@@ -1,0 +1,59 @@
+TODO:
+
+Recompile Carla
+Channel concept, mixer gain
+MultiLoop + Sync, Undo/Redo
+TimeClock
+Plugins 
+saving .wav files (see http://www.softsynth.com/jsyn/developers/download.php)
+
+Services - Settings - Loop Settings
+MidiMapper
+Commands, command scripts
+Sampler
+
+Song / Scene (i.e., 1 bar drum setups)
+SetList
+Effects and knobs
+Drums and pads 
+Gui
+joystick  (pitch bend logarithmic to 1 octave) (left cc = distortion or vocoder right cc = delay)
+dr-5
+    1. channel switch
+    2. mpk pads assign
+Up/down drum bank
+Drum pads
+Save settings
+Pad/knob server
+Guesstimator
+Midi learn
+Direct midi translate.
+Other synth.
+
+Knobs:
+Fluid synth knobs:
+Volume, Chorus, reverb, ...
+Volume track/master, pan, 
+Rakarrack knobs
+Input/output/gain lvl, pedal knobs
+Other knobs: calf, Jackrack,mixer
+
+Script/script gen
+
+jvsthost:
+in JVstHost.cpp (/home/judah/Tracks/jvst/jvsthost-master/src/com/synthbot/audioplugin/vst/vst2/)
+commented out line 1387 (  effect->process(effect, cinputs, coutputs, (int) sampleFrames);
+
+
+javafx
+eclipse plugin: https://www.eclipse.org/efxclipse/install.html#for-the-lazy
+export PATH_TO_FX=path/to/javafx-sdk-13/lib
+javac --module-path $PATH_TO_FX --add-modules javafx.controls HelloFX.java
+
+LV2 plugins
+ARty effects  https://github.com/openAVproductions/openAV-ArtyFX/blob/master/manual.md
+Rudolf556 drum machine http://ll-plugins.nongnu.org/lv2/rudolf556.html
+Drum machine w/ Hydrogen drums https://github.com/nicklan/drmr/wiki
+
+Simple converter ttl to JSON
+https://github.com/PedalController/Lv2Library/blob/master/src/br/com/srmourasilva/lv2library/Lv2Mapper.java

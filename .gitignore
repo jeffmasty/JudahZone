@@ -1,0 +1,9 @@
+.project
+.settings
+.classpath
+*.log
+**.class
+target/**
+pom.properties
+.settings/
+/target/
