@@ -40,7 +40,6 @@ public class JudahZone {
     		new File(JudahZone.class.getClassLoader().getResource("JudahZone.carxp").getFile());
     
     
-    
     @Getter private final Settings settings;
 	@Getter private static final Services services = new Services();
 	@Getter private final CommandHandler commander;
@@ -105,10 +104,9 @@ public class JudahZone {
 		//			log.error(e.getMessage(), e);
 		//		}
     	
-    	Thread.sleep(30);
-        startUI();
     	commander.initializeCommands();
-
+    	Thread.sleep(1000);
+        startUI();
 	}
 
 	private class ShutdownHook extends Thread {

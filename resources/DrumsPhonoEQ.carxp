@@ -1,0 +1,625 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE CARLA-PROJECT>
+<CARLA-PROJECT VERSION='2.0'>
+ <EngineSettings>
+  <ForceStereo>false</ForceStereo>
+  <PreferPluginBridges>false</PreferPluginBridges>
+  <PreferUiBridges>true</PreferUiBridges>
+  <UIsAlwaysOnTop>false</UIsAlwaysOnTop>
+  <MaxParameters>200</MaxParameters>
+  <UIBridgesTimeout>4000</UIBridgesTimeout>
+ </EngineSettings>
+
+ <!-- GxCabinet -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>Guitar Cabinet</Name>
+   <URI>http://guitarix.sourceforge.net/plugins/gx_cabinet#CABINET</URI>
+  </Info>
+
+  <Data>
+   <Active>Yes</Active>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x0</Options>
+
+   <Parameter>
+    <Index>0</Index>
+    <Name>Cabinet</Name>
+    <Symbol>CLevel</Symbol>
+    <Value>4.44250011444092</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>Bass</Name>
+    <Symbol>CBass</Symbol>
+    <Value>-2.84213709831238</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>2</Index>
+    <Name>Treble</Name>
+    <Symbol>CTreble</Symbol>
+    <Value>3.33733510971069</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>3</Index>
+    <Name>Cab Model</Name>
+    <Symbol>c_model</Symbol>
+    <Value>8</Value>
+   </Parameter>
+
+   <CustomData>
+    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
+    <Key>CarlaSkinIsCompacted</Key>
+    <Value>true</Value>
+   </CustomData>
+  </Data>
+ </Plugin>
+
+ <!-- Calf Mono Input -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>Guitar Stereo</Name>
+   <URI>http://calf.sourceforge.net/plugins/MonoInput</URI>
+  </Info>
+
+  <Data>
+   <Active>Yes</Active>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x1e1</Options>
+
+   <Parameter>
+    <Index>0</Index>
+    <Name>Bypass</Name>
+    <Symbol>bypass</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>Input</Name>
+    <Symbol>level_in</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>2</Index>
+    <Name>Output</Name>
+    <Symbol>level_out</Symbol>
+    <Value>1.82007694244385</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>9</Index>
+    <Name>Balance</Name>
+    <Symbol>balance_out</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>10</Index>
+    <Name>Softclip</Name>
+    <Symbol>softclip</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>11</Index>
+    <Name>Mute L</Name>
+    <Symbol>mutel</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>12</Index>
+    <Name>Mute R</Name>
+    <Symbol>muter</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>13</Index>
+    <Name>Phase L</Name>
+    <Symbol>phasel</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>14</Index>
+    <Name>Phase R</Name>
+    <Symbol>phaser</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>15</Index>
+    <Name>Delay</Name>
+    <Symbol>delay</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>16</Index>
+    <Name>Stereo Base</Name>
+    <Symbol>stereo_base</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>17</Index>
+    <Name>Stereo Phase</Name>
+    <Symbol>stereo_phase</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>18</Index>
+    <Name>S/C Level</Name>
+    <Symbol>sc_level</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <CustomData>
+    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
+    <Key>CarlaSkinIsCompacted</Key>
+    <Value>true</Value>
+   </CustomData>
+  </Data>
+ </Plugin>
+
+ <!-- Calf Mono Input -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>Mic Stereo</Name>
+   <URI>http://calf.sourceforge.net/plugins/MonoInput</URI>
+  </Info>
+
+  <Data>
+   <Active>Yes</Active>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x1e1</Options>
+
+   <Parameter>
+    <Index>0</Index>
+    <Name>Bypass</Name>
+    <Symbol>bypass</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>Input</Name>
+    <Symbol>level_in</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>2</Index>
+    <Name>Output</Name>
+    <Symbol>level_out</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>9</Index>
+    <Name>Balance</Name>
+    <Symbol>balance_out</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>10</Index>
+    <Name>Softclip</Name>
+    <Symbol>softclip</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>11</Index>
+    <Name>Mute L</Name>
+    <Symbol>mutel</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>12</Index>
+    <Name>Mute R</Name>
+    <Symbol>muter</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>13</Index>
+    <Name>Phase L</Name>
+    <Symbol>phasel</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>14</Index>
+    <Name>Phase R</Name>
+    <Symbol>phaser</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>15</Index>
+    <Name>Delay</Name>
+    <Symbol>delay</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>16</Index>
+    <Name>Stereo Base</Name>
+    <Symbol>stereo_base</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>17</Index>
+    <Name>Stereo Phase</Name>
+    <Symbol>stereo_phase</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>18</Index>
+    <Name>S/C Level</Name>
+    <Symbol>sc_level</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <CustomData>
+    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
+    <Key>CarlaSkinIsCompacted</Key>
+    <Value>true</Value>
+   </CustomData>
+  </Data>
+ </Plugin>
+
+ <!-- Invada Compressor (mono) -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>Drum Compressor</Name>
+   <URI>http://invadarecords.com/plugins/lv2/compressor/mono</URI>
+  </Info>
+
+  <Data>
+   <Active>Yes</Active>
+   <DryWet>0.9</DryWet>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x0</Options>
+
+   <Parameter>
+    <Index>0</Index>
+    <Name>Bypass</Name>
+    <Symbol>bypass</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>RMS</Name>
+    <Symbol>rms</Symbol>
+    <Value>0.5</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>2</Index>
+    <Name>Attack</Name>
+    <Symbol>attack</Symbol>
+    <Value>0.430923700332642</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>3</Index>
+    <Name>Release</Name>
+    <Symbol>release</Symbol>
+    <Value>0.322276711463928</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>4</Index>
+    <Name>Threshold</Name>
+    <Symbol>threshold</Symbol>
+    <Value>-5.4521107673645</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>5</Index>
+    <Name>Ratio</Name>
+    <Symbol>ratio</Symbol>
+    <Value>2.04754090309143</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>6</Index>
+    <Name>Gain</Name>
+    <Symbol>gain</Symbol>
+    <Value>1.41438603401184</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>7</Index>
+    <Name>Soft Clip</Name>
+    <Symbol>noClip</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <CustomData>
+    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
+    <Key>CarlaSkinIsCompacted</Key>
+    <Value>true</Value>
+   </CustomData>
+  </Data>
+ </Plugin>
+
+ <!-- Calf Mono Input -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>Drum Stereo</Name>
+   <URI>http://calf.sourceforge.net/plugins/MonoInput</URI>
+  </Info>
+
+  <Data>
+   <Active>Yes</Active>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x1e1</Options>
+
+   <Parameter>
+    <Index>0</Index>
+    <Name>Bypass</Name>
+    <Symbol>bypass</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>Input</Name>
+    <Symbol>level_in</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>2</Index>
+    <Name>Output</Name>
+    <Symbol>level_out</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>9</Index>
+    <Name>Balance</Name>
+    <Symbol>balance_out</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>10</Index>
+    <Name>Softclip</Name>
+    <Symbol>softclip</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>11</Index>
+    <Name>Mute L</Name>
+    <Symbol>mutel</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>12</Index>
+    <Name>Mute R</Name>
+    <Symbol>muter</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>13</Index>
+    <Name>Phase L</Name>
+    <Symbol>phasel</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>14</Index>
+    <Name>Phase R</Name>
+    <Symbol>phaser</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>15</Index>
+    <Name>Delay</Name>
+    <Symbol>delay</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>16</Index>
+    <Name>Stereo Base</Name>
+    <Symbol>stereo_base</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>17</Index>
+    <Name>Stereo Phase</Name>
+    <Symbol>stereo_phase</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>18</Index>
+    <Name>S/C Level</Name>
+    <Symbol>sc_level</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <CustomData>
+    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
+    <Key>CarlaSkinIsCompacted</Key>
+    <Value>true</Value>
+   </CustomData>
+  </Data>
+ </Plugin>
+
+ <!-- ZamPhono -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>ZamPhono</Name>
+   <URI>urn:zamaudio:ZamPhono</URI>
+  </Info>
+
+  <Data>
+   <Active>Yes</Active>
+   <DryWet>0.7533013</DryWet>
+   <Volume>1.27</Volume>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x4</Options>
+
+   <Parameter>
+    <Index>0</Index>
+    <Name>Reproduction/Production</Name>
+    <Symbol>inv</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>Phono Filter Type</Name>
+    <Symbol>type</Symbol>
+    <Value>2</Value>
+   </Parameter>
+  </Data>
+ </Plugin>
+
+ <ExternalPatchbay>
+  <Connection>
+   <Source>system:capture_1</Source>
+   <Target>Carla:Guitar Cabinet:in</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_2</Source>
+   <Target>Carla:Mic Stereo:In L</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_4</Source>
+   <Target>Carla:Drum Compressor:In</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:MPKmini2 [16] (capture): MPKmini2 MIDI 1</Source>
+   <Target>JudahMidi:keyboard</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:ActitioN MIDI Controller [24] (capture): ActitioN MIDI Controller MIDI 1</Source>
+   <Target>JudahMidi:pedal</Target>
+  </Connection>
+  <Connection>
+   <Source>PulseAudio JACK Sink:front-left</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>PulseAudio JACK Sink:front-right</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahMidi:synth</Source>
+   <Target>fluidsynth:midi</Target>
+  </Connection>
+  <Connection>
+   <Source>fluidsynth:l_00</Source>
+   <Target>JudahZone:synth_left</Target>
+  </Connection>
+  <Connection>
+   <Source>fluidsynth:l_00</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>fluidsynth:r_00</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>fluidsynth:r_00</Source>
+   <Target>JudahZone:synth_right</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahZone:left</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahZone:right</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Guitar Cabinet:Out</Source>
+   <Target>Carla:Guitar Stereo:In L</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Guitar Stereo:Out L</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Guitar Stereo:Out L</Source>
+   <Target>JudahZone:guitar_left</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Guitar Stereo:Out R</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Guitar Stereo:Out R</Source>
+   <Target>JudahZone:guitar_right</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Mic Stereo:Out L</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Mic Stereo:Out L</Source>
+   <Target>JudahZone:mic_left</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Mic Stereo:Out R</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Mic Stereo:Out R</Source>
+   <Target>JudahZone:mic_right</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Drum Compressor:Out</Source>
+   <Target>Carla:ZamPhono:Audio Input 1</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Drum Stereo:Out L</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Drum Stereo:Out L</Source>
+   <Target>JudahZone:drums_left</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Drum Stereo:Out R</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Drum Stereo:Out R</Source>
+   <Target>JudahZone:drums_right</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:ZamPhono:Audio Output 1</Source>
+   <Target>Carla:Drum Stereo:In L</Target>
+  </Connection>
+ </ExternalPatchbay>
+</CARLA-PROJECT>
