@@ -1,17 +1,22 @@
 package net.judah.mixer;
 
-import com.sun.istack.internal.NotNull;
+import java.util.HashMap;
 
 import lombok.Data;
+import lombok.NonNull;
+import net.judah.midi.Midi;
 
 @Data
-public class Instrument {
+public abstract class Instrument {
 	public static enum Type {
 		Sys, Synth, Other
 	}
 	
-	@NotNull private final String name;
-	@NotNull private final Type type; 
-	private String[] sourcePort;
+	@NonNull protected final String name;
+	@NonNull protected final Type type; 
+	protected String[] sourcePort;
+	
+	// Control name to Midi message map
+	protected HashMap<String, Midi> controls;
 	
 }

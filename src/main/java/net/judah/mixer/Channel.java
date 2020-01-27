@@ -7,11 +7,11 @@ import lombok.Getter;
 import lombok.NonNull;
 
 @Data 
-public class Channel {
+public final class Channel {
 
 	final Instrument instrument;
-	//boolean isSynth;
-	//ArrayList<Widget> widgets;
+	ArrayList<Widget> widgets;
+	Widget gainWidget;
 	
 	@NonNull String name;
 	private final ArrayList<MixerPort> in;
