@@ -1,7 +1,7 @@
 package net.judah.mixer;
 
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 
@@ -43,11 +43,10 @@ public class Mixer extends BasicClient implements Service {
 	private final List<MixerPort> inputPorts = new ArrayList<>();
 	private final List<MixerPort> outputPorts = new ArrayList<>();
 	@Getter private final List<Loop> loops = new ArrayList<>();
+	private final HashSet<MixerPort> toCopy = new HashSet<>();
 	
 	@SuppressWarnings("unused")
 	private float masterGain = 1f;
-	private List<FloatBuffer> buf;
-
 	
 	public Mixer(Services services, Patchbay patchbay) throws JackException {
 		super(patchbay.getClientName());
@@ -84,7 +83,6 @@ public class Mixer extends BasicClient implements Service {
 		//	for (LoopSettings loop : patchbay.getLoops()) {
 		//		loops.add(new Bloop(loop.getName(), jackclient, inputPorts, outputPorts)); }
 		
-		buf = new ArrayList<FloatBuffer>(outputPorts.size());
 	}
 
 	@Override
@@ -155,20 +153,19 @@ public class Mixer extends BasicClient implements Service {
 	// for every input, set levels, hand a copy off to loopers and get off the thread.
 	@Override
 	public boolean process(JackClient client, int nframes) {
-
-		buf.clear();
-		for (MixerPort p : outputPorts)
-			buf.add(p.getPort().getFloatBuffer());
-		AudioTools.processSilence(buf);
-
+		if (state.get() != Status.ACTIVE) return false;
+			
+		// any loopers playing will be additive
 		for (MixerPort p : outputPorts)
 			AudioTools.processSilence(p.getPort().getFloatBuffer());
 		
 		// do any recording or playing
+		
+		
 		for (Loop loop : loops) {
 			loop.process(nframes);
 		}
-		return Status.ACTIVE == state.get();
+		return true;
 	}
 
 }

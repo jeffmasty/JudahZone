@@ -65,26 +65,6 @@ public class ClipBoard extends LinkedList<Recording> {
 	private int x, y;
 	private FloatBuffer buf;
 	/**save the mixed sound */
-	public void overdub(float[][] tape, float[][] mixer) {
-		for (x = 0; x < tape.length; x++) {
-			for (y = 0; y < tape[x].length; y++) {
-
-			}
-		}
-		// mixer.merge(next(), in, out);
-	}
-	public void overdub(float[][] tape, List<FloatBuffer> inputs, float[][] target) {
-		for (x = 0; x < tape.length; x++) {
-			buf = inputs.get(x);
-			for (y = 0; y < tape[x].length; y++) {
-				target[x][y] = tape[x][y] + buf.get();
-			}
-		}
-		live.add(previous(), target);
-	}
-
-
-
 
 	/**@param outputs the buffers to receive the recorded audio
 	 * @return the recorded audio */
@@ -122,11 +102,32 @@ public class ClipBoard extends LinkedList<Recording> {
 		return result;
 	}
 
-	private int previous() {
-		int result = counter.intValue() - 1;
-		if (result < 0) result = get(0).size();
-		return result;
-	}
+//	private int previous() {
+//		int result = counter.intValue() - 1;
+//		if (result < 0) result = get(0).size();
+//		return result;
+//	}
 
 
 }
+
+
+
+//public void overdub(float[][] tape, float[][] mixer) {
+//for (x = 0; x < tape.length; x++) {
+//	for (y = 0; y < tape[x].length; y++) {
+//
+//	}
+//}
+//// mixer.merge(next(), in, out);
+//}
+//public static void overdub(float[][] tape, List<FloatBuffer> inputs, float[][] target) {
+//for (int x = 0; x < tape.length; x++) {
+//	buf = inputs.get(x);
+//	for (y = 0; y < tape[x].length; y++) {
+//		target[x][y] = tape[x][y] + buf.get();
+//	}
+//}
+//
+//live.add(previous(), target);
+//}

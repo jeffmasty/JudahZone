@@ -87,7 +87,8 @@ public class MasterLoop extends GLoop {
     			clipboard.record(ins);
     		}
     		else {
-    			clipboard.overdub(tape, inputs, memory.getArray());
+    			// wasn't overdubbing anyways
+    			// clipboard.overdub(tape, inputs, memory.getArray());
     		}
 //    		if (!clipboard.isEmpty()) {
 //    			outs = memory.getArray();

@@ -9,6 +9,8 @@ public class Constants {
 
 	public static final int LEFT_CHANNEL = 0;
 	public static final int RIGHT_CHANNEL = 1;
+	public static final int STEREO = 2;
+	public static final int MONO = 1;
 	
 	public static String TEST_PLUGIN_URL = "http://moddevices.com/plugins/tap/reverb";
 

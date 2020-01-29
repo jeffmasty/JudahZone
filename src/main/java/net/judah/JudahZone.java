@@ -11,6 +11,7 @@ import javax.swing.JTabbedPane;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.fluid.FluidSynth;
+import net.judah.instruments.Rakarrack;
 import net.judah.jack.JackUI;
 import net.judah.metronome.Metronome;
 import net.judah.midi.MidiClient;
@@ -38,7 +39,8 @@ public class JudahZone {
     
     public static final File CLARA_SETTINGS = 
     		new File(JudahZone.class.getClassLoader().getResource("JudahZone.carxp").getFile());
-    
+    public static final File RAKARACK_SETTINGS = 
+    		new File(JudahZone.class.getClassLoader().getResource("JudahZone.rkr").getFile());
     
     @Getter private final Settings settings;
 	@Getter private static final Services services = new Services();
@@ -48,6 +50,7 @@ public class JudahZone {
 	@Getter private final Mixer mixer;
     @Getter private final Metronome metronome;
 	@Getter private final MidiClient midi;
+	@Getter private final Rakarrack rak; 
 
     ArrayList<Tab> tabs = new ArrayList<>();
 
@@ -81,8 +84,9 @@ public class JudahZone {
     	midi = new MidiClient(commander, metronome);
     	services.add(midi);
 
-    	Thread.sleep(30);
-
+    	rak = new Rakarrack(RAKARACK_SETTINGS.getAbsolutePath());
+    	services.add(rak);
+    	
     	fluid = new FluidSynth(midi);
     	services.add(fluid);
     	tabs.add(fluid.getGui());
@@ -105,7 +109,8 @@ public class JudahZone {
 		//		}
     	
     	commander.initializeCommands();
-    	Thread.sleep(1000);
+    	
+    	Thread.sleep(800);
         startUI();
 	}
 

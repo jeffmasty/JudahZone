@@ -5,8 +5,8 @@ import static net.judah.looper.Loop.Mode.*;
 import static net.judah.mixer.MixerPort.Type.*;
 
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -16,6 +16,7 @@ import org.jaudiolibs.jnajack.JackException;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
+import net.judah.Constants;
 import net.judah.RTLogger;
 import net.judah.jack.AudioTools;
 import net.judah.mixer.MixerPort;
@@ -31,18 +32,19 @@ public class Loop implements LoopInterface {
 	private final List<MixerPort> inPorts;
 	private final List<MixerPort> outPorts;
  
-	protected Recording live, tape, undo, redo; 
+	protected Recording live, tape; // undo 
 
 	@Getter private AtomicInteger tapeCounter = new AtomicInteger();
 	@Getter protected AtomicReference<Mode> recording = new AtomicReference<>(NEW);
 	@Getter protected AtomicReference<Mode> playing = new AtomicReference<>(NEW);
 	
-	// for tape position
-	private int current, previous;
+	// for tape position counter
+	private int udpated;
 	
 	// for process()
-	private float[][] recordingBuffer;
-	private FloatBuffer fromJack, recordingLeft, recordingRight;
+	private HashSet<Integer> channelsNeeded = new HashSet<>();
+	private float[][] newBuffer, recordedBuffer;
+	private FloatBuffer fromJack;
 	private FloatBuffer toJackLeft, toJackRight;
 	private final float[] workArea;
 	private boolean firstLeft, firstRight;
@@ -51,54 +53,54 @@ public class Loop implements LoopInterface {
 	public Loop(String name, JackClient client, List<MixerPort> inputPorts, List<MixerPort> outputPorts) throws JackException {
 		this.name = name;
 		this.bufSize = client.getBufferSize();
-		inPorts = new ArrayList<MixerPort>(inputPorts.size());
+		this.inPorts = inputPorts;
+		this.outPorts = outputPorts;
 		for (MixerPort p : inputPorts) {
 			if (p.isStereo() == false) 
 				throw new JackException(name + " only handles stereo channels. " + Arrays.toString(inputPorts.toArray()));
-			inPorts.add(new MixerPort(p));
 		}
-		outPorts = new ArrayList<>(outputPorts.size());
-		for (MixerPort p : outputPorts) 
-			outPorts.add(new MixerPort(p));
 		if (outPorts.size() != 2) 
 			throw new JackException(name + " only handles stereo loops.  " + Arrays.toString(outPorts.toArray()));
-		memory = new Memory(2, bufSize);
+		memory = new Memory(Constants.STEREO, bufSize);
 		workArea = new float[bufSize];
 	}
 	
 	private int loopCount = 0;
-	protected float[][] get() {
-		previous = tapeCounter.get();
-		current = previous + 1;
-		if (current == tape.size()) {
+	protected float[][] getCurrent() {
+		return live.get(tapeCounter.get());
+	}
+	
+	protected void updateCounter() {
+		udpated = tapeCounter.get() + 1;
+		if (udpated == live.size()) {
 			RTLogger.log(this, name + "Loop count: " + ++loopCount);
-			current = 0;
+			udpated = 0;
 		}
-		tapeCounter.set(current);
-		return tape.get(previous);
+		tapeCounter.set(udpated);
 	}
 
 	@Override
 	public void record(boolean active) {
 
-		Mode m = recording.get();
-		log.warn(name + " recording active: " + active + " current mode: " + m);
+		Mode mode = recording.get();
+		log.warn(name + " recording: " + active + " from: " + mode);
 		
-
-		if (active && (m == NEW || m == STOPPED)) {
+		if (active && (live == null || mode == NEW)) {
 			live = new Recording();
 			recording.set(STARTING);
-			log.warn("recording starting");
-		} 
+			log.warn(name + " recording starting");
+		} else if (active && playing.get() == RUNNING) {
+			recording.set(STARTING);
+			log.warn(name + " overdub");
+		}
 			
-		if (m == RUNNING && !active) {
+		if (mode == RUNNING && !active) {
 			recording.set(STOPPING);
-			tape = live;
-			live = null;
+			tape = new Recording(live);
 			playing.compareAndSet(NEW, STOPPED);
 			playing.compareAndSet(ARMED, STARTING);
-			
-			log.warn("recording stopped, tape is " + tape.size() + " buffers long");
+			recording.set(STOPPED);
+			log.warn(name + " recording stopped, tape is " + tape.size() + " buffers long");
 		}
 	}
 
@@ -126,16 +128,22 @@ public class Loop implements LoopInterface {
 	public void clear() {
 		log.warn("clearing " + name);
 		recording.compareAndSet(Mode.RUNNING, Mode.STOPPING);
-		playing.compareAndSet(Mode.RUNNING, Mode.STOPPING);
+		boolean wasRunning = false;
+		if (playing.compareAndSet(Mode.RUNNING, Mode.STOPPING)) {
+			wasRunning = true;
+		}
 		
 		try { // get a process() in
 			Thread.sleep(20);
 		} catch (Exception e) {	}
 		
-		undo = null;
-		tape = null;
-		redo = null;
+		
+		recording.set(NEW);
+		playing.set(wasRunning ? ARMED : NEW);
+		
 		tapeCounter.set(0);
+		tape = null;
+		live = null;
 	}
 
 	@Override
@@ -160,9 +168,20 @@ public class Loop implements LoopInterface {
 	////////////////////////////////////
 	public void process(int nframes) {
 		
+		// output
+		if (playing()) {
+			toJackLeft = outPorts.get(LEFT_CHANNEL).getPort().getFloatBuffer();
+			toJackLeft.rewind();
+			toJackRight = outPorts.get(RIGHT_CHANNEL).getPort().getFloatBuffer();
+			toJackRight.rewind();
+			recordedBuffer = getCurrent();
+			processMix(recordedBuffer[LEFT_CHANNEL], toJackLeft, nframes);
+			processMix(recordedBuffer[RIGHT_CHANNEL], toJackRight, nframes);
+		} 
+
 		// input
-		if (isRecording()) {
-			recordingBuffer = memory.getArray();
+		if (recording()) {
+			newBuffer = memory.getArray();
 			firstLeft = true;
 			firstRight = true;
 			for (MixerPort p : inPorts) {
@@ -170,37 +189,31 @@ public class Loop implements LoopInterface {
 					fromJack = p.getPort().getFloatBuffer();
 					if (p.getType() == LEFT) {
 						if (firstLeft) {
-							recordingLeft = FloatBuffer.wrap(recordingBuffer[LEFT_CHANNEL]);
-							recordingLeft.put(fromJack); // processEcho
+							FloatBuffer.wrap(newBuffer[LEFT_CHANNEL]).put(fromJack); // processEcho
 							firstLeft = false;
 						} else {
-							AudioTools.processAdd(fromJack, recordingBuffer[LEFT_CHANNEL]);
+							AudioTools.processAdd(fromJack, newBuffer[LEFT_CHANNEL]);
 						}
 					} else {
 						if (firstRight) {
-							recordingRight = FloatBuffer.wrap(recordingBuffer[RIGHT_CHANNEL]);
-							recordingRight.put(fromJack);
+							FloatBuffer.wrap(newBuffer[RIGHT_CHANNEL]).put(fromJack);
 							firstRight = false;
 						} else {
-							AudioTools.processAdd(fromJack, recordingBuffer[RIGHT_CHANNEL]);
+							AudioTools.processAdd(fromJack, newBuffer[RIGHT_CHANNEL]);
 						}
 					}
 				}
 			}
-			live.add(recordingBuffer);
+			
+			if (hasRecording()) 
+				live.dub(newBuffer, recordedBuffer, tapeCounter.get());
+			else 
+				live.add(newBuffer);
+			
 		}
 		
-		// output
-		toJackLeft = outPorts.get(LEFT_CHANNEL).getPort().getFloatBuffer();
-		toJackLeft.rewind();
-		toJackRight = outPorts.get(RIGHT_CHANNEL).getPort().getFloatBuffer();
-		toJackRight.rewind();
-		
-		if (isPlaying()) {
-			recordingBuffer = get();
-			processMix(recordingBuffer[LEFT_CHANNEL], toJackLeft, nframes);
-			processMix(recordingBuffer[RIGHT_CHANNEL], toJackRight, nframes);
-		} 
+		if (playing.get() == RUNNING)
+			updateCounter();
 	}
 
 	
@@ -212,17 +225,16 @@ public class Loop implements LoopInterface {
 		}
 		
 	}
-
 	
 	/** for process() thread */
-	private boolean isPlaying() {
+	private boolean playing() {
 		playing.compareAndSet(STOPPING, STOPPED);
 		playing.compareAndSet(STARTING, RUNNING);
 		return playing.get() == RUNNING;
 	}
 	
 	/** for process() thread */
-	private boolean isRecording() {
+	private boolean recording() {
 		if (recording.compareAndSet(STOPPING, STOPPED)) {
 
 		}
@@ -234,4 +246,20 @@ public class Loop implements LoopInterface {
 		return false;
 	}
 
+	
+	public void poll(HashSet<MixerPort> neededPorts) {
+		if (recording.get() != RUNNING)
+			return;
+		for (MixerPort p : inPorts)
+			if (p.isOnLoop())
+				neededPorts.add(p);
+	}
+	
+	public boolean isRecording() {
+		if (recording.get() == RUNNING)
+			for (MixerPort p : inPorts)
+				if (p.isOnLoop())
+					return true;
+		return false;
+	}
 }

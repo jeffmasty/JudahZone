@@ -171,7 +171,28 @@ public class AudioTools  {
 		return result;
 	}
 
-
+	/** MIX
+	 *  
+	 * @param overdub
+	 * @param oldLoop
+	 */
+	
+	public static float[][] overdub(float[][] overdub, float[][] oldLoop) {
+		float[][] channels = new float[oldLoop.length][];
+		float[] in, out, result;
+		for (int channel = 0; channel < oldLoop.length; channel++) {
+			in = overdub[channel];
+			out = oldLoop[channel];
+			result = new float[out.length]; 
+			for (int x = 0; x < out.length; x++) {
+				result[x] = in[x] + out[x];
+			}
+			channels[channel] = result;
+		}
+		return channels;
+	}
+	
+	/** MIX */
 	public static void processAdd(FloatBuffer in, float[] out) {
 		for (int i = 0; i < out.length; i++) 
 			out[i] += in.get();
