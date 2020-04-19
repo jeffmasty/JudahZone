@@ -271,20 +271,6 @@ public class MPK extends Tab {
 
 	}
 
-
-
-	@Override
-	public boolean start() {
-//		fluid = master.getFluidsynth();
-		return false;
-	}
-
-	@Override
-	public boolean stop() {
-//		fluid = null;
-		return true;
-	}
-
 	private Midi processFluid(Midi msg) {
 		// if (fluid != null) // fluid = master.getFluidsynth();
 		if (msg.getStatus() == ShortMessage.NOTE_ON || msg.getStatus() == ShortMessage.NOTE_OFF) return msg;

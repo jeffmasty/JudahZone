@@ -1,93 +1,129 @@
 package net.judah.metronome;
+import static net.judah.Constants.Gui.*;
+
+import java.awt.Color;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Properties;
 
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
+import javax.swing.border.BevelBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.Tab;
 
-@Log4j @SuppressWarnings("serial")
-public class MetroUI extends Tab implements  ChangeListener {
+@Log4j 
+public class MetroPanel extends JPanel implements  ActionListener, ChangeListener {
+	
 	final Metronome metro;
 	private final JToggleButton playBtn;
     private final JToggleButton stopBtn;
+    private final JButton bpbBtn;
+    private final JButton fileBtn;
+    
+    
     JTextField bpb;
     JTextField bpmText;
     JSlider bpm;
     private final JSlider volume;
 
-	public MetroUI(Metronome metro) {
-		super(true); // custom ui
+	public MetroPanel(Metronome metro) {
 		this.metro = metro;
 
+		setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
 		JPanel banner = new JPanel();
 		playBtn = new JToggleButton("Play");
+		playBtn.setFont(BOLD);
 		playBtn.addActionListener(this);
 		stopBtn = new JToggleButton("Stop");
+		stopBtn.setFont(BOLD);
 		stopBtn.addActionListener(this);
 		stopBtn.setSelected(true);
+		
+		
+		JPanel bpmPnl = new JPanel();
+		bpmPnl.setLayout(new BoxLayout(bpmPnl, BoxLayout.Y_AXIS));
+		JLabel bpmLbl = new JLabel("BPM");
+		bpmLbl.setFont(FONT12);
+		bpmText = new JTextField("70", 2);
+		bpmText.setFont(FONT12);
+		bpmText.addActionListener(this);
+		bpmPnl.add(bpmLbl);
+		bpmPnl.add(bpmText);
+		
 		JPanel indicatorPanel = new JPanel();
-		indicatorPanel.add(new JLabel("   "));
+		indicatorPanel.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
+		
+		bpbBtn = new JButton("BPB");
+		bpbBtn.setMargin(BTN_MARGIN);
+		bpbBtn.setFont(FONT11);
+		
+		fileBtn = new JButton(" File ");
+		fileBtn.setMargin(BTN_MARGIN);
+		fileBtn.setFont(FONT11);
+		indicatorPanel.add(bpbBtn);
+		indicatorPanel.add(fileBtn);
+		
+		
 		banner.add(playBtn);
 		banner.add(stopBtn);
+		banner.add(bpmPnl);
 		banner.add(indicatorPanel);
+		
 		add(banner);
 
-		JPanel beatsPanel = new JPanel();
-		beatsPanel.add(new JLabel("BPM:"));
-		bpmText = new JTextField("70", 4);
-		bpmText.addActionListener(this);
-		beatsPanel.add(bpmText);
-		beatsPanel.add(new JLabel("Beats per Bar:"));
-		bpb = new JTextField("4", 3);
-		bpb.addActionListener(this);
-		beatsPanel.add(bpb);
-		add(beatsPanel);
+//		JPanel beatsPanel = new JPanel();
+//		beatsPanel.add(new JLabel("BPB"));
+//		bpb = new JTextField("4", 2);
+//		bpb.addActionListener(this);
+//		beatsPanel.add(bpb);
+//		add(beatsPanel);
 
 		JPanel tempoPanel = new JPanel();
-		tempoPanel.add(new JLabel("Tempo:"));
-		bpm = new JSlider(JSlider.HORIZONTAL, 50, 150, 70);
-
-		bpm.addChangeListener(this);
+		
+		JLabel tempo = new JLabel("Tempo");
+		tempo.setFont(FONT13);
+		tempoPanel.add(tempo);
+		
+		bpm = new JSlider(JSlider.HORIZONTAL, 50, 170, 70);
+		bpm.setFont(FONT9);
 		bpm.setMajorTickSpacing(20);
-		bpm.setPaintTicks(true);
+		bpm.setPaintTicks(false);
 		bpm.setPaintLabels(true);
+		bpm.addChangeListener(this);
 		tempoPanel.add(bpm);
 		add(tempoPanel);
 
 		JPanel volumePanel = new JPanel();
-		volumePanel.add(new JLabel("Volume:"));
-		volume = new JSlider(JSlider.HORIZONTAL,
-                0, 100, 70);
-		volume.addChangeListener(this);
+		JLabel volumeLbl = new JLabel("Volume");
+		volumeLbl.setFont(FONT13);
+		volumePanel.add(volumeLbl);
+		
+		volume = new JSlider(JSlider.HORIZONTAL, 0, 100, 70);
+		volume.setFont(FONT9);
 		volume.setMajorTickSpacing(20);
 		volume.setPaintTicks(true);
-		volume.setPaintLabels(true);
+		volume.setPaintLabels(false);
+		volume.addChangeListener(this);
 		volumePanel.add(volume);
 		add(volumePanel);
 
-		update();
 //		Properties props = new Properties();
 //		props.put("bpb", 4);
 //		props.put("bpm", 70f);
 //		props.put("volume", 0.7f);
 //		setProperties(props);
 
-	}
-
-	@Override
-	public String getTabName() {
-		return metro.getServiceName();
 	}
 
 	public boolean start() {
@@ -166,11 +202,5 @@ public class MetroUI extends Tab implements  ChangeListener {
 			log.error(ex.getMessage(), ex);
 		}
 	}
-
-	@Override
-	public void setProperties(Properties p) {
-		update();
-	}
-
 
 }
