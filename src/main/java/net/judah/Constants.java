@@ -1,8 +1,5 @@
 package net.judah;
 
-import java.awt.Font;
-import java.awt.Insets;
-
 public class Constants {
 
 	public static final String NL = System.getProperty("line.separator", "\r\n");
@@ -25,19 +22,6 @@ public class Constants {
     	return Math.round(gain * 127);
     }
 
-    public static class Gui {
-    	public static final int STD_HEIGHT = 18;
-    	public static final Insets BTN_MARGIN = new Insets(1,1,1,1);
-    	public static final Insets ZERO_MARGIN = new Insets(0,0,0,0);
-    	public static final Font BOLD = new Font("Arial", Font.BOLD, 12);
-    	public static final Font FONT13 = new Font("Arial", Font.PLAIN, 13);
-    	public static final Font FONT12 = new Font("Arial", Font.PLAIN, 12);
-    	public static final Font FONT11 = new Font("Arial", Font.PLAIN, 11);
-    	public static final Font FONT10 = new Font("Arial", Font.PLAIN, 10);
-    	public static final Font FONT9 = new Font("Arial", Font.PLAIN, 9);
-    	
-    }
-    
 }
 
 // public static final String IN_PORT = "MIDI in";

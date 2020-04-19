@@ -1,6 +1,7 @@
 package net.judah.metronome;
 import java.awt.event.ActionEvent;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
@@ -14,11 +15,12 @@ import javax.swing.event.ChangeListener;
 import lombok.extern.log4j.Log4j;
 import net.judah.Tab;
 
-@Log4j @SuppressWarnings("serial")
-public class MetroUI extends Tab implements  ChangeListener {
+@SuppressWarnings("serial") @Log4j
+public class MetroUI extends Tab implements ChangeListener {
 	final Metronome metro;
 	private final JToggleButton playBtn;
     private final JToggleButton stopBtn;
+    private AtomicBoolean mouseReleased = new AtomicBoolean(true);
     JTextField bpb;
     JTextField bpmText;
     JSlider bpm;
@@ -56,7 +58,8 @@ public class MetroUI extends Tab implements  ChangeListener {
 
 		JPanel tempoPanel = new JPanel();
 		tempoPanel.add(new JLabel("Tempo:"));
-		bpm = new JSlider(JSlider.HORIZONTAL, 50, 150, 70);
+		bpm = new JSlider(JSlider.HORIZONTAL,
+                50, 150, 70);
 
 		bpm.addChangeListener(this);
 		bpm.setMajorTickSpacing(20);
@@ -76,12 +79,12 @@ public class MetroUI extends Tab implements  ChangeListener {
 		volumePanel.add(volume);
 		add(volumePanel);
 
-		update();
-//		Properties props = new Properties();
-//		props.put("bpb", 4);
-//		props.put("bpm", 70f);
-//		props.put("volume", 0.7f);
-//		setProperties(props);
+
+		Properties props = new Properties();
+		props.put("bpb", 4);
+		props.put("bpm", 70f);
+		props.put("volume", 0.7f);
+		setProperties(props);
 
 	}
 
@@ -90,12 +93,14 @@ public class MetroUI extends Tab implements  ChangeListener {
 		return metro.getServiceName();
 	}
 
+	@Override
 	public boolean start() {
 		playBtn.setSelected(true);
 		stopBtn.setSelected(false);
 		return true;
 	}
 
+	@Override
 	public boolean stop() {
 		playBtn.setSelected(false);
 		stopBtn.setSelected(true);
@@ -113,6 +118,7 @@ public class MetroUI extends Tab implements  ChangeListener {
 
 	@Override
 	public void stateChanged(ChangeEvent e) {
+		if (mouseReleased.get() == false) return;
 		Properties props = metro.getProps();
 		try {
 			if (e.getSource() == volume) {

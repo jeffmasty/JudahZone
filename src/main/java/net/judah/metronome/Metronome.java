@@ -1,6 +1,6 @@
 package net.judah.metronome;
 
-import static net.judah.Constants.*;
+import static net.judah.Constants.NL;
 
 import java.nio.ByteBuffer;
 import java.security.InvalidParameterException;
@@ -39,7 +39,7 @@ import net.judah.settings.Command;
 import net.judah.settings.Service;
 
 @Log4j
-public class Metronome implements Service, JackTimebaseCallback, JackSyncCallback {  
+public class Metronome implements Service, JackTimebaseCallback, JackSyncCallback { /* extends BasicClient  implements JackProcessCallback, JackShutdownCallback, JackTimebaseCallback, JackSyncCallback */ 
 
 	private final ArrayList<Command> commands = new ArrayList<>();
 
@@ -276,6 +276,16 @@ public class Metronome implements Service, JackTimebaseCallback, JackSyncCallbac
 
 
 	
+//    /** NOTE: blocks while Midi jack client is initialized */
+//	public JackPort getOutPort() {
+//    	while (out == null) { // wait for initialization
+//    		try {
+//				Thread.sleep(100);
+//			} catch (InterruptedException e) { }
+//    	}
+//    	return out;
+//    }
+
 	@Override
 	public String getServiceName() {
 		return Metronome.class.getSimpleName();

@@ -1,7 +1,7 @@
 package net.judah.midi;
 
-import static org.jaudiolibs.jnajack.JackPortFlags.*;
-import static org.jaudiolibs.jnajack.JackPortType.*;
+import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsOutput;
+import static org.jaudiolibs.jnajack.JackPortType.MIDI;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,8 +9,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
-import javax.sound.midi.MidiMessage;
 
 import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
@@ -61,14 +59,12 @@ public class MidiClient extends BasicClient implements Service {
 
     ConcurrentLinkedQueue<Long> timeRequest = new ConcurrentLinkedQueue<>(); // for future Timebase interface
 	
-    private final ConcurrentLinkedQueue<MidiMessage> queue = new ConcurrentLinkedQueue<MidiMessage>();
-    
 	// for process()
 	private Event midiEvent = new JackMidi.Event();
 	private byte[] data = null;
     private int index, eventCount, size;
 	private Midi midiToSend;
-	private MidiMessage poll;
+	
     
     public MidiClient(CommandHandler commander, Metronome metro) throws JackException {
     	this(DEFAULT_CONFIG, commander, metro);
@@ -149,22 +145,12 @@ public class MidiClient extends BasicClient implements Service {
     			JackMidi.eventWrite(synth, 0, midiToSend.getMessage(), midiToSend.getLength());
     		}    		
     		
-    		poll = queue.poll();
-    		while (poll != null) {
-    			JackMidi.eventWrite(synth, 0, poll.getMessage(), poll.getLength());
-    			poll = queue.poll();
-    		}
-    		
     	} catch (Exception e) {
     		RTLogger.warn(this, e);
     		return false;
     	}
     	return state.get() == Status.ACTIVE;
     }
-
-	public void queue(MidiMessage message, long timeStamp) {
-		queue.add(message);
-	}
 
 }
 
