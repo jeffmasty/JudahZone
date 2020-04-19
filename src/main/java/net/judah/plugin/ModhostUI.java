@@ -1,6 +1,6 @@
 package net.judah.plugin;
 
-import static net.judah.Constants.NL;
+import static net.judah.Constants.*;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -53,17 +53,6 @@ public class ModhostUI extends Tab implements ActionListener {
 	public String getTabName() {
 		return TAB_NAME;
 	}
-
-	@Override
-	public boolean start() {
-		return true;
-	}
-
-	@Override
-	public boolean stop() {
-		return true;
-	}
-
 	@Override
 	public void setProperties(Properties p) {
 		// TODO Auto-generated method stub

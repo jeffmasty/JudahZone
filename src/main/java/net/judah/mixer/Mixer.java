@@ -1,7 +1,7 @@
 package net.judah.mixer;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -13,13 +13,17 @@ import org.jaudiolibs.jnajack.JackPortType;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahException;
-import net.judah.Tab;
+import net.judah.fluid.FluidSynth;
 import net.judah.jack.AudioTools;
 import net.judah.jack.BasicClient;
 import net.judah.jack.Status;
 import net.judah.looper.Loop;
 import net.judah.mixer.MixerPort.PortDescriptor;
 import net.judah.mixer.MixerPort.Type;
+import net.judah.mixer.gui.MixBoard;
+import net.judah.mixer.instrument.InstType;
+import net.judah.mixer.widget.CarlaVolume;
+import net.judah.mixer.widget.FluidVolume;
 import net.judah.settings.Command;
 import net.judah.settings.Patch;
 import net.judah.settings.Patchbay;
@@ -35,26 +39,24 @@ public class Mixer extends BasicClient implements Service {
 	public static final String GAIN_COMMAND = "Mix Volume";
 	public static final String PLUGIN_COMMAND = "Load Plugin";
 
-	
 	private final MixerCommands mixerCommands;
-	
 	private final Patchbay patchbay;
 	
+	private final List<Channel> channels = new ArrayList<>();
 	private final List<MixerPort> inputPorts = new ArrayList<>();
 	private final List<MixerPort> outputPorts = new ArrayList<>();
 	@Getter private final List<Loop> loops = new ArrayList<>();
-	private final HashSet<MixerPort> toCopy = new HashSet<>();
+	@Getter private final MixBoard gui = new MixBoard();
 	
 	@SuppressWarnings("unused")
-	private float masterGain = 1f;
+	private float masterGain = 1f;  
 	
 	public Mixer(Services services, Patchbay patchbay) throws JackException {
 		super(patchbay.getClientName());
 		this.patchbay = patchbay;
-		mixerCommands = new MixerCommands(this); 
+		mixerCommands = new MixerCommands(this);
 		start();
 	}
-
 
 	@Override
 	protected void initialize() throws JackException {
@@ -79,12 +81,29 @@ public class Mixer extends BasicClient implements Service {
 		}
 
 		loops.add(new Loop("Boss", jackclient, inputPorts, outputPorts));
-		loops.add(new Loop("Little Pup", jackclient, inputPorts, outputPorts));
+		loops.add(new Loop("LilPup", jackclient, inputPorts, outputPorts));
 		//	for (LoopSettings loop : patchbay.getLoops()) {
-		//		loops.add(new Bloop(loop.getName(), jackclient, inputPorts, outputPorts)); }
+		//		loops.add(new Loop(loop.getName(), jackclient, inputPorts, outputPorts)); }
 		
+		initializeChannels();
+		gui.setup(channels, loops);
 	}
 
+	private void initializeChannels() {
+		
+		Instrument g = new Instrument("Guitar", InstType.Sys, new String[] {"system:capture_1"}, null); 
+		Instrument m = new Instrument("Mic", InstType.Sys, new String[] {"system:capture_2"}, null);  
+		Instrument d = new Instrument("Drums", InstType.Sys, new String[] {"system:capture_4"}, null);
+		Instrument s = new Instrument("Synth", InstType.Synth, new String[] {FluidSynth.LEFT_PORT, FluidSynth.RIGHT_PORT}, null);
+		
+		Channel guitar = new Channel(g, new CarlaVolume(0));
+		Channel mic = new Channel(m, new CarlaVolume(2));
+		Channel drums = new Channel(d, new CarlaVolume(3));
+		Channel synth = new Channel(s, new FluidVolume());
+		channels.addAll(Arrays.asList(new Channel[] {guitar, mic, drums, synth}));
+	}
+	
+	
 	@Override
 	protected void makeConnections() throws JackException {
 		for (Patch patch : patchbay.getConnections()) {
@@ -101,12 +120,10 @@ public class Mixer extends BasicClient implements Service {
 	public List<Command> getCommands() {
 		return mixerCommands;
 	}
-
+	
 	@Override
 	public void execute(Command cmd, Properties props) throws Exception {
-
 		mixerCommands.execute(cmd, props); 
-		
 		//		if (cmd.getName().equals(GAIN_COMMAND)) {
 		//			gainCommand(cmd, props);
 		//		} else if (cmd.getName().equals(PLUGIN_COMMAND)) {
@@ -142,11 +159,8 @@ public class Mixer extends BasicClient implements Service {
 		}
 	}
 
-	@Override
-	public Tab getGui() {
-		return null;  // TODO !!
-	}
-
+	
+	
     ////////////////////////////////////////////////////
     //                PROCESS AUDIO                   //
     ////////////////////////////////////////////////////
@@ -160,8 +174,6 @@ public class Mixer extends BasicClient implements Service {
 			AudioTools.processSilence(p.getPort().getFloatBuffer());
 		
 		// do any recording or playing
-		
-		
 		for (Loop loop : loops) {
 			loop.process(nframes);
 		}

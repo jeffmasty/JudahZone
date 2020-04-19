@@ -20,7 +20,7 @@
 
   <Data>
    <Active>Yes</Active>
-   <Volume>0.6095999</Volume>
+   <Volume>1.0</Volume>
    <ControlChannel>1</ControlChannel>
    <Options>0x0</Options>
 
@@ -28,40 +28,34 @@
     <Index>0</Index>
     <Name>Cabinet</Name>
     <Symbol>CLevel</Symbol>
-    <Value>4.33000040054321</Value>
+    <Value>4.44250011444092</Value>
    </Parameter>
 
    <Parameter>
     <Index>1</Index>
     <Name>Bass</Name>
     <Symbol>CBass</Symbol>
-    <Value>-4.04213714599609</Value>
+    <Value>-2.84213709831238</Value>
    </Parameter>
 
    <Parameter>
     <Index>2</Index>
     <Name>Treble</Name>
     <Symbol>CTreble</Symbol>
-    <Value>3.71248507499695</Value>
+    <Value>3.33733510971069</Value>
    </Parameter>
 
    <Parameter>
     <Index>3</Index>
     <Name>Cab Model</Name>
     <Symbol>c_model</Symbol>
-    <Value>15</Value>
+    <Value>8</Value>
    </Parameter>
 
    <CustomData>
     <Type>http://kxstudio.sf.net/ns/carla/property</Type>
     <Key>CarlaSkinIsCompacted</Key>
     <Value>true</Value>
-   </CustomData>
-
-   <CustomData>
-    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
-    <Key>CarlaSkin</Key>
-    <Value>classic</Value>
    </CustomData>
   </Data>
  </Plugin>
@@ -90,14 +84,14 @@
     <Index>1</Index>
     <Name>Input</Name>
     <Symbol>level_in</Symbol>
-    <Value>2.5508017539978</Value>
+    <Value>1</Value>
    </Parameter>
 
    <Parameter>
     <Index>2</Index>
     <Name>Output</Name>
     <Symbol>level_out</Symbol>
-    <Value>1.07396745681763</Value>
+    <Value>1.82007694244385</Value>
    </Parameter>
 
    <Parameter>
@@ -111,7 +105,7 @@
     <Index>10</Index>
     <Name>Softclip</Name>
     <Symbol>softclip</Symbol>
-    <Value>1</Value>
+    <Value>0</Value>
    </Parameter>
 
    <Parameter>
@@ -188,7 +182,6 @@
 
   <Data>
    <Active>Yes</Active>
-   <Volume>0.5461</Volume>
    <ControlChannel>1</ControlChannel>
    <Options>0x1e1</Options>
 
@@ -203,7 +196,7 @@
     <Index>1</Index>
     <Name>Input</Name>
     <Symbol>level_in</Symbol>
-    <Value>1.26225197315216</Value>
+    <Value>1</Value>
    </Parameter>
 
    <Parameter>
@@ -224,7 +217,7 @@
     <Index>10</Index>
     <Name>Softclip</Name>
     <Symbol>softclip</Symbol>
-    <Value>1</Value>
+    <Value>0</Value>
    </Parameter>
 
    <Parameter>
@@ -291,33 +284,329 @@
   </Data>
  </Plugin>
 
- <!-- ZamPhono -->
+ <!-- Invada Compressor (mono) -->
  <Plugin>
   <Info>
    <Type>LV2</Type>
-   <Name>Drums Phonograph</Name>
-   <URI>urn:zamaudio:ZamPhono</URI>
+   <Name>Drum Compressor</Name>
+   <URI>http://invadarecords.com/plugins/lv2/compressor/mono</URI>
   </Info>
 
   <Data>
    <Active>Yes</Active>
-   <DryWet>0.822629</DryWet>
-   <Volume>0.635</Volume>
+   <DryWet>0.9</DryWet>
+   <Volume>1.0</Volume>
    <ControlChannel>1</ControlChannel>
-   <Options>0x4</Options>
+   <Options>0x0</Options>
 
    <Parameter>
     <Index>0</Index>
-    <Name>Reproduction/Production</Name>
-    <Symbol>inv</Symbol>
+    <Name>Bypass</Name>
+    <Symbol>bypass</Symbol>
     <Value>0</Value>
    </Parameter>
 
    <Parameter>
     <Index>1</Index>
-    <Name>Phono Filter Type</Name>
-    <Symbol>type</Symbol>
-    <Value>2</Value>
+    <Name>RMS</Name>
+    <Symbol>rms</Symbol>
+    <Value>0.5</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>2</Index>
+    <Name>Attack</Name>
+    <Symbol>attack</Symbol>
+    <Value>0.430923700332642</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>3</Index>
+    <Name>Release</Name>
+    <Symbol>release</Symbol>
+    <Value>0.322276711463928</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>4</Index>
+    <Name>Threshold</Name>
+    <Symbol>threshold</Symbol>
+    <Value>-5.4521107673645</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>5</Index>
+    <Name>Ratio</Name>
+    <Symbol>ratio</Symbol>
+    <Value>2.04754090309143</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>6</Index>
+    <Name>Gain</Name>
+    <Symbol>gain</Symbol>
+    <Value>1.41438603401184</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>7</Index>
+    <Name>Soft Clip</Name>
+    <Symbol>noClip</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <CustomData>
+    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
+    <Key>CarlaSkinIsCompacted</Key>
+    <Value>true</Value>
+   </CustomData>
+  </Data>
+ </Plugin>
+
+ <!-- x42-eq - Parametric Equalizer Mono -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>Drum EQ</Name>
+   <URI>http://gareus.org/oss/lv2/fil4#mono</URI>
+  </Info>
+
+  <Data>
+   <Active>Yes</Active>
+   <DryWet>0.9</DryWet>
+   <Volume>1.0</Volume>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x0</Options>
+
+   <Parameter>
+    <Index>0</Index>
+    <Name>Enable</Name>
+    <Symbol>enable</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>Gain</Name>
+    <Symbol>gain</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>3</Index>
+    <Name>Reset Peak Hold</Name>
+    <Symbol>peakreset</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>4</Index>
+    <Name>Highpass</Name>
+    <Symbol>HighPass</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>5</Index>
+    <Name>Highpass Frequency</Name>
+    <Symbol>HPfreq</Symbol>
+    <Value>20</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>6</Index>
+    <Name>HighPass Resonance</Name>
+    <Symbol>HPQ</Symbol>
+    <Value>0.73550420999527</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>7</Index>
+    <Name>Lowpass</Name>
+    <Symbol>LowPass</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>8</Index>
+    <Name>Lowpass Frequency</Name>
+    <Symbol>LPfreq</Symbol>
+    <Value>20000</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>9</Index>
+    <Name>LowPass Resonance</Name>
+    <Symbol>LPQ</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>10</Index>
+    <Name>Lowshelf</Name>
+    <Symbol>LSsec</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>11</Index>
+    <Name>Lowshelf Frequency</Name>
+    <Symbol>LSfreq</Symbol>
+    <Value>35.2420959472656</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>12</Index>
+    <Name>Lowshelf Bandwidth</Name>
+    <Symbol>LSq</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>13</Index>
+    <Name>Lowshelf Gain</Name>
+    <Symbol>LSgain</Symbol>
+    <Value>-9</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>14</Index>
+    <Name>Section 1</Name>
+    <Symbol>sec1</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>15</Index>
+    <Name>Frequency 1</Name>
+    <Symbol>freq1</Symbol>
+    <Value>63.245548248291</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>16</Index>
+    <Name>Bandwidth 1</Name>
+    <Symbol>q1</Symbol>
+    <Value>0.600000023841858</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>17</Index>
+    <Name>Gain 1</Name>
+    <Symbol>gain1</Symbol>
+    <Value>8.80000114440918</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>18</Index>
+    <Name>Section 2</Name>
+    <Symbol>sec2</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>19</Index>
+    <Name>Frequency 2</Name>
+    <Symbol>freq2</Symbol>
+    <Value>386.139556884766</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>20</Index>
+    <Name>Bandwidth 2</Name>
+    <Symbol>q2</Symbol>
+    <Value>0.600000023841858</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>21</Index>
+    <Name>Gain 2</Name>
+    <Symbol>gain2</Symbol>
+    <Value>-3.79999995231628</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>22</Index>
+    <Name>Section 3</Name>
+    <Symbol>sec3</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>23</Index>
+    <Name>Frequency 3</Name>
+    <Symbol>freq3</Symbol>
+    <Value>1114.45275878906</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>24</Index>
+    <Name>Bandwidth 3</Name>
+    <Symbol>q3</Symbol>
+    <Value>0.600000023841858</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>25</Index>
+    <Name>Gain 3</Name>
+    <Symbol>gain3</Symbol>
+    <Value>-6</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>26</Index>
+    <Name>Section 4</Name>
+    <Symbol>sec4</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>27</Index>
+    <Name>Frequency 4</Name>
+    <Symbol>freq4</Symbol>
+    <Value>8020.56005859375</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>28</Index>
+    <Name>Bandwidth 4</Name>
+    <Symbol>q4</Symbol>
+    <Value>0.600000023841858</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>29</Index>
+    <Name>Gain 4</Name>
+    <Symbol>gain4</Symbol>
+    <Value>-1.79999899864197</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>30</Index>
+    <Name>Highshelf</Name>
+    <Symbol>HSsec</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>31</Index>
+    <Name>Highshelf Frequency</Name>
+    <Symbol>HSfreq</Symbol>
+    <Value>12550.1552734375</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>32</Index>
+    <Name>Highshelf Bandwidth</Name>
+    <Symbol>HSq</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>33</Index>
+    <Name>Highshelf Gain</Name>
+    <Symbol>HSgain</Symbol>
+    <Value>-8.39999961853027</Value>
    </Parameter>
 
    <CustomData>
@@ -327,9 +616,33 @@
    </CustomData>
 
    <CustomData>
-    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
-    <Key>CarlaSkin</Key>
-    <Value>3bandeq</Value>
+    <Type>http://lv2plug.in/ns/ext/atom#Float</Type>
+    <Key>http://gareus.org/oss/lv2/fil4#dbscale</Key>
+    <Value>AADwQQ==</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#Float</Type>
+    <Key>http://gareus.org/oss/lv2/fil4#fftgain</Key>
+    <Value>AAAAAA==</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#Float</Type>
+    <Key>http://gareus.org/oss/lv2/fil4#uiscale</Key>
+    <Value>AADcQw==</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#Int</Type>
+    <Key>http://gareus.org/oss/lv2/fil4#fftmode</Key>
+    <Value>ARIAAA==</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#Int</Type>
+    <Key>http://gareus.org/oss/lv2/fil4#fftchannel</Key>
+    <Value>/////w==</Value>
    </CustomData>
   </Data>
  </Plugin>
@@ -338,14 +651,14 @@
  <Plugin>
   <Info>
    <Type>LV2</Type>
-   <Name>Drums Stereo</Name>
+   <Name>Drum Stereo</Name>
    <URI>http://calf.sourceforge.net/plugins/MonoInput</URI>
   </Info>
 
   <Data>
    <Active>Yes</Active>
    <ControlChannel>1</ControlChannel>
-   <Options>0x3f1</Options>
+   <Options>0x1e1</Options>
 
    <Parameter>
     <Index>0</Index>
@@ -457,15 +770,31 @@
   </Connection>
   <Connection>
    <Source>system:capture_4</Source>
-   <Target>Carla:Drums Phonograph:Audio Input 1</Target>
+   <Target>Carla:Drum Compressor:In</Target>
   </Connection>
   <Connection>
-   <Source>a2j:MPKmini2 [20] (capture): MPKmini2 MIDI 1</Source>
+   <Source>a2j:Midi Through [14] (capture): Midi Through Port-0</Source>
+   <Target>mod-host:midi_in</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:MPKmini2 [16] (capture): MPKmini2 MIDI 1</Source>
    <Target>JudahMidi:keyboard</Target>
   </Connection>
   <Connection>
-   <Source>a2j:ActitioN MIDI Controller [28] (capture): ActitioN MIDI Controller MIDI 1</Source>
+   <Source>a2j:MPKmini2 [16] (capture): MPKmini2 MIDI 1</Source>
+   <Target>mod-host:midi_in</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:Komplete Audio 6 [20] (capture): Komplete Audio 6 MIDI 1</Source>
+   <Target>mod-host:midi_in</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:ActitioN MIDI Controller [24] (capture): ActitioN MIDI Controller MIDI 1</Source>
    <Target>JudahMidi:pedal</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:ActitioN MIDI Controller [24] (capture): ActitioN MIDI Controller MIDI 1</Source>
+   <Target>mod-host:midi_in</Target>
   </Connection>
   <Connection>
    <Source>PulseAudio JACK Sink:front-left</Source>
@@ -540,23 +869,27 @@
    <Target>JudahZone:mic_right</Target>
   </Connection>
   <Connection>
-   <Source>Carla:Drums Phonograph:Audio Output 1</Source>
-   <Target>Carla:Drums Stereo:In L</Target>
+   <Source>Carla:Drum Compressor:Out</Source>
+   <Target>Carla:Drum EQ:In</Target>
   </Connection>
   <Connection>
-   <Source>Carla:Drums Stereo:Out L</Source>
-   <Target>JudahZone:drums_left</Target>
+   <Source>Carla:Drum EQ:Out</Source>
+   <Target>Carla:Drum Stereo:In L</Target>
   </Connection>
   <Connection>
-   <Source>Carla:Drums Stereo:Out L</Source>
+   <Source>Carla:Drum Stereo:Out L</Source>
    <Target>system:playback_1</Target>
   </Connection>
   <Connection>
-   <Source>Carla:Drums Stereo:Out R</Source>
+   <Source>Carla:Drum Stereo:Out L</Source>
+   <Target>JudahZone:drums_left</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Drum Stereo:Out R</Source>
    <Target>system:playback_2</Target>
   </Connection>
   <Connection>
-   <Source>Carla:Drums Stereo:Out R</Source>
+   <Source>Carla:Drum Stereo:Out R</Source>
    <Target>JudahZone:drums_right</Target>
   </Connection>
  </ExternalPatchbay>

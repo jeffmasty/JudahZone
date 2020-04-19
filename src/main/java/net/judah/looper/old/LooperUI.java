@@ -73,16 +73,6 @@ public class LooperUI extends Tab implements ActionListener {
 	}
 
 	@Override
-	public boolean start() {
-		return true;
-	}
-
-	@Override
-	public boolean stop() {
-		return false;
-	}
-
-	@Override
 	public void setProperties(Properties p) {
 
 	}

@@ -59,6 +59,7 @@ public class AudioTools  {
 
     
 	public static String portName(String client, String port) {
+		
 		return client + ":" + port;
 	}
 	
@@ -72,6 +73,13 @@ public class AudioTools  {
     	return result;
     }
 
+    public static void bufToArray(final FloatBuffer buf, float[] result) {
+    	for (int i = 0; i < buf.capacity(); i++) {
+    		result[i] = buf.get();
+    	}
+    	buf.rewind();
+    }
+    
     public static float[] bufToArray(final FloatBuffer buf) {
     	float[] result = new float[buf.capacity()];
     	for (int i = 0; i < buf.capacity(); i++) {
@@ -141,10 +149,7 @@ public class AudioTools  {
         this.samplerate = samplerate;
     }
 
-	public boolean isInputRequired(boolean outputRequired) {
-        return outputRequired;
-    }
-
+	
 	public static void makeConnecction(JackClient client, JackPort port, String client2, String port2)
 			throws JackException {
 	

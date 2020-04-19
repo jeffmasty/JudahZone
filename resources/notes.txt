@@ -1,9 +1,10 @@
 TODO:
 
 upload jna-jack patch
-Recompile Carla
+Recompile Carla (done, modified modules/rtaudio.cpp)
 Channel concept, mixer gain
 MultiLoop + Sync, Undo/Redo
+Midi to Rakarrack
 TimeClock
 Plugins 
 saving .wav files (see http://www.softsynth.com/jsyn/developers/download.php)

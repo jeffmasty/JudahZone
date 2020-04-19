@@ -1,6 +1,6 @@
 package net.judah;
 
-import static net.judah.Constants.NL;
+import static net.judah.Constants.*;
 
 import java.awt.Dimension;
 import java.awt.Point;
@@ -55,10 +55,6 @@ abstract public class Tab extends JComponent implements ActionListener {
 	}
 
 	abstract public String getTabName();
-
-	abstract public boolean start();
-
-	abstract public boolean stop();
 
 	abstract public void setProperties(Properties p);
 

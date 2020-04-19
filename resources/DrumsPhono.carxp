@@ -20,7 +20,6 @@
 
   <Data>
    <Active>Yes</Active>
-   <Volume>0.6095999</Volume>
    <ControlChannel>1</ControlChannel>
    <Options>0x0</Options>
 
@@ -28,40 +27,34 @@
     <Index>0</Index>
     <Name>Cabinet</Name>
     <Symbol>CLevel</Symbol>
-    <Value>4.33000040054321</Value>
+    <Value>4.19500017166138</Value>
    </Parameter>
 
    <Parameter>
     <Index>1</Index>
     <Name>Bass</Name>
     <Symbol>CBass</Symbol>
-    <Value>-4.04213714599609</Value>
+    <Value>-4.74213695526123</Value>
    </Parameter>
 
    <Parameter>
     <Index>2</Index>
     <Name>Treble</Name>
     <Symbol>CTreble</Symbol>
-    <Value>3.71248507499695</Value>
+    <Value>3.33733510971069</Value>
    </Parameter>
 
    <Parameter>
     <Index>3</Index>
     <Name>Cab Model</Name>
     <Symbol>c_model</Symbol>
-    <Value>15</Value>
+    <Value>8</Value>
    </Parameter>
 
    <CustomData>
     <Type>http://kxstudio.sf.net/ns/carla/property</Type>
     <Key>CarlaSkinIsCompacted</Key>
-    <Value>true</Value>
-   </CustomData>
-
-   <CustomData>
-    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
-    <Key>CarlaSkin</Key>
-    <Value>classic</Value>
+    <Value>false</Value>
    </CustomData>
   </Data>
  </Plugin>
@@ -90,14 +83,14 @@
     <Index>1</Index>
     <Name>Input</Name>
     <Symbol>level_in</Symbol>
-    <Value>2.5508017539978</Value>
+    <Value>1</Value>
    </Parameter>
 
    <Parameter>
     <Index>2</Index>
     <Name>Output</Name>
     <Symbol>level_out</Symbol>
-    <Value>1.07396745681763</Value>
+    <Value>1.82007694244385</Value>
    </Parameter>
 
    <Parameter>
@@ -111,7 +104,7 @@
     <Index>10</Index>
     <Name>Softclip</Name>
     <Symbol>softclip</Symbol>
-    <Value>1</Value>
+    <Value>0</Value>
    </Parameter>
 
    <Parameter>
@@ -188,7 +181,6 @@
 
   <Data>
    <Active>Yes</Active>
-   <Volume>0.5461</Volume>
    <ControlChannel>1</ControlChannel>
    <Options>0x1e1</Options>
 
@@ -203,7 +195,7 @@
     <Index>1</Index>
     <Name>Input</Name>
     <Symbol>level_in</Symbol>
-    <Value>1.26225197315216</Value>
+    <Value>1</Value>
    </Parameter>
 
    <Parameter>
@@ -224,7 +216,7 @@
     <Index>10</Index>
     <Name>Softclip</Name>
     <Symbol>softclip</Symbol>
-    <Value>1</Value>
+    <Value>0</Value>
    </Parameter>
 
    <Parameter>
@@ -302,7 +294,7 @@
   <Data>
    <Active>Yes</Active>
    <DryWet>0.822629</DryWet>
-   <Volume>0.635</Volume>
+   <Volume>0.7535384</Volume>
    <ControlChannel>1</ControlChannel>
    <Options>0x4</Options>
 
@@ -324,12 +316,6 @@
     <Type>http://kxstudio.sf.net/ns/carla/property</Type>
     <Key>CarlaSkinIsCompacted</Key>
     <Value>true</Value>
-   </CustomData>
-
-   <CustomData>
-    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
-    <Key>CarlaSkin</Key>
-    <Value>3bandeq</Value>
    </CustomData>
   </Data>
  </Plugin>
@@ -540,10 +526,6 @@
    <Target>JudahZone:mic_right</Target>
   </Connection>
   <Connection>
-   <Source>Carla:Drums Phonograph:Audio Output 1</Source>
-   <Target>Carla:Drums Stereo:In L</Target>
-  </Connection>
-  <Connection>
    <Source>Carla:Drums Stereo:Out L</Source>
    <Target>JudahZone:drums_left</Target>
   </Connection>
@@ -558,6 +540,10 @@
   <Connection>
    <Source>Carla:Drums Stereo:Out R</Source>
    <Target>JudahZone:drums_right</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Drums Phonograph:Audio Output 1</Source>
+   <Target>Carla:Drums Stereo:In L</Target>
   </Connection>
  </ExternalPatchbay>
 </CARLA-PROJECT>

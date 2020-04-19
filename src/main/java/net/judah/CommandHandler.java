@@ -148,7 +148,7 @@ public class CommandHandler implements Service {
 		new Thread() {
 			@Override public void run() {
 				try {
-					log.info("Running command: " + c + " " + prettyPrint(p));
+					log.info(c + " " + prettyPrint(p));
 					c.getService().execute(c, p);
 				} catch (Exception e) { log.error(e.getMessage(), e); }
 			}}.start();
