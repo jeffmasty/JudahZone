@@ -2,8 +2,12 @@ package net.judah.settings;
 
 import java.util.ArrayList;
 
+import net.judah.JudahZone;
+import net.judah.midi.MidiClient;
+
+@SuppressWarnings("serial")
 public class Services extends ArrayList<Service> {
-	private static final long serialVersionUID = 9786722563L;
+	
 
 	public Service byName(String name) {
 		for (Service service : this)
@@ -20,5 +24,8 @@ public class Services extends ArrayList<Service> {
 	}
 
 
+	public MidiClient getMidiClient() {
+		return (MidiClient)JudahZone.getServices().byClass(MidiClient.class);
+	}
 
 }

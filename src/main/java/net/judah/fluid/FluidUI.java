@@ -1,5 +1,5 @@
 package net.judah.fluid;
-import static net.judah.Constants.NL;
+import static net.judah.Constants.*;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -9,7 +9,6 @@ import javax.swing.JTextField;
 
 import org.apache.log4j.Logger;
 
-import net.judah.JudahException;
 import net.judah.Tab;
 
 public class FluidUI extends Tab implements ActionListener {
@@ -71,28 +70,21 @@ public class FluidUI extends Tab implements ActionListener {
 		return TAB_NAME;
 	}
 
-	@Override
-	public boolean stop() {
-		try {
-			fluid.sendCommand(FluidCommand.QUIT);
-			fluid = null;
-			return true;
-		} catch (JudahException j) {
-			addText(j.getMessage() + " :" + j.getClass().getSimpleName());
-		}
-		return false;
-	}
+//	public boolean stop() {
+//		try {
+//			fluid.sendCommand(FluidCommand.QUIT);
+//			fluid = null;
+//			return true;
+//		} catch (JudahException j) {
+//			addText(j.getMessage() + " :" + j.getClass().getSimpleName());
+//		}
+//		return false;
+//	}
 
 	@Override
 	public void setProperties(Properties p) {
 		// TODO Auto-generated method stub
 
 	}
-
-	@Override
-	public boolean start() {
-		return true;
-	}
-
 
 }

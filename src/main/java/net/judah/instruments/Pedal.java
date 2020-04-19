@@ -31,16 +31,6 @@ public class Pedal extends Tab {
 	}
 
 	@Override
-	public boolean start() {
-		return false;
-	}
-
-	@Override
-	public boolean stop() {
-		return false;
-	}
-
-	@Override
 	public void setProperties(Properties p) {
 
 	}

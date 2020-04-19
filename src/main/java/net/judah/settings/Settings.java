@@ -208,9 +208,10 @@ public class Settings implements Service, Serializable {
 		
 		in = new PortDescriptor("synth_left", Type.LEFT, AUDIO, JackPortIsInput);
 		ports.add(in);
-		connections.add(new Patch(FluidSynth.LEFT_PORT, portName(client, in.getName())));
+//		connections.add(new Patch(FluidSynth.LEFT_PORT, portName(client, in.getName())));
 		in = new PortDescriptor("synth_right", Type.RIGHT, AUDIO, JackPortIsInput);
 		ports.add(in);
+//		connections.add(new Patch(FluidSynth.RIGHT_PORT, portName(client, in.getName())));
 		
 		// Outputs
 		out = new PortDescriptor("left", Type.LEFT, AUDIO, JackPortIsOutput);

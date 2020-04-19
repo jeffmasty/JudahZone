@@ -25,7 +25,7 @@ import net.judah.mixer.MixerPort;
 public class Loop implements LoopInterface {
     public static enum Mode {NEW, ARMED, STARTING, RUNNING, STOPPING, STOPPED};
     
-	private final String name;
+	@Getter private final String name;
 
 	private final int bufSize;
 	private final Memory memory;
@@ -42,7 +42,6 @@ public class Loop implements LoopInterface {
 	private int udpated;
 	
 	// for process()
-	private HashSet<Integer> channelsNeeded = new HashSet<>();
 	private float[][] newBuffer, recordedBuffer;
 	private FloatBuffer fromJack;
 	private FloatBuffer toJackLeft, toJackRight;
@@ -235,9 +234,7 @@ public class Loop implements LoopInterface {
 	
 	/** for process() thread */
 	private boolean recording() {
-		if (recording.compareAndSet(STOPPING, STOPPED)) {
-
-		}
+		recording.compareAndSet(STOPPING, STOPPED);
 		recording.compareAndSet(STARTING, RUNNING);
 		if (recording.get() == RUNNING)
 			for (MixerPort p : inPorts)

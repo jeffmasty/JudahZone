@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
@@ -34,23 +36,28 @@ public class JudahZone {
 
     public static final String JUDAHZONE = JudahZone.class.getSimpleName();
     
-    // 150 mb, installed on fluid-soundfount-gm package
-    public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2");
     
-    public static final File CLARA_SETTINGS = 
+    public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // fluid-soundfount-gm package, 150mb
+    
+    public static final String CARLA_SHELL_COMMAND = "/usr/local/bin/carla ";
+    public static final File CARLA_SETTINGS = 
     		new File(JudahZone.class.getClassLoader().getResource("JudahZone.carxp").getFile());
-    public static final File RAKARACK_SETTINGS = 
+    
+    public static final int CARLA_PORT = 22753;
+    
+    
+    public static final File RAKARRACK_SETTINGS = 
     		new File(JudahZone.class.getClassLoader().getResource("JudahZone.rkr").getFile());
     
     @Getter private final Settings settings;
 	@Getter private static final Services services = new Services();
 	@Getter private final CommandHandler commander;
-	@Getter private final Carla carla;
+	@Getter private final Carla effects;
 	@Getter private final FluidSynth fluid; 
 	@Getter private final Mixer mixer;
     @Getter private final Metronome metronome;
 	@Getter private final MidiClient midi;
-	@Getter private final Rakarrack rak; 
+	@Getter private final Rakarrack rack; 
 
     ArrayList<Tab> tabs = new ArrayList<>();
 
@@ -79,26 +86,23 @@ public class JudahZone {
 
     	metronome = new Metronome();
     	services.add(metronome);
-    	tabs.add(metronome.getGui());
     	
     	midi = new MidiClient(commander, metronome);
     	services.add(midi);
 
-    	rak = new Rakarrack(RAKARACK_SETTINGS.getAbsolutePath());
-    	services.add(rak);
+    	rack = null;
+//    	rack = new Rakarrack(RAKARRACK_SETTINGS.getAbsolutePath());
+//    	services.add(rack);
     	
     	fluid = new FluidSynth(midi);
     	services.add(fluid);
-    	tabs.add(fluid.getGui());
     	
-		tabs.add(new JackUI());
 
 		mixer = new Mixer(services, Settings.DEFAULT_SETTINGS.getPatchbay());
 		services.add(mixer);
-		// tabs.add(mixer.getGui());
-
-    	carla = new Carla(CLARA_SETTINGS, 11589);
-    	services.add(carla);
+		
+    	effects = new Carla(CARLA_SHELL_COMMAND, CARLA_SETTINGS, CARLA_PORT);
+    	services.add(effects);
     	
 		//		try {
 		//			Modhost modhost = new Modhost();
@@ -110,7 +114,12 @@ public class JudahZone {
     	
     	commander.initializeCommands();
     	
-    	Thread.sleep(800);
+    	Thread.sleep(900);
+
+		tabs.add(mixer.getGui());
+    	tabs.add(metronome.getGui());
+		tabs.add(new JackUI());
+    	tabs.add(fluid.getGui());
         startUI();
 	}
 
@@ -122,6 +131,9 @@ public class JudahZone {
 	}
 
     private void startUI() {
+        try { UIManager.setLookAndFeel ("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+				| UnsupportedLookAndFeelException e) { log.info(e.getMessage(), e); }
 
         //Create and set up the window.
         JFrame frame = new JFrame("JudahZone");
@@ -141,9 +153,8 @@ public class JudahZone {
 
         //Display the window.
         content.add(tabbedPane);
-        frame.setLocation(100, 100);
-        frame.pack();
-        frame.setSize(700, 400);
+        frame.setLocation(70, 70);
+        frame.setSize(340, 445);
         frame.setVisible(true);
     }
 
