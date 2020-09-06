@@ -1,7 +1,6 @@
 package net.judah;
 
 import java.awt.GridLayout;
-import java.io.File;
 import java.util.ArrayList;
 
 import javax.swing.JFrame;
@@ -13,9 +12,7 @@ import javax.swing.UnsupportedLookAndFeelException;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.fluid.FluidSynth;
-import net.judah.instruments.Rakarrack;
 import net.judah.jack.JackUI;
-import net.judah.metronome.Metronome;
 import net.judah.midi.MidiClient;
 import net.judah.mixer.Mixer;
 import net.judah.plugin.Carla;
@@ -36,28 +33,16 @@ public class JudahZone {
 
     public static final String JUDAHZONE = JudahZone.class.getSimpleName();
     
-    
-    public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // fluid-soundfount-gm package, 150mb
-    
-    public static final String CARLA_SHELL_COMMAND = "/usr/local/bin/carla ";
-    public static final File CARLA_SETTINGS = 
-    		new File(JudahZone.class.getClassLoader().getResource("JudahZone.carxp").getFile());
-    
-    public static final int CARLA_PORT = 22753;
-    
-    
-    public static final File RAKARRACK_SETTINGS = 
-    		new File(JudahZone.class.getClassLoader().getResource("JudahZone.rkr").getFile());
-    
     @Getter private final Settings settings;
 	@Getter private static final Services services = new Services();
 	@Getter private final CommandHandler commander;
 	@Getter private final Carla effects;
 	@Getter private final FluidSynth fluid; 
 	@Getter private final Mixer mixer;
-    @Getter private final Metronome metronome;
 	@Getter private final MidiClient midi;
-	@Getter private final Rakarrack rack; 
+	
+	// @Getter private final Rakarrack rack = null; 
+    // @Getter private final MetroService metronome;
 
     ArrayList<Tab> tabs = new ArrayList<>();
 
@@ -84,28 +69,24 @@ public class JudahZone {
     	commander = new CommandHandler(settings.getMappings());
     	services.add(commander);
 
-    	metronome = new Metronome();
-    	services.add(metronome);
-    	
-    	midi = new MidiClient(commander, metronome);
+    	midi = new MidiClient(commander);
     	services.add(midi);
 
-    	rack = null;
-//    	rack = new Rakarrack(RAKARRACK_SETTINGS.getAbsolutePath());
-//    	services.add(rack);
-    	
     	fluid = new FluidSynth(midi);
     	services.add(fluid);
     	
-
 		mixer = new Mixer(services, Settings.DEFAULT_SETTINGS.getPatchbay());
 		services.add(mixer);
 		
-    	effects = new Carla(CARLA_SHELL_COMMAND, CARLA_SETTINGS, CARLA_PORT);
+    	effects = new Carla(); 
     	services.add(effects);
     	
 		//		try {
-		//			Modhost modhost = new Modhost();
+		//			metronome = new MetroService();
+		//			services.add(metronome);
+		//			rack = new Rakarrack();
+		//			services.add(rack);
+    	//			Modhost modhost = new Modhost();
 		//			services.add(modhost);
 		//			tabs.add(modhost.getGui());
 		//		} catch (Exception e) {
@@ -114,10 +95,9 @@ public class JudahZone {
     	
     	commander.initializeCommands();
     	
-    	Thread.sleep(900);
+    	Thread.sleep(800);
 
 		tabs.add(mixer.getGui());
-    	tabs.add(metronome.getGui());
 		tabs.add(new JackUI());
     	tabs.add(fluid.getGui());
         startUI();
@@ -170,7 +150,6 @@ public class JudahZone {
     	// TODO
 		return Settings.DEFAULT_SETTINGS;
 	}
-
 
     
 }

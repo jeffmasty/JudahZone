@@ -16,7 +16,7 @@ import net.judah.Tab;
 
 @Log4j @SuppressWarnings("serial")
 public class MetroUI extends Tab implements  ChangeListener {
-	final Metronome metro;
+	final MetroService metro;
 	private final JToggleButton playBtn;
     private final JToggleButton stopBtn;
     JTextField bpb;
@@ -24,7 +24,7 @@ public class MetroUI extends Tab implements  ChangeListener {
     JSlider bpm;
     private final JSlider volume;
 
-	public MetroUI(Metronome metro) {
+	public MetroUI(MetroService metro) {
 		super(true); // custom ui
 		this.metro = metro;
 

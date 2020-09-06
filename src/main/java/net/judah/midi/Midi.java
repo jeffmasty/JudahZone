@@ -3,7 +3,12 @@ package net.judah.midi;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
+import lombok.extern.log4j.Log4j;
+
+
+
 /** serialization isn't working, save as byte[] */
+@Log4j
 public class Midi extends ShortMessage {
 
 	public Midi(byte[] bytes) {
@@ -67,9 +72,22 @@ public class Midi extends ShortMessage {
 	}
 
 	/** equal, ignoring data2 */
-	public boolean matches(Midi midi) {
+	public boolean matches(ShortMessage midi) {
 		return getChannel() == midi.getChannel() && getCommand() == midi.getCommand() && getData1() == midi.getData1();
 	}
+
+	public void setVelocity(int velocity) {
+		try {
+			setMessage(getCommand(), getChannel(), getData1(), velocity);
+		} catch (InvalidMidiDataException e) {
+			log.error(e.getMessage(), e);
+		}
+	}
+	
+	public static boolean isCC(ShortMessage msg) {
+		 return msg.getStatus() - msg.getChannel() == ShortMessage.CONTROL_CHANGE;
+	}
+	
 }
 
 /* sys message

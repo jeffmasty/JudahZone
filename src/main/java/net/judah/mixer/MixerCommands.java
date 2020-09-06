@@ -7,21 +7,28 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
+import lombok.extern.log4j.Log4j;
 import net.judah.JudahException;
 import net.judah.looper.Loop;
 import net.judah.settings.Command;
 
-@SuppressWarnings("serial")
+@SuppressWarnings("serial") @Log4j
 public class MixerCommands extends ArrayList<Command> {
 	
 	protected final Mixer mixer;
 	
+	public static final String GAIN_PROP = "Gain";
+	public static final String CHANNEL_PROP = "Channel";
+	public static final String PLUGIN_PROP = "Plugin Name";
+	public static final String GAIN_COMMAND = "Channel Gain";
+	public static final String PLUGIN_COMMAND = "Load Plugin";
+
 	static final String ACTIVE_PARAM = "Active";
 	static final String LOOP_PARAM = "Loop";
 	static final String CHANNEL_PARAM = "Channel";
 	
 	// mixer interface
-//	final Command gainCommand;
+	final Command gainCommand;
 //	final Command pluginCommand;
 	
 	// loop interface
@@ -33,6 +40,9 @@ public class MixerCommands extends ArrayList<Command> {
 	protected final Command clearCommand;
 	protected final Command muteCommand;
 
+	@SuppressWarnings("unused")
+	private float masterGain = 1f;  
+	
 	MixerCommands(Mixer mixer) {
 		this.mixer = mixer;
 
@@ -50,11 +60,9 @@ public class MixerCommands extends ArrayList<Command> {
 		add(muteCommand);
 		add(clearCommand);
 		
-//		props = new HashMap<>();
-//		props.put(CHANNEL_PROP, Integer.class); 
-//		props.put(GAIN_PROP, Float.class);  // between 0 and 2
-//		gainCommand = new Command(GAIN_COMMAND, this, "Adjust gain, gain parameter between 0 and 2");
-//		commands.add(gainCommand);
+		gainCommand = new Command(GAIN_COMMAND, mixer, gainProps(), "Adjust gain, gain parameter between 0 and 1");
+		add(gainCommand);
+		
 //		props = new HashMap<>();
 //		props.put(CHANNEL_PROP, Integer.class); // -1 = main
 //		props.put(PLUGIN_PROP, String.class); // plugin name;
@@ -92,6 +100,13 @@ public class MixerCommands extends ArrayList<Command> {
 		return commandProps;
 	}
 	
+	private HashMap<String, Class<?>> gainProps() {
+		HashMap<String, Class<?>> commandProps = new HashMap<>();
+		commandProps.put(LOOP_PARAM, Integer.class);
+		commandProps.put(ACTIVE_PARAM, Boolean.class);
+		return commandProps;
+	}
+
 	private HashMap<String, Class<?>> channelProps() {
 		HashMap<String, Class<?>> commandProps = loopProps();
 		commandProps.put(CHANNEL_PARAM, Integer.class);
@@ -99,6 +114,16 @@ public class MixerCommands extends ArrayList<Command> {
 	}
 
 	public void execute(Command cmd, Properties props) throws JudahException {
+		
+				if (cmd.getName().equals(GAIN_COMMAND)) {
+					gainCommand(cmd, props);
+					return;
+				} 
+		// 		if (cmd.getName().equals(PLUGIN_COMMAND)) {
+		//			pluginCommand(cmd, props);
+		//		} else throw new JudahException("Unknown Command: " + cmd);
+
+		
 		List<Loop> loops = mixer.getLoops();
 		boolean all = false;
 		int idx = -1;
@@ -131,29 +156,6 @@ public class MixerCommands extends ArrayList<Command> {
 				loops.get(idx).channel(ch, active);
 		} else throw new JudahException("Unknown command: " + cmd);
 	}
-
-	// execute() {
-
-//	log.debug("looper execute " + cmd + " " + cmd.toString(props));
-//	HashMap<String, Class<?>> types = cmd.getProps();
-//	for (String key : types.keySet()) {
-//		if (!props.containsKey(key))
-//			throw new JudahException("for property: " + key + " (" + types.get(key) + ") " + Arrays.toString(props.keySet().toArray()));
-//	}
-//	if (cmd.equals(cmdRecord)) {
-//		int idx = Integer.parseInt(props.get("Loop").toString());
-//		if (idx < loops.size() && idx >= 0)
-//			loops.get(idx).setRecord(Boolean.parseBoolean(props.get("Active").toString()));
-//	}
-//	else if (cmd.equals(cmdPlay)) {
-//		int idx = Integer.parseInt(props.get("Loop").toString());
-//		if (idx < loops.size() && idx >= 0)
-//			loops.get(idx).setPlay(Boolean.parseBoolean(props.get("Active").toString()));
-//	}
-//	else if (cmd.equals(cmdReset)) {
-//		for (Loop loop : loops)
-//			loop.clear();
-//	}
 //	else if (cmd.equals(cmdUndo)) {
 //		// TODO
 //	}
@@ -162,6 +164,35 @@ public class MixerCommands extends ArrayList<Command> {
 //		// TODO
 //	}
 
+	@SuppressWarnings("unused")
+	private void gainCommand(Command cmd, Properties props) throws JudahException {
+		if (!props.containsKey(GAIN_PROP)) throw new JudahException("No Volume. " + cmd + " " );
+		float gain = (Float)props.get(GAIN_PROP);
+		Object o = props.get(CHANNEL_PROP);
+		if (o == null) {
+			masterGain = gain;
+			return;
+		}
 
-	
+		log.debug("channel " + o + " gain: " + gain);
+		int idx = (Integer)o;
+		
+		mixer.getChannels().get(idx).setGain(gain);
+		mixer.getGui().update();
+		
+//		if (idx >= 0 && idx < inputPorts.size()) {
+//			MixerPort p = inputPorts.get(idx);
+//			p.setGain(gain);
+//			if (p.isStereo()) {
+//				if (p.getType() == Type.LEFT) 
+//					inputPorts.get(idx + 1).setGain(gain);
+//				else 
+//					inputPorts.get(idx -1).setGain(gain);
+//			}
+//		}
+//		else masterGain = gain;
+		
+	}
+
+
 }

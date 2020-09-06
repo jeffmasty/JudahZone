@@ -1,17 +1,15 @@
 package net.judah.instruments;
 
-import java.awt.event.ActionEvent;
-import java.util.Properties;
+import java.util.ArrayList;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
-import net.judah.JudahZone;
-import net.judah.Tab;
+import lombok.extern.log4j.Log4j;
 import net.judah.midi.Midi;
 
-@SuppressWarnings({"serial", "unused"})
-public class MPK extends Tab {
+@Log4j
+public class MPK {
 
 	public static final String NAME = "MPKmini2"; // capture
 
@@ -25,38 +23,23 @@ public class MPK extends Tab {
 	public static final int BBANK = 1;
 
 
-	// BOSS DR-5
-	private int DR5_CC = 36;
-	private static class DR5_PADS {
-		static int DR5_SWITCH = 45;
-		static int DRUMS = 50;
-		static int CHORDS = 51;
-		static int BASS = 46;
-		static int AUX = 47;
-	}
-	// private int dr5_channel = DR5.AUX_CHANNEL;
-
-
-	// FLUID
-	static final int REVERB_KNOB = 0;
-	static final int ROOM_SIZE_KNOB = 1;
-	static final int DAMPNESS_KNOB = 2;
-	static final int VOLUME_KNOB = 3;
-	static final int CHORUS_DELAYLINES_KNOB = 4;
-	static final int CHORUS_LEVEL_KNOB = 5;
-	static final int CHORUS_SPEED_KNOB = 6;
-	static final int CHORUS_DEPTH_KNOB = 7;
-
-	static final int INSTRUMENT_UP = 3;
-	static final int INSTRUMENT_DOWN = 7;
-	static final int BANK_UP = 2;
-	static final int BANK_DOWN = 6;
-	static final int PRESET1 = 0;
-	static final int PRESET2 = 4;
-
-	static final int TOGGLE_REVERB = 0;
-	static final int TOGGLE_CHORUS = 4;
-
+//	// FLUID
+//	static final int REVERB_KNOB = 0;
+//	static final int ROOM_SIZE_KNOB = 1;
+//	static final int DAMPNESS_KNOB = 2;
+//	static final int VOLUME_KNOB = 3;
+//	static final int CHORUS_DELAYLINES_KNOB = 4;
+//	static final int CHORUS_LEVEL_KNOB = 5;
+//	static final int CHORUS_SPEED_KNOB = 6;
+//	static final int CHORUS_DEPTH_KNOB = 7;
+//	static final int INSTRUMENT_UP = 3;
+//	static final int INSTRUMENT_DOWN = 7;
+//	static final int BANK_UP = 2;
+//	static final int BANK_DOWN = 6;
+//	static final int PRESET1 = 0;
+//	static final int PRESET2 = 4;
+//	static final int TOGGLE_REVERB = 0;
+//	static final int TOGGLE_CHORUS = 4;
 	/*
 		// TODO upJoystick, downJoystick
 
@@ -78,13 +61,25 @@ public class MPK extends Tab {
 	 95 phaser
 */
 
-	private static int[][] knobs = {
-			{14, 15, 16, 17, 18, 19, 20, 21},
-			{22, 23, 24, 25, 26, 27, 28, 29},
-			{75, 76, 77, 78, 79, 80, 81, 82},
-			{30, 83, 126, 7, 84, 94, 95, 8}
-	};
-
+	
+	private static ArrayList<ShortMessage[]> knobs = genKnobs( new int[][] {
+				{14, 15, 16, 17, 18, 19, 20, 21},
+				{22, 23, 24, 25, 26, 27, 28, 29},
+				{75, 76, 77, 78, 79, 80, 81, 82},
+				{30, 83, 126, 7, 84, 94, 95,  8} });
+	
+	public static ShortMessage knob(int bank, int knobNum) {
+		return knobs.get(bank)[knobNum];
+	}
+	
+// private static int[][] knobs = null; 
+//	new int[][] {
+//			{14, 15, 16, 17, 18, 19, 20, 21},
+//			{22, 23, 24, 25, 26, 27, 28, 29},
+//			{75, 76, 77, 78, 79, 80, 81, 82},
+//			{30, 83, 126, 7, 84, 94, 95, 8}
+//	};
+	
 	private static int [][][] ccpads = {
 			{ // green A bank
 				{31, 32, 33, 34, 35, 36, 37, 38},
@@ -116,14 +111,27 @@ public class MPK extends Tab {
 			}
 	};
 
-
-	private final JudahZone master;
-
-//	private FluidSynth fluid;
-
-	public MPK(JudahZone judahzone) {
-		master = judahzone;
-	}
+//		{14, 15, 16, 17, 18, 19, 20, 21},
+//		{22, 23, 24, 25, 26, 27, 28, 29},
+//		{75, 76, 77, 78, 79, 80, 81, 82},
+//		{30, 83, 126, 7, 84, 94, 95, 8}
+	private static ArrayList<ShortMessage[]> genKnobs(int[][] in) {
+		
+		ArrayList<ShortMessage[]> result = new ArrayList<>();
+		try {
+			for (int i = 0; i < in.length; i++) {
+				final int length = in[i].length;
+				ShortMessage[] program = new ShortMessage[length];
+				for (int j = 0; j < length; j++) {
+					program[j] = new ShortMessage(ShortMessage.CONTROL_CHANGE, 0, in[i][j], 0);
+				}
+				result.add(program);
+			} 
+		} catch (InvalidMidiDataException e) {
+			log.error(e.getMessage(), e);
+		}
+	return result;
+}
 
 	/** {@link ShortMessage#PROGRAM_CHANGE} allowing for 15 more channels */
 	public static boolean isProgramChange(ShortMessage msg) {
@@ -142,20 +150,25 @@ public class MPK extends Tab {
 		return -1;
 	}
 
-	public static boolean isCC(ShortMessage msg) {
-		 return msg.getStatus() - msg.getChannel() == ShortMessage.CONTROL_CHANGE;
-	}
-
-	/** @return the knob index number (0 to 7 from top left) or -1 if not a knob */
-	public static int isKnob(ShortMessage msg) {
-		if (!isCC(msg)) return 0;
+	public static boolean isCCPad(Midi msg, int CCpad) {
 		int data1 = msg.getData1();
-
-		for (int i = 0; i < KNOB_STYLES; i++)
-			for (int j = 0; j < KNOB_COUNT; j++)
-				if (data1 == knobs[i][j]) return j;
-		return -1;
+		for (int ab = 0; ab < 2; ab++)
+			for (int padLvl = 0; padLvl < PAD_STYLES; padLvl++)
+				if (ccpads[ab][padLvl][CCpad] == data1)
+					return Midi.isCC(msg);
+		return false;
 	}
+	
+//	/** @return the knob index number (0 to 7 from top left) or -1 if not a knob */
+//	public static int isKnob(ShortMessage msg) {
+//		if (!isCC(msg)) return 0;
+//		int data1 = msg.getData1();
+//
+//		for (int i = 0; i < KNOB_STYLES; i++)
+//			for (int j = 0; j < KNOB_COUNT; j++)
+//				if (data1 == knobs[i][j]) return j;
+//		return -1;
+//	}
 
 //	public static boolean isBankUp(Midi msg) {
 //		int progChange = whichProgPad(msg);
@@ -169,50 +182,42 @@ public class MPK extends Tab {
 //		return msg.getData1() == green[progChange - 1][BANK_DOWN];
 //	}
 
-	public static boolean isInstrumentUp(Midi msg) {
-		int cmd = msg.getCommand();
-		if (cmd >= ShortMessage.PROGRAM_CHANGE && cmd <= 208) {
-			int data1 = msg.getData1();
-			for (int ab = 0; ab < 2; ab++) {
-				for (int i = 0; i < PAD_STYLES; i++) {
-					if (progchanges[ab][i][INSTRUMENT_UP] == data1)
-						return true;
-				}
-			}
-		}
-		return false;
-	}
+//	public static boolean isInstrumentUp(Midi msg) {
+//		int cmd = msg.getCommand();
+//		if (cmd >= ShortMessage.PROGRAM_CHANGE && cmd <= 208) {
+//			int data1 = msg.getData1();
+//			for (int ab = 0; ab < 2; ab++) {
+//				for (int i = 0; i < PAD_STYLES; i++) {
+//					if (progchanges[ab][i][INSTRUMENT_UP] == data1)
+//						return true;
+//				}
+//			}
+//		}
+//		return false;
+//	}
+//
 
-	public static boolean isCCPad(Midi msg, int CCpad) {
-		int data1 = msg.getData1();
-		for (int ab = 0; ab < 2; ab++)
-			for (int padLvl = 0; padLvl < PAD_STYLES; padLvl++)
-				if (ccpads[ab][padLvl][CCpad] == data1)
-					return isCC(msg);
-		return false;
-	}
+//	public static boolean isKnobType(Midi msg, int knobType) {
+//		int data1 = msg.getData1();
+//		for (int i = 0; i < KNOB_STYLES; i++)
+//			if (knobs[i][knobType] == data1)
+//				return isCC(msg);
+//		return false;
+//	}
 
-	public static boolean isKnobType(Midi msg, int knobType) {
-		int data1 = msg.getData1();
-		for (int i = 0; i < KNOB_STYLES; i++)
-			if (knobs[i][knobType] == data1)
-				return isCC(msg);
-		return false;
-	}
-
-	public static boolean isInstrumentDown(Midi msg) {
-		int cmd = msg.getCommand();
-		if (cmd >= ShortMessage.PROGRAM_CHANGE && cmd <= 208) {
-			int data1 = msg.getData1();
-			for (int ab = 0; ab < 2; ab++) {
-				for (int i = 0; i < PAD_STYLES; i++) {
-					if (progchanges[ab][i][INSTRUMENT_DOWN] == data1)
-						return true;
-				}
-			}
-		}
-		return false;
-	}
+//	public static boolean isInstrumentDown(Midi msg) {
+//		int cmd = msg.getCommand();
+//		if (cmd >= ShortMessage.PROGRAM_CHANGE && cmd <= 208) {
+//			int data1 = msg.getData1();
+//			for (int ab = 0; ab < 2; ab++) {
+//				for (int i = 0; i < PAD_STYLES; i++) {
+//					if (progchanges[ab][i][INSTRUMENT_DOWN] == data1)
+//						return true;
+//				}
+//			}
+//		}
+//		return false;
+//	}
 
 	/** @return null if the msg was consumed (possibly firing off other events) or pass the midi message back as bytes*/
 	public ShortMessage process(ShortMessage msg) throws InvalidMidiDataException {
@@ -230,7 +235,7 @@ public class MPK extends Tab {
 	}
 
 
-	private ShortMessage processDR5(ShortMessage msg) {
+//	private ShortMessage processDR5(ShortMessage msg) {
 //		if (isCC(msg)) {
 //
 //			// System.out.println(msg.getStatus() + " @ " + msg.getData1() + " @ " + msg.getData2() + " @ " + msg.getCommand() + " knob: " + isKnob(msg));
@@ -267,104 +272,84 @@ public class MPK extends Tab {
 //			if (padNum >= 0 && padNum < PAD_COUNT) {
 //			}
 //		}
-		return null;
+//		return null;
+//	}
 
-	}
-
-	private Midi processFluid(Midi msg) {
-		// if (fluid != null) // fluid = master.getFluidsynth();
-		if (msg.getStatus() == ShortMessage.NOTE_ON || msg.getStatus() == ShortMessage.NOTE_OFF) return msg;
-		// int i = (int)(byte & 0xFF)
-		//System.out.println(msg.getStatus() + " @ " + msg.getData1() + " @ " + msg.getData2() + " @ " + msg.getCommand() + " knob: " + isKnob(msg));
-
-//		if (isCC(msg)) {
-//			int knob = isKnob(msg);
-//			if (knob == VOLUME_KNOB) {
-//				fluid.gain(msg.getData2() * 0.05f);
-//				return null;
-//			}
-//        	if (isKnobType(msg, REVERB_KNOB)) {
-//        		fluid.reverb(toFloat(msg.getData2()));
-//        		return null;
-//        	}
-//        	if (isKnobType(msg, ROOM_SIZE_KNOB)) {
-//        		fluid.roomSize(toFloat(msg.getData2()));
-//        		return null;
-//        	}
-//        	if (isKnobType(msg, DAMPNESS_KNOB)) {
-//        		fluid.dampness(toFloat(msg.getData2()));
-//        		return null;
-//        	}
-//        	if (isKnobType(msg, CHORUS_DELAYLINES_KNOB)) {
-//        		fluid.chorusDelayLines((int) (msg.getData2() * 0.99f));
-//        		return null;
-//        	}
-//        	if (isKnobType(msg, CHORUS_LEVEL_KNOB)) {
-//        		fluid.chorusLevel(msg.getData2() / 80f);
-//        		return null;
-//        	}
-//// TODO zero error   sendCommand: cho_set_speed 3.7006562 Too high depth. Setting it to max (2048).
-//        	if (isKnobType(msg, CHORUS_SPEED_KNOB)) {
-//        		// 0.3 to 5
-//        		fluid.chorusSpeed(((msg.getData2() + 0.61f) * 0.0496f) );
-//        		return null;
-//        	}
-//        	if (isKnobType(msg, CHORUS_DEPTH_KNOB)) {
-//        		fluid.chorusDepth((int)(msg.getData2() * 0.42f));
-//        		return null;
-//        	}
-//// TODO read data2
-//        	if (isCCPad(msg, TOGGLE_REVERB)) {
-//        		fluid.toggle(Constants.Toggles.REVERB, msg.getData2() > 0);
-//        	}
-//        	if (isCCPad(msg, TOGGLE_CHORUS)) {
-//        		fluid.toggle(Constants.Toggles.CHORUS, msg.getData2() > 0);
-//        	}
-//		}
+//	private Midi processFluid(Midi msg) {
+//		// if (fluid != null) // fluid = master.getFluidsynth();
+//		if (msg.getStatus() == ShortMessage.NOTE_ON || msg.getStatus() == ShortMessage.NOTE_OFF) return msg;
+//		// int i = (int)(byte & 0xFF)
+//		//System.out.println(msg.getStatus() + " @ " + msg.getData1() + " @ " + msg.getData2() + " @ " + msg.getCommand() + " knob: " + isKnob(msg));
 //
-//		if (isProgramChange(msg)) {
-//			int padNum = whichProgPad(msg);
-//			if (padNum >= 0 && padNum < PAD_COUNT) {
-//	        	if (isInstrumentUp(msg))
-//	        		return fluid.instrumentUp();
-//	        	if (isInstrumentDown(msg))
-//	        		return fluid.instrumentDown();
-//	        	if (padNum == PRESET1)
-//	        		return fluid.preset(1);
-//	        	if (padNum == PRESET2)
-//	        		return fluid.preset(2);
-//			}
-//		}
-// TODO
-//        	if (isBankUp(msg))
-//        		return fluid.bankUp();
-//        	if (isBankDown(msg))
-//        		return fluid.bankDown();
-		return msg;
-	}
-
-	private float toFloat(int val) {
-		if (val > 100) val = 100;
-		return val / 100f;
-	}
-
-	@Override
-	public String getTabName() {
-		return "MPK";
-	}
-
-
-	@Override
-	public void setProperties(Properties p) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
-
-	}
-
+////		if (isCC(msg)) {
+////			int knob = isKnob(msg);
+////			if (knob == VOLUME_KNOB) {
+////				fluid.gain(msg.getData2() * 0.05f);
+////				return null;
+////			}
+////        	if (isKnobType(msg, REVERB_KNOB)) {
+////        		fluid.reverb(toFloat(msg.getData2()));
+////        		return null;
+////        	}
+////        	if (isKnobType(msg, ROOM_SIZE_KNOB)) {
+////        		fluid.roomSize(toFloat(msg.getData2()));
+////        		return null;
+////        	}
+////        	if (isKnobType(msg, DAMPNESS_KNOB)) {
+////        		fluid.dampness(toFloat(msg.getData2()));
+////        		return null;
+////        	}
+////        	if (isKnobType(msg, CHORUS_DELAYLINES_KNOB)) {
+////        		fluid.chorusDelayLines((int) (msg.getData2() * 0.99f));
+////        		return null;
+////        	}
+////        	if (isKnobType(msg, CHORUS_LEVEL_KNOB)) {
+////        		fluid.chorusLevel(msg.getData2() / 80f);
+////        		return null;
+////        	}
+////// TODO zero error   sendCommand: cho_set_speed 3.7006562 Too high depth. Setting it to max (2048).
+////        	if (isKnobType(msg, CHORUS_SPEED_KNOB)) {
+////        		// 0.3 to 5
+////        		fluid.chorusSpeed(((msg.getData2() + 0.61f) * 0.0496f) );
+////        		return null;
+////        	}
+////        	if (isKnobType(msg, CHORUS_DEPTH_KNOB)) {
+////        		fluid.chorusDepth((int)(msg.getData2() * 0.42f));
+////        		return null;
+////        	}
+////// TODO read data2
+////        	if (isCCPad(msg, TOGGLE_REVERB)) {
+////        		fluid.toggle(Constants.Toggles.REVERB, msg.getData2() > 0);
+////        	}
+////        	if (isCCPad(msg, TOGGLE_CHORUS)) {
+////        		fluid.toggle(Constants.Toggles.CHORUS, msg.getData2() > 0);
+////        	}
+////		}
+////
+////		if (isProgramChange(msg)) {
+////			int padNum = whichProgPad(msg);
+////			if (padNum >= 0 && padNum < PAD_COUNT) {
+////	        	if (isInstrumentUp(msg))
+////	        		return fluid.instrumentUp();
+////	        	if (isInstrumentDown(msg))
+////	        		return fluid.instrumentDown();
+////	        	if (padNum == PRESET1)
+////	        		return fluid.preset(1);
+////	        	if (padNum == PRESET2)
+////	        		return fluid.preset(2);
+////			}
+////		}
+//// TODO
+////        	if (isBankUp(msg))
+////        		return fluid.bankUp();
+////        	if (isBankDown(msg))
+////        		return fluid.bankDown();
+//		return msg;
+//	}
+//
+//	private float toFloat(int val) {
+//		if (val > 100) val = 100;
+//		return val / 100f;
+//	}
 
 }

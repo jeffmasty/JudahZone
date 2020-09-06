@@ -29,7 +29,6 @@ import net.judah.instruments.Pedal;
 import net.judah.jack.BasicClient;
 import net.judah.jack.ClientConfig;
 import net.judah.jack.Status;
-import net.judah.metronome.Metronome;
 import net.judah.settings.Command;
 import net.judah.settings.Service;
 
@@ -45,7 +44,7 @@ public class MidiClient extends BasicClient implements Service {
 
 	private final ClientConfig config;
 	private final CommandHandler commander;
-	private final Metronome metro;
+//	private final MetroService metro;
 
 	private ArrayList<JackPort> inPorts = new ArrayList<JackPort>();  // Keyboard, Pedal, MidiIn
 	private JackPort keyboard;
@@ -67,18 +66,16 @@ public class MidiClient extends BasicClient implements Service {
 	private Event midiEvent = new JackMidi.Event();
 	private byte[] data = null;
     private int index, eventCount, size;
-	private Midi midiToSend;
 	private MidiMessage poll;
     
-    public MidiClient(CommandHandler commander, Metronome metro) throws JackException {
-    	this(DEFAULT_CONFIG, commander, metro);
+    public MidiClient(CommandHandler commander) throws JackException {
+    	this(DEFAULT_CONFIG, commander);
     }
     
-	public MidiClient(ClientConfig config, CommandHandler commander, Metronome metro) throws JackException {
+	public MidiClient(ClientConfig config, CommandHandler commander) throws JackException {
 		super(config.getName());
 		this.config = config;
 		this.commander = commander;
-		this.metro = metro;
 		start();
 	}
 
@@ -104,9 +101,8 @@ public class MidiClient extends BasicClient implements Service {
         if (outPorts.size() > 1) effects = outPorts.get(1);
         if (outPorts.size() > 2) midiOut = outPorts.get(2);
         
-		jackclient.setTimebaseCallback(metro, false);
-		jackclient.setSyncCallback(metro);
-
+//		jackclient.setTimebaseCallback(metro, false);
+//		jackclient.setSyncCallback(metro);
 	}
 
 	@Override
@@ -144,11 +140,6 @@ public class MidiClient extends BasicClient implements Service {
         		}
     		}
         	
-    		midiToSend = metro.poll();
-    		if (midiToSend != null) {
-    			JackMidi.eventWrite(synth, 0, midiToSend.getMessage(), midiToSend.getLength());
-    		}    		
-    		
     		poll = queue.poll();
     		while (poll != null) {
     			JackMidi.eventWrite(synth, 0, poll.getMessage(), poll.getLength());
@@ -162,7 +153,7 @@ public class MidiClient extends BasicClient implements Service {
     	return state.get() == Status.ACTIVE;
     }
 
-	public void queue(MidiMessage message, long timeStamp) {
+	public void queue(MidiMessage message) {
 		queue.add(message);
 	}
 

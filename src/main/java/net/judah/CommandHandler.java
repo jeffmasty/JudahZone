@@ -11,7 +11,7 @@ import java.util.Properties;
 
 import lombok.extern.log4j.Log4j;
 import net.judah.midi.Midi;
-import net.judah.mixer.Mixer;
+import net.judah.mixer.MixerCommands;
 import net.judah.settings.Command;
 import net.judah.settings.Mapping;
 import net.judah.settings.Service;
@@ -84,13 +84,13 @@ public class CommandHandler implements Service {
 					fire(mapping, p);
 					return true;
 				}
-				else if (mapping.getCommandName().equals(Mixer.GAIN_COMMAND)) {
-					p.put(Mixer.GAIN_PROP, midiMsg.getData2() / 50f );
-					assert mapping.getProps().get(Mixer.CHANNEL_PROP) != null : Arrays.toString(mapping.getProps().keySet().toArray());
-					p.put(Mixer.CHANNEL_PROP, mapping.getProps().get(Mixer.CHANNEL_PROP));
+				else if (mapping.getCommandName().equals(MixerCommands.GAIN_COMMAND)) {
+					p.put(MixerCommands.GAIN_PROP, midiMsg.getData2() / 100f);
+					assert mapping.getProps().get(MixerCommands.CHANNEL_PROP) != null : Arrays.toString(mapping.getProps().keySet().toArray());
+					p.put(MixerCommands.CHANNEL_PROP, mapping.getProps().get(MixerCommands.CHANNEL_PROP));
 					fire(mapping, p);
 				}
-				else if (mapping.getCommandName().equals(Mixer.PLUGIN_COMMAND)) {
+				else if (mapping.getCommandName().equals(MixerCommands.PLUGIN_COMMAND)) {
 					fire(mapping, mapping.getProps());
 				}
 				else log.warn(mapping.getCommandName() + " midi: " + mapping.getMidi());

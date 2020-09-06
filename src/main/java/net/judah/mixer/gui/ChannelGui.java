@@ -17,7 +17,6 @@ import javax.swing.event.ChangeListener;
 import net.judah.mixer.Channel;
 import net.judah.mixer.instrument.InstType;
 
-@SuppressWarnings("serial")
 public class ChannelGui extends JPanel implements  ChangeListener {
 	final static Dimension lbl = new Dimension(75, STD_HEIGHT);
 	final static Dimension btn = new Dimension(18, STD_HEIGHT);
@@ -66,7 +65,11 @@ public class ChannelGui extends JPanel implements  ChangeListener {
 
 	@Override
 	public void stateChanged(ChangeEvent e) {
-		channel.setVolume(slider.getValue() / 100f);
+		channel.setGain(slider.getValue() / 100f);
+	}
+
+	public void update() {
+		slider.setValue(Math.round(channel.getGain() * 100));
 	}
 	
 }

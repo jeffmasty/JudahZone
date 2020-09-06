@@ -8,7 +8,7 @@ import java.util.Properties;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.Tab;
-import net.judah.midi.JackReceiver;
+import net.judah.midi.JudahReceiver;
 import net.judah.midi.MidiPlayer;
 import net.judah.plugin.Carla;
 import net.judah.settings.Service;
@@ -81,7 +81,7 @@ public class JackUI extends Tab {
 				}
 				
 				MidiPlayer playa = new MidiPlayer(midiFile, 80, 0, 
-						new JackReceiver(JudahZone.getServices().getMidiClient()));
+						new JudahReceiver(JudahZone.getServices().getMidiClient()));
 				addText(playa.getSequencer().getDeviceInfo() + " / " + playa.getSequencer().getMasterSyncMode());
 				playa.start();
 			} catch (Throwable t) {

@@ -48,9 +48,10 @@ public final class Channel {
 		carlaIndex = null;
 	}
 
-	public void setVolume(float gain) {
+	public void setGain(float gain) {
+		this.gain = gain; 
 		if (volume != null)
-		volume.setVolume(gain);
+			volume.setVolume(gain);
 	}
 	
 	

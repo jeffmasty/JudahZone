@@ -22,14 +22,20 @@ public class MidiPlayer {
 	@Getter private final Sequencer sequencer;
 	@Getter private final Sequence sequence; 
 	private Thread listener;
+	private final float tempo;
+	
 	
 	public MidiPlayer(File file, float bpm, int loopCount, Receiver receiver) throws InvalidMidiDataException, MidiUnavailableException, IOException {
+		
+		log.info("TEMPO: " + bpm);
+		this.tempo = bpm;
+		
 		this.file = file;
 		sequencer = MidiSystem.getSequencer(false);
 		sequence = MidiSystem.getSequence(file);
 		sequencer.setSequence(sequence);
 		sequencer.setLoopCount(loopCount);
-		sequencer.setTempoInBPM(bpm);
+		sequencer.setTempoInBPM(100);
 		
 		for (Receiver old : sequencer.getReceivers()) 
 			old.close();
@@ -40,6 +46,7 @@ public class MidiPlayer {
 		if (!sequencer.isOpen()) {
 			sequencer.open();
 		}
+		sequencer.setTempoFactor(tempo/100f);
 		log.info("Midi player starting. " + file.getAbsolutePath());
 		sequencer.start();
 		listener = new Thread() {

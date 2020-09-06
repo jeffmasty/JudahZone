@@ -1,16 +1,14 @@
 TODO:
 
-upload jna-jack patch
-Recompile Carla (done, modified modules/rtaudio.cpp)
-Channel concept, mixer gain
+MidiMapper
 MultiLoop + Sync, Undo/Redo
 Midi to Rakarrack
 TimeClock
-Plugins 
+Plugins, ttl see https://github.com/PedalController/Lv2Library/blob/master/src/br/com/srmourasilva/lv2library/Lv2Mapper.java
 saving .wav files (see http://www.softsynth.com/jsyn/developers/download.php)
+upload jna-jack patch
 
 Services - Settings - Loop Settings
-MidiMapper
 Commands, command scripts
 Sampler
 
@@ -46,7 +44,6 @@ jvsthost:
 in JVstHost.cpp (/home/judah/Tracks/jvst/jvsthost-master/src/com/synthbot/audioplugin/vst/vst2/)
 commented out line 1387 (  effect->process(effect, cinputs, coutputs, (int) sampleFrames);
 
-
 javafx
 eclipse plugin: https://www.eclipse.org/efxclipse/install.html#for-the-lazy
 export PATH_TO_FX=path/to/javafx-sdk-13/lib
@@ -59,3 +56,7 @@ Drum machine w/ Hydrogen drums https://github.com/nicklan/drmr/wiki
 
 Simple converter ttl to JSON
 https://github.com/PedalController/Lv2Library/blob/master/src/br/com/srmourasilva/lv2library/Lv2Mapper.java
+
+Done:
+Recompile Carla (done, modified modules/rtaudio.cpp)
+Channel concept, mixer gain

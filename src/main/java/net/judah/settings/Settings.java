@@ -25,10 +25,11 @@ import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.Tab;
 import net.judah.fluid.FluidSynth;
+import net.judah.instruments.MPK;
 import net.judah.looper.Loop;
 import net.judah.looper.old.LoopSettings;
 import net.judah.midi.Midi;
-import net.judah.mixer.Mixer;
+import net.judah.mixer.MixerCommands;
 import net.judah.mixer.MixerPort.PortDescriptor;
 import net.judah.mixer.MixerPort.Type;
 
@@ -323,11 +324,7 @@ public class Settings implements Service, Serializable {
 				//		mappings.add(new Mapping(command, new Midi(176, 0, 101, 127), null));
 				//	} else if (command.getName().equals("EffectOff")) {
 				//		mappings.add(new Mapping(command, new Midi(176, 0, 101, 0), null));
-				if (command.getName().equals("tick")) {
-					mappings.add(new Mapping(command, new Midi(176, 0, 101, 127), null));
-				} else if (command.getName().equals("tock")) {
-					mappings.add(new Mapping(command, new Midi(176, 0, 101, 0), null));
-				} else if (command.getName().equals(PLAY.getLabel())) {
+				if (command.getName().equals(PLAY.getLabel())) {
 					props = new Properties();
 					props.put("Loop", 1);
 					props.put("Active", true);
@@ -372,38 +369,43 @@ public class Settings implements Service, Serializable {
 					props.put("Loop", 0);
 					props.put("Active", false);
 					mappings.add(new Mapping(command, new Midi(176, 0, 96, 0), props));
+				} else if (command.getName().equals("tick")) {
+					mappings.add(new Mapping(command, new Midi(176, 0, 101, 127), null));
+				} else if (command.getName().equals("tock")) {
+					mappings.add(new Mapping(command, new Midi(176, 0, 101, 0), null));
 				} else if (command.getName().equals("Metronome settings")) {
 					props = new Properties();
 					props.put("bpm", "todo");
-					mappings.add(new Mapping(command, new Midi(176, 0, 14), props, DYNAMIC));
+					mappings.add(new Mapping(command, MPK.knob(0, 0), props, DYNAMIC));
 					props = new Properties();
 					props.put("volume", "todo");
-					mappings.add(new Mapping(command, new Midi(176, 0, 15), props, DYNAMIC));
-				} else if (command.getName().equals(Mixer.GAIN_COMMAND)) {
+					mappings.add(new Mapping(command, MPK.knob(0, 1), props, DYNAMIC));
+				} else if (command.getName().equals(MixerCommands.GAIN_COMMAND)) {
+//					props = new Properties();
+//					props.put(MixerCommands.GAIN_PROP, "todo");
+//					props.put(MixerCommands.CHANNEL_PROP, 0);
+//					mappings.add(new Mapping(command, MPK.knob(0, 4), props, DYNAMIC));
+//					props = new Properties();
+//					props.put(MixerCommands.GAIN_PROP, "todo");
+//					props.put(MixerCommands.CHANNEL_PROP, 1);
+//					mappings.add(new Mapping(command, MPK.knob(0, 5), props, DYNAMIC));
+//					props = new Properties();
+//					props.put(MixerCommands.GAIN_PROP, "todo");
+//					props.put(MixerCommands.CHANNEL_PROP, 2);
+//					mappings.add(new Mapping(command, MPK.knob(0, 6), props, DYNAMIC));
+//					props = new Properties();
+//					props.put(MixerCommands.GAIN_PROP, "todo");
+//					props.put(MixerCommands.CHANNEL_PROP, 3);
+//					mappings.add(new Mapping(command, MPK.knob(0, 7), props, DYNAMIC));
+//					props = new Properties(); // master volume
+//					props.put(Mixer.GAIN_PROP, "todo");
+//					props.put(Mixer.CHANNEL_PROP, -1);
+//					mappings.add(new Mapping(command, new Midi(176, 0, 17), props, DYNAMIC));
+
+				} else if (command.getName().equals(MixerCommands.PLUGIN_COMMAND)) {
 					props = new Properties();
-					props.put(Mixer.GAIN_PROP, "todo");
-					props.put(Mixer.CHANNEL_PROP, 0);
-					mappings.add(new Mapping(command, new Midi(176, 0, 18), props, DYNAMIC));
-					props = new Properties();
-					props.put(Mixer.GAIN_PROP, "todo");
-					props.put(Mixer.CHANNEL_PROP, 1);
-					mappings.add(new Mapping(command, new Midi(176, 0, 19), props, DYNAMIC));
-					props = new Properties();
-					props.put(Mixer.GAIN_PROP, "todo");
-					props.put(Mixer.CHANNEL_PROP, 2);
-					mappings.add(new Mapping(command, new Midi(176, 0, 20), props, DYNAMIC));
-					props = new Properties();
-					props.put(Mixer.GAIN_PROP, "todo");
-					props.put(Mixer.CHANNEL_PROP, 3);
-					mappings.add(new Mapping(command, new Midi(176, 0, 21), props, DYNAMIC));
-					props = new Properties(); // master volume
-					props.put(Mixer.GAIN_PROP, "todo");
-					props.put(Mixer.CHANNEL_PROP, -1);
-					mappings.add(new Mapping(command, new Midi(176, 0, 17), props, DYNAMIC));
-				} else if (command.getName().equals(Mixer.PLUGIN_COMMAND)) {
-					props = new Properties();
-					props.put(Mixer.CHANNEL_PROP, -1);
-					props.put(Mixer.PLUGIN_PROP, "ZynPhaser");
+					props.put(MixerCommands.CHANNEL_PROP, -1);
+					props.put(MixerCommands.PLUGIN_PROP, "ZynPhaser");
 					mappings.add(new Mapping(command, new Midi(176, 9, 32), props, DYNAMIC));
 					/*	 on:  Ch 10, Ctrl  32, Val  56  
 						off:  Ch 10, Ctrl  32, Val   0 

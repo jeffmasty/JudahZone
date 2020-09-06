@@ -13,6 +13,7 @@ import com.illposed.osc.OSCSerializeException;
 import com.illposed.osc.transport.udp.OSCPortOut;
 
 import lombok.extern.log4j.Log4j;
+import net.judah.JudahZone;
 import net.judah.Tab;
 import net.judah.settings.Command;
 import net.judah.settings.Service;
@@ -43,28 +44,31 @@ import net.judah.settings.Service;
 @Log4j
 public class Carla implements Service {
 
+    public static final String CARLA_SHELL_COMMAND = "/usr/local/bin/carla ";
+    public static final File CARLA_SETTINGS = 
+    		new File(JudahZone.class.getClassLoader().getResource("JudahZone.carxp").getFile());
+    
+    public static final int CARLA_PORT = 22753;
+	
 	private static final String PREFIX = "/Carla/";
 	private static final String OSC = "OSC:"; //log
 	
-	private Process process;
-	// public static final String SHELL_COMMAND = "carla ";
-	String cmd;
-	OSCPortOut out;
+	private final Process process;
+	private final String cmd;
+	private final OSCPortOut out;
 
-	
 	public Carla(String shellCommand, File carlaSettings, int port) throws IOException {
-		try {
 			cmd = shellCommand + carlaSettings;
 			log.info("Opening Carla with: " + cmd + " and using UDP port=" + port);
 			process = Runtime.getRuntime().exec(cmd);
 			out = new OSCPortOut(InetAddress.getLocalHost(), port);
 			out.connect();
-		} catch (Throwable t) {
-			log.error(t.getMessage(), t);
-		}
-	
 	}
 	
+	public Carla() throws IOException {
+		this(CARLA_SHELL_COMMAND, CARLA_SETTINGS, CARLA_PORT);
+	}
+
 	/** @return true if message sent */
 	public boolean setVolume(int pluginIdx, float gain) {
 		assert out.isConnected();

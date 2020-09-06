@@ -25,6 +25,11 @@ public class Constants {
     	return Math.round(gain * 127);
     }
 
+	public static long millisPerBeat(float beatsPerMinute) {
+		return Math.round(60000/ beatsPerMinute); //  millis per minute / beats per minute
+	}
+
+    
     public static class Gui {
     	public static final int STD_HEIGHT = 18;
     	public static final Insets BTN_MARGIN = new Insets(1,1,1,1);

@@ -1,10 +1,12 @@
 package net.judah.instruments;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
+import net.judah.JudahZone;
 import net.judah.Tab;
 import net.judah.settings.Command;
 import net.judah.settings.Service;
@@ -13,6 +15,9 @@ import net.judah.settings.Service;
 
 public class Rakarrack implements Service {
 
+    public static final File RAKARRACK_SETTINGS = 
+    		new File(JudahZone.class.getClassLoader().getResource("JudahZone.rkr").getFile());
+	
 	private static final String clientName = "rakarrack:";
 	public static final String IN_L= clientName + "in_1";
 	public static final String IN_R = clientName + "in_2";
@@ -24,8 +29,12 @@ public class Rakarrack implements Service {
 	private final String cmd;
 
 
-	public Rakarrack(String file) throws IOException {
-		cmd = SHELL_COMMAND + file;
+	public Rakarrack() throws IOException {
+		this (RAKARRACK_SETTINGS);
+	}
+	
+	public Rakarrack(File settings) throws IOException {
+		cmd = SHELL_COMMAND + settings.getAbsolutePath();
 		process = Runtime.getRuntime().exec(cmd);
 	}
 

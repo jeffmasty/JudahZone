@@ -12,14 +12,12 @@ import org.jaudiolibs.jnajack.JackPortType;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
-import net.judah.JudahException;
 import net.judah.fluid.FluidSynth;
 import net.judah.jack.AudioTools;
 import net.judah.jack.BasicClient;
 import net.judah.jack.Status;
 import net.judah.looper.Loop;
 import net.judah.mixer.MixerPort.PortDescriptor;
-import net.judah.mixer.MixerPort.Type;
 import net.judah.mixer.gui.MixBoard;
 import net.judah.mixer.instrument.InstType;
 import net.judah.mixer.widget.CarlaVolume;
@@ -33,28 +31,18 @@ import net.judah.settings.Services;
 @Log4j
 public class Mixer extends BasicClient implements Service {
 
-	public static final String GAIN_PROP = "Gain";
-	public static final String CHANNEL_PROP = "Channel";
-	public static final String PLUGIN_PROP = "Plugin Name";
-	public static final String GAIN_COMMAND = "Mix Volume";
-	public static final String PLUGIN_COMMAND = "Load Plugin";
-
-	private final MixerCommands mixerCommands;
-	private final Patchbay patchbay;
-	
-	private final List<Channel> channels = new ArrayList<>();
+	@Getter private final MixerCommands commands;
+	@Getter private final MixBoard gui = new MixBoard();
+	@Getter private final List<Loop> loops = new ArrayList<>();
+	@Getter private final List<Channel> channels = new ArrayList<>();
 	private final List<MixerPort> inputPorts = new ArrayList<>();
 	private final List<MixerPort> outputPorts = new ArrayList<>();
-	@Getter private final List<Loop> loops = new ArrayList<>();
-	@Getter private final MixBoard gui = new MixBoard();
-	
-	@SuppressWarnings("unused")
-	private float masterGain = 1f;  
-	
+	private final Patchbay patchbay;
+
 	public Mixer(Services services, Patchbay patchbay) throws JackException {
 		super(patchbay.getClientName());
 		this.patchbay = patchbay;
-		mixerCommands = new MixerCommands(this);
+		commands = new MixerCommands(this);
 		start();
 	}
 
@@ -117,48 +105,9 @@ public class Mixer extends BasicClient implements Service {
 	}
 	
 	@Override
-	public List<Command> getCommands() {
-		return mixerCommands;
-	}
-	
-	@Override
 	public void execute(Command cmd, Properties props) throws Exception {
-		mixerCommands.execute(cmd, props); 
-		//		if (cmd.getName().equals(GAIN_COMMAND)) {
-		//			gainCommand(cmd, props);
-		//		} else if (cmd.getName().equals(PLUGIN_COMMAND)) {
-		//			pluginCommand(cmd, props);
-		//		} else throw new JudahException("Unknown Command: " + cmd);
+		commands.execute(cmd, props); 
 	}
-
-	@SuppressWarnings("unused")
-	private void gainCommand(Command cmd, Properties props) throws JudahException {
-		if (!props.containsKey(GAIN_PROP)) throw new JudahException("No Volume. " + cmd + " " );
-		float gain = (Float)props.get(GAIN_PROP);
-		Object o = props.get(CHANNEL_PROP);
-		if (o == null) {
-			masterGain = gain;
-			return;
-		}
-
-		log.debug("channel " + o + " gain: " + gain);
-		int idx = (Integer)o;
-		
-		if (idx >= 0 && idx < inputPorts.size()) {
-			MixerPort p = inputPorts.get(idx);
-			p.setGain(gain);
-			if (p.isStereo()) {
-				if (p.getType() == Type.LEFT) 
-					inputPorts.get(idx + 1).setGain(gain);
-				else 
-					inputPorts.get(idx -1).setGain(gain);
-			}
-		}
-		else {
-			masterGain = gain;
-		}
-	}
-
 	
 	
     ////////////////////////////////////////////////////

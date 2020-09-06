@@ -12,32 +12,32 @@ import javax.swing.JSeparator;
 import net.judah.JudahZone;
 import net.judah.Tab;
 import net.judah.looper.Loop;
-import net.judah.metronome.MetroPanel;
 import net.judah.metronome.Metronome;
 import net.judah.mixer.Channel;
 
-@SuppressWarnings("serial")
 public class MixBoard extends Tab {
 	
 	private final class MySeparator extends JSeparator {
 		public MySeparator() { setPreferredSize(new Dimension(350, 11)); } }
 	
 	private final ArrayList<ChannelGui> channels = new ArrayList<ChannelGui>();
+	private final Metronome metro = new Metronome();
 	
 	public MixBoard() {
 		super(true);
-		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+		JudahZone.getServices().add(metro);
 	}
 	
+	public void update() {
+		for (ChannelGui ch : channels) 
+			ch.update();
+	}
+	
+	
+	
 	public void setup(List<Channel> channels2, List<Loop> loops) {
-		add(new MySeparator());
 		
-		for (Channel c : channels2) {
-			ChannelGui gui = new ChannelGui(c);
-			channels.add(gui);
-			add(gui);
-		}
-		
+		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		add(new MySeparator());
 		
 		// ChannelGui master = new ChannelGui(new Channel(new Instrument("Master", InstType.Other, null, null)));
@@ -48,9 +48,38 @@ public class MixBoard extends Tab {
 			channels.add(gui);
 			add(gui);
 		}
+
+		add(new MySeparator());
+		
+		for (Channel c : channels2) {
+			ChannelGui gui = new ChannelGui(c);
+			channels.add(gui);
+			add(gui);
+		}
+		
+//		Properties props = new Properties();
+//		props.put(MixerCommands.GAIN_PROP, "todo");
+//		props.put(MixerCommands.CHANNEL_PROP, 0);
+//		mappings.add(new Mapping(command, MPK.knob(0, 4), props, DYNAMIC));
+//		props = new Properties();
+//		props.put(MixerCommands.GAIN_PROP, "todo");
+//		props.put(MixerCommands.CHANNEL_PROP, 1);
+//		mappings.add(new Mapping(command, MPK.knob(0, 5), props, DYNAMIC));
+//		props = new Properties();
+//		props.put(MixerCommands.GAIN_PROP, "todo");
+//		props.put(MixerCommands.CHANNEL_PROP, 2);
+//		mappings.add(new Mapping(command, MPK.knob(0, 6), props, DYNAMIC));
+//		props = new Properties();
+//		props.put(MixerCommands.GAIN_PROP, "todo");
+//		props.put(MixerCommands.CHANNEL_PROP, 3);
+//		mappings.add(new Mapping(command, MPK.knob(0, 7), props, DYNAMIC));
+
+		
+		
 		add(new MySeparator());
 		add(new MySeparator());
-		add(new MetroPanel((Metronome)JudahZone.getServices().byClass(Metronome.class)));
+		
+		add(metro);
 		add(new MySeparator());
 	}
 	

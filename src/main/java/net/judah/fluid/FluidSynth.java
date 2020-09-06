@@ -2,6 +2,7 @@ package net.judah.fluid;
 
 import static net.judah.Constants.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collections;
@@ -20,7 +21,6 @@ import lombok.extern.log4j.Log4j;
 import net.judah.Constants;
 import net.judah.Constants.Toggles;
 import net.judah.JudahException;
-import net.judah.JudahZone;
 import net.judah.Tab;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiClient;
@@ -36,6 +36,8 @@ public class FluidSynth implements Service {
 	public static final String RIGHT_PORT = "fluidsynth:r_00";
 	public static final String MIDI_PORT = "fluidsynth:midi";
 
+    public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // fluid-soundfount-gm package, 150mb
+	
 	final String MIDI_DRIVER = "jack";
 	final String AUDIO_DRIVER = "jack";
 
@@ -59,12 +61,16 @@ public class FluidSynth implements Service {
 	private float roomSize = 0.75f;
 	private float dampness = 0.75f;
 
-    @SuppressWarnings("deprecation")
 	public FluidSynth (MidiClient midi) throws JackException, JudahException, IOException, JackException {
+		this(midi, SOUND_FONT);
+	}
+	
+	@SuppressWarnings("deprecation")
+	public FluidSynth (MidiClient midi, File soundFont) throws JackException, JudahException, IOException, JackException {
 		shellCommand = "fluidsynth" +
 				" --midi-driver=jack --audio-driver=jack" +
 	    		" -o synth.ladspa.active=0  --sample-rate " + Constants.SAMPLE_RATE + " " +
-				JudahZone.SOUND_FONT.getAbsolutePath();
+				SOUND_FONT.getAbsolutePath();
 		
 		fluidWindow = new FluidUI(this);
 		log.debug(shellCommand);
