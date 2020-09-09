@@ -12,9 +12,9 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.Tab;
+import net.judah.util.Tab;
 
-@Log4j @SuppressWarnings("serial")
+@Log4j @Deprecated
 public class MetroUI extends Tab implements  ChangeListener {
 	final MetroService metro;
 	private final JToggleButton playBtn;

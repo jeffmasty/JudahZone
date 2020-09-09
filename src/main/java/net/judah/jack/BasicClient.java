@@ -1,10 +1,6 @@
 package net.judah.jack;
 
-import static net.judah.jack.Status.ACTIVE;
-import static net.judah.jack.Status.CLOSING;
-import static net.judah.jack.Status.INITIALISING;
-import static net.judah.jack.Status.NEW;
-import static net.judah.jack.Status.TERMINATED;
+import static net.judah.jack.Status.*;
 
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -21,7 +17,7 @@ import org.jaudiolibs.jnajack.JackStatus;
 import org.jaudiolibs.jnajack.JackXrunCallback;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.Constants;
+import net.judah.util.Constants;
 
 @Log4j
 public abstract class BasicClient extends Thread implements JackXrunCallback, JackProcessCallback, JackShutdownCallback  {
@@ -85,7 +81,7 @@ public abstract class BasicClient extends Thread implements JackXrunCallback, Ja
 	public void close() {
 		if (TERMINATED == state.get()) return;
 		state = new AtomicReference<>(CLOSING);
-		log.warn("Closing " + this.getServiceName());
+		log.warn("Closing Jack client " + clientName);
 		if (jackclient != null)
 	        try {
 	            jackclient.close();
@@ -128,9 +124,9 @@ public abstract class BasicClient extends Thread implements JackXrunCallback, Ja
 	/** Jack Client has been started */
 	protected abstract void makeConnections() throws JackException;
 
-	public String getServiceName() {
-		return clientName;
-	}
+//	public String getServiceName() {
+//		return clientName;
+//	}
 
 
 }

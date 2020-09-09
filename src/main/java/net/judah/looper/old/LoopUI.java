@@ -12,7 +12,7 @@ import javax.swing.JPanel;
 import lombok.extern.log4j.Log4j;
 import net.judah.looper.old.GLoop.Mode;
 
-@SuppressWarnings("serial") @Log4j
+@Log4j
 public class LoopUI extends JPanel {
 
 	final GLoop loop;

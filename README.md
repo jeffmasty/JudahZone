@@ -17,9 +17,10 @@ mod-host (https://github.com/moddevices/mod-host) another LV2 plugin host. Succe
 FluidSynth (https://github.com/FluidSynth/fluidsynth) a synthesizer controlled over STDIN/STDOUT and Midi.
 Also using fluid-soundfont-gm.
 
-Apache Jena (https://jena.apache.org/) to open LV2 plugin descriptors.
+Jackson (https://github.com/FasterXML/jackson) for JSON handling and
+Apache Jena (https://jena.apache.org/) to open LV2 .ttl plugin descriptors.
 
-Illposed OSC (http://www.illposed.com/software/javaosc.html) successfully connected to an OSC server.
+Illposed OSC (http://www.illposed.com/software/javaosc.html) successfully communicated with an OSC server.
 
 
 ##   

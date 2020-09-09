@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Properties;
 
 import net.judah.JudahZone;
-import net.judah.Tab;
 import net.judah.settings.Command;
 import net.judah.settings.Service;
+import net.judah.util.Tab;
 
 /** shell:  rakarrack --Load [File /home/judah/Tracks/Ramarok/JudahZone.rkr] */
 

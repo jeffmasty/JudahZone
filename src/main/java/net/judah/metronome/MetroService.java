@@ -1,6 +1,6 @@
 package net.judah.metronome;
 
-import static net.judah.Constants.*;
+import static net.judah.util.Constants.*;
 
 import java.nio.ByteBuffer;
 import java.security.InvalidParameterException;
@@ -28,14 +28,14 @@ import org.jaudiolibs.jnajack.JackTransportState;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
-import net.judah.Constants;
-import net.judah.RTLogger;
-import net.judah.Tab;
 import net.judah.midi.Midi;
 import net.judah.settings.Command;
 import net.judah.settings.Service;
+import net.judah.util.Constants;
+import net.judah.util.RTLogger;
+import net.judah.util.Tab;
 
-@Log4j
+@Log4j @Deprecated
 public class MetroService implements Service, JackTimebaseCallback, JackSyncCallback {  
 
 	@Getter private final ArrayList<Command> commands = new ArrayList<>();

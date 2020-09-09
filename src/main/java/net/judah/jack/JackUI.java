@@ -7,11 +7,11 @@ import java.util.Properties;
 
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
-import net.judah.Tab;
 import net.judah.midi.JudahReceiver;
 import net.judah.midi.MidiPlayer;
 import net.judah.plugin.Carla;
 import net.judah.settings.Service;
+import net.judah.util.Tab;
 
 @Log4j
 public class JackUI extends Tab {

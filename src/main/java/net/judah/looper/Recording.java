@@ -7,7 +7,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import net.judah.jack.AudioTools;
 
 
-@SuppressWarnings("serial")
 public class Recording extends Vector<float[][]>{
 
 	private final BlockingQueue<float[][]> newQueue = new LinkedBlockingQueue<>();

@@ -1,6 +1,6 @@
 package net.judah.fluid;
 
-import net.judah.JudahException;
+import net.judah.util.JudahException;
 
 /**<pre>
 from: https://github.com/FluidSynth/fluidsynth/blob/master/doc/ladspa.md

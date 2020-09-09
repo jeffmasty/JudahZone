@@ -1,6 +1,6 @@
 package net.judah.plugin;
 
-import static net.judah.Constants.NL;
+import static net.judah.util.Constants.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -9,9 +9,9 @@ import java.util.List;
 import java.util.Properties;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.Tab;
 import net.judah.settings.Command;
 import net.judah.settings.Service;
+import net.judah.util.Tab;
 
 /** ~/lib/mod-host$ ./mod-host -p 7897 -f 7898 */
 @Log4j

@@ -1,4 +1,4 @@
-package net.judah;
+package net.judah.util;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;

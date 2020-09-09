@@ -1,4 +1,4 @@
-package net.judah;
+package net.judah.util;
 
 public class JudahException extends Exception {
 	private static final long serialVersionUID = 4052236208283488917L;

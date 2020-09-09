@@ -8,12 +8,12 @@ import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.Constants;
-import net.judah.RTLogger;
 import net.judah.jack.AudioTools;
 import net.judah.jack.ClientConfig;
 import net.judah.jack.Status;
 import net.judah.looper.ClipBoard;
+import net.judah.util.Constants;
+import net.judah.util.RTLogger;
 
 @Log4j
 public class MasterLoop extends GLoop {

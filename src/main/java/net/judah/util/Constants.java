@@ -1,11 +1,15 @@
-package net.judah;
+package net.judah.util;
 
 import java.awt.Font;
 import java.awt.Insets;
 
+import javax.swing.JOptionPane;
+
 public class Constants {
 
 	public static final String NL = System.getProperty("line.separator", "\r\n");
+	public static final String CUTE_NOTE = "♫ ";
+	public static final String FILE_SEPERATOR = System.getProperty("file.separator");
 	public static final String TAB = "    ";
 	public static final int CHANNELS = 16;
 	public static final int SAMPLE_RATE = 48000;
@@ -14,6 +18,8 @@ public class Constants {
 	public static final int RIGHT_CHANNEL = 1;
 	public static final int STEREO = 2;
 	public static final int MONO = 1;
+
+	
 	
 	public static String TEST_PLUGIN_URL = "http://moddevices.com/plugins/tap/reverb";
 
@@ -41,6 +47,11 @@ public class Constants {
     	public static final Font FONT10 = new Font("Arial", Font.PLAIN, 10);
     	public static final Font FONT9 = new Font("Arial", Font.PLAIN, 9);
     	
+    }
+ 
+    public static void infoBox(String infoMessage, String titleBar)
+    {
+        JOptionPane.showMessageDialog(null, infoMessage, titleBar, JOptionPane.INFORMATION_MESSAGE);
     }
     
 }

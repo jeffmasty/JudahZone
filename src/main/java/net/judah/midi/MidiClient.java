@@ -22,8 +22,6 @@ import org.jaudiolibs.jnajack.JackPortFlags;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.CommandHandler;
-import net.judah.RTLogger;
-import net.judah.Tab;
 import net.judah.instruments.MPK;
 import net.judah.instruments.Pedal;
 import net.judah.jack.BasicClient;
@@ -31,6 +29,8 @@ import net.judah.jack.ClientConfig;
 import net.judah.jack.Status;
 import net.judah.settings.Command;
 import net.judah.settings.Service;
+import net.judah.util.RTLogger;
+import net.judah.util.Tab;
 
 // process MIDI ports
 // assisted by: https://github.com/jaudiolibs/examples/blob/master/src/main/java/org/jaudiolibs/examples/MidiThru.java
@@ -44,7 +44,6 @@ public class MidiClient extends BasicClient implements Service {
 
 	private final ClientConfig config;
 	private final CommandHandler commander;
-//	private final MetroService metro;
 
 	private ArrayList<JackPort> inPorts = new ArrayList<JackPort>();  // Keyboard, Pedal, MidiIn
 	private JackPort keyboard;
@@ -155,6 +154,11 @@ public class MidiClient extends BasicClient implements Service {
 
 	public void queue(MidiMessage message) {
 		queue.add(message);
+	}
+
+	@Override
+	public String getServiceName() {
+		return MidiClient.class.getSimpleName();
 	}
 
 }

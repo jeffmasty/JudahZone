@@ -8,11 +8,11 @@ import java.util.List;
 import java.util.Properties;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.JudahException;
 import net.judah.looper.Loop;
 import net.judah.settings.Command;
+import net.judah.util.JudahException;
 
-@SuppressWarnings("serial") @Log4j
+@Log4j
 public class MixerCommands extends ArrayList<Command> {
 	
 	protected final Mixer mixer;
@@ -164,7 +164,7 @@ public class MixerCommands extends ArrayList<Command> {
 //		// TODO
 //	}
 
-	@SuppressWarnings("unused")
+
 	private void gainCommand(Command cmd, Properties props) throws JudahException {
 		if (!props.containsKey(GAIN_PROP)) throw new JudahException("No Volume. " + cmd + " " );
 		float gain = (Float)props.get(GAIN_PROP);

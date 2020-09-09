@@ -1,6 +1,7 @@
 package net.judah;
 
 import java.awt.GridLayout;
+import java.io.File;
 import java.util.ArrayList;
 
 import javax.swing.JFrame;
@@ -19,6 +20,10 @@ import net.judah.plugin.Carla;
 import net.judah.settings.Service;
 import net.judah.settings.Services;
 import net.judah.settings.Settings;
+import net.judah.song.SonglistTab;
+import net.judah.util.MenuBar;
+import net.judah.util.RTLogger;
+import net.judah.util.Tab;
 
 
 /* Starting my jack sound system: 
@@ -32,20 +37,24 @@ public class JudahZone {
     static boolean noJack;
 
     public static final String JUDAHZONE = JudahZone.class.getSimpleName();
+
+    // TODO
+    public static final File defaultSetlist = new File("/home/judah/list1.songs"); 
+    public static final File defaultFolder = new File("/home/judah/JudahZone"); 
     
-    @Getter private final Settings settings;
-	@Getter private static final Services services = new Services();
-	@Getter private final CommandHandler commander;
-	@Getter private final Carla effects;
-	@Getter private final FluidSynth fluid; 
-	@Getter private final Mixer mixer;
-	@Getter private final MidiClient midi;
+    
+	@Getter private static JFrame frame;
+	private static JTabbedPane tabbedPane;
+	private static ArrayList<Tab> tabs = new ArrayList<>();
 	
-	// @Getter private final Rakarrack rack = null; 
-    // @Getter private final MetroService metronome;
-
-    ArrayList<Tab> tabs = new ArrayList<>();
-
+	@Getter private static final Services services = new Services();
+	// private final Settings settings;
+	private final CommandHandler commander;
+	private final Carla effects;
+	private final FluidSynth fluid; 
+	private final Mixer mixer;
+	private final MidiClient midi;
+	
     public static void main(String[] args) {
 
     	if ("true".equals(processArgs("--noJack", args))) 
@@ -63,11 +72,10 @@ public class JudahZone {
     }
 
 	private JudahZone(Settings settings) throws Throwable {
-    	this.settings = settings;
+    	// this.settings = settings;
     	Runtime.getRuntime().addShutdownHook(new ShutdownHook());
 
-    	commander = new CommandHandler(settings.getMappings());
-    	services.add(commander);
+    	commander = new CommandHandler();
 
     	midi = new MidiClient(commander);
     	services.add(midi);
@@ -81,22 +89,12 @@ public class JudahZone {
     	effects = new Carla(); 
     	services.add(effects);
     	
-		//		try {
-		//			metronome = new MetroService();
-		//			services.add(metronome);
-		//			rack = new Rakarrack();
-		//			services.add(rack);
-    	//			Modhost modhost = new Modhost();
-		//			services.add(modhost);
-		//			tabs.add(modhost.getGui());
-		//		} catch (Exception e) {
-		//			log.error(e.getMessage(), e);
-		//		}
-    	
     	commander.initializeCommands();
     	
     	Thread.sleep(800);
 
+    	tabs.add(new SonglistTab(defaultSetlist));
+    	
 		tabs.add(mixer.getGui());
 		tabs.add(new JackUI());
     	tabs.add(fluid.getGui());
@@ -104,6 +102,7 @@ public class JudahZone {
 	}
 
 	private class ShutdownHook extends Thread {
+
 		@Override public void run() {
       	  	for (Service service : services)
       	  		service.close();
@@ -116,12 +115,15 @@ public class JudahZone {
 				| UnsupportedLookAndFeelException e) { log.info(e.getMessage(), e); }
 
         //Create and set up the window.
-        JFrame frame = new JFrame("JudahZone");
+        frame = new JFrame(JUDAHZONE);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        frame.setJMenuBar(new MenuBar());
+        
         JPanel content = (JPanel)frame.getContentPane();
         content.setLayout(new GridLayout(1, 1));
 
-        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane = new JTabbedPane();
         for (int i = 0; i < tabs.size(); i++) {
         	Tab tab = tabs.get(i);
         	tabbedPane.insertTab(tab.getTabName(), null, tab, "Alt-" + (i+1), i);
@@ -151,5 +153,28 @@ public class JudahZone {
 		return Settings.DEFAULT_SETTINGS;
 	}
 
+	public static void openTab(Tab tab) {
+    	tabbedPane.insertTab(tab.getTabName(), null, tab, null, tabbedPane.getTabCount());
+    	tabbedPane.setSelectedComponent(tab);
+    	tabs.add(tab);
+	}
+
+	public static void closeTab(Tab tab) {
+		tabbedPane.remove(tab);
+		tabs.remove(tab);
+	}
     
+	
 }
+
+// unused services
+// @Getter private final Rakarrack rack = null; 
+// @Getter private final MetroService metronome;
+//			metronome = new MetroService();
+//			services.add(metronome);
+//			rack = new Rakarrack();
+//			services.add(rack);
+//			Modhost modhost = new Modhost();
+//			services.add(modhost);
+//			tabs.add(modhost.getGui());
+

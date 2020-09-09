@@ -5,10 +5,9 @@ import java.util.Properties;
 
 import org.jaudiolibs.jnajack.JackPort;
 
-import net.judah.Tab;
+import net.judah.util.Tab;
 
 
-@SuppressWarnings("serial")
 public class Pedal extends Tab {
 
     public static final String NAME = "ActitioN MIDI Controller";

@@ -2,7 +2,7 @@ package net.judah.looper;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import net.judah.RTLogger;
+import net.judah.util.RTLogger;
 
 /** supplies objects created in a side thread */
 public class Memory {

@@ -1,5 +1,17 @@
 TODO:
 
+Setlist
+
+
+Song  (default song)
+setup notes
+patch setup (services like carla/fluid/drums)
+command mappings
+triggers
+teardown notes
+
+
+Sampler (save and play loops)
 MidiMapper
 MultiLoop + Sync, Undo/Redo
 Midi to Rakarrack
@@ -10,10 +22,9 @@ upload jna-jack patch
 
 Services - Settings - Loop Settings
 Commands, command scripts
-Sampler
+
 
 Song / Scene (i.e., 1 bar drum setups)
-SetList
 Effects and knobs
 Drums and pads 
 Gui

@@ -1,6 +1,6 @@
 package net.judah.plugin;
 
-import static net.judah.Constants.*;
+import static net.judah.util.Constants.*;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -8,7 +8,7 @@ import java.util.Properties;
 
 import javax.swing.JTextField;
 
-import net.judah.Tab;
+import net.judah.util.Tab;
 
 public class ModhostUI extends Tab implements ActionListener {
 	private static final long serialVersionUID = -33505833140137161L;

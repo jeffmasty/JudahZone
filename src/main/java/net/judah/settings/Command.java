@@ -6,9 +6,11 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 import lombok.Getter;
+import lombok.Setter;
 
 public class Command implements Serializable {
 	private static final long serialVersionUID = -6802900843908593216L;
+	
 	public static final boolean DYNAMIC = true;
 	public static final boolean STATIC = !DYNAMIC;
 	
@@ -22,6 +24,7 @@ public class Command implements Serializable {
 	@Getter public final String description;
 	@Getter public final Service service;
 	@Getter public final HashMap<String, Class<?>> props;
+	@Getter @Setter private boolean dynamic = false;
 
 	public Command(String name, Service service, HashMap<String, Class<?>> props, String description) {
 		this.name = name;
@@ -79,10 +82,11 @@ public class Command implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Command [name=" + name + ", service=" + service.getServiceName() + " " + props.values().size() + " properties.";
+		return name;
+		// return "Command [name=" + name + ", service=" + service.getServiceName() + " " + props.values().size() + " properties.";
 	}
 
-	public String toString(Properties props) {
+	public static String toString(Properties props) {
 		String result = " Properties:";
 		if (props == null || props.isEmpty()) {
 			return result + " none";
@@ -93,5 +97,6 @@ public class Command implements Serializable {
 		return result;
 	}
 
-
+	
+	
 }

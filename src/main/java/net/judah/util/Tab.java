@@ -1,6 +1,6 @@
-package net.judah;
+package net.judah.util;
 
-import static net.judah.Constants.*;
+import static net.judah.util.Constants.*;
 
 import java.awt.Dimension;
 import java.awt.Point;
@@ -18,7 +18,6 @@ import javax.swing.border.EtchedBorder;
 
 import org.apache.log4j.Logger;
 
-@SuppressWarnings("serial")
 abstract public class Tab extends JComponent implements ActionListener {
 
 	protected final JTextArea output;

@@ -11,9 +11,8 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JToolBar;
 
-import net.judah.Tab;
+import net.judah.util.Tab;
 
-@SuppressWarnings("serial")
 public class LooperUI extends Tab implements ActionListener {
 
 	static LooperUI instance;

@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import net.judah.JudahZone;
 import net.judah.midi.MidiClient;
 
-@SuppressWarnings("serial")
 public class Services extends ArrayList<Service> {
 	
 

@@ -5,15 +5,17 @@ import java.util.Properties;
 
 import javax.sound.midi.ShortMessage;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.judah.midi.Midi;
 
+@AllArgsConstructor
 public class Mapping implements Serializable {
 	private static final long serialVersionUID = 391031963502031826L;
 
 	@Getter final String serviceName;
 	@Getter final String commandName;
-	final byte[] midiData;
+	@Getter final byte[] midiData;
 	@Getter final Properties props;
 	@Getter final boolean isDynamic;
 
@@ -40,7 +42,8 @@ public class Mapping implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Mapping " + serviceName + "." + commandName + " for " + new Midi(midiData);
+		return "Mapping " + serviceName + "." + commandName + " for " + new Midi(midiData) + (isDynamic ? " dynamic " : " ") + 
+				Command.toString(props);
 	}
 
 }

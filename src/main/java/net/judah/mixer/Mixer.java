@@ -109,6 +109,11 @@ public class Mixer extends BasicClient implements Service {
 		commands.execute(cmd, props); 
 	}
 	
+	@Override
+	public String getServiceName() {
+		return Mixer.class.getSimpleName();
+	}
+
 	
     ////////////////////////////////////////////////////
     //                PROCESS AUDIO                   //
@@ -128,6 +133,7 @@ public class Mixer extends BasicClient implements Service {
 		}
 		return true;
 	}
+
 
 }
 

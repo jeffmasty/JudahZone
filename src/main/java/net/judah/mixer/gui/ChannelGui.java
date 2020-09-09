@@ -1,6 +1,6 @@
 package net.judah.mixer.gui;
 
-import static net.judah.Constants.Gui.*;
+import static net.judah.util.Constants.Gui.*;
 
 import java.awt.BorderLayout;
 import java.awt.Color;

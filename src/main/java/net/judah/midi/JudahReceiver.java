@@ -8,6 +8,7 @@ import javax.sound.midi.ShortMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
 
+/** Volume adjusted javax midi sender */
 @RequiredArgsConstructor @Log4j
 public class JudahReceiver implements Receiver {
 

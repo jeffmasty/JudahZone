@@ -10,10 +10,10 @@ import javax.swing.BoxLayout;
 import javax.swing.JSeparator;
 
 import net.judah.JudahZone;
-import net.judah.Tab;
 import net.judah.looper.Loop;
 import net.judah.metronome.Metronome;
 import net.judah.mixer.Channel;
+import net.judah.util.Tab;
 
 public class MixBoard extends Tab {
 	

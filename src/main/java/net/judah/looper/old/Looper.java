@@ -10,19 +10,20 @@ import org.jaudiolibs.jnajack.JackException;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
-import net.judah.JudahException;
-import net.judah.Tab;
 import net.judah.jack.ClientConfig;
 import net.judah.looper.old.LoopSettings.Kickoff;
 import net.judah.looper.old.LoopSettings.PostRecordAction;
 import net.judah.metronome.Quantization;
 import net.judah.settings.Command;
 import net.judah.settings.Service;
+import net.judah.util.JudahException;
+import net.judah.util.Tab;
 
 @Log4j
 // TODO features: toggle play loop 1 or 2 (verse vs. chorus)
 public class Looper implements Service {
 
+	public static final String SERVICE_NAME = "Looper";
 	static final LoopSettings defaultMasterSettings = new LoopSettings(
 			"Master", MasterLoop.class, 0, 0, 0, new Quantization(), false,
 			Kickoff.PressRecord, PostRecordAction.DUB_AND_PLAY, true, false, true);
@@ -31,7 +32,8 @@ public class Looper implements Service {
 			Kickoff.PressRecord, PostRecordAction.NOTHING, false, false, true);
 
 	final LooperUI UI;
-	private final String name;
+	/** Looper unique name. */
+	@Getter private final String name;
 	@Getter private LoopCommand status = LoopCommand.STOP;
 	Command cmdPlay, cmdRecord, cmdStop, cmdReset, cmdUndo, cmdToggleMode;
 	private final List<Command> commands = new ArrayList<>();
@@ -76,7 +78,7 @@ public class Looper implements Service {
 
 	@Override
 	public void execute(Command cmd, Properties props) throws Exception {
-		log.debug("looper execute " + cmd + " " + cmd.toString(props));
+		log.debug("looper execute " + cmd + " " + Command.toString(props));
 		HashMap<String, Class<?>> types = cmd.getProps();
 		for (String key : types.keySet()) {
 			if (!props.containsKey(key))
@@ -117,11 +119,11 @@ public class Looper implements Service {
 
     private void initCommands() {
     	// RECORD("record"), PLAY("play"), STOP("stop"), DUB("dub"), PAUSE("pause") /*TODO*/, CONTINUE("continue") /*TODO*/;
-    	cmdPlay = new Command("Play", this, channelProps(),
+    	cmdPlay = new Command(LoopCommand.PLAY.txt, this, channelProps(),
     			"Play a recorded loop on the provided loop number");
-    	cmdRecord = new Command("Record", this, channelProps(),
+    	cmdRecord = new Command(LoopCommand.RECORD.txt, this, channelProps(),
     			"Record on the provided loop number.");
-    	cmdStop = new Command("Stop", this, channelProps(),
+    	cmdStop = new Command(LoopCommand.STOP.txt, this, channelProps(),
     			"Stop playing a loop or stop recording on the given loop number.");
 
     	HashMap<String, Class<?>> commandProps = new HashMap<>();
@@ -144,15 +146,11 @@ public class Looper implements Service {
     		loop.close();
     }
 
-	@Override
-	public Tab getGui() {
-		return UI;
-	}
+	@Override public Tab getGui() {
+		return UI; }
 
-	@Override
-	public String getServiceName() {
-		return name;
-	}
+	@Override public String getServiceName() {
+		return SERVICE_NAME; }
 }
 
 

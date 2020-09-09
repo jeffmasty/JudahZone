@@ -1,8 +1,8 @@
 package net.judah.looper;
 
-import static net.judah.Constants.*;
 import static net.judah.looper.Loop.Mode.*;
 import static net.judah.mixer.MixerPort.Type.*;
+import static net.judah.util.Constants.*;
 
 import java.nio.FloatBuffer;
 import java.util.Arrays;
@@ -16,10 +16,10 @@ import org.jaudiolibs.jnajack.JackException;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
-import net.judah.Constants;
-import net.judah.RTLogger;
 import net.judah.jack.AudioTools;
 import net.judah.mixer.MixerPort;
+import net.judah.util.Constants;
+import net.judah.util.RTLogger;
 
 @Log4j
 public class Loop implements LoopInterface {

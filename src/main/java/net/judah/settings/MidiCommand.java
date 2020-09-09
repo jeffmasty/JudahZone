@@ -2,7 +2,6 @@ package net.judah.settings;
 
 import java.util.HashMap;
 
-@SuppressWarnings("serial")
 public class MidiCommand extends Command {
 
 	public MidiCommand(String name, Service service, HashMap<String, Class<?>> props, String description) {

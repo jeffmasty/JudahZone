@@ -2,7 +2,6 @@ package net.judah.fluid;
 
 import java.util.ArrayList;
 
-@SuppressWarnings("serial")
 public class Channels extends ArrayList<FluidChannel> {
 
 	/** @return preset instrument index for the channel */

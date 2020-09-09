@@ -64,6 +64,7 @@ class FluidListener extends Thread {
             		}
             		if (sysOverride == FluidCommand.CHANNELS) {
             			if (line.contains(FluidCommand.CHANNELS.code)) continue;
+            			if (line.contains(FluidCommand.PROG_CHANGE.code)) continue;
             			FluidChannel channel = new FluidChannel(line);
             			channels.add(channel);
             			if (channel.channel == 15) sysOverride = null;

@@ -23,7 +23,6 @@ import javax.sound.midi.InvalidMidiDataException;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
-import net.judah.Tab;
 import net.judah.fluid.FluidSynth;
 import net.judah.instruments.MPK;
 import net.judah.looper.Loop;
@@ -32,6 +31,7 @@ import net.judah.midi.Midi;
 import net.judah.mixer.MixerCommands;
 import net.judah.mixer.MixerPort.PortDescriptor;
 import net.judah.mixer.MixerPort.Type;
+import net.judah.util.Tab;
 
 @Log4j
 public class Settings implements Service, Serializable {

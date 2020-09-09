@@ -1,11 +1,12 @@
 package net.judah.fluid;
 
-import static net.judah.Constants.*;
+import static net.judah.util.Constants.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
@@ -18,15 +19,16 @@ import org.jaudiolibs.jnajack.JackException;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.Constants;
-import net.judah.Constants.Toggles;
-import net.judah.JudahException;
-import net.judah.Tab;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiClient;
 import net.judah.midi.ProgMsg;
 import net.judah.settings.Command;
-import net.judah.settings.Service;;
+import net.judah.settings.Service;
+import net.judah.util.Constants;
+import net.judah.util.Constants.Toggles;
+import net.judah.util.JudahException;
+import net.judah.util.Tab;
+
 
 /** runs and then connects to FluidSynth stdin and stdout ports, connects midi and speakers */
 @Log4j
@@ -49,11 +51,10 @@ public class FluidSynth implements Service {
     private OutputStream console;
     private FluidUI fluidWindow;
 
-	Instruments instruments = new Instruments();
-	Channels channels = new Channels();
-
-	//*--- serialize ---*//
-
+	private Instruments instruments = new Instruments();
+	private Channels channels = new Channels();
+	private final Command progChange, instUp, instDown;
+	
 	private float gain = 0.7f; // max 5
 	private boolean reverb; // toggles on in init()
 	private boolean chorus; // toggles on in init()
@@ -102,7 +103,16 @@ public class FluidSynth implements Service {
 
 		fluidWindow.addText( "channels: " + channels.size() + " instruments: " + instruments.size());
 		initReverb();
-		sendCommand("help");
+
+		
+		HashMap<String, Class<?>> props = new HashMap<String, Class<?>>();
+		props.put("channel", Integer.class);
+		props.put("preset", Integer.class);
+		progChange = new Command("Program Change", this, props, "set the Fluid preset instrument on the given channel");
+		instUp = new Command("Program Up", this, "Fluid instrument up, channel 0");
+		instDown = new Command("Program Down", this, "Fluid instrument down, channel 0");
+		
+		sendCommand("help");		
 		//	try { new FluidLadspa(this, window);
 		//	} catch (JudahException e) { log.error("FLUID LADSPA Failed.", e); }
 	}
@@ -113,8 +123,8 @@ public class FluidSynth implements Service {
 		console.write( (FluidCommand.CHANNELS.code + NL).getBytes() );
 		console.flush();
 		int count = 0;
-		while (listener.sysOverride != null && count++ < 20) {
-			Thread.sleep(30);
+		while (listener.sysOverride != null && count++ < 15) {
+			Thread.sleep(20);
 		}
 		if (listener.channels.isEmpty())
 			throw new JudahException("Error reading channels");
@@ -248,13 +258,35 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 			return null;
 		}
 	}
+	
+	public void instUp() {
+		int current = channels.getCurrentPreset(0);
+		int max = instruments.getMaxPreset(0);
+		if (current == max)
+			current = 0;
+		else
+			current++;
+		progChangeConsole(0, current);
+	}
+	
+	public void instDown() {
+		int current = channels.getCurrentPreset(0);
+		if (current == 0) 
+			current = instruments.getMaxPreset(0);
+		else
+			current--;
+		progChangeConsole(0, current);
+	}
+	
 	public int progChangeConsole(int channel, int preset) {
 		try {
 			String progChange = FluidCommand.PROG_CHANGE.code + channel + " " + preset;
 			sendCommand(progChange);
 			syncChannels();
 			int result = channels.getCurrentPreset(channel);
-			fluidWindow.addText(channels.get(channels.getCurrentPreset(0)).toString());
+			FluidInstrument f = instruments.get(result);
+			fluidWindow.addText(f);
+			log.info(f);
 			return result;
 		} catch (Throwable t) {
 			log.error(t.getMessage(), t);
@@ -433,14 +465,21 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 
 	@Override
 	public List<Command> getCommands() {
-
-		return Collections.emptyList();
+		return Arrays.asList(new Command[] {progChange, instUp, instDown});
 	}
 
 	@Override
 	public void execute(Command cmd, Properties props) throws Exception {
-		// TODO
-		throw new JudahException("not implemented yet.");
+		if (cmd == instDown)  
+			instDown();
+		else if (cmd == instUp) 
+			instUp();
+		else if (cmd == progChange) 
+			progChangeConsole(
+					Integer.parseInt(props.getProperty("channel")), 
+					Integer.parseInt(props.getProperty("preset")));
+		else 
+			throw new JudahException(cmd + " not implemented yet. " + Command.toString(props));
  	}
 
 	@Override

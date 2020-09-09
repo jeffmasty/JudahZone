@@ -1,5 +1,5 @@
 package net.judah.fluid;
-import static net.judah.Constants.*;
+import static net.judah.util.Constants.*;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -9,7 +9,7 @@ import javax.swing.JTextField;
 
 import org.apache.log4j.Logger;
 
-import net.judah.Tab;
+import net.judah.util.Tab;
 
 public class FluidUI extends Tab implements ActionListener {
 	private static final long serialVersionUID = -3350583314013716111L;

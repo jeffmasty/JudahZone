@@ -31,14 +31,15 @@ public class Midi extends ShortMessage {
 
 	@Override
 	public String toString() {
+		
         StringBuffer sb = new StringBuffer();
-
-        for (int j = 0; j < getLength(); j++) {
-            sb.append((j == 0) ? "" : ".");
-            sb.append(data[j] & 0xFF);
+        if (data == null || data.length == 0) return "";
+        sb.append( (data[0] - getChannel()) & 0xFF );
+        
+        for (int j = 1; j < getLength(); j++) {
+            sb.append(".").append(data[j] & 0xFF);
         }
-        sb.append(" (").append(getChannel()).append(")");
-        return sb.toString();
+        return sb.append("/").append(getChannel()).toString();
 	}
 
 	@Override
@@ -86,6 +87,11 @@ public class Midi extends ShortMessage {
 	
 	public static boolean isCC(ShortMessage msg) {
 		 return msg.getStatus() - msg.getChannel() == ShortMessage.CONTROL_CHANGE;
+	}
+	
+	public static boolean isNote(ShortMessage msg) {
+		int stat = msg.getStatus() - msg.getChannel();
+		return stat == Midi.NOTE_OFF || stat == NOTE_ON; 
 	}
 	
 }

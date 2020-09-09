@@ -3,7 +3,7 @@ package net.judah.settings;
 import java.util.List;
 import java.util.Properties;
 
-import net.judah.Tab;
+import net.judah.util.Tab;
 
 public interface Service {
 

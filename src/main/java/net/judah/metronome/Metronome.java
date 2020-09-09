@@ -1,5 +1,6 @@
 package net.judah.metronome;
-import static net.judah.Constants.Gui.*;
+
+import static net.judah.util.Constants.Gui.*;
 
 import java.awt.Color;
 import java.awt.event.ActionEvent;
@@ -34,15 +35,15 @@ import javax.swing.event.ChangeListener;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
-import net.judah.Constants;
 import net.judah.JudahZone;
-import net.judah.Tab;
 import net.judah.midi.JudahReceiver;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiClient;
 import net.judah.midi.MidiPlayer;
 import net.judah.settings.Command;
 import net.judah.settings.Service;
+import net.judah.util.Constants;
+import net.judah.util.Tab;
 
 @Log4j 
 public class Metronome extends JPanel implements Service, ActionListener, ChangeListener {

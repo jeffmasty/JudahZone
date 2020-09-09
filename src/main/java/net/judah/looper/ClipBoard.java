@@ -7,11 +7,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.RTLogger;
 import net.judah.jack.mixers.Merge;
 import net.judah.jack.mixers.SimpleMixer;
+import net.judah.util.RTLogger;
 
-@SuppressWarnings("serial") @RequiredArgsConstructor
+@RequiredArgsConstructor
 public class ClipBoard extends LinkedList<Recording> {
 
 	private final int channels;
