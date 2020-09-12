@@ -10,16 +10,16 @@ import lombok.Setter;
 
 @Data
 public class MixerPort {
-	public static enum Type {LEFT, RIGHT, MONO};
+	public static enum ChannelType {LEFT, RIGHT, MONO};
 	
 	@Data public static class PortDescriptor {
 		private final String name;
-		private final Type type;
+		private final ChannelType type;
 		private final float defaultGain;
 		private final JackPortType portType;
 		private final JackPortFlags portFlag;
 		
-		public PortDescriptor(String name, Type type, JackPortType portType, JackPortFlags portFlag) {
+		public PortDescriptor(String name, ChannelType type, JackPortType portType, JackPortFlags portFlag) {
 			this.name = name;
 			this.type = type;
 			this.defaultGain = 1f;
@@ -29,7 +29,7 @@ public class MixerPort {
 	}
 
 	private final String name;
-	private final Type type;
+	private final ChannelType type;
 
 	@Getter @Setter private JackPort port;
 
@@ -37,10 +37,6 @@ public class MixerPort {
 	@Getter @Setter private float gain = 1f;
 	@Getter @Setter private float pan = 0f;
 
-//	public MixerPort(String name) {
-//
-//	}
-	
 	public MixerPort(PortDescriptor meta, JackPort port) {
 		this.name = meta.getName();
 		this.type = meta.getType();
@@ -56,11 +52,11 @@ public class MixerPort {
 	}
 
 	public boolean isStereo() {
-		return Type.MONO != type;
+		return ChannelType.MONO != type;
 	}
 
 	public boolean isMono() {
-		return Type.MONO == type;
+		return ChannelType.MONO == type;
 	}
 
 	public String getPortname() {
@@ -68,7 +64,7 @@ public class MixerPort {
 		return port.getName();
 	}
 
-	public float getVolume(Type ch) {
+	public float getVolume(ChannelType ch) {
 		// TODO support stereo channels and adjust Volume to pan setting
 		return gain;
 	}

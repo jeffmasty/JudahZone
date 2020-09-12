@@ -14,8 +14,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.looper.old.LoopCommand;
-import net.judah.looper.old.Looper;
 import net.judah.midi.Midi;
 import net.judah.song.Link;
 import net.judah.song.Songlist;
@@ -88,8 +86,6 @@ public class JsonUtil {
 //		
 		
 		Link l = new Link();
-		l.setService(Looper.SERVICE_NAME);
-		l.setCommand(LoopCommand.RECORD.txt);
 		
 		HashMap<String, Object> props = new HashMap();
 		props.put("Loop", 1);

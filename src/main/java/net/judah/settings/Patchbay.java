@@ -4,7 +4,6 @@ import java.util.List;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import net.judah.looper.old.LoopSettings;
 import net.judah.mixer.MixerPort.PortDescriptor;
 
 /*													  (R/O)	
@@ -20,14 +19,12 @@ public class Patchbay {
 	
 	private final String clientName;
 	private final List<PortDescriptor> ports;
-	private final List<LoopSettings> loops;
 	private final List<Patch> connections;
 	
 	/** copy constructor TODO */
 	public Patchbay(Patchbay patchbay) {
 		this.clientName = patchbay.clientName;
 		this.ports = patchbay.ports;
-		this.loops = patchbay.loops;
 		this.connections = patchbay.connections;
 	}
 }

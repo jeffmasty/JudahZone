@@ -1,12 +1,11 @@
 package net.judah.looper;
 
-import static net.judah.looper.Loop.Mode.*;
-import static net.judah.mixer.MixerPort.Type.*;
+import static net.judah.jack.AudioMode.*;
+import static net.judah.mixer.MixerPort.ChannelType.*;
 import static net.judah.util.Constants.*;
 
 import java.nio.FloatBuffer;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -16,6 +15,7 @@ import org.jaudiolibs.jnajack.JackException;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
+import net.judah.jack.AudioMode;
 import net.judah.jack.AudioTools;
 import net.judah.mixer.MixerPort;
 import net.judah.util.Constants;
@@ -23,20 +23,21 @@ import net.judah.util.RTLogger;
 
 @Log4j
 public class Loop implements LoopInterface {
-    public static enum Mode {NEW, ARMED, STARTING, RUNNING, STOPPING, STOPPED};
+
     
 	@Getter private final String name;
+	private final List<MixerPort> inPorts;
+	private final List<MixerPort> outPorts;
 
 	private final int bufSize;
 	private final Memory memory;
-	private final List<MixerPort> inPorts;
-	private final List<MixerPort> outPorts;
  
-	protected Recording live, tape; // undo 
+	protected LiveRecording live;
+	protected Recording tape; // undo 
 
 	@Getter private AtomicInteger tapeCounter = new AtomicInteger();
-	@Getter protected AtomicReference<Mode> recording = new AtomicReference<>(NEW);
-	@Getter protected AtomicReference<Mode> playing = new AtomicReference<>(NEW);
+	protected AtomicReference<AudioMode> recording = new AtomicReference<>(NEW);
+	protected AtomicReference<AudioMode> playing = new AtomicReference<>(NEW);
 	
 	// for tape position counter
 	private int udpated;
@@ -81,11 +82,11 @@ public class Loop implements LoopInterface {
 	@Override
 	public void record(boolean active) {
 
-		Mode mode = recording.get();
+		AudioMode mode = recording.get();
 		log.warn(name + " recording: " + active + " from: " + mode);
 		
 		if (active && (live == null || mode == NEW)) {
-			live = new Recording();
+			live = new LiveRecording(); // threaded to accept live stream
 			recording.set(STARTING);
 			log.warn(name + " recording starting");
 		} else if (active && playing.get() == RUNNING) {
@@ -103,6 +104,7 @@ public class Loop implements LoopInterface {
 		}
 	}
 
+	/** sets the playing flag (actual start/stop happens in the Jack thread) */
 	@Override
 	public void play(boolean active) {
 		log.warn(name + " playing active: " + active);
@@ -117,18 +119,30 @@ public class Loop implements LoopInterface {
 			if (active) 
 				log.warn("playing starting. tape has " + tape.size() + " buffers.");
 		}
-		
 	}
-	private boolean hasRecording() {
+	public boolean hasRecording() {
 		return tape != null && !tape.isEmpty();
+	}
+
+	public void setRecording(Recording sample) {
+		if (live == null) live = new LiveRecording();
+		live.clear();
+		live.addAll(sample);
+		tape = new Recording(sample);
+		log.warn("Recording loaded");
+		playing.set(STOPPED);
+	}
+
+	public Recording getRecording() {
+		return tape;
 	}
 
 	@Override
 	public void clear() {
 		log.warn("clearing " + name);
-		recording.compareAndSet(Mode.RUNNING, Mode.STOPPING);
+		recording.compareAndSet(RUNNING, STOPPING);
 		boolean wasRunning = false;
-		if (playing.compareAndSet(Mode.RUNNING, Mode.STOPPING)) {
+		if (playing.compareAndSet(RUNNING, STOPPING)) {
 			wasRunning = true;
 		}
 		
@@ -145,25 +159,51 @@ public class Loop implements LoopInterface {
 		live = null;
 	}
 
-	@Override
-	public void channel(int ch, boolean active) {
-		// TODO Auto-generated method stub
+	@Override // TODO
+	public void channel(int ch, boolean active) {	}
+	
+	@Override // TODO 
+	public void undo() {	}
+
+	@Override // TODO 
+	public void redo() {	}
+
+	/** for process() thread */
+	private final boolean playing() {
+		playing.compareAndSet(STOPPING, STOPPED);
+		playing.compareAndSet(STARTING, RUNNING);
+		return playing.get() == RUNNING;
 	}
 	
-	@Override
-	public void undo() {
-		// TODO Auto-generated method stub
+	/** for process() thread */
+	private final boolean recording() {
+		recording.compareAndSet(STOPPING, STOPPED);
+		recording.compareAndSet(STARTING, RUNNING);
+		if (recording.get() == RUNNING)
+			for (MixerPort p : inPorts)
+				if (p.isOnLoop())
+					return true;
+		return false;
 	}
-
-	@Override
-	public void redo() {
-		// TODO Auto-generated method stub
-	}
-
-
-
+	
+	//	public void poll(HashSet<MixerPort> neededPorts) {
+	//	if (recording.get() != RUNNING)
+	//		return;
+	//	for (MixerPort p : inPorts)
+	//		if (p.isOnLoop())
+	//			neededPorts.add(p);
+	//}
+	//
+	//public boolean isRecording() {
+	//	if (recording.get() == RUNNING)
+	//		for (MixerPort p : inPorts)
+	//			if (p.isOnLoop())
+	//				return true;
+	//	return false;
+	//}
+	
 	////////////////////////////////////
-	//     Process Audio
+	//     Process Realtime Audio     //
 	////////////////////////////////////
 	public void process(int nframes) {
 		
@@ -222,41 +262,6 @@ public class Loop implements LoopInterface {
 		for (z = 0; z < nframes; z++) {
 			out.put(workArea[z] + in[z]);
 		}
-		
-	}
-	
-	/** for process() thread */
-	private boolean playing() {
-		playing.compareAndSet(STOPPING, STOPPED);
-		playing.compareAndSet(STARTING, RUNNING);
-		return playing.get() == RUNNING;
-	}
-	
-	/** for process() thread */
-	private boolean recording() {
-		recording.compareAndSet(STOPPING, STOPPED);
-		recording.compareAndSet(STARTING, RUNNING);
-		if (recording.get() == RUNNING)
-			for (MixerPort p : inPorts)
-				if (p.isOnLoop())
-					return true;
-		return false;
 	}
 
-	
-	public void poll(HashSet<MixerPort> neededPorts) {
-		if (recording.get() != RUNNING)
-			return;
-		for (MixerPort p : inPorts)
-			if (p.isOnLoop())
-				neededPorts.add(p);
-	}
-	
-	public boolean isRecording() {
-		if (recording.get() == RUNNING)
-			for (MixerPort p : inPorts)
-				if (p.isOnLoop())
-					return true;
-		return false;
-	}
 }

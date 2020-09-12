@@ -10,12 +10,15 @@ import javax.swing.event.CellEditorListener;
 import javax.swing.table.TableCellEditor;
 
 import lombok.extern.log4j.Log4j;
+import net.judah.settings.Command;
 import net.judah.song.CellDialog.CallBack;
 
 @Log4j
 public class PropertiesEditor extends JButton implements TableCellEditor, CallBack {
 
-	int row;
+	public static final int COMMAND_COLUMN = 1;
+	
+	int row, column;
 	JTable table;
 	HashMap<String, Object> props;
 	PropertiesTable editor;
@@ -65,20 +68,28 @@ public class PropertiesEditor extends JButton implements TableCellEditor, CallBa
 	public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
 		props = (HashMap)value;
 		this.row = row;
+		this.column = column;
 		this.table = table;
 		return this;
 	}
 
 	private void openEditor() {
-		editor = new PropertiesTable(props);
-		dialog = new CellDialog(editor, null);
+		Object o = table.getModel().getValueAt(row, COMMAND_COLUMN);
+		if (o == null) 
+			editor = new PropertiesTable(props);
+		else {
+			Command cmd = (Command)table.getModel().getValueAt(row, COMMAND_COLUMN);
+			editor = new PropertiesTable(props, cmd.getProps());
+		}
+		dialog = new CellDialog(editor, this);
 	}
 
 	@Override
 	public void callback(boolean ok) {
 		if (!ok) return;
-		props.clear();
-		props.putAll(editor.getMap());
+		table.getModel().setValueAt(editor.getMap(), row, column);
+		log.info("Callback + " + Command.toString(editor.getMap()));
+		
 	}
 	
 }

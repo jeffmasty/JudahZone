@@ -22,7 +22,7 @@ public class CellDialog extends JDialog {
 	CallBack callback;
 	
 	public CellDialog(JComponent content, CallBack callback) {
-		super(JudahZone.getFrame());
+		super(JudahZone.getFrame(), true);
 		setLayout(new BorderLayout());
 		this.callback = callback;
 		add(content, BorderLayout.CENTER);

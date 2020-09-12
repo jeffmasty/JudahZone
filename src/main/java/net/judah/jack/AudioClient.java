@@ -74,8 +74,6 @@ public abstract class AudioClient extends BasicClient {
 
 	@Override
 	protected void initialize() throws JackException {
-        buffersize = jackclient.getBufferSize();
-        samplerate = jackclient.getSampleRate();
         if (config == null) return; // roll your own ports
 
         int count = config.getAudioInputNames().length;

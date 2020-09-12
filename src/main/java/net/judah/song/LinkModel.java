@@ -9,11 +9,17 @@ import javax.swing.table.DefaultTableModel;
 import net.judah.CommandHandler;
 import net.judah.midi.Midi;
 import net.judah.settings.Command;
+import net.judah.util.JudahException;
 
 public class LinkModel extends DefaultTableModel {
 	
-	public static final String SPLIT = ">";
-	
+	public LinkModel(List<Link> links) {
+		super (new Object[] { "Name", "Command", "Midi", "Param"}, 0);
+		if (links == null) return;
+		for (Link link : links)
+			addRow(link);
+	}
+
 	@Override
 	public Class<?> getColumnClass(int idx) {
 		switch (idx) {
@@ -24,20 +30,13 @@ public class LinkModel extends DefaultTableModel {
 		}
 		return super.getColumnClass(idx);
 	}
-	
-	public LinkModel(List<Link> links) {
-		super (new Object[] { "Name", "Command", "Midi", "Param"}, 0);
-		if (links == null) return;
-		for (Link link : links)
-			addRow(link);
-	}
 
 	public void addRow(Link link) {
 		addRow(new Object[] { link.getName(), CommandHandler.find(link.getService(), link.getCommand()), 
         		new Midi(link.getMidi()), link.getProps()});
 	}
 
-	public ArrayList<Link> getData() {
+	public ArrayList<Link> getData() throws JudahException {
 		ArrayList<Link> result = new ArrayList<Link>();
 		for (int i = 0; i < getRowCount(); i++)
 			result.add(getRow(i));
@@ -45,9 +44,9 @@ public class LinkModel extends DefaultTableModel {
 	}
 
 	@SuppressWarnings( { "rawtypes", "unchecked" })
-	public Link getRow(int i) {
+	public Link getRow(int i) throws JudahException {
 		Command cmd = ((Command)getValueAt(i,1));
-		if (cmd == null) throw new NullPointerException("no command for midi link");
+		if (cmd == null) throw new JudahException("no command for midi link");
 		Link link = new Link(getValueAt(i, 0).toString(), cmd.getService().getServiceName(), cmd.getName(),
 				((Midi)getValueAt(i, 2)).getMessage(), (HashMap)getValueAt(i, 3));
 		return link;

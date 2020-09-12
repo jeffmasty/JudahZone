@@ -6,8 +6,8 @@ import static org.jaudiolibs.jnajack.JackPortType.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.sound.midi.MidiMessage;
@@ -41,7 +41,9 @@ public class MidiClient extends BasicClient implements Service {
 	public static final ClientConfig DEFAULT_CONFIG = new ClientConfig("JudahMidi", new String[0], new String[0],
 			new String[] {"keyboard", "pedal", "midiIn"},
 			new String[] {"synth", "effects", "midiOut"});
-
+	
+	@Getter private static MidiClient instance;
+	
 	private final ClientConfig config;
 	private final CommandHandler commander;
 
@@ -75,15 +77,16 @@ public class MidiClient extends BasicClient implements Service {
 		super(config.getName());
 		this.config = config;
 		this.commander = commander;
+		instance = this;
 		start();
 	}
 
 	// Service interface
 	@Override public List<Command> getCommands() { return Collections.emptyList(); }
-	@Override public void execute(Command cmd, Properties props) throws Exception { }
+	@Override public void execute(Command cmd, HashMap<String, Object> props) throws Exception { }
 	@Override public Tab getGui() { return null; }
 	
-	// Jack Midi interface
+
 	@Override
 	protected void initialize() throws JackException {
         for (String in : config.getMidiInputNames()) {
@@ -100,8 +103,8 @@ public class MidiClient extends BasicClient implements Service {
         if (outPorts.size() > 1) effects = outPorts.get(1);
         if (outPorts.size() > 2) midiOut = outPorts.get(2);
         
-//		jackclient.setTimebaseCallback(metro, false);
-//		jackclient.setSyncCallback(metro);
+		//	jackclient.setTimebaseCallback(metro, false);
+		//	jackclient.setSyncCallback(metro);
 	}
 
 	@Override

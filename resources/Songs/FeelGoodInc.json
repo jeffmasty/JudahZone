@@ -1,0 +1,62 @@
+{
+  "props" : {
+    "todo" : "prog change for instruments init drums",
+    "clicktrack.bars" : "5",
+    "loop.bars" : "4",
+    "bpb" : 4,
+    "clicktrack.intro" : "1",
+    "setup" : "Octave down for bass",
+    "services" : "Carla, Fluid, Master, Slave",
+    "clicktrack" : "",
+    "inspiration" : "https://www.youtube.com/watch?v=FC2g_XEi6wg",
+    "bpm" : "100"
+  },
+  "links" : [ {
+    "name" : "prog pad 3",
+    "service" : "FluidSynth",
+    "command" : "Program Up",
+    "midi" : "yQQ=",
+    "props" : { }
+  }, {
+    "name" : "prog pad 7",
+    "service" : "FluidSynth",
+    "command" : "Program Down",
+    "midi" : "yQg=",
+    "props" : { }
+  } ],
+  "sequencer" : [ {
+    "type" : "ABSOLUTE",
+    "timestamp" : -1,
+    "duration" : null,
+    "service" : "FluidSynth",
+    "command" : "Program Change",
+    "notes" : "38 = Synth Bass 1 (or 81, saw wave)",
+    "params" : {
+      "channel" : "0",
+      "preset" : "38"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : -1,
+    "duration" : null,
+    "service" : "Metronome",
+    "command" : "Clicktrack",
+    "notes" : "",
+    "params" : {
+      "file" : null,
+      "intro.bars" : "1",
+      "duration.bars" : "5"
+      }
+    }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 0,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "record loop",
+    "notes" : "",
+    "params" : {
+      "Loop" : "0",
+      "Active" : "true"
+    }
+  } ]
+}

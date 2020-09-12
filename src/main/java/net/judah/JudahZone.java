@@ -13,13 +13,12 @@ import javax.swing.UnsupportedLookAndFeelException;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.fluid.FluidSynth;
-import net.judah.jack.JackUI;
+import net.judah.jack.JackTab;
 import net.judah.midi.MidiClient;
 import net.judah.mixer.Mixer;
 import net.judah.plugin.Carla;
 import net.judah.settings.Service;
 import net.judah.settings.Services;
-import net.judah.settings.Settings;
 import net.judah.song.SonglistTab;
 import net.judah.util.MenuBar;
 import net.judah.util.RTLogger;
@@ -39,17 +38,16 @@ public class JudahZone {
     public static final String JUDAHZONE = JudahZone.class.getSimpleName();
 
     // TODO
-    public static final File defaultSetlist = new File("/home/judah/list1.songs"); 
-    public static final File defaultFolder = new File("/home/judah/JudahZone"); 
+    public static final File defaultSetlist = new File("/home/judah/git/JudahZone/resources/Songs/list1.songs"); 
+    public static final File defaultFolder = new File("/home/judah/git/JudahZone/resources/Songs/"); 
     
     
 	@Getter private static JFrame frame;
 	private static JTabbedPane tabbedPane;
 	private static ArrayList<Tab> tabs = new ArrayList<>();
 	
-	@Getter private static final Services services = new Services();
-	// private final Settings settings;
-	private final CommandHandler commander;
+	private final Services services = new Services();
+	private final CommandHandler commander = new CommandHandler();
 	private final Carla effects;
 	private final FluidSynth fluid; 
 	private final Mixer mixer;
@@ -57,12 +55,8 @@ public class JudahZone {
 	
     public static void main(String[] args) {
 
-    	if ("true".equals(processArgs("--noJack", args))) 
-    		noJack = true;
-
-    	Settings settings = processArgs(args);
 		try {
-			new JudahZone(settings);
+			new JudahZone();
 			while (true) {
 				RTLogger.poll();
 			}
@@ -71,11 +65,8 @@ public class JudahZone {
         }
     }
 
-	private JudahZone(Settings settings) throws Throwable {
-    	// this.settings = settings;
+	private JudahZone() throws Throwable {
     	Runtime.getRuntime().addShutdownHook(new ShutdownHook());
-
-    	commander = new CommandHandler();
 
     	midi = new MidiClient(commander);
     	services.add(midi);
@@ -83,7 +74,7 @@ public class JudahZone {
     	fluid = new FluidSynth(midi);
     	services.add(fluid);
     	
-		mixer = new Mixer(services, Settings.DEFAULT_SETTINGS.getPatchbay());
+		mixer = new Mixer();
 		services.add(mixer);
 		
     	effects = new Carla(); 
@@ -91,12 +82,12 @@ public class JudahZone {
     	
     	commander.initializeCommands();
     	
-    	Thread.sleep(800);
+    	Thread.sleep(750);
 
     	tabs.add(new SonglistTab(defaultSetlist));
     	
 		tabs.add(mixer.getGui());
-		tabs.add(new JackUI());
+		tabs.add(new JackTab());
     	tabs.add(fluid.getGui());
         startUI();
 	}
@@ -135,23 +126,10 @@ public class JudahZone {
 
         //Display the window.
         content.add(tabbedPane);
-        frame.setLocation(70, 70);
-        frame.setSize(340, 445);
+        frame.setLocation(50, 50);
+        frame.setSize(800, 550);
         frame.setVisible(true);
     }
-
-    static String processArgs(String string, String[] args) {
-    	if (args == null) return null;
-    	for (int i = 0; i < args.length; i++)
-    		if (args[i].equals(string) && i + 1 < args.length)
-    				return args[++i];
-		return null;
-	}
-
-    private static Settings processArgs(String[] args) {
-    	// TODO
-		return Settings.DEFAULT_SETTINGS;
-	}
 
 	public static void openTab(Tab tab) {
     	tabbedPane.insertTab(tab.getTabName(), null, tab, null, tabbedPane.getTabCount());

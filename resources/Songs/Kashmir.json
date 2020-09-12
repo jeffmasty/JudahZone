@@ -1,0 +1,16 @@
+{
+  "props" : {
+    "Led Zeppelin" : "cool"
+  },
+  "links" : [ {
+    "name" : "",
+    "service" : "FluidSynth",
+    "command" : "Program Change",
+    "midi" : "uSRs",
+    "props" : {
+      "channel" : "8",
+      "preset" : null
+    }
+  } ],
+  "sequencer" : [ ]
+}

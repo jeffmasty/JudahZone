@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NonNull;
 import net.judah.looper.Loop;
-import net.judah.mixer.instrument.InstType;
+import net.judah.mixer.Widget.Type;
 import net.judah.mixer.widget.VolumeWidget;
 
 @Data @AllArgsConstructor 
@@ -44,7 +44,7 @@ public final class Channel {
 	
 	public Channel(Loop loop) {
 		name = loop.getName();
-		instrument = new Instrument(name, InstType.Looper, null, null);
+		instrument = new Instrument(name, Type.LOOPER, null, null);
 		carlaIndex = null;
 	}
 

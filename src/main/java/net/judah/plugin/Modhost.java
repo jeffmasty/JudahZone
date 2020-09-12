@@ -5,8 +5,8 @@ import static net.judah.util.Constants.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
 
 import lombok.extern.log4j.Log4j;
 import net.judah.settings.Command;
@@ -70,7 +70,7 @@ public class Modhost implements Service {
 	}
 
 	@Override
-	public void execute(Command cmd, Properties props) throws Exception {
+	public void execute(Command cmd, HashMap<String, Object> props) throws Exception {
 		
 	}
 

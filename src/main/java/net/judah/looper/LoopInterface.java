@@ -1,5 +1,6 @@
 package net.judah.looper;
 
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -22,5 +23,7 @@ public interface LoopInterface {
 		CHANNEL("record channel");
 		@Getter private final String label;
 	}
-	
+
+//    public static enum Mode {NEW, ARMED, STARTING, RUNNING, STOPPING, STOPPED};
+
 }

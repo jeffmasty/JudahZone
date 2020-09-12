@@ -73,6 +73,17 @@ public class SonglistTab extends Tab implements ListSelectionListener {
 		
 		buttonsPanel();
 		
+		// TODO auto load default settings
+		if (model != null && !model.isEmpty() && model.get(0) != null &&
+				model.get(0).getName().startsWith("default"))
+			new Thread() {
+			@Override public void run() {
+				try {Thread.sleep(400);} catch (Exception e) { }
+				openSong(0);};
+		}.start();
+			
+
+		
 	}
 
 	private void filePanel() {
@@ -164,13 +175,13 @@ public class SonglistTab extends Tab implements ListSelectionListener {
 		
 		File file = FileChooser.choose();
 		if (file == null) return;
-		if (model.getSelectedItem() == null)
-			model.addElement(file);
-		else
-			model.insertElementAt(file, model.getIndexOf(model.getSelectedItem()));
 		Song song = new Song();
 		try {
 			JsonUtil.saveString(JsonUtil.MAPPER.writeValueAsString(song), file);
+			if (jsongs.getSelectedIndex() < 0)
+				model.addElement(file);
+			else
+				model.insertElementAt(file, jsongs.getSelectedIndex() + 1);
 			JudahZone.openTab(new SongTab(song, file));
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
@@ -185,10 +196,10 @@ public class SonglistTab extends Tab implements ListSelectionListener {
 
 		try { // to validate file
 			JsonUtil.readJson(file, Song.class);
-			if (model.getSelectedItem() == null)
+			if (jsongs.getSelectedIndex() < 0)
 				model.addElement(file);
 			else
-				model.insertElementAt(file, model.getIndexOf(model.getSelectedItem()));
+				model.insertElementAt(file, jsongs.getSelectedIndex() + 1);
 		} catch (IOException e) {
 			log.error(e.getMessage() + " - " + file.getAbsolutePath());
 			Constants.infoBox(file.getAbsolutePath() + ": " + e.getMessage(), "Error");
@@ -272,11 +283,11 @@ public class SonglistTab extends Tab implements ListSelectionListener {
 		}
 	}
 	
-	void openSong(int selectedIndex) {
-		if (selectedIndex < 0 || selectedIndex >= model.getSize())
+	void openSong(int index) {
+		if (index < 0 || index >= model.getSize())
 			return;
 		
-		File file = model.getElementAt(selectedIndex);
+		File file = model.getElementAt(index);
 		try {
 			Song song = (Song)JsonUtil.readJson(file, Song.class);
 			JudahZone.openTab(new SongTab(song, file));

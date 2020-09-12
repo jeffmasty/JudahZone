@@ -1,0 +1,166 @@
+{
+  "props" : { },
+  "links" : [ {
+    "name" : "start metronome",
+    "service" : "Metronome",
+    "command" : "tick",
+    "midi" : "sGV/",
+    "props" : { }
+  }, {
+    "name" : "stop metronome",
+    "service" : "Metronome",
+    "command" : "tock",
+    "midi" : "sGUA",
+    "props" : { }
+  }, {
+    "name" : "clear loops",
+    "service" : "Mixer",
+    "command" : "clear looper",
+    "midi" : "sGIA",
+    "props" : { }
+  }, {
+    "name" : "Prog Pad 3",
+    "service" : "FluidSynth",
+    "command" : "Program Up",
+    "midi" : "yQQ=",
+    "props" : { }
+  }, {
+    "name" : "Prog Pad 7",
+    "service" : "FluidSynth",
+    "command" : "Program Down",
+    "midi" : "yQg=",
+    "props" : { }
+  }, {
+    "name" : "Finale CC2 stop all loops",
+    "service" : "Mixer",
+    "command" : "play loop",
+    "midi" : "uSEA",
+    "props" : {
+      "Loop" : "-1",
+      "Active" : "0",
+      "Channel" : null
+    }
+  }, {
+    "name" : "Master Record",
+    "service" : "Mixer",
+    "command" : "record loop",
+    "midi" : "sGB/",
+    "props" : {
+      "Loop" : "0",
+      "Active" : "true"
+    }
+  }, {
+    "name" : "Master Stop Record",
+    "service" : "Mixer",
+    "command" : "record loop",
+    "midi" : "sGAA",
+    "props" : {
+      "Loop" : "0",
+      "Active" : "false"
+    }
+  }, {
+    "name" : "Master Play",
+    "service" : "Mixer",
+    "command" : "play loop",
+    "midi" : "sGN/",
+    "props" : {
+      "Loop" : "0",
+      "Active" : "true"
+    }
+  }, {
+    "name" : "Master Stop",
+    "service" : "Mixer",
+    "command" : "play loop",
+    "midi" : "sGMA",
+    "props" : {
+      "Loop" : "0",
+      "Active" : "false"
+    }
+  }, {
+    "name" : "Loop2 Record",
+    "service" : "Mixer",
+    "command" : "record loop",
+    "midi" : "sGF/",
+    "props" : {
+      "Loop" : "1",
+      "Active" : "true"
+    }
+  }, {
+    "name" : "Loop2 Stop Record",
+    "service" : "Mixer",
+    "command" : "record loop",
+    "midi" : "sGEA",
+    "props" : {
+      "Loop" : "1",
+      "Active" : "false"
+    }
+  }, {
+    "name" : "Loop2 Play",
+    "service" : "Mixer",
+    "command" : "play loop",
+    "midi" : "sGR/",
+    "props" : {
+      "Loop" : "1",
+      "Active" : "true"
+    }
+  }, {
+    "name" : "Loop2 Stop",
+    "service" : "Mixer",
+    "command" : "play loop",
+    "midi" : "sGQA",
+    "props" : {
+      "Loop" : "1",
+      "Active" : "false"
+    }
+  }, {
+    "name" : "Knob 0",
+    "service" : "Metronome",
+    "command" : "Metro volume",
+    "midi" : "sA4A",
+    "props" : {
+      "Loop" : null,
+      "volume" : null,
+      "Active" : null
+    }
+  }, {
+    "name" : "Knob 1",
+    "service" : "Metronome",
+    "command" : "Metro tempo",
+    "midi" : "sA8A",
+    "props" : {
+      "bpm" : null
+    }
+  }, {
+    "name" : "Knob 2",
+    "service" : "Mixer",
+    "command" : "Mixer Gain",
+    "midi" : "sBA3",
+    "props" : {
+      "isInput" : "false",
+      "Index" : "0",
+      "Gain" : null
+    }
+  }, {
+    "name" : "Knob 3",
+    "service" : "Mixer",
+    "command" : "Mixer Gain",
+    "midi" : "sBEA",
+    "props" : {
+      "isInput" : "false",
+      "Index" : "1",
+      "Gain" : null
+    }
+  } ],
+  "sequencer" : [ {
+    "type" : "ABSOLUTE",
+    "timestamp" : -1,
+    "duration" : null,
+    "service" : "FluidSynth",
+    "command" : "Program Change",
+    "notes" : "Church Organ",
+    "params" : {
+      "channel" : "0",
+      "preset" : "19"
+    }
+  } ]
+}

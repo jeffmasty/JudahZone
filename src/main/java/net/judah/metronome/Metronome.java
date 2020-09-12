@@ -11,7 +11,6 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -35,12 +34,12 @@ import javax.swing.event.ChangeListener;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
-import net.judah.JudahZone;
 import net.judah.midi.JudahReceiver;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiClient;
 import net.judah.midi.MidiPlayer;
 import net.judah.settings.Command;
+import net.judah.settings.DynamicCommand;
 import net.judah.settings.Service;
 import net.judah.util.Constants;
 import net.judah.util.Tab;
@@ -50,12 +49,11 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 	
 	@Getter private final String serviceName = Metronome.class.getSimpleName();
 	@Getter private final ArrayList<Command> commands = new ArrayList<>();
-	@Getter private final Command start, stop, settings;
+	@Getter private final Command start, stop, settings, tempoCmd, volumeCmd, clicktrack;
 
 	/** if null, generate midi notes ourself */
-    public static final File midiFile = new File(
-    		JudahZone.class.getClassLoader().getResource("metronome/Rock1.mid").getFile());
-	// private File midiFile = new File("/home/judah/git/JudahZone/resources/metronome/Latin16.mid");
+    //public static final File midiFile = new File(JudahZone.class.getClassLoader().getResource("metronome/Rock1.mid").getFile());
+	private File midiFile = new File("/home/judah/git/JudahZone/resources/metronome/Latin16.mid");
 	private int measure = 4;
 	private float tempo = 100f;
 	private float gain = 1f;
@@ -123,8 +121,6 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 	    	}
 		}
 
-
-		
 		public boolean isRunning() {
 			return beeperHandle != null;
 		}
@@ -174,10 +170,30 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 
 		HashMap<String, Class<?>> params = new HashMap<String, Class<?>>();
 		params.put("bpm", Float.class);
+		tempoCmd = new DynamicCommand("Metro tempo", this, params, "Tempo of metronome") {
+			@Override public void processMidi(int data2, HashMap<String, Object> props) {
+				props.put("bpm", (data2 + 40) * 1.1f); }};
+
+		params = new HashMap<String, Class<?>>();
+		params.put("volume", Float.class);
+		volumeCmd = new DynamicCommand("Metro volume", this, params, "Volume of metronome") {
+			@Override public void processMidi(int data2, java.util.HashMap<String,Object> props) {
+				props.put("volume", ((data2 - 1))* 0.01f); }};
+
+		// todo remove gui command?
+		params = new HashMap<String, Class<?>>();
+		params.put("bpm", Float.class);
 		params.put("bpb", Integer.class);
 		params.put("volume", Float.class);
 		settings = new Command("Metronome settings", this, params, "Adjust metronome settings.");
-		commands.addAll(Arrays.asList(new Command[] {start, stop, settings}));
+		
+		params = new HashMap<String, Class<?>>();
+		params.put("intro.bars", Integer.class);
+		params.put("duration.bars", Integer.class);
+		params.put("file", String.class);
+		clicktrack = new Command("Clicktrack", this, params, "start a clicktrack");
+		
+		commands.addAll(Arrays.asList(new Command[] {start, stop, settings, tempoCmd, volumeCmd, clicktrack}));
 
 		createGui();
 	}
@@ -266,12 +282,12 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 	public void stateChanged(ChangeEvent e) {
 		try {
 			if (e.getSource() == volume) {
-				Properties p = makeProps();
+				HashMap<String, Object> p = makeProps();
 				p.put("volume", volume.getValue() / 100f);
 				execute(settings, p);
 			}
 			if (e.getSource() == bpm) {
-				Properties p = makeProps();
+				HashMap<String, Object> p = makeProps();
 				p.put("bpm", bpm.getValue() * 1f);
 				execute(settings, p);
 			}
@@ -314,8 +330,8 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 		}
 	}
 
-	private Properties makeProps() {
-		Properties p = new Properties();
+	private HashMap<String, Object> makeProps() {
+		HashMap<String, Object> p = new HashMap<String, Object>();
 		p.put("bpm", tempo);
 		p.put("bpb", measure);
 		p.put("volume", gain);
@@ -323,10 +339,9 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 	}
 	
 	@Override
-	public void execute(Command cmd, Properties props) throws Exception {
+	public void execute(Command cmd, HashMap<String, Object> props) throws Exception {
 
 		if (cmd.equals(start)) {
-			MidiClient midi = JudahZone.getServices().getMidiClient();
 			if (ticktock != null) {
 				ticktock.stop();
 			}
@@ -335,11 +350,11 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 			}
 			
 			if (midiFile == null) {
-				ticktock = new TickTock(midi);
+				ticktock = new TickTock(MidiClient.getInstance());
 				ticktock.start();
 			}
 			else {
-				receiver = new JudahReceiver(midi);
+				receiver = new JudahReceiver(MidiClient.getInstance());
 				playa = new MidiPlayer(midiFile, tempo, MidiPlayer.LOOP, receiver);
 				playa.start();
 			}
@@ -361,12 +376,17 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 			stopBtn.setSelected(true);
 		}
 
-		if (cmd.equals(settings)) {
+		if (cmd.equals(settings)) 
+			settings(props);
+		if (cmd.equals(tempoCmd))
+			settings(props);
+		if (cmd.equals(volumeCmd)) {
 			settings(props);
 		}
+		
 	}
 
-	public void settings(Properties props) {
+	public void settings(HashMap<String, Object> props) {
 		Object param = null;
 		try {
 			param = props.get("bpm");
@@ -394,7 +414,6 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 		} catch (Throwable t) {	}
 		
 		update();
-		log.debug("Settings: bpm " + tempo + " bpb " + measure + " volume " + gain + " running: " + isRunning());
 		if (isRunning()) {
 			changed.set(true);
 		}

@@ -16,6 +16,7 @@ import org.jaudiolibs.jnajack.JackShutdownCallback;
 import org.jaudiolibs.jnajack.JackStatus;
 import org.jaudiolibs.jnajack.JackXrunCallback;
 
+import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.util.Constants;
 
@@ -31,8 +32,8 @@ public abstract class BasicClient extends Thread implements JackXrunCallback, Ja
     protected JackClient jackclient;
     protected AtomicReference<Status> state = new AtomicReference<>(NEW);
     protected final String clientName;
-	protected int buffersize;
-	protected int samplerate;
+    @Getter private int buffersize;
+	@Getter private int samplerate;
     
     public BasicClient(String name) throws JackException {
     	clientName = name;
@@ -57,6 +58,8 @@ public abstract class BasicClient extends Thread implements JackXrunCallback, Ja
         }
         try {
         	jackclient = jack.openClient(clientName, OPTIONS, STATUS);
+        	samplerate = jackclient.getSampleRate();
+        	buffersize = jackclient.getBufferSize();
             initialize();
 	        if (state.compareAndSet(INITIALISING, ACTIVE)) {
 	        		jackclient.setXrunCallback(this);
@@ -96,7 +99,6 @@ public abstract class BasicClient extends Thread implements JackXrunCallback, Ja
     	close();
     }
 
-
 	@Override
 	public final void xrunOccured(JackClient client) {
 
@@ -119,14 +121,10 @@ public abstract class BasicClient extends Thread implements JackXrunCallback, Ja
 		return "size: " + total + Constants.NL + result;
 	}
 
-	/** Jack Client created but not started */
+	/** Jack Client created but not started. Register ports. */
 	protected abstract void initialize() throws JackException;
 	/** Jack Client has been started */
 	protected abstract void makeConnections() throws JackException;
-
-//	public String getServiceName() {
-//		return clientName;
-//	}
 
 
 }

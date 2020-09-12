@@ -3,9 +3,9 @@ package net.judah.song;
 import java.io.File;
 import java.util.ArrayList;
 
-import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListModel;
 
-class SonglistModel extends DefaultComboBoxModel<File> {
+class SonglistModel extends DefaultListModel<File> {
 		
 		SonglistModel(ArrayList<String> files) {
 			for (String s : files) {
@@ -13,8 +13,6 @@ class SonglistModel extends DefaultComboBoxModel<File> {
 			}
 		}
 	
-		
-		
 		public ArrayList<String> getAll() {
 			ArrayList<String> result = new ArrayList<String>();
 			for (int i = 0; i < getSize(); i++) {
@@ -22,6 +20,5 @@ class SonglistModel extends DefaultComboBoxModel<File> {
 			}
 			return result;
 		}
-		
 		
 	}

@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
 
 import com.illposed.osc.OSCMessage;
 import com.illposed.osc.OSCSerializeException;
@@ -139,7 +139,7 @@ public class Carla implements Service {
 	}
 
 	@Override
-	public void execute(Command cmd, Properties props) throws Exception {
+	public void execute(Command cmd, HashMap<String, Object> props) throws Exception {
 		// TODO Auto-generated method stub
 		
 	}

@@ -1,29 +1,16 @@
 TODO:
 
-Setlist
-
-
-Song  (default song)
-setup notes
-patch setup (services like carla/fluid/drums)
-command mappings
-triggers
-teardown notes
-
-
-Sampler (save and play loops)
-MidiMapper
-MultiLoop + Sync, Undo/Redo
-Midi to Rakarrack
+midi router, fix props table
 TimeClock
-Plugins, ttl see https://github.com/PedalController/Lv2Library/blob/master/src/br/com/srmourasilva/lv2library/Lv2Mapper.java
-saving .wav files (see http://www.softsynth.com/jsyn/developers/download.php)
-upload jna-jack patch
+MultiLoop + Sync, Undo/Redo
 
+patch setup (services like carla/fluid/drums)
 Services - Settings - Loop Settings
 Commands, command scripts
-
-
+Midi to Rakarrack
+Plugins, ttl 
+upload jna-jack patch
+arpegiator
 Song / Scene (i.e., 1 bar drum setups)
 Effects and knobs
 Drums and pads 
@@ -37,7 +24,6 @@ Drum pads
 Save settings
 Pad/knob server
 Guesstimator
-Midi learn
 Direct midi translate.
 Other synth.
 
@@ -71,3 +57,11 @@ https://github.com/PedalController/Lv2Library/blob/master/src/br/com/srmourasilv
 Done:
 Recompile Carla (done, modified modules/rtaudio.cpp)
 Channel concept, mixer gain
+MidiMapper
+Setlist and Song  (default song)
+setup and teardown notes
+command mappings
+triggers
+save loops to disk and play samples (see http://www.softsynth.com/jsyn/developers/download.php)
+Sampler (save and play loops)
+

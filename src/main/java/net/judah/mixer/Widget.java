@@ -6,7 +6,9 @@ import lombok.Data;
 
 @Data
 public abstract class Widget {
-	public enum Type {SYS, SYNTH, CARLA, MODHOST, MASTER, LOOP}
+	public enum Type {
+		SYS, SYNTH, CARLA, MODHOST, LOOPER, OTHER
+	}
 	
 //	final protected String[] inPorts;
 //	final protected String[] outPorts;

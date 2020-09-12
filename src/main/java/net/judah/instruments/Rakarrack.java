@@ -3,8 +3,8 @@ package net.judah.instruments;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
 
 import net.judah.JudahZone;
 import net.judah.settings.Command;
@@ -51,7 +51,7 @@ public class Rakarrack implements Service {
 
 
 	@Override
-	public void execute(Command cmd, Properties props) throws Exception {
+	public void execute(Command cmd, HashMap<String, Object> props) throws Exception {
 		// TODO Auto-generated method stub
 
 	}

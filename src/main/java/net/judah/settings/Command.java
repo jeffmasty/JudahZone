@@ -2,8 +2,7 @@ package net.judah.settings;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.Map.Entry;
-import java.util.Properties;
+import java.util.Map;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -86,12 +85,16 @@ public class Command implements Serializable {
 		// return "Command [name=" + name + ", service=" + service.getServiceName() + " " + props.values().size() + " properties.";
 	}
 
-	public static String toString(Properties props) {
+	@SuppressWarnings("rawtypes")
+	public static String toString(HashMap props) {
 		String result = " Properties:";
 		if (props == null || props.isEmpty()) {
 			return result + " none";
 		}
-		for (Entry<Object, Object> entry : props.entrySet()) {
+		
+		
+		for (Object o : props.entrySet()) {
+			Map.Entry entry = (Map.Entry)o;
 			result += " " + entry.getKey() + ":" + entry.getValue();
 		}
 		return result;

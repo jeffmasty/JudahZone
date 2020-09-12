@@ -1,7 +1,7 @@
 package net.judah.mixer.widget;
 
-import net.judah.JudahZone;
 import net.judah.fluid.FluidSynth;
+import net.judah.settings.Services;
 
 public class FluidVolume extends VolumeWidget {
 
@@ -15,7 +15,7 @@ public class FluidVolume extends VolumeWidget {
 	}
 
 	private FluidSynth getFluid() {
-		return (FluidSynth)JudahZone.getServices().byClass(FluidSynth.class);
+		return (FluidSynth)Services.byClass(FluidSynth.class);
 	}
 	
 }

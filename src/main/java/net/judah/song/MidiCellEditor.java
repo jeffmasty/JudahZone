@@ -1,5 +1,6 @@
 package net.judah.song;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.util.EventObject;
@@ -18,6 +19,7 @@ import net.judah.CommandHandler;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiListener;
 import net.judah.song.CellDialog.CallBack;
+import net.judah.util.Constants;
 
 @Log4j
 public class MidiCellEditor extends JLabel implements TableCellEditor, MidiListener, CallBack {
@@ -72,8 +74,17 @@ public class MidiCellEditor extends JLabel implements TableCellEditor, MidiListe
 		this.row = row;
 		this.column = column;
 		setText(midi.toString());
+		if (isSelected) {
+			setBorder(Constants.Gui.GRAY1);
+		    setForeground(Color.BLACK);
+		} else {
+			setBorder(null);
+		    setForeground(Color.GRAY);
+		}
 		openEditor();
 		return this;
+		
+		
 	}
 
 	private void openEditor() {

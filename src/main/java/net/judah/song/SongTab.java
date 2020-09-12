@@ -16,6 +16,8 @@ import lombok.NonNull;
 import lombok.extern.log4j.Log4j;
 import net.judah.CommandHandler;
 import net.judah.JudahZone;
+import net.judah.settings.Command;
+import net.judah.settings.Services;
 import net.judah.util.Constants;
 import net.judah.util.JsonUtil;
 import net.judah.util.Tab;
@@ -31,7 +33,7 @@ public class SongTab extends Tab {
 
 	private final PropertiesTable properties;
 	private final LinkTable links;
-	// private final Sequencer sequencer = new Sequencer();
+	private final TriggersTable triggers;
 	
 	public SongTab(@NonNull Song song, @NonNull File file) {
 		super(true);
@@ -41,10 +43,12 @@ public class SongTab extends Tab {
 		setLayout(new BorderLayout());
 		properties = new PropertiesTable(song.getProps()); 
 		links = new LinkTable(song.getLinks());
-		
-		tabbedPane.addTab("Midi Links", links);
+		triggers = new TriggersTable(song.getSequencer());
+		SequencerControl sequencer = new SequencerControl();
+		tabbedPane.addTab("Midi Map", links);
+		tabbedPane.addTab("Triggers", triggers);
 		tabbedPane.addTab("Properties", properties);
-        // tabbedPane.addTab("Sequencer", sequencer); TODO
+		tabbedPane.addTab("Sequencer", sequencer);
         tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         add(tabbedPane, BorderLayout.CENTER);
         
@@ -76,12 +80,30 @@ public class SongTab extends Tab {
 		CommandHandler.clearMappings();
 		CommandHandler.addMappings(song.getLinks());
 		
+		initializeSequencer();
+		
 	}
 	
+	private void initializeSequencer() {
+		if (song.getSequencer() == null) return;
+		for (Trigger trig : song.getSequencer()) {
+			if (trig.getTimestamp() >= 0) return;
+			Command cmd = CommandHandler.find(trig.getService(), trig.getCommand());
+			if (cmd == null) continue;
+			try {
+				Services.byName(trig.getService()).execute(cmd, trig.getParams());
+			} catch (Exception e) {
+				log.error(e.getMessage() + " " + trig + " " + cmd, e);
+				Constants.infoBox(e.getMessage(), "Sequencer Initialization Error");
+			}
+		}
+	}
+
 	private void save() {
 		try {
 			song.setProps(properties.getMap());
 			song.setLinks(links.getLinks());
+			song.setSequencer(triggers.getSequence());
 			JsonUtil.saveString(JsonUtil.MAPPER.writeValueAsString(song), file);
 			
 			log.info("Saved: " + file.getAbsolutePath());
