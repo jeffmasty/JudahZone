@@ -38,6 +38,7 @@ public class RTLogger {
 
 	public static void warn(Object o, Throwable e) {
 		warn(o, e.getLocalizedMessage());
+		e.printStackTrace();
 	}
 
 

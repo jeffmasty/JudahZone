@@ -1,14 +1,18 @@
-package net.judah.song;
+package net.judah.util;
 
 
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
+
+import net.judah.song.Edits;
 
 /**JTable for a HashMap
  * @author judah */
@@ -58,11 +62,15 @@ public class PropertiesTable extends JPanel implements Edits {
 	}
 	
 	private void doTable() {
-		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-		table.getColumnModel().getColumn(0).setPreferredWidth(80);
-		table.getColumnModel().getColumn(1).setPreferredWidth(300);
-		add(new JScrollPane(table));
+		table.getColumnModel().getColumn(0).setPreferredWidth(100);
+		table.getColumnModel().getColumn(1).setPreferredWidth(275);
+		JScrollPane scroll = new JScrollPane(table);
+		Dimension size = new Dimension(model.getRowCount() * 30, 375);
+		scroll.setPreferredSize(size);
+		scroll.setSize(size);
+		setLayout(new GridBagLayout());
+		add(table, new GridBagConstraints());
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })

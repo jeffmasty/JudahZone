@@ -16,10 +16,15 @@ import lombok.NonNull;
 import lombok.extern.log4j.Log4j;
 import net.judah.CommandHandler;
 import net.judah.JudahZone;
+import net.judah.fluid.FluidSynth;
+import net.judah.midi.MidiClient;
+import net.judah.midi.MidiPair;
+import net.judah.midi.Route;
 import net.judah.settings.Command;
 import net.judah.settings.Services;
 import net.judah.util.Constants;
 import net.judah.util.JsonUtil;
+import net.judah.util.PropertiesTable;
 import net.judah.util.Tab;
 
 @Log4j
@@ -34,6 +39,7 @@ public class SongTab extends Tab {
 	private final PropertiesTable properties;
 	private final LinkTable links;
 	private final TriggersTable triggers;
+	private final RouterTable router;
 	
 	public SongTab(@NonNull Song song, @NonNull File file) {
 		super(true);
@@ -44,11 +50,13 @@ public class SongTab extends Tab {
 		properties = new PropertiesTable(song.getProps()); 
 		links = new LinkTable(song.getLinks());
 		triggers = new TriggersTable(song.getSequencer());
-		SequencerControl sequencer = new SequencerControl();
+		router = new RouterTable(song.getRouter());
+		
+		tabbedPane.addTab("Router", router);
 		tabbedPane.addTab("Midi Map", links);
 		tabbedPane.addTab("Triggers", triggers);
 		tabbedPane.addTab("Properties", properties);
-		tabbedPane.addTab("Sequencer", sequencer);
+
         tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         add(tabbedPane, BorderLayout.CENTER);
         
@@ -77,11 +85,29 @@ public class SongTab extends Tab {
 		footer.add(buttons);
 		footer.add(close);
 		
+		// Song syste setup
 		CommandHandler.clearMappings();
 		CommandHandler.addMappings(song.getLinks());
-		
+		MidiClient router = MidiClient.getInstance();
+		router.getRouter().clear();
+		if (song.getRouter() != null) {
+			for (MidiPair pair : song.getRouter()) 
+				router.getRouter().add(new Route(pair.getFromMidi(), pair.getToMidi()));
+			log.warn("midi router handling " + router.getRouter().size() + " translations");
+		}		
+		initializeProperties();
 		initializeSequencer();
 		
+	}
+	
+	private void initializeProperties() {
+		if (song.getProps() == null) return;
+		if (song.getProps().containsKey("fluid")) {
+			FluidSynth fluid = (FluidSynth)Services.byClass(FluidSynth.class);
+			String[] split = song.getProps().get("fluid").toString().split(";");
+			for (String cmd : split)
+				fluid.sendCommand(cmd);
+		}
 	}
 	
 	private void initializeSequencer() {
@@ -104,6 +130,7 @@ public class SongTab extends Tab {
 			song.setProps(properties.getMap());
 			song.setLinks(links.getLinks());
 			song.setSequencer(triggers.getSequence());
+			song.setRouter(router.getRoutes());
 			JsonUtil.saveString(JsonUtil.MAPPER.writeValueAsString(song), file);
 			
 			log.info("Saved: " + file.getAbsolutePath());

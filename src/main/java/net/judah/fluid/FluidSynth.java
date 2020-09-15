@@ -25,6 +25,7 @@ import net.judah.midi.MidiClient;
 import net.judah.midi.ProgMsg;
 import net.judah.settings.Command;
 import net.judah.settings.Service;
+import net.judah.util.Constants;
 import net.judah.util.Constants.Toggles;
 import net.judah.util.JudahException;
 import net.judah.util.Tab;
@@ -39,7 +40,10 @@ public class FluidSynth implements Service {
 	public static final String MIDI_PORT = "fluidsynth:midi";
 
     public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // fluid-soundfount-gm package, 150mb
-	
+
+    /** Drums midi channel */
+    private static final int DRUMS = 9;
+    
 	final String MIDI_DRIVER = "jack";
 	final String AUDIO_DRIVER = "jack";
 
@@ -54,7 +58,7 @@ public class FluidSynth implements Service {
 
 	private Instruments instruments = new Instruments();
 	private Channels channels = new Channels();
-	private final Command progChange, instUp, instDown;
+	private final Command progChange, instUp, instDown, drumBank;
 	
 	private float gain = 0.7f; // max 5
 	private boolean reverb; // toggles on in init()
@@ -113,6 +117,10 @@ public class FluidSynth implements Service {
 		progChange = new Command("Program Change", this, props, "set the Fluid preset instrument on the given channel");
 		instUp = new Command("Program Up", this, "Fluid instrument up, channel 0");
 		instDown = new Command("Program Down", this, "Fluid instrument down, channel 0");
+		props = new HashMap<String, Class<?>>();
+		props.put("up", Boolean.class);
+		props.put("preset", Integer.class);
+		drumBank = new Command("Drum Set", this, props, "Change drum bank up (true/false) or preset #");
 		
 		doHelp();
 		fluidWindow.newLine();
@@ -281,24 +289,32 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 		}
 	}
 	
-	public void instUp() {
-		int current = channels.getCurrentPreset(0);
-		int max = instruments.getMaxPreset(0);
-		if (current == max)
-			current = 0;
-		else
-			current++;
-		progChangeConsole(0, current);
+	public void instUp(int channel, boolean up) {
+		int current = channels.getCurrentPreset(channel);
+		int bank = channels.getBank(channel);
+		int preset = instruments.getNextPreset(bank, current, up);
+		progChangeConsole(channel, preset);
+//		int channels.getNextPreset(channel, up);
+//		
+//		progChangeConsole(channel, current);
+//		int current = channels.getCurrentPreset(channel);
+//		int max = instruments.getMaxPreset(channel);
+//		if (current == max)
+//			current = 0;
+//		else
+//			current++;
+//		
+//		progChangeConsole(channel, current);
 	}
 	
-	public void instDown() {
-		int current = channels.getCurrentPreset(0);
-		if (current == 0) 
-			current = instruments.getMaxPreset(0);
-		else
-			current--;
-		progChangeConsole(0, current);
-	}
+//	public void instDown(int channel) {
+//		int current = channels.getCurrentPreset(channel);
+//		if (current == 0) 
+//			current = instruments.getMaxPreset(channel);
+//		else
+//			current--;
+//		progChangeConsole(channel, current);
+//	}
 	
 	public int progChangeConsole(int channel, int preset) {
 		try {
@@ -306,41 +322,17 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 			sendCommand(progChange);
 			syncChannels();
 			int result = channels.getCurrentPreset(channel);
-			FluidInstrument f = instruments.get(result);
-			fluidWindow.addText(f);
-			log.info(f);
+			int bank = channels.getBank(channel);
+			for (FluidInstrument f : instruments) 
+				if (f.group == bank && f.index == preset) {
+					fluidWindow.addText(f);
+					log.info(f);
+				}
 			return result;
 		} catch (Throwable t) {
 			log.error(t.getMessage(), t);
 			return -1;
 		}
-	}
-
-	public Midi instrumentUp(int channel, int bank) {
-		int current = channels.getCurrentPreset(channel);
-		int max = instruments.getMaxPreset(bank);
-		if (current == max)
-			current = 0;
-		else
-			current++;
-		return progChange(channel, current);
-	}
-
-	public Midi instrumentUp() {
-		return instrumentUp(0, 0);
-	}
-
-	public Midi instrumentDown(int channel, int bank) {
-		int current = channels.getCurrentPreset(channel);
-		if (current - 1 < 0)
-			current = instruments.getMaxPreset(bank);
-		else
-			current--;
-		return progChange(channel, current);
-	}
-
-	public Midi instrumentDown() {
-		return instrumentDown(0, 0);
 	}
 
 	public void sendCommand(FluidCommand cmd) throws JudahException {
@@ -355,7 +347,7 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 		sendCommand(send);
 	}
 
-	void sendCommand(String string) {
+	public void sendCommand(String string) {
 		log.debug("sendCommand: " + string);
 		if (false == string.endsWith(NL))
 			string = string + NL;
@@ -487,15 +479,15 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 
 	@Override
 	public List<Command> getCommands() {
-		return Arrays.asList(new Command[] {progChange, instUp, instDown});
+		return Arrays.asList(new Command[] {progChange, instUp, instDown, drumBank});
 	}
 
 	@Override
 	public void execute(Command cmd, HashMap<String, Object> props) throws Exception {
 		if (cmd == instDown)  
-			instDown();
+			instUp(0, false);
 		else if (cmd == instUp) 
-			instUp();
+			instUp(0, true);
 		else if (cmd == progChange) {
 			int channel = 0;
 			try {
@@ -503,6 +495,16 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 			} catch (Throwable t) { log.debug(t.getMessage()); }
 			midi.queue(
 			progChange(channel, Integer.parseInt(props.get("preset").toString())));
+		}
+		else if (cmd == drumBank) {
+			Object o = props.get("up");
+			Object o2 = props.get("preset");
+			if (o == null && o2 == null) 
+				throw new JudahException("up or preset needs to be set. " + cmd + " - " + Constants.prettyPrint(props));
+			if (o != null) 
+				instUp(DRUMS, Boolean.parseBoolean(o.toString()));
+			else 
+				sendCommand(FluidCommand.PROG_CHANGE, "9 " + Integer.parseInt(o2.toString()));
 		}
 		else 
 			throw new JudahException(cmd + " not implemented yet. " + Command.toString(props));
@@ -534,8 +536,16 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 					return c.preset;
 			return -1;
 		}
+		public int getBank(int channel) {
+			for (FluidChannel c : this)
+				if (c.channel == channel)
+					return c.bank;
+			return -1;
+		}
 	}
 
+	
+	
 	private class Instruments extends ArrayList<FluidInstrument> {
 		public int getMaxPreset(int bank) {
 			int max = -1;
@@ -544,6 +554,35 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 						max = i.index;
 			return max;
 		}
+		public int getNextPreset(int bank, int current, boolean up) {
+			int index = -1;
+			int count = -1;
+			// extract bank
+			ArrayList<FluidInstrument> roll = new ArrayList<FluidInstrument>();
+			for (FluidInstrument i : this) 
+				if (i.group == bank) {   
+					count++;
+					roll.add(i);
+					if (i.index == current) {
+						index = count;
+					}
+				}
+			if (index == -1) 
+				throw new IndexOutOfBoundsException("preset " + current + " for bank " + bank + ": " + Arrays.toString(roll.toArray()));
+			if (up) {
+				index++;
+				if (index == roll.size())
+					index = 0;
+				return roll.get(index).index;
+			}
+			else {
+				index--;
+				if (index < 0)
+					index = roll.size() -1;
+				return roll.get(index).index;
+			}
+		}
+		
 	}
 }
 

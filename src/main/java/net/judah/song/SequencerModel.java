@@ -2,6 +2,7 @@ package net.judah.song;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.swing.table.DefaultTableModel;
 
@@ -12,7 +13,7 @@ import net.judah.util.JudahException;
 
 public class SequencerModel extends DefaultTableModel {
 
-	public SequencerModel(ArrayList<Trigger> sequence) {
+	public SequencerModel(List<Trigger> sequence) {
 		super (new Object[] { "Timestamp", "Command", "Notes", "Param"}, 0);
 		if (sequence == null) return;
 		for (Trigger trigger: sequence) 

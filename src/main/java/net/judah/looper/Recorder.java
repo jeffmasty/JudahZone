@@ -23,7 +23,7 @@ import net.judah.util.Constants;
 // TODO Loop substitute
 public class Recorder extends Sample implements RecordAudio {
 
-	@Getter protected Recording liveRecording;
+	@Getter protected LiveRecording liveRecording;
 	protected final transient AtomicReference<AudioMode> isRecording = new AtomicReference<>(AudioMode.NEW);
 	@Setter protected transient List<MixerPort> inputPorts;
 	
@@ -33,9 +33,16 @@ public class Recorder extends Sample implements RecordAudio {
 	private boolean firstLeft, firstRight;
 	
 	public Recorder(String name, Type type) {
+		this(name, type, null, null);
+	}
+	
+	public Recorder(String name, Type type, List<MixerPort> inputPorts, List<MixerPort> outputPorts) {
 		this.name = name;
 		this.type = type;
+		this.inputPorts = inputPorts;
+		this.outputPorts = outputPorts;
 		memory = new Memory(Constants.STEREO, MidiClient.getInstance().getBuffersize());
+		isPlaying.set(NEW);
 	}
 
 	@Override
@@ -114,9 +121,16 @@ public class Recorder extends Sample implements RecordAudio {
 					}
 				}
 			}
-
-		
 		}
+		if (hasRecording()) 
+			liveRecording.dub(newBuffer, recordedBuffer, tapeCounter.get());
+		else 
+			liveRecording.add(newBuffer);
+	}
+	
+	@Override
+	public String toString() {
+		return "Loop " + name;
 	}
 }
 

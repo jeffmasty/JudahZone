@@ -61,6 +61,7 @@ public class MPK {
 	 95 phaser
 */
 
+	private static final int[] greenDrums1 = null; 
 	
 	private static ArrayList<ShortMessage[]> knobs = genKnobs( new int[][] {
 				{14, 15, 16, 17, 18, 19, 20, 21},
@@ -133,11 +134,11 @@ public class MPK {
 	return result;
 }
 
-	/** {@link ShortMessage#PROGRAM_CHANGE} allowing for 15 more channels */
-	public static boolean isProgramChange(ShortMessage msg) {
-		int cmd = msg.getCommand();
-		return (cmd >= ShortMessage.PROGRAM_CHANGE && cmd <= 208);
-	}
+//	/** {@link ShortMessage#PROGRAM_CHANGE} allowing for 15 more channels */
+//	public static boolean isProgramChange(ShortMessage msg) {
+//		int cmd = msg.getCommand();
+//		return (cmd >= ShortMessage.PROGRAM_CHANGE && cmd <= 208);
+//	}
 
 	/** @return 0 to 7 pad of program change or -1 if MPK prog pads did not send this */
 	public static int whichProgPad(ShortMessage msg) {

@@ -7,7 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.looper.Loop;
+import net.judah.jack.RecordAudio;
+import net.judah.looper.Sample;
 import net.judah.settings.Command;
 import net.judah.settings.DynamicCommand;
 import net.judah.util.JudahException;
@@ -101,7 +102,7 @@ public class MixerCommands extends ArrayList<Command> {
 			return;
 		} 
 		
-		List<Loop> loops = mixer.getLoops();
+		List<Sample> loops = mixer.getSamples();
 		boolean all = false;
 		int idx = -1;
 		try {
@@ -112,7 +113,7 @@ public class MixerCommands extends ArrayList<Command> {
 		}
 		if (cmd.equals(clearCommand)) {
 			if (all) 
-				for (Loop loop : loops)
+				for (Sample loop : loops)
 					loop.clear();
 			else 
 				loops.get(idx).clear();
@@ -121,31 +122,37 @@ public class MixerCommands extends ArrayList<Command> {
 		
 		boolean active = Boolean.parseBoolean(props.get(ACTIVE_PARAM).toString());
 		if (cmd.equals(recordCommand)) {
-			loops.get(idx).record(active);
+			Sample s = loops.get(idx);
+			if (false == s instanceof RecordAudio) 
+				throw new JudahException("Sample " + idx + " (" + s.getName() + ") does not record audio.");
+			((RecordAudio)s).record(active);
+			
 		} else if (cmd.equals(playCommand)) {
 			if (all)
-				for (Loop loop : loops) 
+				for (Sample loop : loops) 
 					loop.play(active);
 			else 
 				loops.get(idx).play(active);
-		} else if (cmd.equals(muteCommand)) {
-			int ch = Integer.parseInt(props.get(CHANNEL_PARAM).toString());
-			if (all) 
-				for (Loop loop : loops)
-					loop.channel(ch, active);
-			else 
-				loops.get(idx).channel(ch, active);
+		// TODO Mute
+		//	else if (cmd.equals(muteCommand)) {
+		//		int ch = Integer.parseInt(props.get(CHANNEL_PARAM).toString());
+		//		if (all) 
+		//			for (Sample loop : loops)
+		//				loop.channel(ch, active);
+		//		else 
+		//			loops.get(idx).channel(ch, active);
+		//	else if (cmd.equals(cmdUndo)) { }
+		//	else if (cmd.equals(cmdToggleMode)) { }
+
 		} else throw new JudahException("Unknown command: " + cmd);
 	}
-//	else if (cmd.equals(cmdUndo)) { }
-//	else if (cmd.equals(cmdToggleMode)) { }
 
 	private void gainCommand(Command cmd, HashMap<String, Object> props) throws JudahException {
 		if (!props.containsKey(GAIN_PROP)) throw new JudahException("No Volume. " + cmd + " " );
 		float gain = (Float)props.get(GAIN_PROP);
 		boolean isInput = Boolean.parseBoolean(props.get(IS_INPUT).toString());
 		int idx = Integer.parseInt(props.get(INDEX).toString());
-		log.debug("gain: " + gain + (isInput ? mixer.getChannels().get(idx).getName() : mixer.getLoops().get(idx).getName()));
+		log.debug("gain: " + gain + (isInput ? mixer.getChannels().get(idx).getName() : mixer.getSamples().get(idx).getName()));
 		if (isInput) 
 			mixer.getChannels().get(idx).setGain(gain);
 		else

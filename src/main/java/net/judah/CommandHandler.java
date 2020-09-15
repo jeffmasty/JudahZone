@@ -3,6 +3,7 @@ package net.judah;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -73,11 +74,8 @@ public class CommandHandler {
 		// verifyMappings(); // TODO
 	}
 
-	Midi midiMsg;
 	/** @return true if consumed */
-	public boolean midiProcessed(byte[] midi) throws JudahException {
-		midiMsg = new Midi(midi);
-		
+	public boolean midiProcessed(Midi midiMsg) throws JudahException {
 		if (midiListener != null) {
 			new Thread() {
 			@Override public void run() {midiListener.feed(midiMsg);};
@@ -114,54 +112,6 @@ public class CommandHandler {
 		}
 		return false;
 	}
-//			if (cmd instanceof DynamicCommand 
-//					&& midiMsg.matches(mapping.getMidi()) 
-//					&& midiMsg.getCommand() == Midi.CONTROL_CHANGE) { 
-//			// if ( Arrays.equals(midiMsg.getMessage(), mapping.getMidi()) && midiMsg.getCommand() == Midi.CONTROL_CHANGE) {
-//				
-//				
-//			// if (mapping.isDynamic() && midiMsg.matches(mapping.getMidi()) && midiMsg.getCommand() == Midi.CONTROL_CHANGE) {
-//				final HashMap<String, Object> p = new HashMap<String, Object>();
-//
-//				if (mapping.getCommand().equals("Metronome settings")) {
-//					if (mapping.getProps().containsKey("volume")) {
-//						p.put("volume", ((midiMsg.getData2() - 1))* 0.01f);
-//					} else if (mapping.getProps().containsKey("bpm")) {
-//						p.put("bpm", (midiMsg.getData2() + 50) * 1.2f);
-//					}
-//					fire(mapping, p);
-//					return true;
-//				}
-//				else if (mapping.getCommand().equals(MixerCommands.GAIN_COMMAND)) {
-//					p.put(MixerCommands.GAIN_PROP, midiMsg.getData2() / 100f);
-//					assert mapping.getProps().get(MixerCommands.CHANNEL_PROP) != null : Arrays.toString(mapping.getProps().keySet().toArray());
-//					p.put(MixerCommands.CHANNEL_PROP, mapping.getProps().get(MixerCommands.CHANNEL_PROP));
-//					fire(mapping, p);
-//				}
-//				else { // if (mapping.getCommand().equals(MixerCommands.PLUGIN_COMMAND)) {
-//					p.putAll(mapping.getProps());
-//					fire(mapping, p);
-//				}
-//				// else log.warn(mapping.getCommand() + " midi: " + mapping.getMidi());
-//			}
-//
-//			else if (Arrays.equals(mapping.getMidi(), midiMsg.getMessage())) {
-//				Command c = find(mapping.getService(), mapping.getCommand());
-//					if (c == null)
-//						throw new JudahException("Command not found for mapping. " + mapping);
-//					new Thread() {
-//						@Override public void run() {
-//							try {
-//								fire(mapping, mapping.getProps());
-//								// c.getService().execute(c, mapping.getProps());
-//							} catch (Exception e) { log.error(e.getMessage(), e); }
-//						}}.start();
-//				return true;
-//			}
-//		return false;
-//	}
-
-	
 	
 	private void fire(final Command cmd, HashMap<String, Object> props) throws JudahException {
 		new Thread() {
@@ -171,13 +121,6 @@ public class CommandHandler {
 				} catch (Exception e) { log.error(e.getMessage(), e); }
 			}}.start();
 	}
-
-//	private Command findCommand(Link m) {
-//		for (Command c : available)
-//			if (c.getName().equals(m.getCommand()) && c.getService().getServiceName().equals(m.getService()))
-//				return c;
-//		return null;
-//	}
 
 	public static Command[] getAvailableCommands() {
 		return instance.available.toArray(new Command[instance.available.size()]);
@@ -195,11 +138,11 @@ public class CommandHandler {
 		instance.links.clear();
 	}
 	
-	public static void addMappings(ArrayList<Link> links) {
-		instance.links.addAll(links);
-		log.warn("added " + links.size() + " mappings, total: " + instance.links.size());
+	public static void addMappings(LinkedHashSet<Link> linkedHashSet) {
+		instance.links.addAll(linkedHashSet);
+		log.warn("added " + linkedHashSet.size() + " mappings, total: " + instance.links.size());
 	}
-	
+
 }
 
 

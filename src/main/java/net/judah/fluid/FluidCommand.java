@@ -1,5 +1,7 @@
 package net.judah.fluid;
 
+import lombok.AllArgsConstructor;
+
 enum ValueType {
 	NONE,
 	INT,
@@ -7,6 +9,7 @@ enum ValueType {
 	/** 2 integers */ POINT
 }
 
+@AllArgsConstructor
 public enum FluidCommand {
 
 		CHANNELS	("channels -verbose", ValueType.NONE),
@@ -23,9 +26,7 @@ public enum FluidCommand {
 		CHORUS_OUTPUT      ("cho_set_level ", ValueType.FLOAT, 0, 1.25),
 		CHORUS_SPEED       ("cho_set_speed ", ValueType.FLOAT, 0.3f, 5f), // hz
 		CHORUS_DEPTH	   ("cho_set_depth ", ValueType.INT, 0, 42) // ms
-
 		;
-
 
 		final String code;
 		final ValueType type;
@@ -35,15 +36,7 @@ public enum FluidCommand {
 		FluidCommand(String code, ValueType type) {
 			this.code = code;
 			this.type = type;
-			this.min = null;
-			this.max = null;
-		}
-
-		FluidCommand(String code, ValueType type, Number min, Number max) {
-			this.code = code;
-			this.type = type;
-			this.min = min;
-			this.max = max;
+			min = max = null;
 		}
 
 	}

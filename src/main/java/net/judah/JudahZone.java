@@ -126,8 +126,8 @@ public class JudahZone {
 
         //Display the window.
         content.add(tabbedPane);
-        frame.setLocation(50, 50);
-        frame.setSize(800, 550);
+        frame.setLocation(30, 50);
+        frame.setSize(800, 540);  // mixer panel can do 1/3 width and 2/3 height
         frame.setVisible(true);
     }
 

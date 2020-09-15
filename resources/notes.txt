@@ -1,19 +1,17 @@
 TODO:
 
-midi router, fix props table
-TimeClock
-MultiLoop + Sync, Undo/Redo
-
+midi looper
+Song / Scene (i.e., 1 bar drum setups)
+Sequencer: TimeClock, MultiLoop + Sync, 
+Undo/Redo/Copy/Paste
+fix props table & scripts
 patch setup (services like carla/fluid/drums)
 Services - Settings - Loop Settings
 Commands, command scripts
-Midi to Rakarrack
 Plugins, ttl 
 upload jna-jack patch
 arpegiator
-Song / Scene (i.e., 1 bar drum setups)
-Effects and knobs
-Drums and pads 
+
 Gui
 joystick  (pitch bend logarithmic to 1 octave) (left cc = distortion or vocoder right cc = delay)
 dr-5
@@ -33,9 +31,11 @@ Volume, Chorus, reverb, ...
 Volume track/master, pan, 
 Rakarrack knobs
 Input/output/gain lvl, pedal knobs
-Other knobs: calf, Jackrack,mixer
+Other knobs: calf, Jackrack, mixer
 
-Script/script gen
+
+
+drum options:  drumkv1-jack, hydrogen, fluid, drumsynth, black pearl
 
 jvsthost:
 in JVstHost.cpp (/home/judah/Tracks/jvst/jvsthost-master/src/com/synthbot/audioplugin/vst/vst2/)
@@ -56,8 +56,8 @@ https://github.com/PedalController/Lv2Library/blob/master/src/br/com/srmourasilv
 
 Done:
 Recompile Carla (done, modified modules/rtaudio.cpp)
-Channel concept, mixer gain
-MidiMapper
+mixer/Channel concept, mixer gain
+MidiMapper, midi router
 Setlist and Song  (default song)
 setup and teardown notes
 command mappings

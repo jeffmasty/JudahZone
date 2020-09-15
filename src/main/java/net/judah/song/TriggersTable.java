@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.swing.BoxLayout;
 import javax.swing.DefaultCellEditor;
@@ -25,7 +26,7 @@ public class TriggersTable extends JPanel implements Edits {
 	private final JTable table;
 	private final SequencerModel model;
 	
-	public TriggersTable(ArrayList<Trigger> sequence) {
+	public TriggersTable(List<Trigger> sequence) {
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		model = new SequencerModel(sequence);
 		table = new JTable(model);

@@ -34,9 +34,9 @@ public class Sample implements ProcessAudio {
 	@Setter @Getter protected transient float gain = 1f;
 	
 	// for process()
+	protected transient float[][] recordedBuffer;
 	private transient int updated; // tape position counter
 	private transient final float[] workArea = new float[MidiClient.getInstance().getBuffersize()];
-	private transient float[][] recordedBuffer;
 	private transient FloatBuffer toJackLeft, toJackRight;
 	private transient int z;
 
@@ -152,5 +152,9 @@ public class Sample implements ProcessAudio {
 		tapeCounter.set(0);
 		recording = null;
 	}
-	
+
+	@Override
+	public String toString() {
+		return "Sample " + name;
+	}
 }

@@ -1,23 +1,23 @@
 package net.judah.song;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.judah.midi.MidiPair;
 
 @Data @AllArgsConstructor @NoArgsConstructor
 public class Song {
 
 	private HashMap<String,Object> props = new HashMap<String, Object>(); 
 
-	private ArrayList<Link> links = new ArrayList<Link>();
+	private LinkedHashSet<Link> links = new LinkedHashSet<Link>();
 	
-	private ArrayList<Trigger> sequencer;
+	private List<Trigger> sequencer;
+	
+	private List<MidiPair> router;
 
-//	public Song(File file) {
-//		name = FilenameUtils.removeExtension(file.getName());
-//	}
-	
 }

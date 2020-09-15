@@ -3,9 +3,14 @@ package net.judah.util;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Insets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+import javax.sound.midi.MidiDevice.Info;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.MidiUnavailableException;
+import javax.sound.midi.Synthesizer;
 import javax.swing.JOptionPane;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
@@ -63,7 +68,38 @@ public class Constants {
 		return b.toString();
 	}
 
-
+	public static void main(String[] args) {
+		for (Info info :  MidiSystem.getMidiDeviceInfo()) {
+			System.out.println(info.getName() + " - " + info.getDescription() + " / " + info.getVendor());
+		}
+		
+		try {
+			Synthesizer synth = MidiSystem.getSynthesizer();
+			System.out.println("Synthesizer instruments: " + synth.getDeviceInfo().getName() + 
+					" - " + synth.getDeviceInfo().getDescription());
+			System.out.println(Arrays.toString(synth.getDefaultSoundbank().getResources()));
+			
+			
+		} catch (MidiUnavailableException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	
+//	// list out standard swing ui setting names
+//		public static void main(String[] args) {
+//			List<String> colors = new ArrayList<String>();
+//			for (Map.Entry<Object, Object> entry : UIManager.getDefaults().entrySet()) {
+//			    if (entry.getValue() instanceof Color) {
+//			        colors.add((String) entry.getKey()); // all the keys are strings
+//			    }
+//			}
+//			Collections.sort(colors);
+//			for (String name : colors)
+//			    System.out.println(name);
+//		}
+		
 }
 
 // public static final String IN_PORT = "MIDI in";

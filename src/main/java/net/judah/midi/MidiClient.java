@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import javax.sound.midi.MidiMessage;
+import javax.sound.midi.ShortMessage;
 
 import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
@@ -40,10 +40,11 @@ public class MidiClient extends BasicClient implements Service {
 	/** Judah's own special sauce */
 	public static final ClientConfig DEFAULT_CONFIG = new ClientConfig("JudahMidi", new String[0], new String[0],
 			new String[] {"keyboard", "pedal", "midiIn"},
-			new String[] {"synth", "effects", "midiOut"});
+			new String[] {"synth", "drums", "midiOut"});
 	
 	@Getter private static MidiClient instance;
 	
+	@Getter private final Router router = new Router();
 	private final ClientConfig config;
 	private final CommandHandler commander;
 
@@ -55,20 +56,23 @@ public class MidiClient extends BasicClient implements Service {
 	private ArrayList<JackPort> outPorts = new ArrayList<>(); // Synth, Effects, MidiOut
 	@Getter private JackPort synth;
 	@SuppressWarnings("unused")
-	private JackPort effects;
+	private JackPort drums;
 	@SuppressWarnings("unused")
 	private JackPort midiOut;
 
-    ConcurrentLinkedQueue<Long> timeRequest = new ConcurrentLinkedQueue<>(); // for future Timebase interface
-	
-    private final ConcurrentLinkedQueue<MidiMessage> queue = new ConcurrentLinkedQueue<MidiMessage>();
+    private final ConcurrentLinkedQueue<ShortMessage> queue = new ConcurrentLinkedQueue<ShortMessage>();
     
-	// for process()
+	// for future Timebase interface
+	ConcurrentLinkedQueue<Long> timeRequest = new ConcurrentLinkedQueue<>(); 
+
+
+    // for process()
 	private Event midiEvent = new JackMidi.Event();
 	private byte[] data = null;
     private int index, eventCount, size;
-	private MidiMessage poll;
-    
+	private ShortMessage poll;
+	private Midi midi;
+
     public MidiClient(CommandHandler commander) throws JackException {
     	this(DEFAULT_CONFIG, commander);
     }
@@ -100,7 +104,7 @@ public class MidiClient extends BasicClient implements Service {
         if (inPorts.size() > 1) pedal = inPorts.get(1);
         if (inPorts.size() > 2) midiIn = inPorts.get(2);
         if (outPorts.size() > 0) synth = outPorts.get(0);
-        if (outPorts.size() > 1) effects = outPorts.get(1);
+        if (outPorts.size() > 1) drums = outPorts.get(1);
         if (outPorts.size() > 2) midiOut = outPorts.get(2);
         
 		//	jackclient.setTimebaseCallback(metro, false);
@@ -121,10 +125,12 @@ public class MidiClient extends BasicClient implements Service {
     	// Fluid Synth connects when it is initialized, see getJackclient()
 	}
 
+
     @Override
 	public boolean process(JackClient client, int nframes) {
     	try {
     		JackMidi.clearBuffer(synth);
+    		JackMidi.clearBuffer(drums);
 
         	for (JackPort port : inPorts) {
         		eventCount = JackMidi.getEventCount(port);
@@ -136,15 +142,19 @@ public class MidiClient extends BasicClient implements Service {
                         data = new byte[size];
                     }
                     midiEvent.read(data);
-	                if (commander.midiProcessed(data) == false) {
-	                    JackMidi.eventWrite(synth, midiEvent.time(), data, midiEvent.size());
+                    midi = router.process(new Midi(data));
+                    
+	                if (commander.midiProcessed(midi) == false) {
+	                	write(midi, midiEvent.time());
+	                    
 	        		}
         		}
     		}
         	
     		poll = queue.poll();
     		while (poll != null) {
-    			JackMidi.eventWrite(synth, 0, poll.getMessage(), poll.getLength());
+    			write(poll, 0);
+    			// JackMidi.eventWrite(synth, 0, poll.getMessage(), poll.getLength());
     			poll = queue.poll();
     		}
     		
@@ -155,7 +165,14 @@ public class MidiClient extends BasicClient implements Service {
     	return state.get() == Status.ACTIVE;
     }
 
-	public void queue(MidiMessage message) {
+    private void write(ShortMessage midi, int time) throws JackException {
+    	if (midi.getChannel() == 9) 
+    		JackMidi.eventWrite(drums, time, midi.getMessage(), midi.getLength());
+    	else 
+    		JackMidi.eventWrite(synth, time, midi.getMessage(), midi.getLength());
+    }
+    
+	public void queue(ShortMessage message) {
 		queue.add(message);
 	}
 
@@ -163,7 +180,9 @@ public class MidiClient extends BasicClient implements Service {
 	public String getServiceName() {
 		return MidiClient.class.getSimpleName();
 	}
-
+	
 }
+
+
 
 // jack.connect(jackclient, dr5Port.getName(), "a2j:Komplete Audio 6 [20] (playback): Komplete Audio 6 MIDI 1");

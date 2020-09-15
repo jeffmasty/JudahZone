@@ -28,7 +28,7 @@ public class JudahReceiver implements Receiver {
 				log.error(e.getMessage(), e);
 			}
 		}
-		midi.queue(message);
+		midi.queue((ShortMessage)message);
 	}
 
 	public void setGain(float gain) {

@@ -20,8 +20,9 @@ import net.judah.JudahZone;
 import net.judah.fluid.FluidSynth;
 import net.judah.jack.AudioTools;
 import net.judah.jack.BasicClient;
+import net.judah.jack.ProcessAudio;
 import net.judah.jack.Status;
-import net.judah.looper.Loop;
+import net.judah.looper.Recorder;
 import net.judah.looper.Sample;
 import net.judah.mixer.MixerPort.ChannelType;
 import net.judah.mixer.MixerPort.PortDescriptor;
@@ -41,7 +42,9 @@ public class Mixer extends BasicClient implements Service {
 	
 	@Getter private final MixerCommands commands;
 	@Getter private final MixerTab gui = new MixerTab();
-	@Getter private final List<Loop> loops = new ArrayList<>();
+	
+// 	@Getter private final List<Loop> loops = new ArrayList<>();
+	
 	@Getter private final List<Sample> samples = new ArrayList<>();
 	@Getter private final List<Channel> channels = new ArrayList<>();
 	private final List<MixerPort> inputPorts = new ArrayList<>();
@@ -81,13 +84,16 @@ public class Mixer extends BasicClient implements Service {
 		}
 
 		// TODO Song settings
-		loops.add(new Loop("Boss", jackclient, inputPorts, outputPorts));
-		loops.add(new Loop("LilPup", jackclient, inputPorts, outputPorts));
+		//	loops.add(new Loop("Boss", jackclient, inputPorts, outputPorts));
+		//	loops.add(new Loop("LilPup", jackclient, inputPorts, outputPorts));
 		//	for (LoopSettings loop : patchbay.getLoops()) {
 		//		loops.add(new Loop(loop.getName(), jackclient, inputPorts, outputPorts)); }
 		
+		samples.add(new Recorder("Boss", ProcessAudio.Type.FREE, inputPorts, outputPorts));
+		samples.add(new Recorder("lil pup", ProcessAudio.Type.FREE, inputPorts, outputPorts));
+		
 		initializeChannels();
-		gui.setup(channels, loops);
+		gui.setup(channels, samples);
 	}
 
 	private void initializeChannels() {
@@ -189,9 +195,6 @@ public class Mixer extends BasicClient implements Service {
 			AudioTools.processSilence(outport.getPort().getFloatBuffer());
 		
 		// do any recording or playing
-		for (Loop loop : loops) {
-			loop.process(nframes);
-		}
 		for (Sample sample : samples) {
 			sample.process(nframes);
 		}
@@ -201,9 +204,6 @@ public class Mixer extends BasicClient implements Service {
 	public void stopAll() {
 		for (Sample s : samples)
 			s.play(false);
-		for (Loop l : loops)
-			l.play(false);
-		
 	}
 
 

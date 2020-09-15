@@ -1,8 +1,7 @@
 package net.judah.song;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedHashSet;
 
 import javax.swing.table.DefaultTableModel;
 
@@ -13,7 +12,7 @@ import net.judah.util.JudahException;
 
 public class LinkModel extends DefaultTableModel {
 	
-	public LinkModel(List<Link> links) {
+	public LinkModel(LinkedHashSet<Link> links) {
 		super (new Object[] { "Name", "Command", "Midi", "Param"}, 0);
 		if (links == null) return;
 		for (Link link : links)
@@ -36,8 +35,8 @@ public class LinkModel extends DefaultTableModel {
         		new Midi(link.getMidi()), link.getProps()});
 	}
 
-	public ArrayList<Link> getData() throws JudahException {
-		ArrayList<Link> result = new ArrayList<Link>();
+	public LinkedHashSet<Link> getData() throws JudahException {
+		LinkedHashSet<Link> result = new LinkedHashSet<Link>();
 		for (int i = 0; i < getRowCount(); i++)
 			result.add(getRow(i));
 		return result;
