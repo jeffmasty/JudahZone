@@ -35,12 +35,19 @@ import net.judah.util.Tab;
 @Log4j
 public class FluidSynth implements Service {
 
-	public static final String LEFT_PORT = "fluidsynth:l_00";
-	public static final String RIGHT_PORT = "fluidsynth:r_00";
-	public static final String MIDI_PORT = "fluidsynth:midi";
+//	public static final String LEFT_PORT = "fluidsynth:l_00";
+//	public static final String RIGHT_PORT = "fluidsynth:r_00";
+//	public static final String MIDI_PORT = "fluidsynth:midi";
 
+	public static final String LEFT_PORT = "fluidsynth-midi:left";
+	public static final String RIGHT_PORT = "fluidsynth-midi:right";
+	public static final String MIDI_PORT = "fluidsynth-midi:midi_00";
+
+	
     public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // fluid-soundfount-gm package, 150mb
-
+    
+    // public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/JJazzLab-SoundFont.sf2"); // custom soundfont, 350mb, no reverb?
+    
     /** Drums midi channel */
     private static final int DRUMS = 9;
     
@@ -74,6 +81,7 @@ public class FluidSynth implements Service {
 	@SuppressWarnings("deprecation")
 	public FluidSynth (MidiClient midi, File soundFont) throws JackException, JudahException, IOException, JackException {
 		this.midi = midi;
+		
 		shellCommand = "fluidsynth" +
 				" --midi-driver=jack --audio-driver=jack" +
 	    		" -o synth.ladspa.active=0  --sample-rate " + midi.getJackclient().getSampleRate() + " " +
@@ -106,10 +114,8 @@ public class FluidSynth implements Service {
 	    	log.error(e);
 	    }
 	    sync();
-
 		
 		initReverb();
-
 		
 		HashMap<String, Class<?>> props = new HashMap<String, Class<?>>();
 		props.put("channel", Integer.class);
@@ -253,8 +259,6 @@ public class FluidSynth implements Service {
 		return null;
 	}
 
-
-
 	/** MIDI
 	The MIDI message used to specify the instrument is called a "program change" message. It has one STATUS byte and one DATA byte :
 Status byte : 1100 CCCC
@@ -294,27 +298,7 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 		int bank = channels.getBank(channel);
 		int preset = instruments.getNextPreset(bank, current, up);
 		progChangeConsole(channel, preset);
-//		int channels.getNextPreset(channel, up);
-//		
-//		progChangeConsole(channel, current);
-//		int current = channels.getCurrentPreset(channel);
-//		int max = instruments.getMaxPreset(channel);
-//		if (current == max)
-//			current = 0;
-//		else
-//			current++;
-//		
-//		progChangeConsole(channel, current);
 	}
-	
-//	public void instDown(int channel) {
-//		int current = channels.getCurrentPreset(channel);
-//		if (current == 0) 
-//			current = instruments.getMaxPreset(channel);
-//		else
-//			current--;
-//		progChangeConsole(channel, current);
-//	}
 	
 	public int progChangeConsole(int channel, int preset) {
 		try {
@@ -547,13 +531,6 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 	
 	
 	private class Instruments extends ArrayList<FluidInstrument> {
-		public int getMaxPreset(int bank) {
-			int max = -1;
-			for (FluidInstrument i : this) 
-				if (i.group == bank && i.index > max)
-						max = i.index;
-			return max;
-		}
 		public int getNextPreset(int bank, int current, boolean up) {
 			int index = -1;
 			int count = -1;

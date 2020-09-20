@@ -91,31 +91,4 @@ public class Modhost implements Service {
 		return ui;
 	}
 	
-	/*
-private static LinuxClientSocket mySocket = new LinuxClientSocket("127.0.0.1", 7000);
-
-	public static void main(String[] args)
-	{
-		mySocket.connectSocket	();
-		System.out.println("Connected to the socket");
-
-		String msg = mySocket.getMessage();
-		System.out.println("Sent: HELLO");
-		System.out.println("Got: " + msg);
-
-		// Raw function; send and receive directly
-		// (by default, it is disabled for safety. 
-		// To test it, change visibility of sendStringToLinuxSocket() and receiveStringFromLinuxSocket() from public to private)
-
-//		mySocket.sendStringToLinuxSocket("HELLO");
-//		msg = mySocket.receiveStringFromLinuxSocket();
-//		System.out.println("Sent: HELLO");
-//		System.out.println("Got: " + msg);
-
-		mySocket.disconnectSocket();
-		System.out.println("DIsconnected from the socket");
-	} 
-	 */
-	
-	
 }

@@ -1,11 +1,13 @@
 package net.judah.mixer;
 
-import static net.judah.looper.LoopInterface.CMD.*;
+import static net.judah.mixer.MixerCommands.Labels.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
 import net.judah.jack.RecordAudio;
 import net.judah.looper.Sample;
@@ -16,6 +18,18 @@ import net.judah.util.JudahException;
 @Log4j
 public class MixerCommands extends ArrayList<Command> {
 	
+	@RequiredArgsConstructor
+	static enum Labels {
+		TOGGLE_RECORD("Record start/stop"),
+		TOGGLE_PLAY("Sample start/stop"),
+		UNDO("undo recording"), 
+		REDO("redo recording"), 
+		CLEAR("clear looper"), 
+		CHANNEL("record channel");
+		@Getter private final String label;
+	}
+
+	
 	protected final Mixer mixer;
 	
 	public static final String GAIN_PROP = "Gain";
@@ -25,13 +39,13 @@ public class MixerCommands extends ArrayList<Command> {
 	public static final String PLUGIN_PROP = "Plugin Name";
 	public static final String GAIN_COMMAND = "Mixer Gain";
 	public static final String PLUGIN_COMMAND = "Load Plugin";
-	public static final String ACTIVE_PARAM = "Active";
 	public static final String LOOP_PARAM = "Loop";
 	public static final String CHANNEL_PARAM = "Channel";
 	
 	protected final Command gainCommand;
-	protected final Command playCommand;
-	protected final Command recordCommand;
+	protected final DynamicCommand playCmd;
+	protected final DynamicCommand recordCmd;
+	
 	protected final Command clearCommand;
 	protected final Command muteCommand;
 
@@ -43,17 +57,22 @@ public class MixerCommands extends ArrayList<Command> {
 	MixerCommands(Mixer mixer) {
 		this.mixer = mixer;
 
-		recordCommand = new Command(RECORD.getLabel(), mixer, loopProps(),
-				"Activate/deactivate recording on the provided looper number.");
-		playCommand = new Command(PLAY.getLabel(), mixer, loopProps(), 
-				"Activate/deactivate playing a recorded loop on the provided loop number");
+		recordCmd = new DynamicCommand(TOGGLE_RECORD.getLabel(), mixer, loopProps(),
+				"Activate/deactivate recording on the provided looper number.") {
+					@Override public void processMidi(int data2, HashMap<String, Object> props) {
+						props.put(ACTIVE_PARAM, data2 > 0); }};
+		playCmd = new DynamicCommand(TOGGLE_PLAY.getLabel(), mixer, loopProps(), 
+				"Activate/deactivate playing a recorded loop with the provided Sample number") {
+					@Override public void processMidi(int data2, HashMap<String, Object> props) {
+						props.put(ACTIVE_PARAM, data2 > 0); }};
+			
 		muteCommand = new Command(CHANNEL.getLabel(), mixer, channelProps(),
 				"Mute/unmute the recording of a given looper channel");
 		clearCommand = new Command(CLEAR.getLabel(), mixer, loopProps(),
 				"Reset the given looper");
 		
-		add(recordCommand);
-		add(playCommand);
+		add(recordCmd);
+		add(playCmd);
 		add(muteCommand);
 		add(clearCommand);
 		
@@ -77,7 +96,7 @@ public class MixerCommands extends ArrayList<Command> {
 	private HashMap<String, Class<?>> loopProps() {
 		HashMap<String, Class<?>> commandProps = new HashMap<>();
 		commandProps.put(LOOP_PARAM, Integer.class);
-		commandProps.put(ACTIVE_PARAM, Boolean.class);
+		commandProps.put(Command.ACTIVE_PARAM, Boolean.class);
 		return commandProps;
 	}
 	
@@ -120,14 +139,14 @@ public class MixerCommands extends ArrayList<Command> {
 			return;
 		} 
 		
-		boolean active = Boolean.parseBoolean(props.get(ACTIVE_PARAM).toString());
-		if (cmd.equals(recordCommand)) {
+		boolean active = Boolean.parseBoolean(props.get(Command.ACTIVE_PARAM).toString());
+		if (cmd.equals(recordCmd)) {
 			Sample s = loops.get(idx);
 			if (false == s instanceof RecordAudio) 
 				throw new JudahException("Sample " + idx + " (" + s.getName() + ") does not record audio.");
 			((RecordAudio)s).record(active);
 			
-		} else if (cmd.equals(playCommand)) {
+		} else if (cmd.equals(playCmd)) {
 			if (all)
 				for (Sample loop : loops) 
 					loop.play(active);
@@ -152,26 +171,13 @@ public class MixerCommands extends ArrayList<Command> {
 		float gain = (Float)props.get(GAIN_PROP);
 		boolean isInput = Boolean.parseBoolean(props.get(IS_INPUT).toString());
 		int idx = Integer.parseInt(props.get(INDEX).toString());
-		log.debug("gain: " + gain + (isInput ? mixer.getChannels().get(idx).getName() : mixer.getSamples().get(idx).getName()));
+		log.debug((isInput ? mixer.getChannels().get(idx).getName() : mixer.getSamples().get(idx).getName()) 
+				+ " gain: " + gain);
 		if (isInput) 
 			mixer.getChannels().get(idx).setGain(gain);
 		else
-			// TODO
 			mixer.getSamples().get(idx).setGain(gain);
 		mixer.getGui().update();
-		
-//		if (idx >= 0 && idx < inputPorts.size()) {
-//			MixerPort p = inputPorts.get(idx);
-//			p.setGain(gain);
-//			if (p.isStereo()) {
-//				if (p.getType() == Type.LEFT) 
-//					inputPorts.get(idx + 1).setGain(gain);
-//				else 
-//					inputPorts.get(idx -1).setGain(gain);
-//			}
-//		}
-//		else masterGain = gain;
-		
 	}
 
 

@@ -3,14 +3,11 @@ package net.judah.util;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Insets;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-import javax.sound.midi.MidiDevice.Info;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
-import javax.sound.midi.Synthesizer;
 import javax.swing.JOptionPane;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
@@ -69,15 +66,16 @@ public class Constants {
 	}
 
 	public static void main(String[] args) {
-		for (Info info :  MidiSystem.getMidiDeviceInfo()) {
-			System.out.println(info.getName() + " - " + info.getDescription() + " / " + info.getVendor());
-		}
 		
+//		for (Info info :  MidiSystem.getMidiDeviceInfo()) {
+//			System.out.println(info.getName() + " - " + info.getDescription() + " / " + info.getVendor());
+//		}
 		try {
-			Synthesizer synth = MidiSystem.getSynthesizer();
-			System.out.println("Synthesizer instruments: " + synth.getDeviceInfo().getName() + 
-					" - " + synth.getDeviceInfo().getDescription());
-			System.out.println(Arrays.toString(synth.getDefaultSoundbank().getResources()));
+			
+			System.out.println(MidiSystem.getSequencer().getClass().getCanonicalName());
+//			System.out.println("Synthesizer instruments: " + synth.getDeviceInfo().getName() + 
+//					" - " + synth.getDeviceInfo().getDescription());
+//			System.out.println(Arrays.toString(synth.getDefaultSoundbank().getResources()));
 			
 			
 		} catch (MidiUnavailableException e) {

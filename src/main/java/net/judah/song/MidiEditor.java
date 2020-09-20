@@ -50,7 +50,7 @@ public class MidiEditor implements TableCellEditor {
 		}
 	}
 	@Override public boolean isCellEditable(EventObject anEvent) { return true; }
-	@Override public boolean shouldSelectCell(EventObject anEvent) { return false; }
+	@Override public boolean shouldSelectCell(EventObject anEvent) { return true; }
 	@Override public boolean stopCellEditing() { return true; }
 	@Override public void addCellEditorListener(CellEditorListener l) {	}
 	@Override public void removeCellEditorListener(CellEditorListener l) {	}

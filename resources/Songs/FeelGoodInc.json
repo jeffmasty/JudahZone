@@ -1,28 +1,178 @@
 {
   "props" : {
     "todo" : "prog change for instruments init drums",
-    "clicktrack.bars" : "5",
-    "loop.bars" : "4",
+    "Carla" : "/home/judah/git/JudahZone/resources/carla/FeelGoodInk.carxp",
     "bpb" : 4,
     "clicktrack.intro" : "1",
-    "setup" : "Octave down for bass",
+    "setup" : "Octave down for bass: VL70 Program 32 DampBass",
     "services" : "Carla, Fluid, Master, Slave",
-    "clicktrack" : "",
     "inspiration" : "https://www.youtube.com/watch?v=FC2g_XEi6wg",
-    "bpm" : "100"
+    "drumkv1" : "/home/judah/Tracks/drumkv1/Classic-808/Classic-808.drumkv1",
+    "midiport" : "aux",
+    "bpm" : "120"
   },
   "links" : [ {
-    "name" : "prog pad 3",
+    "name" : "start metronome",
+    "service" : "Metronome",
+    "command" : "tick",
+    "midi" : "sGV/",
+    "props" : { }
+  }, {
+    "name" : "stop metronome",
+    "service" : "Metronome",
+    "command" : "tock",
+    "midi" : "sGUA",
+    "props" : { }
+  }, {
+    "name" : "clear loops",
+    "service" : "Sequencer",
+    "command" : "Stop Sequencer",
+    "midi" : "t2IA",
+    "props" : { }
+  }, {
+    "name" : "Prog Pad 3",
     "service" : "FluidSynth",
     "command" : "Program Up",
     "midi" : "yQQ=",
     "props" : { }
   }, {
-    "name" : "prog pad 7",
+    "name" : "Prog Pad 7",
     "service" : "FluidSynth",
     "command" : "Program Down",
     "midi" : "yQg=",
     "props" : { }
+  }, {
+    "name" : "Master Record",
+    "service" : "Mixer",
+    "command" : "Record start/stop",
+    "midi" : "sGB/",
+    "props" : {
+      "Loop" : "0",
+      "Active" : "true"
+    }
+  }, {
+    "name" : "Master Play",
+    "service" : "Mixer",
+    "command" : "Sample start/stop",
+    "midi" : "sGN/",
+    "props" : {
+      "Loop" : "0",
+      "Active" : "true"
+    }
+  }, {
+    "name" : "Loop2 Record",
+    "service" : "Mixer",
+    "command" : "Record start/stop",
+    "midi" : "sGF/",
+    "props" : {
+      "Loop" : "1",
+      "Active" : "true"
+    }
+  }, {
+    "name" : "Loop2 Play",
+    "service" : "Mixer",
+    "command" : "Sample start/stop",
+    "midi" : "sGR/",
+    "props" : {
+      "Loop" : "1",
+      "Active" : "true"
+    }
+  }, {
+    "name" : "Knob 0",
+    "service" : "Metronome",
+    "command" : "Metro volume",
+    "midi" : "sA4A",
+    "props" : {
+      "Loop" : null,
+      "volume" : null,
+      "Active" : null
+    }
+  }, {
+    "name" : "Knob 1",
+    "service" : "Metronome",
+    "command" : "Metro tempo",
+    "midi" : "sA8A",
+    "props" : {
+      "bpm" : null
+    }
+  }, {
+    "name" : "Knob 2",
+    "service" : "Mixer",
+    "command" : "Mixer Gain",
+    "midi" : "sBA3",
+    "props" : {
+      "isInput" : "false",
+      "Index" : "0",
+      "Gain" : null
+    }
+  }, {
+    "name" : "Knob 3",
+    "service" : "Metronome",
+    "command" : "Metronome settings",
+    "midi" : "sBEA",
+    "props" : {
+      "isInput" : "false",
+      "Index" : "1",
+      "Gain" : null
+    }
+  }, {
+    "name" : "Knob 4",
+    "service" : "Mixer",
+    "command" : "Mixer Gain",
+    "midi" : "sBIA",
+    "props" : {
+      "isInput" : "true",
+      "Index" : "0",
+      "Gain" : null
+    }
+  }, {
+    "name" : "Knob 5",
+    "service" : "Mixer",
+    "command" : "Mixer Gain",
+    "midi" : "sBMA",
+    "props" : {
+      "isInput" : "true",
+      "Index" : "1",
+      "Gain" : null
+    }
+  }, {
+    "name" : "Knob 6",
+    "service" : "Mixer",
+    "command" : "Mixer Gain",
+    "midi" : "sBQA",
+    "props" : {
+      "isInput" : "true",
+      "Index" : "2",
+      "Gain" : null
+    }
+  }, {
+    "name" : "Knob 7",
+    "service" : "Mixer",
+    "command" : "Mixer Gain",
+    "midi" : "sBUA",
+    "props" : {
+      "isInput" : "true",
+      "Index" : "3",
+      "Gain" : null
+    }
+  }, {
+    "name" : "Prog 2 - Drums up",
+    "service" : "FluidSynth",
+    "command" : "Drum Set",
+    "midi" : "yQM=",
+    "props" : {
+      "up" : "true",
+      "preset" : null
+    }
+  }, {
+    "name" : "Prog 6 - Drums down",
+    "service" : "FluidSynth",
+    "command" : "Drum Set",
+    "midi" : "yQc=",
+    "props" : {
+      "up" : "false",
+      "preset" : null
+    }
   } ],
   "sequencer" : [ {
     "type" : "ABSOLUTE",
@@ -39,24 +189,119 @@
     "type" : "ABSOLUTE",
     "timestamp" : -1,
     "duration" : null,
+    "service" : "MidiClient",
+    "command" : "Route Midi Channel",
+    "notes" : "route to VL70 for bass",
+    "params" : {
+      "Active" : "true",
+      "from" : "0",
+      "to" : "7"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : -1,
+    "duration" : null,
     "service" : "Metronome",
     "command" : "Clicktrack",
     "notes" : "",
     "params" : {
-      "file" : null,
-      "intro.bars" : "1",
-      "duration.bars" : "5"
-      }
-    }, {
+      "intro.beats" : "4",
+      "midi.beat" : "45",
+      "midi.channel" : "6",
+      "duration.beats" : "20",
+      "midi.file" : null,
+      "midi.note.downbeat" : "51",
+      "duraction.beats" : "20"
+    }
+  }, {
     "type" : "ABSOLUTE",
     "timestamp" : 0,
     "duration" : null,
     "service" : "Mixer",
-    "command" : "record loop",
+    "command" : "Record start/stop",
     "notes" : "",
     "params" : {
       "Loop" : "0",
       "Active" : "true"
     }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 16,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Record start/stop",
+    "notes" : "",
+    "params" : {
+      "Loop" : "0",
+      "Active" : "false"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 16,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Sample start/stop",
+    "notes" : "",
+    "params" : {
+      "Loop" : "0",
+      "Active" : "true"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 16,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Record start/stop",
+    "notes" : "",
+    "params" : {
+      "Loop" : "1",
+      "Active" : "true"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 48,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Record start/stop",
+    "notes" : "",
+    "params" : {
+      "Loop" : "1",
+      "Active" : "false"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 48,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Sample start/stop",
+    "notes" : "",
+    "params" : {
+      "Loop" : "1",
+      "Active" : "true"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 48,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Record start/stop",
+    "notes" : "",
+    "params" : {
+      "Loop" : "0",
+      "Active" : "true"
+    }
+  } ],
+  "router" : [ {
+    "from" : "iTAA",
+    "to" : "iSQA"
+  }, {
+    "from" : "iTMA",
+    "to" : "iSYA"
+  }, {
+    "from" : "iTIA",
+    "to" : "iSwA"
+  }, {
+    "from" : "iTEA",
+    "to" : "iSoA"
   } ]
 }

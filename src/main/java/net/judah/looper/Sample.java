@@ -32,6 +32,7 @@ public class Sample implements ProcessAudio {
 	protected final transient AtomicReference<AudioMode> isPlaying = new AtomicReference<AudioMode>(STOPPED);
 	
 	@Setter @Getter protected transient float gain = 1f;
+	protected Integer length;
 	
 	// for process()
 	protected transient float[][] recordedBuffer;
@@ -43,6 +44,7 @@ public class Sample implements ProcessAudio {
 	public Sample(String name, Recording recording, Type type) {
 		this.name = name;
 		this.recording = recording;
+		length = recording.size();
 	}
 	
 	public Sample(String name, Recording recording) throws JudahException {
@@ -82,16 +84,17 @@ public class Sample implements ProcessAudio {
 		}
 	}
 	public boolean hasRecording() {
-		return recording != null && !recording.isEmpty();
+		return recording != null && length != null && length > 0;
 	}
 
 	public void setRecording(Recording sample) {
 		recording = sample;
+		length = recording.size();
 		log.warn("Recording loaded");
 	}
 	
 	/** for process() thread */
-	private void updateCounter() {
+	protected void updateCounter() {
 		updated = tapeCounter.get() + 1;
 		if (updated == recording.size()) {
 			if (type == Type.ONE_TIME) {
@@ -105,7 +108,7 @@ public class Sample implements ProcessAudio {
 		tapeCounter.set(updated);
 	}
 	
-	private final boolean playing() {
+	protected final boolean playing() {
 		isPlaying.compareAndSet(STOPPING, STOPPED);
 		isPlaying.compareAndSet(STARTING, RUNNING);
 		return isPlaying.get() == RUNNING;

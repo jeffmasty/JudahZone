@@ -1,6 +1,7 @@
 {
   "props" : {
-    "fluid" : "reverb on; rev_preset 3"
+    "Carla" : "/home/judah/git/JudahZone/resources/carla/JudahZone.carxp",
+    "fluid" : "reverb on; rev_preset 1"
   },
   "links" : [ {
     "name" : "start metronome",
@@ -33,86 +34,40 @@
     "midi" : "yQg=",
     "props" : { }
   }, {
-    "name" : "Finale CC2 stop all loops",
-    "service" : "Mixer",
-    "command" : "play loop",
-    "midi" : "uSEA",
-    "props" : {
-      "Loop" : "-1",
-      "Active" : "0",
-      "Channel" : null
-    }
-  }, {
     "name" : "Master Record",
     "service" : "Mixer",
-    "command" : "record loop",
+    "command" : "Record start/stop",
     "midi" : "sGB/",
     "props" : {
       "Loop" : "0",
       "Active" : "true"
     }
   }, {
-    "name" : "Master Stop Record",
-    "service" : "Mixer",
-    "command" : "record loop",
-    "midi" : "sGAA",
-    "props" : {
-      "Loop" : "0",
-      "Active" : "false"
-    }
-  }, {
     "name" : "Master Play",
     "service" : "Mixer",
-    "command" : "play loop",
+    "command" : "Sample start/stop",
     "midi" : "sGN/",
     "props" : {
       "Loop" : "0",
       "Active" : "true"
     }
   }, {
-    "name" : "Master Stop",
-    "service" : "Mixer",
-    "command" : "play loop",
-    "midi" : "sGMA",
-    "props" : {
-      "Loop" : "0",
-      "Active" : "false"
-    }
-  }, {
     "name" : "Loop2 Record",
     "service" : "Mixer",
-    "command" : "record loop",
+    "command" : "Record start/stop",
     "midi" : "sGF/",
     "props" : {
       "Loop" : "1",
       "Active" : "true"
     }
   }, {
-    "name" : "Loop2 Stop Record",
-    "service" : "Mixer",
-    "command" : "record loop",
-    "midi" : "sGEA",
-    "props" : {
-      "Loop" : "1",
-      "Active" : "false"
-    }
-  }, {
     "name" : "Loop2 Play",
     "service" : "Mixer",
-    "command" : "play loop",
+    "command" : "Sample start/stop",
     "midi" : "sGR/",
     "props" : {
       "Loop" : "1",
       "Active" : "true"
-    }
-  }, {
-    "name" : "Loop2 Stop",
-    "service" : "Mixer",
-    "command" : "play loop",
-    "midi" : "sGQA",
-    "props" : {
-      "Loop" : "1",
-      "Active" : "false"
     }
   }, {
     "name" : "Knob 0",
@@ -144,8 +99,8 @@
     }
   }, {
     "name" : "Knob 3",
-    "service" : "Mixer",
-    "command" : "Mixer Gain",
+    "service" : "Metronome",
+    "command" : "Metronome settings",
     "midi" : "sBEA",
     "props" : {
       "isInput" : "false",
@@ -209,6 +164,42 @@
     "props" : {
       "up" : "false",
       "preset" : null
+    }
+  }, {
+    "name" : "CC Master Rec",
+    "service" : "Mixer",
+    "command" : "Record start/stop",
+    "midi" : "uR9/",
+    "props" : {
+      "Loop" : "0",
+      "Active" : "true"
+    }
+  }, {
+    "name" : "CC Master Play",
+    "service" : "Mixer",
+    "command" : "Sample start/stop",
+    "midi" : "uSMA",
+    "props" : {
+      "Loop" : "0",
+      "Active" : null
+    }
+  }, {
+    "name" : "CC Loop2 Rec",
+    "service" : "Mixer",
+    "command" : "Record start/stop",
+    "midi" : "uSAA",
+    "props" : {
+      "Loop" : "1",
+      "Active" : null
+    }
+  }, {
+    "name" : "CC Loop2 Play",
+    "service" : "Mixer",
+    "command" : "Sample start/stop",
+    "midi" : "uSQA",
+    "props" : {
+      "Loop" : "1",
+      "Active" : null
     }
   } ],
   "sequencer" : [ {

@@ -39,4 +39,8 @@ public class JudahReceiver implements Receiver {
 	public void close() {
 	}
 
+	public JudahReceiver() {
+		this.midi = MidiClient.getInstance();
+	}
+
 }

@@ -6,7 +6,6 @@ import java.util.List;
 
 import javax.swing.table.DefaultTableModel;
 
-import net.judah.CommandHandler;
 import net.judah.settings.Command;
 import net.judah.song.Trigger.Type;
 import net.judah.util.JudahException;
@@ -17,7 +16,7 @@ public class SequencerModel extends DefaultTableModel {
 		super (new Object[] { "Timestamp", "Command", "Notes", "Param"}, 0);
 		if (sequence == null) return;
 		for (Trigger trigger: sequence) 
-			addRow(trigger);
+			addRow(trigger.toObjectArray());
 	}
 
 	@Override
@@ -31,11 +30,6 @@ public class SequencerModel extends DefaultTableModel {
 		return super.getColumnClass(idx);
 	}
 
-	public void addRow(Trigger trigger) {
-		addRow(new Object[] { trigger.getTimestamp(), CommandHandler.find(trigger.getService(), trigger.getCommand()), 
-        		trigger.getNotes(), trigger.getParams() });
-	}
-
 	@SuppressWarnings( { "rawtypes", "unchecked" })
 	public Trigger getRow(int i) throws JudahException {
 		Command cmd = ((Command)getValueAt(i,1));
@@ -43,7 +37,6 @@ public class SequencerModel extends DefaultTableModel {
 		return new Trigger(Type.ABSOLUTE, (long)getValueAt(i, 0), null, cmd.getService().getServiceName(), cmd.getName(),
 				getValueAt(i, 2).toString(), (HashMap)getValueAt(i, 3));
 	}
-
 	
 	public ArrayList<Trigger> getData() throws JudahException {
 		ArrayList<Trigger> result = new ArrayList<Trigger>();

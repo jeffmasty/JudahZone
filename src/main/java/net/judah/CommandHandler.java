@@ -10,6 +10,7 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiListener;
+import net.judah.midi.MidiListener.PassThrough;
 import net.judah.settings.Command;
 import net.judah.settings.DynamicCommand;
 import net.judah.settings.Service;
@@ -24,20 +25,10 @@ public class CommandHandler {
 	@Getter private static CommandHandler instance;
 
 	private final ArrayList<Command> available = new ArrayList<>();
-	// private final List<Mapping> mappings;
 	private final Links links = new Links();
 	
 	@Setter private MidiListener midiListener;
 
-//	public CommandHandler(List<Mapping> mappings) {
-//		instance = this;
-//		this.mappings = mappings;
-//		if (mappings != null)
-//		log.debug("currently handling " + mappings.size() + " command mappings. ");
-//		for (Mapping mapping : mappings) {
-//			log.debug("    " + mapping);
-//		}
-//	}
 	public CommandHandler() {
 		instance = this;
 	}
@@ -54,24 +45,6 @@ public class CommandHandler {
 		for (Command c : available) {
 			log.debug("    " + c);
 		}
-//		if (mappings.isEmpty())
-//			mappings.addAll(Settings.dummyMappings(available));
-		
-//for (Mapping mapping : mappings) log.warn(mapping);
-//	Mapping Metronome.tick for 176.101.127/0  Properties: none
-//	Mapping Metronome.tock for 176.101.0/0  Properties: none
-//	Mapping Metronome.Metronome settings for 176.14.0/0 dynamic  Properties: bpm:todo
-//	Mapping Metronome.Metronome settings for 176.15.0/0 dynamic  Properties: volume:todo
-//	Mapping Mixer.record loop for 176.97.127/0  Properties: Active:true Loop:1
-//	Mapping Mixer.record loop for 176.97.0/0  Properties: Active:false Loop:1
-//	Mapping Mixer.record loop for 176.96.127/0  Properties: Active:true Loop:0
-//	Mapping Mixer.record loop for 176.96.0/0  Properties: Active:false Loop:0
-//	Mapping Mixer.play loop for 176.100.127/0  Properties: Active:true Loop:1
-//	Mapping Mixer.play loop for 176.100.0/0  Properties: Active:false Loop:1
-//	Mapping Mixer.play loop for 176.99.127/0  Properties: Active:true Loop:0
-//	Mapping Mixer.play loop for 176.99.0/0  Properties: Active:false Loop:0
-//	Mapping Mixer.clear looper for 176.98.127/0  Properties: none
-		// verifyMappings(); // TODO
 	}
 
 	/** @return true if consumed */
@@ -80,7 +53,12 @@ public class CommandHandler {
 			new Thread() {
 			@Override public void run() {midiListener.feed(midiMsg);};
 			}.start();
-			return !Midi.isNote(midiMsg);
+			
+			MidiListener.PassThrough mode = midiListener.getPassThroughMode();
+			if (PassThrough.NONE == mode)
+				return true;
+			if (PassThrough.NOTES == mode)
+				return !Midi.isNote(midiMsg);
 		}
 		
 		Command cmd;
@@ -97,11 +75,13 @@ public class CommandHandler {
 					p.putAll(mapping.getProps());
 					((DynamicCommand)cmd).processMidi(midiMsg.getData2(), p);
 					fire(cmd, p);
+					return true;
 				}
-				else if (Arrays.equals(midiMsg.getMessage(), mapping.getMidi()) ) {
+				else if ((byte)midiMsg.getData2() == mapping.getMidi()[2]) { // ignores channel;
 					p = new HashMap<String, Object>();
 					p.putAll(mapping.getProps());
 					fire(cmd, p);
+					return true;
 				}
 			}
 			
@@ -140,12 +120,25 @@ public class CommandHandler {
 	
 	public static void addMappings(LinkedHashSet<Link> linkedHashSet) {
 		instance.links.addAll(linkedHashSet);
-		log.warn("added " + linkedHashSet.size() + " mappings, total: " + instance.links.size());
+		log.debug("added " + linkedHashSet.size() + " mappings, total: " + instance.links.size());
 	}
 
 }
 
-
+//for (Mapping mapping : mappings) log.warn(mapping);
+//Mapping Metronome.tick for 176.101.127/0  Properties: none
+//Mapping Metronome.tock for 176.101.0/0  Properties: none
+//Mapping Metronome.Metronome settings for 176.14.0/0 dynamic  Properties: bpm:todo
+//Mapping Metronome.Metronome settings for 176.15.0/0 dynamic  Properties: volume:todo
+//Mapping Mixer.record loop for 176.97.127/0  Properties: Active:true Loop:1
+//Mapping Mixer.record loop for 176.97.0/0  Properties: Active:false Loop:1
+//Mapping Mixer.record loop for 176.96.127/0  Properties: Active:true Loop:0
+//Mapping Mixer.record loop for 176.96.0/0  Properties: Active:false Loop:0
+//Mapping Mixer.play loop for 176.100.127/0  Properties: Active:true Loop:1
+//Mapping Mixer.play loop for 176.100.0/0  Properties: Active:false Loop:1
+//Mapping Mixer.play loop for 176.99.127/0  Properties: Active:true Loop:0
+//Mapping Mixer.play loop for 176.99.0/0  Properties: Active:false Loop:0
+//Mapping Mixer.clear looper for 176.98.127/0  Properties: none
 
 //else if (mapping.getMidi().matches(midiMsg)) {
 //final Properties p = new Properties();
@@ -166,11 +159,3 @@ public class CommandHandler {
 //		assert mapping.getProps().get(Mixer.CHANNEL_PROP) != null : Arrays.toString(mapping.getProps().keySet().toArray());
 //		p.put(Mixer.CHANNEL_PROP, mapping.getProps().get(Mixer.CHANNEL_PROP));
 //		fire(mapping, p);
-//	}
-//	else log.warn(mapping.getCommandName() + " midi: " + mapping.getMidi());
-//} else {
-//	RTLogger.log(this, "interesting midi: " + midi);
-//}
-//}
-// else { RTLogger.warn(this, "No match " + midiMsg); }
-

@@ -6,15 +6,29 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Vector;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
+import net.judah.jack.AudioTools;
 
-@NoArgsConstructor
 public class Recording extends Vector<float[][]> {
 	
+	public Recording() {
+		new Runner().start();
+	}
+
+	public Recording(boolean startListeners) {
+		if (startListeners)
+			new Runner().start();
+	}
+	
 	@Getter @Setter private String notes;
+
+	transient private final BlockingQueue<float[][]> newQueue = new LinkedBlockingQueue<>();
+	transient private final BlockingQueue<float[][]> oldQueue = new LinkedBlockingQueue<>();
+	transient private final BlockingQueue<Integer> locationQueue = new LinkedBlockingQueue<>(); 
 	
 	/** deep copy the 2D float array */
 	Recording(Recording toCopy) {
@@ -41,6 +55,26 @@ public class Recording extends Vector<float[][]> {
 		oos.writeObject(this);
 		oos.close();
 	}
+
+class Runner extends Thread {
+	@Override public void run() {
+		try {
+			while (true) {
+				// MIX 
+				float[][] in = newQueue.take();
+				float[][] old = oldQueue.take();
+				set(locationQueue.take(), AudioTools.overdub(in, old));
+			}
+		} catch (InterruptedException e) {  }
+	}
+}
+
+/** get off the process thread */
+public void dub(float[][] newBuffer, float[][] oldBuffer, int location) {
+	newQueue.add(newBuffer);
+	oldQueue.add(oldBuffer);
+	locationQueue.add(location);
+}
 
 	
 }

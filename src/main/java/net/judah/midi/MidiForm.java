@@ -167,6 +167,10 @@ public class MidiForm extends JPanel implements MidiListener {
 		}
 	}
 
+	public void setChannel(int i) {
+		channel.setSelectedItem(i);
+	}
+
 	@Override
 	public void feed(Midi midi) {
 		for (MidiCommands cmd : MidiCommands.values()) 
@@ -178,8 +182,9 @@ public class MidiForm extends JPanel implements MidiListener {
 			}
 	}
 
-	public void setChannel(int i) {
-		channel.setSelectedItem(i);
+	@Override
+	public PassThrough getPassThroughMode() {
+		return PassThrough.NOTES;
 	}
 
 }

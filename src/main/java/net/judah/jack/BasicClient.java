@@ -33,7 +33,7 @@ public abstract class BasicClient extends Thread implements JackXrunCallback, Ja
     protected AtomicReference<Status> state = new AtomicReference<>(NEW);
     protected final String clientName;
     @Getter private int buffersize;
-	@Getter private int samplerate;
+	@Getter private int sampleRate;
     
     public BasicClient(String name) throws JackException {
     	clientName = name;
@@ -58,7 +58,7 @@ public abstract class BasicClient extends Thread implements JackXrunCallback, Ja
         }
         try {
         	jackclient = jack.openClient(clientName, OPTIONS, STATUS);
-        	samplerate = jackclient.getSampleRate();
+        	sampleRate = jackclient.getSampleRate();
         	buffersize = jackclient.getBufferSize();
             initialize();
 	        if (state.compareAndSet(INITIALISING, ACTIVE)) {

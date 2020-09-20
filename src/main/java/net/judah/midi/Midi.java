@@ -29,14 +29,18 @@ public class Midi extends ShortMessage {
 	@Override
 	public String toString() {
 		
-        StringBuffer sb = new StringBuffer();
-        if (data == null || data.length == 0) return "";
-        sb.append( (data[0] - getChannel()) & 0xFF );
-        
-        for (int j = 1; j < getLength(); j++) {
-            sb.append(".").append(data[j] & 0xFF);
-        }
+        StringBuffer sb = new StringBuffer("" + getCommand());
+        if (getLength() > 1)
+        	sb.append(".").append(getData1());
+        if (getLength() > 2)
+        	sb.append(".").append(getData2());
         return sb.append("/").append(getChannel()).toString();
+//        if (data == null || data.length == 0) return "";
+//        sb.append( (data[0] - getChannel()) & 0xFF );
+//        for (int j = 1; j < getLength(); j++) {
+//            sb.append(".").append(data[j] & 0xFF);
+//        }
+//        return sb.append("/").append(getChannel()).toString();
 	}
 
 	@Override

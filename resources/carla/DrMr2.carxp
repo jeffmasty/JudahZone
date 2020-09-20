@@ -1,0 +1,1091 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE CARLA-PROJECT>
+<CARLA-PROJECT VERSION='2.0'>
+ <EngineSettings>
+  <ForceStereo>false</ForceStereo>
+  <PreferPluginBridges>false</PreferPluginBridges>
+  <PreferUiBridges>true</PreferUiBridges>
+  <UIsAlwaysOnTop>false</UIsAlwaysOnTop>
+  <MaxParameters>200</MaxParameters>
+  <UIBridgesTimeout>4000</UIBridgesTimeout>
+ </EngineSettings>
+
+ <Transport>
+  <BeatsPerMinute>120</BeatsPerMinute>
+ </Transport>
+
+ <!-- GxCabinet -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>Guitar Cabinet</Name>
+   <URI>http://guitarix.sourceforge.net/plugins/gx_cabinet#CABINET</URI>
+  </Info>
+
+  <Data>
+   <Active>Yes</Active>
+   <Volume>0.6095999</Volume>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x0</Options>
+
+   <Parameter>
+    <Index>0</Index>
+    <Name>Cabinet</Name>
+    <Symbol>CLevel</Symbol>
+    <Value>4.33000040054321</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>Bass</Name>
+    <Symbol>CBass</Symbol>
+    <Value>-4.04213714599609</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>2</Index>
+    <Name>Treble</Name>
+    <Symbol>CTreble</Symbol>
+    <Value>3.71248507499695</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>3</Index>
+    <Name>Cab Model</Name>
+    <Symbol>c_model</Symbol>
+    <Value>15</Value>
+   </Parameter>
+
+   <CustomData>
+    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
+    <Key>CarlaSkinIsCompacted</Key>
+    <Value>true</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
+    <Key>CarlaSkin</Key>
+    <Value>classic</Value>
+   </CustomData>
+  </Data>
+ </Plugin>
+
+ <!-- Calf Mono Input -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>Guitar Stereo</Name>
+   <URI>http://calf.sourceforge.net/plugins/MonoInput</URI>
+  </Info>
+
+  <Data>
+   <Active>Yes</Active>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x1e1</Options>
+
+   <Parameter>
+    <Index>0</Index>
+    <Name>Bypass</Name>
+    <Symbol>bypass</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>Input</Name>
+    <Symbol>level_in</Symbol>
+    <Value>2.5508017539978</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>2</Index>
+    <Name>Output</Name>
+    <Symbol>level_out</Symbol>
+    <Value>1.07396745681763</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>9</Index>
+    <Name>Balance</Name>
+    <Symbol>balance_out</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>10</Index>
+    <Name>Softclip</Name>
+    <Symbol>softclip</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>11</Index>
+    <Name>Mute L</Name>
+    <Symbol>mutel</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>12</Index>
+    <Name>Mute R</Name>
+    <Symbol>muter</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>13</Index>
+    <Name>Phase L</Name>
+    <Symbol>phasel</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>14</Index>
+    <Name>Phase R</Name>
+    <Symbol>phaser</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>15</Index>
+    <Name>Delay</Name>
+    <Symbol>delay</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>16</Index>
+    <Name>Stereo Base</Name>
+    <Symbol>stereo_base</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>17</Index>
+    <Name>Stereo Phase</Name>
+    <Symbol>stereo_phase</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>18</Index>
+    <Name>S/C Level</Name>
+    <Symbol>sc_level</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <CustomData>
+    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
+    <Key>CarlaSkinIsCompacted</Key>
+    <Value>true</Value>
+   </CustomData>
+  </Data>
+ </Plugin>
+
+ <!-- Calf Mono Input -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>Mic Stereo</Name>
+   <URI>http://calf.sourceforge.net/plugins/MonoInput</URI>
+  </Info>
+
+  <Data>
+   <Active>Yes</Active>
+   <Volume>0.5461</Volume>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x1e1</Options>
+
+   <Parameter>
+    <Index>0</Index>
+    <Name>Bypass</Name>
+    <Symbol>bypass</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>Input</Name>
+    <Symbol>level_in</Symbol>
+    <Value>1.26225197315216</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>2</Index>
+    <Name>Output</Name>
+    <Symbol>level_out</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>9</Index>
+    <Name>Balance</Name>
+    <Symbol>balance_out</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>10</Index>
+    <Name>Softclip</Name>
+    <Symbol>softclip</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>11</Index>
+    <Name>Mute L</Name>
+    <Symbol>mutel</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>12</Index>
+    <Name>Mute R</Name>
+    <Symbol>muter</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>13</Index>
+    <Name>Phase L</Name>
+    <Symbol>phasel</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>14</Index>
+    <Name>Phase R</Name>
+    <Symbol>phaser</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>15</Index>
+    <Name>Delay</Name>
+    <Symbol>delay</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>16</Index>
+    <Name>Stereo Base</Name>
+    <Symbol>stereo_base</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>17</Index>
+    <Name>Stereo Phase</Name>
+    <Symbol>stereo_phase</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>18</Index>
+    <Name>S/C Level</Name>
+    <Symbol>sc_level</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <CustomData>
+    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
+    <Key>CarlaSkinIsCompacted</Key>
+    <Value>true</Value>
+   </CustomData>
+  </Data>
+ </Plugin>
+
+ <!-- ZamPhono -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>Drums Phonograph</Name>
+   <URI>urn:zamaudio:ZamPhono</URI>
+  </Info>
+
+  <Data>
+   <Active>Yes</Active>
+   <DryWet>0.822629</DryWet>
+   <Volume>0.635</Volume>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x4</Options>
+
+   <Parameter>
+    <Index>0</Index>
+    <Name>Reproduction/Production</Name>
+    <Symbol>inv</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>Phono Filter Type</Name>
+    <Symbol>type</Symbol>
+    <Value>2</Value>
+   </Parameter>
+
+   <CustomData>
+    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
+    <Key>CarlaSkinIsCompacted</Key>
+    <Value>true</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
+    <Key>CarlaSkin</Key>
+    <Value>3bandeq</Value>
+   </CustomData>
+  </Data>
+ </Plugin>
+
+ <!-- Calf Mono Input -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>Drums Stereo</Name>
+   <URI>http://calf.sourceforge.net/plugins/MonoInput</URI>
+  </Info>
+
+  <Data>
+   <Active>Yes</Active>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x3f1</Options>
+
+   <Parameter>
+    <Index>0</Index>
+    <Name>Bypass</Name>
+    <Symbol>bypass</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>Input</Name>
+    <Symbol>level_in</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>2</Index>
+    <Name>Output</Name>
+    <Symbol>level_out</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>9</Index>
+    <Name>Balance</Name>
+    <Symbol>balance_out</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>10</Index>
+    <Name>Softclip</Name>
+    <Symbol>softclip</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>11</Index>
+    <Name>Mute L</Name>
+    <Symbol>mutel</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>12</Index>
+    <Name>Mute R</Name>
+    <Symbol>muter</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>13</Index>
+    <Name>Phase L</Name>
+    <Symbol>phasel</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>14</Index>
+    <Name>Phase R</Name>
+    <Symbol>phaser</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>15</Index>
+    <Name>Delay</Name>
+    <Symbol>delay</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>16</Index>
+    <Name>Stereo Base</Name>
+    <Symbol>stereo_base</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>17</Index>
+    <Name>Stereo Phase</Name>
+    <Symbol>stereo_phase</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>18</Index>
+    <Name>S/C Level</Name>
+    <Symbol>sc_level</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <CustomData>
+    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
+    <Key>CarlaSkinIsCompacted</Key>
+    <Value>true</Value>
+   </CustomData>
+  </Data>
+ </Plugin>
+
+ <!-- DrMr Sampler -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>DrMr Sampler</Name>
+   <URI>http://github.com/nicklan/drmr</URI>
+  </Info>
+
+  <Data>
+   <Active>Yes</Active>
+   <Volume>0.08367272</Volume>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x3f0</Options>
+
+   <Parameter>
+    <Index>0</Index>
+    <Name>Kit Index</Name>
+    <Symbol>kit_num</Symbol>
+    <Value>6</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>Midi Base Note</Name>
+    <Symbol>base_note</Symbol>
+    <Value>36</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>2</Index>
+    <Name>Sample One Gain</Name>
+    <Symbol>gain_one</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>3</Index>
+    <Name>Sample Two Gain</Name>
+    <Symbol>gain_two</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>4</Index>
+    <Name>Sample Three Gain</Name>
+    <Symbol>gain_three</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>5</Index>
+    <Name>Sample Four Gain</Name>
+    <Symbol>gain_four</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>6</Index>
+    <Name>Sample Five Gain</Name>
+    <Symbol>gain_five</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>7</Index>
+    <Name>Sample Six Gain</Name>
+    <Symbol>gain_six</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>8</Index>
+    <Name>Sample Seven Gain</Name>
+    <Symbol>gain_seven</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>9</Index>
+    <Name>Sample Eight Gain</Name>
+    <Symbol>gain_eight</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>10</Index>
+    <Name>Sample Nine Gain</Name>
+    <Symbol>gain_nine</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>11</Index>
+    <Name>Sample Ten Gain</Name>
+    <Symbol>gain_ten</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>12</Index>
+    <Name>Sample Eleven Gain</Name>
+    <Symbol>gain_eleven</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>13</Index>
+    <Name>Sample Twelve Gain</Name>
+    <Symbol>gain_twelve</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>14</Index>
+    <Name>Sample Thirteen Gain</Name>
+    <Symbol>gain_thirteen</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>15</Index>
+    <Name>Sample Fourteen Gain</Name>
+    <Symbol>gain_fourteen</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>16</Index>
+    <Name>Sample Fifteen Gain</Name>
+    <Symbol>gain_fifteen</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>17</Index>
+    <Name>Sample Sixteen Gain</Name>
+    <Symbol>gain_sixteen</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>18</Index>
+    <Name>Sample Seventeen Gain</Name>
+    <Symbol>gain_seventeen</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>19</Index>
+    <Name>Sample Eighteen Gain</Name>
+    <Symbol>gain_eighteen</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>20</Index>
+    <Name>Sample Nineteen Gain</Name>
+    <Symbol>gain_nineteen</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>21</Index>
+    <Name>Sample Twenty Gain</Name>
+    <Symbol>gain_twenty</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>22</Index>
+    <Name>Sample Twenty One Gain</Name>
+    <Symbol>gain_twentyone</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>23</Index>
+    <Name>Sample Twenty Two Gain</Name>
+    <Symbol>gain_twentytwo</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>24</Index>
+    <Name>Sample Twenty Three Gain</Name>
+    <Symbol>gain_twentythree</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>25</Index>
+    <Name>Sample Twenty Four Gain</Name>
+    <Symbol>gain_twentyfour</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>26</Index>
+    <Name>Sample Twenty Five Gain</Name>
+    <Symbol>gain_twentyfive</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>27</Index>
+    <Name>Sample Twenty Six Gain</Name>
+    <Symbol>gain_twentysix</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>28</Index>
+    <Name>Sample Twenty Seven Gain</Name>
+    <Symbol>gain_twentyseven</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>29</Index>
+    <Name>Sample Twenty Eight Gain</Name>
+    <Symbol>gain_twentyeight</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>30</Index>
+    <Name>Sample Twenty Nine Gain</Name>
+    <Symbol>gain_twentynine</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>31</Index>
+    <Name>Sample Thirty Gain</Name>
+    <Symbol>gain_thirty</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>32</Index>
+    <Name>Sample Thirty One Gain</Name>
+    <Symbol>gain_thirtyone</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>33</Index>
+    <Name>Sample Thirty Two Gain</Name>
+    <Symbol>gain_thirtytwo</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>34</Index>
+    <Name>Sample One Pan</Name>
+    <Symbol>pan_one</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>35</Index>
+    <Name>Sample Two Pan</Name>
+    <Symbol>pan_two</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>36</Index>
+    <Name>Sample Three Pan</Name>
+    <Symbol>pan_three</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>37</Index>
+    <Name>Sample Four Pan</Name>
+    <Symbol>pan_four</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>38</Index>
+    <Name>Sample Five Pan</Name>
+    <Symbol>pan_five</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>39</Index>
+    <Name>Sample Six Pan</Name>
+    <Symbol>pan_six</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>40</Index>
+    <Name>Sample Seven Pan</Name>
+    <Symbol>pan_seven</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>41</Index>
+    <Name>Sample Eight Pan</Name>
+    <Symbol>pan_eight</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>42</Index>
+    <Name>Sample Nine Pan</Name>
+    <Symbol>pan_nine</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>43</Index>
+    <Name>Sample Ten Pan</Name>
+    <Symbol>pan_ten</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>44</Index>
+    <Name>Sample Eleven Pan</Name>
+    <Symbol>pan_eleven</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>45</Index>
+    <Name>Sample Twelve Pan</Name>
+    <Symbol>pan_twelve</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>46</Index>
+    <Name>Sample Thirteen Pan</Name>
+    <Symbol>pan_thirteen</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>47</Index>
+    <Name>Sample Fourteen Pan</Name>
+    <Symbol>pan_fourteen</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>48</Index>
+    <Name>Sample Fifteen Pan</Name>
+    <Symbol>pan_fifteen</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>49</Index>
+    <Name>Sample Sixteen Pan</Name>
+    <Symbol>pan_sixteen</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>50</Index>
+    <Name>Sample Seventeen Pan</Name>
+    <Symbol>pan_seventeen</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>51</Index>
+    <Name>Sample Eighteen Pan</Name>
+    <Symbol>pan_eighteen</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>52</Index>
+    <Name>Sample Nineteen Pan</Name>
+    <Symbol>pan_nineteen</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>53</Index>
+    <Name>Sample Twenty Pan</Name>
+    <Symbol>pan_twenty</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>54</Index>
+    <Name>Sample Twenty One Pan</Name>
+    <Symbol>pan_twentyone</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>55</Index>
+    <Name>Sample Twenty Two Pan</Name>
+    <Symbol>pan_twentytwo</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>56</Index>
+    <Name>Sample Twenty Three Pan</Name>
+    <Symbol>pan_twentythree</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>57</Index>
+    <Name>Sample Twenty Four Pan</Name>
+    <Symbol>pan_twentyfour</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>58</Index>
+    <Name>Sample Twenty Five Pan</Name>
+    <Symbol>pan_twentyfive</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>59</Index>
+    <Name>Sample Twenty Six Pan</Name>
+    <Symbol>pan_twentysix</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>60</Index>
+    <Name>Sample Twenty Seven Pan</Name>
+    <Symbol>pan_twentyseven</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>61</Index>
+    <Name>Sample Twenty Eight Pan</Name>
+    <Symbol>pan_twentyeight</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>62</Index>
+    <Name>Sample Twenty Nine Pan</Name>
+    <Symbol>pan_twentynine</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>63</Index>
+    <Name>Sample Thirty Pan</Name>
+    <Symbol>pan_thirty</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>64</Index>
+    <Name>Sample Thirty One Pan</Name>
+    <Symbol>pan_thirtyone</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>65</Index>
+    <Name>Sample Thirty Two Pan</Name>
+    <Symbol>pan_thirtytwo</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>66</Index>
+    <Name>Ignore Velocity</Name>
+    <Symbol>ignore_velocity</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>67</Index>
+    <Name>Ignore Note Off</Name>
+    <Symbol>ignore_note_off</Symbol>
+    <Value>1</Value>
+   </Parameter>
+  </Data>
+ </Plugin>
+
+ <ExternalPatchbay>
+  <Connection>
+   <Source>system:capture_1</Source>
+   <Target>Carla:Guitar Cabinet:in</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_2</Source>
+   <Target>Carla:Mic Stereo:In L</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_3</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_3</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_4</Source>
+   <Target>Carla:Drums Phonograph:Audio Input 1</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:Komplete Audio 6 [16] (capture): Komplete Audio 6 MIDI 1</Source>
+   <Target>Carla:DrMr Sampler:events-in</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:MPKmini2 [20] (capture): MPKmini2 MIDI 1</Source>
+   <Target>qmidiarp:in</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:ActitioN MIDI Controller [24] (capture): ActitioN MIDI Controller MIDI 1</Source>
+   <Target>JudahMidi:pedal</Target>
+  </Connection>
+  <Connection>
+   <Source>PulseAudio JACK Sink:front-left</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>PulseAudio JACK Sink:front-right</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahMidi:synth</Source>
+   <Target>fluidsynth:midi</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahMidi:drums</Source>
+   <Target>fluidsynth:midi</Target>
+  </Connection>
+  <Connection>
+   <Source>fluidsynth:l_00</Source>
+   <Target>JudahZone:synth_left</Target>
+  </Connection>
+  <Connection>
+   <Source>fluidsynth:l_00</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>fluidsynth:r_00</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>fluidsynth:r_00</Source>
+   <Target>JudahZone:synth_right</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahZone:left</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahZone:right</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Guitar Cabinet:Out</Source>
+   <Target>Carla:Guitar Stereo:In L</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Guitar Stereo:Out L</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Guitar Stereo:Out L</Source>
+   <Target>JudahZone:guitar_left</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Guitar Stereo:Out R</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Guitar Stereo:Out R</Source>
+   <Target>JudahZone:guitar_right</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Mic Stereo:Out L</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Mic Stereo:Out L</Source>
+   <Target>JudahZone:mic_left</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Mic Stereo:Out R</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Mic Stereo:Out R</Source>
+   <Target>JudahZone:mic_right</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Drums Phonograph:Audio Output 1</Source>
+   <Target>Carla:Drums Stereo:In L</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Drums Stereo:Out L</Source>
+   <Target>JudahZone:drums_left</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Drums Stereo:Out L</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Drums Stereo:Out R</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:Drums Stereo:Out R</Source>
+   <Target>JudahZone:drums_right</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:DrMr Sampler:Left</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>Carla:DrMr Sampler:Right</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>qmidiarp:out 1</Source>
+   <Target>fluidsynth:midi</Target>
+  </Connection>
+  <Connection>
+   <Source>qmidiarp:out 2</Source>
+   <Target>fluidsynth:midi</Target>
+  </Connection>
+ </ExternalPatchbay>
+</CARLA-PROJECT>

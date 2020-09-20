@@ -1,4 +1,4 @@
-package net.judah.sequencer;
+package net.judah.metronome;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;

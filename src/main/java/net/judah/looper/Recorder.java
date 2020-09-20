@@ -9,7 +9,6 @@ import java.nio.FloatBuffer;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.jack.AudioMode;
@@ -20,10 +19,8 @@ import net.judah.mixer.MixerPort;
 import net.judah.util.Constants;
 
 @Log4j
-// TODO Loop substitute
 public class Recorder extends Sample implements RecordAudio {
 
-	@Getter protected LiveRecording liveRecording;
 	protected final transient AtomicReference<AudioMode> isRecording = new AtomicReference<>(AudioMode.NEW);
 	@Setter protected transient List<MixerPort> inputPorts;
 	
@@ -31,6 +28,7 @@ public class Recorder extends Sample implements RecordAudio {
 	private transient float[][] newBuffer;
 	private transient FloatBuffer fromJack;
 	private boolean firstLeft, firstRight;
+	private transient int counter;
 	
 	public Recorder(String name, Type type) {
 		this(name, type, null, null);
@@ -51,18 +49,19 @@ public class Recorder extends Sample implements RecordAudio {
 		AudioMode mode = isRecording.get();
 		log.warn((active ? "Activate recording from " : "Inactivate recording from ") + mode);
 		
-		if (active && (liveRecording == null || mode == NEW)) {
-			liveRecording = new LiveRecording(); // threaded to accept live stream
+		if (active && (recording == null || mode == NEW)) {
+			recording = new Recording(true); // threaded to accept live stream
 			isRecording.set(STARTING);
 			log.warn(name + " recording starting");
-		} else if (active && isPlaying.get() == RUNNING) {
+		} else if (active && (isPlaying.get() == RUNNING || isPlaying.get() == STARTING)) {
 			isRecording.set(STARTING);
 			log.warn(name + " overdub starting");
 		}
 			
 		if (mode == RUNNING && !active) {
 			isRecording.set(STOPPING);
-			recording = new Recording(liveRecording);
+			// recording = new Recording(liveRecording);
+			length = recording.size();
 			isPlaying.compareAndSet(NEW, STOPPED);
 			isPlaying.compareAndSet(ARMED, STARTING);
 			isRecording.set(STOPPED);
@@ -80,7 +79,7 @@ public class Recorder extends Sample implements RecordAudio {
 		isRecording.compareAndSet(RUNNING, STOPPING);
 		super.clear();
 		isRecording.set(NEW);
-		liveRecording = null;
+		recording = null;
 	}
 
 	/** for process() thread */
@@ -96,8 +95,14 @@ public class Recorder extends Sample implements RecordAudio {
 	
 	@Override
 	public void process(int nframes) {
+		counter = tapeCounter.get();
+		
 		super.process(nframes);
 		if (!recording()) return;
+		if (!playing() && hasRecording()) {
+			recordedBuffer = getCurrent();
+			updateCounter();
+		}
 		
 		newBuffer = memory.getArray();
 		firstLeft = true;
@@ -123,9 +128,10 @@ public class Recorder extends Sample implements RecordAudio {
 			}
 		}
 		if (hasRecording()) 
-			liveRecording.dub(newBuffer, recordedBuffer, tapeCounter.get());
+			// recorded buffer set in Sample.process()
+			recording.dub(newBuffer, recordedBuffer, counter); 
 		else 
-			liveRecording.add(newBuffer);
+			recording.add(newBuffer);
 	}
 	
 	@Override

@@ -58,7 +58,11 @@ public class TriggersTable extends JPanel implements Edits {
 	}
 
 	@Override public void add() {
-		model.addRow(new Trigger(Type.ABSOLUTE, -1l, null, "", "", "", new HashMap<String, Object>()));
+		Object[] trigger = new Trigger(Type.ABSOLUTE, -1l, null, "", "", "", new HashMap<String, Object>()).toObjectArray();
+		if(table.getSelectedRow() < 0)
+			model.addRow(trigger);
+		else 
+			model.insertRow(table.getSelectedRow() + 1, trigger);
 	}
 
 	@Override public void delete() {

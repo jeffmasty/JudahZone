@@ -1,8 +1,10 @@
 TODO:
 
-midi looper
+midi recorder
 Song / Scene (i.e., 1 bar drum setups)
-Sequencer: TimeClock, MultiLoop + Sync, 
+looper bug
+Sequencer: TimeClock, MultiLoop + Sync,
+new GUI layout 
 Undo/Redo/Copy/Paste
 fix props table & scripts
 patch setup (services like carla/fluid/drums)
@@ -11,6 +13,7 @@ Commands, command scripts
 Plugins, ttl 
 upload jna-jack patch
 arpegiator
+walking bassline midi bot
 
 Gui
 joystick  (pitch bend logarithmic to 1 octave) (left cc = distortion or vocoder right cc = delay)
@@ -35,7 +38,11 @@ Other knobs: calf, Jackrack, mixer
 
 
 
-drum options:  drumkv1-jack, hydrogen, fluid, drumsynth, black pearl
+drum options:  DrMr, drumkv1-jack, hydrogen, fluid, drumsynth, black pearl
+
+java analyse and sequence music https://github.com/arnaudh/elusive-sound
+
+arpeggio this! https://github.com/ybalcanci/Sequence-Player/blob/master/RecamanSequence.java
 
 jvsthost:
 in JVstHost.cpp (/home/judah/Tracks/jvst/jvsthost-master/src/com/synthbot/audioplugin/vst/vst2/)

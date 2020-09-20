@@ -69,7 +69,6 @@ public class JackTab extends Tab implements MidiListener {
 			help();
 			return;
 		}
-
 		if (text.startsWith("xruns") || text.equalsIgnoreCase("xrun")) {
 			for (Service s : Services.getInstance())
 				if (s instanceof BasicClient) 
@@ -78,9 +77,8 @@ public class JackTab extends Tab implements MidiListener {
 		}
 		
 		//  set_active	set_parameter_value set_volume 
-		if (text.startsWith("volume ") && split.length == 3) {
+		if (text.startsWith("volume ") && split.length == 3) 
 			getCarla().setVolume(Integer.parseInt(split[1]), Float.parseFloat(split[2]));
-		}
 		else if (text.startsWith("active ") && split.length == 3) 
 			getCarla().setActive(Integer.parseInt(split[1]), 
 					Integer.parseInt(split[2]));
@@ -116,6 +114,23 @@ public class JackTab extends Tab implements MidiListener {
 			addText(":( unknown command. try help");
 	}
 
+	private void help() {
+		addText("xrun");
+		addText("volume carla_plugin_index value");
+		addText("active carla_plugin_index 1_or_0");
+		addText("parameter carla_plugin_index parameter_index value");
+		addText(saveHelp);
+		addText(readHelp);
+		addText(playHelp);
+		addText(stopHelp);
+		addText(samples);
+		addText(playHelp);
+		addText(routeHelp);
+		addText(routerHelp);
+		addText(midiPlay);
+		addText(listenHelp);
+	}
+
 	private void midiListen() {
 		midiListen = !midiListen;
 		CommandHandler.getInstance().setMidiListener(midiListen ? this : null);
@@ -140,7 +155,7 @@ public class JackTab extends Tab implements MidiListener {
 				midiFile = new File("/home/judah/Tracks/midi/dance/dance21.mid");
 			}
 			
-			MidiPlayer playa = new MidiPlayer(midiFile, 80, 0, 
+			MidiPlayer playa = new MidiPlayer(midiFile, 0, 
 					new JudahReceiver(MidiClient.getInstance()));
 			addText(playa.getSequencer().getDeviceInfo() + " / " + playa.getSequencer().getMasterSyncMode());
 			playa.start();
@@ -150,22 +165,6 @@ public class JackTab extends Tab implements MidiListener {
 		}
 	}
 
-	private void help() {
-		addText("xrun");
-		addText("volume carla_plugin_index value");
-		addText("active carla_plugin_index 1_or_0");
-		addText("parameter carla_plugin_index parameter_index value");
-		addText(saveHelp);
-		addText(readHelp);
-		addText(playHelp);
-		addText(stopHelp);
-		addText(samples);
-		addText(playHelp);
-		addText(routeHelp);
-		addText(routerHelp);
-		addText(midiPlay);
-		addText(listenHelp);
-	}
 
 	private void play(String[] split) {
 		if (split.length != 2) {
@@ -211,7 +210,7 @@ public class JackTab extends Tab implements MidiListener {
 		try {
 			Recording recording = Recording.readAudio(filename);
 			loop.setRecording(recording);
-			float seconds = recording.size() / MidiClient.getInstance().getSamplerate(); 
+			float seconds = recording.size() / MidiClient.getInstance().getSampleRate(); 
 			addText(seconds + " of " + filename + " read, stored in loop " + loopNum + ". " + recording.getNotes());
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
@@ -245,7 +244,7 @@ public class JackTab extends Tab implements MidiListener {
 		try {
 			recording.setNotes("Hello, world");
 			recording.saveAudio(filename);
-			float seconds = recording.size() / MidiClient.getInstance().getSamplerate();
+			float seconds = recording.size() / MidiClient.getInstance().getSampleRate();
 			addText(seconds + " of loop " + loopNum + " saved to " + filename);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
@@ -288,6 +287,11 @@ public class JackTab extends Tab implements MidiListener {
 	@Override
 	public void feed(Midi midi) {
 		addText("midilisten: " + midi);
+	}
+	
+	@Override
+	public PassThrough getPassThroughMode() {
+		return PassThrough.ALL;
 	}
 	
 }

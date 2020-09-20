@@ -5,11 +5,17 @@ import java.util.HashMap;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.judah.CommandHandler;
+import net.judah.settings.Command;
 
 @Data @AllArgsConstructor @NoArgsConstructor
 public class Trigger {
 	public enum Type {
 		ABSOLUTE, RELATIVE, MIDI
+	}
+	
+	public Trigger(long timestamp, Command cmd) {
+		this(Type.ABSOLUTE, timestamp, 0l, cmd.getService().getServiceName(), cmd.getName(), "", new HashMap<>());
 	}
 	
 	Type type;
@@ -21,4 +27,10 @@ public class Trigger {
 	String notes;
 	HashMap<String, Object> params;
 
+	public Object[] toObjectArray() {
+		return new Object[] {getTimestamp(), 
+				CommandHandler.find(getService(), getCommand()), 
+				getNotes(), getParams() };
+	}
+	
 }

@@ -1,14 +1,14 @@
 package net.judah.settings;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 import lombok.Getter;
 import lombok.Setter;
 
-public class Command implements Serializable {
-	private static final long serialVersionUID = -6802900843908593216L;
+public class Command {
+	
+	public static final String ACTIVE_PARAM = "Active";
 	
 	public static final boolean DYNAMIC = true;
 	public static final boolean STATIC = !DYNAMIC;

@@ -44,7 +44,6 @@ public class Mixer extends BasicClient implements Service {
 	@Getter private final MixerTab gui = new MixerTab();
 	
 // 	@Getter private final List<Loop> loops = new ArrayList<>();
-	
 	@Getter private final List<Sample> samples = new ArrayList<>();
 	@Getter private final List<Channel> channels = new ArrayList<>();
 	private final List<MixerPort> inputPorts = new ArrayList<>();
@@ -202,11 +201,12 @@ public class Mixer extends BasicClient implements Service {
 	}
 
 	public void stopAll() {
-		for (Sample s : samples)
+		for (Sample s : samples) {
 			s.play(false);
+			if (s instanceof Recorder) 
+				((Recorder) s).record(false);
+		}
 	}
-
-
 
 }
 

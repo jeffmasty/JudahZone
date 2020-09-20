@@ -12,9 +12,10 @@ import javax.sound.midi.Sequencer;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
+import net.judah.metronome.MetroPlayer;
 
 @Log4j
-public class MidiPlayer {
+public class MidiPlayer implements MetroPlayer {
 	/** loop count for continuous looping */
 	public static final int LOOP = Sequencer.LOOP_CONTINUOUSLY;
 	
@@ -22,13 +23,13 @@ public class MidiPlayer {
 	@Getter private final Sequencer sequencer;
 	@Getter private final Sequence sequence; 
 	private Thread listener;
-	private final float tempo;
+	private final JudahReceiver receiver;
 	
 	
-	public MidiPlayer(File file, float bpm, int loopCount, Receiver receiver) throws InvalidMidiDataException, MidiUnavailableException, IOException {
+	public MidiPlayer(File file, int loopCount, JudahReceiver receiver) 
+			throws InvalidMidiDataException, MidiUnavailableException, IOException {
 		
-		log.info("TEMPO: " + bpm);
-		this.tempo = bpm;
+		this.receiver = receiver;
 		
 		this.file = file;
 		sequencer = MidiSystem.getSequencer(false);
@@ -42,11 +43,16 @@ public class MidiPlayer {
 		sequencer.getTransmitter().setReceiver(receiver);
 	}
 	
+	public MidiPlayer(File file) throws MidiUnavailableException, InvalidMidiDataException, IOException {
+		this(file, Sequencer.LOOP_CONTINUOUSLY, new JudahReceiver());
+	}
+
+	@Override
 	public void start() throws MidiUnavailableException {
 		if (!sequencer.isOpen()) {
 			sequencer.open();
 		}
-		sequencer.setTempoFactor(tempo/100f);
+		sequencer.setTempoFactor(net.judah.metronome.Sequencer.getInstance().getTempo()/100f);
 		log.info("Midi player starting. " + file.getAbsolutePath());
 		sequencer.start();
 		listener = new Thread() {
@@ -62,14 +68,31 @@ public class MidiPlayer {
 		listener.start();
 	}
 	
+	@Override
 	public void stop() {
 		if (sequencer.isRunning())
 		sequencer.stop();
 	}
 	
+	@Override
 	public void close() {
 		if (sequencer.isOpen())
 			sequencer.close();
+	}
+
+	@Override
+	public void setGain(float gain) {
+		receiver.setGain(gain);
+	}
+	
+	@Override
+	public boolean isRunning() {
+		return sequencer.isRunning();
+	}
+	
+	@Override
+	public void setDuration(Integer intro, Integer duration) {
+		throw new IllegalAccessError("Not implemented yet on MidiPlayer.");
 	}
 	
 }
