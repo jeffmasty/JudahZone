@@ -1,5 +1,6 @@
 package net.judah.metronome;
 
+import static javax.sound.midi.Sequencer.*;
 import static net.judah.util.Constants.Gui.*;
 
 import java.awt.Color;
@@ -39,13 +40,15 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 	
 	@Getter private final String serviceName = Metronome.class.getSimpleName();
 	@Getter private final ArrayList<Command> commands = new ArrayList<>();
+	@Getter private final Tab gui = null;
+
 	private final Command start, stop, settings, tempoCmd, volumeCmd;
 	private final ClickTrack clicktrack;
-	private Sequencer sequencer = Sequencer.getInstance();
+	private final Sequencer sequencer;
 
 	/** if null, generate midi notes ourself */
     //public static final File midiFile = new File(JudahZone.class.getClassLoader().getResource("metronome/Rock1.mid").getFile());
-	private File midiFile; // = new File("/home/judah/git/JudahZone/resources/metronome/Latin16.mid");
+	private File midiFile = new File("/home/judah/git/JudahZone/resources/metronome/Latin16.mid");
 	private float gain = 1f;
 	
 	private MetroPlayer playa;
@@ -61,7 +64,8 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
     private JSlider bpm;
     private JSlider volume;
 
-	public Metronome() {
+	public Metronome(Sequencer sequencer) {
+		this.sequencer = sequencer;
 		start = new Command("tick", this, "Start the metronome.");
 		stop = new Command("tock", this, "Stop the metronome.");
 
@@ -76,16 +80,17 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 		volumeCmd = new DynamicCommand("Metro volume", this, params, "Volume of metronome") {
 			@Override public void processMidi(int data2, java.util.HashMap<String,Object> props) {
 				props.put("volume", ((data2 - 1))* 0.01f); }};
-
+				
+		
 		// todo remove gui command?
 		params = new HashMap<String, Class<?>>();
 		params.put("bpm", Float.class);
 		params.put("bpb", Integer.class);
 		params.put("volume", Float.class);
 		settings = new Command("Metronome settings", this, params, "Adjust metronome settings.");
-		clicktrack = new ClickTrack(this);
-		
+		clicktrack = new ClickTrack(sequencer, this);
 		commands.addAll(Arrays.asList(new Command[] {start, stop, settings, tempoCmd, volumeCmd, clicktrack}));
+		sequencer.getServices().add(this);
 
 		createGui();
 	}
@@ -136,8 +141,8 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 		JLabel tempoLbl = new JLabel("Tempo");
 		tempoLbl.setFont(FONT13);
 		tempoPanel.add(tempoLbl);
-		
-		bpm = new JSlider(JSlider.HORIZONTAL, 60, 180, Math.round(Sequencer.getInstance().getTempo()));
+
+		bpm = new JSlider(JSlider.HORIZONTAL, 50, 180, Math.round(sequencer.getTempo()));
 		bpm.setFont(FONT9);
 		bpm.setMajorTickSpacing(20);
 		bpm.setPaintTicks(false);
@@ -168,7 +173,7 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 	
 	/** update UI */
 	public void update() {
-		float tempo = Sequencer.getInstance().getTempo();
+		float tempo = sequencer.getTempo();
 		bpmText.setText("" + tempo);
 		bpm.setValue(Math.round(tempo));
 		volume.setValue(Math.round(100f * gain));
@@ -224,14 +229,12 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 			if (playa != null && playa.isRunning())
 				playa.stop();
 			
-			if (playa != null) {
-				
-			}
 			if (playa == null) {
 				if (midiFile == null) {
-					playa = new TickTock();
+					playa = new TickTock(sequencer);
 				} else {
-					playa = new MidiPlayer(midiFile, MidiPlayer.LOOP, new JudahReceiver(MidiClient.getInstance()));
+					playa = new MidiPlayer(midiFile, LOOP_CONTINUOUSLY, 
+							new JudahReceiver(MidiClient.getInstance()), sequencer);
 				}
 			}
 			else 
@@ -281,13 +284,11 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 
 	@Override
 	public void close() {
-		if (playa != null)
+		if (playa != null) {
 			playa.close();
-	}
-
-	@Override
-	public Tab getGui() {
-		return null;
+			playa = null;
+		}
+		
 	}
 
 	/** store a ticktock object configured and ready to begin transport */

@@ -1,5 +1,201 @@
 {
-  "props" : { },
-  "links" : [ ],
-  "sequencer" : null
+  "props" : {
+    "notes" : "shakers tempo",
+    "Carla" : "/home/judah/git/JudahZone/resources/carla/Wave.carxp",
+    "drumkv1" : "/home/judah/Tracks/drumkv1/ErnysPercussion/ErnysPercussion.drumkv1",
+    "midiport" : "drums",
+    "bpm" : "90",
+    "midi.controlled" : "true"
+  },
+  "links" : [ {
+    "name" : "Drums Record",
+    "service" : "Mixer",
+    "command" : "Record start/stop",
+    "midi" : "sGMA",
+    "props" : {
+      "Loop" : "0",
+      "Active" : "true"
+    }
+  }, {
+    "name" : "Guitar Record",
+    "service" : "Mixer",
+    "command" : "Record start/stop",
+    "midi" : "sGQA",
+    "props" : {
+      "Loop" : "1",
+      "Active" : "true"
+    }
+  }, {
+    "name" : "Guitar Play",
+    "service" : "Mixer",
+    "command" : "Sample start/stop",
+    "midi" : "sGUA",
+    "props" : {
+      "Loop" : "1",
+      "Active" : "true"
+    }
+  }, {
+    "name" : "Ritardando!!  (TODO)",
+    "service" : "Sequencer",
+    "command" : "Trigger",
+    "midi" : "sGB/",
+    "props" : { }
+  }, {
+    "name" : "Clear Looper",
+    "service" : "Mixer",
+    "command" : "clear looper",
+    "midi" : "sGIA",
+    "props" : {
+      "Loop" : "-1",
+      "Active" : "true"
+    }
+  } ],
+  "sequencer" : [ {
+    "type" : "ABSOLUTE",
+    "timestamp" : -1,
+    "duration" : null,
+    "service" : "FluidSynth",
+    "command" : "Program Change",
+    "notes" : "fretless bass",
+    "params" : {
+      "channel" : "0",
+      "preset" : "35"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : -1,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Mute channel",
+    "notes" : "mute guitar on drum loop",
+    "params" : {
+      "Loop" : "0",
+      "Active" : null,
+      "Channel" : "guitar",
+      "mute" : "true"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : -1,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Mute channel",
+    "notes" : "mute mic  on drum loop",
+    "params" : {
+      "Loop" : "0",
+      "Active" : null,
+      "Channel" : "mic",
+      "mute" : "true"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : -1,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Mute channel",
+    "notes" : "mute synth on drum loop",
+    "params" : {
+      "Loop" : "0",
+      "Active" : null,
+      "Channel" : "synth",
+      "mute" : "true"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : -1,
+    "duration" : null,
+    "service" : "Metronome",
+    "command" : "Clicktrack",
+    "notes" : "",
+    "params" : {
+      "intro.beats" : "0",
+      "midi.beat" : null,
+      "midi.channel" : "9",
+      "duration.beats" : "16",
+      "midi.downbeat" : null,
+      "midi.file" : "/home/judah/Tracks/midi/Latin/shakers2.mid"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 0,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Record start/stop",
+    "notes" : "Record 4 bars on loop 0",
+    "params" : {
+      "Loop" : "0",
+      "Active" : "true"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 16,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Record start/stop",
+    "notes" : "(stop record)",
+    "params" : {
+      "Loop" : "0",
+      "Active" : "false"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 16,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Load Sample",
+    "notes" : "Create empty guitar Loop from drum loop",
+    "params" : {
+      "Loop" : null,
+      "Active" : null,
+      "source.file" : null,
+      "destination.loop" : "1",
+      "channel" : "2",
+      "source.loop" : "0",
+      "loop.duplicate" : "false",
+      "preset" : "13"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 16,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Sample start/stop",
+    "notes" : "play rythmn loop",
+    "params" : {
+      "Loop" : "0",
+      "Active" : "true"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 16,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Record start/stop",
+    "notes" : "record on drum loop",
+    "params" : {
+      "Loop" : "0",
+      "Active" : "true"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : -2,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Record start/stop",
+    "notes" : "stop recording drum loop 4x through",
+    "params" : {
+      "Loop" : "0",
+      "Active" : "false"
+    }
+  } ],
+  "router" : [ {
+    "from" : "iTAA",
+    "to" : "iSUA"
+  }, {
+    "from" : "iTMA",
+    "to" : "iSwA"
+  }, {
+    "from" : "iTEA",
+    "to" : "mTkA"
+  } ]
 }

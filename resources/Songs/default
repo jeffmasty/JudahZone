@@ -224,6 +224,32 @@
       "up" : null,
       "preset" : "25"
     }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : -1,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Load Sample",
+    "notes" : "",
+    "params" : {
+      "Loop" : "0",
+      "Active" : null,
+      "source.file" : "/home/judah/4x4.rec",
+      "destination.loop" : "0",
+      "source.loop" : null,
+      "loop.duplicate" : ""
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : -1,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Sample start/stop",
+    "notes" : "",
+    "params" : {
+      "Loop" : "0",
+      "Active" : "true"
+    }
   } ],
   "router" : [ {
     "from" : "iSwA",

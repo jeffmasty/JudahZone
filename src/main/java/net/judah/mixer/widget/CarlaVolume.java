@@ -2,8 +2,8 @@ package net.judah.mixer.widget;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.judah.JudahZone;
 import net.judah.plugin.Carla;
-import net.judah.settings.Services;
 
 @RequiredArgsConstructor 
 public class CarlaVolume extends VolumeWidget {
@@ -20,6 +20,6 @@ public class CarlaVolume extends VolumeWidget {
 	}
 	
 	private Carla getCarla() {
-		return (Carla)Services.byClass(Carla.class);
+		return JudahZone.getCurrentSong().getCarla();
 	}
 }

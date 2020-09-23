@@ -32,7 +32,6 @@ public class MixerPort {
 	private final ChannelType type;
 
 	@Getter @Setter private JackPort port;
-
 	@Getter	@Setter private boolean onLoop = true;
 	@Getter @Setter private float gain = 1f;
 	@Getter @Setter private float pan = 0f;
@@ -49,6 +48,8 @@ public class MixerPort {
 		type = p.type;
 		port = p.port;
 		onLoop = p.onLoop;
+		gain = p.gain;
+		pan = p.pan;
 	}
 
 	public boolean isStereo() {

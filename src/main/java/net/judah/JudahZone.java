@@ -14,12 +14,12 @@ import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.fluid.FluidSynth;
 import net.judah.jack.JackTab;
-import net.judah.metronome.Metronome;
+import net.judah.metronome.Sequencer;
 import net.judah.midi.MidiClient;
 import net.judah.mixer.Mixer;
+import net.judah.plugin.Carla;
+import net.judah.plugin.Drumkv1;
 import net.judah.settings.Service;
-import net.judah.settings.Services;
-import net.judah.song.Song;
 import net.judah.song.SongTab;
 import net.judah.song.SonglistTab;
 import net.judah.util.MenuBar;
@@ -44,13 +44,11 @@ public class JudahZone {
     public static final File defaultFolder = new File("/home/judah/git/JudahZone/resources/Songs/"); 
     
     /** Current Song */
-    @Getter private static Song currentSong;
+    @Getter private static Sequencer currentSong;
     @Getter private static JFrame frame;
 	private static JTabbedPane tabbedPane;
 	private static ArrayList<Tab> tabs = new ArrayList<>();
 	
-	private final Services services = new Services();
-	private final CommandHandler commander = new CommandHandler();
 	private final FluidSynth fluid; 
 	private final Mixer mixer;
 	private final MidiClient midi;
@@ -69,18 +67,11 @@ public class JudahZone {
 	private JudahZone() throws Throwable {
     	Runtime.getRuntime().addShutdownHook(new ShutdownHook());
 
-    	midi = new MidiClient(commander);
-    	services.add(midi);
-
+    	midi = new MidiClient();
     	fluid = new FluidSynth(midi);
-    	services.add(fluid);
-    	
 		mixer = new Mixer();
-		services.add(mixer);
 		
-    	commander.initializeCommands();
-    	
-    	Thread.sleep(750);
+    	Thread.sleep(100);
 
     	tabs.add(new SonglistTab(defaultSetlist));
     	
@@ -92,8 +83,17 @@ public class JudahZone {
 
 	private class ShutdownHook extends Thread {
 		@Override public void run() {
-      	  	for (Service service : services)
-      	  		service.close();
+			if (Drumkv1.getInstance() != null)
+				Drumkv1.getInstance().close();
+			if (Carla.getInstance() != null)
+				Carla.getInstance().close();
+			if (getCurrentSong() != null)
+      	  		for (Service service : getCurrentSong().getServices())
+      	  			service.close();
+			if (MidiClient.getInstance() != null)
+				MidiClient.getInstance().close();
+			if (Mixer.getInstance() != null) 
+				Mixer.getInstance().close();
 		}
 	}
 
@@ -131,8 +131,9 @@ public class JudahZone {
 	public static void openTab(Tab tab) {
     	tabbedPane.insertTab(tab.getTabName(), null, tab, null, tabbedPane.getTabCount());
     	tabbedPane.setSelectedComponent(tab);
+    	
     	if (tab instanceof SongTab) {
-    		currentSong = ((SongTab)tab).getSong();
+    		currentSong = ((SongTab)tab).getSequencer();
     	}
     	tabs.add(tab);
 	}
@@ -140,11 +141,6 @@ public class JudahZone {
 	public static void closeTab(Tab tab) {
 		tabbedPane.remove(tab);
 		tabs.remove(tab);
-		if (tab instanceof SongTab) {
-			if (((SongTab)tab).getSong() == JudahZone.getCurrentSong())
-				((Metronome)Services.byClass(Metronome.class)).close();
-		}
-		
 	}
     
 	

@@ -199,6 +199,7 @@ public class AudioTools  {
 	
 	/** MIX */
 	public static void processAdd(FloatBuffer in, float[] out) {
+		in.rewind();
 		for (int i = 0; i < out.length; i++) 
 			out[i] += in.get();
 	}

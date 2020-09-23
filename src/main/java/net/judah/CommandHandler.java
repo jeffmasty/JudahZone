@@ -5,46 +5,39 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 
-import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
+import net.judah.metronome.Sequencer;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiListener;
 import net.judah.midi.MidiListener.PassThrough;
 import net.judah.settings.Command;
 import net.judah.settings.DynamicCommand;
 import net.judah.settings.Service;
-import net.judah.settings.Services;
 import net.judah.song.Link;
 import net.judah.util.JudahException;
 import net.judah.util.Links;
 
-@Log4j
+@RequiredArgsConstructor @Log4j 
 public class CommandHandler {
 	
-	@Getter private static CommandHandler instance;
-
 	private final ArrayList<Command> available = new ArrayList<>();
 	private final Links links = new Links();
+	private final Sequencer sequencer;
 	
 	@Setter private MidiListener midiListener;
 
-	public CommandHandler() {
-		instance = this;
-	}
 
 	/** call after all services have been initialized */
-	void initializeCommands() {
+	public void initializeCommands() {
 
 		available.clear();
-		for (Service s : Services.getInstance()) {
+		for (Service s : sequencer.getServices()) {
 			available.addAll(s.getCommands());
 		}
-		log.debug("currently handling " + available.size() + " available different commands");
-		log.debug("known commands:");
-		for (Command c : available) {
-			log.debug("    " + c);
-		}
+		//log.debug("currently handling " + available.size() + " available different commands");
+		//for (Command c : available) log.debug("    " + c);
 	}
 
 	/** @return true if consumed */
@@ -102,25 +95,31 @@ public class CommandHandler {
 			}}.start();
 	}
 
-	public static Command[] getAvailableCommands() {
-		return instance.available.toArray(new Command[instance.available.size()]);
+	public Command[] getAvailableCommands() {
+		return available.toArray(new Command[available.size()]);
 	}
 
-	public static Command find(String service, String command) {
-		for (Command c : instance.available) 
-			if (c.getService().getServiceName().equals(service) && c.getName().equals(command))
-				return c;
-		log.warn("could not find " + service + " - " + command + " in " + Arrays.toString(instance.available.toArray()));
+	public Command find(String service, String command) {
+		for (Command c : available) 
+			try {
+				assert c != null;
+				assert c.getName() != null;
+				if (c.getService().getServiceName().equals(service) && c.getName().equals(command))
+					return c;
+			} catch (Throwable t) {
+				log.error(c + " " + c.getService() + " " + t.getMessage(), t);
+			}
+		log.warn("could not find " + service + " - " + command + " in " + Arrays.toString(available.toArray()));
 		return null;
 	}
 	
-	public static void clearMappings() {
-		instance.links.clear();
+	public void clearMappings() {
+		links.clear();
 	}
 	
-	public static void addMappings(LinkedHashSet<Link> linkedHashSet) {
-		instance.links.addAll(linkedHashSet);
-		log.debug("added " + linkedHashSet.size() + " mappings, total: " + instance.links.size());
+	public void addMappings(LinkedHashSet<Link> linkedHashSet) {
+		links.addAll(linkedHashSet);
+		log.debug("added " + linkedHashSet.size() + " mappings, total: " + links.size());
 	}
 
 }

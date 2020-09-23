@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 import lombok.extern.log4j.Log4j;
 import net.judah.midi.JudahChannel;
+import net.judah.midi.JudahReceiver;
 import net.judah.midi.MidiPlayer;
 import net.judah.settings.Command;
 import net.judah.settings.Executable;
@@ -12,26 +13,29 @@ import net.judah.util.Constants;
 
 @Log4j
 public class ClickTrack extends Command implements Executable {
-// 	Drumkv1 drumkv1;
-	TickTock ticktock;
-	Metronome metro;
+
+	private final Sequencer sequencer;
+	private final Metronome metronome;
 	
+	/** midi file of click track (optional) */
+	public static final String PARAM_MIDIFILE = "midi.file"; 
+	/** total loops to play (midi file) */
+	public static final String PARAM_LOOPS = "duration.loops";
 	/** beats before Transport starts */
 	public static final String PARAM_INTRO = "intro.beats";
 	/** total beats to play */
-	public static final String PARAM_DURATION = "duraction.beats";
+	public static final String PARAM_DURATION = "duration.beats";
 	/** channel to send trick track midi out on */
 	public static final String PARAM_CHANNEL = "midi.channel";
-	/** midi file of click track (optional) */
-	public static final String PARAM_MIDIFILE = "midi.file"; 
 	/** note_on note, first beat of bar (optional) */
-	public static final String PARAM_DOWNBEAT = "midi.note.downbeat";
+	public static final String PARAM_DOWNBEAT = "midi.downbeat";
 	/** note_on note (optional) */
 	public static final String PARAM_BEAT = "midi.beat"; 
 	
-	public ClickTrack(Metronome metro) {
+	public ClickTrack(Sequencer sequencer, Metronome metro) {
 		super("Clicktrack", metro, generateParams(), "start a clicktrack");
-		this.metro = metro;
+		this.metronome = metro;
+		this.sequencer = sequencer;
 	}
 	
 	private static HashMap<String, Class<?>> generateParams() {
@@ -48,14 +52,14 @@ public class ClickTrack extends Command implements Executable {
 	}
 
 	@Override
-	public void execute(HashMap<String, Object> props) {
+	public void execute(final HashMap<String, Object> props) {
 		// duration.beats intro.beats drumkv1 file  file  port
-		
+		log.warn("Click Track execute: " + Constants.prettyPrint(props));
 		int channel = JudahChannel.DRUMS.getChannel();
 		try {
 			channel = Integer.parseInt("" + props.get(PARAM_CHANNEL));
 		} catch (NumberFormatException e) {
-			Constants.infoBox("Couldn't setup Click Track channel, using default Drums channel.", "Sequencer Initialization (Clicktrack)");
+			log.error("Couldn't setup Click Track channel, using default Drums channel.");
 		}
 			
 		MetroPlayer ticktock = null;
@@ -69,33 +73,49 @@ public class ClickTrack extends Command implements Executable {
 			try {
 				beat = Integer.parseInt(b.toString());
 				downbeat = Integer.parseInt(down.toString());
-				ticktock = new TickTock(downbeat, beat, channel);
 			} catch (NumberFormatException e) {
-				log.error(e.getMessage());
+				log.error(e.getMessage(), e);
 			}
+			ticktock = new TickTock(sequencer, downbeat, beat, channel);
 		}
 		else if (file != null) 
 			try {
-				ticktock = new MidiPlayer(new File(file.toString()));
+				Object o = props.get(PARAM_LOOPS);
+				int loops = -1; // LOOP_CONTINUOUSLY;
+				if (o != null) 
+					try {
+						loops = Integer.parseInt(o.toString());
+					} catch (NumberFormatException e) {
+						log.error("unparsable clicktrack loop count " + o);
+					}
+				ticktock = new MidiPlayer(new File(file.toString()), 
+						loops, new JudahReceiver(), sequencer);
 			} catch (Exception e) {
 				String msg = e.getMessage() + " for " + props.get(PARAM_MIDIFILE);
 				log.error(msg, e);
 				Constants.infoBox(msg, ClickTrack.class.getSimpleName());
 			}
-		
-		int intro = 4;
-		try { intro = Integer.parseInt("" + props.get(PARAM_INTRO));
-		} catch (NumberFormatException e) { 
-			log.warn(e.getMessage() + " intro.beats=" + props.get(PARAM_INTRO)); 
-		}
-		int duration = 4;
-		try { duration = Integer.parseInt("" + props.get(PARAM_DURATION));
-		} catch (NumberFormatException e) {
-			log.warn(e.getMessage() + " duration.beats=" + props.get(PARAM_DURATION));
-		}
-		ticktock.setDuration(intro, duration);
 
-		metro.setPlayer(ticktock == null ? new TickTock() : ticktock);
+		Object o = props.get(PARAM_INTRO);
+		Object d = props.get(PARAM_DURATION);
+
+		ticktock = (ticktock == null) ? new TickTock(sequencer) : ticktock;
+
+		Integer intro = null;
+		Integer duration = null;
+		try { intro = Integer.parseInt(o.toString());
+		} catch (Throwable e) { 
+			log.warn(e.getMessage() + " " + PARAM_INTRO + " = " + props.get(PARAM_INTRO)); 
+		}
+		try { duration = Integer.parseInt(props.get(PARAM_DURATION).toString());
+		} catch (Throwable e) {
+			log.warn(e.getMessage() + " " + PARAM_DURATION + " = " + props.get(PARAM_DURATION));
+		}
+		if (intro != null && duration != null)
+			ticktock.setDuration(intro, duration);
+		
+
+		metronome.setPlayer(ticktock);
 	}
 
 }

@@ -24,12 +24,14 @@ import net.judah.jack.ProcessAudio;
 import net.judah.jack.Status;
 import net.judah.looper.Recorder;
 import net.judah.looper.Sample;
+import net.judah.metronome.Metronome;
 import net.judah.mixer.MixerPort.ChannelType;
 import net.judah.mixer.MixerPort.PortDescriptor;
 import net.judah.mixer.Widget.Type;
 import net.judah.mixer.gui.MixerTab;
 import net.judah.mixer.widget.CarlaVolume;
 import net.judah.mixer.widget.FluidVolume;
+import net.judah.mixer.widget.VolumeWidget;
 import net.judah.settings.Command;
 import net.judah.settings.Patch;
 import net.judah.settings.Patchbay;
@@ -43,7 +45,6 @@ public class Mixer extends BasicClient implements Service {
 	@Getter private final MixerCommands commands;
 	@Getter private final MixerTab gui = new MixerTab();
 	
-// 	@Getter private final List<Loop> loops = new ArrayList<>();
 	@Getter private final List<Sample> samples = new ArrayList<>();
 	@Getter private final List<Channel> channels = new ArrayList<>();
 	private final List<MixerPort> inputPorts = new ArrayList<>();
@@ -101,12 +102,16 @@ public class Mixer extends BasicClient implements Service {
 		Instrument m = new Instrument("Mic", Type.SYS, new String[] {"system:capture_2"}, null);  
 		Instrument d = new Instrument("Drums", Type.SYS, new String[] {"system:capture_4"}, null);
 		Instrument s = new Instrument("Synth", Type.SYNTH, new String[] {FluidSynth.LEFT_PORT, FluidSynth.RIGHT_PORT}, null);
+		Instrument a = new Instrument("Aux", Type.OTHER, new String[] {"system:capture_3"}, null);
 		
 		Channel guitar = new Channel(g, new CarlaVolume(0));
 		Channel mic = new Channel(m, new CarlaVolume(2));
 		Channel drums = new Channel(d, new CarlaVolume(3));
 		Channel synth = new Channel(s, new FluidVolume());
-		channels.addAll(Arrays.asList(new Channel[] {guitar, mic, drums, synth}));
+		Channel aux = new Channel(a, new VolumeWidget() {
+			@Override public boolean setVolume(float gain) {
+				return false; /* no-op */}});
+		channels.addAll(Arrays.asList(new Channel[] { guitar, mic, drums, synth, aux }));
 	}
 	
 	
@@ -171,6 +176,12 @@ public class Mixer extends BasicClient implements Service {
 		ports.add(in);
 		//	connections.add(new Patch(FluidSynth.RIGHT_PORT, portName(client, in.getName())));
 		//	connections.add(new Patch(FluidSynth.LEFT_PORT, portName(client, in.getName())));
+		
+		in = new PortDescriptor("aux_left", ChannelType.LEFT, AUDIO, JackPortIsInput);
+		ports.add(in);
+		in = new PortDescriptor("aux_right", ChannelType.RIGHT, AUDIO, JackPortIsInput);
+		ports.add(in);
+		
 		// Outputs
 		out = new PortDescriptor("left", ChannelType.LEFT, AUDIO, JackPortIsOutput);
 		ports.add(out);
@@ -208,31 +219,10 @@ public class Mixer extends BasicClient implements Service {
 		}
 	}
 
-}
+	public void setMetronome(Metronome metronome) {
+		gui.setMetronome(metronome);
+		
+	}
 
-//@Override public void close() {
-//// if (vst != null) { vst.turnOffAndUnloadPlugin(); vst = null; }
-//super.close(); }
-//private void pluginCommand(Command cmd, Properties props) throws FileNotFoundException, JVstLoadException, JudahException {
-//	if (vst != null) { // turn off
-//		log.info("Turning off Plugin");
-//		JVstHost2 temp = vst;
-//		vst = null;
-//		try {
-//			Thread.sleep(10);
-//		} catch (InterruptedException e) { e.printStackTrace(); }
-//		temp.turnOffAndUnloadPlugin();
-//		return;
-//	}
-//	// turn on
-//	log.info("Turning ON Plugin");
-//	Object o = props.get(PLUGIN_PROP);
-//	if (o instanceof String == false) throw new JudahException("Invalid " + PLUGIN_PROP + ": " + o);
-//	JVstHost2 temp = new VST().loadPlugin((String)o, samplerate, buffersize);
-//	log.info(temp.getEffectName() + " (" + temp.getProgramName() +  (temp.isSynth() ? ") SYNTH " : ") ")
-//			+ temp.numInputs() + " inputs, " + temp.numParameters() + " parameters.");
-//	for (int i = 0; i < temp.numParameters(); i++)
-//	  log.info(temp.getParameterName(i) + " (" + temp.getParameterDisplay(i) + ") = " + temp.getParameter(i));
-//	vst = temp;
-//}
+}
 

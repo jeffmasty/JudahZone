@@ -32,7 +32,7 @@
     <Index>0</Index>
     <Name>Cabinet</Name>
     <Symbol>CLevel</Symbol>
-    <Value>4.55500030517578</Value>
+    <Value>4.33000040054321</Value>
    </Parameter>
 
    <Parameter>
@@ -53,7 +53,7 @@
     <Index>3</Index>
     <Name>Cab Model</Name>
     <Symbol>c_model</Symbol>
-    <Value>8</Value>
+    <Value>15</Value>
    </Parameter>
 
    <CustomData>
@@ -295,152 +295,24 @@
   </Data>
  </Plugin>
 
- <!-- ZamPhono -->
+ <!-- Mono to Stereo splitter -->
  <Plugin>
   <Info>
    <Type>LV2</Type>
-   <Name>Drums Phonograph</Name>
-   <URI>urn:zamaudio:ZamPhono</URI>
+   <Name>VL70 Stereo</Name>
+   <URI>http://plugin.org.uk/swh-plugins/split</URI>
   </Info>
 
   <Data>
    <Active>Yes</Active>
-   <DryWet>0.822629</DryWet>
-   <Volume>0.635</Volume>
    <ControlChannel>1</ControlChannel>
-   <Options>0x4</Options>
-
-   <Parameter>
-    <Index>0</Index>
-    <Name>Reproduction/Production</Name>
-    <Symbol>inv</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>1</Index>
-    <Name>Phono Filter Type</Name>
-    <Symbol>type</Symbol>
-    <Value>2</Value>
-   </Parameter>
-
-   <CustomData>
-    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
-    <Key>CarlaSkinIsCompacted</Key>
-    <Value>true</Value>
-   </CustomData>
+   <Options>0x0</Options>
 
    <CustomData>
     <Type>http://kxstudio.sf.net/ns/carla/property</Type>
     <Key>CarlaSkin</Key>
-    <Value>3bandeq</Value>
+    <Value>presets</Value>
    </CustomData>
-  </Data>
- </Plugin>
-
- <!-- Calf Mono Input -->
- <Plugin>
-  <Info>
-   <Type>LV2</Type>
-   <Name>Drums Stereo</Name>
-   <URI>http://calf.sourceforge.net/plugins/MonoInput</URI>
-  </Info>
-
-  <Data>
-   <Active>Yes</Active>
-   <ControlChannel>1</ControlChannel>
-   <Options>0x3f1</Options>
-
-   <Parameter>
-    <Index>0</Index>
-    <Name>Bypass</Name>
-    <Symbol>bypass</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>1</Index>
-    <Name>Input</Name>
-    <Symbol>level_in</Symbol>
-    <Value>1</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>2</Index>
-    <Name>Output</Name>
-    <Symbol>level_out</Symbol>
-    <Value>1</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>9</Index>
-    <Name>Balance</Name>
-    <Symbol>balance_out</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>10</Index>
-    <Name>Softclip</Name>
-    <Symbol>softclip</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>11</Index>
-    <Name>Mute L</Name>
-    <Symbol>mutel</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>12</Index>
-    <Name>Mute R</Name>
-    <Symbol>muter</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>13</Index>
-    <Name>Phase L</Name>
-    <Symbol>phasel</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>14</Index>
-    <Name>Phase R</Name>
-    <Symbol>phaser</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>15</Index>
-    <Name>Delay</Name>
-    <Symbol>delay</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>16</Index>
-    <Name>Stereo Base</Name>
-    <Symbol>stereo_base</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>17</Index>
-    <Name>Stereo Phase</Name>
-    <Symbol>stereo_phase</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>18</Index>
-    <Name>S/C Level</Name>
-    <Symbol>sc_level</Symbol>
-    <Value>1</Value>
-   </Parameter>
 
    <CustomData>
     <Type>http://kxstudio.sf.net/ns/carla/property</Type>
@@ -461,15 +333,7 @@
   </Connection>
   <Connection>
    <Source>system:capture_3</Source>
-   <Target>JudahZone:aux_left</Target>
-  </Connection>
-  <Connection>
-   <Source>system:capture_3</Source>
-   <Target>JudahZone:aux_right</Target>
-  </Connection>
-  <Connection>
-   <Source>system:capture_4</Source>
-   <Target>Carla:Drums Phonograph:Audio Input 1</Target>
+   <Target>Carla:VL70 Stereo:Input</Target>
   </Connection>
   <Connection>
    <Source>a2j:MPKmini2 [20] (capture): MPKmini2 MIDI 1</Source>
@@ -493,7 +357,7 @@
   </Connection>
   <Connection>
    <Source>JudahMidi:drums</Source>
-   <Target>fluidsynth-midi:midi_00</Target>
+   <Target>drumkv1:in</Target>
   </Connection>
   <Connection>
    <Source>JudahMidi:komplete</Source>
@@ -509,11 +373,11 @@
   </Connection>
   <Connection>
    <Source>fluidsynth-midi:right</Source>
-   <Target>system:playback_2</Target>
+   <Target>JudahZone:synth_right</Target>
   </Connection>
   <Connection>
    <Source>fluidsynth-midi:right</Source>
-   <Target>JudahZone:synth_right</Target>
+   <Target>system:playback_2</Target>
   </Connection>
   <Connection>
    <Source>JudahZone:left</Source>
@@ -560,23 +424,35 @@
    <Target>JudahZone:mic_right</Target>
   </Connection>
   <Connection>
-   <Source>Carla:Drums Phonograph:Audio Output 1</Source>
-   <Target>Carla:Drums Stereo:In L</Target>
+   <Source>Carla:VL70 Stereo:Output 1</Source>
+   <Target>JudahZone:aux_left</Target>
   </Connection>
   <Connection>
-   <Source>Carla:Drums Stereo:Out L</Source>
+   <Source>Carla:VL70 Stereo:Output 1</Source>
    <Target>system:playback_1</Target>
   </Connection>
   <Connection>
-   <Source>Carla:Drums Stereo:Out L</Source>
-   <Target>JudahZone:drums_left</Target>
+   <Source>Carla:VL70 Stereo:Output 2</Source>
+   <Target>JudahZone:aux_right</Target>
   </Connection>
   <Connection>
-   <Source>Carla:Drums Stereo:Out R</Source>
+   <Source>Carla:VL70 Stereo:Output 2</Source>
    <Target>system:playback_2</Target>
   </Connection>
   <Connection>
-   <Source>Carla:Drums Stereo:Out R</Source>
+   <Source>drumkv1:out_1</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>drumkv1:out_1</Source>
+   <Target>JudahZone:drums_left</Target>
+  </Connection>
+  <Connection>
+   <Source>drumkv1:out_2</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>drumkv1:out_2</Source>
    <Target>JudahZone:drums_right</Target>
   </Connection>
  </ExternalPatchbay>

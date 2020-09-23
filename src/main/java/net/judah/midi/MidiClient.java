@@ -20,7 +20,7 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
-import net.judah.CommandHandler;
+import net.judah.JudahZone;
 import net.judah.fluid.FluidSynth;
 import net.judah.instruments.MPK;
 import net.judah.instruments.Pedal;
@@ -55,7 +55,7 @@ public class MidiClient extends BasicClient implements Service {
 	
 	@Getter private final Router router = new Router();
 	// private final ClientConfig config;
-	private final CommandHandler commander;
+	// private final CommandHandler commander;
 
 	private ArrayList<JackPort> inPorts = new ArrayList<JackPort>();  // Keyboard, Pedal, MidiIn
 	@Getter private JackPort keyboard;
@@ -84,9 +84,9 @@ public class MidiClient extends BasicClient implements Service {
 	private ShortMessage poll;
 	private Midi midi;
 
-    public MidiClient(CommandHandler commander) throws JackException {
+	public MidiClient(/* CommandHandler commander */) throws JackException {
 		super(JACKCLIENT_NAME);
-		this.commander = commander;
+		//this.commander = commander;
 		instance = this;
 		start();
     }
@@ -187,7 +187,8 @@ public class MidiClient extends BasicClient implements Service {
                     }
                     midiEvent.read(data);
                     midi = router.process(new Midi(data));
-	                if (commander.midiProcessed(midi) == false) {
+                    if (JudahZone.getCurrentSong() != null
+	                    && JudahZone.getCurrentSong().getCommander().midiProcessed(midi) == false) {
 	                	write(midi, midiEvent.time());
 	        		}
         		}

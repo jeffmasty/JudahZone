@@ -5,7 +5,6 @@ import java.util.HashMap;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import net.judah.CommandHandler;
 import net.judah.settings.Command;
 
 @Data @AllArgsConstructor @NoArgsConstructor
@@ -26,11 +25,5 @@ public class Trigger {
 	String command;
 	String notes;
 	HashMap<String, Object> params;
-
-	public Object[] toObjectArray() {
-		return new Object[] {getTimestamp(), 
-				CommandHandler.find(getService(), getCommand()), 
-				getNotes(), getParams() };
-	}
 	
 }

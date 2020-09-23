@@ -6,10 +6,10 @@ import static net.judah.mixer.MixerPort.ChannelType.*;
 import static net.judah.util.Constants.*;
 
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.jack.AudioMode;
 import net.judah.jack.AudioTools;
@@ -21,23 +21,22 @@ import net.judah.util.Constants;
 @Log4j
 public class Recorder extends Sample implements RecordAudio {
 
-	protected final transient AtomicReference<AudioMode> isRecording = new AtomicReference<>(AudioMode.NEW);
-	@Setter protected transient List<MixerPort> inputPorts;
+	protected final AtomicReference<AudioMode> isRecording = new AtomicReference<>(AudioMode.NEW);
+	protected final List<MixerPort> inputPorts = new ArrayList<>();
 	
-	private final transient Memory memory;
-	private transient float[][] newBuffer;
-	private transient FloatBuffer fromJack;
+	private final Memory memory;
+	private float[][] newBuffer;
+	private FloatBuffer fromJack;
 	private boolean firstLeft, firstRight;
-	private transient int counter;
-	
-	public Recorder(String name, Type type) {
-		this(name, type, null, null);
-	}
+	private int counter;
 	
 	public Recorder(String name, Type type, List<MixerPort> inputPorts, List<MixerPort> outputPorts) {
 		this.name = name;
 		this.type = type;
-		this.inputPorts = inputPorts;
+		for (MixerPort p : inputPorts)
+			this.inputPorts.add(new MixerPort(p));
+		
+		
 		this.outputPorts = outputPorts;
 		memory = new Memory(Constants.STEREO, MidiClient.getInstance().getBuffersize());
 		isPlaying.set(NEW);
@@ -96,13 +95,9 @@ public class Recorder extends Sample implements RecordAudio {
 	@Override
 	public void process(int nframes) {
 		counter = tapeCounter.get();
-		
+		recordedBuffer = null;
 		super.process(nframes);
 		if (!recording()) return;
-		if (!playing() && hasRecording()) {
-			recordedBuffer = getCurrent();
-			updateCounter();
-		}
 		
 		newBuffer = memory.getArray();
 		firstLeft = true;
@@ -127,9 +122,13 @@ public class Recorder extends Sample implements RecordAudio {
 				}
 			}
 		}
-		if (hasRecording()) 
-			// recorded buffer set in Sample.process()
-			recording.dub(newBuffer, recordedBuffer, counter); 
+		if (hasRecording()) {
+			if (recordedBuffer == null) {
+				assert !playing();
+				readRecordedBuffer();
+			}
+			recording.dub(newBuffer, recordedBuffer, counter);
+		}
 		else 
 			recording.add(newBuffer);
 	}
@@ -138,5 +137,22 @@ public class Recorder extends Sample implements RecordAudio {
 	public String toString() {
 		return "Loop " + name;
 	}
+
+	@Override
+	public void setRecording(Recording sample) {
+		super.setRecording(sample);
+		isRecording.set(STOPPED);
+		sample.startListeners();
+	}
+
+	public void mute(String channel, boolean mute) {
+		for (MixerPort p : inputPorts) 
+			if (p.getName().contains(channel)) {
+				p.setOnLoop(!mute);
+				
+				log.info( (mute ? "Muted " : "Unmuted ") + p.getName() + " on recording track: " + getName());
+			}
+	}
+
 }
 

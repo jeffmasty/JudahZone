@@ -11,9 +11,11 @@ import net.judah.settings.Command;
 import net.judah.util.JudahException;
 
 public class LinkModel extends DefaultTableModel {
+	private final CommandHandler commander;
 	
-	public LinkModel(LinkedHashSet<Link> links) {
+	public LinkModel(LinkedHashSet<Link> links, CommandHandler commander) {
 		super (new Object[] { "Name", "Command", "Midi", "Param"}, 0);
+		this.commander = commander;
 		if (links == null) return;
 		for (Link link : links)
 			addRow(link);
@@ -31,7 +33,7 @@ public class LinkModel extends DefaultTableModel {
 	}
 
 	public void addRow(Link link) {
-		addRow(new Object[] { link.getName(), CommandHandler.find(link.getService(), link.getCommand()), 
+		addRow(new Object[] { link.getName(), commander.find(link.getService(), link.getCommand()), 
         		new Midi(link.getMidi()), link.getProps()});
 	}
 

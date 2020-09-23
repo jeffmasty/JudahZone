@@ -5,26 +5,25 @@ import static org.jaudiolibs.jnajack.JackPortFlags.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
 
 import org.jaudiolibs.jnajack.Jack;
 import org.jaudiolibs.jnajack.JackException;
 import org.jaudiolibs.jnajack.JackPortType;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.midi.JudahPort;
-import net.judah.settings.Command;
-import net.judah.settings.Service;
-import net.judah.settings.Services;
-import net.judah.util.Constants;
-import net.judah.util.Tab;
 
 @Log4j
-public class Drumkv1 implements Service {
+public class Drumkv1 {
+	
+	@Data
+	public static class Drumkv1Params {
+		final File drumkit;
+		final String portname;
+	}
 
 	public static final String FILE_PARAM = "drumkv1";
 	public static final String PORT_PARAM = "midiport";
@@ -51,21 +50,13 @@ public class Drumkv1 implements Service {
 		if (instance != null) {
 			log.warn("Closing previous instance!!");
 			instance.close();
+			try { Thread.sleep(25); } catch (Throwable t) { }
 		}
 		
 		this.drumkit = drumkit;
 		this.portname = portname;
 		cmd = shellCommand + drumkit.getAbsolutePath();
-
-		new Thread() { @Override
-			public void run() {
-				try {
-					process = Runtime.getRuntime().exec(cmd);
-				} catch (Exception e) {
-					Constants.infoBox(e.getMessage(), Drumkv1.class.getSimpleName());
-				}
-			}
-		}.start();
+		process = Runtime.getRuntime().exec(cmd);
 
 	    Jack jack = Jack.getInstance();
 	    try { // wait a bit for drumkv1 to create its ports
@@ -73,8 +64,6 @@ public class Drumkv1 implements Service {
 		    	Thread.sleep(50); }
 	    } catch (InterruptedException e) { }
 
-	    
-		Services.getInstance().add(this);		
 		instance = this;
 
  		log.info("drumkv1 process created");
@@ -111,7 +100,6 @@ public class Drumkv1 implements Service {
 				jack.connect(s, "system:playback_2");
 	}
 
-	@Override
 	public void close() {
 		if (process != null)
 			process.destroy();	
@@ -120,13 +108,13 @@ public class Drumkv1 implements Service {
 		instance = null;
 	}
 
-	@Override
-	public String getServiceName() {
-		return null;
-	}
-	@Override public List<Command> getCommands() { return Collections.emptyList(); }
-	@Override public void execute(Command cmd, HashMap<String, Object> props) throws Exception { }
-	@Override public Tab getGui() { return null; }
+//	@Override
+//	public String getServiceName() {
+//		return null;
+//	}
+//	@Override public List<Command> getCommands() { return Collections.emptyList(); }
+//	@Override public void execute(Command cmd, HashMap<String, Object> props) throws Exception { }
+//	@Override public Tab getGui() { return null; }
 
 
 	

@@ -22,7 +22,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.JudahZone;
+import net.judah.metronome.Sequencer;
 import net.judah.util.Constants;
 import net.judah.util.FileCellRenderer;
 import net.judah.util.FileChooser;
@@ -74,11 +74,11 @@ public class SonglistTab extends Tab implements ListSelectionListener {
 		buttonsPanel();
 		
 		// TODO auto load default settings
-		if (model != null && !model.isEmpty() && model.get(0) != null &&
-				model.get(0).getName().startsWith("default"))
+		if (model != null && !model.isEmpty() && model.get(0) != null 
+				&& model.get(0).getName().startsWith("default"))
 			new Thread() {
 			@Override public void run() {
-				try {Thread.sleep(400);} catch (Exception e) { }
+				try {Thread.sleep(100);} catch (Exception e) { }
 				openSong(0);};
 		}.start();
 			
@@ -117,7 +117,7 @@ public class SonglistTab extends Tab implements ListSelectionListener {
 	
 	private String setlistLabel(File file) {
 		int i = file.getName().lastIndexOf(SUFFIX);
-		return "Setlist: " + ((i < 0) ? file.getName() : file.getName().substring(0, i));
+		return "Set: " + ((i < 0) ? file.getName() : file.getName().substring(0, i));
 	}
 	
 	enum CMD {
@@ -182,7 +182,8 @@ public class SonglistTab extends Tab implements ListSelectionListener {
 				model.addElement(file);
 			else
 				model.insertElementAt(file, jsongs.getSelectedIndex() + 1);
-			JudahZone.openTab(new SongTab(song, file));
+
+			new Sequencer(song, file);
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
 			Constants.infoBox(e.getMessage(), "Error");
@@ -290,7 +291,7 @@ public class SonglistTab extends Tab implements ListSelectionListener {
 		File file = model.getElementAt(index);
 		try {
 			Song song = (Song)JsonUtil.readJson(file, Song.class);
-			JudahZone.openTab(new SongTab(song, file));
+			new Sequencer(song, file);
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
 			log.error(file.getAbsolutePath());

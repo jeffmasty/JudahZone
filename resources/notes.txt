@@ -1,15 +1,11 @@
 TODO:
 
+patch bay needed. see jack_lsp, jack_connect
 midi recorder
+new GUI layout, fix props table
 Song / Scene (i.e., 1 bar drum setups)
-looper bug
 Sequencer: TimeClock, MultiLoop + Sync,
-new GUI layout 
 Undo/Redo/Copy/Paste
-fix props table & scripts
-patch setup (services like carla/fluid/drums)
-Services - Settings - Loop Settings
-Commands, command scripts
 Plugins, ttl 
 upload jna-jack patch
 arpegiator
@@ -20,23 +16,16 @@ joystick  (pitch bend logarithmic to 1 octave) (left cc = distortion or vocoder 
 dr-5
     1. channel switch
     2. mpk pads assign
-Up/down drum bank
-Drum pads
-Save settings
 Pad/knob server
 Guesstimator
 Direct midi translate.
-Other synth.
 
 Knobs:
 Fluid synth knobs:
 Volume, Chorus, reverb, ...
 Volume track/master, pan, 
-Rakarrack knobs
 Input/output/gain lvl, pedal knobs
 Other knobs: calf, Jackrack, mixer
-
-
 
 drum options:  DrMr, drumkv1-jack, hydrogen, fluid, drumsynth, black pearl
 
@@ -71,4 +60,16 @@ command mappings
 triggers
 save loops to disk and play samples (see http://www.softsynth.com/jsyn/developers/download.php)
 Sampler (save and play loops)
+
+
+Wave:
+
+shakers midi track, volume adjusted
+add some bongos
+play "Wave"
+loop on dm - gm, flute solo
+come back in on the bridge and sequence a Ritardo at the end.
+
+ Feel Good: 
+ Octave up bass at the end? (requires midi record)
 

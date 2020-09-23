@@ -18,6 +18,7 @@ import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
 import org.jaudiolibs.jnajack.JackPort;
 
+import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.midi.GMNames;
 import net.judah.midi.Midi;
@@ -35,18 +36,13 @@ import net.judah.util.Tab;
 @Log4j
 public class FluidSynth implements Service {
 
-//	public static final String LEFT_PORT = "fluidsynth:l_00";
-//	public static final String RIGHT_PORT = "fluidsynth:r_00";
-//	public static final String MIDI_PORT = "fluidsynth:midi";
-
-	public static final String LEFT_PORT = "fluidsynth-midi:left";
-	public static final String RIGHT_PORT = "fluidsynth-midi:right";
-	public static final String MIDI_PORT = "fluidsynth-midi:midi_00";
-
+	@Getter private static FluidSynth instance;
 	
-    public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // fluid-soundfount-gm package, 150mb
-    
-    // public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/JJazzLab-SoundFont.sf2"); // custom soundfont, 350mb, no reverb?
+	public static final String LEFT_PORT = "fluidsynth-midi:left"; // "fluidsynth:l_00";
+	public static final String RIGHT_PORT = "fluidsynth-midi:right"; // "fluidsynth:r_00";
+	public static final String MIDI_PORT = "fluidsynth-midi:midi_00"; // "fluidsynth:midi";
+
+    public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // "/usr/share/sounds/sf2/JJazzLab-SoundFont.sf2"
     
     /** Drums midi channel */
     private static final int DRUMS = 9;
@@ -81,7 +77,6 @@ public class FluidSynth implements Service {
 	@SuppressWarnings("deprecation")
 	public FluidSynth (MidiClient midi, File soundFont) throws JackException, JudahException, IOException, JackException {
 		this.midi = midi;
-		
 		shellCommand = "fluidsynth" +
 				" --midi-driver=jack --audio-driver=jack" +
 	    		" -o synth.ladspa.active=0  --sample-rate " + midi.getJackclient().getSampleRate() + " " +
@@ -108,15 +103,14 @@ public class FluidSynth implements Service {
 		    	Thread.sleep(50);
 	    	}
 	    	gain(gain);
-	    	Thread.sleep(30);
+	    	Thread.sleep(40);
 	    	connect(midi.getJackclient(), midi.getSynth());
 	    } catch (InterruptedException e) {
 	    	log.error(e);
 	    }
+	    instance = this;
 	    sync();
-		
 		initReverb();
-		
 		HashMap<String, Class<?>> props = new HashMap<String, Class<?>>();
 		props.put("channel", Integer.class);
 		props.put("preset", Integer.class);
@@ -132,6 +126,7 @@ public class FluidSynth implements Service {
 		fluidWindow.newLine();
 		fluidWindow.addText( "channels: " + channels.size() + " instruments: " + instruments.size());
 		fluidWindow.newLine();
+		
 	}
 
 	private void syncChannels() throws InterruptedException, IOException, JudahException {

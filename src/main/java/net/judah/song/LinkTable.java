@@ -23,9 +23,9 @@ public class LinkTable extends JPanel implements Edits {
 	private final LinkModel model;
 	private final JTable table;
 	
-	public LinkTable(LinkedHashSet<Link> links) {
+	public LinkTable(LinkedHashSet<Link> links,  CommandHandler commander) {
 
-		model = new LinkModel(links);
+		model = new LinkModel(links, commander);
 		table = new JTable(model);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 		table.getColumnModel().getColumn(0).setPreferredWidth(70);
@@ -34,7 +34,7 @@ public class LinkTable extends JPanel implements Edits {
 		table.getColumnModel().getColumn(3).setPreferredWidth(15);
 		
 		table.setDefaultEditor(Command.class, new DefaultCellEditor(
-				new JComboBox<Command>(CommandHandler.getAvailableCommands())));
+				new JComboBox<Command>(commander.getAvailableCommands())));
 		table.setDefaultEditor(Midi.class, new MidiEditor());
 		table.setDefaultEditor(HashMap.class, new PropertiesEditor());
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));

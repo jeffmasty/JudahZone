@@ -18,18 +18,17 @@ import net.judah.util.Constants;
 /** sequence our own metronome */
 @Log4j @ToString
 public class TickTock implements MetroPlayer {
-	
+
 	public static final int DEFAULT_DOWNBEAT = 34;
 	public static final int DEFAULT_BEAT = 33;
-	MidiClient midi = MidiClient.getInstance();
-	Sequencer sequencer = Sequencer.getInstance();
+	private final MidiClient midi = MidiClient.getInstance();
+	private final Sequencer sequencer;
 	
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 	private ScheduledFuture<?> beeperHandle;
     private final WakeUp wakeUp = new WakeUp();
 	private final AtomicBoolean changed = new AtomicBoolean(true);
     
-
 	private Midi downbeatOn, downbeatOff, beatOn, beatOff; //:>
 	private int gain = 99; // data2 midi gain
 	
@@ -74,7 +73,8 @@ public class TickTock implements MetroPlayer {
 	 * @param measure beats per measure
 	 * @param tempo
 	 */
-	TickTock(int downbeat, int beat, int channel) {
+	TickTock(Sequencer sequencer, int downbeat, int beat, int channel) {
+		this.sequencer = sequencer;
     	try {
     		downbeatOn = new Midi(ShortMessage.NOTE_ON, channel, downbeat, gain); 
     		downbeatOff = new Midi(ShortMessage.NOTE_OFF, channel, downbeat);
@@ -86,8 +86,8 @@ public class TickTock implements MetroPlayer {
 	}
 
 	/** bell and woodblock on channel 9 */
-	TickTock() {
-		this(34, 33, 9); 
+	TickTock(Sequencer sequencer) {
+		this(sequencer, 34, 33, 9); 
 	}
 
 	@Override
@@ -100,7 +100,7 @@ public class TickTock implements MetroPlayer {
 		if (isRunning()) return;
 
 		long cycle = Constants.millisPerBeat(sequencer.getTempo());
-		log.debug("Metronome starting with a cycle of " + cycle + " for bpm: " + Sequencer.getInstance().getMeasure());
+		log.debug("Metronome starting with a cycle of " + cycle + " for bpm: " + sequencer.getTempo());
 
 		beeperHandle = scheduler.scheduleAtFixedRate(wakeUp, 0, 
 				Constants.millisPerBeat(sequencer.getTempo()), TimeUnit.MILLISECONDS);
@@ -132,6 +132,10 @@ public class TickTock implements MetroPlayer {
 		stop();
 	}
 	
+	@Override public String toString() { 
+		return TickTock.class.getSimpleName() + " " + duration + " beats duration"; 
+	}
+
 	@Override
 	public void setDuration(Integer intro, Integer duration) {
 		this.intro = intro;

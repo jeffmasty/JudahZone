@@ -6,19 +6,24 @@ import java.util.List;
 
 import javax.swing.table.DefaultTableModel;
 
+import net.judah.CommandHandler;
 import net.judah.settings.Command;
 import net.judah.song.Trigger.Type;
 import net.judah.util.JudahException;
 
 public class SequencerModel extends DefaultTableModel {
 
-	public SequencerModel(List<Trigger> sequence) {
+	
+	public SequencerModel(List<Trigger> sequence, CommandHandler commander) {
 		super (new Object[] { "Timestamp", "Command", "Notes", "Param"}, 0);
 		if (sequence == null) return;
 		for (Trigger trigger: sequence) 
-			addRow(trigger.toObjectArray());
+			addRow(new Object[] {trigger.getTimestamp(), commander.find(trigger.getService(), trigger.getCommand()), 
+					trigger.getNotes(), trigger.getParams()});
 	}
 
+
+	
 	@Override
 	public Class<?> getColumnClass(int idx) {
 		switch (idx) {
@@ -34,6 +39,8 @@ public class SequencerModel extends DefaultTableModel {
 	public Trigger getRow(int i) throws JudahException {
 		Command cmd = ((Command)getValueAt(i,1));
 		if (cmd == null) throw new JudahException("no command for midi link");
+		assert cmd.getService() != null;
+		assert cmd.getName() != null;
 		return new Trigger(Type.ABSOLUTE, (long)getValueAt(i, 0), null, cmd.getService().getServiceName(), cmd.getName(),
 				getValueAt(i, 2).toString(), (HashMap)getValueAt(i, 3));
 	}

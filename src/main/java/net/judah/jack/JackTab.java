@@ -9,7 +9,7 @@ import java.util.Properties;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.CommandHandler;
+import net.judah.JudahZone;
 import net.judah.jack.ProcessAudio.Type;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
@@ -21,8 +21,6 @@ import net.judah.midi.MidiPlayer;
 import net.judah.midi.Route;
 import net.judah.mixer.Mixer;
 import net.judah.plugin.Carla;
-import net.judah.settings.Service;
-import net.judah.settings.Services;
 import net.judah.util.Tab;
 
 
@@ -70,9 +68,7 @@ public class JackTab extends Tab implements MidiListener {
 			return;
 		}
 		if (text.startsWith("xruns") || text.equalsIgnoreCase("xrun")) {
-			for (Service s : Services.getInstance())
-				if (s instanceof BasicClient) 
-					addText(((BasicClient)s).xrunsToString());
+			addText(MidiClient.getInstance().xrunsToString());
 			return;
 		}
 		
@@ -101,7 +97,7 @@ public class JackTab extends Tab implements MidiListener {
 		else if (text.startsWith("stop "))
 			stop(split);
 		else if (text.equals("samples")) 
-			addText( Arrays.toString(((Mixer)Services.byClass(Mixer.class)).getSamples().toArray()));
+			addText( Arrays.toString(Mixer.getInstance().getSamples().toArray()));
 		else if (text.equals("router")) 
 			for (Route r : MidiClient.getInstance().getRouter())
 				addText(r);
@@ -133,7 +129,7 @@ public class JackTab extends Tab implements MidiListener {
 
 	private void midiListen() {
 		midiListen = !midiListen;
-		CommandHandler.getInstance().setMidiListener(midiListen ? this : null);
+		JudahZone.getCurrentSong().getCommander().setMidiListener(midiListen ? this : null);
 	}
 	
 	private void midiPlay(String[] split) {
@@ -155,9 +151,8 @@ public class JackTab extends Tab implements MidiListener {
 				midiFile = new File("/home/judah/Tracks/midi/dance/dance21.mid");
 			}
 			
-			MidiPlayer playa = new MidiPlayer(midiFile, 0, 
-					new JudahReceiver(MidiClient.getInstance()));
-			addText(playa.getSequencer().getDeviceInfo() + " / " + playa.getSequencer().getMasterSyncMode());
+			MidiPlayer playa = new MidiPlayer(midiFile, 8, 
+					new JudahReceiver(MidiClient.getInstance()), null);
 			playa.start();
 		} catch (Throwable t) {
 			addText(t.getMessage());
@@ -279,9 +274,8 @@ public class JackTab extends Tab implements MidiListener {
 		
 	}
 
-	
 	private Carla getCarla() {
-		return (Carla)Services.byClass(Carla.class);
+		return JudahZone.getCurrentSong().getCarla();
 	}
 
 	@Override

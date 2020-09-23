@@ -25,10 +25,12 @@ public class TriggersTable extends JPanel implements Edits {
 
 	private final JTable table;
 	private final SequencerModel model;
+	private final CommandHandler commander;
 	
-	public TriggersTable(List<Trigger> sequence) {
+	public TriggersTable(List<Trigger> sequence,  CommandHandler commander) {
+		this.commander = commander;
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-		model = new SequencerModel(sequence);
+		model = new SequencerModel(sequence, commander);
 		table = new JTable(model);
 		
 		
@@ -39,7 +41,7 @@ public class TriggersTable extends JPanel implements Edits {
 		table.getColumnModel().getColumn(3).setPreferredWidth(20);
 		
 		table.setDefaultEditor(Command.class, new DefaultCellEditor(
-				new JComboBox<Command>(CommandHandler.getAvailableCommands())));
+				new JComboBox<Command>(commander.getAvailableCommands())));
 		table.setDefaultEditor(HashMap.class, new PropertiesEditor());
 		table.setDefaultRenderer(HashMap.class, new TableCellRenderer() {
 			@SuppressWarnings("rawtypes")
@@ -58,11 +60,14 @@ public class TriggersTable extends JPanel implements Edits {
 	}
 
 	@Override public void add() {
-		Object[] trigger = new Trigger(Type.ABSOLUTE, -1l, null, "", "", "", new HashMap<String, Object>()).toObjectArray();
+		Trigger trigger = new Trigger(Type.ABSOLUTE, -1l, null, "", "", "", new HashMap<String, Object>());
+		Object[] data = new Object[] { trigger.getTimestamp(), commander.find(trigger.getService(), trigger.getCommand()), 
+				trigger.getNotes(), trigger.getParams()}; 
+		
 		if(table.getSelectedRow() < 0)
-			model.addRow(trigger);
+			model.addRow(data);
 		else 
-			model.insertRow(table.getSelectedRow() + 1, trigger);
+			model.insertRow(table.getSelectedRow() + 1, data);
 	}
 
 	@Override public void delete() {

@@ -94,7 +94,7 @@ public abstract class BasicClient extends Thread implements JackXrunCallback, Ja
 
     @Override
 	public final void clientShutdown(JackClient client) {
-    	log.warn("---- " + client.getName() + " " + this.getClass().getSimpleName() + " disposed by Jack. ----");
+    	log.warn("---- " + client.getName() + " / " + this.getClass().getCanonicalName() + " disposed by Jack. ----");
     	jackclient = null;
     	close();
     }

@@ -15,7 +15,7 @@ import javax.swing.JToggleButton;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
-import net.judah.CommandHandler;
+import net.judah.JudahZone;
 import net.judah.util.Constants;
 
 @Log4j
@@ -118,7 +118,7 @@ public class MidiForm extends JPanel implements MidiListener {
 	}
 	
 	private void midiLearn() {
-		CommandHandler.getInstance().setMidiListener(midiRecord.isSelected() ? this : null);
+		JudahZone.getCurrentSong().getCommander().setMidiListener(midiRecord.isSelected() ? this : null);
 	}
 
 	private void midiPlay() {

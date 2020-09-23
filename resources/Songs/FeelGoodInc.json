@@ -209,9 +209,8 @@
       "midi.beat" : "45",
       "midi.channel" : "6",
       "duration.beats" : "20",
-      "midi.file" : null,
-      "midi.note.downbeat" : "51",
-      "duraction.beats" : "20"
+      "midi.downbeat" : "51",
+      "midi.file" : null
     }
   }, {
     "type" : "ABSOLUTE",

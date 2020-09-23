@@ -4,19 +4,14 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 import com.illposed.osc.OSCMessage;
 import com.illposed.osc.OSCSerializeException;
 import com.illposed.osc.transport.udp.OSCPortOut;
 
+import lombok.Getter;
 import lombok.extern.log4j.Log4j;
-import net.judah.settings.Command;
-import net.judah.settings.Service;
-import net.judah.settings.Services;
-import net.judah.util.Tab;
 
 // /home/judah/git/JudahZone/JudahZone/JudahZone.carxp
 // /usr/local/share/applications
@@ -42,8 +37,10 @@ import net.judah.util.Tab;
 </pre>
  */
 @Log4j
-public class Carla implements Service {
+public class Carla {
 
+	@Getter private static Carla instance; 
+	
     public static final String CARLA_SHELL_COMMAND = "/usr/local/bin/carla ";
 //    public static final File CARLA_SETTINGS = 
 //    		new File(JudahZone.class.getClassLoader().getResource("JudahZone.carxp").getFile());
@@ -67,9 +64,10 @@ public class Carla implements Service {
 		cmd = shellCommand + carlaSettings;
 		log.info("Opening Carla with: " + cmd + " and using UDP port=" + port);
 		process = Runtime.getRuntime().exec(cmd);
-		Services.getInstance().add(this);
+		instance = this;
 		out = new OSCPortOut(InetAddress.getLocalHost(), port);
 		out.connect();
+
 	}
 	
 //	public Carla() throws IOException {
@@ -150,23 +148,6 @@ public class Carla implements Service {
 	}
 	
 	
-	@Override
-	public String getServiceName() {
-		return this.getClass().getSimpleName();
-	}
-
-	@Override
-	public List<Command> getCommands() {
-		return Collections.emptyList(); // TODO
-	}
-
-	@Override
-	public void execute(Command cmd, HashMap<String, Object> props) throws Exception {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
 	public void close() {
 		if (out != null && out.isConnected()) {
 			try {
@@ -177,9 +158,6 @@ public class Carla implements Service {
 		}
 		process.destroy();
 	}
-
-	@Override public Tab getGui() { return null; }
-
 	
 }
 

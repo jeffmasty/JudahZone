@@ -59,8 +59,20 @@ public class Sample implements ProcessAudio {
 	
 	protected Sample() { }
 	
-	protected float[][] getCurrent() {
-		return recording.get(tapeCounter.get());
+	protected void readRecordedBuffer() {
+		recordedBuffer = recording.get(tapeCounter.get());
+		
+		updated = tapeCounter.get() + 1;
+		if (updated == recording.size()) {
+			if (type == Type.ONE_TIME) {
+				isPlaying.set(STOPPING);
+				new Thread() {
+					@Override public void run() {Mixer.getInstance().removeSample(Sample.this);}
+				}.start();
+			}
+			updated = 0;
+		}
+		tapeCounter.set(updated);
 	}
 
 	@Override public final AudioMode isPlaying() {
@@ -87,26 +99,20 @@ public class Sample implements ProcessAudio {
 		return recording != null && length != null && length > 0;
 	}
 
-	public void setRecording(Recording sample) {
-		recording = sample;
-		length = recording.size();
-		log.warn("Recording loaded");
-	}
-	
-	/** for process() thread */
-	protected void updateCounter() {
-		updated = tapeCounter.get() + 1;
-		if (updated == recording.size()) {
-			if (type == Type.ONE_TIME) {
-				isPlaying.set(STOPPING);
-				new Thread() {
-					@Override public void run() {Mixer.getInstance().removeSample(Sample.this);}
-				}.start();
-			}
-			updated = 0;
-		}
-		tapeCounter.set(updated);
-	}
+//	/** for process() thread */
+//	protected void updateCounter() {
+//		updated = tapeCounter.get() + 1;
+//		if (updated == recording.size()) {
+//			if (type == Type.ONE_TIME) {
+//				isPlaying.set(STOPPING);
+//				new Thread() {
+//					@Override public void run() {Mixer.getInstance().removeSample(Sample.this);}
+//				}.start();
+//			}
+//			updated = 0;
+//		}
+//		tapeCounter.set(updated);
+//	}
 	
 	protected final boolean playing() {
 		isPlaying.compareAndSet(STOPPING, STOPPED);
@@ -126,10 +132,9 @@ public class Sample implements ProcessAudio {
 			toJackLeft.rewind();
 			toJackRight = outputPorts.get(RIGHT_CHANNEL).getPort().getFloatBuffer();
 			toJackRight.rewind();
-			recordedBuffer = getCurrent();
+			readRecordedBuffer();
 			processMix(recordedBuffer[LEFT_CHANNEL], toJackLeft, nframes);
 			processMix(recordedBuffer[RIGHT_CHANNEL], toJackRight, nframes);
-			updateCounter();
 		} 
 	}
 
@@ -151,9 +156,18 @@ public class Sample implements ProcessAudio {
 				Thread.sleep(20); } catch (Exception e) {	}
 		}
 		isPlaying.set(wasRunning ? ARMED : NEW);
-		
 		tapeCounter.set(0);
 		recording = null;
+		length = null;
+	}
+
+	public void setRecording(Recording sample) {
+		if (recording != null)
+			recording.close();
+		recording = sample;
+		length = recording.size();
+		log.warn("Recording loaded, " + length + " frames.");
+		isPlaying.set(STOPPED);
 	}
 
 	@Override

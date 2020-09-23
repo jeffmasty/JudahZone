@@ -10,7 +10,10 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
 import net.judah.jack.RecordAudio;
+import net.judah.looper.Recorder;
+import net.judah.looper.Recording;
 import net.judah.looper.Sample;
+import net.judah.settings.ActiveCommand;
 import net.judah.settings.Command;
 import net.judah.settings.DynamicCommand;
 import net.judah.util.JudahException;
@@ -25,10 +28,11 @@ public class MixerCommands extends ArrayList<Command> {
 		UNDO("undo recording"), 
 		REDO("redo recording"), 
 		CLEAR("clear looper"), 
-		CHANNEL("record channel");
+		CHANNEL("Mute channel"),
+		TOGGLE_LOOP("Switch Loop Recording"),
+		LOAD_SAMPLE("Load Sample");
 		@Getter private final String label;
 	}
-
 	
 	protected final Mixer mixer;
 	
@@ -41,6 +45,11 @@ public class MixerCommands extends ArrayList<Command> {
 	public static final String PLUGIN_COMMAND = "Load Plugin";
 	public static final String LOOP_PARAM = "Loop";
 	public static final String CHANNEL_PARAM = "Channel";
+	public static final String SOURCE_LOOP = "source.loop";
+	public static final String DESTINATION_LOOP = "destination.loop";
+	public static final String SOURCE_FILE = "source.file";
+	public static final String LOOP_DUPLICATE = "loop.duplicate";
+
 	
 	protected final Command gainCommand;
 	protected final DynamicCommand playCmd;
@@ -48,7 +57,10 @@ public class MixerCommands extends ArrayList<Command> {
 	
 	protected final Command clearCommand;
 	protected final Command muteCommand;
-
+	
+	protected final Command toggleLoopRecord;
+	protected final Command loadSample;
+	
 	//	final Command pluginCommand;
 	//	final Command undoCommand;
 	//	final Command redoCommand;
@@ -66,20 +78,25 @@ public class MixerCommands extends ArrayList<Command> {
 					@Override public void processMidi(int data2, HashMap<String, Object> props) {
 						props.put(ACTIVE_PARAM, data2 > 0); }};
 			
-		muteCommand = new Command(CHANNEL.getLabel(), mixer, channelProps(),
+		muteCommand = new Command(CHANNEL.getLabel(), mixer, muteProps(),
 				"Mute/unmute the recording of a given looper channel");
 		clearCommand = new Command(CLEAR.getLabel(), mixer, loopProps(),
 				"Reset the given looper");
+		gainCommand = new DynamicCommand(GAIN_COMMAND, mixer, gainProps(), "Adjust loop or input gain between 0 and 1") {
+			@Override public void processMidi(int data2, HashMap<String, Object> props) {
+						props.put(GAIN_PROP, ((data2 - 1))* 0.01f); }};
+
+		toggleLoopRecord = new ActiveCommand(TOGGLE_LOOP.getLabel(), mixer, new HashMap<>(), "Switch Recording between first 2 loops.");
+
+		loadSample = new Command(LOAD_SAMPLE.getLabel(), mixer, sampleProps(), "load looper or sample, can be empty"); 
 		
 		add(recordCmd);
 		add(playCmd);
 		add(muteCommand);
 		add(clearCommand);
-		
-		gainCommand = new DynamicCommand(GAIN_COMMAND, mixer, gainProps(), "Adjust loop or input gain between 0 and 1") {
-			@Override public void processMidi(int data2, HashMap<String, Object> props) {
-						props.put(GAIN_PROP, ((data2 - 1))* 0.01f); }};
 		add(gainCommand);
+		add(toggleLoopRecord);
+		add(loadSample);
 		
 //  	TODO		
 //		props.put(CHANNEL_PROP, Integer.class); // -1 = main
@@ -108,12 +125,23 @@ public class MixerCommands extends ArrayList<Command> {
 		return commandProps;
 	}
 
-	private HashMap<String, Class<?>> channelProps() {
+	private HashMap<String, Class<?>> muteProps() {
 		HashMap<String, Class<?>> commandProps = loopProps();
+		commandProps.put(LOOP_PARAM, Integer.class);
+		commandProps.put("mute", Boolean.class);
 		commandProps.put(CHANNEL_PARAM, Integer.class);
 		return commandProps;
 	}
 
+	private HashMap<String, Class<?>> sampleProps() {
+		HashMap<String, Class<?>> commandProps = loopProps();
+		commandProps.put(LOOP_PARAM, Integer.class);
+		commandProps.put(SOURCE_LOOP, Integer.class);
+		commandProps.put(SOURCE_FILE, Integer.class);
+		commandProps.put(LOOP_DUPLICATE, Boolean.class);
+		return commandProps;
+	}
+	
 	public void execute(Command cmd, HashMap<String, Object> props) throws JudahException {
 		
 		if (cmd.getName().equals(GAIN_COMMAND)) {
@@ -139,6 +167,45 @@ public class MixerCommands extends ArrayList<Command> {
 			return;
 		} 
 		
+		if (cmd.equals(loadSample)) {
+			 
+			Object file = props.get(SOURCE_FILE);
+			Object loop = props.get(LOOP_PARAM);
+			if (file != null && file.toString().length() > 0) {
+				try {
+					mixer.getSamples().get(Integer.parseInt(loop.toString()))
+						.setRecording(Recording.readAudio(file.toString()));
+				} catch (Throwable t) {
+					throw new JudahException(t);
+				}
+				return;
+			}
+			else {
+				// TODO, quick implement an empty loop[1] based on size of loop[0] for now
+				Sample s = mixer.getSamples().get(0);
+				Sample s2 = mixer.getSamples().get(1);
+				if (!s.hasRecording()) {
+					log.error("No recording in Loop " + s.getName());
+					return;
+				}
+				s2.setRecording(new Recording(s.getRecording().size(), true));
+				return;
+			}
+		}
+
+		if (cmd.equals(muteCommand)) {
+			boolean mute = Boolean.parseBoolean(props.get("mute").toString());
+			String channel = props.get(CHANNEL_PARAM).toString();
+			if (channel.equals("all")) 
+				for (Sample loop : loops)
+				{
+					
+				}
+			else 
+				((Recorder)loops.get(idx)).mute(channel, mute);
+			return;
+		}
+		
 		boolean active = Boolean.parseBoolean(props.get(Command.ACTIVE_PARAM).toString());
 		if (cmd.equals(recordCmd)) {
 			Sample s = loops.get(idx);
@@ -152,14 +219,6 @@ public class MixerCommands extends ArrayList<Command> {
 					loop.play(active);
 			else 
 				loops.get(idx).play(active);
-		// TODO Mute
-		//	else if (cmd.equals(muteCommand)) {
-		//		int ch = Integer.parseInt(props.get(CHANNEL_PARAM).toString());
-		//		if (all) 
-		//			for (Sample loop : loops)
-		//				loop.channel(ch, active);
-		//		else 
-		//			loops.get(idx).channel(ch, active);
 		//	else if (cmd.equals(cmdUndo)) { }
 		//	else if (cmd.equals(cmdToggleMode)) { }
 
