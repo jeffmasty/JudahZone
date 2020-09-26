@@ -49,7 +49,7 @@ public class LinkModel extends DefaultTableModel {
 		Command cmd = ((Command)getValueAt(i,1));
 		if (cmd == null) throw new JudahException("no command for midi link");
 		Link link = new Link(getValueAt(i, 0).toString(), cmd.getService().getServiceName(), cmd.getName(),
-				((Midi)getValueAt(i, 2)).getMessage(), (HashMap)getValueAt(i, 3));
+				((Midi)getValueAt(i, 2)).getMessage(), new HashMap((HashMap)getValueAt(i, 3)));
 		return link;
 	}
 

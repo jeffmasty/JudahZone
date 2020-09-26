@@ -12,23 +12,11 @@ import javax.swing.table.DefaultTableModel;
 import lombok.extern.log4j.Log4j;
 import net.judah.midi.MidiPair;
 import net.judah.midi.NoteOn;
+import net.judah.util.PopupMenu;
 
 @Log4j
 public class RouterTable extends JPanel implements Edits {
 
-//	@AllArgsConstructor @Getter @Setter @EqualsAndHashCode
-//	public static class FromTo {
-//		private Midi from, to;
-//		public FromTo(FromTo source) {
-//			from = source.from;
-//			to = source.to;
-//		}
-//		@Override
-//		public String toString() {
-//			return from + " -> " + to;
-//		}
-//	}
-	
 	private final DefaultTableModel model;
 	private final JTable list;
 
@@ -38,16 +26,8 @@ public class RouterTable extends JPanel implements Edits {
 		list.setDefaultEditor(MidiPair.class, new RouterEditor());
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		add(new JScrollPane(list));
+		list.setComponentPopupMenu(new PopupMenu(this));
 	}
-	
-//	public RouterTable(HashMap<byte[], byte[]> routes) {
-//		model = toTableModel(routes);
-//		list = new JTable(model);
-//		list.setDefaultEditor(FromTo.class, new RouterEditor());
-//
-//		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-//		add(new JScrollPane(list));
-//	}
 	
 	public static DefaultTableModel toTableModel(List<MidiPair> routes) {
 	    DefaultTableModel model = new DefaultTableModel(new String[] { " From  -->   To " }, 0) {
@@ -58,19 +38,6 @@ public class RouterTable extends JPanel implements Edits {
         return model;
 	}
 	
-//	public static DefaultTableModel toTableModel(Map<byte[],byte[]> map) {
-//	    DefaultTableModel model = new DefaultTableModel(new String[] { " From  -->   To " }, 0) {
-//	    		@Override public Class<?> getColumnClass(int idx) {return FromTo.class;}};
-//	    if (map == null) return model;
-//	    Midi from, to;
-//	    for (Map.Entry<byte[],byte[]> entry : map.entrySet()) {
-//	    	from = entry.getKey() == null ? null : new Midi(entry.getKey());
-//	    	to = entry.getValue() == null ? null : new Midi(entry.getValue());
-//	    	model.addRow(new Object[] {new FromTo (from, to)});
-//	    }
-//	    return model;
-//	}
-
 	public List<MidiPair> getRoutes() {
 		ArrayList<MidiPair> routes = new ArrayList<MidiPair>();
 		for (int i = 0; i < model.getRowCount(); i++) {
@@ -79,20 +46,7 @@ public class RouterTable extends JPanel implements Edits {
 		return routes;
 	}
 	
-//	public HashMap<byte[], byte[]> getRoutes() {
-//		HashMap<byte[], byte[]> result = new HashMap<byte[], byte[]>();
-//		Object o1;
-//		for (int i = 0; i < model.getRowCount(); i++) {
-//			o1 = model.getValueAt(i, 0);
-//			if (o1 != null) { 
-//				FromTo val = ((FromTo)o1);
-//				result.put(val.getFrom().getMessage(), val.getTo().getMessage());
-//			}
-//		}
-//		return result;
-//	}
-	
-	@Override public void add() {
+	@Override public void editAdd() {
 		try {
 			model.addRow(new Object[] {new MidiPair(new NoteOn(), new NoteOn())});
 		} catch (Exception e) {
@@ -100,16 +54,44 @@ public class RouterTable extends JPanel implements Edits {
 		}
 	}
 
-	@Override public void delete() {
+	@Override public void editDelete() {
 		int selected = list.getSelectedRow();
 		if (selected < 0) return;
 		model.removeRow(selected);
 	}
 	
-	@Override public void copy() {
+	@Override
+	public void paste(List<Copyable> clipboard) {
+		if (clipboard == null || clipboard.isEmpty()) return;
 		int selected = list.getSelectedRow();
-		if (selected < 0) return;
-		model.addRow(new Object[] { new MidiPair((MidiPair)model.getValueAt(selected, 0))});
+		if (selected < 0) selected = 0;
+		for (int i = clipboard.size() -1; i >= 0; i--)
+			model.insertRow(selected, new Object[] {(MidiPair)clipboard.get(i)});
+		
 	}
+
+	@Override
+	public List<Copyable> cut() {
+		List<Copyable> result = copy();
+		if (result != null)
+			editDelete();
+		return result;
+	}
+	
+	@Override
+	public List<Copyable> copy() {
+		int selected = list.getSelectedRow();
+		if (selected < 0) return null;
+		ArrayList<Copyable> result = new ArrayList<>();
+		for (int rownum : list.getSelectedRows()) {
+			result.add(new MidiPair((MidiPair)model.getValueAt(rownum, 0)));
+		}
+		return result;
+	}
+	//	public void copy() {
+	//		int selected = list.getSelectedRow();
+	//		if (selected < 0) return;
+	//		model.addRow(new Object[] { new MidiPair((MidiPair)model.getValueAt(selected, 0))});
+	//	}
 	
 }

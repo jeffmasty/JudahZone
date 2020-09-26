@@ -9,6 +9,7 @@ import java.util.List;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
+import net.judah.JudahZone;
 import net.judah.jack.RecordAudio;
 import net.judah.looper.Recorder;
 import net.judah.looper.Recording;
@@ -226,14 +227,15 @@ public class MixerCommands extends ArrayList<Command> {
 	}
 
 	private void gainCommand(Command cmd, HashMap<String, Object> props) throws JudahException {
+		
 		if (!props.containsKey(GAIN_PROP)) throw new JudahException("No Volume. " + cmd + " " );
 		float gain = (Float)props.get(GAIN_PROP);
 		boolean isInput = Boolean.parseBoolean(props.get(IS_INPUT).toString());
 		int idx = Integer.parseInt(props.get(INDEX).toString());
-		log.debug((isInput ? mixer.getChannels().get(idx).getName() : mixer.getSamples().get(idx).getName()) 
+		log.debug((isInput ? JudahZone.getChannels().get(idx).getName() : mixer.getSamples().get(idx).getName()) 
 				+ " gain: " + gain);
 		if (isInput) 
-			mixer.getChannels().get(idx).setGain(gain);
+			JudahZone.getChannels().get(idx).setGain(gain);
 		else
 			mixer.getSamples().get(idx).setGain(gain);
 		mixer.getGui().update();

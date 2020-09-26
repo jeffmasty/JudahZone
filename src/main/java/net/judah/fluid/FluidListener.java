@@ -8,6 +8,8 @@ import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
 
+import net.judah.util.Console;
+
 class FluidListener extends Thread {
 	static final Logger log = Logger.getLogger(FluidListener.class);
 
@@ -18,13 +20,11 @@ class FluidListener extends Thread {
     final ArrayList<FluidChannel> channels = new ArrayList<FluidChannel>();
 
 	final InputStream is;
-    final FluidUI ui;
     final boolean isError;
 
     FluidCommand sysOverride;
 
-    FluidListener(FluidUI ui, InputStream is, boolean isError) {
-    	this.ui = ui;
+    FluidListener(InputStream is, boolean isError) {
         this.is = is;
         this.isError = isError;
     }
@@ -73,7 +73,7 @@ class FluidListener extends Thread {
             	}
             	else {
             		// log.debug("fluid: " + line);
-            		ui.addText(line);
+            		Console.addText(PREFIX + ": " + line);
             	}
             }
         } catch (IOException ioe) {

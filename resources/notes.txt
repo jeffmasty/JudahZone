@@ -1,8 +1,9 @@
 TODO:
 
-patch bay needed. see jack_lsp, jack_connect
+upgrade mixer
 midi recorder
-new GUI layout, fix props table
+unify consoles
+patch bay needed. see jack_lsp, jack_connect
 Song / Scene (i.e., 1 bar drum setups)
 Sequencer: TimeClock, MultiLoop + Sync,
 Undo/Redo/Copy/Paste
@@ -51,6 +52,7 @@ Simple converter ttl to JSON
 https://github.com/PedalController/Lv2Library/blob/master/src/br/com/srmourasilva/lv2library/Lv2Mapper.java
 
 Done:
+new GUI layout, fix props table
 Recompile Carla (done, modified modules/rtaudio.cpp)
 mixer/Channel concept, mixer gain
 MidiMapper, midi router
@@ -58,8 +60,8 @@ Setlist and Song  (default song)
 setup and teardown notes
 command mappings
 triggers
-save loops to disk and play samples (see http://www.softsynth.com/jsyn/developers/download.php)
-Sampler (save and play loops)
+save loops to disk and play samples
+
 
 
 Wave:

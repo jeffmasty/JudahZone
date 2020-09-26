@@ -2,7 +2,7 @@ package net.judah.settings;
 
 import java.util.List;
 
-import lombok.Data;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.mixer.MixerPort.PortDescriptor;
 
@@ -14,17 +14,17 @@ import net.judah.mixer.MixerPort.PortDescriptor;
  		sys_2                     judahzone                    x
  		                                                       x     [connect]
  */
-@Data @RequiredArgsConstructor
+@Getter @RequiredArgsConstructor
 public class Patchbay {
 	
 	private final String clientName;
 	private final List<PortDescriptor> ports;
 	private final List<Patch> connections;
 	
-	/** copy constructor TODO */
-	public Patchbay(Patchbay patchbay) {
-		this.clientName = patchbay.clientName;
-		this.ports = patchbay.ports;
-		this.connections = patchbay.connections;
-	}
+//	/** copy constructor TODO */
+//	public Patchbay(Patchbay patchbay) {
+//		this.clientName = patchbay.clientName;
+//		this.ports = patchbay.ports;
+//		this.connections = patchbay.connections;
+//	}
 }

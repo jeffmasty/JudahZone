@@ -13,12 +13,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
+import net.judah.JudahZone;
 import net.judah.jack.AudioMode;
 import net.judah.jack.ProcessAudio;
 import net.judah.midi.MidiClient;
-import net.judah.mixer.Mixer;
 import net.judah.mixer.MixerPort;
-import net.judah.util.JudahException;
 
 @Log4j
 public class Sample implements ProcessAudio {
@@ -29,6 +28,8 @@ public class Sample implements ProcessAudio {
 	
 	@Setter protected transient List<MixerPort> outputPorts;
 	@Getter protected final transient AtomicInteger tapeCounter = new AtomicInteger();
+	@Getter @Setter boolean timeSync = false;
+	
 	protected final transient AtomicReference<AudioMode> isPlaying = new AtomicReference<AudioMode>(STOPPED);
 	
 	@Setter @Getter protected transient float gain = 1f;
@@ -45,16 +46,7 @@ public class Sample implements ProcessAudio {
 		this.name = name;
 		this.recording = recording;
 		length = recording.size();
-	}
-	
-	public Sample(String name, Recording recording) throws JudahException {
-		this(name, recording, Type.ONE_TIME);
-	}
-	
-	public Sample(String name, Recording recording, List<MixerPort> outputPorts, int bufSize) throws JudahException {
-		this.name = name;
-		this.recording = recording;
-		this.outputPorts = outputPorts;
+		
 	}
 	
 	protected Sample() { }
@@ -67,10 +59,12 @@ public class Sample implements ProcessAudio {
 			if (type == Type.ONE_TIME) {
 				isPlaying.set(STOPPING);
 				new Thread() {
-					@Override public void run() {Mixer.getInstance().removeSample(Sample.this);}
+					@Override public void run() {JudahZone.getCurrentSong().getMixer().removeSample(Sample.this);}
 				}.start();
 			}
 			updated = 0;
+			if (timeSync)
+				JudahZone.getCurrentSong().pulse();
 		}
 		tapeCounter.set(updated);
 	}
@@ -99,53 +93,12 @@ public class Sample implements ProcessAudio {
 		return recording != null && length != null && length > 0;
 	}
 
-//	/** for process() thread */
-//	protected void updateCounter() {
-//		updated = tapeCounter.get() + 1;
-//		if (updated == recording.size()) {
-//			if (type == Type.ONE_TIME) {
-//				isPlaying.set(STOPPING);
-//				new Thread() {
-//					@Override public void run() {Mixer.getInstance().removeSample(Sample.this);}
-//				}.start();
-//			}
-//			updated = 0;
-//		}
-//		tapeCounter.set(updated);
-//	}
-	
 	protected final boolean playing() {
 		isPlaying.compareAndSet(STOPPING, STOPPED);
 		isPlaying.compareAndSet(STARTING, RUNNING);
 		return isPlaying.get() == RUNNING;
 	}
 	
-	////////////////////////////////////
-	//     Process Realtime Audio     //
-	////////////////////////////////////
-	@Override
-	public void process(int nframes) {
-		
-		// output
-		if (playing()) {
-			toJackLeft = outputPorts.get(LEFT_CHANNEL).getPort().getFloatBuffer();
-			toJackLeft.rewind();
-			toJackRight = outputPorts.get(RIGHT_CHANNEL).getPort().getFloatBuffer();
-			toJackRight.rewind();
-			readRecordedBuffer();
-			processMix(recordedBuffer[LEFT_CHANNEL], toJackLeft, nframes);
-			processMix(recordedBuffer[RIGHT_CHANNEL], toJackRight, nframes);
-		} 
-	}
-
-	protected void processMix(float[] in, FloatBuffer out, int nframes) {
-		out.get(workArea);
-		out.rewind();
-		for (z = 0; z < nframes; z++) {
-			out.put(workArea[z] + gain * in[z]);
-		}
-	}
-
 	@Override
 	public void clear() {
 		log.warn("clearing " + name);
@@ -174,4 +127,31 @@ public class Sample implements ProcessAudio {
 	public String toString() {
 		return "Sample " + name;
 	}
+
+	////////////////////////////////////
+	//     Process Realtime Audio     //
+	////////////////////////////////////
+	@Override
+	public void process(int nframes) {
+		
+		// output
+		if (playing()) {
+			toJackLeft = outputPorts.get(LEFT_CHANNEL).getPort().getFloatBuffer();
+			toJackLeft.rewind();
+			toJackRight = outputPorts.get(RIGHT_CHANNEL).getPort().getFloatBuffer();
+			toJackRight.rewind();
+			readRecordedBuffer();
+			processMix(recordedBuffer[LEFT_CHANNEL], toJackLeft, nframes);
+			processMix(recordedBuffer[RIGHT_CHANNEL], toJackRight, nframes);
+		} 
+	}
+
+	protected void processMix(float[] in, FloatBuffer out, int nframes) {
+		out.get(workArea);
+		out.rewind();
+		for (z = 0; z < nframes; z++) {
+			out.put(workArea[z] + gain * in[z]);
+		}
+	}
+
 }

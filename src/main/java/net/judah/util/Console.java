@@ -1,15 +1,33 @@
-package net.judah.jack;
+package net.judah.util;
 
+import static net.judah.util.Constants.*;
+
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Properties;
+
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.border.EtchedBorder;
 
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
+import net.judah.fluid.FluidSynth;
 import net.judah.jack.ProcessAudio.Type;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
@@ -21,11 +39,11 @@ import net.judah.midi.MidiPlayer;
 import net.judah.midi.Route;
 import net.judah.mixer.Mixer;
 import net.judah.plugin.Carla;
-import net.judah.util.Tab;
-
 
 @Log4j
-public class JackTab extends Tab implements MidiListener {
+public class Console extends JComponent implements ActionListener, ConsoleParticipant, MidiListener {
+	
+	
 	private static final String midiPlay = "midi filename (play a midi file)";
 	private static final String listenHelp = "midilisten (toggle midi output to console)";
 	private static final String saveHelp = "save loop_num filename (saves looper to disc)"; 
@@ -36,33 +54,112 @@ public class JackTab extends Tab implements MidiListener {
 	private static final String routerHelp = "router - prints current midi translations";
 	private static final String routeHelp = "route/unroute channel fromChannel# toChannel#";
 	
-	
+	private static Console me;
+	@Getter @Setter private static Level level = Level.DEBUG;
+	private final JTextArea output;
+	private final JScrollPane listScroller;
 	private boolean midiListen = false;
+	private String history = null;
+	@Getter private ArrayList<ConsoleParticipant> participants = new ArrayList<>();
 	
-	public JackTab() {
-		new Thread() {
-			@Override public void run() {
-				try { Thread.sleep(100); } catch (InterruptedException e) { }
-				help(); 
-			}}.start();
+	public static Console getInstance() {
+		if (me == null) me = new Console();
+		return me;
+	}
+	
+	Console() {
+        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+
+        output = new JTextArea();
+        output.setEditable(false);
+        listScroller = new JScrollPane(output);
+        listScroller.setBorder(new EtchedBorder());
+        listScroller.setPreferredSize(new Dimension(680, 350));
+        listScroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        listScroller.setAlignmentX(LEFT_ALIGNMENT);
+        add(listScroller);
+
+		JTextField input = new JTextField(70);
+		input.setMaximumSize(new Dimension(660, 75));
+        add(input);
+        input.addActionListener(this);
+        input.grabFocus();
+        
+        participants.add(this);
+        participants.add(FluidSynth.getInstance().getConsole());
+        
+        me = this;
+        
 	}
 
-	@Override
-	public String getTabName() {
-		return "Jack";
+	protected String parseInputBox(ActionEvent e) {
+		if (e.getSource() instanceof JTextField == false) return null;
+		JTextField widget = (JTextField)e.getSource();
+		String text = widget.getText();
+		widget.setText("");
+		if (text.isEmpty() && history != null) {
+			addText(history);
+			return history;
+		}
+		addText("> " + text);
+		history = text;
+		return text;
 	}
 
-	@Override
-	public void setProperties(Properties p) {
-		// TODO Auto-generated method stub
-
+	public static void addText(String s) {
+		
+		if (me == null || me.output == null) {
+			return;
+		}
+		if (s == null) {
+			s = "null" + NL;
+			Logger.getLogger(Tab.class).info("null addText() to terminal");
+		}
+		
+		if (false == s.endsWith(NL))
+			s = s + NL;
+		me.output.append(s);
+		Rectangle r = me.output.getBounds();
+		me.listScroller.getViewport().setViewPosition(new Point(0, r.height));
 	}
 
+	//** output to console */
+	public static void newLine() {
+		addText("" + NL);
+	}
+
+	public static void warn(String s) {
+		
+	}
+	
+	public static void info(String s) {
+		if (level == Level.DEBUG || level == Level.INFO)
+			addText(s);
+	}
+	
 	@Override
 	public void actionPerformed(ActionEvent event) {
-		String text = super.parseInputBox(event);
+		String text = parseInputBox(event);
+		
+		if (text.isEmpty() && history != null) {
+			addText(history);
+			text = history;
+		}
+		else {
+			addText(text);
+			history = text;
+		}
+			
 		String[] split = text.split(" ");
 		
+		for (ConsoleParticipant p : participants) {
+			p.process(split);
+		}
+	}
+
+	@Override
+	public void process(String[] input) {
+		String text = input[0];
 		if (text.equalsIgnoreCase("help")) {
 			help();
 			return;
@@ -73,43 +170,44 @@ public class JackTab extends Tab implements MidiListener {
 		}
 		
 		//  set_active	set_parameter_value set_volume 
-		if (text.startsWith("volume ") && split.length == 3) 
-			getCarla().setVolume(Integer.parseInt(split[1]), Float.parseFloat(split[2]));
-		else if (text.startsWith("active ") && split.length == 3) 
-			getCarla().setActive(Integer.parseInt(split[1]), 
-					Integer.parseInt(split[2]));
-		else if (text.startsWith("parameter ") && split.length == 4) 
-			getCarla().setParameterValue(Integer.parseInt(split[1]), 
-					Integer.parseInt(split[2]), Float.parseFloat(split[3]));
+		if (text.startsWith("volume ") && input.length == 3) 
+			getCarla().setVolume(Integer.parseInt(input[1]), Float.parseFloat(input[2]));
+		else if (text.startsWith("active ") && input.length == 3) 
+			getCarla().setActive(Integer.parseInt(input[1]), 
+					Integer.parseInt(input[2]));
+		else if (text.startsWith("parameter ") && input.length == 4) 
+			getCarla().setParameterValue(Integer.parseInt(input[1]), 
+					Integer.parseInt(input[2]), Float.parseFloat(input[3]));
 		
-		else if (text.startsWith("midi ")) 
-			midiPlay(split);
+		else if (text.equals("midi")) 
+			midiPlay(input);
 		else if (text.equals("midilisten"))
 			midiListen();
-		else if (text.startsWith("save "))
-			save(split);
-		else if (text.startsWith("read ")) 
-			read(split);
-		else if (text.startsWith("play "))
-			play(split);
-		else if (text.equals("stop")) 
-			Mixer.getInstance().stopAll();
-		else if (text.startsWith("stop "))
-			stop(split);
+		else if (text.equals("save"))
+			save(input);
+		else if (text.equals("read")) 
+			read(input);
+		else if (text.equals("play"))
+			play(input);
+		else if (text.equals("stop"))
+			if (input.length == 2)
+				mixer().stopAll();
+			else 
+				stop(input);
+			
 		else if (text.equals("samples")) 
-			addText( Arrays.toString(Mixer.getInstance().getSamples().toArray()));
+			addText( Arrays.toString(JudahZone.getCurrentSong().getMixer().getSamples().toArray()));
 		else if (text.equals("router")) 
 			for (Route r : MidiClient.getInstance().getRouter())
-				addText(r);
+				addText("" + r);
 		
-		else if (text.startsWith("route ")) 
-			route(split);
-		else if (text.startsWith("unroute "))
-			unroute(split);
-		else 
-			addText(":( unknown command. try help");
-	}
+		else if (text.equals("route")) 
+			route(input);
+		else if (text.equals("unroute "))
+			unroute(input);
 
+	}
+	
 	private void help() {
 		addText("xrun");
 		addText("volume carla_plugin_index value");
@@ -126,7 +224,6 @@ public class JackTab extends Tab implements MidiListener {
 		addText(midiPlay);
 		addText(listenHelp);
 	}
-
 	private void midiListen() {
 		midiListen = !midiListen;
 		JudahZone.getCurrentSong().getCommander().setMidiListener(midiListen ? this : null);
@@ -160,7 +257,10 @@ public class JackTab extends Tab implements MidiListener {
 		}
 	}
 
-
+	private Mixer mixer() {
+		return JudahZone.getCurrentSong().getMixer();
+	}
+	
 	private void play(String[] split) {
 		if (split.length != 2) {
 			addText("usage: " + playHelp);
@@ -168,9 +268,8 @@ public class JackTab extends Tab implements MidiListener {
 		}
 		String file = split[1];
 		try {
-			Sample sample = new Sample(new File(file).getName(), Recording.readAudio(file));
-			sample.setType(Type.LOOP);
-			Mixer.getInstance().addSample(sample);
+			Sample sample = new Sample(new File(file).getName(), Recording.readAudio(file), Type.ONE_TIME);
+			mixer().addSample(sample);
 			sample.play(true);
 		} catch (Throwable t) {
 			addText(t.getMessage());
@@ -184,7 +283,7 @@ public class JackTab extends Tab implements MidiListener {
 			return;
 		}
 		Integer idx = Integer.parseInt(split[1]);
-		Mixer.getInstance().removeSample(idx);
+		mixer().removeSample(idx);
 		addText("Sample removed");
 		
 	}
@@ -195,12 +294,12 @@ public class JackTab extends Tab implements MidiListener {
 		}
 		int loopNum = Integer.parseInt(split[1]);
 		String filename = split[2];
-		int loopMax = Mixer.getInstance().getSamples().size();
+		int loopMax = mixer().getSamples().size();
 		if (loopNum < 0 || loopNum >= loopMax) {
 			addText("loop " + loopNum + " does not exist.");
 			return;
 		}
-		Sample loop = Mixer.getInstance().getSamples().get(loopNum);
+		Sample loop = mixer().getSamples().get(loopNum);
 
 		try {
 			Recording recording = Recording.readAudio(filename);
@@ -220,12 +319,12 @@ public class JackTab extends Tab implements MidiListener {
 		}
 		int loopNum = Integer.parseInt(split[1]);
 		String filename = split[2];
-		int loopMax = Mixer.getInstance().getSamples().size();
+		int loopMax = mixer().getSamples().size();
 		if (loopNum < 0 || loopNum >= loopMax) {
 			addText("loop " + loopNum + " does not exist.");
 			return;
 		}
-		Sample loop = Mixer.getInstance().getSamples().get(loopNum);
+		Sample loop = mixer().getSamples().get(loopNum);
 		if (!loop.hasRecording()) {
 			addText("Nothing in Loop " + loopNum);
 			return;
@@ -287,5 +386,6 @@ public class JackTab extends Tab implements MidiListener {
 	public PassThrough getPassThroughMode() {
 		return PassThrough.ALL;
 	}
+
 	
 }

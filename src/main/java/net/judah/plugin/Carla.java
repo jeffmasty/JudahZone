@@ -13,7 +13,6 @@ import com.illposed.osc.transport.udp.OSCPortOut;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 
-// /home/judah/git/JudahZone/JudahZone/JudahZone.carxp
 // /usr/local/share/applications
 
 /**
@@ -42,8 +41,6 @@ public class Carla {
 	@Getter private static Carla instance; 
 	
     public static final String CARLA_SHELL_COMMAND = "/usr/local/bin/carla ";
-//    public static final File CARLA_SETTINGS = 
-//    		new File(JudahZone.class.getClassLoader().getResource("JudahZone.carxp").getFile());
     
     public static final int CARLA_PORT = 22753;
 	
@@ -67,13 +64,8 @@ public class Carla {
 		instance = this;
 		out = new OSCPortOut(InetAddress.getLocalHost(), port);
 		out.connect();
-
 	}
 	
-//	public Carla() throws IOException {
-//		this(CARLA_SHELL_COMMAND, CARLA_SETTINGS, CARLA_PORT);
-//	}
-
 	public Carla(File file) throws IOException {
 		this(CARLA_SHELL_COMMAND, file, CARLA_PORT);
 	}
@@ -86,8 +78,8 @@ public class Carla {
 		process = Runtime.getRuntime().exec(cmd);
 		out = new OSCPortOut(InetAddress.getLocalHost(), port);
 		out.connect();
+		instance = this;
 	}
-
 	
 	/** @return true if message sent */
 	public boolean setVolume(int pluginIdx, float gain) {
@@ -156,7 +148,10 @@ public class Carla {
 				log.error(e);
 			}
 		}
-		process.destroy();
+		
+		process.destroyForcibly();
+		log.warn("-- CARLA DISPOSED --");
+		instance = null;
 	}
 	
 }

@@ -2,18 +2,17 @@ package net.judah.song;
 
 import static net.judah.util.Constants.Gui.*;
 
-import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Properties;
 
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JLabel;
+import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -22,15 +21,14 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.metronome.Sequencer;
+import net.judah.sequencer.Sequencer;
 import net.judah.util.Constants;
 import net.judah.util.FileCellRenderer;
 import net.judah.util.FileChooser;
 import net.judah.util.JsonUtil;
-import net.judah.util.Tab;
 
 @Log4j
-public class SonglistTab extends Tab implements ListSelectionListener {
+public class SonglistTab extends JComponent implements ListSelectionListener {
 
 	public static final String SUFFIX = ".songs";
 	public static final String TABNAME = "Songs";
@@ -38,26 +36,28 @@ public class SonglistTab extends Tab implements ListSelectionListener {
 	private File file;
 	private SonglistModel model;
 	
-	JPanel filePanel, listPanel, buttonsPanel;
+	JPanel listPanel, buttonsPanel;
 	
 	private final JList<File> jsongs = new JList<File>();
-	private JLabel setlistLabel;
-	private JButton loadSonglist, newSonglist, saveSonglist;
+	private JButton setlistLabel;
+	private JButton newSonglist, saveSonglist;
 	@SuppressWarnings("unused")
 	private JButton newSong, addSong, deleteSong, upSong, downSong; //copySong 
 	
-	@Override public void actionPerformed(ActionEvent e) { }
-	@Override public String getTabName() { return TABNAME; }
-	@Override public void setProperties(Properties p) { }
-
 	public SonglistTab(File setlist) {
-		super(true);
 		this.file = setlist;
 		
-		setLayout(new BorderLayout());
+		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
+		setlistLabel = new JButton(setlistLabel(file));
+		setlistLabel.setToolTipText(file.getAbsolutePath());
+		setlistLabel.addActionListener((event) -> loadSetlist(null));
+		setlistLabel.setMinimumSize(new Dimension(100, 30));
+		JPanel lbl = new JPanel(new FlowLayout());
+		lbl.add(setlistLabel);
+		add(lbl);
+		
 		filePanel();
-
 		loadSetlist(setlist);
 		jsongs.setCellRenderer(new FileCellRenderer());
 		jsongs.addListSelectionListener(this);
@@ -66,39 +66,16 @@ public class SonglistTab extends Tab implements ListSelectionListener {
 				 if (mouseEvent.getClickCount() == 2 && jsongs.getSelectedIndex() >= 0 && !mouseEvent.isConsumed()) { 
 					 openSong(jsongs.getSelectedIndex());
 					 mouseEvent.consume();
-				 }
-			 }
-		});
-		add(new JScrollPane(jsongs), BorderLayout.CENTER);
-		
+				 }}});
+		add(new JScrollPane(jsongs));
 		buttonsPanel();
-		
-		// TODO auto load default settings
-		if (model != null && !model.isEmpty() && model.get(0) != null 
-				&& model.get(0).getName().startsWith("default"))
-			new Thread() {
-			@Override public void run() {
-				try {Thread.sleep(100);} catch (Exception e) { }
-				openSong(0);};
-		}.start();
-			
-
-		
 	}
 
 	private void filePanel() {
-		filePanel = new JPanel(new FlowLayout());
 		
-		setlistLabel = new JLabel(setlistLabel(file));
-		setlistLabel.setToolTipText(file.getAbsolutePath());
-		filePanel.add(setlistLabel);
+		JPanel filePanel = new JPanel(new FlowLayout());
 		
 		// https://en-human-begin.blogspot.com/2007/11/javas-icons-by-default.html
-		loadSonglist = new JButton(UIManager.getIcon("Tree.openIcon"));
-		loadSonglist.setMargin(BTN_MARGIN);
-		loadSonglist.addActionListener((event) -> loadSetlist(null));
-		loadSonglist.setToolTipText("Load List");
-		
 		newSonglist = new JButton(UIManager.getIcon("Tree.leafIcon"));
 		newSonglist.setMargin(BTN_MARGIN);
 		newSonglist.addActionListener((event) -> newSetlist());
@@ -109,10 +86,10 @@ public class SonglistTab extends Tab implements ListSelectionListener {
 		saveSonglist.addActionListener((event) -> saveSetlist());
 		saveSonglist.setToolTipText("Save List");
 		
-		filePanel.add(loadSonglist);
+		// filePanel.add(loadSonglist);
 		filePanel.add(newSonglist);
 		filePanel.add(saveSonglist);
-		add(filePanel, BorderLayout.PAGE_START);
+		add(filePanel);
 	}
 	
 	private String setlistLabel(File file) {
@@ -143,7 +120,7 @@ public class SonglistTab extends Tab implements ListSelectionListener {
 		upSong = button(CMD.UP);
 		downSong = button(CMD.DOWN);
 		buttonsPanel.doLayout();
-		add(buttonsPanel, BorderLayout.PAGE_END);
+		add(buttonsPanel);
 	}
 	
 	private JButton button(CMD cmd) {
@@ -184,7 +161,7 @@ public class SonglistTab extends Tab implements ListSelectionListener {
 				model.insertElementAt(file, jsongs.getSelectedIndex() + 1);
 
 			new Sequencer(song, file);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 			Constants.infoBox(e.getMessage(), "Error");
 		}
@@ -238,8 +215,6 @@ public class SonglistTab extends Tab implements ListSelectionListener {
 		} catch (IOException e) {
 			Constants.infoBox(e.getMessage(), "Error on Songlist");
 		}
-		log.warn("setlist loaded");
-		
 	}
 	private void newSetlist( ) {
 		File f = FileChooser.choose();
@@ -292,7 +267,7 @@ public class SonglistTab extends Tab implements ListSelectionListener {
 		try {
 			Song song = (Song)JsonUtil.readJson(file, Song.class);
 			new Sequencer(song, file);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 			log.error(file.getAbsolutePath());
 			Constants.infoBox(file.getAbsoluteFile() + " -- " + e.getMessage(), "Song Load Failed");

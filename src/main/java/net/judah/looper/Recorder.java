@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import lombok.extern.log4j.Log4j;
+import net.judah.JudahZone;
 import net.judah.jack.AudioMode;
 import net.judah.jack.AudioTools;
 import net.judah.jack.RecordAudio;
@@ -29,6 +30,10 @@ public class Recorder extends Sample implements RecordAudio {
 	private FloatBuffer fromJack;
 	private boolean firstLeft, firstRight;
 	private int counter;
+	
+	public Recorder(String name, Type type) {
+		this(name, type, JudahZone.getInputPorts(), JudahZone.getOutputPorts());
+	}
 	
 	public Recorder(String name, Type type, List<MixerPort> inputPorts, List<MixerPort> outputPorts) {
 		this.name = name;
@@ -55,7 +60,11 @@ public class Recorder extends Sample implements RecordAudio {
 		} else if (active && (isPlaying.get() == RUNNING || isPlaying.get() == STARTING)) {
 			isRecording.set(STARTING);
 			log.warn(name + " overdub starting");
+		} else if (active && (recording != null || mode == STOPPED)) {
+			isRecording.set(STARTING);
+			log.warn("silently overdubbing on " + name);
 		}
+		
 			
 		if (mode == RUNNING && !active) {
 			isRecording.set(STOPPING);
@@ -81,6 +90,27 @@ public class Recorder extends Sample implements RecordAudio {
 		recording = null;
 	}
 
+	@Override
+	public String toString() {
+		return "Loop " + name;
+	}
+
+	@Override
+	public void setRecording(Recording sample) {
+		super.setRecording(sample);
+		isRecording.set(STOPPED);
+		sample.startListeners();
+	}
+
+	public void mute(String channel, boolean mute) {
+		for (MixerPort p : inputPorts) 
+			if (p.getName().contains(channel)) {
+				p.setOnLoop(!mute);
+				
+				log.info( (mute ? "Muted " : "Unmuted ") + p.getName() + " on recording track: " + getName());
+			}
+	}
+
 	/** for process() thread */
 	private final boolean recording() {
 		isRecording.compareAndSet(STOPPING, STOPPED);
@@ -92,6 +122,10 @@ public class Recorder extends Sample implements RecordAudio {
 		return false;
 	}
 	
+	////////////////////////////////////////////////////
+    //                PROCESS AUDIO                   //
+    ////////////////////////////////////////////////////
+
 	@Override
 	public void process(int nframes) {
 		counter = tapeCounter.get();
@@ -133,26 +167,6 @@ public class Recorder extends Sample implements RecordAudio {
 			recording.add(newBuffer);
 	}
 	
-	@Override
-	public String toString() {
-		return "Loop " + name;
-	}
-
-	@Override
-	public void setRecording(Recording sample) {
-		super.setRecording(sample);
-		isRecording.set(STOPPED);
-		sample.startListeners();
-	}
-
-	public void mute(String channel, boolean mute) {
-		for (MixerPort p : inputPorts) 
-			if (p.getName().contains(channel)) {
-				p.setOnLoop(!mute);
-				
-				log.info( (mute ? "Muted " : "Unmuted ") + p.getName() + " on recording track: " + getName());
-			}
-	}
 
 }
 

@@ -1,13 +1,15 @@
-package net.judah.metronome;
+package net.judah.sequencer;
+
+import java.awt.event.ActionEvent;
+import java.util.Properties;
 
 import javax.swing.JButton;
-import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
 
-import net.judah.song.Edits;
+import net.judah.util.Tab;
 
-public class SequencerControl extends JPanel implements Edits {
+public class SequencerControl extends Tab {
 
 	JButton start, previous, next, end, play, pause, settings;
 	JTextField current, tempo;
@@ -20,13 +22,12 @@ public class SequencerControl extends JPanel implements Edits {
 	}
 	
 	@Override
-	public void add() {
-	}
+	public void actionPerformed(ActionEvent e) {}
+
 	@Override
-	public void delete() {
-	}
+	public String getTabName() {return "Sequenca";}
+
 	@Override
-	public void copy() {
-	}
+	public void setProperties(Properties p) {}
 	
 }

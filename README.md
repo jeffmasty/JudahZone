@@ -24,4 +24,7 @@ Illposed OSC (http://www.illposed.com/software/javaosc.html) successfully commun
 
 
 ##   
+
+A GUI is starting to come together:
+![JudahZone logo](/resources/JudahZone.png)
  

@@ -31,7 +31,6 @@ import net.judah.settings.Command;
 import net.judah.settings.Service;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
-import net.judah.util.Tab;
 
 // process MIDI ports
 // assisted by: https://github.com/jaudiolibs/examples/blob/master/src/main/java/org/jaudiolibs/examples/MidiThru.java
@@ -96,7 +95,6 @@ public class MidiClient extends BasicClient implements Service {
 
 	// Service interface
 	@Override public List<Command> getCommands() { return cmds; }
-	@Override public Tab getGui() { return null; }
 	@Override public void execute(Command cmd, HashMap<String, Object> props) throws Exception {
 		if (cmd == routeChannel) {
 			routeChannel(props);

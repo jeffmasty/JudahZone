@@ -18,12 +18,13 @@ import javax.sound.midi.ShortMessage;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
-import net.judah.metronome.MetroPlayer;
-import net.judah.metronome.Sequencer;
+import net.judah.sequencer.MetroPlayer;
+import net.judah.sequencer.Sequencer;
 
 @Log4j
 public class MidiPlayer implements MetroPlayer, ControllerEventListener, MetaEventListener {
 	/** loop count for continuous looping */
+	private static final int[] controllers = new int[] {3};
 	
 	@Getter private final File file; 
 	@Getter private final javax.sound.midi.Sequencer sequencer;
@@ -50,10 +51,8 @@ public class MidiPlayer implements MetroPlayer, ControllerEventListener, MetaEve
 		sequencer.setLoopCount(loopCount);
 		sequencer.setTempoInBPM(100);
 
-		int[] controllers = new int[] {3};
-		sequencer.addMetaEventListener(this);
+		// sequencer.addMetaEventListener(this);
 		sequencer.addControllerEventListener(this, controllers);
-		sequencer.addControllerEventListener(sequenca, controllers);
 
 		for (Receiver old : sequencer.getReceivers()) 
 			old.close();
@@ -79,7 +78,7 @@ public class MidiPlayer implements MetroPlayer, ControllerEventListener, MetaEve
 		sequencer.start();
 		if (intro != null && intro == 0)
 			sequenca.rollTransport();
-		
+			sequencer.addControllerEventListener(sequenca, controllers);
 		listener = new Thread() {
 			@Override public void run() {
 				do {try { 
@@ -130,19 +129,22 @@ public class MidiPlayer implements MetroPlayer, ControllerEventListener, MetaEve
 		return MidiPlayer.class.getSimpleName() + " (" + file + ")";
 	}
 	
+	
+	/** for now this only handles 1 bar midi clicktracks */
 	@Override
 	public void controlChange(ShortMessage event) {
 		if (event.getData1() != 3) return;
 		int beats = ++cc3 * sequenca.getMeasure();
 		if (intro != null && beats == intro) 
 			sequenca.rollTransport();
+			sequencer.addControllerEventListener(sequenca, controllers);
 		if (duration != null && beats == duration)
 			stop();
 	}
 
 	@Override
 	public void meta(MetaMessage meta) {
-		// log.warn("Yo, meta " + meta.getStatus() + "." + meta.getType());
+		// log.warn("meta midi: " + meta.getStatus() + "." + meta.getType());
 	}
 
 }

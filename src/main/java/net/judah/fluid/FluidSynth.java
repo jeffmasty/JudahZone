@@ -20,16 +20,15 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
-import net.judah.midi.GMNames;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiClient;
 import net.judah.midi.ProgMsg;
 import net.judah.settings.Command;
 import net.judah.settings.Service;
+import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.Constants.Toggles;
 import net.judah.util.JudahException;
-import net.judah.util.Tab;
 
 
 /** runs and then connects to FluidSynth stdin and stdout ports, connects midi and speakers */
@@ -56,11 +55,12 @@ public class FluidSynth implements Service {
 
 	private FluidListener listener;
 	/** talks to FluidSynth on it's stdin */
-    private OutputStream console;
-    private FluidUI fluidWindow;
-
-	private Instruments instruments = new Instruments();
-	private Channels channels = new Channels();
+    private OutputStream outStream;
+    
+    @Getter private final FluidConsole console;
+    
+	@Getter private Instruments instruments = new Instruments();
+	@Getter private Channels channels = new Channels();
 	private final Command progChange, instUp, instDown, drumBank;
 	
 	private float gain = 0.7f; // max 5
@@ -76,13 +76,14 @@ public class FluidSynth implements Service {
 	
 	@SuppressWarnings("deprecation")
 	public FluidSynth (MidiClient midi, File soundFont) throws JackException, JudahException, IOException, JackException {
+	    instance = this;
 		this.midi = midi;
 		shellCommand = "fluidsynth" +
 				" --midi-driver=jack --audio-driver=jack" +
 	    		" -o synth.ladspa.active=0  --sample-rate " + midi.getJackclient().getSampleRate() + " " +
 				SOUND_FONT.getAbsolutePath();
 		
-		fluidWindow = new FluidUI(this);
+		console = new FluidConsole(this);
 		log.debug(shellCommand);
 		try {
 			process = Runtime.getRuntime().exec(shellCommand);
@@ -91,11 +92,11 @@ public class FluidSynth implements Service {
 		}
 
 	    // read FluidSynth output
-	    listener = new FluidListener(fluidWindow, process.getInputStream(), false);
-	    new FluidListener(fluidWindow, process.getErrorStream(), true).start();
+	    listener = new FluidListener(process.getInputStream(), false);
+	    new FluidListener(process.getErrorStream(), true).start();
 	    listener.start();
-	    console = process.getOutputStream();
-	    assert console != null;
+	    outStream = process.getOutputStream();
+	    assert outStream != null;
 
 	    Jack jack = Jack.getInstance();
 	    try { // wait for fluid synth to init
@@ -108,7 +109,6 @@ public class FluidSynth implements Service {
 	    } catch (InterruptedException e) {
 	    	log.error(e);
 	    }
-	    instance = this;
 	    sync();
 		initReverb();
 		HashMap<String, Class<?>> props = new HashMap<String, Class<?>>();
@@ -122,17 +122,15 @@ public class FluidSynth implements Service {
 		props.put("preset", Integer.class);
 		drumBank = new Command("Drum Set", this, props, "Change drum bank up (true/false) or preset #");
 		
-		doHelp();
-		fluidWindow.newLine();
-		fluidWindow.addText( "channels: " + channels.size() + " instruments: " + instruments.size());
-		fluidWindow.newLine();
+		// doHelp();
+		Console.addText( "FluidSynth channels: " + channels.size() + " instruments: " + instruments.size());
 		
 	}
 
 	private void syncChannels() throws InterruptedException, IOException, JudahException {
 		listener.sysOverride(FluidCommand.CHANNELS);
-		console.write( (FluidCommand.CHANNELS.code + NL).getBytes() );
-		console.flush();
+		outStream.write( (FluidCommand.CHANNELS.code + NL).getBytes() );
+		outStream.flush();
 		int count = 0;
 		while (listener.sysOverride != null && count++ < 15) {
 			Thread.sleep(20);
@@ -148,8 +146,8 @@ public class FluidSynth implements Service {
 
 	private void syncInstruments() throws InterruptedException, IOException, JudahException {
 		listener.sysOverride(FluidCommand.INST);
-		console.write((FluidCommand.INST.code + "1" + NL).getBytes());
-		console.flush();
+		outStream.write((FluidCommand.INST.code + "1" + NL).getBytes());
+		outStream.flush();
 		int count = 0;
 		while (listener.sysOverride != null && count++ < 20) {
 			Thread.sleep(30);
@@ -161,69 +159,15 @@ public class FluidSynth implements Service {
 			instruments.add(i);
 	}
 
-	private void sync() {
+	public void sync() {
 		try {
 			syncChannels();
 			syncInstruments();
 		} catch (Throwable t) {
-			fluidWindow.addText("sync failed. " + t.getMessage() + NL);
+			Console.addText("sync failed. " + t.getMessage() + NL);
 			log.error(t.getMessage(), t);
 		}
 
-	}
-
-	private void doHelp() {
-		sendCommand("help");		
-		try { Thread.sleep(20); } catch (InterruptedException e) { }
-		fluidWindow.addText("judah sync");
-		fluidWindow.addText("judah instruments");
-		fluidWindow.addText("judah current");
-		fluidWindow.addText("judah GM_NAMES");
-	}
-
-	public void judahCommand(String text) {
-		if (text.equals("sync"))
-			sync();
-
-		if (text.equals("channels")) {
-			fluidWindow.addText("channels: " + channels.size() + NL);
-			for (FluidChannel channel : channels) {
-				fluidWindow.addText(channel.toString() + NL);
-			}
-			fluidWindow.newLine();
-		}
-		if (text.equals("inst") || text.equals("instruments")) {
-			fluidWindow.addText("instruments: " + instruments.size() + NL);
-			for (FluidInstrument instrument : instruments) {
-				fluidWindow.addText(instrument.toString() + NL);
-			}
-			fluidWindow.newLine();
-		}
-		if (text.equals("current")) {
-			fluidWindow.addText("current: " + instruments.get(channels.getCurrentPreset(0)));
-		}
-		if (text.equals("mute")) {
-			mute();
-		}
-		if (text.equals("maxGain")) {
-			maxGain();
-		}
-		if (text.equals("GM_NAMES")) {
-			for (int i = 0; i < GMNames.GM_NAMES.length; i++)
-				fluidWindow.addText(i + " " + GMNames.GM_NAMES[i]);
-		}
-	}
-	public void userCommand(String text) {
-		if (text == null) return;
-		if (text.equals("help")) {
-			doHelp(); 
-			return;
-		}
-		if (text.startsWith("judah ")) {
-			judahCommand(text.replace("judah ", "").trim());
-			return;
-		}
-		sendCommand(text);
 	}
 
 	private void initReverb() {
@@ -275,14 +219,14 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 						syncChannels();
 						Thread.sleep(40);
 						int after = channels.getCurrentPreset(channel);
-						fluidWindow.addText("PROG CHNG " + instruments.get(after) + " (from " + instruments.get(before) + ")");
+						Console.info("PROG CHNG " + instruments.get(after) + " (from " + instruments.get(before) + ")");
 					} catch (Throwable e) { log.warn(e.getMessage(), e); }
 				};
 			}.start();
 
 			return msg;
 		} catch (Throwable t) {
-			fluidWindow.addText(t.getMessage());
+			Console.warn(t.getMessage());
 			log.error(t);
 			return null;
 		}
@@ -304,7 +248,7 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 			int bank = channels.getBank(channel);
 			for (FluidInstrument f : instruments) 
 				if (f.group == bank && f.index == preset) {
-					fluidWindow.addText(f);
+					Console.addText(f.toString());
 					log.info(f);
 				}
 			return result;
@@ -332,8 +276,8 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 			string = string + NL;
 
 		try {
-		    console.write((string).getBytes());
-		    console.flush();
+		    outStream.write((string).getBytes());
+		    outStream.flush();
 		} catch(IOException e) {
 			log.error(e.getMessage(), e);
 		}
@@ -496,18 +440,13 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
   	  	} catch (JudahException e) { log.warn(e); }
 	}
 
-	@Override
-	public Tab getGui() {
-		return fluidWindow;
-	}
-
 	public void connect(JackClient jackclient, JackPort port) throws JackException {
 		log.warn("Trying to connect " + port.getName() +" to " + MIDI_PORT);
 	    Jack.getInstance().connect(jackclient, port.getName(), MIDI_PORT);
 	}
 
 
-	private class Channels extends ArrayList<FluidChannel> {
+	public static class Channels extends ArrayList<FluidChannel> {
 		/** @return preset instrument index for the channel */
 		public int getCurrentPreset(int channel) {
 			for (FluidChannel c : this) 
@@ -525,7 +464,7 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 
 	
 	
-	private class Instruments extends ArrayList<FluidInstrument> {
+	public static class Instruments extends ArrayList<FluidInstrument> {
 		public int getNextPreset(int bank, int current, boolean up) {
 			int index = -1;
 			int count = -1;
@@ -554,7 +493,6 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 				return roll.get(index).index;
 			}
 		}
-		
 	}
 }
 

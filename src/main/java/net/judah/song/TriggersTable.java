@@ -20,6 +20,7 @@ import net.judah.settings.Command;
 import net.judah.song.Trigger.Type;
 import net.judah.util.Constants;
 import net.judah.util.JudahException;
+import net.judah.util.PopupMenu;
 
 public class TriggersTable extends JPanel implements Edits {
 
@@ -57,9 +58,10 @@ public class TriggersTable extends JPanel implements Edits {
 		});
 		
 		add(new JScrollPane(table));
+		table.setComponentPopupMenu(new PopupMenu(this));
 	}
 
-	@Override public void add() {
+	@Override public void editAdd() {
 		Trigger trigger = new Trigger(Type.ABSOLUTE, -1l, null, "", "", "", new HashMap<String, Object>());
 		Object[] data = new Object[] { trigger.getTimestamp(), commander.find(trigger.getService(), trigger.getCommand()), 
 				trigger.getNotes(), trigger.getParams()}; 
@@ -70,17 +72,32 @@ public class TriggersTable extends JPanel implements Edits {
 			model.insertRow(table.getSelectedRow() + 1, data);
 	}
 
-	@Override public void delete() {
+	@Override public void editDelete() {
 		int selected = table.getSelectedRow();
 		if (selected < 0) return;
 		model.removeRow(selected);
 	}
 
-	@Override public void copy() {
-		Constants.infoBox("Coming Soon...", "Sequencer");
-	}
 
 	public ArrayList<Trigger> getSequence() throws JudahException {
 		return model.getData();
+	}
+
+	@Override
+	public List<Copyable> copy() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<Copyable> cut() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void paste(List<Copyable> clipboard) {
+		// TODO Auto-generated method stub
+		
 	}
 }

@@ -3,8 +3,6 @@ package net.judah.settings;
 import java.util.HashMap;
 import java.util.List;
 
-import net.judah.util.Tab;
-
 public interface Service {
 
 	String getServiceName();
@@ -14,7 +12,5 @@ public interface Service {
 	void execute(Command cmd, HashMap<String, Object> props) throws Exception;
 
 	void close();
-
-	Tab getGui();
 
 }

@@ -1,4 +1,4 @@
-package net.judah.metronome;
+package net.judah.sequencer;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -9,14 +9,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
-import lombok.ToString;
 import lombok.extern.log4j.Log4j;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiClient;
 import net.judah.util.Constants;
 
 /** sequence our own metronome */
-@Log4j @ToString
+@Log4j
 public class TickTock implements MetroPlayer {
 
 	public static final int DEFAULT_DOWNBEAT = 34;

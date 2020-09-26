@@ -32,28 +32,28 @@
     <Index>0</Index>
     <Name>Cabinet</Name>
     <Symbol>CLevel</Symbol>
-    <Value>4.33000040054321</Value>
+    <Value>4.51999998092651</Value>
    </Parameter>
 
    <Parameter>
     <Index>1</Index>
     <Name>Bass</Name>
     <Symbol>CBass</Symbol>
-    <Value>-4.04213714599609</Value>
+    <Value>0.157862856984138</Value>
    </Parameter>
 
    <Parameter>
     <Index>2</Index>
     <Name>Treble</Name>
     <Symbol>CTreble</Symbol>
-    <Value>3.71248507499695</Value>
+    <Value>1.60000002384186</Value>
    </Parameter>
 
    <Parameter>
     <Index>3</Index>
     <Name>Cab Model</Name>
     <Symbol>c_model</Symbol>
-    <Value>15</Value>
+    <Value>8</Value>
    </Parameter>
 
    <CustomData>
@@ -325,11 +325,27 @@
  <ExternalPatchbay>
   <Connection>
    <Source>system:capture_1</Source>
+   <Target>PulseAudio JACK Source:front-left</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_1</Source>
    <Target>Carla:Guitar Cabinet:in</Target>
   </Connection>
   <Connection>
    <Source>system:capture_2</Source>
+   <Target>PulseAudio JACK Source:front-right</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_2</Source>
    <Target>Carla:Mic Stereo:In L</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_3</Source>
+   <Target>JudahZone:aux_left</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_3</Source>
+   <Target>JudahZone:aux_right</Target>
   </Connection>
   <Connection>
    <Source>system:capture_3</Source>
@@ -373,11 +389,11 @@
   </Connection>
   <Connection>
    <Source>fluidsynth-midi:right</Source>
-   <Target>JudahZone:synth_right</Target>
+   <Target>system:playback_2</Target>
   </Connection>
   <Connection>
    <Source>fluidsynth-midi:right</Source>
-   <Target>system:playback_2</Target>
+   <Target>JudahZone:synth_right</Target>
   </Connection>
   <Connection>
    <Source>JudahZone:left</Source>

@@ -1,4 +1,4 @@
-package net.judah.metronome;
+package net.judah.sequencer;
 
 import javax.sound.midi.MidiUnavailableException;
 

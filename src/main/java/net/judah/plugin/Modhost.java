@@ -11,7 +11,6 @@ import java.util.List;
 import lombok.extern.log4j.Log4j;
 import net.judah.settings.Command;
 import net.judah.settings.Service;
-import net.judah.util.Tab;
 
 /** ~/lib/mod-host$ ./mod-host -p 7897 -f 7898 */
 @Log4j
@@ -41,7 +40,7 @@ public class Modhost implements Service {
 	    assert toModhost != null;
 
 	    sendCommand("cpu_load");
-	    log.info("-------------------------------mod host started---------------------------");
+	    log.info("-----------mod host started-----------");
 	}
 	
 	void sendCommand(String string) {
@@ -86,9 +85,4 @@ public class Modhost implements Service {
 
 	}
 
-	@Override
-	public Tab getGui() {
-		return ui;
-	}
-	
 }

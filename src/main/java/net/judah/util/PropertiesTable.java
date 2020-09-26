@@ -4,7 +4,9 @@ package net.judah.util;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.JPanel;
@@ -71,6 +73,7 @@ public class PropertiesTable extends JPanel implements Edits {
 		scroll.setSize(size);
 		setLayout(new GridBagLayout());
 		add(table, new GridBagConstraints());
+		table.setComponentPopupMenu(new PopupMenu(this));
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -81,20 +84,47 @@ public class PropertiesTable extends JPanel implements Edits {
 		return result;
 	}
 
-	@Override public void add() {
+	@Override public void editAdd() {
 		model.addRow(new Object[] {"", ""});
 	}
 
-	@Override public void delete() {
+	@Override public void editDelete() {
 		int selected = table.getSelectedRow();
 		if (selected < 0) return;
 		model.removeRow(selected);
 	}
 
-	@Override public void copy() {
-		int selected = table.getSelectedRow();
-		if (selected < 0) return;
-		model.addRow(new Object[] {model.getValueAt(selected, 0), model.getValueAt(selected, 1)});
+	@Override
+	public List<Copyable> copy() {
+		if (table.getSelectedRow() < 0) return null;
+		List<Copyable> result = new ArrayList<>();
+		for (int rownum : table.getSelectedRows()) {
+			result.add(new KeyPair((String)model.getValueAt(rownum, 0), model.getValueAt(rownum, 1)));
+		}
+		return result;
 	}
+
+	@Override
+	public List<Copyable> cut() {
+		List<Copyable> result = copy();
+		if (result == null || result.isEmpty()) return null;
+		editDelete();
+		return result;
+	}
+
+	@Override
+	public void paste(List<Copyable> clipboard) {
+		if (clipboard == null || clipboard.isEmpty()) return;
+		for (Object o : clipboard) {
+			KeyPair prop = (KeyPair)o;
+			model.addRow(new Object[] {prop.getKey(), prop.getValue()});
+		}
+	}
+
+//	@Override public void copy() {
+//		int selected = table.getSelectedRow();
+//		if (selected < 0) return;
+//		model.addRow(new Object[] {model.getValueAt(selected, 0), model.getValueAt(selected, 1)});
+//	}
 	
 }

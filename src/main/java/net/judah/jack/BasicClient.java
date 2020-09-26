@@ -23,8 +23,8 @@ import net.judah.util.Constants;
 @Log4j
 public abstract class BasicClient extends Thread implements JackXrunCallback, JackProcessCallback, JackShutdownCallback  {
 
-    public static final EnumSet<JackOptions> OPTIONS = EnumSet.of(JackOptions.JackNoStartServer);
-    public static final EnumSet<JackStatus> STATUS = EnumSet.noneOf(JackStatus.class);
+    static final EnumSet<JackOptions> OPTIONS = EnumSet.of(JackOptions.JackNoStartServer);
+    static final EnumSet<JackStatus> STATUS = EnumSet.noneOf(JackStatus.class);
 
 	protected static final HashMap<JackClient, Integer> xruns = new HashMap<>();
 

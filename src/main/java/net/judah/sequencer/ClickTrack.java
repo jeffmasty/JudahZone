@@ -1,4 +1,4 @@
-package net.judah.metronome;
+package net.judah.sequencer;
 
 import java.io.File;
 import java.util.HashMap;
@@ -96,14 +96,11 @@ public class ClickTrack extends Command implements Executable {
 				Constants.infoBox(msg, ClickTrack.class.getSimpleName());
 			}
 
-		Object o = props.get(PARAM_INTRO);
-		Object d = props.get(PARAM_DURATION);
-
 		ticktock = (ticktock == null) ? new TickTock(sequencer) : ticktock;
 
 		Integer intro = null;
 		Integer duration = null;
-		try { intro = Integer.parseInt(o.toString());
+		try { intro = Integer.parseInt(props.get(PARAM_INTRO).toString());
 		} catch (Throwable e) { 
 			log.warn(e.getMessage() + " " + PARAM_INTRO + " = " + props.get(PARAM_INTRO)); 
 		}
@@ -113,7 +110,6 @@ public class ClickTrack extends Command implements Executable {
 		}
 		if (intro != null && duration != null)
 			ticktock.setDuration(intro, duration);
-		
 
 		metronome.setPlayer(ticktock);
 	}

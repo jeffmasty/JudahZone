@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.swing.JOptionPane;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
@@ -66,7 +67,10 @@ public class Constants {
 	}
 
 	public static void main(String[] args) {
-		
+		 UIManager.LookAndFeelInfo[] looks = UIManager.getInstalledLookAndFeels(); 
+	        for (UIManager.LookAndFeelInfo look : looks) { 
+	            System.out.println(look.getClassName()); 
+	        } 
 //		for (Info info :  MidiSystem.getMidiDeviceInfo()) {
 //			System.out.println(info.getName() + " - " + info.getDescription() + " / " + info.getVendor());
 //		}

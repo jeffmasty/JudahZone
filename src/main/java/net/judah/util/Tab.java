@@ -22,7 +22,6 @@ abstract public class Tab extends JComponent implements ActionListener {
 
 	protected final JTextArea output;
 	protected final JScrollPane listScroller;
-	protected boolean firsttime = true;
 	private String history = null;
 
 	public Tab(boolean customLayout) {
@@ -90,4 +89,5 @@ abstract public class Tab extends JComponent implements ActionListener {
 		return text;
 	}
 
+	
 }

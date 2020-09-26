@@ -1,14 +1,17 @@
 package net.judah.midi;
 
+import java.util.Arrays;
+
 import javax.sound.midi.MidiMessage;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.judah.song.Edits.Copyable;
 
 @Data @NoArgsConstructor 
-public class MidiPair {
+public class MidiPair implements Copyable {
 
 	private byte[] from;
 	private byte[] to;
@@ -17,8 +20,10 @@ public class MidiPair {
 	@JsonIgnore private transient Midi toMidi;
 	
 	public MidiPair(byte[] from, byte[] to) {
-		this.from = from;
-		this.to = to;
+		
+
+		this.from = Arrays.copyOf(from, from.length);;
+		this.to = Arrays.copyOf(to, to.length);;
 	}
 
 	public MidiPair(MidiMessage note1, MidiMessage note2) {
@@ -46,4 +51,8 @@ public class MidiPair {
 		return toMidi;
 	}
 	
+	@Override
+	public MidiPair clone() throws CloneNotSupportedException {
+		return new MidiPair(from, to);
+	}
 }

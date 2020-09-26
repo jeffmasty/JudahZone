@@ -11,7 +11,7 @@ import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 
-import net.judah.JudahZone;
+import net.judah.MainFrame;
 
 public class CellDialog extends JDialog {
 
@@ -22,7 +22,7 @@ public class CellDialog extends JDialog {
 	CallBack callback;
 	
 	public CellDialog(JComponent content, CallBack callback) {
-		super(JudahZone.getFrame(), true);
+		super(MainFrame.get(), true);
 		setLayout(new BorderLayout());
 		this.callback = callback;
 		add(content, BorderLayout.CENTER);

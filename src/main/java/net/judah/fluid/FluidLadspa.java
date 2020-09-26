@@ -24,11 +24,10 @@ ladspa_setnode node value  Assigns `value' to `node'
  </pre>*/
 public class FluidLadspa {
 	final FluidSynth fluid;
-	final FluidUI console;
 
-	FluidLadspa(FluidSynth fluid, FluidUI window) throws JudahException {
+	FluidLadspa(FluidSynth fluid) throws JudahException {
 		this.fluid = fluid;
-		this.console = window;
+
 		// loadReverb();
 		fluid.sendCommand("ladspa_start");
 	}

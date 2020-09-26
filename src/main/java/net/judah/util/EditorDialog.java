@@ -15,7 +15,7 @@ import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 
 import lombok.Getter;
-import net.judah.JudahZone;
+import net.judah.MainFrame;
 
 public class EditorDialog extends JDialog {
 
@@ -24,7 +24,7 @@ public class EditorDialog extends JDialog {
 	private JPanel okCancel;
 
 	public EditorDialog(String title) {
-		super(JudahZone.getFrame(), true);
+		super(MainFrame.get(), true);
 		setTitle(title);
 		okCancel = new JPanel();
 		JButton ok = new JButton("ok");

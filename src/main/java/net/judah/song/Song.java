@@ -7,8 +7,8 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import net.judah.metronome.Sequencer;
 import net.judah.midi.MidiPair;
+import net.judah.sequencer.Sequencer;
 
 @Data @AllArgsConstructor @NoArgsConstructor
 public class Song {

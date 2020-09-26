@@ -3,13 +3,13 @@
     "todo" : "prog change for instruments init drums",
     "Carla" : "/home/judah/git/JudahZone/resources/carla/FeelGoodInk.carxp",
     "bpb" : 4,
-    "clicktrack.intro" : "1",
+    "clicktrack.intro" : 1,
     "setup" : "Octave down for bass: VL70 Program 32 DampBass",
-    "services" : "Carla, Fluid, Master, Slave",
+    "services" : "Carla, F luid, Master, Slave",
     "inspiration" : "https://www.youtube.com/watch?v=FC2g_XEi6wg",
     "drumkv1" : "/home/judah/Tracks/drumkv1/Classic-808/Classic-808.drumkv1",
     "midiport" : "aux",
-    "bpm" : "120"
+    "bpm" : 90
   },
   "links" : [ {
     "name" : "start metronome",

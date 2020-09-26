@@ -1,11 +1,47 @@
 package net.judah.song;
 
-public interface Edits {
+import java.util.List;
 
-	void add();
+public interface Edits {
 	
-	void delete();
+	public static interface Copyable extends Cloneable{
+		public Copyable clone() throws CloneNotSupportedException;
+	}
+
+	void editAdd();
 	
-	void copy();
+	void editDelete();
+	
+	List<Copyable> copy();
+	
+	List<Copyable> cut();
+	
+	void paste(List<Copyable> clipboard);
+	
+	
+	/////////////////////
+//	public List<Object> copy() {
+//		
+//		return null;
+//	}
+//	
+//	public List<Object> cut() {
+//		return null;
+//	}
+//	
+//	public void paste(List<Object> clipboard) {
+//		
+//	}
+//	
+//	public void editAdd() {
+//		
+//	}
+//	
+//	public void editDelete() {
+//		
+//	}
+
+	
+	
 	
 }

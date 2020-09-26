@@ -169,6 +169,17 @@
     "type" : "ABSOLUTE",
     "timestamp" : 16,
     "duration" : null,
+    "service" : "Sequencer",
+    "command" : "Time control",
+    "notes" : "Looper controls time",
+    "params" : {
+      "Loop" : "0",
+      "beats.per.pulse" : "8"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 16,
+    "duration" : null,
     "service" : "Mixer",
     "command" : "Record start/stop",
     "notes" : "record on drum loop",
@@ -178,7 +189,7 @@
     }
   }, {
     "type" : "ABSOLUTE",
-    "timestamp" : -2,
+    "timestamp" : 48,
     "duration" : null,
     "service" : "Mixer",
     "command" : "Record start/stop",
@@ -190,10 +201,10 @@
   } ],
   "router" : [ {
     "from" : "iTAA",
-    "to" : "iSUA"
+    "to" : "iSgA"
   }, {
     "from" : "iTMA",
-    "to" : "iSwA"
+    "to" : "iScA"
   }, {
     "from" : "iTEA",
     "to" : "mTkA"

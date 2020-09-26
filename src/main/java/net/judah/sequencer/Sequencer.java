@@ -1,4 +1,4 @@
-package net.judah.metronome;
+package net.judah.sequencer;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -11,17 +11,17 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import javax.sound.midi.ControllerEventListener;
-import javax.sound.midi.MetaEventListener;
-import javax.sound.midi.MetaMessage;
 import javax.sound.midi.ShortMessage;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jaudiolibs.jnajack.JackException;
 
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.CommandHandler;
-import net.judah.JudahZone;
+import net.judah.MainFrame;
+import net.judah.Page;
 import net.judah.fluid.FluidSynth;
 import net.judah.midi.MidiClient;
 import net.judah.midi.MidiPair;
@@ -33,28 +33,38 @@ import net.judah.settings.Command;
 import net.judah.settings.Service;
 import net.judah.settings.Services;
 import net.judah.song.Song;
-import net.judah.song.SongTab;
 import net.judah.song.Trigger;
+import net.judah.util.Console;
 import net.judah.util.Constants;
-import net.judah.util.Tab;
 
 @Log4j
-public class Sequencer implements Service, Runnable, MetaEventListener, ControllerEventListener {
+public class Sequencer implements Service, Runnable, ControllerEventListener {
 	
+	public static enum ControlMode {
+		/** internal clock */ 
+		INTERNAL, 
+		/** external clock (from looper, cc3 inserted into click tracks) */ 
+		EXTERNAL};
+	
+	public static final String PARAM_LOOP = "Loop";
+	public static final String PARAM_UNIT = "beats.per.pulse";
 	public static final String PARAM_BPM = "bpm";
 	public static final String PARAM_MEAUSRE = "bpb";
 	public static final String PARAM_FLUID = "fluid";
 	public static final String PARAM_CARLA = "Carla";
 	/** CC3 messages inserted in midi clicktrack file define bars, see {@link #controlChange(ShortMessage)} */
 	public static final String PARAM_CONTROLLED = "midi.controlled";
+	private static final String CONTROL_ERROR = "External control error: ";
 	
 	private final Command trigger = new Command("Trigger", this, "Move Sequencer to the next song section");
 	private final Command end = new Command("Stop Sequencer", this, "stop song");
-	// TODO clicktrack
+	private final Command externalControl = new Command("Time control", this, externalParams(), 
+			"Move time clock from midi sequencer to a looper");
+	// TODO move clicktrack command here
 	
-	@Getter private final List<Command> commands = Arrays.asList(new Command[] {trigger, end});
+	@Getter private final List<Command> commands = Arrays.asList(new Command[] {trigger, end, externalControl});
 	@Getter private final String serviceName = Sequencer.class.getSimpleName();
-	@Getter private final Tab gui = null;
+	@Getter private final Page page;
 	
 	@Getter private float tempo = 80;
 	@Setter @Getter private int measure = 4;
@@ -62,25 +72,26 @@ public class Sequencer implements Service, Runnable, MetaEventListener, Controll
 	@Getter private File songfile;
 	@Getter private final Services services = new Services();
 	@Getter private final CommandHandler commander = new CommandHandler(this); 
-	@Getter final private Carla carla;
-	@Getter final private Metronome metronome;
+	@Getter private final Carla carla;
+	@Getter private final Metronome metronome;
+	@Getter private final Mixer mixer;
 	
-	boolean midiControlled = false; // click track uses cc3 messages to set tempo
-	private int cc3 = -1;
+	/** external (click track) uses cc3 messages and looper to set time */
+	@Getter ControlMode control = ControlMode.INTERNAL;
+
+	
 	private Trigger active;
 	private int index = 0;
 	
 	private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 	private ScheduledFuture<?> callback;
 	private int count = -1;
+	/** number of beats per pulse */
+	int pulse = 4;
 	
-	public Sequencer(Song song, File songfile) {
+	public Sequencer(Song song, File songfile) throws JackException {
 		this.song = song;
 		this.songfile = songfile;
-
-		if (JudahZone.getCurrentSong() != null) {
-			JudahZone.getCurrentSong().stop();
-		}
 		
 		services.add(this);
 		commander.clearMappings();
@@ -97,14 +108,17 @@ public class Sequencer implements Service, Runnable, MetaEventListener, Controll
 		
 		
 		initializeProperties();
+		
 		metronome = new Metronome(this);
-		Mixer.getInstance().setMetronome(metronome);
+		
+		mixer = new Mixer(this);
+		
 		carla = initializeCarla();
 		commander.initializeCommands();
 		initializeTriggers();
-		
-		JudahZone.openTab(new SongTab(this));
-		
+
+		page = new Page(this);
+		MainFrame.get().openPage(page);
 	}
 	
 	private void initializeTriggers() {
@@ -153,7 +167,7 @@ public class Sequencer implements Service, Runnable, MetaEventListener, Controll
 		
 		Object o = props.get(PARAM_CONTROLLED);
 		if (o != null) 
-			midiControlled = Boolean.parseBoolean(o.toString());
+			control =  Boolean.parseBoolean(o.toString()) ? ControlMode.EXTERNAL : ControlMode.INTERNAL;
 		
 		if (StringUtils.isNumeric("" + props.get("bpm"))) {
 			log.warn("props.get(bpm)  " + props.get("bpm"));
@@ -165,7 +179,7 @@ public class Sequencer implements Service, Runnable, MetaEventListener, Controll
 		if (props.containsKey("fluid")) {
 			String[] split = props.get("fluid").toString().split(";");
 			for (String cmd : split)
-				((FluidSynth)services.byClass(FluidSynth.class)).sendCommand(cmd);
+				FluidSynth.getInstance().sendCommand(cmd);
 		}
 		if (props.containsKey(Drumkv1.FILE_PARAM) && props.containsKey(Drumkv1.PORT_PARAM)) {
 			MidiClient.getInstance().disconnectDrums();
@@ -179,22 +193,24 @@ public class Sequencer implements Service, Runnable, MetaEventListener, Controll
 	}
 	
 	public boolean isRunning() {
-		return callback != null;
+		return count >= 0;
 	}
 
 	@Override public void close() {
+		stop();
+		services.remove(this);
+		for (Service s : services)
+			s.close();
 	}
 
 	public void reset() {
 	}
 
+	// dispose Song's services (metronome, loops, etc)
 	public void stop() {
 		if (!isRunning()) return;
 		scheduler.shutdown();
 		callback = null;
-		Mixer.getInstance().stopAll();
-		if (metronome.isRunning()) 
-			metronome.close();
 	}
 	
 	
@@ -202,26 +218,6 @@ public class Sequencer implements Service, Runnable, MetaEventListener, Controll
 		if (active != null) {
 			execute(active);
 			increment();
-		}
-	}
-
-	public void rollTransport() {
-		if (isRunning()) return;
-
-
-		if (midiControlled) {
-			// pick up timing from CC3 messages in midi stream (ControlEventListener)
-		}
-		else {
-			// start internal time
-			long cycle = Constants.millisPerBeat(tempo);
-			log.warn("Sequencer starting with a cycle of " + cycle + " for bpm: " + measure);
-
-			callback = scheduler.scheduleAtFixedRate(this, 0, 
-					Constants.millisPerBeat(tempo), TimeUnit.MILLISECONDS);
-			scheduler.schedule(
-	    		new Runnable() {@Override public void run() {callback.cancel(true);}},
-	    		24, TimeUnit.HOURS);
 		}
 	}
 
@@ -235,24 +231,15 @@ public class Sequencer implements Service, Runnable, MetaEventListener, Controll
 		}
 	}
 	
-	@Override public void run() {
-		// if (count == -1) { /* initialization */ }
-		count++;
-		while (active.getTimestamp() == count) {
-			execute(active);
-			increment();
-		}
-	}
-
-	
-	
-	
 	@Override
 	public void execute(Command cmd, HashMap<String, Object> props) throws Exception {
 		if (cmd == trigger) 
 			trigger();
 		if (cmd == end) 
 			stop();
+		if (cmd == externalControl) {
+			externalControl(props);
+		}
 	}
 
 	private void execute(Trigger trig) {
@@ -265,21 +252,85 @@ public class Sequencer implements Service, Runnable, MetaEventListener, Controll
 		}
 	}
 
-	@Override
-	public void meta(MetaMessage meta) {
-		// log.warn("meta rcv'd: " + meta.getStatus() + "." + meta.getType());
+	private void externalControl(HashMap<String, Object> props) {
+		Object o = props.get(PARAM_LOOP);
+		Object o2 = props.get(PARAM_UNIT);
+		if (!StringUtils.isNumeric("" + o) || !StringUtils.isNumeric("" + o2)) {
+			log.error(CONTROL_ERROR + o + " and " + o2);
+			return;
+		}
+		int loop = Integer.parseInt(o.toString());
+		if (mixer.getSamples().size() <= loop) {
+			log.error(CONTROL_ERROR + " loop " + loop + " doesn't exist.");
+			return;
+		}
+		
+		pulse = Integer.parseInt(o2.toString());
+		mixer.getSamples().get(loop).setTimeSync(true);
+		log.warn("Looper " + loop + " has time control with pulse of " + pulse + " beats.");
+		
 	}
 
-	@Override
-	public void controlChange(ShortMessage event) {
-		if (event.getData1() != 3) return;
-		count = ++cc3 * measure;
-		log.warn("-- beat: " + count + " vs. " + active.getTimestamp());
+	private HashMap<String, Class<?>> externalParams() {
+		HashMap<String, Class<?>> result = new HashMap<>(2);
+		result.put(PARAM_LOOP, Integer.class);
+		result.put(PARAM_UNIT, Integer.class);
+		return result;
+	}
+
+	public void rollTransport() {
+		if (isRunning()) return;
+		count = 0;
+		while (active.getTimestamp() == count) { 
+			execute(active);
+			increment();
+		}
+
+		if (control == ControlMode.EXTERNAL) {
+			// will receive timing from CC3 messages in midi stream (ControlEventListener) or looper repeats (pulse) 
+		}
+		else {
+			// start internal time
+			long cycle = Constants.millisPerBeat(tempo);
+			log.warn("Sequencer starting with a cycle of " + cycle + " for bpm: " + measure);
+			Console.addText("Sequencer starting with a cycle of " + cycle + " for bpm: " + measure);
+			
+			callback = scheduler.scheduleAtFixedRate(this, Constants.millisPerBeat(tempo), 
+					Constants.millisPerBeat(tempo), TimeUnit.MILLISECONDS);
+			scheduler.schedule(
+	    		new Runnable() {@Override public void run() {callback.cancel(true);}},
+	    		24, TimeUnit.HOURS);
+		}
+	}
+
+
+	/** external clock */
+	public void pulse() {
+		count += pulse;
+		Console.addText("-- beat: " + count + " vs. " + active.getTimestamp());
 		while (active.getTimestamp() == count) {
 			execute(active);
 			increment();
 		}
 	}
 	
+	/** external clock */
+	@Override
+	public void controlChange(ShortMessage event) {
+		if (event.getData1() != 3) 
+			return;
+		if (isRunning()) 
+			pulse();
+	}
+
+	@Override public void run() {
+		// if (count == -1) { /* initialization */ }
+		++count;
+		Console.addText("internal: " + count);
+		while (active.getTimestamp() == count) {
+			execute(active);
+			increment();
+		}
+	}
 
 }

@@ -8,10 +8,12 @@ import java.util.LinkedHashSet;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
-import net.judah.metronome.Sequencer;
+import net.judah.fluid.FluidSynth;
 import net.judah.midi.Midi;
+import net.judah.midi.MidiClient;
 import net.judah.midi.MidiListener;
 import net.judah.midi.MidiListener.PassThrough;
+import net.judah.sequencer.Sequencer;
 import net.judah.settings.Command;
 import net.judah.settings.DynamicCommand;
 import net.judah.settings.Service;
@@ -36,6 +38,10 @@ public class CommandHandler {
 		for (Service s : sequencer.getServices()) {
 			available.addAll(s.getCommands());
 		}
+		
+		available.addAll(MidiClient.getInstance().getCommands());
+		available.addAll(FluidSynth.getInstance().getCommands());
+
 		//log.debug("currently handling " + available.size() + " available different commands");
 		//for (Command c : available) log.debug("    " + c);
 	}

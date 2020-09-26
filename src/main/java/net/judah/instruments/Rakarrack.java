@@ -9,7 +9,6 @@ import java.util.List;
 import net.judah.JudahZone;
 import net.judah.settings.Command;
 import net.judah.settings.Service;
-import net.judah.util.Tab;
 
 /** shell:  rakarrack --Load [File /home/judah/Tracks/Ramarok/JudahZone.rkr] */
 
@@ -60,12 +59,6 @@ public class Rakarrack implements Service {
 	@Override
 	public void close() {
 		process.destroy();
-	}
-
-	@Override
-	public Tab getGui() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 

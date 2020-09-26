@@ -1,4 +1,4 @@
-package net.judah.metronome;
+package net.judah.sequencer;
 
 import static javax.sound.midi.Sequencer.*;
 import static net.judah.util.Constants.Gui.*;
@@ -144,7 +144,7 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 
 		bpm = new JSlider(JSlider.HORIZONTAL, 50, 180, Math.round(sequencer.getTempo()));
 		bpm.setFont(FONT9);
-		bpm.setMajorTickSpacing(20);
+		bpm.setMajorTickSpacing(25);
 		bpm.setPaintTicks(false);
 		bpm.setPaintLabels(true);
 		bpm.addChangeListener(this);
@@ -158,7 +158,7 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 		
 		volume = new JSlider(JSlider.HORIZONTAL, 0, 100, Math.round(gain * 100));
 		volume.setFont(FONT9);
-		volume.setMajorTickSpacing(20);
+		volume.setMajorTickSpacing(25);
 		volume.setPaintTicks(true);
 		volume.setPaintLabels(false);
 		volume.addChangeListener(this);
@@ -251,6 +251,12 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 				playa.stop();
 				playa = null;
 			}
+			else {
+				// forward on to sequencer
+				sequencer.stop();
+				sequencer.getMixer().stopAll();
+			}
+			
 			playBtn.setSelected(false);
 			stopBtn.setSelected(true);
 		}
