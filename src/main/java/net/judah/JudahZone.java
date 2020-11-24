@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+
 import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
 import org.jaudiolibs.jnajack.JackPortFlags;
@@ -36,9 +39,7 @@ import net.judah.plugin.Carla;
 import net.judah.plugin.Drumkv1;
 import net.judah.sequencer.Sequencer;
 import net.judah.settings.Patch;
-import net.judah.song.Song;
 import net.judah.util.Constants;
-import net.judah.util.JsonUtil;
 import net.judah.util.RTLogger;
 
 
@@ -82,8 +83,10 @@ public class JudahZone extends BasicClient {
     	Runtime.getRuntime().addShutdownHook(new ShutdownHook());
     	patchbay = audioConfig();
     	midi = new MidiClient();
+    	
     	fluid = new FluidSynth(midi);
-		Thread.sleep(100);
+    	
+    	Thread.sleep(100);
         start();
 	}
 
@@ -105,19 +108,6 @@ public class JudahZone extends BasicClient {
 			} 
 		}
 		initializeChannels();
-		
-		// start GUI
-		new MainFrame(JUDAHZONE);
-
-		File file = new File("/home/judah/git/JudahZone/resources/Songs/default");
-		try {
-			Song song = (Song)JsonUtil.readJson(file, Song.class);
-			new Sequencer(song, file);
-		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			log.error(file.getAbsolutePath());
-			Constants.infoBox(file.getAbsoluteFile() + " -- " + e.getMessage(), "Song Load Failed");
-		}
 		
 	}
 
@@ -142,6 +132,24 @@ public class JudahZone extends BasicClient {
 	
 	@Override
 	protected void makeConnections() throws JackException {
+
+		// start GUI
+        try { UIManager.setLookAndFeel ("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+				| UnsupportedLookAndFeelException e) { log.info(e.getMessage(), e); }
+		new MainFrame(JUDAHZONE);
+
+		// Open a default song 
+		File file = new File("/home/judah/git/JudahZone/resources/Songs/default");
+		try {
+			new Sequencer(file);
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			log.error(file.getAbsolutePath());
+			Constants.infoBox(file.getAbsoluteFile() + " -- " + e.getMessage(), "Song Load Failed");
+		}
+		
+		// make any internally defined connections (typically Carla makes connections)
 		for (Patch patch : patchbay.getConnections()) {
 			try {
 				jack.connect(jackclient, patch.getOutputPort(), patch.getInputPort());
@@ -150,6 +158,7 @@ public class JudahZone extends BasicClient {
 				throw e;
 			}
 		}
+		
 	}
 	
 	@RequiredArgsConstructor @Getter

@@ -4,12 +4,13 @@
     "Carla" : "/home/judah/git/JudahZone/resources/carla/FeelGoodInk.carxp",
     "bpb" : 4,
     "clicktrack.intro" : 1,
+    "beats.per.pulse" : "16",
     "setup" : "Octave down for bass: VL70 Program 32 DampBass",
     "services" : "Carla, F luid, Master, Slave",
     "inspiration" : "https://www.youtube.com/watch?v=FC2g_XEi6wg",
     "drumkv1" : "/home/judah/Tracks/drumkv1/Classic-808/Classic-808.drumkv1",
     "midiport" : "aux",
-    "bpm" : 90
+    "bpm" : "125"
   },
   "links" : [ {
     "name" : "start metronome",
@@ -101,18 +102,18 @@
     "command" : "Mixer Gain",
     "midi" : "sBA3",
     "props" : {
-      "isInput" : "false",
       "Index" : "0",
+      "isInput" : "false",
       "Gain" : null
     }
   }, {
     "name" : "Knob 3",
-    "service" : "Metronome",
-    "command" : "Metronome settings",
+    "service" : "Mixer",
+    "command" : "Mixer Gain",
     "midi" : "sBEA",
     "props" : {
-      "isInput" : "false",
       "Index" : "1",
+      "isInput" : "false",
       "Gain" : null
     }
   }, {
@@ -121,8 +122,8 @@
     "command" : "Mixer Gain",
     "midi" : "sBIA",
     "props" : {
-      "isInput" : "true",
       "Index" : "0",
+      "isInput" : "true",
       "Gain" : null
     }
   }, {
@@ -131,8 +132,8 @@
     "command" : "Mixer Gain",
     "midi" : "sBMA",
     "props" : {
-      "isInput" : "true",
       "Index" : "1",
+      "isInput" : "true",
       "Gain" : null
     }
   }, {
@@ -141,8 +142,8 @@
     "command" : "Mixer Gain",
     "midi" : "sBQA",
     "props" : {
-      "isInput" : "true",
       "Index" : "2",
+      "isInput" : "true",
       "Gain" : null
     }
   }, {
@@ -151,8 +152,8 @@
     "command" : "Mixer Gain",
     "midi" : "sBUA",
     "props" : {
-      "isInput" : "true",
       "Index" : "3",
+      "isInput" : "true",
       "Gain" : null
     }
   }, {
@@ -173,19 +174,36 @@
       "up" : "false",
       "preset" : null
     }
-  } ],
-  "sequencer" : [ {
-    "type" : "ABSOLUTE",
-    "timestamp" : -1,
-    "duration" : null,
+  }, {
+    "name" : "synth brass cc7",
     "service" : "FluidSynth",
     "command" : "Program Change",
-    "notes" : "38 = Synth Bass 1 (or 81, saw wave)",
-    "params" : {
+    "midi" : "uSYA",
+    "props" : {
       "channel" : "0",
-      "preset" : "38"
+      "preset" : "63"
     }
   }, {
+    "name" : "queue ending cc3",
+    "service" : "Sequencer",
+    "command" : "Queue Play",
+    "midi" : "uSIA",
+    "props" : {
+      "Loop" : "-1",
+      "Active" : "false"
+    }
+  }, {
+    "name" : "cc6 route to VL70 synth",
+    "service" : "MidiClient",
+    "command" : "Route Midi Channel",
+    "midi" : "uSUA",
+    "props" : {
+      "Active" : "true",
+      "from" : "0",
+      "to" : "7"
+    }
+  } ],
+  "sequencer" : [ {
     "type" : "ABSOLUTE",
     "timestamp" : -1,
     "duration" : null,
@@ -229,7 +247,7 @@
     "duration" : null,
     "service" : "Mixer",
     "command" : "Record start/stop",
-    "notes" : "",
+    "notes" : "4 bars bass drum and snare",
     "params" : {
       "Loop" : "0",
       "Active" : "false"
@@ -239,8 +257,36 @@
     "timestamp" : 16,
     "duration" : null,
     "service" : "Mixer",
+    "command" : "Load Sample",
+    "notes" : "load empty in to loop B of A length",
+    "params" : {
+      "Loop" : "0",
+      "Active" : null,
+      "source.file" : null,
+      "source.loop" : "1",
+      "loop.duplicate" : "true"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 16,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Load Sample",
+    "notes" : "Double loop B",
+    "params" : {
+      "Loop" : "1",
+      "Active" : null,
+      "source.file" : null,
+      "source.loop" : "1",
+      "loop.duplicate" : "true"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 16,
+    "duration" : null,
+    "service" : "Mixer",
     "command" : "Sample start/stop",
-    "notes" : "",
+    "notes" : "play loop A",
     "params" : {
       "Loop" : "0",
       "Active" : "true"
@@ -251,7 +297,7 @@
     "duration" : null,
     "service" : "Mixer",
     "command" : "Record start/stop",
-    "notes" : "",
+    "notes" : "Record B (bass line)",
     "params" : {
       "Loop" : "1",
       "Active" : "true"
@@ -262,7 +308,7 @@
     "duration" : null,
     "service" : "Mixer",
     "command" : "Record start/stop",
-    "notes" : "",
+    "notes" : "stop bass line",
     "params" : {
       "Loop" : "1",
       "Active" : "false"
@@ -273,7 +319,7 @@
     "duration" : null,
     "service" : "Mixer",
     "command" : "Sample start/stop",
-    "notes" : "",
+    "notes" : "play bassline ",
     "params" : {
       "Loop" : "1",
       "Active" : "true"
@@ -284,9 +330,54 @@
     "duration" : null,
     "service" : "Mixer",
     "command" : "Record start/stop",
-    "notes" : "",
+    "notes" : "record high hat",
     "params" : {
       "Loop" : "0",
+      "Active" : "true"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 50,
+    "duration" : null,
+    "service" : "MidiClient",
+    "command" : "Route Midi Channel",
+    "notes" : "Unroute VL70 synth",
+    "params" : {
+      "Active" : "false",
+      "from" : "0",
+      "to" : "7"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 51,
+    "duration" : null,
+    "service" : "FluidSynth",
+    "command" : "Program Change",
+    "notes" : "FluidSynth Strings ",
+    "params" : {
+      "channel" : "0",
+      "preset" : "48"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 80,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Record start/stop",
+    "notes" : "stop with the high hat",
+    "params" : {
+      "Loop" : "0",
+      "Active" : "false"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 80,
+    "duration" : null,
+    "service" : "Mixer",
+    "command" : "Record start/stop",
+    "notes" : "record guitar (loop B)",
+    "params" : {
+      "Loop" : "1",
       "Active" : "true"
     }
   } ],
@@ -302,5 +393,8 @@
   }, {
     "from" : "iTEA",
     "to" : "iSoA"
+  }, {
+    "from" : "iSwA",
+    "to" : "iScA"
   } ]
 }

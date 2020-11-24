@@ -8,10 +8,12 @@ import javax.swing.JTable;
 import javax.swing.event.CellEditorListener;
 import javax.swing.table.TableCellEditor;
 
+import lombok.extern.log4j.Log4j;
 import net.judah.settings.Command;
 import net.judah.util.EditorDialog;
 import net.judah.util.PropertiesTable;
 
+@Log4j
 public class PropertiesEditor implements TableCellEditor {
 
 	private PropertiesTable cell;
@@ -27,14 +29,15 @@ public class PropertiesEditor implements TableCellEditor {
 		dialog = new EditorDialog("Midi");
 		HashMap props = (HashMap)value;
 		Object o = table.getModel().getValueAt(row, LinkTable.COMMAND_COL);
-		if (o == null || false == o instanceof Command) 
-			cell = new PropertiesTable((HashMap)value);
-		else {
+		if (o != null && o instanceof Command) {
 			Command cmd = (Command)o;
 			cell = new PropertiesTable(props, cmd.getProps());
 		}
+		else {
+			cell = new PropertiesTable(props);
+			log.error("no command @ " + row + "," + column + " = " + value);
+		}
 
-		cell = new PropertiesTable((HashMap)value);
 		Component c = table.getCellRenderer(row, column).getTableCellRendererComponent(
 				table, value, isSelected, isSelected, row, column);
 		boolean result = dialog.showContent(cell);
@@ -42,9 +45,6 @@ public class PropertiesEditor implements TableCellEditor {
 			table.setValueAt(cell.getMap(), row, column);
 			table.getModel().setValueAt(cell.getMap(), row, column);
 			table.invalidate();
-//			if (c != null && c instanceof JLabel) 
-//				((JLabel)c).setText(midiCard.getMidi().toString());
-//			else log.warn(c.getClass().getCanonicalName());
 		}
 		return c;
 	}

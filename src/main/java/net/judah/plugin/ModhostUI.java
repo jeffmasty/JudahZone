@@ -4,16 +4,12 @@ import static net.judah.util.Constants.*;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Properties;
 
 import javax.swing.JTextField;
 
-import net.judah.util.Tab;
+import net.judah.util.Console;
 
-public class ModhostUI extends Tab implements ActionListener {
-	private static final long serialVersionUID = -33505833140137161L;
-	
-
+public class ModhostUI implements ActionListener {
 	public static final String TAB_NAME = "Mod-Host";
 
 	final Modhost modhost;
@@ -31,7 +27,7 @@ public class ModhostUI extends Tab implements ActionListener {
 			JTextField widget = (JTextField)event.getSource();
 			String text = widget.getText();
 			if (text.isEmpty() && history != null) {
-				addText(history);
+				Console.addText(history);
 
 				modhost.sendCommand(text);
 				
@@ -46,16 +42,7 @@ public class ModhostUI extends Tab implements ActionListener {
 
 	//** output to console */
 	public void newLine() {
-		addText("" + NL);
-	}
-
-	@Override
-	public String getTabName() {
-		return TAB_NAME;
-	}
-	@Override
-	public void setProperties(Properties p) {
-		// TODO Auto-generated method stub
+		Console.addText("" + NL);
 	}
 
 

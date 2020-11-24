@@ -51,7 +51,7 @@ public class EditorDialog extends JDialog {
 		add(content, BorderLayout.CENTER);
 		add(okCancel, BorderLayout.PAGE_END);
 		Point p = MouseInfo.getPointerInfo().getLocation();
-		setLocation(p.x - 30, p.y - 25);
+		setLocation(p.x - 100, p.y - 30);
 		pack();
 		setVisible(true);
 		return result == null ? false : result;

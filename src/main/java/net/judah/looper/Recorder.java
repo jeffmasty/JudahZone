@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.jack.AudioMode;
@@ -17,13 +18,14 @@ import net.judah.jack.AudioTools;
 import net.judah.jack.RecordAudio;
 import net.judah.midi.MidiClient;
 import net.judah.mixer.MixerPort;
+import net.judah.util.Console;
 import net.judah.util.Constants;
 
 @Log4j
 public class Recorder extends Sample implements RecordAudio {
 
 	protected final AtomicReference<AudioMode> isRecording = new AtomicReference<>(AudioMode.NEW);
-	protected final List<MixerPort> inputPorts = new ArrayList<>();
+	@Getter protected final List<MixerPort> inputPorts = new ArrayList<>();
 	
 	private final Memory memory;
 	private float[][] newBuffer;
@@ -56,13 +58,13 @@ public class Recorder extends Sample implements RecordAudio {
 		if (active && (recording == null || mode == NEW)) {
 			recording = new Recording(true); // threaded to accept live stream
 			isRecording.set(STARTING);
-			log.warn(name + " recording starting");
+			Console.addText(name + " recording starting");
 		} else if (active && (isPlaying.get() == RUNNING || isPlaying.get() == STARTING)) {
 			isRecording.set(STARTING);
-			log.warn(name + " overdub starting");
+			Console.addText(name + " overdub starting");
 		} else if (active && (recording != null || mode == STOPPED)) {
 			isRecording.set(STARTING);
-			log.warn("silently overdubbing on " + name);
+			Console.addText("silently overdubbing on " + name);
 		}
 		
 			
@@ -73,7 +75,7 @@ public class Recorder extends Sample implements RecordAudio {
 			isPlaying.compareAndSet(NEW, STOPPED);
 			isPlaying.compareAndSet(ARMED, STARTING);
 			isRecording.set(STOPPED);
-			log.warn(name + " recording stopped, tape is " + recording.size() + " buffers long");
+			Console.addText(name + " recording stopped, tape is " + recording.size() + " buffers long");
 		}
 	}
 

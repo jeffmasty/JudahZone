@@ -8,7 +8,7 @@ import net.judah.mixer.MixerPort;
 /**Participates in real time audio processing, can respond to some commands*/
 public interface ProcessAudio {
 
-	public enum Type {ONE_TIME, LOOP, DUPLICATE, FREE, TRANSPORT}
+	public enum Type {ONE_TIME, CONTROLLED, DUPLICATE, FREE}
 	
 	/** in Real-Time thread */
 	void process(int nframes);

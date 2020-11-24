@@ -40,10 +40,13 @@ public class Carla {
 
 	@Getter private static Carla instance; 
 	
-    public static final String CARLA_SHELL_COMMAND = "/usr/local/bin/carla ";
-    
+    // public static final String CARLA_SHELL_COMMAND = "/usr/local/bin/carla ";
+    public static final String CARLA_SHELL_COMMAND = "carla ";
+	
     public static final int CARLA_PORT = 22753;
 	
+    
+    
 	private static final String PREFIX = "/Carla/";
 	
 	private static final String OSC = "OSC:"; //log

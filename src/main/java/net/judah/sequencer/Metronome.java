@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -27,29 +28,35 @@ import javax.swing.event.ChangeListener;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
+import net.judah.JudahZone;
 import net.judah.midi.JudahReceiver;
 import net.judah.midi.MidiClient;
 import net.judah.midi.MidiPlayer;
 import net.judah.settings.Command;
 import net.judah.settings.DynamicCommand;
 import net.judah.settings.Service;
-import net.judah.util.Tab;
+import net.judah.util.FileChooser;
 
 @Log4j 
 public class Metronome extends JPanel implements Service, ActionListener, ChangeListener {
 	
+	public static final String PARAM_GAIN = "volume";
+	public static final String PARAM_TEMPO = "bpm";
+	public static final String PARAM_MEASURE = "bpb";
+	public static final String PARAM_FILE = "midi.file";
+	
 	@Getter private final String serviceName = Metronome.class.getSimpleName();
 	@Getter private final ArrayList<Command> commands = new ArrayList<>();
-	@Getter private final Tab gui = null;
 
-	private final Command start, stop, settings, tempoCmd, volumeCmd;
+	private final Command start, stop, settings;
+	private final DynamicCommand tempoCmd, volumeCmd;
+	
 	private final ClickTrack clicktrack;
 	private final Sequencer sequencer;
 
 	/** if null, generate midi notes ourself */
-    //public static final File midiFile = new File(JudahZone.class.getClassLoader().getResource("metronome/Rock1.mid").getFile());
-	private File midiFile = new File("/home/judah/git/JudahZone/resources/metronome/Latin16.mid");
-	private float gain = 1f;
+    public static File midiFile = new File(JudahZone.class.getClassLoader().getResource("metronome/Latin16.mid").getFile());
+	private float gain = 0.8f;
 	
 	private MetroPlayer playa;
 	
@@ -64,8 +71,16 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
     private JSlider bpm;
     private JSlider volume;
 
+    private boolean suppress = false;
+    
 	public Metronome(Sequencer sequencer) {
 		this.sequencer = sequencer;
+		
+		Object o = sequencer.getSong().getProps().get(PARAM_FILE);
+		if (new File("" + o).isFile()) {
+			midiFile = new File("" + o);
+		}
+		
 		start = new Command("tick", this, "Start the metronome.");
 		stop = new Command("tock", this, "Stop the metronome.");
 
@@ -73,20 +88,20 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 		params.put("bpm", Float.class);
 		tempoCmd = new DynamicCommand("Metro tempo", this, params, "Tempo of metronome") {
 			@Override public void processMidi(int data2, HashMap<String, Object> props) {
-				props.put("bpm", (data2 + 40) * 1.1f); }};
+				props.put("bpm", (data2 + 35) * 1.15f); }};
 
 		params = new HashMap<String, Class<?>>();
 		params.put("volume", Float.class);
 		volumeCmd = new DynamicCommand("Metro volume", this, params, "Volume of metronome") {
 			@Override public void processMidi(int data2, java.util.HashMap<String,Object> props) {
-				props.put("volume", ((data2 - 1))* 0.01f); }};
+				props.put("volume", ((data2))* 0.01f); }};
 				
 		
 		// todo remove gui command?
 		params = new HashMap<String, Class<?>>();
-		params.put("bpm", Float.class);
-		params.put("bpb", Integer.class);
-		params.put("volume", Float.class);
+		params.put(PARAM_TEMPO, Float.class);
+		params.put(PARAM_MEASURE, Integer.class);
+		params.put(PARAM_GAIN, Float.class);
 		settings = new Command("Metronome settings", this, params, "Adjust metronome settings.");
 		clicktrack = new ClickTrack(sequencer, this);
 		commands.addAll(Arrays.asList(new Command[] {start, stop, settings, tempoCmd, volumeCmd, clicktrack}));
@@ -128,6 +143,7 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 		fileBtn = new JButton(" File ");
 		fileBtn.setMargin(BTN_MARGIN);
 		fileBtn.setFont(FONT11);
+		fileBtn.addActionListener( (event) -> loadMidi());
 		indicatorPanel.add(bpbBtn);
 		indicatorPanel.add(fileBtn);
 		
@@ -142,7 +158,7 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 		tempoLbl.setFont(FONT13);
 		tempoPanel.add(tempoLbl);
 
-		bpm = new JSlider(JSlider.HORIZONTAL, 50, 180, Math.round(sequencer.getTempo()));
+		bpm = new JSlider(JSlider.HORIZONTAL, 45, 155, Math.round(sequencer.getTempo()));
 		bpm.setFont(FONT9);
 		bpm.setMajorTickSpacing(25);
 		bpm.setPaintTicks(false);
@@ -167,6 +183,12 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 		update();
 	}
 
+	public void loadMidi() {
+		File file = FileChooser.choose(JFileChooser.FILES_ONLY, "mid", "Midi files (*.mid)");
+		if (file == null) ;
+		midiFile = file;
+	}
+
 	public boolean isRunning() {
 		return playa != null && playa.isRunning();
 	}
@@ -188,6 +210,10 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 				execute(settings, p);
 			}
 			if (e.getSource() == bpm) {
+				if (suppress) {
+					suppress = false;
+					return;
+				}
 				HashMap<String, Object> p = makeProps();
 				p.put("bpm", bpm.getValue() * 1f);
 				execute(settings, p);
@@ -216,9 +242,9 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 
 	private HashMap<String, Object> makeProps() {
 		HashMap<String, Object> p = new HashMap<String, Object>();
-		p.put("bpm", sequencer.getTempo());
-		p.put("bpb", sequencer.getMeasure());
-		p.put("volume", gain);
+		p.put(PARAM_TEMPO, sequencer.getTempo());
+		p.put(PARAM_MEASURE, sequencer.getMeasure());
+		p.put(PARAM_GAIN, gain);
 		return p;
 	}
 	
@@ -263,24 +289,47 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 
 		if (cmd.equals(settings)) 
 			settings(props);
-		if (cmd.equals(tempoCmd))
+		if (cmd.equals(tempoCmd)) {
+			suppress = true;
 			settings(props);
+		}
 		if (cmd.equals(volumeCmd)) 
 			settings(props);
 		if (cmd.equals(clicktrack)) 
 			clicktrack.execute(props);
 	}
 
-	public void settings(HashMap<String, Object> props) {
-		Object param = null;
-		try {
-			param = props.get("volume");
-			gain = (Float)param;
-			if (gain > 1 || gain < 0) throw new InvalidParameterException("volume between 0 and 1: " + gain);
+	public void mute() {
+		if (playa != null) {
+			playa.setGain(0f);
+		}
+	}
 	
-			if (playa != null)
-				playa.setGain(gain);
-		} catch (Throwable t) {	}
+	public void unMute() {
+		if (playa != null) {
+			playa.setGain(gain);
+		}
+	}
+	
+	public void setVolume(float gain) {
+		if (gain > 1 || gain < 0) throw new InvalidParameterException("volume between 0 and 1: " + gain);
+		this.gain = gain;
+		if (playa != null) {
+			playa.setGain(gain);
+		}
+	}
+	
+	private void settings(HashMap<String, Object> props) {
+		
+		Object param = null;
+		
+		param = props.get(PARAM_GAIN);
+		if (param != null && !param.toString().isEmpty())
+			setVolume((Float)param);
+		
+		param = props.get(PARAM_TEMPO);
+		if (param != null && !param.toString().isEmpty())
+			sequencer.setTempo((Float)param);
 		
 		update();
 		if (isRunning()) {
@@ -302,6 +351,14 @@ public class Metronome extends JPanel implements Service, ActionListener, Change
 		playa = ticktock;
 	}
 
+	public void setTempo(float tempo) {
+		if (playa != null)
+			if (playa instanceof MidiPlayer)
+				((MidiPlayer)playa).getSequencer().setTempoFactor(tempo/100f);
+		bpmText.setText("" + tempo);
+		bpm.setValue(Math.round(tempo));
+	}
+	
 }
 
 //private JTextField bpb;

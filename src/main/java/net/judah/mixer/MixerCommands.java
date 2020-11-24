@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
@@ -52,14 +54,14 @@ public class MixerCommands extends ArrayList<Command> {
 	public static final String LOOP_DUPLICATE = "loop.duplicate";
 
 	
-	protected final Command gainCommand;
-	protected final DynamicCommand playCmd;
-	protected final DynamicCommand recordCmd;
+	@Getter protected final Command gainCommand;
+	@Getter protected final DynamicCommand playCmd;
+	@Getter protected final DynamicCommand recordCmd;
 	
 	protected final Command clearCommand;
 	protected final Command muteCommand;
 	
-	protected final Command toggleLoopRecord;
+	@Getter protected final Command toggleLoopRecord;
 	protected final Command loadSample;
 	
 	//	final Command pluginCommand;
@@ -85,7 +87,7 @@ public class MixerCommands extends ArrayList<Command> {
 				"Reset the given looper");
 		gainCommand = new DynamicCommand(GAIN_COMMAND, mixer, gainProps(), "Adjust loop or input gain between 0 and 1") {
 			@Override public void processMidi(int data2, HashMap<String, Object> props) {
-						props.put(GAIN_PROP, ((data2 - 1))* 0.01f); }};
+						props.put(GAIN_PROP, ((data2))* 0.01f); }};
 
 		toggleLoopRecord = new ActiveCommand(TOGGLE_LOOP.getLabel(), mixer, new HashMap<>(), "Switch Recording between first 2 loops.");
 
@@ -111,14 +113,14 @@ public class MixerCommands extends ArrayList<Command> {
 //		cmdUndo = new Command("Undo", this, "Undo the last record or overdub");
 	}
 
-	private HashMap<String, Class<?>> loopProps() {
+	public static HashMap<String, Class<?>> loopProps() {
 		HashMap<String, Class<?>> commandProps = new HashMap<>();
 		commandProps.put(LOOP_PARAM, Integer.class);
 		commandProps.put(Command.ACTIVE_PARAM, Boolean.class);
 		return commandProps;
 	}
 	
-	private HashMap<String, Class<?>> gainProps() {
+	public static HashMap<String, Class<?>> gainProps() {
 		HashMap<String, Class<?>> commandProps = new HashMap<>();
 		commandProps.put(IS_INPUT, Boolean.class);
 		commandProps.put(INDEX, Integer.class);
@@ -126,7 +128,7 @@ public class MixerCommands extends ArrayList<Command> {
 		return commandProps;
 	}
 
-	private HashMap<String, Class<?>> muteProps() {
+	public static HashMap<String, Class<?>> muteProps() {
 		HashMap<String, Class<?>> commandProps = loopProps();
 		commandProps.put(LOOP_PARAM, Integer.class);
 		commandProps.put("mute", Boolean.class);
@@ -134,7 +136,7 @@ public class MixerCommands extends ArrayList<Command> {
 		return commandProps;
 	}
 
-	private HashMap<String, Class<?>> sampleProps() {
+	public static HashMap<String, Class<?>> sampleProps() {
 		HashMap<String, Class<?>> commandProps = loopProps();
 		commandProps.put(LOOP_PARAM, Integer.class);
 		commandProps.put(SOURCE_LOOP, Integer.class);
@@ -183,13 +185,29 @@ public class MixerCommands extends ArrayList<Command> {
 			}
 			else {
 				// TODO, quick implement an empty loop[1] based on size of loop[0] for now
-				Sample s = mixer.getSamples().get(0);
-				Sample s2 = mixer.getSamples().get(1);
-				if (!s.hasRecording()) {
-					log.error("No recording in Loop " + s.getName());
+				Object sauce = props.get(SOURCE_LOOP);
+				Sample source = mixer.getSamples().get(0);
+				if (sauce != null && StringUtils.isNumeric(sauce.toString()))
+					source = mixer.getSamples().get(Integer.parseInt(sauce.toString()));
+				Sample destination = mixer.getSamples().get(0);
+				if (LOOP_PARAM != null && StringUtils.isNumeric(loop.toString()))
+					destination = mixer.getSamples().get(Integer.parseInt(loop.toString()));
+				if (!source.hasRecording()) {
+					log.error("No recording in Loop " + source.getName());
 					return;
 				}
-				s2.setRecording(new Recording(s.getRecording().size(), true));
+				if (destination.equals(source)) {
+					// DUPLICATE source
+					Recording result = new Recording(source.getRecording().size(), true);
+					result.addAll(source.getRecording());
+					result.addAll(source.getRecording());
+					destination.setRecording(result);
+					
+					// destination.setRecording(new Recording(source.getRecording().size() * 2, true));
+				}
+				else { // create blank recording of source's size in destination
+					destination.setRecording(new Recording(source.getRecording().size(), true));
+				}
 				return;
 			}
 		}
@@ -197,12 +215,7 @@ public class MixerCommands extends ArrayList<Command> {
 		if (cmd.equals(muteCommand)) {
 			boolean mute = Boolean.parseBoolean(props.get("mute").toString());
 			String channel = props.get(CHANNEL_PARAM).toString();
-			if (channel.equals("all")) 
-				for (Sample loop : loops)
-				{
-					
-				}
-			else 
+			if (idx >= 0) 
 				((Recorder)loops.get(idx)).mute(channel, mute);
 			return;
 		}

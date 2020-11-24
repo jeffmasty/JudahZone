@@ -1,16 +1,15 @@
 package net.judah;
 
 import java.awt.Component;
-import java.awt.GridLayout;
 
+import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 
 import lombok.extern.log4j.Log4j;
 import net.judah.sequencer.Sequencer;
+import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.MenuBar;
 
@@ -22,30 +21,39 @@ public class MainFrame extends JFrame {
 	private final JPanel content;
 	private final String prefix;
 	
+	private final JPanel left;
+	private final RightPane right;
+	
+	
 	MainFrame(String name) {
 		super(name);
 		instance = this;
 		prefix = name;
 		
-        try { UIManager.setLookAndFeel ("javax.swing.plaf.nimbus.NimbusLookAndFeel");
-		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
-				| UnsupportedLookAndFeelException e) { log.info(e.getMessage(), e); }
-
-        //Create and set up the window.
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setJMenuBar(new MenuBar());
-        
         content = (JPanel)getContentPane();
-        content.setLayout(new GridLayout(1, 1));
-        tabs = new JTabbedPane();
+        content.setLayout(new BoxLayout(content, BoxLayout.X_AXIS));
         
-        // enables scrolling tabs.
+        left = new JPanel();
+        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+        tabs = new JTabbedPane();
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-
-        //Display the window.
-        content.add(tabs);
+        left.add(tabs);
+        
+        left.add(Console.getInstance().getOutput());
+        left.add(Console.getInstance().getInput());
+        
+        content.add(left);
+        right = new RightPane();
+        content.add(right);
+        
+        
         setLocation(30, 30);
-        setSize(1050, 620);  
+// TODO        
+        setSize(1050, 700);  
+        
+        
         setVisible(true);
         // setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
 	}
@@ -68,9 +76,9 @@ public class MainFrame extends JFrame {
 		Sequencer sequencer = page.getSequencer();
 		JudahZone.setCurrentSong(sequencer);
 		log.debug("loaded song " + sequencer.getSongfile().getAbsolutePath());
-		
+		right.setSong(sequencer);
 	}
-
+	
 	public static MainFrame get() {
 		return instance;
 	}

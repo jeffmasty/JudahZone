@@ -11,17 +11,20 @@ import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
+import lombok.extern.log4j.Log4j;
 import net.judah.CommandHandler;
 import net.judah.settings.Command;
 import net.judah.song.Trigger.Type;
+import net.judah.util.Console;
 import net.judah.util.Constants;
+import net.judah.util.EditsPane;
 import net.judah.util.JudahException;
 import net.judah.util.PopupMenu;
 
+@Log4j
 public class TriggersTable extends JPanel implements Edits {
 
 	private final JTable table;
@@ -57,21 +60,24 @@ public class TriggersTable extends JPanel implements Edits {
 			}
 		});
 		
-		add(new JScrollPane(table));
-		table.setComponentPopupMenu(new PopupMenu(this));
+		PopupMenu menu = new PopupMenu(this);
+		add(new EditsPane(table, menu));
+		table.setComponentPopupMenu(menu);
 	}
 
 	@Override public void editAdd() {
-		Trigger trigger = new Trigger(Type.ABSOLUTE, -1l, null, "", "", "", new HashMap<String, Object>());
-		Object[] data = new Object[] { trigger.getTimestamp(), commander.find(trigger.getService(), trigger.getCommand()), 
-				trigger.getNotes(), trigger.getParams()}; 
-		
+		Trigger trigger = new Trigger(Type.ABSOLUTE, -1l, null, "", "", "", new HashMap<String, Object>(), null);
 		if(table.getSelectedRow() < 0)
-			model.addRow(data);
+			model.addRow(newRow(trigger));
 		else 
-			model.insertRow(table.getSelectedRow() + 1, data);
+			model.insertRow(table.getSelectedRow() + 1, newRow(trigger));
 	}
 
+	private Object[] newRow(Trigger trigger) {
+		return new Object[] { trigger.getTimestamp(), commander.find(trigger.getService(), trigger.getCommand()), 
+				trigger.getNotes(), trigger.getParams()};
+	}
+	
 	@Override public void editDelete() {
 		int selected = table.getSelectedRow();
 		if (selected < 0) return;
@@ -85,19 +91,33 @@ public class TriggersTable extends JPanel implements Edits {
 
 	@Override
 	public List<Copyable> copy() {
-		// TODO Auto-generated method stub
-		return null;
+		int selected[] = table.getSelectedRows();
+		if (selected == null || selected.length == 0) return null;
+		List<Copyable> result = new ArrayList<Copyable>();
+		for (int i = 0; i < selected.length; i++) {
+			try {
+				result.add(  model.getRow(selected[i]).clone());
+			} catch (JudahException e) {
+				Console.warn(e.getMessage());
+			}
+		}
+		return result;
 	}
 
 	@Override
 	public List<Copyable> cut() {
-		// TODO Auto-generated method stub
-		return null;
+		List<Copyable> result = copy();
+		if (result != null && !result.isEmpty())
+			editDelete();
+		return result;
 	}
 
 	@Override
 	public void paste(List<Copyable> clipboard) {
-		// TODO Auto-generated method stub
-		
+		if (clipboard == null || clipboard.isEmpty()) return;
+		for (Copyable c : clipboard)
+			if (c instanceof Trigger) {
+				model.addRow(newRow((Trigger)c));
+			}
 	}
 }

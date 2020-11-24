@@ -73,7 +73,7 @@ class FluidListener extends Thread {
             	}
             	else {
             		// log.debug("fluid: " + line);
-            		Console.addText(PREFIX + ": " + line);
+            		Console.addText("fluid: " + line);
             	}
             }
         } catch (IOException ioe) {

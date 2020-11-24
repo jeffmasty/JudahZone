@@ -9,13 +9,13 @@ import javax.swing.BoxLayout;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
 import lombok.extern.log4j.Log4j;
 import net.judah.CommandHandler;
 import net.judah.midi.Midi;
 import net.judah.settings.Command;
+import net.judah.util.EditsPane;
 import net.judah.util.JudahException;
 import net.judah.util.PopupMenu;
 
@@ -42,8 +42,9 @@ public class LinkTable extends JPanel implements Edits {
 		table.setDefaultEditor(Midi.class, new MidiEditor());
 		table.setDefaultEditor(HashMap.class, new PropertiesEditor());
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-		add(new JScrollPane(table));
-		table.setComponentPopupMenu(new PopupMenu(this));
+		PopupMenu menu = new PopupMenu(this);
+		add(new EditsPane(table, menu));
+		table.setComponentPopupMenu(menu);
 	}
 
 	public LinkedHashSet<Link> getLinks() throws JudahException {
@@ -51,7 +52,7 @@ public class LinkTable extends JPanel implements Edits {
 	}
 
 	@Override public void editAdd() {
-		model.addRow(new Link("", "", "", null, new HashMap<String, Object>()));
+		model.addRow(new Link("", "", "", null, new HashMap<String, Object>(), null));
 	}
 
 	@Override public void editDelete() {
@@ -67,10 +68,11 @@ public class LinkTable extends JPanel implements Edits {
 		List<Copyable> result = new ArrayList<>();
 		for (int i = 0; i < selected.length; i++) {
 			try {
-				result.add(model.getRow(i));
-			} catch (JudahException e) {
+				result.add(model.getRow(selected[i]).clone());
+			} catch (Exception e) {
 				log.warn(e.getMessage() + " for link " + i);
-			}
+			} 
+
 		}
 		return result;
 	}

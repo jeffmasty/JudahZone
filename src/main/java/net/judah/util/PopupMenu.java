@@ -13,7 +13,7 @@ import net.judah.song.Edits.Copyable;
 @Log4j
 public class PopupMenu extends JPopupMenu {
 
-	private final List<Copyable> clipboard = new ArrayList<Copyable>();
+	private static final List<Copyable> clipboard = new ArrayList<Copyable>();
 	
     JMenuItem copy = new JMenuItem("Copy");
     JMenuItem cut = new JMenuItem("Cut");

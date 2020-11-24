@@ -1,11 +1,12 @@
 TODO:
 
-upgrade mixer
+Looper Control and triggers  Queue : cmd name cmd service loop# active(toggle) 
+Sequencer: TimeClock, MultiLoop + Sync,
 midi recorder
-unify consoles
+drum machine
 patch bay needed. see jack_lsp, jack_connect
 Song / Scene (i.e., 1 bar drum setups)
-Sequencer: TimeClock, MultiLoop + Sync,
+
 Undo/Redo/Copy/Paste
 Plugins, ttl 
 upload jna-jack patch
@@ -34,6 +35,8 @@ java analyse and sequence music https://github.com/arnaudh/elusive-sound
 
 arpeggio this! https://github.com/ybalcanci/Sequence-Player/blob/master/RecamanSequence.java
 
+https://github.com/VCVRack  modular synth
+
 jvsthost:
 in JVstHost.cpp (/home/judah/Tracks/jvst/jvsthost-master/src/com/synthbot/audioplugin/vst/vst2/)
 commented out line 1387 (  effect->process(effect, cinputs, coutputs, (int) sampleFrames);
@@ -61,7 +64,7 @@ setup and teardown notes
 command mappings
 triggers
 save loops to disk and play samples
-
+unify consoles
 
 
 Wave:
@@ -74,4 +77,27 @@ come back in on the bridge and sequence a Ritardo at the end.
 
  Feel Good: 
  Octave up bass at the end? (requires midi record)
+
+See It:
+
+Scenes: A A A B
+
+Scene A
+minor arpeggio
+
+loop 0:  midi player
+loop 1:  guitar 
+loop 2:  drums
+loop 3:  drums2
+loop 4:  melody
+
+Scene B
+loop 5:  Arpeggiator
+loop 6:  drums3
+loop 7:  melody B 
+
+
+
+
+
 

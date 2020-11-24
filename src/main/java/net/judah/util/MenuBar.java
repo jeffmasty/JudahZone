@@ -80,8 +80,7 @@ public class MenuBar extends JMenuBar {
 		if (file == null) return;
 
 		try { 
-			Song song = (Song)JsonUtil.readJson(file, Song.class);
-			new Sequencer(song, file);
+			new Sequencer(file);
 		} catch (Exception e) {
 			log.error(e.getMessage() + " - " + file.getAbsolutePath());
 			Constants.infoBox(file.getAbsolutePath() + ": " + e.getMessage(), "Error");
@@ -95,7 +94,7 @@ public class MenuBar extends JMenuBar {
 		Song song = new Song();
 		try {
 			JsonUtil.saveString(JsonUtil.MAPPER.writeValueAsString(song), file);
-			new Sequencer(song, file);
+			new Sequencer(file);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 			Constants.infoBox(e.getMessage(), "Error");

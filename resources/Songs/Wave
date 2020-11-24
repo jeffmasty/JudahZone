@@ -1,11 +1,11 @@
 {
   "props" : {
+    "pulse.controlled" : "true",
     "notes" : "shakers tempo",
     "Carla" : "/home/judah/git/JudahZone/resources/carla/Wave.carxp",
     "drumkv1" : "/home/judah/Tracks/drumkv1/ErnysPercussion/ErnysPercussion.drumkv1",
     "midiport" : "drums",
-    "bpm" : "90",
-    "midi.controlled" : "true"
+    "bpm" : "95"
   },
   "links" : [ {
     "name" : "Drums Record",
@@ -145,9 +145,6 @@
     "command" : "Load Sample",
     "notes" : "Create empty guitar Loop from drum loop",
     "params" : {
-      "Loop" : null,
-      "Active" : null,
-      "source.file" : null,
       "destination.loop" : "1",
       "channel" : "2",
       "source.loop" : "0",

@@ -18,6 +18,7 @@ import net.judah.jack.AudioMode;
 import net.judah.jack.ProcessAudio;
 import net.judah.midi.MidiClient;
 import net.judah.mixer.MixerPort;
+import net.judah.util.Console;
 
 @Log4j
 public class Sample implements ProcessAudio {
@@ -79,14 +80,14 @@ public class Sample implements ProcessAudio {
 		log.warn(name + " playing active: " + active);
 		
 		if (isPlaying.compareAndSet(NEW, active ? ARMED : NEW)) {
-			if (active) log.warn("Play is armed.");
+			if (active) Console.info(name + " Play is armed.");
 		}
 		isPlaying.compareAndSet(ARMED, active ? ARMED : hasRecording() ? STOPPED : NEW);
 		isPlaying.compareAndSet(RUNNING, active ? RUNNING : STOPPING);
 		
 		if (isPlaying.compareAndSet(STOPPED, active ? STARTING : STOPPED)) {
 			if (active) 
-				log.warn("playing starting. sample has " + recording.size() + " buffers.");
+				Console.addText(name + " playing. sample has " + recording.size() + " buffers.");
 		}
 	}
 	public boolean hasRecording() {
@@ -101,7 +102,7 @@ public class Sample implements ProcessAudio {
 	
 	@Override
 	public void clear() {
-		log.warn("clearing " + name);
+		Console.addText("clearing " + name);
 		boolean wasRunning = false;
 		if (isPlaying.compareAndSet(RUNNING, STOPPING)) {
 			wasRunning = true;
@@ -119,7 +120,7 @@ public class Sample implements ProcessAudio {
 			recording.close();
 		recording = sample;
 		length = recording.size();
-		log.warn("Recording loaded, " + length + " frames.");
+		Console.addText("Recording loaded, " + length + " frames.");
 		isPlaying.set(STOPPED);
 	}
 

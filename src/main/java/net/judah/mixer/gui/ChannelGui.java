@@ -31,7 +31,6 @@ public class ChannelGui extends JPanel implements  ChangeListener {
 		this.channel = channel;
 		final boolean isLooper = channel.getInstrument().getType() == Type.LOOPER;
 		
-		
 		setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
 		setLayout(new BorderLayout(1, 1));
 		
@@ -52,7 +51,6 @@ public class ChannelGui extends JPanel implements  ChangeListener {
 		mute.setMargin(BTN_MARGIN);
 		mute.setFont(FONT9);
 		buttons.add(mute);
-		
 		
 		loop = new JToggleButton(isLooper ? "R" : "L");
 		loop.setPreferredSize(btn);

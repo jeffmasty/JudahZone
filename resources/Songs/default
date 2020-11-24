@@ -93,18 +93,18 @@
     "command" : "Mixer Gain",
     "midi" : "sBA3",
     "props" : {
-      "isInput" : "false",
       "Index" : "0",
+      "isInput" : "false",
       "Gain" : null
     }
   }, {
     "name" : "Knob 3",
-    "service" : "Metronome",
-    "command" : "Metronome settings",
+    "service" : "Mixer",
+    "command" : "Mixer Gain",
     "midi" : "sBEA",
     "props" : {
-      "isInput" : "false",
       "Index" : "1",
+      "isInput" : "false",
       "Gain" : null
     }
   }, {
@@ -113,8 +113,8 @@
     "command" : "Mixer Gain",
     "midi" : "sBIA",
     "props" : {
-      "isInput" : "true",
       "Index" : "0",
+      "isInput" : "true",
       "Gain" : null
     }
   }, {
@@ -123,8 +123,8 @@
     "command" : "Mixer Gain",
     "midi" : "sBMA",
     "props" : {
-      "isInput" : "true",
       "Index" : "1",
+      "isInput" : "true",
       "Gain" : null
     }
   }, {
@@ -133,8 +133,8 @@
     "command" : "Mixer Gain",
     "midi" : "sBQA",
     "props" : {
-      "isInput" : "true",
       "Index" : "2",
+      "isInput" : "true",
       "Gain" : null
     }
   }, {
@@ -143,8 +143,8 @@
     "command" : "Mixer Gain",
     "midi" : "sBUA",
     "props" : {
-      "isInput" : "true",
       "Index" : "3",
+      "isInput" : "true",
       "Gain" : null
     }
   }, {
@@ -201,6 +201,12 @@
       "Loop" : "1",
       "Active" : null
     }
+  }, {
+    "name" : "Drop Beat - CC3",
+    "service" : "Sequencer",
+    "command" : "DropDaBeat",
+    "midi" : "uSIA",
+    "props" : { }
   } ],
   "sequencer" : [ {
     "type" : "ABSOLUTE",

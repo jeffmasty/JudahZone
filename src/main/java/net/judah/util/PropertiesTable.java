@@ -1,7 +1,6 @@
 package net.judah.util;
 
 
-import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.ArrayList;
@@ -9,8 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.BoxLayout;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
@@ -22,6 +21,7 @@ public class PropertiesTable extends JPanel implements Edits {
 
 	private final DefaultTableModel model;
 	private final JTable table;
+	private final boolean popup;
 	
 	public static DefaultTableModel toTableModel(Map<String,Object> map, HashMap<String,Class<?>> definition) {
 		if (definition == null) {
@@ -51,29 +51,42 @@ public class PropertiesTable extends JPanel implements Edits {
 	    return model;
 	}
 	
+	
+	/** Has an associated command (is a popup window) */
 	public PropertiesTable(HashMap<String, Object> data, HashMap<String, Class<?>> definition) {
 		model = toTableModel(data, definition);
 		table = new JTable(model);
+		popup = true;
 		doTable();
 	}
 	
 	public PropertiesTable(HashMap<String, Object> data){
 		model = toTableModel(data, null);
 		table = new JTable(model);
+		popup = false;
 		doTable();
 	}
 	
 	private void doTable() {
-		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-		table.getColumnModel().getColumn(0).setPreferredWidth(100);
-		table.getColumnModel().getColumn(1).setPreferredWidth(275);
-		JScrollPane scroll = new JScrollPane(table);
-		Dimension size = new Dimension(model.getRowCount() * 30, 375);
-		scroll.setPreferredSize(size);
-		scroll.setSize(size);
-		setLayout(new GridBagLayout());
-		add(table, new GridBagConstraints());
-		table.setComponentPopupMenu(new PopupMenu(this));
+		PopupMenu menu = new PopupMenu(this);
+		table.setComponentPopupMenu(menu);
+		
+		if (popup) {
+			table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+			table.getColumnModel().getColumn(0).setPreferredWidth(100);
+			table.getColumnModel().getColumn(1).setPreferredWidth(200);
+			setLayout(new GridBagLayout());
+			add(table, new GridBagConstraints());
+		}
+		else {
+			EditsPane scroller = new EditsPane(table, menu);
+			setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+			add(scroller);
+		}
+		
+		
+		
+		
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })

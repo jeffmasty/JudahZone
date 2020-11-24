@@ -22,6 +22,7 @@ import javax.swing.event.ListSelectionListener;
 
 import lombok.extern.log4j.Log4j;
 import net.judah.sequencer.Sequencer;
+import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.FileCellRenderer;
 import net.judah.util.FileChooser;
@@ -41,24 +42,24 @@ public class SonglistTab extends JComponent implements ListSelectionListener {
 	private final JList<File> jsongs = new JList<File>();
 	private JButton setlistLabel;
 	private JButton newSonglist, saveSonglist;
-	@SuppressWarnings("unused")
-	private JButton newSong, addSong, deleteSong, upSong, downSong; //copySong 
+	
+	private JButton deleteSong; 
+	// private JButton upSong, downSong, copySong; 
 	
 	public SonglistTab(File setlist) {
 		this.file = setlist;
 		
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-		setlistLabel = new JButton(setlistLabel(file));
-		setlistLabel.setToolTipText(file.getAbsolutePath());
-		setlistLabel.addActionListener((event) -> loadSetlist(null));
-		setlistLabel.setMinimumSize(new Dimension(100, 30));
-		JPanel lbl = new JPanel(new FlowLayout());
-		lbl.add(setlistLabel);
-		add(lbl);
-		
 		filePanel();
+		buttonsPanel();
+		
 		loadSetlist(setlist);
+		if (setlist == null) {
+			Console.addText("No Set List");
+			return;
+		}
+
 		jsongs.setCellRenderer(new FileCellRenderer());
 		jsongs.addListSelectionListener(this);
 		jsongs.addMouseListener(new MouseAdapter() {
@@ -68,13 +69,18 @@ public class SonglistTab extends JComponent implements ListSelectionListener {
 					 mouseEvent.consume();
 				 }}});
 		add(new JScrollPane(jsongs));
-		buttonsPanel();
+
 	}
 
 	private void filePanel() {
 		
 		JPanel filePanel = new JPanel(new FlowLayout());
 		
+		setlistLabel = new JButton(setlistLabel(file));
+		setlistLabel.setToolTipText(file.getAbsolutePath());
+		setlistLabel.addActionListener((event) -> loadSetlist(null));
+		setlistLabel.setMinimumSize(new Dimension(100, 30));
+
 		// https://en-human-begin.blogspot.com/2007/11/javas-icons-by-default.html
 		newSonglist = new JButton(UIManager.getIcon("Tree.leafIcon"));
 		newSonglist.setMargin(BTN_MARGIN);
@@ -86,7 +92,7 @@ public class SonglistTab extends JComponent implements ListSelectionListener {
 		saveSonglist.addActionListener((event) -> saveSetlist());
 		saveSonglist.setToolTipText("Save List");
 		
-		// filePanel.add(loadSonglist);
+		filePanel.add(setlistLabel);
 		filePanel.add(newSonglist);
 		filePanel.add(saveSonglist);
 		add(filePanel);
@@ -113,12 +119,12 @@ public class SonglistTab extends JComponent implements ListSelectionListener {
 	
 	private void buttonsPanel() {
 		buttonsPanel = new JPanel(new FlowLayout());
-		newSong = button(CMD.NEW);
-		addSong = button(CMD.ADD);
+		button(CMD.NEW);
+		button(CMD.ADD);
 		deleteSong = button(CMD.DELETE);
 		// copySong = button(CMD.COPY);
-		upSong = button(CMD.UP);
-		downSong = button(CMD.DOWN);
+		// upSong = button(CMD.UP);
+		// downSong = button(CMD.DOWN);
 		buttonsPanel.doLayout();
 		add(buttonsPanel);
 	}
@@ -159,8 +165,8 @@ public class SonglistTab extends JComponent implements ListSelectionListener {
 				model.addElement(file);
 			else
 				model.insertElementAt(file, jsongs.getSelectedIndex() + 1);
-
-			new Sequencer(song, file);
+			saveSetlist();
+			new Sequencer(file);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 			Constants.infoBox(e.getMessage(), "Error");
@@ -178,6 +184,7 @@ public class SonglistTab extends JComponent implements ListSelectionListener {
 				model.addElement(file);
 			else
 				model.insertElementAt(file, jsongs.getSelectedIndex() + 1);
+			saveSetlist();
 		} catch (IOException e) {
 			log.error(e.getMessage() + " - " + file.getAbsolutePath());
 			Constants.infoBox(file.getAbsolutePath() + ": " + e.getMessage(), "Error");
@@ -188,6 +195,7 @@ public class SonglistTab extends JComponent implements ListSelectionListener {
 		for (File f : jsongs.getSelectedValuesList()) {
 			model.removeElement(f);
 		}
+		saveSetlist();
 	}
 	
 	private void copySong() {
@@ -245,17 +253,18 @@ public class SonglistTab extends JComponent implements ListSelectionListener {
 			Constants.infoBox(e.getMessage(), "Not Saved");
 		}
 	}
-	@Override //newSong, addSong, deleteSong, upSong, downSong; //copySong
+
+	@Override
 	public void valueChanged(ListSelectionEvent e) {
 		int selected[] = jsongs.getSelectedIndices();
 		if (selected.length == 0) {
 			deleteSong.setEnabled(false);
-			upSong.setEnabled(false);
-			downSong.setEnabled(false);
+//			upSong.setEnabled(false);
+//			downSong.setEnabled(false);
 		} else {
 			deleteSong.setEnabled(true);
-			upSong.setEnabled(true);
-			downSong.setEnabled(true);
+//			upSong.setEnabled(true);
+//			downSong.setEnabled(true);
 		}
 	}
 	
@@ -265,8 +274,7 @@ public class SonglistTab extends JComponent implements ListSelectionListener {
 		
 		File file = model.getElementAt(index);
 		try {
-			Song song = (Song)JsonUtil.readJson(file, Song.class);
-			new Sequencer(song, file);
+			new Sequencer(file);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 			log.error(file.getAbsolutePath());

@@ -453,11 +453,7 @@
  <ExternalPatchbay>
   <Connection>
    <Source>system:capture_1</Source>
-   <Target>Carla:Guitar Cabinet:in</Target>
-  </Connection>
-  <Connection>
-   <Source>system:capture_2</Source>
-   <Target>Carla:Mic Stereo:In L</Target>
+   <Target>Guitar Cabinet:in</Target>
   </Connection>
   <Connection>
    <Source>system:capture_3</Source>
@@ -468,24 +464,12 @@
    <Target>JudahZone:aux_right</Target>
   </Connection>
   <Connection>
-   <Source>system:capture_4</Source>
-   <Target>Carla:Drums Phonograph:Audio Input 1</Target>
-  </Connection>
-  <Connection>
    <Source>a2j:MPKmini2 [20] (capture): MPKmini2 MIDI 1</Source>
    <Target>JudahMidi:keyboard</Target>
   </Connection>
   <Connection>
-   <Source>a2j:ActitioN MIDI Controller [24] (capture): ActitioN MIDI Controller MIDI 1</Source>
+   <Source>a2j:ActitioN MIDI Controller [28] (capture): ActitioN MIDI Controller MIDI 1</Source>
    <Target>JudahMidi:pedal</Target>
-  </Connection>
-  <Connection>
-   <Source>PulseAudio JACK Sink:front-left</Source>
-   <Target>system:playback_1</Target>
-  </Connection>
-  <Connection>
-   <Source>PulseAudio JACK Sink:front-right</Source>
-   <Target>system:playback_2</Target>
   </Connection>
   <Connection>
    <Source>JudahMidi:synth</Source>
@@ -497,7 +481,7 @@
   </Connection>
   <Connection>
    <Source>JudahMidi:komplete</Source>
-   <Target>a2j:Komplete Audio 6 [16] (playback): Komplete Audio 6 MIDI 1</Target>
+   <Target>a2j:Komplete Audio 6 [24] (playback): Komplete Audio 6 MIDI 1</Target>
   </Connection>
   <Connection>
    <Source>fluidsynth-midi:left</Source>
@@ -524,60 +508,24 @@
    <Target>system:playback_2</Target>
   </Connection>
   <Connection>
-   <Source>Carla:Guitar Cabinet:Out</Source>
-   <Target>Carla:Guitar Stereo:In L</Target>
+   <Source>Guitar Cabinet:Out</Source>
+   <Target>Guitar Stereo:In L</Target>
   </Connection>
   <Connection>
-   <Source>Carla:Guitar Stereo:Out L</Source>
-   <Target>system:playback_1</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:Guitar Stereo:Out L</Source>
+   <Source>Guitar Stereo:Out L</Source>
    <Target>JudahZone:guitar_left</Target>
   </Connection>
   <Connection>
-   <Source>Carla:Guitar Stereo:Out R</Source>
-   <Target>system:playback_2</Target>
+   <Source>Guitar Stereo:Out L</Source>
+   <Target>system:playback_1</Target>
   </Connection>
   <Connection>
-   <Source>Carla:Guitar Stereo:Out R</Source>
+   <Source>Guitar Stereo:Out R</Source>
    <Target>JudahZone:guitar_right</Target>
   </Connection>
   <Connection>
-   <Source>Carla:Mic Stereo:Out L</Source>
-   <Target>system:playback_1</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:Mic Stereo:Out L</Source>
-   <Target>JudahZone:mic_left</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:Mic Stereo:Out R</Source>
+   <Source>Guitar Stereo:Out R</Source>
    <Target>system:playback_2</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:Mic Stereo:Out R</Source>
-   <Target>JudahZone:mic_right</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:Drums Phonograph:Audio Output 1</Source>
-   <Target>Carla:Drums Stereo:In L</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:Drums Stereo:Out L</Source>
-   <Target>system:playback_1</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:Drums Stereo:Out L</Source>
-   <Target>JudahZone:drums_left</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:Drums Stereo:Out R</Source>
-   <Target>system:playback_2</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:Drums Stereo:Out R</Source>
-   <Target>JudahZone:drums_right</Target>
   </Connection>
  </ExternalPatchbay>
 </CARLA-PROJECT>

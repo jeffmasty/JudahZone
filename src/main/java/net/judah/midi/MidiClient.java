@@ -53,8 +53,6 @@ public class MidiClient extends BasicClient implements Service {
 	@Getter private static MidiClient instance;
 	
 	@Getter private final Router router = new Router();
-	// private final ClientConfig config;
-	// private final CommandHandler commander;
 
 	private ArrayList<JackPort> inPorts = new ArrayList<JackPort>();  // Keyboard, Pedal, MidiIn
 	@Getter private JackPort keyboard;
@@ -83,16 +81,12 @@ public class MidiClient extends BasicClient implements Service {
 	private ShortMessage poll;
 	private Midi midi;
 
-	public MidiClient(/* CommandHandler commander */) throws JackException {
+	public MidiClient() throws JackException {
 		super(JACKCLIENT_NAME);
-		//this.commander = commander;
 		instance = this;
 		start();
     }
     
-//	public MidiClient(ClientConfig config, CommandHandler commander) throws JackException {
-//	}
-
 	// Service interface
 	@Override public List<Command> getCommands() { return cmds; }
 	@Override public void execute(Command cmd, HashMap<String, Object> props) throws Exception {
@@ -101,7 +95,7 @@ public class MidiClient extends BasicClient implements Service {
 		}
 	}
 
-	private void routeChannel(HashMap<String, Object> props) {
+	public void routeChannel(HashMap<String, Object> props) {
 		try {
 			boolean active = Boolean.parseBoolean("" + props.get("Active"));
 			int from = Integer.parseInt("" + props.get("from"));
@@ -195,7 +189,6 @@ public class MidiClient extends BasicClient implements Service {
     		poll = queue.poll();
     		while (poll != null) {
     			write(poll, 0);
-    			// JackMidi.eventWrite(synth, 0, poll.getMessage(), poll.getLength());
     			poll = queue.poll();
     		}
     		

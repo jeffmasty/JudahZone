@@ -4,16 +4,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import lombok.Getter;
-import lombok.Setter;
 
 public class Command {
 	
 	public static final String ACTIVE_PARAM = "Active";
 	
-	public static final boolean DYNAMIC = true;
-	public static final boolean STATIC = !DYNAMIC;
-	
-
 	/** MIDI transported commands are expected to have the "midi" message as an object member of {@link Command#props} */
 	public enum Transport {
 		INTERNAL, MIDI
@@ -23,7 +18,6 @@ public class Command {
 	@Getter public final String description;
 	@Getter public final Service service;
 	@Getter public final HashMap<String, Class<?>> props;
-	@Getter @Setter private boolean dynamic = false;
 
 	public Command(String name, Service service, HashMap<String, Class<?>> props, String description) {
 		this.name = name;

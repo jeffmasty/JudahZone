@@ -5,13 +5,13 @@ import java.util.List;
 
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 import lombok.extern.log4j.Log4j;
 import net.judah.midi.MidiPair;
 import net.judah.midi.NoteOn;
+import net.judah.util.EditsPane;
 import net.judah.util.PopupMenu;
 
 @Log4j
@@ -25,8 +25,9 @@ public class RouterTable extends JPanel implements Edits {
 		list = new JTable(model);
 		list.setDefaultEditor(MidiPair.class, new RouterEditor());
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-		add(new JScrollPane(list));
-		list.setComponentPopupMenu(new PopupMenu(this));
+		PopupMenu menu = new PopupMenu(this);
+		list.setComponentPopupMenu(menu);
+		add(new EditsPane(list, menu));
 	}
 	
 	public static DefaultTableModel toTableModel(List<MidiPair> routes) {

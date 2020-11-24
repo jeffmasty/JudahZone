@@ -2,12 +2,10 @@ package net.judah.fluid;
 
 import static net.judah.util.Constants.*;
 
-import lombok.extern.log4j.Log4j;
 import net.judah.midi.GMNames;
 import net.judah.util.Console;
 import net.judah.util.ConsoleParticipant;
 
-@Log4j
 public class FluidConsole implements ConsoleParticipant {
 	public static final String PREFIX = "fluid";
 	private final FluidSynth fluid;

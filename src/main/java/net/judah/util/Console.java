@@ -3,8 +3,6 @@ package net.judah.util;
 import static net.judah.util.Constants.*;
 
 import java.awt.Dimension;
-import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -13,22 +11,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.swing.BoxLayout;
-import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.border.EtchedBorder;
 
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.fluid.FluidSynth;
-import net.judah.jack.ProcessAudio.Type;
+import net.judah.jack.ProcessAudio;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
 import net.judah.midi.JudahReceiver;
@@ -41,55 +37,54 @@ import net.judah.mixer.Mixer;
 import net.judah.plugin.Carla;
 
 @Log4j
-public class Console extends JComponent implements ActionListener, ConsoleParticipant, MidiListener {
-	
+public class Console implements ActionListener, ConsoleParticipant, MidiListener {
 	
 	private static final String midiPlay = "midi filename (play a midi file)";
 	private static final String listenHelp = "midilisten (toggle midi output to console)";
 	private static final String saveHelp = "save loop_num filename (saves looper to disc)"; 
-	private static final String readHelp = "read loop_num filename (reads bytes from disc into looper)";
+	private static final String readHelp = "read loop_num filename (reads Sample audio from disk into looper)";
 	private static final String playHelp = "play filename or sample index (play a sample)";
 	private static final String stopHelp = "stop index (stop a sample)";
 	private static final String samples = "samples : list samples";
 	private static final String routerHelp = "router - prints current midi translations";
 	private static final String routeHelp = "route/unroute channel fromChannel# toChannel#";
 	
-	private static Console me;
+	private static Console instance;
+	public static Console getInstance() {
+		if (instance == null) instance = new Console();
+		return instance;
+	}
 	@Getter @Setter private static Level level = Level.DEBUG;
-	private final JTextArea output;
-	private final JScrollPane listScroller;
+	private final JTextArea textarea;
+	@Getter private final JPanel output;
+	@Getter private final JScrollPane scroller;
+	@Getter private final JTextField input;
 	private boolean midiListen = false;
 	private String history = null;
 	@Getter private ArrayList<ConsoleParticipant> participants = new ArrayList<>();
 	
-	public static Console getInstance() {
-		if (me == null) me = new Console();
-		return me;
-	}
-	
-	Console() {
-        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+	private Console() {
 
-        output = new JTextArea();
-        output.setEditable(false);
-        listScroller = new JScrollPane(output);
-        listScroller.setBorder(new EtchedBorder());
-        listScroller.setPreferredSize(new Dimension(680, 350));
-        listScroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        listScroller.setAlignmentX(LEFT_ALIGNMENT);
-        add(listScroller);
-
-		JTextField input = new JTextField(70);
-		input.setMaximumSize(new Dimension(660, 75));
-        add(input);
+        textarea = new JTextArea(8, 60);
+        textarea.setEditable(false);
+        
+        scroller = new JScrollPane(textarea);
+        scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        
+        output = new JPanel();
+        output.setLayout(new BoxLayout(output, BoxLayout.Y_AXIS));
+        output.add(scroller);
+        
+        
+		input = new JTextField(70);
+		input.setMaximumSize(new Dimension(625, 75));
         input.addActionListener(this);
         input.grabFocus();
         
         participants.add(this);
         participants.add(FluidSynth.getInstance().getConsole());
         
-        me = this;
-        
+        instance = this;
 	}
 
 	protected String parseInputBox(ActionEvent e) {
@@ -106,35 +101,42 @@ public class Console extends JComponent implements ActionListener, ConsolePartic
 		return text;
 	}
 
+	//** output to console */
 	public static void addText(String s) {
 		
-		if (me == null || me.output == null) {
+		if (instance == null || instance.textarea == null) {
 			return;
 		}
 		if (s == null) {
 			s = "null" + NL;
-			Logger.getLogger(Tab.class).info("null addText() to terminal");
 		}
 		
 		if (false == s.endsWith(NL))
 			s = s + NL;
-		me.output.append(s);
-		Rectangle r = me.output.getBounds();
-		me.listScroller.getViewport().setViewPosition(new Point(0, r.height));
+
+		instance.textarea.append(s);
+		
+		instance.textarea.setCaretPosition(instance.textarea.getDocument().getLength() - 1);
+		instance.scroller.getVerticalScrollBar().setValue( instance.scroller.getVerticalScrollBar().getMaximum() - 1 );
+		instance.output.invalidate();
 	}
 
-	//** output to console */
 	public static void newLine() {
 		addText("" + NL);
 	}
 
 	public static void warn(String s) {
-		
+		addText("WARN " + s);
 	}
 	
 	public static void info(String s) {
-		if (level == Level.DEBUG || level == Level.INFO)
+		if (level == Level.DEBUG || level == Level.INFO || level == Level.TRACE)
 			addText(s);
+	}
+	
+	public static void debug(String s) {
+		if (level == Level.DEBUG || level == Level.TRACE)
+			addText("debug " + s);
 	}
 	
 	@Override
@@ -203,8 +205,11 @@ public class Console extends JComponent implements ActionListener, ConsolePartic
 		
 		else if (text.equals("route")) 
 			route(input);
-		else if (text.equals("unroute "))
+		else if (text.equals("unroute"))
 			unroute(input);
+		else if (text.equals("test")) {
+			test();
+		}
 
 	}
 	
@@ -233,15 +238,10 @@ public class Console extends JComponent implements ActionListener, ConsolePartic
 		try {
 			File midiFile = null;
 			if (split.length == 2) {
-				try {
 					midiFile = new File(split[1]);
 					if (!midiFile.isFile()) {
 						throw new FileNotFoundException(split[1]);
 					}
-				} catch (Throwable t) {
-					addText(t.getMessage());
-					log.info(t.getMessage(), t);
-				}
 			}
 			if (midiFile == null) {
 				addText("uh-oh, no midi file.");
@@ -250,6 +250,7 @@ public class Console extends JComponent implements ActionListener, ConsolePartic
 			
 			MidiPlayer playa = new MidiPlayer(midiFile, 8, 
 					new JudahReceiver(MidiClient.getInstance()), null);
+			
 			playa.start();
 		} catch (Throwable t) {
 			addText(t.getMessage());
@@ -268,7 +269,7 @@ public class Console extends JComponent implements ActionListener, ConsolePartic
 		}
 		String file = split[1];
 		try {
-			Sample sample = new Sample(new File(file).getName(), Recording.readAudio(file), Type.ONE_TIME);
+			Sample sample = new Sample(new File(file).getName(), Recording.readAudio(file), ProcessAudio.Type.ONE_TIME);
 			mixer().addSample(sample);
 			sample.play(true);
 		} catch (Throwable t) {
@@ -370,7 +371,6 @@ public class Console extends JComponent implements ActionListener, ConsolePartic
 				addText(routeHelp + " (" + Arrays.toString(split) + ")");
 			}
 		}
-		
 	}
 
 	private Carla getCarla() {
@@ -387,5 +387,8 @@ public class Console extends JComponent implements ActionListener, ConsolePartic
 		return PassThrough.ALL;
 	}
 
+	public void test() {
+		Console.debug("metronome width: " + JudahZone.getCurrentSong().getMetronome().getWidth());
+	}
 	
 }

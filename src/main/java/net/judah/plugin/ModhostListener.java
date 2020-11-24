@@ -8,6 +8,8 @@ import java.io.InputStreamReader;
 
 import org.apache.log4j.Logger;
 
+import net.judah.util.Console;
+
 class ModhostListener extends Thread {
 	static final Logger log = Logger.getLogger(ModhostListener.class);
 
@@ -36,7 +38,7 @@ class ModhostListener extends Thread {
             	if (line.startsWith(JACK) || line.startsWith(PREFIX_JACK))
             		continue;
             	
-        		ui.addText(line);
+        		Console.addText(line);
             	log.warn("MOD-HOST: " + line);
             }
 //            30:35 WARN  ModhostListener:37 - MOD-HOST: mod-host> cpu_load

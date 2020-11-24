@@ -1,10 +1,12 @@
 package net.judah.sequencer;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Stack;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -27,15 +29,20 @@ import net.judah.midi.MidiClient;
 import net.judah.midi.MidiPair;
 import net.judah.midi.Route;
 import net.judah.mixer.Mixer;
+import net.judah.mixer.MixerCommands;
 import net.judah.plugin.Carla;
 import net.judah.plugin.Drumkv1;
+import net.judah.settings.ActiveCommand;
 import net.judah.settings.Command;
+import net.judah.settings.CommandPair;
 import net.judah.settings.Service;
 import net.judah.settings.Services;
 import net.judah.song.Song;
 import net.judah.song.Trigger;
 import net.judah.util.Console;
 import net.judah.util.Constants;
+import net.judah.util.JsonUtil;
+import net.judah.util.JudahException;
 
 @Log4j
 public class Sequencer implements Service, Runnable, ControllerEventListener {
@@ -53,20 +60,31 @@ public class Sequencer implements Service, Runnable, ControllerEventListener {
 	public static final String PARAM_FLUID = "fluid";
 	public static final String PARAM_CARLA = "Carla";
 	/** CC3 messages inserted in midi clicktrack file define bars, see {@link #controlChange(ShortMessage)} */
-	public static final String PARAM_CONTROLLED = "midi.controlled";
+	public static final String PARAM_CONTROLLED = "pulse.controlled";
+	public static final String PARAM_SEQ_INTERNAL = "sequencer.internal";
 	private static final String CONTROL_ERROR = "External control error: ";
+	
 	
 	private final Command trigger = new Command("Trigger", this, "Move Sequencer to the next song section");
 	private final Command end = new Command("Stop Sequencer", this, "stop song");
 	private final Command externalControl = new Command("Time control", this, externalParams(), 
 			"Move time clock from midi sequencer to a looper");
+	private final Command dropBeatCmd = new Command("DropDaBeat", this, "Mute loops until next pulse");
+	private final Command queuePlay = new ActiveCommand("Queue Play", this, MixerCommands.loopProps(), "play/stop on next pulse.");
+	private final Command queueRecord = new ActiveCommand("Queue Record", this, MixerCommands.loopProps(), "record/stop on next pulse.");
+	
+	private ArrayList<Float> mixerState; 
+	private Stack<CommandPair> queue = new Stack<CommandPair>();
+	
 	// TODO move clicktrack command here
 	
-	@Getter private final List<Command> commands = Arrays.asList(new Command[] {trigger, end, externalControl});
+	@Getter private final List<Command> commands = Arrays.asList(new Command[] 
+			{trigger, end, externalControl, dropBeatCmd, queuePlay, queueRecord});
 	@Getter private final String serviceName = Sequencer.class.getSimpleName();
-	@Getter private final Page page;
+	// @Getter private final Page page;
+	@Getter private final Page page; 
 	
-	@Getter private float tempo = 80;
+	@Getter private float tempo = 80f;
 	@Setter @Getter private int measure = 4;
 	@Getter private final Song song;
 	@Getter private File songfile;
@@ -89,8 +107,8 @@ public class Sequencer implements Service, Runnable, ControllerEventListener {
 	/** number of beats per pulse */
 	int pulse = 4;
 	
-	public Sequencer(Song song, File songfile) throws JackException {
-		this.song = song;
+	public Sequencer(File songfile) throws IOException, JackException {
+		song = (Song)JsonUtil.readJson(songfile, Song.class);
 		this.songfile = songfile;
 		
 		services.add(this);
@@ -119,6 +137,7 @@ public class Sequencer implements Service, Runnable, ControllerEventListener {
 
 		page = new Page(this);
 		MainFrame.get().openPage(page);
+		
 	}
 	
 	private void initializeTriggers() {
@@ -128,7 +147,9 @@ public class Sequencer implements Service, Runnable, ControllerEventListener {
 		List<Trigger> triggers = song.getSequencer();
 		for (index = 0; index < triggers.size(); index++) {
 			active = triggers.get(index);
-			if (active.getTimestamp() >= 0) return; // initialization done
+			if (active.getTimestamp() >= 0) {
+				return; // initialization done
+			}
 			
 			Command cmd = commander.find(active.getService(), active.getCommand());
 			if (cmd == null) {
@@ -189,6 +210,11 @@ public class Sequencer implements Service, Runnable, ControllerEventListener {
 				log.error(e.getMessage(), e);
 			}
 		}
+		if (props.containsKey(PARAM_UNIT)) {
+			Object o2 = props.get(PARAM_UNIT);
+			if (StringUtils.isNumeric("" + o2))
+				pulse = Integer.parseInt(o2.toString());
+		}
 		
 	}
 	
@@ -237,15 +263,35 @@ public class Sequencer implements Service, Runnable, ControllerEventListener {
 			trigger();
 		if (cmd == end) 
 			stop();
-		if (cmd == externalControl) {
+		if (cmd == externalControl) 
 			externalControl(props);
+		if (cmd == dropBeatCmd) {
+			mixerState = mixer.muteAll();
+			metronome.mute();
+			queue.push(new CommandPair(dropBeatCmd, null));
 		}
+		if (cmd == queuePlay) 
+			if (control == ControlMode.INTERNAL) {
+				int candidate = count + 1;
+				while (candidate % measure != 0) 
+					candidate++;
+				props.put(PARAM_SEQ_INTERNAL, candidate);
+			}
+			queue.push(new CommandPair(mixer.getCommands().getPlayCmd(), props));
+		if (cmd == queueRecord)
+			if (control == ControlMode.INTERNAL) {
+				int candidate = count + 1;
+				while (candidate % measure != 0) 
+					candidate++;
+				props.put(PARAM_SEQ_INTERNAL, candidate);
+			}
+			queue.push(new CommandPair(mixer.getCommands().getRecordCmd(), props));
 	}
 
 	private void execute(Trigger trig) {
 		try {
 			Command cmd = commander.find(trig.getService(), trig.getCommand());
-			log.warn("@" + count + " seq execute: " + cmd + " " + Constants.prettyPrint(trig.getParams()));
+			Console.info("@" + count + " seq execute: " + cmd + " " + Constants.prettyPrint(trig.getParams()));
 			cmd.getService().execute(cmd, trig.getParams());
 		} catch (Exception e) {
 			log.error(e.getMessage() + " for " + trig, e);
@@ -254,9 +300,9 @@ public class Sequencer implements Service, Runnable, ControllerEventListener {
 
 	private void externalControl(HashMap<String, Object> props) {
 		Object o = props.get(PARAM_LOOP);
-		Object o2 = props.get(PARAM_UNIT);
-		if (!StringUtils.isNumeric("" + o) || !StringUtils.isNumeric("" + o2)) {
-			log.error(CONTROL_ERROR + o + " and " + o2);
+
+		if (!StringUtils.isNumeric("" + o)) {
+			log.error(CONTROL_ERROR + o);
 			return;
 		}
 		int loop = Integer.parseInt(o.toString());
@@ -264,8 +310,10 @@ public class Sequencer implements Service, Runnable, ControllerEventListener {
 			log.error(CONTROL_ERROR + " loop " + loop + " doesn't exist.");
 			return;
 		}
-		
-		pulse = Integer.parseInt(o2.toString());
+
+		Object o2 = props.get(PARAM_UNIT);
+		if (o2 != null && StringUtils.isNumeric(o2.toString())) 
+			pulse = Integer.parseInt(o2.toString());
 		mixer.getSamples().get(loop).setTimeSync(true);
 		log.warn("Looper " + loop + " has time control with pulse of " + pulse + " beats.");
 		
@@ -280,13 +328,19 @@ public class Sequencer implements Service, Runnable, ControllerEventListener {
 
 	public void rollTransport() {
 		if (isRunning()) return;
+		
 		count = 0;
+		Console.debug(active.getTimestamp() + " " + active.getNotes()+ " " + Constants.prettyPrint(active.getParams()));
+		if (active != null && active.getTimestamp() < 0)
+			increment();
+		
 		while (active.getTimestamp() == count) { 
 			execute(active);
 			increment();
 		}
 
 		if (control == ControlMode.EXTERNAL) {
+			Console.info("Rolling external, pulse: " + pulse);
 			// will receive timing from CC3 messages in midi stream (ControlEventListener) or looper repeats (pulse) 
 		}
 		else {
@@ -303,7 +357,6 @@ public class Sequencer implements Service, Runnable, ControllerEventListener {
 		}
 	}
 
-
 	/** external clock */
 	public void pulse() {
 		count += pulse;
@@ -311,6 +364,23 @@ public class Sequencer implements Service, Runnable, ControllerEventListener {
 		while (active.getTimestamp() == count) {
 			execute(active);
 			increment();
+		}
+		
+		
+		while (queue.isEmpty() == false) {
+			CommandPair c = queue.pop();
+			if (c.getCommand() == dropBeatCmd) { 
+				Console.warn("UN-QUEUEU!!");
+				try {
+					metronome.unMute();
+					mixer.restoreState(mixerState);
+				} catch (JudahException e) {
+					log.error(e.getMessage(), e);
+					Console.warn("restore state: " + e.getMessage());
+				}
+			}
+			else
+				commander.fire(c.getCommand(), c.getProps());
 		}
 	}
 	
@@ -330,6 +400,28 @@ public class Sequencer implements Service, Runnable, ControllerEventListener {
 		while (active.getTimestamp() == count) {
 			execute(active);
 			increment();
+		}
+		
+		if (queue.isEmpty()) return;
+		
+		CommandPair p = queue.peek();
+		Object o = p.getProps().get(PARAM_SEQ_INTERNAL);
+		if (o instanceof Integer && count == (Integer)o) {
+			p = queue.pop();
+			try {
+				execute(p.getCommand(), p.getProps());
+			} catch (Exception e) {
+				log.error(e.getMessage(), e);
+				Console.warn(e.getMessage());
+			}
+		}
+		
+	}
+
+	public void setTempo(float tempo2) {
+		if (tempo2 < tempo || tempo2 > tempo) {
+			tempo = tempo2;
+			metronome.setTempo(tempo);
 		}
 	}
 

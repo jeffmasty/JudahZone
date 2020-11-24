@@ -1,8 +1,9 @@
 {
   "props" : {
-    "" : "",
     "pulse.controlled" : "true",
-    "inspiration" : "https://youtu.be/GxW3Ed7GrhQ"
+    "Carla" : "/home/judah/git/JudahZone/resources/carla/Jazz.carxp",
+    "beats.per.pulse" : "16",
+    "midi.file" : "/home/judah/Tracks/midi/jazz_blues/12bar4.mid"
   },
   "links" : [ {
     "name" : "start metronome",
@@ -23,21 +24,9 @@
     "midi" : "sGIA",
     "props" : { }
   }, {
-    "name" : "Prog Pad 3",
-    "service" : "FluidSynth",
-    "command" : "Program Up",
-    "midi" : "yQQ=",
-    "props" : { }
-  }, {
-    "name" : "Prog Pad 7",
-    "service" : "FluidSynth",
-    "command" : "Program Down",
-    "midi" : "yQg=",
-    "props" : { }
-  }, {
     "name" : "Master Record",
-    "service" : "Mixer",
-    "command" : "Record start/stop",
+    "service" : "Sequencer",
+    "command" : "Queue Record",
     "midi" : "sGB/",
     "props" : {
       "Loop" : "0",
@@ -45,8 +34,8 @@
     }
   }, {
     "name" : "Master Play",
-    "service" : "Mixer",
-    "command" : "Sample start/stop",
+    "service" : "Sequencer",
+    "command" : "Queue Play",
     "midi" : "sGN/",
     "props" : {
       "Loop" : "0",
@@ -89,7 +78,7 @@
       "bpm" : null
     }
   }, {
-    "name" : "Knob 2",
+    "name" : "Knob 2 - Loop A",
     "service" : "Mixer",
     "command" : "Mixer Gain",
     "midi" : "sBA3",
@@ -99,7 +88,7 @@
       "Gain" : null
     }
   }, {
-    "name" : "Knob 3",
+    "name" : "Knob 3 - Loop B",
     "service" : "Mixer",
     "command" : "Mixer Gain",
     "midi" : "sBEA",
@@ -109,67 +98,9 @@
       "Gain" : null
     }
   }, {
-    "name" : "Knob 4",
-    "service" : "Mixer",
-    "command" : "Mixer Gain",
-    "midi" : "sBIA",
-    "props" : {
-      "Index" : "0",
-      "isInput" : "true",
-      "Gain" : null
-    }
-  }, {
-    "name" : "Knob 5",
-    "service" : "Mixer",
-    "command" : "Mixer Gain",
-    "midi" : "sBMA",
-    "props" : {
-      "Index" : "1",
-      "isInput" : "true",
-      "Gain" : null
-    }
-  }, {
-    "name" : "Knob 6",
-    "service" : "Mixer",
-    "command" : "Mixer Gain",
-    "midi" : "sBQA",
-    "props" : {
-      "Index" : "2",
-      "isInput" : "true",
-      "Gain" : null
-    }
-  }, {
-    "name" : "Knob 7",
-    "service" : "Mixer",
-    "command" : "Mixer Gain",
-    "midi" : "sBUA",
-    "props" : {
-      "Index" : "3",
-      "isInput" : "true",
-      "Gain" : null
-    }
-  }, {
-    "name" : "Prog 2 - Drums up",
-    "service" : "FluidSynth",
-    "command" : "Drum Set",
-    "midi" : "yQM=",
-    "props" : {
-      "up" : "true",
-      "preset" : null
-    }
-  }, {
-    "name" : "Prog 6 - Drums down",
-    "service" : "FluidSynth",
-    "command" : "Drum Set",
-    "midi" : "yQc=",
-    "props" : {
-      "up" : "false",
-      "preset" : null
-    }
-  }, {
     "name" : "CC Master Rec",
-    "service" : "Mixer",
-    "command" : "Record start/stop",
+    "service" : "Sequencer",
+    "command" : "Queue Record",
     "midi" : "uR9/",
     "props" : {
       "Loop" : "0",
@@ -177,8 +108,8 @@
     }
   }, {
     "name" : "CC Master Play",
-    "service" : "Mixer",
-    "command" : "Sample start/stop",
+    "service" : "Sequencer",
+    "command" : "Queue Play",
     "midi" : "uSMA",
     "props" : {
       "Loop" : "0",
@@ -214,50 +145,26 @@
     "timestamp" : -1,
     "duration" : null,
     "service" : "FluidSynth",
-    "command" : "Program Change",
+    "command" : "Drum Set",
     "notes" : "",
     "params" : {
-      "channel" : "0",
-      "preset" : "104"
+      "up" : null,
+      "preset" : "41"
     }
   }, {
     "type" : "ABSOLUTE",
     "timestamp" : -1,
     "duration" : null,
-    "service" : "Mixer",
-    "command" : "Load Sample",
+    "service" : "Metronome",
+    "command" : "Clicktrack",
     "notes" : "",
     "params" : {
-      "Loop" : "0",
-      "Active" : null,
-      "source.file" : "/home/judah/4x4.rec",
-      "source.loop" : null,
-      "loop.duplicate" : null
-    }
-  }, {
-    "type" : "ABSOLUTE",
-    "timestamp" : -1,
-    "duration" : null,
-    "service" : "Mixer",
-    "command" : "Load Sample",
-    "notes" : "",
-    "params" : {
-      "Loop" : "1",
-      "Active" : null,
-      "source.file" : null,
-      "source.loop" : "0",
-      "loop.duplicate" : "false"
-    }
-  }, {
-    "type" : "ABSOLUTE",
-    "timestamp" : -1,
-    "duration" : null,
-    "service" : "Sequencer",
-    "command" : "Time control",
-    "notes" : "",
-    "params" : {
-      "Loop" : "0",
-      "beats.per.pulse" : "16"
+      "intro.beats" : "0",
+      "midi.beat" : null,
+      "midi.channel" : null,
+      "duration.beats" : "2000",
+      "midi.downbeat" : null,
+      "midi.file" : "/home/judah/git/JudahZone/resources/metronome/Rock1.mid"
     }
   } ],
   "router" : [ ]

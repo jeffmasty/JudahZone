@@ -4,7 +4,7 @@ import java.util.List;
 
 public interface Edits {
 	
-	public static interface Copyable extends Cloneable{
+	public static interface Copyable extends Cloneable {
 		public Copyable clone() throws CloneNotSupportedException;
 	}
 
@@ -17,31 +17,5 @@ public interface Edits {
 	List<Copyable> cut();
 	
 	void paste(List<Copyable> clipboard);
-	
-	
-	/////////////////////
-//	public List<Object> copy() {
-//		
-//		return null;
-//	}
-//	
-//	public List<Object> cut() {
-//		return null;
-//	}
-//	
-//	public void paste(List<Object> clipboard) {
-//		
-//	}
-//	
-//	public void editAdd() {
-//		
-//	}
-//	
-//	public void editDelete() {
-//		
-//	}
-
-	
-	
 	
 }

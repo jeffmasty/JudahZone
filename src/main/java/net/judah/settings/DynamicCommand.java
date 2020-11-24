@@ -13,11 +13,6 @@ public abstract class DynamicCommand extends Command {
 		super(name, service, description);
 	}
 
-	@Override
-	public boolean isDynamic() {
-		return true;
-	}
-
 	/** process dynamic data */
 	public abstract void processMidi(int data2, HashMap<String, Object> props);
 }

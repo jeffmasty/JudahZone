@@ -28,6 +28,7 @@ public class TickTock implements MetroPlayer {
     private final WakeUp wakeUp = new WakeUp();
 	private final AtomicBoolean changed = new AtomicBoolean(true);
     
+	@SuppressWarnings("unused")
 	private Midi downbeatOn, downbeatOff, beatOn, beatOff; //:>
 	private int gain = 99; // data2 midi gain
 	

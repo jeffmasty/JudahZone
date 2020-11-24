@@ -42,7 +42,7 @@ public class SequencerModel extends DefaultTableModel {
 		assert cmd.getService() != null;
 		assert cmd.getName() != null;
 		return new Trigger(Type.ABSOLUTE, (long)getValueAt(i, 0), null, cmd.getService().getServiceName(), cmd.getName(),
-				getValueAt(i, 2).toString(), (HashMap)getValueAt(i, 3));
+				getValueAt(i, 2).toString(), (HashMap)getValueAt(i, 3), cmd);
 	}
 	
 	public ArrayList<Trigger> getData() throws JudahException {

@@ -15,6 +15,7 @@ import net.judah.mixer.gui.MixerTab;
 import net.judah.sequencer.Sequencer;
 import net.judah.settings.Command;
 import net.judah.settings.Service;
+import net.judah.util.JudahException;
 
 
 public class Mixer implements Service {
@@ -27,7 +28,7 @@ public class Mixer implements Service {
 	public Mixer(Sequencer sequencer) throws JackException {
 		commands = new MixerCommands(this);
 		
-		// init loops
+		// init loops  
 		samples.add(new Recorder("Loop A", ProcessAudio.Type.FREE));
 		samples.add(new Recorder("Loop B", ProcessAudio.Type.FREE));
 		
@@ -82,7 +83,24 @@ public class Mixer implements Service {
 		}
 	}
 
-	
+	/**@return gain level of each sample before muting */
+	public  ArrayList<Float> muteAll() {
+		ArrayList<Float> result = new ArrayList<Float>();
+		for (Sample sample : samples) {
+			result.add(sample.getGain());
+			sample.setGain(0f);
+		}
+		return result;
+	}
+
+	public void restoreState(ArrayList<Float> mixerState) throws JudahException {
+		if (mixerState.size() != samples.size()) 
+			throw new JudahException(mixerState.size() + " vs. " + samples.size());
+		for (int i = 0; i < samples.size(); i++) {
+			samples.get(i).setGain(mixerState.get(i));
+		}
+	}
+
 	
 }
 

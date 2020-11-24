@@ -63,7 +63,7 @@ public class CommandHandler {
 		Command cmd;
 		HashMap<String, Object> p;
 		for (Link mapping : links) {
-			cmd = find(mapping.getService(), mapping.getCommand());
+			cmd = mapping.getCmd();
 			if (cmd == null)
 				throw new JudahException("Command not found for mapping. " + mapping);
 
@@ -92,7 +92,7 @@ public class CommandHandler {
 		return false;
 	}
 	
-	private void fire(final Command cmd, HashMap<String, Object> props) throws JudahException {
+	public void fire(final Command cmd, HashMap<String, Object> props) {
 		new Thread() {
 			@Override public void run() {
 				try {
