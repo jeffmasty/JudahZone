@@ -70,12 +70,16 @@ public class FluidSynth implements Service {
 	private float roomSize = 0.75f;
 	private float dampness = 0.75f;
 
-	public FluidSynth (MidiClient midi) throws JackException, JudahException, IOException, JackException {
-		this(midi, SOUND_FONT);
+	public FluidSynth (MidiClient midi, boolean startListeners) throws JackException, JudahException, IOException {
+		this(midi, SOUND_FONT, startListeners);
+	}
+	
+	public FluidSynth (MidiClient midi) throws JackException, JudahException, IOException {
+		this(midi, SOUND_FONT, true);
 	}
 	
 	@SuppressWarnings("deprecation")
-	public FluidSynth (MidiClient midi, File soundFont) throws JackException, JudahException, IOException, JackException {
+	public FluidSynth (MidiClient midi, File soundFont, boolean startListeners) throws JackException, JudahException, IOException {
 	    instance = this;
 		this.midi = midi;
 		shellCommand = "fluidsynth" +
@@ -94,9 +98,9 @@ public class FluidSynth implements Service {
 	    // read FluidSynth output
 	    listener = new FluidListener(process.getInputStream(), false);
 	    new FluidListener(process.getErrorStream(), true).start();
-	    listener.start();
+	    if (startListeners)
+	    	listener.start();
 	    outStream = process.getOutputStream();
-	    assert outStream != null;
 
 	    Jack jack = Jack.getInstance();
 	    try { // wait for fluid synth to init
@@ -106,10 +110,15 @@ public class FluidSynth implements Service {
 	    	gain(gain);
 	    	Thread.sleep(40);
 	    	connect(midi.getJackclient(), midi.getSynth());
+	    	connect(midi.getJackclient(), midi.getDrums());
+	    	Jack.getInstance().connect(LEFT_PORT, "system:playback_1");
+			Jack.getInstance().connect(RIGHT_PORT, "system:playback_2");
+	    	
 	    } catch (InterruptedException e) {
 	    	log.error(e);
 	    }
-	    sync();
+	    if (startListeners)
+	    	sync();
 		initReverb();
 		HashMap<String, Class<?>> props = new HashMap<String, Class<?>>();
 		props.put("channel", Integer.class);
@@ -494,5 +503,6 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 			}
 		}
 	}
+
 }
 

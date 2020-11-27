@@ -9,9 +9,9 @@ import javax.swing.event.CellEditorListener;
 import javax.swing.table.TableCellEditor;
 
 import net.judah.midi.Midi;
-import net.judah.midi.MidiForm;
 import net.judah.settings.DynamicCommand;
 import net.judah.util.EditorDialog;
+import net.judah.util.MidiForm;
 
 public class MidiEditor implements TableCellEditor {
 	

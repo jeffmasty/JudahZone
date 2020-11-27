@@ -31,7 +31,7 @@ public class MidiPlayer implements MetroPlayer, ControllerEventListener, MetaEve
 	@Getter private final Sequence sequence;
 	private final Sequencer sequenca;
 	
-	private Thread listener;
+	//private Thread listener;
 	private final JudahReceiver receiver;
 
 	private Integer intro;
@@ -73,23 +73,24 @@ public class MidiPlayer implements MetroPlayer, ControllerEventListener, MetaEve
 		if (!sequencer.isOpen()) {
 			sequencer.open();
 		}
-		sequencer.setTempoFactor(JudahZone.getCurrentSong().getTempo()/100f);
+		if (JudahZone.getCurrentSong() != null)
+			sequencer.setTempoFactor(JudahZone.getCurrentSong().getTempo()/100f);
 		log.info("Midi player starting. " + file.getAbsolutePath());
 		sequencer.start();
-		if (intro != null && intro == 0)
+		if (intro != null && intro == 0) {
 			sequenca.rollTransport();
 			sequencer.addControllerEventListener(sequenca, controllers);
-		listener = new Thread() {
+		}
+		new Thread() {
 			@Override public void run() {
 				do {try { 
 						Thread.sleep(333);
-					} catch (InterruptedException e) {
-						log.info("Midi player stopped. " + file.getAbsolutePath()); }
+					} catch (InterruptedException e) { }
 				} while (sequencer.isRunning());
+				log.info("Midi player stopped. " + file.getAbsolutePath());
 				if (sequencer.isOpen())
 					sequencer.close();
-			}};
-		listener.start();
+			}}.start();
 	}
 	
 	@Override

@@ -35,10 +35,10 @@ import net.judah.mixer.Widget.Type;
 import net.judah.mixer.widget.CarlaVolume;
 import net.judah.mixer.widget.FluidVolume;
 import net.judah.mixer.widget.VolumeWidget;
-import net.judah.plugin.Carla;
-import net.judah.plugin.Drumkv1;
 import net.judah.sequencer.Sequencer;
 import net.judah.settings.Patch;
+import net.judah.settings.Service;
+import net.judah.settings.Services;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -55,8 +55,11 @@ public class JudahZone extends BasicClient {
     // TODO
     public static final File defaultSetlist = new File("/home/judah/git/JudahZone/resources/Songs/list1.songs"); 
     public static final File defaultFolder = new File("/home/judah/git/JudahZone/resources/Songs/"); 
+
+	// System services (fluidsynth, drumkv1)
+    @Getter private static final Services services = new Services();
     
-	private final Patchbay patchbay;
+    private final Patchbay patchbay;
     @Getter private static final List<Channel> channels = new ArrayList<>();
 	@Getter private static final List<MixerPort> inputPorts = new ArrayList<>();
 	@Getter private static final List<MixerPort> outputPorts = new ArrayList<>();
@@ -83,8 +86,9 @@ public class JudahZone extends BasicClient {
     	Runtime.getRuntime().addShutdownHook(new ShutdownHook());
     	patchbay = audioConfig();
     	midi = new MidiClient();
-    	
     	fluid = new FluidSynth(midi);
+    	
+    	services.addAll(Arrays.asList(new Service[] {midi, fluid}));
     	
     	Thread.sleep(100);
         start();
@@ -198,16 +202,12 @@ public class JudahZone extends BasicClient {
 
 	private class ShutdownHook extends Thread {
 		@Override public void run() {
-			if (Carla.getInstance() != null) 
-				Carla.getInstance().close();
-			if (Drumkv1.getInstance() != null)
-				Drumkv1.getInstance().close();
-			if (Carla.getInstance() != null)
-				Carla.getInstance().close();
+//			if (Carla.getInstance() != null) 
+//				Carla.getInstance().close();
 			if (getCurrentSong() != null)
 				getCurrentSong().close();
-			if (MidiClient.getInstance() != null)
-				MidiClient.getInstance().close();
+			for (Service s : services) 
+				s.close();
 		}
 	}
 	

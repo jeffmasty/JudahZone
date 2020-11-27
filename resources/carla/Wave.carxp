@@ -53,7 +53,7 @@
     <Index>3</Index>
     <Name>Cab Model</Name>
     <Symbol>c_model</Symbol>
-    <Value>8</Value>
+    <Value>15</Value>
    </Parameter>
 
    <CustomData>
@@ -295,49 +295,10 @@
   </Data>
  </Plugin>
 
- <!-- Mono to Stereo splitter -->
- <Plugin>
-  <Info>
-   <Type>LV2</Type>
-   <Name>VL70 Stereo</Name>
-   <URI>http://plugin.org.uk/swh-plugins/split</URI>
-  </Info>
-
-  <Data>
-   <Active>Yes</Active>
-   <ControlChannel>1</ControlChannel>
-   <Options>0x0</Options>
-
-   <CustomData>
-    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
-    <Key>CarlaSkin</Key>
-    <Value>presets</Value>
-   </CustomData>
-
-   <CustomData>
-    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
-    <Key>CarlaSkinIsCompacted</Key>
-    <Value>true</Value>
-   </CustomData>
-  </Data>
- </Plugin>
-
  <ExternalPatchbay>
   <Connection>
    <Source>system:capture_1</Source>
-   <Target>PulseAudio JACK Source:front-left</Target>
-  </Connection>
-  <Connection>
-   <Source>system:capture_1</Source>
-   <Target>Carla:Guitar Cabinet:in</Target>
-  </Connection>
-  <Connection>
-   <Source>system:capture_2</Source>
-   <Target>PulseAudio JACK Source:front-right</Target>
-  </Connection>
-  <Connection>
-   <Source>system:capture_2</Source>
-   <Target>Carla:Mic Stereo:In L</Target>
+   <Target>Guitar Cabinet:in</Target>
   </Connection>
   <Connection>
    <Source>system:capture_3</Source>
@@ -348,24 +309,12 @@
    <Target>JudahZone:aux_right</Target>
   </Connection>
   <Connection>
-   <Source>system:capture_3</Source>
-   <Target>Carla:VL70 Stereo:Input</Target>
-  </Connection>
-  <Connection>
    <Source>a2j:MPKmini2 [20] (capture): MPKmini2 MIDI 1</Source>
    <Target>JudahMidi:keyboard</Target>
   </Connection>
   <Connection>
-   <Source>a2j:ActitioN MIDI Controller [24] (capture): ActitioN MIDI Controller MIDI 1</Source>
+   <Source>a2j:ActitioN MIDI Controller [28] (capture): ActitioN MIDI Controller MIDI 1</Source>
    <Target>JudahMidi:pedal</Target>
-  </Connection>
-  <Connection>
-   <Source>PulseAudio JACK Sink:front-left</Source>
-   <Target>system:playback_1</Target>
-  </Connection>
-  <Connection>
-   <Source>PulseAudio JACK Sink:front-right</Source>
-   <Target>system:playback_2</Target>
   </Connection>
   <Connection>
    <Source>JudahMidi:synth</Source>
@@ -377,7 +326,7 @@
   </Connection>
   <Connection>
    <Source>JudahMidi:komplete</Source>
-   <Target>a2j:Komplete Audio 6 [16] (playback): Komplete Audio 6 MIDI 1</Target>
+   <Target>a2j:Komplete Audio 6 [24] (playback): Komplete Audio 6 MIDI 1</Target>
   </Connection>
   <Connection>
    <Source>fluidsynth-midi:left</Source>
@@ -404,58 +353,6 @@
    <Target>system:playback_2</Target>
   </Connection>
   <Connection>
-   <Source>Carla:Guitar Cabinet:Out</Source>
-   <Target>Carla:Guitar Stereo:In L</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:Guitar Stereo:Out L</Source>
-   <Target>system:playback_1</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:Guitar Stereo:Out L</Source>
-   <Target>JudahZone:guitar_left</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:Guitar Stereo:Out R</Source>
-   <Target>system:playback_2</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:Guitar Stereo:Out R</Source>
-   <Target>JudahZone:guitar_right</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:Mic Stereo:Out L</Source>
-   <Target>system:playback_1</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:Mic Stereo:Out L</Source>
-   <Target>JudahZone:mic_left</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:Mic Stereo:Out R</Source>
-   <Target>system:playback_2</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:Mic Stereo:Out R</Source>
-   <Target>JudahZone:mic_right</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:VL70 Stereo:Output 1</Source>
-   <Target>JudahZone:aux_left</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:VL70 Stereo:Output 1</Source>
-   <Target>system:playback_1</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:VL70 Stereo:Output 2</Source>
-   <Target>JudahZone:aux_right</Target>
-  </Connection>
-  <Connection>
-   <Source>Carla:VL70 Stereo:Output 2</Source>
-   <Target>system:playback_2</Target>
-  </Connection>
-  <Connection>
    <Source>drumkv1:out_1</Source>
    <Target>system:playback_1</Target>
   </Connection>
@@ -470,6 +367,26 @@
   <Connection>
    <Source>drumkv1:out_2</Source>
    <Target>JudahZone:drums_right</Target>
+  </Connection>
+  <Connection>
+   <Source>Guitar Cabinet:Out</Source>
+   <Target>Guitar Stereo:In L</Target>
+  </Connection>
+  <Connection>
+   <Source>Guitar Stereo:Out L</Source>
+   <Target>JudahZone:guitar_left</Target>
+  </Connection>
+  <Connection>
+   <Source>Guitar Stereo:Out L</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>Guitar Stereo:Out R</Source>
+   <Target>JudahZone:guitar_right</Target>
+  </Connection>
+  <Connection>
+   <Source>Guitar Stereo:Out R</Source>
+   <Target>system:playback_2</Target>
   </Connection>
  </ExternalPatchbay>
 </CARLA-PROJECT>

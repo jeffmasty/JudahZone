@@ -1,4 +1,4 @@
-package net.judah.midi;
+package net.judah.util;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -16,7 +16,10 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
-import net.judah.util.Constants;
+import net.judah.midi.Midi;
+import net.judah.midi.MidiClient;
+import net.judah.midi.MidiListener;
+import net.judah.midi.MidiListener.PassThrough;
 
 @Log4j
 /** Utility Swing class to select MIDI messages */

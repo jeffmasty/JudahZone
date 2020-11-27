@@ -1,4 +1,14 @@
+tempoCache.getTempoMPQAt visibility
+
+
+
+
 TODO:
+
+Click Track:
+
+
+
 
 Looper Control and triggers  Queue : cmd name cmd service loop# active(toggle) 
 Sequencer: TimeClock, MultiLoop + Sync,
@@ -9,7 +19,7 @@ Song / Scene (i.e., 1 bar drum setups)
 
 Undo/Redo/Copy/Paste
 Plugins, ttl 
-upload jna-jack patch
+
 arpegiator
 walking bassline midi bot
 
@@ -54,6 +64,9 @@ Drum machine w/ Hydrogen drums https://github.com/nicklan/drmr/wiki
 Simple converter ttl to JSON
 https://github.com/PedalController/Lv2Library/blob/master/src/br/com/srmourasilva/lv2library/Lv2Mapper.java
 
+
+
+
 Done:
 new GUI layout, fix props table
 Recompile Carla (done, modified modules/rtaudio.cpp)
@@ -66,35 +79,6 @@ triggers
 save loops to disk and play samples
 unify consoles
 
-
-Wave:
-
-shakers midi track, volume adjusted
-add some bongos
-play "Wave"
-loop on dm - gm, flute solo
-come back in on the bridge and sequence a Ritardo at the end.
-
- Feel Good: 
- Octave up bass at the end? (requires midi record)
-
-See It:
-
-Scenes: A A A B
-
-Scene A
-minor arpeggio
-
-loop 0:  midi player
-loop 1:  guitar 
-loop 2:  drums
-loop 3:  drums2
-loop 4:  melody
-
-Scene B
-loop 5:  Arpeggiator
-loop 6:  drums3
-loop 7:  melody B 
 
 
 

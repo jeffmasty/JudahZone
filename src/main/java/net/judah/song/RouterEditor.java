@@ -14,10 +14,10 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 
 import net.judah.midi.MidiClient;
-import net.judah.midi.MidiForm;
 import net.judah.midi.MidiPair;
 import net.judah.midi.Route;
 import net.judah.util.EditorDialog;
+import net.judah.util.MidiForm;
 
 public class RouterEditor implements TableCellEditor {
 

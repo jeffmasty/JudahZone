@@ -12,5 +12,5 @@ public interface Service {
 	void execute(Command cmd, HashMap<String, Object> props) throws Exception;
 
 	void close();
-
+	
 }

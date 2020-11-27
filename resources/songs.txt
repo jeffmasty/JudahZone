@@ -1,0 +1,34 @@
+Wave:
+shakers midi track, volume adjusted
+add some bongos
+play "Wave"
+loop on dm - gm, flute solo
+come back in on the bridge and sequence a Ritardo at the end.
+
+Feel Good: 
+ Octave up bass at the end? (requires midi record)
+
+See It:
+Scenes: A A A B
+Scene A
+minor arpeggio
+loop 0:  midi player
+loop 1:  guitar 
+loop 2:  drums
+loop 3:  drums2
+loop 4:  melody
+Scene B
+loop 5:  Arpeggiator
+loop 6:  drums3
+loop 7:  melody B 
+
+
+And I Love her:
+click track 5 bars (1 bar intro)
+record 4 bars Loop1 woodblock 2, 3& 4&  (closed high hat on 1)
+queue 10 bars record Loop2 arpeggios 
+Melody
+Stop Loop2 for bridge
+Start Loop2 for ending.
+Stop (ritardando?)
+

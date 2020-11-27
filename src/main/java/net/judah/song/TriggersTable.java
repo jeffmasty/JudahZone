@@ -14,7 +14,6 @@ import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
-import lombok.extern.log4j.Log4j;
 import net.judah.CommandHandler;
 import net.judah.settings.Command;
 import net.judah.song.Trigger.Type;
@@ -24,7 +23,6 @@ import net.judah.util.EditsPane;
 import net.judah.util.JudahException;
 import net.judah.util.PopupMenu;
 
-@Log4j
 public class TriggersTable extends JPanel implements Edits {
 
 	private final JTable table;

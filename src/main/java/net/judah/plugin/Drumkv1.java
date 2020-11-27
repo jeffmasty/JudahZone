@@ -4,8 +4,11 @@ import static org.jaudiolibs.jnajack.JackPortFlags.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
 
 import org.jaudiolibs.jnajack.Jack;
 import org.jaudiolibs.jnajack.JackException;
@@ -15,9 +18,26 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.midi.JudahPort;
+import net.judah.sequencer.ClickTrack;
+import net.judah.settings.Command;
+import net.judah.settings.Service;
 
 @Log4j
-public class Drumkv1 {
+public class Drumkv1 implements Service {
+	
+	private final ClickTrack clickTrack = null;
+	
+	@Getter private final String serviceName = Drumkv1.class.getSimpleName();
+
+	@Override
+	public List<Command> getCommands() {
+		return new ArrayList();
+	}
+
+	@Override
+	public void execute(Command cmd, HashMap<String, Object> props) throws Exception {
+		
+	}
 	
 	@Data
 	public static class Drumkv1Params {
@@ -27,8 +47,11 @@ public class Drumkv1 {
 
 	public static final String FILE_PARAM = "drumkv1";
 	public static final String PORT_PARAM = "midiport";
-	public static final String shellCommand = "drumkv1_jack -g "; // -g = no gui
-	public static final File defaultDrumkit = new File("/home/judah/Tracks/drumkv1/TR808EmulationKit/TR808EmulationKit.drumkv1");
+	// public static final String shellCommand = "drumkv1_jack -g "; // -g = no gui
+	public static final String shellCommand = "drumkv1_jack ";
+	
+	// public static final File defaultDrumkit = new File("/home/judah/Tracks/drumkv1/TR808EmulationKit/TR808EmulationKit.drumkv1");
+	public static final File defaultDrumkit = new File("./resources/drumkv1/FairlightCMI/FairlightCMI.drumkv1");
 	public static final String MIDI_IN = "drumkv1:in";
 	public static final String OUT_L = "drumkv1:out_1";
 	public static final String OUT_R = "drumkv1:out_2";
@@ -100,6 +123,7 @@ public class Drumkv1 {
 				jack.connect(s, "system:playback_2");
 	}
 
+	@Override
 	public void close() {
 		if (process != null)
 			process.destroy();	

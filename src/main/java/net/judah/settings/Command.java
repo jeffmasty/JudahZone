@@ -14,10 +14,10 @@ public class Command {
 		INTERNAL, MIDI
 	}
 
-	@Getter public final String name;
-	@Getter public final String description;
-	@Getter public final Service service;
-	@Getter public final HashMap<String, Class<?>> props;
+	@Getter private final Service service;
+	@Getter private final String name;
+	private final String description;
+	@Getter private final HashMap<String, Class<?>> props;
 
 	public Command(String name, Service service, HashMap<String, Class<?>> props, String description) {
 		this.name = name;

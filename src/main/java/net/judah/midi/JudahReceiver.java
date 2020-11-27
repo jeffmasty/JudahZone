@@ -16,7 +16,11 @@ public class JudahReceiver implements Receiver {
 	private float gain = 1f;
 	
 	private ShortMessage current;
-	
+
+	public JudahReceiver() {
+		this.midi = MidiClient.getInstance();
+	}
+
 	@Override
 	public void send(MidiMessage message, long timeStamp) {
 		if (message instanceof ShortMessage && ((ShortMessage)message).getCommand() == ShortMessage.NOTE_ON) {
@@ -37,10 +41,6 @@ public class JudahReceiver implements Receiver {
 	
 	@Override
 	public void close() {
-	}
-
-	public JudahReceiver() {
-		this.midi = MidiClient.getInstance();
 	}
 
 }

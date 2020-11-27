@@ -31,10 +31,10 @@ import net.judah.midi.Route;
 import net.judah.mixer.Mixer;
 import net.judah.mixer.MixerCommands;
 import net.judah.plugin.Carla;
-import net.judah.plugin.Drumkv1;
 import net.judah.settings.ActiveCommand;
 import net.judah.settings.Command;
 import net.judah.settings.CommandPair;
+import net.judah.settings.DynamicCommand;
 import net.judah.settings.Service;
 import net.judah.settings.Services;
 import net.judah.song.Song;
@@ -72,14 +72,15 @@ public class Sequencer implements Service, Runnable, ControllerEventListener {
 	private final Command dropBeatCmd = new Command("DropDaBeat", this, "Mute loops until next pulse");
 	private final Command queuePlay = new ActiveCommand("Queue Play", this, MixerCommands.loopProps(), "play/stop on next pulse.");
 	private final Command queueRecord = new ActiveCommand("Queue Record", this, MixerCommands.loopProps(), "record/stop on next pulse.");
+	private final Command reload = new DynamicCommand("Reload Song", this, "clear loops, refresh sequencer") {
+		@Override public void processMidi(int data2, HashMap<String, Object> props) {page.reload();}};
+		
+	@Getter private final List<Command> commands = Arrays.asList(new Command[] 
+					{trigger, end, externalControl, dropBeatCmd, queuePlay, queueRecord, reload});
 	
 	private ArrayList<Float> mixerState; 
 	private Stack<CommandPair> queue = new Stack<CommandPair>();
 	
-	// TODO move clicktrack command here
-	
-	@Getter private final List<Command> commands = Arrays.asList(new Command[] 
-			{trigger, end, externalControl, dropBeatCmd, queuePlay, queueRecord});
 	@Getter private final String serviceName = Sequencer.class.getSimpleName();
 	// @Getter private final Page page;
 	@Getter private final Page page; 
@@ -97,7 +98,6 @@ public class Sequencer implements Service, Runnable, ControllerEventListener {
 	/** external (click track) uses cc3 messages and looper to set time */
 	@Getter ControlMode control = ControlMode.INTERNAL;
 
-	
 	private Trigger active;
 	private int index = 0;
 	
@@ -202,14 +202,15 @@ public class Sequencer implements Service, Runnable, ControllerEventListener {
 			for (String cmd : split)
 				FluidSynth.getInstance().sendCommand(cmd);
 		}
-		if (props.containsKey(Drumkv1.FILE_PARAM) && props.containsKey(Drumkv1.PORT_PARAM)) {
-			MidiClient.getInstance().disconnectDrums();
-			try {
-				new Drumkv1(new File("" + props.get(Drumkv1.FILE_PARAM)), "" + props.get(Drumkv1.PORT_PARAM), false);
-			} catch (Exception e) {
-				log.error(e.getMessage(), e);
-			}
-		}
+//		if (props.containsKey(Drumkv1.FILE_PARAM) && props.containsKey(Drumkv1.PORT_PARAM)) {
+//			MidiClient.getInstance().disconnectDrums();
+//			try {
+//				new Drumkv1(new File("" + props.get(Drumkv1.FILE_PARAM)), "" + props.get(Drumkv1.PORT_PARAM), false);
+//			} catch (Exception e) {
+//				log.error(e.getMessage(), e);
+//				Console.addText(e.getMessage());
+//			}
+//		}
 		if (props.containsKey(PARAM_UNIT)) {
 			Object o2 = props.get(PARAM_UNIT);
 			if (StringUtils.isNumeric("" + o2))

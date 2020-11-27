@@ -43,7 +43,7 @@ public class Carla {
     // public static final String CARLA_SHELL_COMMAND = "/usr/local/bin/carla ";
     public static final String CARLA_SHELL_COMMAND = "carla ";
 	
-    public static final int CARLA_PORT = 22753;
+    public static final int CARLA_PORT = 22752;  // 22753
 	
     
     

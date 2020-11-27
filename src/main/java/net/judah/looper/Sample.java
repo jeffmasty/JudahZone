@@ -43,11 +43,11 @@ public class Sample implements ProcessAudio {
 	private transient FloatBuffer toJackLeft, toJackRight;
 	private transient int z;
 
+	
 	public Sample(String name, Recording recording, Type type) {
 		this.name = name;
 		this.recording = recording;
 		length = recording.size();
-		
 	}
 	
 	protected Sample() { }

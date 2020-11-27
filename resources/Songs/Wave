@@ -5,13 +5,13 @@
     "Carla" : "/home/judah/git/JudahZone/resources/carla/Wave.carxp",
     "drumkv1" : "/home/judah/Tracks/drumkv1/ErnysPercussion/ErnysPercussion.drumkv1",
     "midiport" : "drums",
-    "bpm" : "95"
+    "bpm" : "90"
   },
   "links" : [ {
     "name" : "Drums Record",
     "service" : "Mixer",
     "command" : "Record start/stop",
-    "midi" : "sGMA",
+    "midi" : "sGAA",
     "props" : {
       "Loop" : "0",
       "Active" : "true"
@@ -20,7 +20,7 @@
     "name" : "Guitar Record",
     "service" : "Mixer",
     "command" : "Record start/stop",
-    "midi" : "sGQA",
+    "midi" : "sGEA",
     "props" : {
       "Loop" : "1",
       "Active" : "true"
@@ -29,17 +29,11 @@
     "name" : "Guitar Play",
     "service" : "Mixer",
     "command" : "Sample start/stop",
-    "midi" : "sGUA",
+    "midi" : "sGQA",
     "props" : {
       "Loop" : "1",
       "Active" : "true"
     }
-  }, {
-    "name" : "Ritardando!!  (TODO)",
-    "service" : "Sequencer",
-    "command" : "Trigger",
-    "midi" : "sGB/",
-    "props" : { }
   }, {
     "name" : "Clear Looper",
     "service" : "Mixer",
@@ -49,6 +43,18 @@
       "Loop" : "-1",
       "Active" : "true"
     }
+  }, {
+    "name" : "start metronome",
+    "service" : "Metronome",
+    "command" : "tick",
+    "midi" : "sGV/",
+    "props" : { }
+  }, {
+    "name" : "stop metronome",
+    "service" : "Metronome",
+    "command" : "tock",
+    "midi" : "sGUA",
+    "props" : { }
   } ],
   "sequencer" : [ {
     "type" : "ABSOLUTE",
@@ -56,7 +62,7 @@
     "duration" : null,
     "service" : "FluidSynth",
     "command" : "Program Change",
-    "notes" : "fretless bass",
+    "notes" : "fretless bass (DOWN OCTAVE 2!)",
     "params" : {
       "channel" : "0",
       "preset" : "35"

@@ -48,19 +48,14 @@ public class MainFrame extends JFrame {
         right = new RightPane();
         content.add(right);
         
-        
         setLocation(30, 30);
-// TODO        
-        setSize(1050, 700);  
-        
-        
+        setSize(1050, 700); // setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);  
         setVisible(true);
-        // setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
+
 	}
 	
 	public void closeTab(Component c) {
 		tabs.remove(c);
-	
 	}
 
 	public void openPage(Page page) {

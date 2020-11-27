@@ -69,7 +69,7 @@ public class Page extends JPanel {
 		add(cards);
 	}
 	
-	private void reload() {
+	public void reload() {
 		MainFrame.get().closeTab(this);
 		try {
 			new Sequencer(sequencer.getSongfile());

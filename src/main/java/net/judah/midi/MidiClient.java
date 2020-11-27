@@ -51,7 +51,6 @@ public class MidiClient extends BasicClient implements Service {
 	public static final String JACKCLIENT_NAME = "JudahMidi";
 	
 	@Getter private static MidiClient instance;
-	
 	@Getter private final Router router = new Router();
 
 	private ArrayList<JackPort> inPorts = new ArrayList<JackPort>();  // Keyboard, Pedal, MidiIn
@@ -81,10 +80,15 @@ public class MidiClient extends BasicClient implements Service {
 	private ShortMessage poll;
 	private Midi midi;
 
-	public MidiClient() throws JackException {
-		super(JACKCLIENT_NAME);
+	public MidiClient(String name) throws JackException {
+		super(name);
 		instance = this;
 		start();
+		
+	}
+	
+	public MidiClient() throws JackException {
+		this(JACKCLIENT_NAME);
     }
     
 	// Service interface
