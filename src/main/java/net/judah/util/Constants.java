@@ -87,6 +87,9 @@ public class Constants {
 			e.printStackTrace();
 		}
 	}
+
+	public static final String PARAM_BPM = "bpm";
+	public static final String PARAM_MEAUSRE = "bpb";
 	
 	
 //	// list out standard swing ui setting names

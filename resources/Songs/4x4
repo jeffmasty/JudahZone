@@ -1,24 +1,17 @@
 {
   "props" : {
-    "Carla" : "/home/judah/git/JudahZone/resources/carla/JudahZone.carxp",
+    "carla" : "/home/judah/git/JudahZone/resources/carla/JudahZone.carxp",
+    "bpm" : "100",
     "fluid" : "reverb on; rev_preset 1"
   },
   "links" : [ {
     "name" : "start metronome",
-    "service" : "Metronome",
-    "command" : "tick",
+    "command" : "metro:start",
     "midi" : "sGV/",
     "props" : { }
   }, {
-    "name" : "stop metronome",
-    "service" : "Metronome",
-    "command" : "tock",
-    "midi" : "sGUA",
-    "props" : { }
-  }, {
     "name" : "clear loops",
-    "service" : "Sequencer",
-    "command" : "Reload Song",
+    "command" : "song:reload",
     "midi" : "sGIA",
     "props" : {
       "Loop" : null,
@@ -26,20 +19,17 @@
     }
   }, {
     "name" : "Prog Pad 3",
-    "service" : "FluidSynth",
-    "command" : "Program Up",
+    "command" : "synth:instUp",
     "midi" : "yQQ=",
     "props" : { }
   }, {
     "name" : "Prog Pad 7",
-    "service" : "FluidSynth",
-    "command" : "Program Down",
+    "command" : "synth:instDown",
     "midi" : "yQg=",
     "props" : { }
   }, {
     "name" : "Master Record",
-    "service" : "Mixer",
-    "command" : "Record start/stop",
+    "command" : "loop:record",
     "midi" : "sGB/",
     "props" : {
       "Loop" : "0",
@@ -47,8 +37,7 @@
     }
   }, {
     "name" : "Master Play",
-    "service" : "Mixer",
-    "command" : "Sample start/stop",
+    "command" : "loop:play",
     "midi" : "sGN/",
     "props" : {
       "Loop" : "0",
@@ -56,8 +45,7 @@
     }
   }, {
     "name" : "Loop2 Record",
-    "service" : "Mixer",
-    "command" : "Record start/stop",
+    "command" : "loop:record",
     "midi" : "sGF/",
     "props" : {
       "Loop" : "1",
@@ -65,8 +53,7 @@
     }
   }, {
     "name" : "Loop2 Play",
-    "service" : "Mixer",
-    "command" : "Sample start/stop",
+    "command" : "loop:play",
     "midi" : "sGR/",
     "props" : {
       "Loop" : "1",
@@ -74,8 +61,7 @@
     }
   }, {
     "name" : "Knob 0",
-    "service" : "Metronome",
-    "command" : "Metro volume",
+    "command" : "metro:volume",
     "midi" : "sA4A",
     "props" : {
       "Loop" : null,
@@ -84,16 +70,14 @@
     }
   }, {
     "name" : "Knob 1",
-    "service" : "Metronome",
-    "command" : "Metro tempo",
+    "command" : "metro:tempo",
     "midi" : "sA8A",
     "props" : {
       "bpm" : null
     }
   }, {
     "name" : "Knob 2",
-    "service" : "Mixer",
-    "command" : "Mixer Gain",
+    "command" : "mixer:volume",
     "midi" : "sBA3",
     "props" : {
       "Index" : "0",
@@ -102,8 +86,7 @@
     }
   }, {
     "name" : "Knob 3",
-    "service" : "Mixer",
-    "command" : "Mixer Gain",
+    "command" : "mixer:volume",
     "midi" : "sBEA",
     "props" : {
       "Index" : "1",
@@ -112,8 +95,7 @@
     }
   }, {
     "name" : "Knob 4",
-    "service" : "Mixer",
-    "command" : "Mixer Gain",
+    "command" : "mixer:volume",
     "midi" : "sBIA",
     "props" : {
       "Index" : "0",
@@ -122,8 +104,7 @@
     }
   }, {
     "name" : "Knob 5",
-    "service" : "Mixer",
-    "command" : "Mixer Gain",
+    "command" : "mixer:volume",
     "midi" : "sBMA",
     "props" : {
       "Index" : "1",
@@ -132,8 +113,7 @@
     }
   }, {
     "name" : "Knob 6",
-    "service" : "Mixer",
-    "command" : "Mixer Gain",
+    "command" : "mixer:volume",
     "midi" : "sBQA",
     "props" : {
       "Index" : "2",
@@ -142,8 +122,7 @@
     }
   }, {
     "name" : "Knob 7",
-    "service" : "Mixer",
-    "command" : "Mixer Gain",
+    "command" : "mixer:volume",
     "midi" : "sBUA",
     "props" : {
       "Index" : "3",
@@ -152,8 +131,7 @@
     }
   }, {
     "name" : "Prog 2 - Drums up",
-    "service" : "FluidSynth",
-    "command" : "Drum Set",
+    "command" : "synth:drumSet",
     "midi" : "yQM=",
     "props" : {
       "up" : "true",
@@ -161,8 +139,7 @@
     }
   }, {
     "name" : "Prog 6 - Drums down",
-    "service" : "FluidSynth",
-    "command" : "Drum Set",
+    "command" : "synth:drumSet",
     "midi" : "yQc=",
     "props" : {
       "up" : "false",
@@ -170,8 +147,7 @@
     }
   }, {
     "name" : "CC Master Rec",
-    "service" : "Mixer",
-    "command" : "Record start/stop",
+    "command" : "loop:record",
     "midi" : "uR9/",
     "props" : {
       "Loop" : "0",
@@ -179,8 +155,7 @@
     }
   }, {
     "name" : "CC Master Play",
-    "service" : "Mixer",
-    "command" : "Sample start/stop",
+    "command" : "loop:play",
     "midi" : "uSMA",
     "props" : {
       "Loop" : "0",
@@ -188,8 +163,7 @@
     }
   }, {
     "name" : "CC Loop2 Rec",
-    "service" : "Mixer",
-    "command" : "Record start/stop",
+    "command" : "loop:record",
     "midi" : "uSAA",
     "props" : {
       "Loop" : "1",
@@ -197,8 +171,7 @@
     }
   }, {
     "name" : "CC Loop2 Play",
-    "service" : "Mixer",
-    "command" : "Sample start/stop",
+    "command" : "loop:play",
     "midi" : "uSQA",
     "props" : {
       "Loop" : "1",
@@ -206,8 +179,7 @@
     }
   }, {
     "name" : "Drop Beat - CC3",
-    "service" : "Sequencer",
-    "command" : "DropDaBeat",
+    "command" : "seq:dropDaBeat",
     "midi" : "uSIA",
     "props" : { }
   } ],
@@ -215,8 +187,7 @@
     "type" : "ABSOLUTE",
     "timestamp" : -1,
     "duration" : null,
-    "service" : "FluidSynth",
-    "command" : "Program Change",
+    "command" : "synth:progChange",
     "notes" : "Electric Piano",
     "params" : {
       "channel" : "0",
@@ -226,40 +197,13 @@
     "type" : "ABSOLUTE",
     "timestamp" : -1,
     "duration" : null,
-    "service" : "FluidSynth",
-    "command" : "Drum Set",
+    "command" : "synth:drumSet",
     "notes" : "",
     "params" : {
       "up" : null,
       "preset" : "25"
     }
-  }, {
-    "type" : "ABSOLUTE",
-    "timestamp" : -1,
-    "duration" : null,
-    "service" : "Mixer",
-    "command" : "Load Sample",
-    "notes" : "",
-    "params" : {
-      "Loop" : "0",
-      "Active" : null,
-      "source.file" : "/home/judah/4x4.rec",
-      "destination.loop" : "0",
-      "source.loop" : null,
-      "loop.duplicate" : ""
-    }
-  }, {
-    "type" : "ABSOLUTE",
-    "timestamp" : -1,
-    "duration" : null,
-    "service" : "Mixer",
-    "command" : "Sample start/stop",
-    "notes" : "",
-    "params" : {
-      "Loop" : "0",
-      "Active" : "true"
-    }
-  } ],
+  }],
   "router" : [ {
     "from" : "iSwA",
     "to" : "iSUA"

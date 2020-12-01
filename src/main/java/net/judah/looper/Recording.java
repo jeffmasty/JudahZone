@@ -12,7 +12,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.jack.AudioTools;
-import net.judah.midi.MidiClient;
+import net.judah.midi.JudahMidi;
 
 public class Recording extends Vector<float[][]> {
 	
@@ -54,7 +54,7 @@ public class Recording extends Vector<float[][]> {
 	/** create empty recording of size */
 	public Recording(int size, boolean startListeners) {
 		this(startListeners);
-		int bufferSize = MidiClient.getInstance().getBuffersize();
+		int bufferSize = JudahMidi.getInstance().getBuffersize();
 		for (int j = 0; j < size; j++) {
 			float[][] data = new float[2][bufferSize];
 			AudioTools.processSilence(data);

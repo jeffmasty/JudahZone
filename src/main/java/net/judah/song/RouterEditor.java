@@ -13,7 +13,7 @@ import javax.swing.event.CellEditorListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 
-import net.judah.midi.MidiClient;
+import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiPair;
 import net.judah.midi.Route;
 import net.judah.util.EditorDialog;
@@ -94,11 +94,11 @@ public class RouterEditor implements TableCellEditor {
 	
 	private void toggleAudition() {
 		if (channel9.isSelected())  {
-			MidiClient.getInstance().getRouter().add(new Route(0, 9));
+			JudahMidi.getInstance().getRouter().add(new Route(0, 9));
 			toCard.setChannel(9);
 		}
 		else 
-			MidiClient.getInstance().getRouter().remove(new Route(0, 9));
+			JudahMidi.getInstance().getRouter().remove(new Route(0, 9));
 	}
 
 	@Override public void cancelCellEditing() {

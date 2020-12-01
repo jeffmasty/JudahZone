@@ -103,11 +103,11 @@ public class SonglistTab extends JComponent implements ListSelectionListener {
 		return "Set: " + ((i < 0) ? file.getName() : file.getName().substring(0, i));
 	}
 	
-	enum CMD {
+	enum Type {
 		NEW, ADD, DELETE, COPY, UP, DOWN;
 		
 		private String lbl; 
-		CMD() {
+		Type() {
 			lbl = name().charAt(0) + name().substring(1).toLowerCase(); 
 		}
 		
@@ -119,9 +119,9 @@ public class SonglistTab extends JComponent implements ListSelectionListener {
 	
 	private void buttonsPanel() {
 		buttonsPanel = new JPanel(new FlowLayout());
-		button(CMD.NEW);
-		button(CMD.ADD);
-		deleteSong = button(CMD.DELETE);
+		button(Type.NEW);
+		button(Type.ADD);
+		deleteSong = button(Type.DELETE);
 		// copySong = button(CMD.COPY);
 		// upSong = button(CMD.UP);
 		// downSong = button(CMD.DOWN);
@@ -129,7 +129,7 @@ public class SonglistTab extends JComponent implements ListSelectionListener {
 		add(buttonsPanel);
 	}
 	
-	private JButton button(CMD cmd) {
+	private JButton button(Type cmd) {
 		JButton result = new JButton(cmd.lbl);
 		result.setMargin(BTN_MARGIN);
 		result.setActionCommand(cmd.name());
@@ -139,17 +139,17 @@ public class SonglistTab extends JComponent implements ListSelectionListener {
 	}
 	
 	private void songButton(String cmd) {
-		if (cmd == CMD.NEW.name())
+		if (cmd == Type.NEW.name())
 			newSong();
-		else if (cmd == CMD.ADD.name()) 
+		else if (cmd == Type.ADD.name()) 
 			addSong();
-		else if (cmd == CMD.DELETE.name())
+		else if (cmd == Type.DELETE.name())
 			deleteSong();
-		else if (cmd == CMD.COPY.name())
+		else if (cmd == Type.COPY.name())
 			copySong();
-		else if (cmd == CMD.UP.name()) 
+		else if (cmd == Type.UP.name()) 
 			moveSong(true);
-		else if (cmd == CMD.DOWN.name())
+		else if (cmd == Type.DOWN.name())
 			moveSong(false);
 		else log.warn("Tale of the unknown soldier: " + cmd);
 	}

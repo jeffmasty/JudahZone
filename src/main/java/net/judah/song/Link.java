@@ -16,7 +16,6 @@ import net.judah.song.Edits.Copyable;
 public class Link implements Copyable {
 
 	private String name;
-	private String service;
 	private String command;
 	private byte[] midi;
 	private HashMap<String, Object> props;
@@ -26,14 +25,14 @@ public class Link implements Copyable {
 	
 	public Command getCmd() {
 		if (cmd == null) 
-			cmd = JudahZone.getCurrentSong().getCommander().find(service, command);
+			cmd = JudahZone.getCurrentSong().getCommander().find(command);
 		return cmd;
 		
 	}
 	
 	@Override
 	public Link clone() throws CloneNotSupportedException {
-		return new Link(name, service, command, Arrays.copyOf(midi, midi.length), new HashMap<>(props), cmd);
+		return new Link(name, command, Arrays.copyOf(midi, midi.length), new HashMap<>(props), cmd);
 	}
 }
 

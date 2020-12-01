@@ -18,7 +18,7 @@ public class SequencerModel extends DefaultTableModel {
 		super (new Object[] { "Timestamp", "Command", "Notes", "Param"}, 0);
 		if (sequence == null) return;
 		for (Trigger trigger: sequence) 
-			addRow(new Object[] {trigger.getTimestamp(), commander.find(trigger.getService(), trigger.getCommand()), 
+			addRow(new Object[] {trigger.getTimestamp(), commander.find(trigger.getCommand()), 
 					trigger.getNotes(), trigger.getParams()});
 	}
 
@@ -39,9 +39,8 @@ public class SequencerModel extends DefaultTableModel {
 	public Trigger getRow(int i) throws JudahException {
 		Command cmd = ((Command)getValueAt(i,1));
 		if (cmd == null) throw new JudahException("no command for midi link");
-		assert cmd.getService() != null;
 		assert cmd.getName() != null;
-		return new Trigger(Type.ABSOLUTE, (long)getValueAt(i, 0), null, cmd.getService().getServiceName(), cmd.getName(),
+		return new Trigger(Type.ABSOLUTE, (long)getValueAt(i, 0), null, cmd.getName(),
 				getValueAt(i, 2).toString(), (HashMap)getValueAt(i, 3), cmd);
 	}
 	

@@ -1,14 +1,18 @@
 package net.judah.midi;
 
+import java.util.HashMap;
+
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
-import lombok.extern.log4j.Log4j;
-
 /** serialization isn't working, save as byte[] */
-@Log4j
 public class Midi extends ShortMessage {
 
+	public static final String PARAM_COMMAND = "command";
+	public static final String PARAM_CHANNEL = "channel";
+	public static final String PARAM_DATA1 = "data1";
+	public static final String PARAM_DATA2 = "data2";
+	
 	public Midi(byte[] bytes) {
 		super(bytes);
 	}
@@ -74,22 +78,45 @@ public class Midi extends ShortMessage {
 		return getChannel() == midi.getChannel() && getCommand() == midi.getCommand() && getData1() == midi.getData1();
 	}
 
-	public void setVelocity(int velocity) {
-		try {
-			setMessage(getCommand(), getChannel(), getData1(), velocity);
-		} catch (InvalidMidiDataException e) {
-			log.error(e.getMessage(), e);
-		}
+	public void setVelocity(int velocity) throws InvalidMidiDataException {
+		setMessage(getCommand(), getChannel(), getData1(), velocity);
 	}
 	
 	public static boolean isCC(ShortMessage msg) {
 		 return msg.getStatus() - msg.getChannel() == ShortMessage.CONTROL_CHANGE;
 	}
 	
+	public static boolean isProgChange(ShortMessage msg) {
+		return msg.getStatus() - msg.getChannel() == ShortMessage.PROGRAM_CHANGE;
+	}
+	
 	public static boolean isNote(ShortMessage msg) {
 		int stat = msg.getStatus() - msg.getChannel();
 		return stat == Midi.NOTE_OFF || stat == NOTE_ON; 
 	}
+
+	public static HashMap<String, Class<?>> midiTemplate() {
+		HashMap<String, Class<?>> result = new HashMap<>();
+		result.put(PARAM_COMMAND, Integer.class);
+		result.put(PARAM_CHANNEL, Integer.class);
+		result.put(PARAM_DATA1, Integer.class);
+		result.put(PARAM_DATA2, Integer.class);
+		return result;
+	}
+
+	public static ShortMessage fromProps(HashMap<String, Object> props) throws InvalidMidiDataException {
+		try {
+			return new Midi(
+				Integer.parseInt("" + props.get(PARAM_COMMAND)),
+				Integer.parseInt("" + props.get(PARAM_CHANNEL)),
+			    Integer.parseInt("" + props.get(PARAM_DATA1)),
+			    Integer.parseInt("" + props.get(PARAM_DATA2)));
+		} catch (Throwable t) {
+			if (t instanceof InvalidMidiDataException) throw t;
+			throw new InvalidMidiDataException(t.getMessage());
+		}
+	}
+
 	
 }
 

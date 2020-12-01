@@ -31,7 +31,7 @@ public class PropertiesEditor implements TableCellEditor {
 		Object o = table.getModel().getValueAt(row, LinkTable.COMMAND_COL);
 		if (o != null && o instanceof Command) {
 			Command cmd = (Command)o;
-			cell = new PropertiesTable(props, cmd.getProps());
+			cell = new PropertiesTable(props, cmd.getTemplate());
 		}
 		else {
 			cell = new PropertiesTable(props);

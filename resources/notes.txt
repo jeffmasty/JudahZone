@@ -1,14 +1,6 @@
-tempoCache.getTempoMPQAt visibility
-
-
-
+router table -> display pad/knob name  and   midi drum name
 
 TODO:
-
-Click Track:
-
-
-
 
 Looper Control and triggers  Queue : cmd name cmd service loop# active(toggle) 
 Sequencer: TimeClock, MultiLoop + Sync,

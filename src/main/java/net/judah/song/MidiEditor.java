@@ -9,7 +9,7 @@ import javax.swing.event.CellEditorListener;
 import javax.swing.table.TableCellEditor;
 
 import net.judah.midi.Midi;
-import net.judah.settings.DynamicCommand;
+import net.judah.plugin.MPK;
 import net.judah.util.EditorDialog;
 import net.judah.util.MidiForm;
 
@@ -20,17 +20,15 @@ public class MidiEditor implements TableCellEditor {
 	
 	@Override
 	public Object getCellEditorValue() {
-		return midiCard.getMidi();
+		
+		return MPK.format(midiCard.getMidi());
 	}
 	
 	@Override
 	public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
 		dialog = new EditorDialog("Midi");
 		Object o = table.getModel().getValueAt(row, LinkTable.COMMAND_COL);
-		if (o != null && o instanceof DynamicCommand) 
-			midiCard = new MidiForm((Midi)value, true);
-		else 
-			midiCard = new MidiForm((Midi)value);
+		midiCard = (o == null) ? new MidiForm((Midi)value) : new MidiForm((Midi)value, true);  
 		Component c = table.getCellRenderer(row, column).getTableCellRendererComponent(
 				table, value, isSelected, isSelected, row, column);
 		boolean result = dialog.showContent(midiCard);

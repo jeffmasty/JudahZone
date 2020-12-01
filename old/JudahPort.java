@@ -7,10 +7,10 @@ import lombok.RequiredArgsConstructor;
 @Getter @RequiredArgsConstructor
 public enum JudahPort {
 	
-	SYNTH("synth", MidiClient.AUX_CHANNEL), 
-	DRUMS("drums", MidiClient.DRUMS_CHANNEL), 
-	AUX("aux", MidiClient.AUX_CHANNEL), 
-	KOMPLETE("komplete", MidiClient.KOMPLETE_CHANNEL);
+	SYNTH("synth", JudahMidi.AUX_CHANNEL), 
+	DRUMS("drums", JudahMidi.DRUMS_CHANNEL), 
+	AUX("aux", JudahMidi.AUX_CHANNEL), 
+	KOMPLETE("komplete", JudahMidi.KOMPLETE_CHANNEL);
 	
 	private final String portName;
 	private final int channel;

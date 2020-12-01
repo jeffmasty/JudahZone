@@ -11,6 +11,8 @@ import org.jaudiolibs.jnajack.JackPort;
 import org.jaudiolibs.jnajack.JackPortFlags;
 import org.jaudiolibs.jnajack.JackPortType;
 
+import net.judah.looper.Recording;
+
 
 public class AudioTools  {
 
@@ -204,7 +206,17 @@ public class AudioTools  {
 			out[i] += in.get();
 	}
 
-
+	/** plays in repeatedly until out is filled */
+	public static void fill(Recording in, Recording out) {
+		int inIdx = 0;
+		for (int outIdx = 0; outIdx < out.size(); outIdx++) {
+			if (inIdx == in.size())
+				inIdx = 0;
+			out.set(outIdx, in.get(inIdx));
+		}
+		
+	}
+	
 }
 
 

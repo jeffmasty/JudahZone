@@ -1,5 +1,6 @@
 package net.judah.song;
 
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -8,12 +9,15 @@ import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.table.TableCellRenderer;
 
 import lombok.extern.log4j.Log4j;
 import net.judah.CommandHandler;
 import net.judah.midi.Midi;
+import net.judah.plugin.MPK;
 import net.judah.settings.Command;
 import net.judah.util.EditsPane;
 import net.judah.util.JudahException;
@@ -40,6 +44,13 @@ public class LinkTable extends JPanel implements Edits {
 		table.setDefaultEditor(Command.class, new DefaultCellEditor(
 				new JComboBox<Command>(commander.getAvailableCommands())));
 		table.setDefaultEditor(Midi.class, new MidiEditor());
+		table.setDefaultRenderer(Midi.class, new TableCellRenderer() {
+			@Override
+			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+					int row, int column) {
+				return new JLabel(MPK.format((Midi)value));
+			}
+		});
 		table.setDefaultEditor(HashMap.class, new PropertiesEditor());
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		PopupMenu menu = new PopupMenu(this);
@@ -52,7 +63,7 @@ public class LinkTable extends JPanel implements Edits {
 	}
 
 	@Override public void editAdd() {
-		model.addRow(new Link("", "", "", null, new HashMap<String, Object>(), null));
+		model.addRow(new Link("", "", null, new HashMap<String, Object>(), null));
 	}
 
 	@Override public void editDelete() {

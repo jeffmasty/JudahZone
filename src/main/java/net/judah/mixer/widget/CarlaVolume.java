@@ -2,8 +2,9 @@ package net.judah.mixer.widget;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.JudahZone;
 import net.judah.plugin.Carla;
+import net.judah.sequencer.Sequencer;
+import net.judah.util.Console;
 
 @RequiredArgsConstructor 
 public class CarlaVolume extends VolumeWidget {
@@ -12,14 +13,26 @@ public class CarlaVolume extends VolumeWidget {
 	
 	@Override
 	public boolean setVolume(float gain) {
-		return getCarla().setVolume(pluginIndex, gain * 1.27f); // Carla internal volume 0 to 1.27	
+		try {
+			getCarla().setVolume(pluginIndex, gain * 1.27f); // Carla internal volume 0 to 1.27
+			return true;
+		} catch (Exception e) {
+			Console.warn(e.getMessage());
+			return false;
+		}
 	}
 
 	public boolean mute(int tOrF) {
-		return getCarla().setActive(pluginIndex, tOrF);
+		try {
+			getCarla().setActive(pluginIndex, tOrF);
+			return true;
+		} catch (Exception e) {
+			Console.warn(e.getMessage());
+			return false;
+		}
 	}
 	
 	private Carla getCarla() {
-		return JudahZone.getCurrentSong().getCarla();
+		return Sequencer.getCarla();
 	}
 }

@@ -7,7 +7,7 @@ import javax.swing.JPanel;
 
 import net.judah.util.Constants;
 
-public class SequencerControl extends JPanel {
+public class SeqWidget extends JPanel {
 
 	public static final int INSET = 15;
 	public static final int WIDTH = 800 + 2 * INSET;
@@ -19,7 +19,7 @@ public class SequencerControl extends JPanel {
 	// ~/git/Swing-range-slider ---> https://ernienotes.wordpress.com/2010/12/27/creating-a-java-swing-range-slider/
 	// https://www.infoworld.com/article/2071315/jslider-appearance-improvements.html
 	
-	public SequencerControl() {
+	public SeqWidget() {
 		setSize(600, 220);
 		setBorder(Constants.Gui.GRAY1);
 	}

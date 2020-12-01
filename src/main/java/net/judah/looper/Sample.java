@@ -6,6 +6,7 @@ import static net.judah.jack.AudioMode.*;
 import static net.judah.util.Constants.*;
 
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -14,14 +15,17 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
+import net.judah.api.TimeListener;
+import net.judah.api.TimeListener.Property;
+import net.judah.api.TimeNotifier;
 import net.judah.jack.AudioMode;
 import net.judah.jack.ProcessAudio;
-import net.judah.midi.MidiClient;
+import net.judah.midi.JudahMidi;
 import net.judah.mixer.MixerPort;
 import net.judah.util.Console;
 
 @Log4j
-public class Sample implements ProcessAudio {
+public class Sample implements ProcessAudio, TimeNotifier {
 	
     @Getter protected Recording recording; 
 	@Getter @Setter protected String name;
@@ -30,6 +34,8 @@ public class Sample implements ProcessAudio {
 	@Setter protected transient List<MixerPort> outputPorts;
 	@Getter protected final transient AtomicInteger tapeCounter = new AtomicInteger();
 	@Getter @Setter boolean timeSync = false;
+	private final ArrayList<TimeListener> listeners = new ArrayList<>();
+	private int loopCount = 0;
 	
 	protected final transient AtomicReference<AudioMode> isPlaying = new AtomicReference<AudioMode>(STOPPED);
 	
@@ -39,7 +45,7 @@ public class Sample implements ProcessAudio {
 	// for process()
 	protected transient float[][] recordedBuffer;
 	private transient int updated; // tape position counter
-	private transient final float[] workArea = new float[MidiClient.getInstance().getBuffersize()];
+	private transient final float[] workArea = new float[JudahMidi.getInstance().getBuffersize()];
 	private transient FloatBuffer toJackLeft, toJackRight;
 	private transient int z;
 
@@ -64,8 +70,9 @@ public class Sample implements ProcessAudio {
 				}.start();
 			}
 			updated = 0;
-			if (timeSync)
-				JudahZone.getCurrentSong().pulse();
+			
+			listeners.forEach(listener -> {listener.update(Property.LOOP, ++loopCount);});
+			//	if (timeSync) JudahZone.getCurrentSong().pulse();
 		}
 		tapeCounter.set(updated);
 	}
@@ -155,4 +162,18 @@ public class Sample implements ProcessAudio {
 		}
 	}
 
+	@Override
+	public void addListener(TimeListener l) {
+		listeners.add(l);
+	}
+
+	@Override
+	public void removeListener(TimeListener l) {
+		listeners.remove(l);
+	}
+
+	public void setTapeCounter(int current) {
+		tapeCounter.set(current);
+	}
+	
 }

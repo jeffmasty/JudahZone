@@ -1,7 +1,5 @@
 package net.judah;
 
-import java.awt.Component;
-
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -49,12 +47,13 @@ public class MainFrame extends JFrame {
         content.add(right);
         
         setLocation(30, 30);
-        setSize(1050, 700); // setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);  
+        setSize(1050, 600); // setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);  
         setVisible(true);
 
 	}
 	
-	public void closeTab(Component c) {
+	public void closeTab(Page c) {
+		c.getSequencer().stop();
 		tabs.remove(c);
 	}
 
@@ -66,10 +65,14 @@ public class MainFrame extends JFrame {
 		tabs.add(name, page);
 		tabs.setSelectedComponent(page);
 		setTitle(prefix + " - " + page.getName());
-		if (JudahZone.getCurrentSong() != null) 
+		if (JudahZone.getCurrentSong() != null) {
+			JudahZone.getMetronome().removeListener(JudahZone.getCurrentSong());
 			JudahZone.getCurrentSong().close();
+		}
+			
 		Sequencer sequencer = page.getSequencer();
 		JudahZone.setCurrentSong(sequencer);
+		JudahZone.getMetronome().addListener(sequencer);
 		log.debug("loaded song " + sequencer.getSongfile().getAbsolutePath());
 		right.setSong(sequencer);
 	}

@@ -1,6 +1,6 @@
 package net.judah.jack;
 
-import static net.judah.jack.Status.*;
+import static net.judah.api.Status.*;
 
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -18,6 +18,7 @@ import org.jaudiolibs.jnajack.JackXrunCallback;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
+import net.judah.api.Status;
 import net.judah.util.Constants;
 
 @Log4j

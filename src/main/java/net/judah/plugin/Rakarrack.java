@@ -1,4 +1,4 @@
-package net.judah.instruments;
+package net.judah.plugin;
 
 import java.io.File;
 import java.io.IOException;

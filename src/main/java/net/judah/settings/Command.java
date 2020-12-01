@@ -4,8 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-public class Command {
+@RequiredArgsConstructor
+public abstract class Command {
 	
 	public static final String ACTIVE_PARAM = "Active";
 	
@@ -14,30 +16,31 @@ public class Command {
 		INTERNAL, MIDI
 	}
 
-	@Getter private final Service service;
-	@Getter private final String name;
-	private final String description;
-	@Getter private final HashMap<String, Class<?>> props;
+	// @Getter private final Service service;
+	@Getter protected final String name;
+	@Getter protected final String description;
+	@Getter protected final HashMap<String, Class<?>> template;
 
-	public Command(String name, Service service, HashMap<String, Class<?>> props, String description) {
-		this.name = name;
-		this.description = description;
-		this.service = service;
-		this.props = props;
+//	public Command(String name, Service service, HashMap<String, Class<?>> props, String description) {
+//		this.name = name;
+//		this.description = description;
+//		this.service = service;
+//		this.props = props;
+//	}
+
+	public Command(String name, String description) {
+		this(name, description, new HashMap<String, Class<?>>());
 	}
 
-	public Command(String name, Service service, String description) {
-		this(name, service, new HashMap<String, Class<?>>(), description);
-	}
-
+	public abstract void execute(HashMap<String, Object> props, int midiData2) throws Exception;
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((description == null) ? 0 : description.hashCode());
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + ((props == null) ? 0 : props.hashCode());
-		result = prime * result + ((service == null) ? 0 : service.hashCode());
+		result = prime * result + ((template == null) ? 0 : template.hashCode());
 		return result;
 	}
 
@@ -50,27 +53,12 @@ public class Command {
 		if (getClass() != obj.getClass())
 			return false;
 		Command other = (Command) obj;
-		if (description == null) {
-			if (other.description != null)
-				return false;
-		} else if (!description.equals(other.description))
-			return false;
 		if (name == null) {
 			if (other.name != null)
 				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		if (props == null) {
-			if (other.props != null)
-				return false;
-		} else if (!props.equals(other.props))
-			return false;
-		if (service == null) {
-			if (other.service != null)
-				return false;
-		} else if (!service.equals(other.service))
-			return false;
-		return true;
+		} else if (name.equals(other.name))
+			return true;
+		return false;
 	}
 
 	@Override
@@ -85,7 +73,6 @@ public class Command {
 		if (props == null || props.isEmpty()) {
 			return result + " none";
 		}
-		
 		
 		for (Object o : props.entrySet()) {
 			Map.Entry entry = (Map.Entry)o;

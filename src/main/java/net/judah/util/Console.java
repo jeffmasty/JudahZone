@@ -27,14 +27,14 @@ import net.judah.fluid.FluidSynth;
 import net.judah.jack.ProcessAudio;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
-import net.judah.midi.JudahReceiver;
+import net.judah.metronome.JMidiPlay;
+import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
-import net.judah.midi.MidiClient;
 import net.judah.midi.MidiListener;
-import net.judah.midi.MidiPlayer;
 import net.judah.midi.Route;
 import net.judah.mixer.Mixer;
 import net.judah.plugin.Carla;
+import net.judah.sequencer.Sequencer;
 
 @Log4j
 public class Console implements ActionListener, ConsoleParticipant, MidiListener {
@@ -167,21 +167,25 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 			return;
 		}
 		if (text.startsWith("xruns") || text.equalsIgnoreCase("xrun")) {
-			addText(MidiClient.getInstance().xrunsToString());
+			addText(JudahMidi.getInstance().xrunsToString());
 			return;
 		}
 		
-		//  set_active	set_parameter_value set_volume 
-		if (text.startsWith("volume ") && input.length == 3) 
-			getCarla().setVolume(Integer.parseInt(input[1]), Float.parseFloat(input[2]));
-		else if (text.startsWith("active ") && input.length == 3) 
-			getCarla().setActive(Integer.parseInt(input[1]), 
-					Integer.parseInt(input[2]));
-		else if (text.startsWith("parameter ") && input.length == 4) 
-			getCarla().setParameterValue(Integer.parseInt(input[1]), 
-					Integer.parseInt(input[2]), Float.parseFloat(input[3]));
+		//  set_active	set_parameter_value set_volume
+		try {
+			if (text.equals("volume") && input.length == 3) 
+				getCarla().setVolume(Integer.parseInt(input[1]), Float.parseFloat(input[2]));
+			else if (text.equals("active") && input.length == 3) 
+				getCarla().setActive(Integer.parseInt(input[1]), 
+						Integer.parseInt(input[2]));
+			else if (text.equals("parameter") && input.length == 4) 
+				getCarla().setParameterValue(Integer.parseInt(input[1]), 
+						Integer.parseInt(input[2]), Float.parseFloat(input[3]));
+		} catch (Exception e) {
+			Console.warn(e.getMessage());
+		}
 		
-		else if (text.equals("midi")) 
+		if (text.equals("midi")) 
 			midiPlay(input);
 		else if (text.equals("midilisten"))
 			midiListen();
@@ -200,7 +204,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 		else if (text.equals("samples")) 
 			addText( Arrays.toString(JudahZone.getCurrentSong().getMixer().getSamples().toArray()));
 		else if (text.equals("router")) 
-			for (Route r : MidiClient.getInstance().getRouter())
+			for (Route r : JudahMidi.getInstance().getRouter())
 				addText("" + r);
 		
 		else if (text.equals("route")) 
@@ -228,6 +232,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 		addText(routerHelp);
 		addText(midiPlay);
 		addText(listenHelp);
+		addText("fluid help");
 	}
 	private void midiListen() {
 		midiListen = !midiListen;
@@ -248,10 +253,8 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 				midiFile = new File("/home/judah/Tracks/midi/dance/dance21.mid");
 			}
 			
-			MidiPlayer playa = new MidiPlayer(midiFile, 8, 
-					new JudahReceiver(MidiClient.getInstance()), null);
-			
-			playa.start();
+			new JMidiPlay(midiFile); 
+					
 		} catch (Throwable t) {
 			addText(t.getMessage());
 			log.error(t.getMessage(), t);
@@ -305,7 +308,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 		try {
 			Recording recording = Recording.readAudio(filename);
 			loop.setRecording(recording);
-			float seconds = recording.size() / MidiClient.getInstance().getSampleRate(); 
+			float seconds = recording.size() / JudahMidi.getInstance().getSampleRate(); 
 			addText(seconds + " of " + filename + " read, stored in loop " + loopNum + ". " + recording.getNotes());
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
@@ -339,7 +342,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 		try {
 			recording.setNotes("Hello, world");
 			recording.saveAudio(filename);
-			float seconds = recording.size() / MidiClient.getInstance().getSampleRate();
+			float seconds = recording.size() / JudahMidi.getInstance().getSampleRate();
 			addText(seconds + " of loop " + loopNum + " saved to " + filename);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
@@ -352,7 +355,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 			try {
 				int from = Integer.parseInt(split[2]);
 				int to = Integer.parseInt(split[3]);
-				MidiClient.getInstance().getRouter().add(new Route(from, to));				
+				JudahMidi.getInstance().getRouter().add(new Route(from, to));				
 				
 			} catch (NumberFormatException e) {
 				addText(routeHelp + " (" + Arrays.toString(split) + ")");
@@ -365,7 +368,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 			try {
 				int from = Integer.parseInt(split[2]);
 				int to = Integer.parseInt(split[3]);
-				MidiClient.getInstance().getRouter().remove(new Route(from, to));				
+				JudahMidi.getInstance().getRouter().remove(new Route(from, to));				
 				
 			} catch (NumberFormatException e) {
 				addText(routeHelp + " (" + Arrays.toString(split) + ")");
@@ -374,7 +377,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 	}
 
 	private Carla getCarla() {
-		return JudahZone.getCurrentSong().getCarla();
+		return Sequencer.getCarla();
 	}
 
 	@Override
@@ -388,7 +391,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 	}
 
 	public void test() {
-		Console.debug("metronome width: " + JudahZone.getCurrentSong().getMetronome().getWidth());
+		
 	}
 	
 }

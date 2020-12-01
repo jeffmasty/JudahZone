@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.judah.plugin.MPK;
 import net.judah.song.Edits.Copyable;
 
 @Data @NoArgsConstructor 
@@ -36,7 +37,7 @@ public class MidiPair implements Copyable {
 	
 	@Override
 	public String toString() {
-		return getFromMidi() + " -> " + getToMidi();
+		return MPK.format(getFromMidi()) + " --> " + GMDrums.format(getToMidi());
 	}
 
 	public Midi getFromMidi() {

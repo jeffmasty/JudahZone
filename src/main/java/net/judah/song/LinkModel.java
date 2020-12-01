@@ -33,7 +33,7 @@ public class LinkModel extends DefaultTableModel {
 	}
 
 	public void addRow(Link link) {
-		addRow(new Object[] { link.getName(), commander.find(link.getService(), link.getCommand()), 
+		addRow(new Object[] { link.getName(), commander.find(link.getCommand()), 
         		new Midi(link.getMidi()), link.getProps()});
 	}
 
@@ -48,7 +48,7 @@ public class LinkModel extends DefaultTableModel {
 	public Link getRow(int i) throws JudahException {
 		Command cmd = ((Command)getValueAt(i,1));
 		if (cmd == null) throw new JudahException("no command for midi link");
-		Link link = new Link(getValueAt(i, 0).toString(), cmd.getService().getServiceName(), cmd.getName(),
+		Link link = new Link(getValueAt(i, 0).toString(), cmd.getName(),
 				((Midi)getValueAt(i, 2)).getMessage(), new HashMap((HashMap)getValueAt(i, 3)), null);
 		return link;
 	}

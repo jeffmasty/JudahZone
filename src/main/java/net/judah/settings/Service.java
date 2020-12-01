@@ -9,8 +9,11 @@ public interface Service {
 
 	List<Command> getCommands();
 
-	void execute(Command cmd, HashMap<String, Object> props) throws Exception;
+	// void execute(Command cmd, HashMap<String, Object> props) throws Exception;
 
 	void close();
+	
+	void properties(HashMap<String, Object> props);
+	
 	
 }

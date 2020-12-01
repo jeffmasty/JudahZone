@@ -9,14 +9,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import net.judah.midi.MidiPair;
 import net.judah.sequencer.Sequencer;
+import net.judah.util.Constants;
 
 @Data @AllArgsConstructor @NoArgsConstructor
 public class Song {
 	
 	private static final HashMap<String, Object> defaultMap = new HashMap<>();
 	static {
-		defaultMap.put(Sequencer.PARAM_BPM, null);
-		defaultMap.put(Sequencer.PARAM_MEAUSRE, null);
+		defaultMap.put(Constants.PARAM_BPM, null);
+		defaultMap.put(Constants.PARAM_MEAUSRE, null);
 		defaultMap.put(Sequencer.PARAM_CARLA, null);
 		defaultMap.put(Sequencer.PARAM_FLUID, null);
 		defaultMap.put("notes", "");

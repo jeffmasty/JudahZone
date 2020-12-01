@@ -1,18 +1,15 @@
-package net.judah.mixer;
+package net.judah.mixer.widget;
 
 import java.util.HashMap;
 
 import lombok.Data;
+import net.judah.mixer.Channel;
 
 @Data
 public abstract class Widget {
-	public enum Type {
-		SYS, SYNTH, CARLA, MODHOST, LOOPER, OTHER
-	}
-	
-//	final protected String[] inPorts;
+	//	final protected String[] inPorts;
 //	final protected String[] outPorts;
-	final protected Type type;
+	protected Channel.Type type;
 	protected boolean active;
 	
 	// current params

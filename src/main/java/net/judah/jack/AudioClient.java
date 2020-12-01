@@ -36,6 +36,7 @@ import org.jaudiolibs.jnajack.JackPortType;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
+import net.judah.api.Status;
 
 /**
  * Implementation of an Audio Client using Jack (via JNAJack)

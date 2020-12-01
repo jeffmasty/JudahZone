@@ -16,7 +16,7 @@ import net.judah.JudahZone;
 import net.judah.jack.AudioMode;
 import net.judah.jack.AudioTools;
 import net.judah.jack.RecordAudio;
-import net.judah.midi.MidiClient;
+import net.judah.midi.JudahMidi;
 import net.judah.mixer.MixerPort;
 import net.judah.util.Console;
 import net.judah.util.Constants;
@@ -45,7 +45,7 @@ public class Recorder extends Sample implements RecordAudio {
 		
 		
 		this.outputPorts = outputPorts;
-		memory = new Memory(Constants.STEREO, MidiClient.getInstance().getBuffersize());
+		memory = new Memory(Constants.STEREO, JudahMidi.getInstance().getBuffersize());
 		isPlaying.set(NEW);
 	}
 

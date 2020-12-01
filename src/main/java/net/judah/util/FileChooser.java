@@ -5,15 +5,12 @@ import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 
-import org.apache.commons.io.FilenameUtils;
-
 import lombok.extern.log4j.Log4j;
-import net.judah.JudahZone;
 
 @Log4j
 public class FileChooser {
 	
-	static File currentDir = JudahZone.defaultFolder;
+	static File currentDir = new File(System.getProperty("user.dir"));
 	
 	public static void setCurrentDir(File folder) {
 		currentDir = folder;
@@ -28,7 +25,7 @@ public class FileChooser {
 				@Override public String getDescription() {
 					return description; }
 				@Override public boolean accept(File f) {
-					return f.isDirectory() || FilenameUtils.getExtension(f.getName()).equals(extension);}
+					return f.isDirectory() || f.getName().endsWith(extension); } 
 			});
 		if (currentDir != null && currentDir.isDirectory())
 			fc.setCurrentDirectory(currentDir);

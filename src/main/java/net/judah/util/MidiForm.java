@@ -17,9 +17,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.midi.Midi;
-import net.judah.midi.MidiClient;
+import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiListener;
-import net.judah.midi.MidiListener.PassThrough;
 
 @Log4j
 /** Utility Swing class to select MIDI messages */
@@ -125,7 +124,7 @@ public class MidiForm extends JPanel implements MidiListener {
 	}
 
 	private void midiPlay() {
-		MidiClient.getInstance().queue(getMidi());
+		JudahMidi.getInstance().queue(getMidi());
 	}
 
 	private Integer[] generateCombo(int size) {

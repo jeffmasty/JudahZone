@@ -1,5 +1,6 @@
 package net.judah.fluid;
 
+import static net.judah.settings.CMD.FluidLbls.*;
 import static net.judah.util.Constants.*;
 
 import java.io.File;
@@ -20,8 +21,8 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
+import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
-import net.judah.midi.MidiClient;
 import net.judah.midi.ProgMsg;
 import net.judah.settings.Command;
 import net.judah.settings.Service;
@@ -49,7 +50,6 @@ public class FluidSynth implements Service {
 	final String MIDI_DRIVER = "jack";
 	final String AUDIO_DRIVER = "jack";
 
-	private final MidiClient midi;
 	private final String shellCommand;
 	private Process process;
 
@@ -70,18 +70,17 @@ public class FluidSynth implements Service {
 	private float roomSize = 0.75f;
 	private float dampness = 0.75f;
 
-	public FluidSynth (MidiClient midi, boolean startListeners) throws JackException, JudahException, IOException {
+	public FluidSynth (JudahMidi midi, boolean startListeners) throws JackException, JudahException, IOException {
 		this(midi, SOUND_FONT, startListeners);
 	}
 	
-	public FluidSynth (MidiClient midi) throws JackException, JudahException, IOException {
+	public FluidSynth (JudahMidi midi) throws JackException, JudahException, IOException {
 		this(midi, SOUND_FONT, true);
 	}
 	
 	@SuppressWarnings("deprecation")
-	public FluidSynth (MidiClient midi, File soundFont, boolean startListeners) throws JackException, JudahException, IOException {
+	public FluidSynth (JudahMidi midi, File soundFont, boolean startListeners) throws JackException, JudahException, IOException {
 	    instance = this;
-		this.midi = midi;
 		shellCommand = "fluidsynth" +
 				" --midi-driver=jack --audio-driver=jack" +
 	    		" -o synth.ladspa.active=0  --sample-rate " + midi.getJackclient().getSampleRate() + " " +
@@ -120,20 +119,45 @@ public class FluidSynth implements Service {
 	    if (startListeners)
 	    	sync();
 		initReverb();
-		HashMap<String, Class<?>> props = new HashMap<String, Class<?>>();
-		props.put("channel", Integer.class);
-		props.put("preset", Integer.class);
-		progChange = new Command("Program Change", this, props, "set the Fluid preset instrument on the given channel");
-		instUp = new Command("Program Up", this, "Fluid instrument up, channel 0");
-		instDown = new Command("Program Down", this, "Fluid instrument down, channel 0");
-		props = new HashMap<String, Class<?>>();
-		props.put("up", Boolean.class);
-		props.put("preset", Integer.class);
-		drumBank = new Command("Drum Set", this, props, "Change drum bank up (true/false) or preset #");
+		HashMap<String, Class<?>> template = new HashMap<String, Class<?>>();
+		template.put("channel", Integer.class);
+		template.put("preset", Integer.class);
+		progChange = new Command(PROGCHANGE.name, PROGCHANGE.desc, template) {
+			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+					int channel = 0;
+					try {
+						channel = Integer.parseInt(props.get("channel").toString());
+					} catch (Throwable t) { 
+						log.debug(t.getMessage()); }
+					midi.queue(progChange(channel, Integer.parseInt(props.get("preset").toString())));
+		}};
+		
+		instUp = new Command(INSTUP.name, INSTUP.desc) {
+			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+				instUp(0, false);
+			}};
+		instDown = new Command(INSTDOWN.name, INSTDOWN.desc) {
+			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+				instUp(0, false);
+			}};
+		template = new HashMap<String, Class<?>>();
+		template.put("up", Boolean.class);
+		template.put("preset", Integer.class);
+		drumBank = new Command(DRUMBANK.name, DRUMBANK.desc, template) {
+			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+				Object o = props.get("up");
+				Object o2 = props.get("preset");
+				if (o == null && o2 == null) 
+					throw new JudahException("up or preset needs to be set. " + this + " - " + Constants.prettyPrint(props));
+				if (o != null) 
+					instUp(DRUMS, Boolean.parseBoolean(o.toString()));
+				else 
+					sendCommand(FluidCommand.PROG_CHANGE, "9 " + Integer.parseInt(o2.toString()));
+			}
+		};
 		
 		// doHelp();
 		Console.addText( "FluidSynth channels: " + channels.size() + " instruments: " + instruments.size());
-		
 	}
 
 	private void syncChannels() throws InterruptedException, IOException, JudahException {
@@ -413,35 +437,7 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 	public List<Command> getCommands() {
 		return Arrays.asList(new Command[] {progChange, instUp, instDown, drumBank});
 	}
-
-	@Override
-	public void execute(Command cmd, HashMap<String, Object> props) throws Exception {
-		if (cmd == instDown)  
-			instUp(0, false);
-		else if (cmd == instUp) 
-			instUp(0, true);
-		else if (cmd == progChange) {
-			int channel = 0;
-			try {
-				channel = Integer.parseInt(props.get("channel").toString());
-			} catch (Throwable t) { log.debug(t.getMessage()); }
-			midi.queue(
-			progChange(channel, Integer.parseInt(props.get("preset").toString())));
-		}
-		else if (cmd == drumBank) {
-			Object o = props.get("up");
-			Object o2 = props.get("preset");
-			if (o == null && o2 == null) 
-				throw new JudahException("up or preset needs to be set. " + cmd + " - " + Constants.prettyPrint(props));
-			if (o != null) 
-				instUp(DRUMS, Boolean.parseBoolean(o.toString()));
-			else 
-				sendCommand(FluidCommand.PROG_CHANGE, "9 " + Integer.parseInt(o2.toString()));
-		}
-		else 
-			throw new JudahException(cmd + " not implemented yet. " + Command.toString(props));
- 	}
-
+	
 	@Override
 	public void close() {
 		try {
@@ -504,5 +500,43 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 		}
 	}
 
+	@Override
+	public void properties(HashMap<String, Object> props) {
+		if (props.containsKey("fluid")) {
+			String[] split = props.get("fluid").toString().split(";");
+			for (String cmd : split)
+				sendCommand(cmd);
+		}
+	}
+	
 }
 
+/*
+	@Override
+	public void execute(Command cmd, HashMap<String, Object> props) throws Exception {
+		if (cmd == instDown)  
+			instUp(0, false);
+		else if (cmd == instUp) 
+			instUp(0, true);
+		else if (cmd == progChange) {
+			int channel = 0;
+			try {
+				channel = Integer.parseInt(props.get("channel").toString());
+			} catch (Throwable t) { log.debug(t.getMessage()); }
+			midi.queue(
+			progChange(channel, Integer.parseInt(props.get("preset").toString())));
+		}
+		else if (cmd == drumBank) {
+			Object o = props.get("up");
+			Object o2 = props.get("preset");
+			if (o == null && o2 == null) 
+				throw new JudahException("up or preset needs to be set. " + cmd + " - " + Constants.prettyPrint(props));
+			if (o != null) 
+				instUp(DRUMS, Boolean.parseBoolean(o.toString()));
+			else 
+				sendCommand(FluidCommand.PROG_CHANGE, "9 " + Integer.parseInt(o2.toString()));
+		}
+		else 
+			throw new JudahException(cmd + " not implemented yet. " + Command.toString(props));
+ 	}
+*/

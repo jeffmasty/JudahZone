@@ -25,13 +25,14 @@ import lombok.extern.log4j.Log4j;
 import net.judah.fluid.FluidSynth;
 import net.judah.jack.AudioTools;
 import net.judah.jack.BasicClient;
-import net.judah.midi.MidiClient;
+import net.judah.metronome.Metro;
+import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Instrument;
 import net.judah.mixer.MixerPort;
 import net.judah.mixer.MixerPort.ChannelType;
 import net.judah.mixer.MixerPort.PortDescriptor;
-import net.judah.mixer.Widget.Type;
+//import net.judah.mixer.Widget.Type;
 import net.judah.mixer.widget.CarlaVolume;
 import net.judah.mixer.widget.FluidVolume;
 import net.judah.mixer.widget.VolumeWidget;
@@ -65,10 +66,11 @@ public class JudahZone extends BasicClient {
 	@Getter private static final List<MixerPort> outputPorts = new ArrayList<>();
 
     /** Current Song */
-    @Getter @Setter(AccessLevel.PACKAGE) private static Sequencer currentSong;
+	@Getter @Setter(AccessLevel.PACKAGE) private static Sequencer currentSong;
 
 	@Getter private final FluidSynth fluid; 
-	private final MidiClient midi;
+	@Getter private static JudahMidi midi;
+	@Getter private static Metro metronome;
 	
     public static void main(String[] args) {
 
@@ -85,10 +87,12 @@ public class JudahZone extends BasicClient {
 		super(JUDAHZONE);
     	Runtime.getRuntime().addShutdownHook(new ShutdownHook());
     	patchbay = audioConfig();
-    	midi = new MidiClient();
+    	midi = new JudahMidi();
     	fluid = new FluidSynth(midi);
+    	File clickTrack = new File(this.getClass().getClassLoader().getResource("metronome/JudahZone.mid").getFile()); 
+    	metronome = new Metro(clickTrack, null);
     	
-    	services.addAll(Arrays.asList(new Service[] {midi, fluid}));
+    	services.addAll(Arrays.asList(new Service[] {midi, fluid, metronome}));
     	
     	Thread.sleep(100);
         start();
@@ -117,11 +121,11 @@ public class JudahZone extends BasicClient {
 
 	private void initializeChannels() {
 		
-		Instrument g = new Instrument("Guitar", Type.SYS, new String[] {"system:capture_1"}, null); 
-		Instrument m = new Instrument("Mic", Type.SYS, new String[] {"system:capture_2"}, null);  
-		Instrument d = new Instrument("Drums", Type.SYS, new String[] {"system:capture_4"}, null);
-		Instrument s = new Instrument("Synth", Type.SYNTH, new String[] {FluidSynth.LEFT_PORT, FluidSynth.RIGHT_PORT}, null);
-		Instrument a = new Instrument("Aux", Type.OTHER, new String[] {"system:capture_3"}, null);
+		Instrument g = new Instrument("Guitar", new String[] {"system:capture_1"}); 
+		Instrument m = new Instrument("Mic", new String[] {"system:capture_2"});  
+		Instrument d = new Instrument("Drums", new String[] {"system:capture_4"});
+		Instrument s = new Instrument("Synth", new String[] {FluidSynth.LEFT_PORT, FluidSynth.RIGHT_PORT});
+		Instrument a = new Instrument("Aux", new String[] {"system:capture_3"});
 		
 		Channel guitar = new Channel(g, new CarlaVolume(0));
 		Channel mic = new Channel(m, new CarlaVolume(2));
@@ -144,7 +148,7 @@ public class JudahZone extends BasicClient {
 		new MainFrame(JUDAHZONE);
 
 		// Open a default song 
-		File file = new File("/home/judah/git/JudahZone/resources/Songs/default");
+		File file = new File("/home/judah/git/JudahZone/resources/Songs/AndILoveHer");
 		try {
 			new Sequencer(file);
 		} catch (Exception e) {
@@ -202,10 +206,11 @@ public class JudahZone extends BasicClient {
 
 	private class ShutdownHook extends Thread {
 		@Override public void run() {
-//			if (Carla.getInstance() != null) 
-//				Carla.getInstance().close();
-			if (getCurrentSong() != null)
+			if (getCurrentSong() != null) {
 				getCurrentSong().close();
+				if (Sequencer.getCarla() != null)
+					Sequencer.getCarla().close();
+			} 
 			for (Service s : services) 
 				s.close();
 		}

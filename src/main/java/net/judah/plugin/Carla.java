@@ -1,9 +1,9 @@
 package net.judah.plugin;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.illposed.osc.OSCMessage;
@@ -16,6 +16,9 @@ import lombok.extern.log4j.Log4j;
 // /usr/local/share/applications
 
 /**
+ * 
+ * Use UDP Port
+ * 
 <pre>
   	OSC Implemented:
 /set_active					<i-value>
@@ -41,107 +44,111 @@ public class Carla {
 	@Getter private static Carla instance; 
 	
     // public static final String CARLA_SHELL_COMMAND = "/usr/local/bin/carla ";
-    public static final String CARLA_SHELL_COMMAND = "carla ";
+    public static final String CARLA_SHELL_COMMAND = "carla";
 	
-    public static final int CARLA_PORT = 22752;  // 22753
-	
+	private static int _instanceCount = 0; // adjust prefix
     
-    
-	private static final String PREFIX = "/Carla/";
+	private final String prefix;
 	
 	private static final String OSC = "OSC:"; //log
 	
-	private String shellCommand;
-	private int port;
+	private final int port;
 	private Process process;
-	private String cmd;
+	@Getter private final String settings;
 	private OSCPortOut out;
-	
 
-	public Carla(String shellCommand, File carlaSettings, int port) throws IOException {
-		this.shellCommand = shellCommand;
-		this.port = port;
-		cmd = shellCommand + carlaSettings;
-		log.info("Opening Carla with: " + cmd + " and using UDP port=" + port);
-		process = Runtime.getRuntime().exec(cmd);
-		instance = this;
-		out = new OSCPortOut(InetAddress.getLocalHost(), port);
-		out.connect();
+	// default ports
+	public Carla(String carlaSettings, boolean showGui) throws IOException {
+		this(carlaSettings, 11176, 11177, showGui);
 	}
 	
-	public Carla(File file) throws IOException {
-		this(CARLA_SHELL_COMMAND, file, CARLA_PORT);
+	public Carla(String carlaSettings, int tcpPort, int udpPort, boolean showGui) throws IOException {
+
+		this.port = udpPort;
+		this.settings = carlaSettings;
+		
+		ArrayList<String> cmds = new ArrayList<>();
+		cmds.add(CARLA_SHELL_COMMAND);
+		if (!showGui) cmds.add("--no-gui");
+		cmds.add(carlaSettings);
+    	ProcessBuilder builder = new ProcessBuilder(cmds);
+    	builder.environment().put("CARLA_OSC_TCP_PORT", "" + tcpPort);
+    	builder.environment().put("CARLA_OSC_UDP_PORT", "" + udpPort);
+    	process = builder.start();
+    	
+    	prefix = (_instanceCount == 0) ? "/Carla/" : "/Carla_0" + _instanceCount + "/";
+    	_instanceCount++;
+    	
+    	out = new OSCPortOut(InetAddress.getLocalHost(), udpPort);
+    	log.debug("Carla created. " + carlaSettings);
 	}
 
-	/** closes any previous process and reloads Carla with the given project file */
-	public void reload(File carlaSettings) throws IOException {
-		close();
-		cmd = shellCommand + carlaSettings;
-		log.info("Opening Carla with: " + cmd + " and using UDP port=" + port);
-		process = Runtime.getRuntime().exec(cmd);
-		out = new OSCPortOut(InetAddress.getLocalHost(), port);
-		out.connect();
-		instance = this;
+	public static void main(String args[]) {
+
+//		try {
+//			log.info("testing OSC server at: "  + InetAddress.getLocalHost().toString() + " : " + 11177);
+//			OSCPortOut outport = new OSCPortOut(InetAddress.getLocalHost(), 11177);
+//			outport.connect();
+//			log.warn("connected : " + outport.isConnected());
+//			List<Object> param = new ArrayList<>();
+//			
+//			int pluginIndex = 0;
+//			param.add(1);
+//			String address = "/Carla/" + pluginIndex + "/set_active";
+//			
+//			log.debug(OSC + address + " --> " + Arrays.toString(param.toArray()));
+//			try {
+//				outport.send(new OSCMessage(address, param));
+//				log.warn("success.");
+//			} catch (IOException | OSCSerializeException e) {
+//				log.error(e.getMessage(), e);
+//			}
+//			outport.disconnect();
+//		} catch (Exception e) {
+//			log.error(e.getMessage(), e);
+//		}
+		
 	}
 	
-	/** @return true if message sent */
-	public boolean setVolume(int pluginIdx, float gain) {
-		assert out.isConnected();
+	/** @return true if message sent 
+	 * @throws IOException 
+	 * @throws OSCSerializeException */
+	public void setVolume(int pluginIdx, float gain) throws OSCSerializeException, IOException {
 		List<Object> param = new ArrayList<>();
 		param.add(gain);
-		String address = PREFIX + pluginIdx + "/set_volume";
-		log.debug(OSC + address + " --> " + gain);
-		try {
-			out.send(new OSCMessage(address, param));
-			return true;
-		} catch (IOException | OSCSerializeException e) {
-			log.error(e.getMessage(), e);
-			return false;
-		}
+		String address = prefix + pluginIdx + "/set_volume";
+		send(address, param);
 	}
 
-	/** @return true if message sent */
-	public boolean setActive(int pluginIdx, int tOrF) {
-		assert out.isConnected();
+	/** @return true if message sent 
+	 * @throws IOException 
+	 * @throws OSCSerializeException */
+	public void setActive(int pluginIdx, int tOrF) throws OSCSerializeException, IOException {
 		List<Object> param = new ArrayList<>();
 		param.add(tOrF);
-		String address = PREFIX + pluginIdx + "/set_active";
-		log.info(OSC + address + " --> " + tOrF);
-		try {
-			out.send(new OSCMessage(address, param));
-			return true;
-		} catch (IOException | OSCSerializeException e) {
-			log.error(e.getMessage(), e);
-			return false;
-		}
+		String address = prefix + pluginIdx + "/set_active";
+		send(address, param);
+		try {Thread.sleep(14);} catch(Exception e) { }
 	}
 
-	/** @return true if message sent */
-	public boolean setParameterValue(int pluginIdx, int paramIdx, float value) {
+	/** @return true if message sent 
+	 * @throws IOException 
+	 * @throws OSCSerializeException */
+	public void setParameterValue(int pluginIdx, int paramIdx, float value) throws OSCSerializeException, IOException {
 		assert out.isConnected();
-		String address = PREFIX + pluginIdx + "/set_parameter_value";
+		String address = prefix + pluginIdx + "/set_parameter_value";
 		List<Object> param = new ArrayList<>();
 		param.add(paramIdx);
 		param.add(value);
-		log.info(OSC + address + " param " + paramIdx + " --> " + value);
-		try {
-			out.send(new OSCMessage(address, param));
-			return true;
-		} catch (IOException | OSCSerializeException e) {
-			log.error(e.getMessage(), e);
-			return false;
-		}
+		send(address, param);
 	}
 	
 	public void send(String address, List<Object> params) throws OSCSerializeException, IOException {
-		
+		log.debug(OSC + port + " " + address + " --> " + Arrays.toString(params.toArray()));
+		if (!out.isConnected())
+			out.connect();
 		out.send(new OSCMessage(address, params));
-		//		List<Object> param = new ArrayList<>();
-		//		param.add(0.1f);
-		//		OSCMessage message = new OSCMessage("/Carla/1/set_volume", param);
-		//		out.send(message);
 	}
-	
 	
 	public void close() {
 		if (out != null && out.isConnected()) {
@@ -151,11 +158,11 @@ public class Carla {
 				log.error(e);
 			}
 		}
-		
-		process.destroyForcibly();
-		log.warn("-- CARLA DISPOSED --");
+		if (process != null) process.destroyForcibly();
+		log.debug("carla disposed.");
 		instance = null;
+		out = null;
 	}
-	
+
 }
 

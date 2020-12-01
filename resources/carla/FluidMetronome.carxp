@@ -23,7 +23,7 @@
   </Info>
 
   <Data>
-   <Active>Yes</Active>
+   <Active>No</Active>
    <ControlChannel>1</ControlChannel>
    <Options>0x3f1</Options>
 
@@ -112,13 +112,13 @@
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set9</Key>
-    <Value>16408</Value>
+    <Value>0</Value>
    </CustomData>
 
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set10</Key>
-    <Value>16409</Value>
+    <Value>16384</Value>
    </CustomData>
 
    <CustomData>
@@ -160,7 +160,7 @@
    <CustomData>
     <Type>http://kxstudio.sf.net/ns/carla/property</Type>
     <Key>CarlaSkinIsCompacted</Key>
-    <Value>true</Value>
+    <Value>false</Value>
    </CustomData>
   </Data>
  </Plugin>

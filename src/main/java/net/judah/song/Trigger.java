@@ -18,14 +18,13 @@ public class Trigger implements Copyable {
 	}
 	
 	public Trigger(long timestamp, Command cmd) {
-		this(Type.ABSOLUTE, timestamp, 0l, cmd.getService().getServiceName(), cmd.getName(), "", new HashMap<>(), null);
+		this(Type.ABSOLUTE, timestamp, 0l, cmd.getName(), "", new HashMap<>(), null);
 	}
 	
 	Type type = Type.ABSOLUTE;
 	Long timestamp;
 	Long duration; 
 	
-	String service;
 	String command;
 	String notes;
 	HashMap<String, Object> params;
@@ -35,7 +34,7 @@ public class Trigger implements Copyable {
 	
 	public Command getCmd() {
 		if (cmd == null) 
-			cmd = JudahZone.getCurrentSong().getCommander().find(service, command);
+			cmd = JudahZone.getCurrentSong().getCommander().find(command);
 		return cmd;
 		
 	}
@@ -44,7 +43,6 @@ public class Trigger implements Copyable {
 	public Trigger clone() {
 		Trigger result = new Trigger();
 		result.setCommand(command);
-		result.setService(service);
 		result.setDuration(duration);
 		result.setTimestamp(timestamp);
 		result.setNotes(notes);

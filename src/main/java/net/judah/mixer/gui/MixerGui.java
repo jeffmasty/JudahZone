@@ -8,19 +8,17 @@ import javax.swing.JComponent;
 
 import net.judah.JudahZone;
 import net.judah.looper.Sample;
+import net.judah.metronome.Metro;
 import net.judah.mixer.Channel;
-import net.judah.sequencer.Metronome;
 
-public class MixerTab extends JComponent {
+public class MixerGui extends JComponent {
 	  
 	private final ArrayList<ChannelGui> channels = new ArrayList<ChannelGui>();
-	private Metronome metro;
 	
-	public MixerTab(List<Sample> loops, Metronome metronome) {
-		this.metro = metronome;
+	public MixerGui(List<Sample> loops, Metro metro) {
 		
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-		add(metro);
+		add(metro.getGui());
 		
 		for (Channel c : JudahZone.getChannels()) {
 			ChannelGui gui = new ChannelGui(c);

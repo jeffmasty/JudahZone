@@ -11,9 +11,8 @@ import net.judah.JudahZone;
 import net.judah.jack.ProcessAudio;
 import net.judah.looper.Recorder;
 import net.judah.looper.Sample;
-import net.judah.mixer.gui.MixerTab;
+import net.judah.mixer.gui.MixerGui;
 import net.judah.sequencer.Sequencer;
-import net.judah.settings.Command;
 import net.judah.settings.Service;
 import net.judah.util.JudahException;
 
@@ -21,7 +20,7 @@ import net.judah.util.JudahException;
 public class Mixer implements Service {
 
 	@Getter private final MixerCommands commands;
-	@Getter private final MixerTab gui;
+	@Getter private final MixerGui gui;
 	
 	@Getter private final List<Sample> samples = new ArrayList<>();
 
@@ -32,14 +31,9 @@ public class Mixer implements Service {
 		samples.add(new Recorder("Loop A", ProcessAudio.Type.FREE));
 		samples.add(new Recorder("Loop B", ProcessAudio.Type.FREE));
 		
-		gui = new MixerTab(samples, sequencer.getMetronome());
+		gui = new MixerGui(samples, JudahZone.getMetronome());
 		
 		sequencer.getServices().add(this);
-	}
-	
-	@Override
-	public void execute(Command cmd, HashMap<String, Object> props) throws Exception {
-		commands.execute(cmd, props); 
 	}
 	
 	@Override
@@ -99,6 +93,12 @@ public class Mixer implements Service {
 		for (int i = 0; i < samples.size(); i++) {
 			samples.get(i).setGain(mixerState.get(i));
 		}
+	}
+
+	@Override
+	public void properties(HashMap<String, Object> props) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	

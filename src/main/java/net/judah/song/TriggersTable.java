@@ -64,7 +64,7 @@ public class TriggersTable extends JPanel implements Edits {
 	}
 
 	@Override public void editAdd() {
-		Trigger trigger = new Trigger(Type.ABSOLUTE, -1l, null, "", "", "", new HashMap<String, Object>(), null);
+		Trigger trigger = new Trigger(Type.ABSOLUTE, -1l, null, "", "", new HashMap<String, Object>(), null);
 		if(table.getSelectedRow() < 0)
 			model.addRow(newRow(trigger));
 		else 
@@ -72,7 +72,7 @@ public class TriggersTable extends JPanel implements Edits {
 	}
 
 	private Object[] newRow(Trigger trigger) {
-		return new Object[] { trigger.getTimestamp(), commander.find(trigger.getService(), trigger.getCommand()), 
+		return new Object[] { trigger.getTimestamp(), commander.find(trigger.getCommand()), 
 				trigger.getNotes(), trigger.getParams()};
 	}
 	

@@ -13,7 +13,6 @@ import net.judah.midi.MidiListener;
 import net.judah.midi.MidiListener.PassThrough;
 import net.judah.sequencer.Sequencer;
 import net.judah.settings.Command;
-import net.judah.settings.DynamicCommand;
 import net.judah.settings.Service;
 import net.judah.song.Link;
 import net.judah.util.JudahException;
@@ -66,34 +65,25 @@ public class CommandHandler {
 
 			if (midiMsg.getCommand() == Midi.CONTROL_CHANGE 
 					&& (byte)midiMsg.getData1() == mapping.getMidi()[1]) {
-				if (cmd instanceof DynamicCommand) {
-					p = new HashMap<String, Object>();
-					p.putAll(mapping.getProps());
-					((DynamicCommand)cmd).processMidi(midiMsg.getData2(), p);
-					fire(cmd, p);
-					return true;
-				}
-				else if ((byte)midiMsg.getData2() == mapping.getMidi()[2]) { // ignores channel;
-					p = new HashMap<String, Object>();
-					p.putAll(mapping.getProps());
-					fire(cmd, p);
-					return true;
-				}
+				p = new HashMap<String, Object>();
+				p.putAll(mapping.getProps());
+				fire(cmd, p, midiMsg.getData2());
+				return true;
 			}
 			
 			else if (Arrays.equals(mapping.getMidi(), midiMsg.getMessage())) { // Prog Change
-				fire(cmd, mapping.getProps());
+				fire(cmd, mapping.getProps(), midiMsg.getData2());
 				return true;
 			}
 		}
 		return false;
 	}
 	
-	public void fire(final Command cmd, HashMap<String, Object> props) {
+	public void fire(final Command cmd, HashMap<String, Object> props, int midiData2) {
 		new Thread() {
 			@Override public void run() {
 				try {
-					cmd.getService().execute(cmd, props);
+					cmd.execute(props, midiData2);
 				} catch (Exception e) { 
 					log.error(e.getMessage() + " for " + cmd + " with " + Command.toString(props), e); 
 					}
@@ -104,19 +94,26 @@ public class CommandHandler {
 		return available.toArray(new Command[available.size()]);
 	}
 
-	public Command find(String service, String command) {
-		for (Command c : available) 
-			try {
-				assert c != null;
-				assert c.getName() != null;
-				if (c.getService().getServiceName().equals(service) && c.getName().equals(command))
-					return c;
-			} catch (Throwable t) {
-				log.error(c + " " + c.getService() + " " + t.getMessage(), t);
-			}
-		log.warn("could not find " + service + " - " + command + " in " + Arrays.toString(available.toArray()));
+	public Command find(String name) {
+		for (Command c : available)
+			if (c.getName().equals(name))
+				return c;
 		return null;
 	}
+	
+//	public Command find(String service, String command) {
+//		for (Command c : available) 
+//			try {
+//				assert c != null;
+//				assert c.getName() != null;
+//				if (c.getService().getServiceName().equals(service) && c.getName().equals(command))
+//					return c;
+//			} catch (Throwable t) {
+//				log.error(c + " " + c.getService() + " " + t.getMessage(), t);
+//			}
+//		log.warn("could not find " + service + " - " + command + " in " + Arrays.toString(available.toArray()));
+//		return null;
+//	}
 	
 	public void clearMappings() {
 		links.clear();

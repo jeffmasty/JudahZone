@@ -1,6 +1,159 @@
 {
-  "props" : { },
-  "links" : [ ],
-  "sequencer" : [ ],
-  "router" : [ ]
+  "props" : {
+    "carla" : "/home/judah/git/JudahZone/target/classes/carla/JudahZone.carxp",
+    "bpm" : "85"
+  },
+  "links" : [ {
+    "name" : "",
+    "command" : "metro:start",
+    "midi" : "sGUA",
+    "props" : { }
+  } ],
+  "sequencer" : [ {
+    "type" : "ABSOLUTE",
+    "timestamp" : -1,
+    "duration" : null,
+    "command" : "metro:setup",
+    "notes" : "",
+    "params" : {
+      "intro.beats" : "8",
+      "midi.beat" : null,
+      "midi.channel" : null,
+      "duration.beats" : "16",
+      "midi.downbeat" : null,
+      "midi.file" : null
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 0,
+    "duration" : null,
+    "command" : "loop:record",
+    "notes" : "",
+    "params" : {
+      "Loop" : "0",
+      "Active" : "true"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 8,
+    "duration" : null,
+    "command" : "loop:record",
+    "notes" : "",
+    "params" : {
+      "Loop" : "0",
+      "Active" : "false"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 8,
+    "duration" : null,
+    "command" : "midi:note",
+    "notes" : "",
+    "params" : {
+      "data2" : "126",
+      "channel" : "9",
+      "data1" : "36",
+      "command" : "144"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 8,
+    "duration" : null,
+    "command" : "seq:internal",
+    "notes" : "",
+    "params" : {
+      "patch" : "AllMyLoving"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 9,
+    "duration" : null,
+    "command" : "loop:record",
+    "notes" : "Arpeggios",
+    "params" : {
+      "Loop" : "1",
+      "Active" : "true",
+      "repetitions" : null
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 14,
+    "duration" : null,
+    "command" : "loop:record",
+    "notes" : "free melody (x2)",
+    "params" : {
+      "Loop" : "1",
+      "Active" : "false",
+      "repetitions" : null
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 14,
+    "duration" : null,
+    "command" : "loop:play",
+    "notes" : "",
+    "params" : {
+      "Loop" : "1",
+      "Active" : "true"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 24,
+    "duration" : null,
+    "command" : "loop:play",
+    "notes" : "Bridge",
+    "params" : {
+      "Loop" : "1",
+      "Active" : "false"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 28,
+    "duration" : null,
+    "command" : "loop:play",
+    "notes" : "free melody",
+    "params" : {
+      "Loop" : "1",
+      "Active" : "true"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 33,
+    "duration" : null,
+    "command" : "loop:play",
+    "notes" : "",
+    "params" : {
+      "Loop" : "1",
+      "Active" : "false"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 34,
+    "duration" : null,
+    "command" : "loop:play",
+    "notes" : "",
+    "params" : {
+      "Loop" : "0",
+      "Active" : "false"
+    }
+  }, {
+    "type" : "ABSOLUTE",
+    "timestamp" : 34,
+    "duration" : null,
+    "command" : "midi:note",
+    "notes" : "",
+    "params" : {
+      "data2" : "126",
+      "channel" : "9",
+      "data1" : "36",
+      "command" : "144"
+    }
+  } ],
+  "router" : [ {
+    "from" : "iTAA",
+    "to" : "iUUA"
+  }, {
+    "from" : "iTEA",
+    "to" : "iUsA"
+  } ]
 }

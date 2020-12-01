@@ -1,4 +1,4 @@
-package net.judah.instruments;
+package net.judah.plugin;
 
 public class Pedal {
 
