@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
-import net.judah.JudahZone;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeListener.Property;
 import net.judah.api.TimeNotifier;
@@ -22,6 +21,7 @@ import net.judah.jack.AudioMode;
 import net.judah.jack.ProcessAudio;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.MixerPort;
+import net.judah.sequencer.Sequencer;
 import net.judah.util.Console;
 
 @Log4j
@@ -45,7 +45,7 @@ public class Sample implements ProcessAudio, TimeNotifier {
 	// for process()
 	protected transient float[][] recordedBuffer;
 	private transient int updated; // tape position counter
-	private transient final float[] workArea = new float[JudahMidi.getInstance().getBuffersize()];
+	private transient final float[] workArea = new float[JudahMidi.getInstance().getBufferSize()];
 	private transient FloatBuffer toJackLeft, toJackRight;
 	private transient int z;
 
@@ -66,7 +66,7 @@ public class Sample implements ProcessAudio, TimeNotifier {
 			if (type == Type.ONE_TIME) {
 				isPlaying.set(STOPPING);
 				new Thread() {
-					@Override public void run() {JudahZone.getCurrentSong().getMixer().removeSample(Sample.this);}
+					@Override public void run() {Sequencer.getCurrent().getMixer().removeSample(Sample.this);}
 				}.start();
 			}
 			updated = 0;

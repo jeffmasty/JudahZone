@@ -22,14 +22,13 @@ import org.apache.log4j.Level;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
-import net.judah.JudahZone;
+import net.judah.api.Midi;
 import net.judah.fluid.FluidSynth;
 import net.judah.jack.ProcessAudio;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
 import net.judah.metronome.JMidiPlay;
 import net.judah.midi.JudahMidi;
-import net.judah.midi.Midi;
 import net.judah.midi.MidiListener;
 import net.judah.midi.Route;
 import net.judah.mixer.Mixer;
@@ -48,6 +47,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 	private static final String samples = "samples : list samples";
 	private static final String routerHelp = "router - prints current midi translations";
 	private static final String routeHelp = "route/unroute channel fromChannel# toChannel#";
+	private static final String activeHelp ="active - prints the current sequencer command from the top of the stack.";
 	
 	private static Console instance;
 	public static Console getInstance() {
@@ -118,6 +118,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 		
 		instance.textarea.setCaretPosition(instance.textarea.getDocument().getLength() - 1);
 		instance.scroller.getVerticalScrollBar().setValue( instance.scroller.getVerticalScrollBar().getMaximum() - 1 );
+		instance.scroller.getHorizontalScrollBar().setValue(0);
 		instance.output.invalidate();
 	}
 
@@ -166,11 +167,6 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 			help();
 			return;
 		}
-		if (text.startsWith("xruns") || text.equalsIgnoreCase("xrun")) {
-			addText(JudahMidi.getInstance().xrunsToString());
-			return;
-		}
-		
 		//  set_active	set_parameter_value set_volume
 		try {
 			if (text.equals("volume") && input.length == 3) 
@@ -202,7 +198,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 				stop(input);
 			
 		else if (text.equals("samples")) 
-			addText( Arrays.toString(JudahZone.getCurrentSong().getMixer().getSamples().toArray()));
+			addText( Arrays.toString(Sequencer.getCurrent().getMixer().getSamples().toArray()));
 		else if (text.equals("router")) 
 			for (Route r : JudahMidi.getInstance().getRouter())
 				addText("" + r);
@@ -211,6 +207,8 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 			route(input);
 		else if (text.equals("unroute"))
 			unroute(input);
+		else if (text.equals("active"))
+			Console.info("" + Sequencer.getCurrent().getActive());
 		else if (text.equals("test")) {
 			test();
 		}
@@ -218,7 +216,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 	}
 	
 	private void help() {
-		addText("xrun");
+		
 		addText("volume carla_plugin_index value");
 		addText("active carla_plugin_index 1_or_0");
 		addText("parameter carla_plugin_index parameter_index value");
@@ -232,11 +230,13 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 		addText(routerHelp);
 		addText(midiPlay);
 		addText(listenHelp);
+		addText(activeHelp);
 		addText("fluid help");
+		
 	}
 	private void midiListen() {
 		midiListen = !midiListen;
-		JudahZone.getCurrentSong().getCommander().setMidiListener(midiListen ? this : null);
+		Sequencer.getCurrent().getCommander().setMidiListener(midiListen ? this : null);
 	}
 	
 	private void midiPlay(String[] split) {
@@ -262,7 +262,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 	}
 
 	private Mixer mixer() {
-		return JudahZone.getCurrentSong().getMixer();
+		return Sequencer.getCurrent().getMixer();
 	}
 	
 	private void play(String[] split) {

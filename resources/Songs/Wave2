@@ -1,0 +1,40 @@
+{
+  "props" : {
+    "bpm" : "90"
+  },
+  "links" : [ ],
+  "sequencer" : [ {
+    "type" : "ABS",
+    "timestamp" : -1,
+    "command" : "metro:setup",
+    "notes" : "",
+    "params" : {
+      "intro.beats" : "0",
+      "midi.beat" : null,
+      "midi.channel" : null,
+      "duration.beats" : "16",
+      "midi.downbeat" : null,
+      "midi.file" : "/home/judah/git/JudahZone/resources/metronome/wave.mid"
+    }
+  }, {
+    "type" : "ABS",
+    "timestamp" : -1,
+    "command" : "synth:progChange",
+    "notes" : "fretless bass",
+    "params" : {
+      "channel" : "0",
+      "preset" : "35"
+    }
+  }, {
+    "type" : "ABS",
+    "timestamp" : -1,
+    "command" : "midi:octaver",
+    "notes" : "down 2 octaves",
+    "params" : {
+      "active" : "true",
+      "midi.channel" : "0",
+      "steps" : "-24"
+    }
+  } ],
+  "router" : [ ]
+}

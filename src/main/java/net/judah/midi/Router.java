@@ -1,15 +1,17 @@
 package net.judah.midi;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.sound.midi.InvalidMidiDataException;
 
 import lombok.extern.log4j.Log4j;
+import net.judah.api.Midi;
 
 @Log4j
 public class Router extends ArrayList<Route> {
 
-	int channel, command, data1;
+	protected int channel, command, data1;
 	
 	/** Realtime thread */
 	public Midi process(Midi midi) {
@@ -20,7 +22,10 @@ public class Router extends ArrayList<Route> {
 			if (route.getFromChannel() == channel) {
 				if (route.isChannelRoute()) {
 					try {
-						return new Midi(midi.getCommand(), route.getToChannel(), midi.getData1(), midi.getData2());
+						if (route.getOctaver() == null)
+							return new Midi(midi.getCommand(), route.getToChannel(), 
+									midi.getData1(), midi.getData2());
+						return route.getOctaver().process(midi);
 					} catch (InvalidMidiDataException e) {
 						log.error(e.getMessage() + " - " + midi + " - " + route, e);
 					}
@@ -38,6 +43,19 @@ public class Router extends ArrayList<Route> {
 		}
 		return midi;
 	}
+	
+	public void setOctaver(Octaver o) {
+		add(new Route(o));
+	}
+	public void removeOctaver() {
+		List<Route> octaver = new ArrayList<>();
+		for (Route r : this)
+			if (r.getOctaver() != null) 
+				octaver.add(r);
+		for (Route r : octaver)
+			log.debug("Removed octaver route: " + remove(r));
+	}
+	
 	
 
 }

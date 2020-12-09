@@ -23,7 +23,7 @@
   </Info>
 
   <Data>
-   <Active>No</Active>
+   <Active>Yes</Active>
    <ControlChannel>1</ControlChannel>
    <Options>0x3f1</Options>
 
@@ -175,8 +175,12 @@
    <Target>system:playback_2</Target>
   </Connection>
   <Connection>
-   <Source>JudahTime:drums_out</Source>
-   <Target>Calf Fluidsynth:events-in</Target>
+   <Source>PulseAudio JACK Sink:front-left</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>PulseAudio JACK Sink:front-right</Source>
+   <Target>system:playback_2</Target>
   </Connection>
   <Connection>
    <Source>Calf Fluidsynth:Out L</Source>

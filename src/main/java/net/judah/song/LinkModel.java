@@ -6,8 +6,8 @@ import java.util.LinkedHashSet;
 import javax.swing.table.DefaultTableModel;
 
 import net.judah.CommandHandler;
-import net.judah.midi.Midi;
-import net.judah.settings.Command;
+import net.judah.api.Command;
+import net.judah.api.Midi;
 import net.judah.util.JudahException;
 
 public class LinkModel extends DefaultTableModel {

@@ -45,7 +45,7 @@ public class Recorder extends Sample implements RecordAudio {
 		
 		
 		this.outputPorts = outputPorts;
-		memory = new Memory(Constants.STEREO, JudahMidi.getInstance().getBuffersize());
+		memory = new Memory(Constants.STEREO, JudahMidi.getInstance().getBufferSize());
 		isPlaying.set(NEW);
 	}
 

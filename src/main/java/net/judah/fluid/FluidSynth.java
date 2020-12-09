@@ -1,6 +1,6 @@
 package net.judah.fluid;
 
-import static net.judah.settings.CMD.FluidLbls.*;
+import static net.judah.settings.Commands.FluidLbls.*;
 import static net.judah.util.Constants.*;
 
 import java.io.File;
@@ -21,14 +21,12 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
+import net.judah.api.Command;
+import net.judah.api.Midi;
+import net.judah.api.Service;
 import net.judah.midi.JudahMidi;
-import net.judah.midi.Midi;
 import net.judah.midi.ProgMsg;
-import net.judah.settings.Command;
-import net.judah.settings.Service;
 import net.judah.util.Console;
-import net.judah.util.Constants;
-import net.judah.util.Constants.Toggles;
 import net.judah.util.JudahException;
 
 
@@ -61,11 +59,10 @@ public class FluidSynth implements Service {
     
 	@Getter private Instruments instruments = new Instruments();
 	@Getter private Channels channels = new Channels();
-	private final Command progChange, instUp, instDown, drumBank;
+	private final Command progChange, instUp, instDown, drumBank, direct;
+	@Getter private final List<Command> commands;
 	
 	private float gain = 0.7f; // max 5
-	private boolean reverb; // toggles on in init()
-	private boolean chorus; // toggles on in init()
 	private float reverbLevel = 0.75f;
 	private float roomSize = 0.75f;
 	private float dampness = 0.75f;
@@ -134,7 +131,7 @@ public class FluidSynth implements Service {
 		
 		instUp = new Command(INSTUP.name, INSTUP.desc) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				instUp(0, false);
+				instUp(0, true);
 			}};
 		instDown = new Command(INSTDOWN.name, INSTDOWN.desc) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
@@ -145,17 +142,31 @@ public class FluidSynth implements Service {
 		template.put("preset", Integer.class);
 		drumBank = new Command(DRUMBANK.name, DRUMBANK.desc, template) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				Object o = props.get("up");
-				Object o2 = props.get("preset");
-				if (o == null && o2 == null) 
-					throw new JudahException("up or preset needs to be set. " + this + " - " + Constants.prettyPrint(props));
-				if (o != null) 
-					instUp(DRUMS, Boolean.parseBoolean(o.toString()));
-				else 
-					sendCommand(FluidCommand.PROG_CHANGE, "9 " + Integer.parseInt(o2.toString()));
+				
+				Integer preset = null;
+				try {
+					preset = Integer.parseInt("" + props.get("preset"));
+					sendCommand(FluidCommand.PROG_CHANGE, "9 " + preset);
+					return;
+				} catch (Throwable t) { }
+				
+				try {
+					boolean up = Boolean.parseBoolean("" + props.get("up"));
+					instUp(DRUMS, up);
+				} catch (Throwable t) { }
 			}
 		};
-		
+		template = new HashMap<String, Class<?>>();
+		template.put("string", String.class);
+		direct = new Command(DIRECT.name, DIRECT.desc, template) {
+			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+				String[] split = props.get("string").toString().split(";");
+				for (String cmd : split)
+					sendCommand(cmd);
+			}
+		};
+
+	    commands = Arrays.asList(new Command[] {progChange, instUp, instDown, drumBank, direct});				
 		// doHelp();
 		Console.addText( "FluidSynth channels: " + channels.size() + " instruments: " + instruments.size());
 	}
@@ -304,7 +315,7 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 	}
 
 	public void sendCommand(String string) {
-		log.debug("sendCommand: " + string);
+		log.trace("sendCommand: " + string);
 		if (false == string.endsWith(NL))
 			string = string + NL;
 
@@ -392,52 +403,11 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 		return null;
 	}
 
-	public void toggle(Toggles type, boolean on) {
-		if (type == Toggles.REVERB) {
-			sendCommand( on ? "reverb on" : "reverb off");
-			reverb = on;
-		}
-		if (type == Toggles.CHORUS) {
-			sendCommand( on ? "chorus on" : "chorus off");
-			chorus = on;
-		}
-	}
-
-	public void toggle(Toggles type) {
-		if (type == Toggles.REVERB) {
-			toggleReverb();
-		}
-		if (type == Toggles.CHORUS) {
-			toggleChorus();
-		}
-	}
-
-	private void toggleReverb() {
-		if (reverb)
-			sendCommand("reverb off");
-		else
-			sendCommand("reverb on");
-		reverb = !reverb;
-	}
-
-	private void toggleChorus() {
-		if (chorus)
-			sendCommand("chorus off");
-		else
-			sendCommand("chorus on");
-		chorus = !chorus;
-	}
-
 	@Override
 	public String getServiceName() {
 		return FluidSynth.class.getSimpleName();
 	}
 
-	@Override
-	public List<Command> getCommands() {
-		return Arrays.asList(new Command[] {progChange, instUp, instDown, drumBank});
-	}
-	
 	@Override
 	public void close() {
 		try {
@@ -511,32 +481,5 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 	
 }
 
-/*
-	@Override
-	public void execute(Command cmd, HashMap<String, Object> props) throws Exception {
-		if (cmd == instDown)  
-			instUp(0, false);
-		else if (cmd == instUp) 
-			instUp(0, true);
-		else if (cmd == progChange) {
-			int channel = 0;
-			try {
-				channel = Integer.parseInt(props.get("channel").toString());
-			} catch (Throwable t) { log.debug(t.getMessage()); }
-			midi.queue(
-			progChange(channel, Integer.parseInt(props.get("preset").toString())));
-		}
-		else if (cmd == drumBank) {
-			Object o = props.get("up");
-			Object o2 = props.get("preset");
-			if (o == null && o2 == null) 
-				throw new JudahException("up or preset needs to be set. " + cmd + " - " + Constants.prettyPrint(props));
-			if (o != null) 
-				instUp(DRUMS, Boolean.parseBoolean(o.toString()));
-			else 
-				sendCommand(FluidCommand.PROG_CHANGE, "9 " + Integer.parseInt(o2.toString()));
-		}
-		else 
-			throw new JudahException(cmd + " not implemented yet. " + Command.toString(props));
- 	}
-*/
+// sendCommand( on ? "reverb on" : "reverb off");
+// sendCommand( on ? "chorus on" : "chorus off");

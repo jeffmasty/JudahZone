@@ -11,8 +11,8 @@ import org.apache.commons.io.FilenameUtils;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
+import net.judah.sequencer.SeqDisplay;
 import net.judah.sequencer.Sequencer;
-import net.judah.sequencer.SeqWidget;
 import net.judah.song.LinkTable;
 import net.judah.song.RouterTable;
 import net.judah.song.Song;
@@ -62,7 +62,7 @@ public class Page extends JPanel {
 		cards.addTab("Midi Map", links);
 		cards.addTab("Router", router);
 		cards.addTab("Properties", properties);
-		cards.addTab("Sequencer", new SeqWidget());
+		cards.addTab("Sequencer", new SeqDisplay());
 		
 		add(buttons);
 		add(triggers);
@@ -85,7 +85,7 @@ public class Page extends JPanel {
 		try {
 			song.setProps(properties.getMap());
 			song.setLinks(links.getLinks());
-			song.setSequencer(triggers.getSequence());
+			song.setSequencer(triggers.getFilteredData());
 			song.setRouter(router.getRoutes());
 			JsonUtil.saveString(JsonUtil.MAPPER.writeValueAsString(song), file);
 			

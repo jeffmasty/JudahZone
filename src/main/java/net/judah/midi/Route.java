@@ -1,6 +1,10 @@
 package net.judah.midi;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Data;
+import lombok.Getter;
+import net.judah.api.Midi;
 
 
 @Data 
@@ -12,13 +16,21 @@ public class Route {
 	private final Integer toCommand;
 	private final Integer fromData1;
 	private final Integer toData1;
+	
+	@JsonIgnore
+	@Getter private transient Octaver octaver;
 
+	public Route(Octaver octaver) {
+		this(octaver.getChannel(), octaver.getChannel());
+		this.octaver = octaver;
+	}
+	
 	public Route(int fromChannel, int toChannel) {
 		this.fromChannel = fromChannel;
 		this.toChannel = toChannel;
 		fromCommand = toCommand = fromData1 = toData1 = null;
 	}
-	
+
 	public Route(Midi from, Midi to) {
 		fromChannel = from.getChannel();
 		fromCommand = from.getCommand();

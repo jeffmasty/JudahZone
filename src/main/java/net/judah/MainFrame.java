@@ -5,13 +5,10 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
-import lombok.extern.log4j.Log4j;
-import net.judah.sequencer.Sequencer;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.MenuBar;
 
-@Log4j
 public class MainFrame extends JFrame {
 	
 	private static MainFrame instance;
@@ -65,16 +62,8 @@ public class MainFrame extends JFrame {
 		tabs.add(name, page);
 		tabs.setSelectedComponent(page);
 		setTitle(prefix + " - " + page.getName());
-		if (JudahZone.getCurrentSong() != null) {
-			JudahZone.getMetronome().removeListener(JudahZone.getCurrentSong());
-			JudahZone.getCurrentSong().close();
-		}
-			
-		Sequencer sequencer = page.getSequencer();
-		JudahZone.setCurrentSong(sequencer);
-		JudahZone.getMetronome().addListener(sequencer);
-		log.debug("loaded song " + sequencer.getSongfile().getAbsolutePath());
-		right.setSong(sequencer);
+		
+		right.setSong(page.getSequencer());
 	}
 	
 	public static MainFrame get() {

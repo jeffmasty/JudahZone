@@ -1,7 +1,5 @@
 package net.judah.song;
 
-import java.awt.Color;
-import java.awt.Component;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,22 +7,26 @@ import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
-import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumnModel;
 
 import net.judah.CommandHandler;
-import net.judah.settings.Command;
+import net.judah.api.Command;
 import net.judah.song.Trigger.Type;
 import net.judah.util.Console;
-import net.judah.util.Constants;
 import net.judah.util.EditsPane;
 import net.judah.util.JudahException;
 import net.judah.util.PopupMenu;
 
 public class TriggersTable extends JPanel implements Edits {
 
+	static final int COL_TYPE = 0;
+	static final int COL_TIME = 1;
+	static final int COL_CMD = 2;
+	static final int COL_NOTE = 3;
+	static final int COL_PROP = 4;
+	
 	private final JTable table;
 	private final SequencerModel model;
 	private final CommandHandler commander;
@@ -35,28 +37,18 @@ public class TriggersTable extends JPanel implements Edits {
 		model = new SequencerModel(sequence, commander);
 		table = new JTable(model);
 		
+		// table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+		TableColumnModel cols = table.getColumnModel(); 
+		cols.getColumn(COL_TYPE).setPreferredWidth(20);
+		cols.getColumn(COL_TIME).setPreferredWidth(20);
+		cols.getColumn(COL_CMD).setPreferredWidth(95);
+		cols.getColumn(COL_NOTE).setPreferredWidth(115);
+		cols.getColumn(COL_PROP).setPreferredWidth(280);
 		
-		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-		table.getColumnModel().getColumn(0).setPreferredWidth(60);
-		table.getColumnModel().getColumn(1).setPreferredWidth(100);
-		table.getColumnModel().getColumn(2).setPreferredWidth(140);
-		table.getColumnModel().getColumn(3).setPreferredWidth(20);
-		
+		table.setDefaultEditor(Type.class, new DefaultCellEditor(new JComboBox<Type>(Type.values())));
 		table.setDefaultEditor(Command.class, new DefaultCellEditor(
 				new JComboBox<Command>(commander.getAvailableCommands())));
 		table.setDefaultEditor(HashMap.class, new PropertiesEditor());
-		table.setDefaultRenderer(HashMap.class, new TableCellRenderer() {
-			@SuppressWarnings("rawtypes")
-			@Override public Component getTableCellRendererComponent(JTable table, Object value, 
-					boolean isSelected, boolean hasFocus, int row, int column) {
-				
-				boolean empty = value == null || !(value instanceof HashMap) || ((HashMap) value).isEmpty(); 
-				JLabel lbl = new JLabel( empty ? "..." : "abc");
-				lbl.setBorder(isSelected ? Constants.Gui.GRAY1 : null);
-				lbl.setForeground(isSelected ? Color.BLACK : Color.GRAY);
-				return lbl;
-			}
-		});
 		
 		PopupMenu menu = new PopupMenu(this);
 		add(new EditsPane(table, menu));
@@ -64,7 +56,7 @@ public class TriggersTable extends JPanel implements Edits {
 	}
 
 	@Override public void editAdd() {
-		Trigger trigger = new Trigger(Type.ABSOLUTE, -1l, null, "", "", new HashMap<String, Object>(), null);
+		Trigger trigger = new Trigger(Type.ABS, 0l, "", "", new HashMap<String, Object>(), null);
 		if(table.getSelectedRow() < 0)
 			model.addRow(newRow(trigger));
 		else 
@@ -72,7 +64,7 @@ public class TriggersTable extends JPanel implements Edits {
 	}
 
 	private Object[] newRow(Trigger trigger) {
-		return new Object[] { trigger.getTimestamp(), commander.find(trigger.getCommand()), 
+		return new Object[] { trigger.getType(), trigger.getTimestamp(), commander.find(trigger.getCommand()), 
 				trigger.getNotes(), trigger.getParams()};
 	}
 	
@@ -82,9 +74,9 @@ public class TriggersTable extends JPanel implements Edits {
 		model.removeRow(selected);
 	}
 
-
-	public ArrayList<Trigger> getSequence() throws JudahException {
-		return model.getData();
+	/**@return triggers suitable for saving*/
+	public ArrayList<Trigger> getFilteredData() {
+		return model.getFilteredData();
 	}
 
 	@Override
@@ -113,9 +105,14 @@ public class TriggersTable extends JPanel implements Edits {
 	@Override
 	public void paste(List<Copyable> clipboard) {
 		if (clipboard == null || clipboard.isEmpty()) return;
-		for (Copyable c : clipboard)
+		for (int i = clipboard.size() -1; i >= 0; i--) {
+			Object c = clipboard.get(i);
 			if (c instanceof Trigger) {
-				model.addRow(newRow((Trigger)c));
+				if (table.getSelectedRow() == -1)
+					model.addRow(newRow((Trigger)c));
+				else 
+					model.insertRow(table.getSelectedRow() + 1, newRow((Trigger)c));
 			}
+		}
 	}
 }

@@ -8,7 +8,7 @@ import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.midi.Midi;
+import net.judah.api.Midi;
 
 /* TODO upJoystick, downJoystick
 cc codes 14-63,75-83, 85-90, 96-127
@@ -40,6 +40,8 @@ public class MPK {
 	public static final int ABANK = 0;
 	public static final int BBANK = 1;
 
+	// joystick cc 0 and cc 100
+	
 	// Not MPK 
 	private static final List<Integer> pedal = Arrays.asList(new Integer[] 
 			{96, 97, 98, 99, 100, 101});
@@ -66,7 +68,7 @@ public class MPK {
 			else if (knobs0.contains(val))
 				return "Knob  " + knobs0.indexOf(val) + quote(midi);
 			else if (knobs1.contains(val))
-				return "Knob  " + knobs0.indexOf(val) + quote(midi) + " Bank1";
+				return "Knob  " + knobs1.indexOf(val) + quote(midi) + " Bank1";
 			else if (primaryCC.contains(val))
 				return "CC Pad " + primaryCC.indexOf(val) + quote(midi);
 		}
@@ -78,7 +80,7 @@ public class MPK {
 	}
 	
 	private static final List<Integer> knobs0 = Arrays.asList(new Integer[] 
-			{48, 49, 50, 51, 44, 45, 46, 47});
+			{14, 15, 16, 17, 18, 19, 20, 21});
 	private static final List<Integer> knobs1 = Arrays.asList(new Integer[]
 			{22, 23, 24, 25, 26, 27, 28, 29});
 	private static final List<Integer> knobs2 = Arrays.asList(new Integer[]

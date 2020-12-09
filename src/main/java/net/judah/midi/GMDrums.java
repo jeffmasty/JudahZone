@@ -3,13 +3,20 @@ package net.judah.midi;
 import java.util.HashMap;
 
 import lombok.Getter;
+import net.judah.api.Midi;
 
 public class GMDrums {
 
 	@Getter private static final HashMap<Integer, String> map = initMap(); 
 
-	
-	
+	/* (subtract 1)
+	1	Standard Drum Kit
+	9	Room Drum Kit
+	17	Power Drum Kit
+	25	Electric Drum Kit
+	26	Rap TR808 Drums
+	33	Jazz Drum Kit
+	41	Brush Kit */
 	
 	public static HashMap<Integer, String> initMap() {
 		HashMap<Integer, String> result = new HashMap<>();

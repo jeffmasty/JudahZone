@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.judah.api.Midi;
 import net.judah.plugin.MPK;
 import net.judah.song.Edits.Copyable;
 

@@ -1,53 +1,63 @@
 package net.judah.song;
 
+import static net.judah.song.TriggersTable.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.table.DefaultTableModel;
 
+import lombok.extern.log4j.Log4j;
 import net.judah.CommandHandler;
-import net.judah.settings.Command;
+import net.judah.api.Command;
 import net.judah.song.Trigger.Type;
+import net.judah.util.Console;
 import net.judah.util.JudahException;
 
+@Log4j
 public class SequencerModel extends DefaultTableModel {
 
 	
 	public SequencerModel(List<Trigger> sequence, CommandHandler commander) {
-		super (new Object[] { "Timestamp", "Command", "Notes", "Param"}, 0);
+		super (new Object[] { "Type", "Time", "Command", "Notes", "Param"}, 0);
 		if (sequence == null) return;
 		for (Trigger trigger: sequence) 
-			addRow(new Object[] {trigger.getTimestamp(), commander.find(trigger.getCommand()), 
+			addRow(new Object[] {trigger.getType(), trigger.getTimestamp(), commander.find(trigger.getCommand()), 
 					trigger.getNotes(), trigger.getParams()});
 	}
-
-
 	
 	@Override
 	public Class<?> getColumnClass(int idx) {
 		switch (idx) {
-			case 0: return Long.class;
-			case 1: return Command.class;
-			case 2: return String.class;
-			case 3: return HashMap.class;
+			case COL_TYPE: return Type.class;
+			case COL_TIME: return Long.class;
+			case COL_CMD: return Command.class;
+			case COL_NOTE: return String.class;
+			case COL_PROP: return HashMap.class;
 		}
 		return super.getColumnClass(idx);
 	}
 
 	@SuppressWarnings( { "rawtypes", "unchecked" })
 	public Trigger getRow(int i) throws JudahException {
-		Command cmd = ((Command)getValueAt(i,1));
-		if (cmd == null) throw new JudahException("no command for midi link");
+		Command cmd = ((Command)getValueAt(i,COL_CMD));
+		if (cmd == null) throw new JudahException("Sequencer row " + i + " no command.");
 		assert cmd.getName() != null;
-		return new Trigger(Type.ABSOLUTE, (long)getValueAt(i, 0), null, cmd.getName(),
-				getValueAt(i, 2).toString(), (HashMap)getValueAt(i, 3), cmd);
+		return new Trigger((Type)getValueAt(i, COL_TYPE), (long)getValueAt(i, COL_TIME), cmd.getName(),
+				getValueAt(i, COL_NOTE).toString(), (HashMap)getValueAt(i, COL_PROP), cmd);
 	}
 	
-	public ArrayList<Trigger> getData() throws JudahException {
+	public ArrayList<Trigger> getFilteredData() {
 		ArrayList<Trigger> result = new ArrayList<Trigger>();
 		for (int i = 0; i < getRowCount(); i++)
-			result.add(getRow(i));
+			try {
+				result.add(getRow(i));
+			} catch (JudahException e) {
+				// skip empty and error rows (on save)
+				Console.warn("Skipping row " + i);
+				log.debug(e);
+			}
 		return result;
 	}
 

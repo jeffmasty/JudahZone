@@ -3,6 +3,8 @@ package net.judah.midi;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
+import net.judah.api.Midi;
+
 public class CCMsg extends Midi {
 
 	/** create a Control_Change message for the preset instrument on the channel

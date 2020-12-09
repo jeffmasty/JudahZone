@@ -17,7 +17,7 @@ import net.judah.midi.JudahMidi;
 public class Recording extends Vector<float[][]> {
 	
 	@Getter @Setter private String notes;
-
+	@Getter transient private long creationTime = System.currentTimeMillis(); 
 	transient private BlockingQueue<float[][]> newQueue;
 	transient private BlockingQueue<float[][]> oldQueue;
 	transient private BlockingQueue<Integer> locationQueue; 
@@ -54,7 +54,7 @@ public class Recording extends Vector<float[][]> {
 	/** create empty recording of size */
 	public Recording(int size, boolean startListeners) {
 		this(startListeners);
-		int bufferSize = JudahMidi.getInstance().getBuffersize();
+		int bufferSize = JudahMidi.getInstance().getBufferSize();
 		for (int j = 0; j < size; j++) {
 			float[][] data = new float[2][bufferSize];
 			AudioTools.processSilence(data);

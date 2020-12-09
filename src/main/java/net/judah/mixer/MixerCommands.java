@@ -1,6 +1,6 @@
 package net.judah.mixer;
 
-import static net.judah.settings.CMD.MixerLbls.*;
+import static net.judah.settings.Commands.MixerLbls.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,11 +11,14 @@ import org.apache.commons.lang3.StringUtils;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
+import net.judah.api.Command;
 import net.judah.jack.RecordAudio;
+import net.judah.looper.AudioPlay;
 import net.judah.looper.Recorder;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
-import net.judah.settings.Command;
+import net.judah.util.Console;
+import net.judah.util.Constants;
 import net.judah.util.JudahException;
 
 @Log4j
@@ -23,14 +26,12 @@ public class MixerCommands extends ArrayList<Command> {
 	
 	protected final Mixer mixer;
 	
-	public static final String GAIN_PROP = "Gain";
-	public static final String INDEX = "Index";
+	public static final String INDEX = "index";
+	public static final String LOOP_PARAM = "loop";
 	public static final String IS_INPUT = "isInput";
-	public static final String CHANNEL_PROP = "Channel";
+	public static final String CHANNEL_PROP = "channel";
 	public static final String PLUGIN_PROP = "Plugin Name";
 	public static final String PLUGIN_COMMAND = "Load Plugin";
-	public static final String LOOP_PARAM = "Loop";
-	public static final String CHANNEL_PARAM = "Channel";
 	public static final String SOURCE_LOOP = "source.loop";
 	public static final String DESTINATION_LOOP = "destination.loop";
 	public static final String SOURCE_FILE = "source.file";
@@ -43,15 +44,20 @@ public class MixerCommands extends ArrayList<Command> {
 	protected final Command loadSample;
 	protected final Command muteCommand;
 	protected final Command gainCommand;
+	protected final AudioPlay audioPlay;
 	
 	MixerCommands(Mixer mixer) {
 		this.mixer = mixer;
 
 		recordCmd = new Command(TOGGLE_RECORD.name, TOGGLE_RECORD.desc, loopProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				boolean active = midiData2 > 0;
-				try { active = Boolean.parseBoolean(props.get(Command.ACTIVE_PARAM).toString());
-				} catch (Throwable t) {  }
+				boolean active = false;
+				if (midiData2 < 0)
+					try { 
+						active = Boolean.parseBoolean(props.get(Command.PARAM_ACTIVE).toString());
+					} catch (Throwable t) {Console.warn(PARAM_ACTIVE + " not set. " + Constants.prettyPrint(props));  }
+				else 
+					active = midiData2 > 0;
 				int idx = getLoopNum(props); 
 				Sample s = mixer.getSamples().get(idx);
 				if (false == s instanceof RecordAudio) 
@@ -60,9 +66,12 @@ public class MixerCommands extends ArrayList<Command> {
 			}};
 		playCmd = new Command(TOGGLE_PLAY.name, TOGGLE_PLAY.desc, loopProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				boolean active = midiData2 > 0;
-				try { active = Boolean.parseBoolean(props.get(Command.ACTIVE_PARAM).toString());
-				} catch (Throwable t) {  }
+				boolean active = false;
+				if (midiData2 < 0)
+					try { active = Boolean.parseBoolean(props.get(Command.PARAM_ACTIVE).toString());
+					} catch (Throwable t) {Console.warn(PARAM_ACTIVE + " not set. " + Constants.prettyPrint(props));}
+				else 
+					active = midiData2 > 0;
 				int idx = getLoopNum(props);
 				if (idx == ALL)
 					for (Sample loop : mixer.getSamples()) 
@@ -74,7 +83,7 @@ public class MixerCommands extends ArrayList<Command> {
 		muteCommand = new Command(CHANNEL.name, CHANNEL.desc, muteProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				boolean mute = Boolean.parseBoolean(props.get("mute").toString());
-				String channel = props.get(CHANNEL_PARAM).toString();
+				String channel = props.get(Constants.PARAM_CHANNEL).toString();
 				int loopNum = getLoopNum(props);
 				if (loopNum == ALL)
 					for (Sample loop : mixer.getSamples()) 
@@ -94,10 +103,14 @@ public class MixerCommands extends ArrayList<Command> {
 			
 		gainCommand = new Command(GAIN.name, GAIN.desc, gainProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				float gain = ((midiData2))* 0.01f;
+				float gain = 0f;
+					if (midiData2 >= 0)
+						gain = ((midiData2))* 0.01f;
+					else gain = Float.parseFloat("" + props.get(Constants.PARAM_GAIN)); 
+					
 				boolean isInput = Boolean.parseBoolean(props.get(IS_INPUT).toString());
 				int idx = Integer.parseInt(props.get(INDEX).toString());
-				log.debug((isInput ? JudahZone.getChannels().get(idx).getName() : mixer.getSamples().get(idx).getName()) 
+				log.trace((isInput ? JudahZone.getChannels().get(idx).getName() : mixer.getSamples().get(idx).getName()) 
 						+ " gain: " + gain);
 				if (isInput) 
 					JudahZone.getChannels().get(idx).setGain(gain);
@@ -110,8 +123,10 @@ public class MixerCommands extends ArrayList<Command> {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				loadSample(props);}};
 		
+		audioPlay = new AudioPlay();
+				
 		addAll(Arrays.asList(new Command[] {
-			recordCmd, playCmd, clearCommand, loadSample, gainCommand, muteCommand
+			recordCmd, playCmd, clearCommand, loadSample, gainCommand, muteCommand, audioPlay
 		}));
 				
 	}
@@ -119,7 +134,7 @@ public class MixerCommands extends ArrayList<Command> {
 	public static HashMap<String, Class<?>> loopProps() {
 		HashMap<String, Class<?>> commandProps = new HashMap<>();
 		commandProps.put(LOOP_PARAM, Integer.class);
-		commandProps.put(Command.ACTIVE_PARAM, Boolean.class);
+		commandProps.put(Command.PARAM_ACTIVE, Boolean.class);
 		return commandProps;
 	}
 	
@@ -127,15 +142,15 @@ public class MixerCommands extends ArrayList<Command> {
 		HashMap<String, Class<?>> commandProps = new HashMap<>();
 		commandProps.put(IS_INPUT, Boolean.class);
 		commandProps.put(INDEX, Integer.class);
-		commandProps.put(GAIN_PROP, Float.class);
+		commandProps.put(Constants.PARAM_GAIN, Float.class);
 		return commandProps;
 	}
 
 	public static HashMap<String, Class<?>> muteProps() {
 		HashMap<String, Class<?>> commandProps = new HashMap<>();
 		commandProps.put(LOOP_PARAM, Integer.class);
-		commandProps.put(Command.ACTIVE_PARAM, Boolean.class);
-		commandProps.put(CHANNEL_PARAM, Integer.class);
+		commandProps.put(Command.PARAM_ACTIVE, Boolean.class);
+		commandProps.put(Constants.PARAM_CHANNEL, Integer.class);
 		return commandProps;
 	}
 

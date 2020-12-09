@@ -7,23 +7,22 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import net.judah.JudahZone;
-import net.judah.settings.Command;
+import net.judah.api.Command;
+import net.judah.sequencer.Sequencer;
 import net.judah.song.Edits.Copyable;
 
 @Data @AllArgsConstructor @NoArgsConstructor
 public class Trigger implements Copyable {
-	public enum Type {
-		ABSOLUTE, RELATIVE, MIDI
+	public static enum Type {
+		INIT, ABS, REL, TRIG, END
 	}
 	
 	public Trigger(long timestamp, Command cmd) {
-		this(Type.ABSOLUTE, timestamp, 0l, cmd.getName(), "", new HashMap<>(), null);
+		this(Type.ABS, timestamp, cmd.getName(), "", new HashMap<>(), cmd);
 	}
 	
-	Type type = Type.ABSOLUTE;
-	Long timestamp;
-	Long duration; 
+	Type type = Type.ABS;
+	Long timestamp = 0l;
 	
 	String command;
 	String notes;
@@ -34,16 +33,20 @@ public class Trigger implements Copyable {
 	
 	public Command getCmd() {
 		if (cmd == null) 
-			cmd = JudahZone.getCurrentSong().getCommander().find(command);
+			cmd = Sequencer.getCurrent().getCommander().find(command);
 		return cmd;
-		
+	}
+	
+	public boolean go(int count) {
+		if (type == Type.ABS && timestamp == count) return true;
+		if (type == Type.REL && timestamp == 0) return true;
+		return false;
 	}
 
 	@Override
 	public Trigger clone() {
 		Trigger result = new Trigger();
 		result.setCommand(command);
-		result.setDuration(duration);
 		result.setTimestamp(timestamp);
 		result.setNotes(notes);
 		result.setParams(new HashMap<>(params));

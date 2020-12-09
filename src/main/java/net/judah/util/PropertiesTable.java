@@ -83,10 +83,6 @@ public class PropertiesTable extends JPanel implements Edits {
 			setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 			add(scroller);
 		}
-		
-		
-		
-		
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -133,11 +129,5 @@ public class PropertiesTable extends JPanel implements Edits {
 			model.addRow(new Object[] {prop.getKey(), prop.getValue()});
 		}
 	}
-
-//	@Override public void copy() {
-//		int selected = table.getSelectedRow();
-//		if (selected < 0) return;
-//		model.addRow(new Object[] {model.getValueAt(selected, 0), model.getValueAt(selected, 1)});
-//	}
 	
 }

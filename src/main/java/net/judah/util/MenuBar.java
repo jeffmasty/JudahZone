@@ -8,7 +8,6 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.sequencer.Sequencer;
 import net.judah.song.Song;
@@ -16,7 +15,6 @@ import net.judah.song.Song;
 @Log4j
 public class MenuBar extends JMenuBar {
 
-	
     JMenu fileMenu = new JMenu("Song");
 
 	JMenuItem load = new JMenuItem("Open...");
@@ -37,7 +35,7 @@ public class MenuBar extends JMenuBar {
         fileMenu.add(save);
         save.addActionListener( (event) -> saveAs());
         fileMenu.add(saveAs);
-        close.addActionListener( (event) -> MainFrame.get().closeTab(JudahZone.getCurrentSong().getPage()));
+        close.addActionListener( (event) -> MainFrame.get().closeTab(Sequencer.getCurrent().getPage()));
         fileMenu.add(close);
         
 		exit.setMnemonic(KeyEvent.VK_E);
@@ -62,13 +60,13 @@ public class MenuBar extends JMenuBar {
 	}
 	
 	public void save() {
-		Sequencer s = JudahZone.getCurrentSong();
+		Sequencer s = Sequencer.getCurrent();
 		if (s == null) return;
 		s.getPage().save(s.getSongfile());
 	}
 	
 	public void saveAs() {
-		Sequencer s = JudahZone.getCurrentSong();
+		Sequencer s = Sequencer.getCurrent();
 		if (s == null) return;
 		File file = FileChooser.choose();
 		if (file == null) return;

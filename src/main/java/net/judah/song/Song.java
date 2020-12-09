@@ -1,5 +1,6 @@
 package net.judah.song;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -17,19 +18,18 @@ public class Song {
 	private static final HashMap<String, Object> defaultMap = new HashMap<>();
 	static {
 		defaultMap.put(Constants.PARAM_BPM, null);
-		defaultMap.put(Constants.PARAM_MEAUSRE, null);
+		defaultMap.put(Constants.PARAM_MEASURE, null);
 		defaultMap.put(Sequencer.PARAM_CARLA, null);
 		defaultMap.put(Sequencer.PARAM_FLUID, null);
 		defaultMap.put("notes", "");
 	}
 	
-	
 	private HashMap<String,Object> props = new HashMap<String, Object>(); 
 
 	private LinkedHashSet<Link> links = new LinkedHashSet<Link>();
 	
-	private List<Trigger> sequencer;
+	private List<Trigger> sequencer = new ArrayList<>();
 	
-	private List<MidiPair> router;
+	private List<MidiPair> router = new ArrayList<>();
 
 }

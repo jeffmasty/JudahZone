@@ -7,7 +7,7 @@ import javax.sound.midi.ShortMessage;
 
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import net.judah.midi.MidiClient;
+import net.judah.api.MidiClient;
 
 /** Volume adjusted javax midi sender */
 @RequiredArgsConstructor

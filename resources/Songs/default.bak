@@ -37,7 +37,7 @@
     "midi" : "uSEA",
     "props" : {
       "Loop" : "-1",
-      "Active" : "0",
+      "active" : "0",
       "Channel" : null
     }
   }, {
@@ -47,7 +47,7 @@
     "midi" : "sGB/",
     "props" : {
       "Loop" : "0",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "name" : "Master Stop Record",
@@ -56,7 +56,7 @@
     "midi" : "sGAA",
     "props" : {
       "Loop" : "0",
-      "Active" : "false"
+      "active" : "false"
     }
   }, {
     "name" : "Master Play",
@@ -65,7 +65,7 @@
     "midi" : "sGN/",
     "props" : {
       "Loop" : "0",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "name" : "Master Stop",
@@ -74,7 +74,7 @@
     "midi" : "sGMA",
     "props" : {
       "Loop" : "0",
-      "Active" : "false"
+      "active" : "false"
     }
   }, {
     "name" : "Loop2 Record",
@@ -83,7 +83,7 @@
     "midi" : "sGF/",
     "props" : {
       "Loop" : "1",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "name" : "Loop2 Stop Record",
@@ -92,7 +92,7 @@
     "midi" : "sGEA",
     "props" : {
       "Loop" : "1",
-      "Active" : "false"
+      "active" : "false"
     }
   }, {
     "name" : "Loop2 Play",
@@ -101,7 +101,7 @@
     "midi" : "sGR/",
     "props" : {
       "Loop" : "1",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "name" : "Loop2 Stop",
@@ -110,7 +110,7 @@
     "midi" : "sGQA",
     "props" : {
       "Loop" : "1",
-      "Active" : "false"
+      "active" : "false"
     }
   }, {
     "name" : "Knob 0",
@@ -120,7 +120,7 @@
     "props" : {
       "Loop" : null,
       "volume" : null,
-      "Active" : null
+      "active" : null
     }
   }, {
     "name" : "Knob 1",
@@ -133,62 +133,62 @@
   }, {
     "name" : "Knob 2",
     "service" : "Mixer",
-    "command" : "Mixer Gain",
+    "command" : "Mixer gain",
     "midi" : "sBA3",
     "props" : {
       "isInput" : "false",
       "Index" : "0",
-      "Gain" : null
+      "gain" : null
     }
   }, {
     "name" : "Knob 3",
     "service" : "Mixer",
-    "command" : "Mixer Gain",
+    "command" : "Mixer gain",
     "midi" : "sBEA",
     "props" : {
       "isInput" : "false",
       "Index" : "1",
-      "Gain" : null
+      "gain" : null
     }
   }, {
     "name" : "Knob 4",
     "service" : "Mixer",
-    "command" : "Mixer Gain",
+    "command" : "Mixer gain",
     "midi" : "sBIA",
     "props" : {
       "isInput" : "true",
       "Index" : "0",
-      "Gain" : null
+      "gain" : null
     }
   }, {
     "name" : "Knob 5",
     "service" : "Mixer",
-    "command" : "Mixer Gain",
+    "command" : "Mixer gain",
     "midi" : "sBMA",
     "props" : {
       "isInput" : "true",
       "Index" : "1",
-      "Gain" : null
+      "gain" : null
     }
   }, {
     "name" : "Knob 6",
     "service" : "Mixer",
-    "command" : "Mixer Gain",
+    "command" : "Mixer gain",
     "midi" : "sBQA",
     "props" : {
       "isInput" : "true",
       "Index" : "2",
-      "Gain" : null
+      "gain" : null
     }
   }, {
     "name" : "Knob 7",
     "service" : "Mixer",
-    "command" : "Mixer Gain",
+    "command" : "Mixer gain",
     "midi" : "sBUA",
     "props" : {
       "isInput" : "true",
       "Index" : "3",
-      "Gain" : null
+      "gain" : null
     }
   } ],
   "sequencer" : [ {

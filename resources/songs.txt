@@ -32,3 +32,6 @@ Stop Loop2 for bridge
 Start Loop2 for ending.
 Stop (ritardando?)
 
+
+Checklist:
+PulseAudio volume

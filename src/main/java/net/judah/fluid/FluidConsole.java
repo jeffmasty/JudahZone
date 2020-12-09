@@ -14,7 +14,6 @@ public class FluidConsole implements ConsoleParticipant {
 		this.fluid = fluidSynth;
 	}
 
-
 	public String getPrefix() {
 		return PREFIX;
 	}
@@ -23,7 +22,7 @@ public class FluidConsole implements ConsoleParticipant {
 	public void process(String[] input) {
 		if (input == null || input.length < 2 || !PREFIX.equals(input[0])) return;
 		String text = input [1];
-		if (text.equals("help")) {
+		if (text.equals("help") && input.length == 2) {
 			doHelp(); 
 			return;
 		}

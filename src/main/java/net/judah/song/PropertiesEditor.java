@@ -7,9 +7,10 @@ import java.util.HashMap;
 import javax.swing.JTable;
 import javax.swing.event.CellEditorListener;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableModel;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.settings.Command;
+import net.judah.api.Command;
 import net.judah.util.EditorDialog;
 import net.judah.util.PropertiesTable;
 
@@ -24,13 +25,21 @@ public class PropertiesEditor implements TableCellEditor {
 		return cell.getMap();
 	}
 	
+	/** finds a Command object in a TableModel row */
+	private Command getCommand(TableModel table, int row) {
+		int cols = table.getColumnCount();
+		for (int i = 0; i < cols; i++)
+			if (table.getValueAt(row, i) instanceof Command)
+				return (Command)table.getValueAt(row, i);
+		return null;
+	}
+	
 	@Override @SuppressWarnings({ "unchecked", "rawtypes" })
 	public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
 		dialog = new EditorDialog("Midi");
 		HashMap props = (HashMap)value;
-		Object o = table.getModel().getValueAt(row, LinkTable.COMMAND_COL);
-		if (o != null && o instanceof Command) {
-			Command cmd = (Command)o;
+		Command cmd = getCommand(table.getModel(), row);
+		if (cmd != null ) {
 			cell = new PropertiesTable(props, cmd.getTemplate());
 		}
 		else {

@@ -1,151 +1,185 @@
 {
   "props" : {
-    "carla" : "/home/judah/git/JudahZone/target/classes/carla/JudahZone.carxp",
+    "pulse" : "8",
+    "carla" : "/home/judah/git/JudahZone/resources/carla/JudahZone.carxp",
+    "fluid" : "reverb on; rev_preset 2",
     "bpm" : "85"
   },
   "links" : [ {
     "name" : "",
-    "command" : "metro:start",
+    "command" : "seq:transport",
     "midi" : "sGUA",
+    "props" : {
+      "active" : null
+    }
+  }, {
+    "name" : "Prog Pad 3",
+    "command" : "synth:instUp",
+    "midi" : "yQQ=",
+    "props" : { }
+  }, {
+    "name" : "Prog Pad 7",
+    "command" : "synth:instDown",
+    "midi" : "yQg=",
     "props" : { }
   } ],
   "sequencer" : [ {
-    "type" : "ABSOLUTE",
+    "type" : "INIT",
     "timestamp" : -1,
-    "duration" : null,
-    "command" : "metro:setup",
-    "notes" : "",
+    "command" : "seq:clicktrack",
+    "notes" : "2 bar intro, record 2 bars",
     "params" : {
       "intro.beats" : "8",
-      "midi.beat" : null,
-      "midi.channel" : null,
-      "duration.beats" : "16",
-      "midi.downbeat" : null,
-      "midi.file" : null
+      "duration.beats" : "16"
     }
   }, {
-    "type" : "ABSOLUTE",
+    "type" : "INIT",
+    "timestamp" : -1,
+    "command" : "synth:progChange",
+    "notes" : "Vibraphone",
+    "params" : {
+      "channel" : "0",
+      "preset" : "11"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : -1,
+    "command" : "midi:octaver",
+    "notes" : "octave up",
+    "params" : {
+      "active" : "true",
+      "midi.channel" : "0",
+      "steps" : "12"
+    }
+  }, {
+    "type" : "ABS",
     "timestamp" : 0,
-    "duration" : null,
     "command" : "loop:record",
     "notes" : "",
     "params" : {
       "Loop" : "0",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
-    "type" : "ABSOLUTE",
+    "type" : "ABS",
     "timestamp" : 8,
-    "duration" : null,
     "command" : "loop:record",
     "notes" : "",
     "params" : {
       "Loop" : "0",
-      "Active" : "false"
+      "active" : "false"
     }
   }, {
-    "type" : "ABSOLUTE",
+    "type" : "ABS",
     "timestamp" : 8,
-    "duration" : null,
-    "command" : "midi:note",
-    "notes" : "",
-    "params" : {
-      "data2" : "126",
-      "channel" : "9",
-      "data1" : "36",
-      "command" : "144"
-    }
-  }, {
-    "type" : "ABSOLUTE",
-    "timestamp" : 8,
-    "duration" : null,
     "command" : "seq:internal",
-    "notes" : "",
+    "notes" : "time master on loop",
     "params" : {
       "patch" : "AllMyLoving"
     }
   }, {
-    "type" : "ABSOLUTE",
+    "type" : "ABS",
     "timestamp" : 9,
-    "duration" : null,
     "command" : "loop:record",
     "notes" : "Arpeggios",
     "params" : {
       "Loop" : "1",
-      "Active" : "true",
+      "active" : "true",
       "repetitions" : null
     }
   }, {
-    "type" : "ABSOLUTE",
+    "type" : "ABS",
     "timestamp" : 14,
-    "duration" : null,
     "command" : "loop:record",
     "notes" : "free melody (x2)",
     "params" : {
       "Loop" : "1",
-      "Active" : "false",
+      "active" : "false",
       "repetitions" : null
     }
   }, {
-    "type" : "ABSOLUTE",
-    "timestamp" : 14,
-    "duration" : null,
+    "type" : "REL",
+    "timestamp" : 0,
     "command" : "loop:play",
     "notes" : "",
     "params" : {
       "Loop" : "1",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
-    "type" : "ABSOLUTE",
+    "type" : "ABS",
     "timestamp" : 24,
-    "duration" : null,
     "command" : "loop:play",
     "notes" : "Bridge",
     "params" : {
       "Loop" : "1",
-      "Active" : "false"
+      "active" : "false"
     }
   }, {
-    "type" : "ABSOLUTE",
+    "type" : "ABS",
     "timestamp" : 28,
-    "duration" : null,
+    "command" : "loop:play",
+    "notes" : "play Piano",
+    "params" : {
+      "Loop" : "1",
+      "active" : "true"
+    }
+  }, {
+    "type" : "ABS",
+    "timestamp" : 33,
+    "command" : "loop:play",
+    "notes" : "Bridge",
+    "params" : {
+      "Loop" : "1",
+      "active" : "false"
+    }
+  }, {
+    "type" : "ABS",
+    "timestamp" : 37,
     "command" : "loop:play",
     "notes" : "free melody",
     "params" : {
       "Loop" : "1",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
-    "type" : "ABSOLUTE",
-    "timestamp" : 33,
-    "duration" : null,
+    "type" : "ABS",
+    "timestamp" : 42,
     "command" : "loop:play",
     "notes" : "",
     "params" : {
       "Loop" : "1",
-      "Active" : "false"
+      "active" : "false"
     }
   }, {
-    "type" : "ABSOLUTE",
-    "timestamp" : 34,
-    "duration" : null,
+    "type" : "ABS",
+    "timestamp" : 43,
     "command" : "loop:play",
-    "notes" : "",
+    "notes" : "2 bar exit",
     "params" : {
       "Loop" : "0",
-      "Active" : "false"
+      "active" : "false"
     }
   }, {
-    "type" : "ABSOLUTE",
-    "timestamp" : 34,
-    "duration" : null,
+    "type" : "ABS",
+    "timestamp" : 43,
+    "command" : "midi:note",
+    "notes" : "",
+    "params" : {
+      "data2" : "100",
+      "channel" : "9",
+      "data1" : "51",
+      "command" : "144"
+    }
+  }, {
+    "type" : "ABS",
+    "timestamp" : 43,
     "command" : "midi:note",
     "notes" : "",
     "params" : {
       "data2" : "126",
       "channel" : "9",
-      "data1" : "36",
+      "data1" : "75",
       "command" : "144"
     }
   } ],

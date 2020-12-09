@@ -1,0 +1,413 @@
+{
+  "props" : {
+    "carla" : "/home/judah/git/JudahZone/resources/carla/JudahZone.carxp"
+  },
+  "links" : [ {
+    "name" : "trigger",
+    "command" : "seq:trigger",
+    "midi" : "sGIA",
+    "props" : { }
+  }, {
+    "name" : "",
+    "command" : "seq:activate",
+    "midi" : "sGQA",
+    "props" : {
+      "name" : "hihats",
+      "active" : null
+    }
+  }, {
+    "name" : "",
+    "command" : "seq:volume",
+    "midi" : "sA47",
+    "props" : {
+      "volume" : null,
+      "name" : "bassdrum,snare"
+    }
+  }, {
+    "name" : "",
+    "command" : "seq:volume",
+    "midi" : "sA8t",
+    "props" : {
+      "volume" : null,
+      "name" : "hihats"
+    }
+  }, {
+    "name" : "",
+    "command" : "mixer:volume",
+    "midi" : "sBAr",
+    "props" : {
+      "volume" : null,
+      "index" : "0",
+      "isInput" : "false"
+    }
+  }, {
+    "name" : "",
+    "command" : "mixer:volume",
+    "midi" : "sBFG",
+    "props" : {
+      "volume" : null,
+      "index" : "1",
+      "isInput" : "false",
+      "gain" : null
+    }
+  }, {
+    "name" : "hi hats",
+    "command" : "seq:activate",
+    "midi" : "sGQA",
+    "props" : {
+      "name" : "hihats",
+      "active" : null
+    }
+  }, {
+    "name" : "play \"feel good\" sample",
+    "command" : "audio:play",
+    "midi" : "uSIA",
+    "props" : {
+      "active" : "",
+      "file" : "/home/judah/git/JudahZone/resources/samples/FeelGoodInc.wav"
+    }
+  }, {
+    "name" : "knob 7 - Synth Vol",
+    "command" : "mixer:volume",
+    "midi" : "sBUA",
+    "props" : {
+      "volume" : null,
+      "index" : "3",
+      "isInput" : "true",
+      "gain" : null
+    }
+  } ],
+  "sequencer" : [ {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "seq:setup",
+    "notes" : "",
+    "params" : {
+      "intro.beats" : "16",
+      "bpb" : "4",
+      "beats.per.pulse" : "16",
+      "bpm" : "120"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "seq:load",
+    "notes" : "bass drum",
+    "params" : {
+      "sequence" : "0,5",
+      "midi.record" : "false",
+      "data2" : "95",
+      "channel" : "9",
+      "data1" : "36",
+      "name" : "bassdrum",
+      "active" : "true",
+      "command" : "144",
+      "loop.count" : "3"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "seq:load",
+    "notes" : "hi hats",
+    "params" : {
+      "sequence" : "1,2,3,6,7",
+      "midi.record" : "false",
+      "data2" : "90",
+      "channel" : "9",
+      "data1" : "42",
+      "name" : "hihats",
+      "active" : "false",
+      "command" : "144",
+      "loop.count" : ""
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "seq:load",
+    "notes" : "snare",
+    "params" : {
+      "sequence" : "2,6",
+      "midi.record" : "false",
+      "data2" : "90",
+      "channel" : "9",
+      "data1" : "38",
+      "name" : "snare",
+      "active" : "true",
+      "command" : "144",
+      "loop.count" : "3"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "synth:direct",
+    "notes" : "",
+    "params" : {
+      "string" : "set synth.reverb.active off"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "synth:progChange",
+    "notes" : "",
+    "params" : {
+      "channel" : "0",
+      "preset" : "33"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "synth:drumSet",
+    "notes" : "",
+    "params" : {
+      "up" : "",
+      "preset" : "24"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "midi:octaver",
+    "notes" : "",
+    "params" : {
+      "channel" : "0",
+      "active" : "true",
+      "steps" : "-24"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "mixer:volume",
+    "notes" : "",
+    "params" : {
+      "volume" : "0.9",
+      "isInput" : "true",
+      "index" : "3"
+    }
+  }, {
+    "type" : "TRIG",
+    "timestamp" : 0,
+    "command" : "seq:transport",
+    "notes" : "",
+    "params" : {
+      "active" : "true"
+    }
+  }, {
+    "type" : "ABS",
+    "timestamp" : 0,
+    "command" : "loop:record",
+    "notes" : "",
+    "params" : {
+      "loop" : "0",
+      "active" : "true"
+    }
+  }, {
+    "type" : "ABS",
+    "timestamp" : 32,
+    "command" : "loop:record",
+    "notes" : "",
+    "params" : {
+      "loop" : "0",
+      "active" : "false"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "loop:play",
+    "notes" : "",
+    "params" : {
+      "loop" : "0",
+      "active" : "true"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "loop:record",
+    "notes" : "",
+    "params" : {
+      "loop" : "0",
+      "active" : "true"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "mixer:volume",
+    "notes" : "",
+    "params" : {
+      "volume" : "0.40",
+      "isInput" : "true",
+      "index" : "3"
+    }
+  }, {
+    "type" : "ABS",
+    "timestamp" : 64,
+    "command" : "loop:record",
+    "notes" : "switch to loop b",
+    "params" : {
+      "loop" : "0",
+      "active" : "false"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "loop:record",
+    "notes" : "",
+    "params" : {
+      "loop" : "1",
+      "active" : "true"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "seq:activate",
+    "notes" : "bring in some hi hats",
+    "params" : {
+      "name" : "hihats",
+      "active" : "true"
+    }
+  }, {
+    "type" : "ABS",
+    "timestamp" : 96,
+    "command" : "loop:record",
+    "notes" : "overdub on B",
+    "params" : {
+      "loop" : "1",
+      "active" : "false"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "loop:play",
+    "notes" : "",
+    "params" : {
+      "loop" : "1",
+      "active" : "true"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "loop:record",
+    "notes" : "",
+    "params" : {
+      "loop" : "1",
+      "active" : "true"
+    }
+  }, {
+    "type" : "TRIG",
+    "timestamp" : 0,
+    "command" : "synth:progChange",
+    "notes" : "setup flutes",
+    "params" : {
+      "channel" : "0",
+      "preset" : "75"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "synth:direct",
+    "notes" : "",
+    "params" : {
+      "string" : "set synth.reverb.active on"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "midi:octaver",
+    "notes" : "",
+    "params" : {
+      "channel" : null,
+      "active" : "false",
+      "steps" : null
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "midi:octaver",
+    "notes" : "",
+    "params" : {
+      "channel" : "0",
+      "active" : "true",
+      "steps" : "24"
+    }
+  }, {
+    "type" : "TRIG",
+    "timestamp" : 0,
+    "command" : "synth:progChange",
+    "notes" : "setup strings",
+    "params" : {
+      "channel" : "0",
+      "preset" : "44"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "midi:octaver",
+    "notes" : "",
+    "params" : {
+      "channel" : null,
+      "active" : "false",
+      "steps" : null
+    }
+  }, {
+    "type" : "TRIG",
+    "timestamp" : 0,
+    "command" : "synth:progChange",
+    "notes" : "setup bass",
+    "params" : {
+      "string" : "",
+      "channel" : "0",
+      "preset" : "33"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "midi:octaver",
+    "notes" : "",
+    "params" : {
+      "channel" : "0",
+      "active" : "true",
+      "steps" : "-24"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "mixer:volume",
+    "notes" : "",
+    "params" : {
+      "volume" : "0.9",
+      "isInput" : "true",
+      "index" : "3"
+    }
+  }, {
+    "type" : "TRIG",
+    "timestamp" : 0,
+    "command" : "seq:queue",
+    "notes" : "queue stop on trigger",
+    "params" : {
+      "loop" : null,
+      "sequencer.internal" : 288,
+      "active" : "false",
+      "command" : "seq:transport"
+    }
+  }, {
+    "type" : "TRIG",
+    "timestamp" : 0,
+    "command" : "song:reload",
+    "notes" : "",
+    "params" : { }
+  } ],
+  "router" : [ {
+    "from" : "iTAA",
+    "to" : "mScA"
+  }, {
+    "from" : "iS8A",
+    "to" : "mUcA"
+  }, {
+    "from" : "mS0A",
+    "to" : "mT8A"
+  }, {
+    "from" : "iSwA",
+    "to" : "mSoA"
+  }, {
+    "from" : "iTIA",
+    "to" : "mTQA"
+  } ]
+}

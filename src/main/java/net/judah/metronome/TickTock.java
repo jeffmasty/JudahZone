@@ -10,10 +10,9 @@ import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.api.Player;
+import net.judah.api.Midi;
+import net.judah.api.MidiClient;
 import net.judah.api.Status;
-import net.judah.midi.MidiClient;
-import net.judah.midi.Midi;
 import net.judah.util.Constants;
 
 
@@ -24,7 +23,7 @@ public class TickTock implements Player {
 	public static final int DEFAULT_DOWNBEAT = 34;
 	public static final int DEFAULT_BEAT = 33;
 	private final MidiClient midi;
-	private final Metro metronome;
+	private final Metronome metronome;
     private int measure = 4;
     private float tempo = 85;
 	
@@ -44,6 +43,7 @@ public class TickTock implements Player {
 		private int count = 0;
 		@Override public void run() {
 
+			log.debug("wakeup " + count + " " + changed.get() + " " + intro + " " + duration );
 			if (changed.compareAndSet(true, false)) { // initilization or tempo update
 				beeperHandle.cancel(true);
 		        beeperHandle = scheduler.scheduleAtFixedRate(
@@ -56,10 +56,14 @@ public class TickTock implements Player {
 			
 			// count beats then trigger timebase or stop ticktock
 			if (intro != null && count == intro) {
-				metronome.beat(0); // roll transport
+				metronome.rollTransport(); // roll transport
 			}
 			if (duration != null && count >= duration) {
-				metronome.beat(duration - intro);
+				
+				log.info("duration hit " + count);
+				
+				// metronome.beat(duration - intro);
+				beeperHandle.cancel(true);
 				metronome.stop();
 				return;
 			}
@@ -78,8 +82,8 @@ public class TickTock implements Player {
 	 * @param measure beats per measure
 	 * @param tempo
 	 */
-	TickTock(Metro metro, int downbeat, int beat, int channel) {
-		this.midi = metro.getMidi();
+	TickTock(Metronome metro, int downbeat, int beat, int channel) {
+		this.midi = Metronome.getMidi();
 		this.metronome = metro;
     	try {
     		downbeatOn = new Midi(ShortMessage.NOTE_ON, channel, downbeat, 100); 
@@ -92,7 +96,7 @@ public class TickTock implements Player {
 	}
 
 	/** bell and woodblock on channel 9 */
-	TickTock(Metro metro) {
+	TickTock(Metronome metro) {
 		this(metro, 34, 33, 9); 
 	}
 
@@ -106,7 +110,7 @@ public class TickTock implements Player {
 		if (isRunning()) return;
 
 		long cycle = Constants.millisPerBeat(tempo);
-		log.debug("Metronome starting with a cycle of " + cycle + " for bpm: " + tempo);
+		log.debug("TickTock starting with a cycle of " + cycle + " for bpm: " + tempo);
 		
 		beeperHandle = scheduler.scheduleAtFixedRate(wakeUp, 0, 
 				Constants.millisPerBeat(tempo), TimeUnit.MILLISECONDS);
@@ -117,8 +121,10 @@ public class TickTock implements Player {
 
 	@Override
 	public void stop() {
+		log.debug("stop called", new Exception());
+		
 		if (!isRunning()) return;
-		scheduler.shutdown();
+		beeperHandle.cancel(true);
 		beeperHandle = null;
 	}
 

@@ -13,8 +13,23 @@ import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
+import net.judah.api.Command;
+
 public class Constants {
 
+	/** channel to send trick track midi out on */
+	public static final String PARAM_CHANNEL = "channel";
+	public static final String PARAM_BPM = "bpm";
+	public static final String PARAM_TEMP = PARAM_BPM;
+	public static final String PARAM_MEASURE = "bpb";
+	public static final String PARAM_BPB = PARAM_MEASURE;
+	public static final String PARAM_FILE = "file";
+	public static final String PARAM_NAME = "name";
+	
+	public static final String PARAM_GAIN = "volume";
+	// public static final String PARAM_TEMPO = "bpm";
+	// public static final String PARAM_MEASURE = "bpb";
+	
 	public static final String NL = System.getProperty("line.separator", "\r\n");
 	public static final String CUTE_NOTE = "♫ ";
 	public static final String FILE_SEPERATOR = System.getProperty("file.separator");
@@ -38,13 +53,6 @@ public class Constants {
     	public static final Border GRAY1 = new LineBorder(Color.GRAY, 1);
     }
 	
-	
-	public static String TEST_PLUGIN_URL = "http://moddevices.com/plugins/tap/reverb";
-
-	public enum Toggles {
-		REVERB, CHORUS, PHASER, DISTORTION
-	}
-
     public static int gain2midi(float gain) {
     	return Math.round(gain * 127);
     }
@@ -88,9 +96,21 @@ public class Constants {
 		}
 	}
 
-	public static final String PARAM_BPM = "bpm";
-	public static final String PARAM_MEAUSRE = "bpb";
+
+	/**If loopTime contains x beats, what is that in bpm?*/
+	public static float toTempo(long loopTime, int beats) {
+		return 60 * ((loopTime / 1000f) / beats);
+	}
 	
+	public static HashMap<String, Class<?>> active() {
+		return template(Command.PARAM_ACTIVE, Boolean.class);
+	}
+	
+	public static HashMap<String, Class<?>> template(String key, Class<?> clazz) {
+		HashMap<String, Class<?>> result = new HashMap<String, Class<?>>();
+		result.put(key, clazz);
+		return result;
+	}
 	
 //	// list out standard swing ui setting names
 //		public static void main(String[] args) {
@@ -104,7 +124,6 @@ public class Constants {
 //			for (String name : colors)
 //			    System.out.println(name);
 //		}
-		
 }
 
 // public static final String IN_PORT = "MIDI in";

@@ -1,18 +1,19 @@
 package net.judah.metronome;
 
+import static net.judah.settings.Commands.MetronomeLbls.*;
+
 import java.io.File;
 import java.util.HashMap;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.api.Player;
-import net.judah.midi.JudahMidiSetup;
-import net.judah.settings.Command;
+import net.judah.api.Command;
+import net.judah.settings.MidiSetup;
 import net.judah.util.Constants;
 
 @Log4j
 public class ClickTrack extends Command {
 
-	private final Metro metronome;
+	private final Metronome metronome;
 	
 	/** midi file of click track (optional) */
 	public static final String PARAM_MIDIFILE = "midi.file"; 
@@ -22,15 +23,13 @@ public class ClickTrack extends Command {
 	public static final String PARAM_INTRO = "intro.beats";
 	/** total beats to play */
 	public static final String PARAM_DURATION = "duration.beats";
-	/** channel to send trick track midi out on */
-	public static final String PARAM_CHANNEL = "midi.channel";
 	/** note_on note, first beat of bar (optional) */
 	public static final String PARAM_DOWNBEAT = "midi.downbeat";
 	/** note_on note (optional) */
 	public static final String PARAM_BEAT = "midi.beat"; 
 	
-	public ClickTrack(Metro metro) {
-		super("metro:setup", "Click Track settings", generateParams());
+	public ClickTrack(Metronome metro) {
+		super(CLICKTRACK.name, CLICKTRACK.desc, generateParams());
 		this.metronome = metro;
 	}
 	
@@ -39,7 +38,7 @@ public class ClickTrack extends Command {
 		
 		params.put(PARAM_INTRO, Integer.class); 
 		params.put(PARAM_DURATION, Integer.class); 
-		params.put(PARAM_CHANNEL, Integer.class);
+		params.put(Constants.PARAM_CHANNEL, Integer.class);
 		params.put(PARAM_MIDIFILE, String.class); 
 		params.put(PARAM_DOWNBEAT, Integer.class);
 		params.put(PARAM_BEAT, Integer.class);
@@ -50,9 +49,9 @@ public class ClickTrack extends Command {
 	@Override
 	public void execute(final HashMap<String, Object> props, int midiData2) {
 		log.warn("Click Track execute: " + Constants.prettyPrint(props));
-		int channel = JudahMidiSetup.OUT.DRUMS.channel;
+		int channel = MidiSetup.OUT.DRUMS.channel;
 		try {
-			channel = Integer.parseInt("" + props.get(PARAM_CHANNEL));
+			channel = Integer.parseInt("" + props.get(Constants.PARAM_CHANNEL));
 		} catch (NumberFormatException e) { /** default use channel 9 */}
 			
 		Player ticktock = null;
@@ -60,14 +59,14 @@ public class ClickTrack extends Command {
 		Object b = props.get(PARAM_BEAT);
 		Object file = props.get(PARAM_MIDIFILE);
 		
-		if (down != null && b != null) {
+		if (down != null &&  b != null) {
 			int beat = TickTock.DEFAULT_BEAT;
 			int downbeat = TickTock.DEFAULT_DOWNBEAT;
 			try {
 				beat = Integer.parseInt(b.toString());
 				downbeat = Integer.parseInt(down.toString());
 			} catch (NumberFormatException e) {
-				log.error(e.getMessage(), e);
+				log.warn(e.getMessage());
 			}
 			ticktock = new TickTock(metronome, downbeat, beat, channel);
 		}
@@ -82,7 +81,7 @@ public class ClickTrack extends Command {
 						log.error("unparsable clicktrack loop count " + o);
 					}
 				ticktock = new MidiPlayer(new File(file.toString()), 
-						loops, new MidiReceiver(metronome.getMidi()));
+						loops, new MidiReceiver(Metronome.getMidi()));
 			} catch (Exception e) {
 				String msg = e.getMessage() + " for " + props.get(PARAM_MIDIFILE);
 				log.error(msg, e);

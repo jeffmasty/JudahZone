@@ -11,7 +11,7 @@ import org.jaudiolibs.jnajack.Jack;
 import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
 
-import net.judah.midi.MidiClient;
+import net.judah.api.MidiClient;
 
 
 /** plays a Midi file through the active fluid synth instance or creates one */

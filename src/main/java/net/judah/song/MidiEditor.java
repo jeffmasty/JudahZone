@@ -8,7 +8,7 @@ import javax.swing.JTable;
 import javax.swing.event.CellEditorListener;
 import javax.swing.table.TableCellEditor;
 
-import net.judah.midi.Midi;
+import net.judah.api.Midi;
 import net.judah.plugin.MPK;
 import net.judah.util.EditorDialog;
 import net.judah.util.MidiForm;

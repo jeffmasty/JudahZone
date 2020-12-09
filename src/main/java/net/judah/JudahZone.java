@@ -17,15 +17,14 @@ import org.jaudiolibs.jnajack.JackException;
 import org.jaudiolibs.jnajack.JackPortFlags;
 import org.jaudiolibs.jnajack.JackPortType;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.log4j.Log4j;
+import net.judah.api.BasicClient;
+import net.judah.api.Service;
 import net.judah.fluid.FluidSynth;
 import net.judah.jack.AudioTools;
-import net.judah.jack.BasicClient;
-import net.judah.metronome.Metro;
+import net.judah.metronome.Metronome;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Instrument;
@@ -38,10 +37,9 @@ import net.judah.mixer.widget.FluidVolume;
 import net.judah.mixer.widget.VolumeWidget;
 import net.judah.sequencer.Sequencer;
 import net.judah.settings.Patch;
-import net.judah.settings.Service;
-import net.judah.settings.Services;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
+import net.judah.util.Services;
 
 
 /* Starting my jack sound system: 
@@ -65,12 +63,9 @@ public class JudahZone extends BasicClient {
 	@Getter private static final List<MixerPort> inputPorts = new ArrayList<>();
 	@Getter private static final List<MixerPort> outputPorts = new ArrayList<>();
 
-    /** Current Song */
-	@Getter @Setter(AccessLevel.PACKAGE) private static Sequencer currentSong;
-
 	@Getter private final FluidSynth fluid; 
 	@Getter private static JudahMidi midi;
-	@Getter private static Metro metronome;
+	@Getter private static Metronome metronome;
 	
     public static void main(String[] args) {
 
@@ -90,7 +85,7 @@ public class JudahZone extends BasicClient {
     	midi = new JudahMidi();
     	fluid = new FluidSynth(midi);
     	File clickTrack = new File(this.getClass().getClassLoader().getResource("metronome/JudahZone.mid").getFile()); 
-    	metronome = new Metro(clickTrack, null);
+    	metronome = new Metronome(clickTrack, null);
     	
     	services.addAll(Arrays.asList(new Service[] {midi, fluid, metronome}));
     	
@@ -148,7 +143,7 @@ public class JudahZone extends BasicClient {
 		new MainFrame(JUDAHZONE);
 
 		// Open a default song 
-		File file = new File("/home/judah/git/JudahZone/resources/Songs/AndILoveHer");
+		File file = new File("/home/judah/git/JudahZone/resources/Songs/AndILove2");
 		try {
 			new Sequencer(file);
 		} catch (Exception e) {
@@ -206,8 +201,8 @@ public class JudahZone extends BasicClient {
 
 	private class ShutdownHook extends Thread {
 		@Override public void run() {
-			if (getCurrentSong() != null) {
-				getCurrentSong().close();
+			if (Sequencer.getCurrent() != null) {
+				Sequencer.getCurrent().close();
 				if (Sequencer.getCarla() != null)
 					Sequencer.getCarla().close();
 			} 
@@ -220,16 +215,17 @@ public class JudahZone extends BasicClient {
     //                PROCESS AUDIO                   //
     ////////////////////////////////////////////////////
 	
+	private Sequencer seq;
 	@Override
 	public boolean process(JackClient client, int nframes) {
-		
-		if (currentSong == null) 
+		seq = Sequencer.getCurrent();
+		if (seq == null || seq.isRunning() == false) 
 			return true;
 		
 		// any loopers playing will be additive
 		for (MixerPort outport : outputPorts)
 			AudioTools.processSilence(outport.getPort().getFloatBuffer());
-		currentSong.getMixer().process(nframes);
+		Sequencer.getCurrent().getMixer().process(nframes);
 		return true;
 	}
 

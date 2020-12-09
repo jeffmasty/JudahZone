@@ -24,7 +24,7 @@
 
   <Data>
    <Active>Yes</Active>
-   <Volume>0.6095999</Volume>
+   <Volume>1.27</Volume>
    <ControlChannel>1</ControlChannel>
    <Options>0x0</Options>
 
@@ -32,7 +32,7 @@
     <Index>0</Index>
     <Name>Cabinet</Name>
     <Symbol>CLevel</Symbol>
-    <Value>4.55500030517578</Value>
+    <Value>3.63250041007996</Value>
    </Parameter>
 
    <Parameter>
@@ -192,7 +192,7 @@
 
   <Data>
    <Active>Yes</Active>
-   <Volume>0.5461</Volume>
+   <Volume>1.27</Volume>
    <ControlChannel>1</ControlChannel>
    <Options>0x1e1</Options>
 
@@ -306,7 +306,7 @@
   <Data>
    <Active>Yes</Active>
    <DryWet>0.822629</DryWet>
-   <Volume>0.635</Volume>
+   <Volume>1.27</Volume>
    <ControlChannel>1</ControlChannel>
    <Options>0x4</Options>
 
@@ -453,7 +453,15 @@
  <ExternalPatchbay>
   <Connection>
    <Source>system:capture_1</Source>
+   <Target>PulseAudio JACK Source:front-left</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_1</Source>
    <Target>Guitar Cabinet:in</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_2</Source>
+   <Target>PulseAudio JACK Source:front-right</Target>
   </Connection>
   <Connection>
    <Source>system:capture_2</Source>
@@ -472,12 +480,28 @@
    <Target>JudahZone:aux_right</Target>
   </Connection>
   <Connection>
-   <Source>a2j:MPKmini2 [20] (capture): MPKmini2 MIDI 1</Source>
+   <Source>a2j:ActitioN MIDI Controller [24] (capture): ActitioN MIDI Controller MIDI 1</Source>
+   <Target>JudahMidi:pedal</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:MPKmini2 [32] (capture): MPKmini2 MIDI 1</Source>
    <Target>JudahMidi:keyboard</Target>
   </Connection>
   <Connection>
-   <Source>a2j:ActitioN MIDI Controller [28] (capture): ActitioN MIDI Controller MIDI 1</Source>
-   <Target>JudahMidi:pedal</Target>
+   <Source>PulseAudio JACK Sink:front-left</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>PulseAudio JACK Sink:front-left</Source>
+   <Target>JudahZone:aux_left</Target>
+  </Connection>
+  <Connection>
+   <Source>PulseAudio JACK Sink:front-right</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>PulseAudio JACK Sink:front-right</Source>
+   <Target>JudahZone:aux_right</Target>
   </Connection>
   <Connection>
    <Source>JudahMidi:synth</Source>
@@ -489,7 +513,7 @@
   </Connection>
   <Connection>
    <Source>JudahMidi:komplete</Source>
-   <Target>a2j:Komplete Audio 6 [24] (playback): Komplete Audio 6 MIDI 1</Target>
+   <Target>a2j:Komplete Audio 6 [28] (playback): Komplete Audio 6 MIDI 1</Target>
   </Connection>
   <Connection>
    <Source>fluidsynth-midi:left</Source>

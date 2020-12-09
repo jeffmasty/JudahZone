@@ -30,7 +30,7 @@
     "midi" : "sGB/",
     "props" : {
       "Loop" : "0",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "name" : "Master Play",
@@ -39,7 +39,7 @@
     "midi" : "sGN/",
     "props" : {
       "Loop" : "0",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "name" : "Loop2 Record",
@@ -48,7 +48,7 @@
     "midi" : "sGF/",
     "props" : {
       "Loop" : "1",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "name" : "Loop2 Play",
@@ -57,7 +57,7 @@
     "midi" : "sGR/",
     "props" : {
       "Loop" : "1",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "name" : "Knob 0",
@@ -67,7 +67,7 @@
     "props" : {
       "Loop" : null,
       "volume" : null,
-      "Active" : null
+      "active" : null
     }
   }, {
     "name" : "Knob 1",
@@ -80,22 +80,22 @@
   }, {
     "name" : "Knob 2 - Loop A",
     "service" : "Mixer",
-    "command" : "Mixer Gain",
+    "command" : "Mixer gain",
     "midi" : "sBA3",
     "props" : {
       "Index" : "0",
       "isInput" : "false",
-      "Gain" : null
+      "gain" : null
     }
   }, {
     "name" : "Knob 3 - Loop B",
     "service" : "Mixer",
-    "command" : "Mixer Gain",
+    "command" : "Mixer gain",
     "midi" : "sBEA",
     "props" : {
       "Index" : "1",
       "isInput" : "false",
-      "Gain" : null
+      "gain" : null
     }
   }, {
     "name" : "CC Master Rec",
@@ -104,7 +104,7 @@
     "midi" : "uR9/",
     "props" : {
       "Loop" : "0",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "name" : "CC Master Play",
@@ -113,7 +113,7 @@
     "midi" : "uSMA",
     "props" : {
       "Loop" : "0",
-      "Active" : null
+      "active" : null
     }
   }, {
     "name" : "CC Loop2 Rec",
@@ -122,7 +122,7 @@
     "midi" : "uSAA",
     "props" : {
       "Loop" : "1",
-      "Active" : null
+      "active" : null
     }
   }, {
     "name" : "CC Loop2 Play",
@@ -131,7 +131,7 @@
     "midi" : "uSQA",
     "props" : {
       "Loop" : "1",
-      "Active" : null
+      "active" : null
     }
   }, {
     "name" : "Drop Beat - CC3",

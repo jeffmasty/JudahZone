@@ -28,7 +28,7 @@ import net.judah.util.FileChooser;
 @Log4j
 public class MetroGui extends JPanel implements TimeListener {
 
-	private final Metro metro;
+	private final Metronome metro;
 	
 	private JToggleButton playBtn;
     private JToggleButton stopBtn;
@@ -39,7 +39,7 @@ public class MetroGui extends JPanel implements TimeListener {
     private JSlider bpm;
     private JSlider volume;
 	
-	MetroGui(Metro metronome) {
+	MetroGui(Metronome metronome) {
 		metro = metronome;
 		gui();
 		actionListeners();
@@ -133,7 +133,7 @@ public class MetroGui extends JPanel implements TimeListener {
 	}
 	
 	public void loadMidi() {
-		FileChooser.setCurrentDir(new File("/home/judah/Tracks/midi"));
+		// FileChooser.setCurrentDir(new File("/home/judah/Tracks/midi"));
 		File file = FileChooser.choose(JFileChooser.FILES_ONLY, "mid", "Midi files (*.mid)");
 		if (file == null) ;
 		metro.setMidiFile(file);

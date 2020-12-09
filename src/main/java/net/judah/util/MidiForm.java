@@ -15,10 +15,10 @@ import javax.swing.JToggleButton;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
-import net.judah.JudahZone;
-import net.judah.midi.Midi;
+import net.judah.api.Midi;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiListener;
+import net.judah.sequencer.Sequencer;
 
 @Log4j
 /** Utility Swing class to select MIDI messages */
@@ -120,7 +120,7 @@ public class MidiForm extends JPanel implements MidiListener {
 	}
 	
 	private void midiLearn() {
-		JudahZone.getCurrentSong().getCommander().setMidiListener(midiRecord.isSelected() ? this : null);
+		Sequencer.getCurrent().getCommander().setMidiListener(midiRecord.isSelected() ? this : null);
 	}
 
 	private void midiPlay() {

@@ -14,7 +14,7 @@
     "midi" : "sGAA",
     "props" : {
       "Loop" : "0",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "name" : "Guitar Record",
@@ -23,7 +23,7 @@
     "midi" : "sGEA",
     "props" : {
       "Loop" : "1",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "name" : "Guitar Play",
@@ -32,7 +32,7 @@
     "midi" : "sGQA",
     "props" : {
       "Loop" : "1",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "name" : "Clear Looper",
@@ -41,7 +41,7 @@
     "midi" : "sGIA",
     "props" : {
       "Loop" : "-1",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "name" : "start metronome",
@@ -76,7 +76,7 @@
     "notes" : "mute guitar on drum loop",
     "params" : {
       "Loop" : "0",
-      "Active" : null,
+      "active" : null,
       "Channel" : "guitar",
       "mute" : "true"
     }
@@ -89,7 +89,7 @@
     "notes" : "mute mic  on drum loop",
     "params" : {
       "Loop" : "0",
-      "Active" : null,
+      "active" : null,
       "Channel" : "mic",
       "mute" : "true"
     }
@@ -102,7 +102,7 @@
     "notes" : "mute synth on drum loop",
     "params" : {
       "Loop" : "0",
-      "Active" : null,
+      "active" : null,
       "Channel" : "synth",
       "mute" : "true"
     }
@@ -130,7 +130,7 @@
     "notes" : "Record 4 bars on loop 0",
     "params" : {
       "Loop" : "0",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "type" : "ABSOLUTE",
@@ -141,7 +141,7 @@
     "notes" : "(stop record)",
     "params" : {
       "Loop" : "0",
-      "Active" : "false"
+      "active" : "false"
     }
   }, {
     "type" : "ABSOLUTE",
@@ -166,7 +166,7 @@
     "notes" : "play rythmn loop",
     "params" : {
       "Loop" : "0",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "type" : "ABSOLUTE",
@@ -188,7 +188,7 @@
     "notes" : "record on drum loop",
     "params" : {
       "Loop" : "0",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "type" : "ABSOLUTE",
@@ -199,7 +199,7 @@
     "notes" : "stop recording drum loop 4x through",
     "params" : {
       "Loop" : "0",
-      "Active" : "false"
+      "active" : "false"
     }
   } ],
   "router" : [ {

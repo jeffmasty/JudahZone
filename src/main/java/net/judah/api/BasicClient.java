@@ -24,7 +24,7 @@ public abstract class BasicClient extends Thread implements JackProcessCallback,
     protected JackClient jackclient;
     protected AtomicReference<Status> state = new AtomicReference<>(NEW);
     protected final String clientName;
-    @Getter private int buffersize;
+    @Getter private int bufferSize;
 	@Getter private int sampleRate;
     
     public BasicClient(String name) throws JackException {
@@ -51,7 +51,7 @@ public abstract class BasicClient extends Thread implements JackProcessCallback,
         try {
         	jackclient = jack.openClient(clientName, OPTIONS, STATUS);
         	sampleRate = jackclient.getSampleRate();
-        	buffersize = jackclient.getBufferSize();
+        	bufferSize = jackclient.getBufferSize();
             initialize();
 	        if (state.compareAndSet(INITIALISING, ACTIVE)) {
 	                jackclient.setProcessCallback(this);

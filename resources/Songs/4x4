@@ -1,21 +1,25 @@
 {
   "props" : {
     "carla" : "/home/judah/git/JudahZone/resources/carla/JudahZone.carxp",
-    "bpm" : "100",
-    "fluid" : "reverb on; rev_preset 1"
+    "fluid" : "reverb on; rev_preset 1",
+    "bpm" : "100"
   },
   "links" : [ {
     "name" : "start metronome",
     "command" : "metro:start",
-    "midi" : "sGV/",
-    "props" : { }
+    "midi" : "sGUA",
+    "props" : {
+      "active" : "",
+      "midi.channel" : "0",
+      "steps" : "-12"
+    }
   }, {
     "name" : "clear loops",
     "command" : "song:reload",
     "midi" : "sGIA",
     "props" : {
       "Loop" : null,
-      "Active" : null
+      "active" : null
     }
   }, {
     "name" : "Prog Pad 3",
@@ -33,7 +37,7 @@
     "midi" : "sGB/",
     "props" : {
       "Loop" : "0",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "name" : "Master Play",
@@ -41,7 +45,7 @@
     "midi" : "sGN/",
     "props" : {
       "Loop" : "0",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "name" : "Loop2 Record",
@@ -49,7 +53,7 @@
     "midi" : "sGF/",
     "props" : {
       "Loop" : "1",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "name" : "Loop2 Play",
@@ -57,7 +61,7 @@
     "midi" : "sGR/",
     "props" : {
       "Loop" : "1",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "name" : "Knob 0",
@@ -66,7 +70,7 @@
     "props" : {
       "Loop" : null,
       "volume" : null,
-      "Active" : null
+      "active" : null
     }
   }, {
     "name" : "Knob 1",
@@ -82,7 +86,7 @@
     "props" : {
       "Index" : "0",
       "isInput" : "false",
-      "Gain" : null
+      "gain" : null
     }
   }, {
     "name" : "Knob 3",
@@ -91,7 +95,7 @@
     "props" : {
       "Index" : "1",
       "isInput" : "false",
-      "Gain" : null
+      "gain" : null
     }
   }, {
     "name" : "Knob 4",
@@ -100,7 +104,7 @@
     "props" : {
       "Index" : "0",
       "isInput" : "true",
-      "Gain" : null
+      "gain" : null
     }
   }, {
     "name" : "Knob 5",
@@ -109,7 +113,7 @@
     "props" : {
       "Index" : "1",
       "isInput" : "true",
-      "Gain" : null
+      "gain" : null
     }
   }, {
     "name" : "Knob 6",
@@ -118,7 +122,7 @@
     "props" : {
       "Index" : "2",
       "isInput" : "true",
-      "Gain" : null
+      "gain" : null
     }
   }, {
     "name" : "Knob 7",
@@ -127,7 +131,7 @@
     "props" : {
       "Index" : "3",
       "isInput" : "true",
-      "Gain" : null
+      "gain" : null
     }
   }, {
     "name" : "Prog 2 - Drums up",
@@ -151,7 +155,7 @@
     "midi" : "uR9/",
     "props" : {
       "Loop" : "0",
-      "Active" : "true"
+      "active" : "true"
     }
   }, {
     "name" : "CC Master Play",
@@ -159,7 +163,7 @@
     "midi" : "uSMA",
     "props" : {
       "Loop" : "0",
-      "Active" : null
+      "active" : null
     }
   }, {
     "name" : "CC Loop2 Rec",
@@ -167,26 +171,34 @@
     "midi" : "uSAA",
     "props" : {
       "Loop" : "1",
-      "Active" : null
+      "active" : null
     }
   }, {
     "name" : "CC Loop2 Play",
     "command" : "loop:play",
-    "midi" : "uSQA",
+    "midi" : "uTcA",
     "props" : {
       "Loop" : "1",
-      "Active" : null
+      "active" : null
     }
   }, {
     "name" : "Drop Beat - CC3",
     "command" : "seq:dropDaBeat",
     "midi" : "uSIA",
     "props" : { }
+  }, {
+    "name" : "",
+    "command" : "midi:octaver",
+    "midi" : "uSQA",
+    "props" : {
+      "active" : null,
+      "midi.channel" : "0",
+      "steps" : null
+    }
   } ],
   "sequencer" : [ {
-    "type" : "ABSOLUTE",
+    "type" : "ABS",
     "timestamp" : -1,
-    "duration" : null,
     "command" : "synth:progChange",
     "notes" : "Electric Piano",
     "params" : {
@@ -194,16 +206,15 @@
       "preset" : "4"
     }
   }, {
-    "type" : "ABSOLUTE",
+    "type" : "ABS",
     "timestamp" : -1,
-    "duration" : null,
     "command" : "synth:drumSet",
     "notes" : "",
     "params" : {
       "up" : null,
       "preset" : "25"
     }
-  }],
+  } ],
   "router" : [ {
     "from" : "iSwA",
     "to" : "iSUA"

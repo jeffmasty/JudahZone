@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import net.judah.midi.Midi;
+import net.judah.api.Midi;
 
 @Data @AllArgsConstructor @RequiredArgsConstructor
 public class Instrument {

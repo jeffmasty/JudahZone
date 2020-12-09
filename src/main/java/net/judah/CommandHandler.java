@@ -8,12 +8,12 @@ import java.util.LinkedHashSet;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
-import net.judah.midi.Midi;
+import net.judah.api.Command;
+import net.judah.api.Midi;
+import net.judah.api.Service;
 import net.judah.midi.MidiListener;
 import net.judah.midi.MidiListener.PassThrough;
 import net.judah.sequencer.Sequencer;
-import net.judah.settings.Command;
-import net.judah.settings.Service;
 import net.judah.song.Link;
 import net.judah.util.JudahException;
 import net.judah.util.Links;
@@ -30,14 +30,12 @@ public class CommandHandler {
 
 	/** call after all services have been initialized */
 	public void initializeCommands() {
-		for (Service s : JudahZone.getServices()) {
+		for (Service s : sequencer.getServices()) 
 			available.addAll(s.getCommands());
-		}
-		
-		for (Service s : sequencer.getServices()) {
-			available.addAll(s.getCommands());
-		}
 
+		for (Service s : JudahZone.getServices()) 
+			available.addAll(s.getCommands());
+		
 		//log.debug("currently handling " + available.size() + " available different commands");
 		//for (Command c : available) log.debug("    " + c);
 	}
@@ -83,6 +81,7 @@ public class CommandHandler {
 		new Thread() {
 			@Override public void run() {
 				try {
+					cmd.setSeq(sequencer);
 					cmd.execute(props, midiData2);
 				} catch (Exception e) { 
 					log.error(e.getMessage() + " for " + cmd + " with " + Command.toString(props), e); 

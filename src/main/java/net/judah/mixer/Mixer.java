@@ -8,12 +8,12 @@ import org.jaudiolibs.jnajack.JackException;
 
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.api.Service;
 import net.judah.jack.ProcessAudio;
 import net.judah.looper.Recorder;
 import net.judah.looper.Sample;
 import net.judah.mixer.gui.MixerGui;
 import net.judah.sequencer.Sequencer;
-import net.judah.settings.Service;
 import net.judah.util.JudahException;
 
 
@@ -41,9 +41,11 @@ public class Mixer implements Service {
 		return Mixer.class.getSimpleName();
 	}
 
-	public void addSample(Sample s) {
+	/**@return the sample's index number */
+	public int addSample(Sample s) {
 		s.setOutputPorts(JudahZone.getOutputPorts());
 		samples.add(s);
+		return samples.size() - 1;
 	}
 	
 	public void removeSample(int idx) {

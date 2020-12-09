@@ -1,32 +1,25 @@
-router table -> display pad/knob name  and   midi drum name
-
 TODO:
-
+settings/default files
+stereo/mono   output live_left live_right
+END sequence Type (teardown)
+midi recorder
+phaser knob
+arpeggiator
+Undo/Redo/Copy/Paste
 Looper Control and triggers  Queue : cmd name cmd service loop# active(toggle) 
 Sequencer: TimeClock, MultiLoop + Sync,
-midi recorder
 drum machine
 patch bay needed. see jack_lsp, jack_connect
-Song / Scene (i.e., 1 bar drum setups)
-
-Undo/Redo/Copy/Paste
 Plugins, ttl 
-
-arpegiator
 walking bassline midi bot
-
-Gui
 joystick  (pitch bend logarithmic to 1 octave) (left cc = distortion or vocoder right cc = delay)
-dr-5
-    1. channel switch
-    2. mpk pads assign
-Pad/knob server
-Guesstimator
-Direct midi translate.
+Guesstimator/Quantize
+
+fix songs and check in.
+
 
 Knobs:
-Fluid synth knobs:
-Volume, Chorus, reverb, ...
+Fluid synth knobs: Volume, Chorus, reverb, ...
 Volume track/master, pan, 
 Input/output/gain lvl, pedal knobs
 Other knobs: calf, Jackrack, mixer
@@ -34,6 +27,10 @@ Other knobs: calf, Jackrack, mixer
 drum options:  DrMr, drumkv1-jack, hydrogen, fluid, drumsynth, black pearl
 
 java analyse and sequence music https://github.com/arnaudh/elusive-sound
+https://github.com/a-schild/jave2
+Jack's alsa driver/client tries to use SND_PCM_FMT_S32_LE,
+signed 32-bit PCM little endian, 
+which is the format used by all current 24 bit audio cards except for some USB interfaces
 
 arpeggio this! https://github.com/ybalcanci/Sequence-Player/blob/master/RecamanSequence.java
 
@@ -60,6 +57,7 @@ https://github.com/PedalController/Lv2Library/blob/master/src/br/com/srmourasilv
 
 
 Done:
+router table -> display pad/knob name  and   midi drum name
 new GUI layout, fix props table
 Recompile Carla (done, modified modules/rtaudio.cpp)
 mixer/Channel concept, mixer gain
@@ -68,9 +66,10 @@ Setlist and Song  (default song)
 setup and teardown notes
 command mappings
 triggers
-save loops to disk and play samples
+save loops to disk and play samples from disk
 unify consoles
-
+handle relative and trigger type, seq:unit, 
+octaver, 
 
 
 
