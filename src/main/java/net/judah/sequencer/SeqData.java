@@ -1,8 +1,6 @@
 package net.judah.sequencer;
-
-import static net.judah.api.Command.*;
 import static net.judah.sequencer.SeqCmd.*;
-import static net.judah.util.Constants.*;
+import static net.judah.util.Constants.Param.*;
 
 import java.util.HashMap;
 
@@ -24,16 +22,16 @@ public class SeqData {
 	private int[] sequence = new int[] {1};
 	
 	public SeqData(HashMap<String, Object> props) {
-		name = "" + props.get(PARAM_NAME);
+		name = "" + props.get(NAME);
 		try {
-			String[] beats = ("" + props.get(PARAM_SEQ)).replace(" ", "").split(",");
+			String[] beats = ("" + props.get(SEQUENCE)).replace(" ", "").split(",");
 			sequence = new int[beats.length];
 			for (int i = 0; i < beats.length; i++)
 				sequence[i] = Integer.parseInt(beats[i]);
 		} catch (Throwable t) {
-			log.warn(t.getMessage() + " " + props.get(PARAM_SEQ) + " " + note);
+			log.warn(t.getMessage() + " " + props.get(SEQUENCE) + " " + note);
 		}
-		try {active = Boolean.parseBoolean("" + props.get(PARAM_ACTIVE));
+		try {active = Boolean.parseBoolean("" + props.get(ACTIVE));
 			} catch (Throwable t) { }
 		try {
 			note = Midi.fromProps(props);

@@ -5,8 +5,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.api.Command;
 import net.judah.api.Midi;
@@ -22,10 +22,15 @@ import net.judah.util.Links;
 public class CommandHandler {
 	
 	private final ArrayList<Command> available = new ArrayList<>();
+	
+	
+	
 	private final Links links = new Links();
 	private final Sequencer sequencer;
 	
-	@Setter private MidiListener midiListener;
+	@Getter private final ArrayList<MidiListener> listeners = new ArrayList<>();
+	
+	// @Setter private MidiListener midiListener;
 
 
 	/** call after all services have been initialized */
@@ -38,53 +43,65 @@ public class CommandHandler {
 		
 		//log.debug("currently handling " + available.size() + " available different commands");
 		//for (Command c : available) log.debug("    " + c);
+		available.sort((p1, p2) -> p1.getName().compareTo(p2.getName()));
 	}
 
+	public void addCommand(Command c) {
+		available.add(c);
+		available.sort((p1, p2) -> p1.getName().compareTo(p2.getName()));
+	}
+	
 	/** @return true if consumed */
 	public boolean midiProcessed(Midi midiMsg) throws JudahException {
-		if (midiListener != null) {
+		PassThrough mode = PassThrough.ALL;
+		for (MidiListener listener : listeners) {
 			new Thread() {
-			@Override public void run() {midiListener.feed(midiMsg);};
+				@Override public void run() {
+					listener.feed(midiMsg);};
 			}.start();
 			
-			MidiListener.PassThrough mode = midiListener.getPassThroughMode();
-			if (PassThrough.NONE == mode)
-				return true;
-			if (PassThrough.NOTES == mode)
-				return !Midi.isNote(midiMsg);
+			PassThrough current = listener.getPassThroughMode();
+			if (current == PassThrough.NONE)
+				mode = PassThrough.NONE;
+			else if (current == PassThrough.NOTES && mode != PassThrough.NONE)
+				mode = PassThrough.NOTES;
 		}
+		if (PassThrough.NONE == mode)
+			return true;
+		if (PassThrough.NOTES == mode)
+			return !Midi.isNote(midiMsg);
 		
-		Command cmd;
 		HashMap<String, Object> p;
 		for (Link mapping : links) {
-			cmd = mapping.getCmd();
-			if (cmd == null)
-				throw new JudahException("Command not found for mapping. " + mapping);
 
 			if (midiMsg.getCommand() == Midi.CONTROL_CHANGE 
 					&& (byte)midiMsg.getData1() == mapping.getMidi()[1]) {
 				p = new HashMap<String, Object>();
 				p.putAll(mapping.getProps());
-				fire(cmd, p, midiMsg.getData2());
+				fire(mapping, midiMsg.getData2());
 				return true;
 			}
 			
 			else if (Arrays.equals(mapping.getMidi(), midiMsg.getMessage())) { // Prog Change
-				fire(cmd, mapping.getProps(), midiMsg.getData2());
+				fire(mapping, midiMsg.getData2());
 				return true;
 			}
 		}
 		return false;
 	}
 	
-	public void fire(final Command cmd, HashMap<String, Object> props, int midiData2) {
+	public void fire(Link mapping, int midiData2) throws JudahException {
+		
+		Command cmd = mapping.getCmd();
+		if (cmd == null)
+			throw new JudahException("Command not found for mapping. " + mapping);
 		new Thread() {
 			@Override public void run() {
 				try {
 					cmd.setSeq(sequencer);
-					cmd.execute(props, midiData2);
+					cmd.execute(mapping.getProps(), midiData2);
 				} catch (Exception e) { 
-					log.error(e.getMessage() + " for " + cmd + " with " + Command.toString(props), e); 
+					log.error(e.getMessage() + " for " + cmd + " with " + Command.toString(mapping.getProps()), e); 
 					}
 			}}.start();
 	}

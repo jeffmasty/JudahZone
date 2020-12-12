@@ -1,6 +1,7 @@
 package net.judah.metronome;
 
 import static net.judah.settings.Commands.MetronomeLbls.*;
+import static net.judah.util.Constants.Param.*;
 
 import java.io.File;
 import java.util.HashMap;
@@ -14,6 +15,8 @@ import net.judah.util.Constants;
 public class ClickTrack extends Command {
 
 	private final Metronome metronome;
+	
+	
 	
 	/** midi file of click track (optional) */
 	public static final String PARAM_MIDIFILE = "midi.file"; 
@@ -38,7 +41,7 @@ public class ClickTrack extends Command {
 		
 		params.put(PARAM_INTRO, Integer.class); 
 		params.put(PARAM_DURATION, Integer.class); 
-		params.put(Constants.PARAM_CHANNEL, Integer.class);
+		params.put(CHANNEL, Integer.class);
 		params.put(PARAM_MIDIFILE, String.class); 
 		params.put(PARAM_DOWNBEAT, Integer.class);
 		params.put(PARAM_BEAT, Integer.class);
@@ -51,7 +54,7 @@ public class ClickTrack extends Command {
 		log.warn("Click Track execute: " + Constants.prettyPrint(props));
 		int channel = MidiSetup.OUT.DRUMS.channel;
 		try {
-			channel = Integer.parseInt("" + props.get(Constants.PARAM_CHANNEL));
+			channel = Integer.parseInt("" + props.get(CHANNEL));
 		} catch (NumberFormatException e) { /** default use channel 9 */}
 			
 		Player ticktock = null;

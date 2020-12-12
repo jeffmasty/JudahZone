@@ -17,8 +17,8 @@ public class Song {
 	
 	private static final HashMap<String, Object> defaultMap = new HashMap<>();
 	static {
-		defaultMap.put(Constants.PARAM_BPM, null);
-		defaultMap.put(Constants.PARAM_MEASURE, null);
+		defaultMap.put(Constants.Param.BPM, null);
+		defaultMap.put(Constants.Param.MEASURE, null);
 		defaultMap.put(Sequencer.PARAM_CARLA, null);
 		defaultMap.put(Sequencer.PARAM_FLUID, null);
 		defaultMap.put("notes", "");

@@ -1,6 +1,7 @@
 package net.judah.metronome;
 
 import static net.judah.settings.Commands.MetronomeLbls.*;
+import static net.judah.util.Constants.Param.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -99,11 +100,11 @@ public class Metronome implements Service, TimeProvider /* , ActionListener, Cha
     		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
     			setTempo((midiData2 + 35) * 1.15f);}};
         volumeCmd = new Command(VOLUME.name, VOLUME.desc, 
-        		Constants.template(Constants.PARAM_GAIN, Float.class)) {
+        		Constants.template(GAIN, Float.class)) {
     		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
     			if (midiData2 >= 0)
     				setVolume(midiData2 * 0.01f);
-    			else setVolume(Float.parseFloat("" + props.get(Constants.PARAM_GAIN))); 
+    			else setVolume(Float.parseFloat("" + props.get(GAIN))); 
         }};
         	
 		commands = Arrays.asList(new Command[] {start, tempoCmd, volumeCmd, 
@@ -262,11 +263,11 @@ public class Metronome implements Service, TimeProvider /* , ActionListener, Cha
 	public void properties(HashMap<String, Object> props) {
 		clicktrack = false;
 		
-		if (StringUtils.isNumeric("" + props.get(Constants.PARAM_BPM))) {
-			setTempo(Integer.parseInt("" + props.get(Constants.PARAM_BPM)));
+		if (StringUtils.isNumeric("" + props.get(BPM))) {
+			setTempo(Integer.parseInt("" + props.get(BPM)));
 		}
-		if (StringUtils.isNumeric("" + props.get(Constants.PARAM_MEASURE)))
-			setMeasure(Integer.parseInt("" + props.get(Constants.PARAM_MEASURE)));
+		if (StringUtils.isNumeric("" + props.get(MEASURE)))
+			setMeasure(Integer.parseInt("" + props.get(MEASURE)));
 	}
 	
 	public static void remove(TimeListener l) {

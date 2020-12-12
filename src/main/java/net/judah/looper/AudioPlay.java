@@ -1,6 +1,7 @@
 package net.judah.looper;
 
 import static net.judah.settings.Commands.MixerLbls.*;
+import static net.judah.util.Constants.Param.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,7 +14,6 @@ import javax.sound.sampled.Clip;
 import lombok.extern.log4j.Log4j;
 import net.judah.api.Command;
 import net.judah.api.Loadable;
-import net.judah.util.Constants;
 import net.judah.util.JudahException;
 
 @Log4j
@@ -26,7 +26,7 @@ public class AudioPlay extends Command implements Loadable {
 	}
 	
 	private static HashMap<String, Class<?>> template() {
-		HashMap<String, Class<?>> result = Constants.active();
+		HashMap<String, Class<?>> result = activeTemplate();
 		result.put("file", String.class);
 		return result;
 	}
@@ -55,7 +55,7 @@ public class AudioPlay extends Command implements Loadable {
 	public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 		boolean active = false;
 		if (midiData2 < 0) 
-			active = Boolean.parseBoolean("" + props.get(PARAM_ACTIVE));
+			active = Boolean.parseBoolean("" + props.get(ACTIVE));
 		else
 			active = midiData2 > 0;
 			

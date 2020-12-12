@@ -1,28 +1,19 @@
 package net.judah.mixer;
 
-import java.util.ArrayList;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NonNull;
 import net.judah.looper.Sample;
-import net.judah.mixer.widget.VolumeWidget;
-import net.judah.mixer.widget.Widget;
+import net.judah.mixer.plugin.VolumeWidget;
 
 @Data @AllArgsConstructor 
 public final class Channel {
-
-	public static enum Type {
-		SYS, SYNTH, CARLA, LOOPER, OTHER
-	}
 
 	@NonNull String name;
 	final Instrument instrument;
 	Integer carlaIndex;
 	
-
-	ArrayList<Widget> widgets = new ArrayList<>();
 	VolumeWidget volume;
 	
 	@Getter private float gain = 1f;
@@ -34,21 +25,9 @@ public final class Channel {
 		this.volume = volume;
 	}
 	
-//	public Channel(Instrument instrument, Integer carlaIndex) {
-//		this.instrument = instrument;
-//		name = instrument.name;
-//		this.carlaIndex = carlaIndex;
-//	}
-
-	
-	
-//	public Channel(Instrument instrument) {
-//		
-//	}
-	
 	public Channel(Sample loop) {
 		name = loop.getName();
-		instrument = new Instrument(name, Channel.Type.LOOPER, null, null);
+		instrument = new Instrument(name, LineType.LOOPER, null, null);
 		carlaIndex = null;
 	}
 
@@ -57,12 +36,7 @@ public final class Channel {
 		if (volume != null)
 			volume.setVolume(gain);
 	}
-	
-	
 }
-
-
-
 
 
 //public float getLeftVolume() { return gain; } // TODO adjust for Pan

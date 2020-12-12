@@ -103,7 +103,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 
 	//** output to console */
 	public static void addText(String s) {
-		
+		log.debug(s);		
 		if (instance == null || instance.textarea == null) {
 			return;
 		}
@@ -120,6 +120,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 		instance.scroller.getVerticalScrollBar().setValue( instance.scroller.getVerticalScrollBar().getMaximum() - 1 );
 		instance.scroller.getHorizontalScrollBar().setValue(0);
 		instance.output.invalidate();
+
 	}
 
 	public static void newLine() {
@@ -236,7 +237,11 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 	}
 	private void midiListen() {
 		midiListen = !midiListen;
-		Sequencer.getCurrent().getCommander().setMidiListener(midiListen ? this : null);
+		ArrayList<MidiListener> listeners = Sequencer.getCurrent().getCommander().getListeners();
+		if (midiListen) 
+			listeners.add(this);
+		else
+			listeners.remove(this);
 	}
 	
 	private void midiPlay(String[] split) {
@@ -390,8 +395,13 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 		return PassThrough.ALL;
 	}
 
-	public void test() {
-		
+	public static void test() {
+		try {
+			new QuantizationTest();
+			addText("success.");
+		} catch (Throwable t) {
+			warn(t.getMessage());
+		}
 	}
 	
 }

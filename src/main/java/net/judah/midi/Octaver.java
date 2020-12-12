@@ -1,6 +1,7 @@
 package net.judah.midi;
 
 import static net.judah.settings.Commands.OtherLbls.*;
+import static net.judah.util.Constants.Param.*;
 
 import java.util.HashMap;
 
@@ -22,24 +23,14 @@ public class Octaver extends Command {
 	@Getter private int steps = -12;
 
 	public Octaver(JudahMidi midi) {
-		super(OCTAVER.name, OCTAVER.desc, octaverTemplate());
+		super(OCTAVER.name, OCTAVER.desc, transposeTemplate());
 		this.midi = midi;
 	}
 	
-	private static final String PARAM_STEPS = "steps";
-	
-	private static HashMap<String, Class<?>> octaverTemplate() {
-		HashMap<String, Class<?>> result = new HashMap<String, Class<?>>();
-		result.put(PARAM_ACTIVE, Integer.class);
-		result.put(PARAM_STEPS, Integer.class);
-		result.put(Constants.PARAM_CHANNEL, Boolean.class);
-		return result;
-	}
-
 	@Override
 	public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 		if (midiData2 < 0) // sequencer
-			try {active = Boolean.parseBoolean("" + props.get(PARAM_ACTIVE));
+			try {active = Boolean.parseBoolean("" + props.get(ACTIVE));
 			} catch(Throwable t) { Console.warn(t.getMessage()); }
 		else // midi controller
 			active = midiData2 > 0;
@@ -50,8 +41,8 @@ public class Octaver extends Command {
 		}
 			
 		try {
-			channel = Integer.parseInt("" + props.get(Constants.PARAM_CHANNEL));
-			steps = Integer.parseInt("" + props.get(PARAM_STEPS));
+			channel = Integer.parseInt("" + props.get(CHANNEL));
+			steps = Integer.parseInt("" + props.get(STEPS));
 		} catch(Throwable t) { log.debug(t.getMessage()); }
 			
 		midi.getRouter().setOctaver(this);
@@ -59,7 +50,7 @@ public class Octaver extends Command {
 
 	public Midi process(Midi in) throws InvalidMidiDataException {
 		if (Midi.isNote(in))
-			return new Midi(in.getCommand(), channel, in.getData1() + steps, in.getData2());
+			return Constants.transpose(in, steps, channel);
 		return in;
 	}
 

@@ -1,6 +1,6 @@
 {
   "props" : {
-    "carla" : "/home/judah/git/JudahZone/resources/carla/JudahZone.carxp"
+    "carla" : "/home/judah/git/JudahZone/resources/carla/FeelGoodInc.carxp"
   },
   "links" : [ {
     "name" : "trigger",
@@ -16,7 +16,7 @@
       "active" : null
     }
   }, {
-    "name" : "",
+    "name" : "bass and snare volume",
     "command" : "seq:volume",
     "midi" : "sA47",
     "props" : {
@@ -24,7 +24,7 @@
       "name" : "bassdrum,snare"
     }
   }, {
-    "name" : "",
+    "name" : "hi hats volume",
     "command" : "seq:volume",
     "midi" : "sA8t",
     "props" : {
@@ -76,8 +76,84 @@
       "isInput" : "true",
       "gain" : null
     }
+  }, {
+    "name" : "turn on Phaser",
+    "command" : "carla:drywet",
+    "midi" : "uSN/",
+    "props" : {
+      "index" : "1",
+      "value" : null
+    }
+  }, {
+    "name" : "",
+    "command" : "carla:param",
+    "midi" : "sBI6",
+    "props" : {
+      "index" : "1",
+      "paramIdx" : "3",
+      "value" : null
+    }
+  }, {
+    "name" : "",
+    "command" : "carla:param",
+    "midi" : "sBM1",
+    "props" : {
+      "index" : "1",
+      "paramIdx" : "2",
+      "value" : null
+    }
+  }, {
+    "name" : "",
+    "command" : "carla:param",
+    "midi" : "sBQ9",
+    "props" : {
+      "index" : "1",
+      "paramIdx" : "1",
+      "value" : null
+    }
+  }, {
+    "name" : "",
+    "command" : "loop:record",
+    "midi" : "uR8A",
+    "props" : {
+      "active" : null,
+      "loop" : "0"
+    }
+  }, {
+    "name" : "",
+    "command" : "loop:record",
+    "midi" : "uSAA",
+    "props" : {
+      "active" : null,
+      "loop" : "1"
+    }
+  }, {
+    "name" : "",
+    "command" : "seq:trigger",
+    "midi" : "uSYA",
+    "props" : { }
   } ],
   "sequencer" : [ {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "carla:param",
+    "notes" : "phaser",
+    "params" : {
+      "paramIdx" : "4",
+      "index" : "1",
+      "value" : "0.8"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "carla:param",
+    "notes" : "",
+    "params" : {
+      "paramIdx" : "2",
+      "index" : "1",
+      "value" : "0.5"
+    }
+  }, {
     "type" : "INIT",
     "timestamp" : 0,
     "command" : "seq:setup",
@@ -302,10 +378,20 @@
   }, {
     "type" : "REL",
     "timestamp" : 0,
+    "command" : "mixer:volume",
+    "notes" : "",
+    "params" : {
+      "volume" : "0.33",
+      "isInput" : "true",
+      "index" : "3"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
     "command" : "synth:direct",
     "notes" : "",
     "params" : {
-      "string" : "set synth.reverb.active on"
+      "string" : "reverb on; rev_preset 3"
     }
   }, {
     "type" : "REL",
@@ -372,27 +458,29 @@
     "command" : "mixer:volume",
     "notes" : "",
     "params" : {
-      "volume" : "0.9",
+      "volume" : "0.95",
       "isInput" : "true",
       "index" : "3"
     }
   }, {
-    "type" : "TRIG",
+    "type" : "REL",
     "timestamp" : 0,
     "command" : "seq:queue",
     "notes" : "queue stop on trigger",
     "params" : {
       "loop" : null,
-      "sequencer.internal" : 288,
+      "sequencer.internal" : 512,
       "active" : "false",
       "command" : "seq:transport"
     }
   }, {
     "type" : "TRIG",
     "timestamp" : 0,
-    "command" : "song:reload",
+    "command" : "song:next",
     "notes" : "",
-    "params" : { }
+    "params" : {
+      "file" : "/home/judah/git/JudahZone/resources/Songs/AndILoveHer"
+    }
   } ],
   "router" : [ {
     "from" : "iTAA",

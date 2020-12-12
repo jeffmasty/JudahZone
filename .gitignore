@@ -7,4 +7,6 @@ target/**
 pom.properties
 .settings/
 /target/
+/old/
+old/**
 log4j.out.xml

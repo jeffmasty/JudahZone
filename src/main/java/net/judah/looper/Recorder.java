@@ -34,7 +34,7 @@ public class Recorder extends Sample implements RecordAudio {
 	private int counter;
 	
 	public Recorder(String name, Type type) {
-		this(name, type, JudahZone.getInputPorts(), JudahZone.getOutputPorts());
+		this(name, type, JudahZone.getInputPorts(), JudahZone.getMainOutPorts());
 	}
 	
 	public Recorder(String name, Type type, List<MixerPort> inputPorts, List<MixerPort> outputPorts) {
@@ -42,7 +42,6 @@ public class Recorder extends Sample implements RecordAudio {
 		this.type = type;
 		for (MixerPort p : inputPorts)
 			this.inputPorts.add(new MixerPort(p));
-		
 		
 		this.outputPorts = outputPorts;
 		memory = new Memory(Constants.STEREO, JudahMidi.getInstance().getBufferSize());
@@ -53,7 +52,7 @@ public class Recorder extends Sample implements RecordAudio {
 	public void record(boolean active) {
 
 		AudioMode mode = isRecording.get();
-		log.warn((active ? "Activate recording from " : "Inactivate recording from ") + mode);
+		log.trace((active ? "Activate recording from " : "de-activate recording from ") + mode);
 		
 		if (active && (recording == null || mode == NEW)) {
 			recording = new Recording(true); // threaded to accept live stream

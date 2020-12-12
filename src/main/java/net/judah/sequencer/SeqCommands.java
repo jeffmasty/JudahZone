@@ -1,21 +1,23 @@
 package net.judah.sequencer;
 
+import static net.judah.settings.Commands.OtherLbls.*;
 import static net.judah.settings.Commands.SequencerLbls.*;
-import static net.judah.util.Constants.*;
+import static net.judah.util.Constants.Param.*;
 
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import org.jaudiolibs.jnajack.JackTransportState;
 
+import net.judah.MainFrame;
 import net.judah.api.Command;
 import net.judah.api.TimeListener.Property;
 import net.judah.mixer.MixerCommands;
 import net.judah.sequencer.Sequencer.ControlMode;
 import net.judah.util.CommandPair;
 import net.judah.util.Console;
-import net.judah.util.Constants;
+import net.judah.util.JudahException;
 
 public class SeqCommands extends ArrayList<Command> {
 
@@ -28,24 +30,33 @@ public class SeqCommands extends ArrayList<Command> {
 	/** note_on note (optional) */
 	public static final String PARAM_BEAT = "midi.beat"; 
 
-	final Command setup, sequence, active, volume, 
-		trigger, clicktrack, transport, dropBeat, 
-		external, internal, queue, reload;
+	final Command transport;
 
 	SeqCommands(final Sequencer seq) {
-		trigger = new Command(TRIGGER.name, TRIGGER.desc) {
+		
+		transport = new Command(TRANSPORT.name, TRANSPORT.desc, activeTemplate()) {
+			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+				boolean active = false;
+				if (midiData2 < 0) 
+					try { active = Boolean.parseBoolean("" + props.get(ACTIVE));
+					} catch (Throwable t) { Console.warn(t.getMessage());}
+				else if (midiData2 > 0) 
+					active = true;
+				if (active) seq.update(Property.TRANSPORT, JackTransportState.JackTransportStarting); 
+				else seq.update(Property.TRANSPORT, JackTransportState.JackTransportStopped);}};
+		add(transport);
+		
+		add(new Command(TRIGGER.name, TRIGGER.desc) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				if (midiData2 == 0) 
 					seq.trigger();
-			}};
+			}});
 
-		clicktrack = new Command(CLICKTRACK.name, CLICKTRACK.desc, clicktrackTemplate()) {
+		add(new Command(CLICKTRACK.name, CLICKTRACK.desc, clicktrackTemplate()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 
 				Integer intro = null;
 				Integer duration = null;
-				int down = 34; 
-				int up = 33;
 				try { intro = Integer.parseInt(props.get(PARAM_INTRO).toString());
 				} catch (Throwable e) { 
 					Console.warn(e.getMessage() + " " + PARAM_INTRO + " = " + props.get(PARAM_INTRO)); 
@@ -54,83 +65,63 @@ public class SeqCommands extends ArrayList<Command> {
 				} catch (Throwable e) {
 					Console.warn(e.getMessage() + " " + PARAM_DURATION + " = " + props.get(PARAM_DURATION));
 				}
-				try { 
-					down = Integer.parseInt(props.get(PARAM_DOWNBEAT).toString());
-					up = Integer.parseInt(props.get(PARAM_BEAT).toString());
-				} catch (Throwable e) { }
+				//		int down = 34;int up = 33;
+				//		try {down = Integer.parseInt(props.get(PARAM_DOWNBEAT).toString());
+				//			up = Integer.parseInt(props.get(PARAM_BEAT).toString());
+				//		} catch (Throwable e) { }
 				if (intro != null && duration != null) {
-					SeqClock clock = new SeqClock(seq, intro, duration, down, up);
+					SeqClock clock = new SeqClock(seq, intro, duration); // up/down beats
 					seq.setClock(clock);
 				}
 				//	void setup(Integer intro, Integer duration) throws InvalidMidiDataException, OSCSerializeException, IOException {
 				//	seq.setup(intro, duration);
-			}};
+			}});
 
-		setup = new Command(SETUP.name, SETUP.desc, settings()) {
+		add(new Command(SETUP.name, SETUP.desc, settings()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				seq.setClock(new SeqClock(seq, props));
 			}
-		};
-		sequence = new SeqCmd();
-		active = new Command(ACTIVE.name, ACTIVE.desc, activeTemplate()) {
+		});
+		
+		add(new Command(INTERNAL.name, INTERNAL.desc, internalParams()) {
+			@Override public void execute(HashMap<String, Object> props, int midiData2) {
+				seq.internal("" + props.get(Sequencer.PARAM_PATCH), "" + props.get("param"));}});
+		
+		add(new SeqCmd());
+		
+		add(new Command(ACTIVATE.name, ACTIVATE.desc, nameTemplate()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				boolean active = false;
 				if (midiData2 >= 0) 
 					active = midiData2 > 0;
 				else 
-					active = Boolean.parseBoolean("" + props.get(PARAM_ACTIVE));
-				String[] names =  props.get(PARAM_NAME).toString().split(",");
+					active = Boolean.parseBoolean("" + props.get(ACTIVE));
+				String[] names =  props.get(NAME).toString().split(",");
 				for (String name : names) {
 					SeqData data = seq.getClock().byName(name);
 					if (data == null) 
-						Console.warn("Unknown named sequence: " + props.get(PARAM_NAME));
+						Console.warn("Unknown named sequence: " + props.get(NAME));
 					else
 						data.setActive(active);
-				}
-			}
+				}}});
 			
-		};
-			
-		volume = new Command(VOLUME.name, VOLUME.desc, gainTemplate()) {
+		add(new Command(VOLUME.name, VOLUME.desc, gainTemplate()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				float gain = 0f;
 				if (midiData2 >= 0)
 					gain = midiData2 / 100f;
 				else 
-					gain = Float.parseFloat("" + props.get(PARAM_GAIN));
-				String[] names =  props.get(PARAM_NAME).toString().split(",");
+					gain = Float.parseFloat("" + props.get(GAIN));
+				String[] names =  props.get(NAME).toString().split(",");
 				for (String name : names) {
 					SeqData data = seq.getClock().byName(name);
 					if (data == null) 
-						Console.warn("Unknown named sequence: " + props.get(PARAM_NAME));
+						Console.warn("Unknown named sequence: " + props.get(NAME));
 					else
 						data.setVolume(gain);
-					}
-			}
-			
-		};
+				}}});
 		
-		transport = new Command(TRANSPORT.name, TRANSPORT.desc, Constants.active()) {
-			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				boolean active = false;
-				if (midiData2 < 0) 
-					try { active = Boolean.parseBoolean("" + props.get(PARAM_ACTIVE));
-					} catch (Throwable t) { Console.warn(t.getMessage());}
-				else if (midiData2 > 0) 
-					active = true;
-				if (active) seq.update(Property.TRANSPORT, JackTransportState.JackTransportStarting); 
-				else seq.update(Property.TRANSPORT, JackTransportState.JackTransportStopped);}};				
-				
-		external = new Command(EXTERNAL.name, EXTERNAL.desc, externalParams()) {
-			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				seq.externalControl(props);}};
-		internal = new Command(INTERNAL.name, INTERNAL.desc, internalParams()) {
-			@Override public void execute(HashMap<String, Object> props, int midiData2) {
-				seq.internal("" + props.get(Sequencer.PARAM_PATCH), "" + props.get("param"));}};
-		dropBeat = new Command(DROPBEAT.name, DROPBEAT.desc) {
-			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				seq.dropDaBeat(new CommandPair(this, null));}};
-		queue = new Command(QUEUE.name, QUEUE.desc, queueTemplate()) {
+		add(new Command(QUEUE.name, QUEUE.desc, queueTemplate()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				Command target = seq.getCommander().find("" + props.get("command"));
 				if (target == null) throw new NullPointerException("command " + props.get("command"));
@@ -141,39 +132,103 @@ public class SeqCommands extends ArrayList<Command> {
 				}
 				props.put(Sequencer.PARAM_SEQ_INTERNAL, candidate);
 				seq.queue(new CommandPair(target, props));
-			}};
+			}});
 				
-		reload = new Command(RELOAD.name, RELOAD.desc) {
+		add(new Command(RELOAD.name, RELOAD.desc) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				seq.getPage().reload();}};
-				
-		addAll(Arrays.asList(new Command[] {
-				setup, transport, sequence, active, volume,
-				trigger, external, internal, 
-				dropBeat, queue, reload, clicktrack 	
-		}));
-	}
+				seq.getPage().reload();}});
+		add(new Command(NEXT.name, NEXT.desc, singleTemplate(FILE, String.class)) {
+			@Override public void execute(HashMap<String,Object> props, int midiData2) throws Exception {
+				File song = new File(props.get(FILE).toString());
+				try {
+					new Sequencer(song);
+					MainFrame.get().closeTab(seq.getPage());
+				} catch (Exception e) {
+					Console.addText(song.getName() + " -- " + e.getMessage() + " " + song.getAbsoluteFile());
+				}
 
+			};
+		});
+		
+		add(new Command(RECORD.name, RECORD.desc, activeTemplate()) {
+			@Override public void execute(HashMap<String,Object> props, int midiData2) throws Exception {
+				boolean active = false;
+				
+				if (midiData2 >= 0)
+					active = midiData2 > 0;
+				else 
+					active = Boolean.parseBoolean(props.get(ACTIVE).toString());
+				seq.getClock().record(active);
+			}});
+		
+		add(new Command(PLAY.name, PLAY.desc, indexTemplate()) {
+			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+				boolean active = false;
+				if (midiData2 >= 0)
+					active = midiData2 > 0;
+				else 
+					active = Boolean.parseBoolean(props.get(ACTIVE).toString());
+				seq.getClock().play(Integer.parseInt("" + props.get(INDEX)), active);
+			}});
+		add(new Command(TRANSPOSE.name, TRANSPOSE.desc, transposeTemplate()) {
+
+			@Override
+			public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+				int steps = 0;
+				if (midiData2 >= 0) {
+					steps = Math.round((midiData2 - 50) / 5f);
+				}
+				else {
+					steps = Integer.parseInt(props.get(STEPS).toString());
+				}
+				seq.getClock().getTracks().setTranspose(steps);
+			}});
+		add(new Command(MIDIGAIN.name, MIDIGAIN.desc, indexGain()) {
+			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+				float gain = 0f;
+				if (midiData2 >= 0)
+					gain = midiData2 / 100f;
+				else 
+					gain = Float.parseFloat("" + props.get(GAIN));
+				int idx = Integer.parseInt("" + props.get(INDEX));
+				if (seq.getClock() == null || seq.getClock().getTracks().size() <= idx)
+					throw new JudahException("no midi track");
+				seq.getClock().getTracks().setGain(idx, gain);
+				}});
+	}
+	
+	private HashMap<String, Class<?>> indexTemplate() {
+		HashMap<String, Class<?>> result = activeTemplate();
+		result.put(INDEX, Integer.class);
+		return result;
+	}
 
 	private HashMap<String, Class<?>> gainTemplate() {
 		HashMap<String, Class<?>> result = new HashMap<>();
-		result.put(PARAM_NAME, String.class);
-		result.put(PARAM_GAIN, Float.class);
+		result.put(NAME, String.class);
+		result.put(GAIN, Float.class);
 		return result;
 	}
 
-	private HashMap<String, Class<?>> activeTemplate() {
-		HashMap<String, Class<?>> result = Constants.active();
-		result.put(PARAM_NAME, String.class);
+	private HashMap<String, Class<?>> indexGain() {
+		HashMap<String, Class<?>> result = new HashMap<>();
+		result.put(INDEX, String.class);
+		result.put(GAIN, Float.class);
 		return result;
 	}
 
+	
+	private HashMap<String, Class<?>> nameTemplate() {
+		HashMap<String, Class<?>> result = activeTemplate();
+		result.put(NAME, String.class);
+		return result;
+	}
 
 	// tempo // bpb // type // intro // pulse
 	public static HashMap<String, Class<?>> settings() {
 		HashMap<String, Class<?>> result = new HashMap<>();
-		result.put(Constants.PARAM_BPM, Float.class);
-		result.put(Constants.PARAM_MEASURE, Integer.class);
+		result.put(BPM, Float.class);
+		result.put(MEASURE, Integer.class);
 		result.put(PARAM_INTRO, Integer.class);
 		result.put(Sequencer.PARAM_PULSE, Integer.class);
 		return result;
@@ -194,7 +249,7 @@ public class SeqCommands extends ArrayList<Command> {
 	
 	public static HashMap<String, Class<?>> externalParams() {
 		HashMap<String, Class<?>> result = new HashMap<>(2);
-		result.put(Sequencer.PARAM_LOOP, Integer.class);
+		result.put(LOOP, Integer.class);
 		result.put(Sequencer.PARAM_PULSE, Integer.class);
 		return result;
 	}
@@ -206,8 +261,8 @@ public class SeqCommands extends ArrayList<Command> {
 		
 		params.put(PARAM_INTRO, Integer.class); 
 		params.put(PARAM_DURATION, Integer.class); 
-		params.put(PARAM_DOWNBEAT, Integer.class);
-		params.put(PARAM_BEAT, Integer.class);
+		// params.put(PARAM_DOWNBEAT, Integer.class);
+		// params.put(PARAM_BEAT, Integer.class);
 		//params.put(Constants.PARAM_CHANNEL, Integer.class);
 		//params.put(PARAM_MIDIFILE, String.class); 
 		return params;
@@ -216,6 +271,12 @@ public class SeqCommands extends ArrayList<Command> {
 	
 }
 
+//	add(new Command(EXTERNAL.name, EXTERNAL.desc, externalParams()) {
+//	@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+//		seq.externalControl(props);}});
+//	dropBeat = new Command(DROPBEAT.name, DROPBEAT.desc) {
+//	@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+//		seq.dropDaBeat(new CommandPair(this, null));}};
 //unit = new Command(UNIT.name, UNIT.desc, unitParams()) {
 //@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 //	seq.setUnit(Sequencer.TimeBase.valueOf("" + props.get("timeUnit")));}};

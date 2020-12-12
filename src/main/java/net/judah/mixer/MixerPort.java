@@ -1,8 +1,6 @@
 package net.judah.mixer;
 
 import org.jaudiolibs.jnajack.JackPort;
-import org.jaudiolibs.jnajack.JackPortFlags;
-import org.jaudiolibs.jnajack.JackPortType;
 
 import lombok.Data;
 import lombok.Getter;
@@ -15,16 +13,10 @@ public class MixerPort {
 	@Data public static class PortDescriptor {
 		private final String name;
 		private final ChannelType type;
-		private final float defaultGain;
-		private final JackPortType portType;
-		private final JackPortFlags portFlag;
 		
-		public PortDescriptor(String name, ChannelType type, JackPortType portType, JackPortFlags portFlag) {
+		public PortDescriptor(String name, ChannelType type) {
 			this.name = name;
 			this.type = type;
-			this.defaultGain = 1f;
-			this.portType = portType;
-			this.portFlag = portFlag;
 		}
 	}
 
@@ -39,7 +31,6 @@ public class MixerPort {
 	public MixerPort(PortDescriptor meta, JackPort port) {
 		this.name = meta.getName();
 		this.type = meta.getType();
-		this.gain = meta.getDefaultGain();
 		this.port = port;
 	}
 	

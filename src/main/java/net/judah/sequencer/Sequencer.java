@@ -1,4 +1,5 @@
 package net.judah.sequencer;
+import static net.judah.util.Constants.Param.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,18 +37,15 @@ import net.judah.mixer.Mixer;
 import net.judah.plugin.Carla;
 import net.judah.song.Song;
 import net.judah.song.Trigger;
-import net.judah.song.Trigger.Type;
 import net.judah.util.CommandPair;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.JsonUtil;
-import net.judah.util.JudahException;
 import net.judah.util.Services;
 
 @Log4j
 public class Sequencer implements Service, Runnable, TimeListener /* , ControllerEventListener */ {
 	
-	public static final String PARAM_LOOP = "loop";
 	public static final String PARAM_PULSE = "beats.per.pulse";
 	public static final String PARAM_FLUID = "fluid";
 	public static final String PARAM_CARLA = "carla";
@@ -84,8 +82,7 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 	@Setter(value = AccessLevel.PACKAGE) @Getter 
 	private ControlMode control = ControlMode.INTERNAL;
 	/** internal clock */
-	@Setter(value = AccessLevel.PACKAGE) @Getter 
-	private SeqClock clock;
+	@Getter private SeqClock clock;
 	
 	final Stack<CommandPair> queue = new Stack<CommandPair>();
 	
@@ -103,7 +100,8 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 	/** number of TimeBase units (beats) per pulse */
 	@Setter(value = AccessLevel.PACKAGE) @Getter 
 	private int pulse = 4;
-	
+	/** msec since transport start or msec between pulses */
+	private long timer = 0;
 	// 	private TimeBase unit = TimeBase.BEATS;
 	// for dropDaBeat, currently not implemented
 	@SuppressWarnings("unused")
@@ -152,24 +150,28 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 
 	private void initializeTriggers() {
 		List<Trigger> triggers = song.getSequencer();
-		for (index = 0; index < triggers.size(); index++) {
-			active = triggers.get(index);
-			if ( false == active.getType().equals(Type.INIT)) 
-				return; // initialization done
-			
-			Command cmd = active.getCmd();
-			if (cmd == null) {
-				Constants.infoBox("Failed to initialize: " + cmd, "Sequencer Initialization");
-				log.error("Failed to initialize: " + cmd);
-				continue;
-			}
+		if (triggers.size() == 0) return;
+		active = triggers.get(0);
+		while (active.go(count)) 
 			execute(active);
-		}
-		if (active == null) {
-			HashMap<String, Object> params = new HashMap<>();
-			params.put(Command.PARAM_ACTIVE, false);
-			active = new Trigger(Type.REL, 0l, commands.transport.getName(), "ze End.", params, commands.transport);
-		}
+//		for (index = 0; index < triggers.size(); index++) {
+//			active = triggers.get(index);
+//			if ( false == active.getType().equals(Type.INIT)) 
+//				return; // initialization done
+//			
+//			Command cmd = active.getCmd();
+//			if (cmd == null) {
+//				Constants.infoBox("Failed to initialize: " + cmd, "Sequencer Initialization");
+//				log.error("Failed to initialize: " + cmd);
+//				continue;
+//			}
+//			execute(active);
+//		}
+//		if (active == null) {
+//			HashMap<String, Object> params = new HashMap<>();
+//			params.put(ACTIVE, false);
+//			active = new Trigger(Type.REL, 0l, commands.transport.getName(), "ze End.", params, commands.transport);
+//		}
 	}
 	
 	private void initializeFiles() {
@@ -222,7 +224,6 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 		count = 0;
 	}
 	
-
 //	/** external clock */
 //	@Override // ControlChange Listener deprecate? see TimeListener    
 //	public void controlChange(ShortMessage event) {
@@ -236,10 +237,8 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 		// if (count == -1) { /* initialization */ }
 		++count;
 		Console.addText("internal: " + count);
-		while (active.go(count)) {
+		while (active.go(count)) 
 			execute(active);
-			increment();
-		}
 		
 		if (queue.isEmpty()) return;
 		
@@ -266,7 +265,6 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 		}
 	}
 
-	private long timer = 0;
 	@Override // TimeListener
 	public void update(Property prop, Object value) {
 		
@@ -277,9 +275,10 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 					log.warn("Internal Sequencer starting with a bpm of " + getTempo());
 					Console.addText("Internal Sequencer starting with a bpm of " + getTempo());
 					JudahZone.getMetronome().removeListener(this);
-					HiHats.stop();
+					timer = System.currentTimeMillis();
 					clock.addListener(this);
 					clock.start();
+					
 				}
 			}
 			else if (value == JackTransportState.JackTransportStopped)
@@ -287,26 +286,29 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 		}
 		if (Property.BEAT == prop) { 
 			// if (!isRunning()) return;
-			log.trace("beat update: " + value);
-			
-			count = (int)value;
-			while (active.go(count)) {
-				execute(active);
-				increment();
+			if (control == ControlMode.INTERNAL) {
+				log.trace("beat update: " + value);
+				count = (int)value;
+				while (active.go(count)) 
+					execute(active);
+
+				checkQueue();
 			}
-			checkQueue();
 		}
 		if (Property.LOOP == prop) {
 			long period = (System.currentTimeMillis() - timer) / pulse;
 			HiHats.setPeriod(period);
-			timer = System.currentTimeMillis();
-			count++;
-			log.debug("loop update: " + count);
-			while (active.go(count)) {
-				execute(active);
-				increment();
+			if (control == ControlMode.EXTERNAL) {
+				count++;
+				log.debug("loop update: " + count);
+				while (active.go(count)) 
+					execute(active);
+				checkQueue();
+				
+				if (clock != null)
+					clock.pulse(timer);
+				timer = System.currentTimeMillis();
 			}
-			checkQueue();
 		}
 	}
 	
@@ -343,19 +345,22 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 	public void properties(HashMap<String, Object> props) {
 		
 		// Initialize Carla
-		if (props.containsKey(PARAM_CARLA))
+		if (props.containsKey(PARAM_CARLA)) 
 			carla = initializeCarla("" + props.get(PARAM_CARLA), true);
+		
+		if (carla != null)
+			carla.getCommands().forEach( c -> {commander.addCommand(c);});
 		
 		Object o = props.get(PARAM_CONTROLLED);
 		if (o != null) 
 			control =  Boolean.parseBoolean(o.toString()) ? ControlMode.EXTERNAL : ControlMode.INTERNAL;
 		
-		if (StringUtils.isNumeric("" + props.get(Constants.PARAM_BPM))) {
-			log.warn("props.get(bpm)  " + props.get(Constants.PARAM_BPM));
-			tempo = Integer.parseInt("" + props.get(Constants.PARAM_BPM));
+		if (StringUtils.isNumeric("" + props.get(BPM))) {
+			log.warn("props.get(bpm)  " + props.get(BPM));
+			tempo = Integer.parseInt("" + props.get(BPM));
 		}
-		if (StringUtils.isNumeric("" + props.get(Constants.PARAM_MEASURE)))
-			measure = Integer.parseInt("" + props.get(Constants.PARAM_MEASURE));
+		if (StringUtils.isNumeric("" + props.get(MEASURE)))
+			measure = Integer.parseInt("" + props.get(MEASURE));
 		
 		if (props.containsKey(PARAM_PULSE)) {
 			Object o2 = props.get(PARAM_PULSE);
@@ -369,17 +374,15 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 	void trigger() {
 		if (active != null) {
 			execute(active);
-			increment();
 			while (active.go(count)) {
 				execute(active);
-				increment();
 			}
 		}
 		
 	}
 
 	void externalControl(HashMap<String, Object> props) {
-		Object o = props.get(PARAM_LOOP);
+		Object o = props.get(LOOP);
 
 		if (!StringUtils.isNumeric("" + o)) {
 			log.error(CONTROL_ERROR + o);
@@ -414,12 +417,23 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 			_andILoveHer();
 		if ("FeelGoodInc".equals(name))
 			_feelGoodInc();
-		if ("bassdrum".equals(name))
-			_bassdrum(param);
+		// if ("bassdrum".equals(name)) _bassdrum(param);
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 	
+
+	private void execute(Trigger trig) {
+		try {
+			Command cmd = trig.getCmd();
+			Console.info("seq @" + count + "/" + index + " execute: " + cmd + " " + Constants.prettyPrint(trig.getParams()));
+			cmd.setSeq(this);
+			cmd.execute(trig.getParams(), -1);
+		} catch (Exception e) {
+			log.error(e.getMessage() + " for " + trig, e);
+		}
+		increment();
+	}
 
 	private void increment() {
 		index++;
@@ -430,17 +444,6 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 			active = new Trigger(-2l, commands.transport);
 			if (clock != null)
 				clock.stop();
-		}
-	}
-
-	private void execute(Trigger trig) {
-		try {
-			Command cmd = trig.getCmd();
-			Console.info("@" + count + " seq execute: " + cmd + " " + Constants.prettyPrint(trig.getParams()));
-			cmd.setSeq(this);
-			cmd.execute(trig.getParams(), -1);
-		} catch (Exception e) {
-			log.error(e.getMessage() + " for " + trig, e);
 		}
 	}
 
@@ -465,19 +468,20 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 		Recorder drums = (Recorder)mixer.getSamples().get(0);
 		Recording sample = drums.getRecording();
 		mixer.getSamples().get(1).setRecording(new Recording(sample.size() * 5, true));
-		if (clock != null) clock.removeListener(this);
+		control = ControlMode.EXTERNAL;
+		clock.stop();
+		// if (clock != null) clock.removeListener(this);
+		pulse = 8;
+		timer = System.currentTimeMillis();
 		Metronome.remove(this);
 		drums.addListener(this);
 		log.info("internal: _allMyLoving()");
 	}
 
 	private void _feelGoodInc() {
-		// TODO Auto-generated method stub
 		Recorder drums = (Recorder)mixer.getSamples().get(0);
 		Recorder track2 = (Recorder)mixer.getSamples().get(1);
 		
-		//drums.record(false);
-		//drums.play(true);
 		Recording sample = drums.getRecording();
 		pulse = 16;
 		timer = System.currentTimeMillis();
@@ -490,19 +494,25 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 		log.info("internal: _feelGoodInc()");
 	}
 
-	private void _bassdrum(String param) {
-		try {
-			if (ControlMode.INTERNAL != control)
-				throw new JudahException("bass drums on internal clock only");
-			int clicks = Integer.parseInt(param);
-			clock.doBassDrum(clicks);
-
-		} catch (Throwable t) {
-			Console.warn("bassdrum " + t.getMessage() + " param=" + param);
-		}
+	public void setClock(SeqClock clock) {
+		if (this.clock != null)
+			this.clock.stop();
+		this.clock = clock;
 	}
 }
 
+
+//private void _bassdrum(String param) {
+//try {
+//	if (ControlMode.INTERNAL != control)
+//		throw new JudahException("bass drums on internal clock only");
+//	int clicks = Integer.parseInt(param);
+//	// clock.doBassDrum(clicks); TODO put in sequencer
+//
+//} catch (Throwable t) {
+//	Console.warn("bassdrum " + t.getMessage() + " param=" + param);
+//}
+//}
 //public void rollTransport() {
 //if (isRunning()) return;
 //count = 0;

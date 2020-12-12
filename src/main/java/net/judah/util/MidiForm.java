@@ -2,6 +2,7 @@ package net.judah.util;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -120,7 +121,11 @@ public class MidiForm extends JPanel implements MidiListener {
 	}
 	
 	private void midiLearn() {
-		Sequencer.getCurrent().getCommander().setMidiListener(midiRecord.isSelected() ? this : null);
+		ArrayList<MidiListener> listeners = Sequencer.getCurrent().getCommander().getListeners();
+		if (midiRecord.isSelected()) 
+			listeners.add(this);
+		else 
+			listeners.remove(this);
 	}
 
 	private void midiPlay() {
@@ -152,6 +157,7 @@ public class MidiForm extends JPanel implements MidiListener {
 	}
 	
 	public Midi getMidi() {
+		Sequencer.getCurrent().getCommander().getListeners().remove(this);
 		int cmd = ((MidiCommands)command.getSelectedItem()).getVal();
 		int chan = (int)channel.getSelectedItem();
 		int dat1 = (int)data1.getSelectedItem();
@@ -167,6 +173,7 @@ public class MidiForm extends JPanel implements MidiListener {
 			Constants.infoBox(e.getMessage(), "MIDI Error");
 			return null;
 		}
+		
 	}
 
 	public void setChannel(int i) {

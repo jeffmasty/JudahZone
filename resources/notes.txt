@@ -1,9 +1,7 @@
 TODO:
-settings/default files
+patchkit, settings/default files
 stereo/mono   output live_left live_right
-END sequence Type (teardown)
-midi recorder
-phaser knob
+
 arpeggiator
 Undo/Redo/Copy/Paste
 Looper Control and triggers  Queue : cmd name cmd service loop# active(toggle) 
@@ -13,10 +11,8 @@ patch bay needed. see jack_lsp, jack_connect
 Plugins, ttl 
 walking bassline midi bot
 joystick  (pitch bend logarithmic to 1 octave) (left cc = distortion or vocoder right cc = delay)
-Guesstimator/Quantize
 
 fix songs and check in.
-
 
 Knobs:
 Fluid synth knobs: Volume, Chorus, reverb, ...
@@ -57,6 +53,7 @@ https://github.com/PedalController/Lv2Library/blob/master/src/br/com/srmourasilv
 
 
 Done:
+Midi looper/recorder, Quantization
 router table -> display pad/knob name  and   midi drum name
 new GUI layout, fix props table
 Recompile Carla (done, modified modules/rtaudio.cpp)
@@ -68,8 +65,9 @@ command mappings
 triggers
 save loops to disk and play samples from disk
 unify consoles
-handle relative and trigger type, seq:unit, 
-octaver, 
+handle relative and trigger type,  
+octaver, phaser knob
+ 
 
 
 

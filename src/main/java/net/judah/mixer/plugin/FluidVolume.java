@@ -1,4 +1,4 @@
-package net.judah.mixer.widget;
+package net.judah.mixer.plugin;
 
 import net.judah.fluid.FluidSynth;
 

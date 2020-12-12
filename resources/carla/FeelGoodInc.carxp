@@ -32,21 +32,21 @@
     <Index>0</Index>
     <Name>Cabinet</Name>
     <Symbol>CLevel</Symbol>
-    <Value>4.21750068664551</Value>
+    <Value>3.63250041007996</Value>
    </Parameter>
 
    <Parameter>
     <Index>1</Index>
     <Name>Bass</Name>
     <Symbol>CBass</Symbol>
-    <Value>0.557862877845764</Value>
+    <Value>-4.04213714599609</Value>
    </Parameter>
 
    <Parameter>
     <Index>2</Index>
     <Name>Treble</Name>
     <Symbol>CTreble</Symbol>
-    <Value>6.41248512268066</Value>
+    <Value>3.71248507499695</Value>
    </Parameter>
 
    <Parameter>
@@ -59,7 +59,7 @@
    <CustomData>
     <Type>http://kxstudio.sf.net/ns/carla/property</Type>
     <Key>CarlaSkinIsCompacted</Key>
-    <Value>true</Value>
+    <Value>false</Value>
    </CustomData>
 
    <CustomData>
@@ -70,116 +70,48 @@
   </Data>
  </Plugin>
 
- <!-- Calf Mono Input -->
+ <!-- dRowAudio: Flanger -->
  <Plugin>
   <Info>
    <Type>LV2</Type>
-   <Name>Mic Stereo</Name>
-   <URI>http://calf.sourceforge.net/plugins/MonoInput</URI>
+   <Name>dRowAudio. Flanger</Name>
+   <URI>http://www.drowaudio.co.uk/audio/audio_plugins/flanger</URI>
   </Info>
 
   <Data>
-   <Active>No</Active>
+   <Active>Yes</Active>
+   <DryWet>0</DryWet>
    <Volume>1.27</Volume>
    <ControlChannel>1</ControlChannel>
-   <Options>0x1e1</Options>
-
-   <Parameter>
-    <Index>0</Index>
-    <Name>Bypass</Name>
-    <Symbol>bypass</Symbol>
-    <Value>0</Value>
-   </Parameter>
+   <Options>0x4</Options>
 
    <Parameter>
     <Index>1</Index>
-    <Name>Input</Name>
-    <Symbol>level_in</Symbol>
-    <Value>1.26225197315216</Value>
+    <Name>Rate</Name>
+    <Symbol>rate</Symbol>
+    <Value>0.0125000001862645</Value>
    </Parameter>
 
    <Parameter>
     <Index>2</Index>
-    <Name>Output</Name>
-    <Symbol>level_out</Symbol>
-    <Value>1</Value>
+    <Name>Intensity</Name>
+    <Symbol>intensity</Symbol>
+    <Value>0.0507999993860722</Value>
    </Parameter>
 
    <Parameter>
-    <Index>9</Index>
-    <Name>Balance</Name>
-    <Symbol>balance_out</Symbol>
-    <Value>0</Value>
+    <Index>3</Index>
+    <Name>Feedback</Name>
+    <Symbol>feedback</Symbol>
+    <Value>0.0154561828821898</Value>
    </Parameter>
 
    <Parameter>
-    <Index>10</Index>
-    <Name>Softclip</Name>
-    <Symbol>softclip</Symbol>
-    <Value>1</Value>
+    <Index>4</Index>
+    <Name>Wet/Dry Mix</Name>
+    <Symbol>wet_dry_mix</Symbol>
+    <Value>0.798319339752197</Value>
    </Parameter>
-
-   <Parameter>
-    <Index>11</Index>
-    <Name>Mute L</Name>
-    <Symbol>mutel</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>12</Index>
-    <Name>Mute R</Name>
-    <Symbol>muter</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>13</Index>
-    <Name>Phase L</Name>
-    <Symbol>phasel</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>14</Index>
-    <Name>Phase R</Name>
-    <Symbol>phaser</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>15</Index>
-    <Name>Delay</Name>
-    <Symbol>delay</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>16</Index>
-    <Name>Stereo Base</Name>
-    <Symbol>stereo_base</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>17</Index>
-    <Name>Stereo Phase</Name>
-    <Symbol>stereo_phase</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>18</Index>
-    <Name>S/C Level</Name>
-    <Symbol>sc_level</Symbol>
-    <Value>1</Value>
-   </Parameter>
-
-   <CustomData>
-    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
-    <Key>CarlaSkinIsCompacted</Key>
-    <Value>true</Value>
-   </CustomData>
   </Data>
  </Plugin>
 
@@ -278,11 +210,11 @@
   </Connection>
   <Connection>
    <Source>Calf Fluidsynth:Out L</Source>
-   <Target>system:playback_1</Target>
+   <Target>dRowAudio. Flanger:Audio Input 1</Target>
   </Connection>
   <Connection>
    <Source>Calf Fluidsynth:Out R</Source>
-   <Target>system:playback_2</Target>
+   <Target>dRowAudio. Flanger:Audio Input 2</Target>
   </Connection>
   <Connection>
    <Source>Guitar Cabinet:Out</Source>
@@ -298,6 +230,14 @@
   </Connection>
   <Connection>
    <Source>Guitar Cabinet:Out</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>dRowAudio. Flanger:Audio Output 1</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>dRowAudio. Flanger:Audio Output 2</Source>
    <Target>system:playback_2</Target>
   </Connection>
  </ExternalPatchbay>

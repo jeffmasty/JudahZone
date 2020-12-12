@@ -14,8 +14,6 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
-import org.jaudiolibs.jnajack.JackPortFlags;
-import org.jaudiolibs.jnajack.JackPortType;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -31,10 +29,9 @@ import net.judah.mixer.Instrument;
 import net.judah.mixer.MixerPort;
 import net.judah.mixer.MixerPort.ChannelType;
 import net.judah.mixer.MixerPort.PortDescriptor;
-//import net.judah.mixer.Widget.Type;
-import net.judah.mixer.widget.CarlaVolume;
-import net.judah.mixer.widget.FluidVolume;
-import net.judah.mixer.widget.VolumeWidget;
+import net.judah.mixer.plugin.CarlaVolume;
+import net.judah.mixer.plugin.FluidVolume;
+import net.judah.mixer.plugin.VolumeWidget;
 import net.judah.sequencer.Sequencer;
 import net.judah.settings.Patch;
 import net.judah.util.Constants;
@@ -61,7 +58,8 @@ public class JudahZone extends BasicClient {
     private final Patchbay patchbay;
     @Getter private static final List<Channel> channels = new ArrayList<>();
 	@Getter private static final List<MixerPort> inputPorts = new ArrayList<>();
-	@Getter private static final List<MixerPort> outputPorts = new ArrayList<>();
+	@Getter private static final List<MixerPort> mainOutPorts = new ArrayList<>();
+	@Getter private static final List<MixerPort> auxOutPorts = new ArrayList<>();
 
 	@Getter private final FluidSynth fluid; 
 	@Getter private static JudahMidi midi;
@@ -95,23 +93,19 @@ public class JudahZone extends BasicClient {
 
 	@Override
 	protected void initialize() throws JackException {
-		
-		MixerPort p;
-		for (PortDescriptor meta : patchbay.getPorts()) {
-			try {
-				if (meta.getPortType().equals(JackPortType.AUDIO) == false)  continue;  // not doing midi here
-				p  = new MixerPort(meta, jackclient.registerPort(meta.getName(), meta.getPortType(), meta.getPortFlag()));
-				if (meta.getPortFlag().equals(JackPortFlags.JackPortIsInput)) 
-					inputPorts.add(p);
-				else 
-					outputPorts.add(p);
-			} catch (JackException e) {
-				log.error("Port Name: " + meta.getName());
-				throw e;
-			} 
+		for (PortDescriptor meta : patchbay.getInPorts()) {
+			inputPorts.add( new MixerPort(
+					meta, jackclient.registerPort(meta.getName(), AUDIO, JackPortIsInput)));
+		}
+		for (PortDescriptor meta : patchbay.getOutPorts()) {
+			mainOutPorts.add( new MixerPort(
+					meta, jackclient.registerPort(meta.getName(), AUDIO, JackPortIsOutput)));
+		}
+		for (PortDescriptor meta : patchbay.getAuxPorts()) {
+			auxOutPorts.add( new MixerPort(
+					meta, jackclient.registerPort(meta.getName(), AUDIO, JackPortIsOutput)));
 		}
 		initializeChannels();
-		
 	}
 
 	private void initializeChannels() {
@@ -143,7 +137,7 @@ public class JudahZone extends BasicClient {
 		new MainFrame(JUDAHZONE);
 
 		// Open a default song 
-		File file = new File("/home/judah/git/JudahZone/resources/Songs/AndILove2");
+		File file = new File("/home/judah/git/JudahZone/resources/Songs/AndILoveHer");
 		try {
 			new Sequencer(file);
 		} catch (Exception e) {
@@ -167,36 +161,44 @@ public class JudahZone extends BasicClient {
 	@RequiredArgsConstructor @Getter
 	private static class Patchbay {
 		private final String clientName;
-		private final List<PortDescriptor> ports;
+		@Getter private final List<PortDescriptor> inPorts;
+		@Getter private final List<PortDescriptor> outPorts;
+		@Getter private final List<PortDescriptor> auxPorts;
 		private final List<Patch> connections;
 	}
 	
 	private static Patchbay audioConfig() {
 		final String client = JudahZone.JUDAHZONE;
-		List<PortDescriptor> ports = new ArrayList<>();
 		List<Patch> connections = new ArrayList<>();
 		PortDescriptor out;
 		
+		List<PortDescriptor> inPorts = new ArrayList<>();
 		// Inputs
-		ports.add(new PortDescriptor("guitar_left", ChannelType.LEFT, AUDIO, JackPortIsInput));
-		ports.add(new PortDescriptor("guitar_right", ChannelType.RIGHT, AUDIO, JackPortIsInput));
-		ports.add(new PortDescriptor("mic_left", ChannelType.LEFT, AUDIO, JackPortIsInput));
-		ports.add(new PortDescriptor("mic_right", ChannelType.RIGHT, AUDIO, JackPortIsInput));
-		ports.add(new PortDescriptor("drums_left", ChannelType.LEFT, AUDIO, JackPortIsInput));
-		ports.add(new PortDescriptor("drums_right", ChannelType.RIGHT, AUDIO, JackPortIsInput));
-		ports.add(new PortDescriptor("synth_left", ChannelType.LEFT, AUDIO, JackPortIsInput));
-		ports.add(new PortDescriptor("synth_right", ChannelType.RIGHT, AUDIO, JackPortIsInput));
-		ports.add(new PortDescriptor("aux_left", ChannelType.LEFT, AUDIO, JackPortIsInput));
-		ports.add(new PortDescriptor("aux_right", ChannelType.RIGHT, AUDIO, JackPortIsInput));
+		inPorts.add(new PortDescriptor("guitar_left", ChannelType.LEFT));
+		inPorts.add(new PortDescriptor("guitar_right", ChannelType.RIGHT));
+		inPorts.add(new PortDescriptor("mic_left", ChannelType.LEFT));
+		inPorts.add(new PortDescriptor("mic_right", ChannelType.RIGHT));
+		inPorts.add(new PortDescriptor("drums_left", ChannelType.LEFT));
+		inPorts.add(new PortDescriptor("drums_right", ChannelType.RIGHT));
+		inPorts.add(new PortDescriptor("synth_left", ChannelType.LEFT));
+		inPorts.add(new PortDescriptor("synth_right", ChannelType.RIGHT));
+		inPorts.add(new PortDescriptor("aux_left", ChannelType.LEFT));
+		inPorts.add(new PortDescriptor("aux_right", ChannelType.RIGHT));
 		
 		// Outputs
-		out = new PortDescriptor("left", ChannelType.LEFT, AUDIO, JackPortIsOutput);
-		ports.add(out);
+		List<PortDescriptor> outPorts = new ArrayList<>();
+		out = new PortDescriptor("left", ChannelType.LEFT);
+		outPorts.add(out);
 		connections.add(new Patch(portName(client, out.getName()), "system:playback_1"));
-		out = new PortDescriptor("right", ChannelType.RIGHT, AUDIO, JackPortIsOutput);
-		ports.add(out);
+		out = new PortDescriptor("right", ChannelType.RIGHT);
+		outPorts.add(out);
 		connections.add(new Patch(portName(client, out.getName()), "system:playback_2"));
-		return new Patchbay(client, ports, connections);
+		
+		List<PortDescriptor> auxPorts = new ArrayList<>();
+		auxPorts.add(new PortDescriptor("aux_1", ChannelType.LEFT));
+		auxPorts.add(new PortDescriptor("aux_2", ChannelType.RIGHT));
+		
+		return new Patchbay(client, inPorts, outPorts, auxPorts, connections);
 	}
 
 	private class ShutdownHook extends Thread {
@@ -223,7 +225,7 @@ public class JudahZone extends BasicClient {
 			return true;
 		
 		// any loopers playing will be additive
-		for (MixerPort outport : outputPorts)
+		for (MixerPort outport : mainOutPorts)
 			AudioTools.processSilence(outport.getPort().getFloatBuffer());
 		Sequencer.getCurrent().getMixer().process(nframes);
 		return true;

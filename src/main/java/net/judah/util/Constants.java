@@ -6,6 +6,7 @@ import java.awt.Insets;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.swing.JOptionPane;
@@ -13,22 +14,40 @@ import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
-import net.judah.api.Command;
+import net.judah.api.Midi;
 
 public class Constants {
 
-	/** channel to send trick track midi out on */
-	public static final String PARAM_CHANNEL = "channel";
-	public static final String PARAM_BPM = "bpm";
-	public static final String PARAM_TEMP = PARAM_BPM;
-	public static final String PARAM_MEASURE = "bpb";
-	public static final String PARAM_BPB = PARAM_MEASURE;
-	public static final String PARAM_FILE = "file";
-	public static final String PARAM_NAME = "name";
-	
-	public static final String PARAM_GAIN = "volume";
-	// public static final String PARAM_TEMPO = "bpm";
-	// public static final String PARAM_MEASURE = "bpb";
+	public static class Param {
+		public static final String ACTIVE = "active";
+		/** channel to send trick track midi out on */
+		public static final String CHANNEL = "channel";
+		public static final String BPM = "bpm";
+		public static final String TEMP = BPM;
+		public static final String MEASURE = "bpb";
+		public static final String BPB = MEASURE;
+		public static final String FILE = "file";
+		public static final String NAME = "name";
+		public static final String INDEX = "index";
+		public static final String VALUE = "value";
+		public static final String TYPE = "type";
+		public static final String GAIN = "volume";
+		public static final String LOOP = "loop";
+		public static final String SEQUENCE = "sequence";
+		public static final String MAX = "max";
+		public static final String STEPS = "steps";
+		
+		public static HashMap<String, Class<?>> singleTemplate(String name, Class<?> clazz) {
+			HashMap<String, Class<?>> params = new HashMap<String, Class<?>>();
+			params.put(name, clazz);
+			return params;
+		}
+		
+		public static HashMap<String, Class<?>> activeTemplate() {
+			return singleTemplate(ACTIVE, Boolean.class);
+		}
+
+	}
 	
 	public static final String NL = System.getProperty("line.separator", "\r\n");
 	public static final String CUTE_NOTE = "♫ ";
@@ -52,9 +71,23 @@ public class Constants {
     	public static final Font FONT9 = new Font("Arial", Font.PLAIN, 9);
     	public static final Border GRAY1 = new LineBorder(Color.GRAY, 1);
     }
+
+	public static final Midi BASSDRUM;
+	static { 
+		Midi temp = null;
+		try { temp = new Midi(Midi.NOTE_ON, 9, 36, 100);
+		} catch (InvalidMidiDataException e) {e.printStackTrace();}
+		BASSDRUM = temp;}
+	
+		
 	
     public static int gain2midi(float gain) {
     	return Math.round(gain * 127);
+    }
+    public static float midi2float(int data2) {
+    	float result = data2/127f;
+    	assert result <= 1f : data2 + " vs. " + (data2/127f);
+    	return result;
     }
 
 	public static long millisPerBeat(float beatsPerMinute) {
@@ -102,14 +135,29 @@ public class Constants {
 		return 60 * ((loopTime / 1000f) / beats);
 	}
 	
-	public static HashMap<String, Class<?>> active() {
-		return template(Command.PARAM_ACTIVE, Boolean.class);
-	}
-	
 	public static HashMap<String, Class<?>> template(String key, Class<?> clazz) {
 		HashMap<String, Class<?>> result = new HashMap<String, Class<?>>();
 		result.put(key, clazz);
 		return result;
+	}
+	
+	public static Midi transpose(Midi in, int steps) throws InvalidMidiDataException {
+		if (steps == 0) return in;
+		return new Midi(in.getCommand(), in.getChannel(), in.getData1() + steps, in.getData2());
+	}
+	
+	public static Midi transpose(Midi in, int steps, float gain) throws InvalidMidiDataException {
+		if (steps == 0 && gain >= 1f) return in;
+		return new Midi(in.getCommand(), in.getChannel(), in.getData1() + steps, (int)(in.getData2() * gain));
+	}
+
+	public static Midi gain(Midi in, float gain) throws InvalidMidiDataException {
+		if (gain == 1f) return in;
+		return new Midi(in.getCommand(), in.getChannel(), in.getData1(), (int)(in.getData2() * gain));
+	}
+	
+	public static Midi transpose(Midi in, int steps, int channel) throws InvalidMidiDataException {
+		return new Midi(in.getCommand(), channel, in.getData1() + steps, in.getData2());
 	}
 	
 //	// list out standard swing ui setting names

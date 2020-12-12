@@ -38,6 +38,7 @@ public class Trigger implements Copyable {
 	}
 	
 	public boolean go(int count) {
+		if (type == Type.INIT && count < 0) return true;
 		if (type == Type.ABS && timestamp == count) return true;
 		if (type == Type.REL && timestamp == 0) return true;
 		return false;

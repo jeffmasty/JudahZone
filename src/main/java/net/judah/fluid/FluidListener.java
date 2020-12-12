@@ -71,10 +71,8 @@ class FluidListener extends Thread {
             		}
 
             	}
-            	else if (!line.contains("> gain ")) {
-            		log.trace("fluid: " + line);
+            	else if (!line.contains("> gain ")) 
             		Console.addText("fluid: " + line);
-            	}
             }
         } catch (IOException ioe) {
         	ioe.printStackTrace();

@@ -1,4 +1,4 @@
-package net.judah.mixer.widget;
+package net.judah.mixer.plugin;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -22,13 +22,11 @@ public class CarlaVolume extends VolumeWidget {
 		}
 	}
 
-	public boolean mute(int tOrF) {
+	public void activate(boolean active) {
 		try {
-			getCarla().setActive(pluginIndex, tOrF);
-			return true;
+			getCarla().setActive(pluginIndex, active ? 1 : 0);
 		} catch (Exception e) {
 			Console.warn(e.getMessage());
-			return false;
 		}
 	}
 	
@@ -36,3 +34,11 @@ public class CarlaVolume extends VolumeWidget {
 		return Sequencer.getCarla();
 	}
 }
+//public void mute(boolean tOrF) {
+//try {
+//	if (tOrF)  previous = 
+//} catch (Exception e) {
+//	Console.warn(e.getMessage());
+//}
+//}
+

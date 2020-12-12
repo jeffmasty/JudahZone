@@ -66,10 +66,10 @@ public class MenuBar extends JMenuBar {
 	}
 	
 	public void saveAs() {
-		Sequencer s = Sequencer.getCurrent();
-		if (s == null) return;
 		File file = FileChooser.choose();
 		if (file == null) return;
+		Sequencer s = Sequencer.getCurrent();
+		if (s == null) return;
 		s.getPage().save(file);
 	}
 	

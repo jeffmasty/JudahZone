@@ -1,9 +1,9 @@
 package net.judah.mixer;
-
 import static net.judah.settings.Commands.MixerLbls.*;
+import static net.judah.settings.Commands.OtherLbls.*;
+import static net.judah.util.Constants.Param.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import org.apache.commons.lang3.StringUtils;
@@ -17,6 +17,7 @@ import net.judah.looper.AudioPlay;
 import net.judah.looper.Recorder;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
+import net.judah.mixer.plugin.Plugin;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.JudahException;
@@ -26,36 +27,27 @@ public class MixerCommands extends ArrayList<Command> {
 	
 	protected final Mixer mixer;
 	
-	public static final String INDEX = "index";
-	public static final String LOOP_PARAM = "loop";
 	public static final String IS_INPUT = "isInput";
 	public static final String CHANNEL_PROP = "channel";
 	public static final String PLUGIN_PROP = "Plugin Name";
 	public static final String PLUGIN_COMMAND = "Load Plugin";
 	public static final String SOURCE_LOOP = "source.loop";
 	public static final String DESTINATION_LOOP = "destination.loop";
-	public static final String SOURCE_FILE = "source.file";
 	public static final String LOOP_DUPLICATE = "loop.duplicate";
 	public static final int ALL = -1;
 	
 	@Getter protected final Command playCmd;
 	@Getter protected final Command recordCmd;
-	protected final Command clearCommand;
-	protected final Command loadSample;
-	protected final Command muteCommand;
-	protected final Command gainCommand;
-	protected final AudioPlay audioPlay;
 	
 	MixerCommands(Mixer mixer) {
 		this.mixer = mixer;
-
 		recordCmd = new Command(TOGGLE_RECORD.name, TOGGLE_RECORD.desc, loopProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				boolean active = false;
 				if (midiData2 < 0)
 					try { 
-						active = Boolean.parseBoolean(props.get(Command.PARAM_ACTIVE).toString());
-					} catch (Throwable t) {Console.warn(PARAM_ACTIVE + " not set. " + Constants.prettyPrint(props));  }
+						active = Boolean.parseBoolean(props.get(ACTIVE).toString());
+					} catch (Throwable t) {Console.warn(ACTIVE + " not set. " + Constants.prettyPrint(props));  }
 				else 
 					active = midiData2 > 0;
 				int idx = getLoopNum(props); 
@@ -64,12 +56,14 @@ public class MixerCommands extends ArrayList<Command> {
 					throw new JudahException("Sample " + idx + " (" + s.getName() + ") does not record audio.");
 				((RecordAudio)s).record(active);
 			}};
+		add(recordCmd);
+		
 		playCmd = new Command(TOGGLE_PLAY.name, TOGGLE_PLAY.desc, loopProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				boolean active = false;
 				if (midiData2 < 0)
-					try { active = Boolean.parseBoolean(props.get(Command.PARAM_ACTIVE).toString());
-					} catch (Throwable t) {Console.warn(PARAM_ACTIVE + " not set. " + Constants.prettyPrint(props));}
+					try { active = Boolean.parseBoolean(props.get(ACTIVE).toString());
+					} catch (Throwable t) {Console.warn(ACTIVE + " not set. " + Constants.prettyPrint(props));}
 				else 
 					active = midiData2 > 0;
 				int idx = getLoopNum(props);
@@ -79,11 +73,12 @@ public class MixerCommands extends ArrayList<Command> {
 				else 
 					mixer.getSamples().get(idx).play(active);
 			}};
-			
-		muteCommand = new Command(CHANNEL.name, CHANNEL.desc, muteProps()) {
+		add(playCmd);
+		
+		add(new Command(MUTE.name, MUTE.desc, muteProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				boolean mute = Boolean.parseBoolean(props.get("mute").toString());
-				String channel = props.get(Constants.PARAM_CHANNEL).toString();
+				String channel = props.get(CHANNEL).toString();
 				int loopNum = getLoopNum(props);
 				if (loopNum == ALL)
 					for (Sample loop : mixer.getSamples()) 
@@ -91,22 +86,22 @@ public class MixerCommands extends ArrayList<Command> {
 				else 
 					((Recorder)mixer.getSamples().get(loopNum)).mute(channel, mute);
 				return;
-			}};
-		clearCommand = new Command(CLEAR.name, CLEAR.desc, loopProps()) {
+			}});
+		add(new Command(CLEAR.name, CLEAR.desc, loopProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				int idx = getLoopNum(props);
 				if (idx == ALL)
 					mixer.getSamples().forEach(loop -> loop.clear());
 				else 
 					mixer.getSamples().get(idx).clear();
-			}};
+			}});
 			
-		gainCommand = new Command(GAIN.name, GAIN.desc, gainProps()) {
+		add(new Command(VOLUME.name, VOLUME.desc, gainProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				float gain = 0f;
 					if (midiData2 >= 0)
 						gain = ((midiData2))* 0.01f;
-					else gain = Float.parseFloat("" + props.get(Constants.PARAM_GAIN)); 
+					else gain = Float.parseFloat("" + props.get(GAIN)); 
 					
 				boolean isInput = Boolean.parseBoolean(props.get(IS_INPUT).toString());
 				int idx = Integer.parseInt(props.get(INDEX).toString());
@@ -117,24 +112,36 @@ public class MixerCommands extends ArrayList<Command> {
 				else
 					mixer.getSamples().get(idx).setGain(gain);
 				mixer.getGui().update();
-			}};
+			}});
 
-		loadSample = new Command(LOAD_SAMPLE.name, LOAD_SAMPLE.desc, sampleProps()) {
+		add(new Command(LOAD_SAMPLE.name, LOAD_SAMPLE.desc, sampleProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				loadSample(props);}};
+				loadSample(props);}});
 		
-		audioPlay = new AudioPlay();
-				
-		addAll(Arrays.asList(new Command[] {
-			recordCmd, playCmd, clearCommand, loadSample, gainCommand, muteCommand, audioPlay
-		}));
-				
+		add(new Command(PLUGIN.name, PLUGIN.desc, pluginTemplate()) {
+			@Override
+			public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+				String name = props.get(NAME).toString();
+				int index = Integer.parseInt(props.get(INDEX).toString());
+				LineType type = LineType.valueOf(props.get(TYPE).toString());
+				mixer.getPlugins().add(new Plugin(name, index, type));
+			}});
+		add(new AudioPlay());
+
 	}
 
+	public static HashMap<String, Class<?>> pluginTemplate() {
+		HashMap<String, Class<?>> result = new HashMap<>();
+		result.put(NAME, String.class);
+		result.put(INDEX, Integer.class);
+		result.put(TYPE, LineType.class);
+		return result;
+	}
+	
 	public static HashMap<String, Class<?>> loopProps() {
 		HashMap<String, Class<?>> commandProps = new HashMap<>();
-		commandProps.put(LOOP_PARAM, Integer.class);
-		commandProps.put(Command.PARAM_ACTIVE, Boolean.class);
+		commandProps.put(LOOP, Integer.class);
+		commandProps.put(ACTIVE, Boolean.class);
 		return commandProps;
 	}
 	
@@ -142,23 +149,23 @@ public class MixerCommands extends ArrayList<Command> {
 		HashMap<String, Class<?>> commandProps = new HashMap<>();
 		commandProps.put(IS_INPUT, Boolean.class);
 		commandProps.put(INDEX, Integer.class);
-		commandProps.put(Constants.PARAM_GAIN, Float.class);
+		commandProps.put(GAIN, Float.class);
 		return commandProps;
 	}
 
 	public static HashMap<String, Class<?>> muteProps() {
 		HashMap<String, Class<?>> commandProps = new HashMap<>();
-		commandProps.put(LOOP_PARAM, Integer.class);
-		commandProps.put(Command.PARAM_ACTIVE, Boolean.class);
-		commandProps.put(Constants.PARAM_CHANNEL, Integer.class);
+		commandProps.put(LOOP, Integer.class);
+		commandProps.put(ACTIVE, Boolean.class);
+		commandProps.put(CHANNEL, Integer.class);
 		return commandProps;
 	}
 
 	public static HashMap<String, Class<?>> sampleProps() {
 		HashMap<String, Class<?>> commandProps = loopProps();
-		commandProps.put(LOOP_PARAM, Integer.class);
+		commandProps.put(LOOP, Integer.class);
 		commandProps.put(SOURCE_LOOP, Integer.class);
-		commandProps.put(SOURCE_FILE, Integer.class);
+		commandProps.put(FILE, Integer.class);
 		commandProps.put(LOOP_DUPLICATE, Boolean.class);
 		return commandProps;
 	}
@@ -166,7 +173,7 @@ public class MixerCommands extends ArrayList<Command> {
 	private int getLoopNum(HashMap<String, Object> props) {
 		int idx = ALL;
 		try {
-			idx = Integer.parseInt(props.get(LOOP_PARAM).toString());
+			idx = Integer.parseInt(props.get(LOOP).toString());
 			if (idx < 0 || idx >= mixer.getSamples().size()) throw new Exception();
 		} catch (Throwable t) { }
 		return idx;
@@ -174,8 +181,8 @@ public class MixerCommands extends ArrayList<Command> {
 	
 	private void loadSample(HashMap<String, Object> props) throws JudahException {
 		 
-		Object file = props.get(SOURCE_FILE);
-		Object loop = props.get(LOOP_PARAM);
+		Object file = props.get(FILE);
+		Object loop = props.get(LOOP);
 		if (file != null && file.toString().length() > 0) {
 			try {
 				mixer.getSamples().get(Integer.parseInt(loop.toString()))
@@ -192,7 +199,7 @@ public class MixerCommands extends ArrayList<Command> {
 			if (sauce != null && StringUtils.isNumeric(sauce.toString()))
 				source = mixer.getSamples().get(Integer.parseInt(sauce.toString()));
 			Sample destination = mixer.getSamples().get(0);
-			if (LOOP_PARAM != null && StringUtils.isNumeric(loop.toString()))
+			if (LOOP != null && StringUtils.isNumeric(loop.toString()))
 				destination = mixer.getSamples().get(Integer.parseInt(loop.toString()));
 			if (!source.hasRecording()) {
 				log.error("No recording in Loop " + source.getName());

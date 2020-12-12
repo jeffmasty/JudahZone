@@ -18,7 +18,7 @@ import lombok.Getter;
 
 /** Create a Jack midi port and process queue'd messages<br>
  assisted by: https://github.com/jaudiolibs/examples/blob/master/src/main/java/org/jaudiolibs/examples/MidiThru.java */
-public class MidiClient extends BasicClient {
+public class MidiClient extends BasicClient implements MidiQueue {
 
 	private final String[] inputs, outputs;
 	private String synthMidiConnect;
@@ -83,6 +83,7 @@ public class MidiClient extends BasicClient {
     		JackMidi.eventWrite(outPorts.get(0), time, midi.getMessage(), midi.getLength());
     }
     
+	@Override
 	public void queue(ShortMessage message) {
 		// log.debug("queued " + message);
 		queue.add(message);

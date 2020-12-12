@@ -31,7 +31,7 @@ public class Sample implements ProcessAudio, TimeNotifier {
 	@Getter @Setter protected String name;
 	@Getter @Setter protected Type type;
 	
-	@Setter protected transient List<MixerPort> outputPorts;
+	protected transient List<MixerPort> outputPorts;
 	@Getter protected final transient AtomicInteger tapeCounter = new AtomicInteger();
 	@Getter @Setter boolean timeSync = false;
 	private final ArrayList<TimeListener> listeners = new ArrayList<>();
@@ -58,6 +58,14 @@ public class Sample implements ProcessAudio, TimeNotifier {
 	
 	protected Sample() { }
 	
+	@Override
+	public void setOutputPorts(List<MixerPort> ports) {
+		synchronized (outputPorts) {
+			outputPorts.clear();
+			outputPorts.addAll(ports);
+		}
+	}
+	
 	protected void readRecordedBuffer() {
 		recordedBuffer = recording.get(tapeCounter.get());
 		
@@ -71,8 +79,10 @@ public class Sample implements ProcessAudio, TimeNotifier {
 			}
 			updated = 0;
 			
-			listeners.forEach(listener -> {listener.update(Property.LOOP, ++loopCount);});
-			//	if (timeSync) JudahZone.getCurrentSong().pulse();
+			Runnable pulse = () -> {
+				listeners.forEach(listener -> {listener.update(Property.LOOP, ++loopCount);});};
+			new Thread(pulse).start();
+			
 		}
 		tapeCounter.set(updated);
 	}
@@ -84,7 +94,7 @@ public class Sample implements ProcessAudio, TimeNotifier {
 	/** sets the playing flag (actual start/stop happens in the Jack thread) */
 	@Override
 	public void play(boolean active) {
-		log.warn(name + " playing active: " + active);
+		log.trace(name + " playing active: " + active);
 		
 		if (isPlaying.compareAndSet(NEW, active ? ARMED : NEW)) {
 			if (active) Console.info(name + " Play is armed.");
@@ -109,7 +119,6 @@ public class Sample implements ProcessAudio, TimeNotifier {
 	
 	@Override
 	public void clear() {
-		Console.addText("clearing " + name);
 		boolean wasRunning = false;
 		if (isPlaying.compareAndSet(RUNNING, STOPPING)) {
 			wasRunning = true;

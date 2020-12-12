@@ -1,7 +1,7 @@
 package net.judah.metronome;
-
 import static net.judah.settings.Commands.MetronomeLbls.*;
 import static net.judah.util.Constants.*;
+import static net.judah.util.Constants.Param.*;
 
 import java.util.HashMap;
 import java.util.concurrent.Executors;
@@ -33,7 +33,7 @@ public class HiHats extends Command implements TimeListener {
 	private static long period; 
     
 	public HiHats(Metronome metro, float gain) throws InvalidMidiDataException {
-		super(HIHATS.name, HIHATS.desc, Command.activeTemplate());
+		super(HIHATS.name, HIHATS.desc, activeTemplate());
 		
 		downbeat = new Midi(ShortMessage.NOTE_ON, 9, DOWN, gain2midi(gain));
 		upbeat = new Midi(ShortMessage.NOTE_ON, 9, UP, gain2midi(gain));
@@ -71,8 +71,8 @@ public class HiHats extends Command implements TimeListener {
 		boolean active = false;
 		if (midiData2 > 0) 
 			active = true;
-		else if (props.containsKey(Command.PARAM_ACTIVE)) 
-			try { active = Boolean.parseBoolean("" + props.get(Command.PARAM_ACTIVE)); }
+		else if (props.containsKey(ACTIVE)) 
+			try { active = Boolean.parseBoolean("" + props.get(ACTIVE)); }
 				catch (Throwable t) { log.debug(t.getMessage());}
 		if (active) {
 			changed.set(true);

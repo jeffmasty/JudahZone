@@ -15,6 +15,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import net.judah.mixer.Channel;
+import net.judah.mixer.LineType;
 
 public class ChannelGui extends JPanel implements  ChangeListener {
 	final static Dimension lbl = new Dimension(75, STD_HEIGHT);
@@ -28,7 +29,7 @@ public class ChannelGui extends JPanel implements  ChangeListener {
 	
 	public ChannelGui(Channel channel) {
 		this.channel = channel;
-		final boolean isLooper = channel.getInstrument().getType() == Channel.Type.LOOPER;
+		final boolean isLooper = channel.getInstrument().getType() == LineType.LOOPER;
 		
 		setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
 		setLayout(new BorderLayout(1, 1));

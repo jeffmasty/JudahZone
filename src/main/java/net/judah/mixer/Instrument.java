@@ -12,7 +12,7 @@ import net.judah.api.Midi;
 public class Instrument {
 	
 	@NonNull protected final String name;
-	@NonNull protected Channel.Type type = Channel.Type.OTHER; 
+	@NonNull protected LineType type = LineType.OTHER; 
 	protected final String[] sourcePort;
 	
 	// Control name to Midi message map

@@ -289,9 +289,9 @@
   } ],
   "router" : [ {
     "from" : "iTAA",
-    "to" : "iUUA"
+    "to" : "iUsA"
   }, {
     "from" : "iTEA",
-    "to" : "iUsA"
+    "to" : "iUUA"
   } ]
 }

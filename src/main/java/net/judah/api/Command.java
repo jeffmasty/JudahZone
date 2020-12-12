@@ -11,7 +11,6 @@ import net.judah.sequencer.Sequencer;
 @RequiredArgsConstructor
 public abstract class Command {
 	
-	public static final String PARAM_ACTIVE = "active";
 	@Setter protected Sequencer seq;
 	
 	/** MIDI transported commands are expected to have the "midi" message as an object member of {@link Command#props} */
@@ -82,12 +81,6 @@ public abstract class Command {
 			result += " " + entry.getKey() + ":" + entry.getValue();
 		}
 		return result;
-	}
-
-	public static HashMap<String, Class<?>> activeTemplate() {
-		HashMap<String, Class<?>> params = new HashMap<String, Class<?>>();
-		params.put(PARAM_ACTIVE, Boolean.class); 
-		return params;
 	}
 
 }

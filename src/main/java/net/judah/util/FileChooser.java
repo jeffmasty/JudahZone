@@ -17,6 +17,7 @@ public class FileChooser {
 	}
 	
 	public static File choose(int selectionMode, final String extension, final String description) {
+		log.debug("file choose...");
 		JFileChooser fc = new JFileChooser();
 		if (selectionMode >= 0)
 			fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);

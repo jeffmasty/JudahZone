@@ -13,6 +13,7 @@ import net.judah.jack.ProcessAudio;
 import net.judah.looper.Recorder;
 import net.judah.looper.Sample;
 import net.judah.mixer.gui.MixerGui;
+import net.judah.mixer.plugin.Plugin;
 import net.judah.sequencer.Sequencer;
 import net.judah.util.JudahException;
 
@@ -23,7 +24,8 @@ public class Mixer implements Service {
 	@Getter private final MixerGui gui;
 	
 	@Getter private final List<Sample> samples = new ArrayList<>();
-
+	@Getter private final List<Plugin> plugins = new ArrayList<>();
+	
 	public Mixer(Sequencer sequencer) throws JackException {
 		commands = new MixerCommands(this);
 		
@@ -43,7 +45,7 @@ public class Mixer implements Service {
 
 	/**@return the sample's index number */
 	public int addSample(Sample s) {
-		s.setOutputPorts(JudahZone.getOutputPorts());
+		s.setOutputPorts(JudahZone.getMainOutPorts());
 		samples.add(s);
 		return samples.size() - 1;
 	}

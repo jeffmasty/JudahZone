@@ -177,7 +177,7 @@ public class FluidSynth implements Service {
 		outStream.flush();
 		int count = 0;
 		while (listener.sysOverride != null && count++ < 15) {
-			Thread.sleep(20);
+			Thread.sleep(30);
 		}
 		if (listener.channels.isEmpty())
 			throw new JudahException("Error reading channels");
@@ -208,8 +208,7 @@ public class FluidSynth implements Service {
 			syncChannels();
 			syncInstruments();
 		} catch (Throwable t) {
-			Console.addText("sync failed. " + t.getMessage() + NL);
-			log.error(t.getMessage(), t);
+			Console.addText("sync failed. " + t.getMessage());
 		}
 
 	}
@@ -259,7 +258,7 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 			new Thread() {
 				@Override public void run() {
 					try {
-						Thread.sleep(10);
+						Thread.sleep(22);
 						syncChannels();
 						Thread.sleep(40);
 						int after = channels.getCurrentPreset(channel);
@@ -291,10 +290,8 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 			int result = channels.getCurrentPreset(channel);
 			int bank = channels.getBank(channel);
 			for (FluidInstrument f : instruments) 
-				if (f.group == bank && f.index == preset) {
+				if (f.group == bank && f.index == preset) 
 					Console.addText(f.toString());
-					log.info(f);
-				}
 			return result;
 		} catch (Throwable t) {
 			log.error(t.getMessage(), t);

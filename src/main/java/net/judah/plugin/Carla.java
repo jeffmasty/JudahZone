@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import com.illposed.osc.OSCMessage;
@@ -12,6 +13,7 @@ import com.illposed.osc.transport.udp.OSCPortOut;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
+import net.judah.api.Service;
 
 // /usr/local/share/applications
 
@@ -24,9 +26,9 @@ import lombok.extern.log4j.Log4j;
 /set_active					<i-value>
 /set_parameter_value 		<i-index> <f-value>
 /set_volume 		 		<f-value>
-
-	TODO:
 /set_drywet 				<f-value>
+ 
+	TODO:
 /set_balance_left	 		<f-value>
 /set_balance_right   		<f-value>
 /set_panning 		 		<f-value>
@@ -39,22 +41,26 @@ import lombok.extern.log4j.Log4j;
 </pre>
  */
 @Log4j
-public class Carla {
+public class Carla implements Service {
 
 	@Getter private static Carla instance; 
 	
     // public static final String CARLA_SHELL_COMMAND = "/usr/local/bin/carla ";
     public static final String CARLA_SHELL_COMMAND = "carla";
 	
-	private static int _instanceCount = 0; // adjust prefix
+	private static boolean isFirst = true; // adjust prefix
     
+	@Override
+	public String getServiceName() { return Carla.class.getSimpleName(); }
+	
 	private final String prefix;
+	@Getter private final CarlaCommands commands = new CarlaCommands(this);
 	
 	private static final String OSC = "OSC:"; //log
 	
+	@Getter private final String settings;
 	private final int port;
 	private Process process;
-	@Getter private final String settings;
 	private OSCPortOut out;
 
 	// default ports
@@ -77,8 +83,8 @@ public class Carla {
     	builder.environment().put("CARLA_OSC_UDP_PORT", "" + udpPort);
     	process = builder.start();
     	
-    	prefix = (_instanceCount == 0) ? "/Carla/" : "/Carla_0" + _instanceCount + "/";
-    	_instanceCount++;
+    	prefix = (isFirst) ? "/Carla/" : "/Carla_01/";
+    	isFirst = false;
     	
     	out = new OSCPortOut(InetAddress.getLocalHost(), udpPort);
     	log.debug("Carla created. " + carlaSettings);
@@ -102,14 +108,19 @@ public class Carla {
 		param.add(tOrF);
 		String address = prefix + pluginIdx + "/set_active";
 		send(address, param);
-		try {Thread.sleep(14);} catch(Exception e) { }
 	}
 
+	public void setDryWet(int pluginIdx, float val) throws OSCSerializeException, IOException {
+		List<Object> param = new ArrayList<>();
+		param.add(val);
+		String address = prefix + pluginIdx + "/set_drywet";
+		send(address, param);
+	}
+	
 	/** @return true if message sent 
 	 * @throws IOException 
 	 * @throws OSCSerializeException */
 	public void setParameterValue(int pluginIdx, int paramIdx, float value) throws OSCSerializeException, IOException {
-		assert out.isConnected();
 		String address = prefix + pluginIdx + "/set_parameter_value";
 		List<Object> param = new ArrayList<>();
 		param.add(paramIdx);
@@ -124,6 +135,7 @@ public class Carla {
 		out.send(new OSCMessage(address, params));
 	}
 	
+	@Override
 	public void close() {
 		if (out != null && out.isConnected()) {
 			try {
@@ -137,6 +149,8 @@ public class Carla {
 		instance = null;
 		out = null;
 	}
+
+	@Override public void properties(HashMap<String, Object> props) { }
 
 }
 
