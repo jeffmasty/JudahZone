@@ -66,6 +66,11 @@ public class Sample implements ProcessAudio, TimeNotifier {
 		}
 	}
 	
+	public int getSize() {
+		if (recording == null) return 0;
+		return recording.size();
+	}
+	
 	protected void readRecordedBuffer() {
 		recordedBuffer = recording.get(tapeCounter.get());
 		
@@ -78,10 +83,12 @@ public class Sample implements ProcessAudio, TimeNotifier {
 				}.start();
 			}
 			updated = 0;
-			
-			Runnable pulse = () -> {
-				listeners.forEach(listener -> {listener.update(Property.LOOP, ++loopCount);});};
-			new Thread(pulse).start();
+			loopCount++;
+			new Thread() {
+				@Override public void run() {
+					for (int i = 0; i < listeners.size(); i++)
+						listeners.get(i).update(Property.LOOP, loopCount);	
+			}}.start();
 			
 		}
 		tapeCounter.set(updated);
@@ -173,7 +180,8 @@ public class Sample implements ProcessAudio, TimeNotifier {
 
 	@Override
 	public void addListener(TimeListener l) {
-		listeners.add(l);
+		if (!listeners.contains(l))
+			listeners.add(l);
 	}
 
 	@Override

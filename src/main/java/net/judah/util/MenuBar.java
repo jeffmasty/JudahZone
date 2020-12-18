@@ -8,6 +8,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 
 import lombok.extern.log4j.Log4j;
+import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.sequencer.Sequencer;
 import net.judah.song.Song;
@@ -23,6 +24,7 @@ public class MenuBar extends JMenuBar {
     JMenuItem saveAs = new JMenuItem("Save As...");
     JMenuItem close = new JMenuItem("Close Song");
     JMenuItem exit = new JMenuItem("Exit");
+    JMenuItem metronome = new JMenuItem("Metronome");
 	
 	public MenuBar() {
 
@@ -37,6 +39,8 @@ public class MenuBar extends JMenuBar {
         fileMenu.add(saveAs);
         close.addActionListener( (event) -> MainFrame.get().closeTab(Sequencer.getCurrent().getPage()));
         fileMenu.add(close);
+        metronome.addActionListener( (event) -> JudahZone.getMetronome().openGui());
+        fileMenu.add(metronome);
         
 		exit.setMnemonic(KeyEvent.VK_E);
         exit.setToolTipText("Exit application");

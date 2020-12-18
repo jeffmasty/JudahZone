@@ -6,12 +6,14 @@ public interface TimeProvider extends TimeNotifier {
 	/**@return true if the operation is supported and successful */ 
 	boolean setTempo(float tempo);
 
-	/**@param intro Beats until Time Transport starts (null, the default, indicates Transport won't be triggered)
-	 * @param duration Beats until clicks end. (null, the default, indicates clicktrack has no set ending.)*/
-	// void setDuration(Integer intro, Integer duration);
+	/** beats per bar */
 	int getMeasure();
 	void setMeasure(int bpb);
 
-	boolean beat(int current);
+	/**@return in milliseconds, -1 if transport not started */
+	long getLastPulse();
+//	
+//	/**@return in milliseconds, -1 if request is not valid in context */
+//	long getNextPulse();
 	
 }

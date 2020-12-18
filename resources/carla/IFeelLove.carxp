@@ -1,0 +1,363 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE CARLA-PROJECT>
+<CARLA-PROJECT VERSION='2.0'>
+ <EngineSettings>
+  <ForceStereo>false</ForceStereo>
+  <PreferPluginBridges>false</PreferPluginBridges>
+  <PreferUiBridges>true</PreferUiBridges>
+  <UIsAlwaysOnTop>false</UIsAlwaysOnTop>
+  <MaxParameters>200</MaxParameters>
+  <UIBridgesTimeout>4000</UIBridgesTimeout>
+ </EngineSettings>
+
+ <Transport>
+  <BeatsPerMinute>120</BeatsPerMinute>
+ </Transport>
+
+ <!-- GxCabinet -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>Guitar Cabinet</Name>
+   <URI>http://guitarix.sourceforge.net/plugins/gx_cabinet#CABINET</URI>
+  </Info>
+
+  <Data>
+   <Active>Yes</Active>
+   <Volume>1.27</Volume>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x0</Options>
+
+   <Parameter>
+    <Index>0</Index>
+    <Name>Cabinet</Name>
+    <Symbol>CLevel</Symbol>
+    <Value>4.21750068664551</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>Bass</Name>
+    <Symbol>CBass</Symbol>
+    <Value>0.557862877845764</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>2</Index>
+    <Name>Treble</Name>
+    <Symbol>CTreble</Symbol>
+    <Value>6.41248512268066</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>3</Index>
+    <Name>Cab Model</Name>
+    <Symbol>c_model</Symbol>
+    <Value>9</Value>
+   </Parameter>
+
+   <CustomData>
+    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
+    <Key>CarlaSkinIsCompacted</Key>
+    <Value>true</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
+    <Key>CarlaSkin</Key>
+    <Value>classic</Value>
+   </CustomData>
+  </Data>
+ </Plugin>
+
+ <!-- Calf Vintage Delay -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>Calf Vintage Delay</Name>
+   <URI>http://calf.sourceforge.net/plugins/VintageDelay</URI>
+  </Info>
+
+  <Data>
+   <Active>Yes</Active>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x3f1</Options>
+
+   <Parameter>
+    <Index>0</Index>
+    <Name>Active</Name>
+    <Symbol>on</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>Input Gain</Name>
+    <Symbol>level_in</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>2</Index>
+    <Name>Output Gain</Name>
+    <Symbol>level_out</Symbol>
+    <Value>4.62034368515015</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>11</Index>
+    <Name>Subdivide</Name>
+    <Symbol>subdiv</Symbol>
+    <Value>8</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>12</Index>
+    <Name>Time L</Name>
+    <Symbol>time_l</Symbol>
+    <Value>4</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>13</Index>
+    <Name>Time R</Name>
+    <Symbol>time_r</Symbol>
+    <Value>4</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>14</Index>
+    <Name>Feedback</Name>
+    <Symbol>feedback</Symbol>
+    <Value>0.0360000282526016</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>15</Index>
+    <Name>Wet</Name>
+    <Symbol>amount</Symbol>
+    <Value>4</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>16</Index>
+    <Name>Mix mode</Name>
+    <Symbol>mix_mode</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>17</Index>
+    <Name>Medium</Name>
+    <Symbol>medium</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>18</Index>
+    <Name>Dry</Name>
+    <Symbol>dry</Symbol>
+    <Value>0.00219433568418026</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>19</Index>
+    <Name>Stereo Width</Name>
+    <Symbol>width</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>20</Index>
+    <Name>Fragmentation</Name>
+    <Symbol>fragmentation</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>21</Index>
+    <Name>Pattern Beats</Name>
+    <Symbol>pbeats</Symbol>
+    <Value>4</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>22</Index>
+    <Name>Pattern Fragmentation</Name>
+    <Symbol>pfrag</Symbol>
+    <Value>4</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>23</Index>
+    <Name>Timing</Name>
+    <Symbol>timing</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>24</Index>
+    <Name>BPM</Name>
+    <Symbol>bpm</Symbol>
+    <Value>132.959991455078</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>25</Index>
+    <Name>ms</Name>
+    <Symbol>ms</Symbol>
+    <Value>500</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>26</Index>
+    <Name>Frequency</Name>
+    <Symbol>hz</Symbol>
+    <Value>2</Value>
+   </Parameter>
+  </Data>
+ </Plugin>
+
+ <ExternalPatchbay>
+  <Connection>
+   <Source>system:capture_1</Source>
+   <Target>PulseAudio JACK Source:front-left</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_1</Source>
+   <Target>Guitar Cabinet:in</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_2</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_2</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_2</Source>
+   <Target>PulseAudio JACK Source:front-right</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_3</Source>
+   <Target>JudahZone:aux_left</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_3</Source>
+   <Target>JudahZone:aux_right</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:ActitioN MIDI Controller [16] (capture): ActitioN MIDI Controller MIDI 1</Source>
+   <Target>JudahMidi:pedal</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:MPKmini2 [28] (capture): MPKmini2 MIDI 1</Source>
+   <Target>JudahMidi:keyboard</Target>
+  </Connection>
+  <Connection>
+   <Source>PulseAudio JACK Sink:front-left</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>PulseAudio JACK Sink:front-left</Source>
+   <Target>JudahZone:aux_left</Target>
+  </Connection>
+  <Connection>
+   <Source>PulseAudio JACK Sink:front-right</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>PulseAudio JACK Sink:front-right</Source>
+   <Target>JudahZone:aux_right</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahMidi:synth</Source>
+   <Target>fluidsynth-midi:midi_00</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahMidi:drums</Source>
+   <Target>fluidsynth-midi:midi_00</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahMidi:komplete</Source>
+   <Target>a2j:Komplete Audio 6 [24] (playback): Komplete Audio 6 MIDI 1</Target>
+  </Connection>
+  <Connection>
+   <Source>fluidsynth-midi:left</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>fluidsynth-midi:left</Source>
+   <Target>JudahZone:synth_left</Target>
+  </Connection>
+  <Connection>
+   <Source>fluidsynth-midi:left</Source>
+   <Target>Calf Vintage Delay:In L</Target>
+  </Connection>
+  <Connection>
+   <Source>fluidsynth-midi:right</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>fluidsynth-midi:right</Source>
+   <Target>JudahZone:synth_right</Target>
+  </Connection>
+  <Connection>
+   <Source>fluidsynth-midi:right</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>fluidsynth-midi:right</Source>
+   <Target>JudahZone:synth_left</Target>
+  </Connection>
+  <Connection>
+   <Source>fluidsynth-midi:right</Source>
+   <Target>Calf Vintage Delay:In R</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahTime:drums_out</Source>
+   <Target>Calf Fluidsynth:events-in</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahZone:left</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahZone:right</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>Calf Fluidsynth:Out L</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>Calf Fluidsynth:Out R</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>Guitar Cabinet:Out</Source>
+   <Target>JudahZone:guitar_left</Target>
+  </Connection>
+  <Connection>
+   <Source>Guitar Cabinet:Out</Source>
+   <Target>JudahZone:guitar_right</Target>
+  </Connection>
+  <Connection>
+   <Source>Guitar Cabinet:Out</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>Guitar Cabinet:Out</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>Calf Vintage Delay:Out L</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>Calf Vintage Delay:Out R</Source>
+   <Target>system:playback_3</Target>
+  </Connection>
+ </ExternalPatchbay>
+</CARLA-PROJECT>

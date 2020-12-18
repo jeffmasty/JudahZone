@@ -59,7 +59,6 @@ public class JudahZone extends BasicClient {
     @Getter private static final List<Channel> channels = new ArrayList<>();
 	@Getter private static final List<MixerPort> inputPorts = new ArrayList<>();
 	@Getter private static final List<MixerPort> mainOutPorts = new ArrayList<>();
-	@Getter private static final List<MixerPort> auxOutPorts = new ArrayList<>();
 
 	@Getter private final FluidSynth fluid; 
 	@Getter private static JudahMidi midi;
@@ -101,10 +100,6 @@ public class JudahZone extends BasicClient {
 			mainOutPorts.add( new MixerPort(
 					meta, jackclient.registerPort(meta.getName(), AUDIO, JackPortIsOutput)));
 		}
-		for (PortDescriptor meta : patchbay.getAuxPorts()) {
-			auxOutPorts.add( new MixerPort(
-					meta, jackclient.registerPort(meta.getName(), AUDIO, JackPortIsOutput)));
-		}
 		initializeChannels();
 	}
 
@@ -138,8 +133,10 @@ public class JudahZone extends BasicClient {
 
 		// Open a default song 
 		File file = new File("/home/judah/git/JudahZone/resources/Songs/AndILoveHer");
+		File file2 = new File("/home/judah/git/JudahZone/resources/Songs/AndIOutro");
 		try {
 			new Sequencer(file);
+			new Sequencer(file2);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 			log.error(file.getAbsolutePath());
@@ -163,7 +160,6 @@ public class JudahZone extends BasicClient {
 		private final String clientName;
 		@Getter private final List<PortDescriptor> inPorts;
 		@Getter private final List<PortDescriptor> outPorts;
-		@Getter private final List<PortDescriptor> auxPorts;
 		private final List<Patch> connections;
 	}
 	
@@ -194,11 +190,7 @@ public class JudahZone extends BasicClient {
 		outPorts.add(out);
 		connections.add(new Patch(portName(client, out.getName()), "system:playback_2"));
 		
-		List<PortDescriptor> auxPorts = new ArrayList<>();
-		auxPorts.add(new PortDescriptor("aux_1", ChannelType.LEFT));
-		auxPorts.add(new PortDescriptor("aux_2", ChannelType.RIGHT));
-		
-		return new Patchbay(client, inPorts, outPorts, auxPorts, connections);
+		return new Patchbay(client, inPorts, outPorts, connections);
 	}
 
 	private class ShutdownHook extends Thread {

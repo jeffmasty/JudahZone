@@ -6,6 +6,7 @@ import static net.judah.util.Constants.Param.*;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import org.jaudiolibs.jnajack.JackTransportState;
@@ -15,7 +16,7 @@ import net.judah.api.Command;
 import net.judah.api.TimeListener.Property;
 import net.judah.mixer.MixerCommands;
 import net.judah.sequencer.Sequencer.ControlMode;
-import net.judah.util.CommandPair;
+import net.judah.util.CommandWrapper;
 import net.judah.util.Console;
 import net.judah.util.JudahException;
 
@@ -39,7 +40,7 @@ public class SeqCommands extends ArrayList<Command> {
 				boolean active = false;
 				if (midiData2 < 0) 
 					try { active = Boolean.parseBoolean("" + props.get(ACTIVE));
-					} catch (Throwable t) { Console.warn(t.getMessage());}
+					} catch (Throwable t) { Console.warn(t.getMessage(), t);}
 				else if (midiData2 > 0) 
 					active = true;
 				if (active) seq.update(Property.TRANSPORT, JackTransportState.JackTransportStarting); 
@@ -59,11 +60,11 @@ public class SeqCommands extends ArrayList<Command> {
 				Integer duration = null;
 				try { intro = Integer.parseInt(props.get(PARAM_INTRO).toString());
 				} catch (Throwable e) { 
-					Console.warn(e.getMessage() + " " + PARAM_INTRO + " = " + props.get(PARAM_INTRO)); 
+					Console.warn(e.getMessage() + " " + PARAM_INTRO + " = " + props.get(PARAM_INTRO), e); 
 				}
 				try { duration = Integer.parseInt(props.get(PARAM_DURATION).toString());
 				} catch (Throwable e) {
-					Console.warn(e.getMessage() + " " + PARAM_DURATION + " = " + props.get(PARAM_DURATION));
+					Console.warn(e.getMessage() + " " + PARAM_DURATION + " = " + props.get(PARAM_DURATION), e);
 				}
 				//		int down = 34;int up = 33;
 				//		try {down = Integer.parseInt(props.get(PARAM_DOWNBEAT).toString());
@@ -97,10 +98,12 @@ public class SeqCommands extends ArrayList<Command> {
 				else 
 					active = Boolean.parseBoolean("" + props.get(ACTIVE));
 				String[] names =  props.get(NAME).toString().split(",");
+				
 				for (String name : names) {
-					SeqData data = seq.getClock().byName(name);
+					Step data = seq.getClock().getSequence(name);
 					if (data == null) 
-						Console.warn("Unknown named sequence: " + props.get(NAME));
+						throw new JudahException("Unknown named sequence: " + props.get(NAME) + " in " + 
+								Arrays.toString(seq.getClock().getSequences().toArray()));
 					else
 						data.setActive(active);
 				}}});
@@ -114,9 +117,10 @@ public class SeqCommands extends ArrayList<Command> {
 					gain = Float.parseFloat("" + props.get(GAIN));
 				String[] names =  props.get(NAME).toString().split(",");
 				for (String name : names) {
-					SeqData data = seq.getClock().byName(name);
+					Step data = seq.getClock().getSequence(name);
 					if (data == null) 
-						Console.warn("Unknown named sequence: " + props.get(NAME));
+						throw new JudahException("Unknown named sequence: " + props.get(NAME) + " in " + 
+								Arrays.toString(seq.getClock().getSequences().toArray()));
 					else
 						data.setVolume(gain);
 				}}});
@@ -125,13 +129,12 @@ public class SeqCommands extends ArrayList<Command> {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				Command target = seq.getCommander().find("" + props.get("command"));
 				if (target == null) throw new NullPointerException("command " + props.get("command"));
-				int candidate = seq.getCount() + 1;
+				int seqInternal = seq.getCount() + 1;
 				if (ControlMode.INTERNAL == seq.getControl()) {
-					while (candidate % seq.getMeasure() != 0) 
-						candidate++;
+					while (seqInternal % seq.getClock().getMeasure() != 0) 
+						seqInternal++;
 				}
-				props.put(Sequencer.PARAM_SEQ_INTERNAL, candidate);
-				seq.queue(new CommandPair(target, props));
+				seq.queue(new CommandWrapper(target, props, seqInternal));
 			}});
 				
 		add(new Command(RELOAD.name, RELOAD.desc) {
@@ -150,7 +153,7 @@ public class SeqCommands extends ArrayList<Command> {
 			};
 		});
 		
-		add(new Command(RECORD.name, RECORD.desc, activeTemplate()) {
+		add(new Command(MIDIRECORD.name, MIDIRECORD.desc, recordTemplate()) {
 			@Override public void execute(HashMap<String,Object> props, int midiData2) throws Exception {
 				boolean active = false;
 				
@@ -158,10 +161,15 @@ public class SeqCommands extends ArrayList<Command> {
 					active = midiData2 > 0;
 				else 
 					active = Boolean.parseBoolean(props.get(ACTIVE).toString());
-				seq.getClock().record(active);
+				
+				boolean onLoop = true;
+				try {
+					onLoop = Boolean.parseBoolean(props.get(LOOP).toString());
+				} catch(Throwable t) { }
+				seq.getClock().record(active, onLoop);
 			}});
 		
-		add(new Command(PLAY.name, PLAY.desc, indexTemplate()) {
+		add(new Command(MIDIPLAY.name, MIDIPLAY.desc, indexTemplate()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				boolean active = false;
 				if (midiData2 >= 0)
@@ -176,6 +184,17 @@ public class SeqCommands extends ArrayList<Command> {
 			public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				int steps = 0;
 				if (midiData2 >= 0) {
+					if (props.containsKey(STEPS) && props.get(STEPS) != null) {
+						 if (midiData2 > 0) {
+							 steps = Integer.parseInt(props.get(STEPS).toString());
+							 seq.getClock().getTracks().setTranspose(steps);
+						 }
+						 else {
+							 seq.getClock().getTracks().setTranspose(0);
+						 }
+						 return;
+					}
+					
 					steps = Math.round((midiData2 - 50) / 5f);
 				}
 				else {
@@ -183,6 +202,8 @@ public class SeqCommands extends ArrayList<Command> {
 				}
 				seq.getClock().getTracks().setTranspose(steps);
 			}});
+		add(new Arpeggiate()); 
+		
 		add(new Command(MIDIGAIN.name, MIDIGAIN.desc, indexGain()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				float gain = 0f;
@@ -197,6 +218,12 @@ public class SeqCommands extends ArrayList<Command> {
 				}});
 	}
 	
+	private HashMap<String, Class<?>> recordTemplate() {
+		HashMap<String, Class<?>> result = activeTemplate();
+		result.put(LOOP, Boolean.class);
+		return result;
+	}
+
 	private HashMap<String, Class<?>> indexTemplate() {
 		HashMap<String, Class<?>> result = activeTemplate();
 		result.put(INDEX, Integer.class);

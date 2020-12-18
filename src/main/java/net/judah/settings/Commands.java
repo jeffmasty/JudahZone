@@ -15,6 +15,7 @@ public class Commands {
 		VOLUME("metro:volume", "Set Gain for the volume"),
 		HIHATS("metro:hihats", "play some hi hats"),
 		CLICKTRACK("metro:clicktrack", "Click Track settings"),
+		METROCHANGE("metro:progChange", "Change external synth patch");
 		;
 		public final String name;
 		public final String desc;
@@ -59,7 +60,7 @@ public class Commands {
 	}
 
 	@RequiredArgsConstructor
-	public static enum FluidLbls {
+	public static enum SynthLbls {
 		PROGCHANGE("synth:progChange", "Change Fluidsynth instrument"),
 		INSTUP("synth:instUp", "Fluid instrument up, channel 0"),
 		INSTDOWN("synth:instDown", "Fluid instrument down, channel 0"),
@@ -72,8 +73,11 @@ public class Commands {
 	
 	@RequiredArgsConstructor
 	public static enum OtherLbls {
-		RECORD  	("midi:record", 		"record a midi sequence"),
-		PLAY		("midi:play", 		"play a midi sequence"),
+		PLAY		("play", 			""),
+		RECORD		("record",			""),
+		ARPEGGIATE  ("midi:arppegiate", "arpeggiate the 8-step sequencer"),
+		MIDIRECORD  ("midi:record", 	"record a midi sequence"),
+		MIDIPLAY	("midi:play", 		"play a midi sequence"),
 		MIDINOTE	("midi:note", 		"send a midi note"),
 		OCTAVER		("midi:octaver", 	"translate incoming midi notes"),
 		TRANSPOSE   ("midi:transpose",  "translate a midi track"),
@@ -82,7 +86,9 @@ public class Commands {
 		ROUTECHANNEL("midi:routeChannel", "take all commands on a given channel and route them to another"),
 		PLUGIN		("carla:load",     	"define a plugin"),
 		DRYWET  	("carla:drywet",	"set dry/wet of a plugin"),
-		PARAMETER	("carla:param", 	"set the parameter value of a plugin")
+		PARAMETER	("carla:param", 	"set the parameter value of a plugin"),
+		HARMONIZER  ("plugin:octaver",  "activate harmonizer")
+		
 		;
 		public final String name;
 		public final String desc;

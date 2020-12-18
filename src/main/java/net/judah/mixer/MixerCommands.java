@@ -47,7 +47,7 @@ public class MixerCommands extends ArrayList<Command> {
 				if (midiData2 < 0)
 					try { 
 						active = Boolean.parseBoolean(props.get(ACTIVE).toString());
-					} catch (Throwable t) {Console.warn(ACTIVE + " not set. " + Constants.prettyPrint(props));  }
+					} catch (Throwable t) {Console.warn(ACTIVE + " not set. " + Constants.prettyPrint(props), t);  }
 				else 
 					active = midiData2 > 0;
 				int idx = getLoopNum(props); 
@@ -63,7 +63,8 @@ public class MixerCommands extends ArrayList<Command> {
 				boolean active = false;
 				if (midiData2 < 0)
 					try { active = Boolean.parseBoolean(props.get(ACTIVE).toString());
-					} catch (Throwable t) {Console.warn(ACTIVE + " not set. " + Constants.prettyPrint(props));}
+					} catch (Throwable t) {Console.warn(ACTIVE + " not set. " + 
+							Constants.prettyPrint(props), t);}
 				else 
 					active = midiData2 > 0;
 				int idx = getLoopNum(props);

@@ -12,7 +12,7 @@ import net.judah.util.Console;
 import net.judah.util.Constants;
 
 @Data @NoArgsConstructor @Log4j
-public class SeqData {
+public class Step {
 	// sequence active= note=36 duration=16 type=inside notes=0,2.5
 	private String name; 
 	private boolean active = false;
@@ -21,7 +21,7 @@ public class SeqData {
 	private boolean record = false;
 	private int[] sequence = new int[] {1};
 	
-	public SeqData(HashMap<String, Object> props) {
+	public Step(HashMap<String, Object> props) {
 		name = "" + props.get(NAME);
 		try {
 			String[] beats = ("" + props.get(SEQUENCE)).replace(" ", "").split(",");
@@ -46,7 +46,7 @@ public class SeqData {
 		try {note = new Midi(
 				note.getCommand(), note.getChannel(), note.getData1(), Constants.gain2midi(gain));
 		} catch (Throwable t) {
-			Console.warn(t.getMessage() + " for gain: " + gain);
+			Console.warn(t.getMessage() + " for gain: " + gain, t);
 		}
 	}
 	

@@ -44,7 +44,7 @@ public class Router extends ArrayList<Route> {
 		return midi;
 	}
 	
-	public void setOctaver(Octaver o) {
+	public void setOctaver(Transposer o) {
 		add(new Route(o));
 	}
 	public void removeOctaver() {

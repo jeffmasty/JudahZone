@@ -14,11 +14,12 @@ public class QuantizationTest {
 		int[] expected = new int[] {25, 75, 125, 150, 199}; // eighth notes
 		
 		MidiTrack track = new MidiTrack();
-		track.setBeats(4);
+		int beats = 4;
+
 		track.setLength(200);
 		track.setQuantize(Quantize.EIGHTH);
 
-		long unit = track.getLength() / (track.getBeats() * 2); // *2 for eighth notes
+		long unit = track.getLength() / (beats * 2); // *2 for eighth notes
 		
 		for (int i = 0; i < input.length; i++) {
 			MidiEvent e = new MidiEvent(Constants.BASSDRUM, 0);

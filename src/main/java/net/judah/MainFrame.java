@@ -42,7 +42,8 @@ public class MainFrame extends JFrame {
         content.add(left);
         right = new RightPane();
         content.add(right);
-        
+
+        invalidate();
         setLocation(30, 30);
         setSize(1050, 600); // setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);  
         setVisible(true);
@@ -64,6 +65,7 @@ public class MainFrame extends JFrame {
 		setTitle(prefix + " - " + page.getName());
 		
 		right.setSong(page.getSequencer());
+		invalidate();
 	}
 	
 	public static MainFrame get() {

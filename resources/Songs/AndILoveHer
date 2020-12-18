@@ -265,33 +265,6 @@
       "active" : "true"
     }
   }, {
-    "type" : "REL",
-    "timestamp" : 0,
-    "command" : "seq:activate",
-    "notes" : "FOR FUN DEBUG TEST",
-    "params" : {
-      "name" : "bassdrum,snare,hihats",
-      "active" : "true"
-    }
-  }, {
-    "type" : "ABS",
-    "timestamp" : 18,
-    "command" : "seq:activate",
-    "notes" : "",
-    "params" : {
-      "name" : "hihats",
-      "active" : "false"
-    }
-  }, {
-    "type" : "ABS",
-    "timestamp" : 19,
-    "command" : "seq:activate",
-    "notes" : "FOR FUN DEBUG TEST",
-    "params" : {
-      "name" : "bassdrum,snare,hihats",
-      "active" : "false"
-    }
-  }, {
     "type" : "ABS",
     "timestamp" : 24,
     "command" : "loop:play",

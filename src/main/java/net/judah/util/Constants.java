@@ -36,6 +36,11 @@ public class Constants {
 		public static final String SEQUENCE = "sequence";
 		public static final String MAX = "max";
 		public static final String STEPS = "steps";
+		public static final String PRESET = "preset";
+		
+		public static boolean parseActive(HashMap<String, Object> props) {
+			return (Boolean.parseBoolean(props.get(ACTIVE).toString()));
+		}
 		
 		public static HashMap<String, Class<?>> singleTemplate(String name, Class<?> clazz) {
 			HashMap<String, Class<?>> params = new HashMap<String, Class<?>>();

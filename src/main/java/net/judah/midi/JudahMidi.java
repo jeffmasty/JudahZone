@@ -44,8 +44,15 @@ import net.judah.util.RTLogger;
 public class JudahMidi extends BasicClient implements Service, MidiQueue {
 
 	public static final String JACKCLIENT_NAME = "JudahMidi";
+	private long frame = 0;
 	
 	@Getter private static JudahMidi instance;
+	/** Jack Frame */
+	public static long getCurrent() {
+		return instance.scheduler.getCurrent();
+	}
+	
+	@Getter private final MidiScheduler scheduler = new MidiScheduler(this);
 	@Getter private final Router router = new Router();
 
 	private ArrayList<JackPort> inPorts = new ArrayList<JackPort>();  // Keyboard, Pedal, MidiIn
@@ -92,7 +99,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 
     };
 
-	private final Octaver octaver = new Octaver(this);
+	private final Transposer octaver = new Transposer(this);
     
 	private final List<Command> cmds = Arrays.asList(new Command[] {routeChannel, midiNote, midiPlay, octaver});
 	
@@ -107,7 +114,6 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 		super(name);
 		instance = this;
 		start();
-		
 	}
 	
 	public JudahMidi() throws JackException {
@@ -152,6 +158,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
         if (outPorts.size() > 3) komplete = outPorts.get(3);
         
 		//	jackclient.setTimebaseCallback(this, false);
+        new Thread(scheduler).start();
 
 	}
 
@@ -178,7 +185,12 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 
     @Override
 	public boolean process(JackClient client, int nframes) {
+    	
     	try {
+    		
+    		// SeqClock.setCurrent(frame++);
+    		scheduler.offer(frame++);
+    		
     		JackMidi.clearBuffer(synth);
     		JackMidi.clearBuffer(drums);
     		JackMidi.clearBuffer(aux);
@@ -242,11 +254,6 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 		queue.add(message);
 	}
 
-	@Override
-	public String getServiceName() {
-		return JudahMidi.class.getSimpleName();
-	}
-	
 	public static HashMap<String, Class<?>> channelTemplate() {
 		HashMap<String, Class<?>> result = new HashMap<String, Class<?>>();
 		result.put("from", Integer.class);
@@ -263,7 +270,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 	
 	@Override
 	public void properties(HashMap<String, Object> props) {
-		
+		scheduler.clear();
 	}
 
 }

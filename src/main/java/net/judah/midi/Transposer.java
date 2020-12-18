@@ -15,14 +15,14 @@ import net.judah.util.Console;
 import net.judah.util.Constants;
 
 @Log4j
-public class Octaver extends Command {
+public class Transposer extends Command {
 
 	private JudahMidi midi;
 	@Getter private boolean active = false;
 	@Getter private int channel = 0;
 	@Getter private int steps = -12;
 
-	public Octaver(JudahMidi midi) {
+	public Transposer(JudahMidi midi) {
 		super(OCTAVER.name, OCTAVER.desc, transposeTemplate());
 		this.midi = midi;
 	}
@@ -31,7 +31,7 @@ public class Octaver extends Command {
 	public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 		if (midiData2 < 0) // sequencer
 			try {active = Boolean.parseBoolean("" + props.get(ACTIVE));
-			} catch(Throwable t) { Console.warn(t.getMessage()); }
+			} catch(Throwable t) { Console.warn(t.getMessage(), t); }
 		else // midi controller
 			active = midiData2 > 0;
 			

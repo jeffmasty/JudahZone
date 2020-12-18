@@ -1,6 +1,6 @@
 package net.judah.fluid;
 
-import static net.judah.settings.Commands.FluidLbls.*;
+import static net.judah.settings.Commands.SynthLbls.*;
 import static net.judah.util.Constants.*;
 
 import java.io.File;
@@ -269,8 +269,7 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 
 			return msg;
 		} catch (Throwable t) {
-			Console.warn(t.getMessage());
-			log.error(t);
+			Console.warn(t.getMessage(), t);
 			return null;
 		}
 	}
@@ -398,11 +397,6 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 			return progChange(0, 24); // 24 nylon guitar
 		}
 		return null;
-	}
-
-	@Override
-	public String getServiceName() {
-		return FluidSynth.class.getSimpleName();
 	}
 
 	@Override

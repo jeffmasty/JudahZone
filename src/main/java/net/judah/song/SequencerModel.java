@@ -8,14 +8,12 @@ import java.util.List;
 
 import javax.swing.table.DefaultTableModel;
 
-import lombok.extern.log4j.Log4j;
 import net.judah.CommandHandler;
 import net.judah.api.Command;
 import net.judah.song.Trigger.Type;
 import net.judah.util.Console;
 import net.judah.util.JudahException;
 
-@Log4j
 public class SequencerModel extends DefaultTableModel {
 
 	
@@ -55,8 +53,7 @@ public class SequencerModel extends DefaultTableModel {
 				result.add(getRow(i));
 			} catch (JudahException e) {
 				// skip empty and error rows (on save)
-				Console.warn("Skipping row " + i);
-				log.debug(e);
+				Console.warn("Skipping row " + i, e);
 			}
 		return result;
 	}

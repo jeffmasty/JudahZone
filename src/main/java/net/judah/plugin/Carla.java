@@ -50,9 +50,6 @@ public class Carla implements Service {
 	
 	private static boolean isFirst = true; // adjust prefix
     
-	@Override
-	public String getServiceName() { return Carla.class.getSimpleName(); }
-	
 	private final String prefix;
 	@Getter private final CarlaCommands commands = new CarlaCommands(this);
 	

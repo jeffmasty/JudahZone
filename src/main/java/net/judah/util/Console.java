@@ -127,8 +127,14 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 		addText("" + NL);
 	}
 
-	public static void warn(String s) {
+	public static void warn(Throwable t) {
+		addText("WARN " + t.getMessage());
+		log.warn(t.getMessage(), t);
+	}
+	
+	public static void warn(String s, Throwable t) {
 		addText("WARN " + s);
+		if (t != null) log.warn(s, t);
 	}
 	
 	public static void info(String s) {
@@ -179,7 +185,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 				getCarla().setParameterValue(Integer.parseInt(input[1]), 
 						Integer.parseInt(input[2]), Float.parseFloat(input[3]));
 		} catch (Exception e) {
-			Console.warn(e.getMessage());
+			Console.warn(e.getMessage(), e);
 		}
 		
 		if (text.equals("midi")) 
@@ -400,7 +406,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 			new QuantizationTest();
 			addText("success.");
 		} catch (Throwable t) {
-			warn(t.getMessage());
+			warn(t.getMessage(), t);
 		}
 	}
 	

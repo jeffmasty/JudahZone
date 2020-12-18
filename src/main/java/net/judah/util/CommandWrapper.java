@@ -6,10 +6,11 @@ import lombok.Data;
 import net.judah.api.Command;
 
 @Data
-public class CommandPair {
+public class CommandWrapper {
 
 	private final Command command;
 	private final HashMap<String, Object> props;
+	private final int internalCount;
 	
 	@Override
 	public String toString() {

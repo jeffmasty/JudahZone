@@ -14,12 +14,12 @@ public class Services extends ArrayList<Service> {
 //		add(FluidSynth.getInstance());
 	}
 
-	public Service byName(String name) {
-		for (Service service : this)
-			if (name.equals(service.getServiceName()))
-					return service;
-		return null;
-	}
+//	public Service byName(String name) {
+//		for (Service service : this)
+//			if (name.equals(service.getServiceName()))
+//					return service;
+//		return null;
+//	}
 
 	public Service byClass(Class<?> clazz) {
 		for (Service service : this)

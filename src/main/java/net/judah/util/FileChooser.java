@@ -43,6 +43,6 @@ public class FileChooser {
 	}
 	
 	public static File choose() {
-		return choose(-1, null, null);
+		return choose(0, null, null);
 	}
 }

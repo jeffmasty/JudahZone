@@ -18,9 +18,9 @@ public class Route {
 	private final Integer toData1;
 	
 	@JsonIgnore
-	@Getter private transient Octaver octaver;
+	@Getter private transient Transposer octaver;
 
-	public Route(Octaver octaver) {
+	public Route(Transposer octaver) {
 		this(octaver.getChannel(), octaver.getChannel());
 		this.octaver = octaver;
 	}

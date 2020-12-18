@@ -270,7 +270,7 @@
     "type" : "ABS",
     "timestamp" : 0,
     "command" : "loop:record",
-    "notes" : "",
+    "notes" : "Record Bass",
     "params" : {
       "loop" : "0",
       "active" : "true"
@@ -308,7 +308,7 @@
     "command" : "mixer:volume",
     "notes" : "",
     "params" : {
-      "volume" : "0.40",
+      "volume" : "0.35",
       "isInput" : "true",
       "index" : "3"
     }
@@ -340,6 +340,53 @@
       "active" : "true"
     }
   }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "midi:octaver",
+    "notes" : "",
+    "params" : {
+      "channel" : null,
+      "active" : "false",
+      "steps" : null
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "synth:progChange",
+    "notes" : "setup flutes",
+    "params" : {
+      "channel" : "0",
+      "preset" : "75"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "midi:octaver",
+    "notes" : "",
+    "params" : {
+      "channel" : "0",
+      "active" : "true",
+      "steps" : "24"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "midi:octaver",
+    "notes" : "",
+    "params" : {
+      "channel" : "0",
+      "active" : "true",
+      "steps" : "24"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "synth:direct",
+    "notes" : "",
+    "params" : {
+      "string" : "reverb on; rev_preset 3"
+    }
+  }, {
     "type" : "ABS",
     "timestamp" : 96,
     "command" : "loop:record",
@@ -365,53 +412,6 @@
     "params" : {
       "loop" : "1",
       "active" : "true"
-    }
-  }, {
-    "type" : "TRIG",
-    "timestamp" : 0,
-    "command" : "synth:progChange",
-    "notes" : "setup flutes",
-    "params" : {
-      "channel" : "0",
-      "preset" : "75"
-    }
-  }, {
-    "type" : "REL",
-    "timestamp" : 0,
-    "command" : "mixer:volume",
-    "notes" : "",
-    "params" : {
-      "volume" : "0.33",
-      "isInput" : "true",
-      "index" : "3"
-    }
-  }, {
-    "type" : "REL",
-    "timestamp" : 0,
-    "command" : "synth:direct",
-    "notes" : "",
-    "params" : {
-      "string" : "reverb on; rev_preset 3"
-    }
-  }, {
-    "type" : "REL",
-    "timestamp" : 0,
-    "command" : "midi:octaver",
-    "notes" : "",
-    "params" : {
-      "channel" : null,
-      "active" : "false",
-      "steps" : null
-    }
-  }, {
-    "type" : "REL",
-    "timestamp" : 0,
-    "command" : "midi:octaver",
-    "notes" : "",
-    "params" : {
-      "channel" : "0",
-      "active" : "true",
-      "steps" : "24"
     }
   }, {
     "type" : "TRIG",

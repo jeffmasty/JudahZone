@@ -1,12 +1,13 @@
 TODO:
-patchkit, settings/default files
-stereo/mono   output live_left live_right
 
-arpeggiator
+play: type, active, index, name, input, output
+record: type, active, index, name
+
+multi-delete, upgrade properties table (enum, int, boolean types)
+Latency + bleeding edge
+settings/default files
+stereo/mono
 Undo/Redo/Copy/Paste
-Looper Control and triggers  Queue : cmd name cmd service loop# active(toggle) 
-Sequencer: TimeClock, MultiLoop + Sync,
-drum machine
 patch bay needed. see jack_lsp, jack_connect
 Plugins, ttl 
 walking bassline midi bot
@@ -53,6 +54,7 @@ https://github.com/PedalController/Lv2Library/blob/master/src/br/com/srmourasilv
 
 
 Done:
+arpeggiator, overdub midi
 Midi looper/recorder, Quantization
 router table -> display pad/knob name  and   midi drum name
 new GUI layout, fix props table

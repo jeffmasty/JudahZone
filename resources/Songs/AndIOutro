@@ -1,6 +1,6 @@
 {
   "props" : {
-    "carla" : "/home/judah/git/JudahZone/resources/carla/IFeelLove.carxp"
+    "carla" : "/home/judah/git/JudahZone/resources/carla/AndIOutro.carxp"
   },
   "links" : [ {
     "name" : "bass and snare volume",
@@ -44,11 +44,12 @@
     }
   }, {
     "name" : "",
-    "command" : "midi:volume",
+    "command" : "mixer:volume",
     "midi" : "sA4A",
     "props" : {
       "volume" : null,
-      "index" : "0"
+      "index" : "0",
+      "isInput" : "false"
     }
   }, {
     "name" : "",
@@ -56,7 +57,7 @@
     "midi" : "sA8A",
     "props" : {
       "volume" : null,
-      "index" : "1"
+      "index" : "0"
     }
   }, {
     "name" : "",
@@ -64,7 +65,7 @@
     "midi" : "sBAA",
     "props" : {
       "volume" : null,
-      "index" : "2"
+      "index" : "1"
     }
   }, {
     "name" : "",
@@ -72,39 +73,37 @@
     "midi" : "sBEA",
     "props" : {
       "volume" : null,
-      "index" : "3"
-    }
-  }, {
-    "name" : "",
-    "command" : "midi:arppegiate",
-    "midi" : "uR8A",
-    "props" : {
-      "active" : ""
-    }
-  }, {
-    "name" : "",
-    "command" : "seq:activate",
-    "midi" : "uSAA",
-    "props" : {
-      "name" : "snare",
-      "active" : "",
-      "index" : "1"
-    }
-  }, {
-    "name" : "",
-    "command" : "midi:play",
-    "midi" : "uSMA",
-    "props" : {
-      "active" : "",
-      "index" : "0"
+      "index" : "2"
     }
   }, {
     "name" : "",
     "command" : "midi:record",
     "midi" : "uR8A",
     "props" : {
+      "active" : ""
+    }
+  }, {
+    "name" : "",
+    "command" : "midi:transpose",
+    "midi" : "uSAA",
+    "props" : {
+      "steps" : "3"
+    }
+  }, {
+    "name" : "",
+    "command" : "seq:activate",
+    "midi" : "uSMA",
+    "props" : {
+      "name" : "hihats",
+      "active" : null
+    }
+  }, {
+    "name" : "",
+    "command" : "loop:record",
+    "midi" : "uSQA",
+    "props" : {
       "active" : null,
-      "loop" : "false"
+      "loop" : "0"
     }
   } ],
   "sequencer" : [ {
@@ -113,37 +112,10 @@
     "command" : "seq:setup",
     "notes" : "",
     "params" : {
-      "intro.beats" : "0",
+      "intro.beats" : "16",
       "bpb" : "4",
-      "beats.per.pulse" : "4",
-      "bpm" : "130"
-    }
-  }, {
-    "type" : "INIT",
-    "timestamp" : 0,
-    "command" : "metro:progChange",
-    "notes" : "",
-    "params" : {
-      "channel" : "9",
-      "up" : null,
-      "preset" : "25"
-    }
-  }, {
-    "type" : "INIT",
-    "timestamp" : 0,
-    "command" : "metro:progChange",
-    "notes" : "",
-    "params" : {
-      "channel" : "0",
-      "preset" : "33"
-    }
-  }, {
-    "type" : "INIT",
-    "timestamp" : 0,
-    "command" : "synth:direct",
-    "notes" : "",
-    "params" : {
-      "string" : "set synth.reverb.active off"
+      "beats.per.pulse" : "16",
+      "bpm" : "91"
     }
   }, {
     "type" : "INIT",
@@ -152,17 +124,24 @@
     "notes" : "",
     "params" : {
       "channel" : "0",
-      "preset" : "33"
+      "preset" : "11"
     }
   }, {
     "type" : "INIT",
     "timestamp" : 0,
-    "command" : "midi:octaver",
+    "command" : "synth:direct",
     "notes" : "",
     "params" : {
-      "channel" : "0",
-      "active" : "true",
-      "steps" : "-24"
+      "string" : "reverb on; rev_preset 2"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "metro:progChange",
+    "notes" : "",
+    "params" : {
+      "channel" : "9",
+      "preset" : "26"
     }
   }, {
     "type" : "INIT",
@@ -170,11 +149,11 @@
     "command" : "seq:load",
     "notes" : "bassdrum sequence",
     "params" : {
-      "sequence" : "0,2,4,6",
+      "sequence" : "0,4",
       "midi.record" : "false",
       "data2" : "115",
       "channel" : "9",
-      "data1" : "35",
+      "data1" : "36",
       "name" : "bassdrum",
       "active" : "true",
       "command" : "144",
@@ -192,7 +171,7 @@
       "channel" : "9",
       "data1" : "40",
       "name" : "snare",
-      "active" : "false",
+      "active" : "true",
       "command" : "144",
       "loop.count" : null
     }
@@ -202,7 +181,7 @@
     "command" : "seq:load",
     "notes" : "hihats sequence",
     "params" : {
-      "sequence" : "1,3,5,7",
+      "sequence" : "1,3,5,6,7",
       "midi.record" : "false",
       "data2" : "115",
       "channel" : "9",
@@ -215,106 +194,58 @@
   }, {
     "type" : "INIT",
     "timestamp" : 0,
-    "command" : "seq:load",
-    "notes" : "bass C",
-    "params" : {
-      "sequence" : "0,2",
-      "midi.record" : "true",
-      "data2" : "100",
-      "channel" : "0",
-      "data1" : "24",
-      "name" : "C",
-      "active" : "true",
-      "command" : "144",
-      "loop.count" : null
-    }
-  }, {
-    "type" : "INIT",
-    "timestamp" : 0,
-    "command" : "seq:load",
-    "notes" : "bass Bb",
-    "params" : {
-      "sequence" : "6",
-      "midi.record" : "true",
-      "data2" : "100",
-      "channel" : "0",
-      "data1" : "34",
-      "name" : "Bb",
-      "active" : "true",
-      "command" : "144",
-      "loop.count" : null
-    }
-  }, {
-    "type" : "INIT",
-    "timestamp" : 0,
-    "command" : "seq:load",
-    "notes" : "bass G",
-    "params" : {
-      "sequence" : "4",
-      "midi.record" : "true",
-      "data2" : "100",
-      "channel" : "0",
-      "data1" : "31",
-      "name" : "G",
-      "active" : "true",
-      "command" : "144",
-      "loop.count" : null
-    }
-  }, {
-    "type" : "INIT",
-    "timestamp" : 0,
-    "command" : "seq:load",
-    "notes" : "off C",
-    "params" : {
-      "sequence" : "1,3",
-      "midi.record" : "true",
-      "data2" : "0",
-      "channel" : "0",
-      "data1" : "24",
-      "name" : "Coff",
-      "active" : "true",
-      "command" : "128",
-      "loop.count" : null
-    }
-  }, {
-    "type" : "INIT",
-    "timestamp" : 0,
-    "command" : "seq:load",
-    "notes" : "off Bb",
-    "params" : {
-      "sequence" : "7",
-      "midi.record" : "true",
-      "data2" : "0",
-      "channel" : "0",
-      "data1" : "34",
-      "name" : "Bboff",
-      "active" : "true",
-      "command" : "128",
-      "loop.count" : null
-    }
-  }, {
-    "type" : "INIT",
-    "timestamp" : 0,
-    "command" : "seq:load",
-    "notes" : "off G",
-    "params" : {
-      "sequence" : "5",
-      "midi.record" : "true",
-      "data2" : "0",
-      "channel" : "0",
-      "data1" : "31",
-      "name" : "Goff",
-      "active" : "true",
-      "command" : "128",
-      "loop.count" : null
-    }
-  }, {
-    "type" : "TRIG",
-    "timestamp" : 0,
     "command" : "seq:transport",
     "notes" : "",
     "params" : {
       "active" : "true"
+    }
+  }, {
+    "type" : "ABS",
+    "timestamp" : 0,
+    "command" : "loop:record",
+    "notes" : "",
+    "params" : {
+      "loop" : "0",
+      "active" : "true"
+    }
+  }, {
+    "type" : "ABS",
+    "timestamp" : 16,
+    "command" : "loop:record",
+    "notes" : "",
+    "params" : {
+      "loop" : "0",
+      "active" : "false"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "loop:play",
+    "notes" : "",
+    "params" : {
+      "loop" : "0",
+      "active" : "true",
+      "index" : "0"
+    }
+  }, {
+    "type" : "ABS",
+    "timestamp" : 17,
+    "command" : "carla:param",
+    "notes" : "off harmonizer",
+    "params" : {
+      "paramIdx" : "0",
+      "index" : "0",
+      "value" : "1"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "carla:param",
+    "notes" : "off EQ",
+    "params" : {
+      "paramIdx" : "0",
+      "index" : "1",
+      "value" : "0"
     }
   }, {
     "type" : "TRIG",
@@ -338,9 +269,11 @@
   }, {
     "type" : "TRIG",
     "timestamp" : 0,
-    "command" : "song:reload",
+    "command" : "song:next",
     "notes" : "",
-    "params" : { }
+    "params" : {
+      "file" : "/home/judah/git/JudahZone/resources/Songs/IFeelLove"
+    }
   } ],
   "router" : [ ]
 }

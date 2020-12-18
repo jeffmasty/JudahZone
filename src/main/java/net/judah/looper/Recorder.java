@@ -1,6 +1,5 @@
 package net.judah.looper;
 
-
 import static net.judah.jack.AudioMode.*;
 import static net.judah.mixer.MixerPort.ChannelType.*;
 import static net.judah.util.Constants.*;
@@ -32,6 +31,8 @@ public class Recorder extends Sample implements RecordAudio {
 	private FloatBuffer fromJack;
 	private boolean firstLeft, firstRight;
 	private int counter;
+	@Getter private long recordedLength = -1; 
+	private long _start;
 	
 	public Recorder(String name, Type type) {
 		this(name, type, JudahZone.getInputPorts(), JudahZone.getMainOutPorts());
@@ -66,11 +67,10 @@ public class Recorder extends Sample implements RecordAudio {
 			Console.addText("silently overdubbing on " + name);
 		}
 		
-			
 		if (mode == RUNNING && !active) {
 			isRecording.set(STOPPING);
-			// recording = new Recording(liveRecording);
 			length = recording.size();
+			recordedLength = System.currentTimeMillis() - _start;
 			isPlaying.compareAndSet(NEW, STOPPED);
 			isPlaying.compareAndSet(ARMED, STARTING);
 			isRecording.set(STOPPED);
@@ -93,7 +93,7 @@ public class Recorder extends Sample implements RecordAudio {
 
 	@Override
 	public String toString() {
-		return "Loop " + name;
+		return this.getClass().getSimpleName() + " " + name;
 	}
 
 	@Override
@@ -115,7 +115,10 @@ public class Recorder extends Sample implements RecordAudio {
 	/** for process() thread */
 	private final boolean recording() {
 		isRecording.compareAndSet(STOPPING, STOPPED);
-		isRecording.compareAndSet(STARTING, RUNNING);
+			
+		if (isRecording.compareAndSet(STARTING, RUNNING)) 
+			_start = System.currentTimeMillis();
+
 		if (isRecording.get() == RUNNING)
 			for (MixerPort p : inputPorts)
 				if (p.isOnLoop())

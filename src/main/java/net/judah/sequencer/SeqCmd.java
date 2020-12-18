@@ -14,7 +14,7 @@ public class SeqCmd extends Command {
 	/** internal vs. external synth */
 	public static final String PARAM_RECORD = "midi.record";
 	
-	private SeqData sequence;
+	private Step sequence;
 	
 	public SeqCmd() {
 		super(SEQ.name, SEQ.desc, template());
@@ -33,7 +33,7 @@ public class SeqCmd extends Command {
 
 	@Override
 	public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-		sequence = new SeqData(props);
+		sequence = new Step(props);
 		seq.getClock().getSequences().add(sequence);
 	}
 	

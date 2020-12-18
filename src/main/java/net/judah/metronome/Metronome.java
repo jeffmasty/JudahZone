@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -25,12 +24,14 @@ import com.illposed.osc.OSCSerializeException;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.api.Command;
+import net.judah.api.Midi;
 import net.judah.api.MidiClient;
 import net.judah.api.Service;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeListener.Property;
 import net.judah.api.TimeProvider;
+import net.judah.midi.ProgMsg;
 import net.judah.plugin.Carla;
 import net.judah.util.Console;
 import net.judah.util.Constants;
@@ -57,7 +58,7 @@ public class Metronome implements Service, TimeProvider /* , ActionListener, Cha
 	@Getter private float tempo = 100f;
 	/** beats per measure */
 	@Getter private int measure = 4;
-	@Getter private float gain = 0.9f;
+	@Getter private float gain = 0.1f;
 	/** if null, generate midi notes ourself */
 	@Getter private File midiFile;
 	
@@ -67,8 +68,8 @@ public class Metronome implements Service, TimeProvider /* , ActionListener, Cha
 	private boolean clicktrack;
 	public boolean hasClicktrack() {return clicktrack;}
 	
-	private final Command start, tempoCmd, volumeCmd;
-	@Getter private final List<Command> commands;
+	// private final Command start, tempoCmd, volumeCmd;
+	@Getter private final List<Command> commands = new ArrayList<>();
 	
     public Metronome(File midiFile, TimeProvider master) throws JackException, IOException, InvalidMidiDataException, OSCSerializeException {
     	
@@ -91,26 +92,51 @@ public class Metronome implements Service, TimeProvider /* , ActionListener, Cha
         		log.warn("Probably have to sleep longer");
         	}};}.start();
 
-        start = new Command(TICKTOCK.name, TICKTOCK.desc) {
+        commands.add(new Command(TICKTOCK.name, TICKTOCK.desc) {
     		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
     			if (midiData2 == 0) stop();
     			else try { play(); } catch (Exception e) {
-    				Console.warn(e.getMessage()); log.error(e.getMessage(), e);}}};
-        tempoCmd = new Command(TEMPO.name, TEMPO.desc) {
+    				Console.warn(e.getMessage(), e); }}});
+        commands.add(new Command(TEMPO.name, TEMPO.desc) {
     		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-    			setTempo((midiData2 + 35) * 1.15f);}};
-        volumeCmd = new Command(VOLUME.name, VOLUME.desc, 
+    			setTempo((midiData2 + 35) * 1.15f);}});
+        commands.add(new Command(VOLUME.name, VOLUME.desc, 
         		Constants.template(GAIN, Float.class)) {
     		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
     			if (midiData2 >= 0)
     				setVolume(midiData2 * 0.01f);
-    			else setVolume(Float.parseFloat("" + props.get(GAIN))); 
-        }};
-        	
-		commands = Arrays.asList(new Command[] {start, tempoCmd, volumeCmd, 
-				new HiHats(this, gain), new ClickTrack(this)});   
+    			else setVolume(Float.parseFloat("" + props.get(GAIN)));}});
+		HashMap<String, Class<?>> template = new HashMap<String, Class<?>>();
+		template.put(CHANNEL, Integer.class);
+		template.put(PRESET, Integer.class);
+
+        commands.add(new Command(METROCHANGE.name, METROCHANGE.desc, template) {
+			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+				int channel = 0;
+				int preset = 0;
+				try {
+					preset = Integer.parseInt(props.get("preset").toString());
+					channel = Integer.parseInt(props.get("channel").toString());
+					Midi msg = new ProgMsg(channel, preset);
+					midi.queue(msg);
+				} catch (Throwable t) { 
+					log.debug(t.getMessage()); }}});
+        
+        commands.add(new ClickTrack(this));
     }
 	
+    public void openGui() {
+		try {
+			JFrame frame = new JFrame("Metronome");
+			frame.setContentPane(getGui());
+	        frame.setLocation(200, 50);
+	        frame.setSize(330, 200);  
+	        frame.setVisible(true);
+		} catch (Exception e) {
+			Console.warn(e.getMessage(), e);
+		}
+    }
+    
     /** Created and cached upon request */
 	public MetroGui getGui() {
 		if (gui == null)
@@ -248,12 +274,6 @@ public class Metronome implements Service, TimeProvider /* , ActionListener, Cha
 	}
 	
 
-	@Override
-	public boolean beat(int current) {
-		// No Op
-		return false;
-	}
-
 	void rollTransport() {
 		if (this != timeProvider) return;
 		listeners.forEach(listener -> {listener.update(Property.TRANSPORT, JackTransportState.JackTransportStarting);});
@@ -273,7 +293,12 @@ public class Metronome implements Service, TimeProvider /* , ActionListener, Cha
 	public static void remove(TimeListener l) {
 		listeners.remove(l);
 	}
-	
+
+	@Override
+	public long getLastPulse() {
+		return -1; // not implemented yet
+	}
+
 	
 //	public static void setActive(boolean active) throws OSCSerializeException, IOException {
 //		carla.setActive(0, (active) ? 1 : 0);

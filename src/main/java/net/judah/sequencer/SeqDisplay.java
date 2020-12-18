@@ -3,16 +3,20 @@ package net.judah.sequencer;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import net.judah.api.TimeListener;
 import net.judah.util.Constants;
 
 /** TODO */
-public class SeqDisplay extends JPanel {
+public class SeqDisplay extends JPanel implements TimeListener {
 
 	public static final int INSET = 15;
 	public static final int WIDTH = 800 + 2 * INSET;
 	public static final int HEIGHT = 200 + 2 * INSET;
+
+	private JLabel beat = new JLabel("current: ??");
 	
 	// JButton start, previous, next, end, play, pause, settings;
 //	JTextField current, tempo;
@@ -21,7 +25,8 @@ public class SeqDisplay extends JPanel {
 	// https://www.infoworld.com/article/2071315/jslider-appearance-improvements.html
 	
 	public SeqDisplay() {
-		setSize(600, 220);
+		//setSize(600, 220);
+		add(beat);
 		setBorder(Constants.Gui.GRAY1);
 	}
 	
@@ -41,6 +46,12 @@ public class SeqDisplay extends JPanel {
         g2d.drawLine(330, 30, 570, 30);
         g2d.drawLine(330, 170, 570, 170);
     }
+    
+	@Override
+	public void update(Property prop, Object value) {
+		if (Property.BEAT == prop)
+			beat.setText("current: " + value);
+	}
 
 
 	

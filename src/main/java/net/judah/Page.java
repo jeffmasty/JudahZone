@@ -74,7 +74,7 @@ public class Page extends JPanel {
 		try {
 			new Sequencer(sequencer.getSongfile());
 		} catch (Exception e) {
-			Console.warn(e.getMessage() + " for " + sequencer.getSongfile());
+			Console.warn(e.getMessage() + " for " + sequencer.getSongfile(), e);
 			Constants.infoBox(e.getMessage(), "reload");
 		}
 	}

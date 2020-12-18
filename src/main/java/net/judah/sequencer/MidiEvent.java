@@ -2,28 +2,37 @@ package net.judah.sequencer;
 
 import lombok.Data;
 import net.judah.api.Midi;
+import net.judah.midi.JudahMidi;
 
 @Data 
 public class MidiEvent {
 
-	private final Midi msg;
-	private long offset;
+	protected final Midi msg;
+	protected long offset;
+	
+	/** not normalized, offset time is JudahMidi frame*/
+	public MidiEvent(long frameNum, Midi msg) {
+		this.msg = msg;
+		this.offset = frameNum;
+	}
 	
 	/** normalize offset to zero based from trackStart */
 	public MidiEvent(Midi msg, long trackStart) {
 		this.msg = new Midi(msg.getMessage());
-		offset = System.currentTimeMillis() - trackStart;
+		offset = JudahMidi.getCurrent() - trackStart;
+		assert offset >= 0 : "current " + JudahMidi.getCurrent() + " - trackStart " + trackStart + " = " + offset;
 	}
 
-	/**@param unit time unit in milliseconds */
+	/**@param unit time unit to quantize to and max in milliseconds */
 	public void quantize(long unit, long max) {
-		long half = unit / 2;
-		if (offset % unit == 0) return;
-		if (offset % unit > half)
-			offset = offset + unit - (offset % unit);
-		else
-			offset = offset - (offset % unit);
-		if (offset >= max) offset = max - 1;
+// TODO not gonna worry about it right now (moving to Jack Frames sync)		
+//		long half = unit / 2;
+//		if (offset % unit == 0) return;
+//		if (offset % unit > half)
+//			offset = offset + unit - (offset % unit);
+//		else
+//			offset = offset - (offset % unit);
+//		if (offset >= max) offset = 0;
 	}
 	
 }

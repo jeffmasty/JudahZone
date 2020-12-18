@@ -35,11 +35,10 @@ public class LinkTable extends JPanel implements Edits {
 
 		model = new LinkModel(links, commander);
 		table = new JTable(model);
-		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-		table.getColumnModel().getColumn(0).setPreferredWidth(70);
-		table.getColumnModel().getColumn(COMMAND_COL).setPreferredWidth(115);
-		table.getColumnModel().getColumn(2).setPreferredWidth(70);
-		table.getColumnModel().getColumn(3).setPreferredWidth(15);
+		table.getColumnModel().getColumn(0).setPreferredWidth(100);
+		table.getColumnModel().getColumn(COMMAND_COL).setPreferredWidth(75);
+		table.getColumnModel().getColumn(2).setPreferredWidth(112);
+		table.getColumnModel().getColumn(3).setPreferredWidth(300);
 		
 		table.setDefaultEditor(Command.class, new DefaultCellEditor(
 				new JComboBox<Command>(commander.getAvailableCommands())));

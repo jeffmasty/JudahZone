@@ -17,7 +17,7 @@ public class CarlaVolume extends VolumeWidget {
 			getCarla().setVolume(pluginIndex, gain * 1.27f); // Carla internal volume 0 to 1.27
 			return true;
 		} catch (Exception e) {
-			Console.warn(e.getMessage());
+			Console.warn(e.getMessage(), e);
 			return false;
 		}
 	}
@@ -26,7 +26,7 @@ public class CarlaVolume extends VolumeWidget {
 		try {
 			getCarla().setActive(pluginIndex, active ? 1 : 0);
 		} catch (Exception e) {
-			Console.warn(e.getMessage());
+			Console.warn(e.getMessage(), e);
 		}
 	}
 	

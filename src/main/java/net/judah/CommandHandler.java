@@ -15,6 +15,8 @@ import net.judah.midi.MidiListener;
 import net.judah.midi.MidiListener.PassThrough;
 import net.judah.sequencer.Sequencer;
 import net.judah.song.Link;
+import net.judah.util.Console;
+import net.judah.util.Constants;
 import net.judah.util.JudahException;
 import net.judah.util.Links;
 
@@ -22,17 +24,10 @@ import net.judah.util.Links;
 public class CommandHandler {
 	
 	private final ArrayList<Command> available = new ArrayList<>();
-	
-	
-	
 	private final Links links = new Links();
 	private final Sequencer sequencer;
-	
 	@Getter private final ArrayList<MidiListener> listeners = new ArrayList<>();
 	
-	// @Setter private MidiListener midiListener;
-
-
 	/** call after all services have been initialized */
 	public void initializeCommands() {
 		for (Service s : sequencer.getServices()) 
@@ -41,8 +36,7 @@ public class CommandHandler {
 		for (Service s : JudahZone.getServices()) 
 			available.addAll(s.getCommands());
 		
-		//log.debug("currently handling " + available.size() + " available different commands");
-		//for (Command c : available) log.debug("    " + c);
+		//log.debug("current commands: " + available.size()); for (Command c : available) log.debug("- " + c);
 		available.sort((p1, p2) -> p1.getName().compareTo(p2.getName()));
 	}
 
@@ -52,7 +46,7 @@ public class CommandHandler {
 	}
 	
 	/** @return true if consumed */
-	public boolean midiProcessed(Midi midiMsg) throws JudahException {
+	public boolean midiProcessed(Midi midiMsg) {
 		PassThrough mode = PassThrough.ALL;
 		for (MidiListener listener : listeners) {
 			new Thread() {
@@ -65,12 +59,17 @@ public class CommandHandler {
 				mode = PassThrough.NONE;
 			else if (current == PassThrough.NOTES && mode != PassThrough.NONE)
 				mode = PassThrough.NOTES;
+			else if (current == PassThrough.NOT_NOTES && mode != PassThrough.NONE)
+				mode = PassThrough.NOT_NOTES;
 		}
 		if (PassThrough.NONE == mode)
 			return true;
-		if (PassThrough.NOTES == mode)
+		else if (PassThrough.NOTES == mode)
 			return !Midi.isNote(midiMsg);
+		else if (PassThrough.NOT_NOTES == mode && Midi.isNote(midiMsg))
+			return true;
 		
+		boolean result = false;
 		HashMap<String, Object> p;
 		for (Link mapping : links) {
 
@@ -79,30 +78,33 @@ public class CommandHandler {
 				p = new HashMap<String, Object>();
 				p.putAll(mapping.getProps());
 				fire(mapping, midiMsg.getData2());
-				return true;
+				result = true;
 			}
 			
 			else if (Arrays.equals(mapping.getMidi(), midiMsg.getMessage())) { // Prog Change
 				fire(mapping, midiMsg.getData2());
-				return true;
+				result = true;
 			}
 		}
-		return false;
+		return result;
 	}
 	
-	public void fire(Link mapping, int midiData2) throws JudahException {
+	public void fire(Link mapping, int midiData2) {
 		
-		Command cmd = mapping.getCmd();
-		if (cmd == null)
-			throw new JudahException("Command not found for mapping. " + mapping);
 		new Thread() {
 			@Override public void run() {
+				Command cmd = mapping.getCmd();
 				try {
+					if (cmd == null)
+						throw new JudahException("Command not found for mapping. " + mapping);
+					Console.info("cmdr@" + sequencer.getCount() + " execute: " 
+							+ cmd + " " + midiData2 + " " + Constants.prettyPrint(mapping.getProps()));
 					cmd.setSeq(sequencer);
 					cmd.execute(mapping.getProps(), midiData2);
-				} catch (Exception e) { 
-					log.error(e.getMessage() + " for " + cmd + " with " + Command.toString(mapping.getProps()), e); 
-					}
+				} catch (Exception e) {
+					Console.warn(e.getMessage() + " for " + cmd + " with " 
+							+ Command.toString(mapping.getProps()), e);
+				}
 			}}.start();
 	}
 
@@ -117,20 +119,6 @@ public class CommandHandler {
 		return null;
 	}
 	
-//	public Command find(String service, String command) {
-//		for (Command c : available) 
-//			try {
-//				assert c != null;
-//				assert c.getName() != null;
-//				if (c.getService().getServiceName().equals(service) && c.getName().equals(command))
-//					return c;
-//			} catch (Throwable t) {
-//				log.error(c + " " + c.getService() + " " + t.getMessage(), t);
-//			}
-//		log.warn("could not find " + service + " - " + command + " in " + Arrays.toString(available.toArray()));
-//		return null;
-//	}
-	
 	public void clearMappings() {
 		links.clear();
 	}
@@ -141,38 +129,3 @@ public class CommandHandler {
 	}
 
 }
-
-//for (Mapping mapping : mappings) log.warn(mapping);
-//Mapping Metronome.tick for 176.101.127/0  Properties: none
-//Mapping Metronome.tock for 176.101.0/0  Properties: none
-//Mapping Metronome.Metronome settings for 176.14.0/0 dynamic  Properties: bpm:todo
-//Mapping Metronome.Metronome settings for 176.15.0/0 dynamic  Properties: volume:todo
-//Mapping Mixer.record loop for 176.97.127/0  Properties: Active:true Loop:1
-//Mapping Mixer.record loop for 176.97.0/0  Properties: Active:false Loop:1
-//Mapping Mixer.record loop for 176.96.127/0  Properties: Active:true Loop:0
-//Mapping Mixer.record loop for 176.96.0/0  Properties: Active:false Loop:0
-//Mapping Mixer.play loop for 176.100.127/0  Properties: Active:true Loop:1
-//Mapping Mixer.play loop for 176.100.0/0  Properties: Active:false Loop:1
-//Mapping Mixer.play loop for 176.99.127/0  Properties: Active:true Loop:0
-//Mapping Mixer.play loop for 176.99.0/0  Properties: Active:false Loop:0
-//Mapping Mixer.clear looper for 176.98.127/0  Properties: none
-
-//else if (mapping.getMidi().matches(midiMsg)) {
-//final Properties p = new Properties();
-//if (midiMsg.getCommand() == Midi.CONTROL_CHANGE) {
-//	if (mapping.getCommandName().equals("Metronome settings")) {
-//		if (mapping.getProps().containsKey("volume")) {
-//			assert midiMsg.getData1() == 15 : midiMsg.getData1();
-//			p.put("volume", ((midiMsg.getData2() - 1))* 0.01f);
-//		} else if (mapping.getProps().containsKey("bpm")) {
-//			assert midiMsg.getData1() == 14 : midiMsg.getData1();
-//			p.put("bpm", (midiMsg.getData2() + 50) * 1.2f);
-//		}
-//		fire(mapping, p);
-//		return true;
-//	}
-//	else if (mapping.getCommandName().equals(Mixer.GAIN_COMMAND)) {
-//		p.put(Mixer.GAIN_PROP, midiMsg.getData2() / 50f );
-//		assert mapping.getProps().get(Mixer.CHANNEL_PROP) != null : Arrays.toString(mapping.getProps().keySet().toArray());
-//		p.put(Mixer.CHANNEL_PROP, mapping.getProps().get(Mixer.CHANNEL_PROP));
-//		fire(mapping, p);

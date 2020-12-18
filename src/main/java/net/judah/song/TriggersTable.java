@@ -88,7 +88,7 @@ public class TriggersTable extends JPanel implements Edits {
 			try {
 				result.add(  model.getRow(selected[i]).clone());
 			} catch (JudahException e) {
-				Console.warn(e.getMessage());
+				Console.warn(e.getMessage(), e);
 			}
 		}
 		return result;

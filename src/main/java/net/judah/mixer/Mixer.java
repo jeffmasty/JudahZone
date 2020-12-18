@@ -21,28 +21,24 @@ import net.judah.util.JudahException;
 public class Mixer implements Service {
 
 	@Getter private final MixerCommands commands;
-	@Getter private final MixerGui gui;
+	private final Sequencer seq;
+	private MixerGui gui;
 	
 	@Getter private final List<Sample> samples = new ArrayList<>();
 	@Getter private final List<Plugin> plugins = new ArrayList<>();
 	
 	public Mixer(Sequencer sequencer) throws JackException {
+		this.seq = sequencer;
+				
 		commands = new MixerCommands(this);
 		
 		// init loops  
 		samples.add(new Recorder("Loop A", ProcessAudio.Type.FREE));
 		samples.add(new Recorder("Loop B", ProcessAudio.Type.FREE));
 		
-		gui = new MixerGui(samples, JudahZone.getMetronome());
-		
 		sequencer.getServices().add(this);
 	}
 	
-	@Override
-	public String getServiceName() {
-		return Mixer.class.getSimpleName();
-	}
-
 	/**@return the sample's index number */
 	public int addSample(Sample s) {
 		s.setOutputPorts(JudahZone.getMainOutPorts());
@@ -105,6 +101,11 @@ public class Mixer implements Service {
 		
 	}
 
+	public MixerGui getGui() {
+		if (gui == null)
+			gui = new MixerGui(samples, seq.getGui());
+		return gui;
+	}
 	
 }
 
