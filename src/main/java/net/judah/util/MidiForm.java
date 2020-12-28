@@ -121,7 +121,7 @@ public class MidiForm extends JPanel implements MidiListener {
 	}
 	
 	private void midiLearn() {
-		ArrayList<MidiListener> listeners = Sequencer.getCurrent().getCommander().getListeners();
+		ArrayList<MidiListener> listeners = Sequencer.getCurrent().getListeners();
 		if (midiRecord.isSelected()) 
 			listeners.add(this);
 		else 
@@ -157,7 +157,7 @@ public class MidiForm extends JPanel implements MidiListener {
 	}
 	
 	public Midi getMidi() {
-		Sequencer.getCurrent().getCommander().getListeners().remove(this);
+		Sequencer.getCurrent().getListeners().remove(this);
 		int cmd = ((MidiCommands)command.getSelectedItem()).getVal();
 		int chan = (int)channel.getSelectedItem();
 		int dat1 = (int)data1.getSelectedItem();

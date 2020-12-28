@@ -22,9 +22,9 @@ public class Arpeggiate extends Command implements MidiListener {
 		else 
 			active = Boolean.parseBoolean(props.get(ACTIVE).toString());
 		if (active)
-			seq.getCommander().getListeners().add(this);
+			seq.getListeners().add(this);
 		else
-			seq.getCommander().getListeners().remove(this);
+			seq.getListeners().remove(this);
 		
 	}
 

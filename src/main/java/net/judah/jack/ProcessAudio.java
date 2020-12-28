@@ -2,8 +2,9 @@ package net.judah.jack;
 
 import java.util.List;
 
+import org.jaudiolibs.jnajack.JackPort;
+
 import net.judah.looper.Recording;
-import net.judah.mixer.MixerPort;
 
 /**Participates in real time audio processing, can respond to some commands*/
 public interface ProcessAudio {
@@ -24,7 +25,7 @@ public interface ProcessAudio {
 	void setGain(float volume);
 	
 	/** destination for audio output */
-	void setOutputPorts(List<MixerPort> output);
+	void setOutputPorts(List<JackPort> output);
 	
 	void clear();
 }

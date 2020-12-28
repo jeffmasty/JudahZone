@@ -2,6 +2,10 @@ TODO:
 
 play: type, active, index, name, input, output
 record: type, active, index, name
+redo carla/plugins/octaver
+
+BeatBuddy
+display sheet music command
 
 multi-delete, upgrade properties table (enum, int, boolean types)
 Latency + bleeding edge
@@ -13,7 +17,7 @@ Plugins, ttl
 walking bassline midi bot
 joystick  (pitch bend logarithmic to 1 octave) (left cc = distortion or vocoder right cc = delay)
 
-fix songs and check in.
+fix songs.
 
 Knobs:
 Fluid synth knobs: Volume, Chorus, reverb, ...
@@ -50,7 +54,26 @@ Drum machine w/ Hydrogen drums https://github.com/nicklan/drmr/wiki
 Simple converter ttl to JSON
 https://github.com/PedalController/Lv2Library/blob/master/src/br/com/srmourasilva/lv2library/Lv2Mapper.java
 
-
+    <dependency>
+      <groupId>org.jaudiolibs</groupId>
+    <artifactId>audioservers-jack</artifactId>
+    <version>2.0.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.jaudiolibs</groupId>
+        <artifactId>pipes-core</artifactId>
+        <version>2.0.0</version>
+    </dependency>
+      <dependency>
+        <groupId>org.jaudiolibs</groupId>
+        <artifactId>pipes-graph</artifactId>
+        <version>2.0.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.jaudiolibs</groupId>
+        <artifactId>pipes-units</artifactId>
+        <version>2.0.0</version>
+    </dependency>
 
 
 Done:

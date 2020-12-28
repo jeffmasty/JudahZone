@@ -22,6 +22,8 @@ import org.apache.log4j.Level;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
+import net.judah.JudahZone;
+import net.judah.Looper;
 import net.judah.api.Midi;
 import net.judah.fluid.FluidSynth;
 import net.judah.jack.ProcessAudio;
@@ -31,7 +33,6 @@ import net.judah.metronome.JMidiPlay;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiListener;
 import net.judah.midi.Route;
-import net.judah.mixer.Mixer;
 import net.judah.plugin.Carla;
 import net.judah.sequencer.Sequencer;
 
@@ -54,6 +55,8 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 		if (instance == null) instance = new Console();
 		return instance;
 	}
+	
+	private Looper looper = JudahZone.getLooper();
 	@Getter @Setter private static Level level = Level.DEBUG;
 	private final JTextArea textarea;
 	@Getter private final JPanel output;
@@ -200,12 +203,12 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 			play(input);
 		else if (text.equals("stop"))
 			if (input.length == 2)
-				mixer().stopAll();
+				looper.stopAll();
 			else 
 				stop(input);
 			
 		else if (text.equals("samples")) 
-			addText( Arrays.toString(Sequencer.getCurrent().getMixer().getSamples().toArray()));
+			addText( Arrays.toString(looper.toArray()));
 		else if (text.equals("router")) 
 			for (Route r : JudahMidi.getInstance().getRouter())
 				addText("" + r);
@@ -243,7 +246,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 	}
 	private void midiListen() {
 		midiListen = !midiListen;
-		ArrayList<MidiListener> listeners = Sequencer.getCurrent().getCommander().getListeners();
+		ArrayList<MidiListener> listeners = Sequencer.getCurrent().getListeners();
 		if (midiListen) 
 			listeners.add(this);
 		else
@@ -272,10 +275,6 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 		}
 	}
 
-	private Mixer mixer() {
-		return Sequencer.getCurrent().getMixer();
-	}
-	
 	private void play(String[] split) {
 		if (split.length != 2) {
 			addText("usage: " + playHelp);
@@ -283,9 +282,14 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 		}
 		String file = split[1];
 		try {
-			Sample sample = new Sample(new File(file).getName(), Recording.readAudio(file), ProcessAudio.Type.ONE_TIME);
-			mixer().addSample(sample);
-			sample.play(true);
+			try {
+				int idx = Integer.parseInt(file);
+				looper.get(idx).play(true);
+			} catch (Throwable t) {
+				Sample sample = new Sample(new File(file).getName(), Recording.readAudio(file), ProcessAudio.Type.ONE_TIME);
+				looper.add(sample);
+				sample.play(true);
+			}
 		} catch (Throwable t) {
 			addText(t.getMessage());
 			log.error(t.getMessage(), t);
@@ -297,8 +301,8 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 			addText("usage: " + stopHelp);
 			return;
 		}
-		Integer idx = Integer.parseInt(split[1]);
-		mixer().removeSample(idx);
+		int idx = Integer.parseInt(split[1]);
+		looper.remove(idx);
 		addText("Sample removed");
 		
 	}
@@ -309,12 +313,12 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 		}
 		int loopNum = Integer.parseInt(split[1]);
 		String filename = split[2];
-		int loopMax = mixer().getSamples().size();
+		int loopMax = looper.size();
 		if (loopNum < 0 || loopNum >= loopMax) {
 			addText("loop " + loopNum + " does not exist.");
 			return;
 		}
-		Sample loop = mixer().getSamples().get(loopNum);
+		Sample loop = looper.get(loopNum);
 
 		try {
 			Recording recording = Recording.readAudio(filename);
@@ -334,12 +338,12 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 		}
 		int loopNum = Integer.parseInt(split[1]);
 		String filename = split[2];
-		int loopMax = mixer().getSamples().size();
+		int loopMax = looper.size();
 		if (loopNum < 0 || loopNum >= loopMax) {
 			addText("loop " + loopNum + " does not exist.");
 			return;
 		}
-		Sample loop = mixer().getSamples().get(loopNum);
+		Sample loop = looper.get(loopNum);
 		if (!loop.hasRecording()) {
 			addText("Nothing in Loop " + loopNum);
 			return;

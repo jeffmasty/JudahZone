@@ -136,6 +136,17 @@
   "sequencer" : [ {
     "type" : "INIT",
     "timestamp" : 0,
+    "command" : "seq:setup",
+    "notes" : "",
+    "params" : {
+      "intro.beats" : "16",
+      "bpb" : "4",
+      "beats.per.pulse" : "16",
+      "bpm" : "120"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
     "command" : "carla:param",
     "notes" : "phaser",
     "params" : {
@@ -156,13 +167,11 @@
   }, {
     "type" : "INIT",
     "timestamp" : 0,
-    "command" : "seq:setup",
+    "command" : "metro:progChange",
     "notes" : "",
     "params" : {
-      "intro.beats" : "16",
-      "bpb" : "4",
-      "beats.per.pulse" : "16",
-      "bpm" : "120"
+      "channel" : "9",
+      "preset" : "0"
     }
   }, {
     "type" : "INIT",

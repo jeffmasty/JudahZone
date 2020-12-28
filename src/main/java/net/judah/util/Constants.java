@@ -3,6 +3,7 @@ package net.judah.util;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Insets;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
@@ -17,6 +18,10 @@ import javax.swing.border.LineBorder;
 import net.judah.api.Midi;
 
 public class Constants {
+
+	// TODO
+    public static final File defaultSetlist = new File("/home/judah/git/JudahZone/resources/Songs/list1.songs"); 
+    public static final File defaultFolder = new File("/home/judah/git/JudahZone/resources/Songs/"); 
 
 	public static class Param {
 		public static final String ACTIVE = "active";

@@ -1,40 +1,30 @@
 package net.judah;
 
 import static net.judah.jack.AudioTools.*;
+import static net.judah.util.Constants.*;
 import static org.jaudiolibs.jnajack.JackPortFlags.*;
 import static org.jaudiolibs.jnajack.JackPortType.*;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 
 import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
+import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
 import net.judah.api.BasicClient;
+import net.judah.api.Midi;
 import net.judah.api.Service;
 import net.judah.fluid.FluidSynth;
-import net.judah.jack.AudioTools;
+import net.judah.looper.Recorder;
 import net.judah.metronome.Metronome;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
-import net.judah.mixer.Instrument;
-import net.judah.mixer.MixerPort;
-import net.judah.mixer.MixerPort.ChannelType;
-import net.judah.mixer.MixerPort.PortDescriptor;
-import net.judah.mixer.plugin.CarlaVolume;
-import net.judah.mixer.plugin.FluidVolume;
-import net.judah.mixer.plugin.VolumeWidget;
+import net.judah.mixer.plugin.Plugin;
 import net.judah.sequencer.Sequencer;
-import net.judah.settings.Patch;
-import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 import net.judah.util.Services;
 
@@ -48,24 +38,25 @@ public class JudahZone extends BasicClient {
 
     public static final String JUDAHZONE = JudahZone.class.getSimpleName();
 
-    // TODO
-    public static final File defaultSetlist = new File("/home/judah/git/JudahZone/resources/Songs/list1.songs"); 
-    public static final File defaultFolder = new File("/home/judah/git/JudahZone/resources/Songs/"); 
+    @Getter private static JudahZone instance;
 
-	// System services (fluidsynth, drumkv1)
+	@Getter private static final ArrayList<JackPort> inPorts = new ArrayList<>();
+	@Getter private static final ArrayList<JackPort> outPorts = new ArrayList<>();
+	@Getter private JackPort outL, outR;
+	
+    // (midi handler, fluidsynth, metronome)
     @Getter private static final Services services = new Services();
-    
-    private final Patchbay patchbay;
-    @Getter private static final List<Channel> channels = new ArrayList<>();
-	@Getter private static final List<MixerPort> inputPorts = new ArrayList<>();
-	@Getter private static final List<MixerPort> mainOutPorts = new ArrayList<>();
-
-	@Getter private final FluidSynth fluid; 
+    @Getter private static final CommandHandler commands = new CommandHandler(); 
+	@Getter private static final ArrayList<Channel> channels = new ArrayList<>();
+	@Getter private static final Looper looper = new Looper(outPorts);
+	@Getter private static final ArrayList<Plugin> plugins = new ArrayList<>();
+	
+	@Getter private final FluidSynth synth; 
 	@Getter private static JudahMidi midi;
 	@Getter private static Metronome metronome;
+	@Getter private Sequencer currentSong;
 	
     public static void main(String[] args) {
-
 		try {
 			new JudahZone();
 			while (true) 
@@ -77,122 +68,170 @@ public class JudahZone extends BasicClient {
 
 	JudahZone() throws Throwable {
 		super(JUDAHZONE);
+		instance = this;
     	Runtime.getRuntime().addShutdownHook(new ShutdownHook());
-    	patchbay = audioConfig();
-    	midi = new JudahMidi();
-    	fluid = new FluidSynth(midi);
+    	
+    	midi = new JudahMidi("JudahMidi");
+    	synth = new FluidSynth(midi);
     	File clickTrack = new File(this.getClass().getClassLoader().getResource("metronome/JudahZone.mid").getFile()); 
     	metronome = new Metronome(clickTrack, null);
+    	services.addAll(Arrays.asList(new Service[] {midi, synth, metronome}));
     	
-    	services.addAll(Arrays.asList(new Service[] {midi, fluid, metronome}));
-    	
-    	Thread.sleep(100);
         start();
 	}
 
 	@Override
 	protected void initialize() throws JackException {
-		for (PortDescriptor meta : patchbay.getInPorts()) {
-			inputPorts.add( new MixerPort(
-					meta, jackclient.registerPort(meta.getName(), AUDIO, JackPortIsInput)));
-		}
-		for (PortDescriptor meta : patchbay.getOutPorts()) {
-			mainOutPorts.add( new MixerPort(
-					meta, jackclient.registerPort(meta.getName(), AUDIO, JackPortIsOutput)));
-		}
-		initializeChannels();
-	}
+		Channel guitar = new Channel("guitar", "system:capture_1", "guitar");
+		guitar.setGainFactor(3f);
+		guitar.setVolume(70);
+		guitar.setDefaultCC(16);
+		
+		Channel mic = new Channel("mic", "system:capture_2", "mic");
+		mic.setGainFactor(3f);
+		mic.setVolume(70);
+		mic.setDefaultCC(17);
 
-	private void initializeChannels() {
+		Channel drums = new Channel("drums", "system:capture_3", "drums");
+		drums.setGainFactor(2.5f);
+		drums.setVolume(60);
+		drums.setDefaultCC(20);
+
+		Channel synth = new Channel("synth",
+				new String[] {FluidSynth.LEFT_PORT, FluidSynth.RIGHT_PORT}, 
+				new String[] {"synthL", "synthR"});
+		synth.setVolume(40);
+		synth.setDefaultCC(21);
 		
-		Instrument g = new Instrument("Guitar", new String[] {"system:capture_1"}); 
-		Instrument m = new Instrument("Mic", new String[] {"system:capture_2"});  
-		Instrument d = new Instrument("Drums", new String[] {"system:capture_4"});
-		Instrument s = new Instrument("Synth", new String[] {FluidSynth.LEFT_PORT, FluidSynth.RIGHT_PORT});
-		Instrument a = new Instrument("Aux", new String[] {"system:capture_3"});
+		Channel aux1 = new Channel("aux1", "system:capture_4", "aux1");
+		aux1.setGainFactor(2.5f);
+		aux1.setDefaultCC(18);
 		
-		Channel guitar = new Channel(g, new CarlaVolume(0));
-		Channel mic = new Channel(m, new CarlaVolume(2));
-		Channel drums = new Channel(d, new CarlaVolume(3));
-		Channel synth = new Channel(s, new FluidVolume());
-		Channel aux = new Channel(a, new VolumeWidget() {
-			@Override public boolean setVolume(float gain) {
-				return false; /* no-op */}});
-		channels.addAll(Arrays.asList(new Channel[] { guitar, mic, drums, synth, aux }));
+		Channel aux2 = new Channel("aux2", new String[]
+				// {"Calf Fluidsynth:Out L", "Calf Fluidsynth:Out R"},
+				{null, null}, // TODO carla fluid ports not started up yet at makeConnections(). 
+				new String[] {"aux2", "aux3"});
+		aux2.setMuteRecord(true);
+		aux2.setDefaultCC(19);
+
+		channels.addAll(Arrays.asList(new Channel[] { guitar, mic, drums, synth, aux1, aux2 }));
+		
+		JackPort port;
+		for (Channel ch : channels) {
+			port = jackclient.registerPort(ch.getLeftConnection(), AUDIO, JackPortIsInput);
+			ch.setLeftPort(port);
+			inPorts.add(port);
+			if (ch.isStereo()) {
+				port = jackclient.registerPort(ch.getRightConnection(), AUDIO, JackPortIsInput);
+				ch.setRightPort(port);
+				inPorts.add(port);
+			}
+		}
+
+		for (String name : new String[] { "left", "right" /* ,"auxL", "auxR" */})
+			outPorts.add(jackclient.registerPort(name, AUDIO, JackPortIsOutput));
+		outL = outPorts.get(LEFT_CHANNEL);
+		outR = outPorts.get(RIGHT_CHANNEL);
+		
+		String debug = "channels: ";
+		for (Channel ch : channels)
+			debug += ch.getName() + " "; 
+		log.debug(debug);
+		
+    	looper.init();
 	}
-	
 	
 	@Override
 	protected void makeConnections() throws JackException {
-
-		// start GUI
-        try { UIManager.setLookAndFeel ("javax.swing.plaf.nimbus.NimbusLookAndFeel");
-		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
-				| UnsupportedLookAndFeelException e) { log.info(e.getMessage(), e); }
+		// inputs
+		for (Channel ch : channels) {
+			if (ch.getLeftSource() != null && ch.getLeftConnection() != null)
+				jack.connect(jackclient, ch.getLeftSource(), 
+						portName(clientName, ch.getLeftConnection()));
+			if (ch.getRightSource() != null && ch.getRightConnection() != null)
+				jack.connect(jackclient, ch.getRightSource(), 
+						portName(clientName, ch.getRightConnection()));
+		}
+		
+		// outputs
+		jack.connect(jackclient, outL.getName(), "system:playback_1");
+		jack.connect(jackclient, outR.getName(), "system:playback_2");
+		
+		
+		// Initialize command services and start GUI
+		commands.initializeCommands();
 		new MainFrame(JUDAHZONE);
 
-		// Open a default song 
-		File file = new File("/home/judah/git/JudahZone/resources/Songs/AndILoveHer");
-		File file2 = new File("/home/judah/git/JudahZone/resources/Songs/AndIOutro");
-		try {
-			new Sequencer(file);
-			new Sequencer(file2);
-		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			log.error(file.getAbsolutePath());
-			Constants.infoBox(file.getAbsoluteFile() + " -- " + e.getMessage(), "Song Load Failed");
-		}
-		
-		// make any internally defined connections (typically Carla makes connections)
-		for (Patch patch : patchbay.getConnections()) {
-			try {
-				jack.connect(jackclient, patch.getOutputPort(), patch.getInputPort());
-			} catch (JackException e) {
-				log.error(patch);
-				throw e;
-			}
-		}
-		
+//		// Open a default song 
+//		File file = new File("/home/judah/git/JudahZone/resources/Songs/FeelGoodInc");
+//		try {
+//			new Sequencer(file);
+//		} catch (Exception e) { 
+//			Console.warn(e.getMessage() + " " + file.getAbsolutePath(), e); }
+
 	}
-	
-	@RequiredArgsConstructor @Getter
-	private static class Patchbay {
-		private final String clientName;
-		@Getter private final List<PortDescriptor> inPorts;
-		@Getter private final List<PortDescriptor> outPorts;
-		private final List<Patch> connections;
-	}
-	
-	private static Patchbay audioConfig() {
-		final String client = JudahZone.JUDAHZONE;
-		List<Patch> connections = new ArrayList<>();
-		PortDescriptor out;
-		
-		List<PortDescriptor> inPorts = new ArrayList<>();
-		// Inputs
-		inPorts.add(new PortDescriptor("guitar_left", ChannelType.LEFT));
-		inPorts.add(new PortDescriptor("guitar_right", ChannelType.RIGHT));
-		inPorts.add(new PortDescriptor("mic_left", ChannelType.LEFT));
-		inPorts.add(new PortDescriptor("mic_right", ChannelType.RIGHT));
-		inPorts.add(new PortDescriptor("drums_left", ChannelType.LEFT));
-		inPorts.add(new PortDescriptor("drums_right", ChannelType.RIGHT));
-		inPorts.add(new PortDescriptor("synth_left", ChannelType.LEFT));
-		inPorts.add(new PortDescriptor("synth_right", ChannelType.RIGHT));
-		inPorts.add(new PortDescriptor("aux_left", ChannelType.LEFT));
-		inPorts.add(new PortDescriptor("aux_right", ChannelType.RIGHT));
-		
-		// Outputs
-		List<PortDescriptor> outPorts = new ArrayList<>();
-		out = new PortDescriptor("left", ChannelType.LEFT);
-		outPorts.add(out);
-		connections.add(new Patch(portName(client, out.getName()), "system:playback_1"));
-		out = new PortDescriptor("right", ChannelType.RIGHT);
-		outPorts.add(out);
-		connections.add(new Patch(portName(client, out.getName()), "system:playback_2"));
-		
-		return new Patchbay(client, inPorts, outPorts, connections);
+	/** if the midi msg is a hard-coded mixer setting, run the setting and return false */ 
+    public static boolean midiProcessed(Midi midi) {
+    	
+    	if (midi.isCC()) {
+    		int data1 = midi.getData1();
+    		for (Channel c : JudahZone.getChannels()) {
+    			if (data1 == c.getDefaultCC()) {
+    				c.setVolume(midi.getData2());
+    				return true;
+    			}
+    		} 
+    		if (data1 == 14) {// loop A volume knob
+    			getLooper().get(0).setVolume(midi.getData2());
+    			return true;
+    		}
+    		
+    		if (data1 == 15) {// loop B volume knob
+    			getLooper().get(1).setVolume(midi.getData2());
+    			return true;
+    		}
+    		
+    		if (data1 == 31) {// record loop a knob
+    			((Recorder)getLooper().get(0)).record(midi.getData2() > 0);
+    			return true;
+    		}
+    		if (data1 == 32) {// record loop b knob
+    			((Recorder)getLooper().get(1)).record(midi.getData2() > 0);
+    			return true;
+    		}
+    		if (data1 == 35) {// play loop a knob
+    			getLooper().get(0).play(midi.getData2() > 0);
+    			return true;
+    		}
+    		if (data1 == 36) {// play loop b knob
+    			getLooper().get(1).play(midi.getData2() > 0);
+    			return true;
+    		}
+    		if (data1 == 34) { // clear loopers cc pad
+    			getLooper().init();
+    			return true;
+    		}
+    		if (data1 == 96) { // record Loop A foot pedal
+    			((Recorder)getLooper().get(0)).record(midi.getData2() > 0);
+    		}
+    		if (data1 == 97) { // record Loop B foot pedal
+    			((Recorder)getLooper().get(1)).record(midi.getData2() > 0);
+    		}
+    		if (data1 == 99) { // record Loop A foot pedal
+    			getLooper().get(0).play(midi.getData2() > 0);
+    		}
+    		if (data1 == 100) { // record Loop A foot pedal
+    			getLooper().get(0).play(midi.getData2() > 0);
+    		}
+    		// TODO 101 = octaver effect
+    		
+    		
+    		
+    	}
+		return false;
 	}
 
+	
 	private class ShutdownHook extends Thread {
 		@Override public void run() {
 			if (Sequencer.getCurrent() != null) {
@@ -209,17 +248,27 @@ public class JudahZone extends BasicClient {
     //                PROCESS AUDIO                   //
     ////////////////////////////////////////////////////
 	
-	private Sequencer seq;
 	@Override
 	public boolean process(JackClient client, int nframes) {
-		seq = Sequencer.getCurrent();
-		if (seq == null || seq.isRunning() == false) 
-			return true;
 		
-		// any loopers playing will be additive
-		for (MixerPort outport : mainOutPorts)
-			AudioTools.processSilence(outport.getPort().getFloatBuffer());
-		Sequencer.getCurrent().getMixer().process(nframes);
+		// channels and looper will be additive
+		processSilence(outL.getFloatBuffer());
+		processSilence(outR.getFloatBuffer());
+		
+		// mix the live stream 
+		for (Channel ch : channels) {
+			if (ch.isOnMute()) continue;
+			ch.applyGain(); // for both live mix and loopers
+			processAdd(ch.getLeftPort().getFloatBuffer(), outL.getFloatBuffer());
+			if (ch.isStereo()) 
+				processAdd(ch.getRightPort().getFloatBuffer(), outR.getFloatBuffer());
+			else 
+				processAdd(ch.getLeftPort().getFloatBuffer(), outR.getFloatBuffer());
+			
+		}
+
+		// get looper in on process()
+		looper.process(nframes);
 		return true;
 	}
 

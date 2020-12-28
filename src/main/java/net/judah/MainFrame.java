@@ -4,11 +4,15 @@ import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
+import lombok.extern.log4j.Log4j;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.MenuBar;
 
+@Log4j
 public class MainFrame extends JFrame {
 	
 	private static MainFrame instance;
@@ -19,9 +23,11 @@ public class MainFrame extends JFrame {
 	private final JPanel left;
 	private final RightPane right;
 	
-	
 	MainFrame(String name) {
 		super(name);
+        try { UIManager.setLookAndFeel ("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+				| UnsupportedLookAndFeelException e) { log.info(e.getMessage(), e); }
 		instance = this;
 		prefix = name;
 		
@@ -64,7 +70,6 @@ public class MainFrame extends JFrame {
 		tabs.setSelectedComponent(page);
 		setTitle(prefix + " - " + page.getName());
 		
-		right.setSong(page.getSequencer());
 		invalidate();
 	}
 	

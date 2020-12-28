@@ -54,8 +54,8 @@ public class Page extends JPanel {
 		buttons.add(reload);
 		
 		properties = new PropertiesTable(song.getProps());
-		links = new LinkTable(song.getLinks(), sequencer.getCommander());
-		triggers = new TriggersTable(song.getSequencer(), sequencer.getCommander());
+		links = new LinkTable(song.getLinks(), JudahZone.getCommands());
+		triggers = new TriggersTable(song.getSequencer(), JudahZone.getCommands());
 		router = new RouterTable(song.getRouter());
 
 		cards.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);

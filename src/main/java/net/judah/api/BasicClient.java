@@ -14,16 +14,18 @@ import org.jaudiolibs.jnajack.JackShutdownCallback;
 import org.jaudiolibs.jnajack.JackStatus;
 
 import lombok.Getter;
+import net.judah.util.Console;
 
+/** Creators of BasicClients must manually {@link #start()} the client */ 
 public abstract class BasicClient extends Thread implements JackProcessCallback, JackShutdownCallback  {
 
     static final EnumSet<JackOptions> OPTIONS = EnumSet.of(JackOptions.JackNoStartServer);
     static final EnumSet<JackStatus> STATUS = EnumSet.noneOf(JackStatus.class);
 
+    protected final String clientName;
     protected final Jack jack;
     protected JackClient jackclient;
-    protected AtomicReference<Status> state = new AtomicReference<>(NEW);
-    protected final String clientName;
+    protected final AtomicReference<Status> state = new AtomicReference<>(NEW);
     @Getter private int bufferSize;
 	@Getter private int sampleRate;
     
@@ -62,9 +64,8 @@ public abstract class BasicClient extends Thread implements JackProcessCallback,
 		                Thread.sleep(100); // @TODO switch to wait()
 		            }
 	        }
-        } catch (InterruptedException e) {
-        } catch (JackException e) {
-        	System.err.println("JackException " + clientName + " " + e.getMessage());
+        } catch (Exception e) {
+        	Console.warn(e);
         }
 
         close();
@@ -73,13 +74,13 @@ public abstract class BasicClient extends Thread implements JackProcessCallback,
 
 	public void close() {
 		if (TERMINATED == state.get()) return;
-		state = new AtomicReference<>(CLOSING);
+		state.set(CLOSING);
 		System.out.println("Closing Jack client " + clientName);
 		if (jackclient != null)
 	        try {
 	            jackclient.close();
 	        } catch (Throwable t) {System.err.println(t.getMessage());}
-        state = new AtomicReference<>(TERMINATED);
+        state.set(TERMINATED);
     }
 
     @Override

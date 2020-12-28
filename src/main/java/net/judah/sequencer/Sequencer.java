@@ -18,21 +18,22 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
-import net.judah.CommandHandler;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.Page;
 import net.judah.api.Command;
 import net.judah.api.Loadable;
+import net.judah.api.Midi;
 import net.judah.api.Service;
 import net.judah.api.TimeListener;
 import net.judah.looper.Recorder;
 import net.judah.looper.Recording;
 import net.judah.metronome.Metronome;
 import net.judah.midi.JudahMidi;
+import net.judah.midi.MidiListener;
+import net.judah.midi.MidiListener.PassThrough;
 import net.judah.midi.Route;
 import net.judah.midi.Router;
-import net.judah.mixer.Mixer;
 import net.judah.plugin.Carla;
 import net.judah.song.Song;
 import net.judah.song.Trigger;
@@ -40,7 +41,6 @@ import net.judah.util.CommandWrapper;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.JsonUtil;
-import net.judah.util.Services;
 
 @Log4j
 public class Sequencer implements Service, Runnable, TimeListener /* , ControllerEventListener */ {
@@ -68,13 +68,16 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 	@Getter private final String serviceName = Sequencer.class.getSimpleName();
 	@Getter private final Song song;
 	@Getter private File songfile;
-	@Getter private final Services services = new Services();
-	@Getter private final CommandHandler commander = new CommandHandler(this); 
+//	@Getter private final Services services = new Services();
+//	@Getter private final CommandHandler commander = new CommandHandler(this); 
+	@Getter private final ArrayList<MidiListener> listeners = new ArrayList<>();
+	private final Mappings mappings;
+	
 	@Getter private static Carla carla;
-	@Getter private final Mixer mixer;
+	@Getter private final JudahZone mixer;
 	@Getter private final Metronome metronome;
 	@Getter private final Page page; 
-	@Getter private SeqCommands commands = new SeqCommands(this);
+	@Getter private SeqCommands commands = new SeqCommands();
 	private SeqDisplay display;
 
 	/** external = looper (or deprecated cc3 events) sets the time */
@@ -99,19 +102,17 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 	
 	// 	private TimeBase unit = TimeBase.BEATS; 
 	// for dropDaBeat, currently not implemented
-	@SuppressWarnings("unused") private ArrayList<Float> mixerState; 
-	
+	@SuppressWarnings("unused") private ArrayList<Float> mixerState;
+	 
 	public Sequencer(File songfile) throws IOException, JackException {
+		this.mixer = JudahZone.getInstance();
 		this.songfile = songfile;
 		song = (Song)JsonUtil.readJson(songfile, Song.class);
-		services.add(this);
+		mappings = new Mappings(song.getLinks());
 		metronome = JudahZone.getMetronome();
-		commander.clearMappings();
-		commander.addMappings(song.getLinks());
 		
-		current = handlePrevious();
-		mixer = new Mixer(this);
-		commander.initializeCommands();
+		handlePrevious();
+		current = this;
 		initializeProperties();
 		initializeFiles();
 		initializeTriggers();
@@ -129,8 +130,10 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 		if (previous != null) {
 			JudahZone.getMetronome().removeListener(previous);
 			previous.close();
+			current = null;
 		}
 		metronome.addListener(this);
+		JudahZone.getLooper().init();
 		log.debug("loaded song: " + songfile.getAbsolutePath());
 		return this;
 	}
@@ -139,8 +142,7 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 		final HashMap<String, Object> props = song.getProps();
 		if (props == null) return;
 		
-		JudahZone.getServices().forEach(service -> { service.properties(props);});
-		getServices().forEach(service -> {service.properties(props);});
+		JudahZone.getServices().forEach(service -> {service.properties(props);});
 	}
 
 	private void initializeTriggers() {
@@ -177,9 +179,6 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 
 	@Override public void close() {
 		stop();
-		services.remove(this);
-		for (Service s : services)
-			s.close();
 		song.getSequencer().forEach(trigger -> {
 			if (trigger.getCmd() instanceof Loadable)
 					((Loadable)trigger.getCmd()).close();});
@@ -187,7 +186,6 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 		song.getLinks().forEach(link -> {
 			if (link.getCmd() instanceof Loadable) 
 				((Loadable)link.getCmd()).close();});
-		
 	}
 
 	// dispose Song's services (loops, etc)
@@ -196,7 +194,7 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 		if (clock != null) {
 			clock.end();
 		}
-		mixer.stopAll();
+		JudahZone.getLooper().stopAll();
 		count = 0;
 	}
 	
@@ -276,8 +274,8 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 		if (props.containsKey(PARAM_CARLA)) 
 			carla = initializeCarla("" + props.get(PARAM_CARLA), true);
 		
-		if (carla != null)
-			carla.getCommands().forEach( c -> {commander.addCommand(c);});
+//		if (carla != null)
+//			carla.getCommands().forEach( c -> {commander.addCommand(c);});
 		
 		Object o = props.get(PARAM_CONTROLLED);
 		if (o != null) 
@@ -296,7 +294,7 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 			if (clock != null) 
 				clock.addListener(display);
 			else 
-				log.debug("no clock");
+				log.debug("gui: no clock");
 		}
 		return display;
 	}
@@ -321,7 +319,7 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 			return;
 		}
 		int loop = Integer.parseInt(o.toString());
-		if (mixer.getSamples().size() <= loop) {
+		if (JudahZone.getLooper().size() <= loop) {
 			log.error(CONTROL_ERROR + " loop " + loop + " doesn't exist.");
 			return;
 		}
@@ -329,12 +327,12 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 		Object o2 = props.get(PARAM_PULSE);
 		if (o2 != null && StringUtils.isNumeric(o2.toString())) 
 			pulse = Integer.parseInt(o2.toString());
-		mixer.getSamples().get(loop).setTimeSync(true);
+		JudahZone.getLooper().get(loop).setTimeSync(true);
 		log.warn("Looper " + loop + " has time control with pulse of " + pulse + " beats.");
 	}
 
 	void dropDaBeat(CommandWrapper cmds) {
-		mixerState = mixer.muteAll();
+		mixerState = JudahZone.getLooper().muteAll();
 		JudahZone.getMetronome().setVolume(0);
 		queue.push(cmds);
 	}
@@ -399,9 +397,9 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 	/**Play sample 0 and it becomes time master. 
 	 * sample 1 is 5 times longer and is empty */
 	private void _andILoveHer() {
-		Recorder drums = (Recorder)mixer.getSamples().get(0);
+		Recorder drums = (Recorder)JudahZone.getLooper().get(0);
 		Recording sample = drums.getRecording();
-		mixer.getSamples().get(1).setRecording(new Recording(sample.size() * 5, true));
+		JudahZone.getLooper().get(1).setRecording(new Recording(sample.size() * 5, true));
 		// if (clock != null) clock.removeListener(this);
 		pulse = 8;
 		Metronome.remove(this);
@@ -415,12 +413,38 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 	}
 
 	private void _feelGoodInc() {
-		Recorder drums = (Recorder)mixer.getSamples().get(0);
+		Recorder drums = (Recorder)JudahZone.getLooper().get(0);
 		clock.setLength(drums.getRecordedLength(), drums.getSize());
 	}
 
 	private void _iFeelLove() {
 		
+	}
+
+	/** @return true if consumed */
+	public boolean midiProcessed(Midi midi) {
+		PassThrough mode = PassThrough.ALL;
+		for (MidiListener listener : listeners) {
+			new Thread() {
+				@Override public void run() {
+					listener.feed(midi);};
+			}.start();
+			
+			PassThrough current = listener.getPassThroughMode();
+			if (current == PassThrough.NONE)
+				mode = PassThrough.NONE;
+			else if (current == PassThrough.NOTES && mode != PassThrough.NONE)
+				mode = PassThrough.NOTES;
+			else if (current == PassThrough.NOT_NOTES && mode != PassThrough.NONE)
+				mode = PassThrough.NOT_NOTES;
+		}
+		if (PassThrough.NONE == mode)
+			return true;
+		else if (PassThrough.NOTES == mode)
+			return !Midi.isNote(midi);
+		else if (PassThrough.NOT_NOTES == mode && Midi.isNote(midi))
+			return true;
+		return mappings.midiProcessed(midi);
 	}
 
 		

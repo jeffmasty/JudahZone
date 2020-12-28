@@ -138,7 +138,7 @@ public class SeqClock extends Thread implements TimeProvider {
 	public void record(boolean active, boolean onLoop) {
 		if (active) {
 			if (activeRecording != null && !activeRecording.isEmpty()) {
-				seq.getCommander().getListeners().remove(activeRecording);
+				seq.getListeners().remove(activeRecording);
 			}
 			
 			activeRecording = (onLoop) ? 
@@ -151,9 +151,9 @@ public class SeqClock extends Thread implements TimeProvider {
 					}
 						
 			tracks.add(activeRecording);
-			seq.getCommander().getListeners().add(activeRecording);
+			seq.getListeners().add(activeRecording);
 		} else if (activeRecording != null && !activeRecording.isEmpty()) {
-			seq.getCommander().getListeners().remove(activeRecording);
+			seq.getListeners().remove(activeRecording);
 			activeRecording = null;
 		}
 	}

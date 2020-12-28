@@ -59,10 +59,11 @@ public class FluidSynth implements Service {
     
 	@Getter private Instruments instruments = new Instruments();
 	@Getter private Channels channels = new Channels();
+
 	private final Command progChange, instUp, instDown, drumBank, direct;
 	@Getter private final List<Command> commands;
 	
-	private float gain = 0.7f; // max 5
+	private float gain = 2.5f; // max 5
 	private float reverbLevel = 0.75f;
 	private float roomSize = 0.75f;
 	private float dampness = 0.75f;
@@ -107,8 +108,8 @@ public class FluidSynth implements Service {
 	    	Thread.sleep(40);
 	    	connect(midi.getJackclient(), midi.getSynth());
 	    	connect(midi.getJackclient(), midi.getDrums());
-	    	Jack.getInstance().connect(LEFT_PORT, "system:playback_1");
-			Jack.getInstance().connect(RIGHT_PORT, "system:playback_2");
+//	    	Jack.getInstance().connect(LEFT_PORT, "system:playback_1");
+//			Jack.getInstance().connect(RIGHT_PORT, "system:playback_2");
 	    	
 	    } catch (InterruptedException e) {
 	    	log.error(e);

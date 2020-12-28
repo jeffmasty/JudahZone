@@ -198,7 +198,27 @@ public class AudioTools  {
 		}
 		return channels;
 	}
+
+	/** MIX in and out with gain applied to the input*/
+	public static void processAdd(FloatBuffer in, FloatBuffer out) {
+		in.rewind();
+		out.rewind();
+		for (int z = 0; z < out.capacity(); z++) 
+			out.put(out.get(z) + in.get(z));
+	}
 	
+	/** MIX in and out with gain applied to the input*/
+	public static void processAdd(FloatBuffer in, float gain, FloatBuffer out) {
+		if (1f == gain) {
+			processAdd(in, out);
+			return;
+		}
+		in.rewind();
+		out.rewind();
+		for (int z = 0; z < out.capacity(); z++) 
+			out.put(out.get(z) + gain * in.get(z));
+	}
+
 	/** MIX */
 	public static void processAdd(FloatBuffer in, float[] out) {
 		in.rewind();

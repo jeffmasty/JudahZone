@@ -25,7 +25,6 @@ import net.judah.util.JudahException;
 @Log4j
 public class MixerCommands extends ArrayList<Command> {
 	
-	protected final Mixer mixer;
 	
 	public static final String IS_INPUT = "isInput";
 	public static final String CHANNEL_PROP = "channel";
@@ -39,8 +38,7 @@ public class MixerCommands extends ArrayList<Command> {
 	@Getter protected final Command playCmd;
 	@Getter protected final Command recordCmd;
 	
-	MixerCommands(Mixer mixer) {
-		this.mixer = mixer;
+	public MixerCommands() {
 		recordCmd = new Command(TOGGLE_RECORD.name, TOGGLE_RECORD.desc, loopProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				boolean active = false;
@@ -51,7 +49,7 @@ public class MixerCommands extends ArrayList<Command> {
 				else 
 					active = midiData2 > 0;
 				int idx = getLoopNum(props); 
-				Sample s = mixer.getSamples().get(idx);
+				Sample s = JudahZone.getLooper().get(idx);
 				if (false == s instanceof RecordAudio) 
 					throw new JudahException("Sample " + idx + " (" + s.getName() + ") does not record audio.");
 				((RecordAudio)s).record(active);
@@ -69,10 +67,10 @@ public class MixerCommands extends ArrayList<Command> {
 					active = midiData2 > 0;
 				int idx = getLoopNum(props);
 				if (idx == ALL)
-					for (Sample loop : mixer.getSamples()) 
+					for (Sample loop : JudahZone.getLooper()) 
 						loop.play(active);
 				else 
-					mixer.getSamples().get(idx).play(active);
+					JudahZone.getLooper().get(idx).play(active);
 			}};
 		add(playCmd);
 		
@@ -82,37 +80,37 @@ public class MixerCommands extends ArrayList<Command> {
 				String channel = props.get(CHANNEL).toString();
 				int loopNum = getLoopNum(props);
 				if (loopNum == ALL)
-					for (Sample loop : mixer.getSamples()) 
+					for (Sample loop : JudahZone.getLooper()) 
 						((Recorder)loop).mute(channel, mute);
 				else 
-					((Recorder)mixer.getSamples().get(loopNum)).mute(channel, mute);
+					((Recorder)JudahZone.getLooper().get(loopNum)).mute(channel, mute);
 				return;
 			}});
 		add(new Command(CLEAR.name, CLEAR.desc, loopProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				int idx = getLoopNum(props);
 				if (idx == ALL)
-					mixer.getSamples().forEach(loop -> loop.clear());
+					JudahZone.getLooper().forEach(loop -> loop.clear());
 				else 
-					mixer.getSamples().get(idx).clear();
+					JudahZone.getLooper().get(idx).clear();
 			}});
 			
 		add(new Command(VOLUME.name, VOLUME.desc, gainProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				float gain = 0f;
+				int gain = 0;
 					if (midiData2 >= 0)
-						gain = ((midiData2))* 0.01f;
-					else gain = Float.parseFloat("" + props.get(GAIN)); 
+						gain = midiData2;
+					else gain = Integer.parseInt("" + props.get(GAIN)); 
 					
 				boolean isInput = Boolean.parseBoolean(props.get(IS_INPUT).toString());
 				int idx = Integer.parseInt(props.get(INDEX).toString());
-				log.trace((isInput ? JudahZone.getChannels().get(idx).getName() : mixer.getSamples().get(idx).getName()) 
-						+ " gain: " + gain);
+				log.trace((isInput ? JudahZone.getChannels().get(idx).getName() : 
+						JudahZone.getLooper().get(idx).getName()) + " gain: " + gain);
 				if (isInput) 
-					JudahZone.getChannels().get(idx).setGain(gain);
+					JudahZone.getChannels().get(idx).setVolume(gain);
 				else
-					mixer.getSamples().get(idx).setGain(gain);
-				mixer.getGui().update();
+					JudahZone.getLooper().get(idx).setGain(gain);
+				// TODO mixer.getGui().update();
 			}});
 
 		add(new Command(LOAD_SAMPLE.name, LOAD_SAMPLE.desc, sampleProps()) {
@@ -125,8 +123,9 @@ public class MixerCommands extends ArrayList<Command> {
 				String name = props.get(NAME).toString();
 				int index = Integer.parseInt(props.get(INDEX).toString());
 				LineType type = LineType.valueOf(props.get(TYPE).toString());
-				mixer.getPlugins().add(new Plugin(name, index, type));
+				JudahZone.getPlugins().add(new Plugin(name, index, type));
 			}});
+		
 		add(new AudioPlay());
 
 	}
@@ -175,7 +174,7 @@ public class MixerCommands extends ArrayList<Command> {
 		int idx = ALL;
 		try {
 			idx = Integer.parseInt(props.get(LOOP).toString());
-			if (idx < 0 || idx >= mixer.getSamples().size()) throw new Exception();
+			if (idx < 0 || idx >= JudahZone.getLooper().size()) throw new Exception();
 		} catch (Throwable t) { }
 		return idx;
 	}
@@ -186,7 +185,7 @@ public class MixerCommands extends ArrayList<Command> {
 		Object loop = props.get(LOOP);
 		if (file != null && file.toString().length() > 0) {
 			try {
-				mixer.getSamples().get(Integer.parseInt(loop.toString()))
+				JudahZone.getLooper().get(Integer.parseInt(loop.toString()))
 					.setRecording(Recording.readAudio(file.toString()));
 			} catch (Throwable t) {
 				throw new JudahException(t);
@@ -196,12 +195,12 @@ public class MixerCommands extends ArrayList<Command> {
 		else {
 			// TODO, quick implement an empty loop[1] based on size of loop[0] for now
 			Object sauce = props.get(SOURCE_LOOP);
-			Sample source = mixer.getSamples().get(0);
+			Sample source = JudahZone.getLooper().get(0);
 			if (sauce != null && StringUtils.isNumeric(sauce.toString()))
-				source = mixer.getSamples().get(Integer.parseInt(sauce.toString()));
-			Sample destination = mixer.getSamples().get(0);
+				source = JudahZone.getLooper().get(Integer.parseInt(sauce.toString()));
+			Sample destination = JudahZone.getLooper().get(0);
 			if (LOOP != null && StringUtils.isNumeric(loop.toString()))
-				destination = mixer.getSamples().get(Integer.parseInt(loop.toString()));
+				destination = JudahZone.getLooper().get(Integer.parseInt(loop.toString()));
 			if (!source.hasRecording()) {
 				log.error("No recording in Loop " + source.getName());
 				return;

@@ -82,18 +82,22 @@ public class Midi extends ShortMessage {
 		setMessage(getCommand(), getChannel(), getData1(), velocity);
 	}
 	
+	
 	public static boolean isCC(ShortMessage msg) {
 		 return msg.getStatus() - msg.getChannel() == ShortMessage.CONTROL_CHANGE;
 	}
+	public boolean isCC() { return isCC(this); }
 	
 	public static boolean isProgChange(ShortMessage msg) {
 		return msg.getStatus() - msg.getChannel() == ShortMessage.PROGRAM_CHANGE;
 	}
+	public boolean isProgChange() { return isProgChange(this); }
 	
 	public static boolean isNote(ShortMessage msg) {
 		int stat = msg.getStatus() - msg.getChannel();
 		return stat == Midi.NOTE_OFF || stat == NOTE_ON; 
 	}
+	public boolean isNote() { return isNote(this); }
 
 	public static HashMap<String, Class<?>> midiTemplate() {
 		HashMap<String, Class<?>> result = new HashMap<>();

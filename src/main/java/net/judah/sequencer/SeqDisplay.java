@@ -6,10 +6,12 @@ import java.awt.Graphics2D;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import lombok.extern.log4j.Log4j;
 import net.judah.api.TimeListener;
 import net.judah.util.Constants;
 
 /** TODO */
+@Log4j
 public class SeqDisplay extends JPanel implements TimeListener {
 
 	public static final int INSET = 15;

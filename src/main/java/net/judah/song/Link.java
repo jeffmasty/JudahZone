@@ -8,8 +8,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.judah.JudahZone;
 import net.judah.api.Command;
-import net.judah.sequencer.Sequencer;
 import net.judah.song.Edits.Copyable;
 
 @AllArgsConstructor @NoArgsConstructor @Data
@@ -25,7 +25,7 @@ public class Link implements Copyable {
 	
 	public Command getCmd() {
 		if (cmd == null) 
-			cmd = Sequencer.getCurrent().getCommander().find(command);
+			cmd = JudahZone.getCommands().find(command);
 		return cmd;
 		
 	}

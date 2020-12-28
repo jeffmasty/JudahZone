@@ -1,16 +1,12 @@
 package net.judah.midi;
-import static net.judah.settings.Commands.OtherLbls.*;
 import static net.judah.settings.MidiSetup.*;
-import static net.judah.util.Constants.Param.*;
 import static org.jaudiolibs.jnajack.JackPortFlags.*;
 import static org.jaudiolibs.jnajack.JackPortType.*;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.sound.midi.ShortMessage;
@@ -25,7 +21,6 @@ import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.api.BasicClient;
-import net.judah.api.Command;
 import net.judah.api.Midi;
 import net.judah.api.MidiQueue;
 import net.judah.api.Service;
@@ -36,7 +31,6 @@ import net.judah.sequencer.Sequencer;
 import net.judah.settings.MidiSetup.IN;
 import net.judah.settings.MidiSetup.OUT;
 import net.judah.util.Constants;
-import net.judah.util.JudahException;
 import net.judah.util.RTLogger;
 
 /** handle MIDI for the project */
@@ -67,41 +61,43 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 	@Getter private JackPort komplete; 
 
     private final ConcurrentLinkedQueue<ShortMessage> queue = new ConcurrentLinkedQueue<ShortMessage>();
-    
+
 	// for future Timebase interface
 	ConcurrentLinkedQueue<Long> timeRequest = new ConcurrentLinkedQueue<>(); 
-	
-	private final Command routeChannel = new Command(ROUTECHANNEL.name, ROUTECHANNEL.desc, channelTemplate()) {
-		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-			routeChannel(props);}};
-	private final Command midiNote = new Command(MIDINOTE.name, MIDINOTE.desc, Midi.midiTemplate()) {
-		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-			queue(Midi.fromProps(props));}};
-    private final Command midiPlay = new Command(MIDIFILE.name, MIDIFILE.desc, playTemplate()) {
-		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-			boolean active = false;
-			if (midiData2 > 0)
-				active = true;
-			else if (props.containsKey(ACTIVE))
-				try { active = Boolean.parseBoolean("" + props.get(ACTIVE));
-				} catch (Throwable t) { log.debug(props.get(ACTIVE) + " " + t.getMessage());  }
-			Object o = props.get(FILE);
-			if (false == o instanceof String)  throw new JudahException("Missing midi file to play");
-			File midi = new File(o.toString());
-			if (!midi.isFile()) throw new JudahException("Not a midi file: " + o);
-			if (active) { 
-				JudahZone.getMetronome().setMidiFile(midi);
-				JudahZone.getMetronome().play();
-			}
-			else
-				JudahZone.getMetronome().stop();
-		}
 
-    };
-
-	private final Transposer octaver = new Transposer(this);
-    
-	private final List<Command> cmds = Arrays.asList(new Command[] {routeChannel, midiNote, midiPlay, octaver});
+//	private final Transposer octaver = new Transposer(this);
+//
+//	private final Command routeChannel = new Command(ROUTECHANNEL.name, ROUTECHANNEL.desc, channelTemplate()) {
+//		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+//			routeChannel(props);}};
+//	private final Command midiNote = new Command(MIDINOTE.name, MIDINOTE.desc, Midi.midiTemplate()) {
+//		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+//			queue(Midi.fromProps(props));}};
+//    private final Command midiPlay = new Command(MIDIFILE.name, MIDIFILE.desc, playTemplate()) {
+//		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+//			boolean active = false;
+//			if (midiData2 > 0)
+//				active = true;
+//			else if (props.containsKey(ACTIVE))
+//				try { active = Boolean.parseBoolean("" + props.get(ACTIVE));
+//				} catch (Throwable t) { log.debug(props.get(ACTIVE) + " " + t.getMessage());  }
+//			Object o = props.get(FILE);
+//			if (false == o instanceof String)  throw new JudahException("Missing midi file to play");
+//			File midi = new File(o.toString());
+//			if (!midi.isFile()) throw new JudahException("Not a midi file: " + o);
+//			if (active) { 
+//				JudahZone.getMetronome().setMidiFile(midi);
+//				JudahZone.getMetronome().play();
+//			}
+//			else
+//				JudahZone.getMetronome().stop();
+//		}
+//    };
+//	private final List<Command> cmds = Arrays.asList(new Command[] 
+//			{routeChannel, midiNote, midiPlay, octaver});
+//	// Service interface
+//	@Override public List<Command> getCommands() { return cmds; }
+@Getter MidiCommands commands = new MidiCommands(this);
 	
     // for process()
 	private Event midiEvent = new JackMidi.Event();
@@ -116,12 +112,6 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 		start();
 	}
 	
-	public JudahMidi() throws JackException {
-		this(JACKCLIENT_NAME);
-    }
-    
-	// Service interface
-	@Override public List<Command> getCommands() { return cmds; }
 
 	public void routeChannel(HashMap<String, Object> props) {
 		try {
@@ -147,7 +137,6 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 		
         for (IN port : IN.values()) 
         	inPorts.add(jackclient.registerPort(port.name, MIDI, JackPortIsInput));
-        
 
         if (inPorts.size() > 0) keyboard = inPorts.get(0);
         if (inPorts.size() > 1) pedal = inPorts.get(1);
@@ -188,7 +177,6 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
     	
     	try {
     		
-    		// SeqClock.setCurrent(frame++);
     		scheduler.offer(frame++);
     		
     		JackMidi.clearBuffer(synth);
@@ -212,10 +200,16 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
                     }
                     midiEvent.read(data);
                     midi = router.process(new Midi(data));
-                    if (Sequencer.getCurrent() != null
-	                    && Sequencer.getCurrent().getCommander().midiProcessed(midi) == false) {
-	                	write(midi, midiEvent.time());
-	        		}
+                    
+                    if (Sequencer.getCurrent() == null) { 
+                    	if (!JudahZone.midiProcessed(midi)) 
+                    		write(midi, midiEvent.time());
+                    }
+                    else if (!Sequencer.getCurrent().midiProcessed(midi)) { 
+                    	if (!JudahZone.midiProcessed(midi))
+                    		write(midi, midiEvent.time());
+                    }
+                    
         		}
     		}
         	
@@ -232,7 +226,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
     	return state.get() == Status.ACTIVE;
     }
 
-    private void write(ShortMessage midi, int time) throws JackException {
+	private void write(ShortMessage midi, int time) throws JackException {
     	switch (midi.getChannel()) {
     	case KOMPLETE_CHANNEL:
     		JackMidi.eventWrite(komplete, time, midi.getMessage(), midi.getLength());
@@ -254,25 +248,11 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 		queue.add(message);
 	}
 
-	public static HashMap<String, Class<?>> channelTemplate() {
-		HashMap<String, Class<?>> result = new HashMap<String, Class<?>>();
-		result.put("from", Integer.class);
-		result.put("to", Integer.class);
-		return result;
-	}
-
-	public static HashMap<String, Class<?>> playTemplate() {
-		HashMap<String, Class<?>> result = new HashMap<String, Class<?>>();
-		result.put(FILE, String.class);
-		result.put(ACTIVE, Boolean.class);
-		return result;
-	}
-	
 	@Override
 	public void properties(HashMap<String, Object> props) {
 		scheduler.clear();
 	}
-
+	
 }
 
 

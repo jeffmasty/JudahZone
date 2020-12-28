@@ -1,7 +1,5 @@
 package net.judah.looper;
 
-
-
 import static net.judah.jack.AudioMode.*;
 import static net.judah.util.Constants.*;
 
@@ -11,17 +9,19 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.jaudiolibs.jnajack.JackPort;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
+import net.judah.JudahZone;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeListener.Property;
 import net.judah.api.TimeNotifier;
 import net.judah.jack.AudioMode;
 import net.judah.jack.ProcessAudio;
 import net.judah.midi.JudahMidi;
-import net.judah.mixer.MixerPort;
-import net.judah.sequencer.Sequencer;
+import net.judah.mixer.LoopGui;
 import net.judah.util.Console;
 
 @Log4j
@@ -30,8 +30,9 @@ public class Sample implements ProcessAudio, TimeNotifier {
     @Getter protected Recording recording; 
 	@Getter @Setter protected String name;
 	@Getter @Setter protected Type type;
+	protected LoopGui gui;
 	
-	protected transient List<MixerPort> outputPorts;
+	protected final transient List<JackPort> outputPorts = new ArrayList<>();
 	@Getter protected final transient AtomicInteger tapeCounter = new AtomicInteger();
 	@Getter @Setter boolean timeSync = false;
 	private final ArrayList<TimeListener> listeners = new ArrayList<>();
@@ -40,6 +41,8 @@ public class Sample implements ProcessAudio, TimeNotifier {
 	protected final transient AtomicReference<AudioMode> isPlaying = new AtomicReference<AudioMode>(STOPPED);
 	
 	@Setter @Getter protected transient float gain = 1f;
+	@Setter @Getter private float gainFactor = 2f;
+	
 	protected Integer length;
 	
 	// for process()
@@ -49,7 +52,6 @@ public class Sample implements ProcessAudio, TimeNotifier {
 	private transient FloatBuffer toJackLeft, toJackRight;
 	private transient int z;
 
-	
 	public Sample(String name, Recording recording, Type type) {
 		this.name = name;
 		this.recording = recording;
@@ -59,7 +61,7 @@ public class Sample implements ProcessAudio, TimeNotifier {
 	protected Sample() { }
 	
 	@Override
-	public void setOutputPorts(List<MixerPort> ports) {
+	public void setOutputPorts(List<JackPort> ports) {
 		synchronized (outputPorts) {
 			outputPorts.clear();
 			outputPorts.addAll(ports);
@@ -78,9 +80,7 @@ public class Sample implements ProcessAudio, TimeNotifier {
 		if (updated == recording.size()) {
 			if (type == Type.ONE_TIME) {
 				isPlaying.set(STOPPING);
-				new Thread() {
-					@Override public void run() {Sequencer.getCurrent().getMixer().removeSample(Sample.this);}
-				}.start();
+				JudahZone.getLooper().remove(Sample.this);
 			}
 			updated = 0;
 			loopCount++;
@@ -152,32 +152,12 @@ public class Sample implements ProcessAudio, TimeNotifier {
 		return "Sample " + name;
 	}
 
-	////////////////////////////////////
-	//     Process Realtime Audio     //
-	////////////////////////////////////
-	@Override
-	public void process(int nframes) {
-		
-		// output
-		if (playing()) {
-			toJackLeft = outputPorts.get(LEFT_CHANNEL).getPort().getFloatBuffer();
-			toJackLeft.rewind();
-			toJackRight = outputPorts.get(RIGHT_CHANNEL).getPort().getFloatBuffer();
-			toJackRight.rewind();
-			readRecordedBuffer();
-			processMix(recordedBuffer[LEFT_CHANNEL], toJackLeft, nframes);
-			processMix(recordedBuffer[RIGHT_CHANNEL], toJackRight, nframes);
-		} 
+	public LoopGui getGui() {
+		if (gui == null)
+			gui = new LoopGui(this);
+		return gui;
 	}
-
-	protected void processMix(float[] in, FloatBuffer out, int nframes) {
-		out.get(workArea);
-		out.rewind();
-		for (z = 0; z < nframes; z++) {
-			out.put(workArea[z] + gain * in[z]);
-		}
-	}
-
+	
 	@Override
 	public void addListener(TimeListener l) {
 		if (!listeners.contains(l))
@@ -193,4 +173,39 @@ public class Sample implements ProcessAudio, TimeNotifier {
 		tapeCounter.set(current);
 	}
 	
+	/** percent of maximum */
+	public void setVolume(int volume) {
+		gain = volume / 100f * gainFactor;
+		if (gui != null) {
+			gui.setVolume(volume);
+		}
+	}
+
+
+	////////////////////////////////////
+	//     Process Realtime Audio     //
+	////////////////////////////////////
+	@Override
+	public void process(int nframes) {
+		
+		// output
+		if (playing()) {
+			toJackLeft = outputPorts.get(LEFT_CHANNEL).getFloatBuffer();
+			toJackLeft.rewind();
+			toJackRight = outputPorts.get(RIGHT_CHANNEL).getFloatBuffer();
+			toJackRight.rewind();
+			readRecordedBuffer();
+			processMix(recordedBuffer[LEFT_CHANNEL], toJackLeft, nframes);
+			processMix(recordedBuffer[RIGHT_CHANNEL], toJackRight, nframes);
+		} 
+	}
+
+	protected void processMix(float[] in, FloatBuffer out, int nframes) {
+		out.get(workArea);
+		out.rewind();
+		for (z = 0; z < nframes; z++) {
+			out.put(workArea[z] + gain * in[z]);
+		}
+	}
+
 }

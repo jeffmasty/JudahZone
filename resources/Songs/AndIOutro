@@ -228,8 +228,8 @@
       "index" : "0"
     }
   }, {
-    "type" : "ABS",
-    "timestamp" : 17,
+    "type" : "TRIG",
+    "timestamp" : 0,
     "command" : "carla:param",
     "notes" : "off harmonizer",
     "params" : {

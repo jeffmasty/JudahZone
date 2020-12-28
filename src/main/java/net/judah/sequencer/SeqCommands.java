@@ -11,6 +11,7 @@ import java.util.HashMap;
 
 import org.jaudiolibs.jnajack.JackTransportState;
 
+import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.Command;
 import net.judah.api.TimeListener.Property;
@@ -33,7 +34,7 @@ public class SeqCommands extends ArrayList<Command> {
 
 	final Command transport;
 
-	SeqCommands(final Sequencer seq) {
+	public SeqCommands() {
 		
 		transport = new Command(TRANSPORT.name, TRANSPORT.desc, activeTemplate()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
@@ -127,7 +128,7 @@ public class SeqCommands extends ArrayList<Command> {
 		
 		add(new Command(QUEUE.name, QUEUE.desc, queueTemplate()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				Command target = seq.getCommander().find("" + props.get("command"));
+				Command target = JudahZone.getCommands().find("" + props.get("command"));
 				if (target == null) throw new NullPointerException("command " + props.get("command"));
 				int seqInternal = seq.getCount() + 1;
 				if (ControlMode.INTERNAL == seq.getControl()) {
