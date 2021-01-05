@@ -20,7 +20,7 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
-import net.judah.Page;
+import net.judah.SongPane;
 import net.judah.api.Command;
 import net.judah.api.Loadable;
 import net.judah.api.Midi;
@@ -34,7 +34,6 @@ import net.judah.midi.MidiListener;
 import net.judah.midi.MidiListener.PassThrough;
 import net.judah.midi.Route;
 import net.judah.midi.Router;
-import net.judah.plugin.Carla;
 import net.judah.song.Song;
 import net.judah.song.Trigger;
 import net.judah.util.CommandWrapper;
@@ -42,12 +41,12 @@ import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.JsonUtil;
 
-@Log4j
+@Log4j @Getter
 public class Sequencer implements Service, Runnable, TimeListener /* , ControllerEventListener */ {
 	
 	public static final String PARAM_PULSE = "beats.per.pulse";
 	public static final String PARAM_FLUID = "fluid";
-	public static final String PARAM_CARLA = "carla";
+	// public static final String PARAM_CARLA = "carla";
 	public static final String PARAM_PATCH = "patch";
 	/** CC3 messages inserted in midi clicktrack file define bars, see {@link #controlChange(ShortMessage)} */
 	public static final String PARAM_CONTROLLED = "pulse.controlled";
@@ -65,44 +64,40 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 	
 	@Getter private static Sequencer current; 
 	
-	@Getter private final String serviceName = Sequencer.class.getSimpleName();
-	@Getter private final Song song;
-	@Getter private File songfile;
-//	@Getter private final Services services = new Services();
-//	@Getter private final CommandHandler commander = new CommandHandler(this); 
-	@Getter private final ArrayList<MidiListener> listeners = new ArrayList<>();
+	private final String serviceName = Sequencer.class.getSimpleName();
+	private final Song song;
+	private File songfile;
+	private final ArrayList<MidiListener> listeners = new ArrayList<>();
 	private final Mappings mappings;
 	
-	@Getter private static Carla carla;
-	@Getter private final JudahZone mixer;
-	@Getter private final Metronome metronome;
-	@Getter private final Page page; 
-	@Getter private SeqCommands commands = new SeqCommands();
+	private final JudahZone mixer;
+	private final Metronome metronome;
+	private final SongPane page; 
+	private SeqCommands commands = new SeqCommands();
 	private SeqDisplay display;
+	/** see {@link #properties(HashMap)} */
+	// @Getter private SheetMusic sheetMusic; 
+	@Getter private File sheetMusic;
 
 	/** external = looper (or deprecated cc3 events) sets the time */
 	@Setter(value = AccessLevel.PACKAGE) @Getter 
 	private ControlMode control = ControlMode.INTERNAL;
 	/** internal clock */
-	@Getter private SeqClock clock;
+	private SeqClock clock;
 	
-	final Stack<CommandWrapper> queue = new Stack<CommandWrapper>();
-	
+	/** a sense of the current beat */
+	private int count = -1;
 	/** the next command sitting in the sequencer awaiting execution. */
-	@Getter private Trigger active;
+	private Trigger active;
 	/** current sequencer command index */
 	private int index = 0;
-
-	/** a sense of the current beat */
-	@Getter private int count = -1;
-	
+	private final Stack<CommandWrapper> queue = new Stack<CommandWrapper>();
 	/** number of TimeBase units (beats) per pulse */
 	@Setter(value = AccessLevel.PACKAGE) @Getter 
 	private int pulse = 4;
-	
 	// 	private TimeBase unit = TimeBase.BEATS; 
 	// for dropDaBeat, currently not implemented
-	@SuppressWarnings("unused") private ArrayList<Float> mixerState;
+	private ArrayList<Float> mixerState;
 	 
 	public Sequencer(File songfile) throws IOException, JackException {
 		this.mixer = JudahZone.getInstance();
@@ -120,7 +115,7 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 		song.getRouter().forEach( pair -> { midi.add(
 				new Route(pair.getFromMidi(), pair.getToMidi()));});
 
-		page = new Page(this);
+		page = new SongPane(this);
 		MainFrame.get().openPage(page);
 	}
 
@@ -143,6 +138,7 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 		if (props == null) return;
 		
 		JudahZone.getServices().forEach(service -> {service.properties(props);});
+		properties(props);
 	}
 
 	private void initializeTriggers() {
@@ -269,15 +265,14 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 	
 	@Override // Service
 	public void properties(HashMap<String, Object> props) {
+		Object o;
+		o = props.get(IMAGE);
+		if (o != null) 
+			sheetMusic = new File(o.toString());
 		
-		// Initialize Carla
-		if (props.containsKey(PARAM_CARLA)) 
-			carla = initializeCarla("" + props.get(PARAM_CARLA), true);
 		
-//		if (carla != null)
-//			carla.getCommands().forEach( c -> {commander.addCommand(c);});
-		
-		Object o = props.get(PARAM_CONTROLLED);
+		// legacy
+		o = props.get(PARAM_CONTROLLED);
 		if (o != null) 
 			control =  Boolean.parseBoolean(o.toString()) ? ControlMode.EXTERNAL : ControlMode.INTERNAL;
 		
@@ -286,6 +281,9 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 			if (StringUtils.isNumeric("" + o2))
 				pulse = Integer.parseInt(o2.toString());
 		}
+		//	if (props.containsKey(PARAM_CARLA)) // Initialize Carla 
+		//		carla = initializeCarla("" + props.get(PARAM_CARLA), true);
+		//		carla.getCommands().forEach( c -> {commander.addCommand(c);});
 	}
 	
 	public SeqDisplay getGui() {
@@ -377,23 +375,7 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 				clock.end();
 		}
 	}
-
-	private Carla initializeCarla(String carlaSettings, boolean showGui) {
-		try {
-			if (carla != null) {
-				if (carla.getSettings().equals(carlaSettings))
-					return carla;
-				carla.close();
-			}
-			return new Carla(carlaSettings, showGui);
-		} catch (Throwable t) {
-			log.error(carlaSettings + ": " + t.getMessage(), t);
-			Constants.infoBox(t.getMessage() + " for " + carlaSettings, "Song Error");
-			return null;
-		}
-	}
-
-
+	
 	/**Play sample 0 and it becomes time master. 
 	 * sample 1 is 5 times longer and is empty */
 	private void _andILoveHer() {
@@ -529,4 +511,18 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 //		return;
 //	if (isRunning()) 
 //		pulse();
+//}
+//private Carla initializeCarla(String carlaSettings, boolean showGui) {
+//try {
+//	if (carla != null) {
+//		if (carla.getSettings().equals(carlaSettings))
+//			return carla;
+//		carla.close();
+//	}
+//	return new Carla(carlaSettings, showGui);
+//} catch (Throwable t) {
+//	log.error(carlaSettings + ": " + t.getMessage(), t);
+//	Constants.infoBox(t.getMessage() + " for " + carlaSettings, "Song Error");
+//	return null;
+//}
 //}

@@ -9,34 +9,36 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j;
-import net.judah.mixer.plugin.Plugin;
 
-@Getter @Log4j
+/**JudahZone mixer Channels come with built-in compression, reverb and gain */
 public class Channel {
 
-	private final String name;
-	private final boolean isStereo;
+	@Getter protected final String name;
+	@Getter protected final boolean isStereo;
+    
+    @Getter private Compression compression = new Compression();
+    @Getter private Reverb reverb = new Reverb();
+    
+    @Getter @Setter protected JackPort leftPort;
+    @Getter @Setter protected JackPort rightPort;
 	
-	@Setter private JackPort leftPort;
-	@Setter private JackPort rightPort;
+    @Getter protected float gain = 1f;
+    @Getter @Setter protected float gainFactor = 1f;
 	
-	private float gain = 1f;
-	@Setter private float gainFactor = 1f;
-	
-	@Setter private boolean onMute;
-	@Setter private boolean muteRecord;
-	@Setter private int defaultCC;
-	private ChannelGui gui;
+    @Getter @Setter protected boolean onMute;
+    @Getter @Setter protected boolean muteRecord;
+    @Getter @Setter protected boolean solo;
+    @Getter @Setter protected int defaultCC;
+    protected ChannelGui gui;
 
-	private final String leftSource;
-	private final String leftConnection;
-	private final String rightSource; // for stereo
-	private final String rightConnection;
+    @Getter protected final String leftSource;
+    @Getter protected final String leftConnection;
+    @Getter protected final String rightSource; // for stereo
+    @Getter protected final String rightConnection;
 	
-	private final ArrayList<Plugin> plugins = new ArrayList<>();
+    @Getter protected final ArrayList<Plugin> plugins = new ArrayList<>();
 	
-	private transient FloatBuffer buf;
+    protected transient FloatBuffer buf;
 	
 	/** Mono channel uses left signal */
 	public Channel(String channelName, String sourcePort, String connectionPort) {
@@ -65,20 +67,45 @@ public class Channel {
 		}
 	}
 
-	public void applyGain() {
-		buf = leftPort.getFloatBuffer();
-		for (int z = 0; z < buf.capacity(); z++)
-			buf.put(buf.get(z) * gain);
-		if (!isStereo) return;
-		buf = rightPort.getFloatBuffer();
-		for (int z = 0; z < buf.capacity(); z++)
-			buf.put(buf.get(z) * gain);
-	}
-
 	public ChannelGui getGui() {
-		if (gui == null)
+		if (gui == null) // lazy load
 			gui = new ChannelGui(this);
 		return gui;
 	}
-	
+    
+
+	public void process() {
+		
+		if (reverb.isActive()) {
+			reverb.process(leftPort.getFloatBuffer(), gain);
+			if (isStereo)
+				reverb.process(rightPort.getFloatBuffer(), gain);
+
+			if (compression.isActive()) { // gain already applied
+				leftPort.getFloatBuffer().rewind();
+				compression.process(leftPort.getFloatBuffer(), 1f); 
+				if (isStereo) {
+					rightPort.getFloatBuffer().rewind();
+					compression.process(rightPort.getFloatBuffer(), 1f);
+				}
+			}
+		}
+		
+		else if (compression.isActive()) {
+			compression.process(leftPort.getFloatBuffer(), gain);
+			if (isStereo)
+				compression.process(rightPort.getFloatBuffer(), gain);
+		}
+
+		else if (gain != 1f) { // standard (no effects) volume
+			buf = leftPort.getFloatBuffer();
+			for (int z = 0; z < buf.capacity(); z++)
+				buf.put(buf.get(z) * gain);
+			if (!isStereo) return;
+			buf = rightPort.getFloatBuffer();
+			for (int z = 0; z < buf.capacity(); z++)
+				buf.put(buf.get(z) * gain);
+		}
+	}
+
 }

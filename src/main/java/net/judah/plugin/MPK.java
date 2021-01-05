@@ -43,12 +43,12 @@ public class MPK {
 	// joystick cc 0 and cc 100
 	
 	// Not MPK 
-	private static final List<Integer> pedal = Arrays.asList(new Integer[] 
+	public static final List<Integer> PEDAL = Arrays.asList(new Integer[] 
 			{96, 97, 98, 99, 100, 101});
 	
-	private static final List<Integer> drumsA = Arrays.asList(new Integer[] 
+	public static final List<Integer> DRUMS_A = Arrays.asList(new Integer[] 
 		{48, 49, 50, 51, 44, 45, 46, 47});
-	private static final List<Integer> drumsB = Arrays.asList(new Integer[]
+	public static final List<Integer> DRUMS_B = Arrays.asList(new Integer[]
 			{36, 37, 38, 39, 32, 33, 34, 35});
 	
 	/** handles Prog Select 0 */
@@ -57,20 +57,20 @@ public class MPK {
 		int val = midi.getData1();
 		
 		if (Midi.isNote(midi)) {
-			if (drumsA.contains(val))
-				return "Drums " + drumsA.indexOf(val) + quote(midi);
-			else if (drumsB.contains(val))
-				return "DrumB " + drumsB.indexOf(val) + quote(midi);
+			if (DRUMS_A.contains(val))
+				return "Drums " + DRUMS_A.indexOf(val) + quote(midi);
+			else if (DRUMS_B.contains(val))
+				return "DrumB " + DRUMS_B.indexOf(val) + quote(midi);
 		}
 		else if (Midi.isCC(midi)) {
-			if (pedal.contains(val))
-				return "Foot" + pedal.indexOf(val) + quote(midi);
-			else if (knobs0.contains(val))
-				return "Knob  " + knobs0.indexOf(val) + quote(midi);
+			if (PEDAL.contains(val))
+				return "Foot" + PEDAL.indexOf(val) + quote(midi);
+			else if (KNOBS.contains(val))
+				return "Knob  " + KNOBS.indexOf(val) + quote(midi);
 			else if (knobs1.contains(val))
 				return "Knob  " + knobs1.indexOf(val) + quote(midi) + " Bank1";
-			else if (primaryCC.contains(val))
-				return "CC Pad " + primaryCC.indexOf(val) + quote(midi);
+			else if (PRIMARY_CC.contains(val))
+				return "CC Pad " + PRIMARY_CC.indexOf(val) + quote(midi);
 		}
 		int prog = whichProgPad(midi);
 		if (prog >= 0) {
@@ -79,7 +79,7 @@ public class MPK {
 		return midi.toString();
 	}
 	
-	private static final List<Integer> knobs0 = Arrays.asList(new Integer[] 
+	public static final List<Integer> KNOBS = Arrays.asList(new Integer[] 
 			{14, 15, 16, 17, 18, 19, 20, 21});
 	private static final List<Integer> knobs1 = Arrays.asList(new Integer[]
 			{22, 23, 24, 25, 26, 27, 28, 29});
@@ -89,20 +89,19 @@ public class MPK {
 			{30, 83, 126, 7, 84, 94, 95,  8});
 	
 	@SuppressWarnings("unchecked")
-	private static final List<Integer>[] knobbanks = new List[] {knobs0, knobs1, knobs2, knobs3};
+	public static final List<Integer>[] KNOB_BANKS = new List[] {KNOBS, knobs1, knobs2, knobs3};
 	
-	private static ArrayList<ShortMessage[]> knobs = genKnobs( knobbanks );
+	public static ArrayList<ShortMessage[]> KNOBS_MIDI = genKnobs( KNOB_BANKS );
 	
 	public static ShortMessage knob(int bank, int knobNum) {
-		return knobs.get(bank)[knobNum];
+		return KNOBS_MIDI.get(bank)[knobNum];
 	}
 	public static ShortMessage knob(int knobNum) {
 		return knob(0, knobNum);
 	}
 	
-	private static final List<Integer> primaryCC = Arrays.asList(new Integer[]{31, 32, 33, 34, 35, 36, 37, 38});
 	
-	private static int [][][] ccpads = {
+	public static int [][][] CC_PADS = {
 			{ // green A bank
 				{31, 32, 33, 34, 35, 36, 37, 38},
 				{39, 40, 41, 42, 43, 44, 45, 46},
@@ -115,10 +114,10 @@ public class MPK {
 				{110, 111, 112, 113, 114, 115, 116, 117},
 				{118, 119, 120, 121, 122, 123, 124, 125}
 			}
-
 	};
-
-	private static int [][][] progchanges = {
+	public static final List<Integer> PRIMARY_CC = Arrays.asList(new Integer[]{31, 32, 33, 34, 35, 36, 37, 38});
+	
+	public static int [][][] PROG_CHANGES = {
 			{ 									   // green
 				{ 1,  2,  3,  4,  5,  6,  7,  8}, // lvl1
 				{ 9, 10, 11, 12, 13, 14, 15, 16}, // lvl2
@@ -132,7 +131,8 @@ public class MPK {
 				{56, 58, 59, 60, 61, 62, 63, 64}  // lvl4
 			}
 	};
-
+	public static final int[] PRIMARY_PROG = PROG_CHANGES[0][0];
+	
 	private static ArrayList<ShortMessage[]> genKnobs(List<Integer>[] in) {
 		
 		ArrayList<ShortMessage[]> result = new ArrayList<>();
@@ -158,7 +158,7 @@ public class MPK {
 		for (int bank = 0; bank < 2; bank++)
 			for (int progLvl = 0; progLvl < PAD_STYLES; progLvl++)
 				for (int padNum = 0; padNum < PAD_COUNT; padNum++)
-					if (progchanges[bank][progLvl][padNum] == data1)
+					if (PROG_CHANGES[bank][progLvl][padNum] == data1)
 						return padNum;
 		return -1;
 	}
@@ -167,7 +167,7 @@ public class MPK {
 		int data1 = msg.getData1();
 		for (int ab = 0; ab < 2; ab++)
 			for (int padLvl = 0; padLvl < PAD_STYLES; padLvl++)
-				if (ccpads[ab][padLvl][CCpad] == data1)
+				if (CC_PADS[ab][padLvl][CCpad] == data1)
 					return Midi.isCC(msg);
 		return false;
 	}

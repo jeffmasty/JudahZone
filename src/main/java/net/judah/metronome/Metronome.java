@@ -26,10 +26,10 @@ import lombok.extern.log4j.Log4j;
 import net.judah.api.Command;
 import net.judah.api.Midi;
 import net.judah.api.MidiClient;
+import net.judah.api.MidiQueue;
 import net.judah.api.Service;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
-import net.judah.api.TimeListener.Property;
 import net.judah.api.TimeProvider;
 import net.judah.midi.ProgMsg;
 import net.judah.plugin.Carla;
@@ -39,7 +39,7 @@ import net.judah.util.Constants;
 @Log4j
 /**Metronome uses it's own somewhat persistent Carla instance with 
  * custom OSC ports started from a custom executable script */ 
-public class Metronome implements Service, TimeProvider /* , ActionListener, ChangeListener */ {
+public class Metronome implements Service, TimeProvider, TimeListener {
 	
 	public static final String CLIENT_NAME = "JudahTime";
 	public static final String DRUM_PORT = "drums_out";
@@ -50,7 +50,7 @@ public class Metronome implements Service, TimeProvider /* , ActionListener, Cha
 	
 	@Getter private final String serviceName = Metronome.class.getSimpleName();
 	
-	@Getter private static MidiClient midi;
+	@Getter private final MidiQueue midi;
 	@Getter private final TimeProvider timeProvider;
 	private static final ArrayList<TimeListener> listeners = new ArrayList<>();
 	
@@ -58,7 +58,7 @@ public class Metronome implements Service, TimeProvider /* , ActionListener, Cha
 	@Getter private float tempo = 100f;
 	/** beats per measure */
 	@Getter private int measure = 4;
-	@Getter private float gain = 0.1f;
+	@Getter private float gain = 0.75f;
 	/** if null, generate midi notes ourself */
 	@Getter private File midiFile;
 	
@@ -71,27 +71,15 @@ public class Metronome implements Service, TimeProvider /* , ActionListener, Cha
 	// private final Command start, tempoCmd, volumeCmd;
 	@Getter private final List<Command> commands = new ArrayList<>();
 	
-    public Metronome(File midiFile, TimeProvider master) throws JackException, IOException, InvalidMidiDataException, OSCSerializeException {
-    	
-    	midi = new MidiClient(CLIENT_NAME, new String[] {}, new String[] {DRUM_PORT});
+    public Metronome(File midiFile, TimeProvider master, MidiQueue queue) throws JackException, IOException, InvalidMidiDataException, OSCSerializeException {
+    	this.midi = queue;
     	Runtime.getRuntime().addShutdownHook(new Thread() {
         	@Override public void run() { if (carla != null) carla.close(); }});
     	timeProvider = master == null ? this : master;
+    	if (timeProvider != this) timeProvider.addListener(this);
+    	
     	this.midiFile = midiFile;
     	
-    	// CARLA
-    	carla = new Carla(this.getClass().getClassLoader().getResource("carla/FluidMetronome.carxp").getFile(),
-    			11198, 11199, false);
-    	new Thread() {
-    		@Override public void run() {
-    	    	try { Thread.sleep(1111); 
-        		carla.setVolume(0, 1.1f);
-    	    	// carla.setActive(0, 0); // initialize with fluid plugin bypassed
-        	} catch (Exception e) {
-        		log.error(e.getMessage(), e);
-        		log.warn("Probably have to sleep longer");
-        	}};}.start();
-
         commands.add(new Command(TICKTOCK.name, TICKTOCK.desc) {
     		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
     			if (midiData2 == 0) stop();
@@ -118,7 +106,7 @@ public class Metronome implements Service, TimeProvider /* , ActionListener, Cha
 					preset = Integer.parseInt(props.get("preset").toString());
 					channel = Integer.parseInt(props.get("channel").toString());
 					Midi msg = new ProgMsg(channel, preset);
-					midi.queue(msg);
+					queue.queue(msg);
 				} catch (Throwable t) { 
 					log.debug(t.getMessage()); }}});
         
@@ -141,18 +129,18 @@ public class Metronome implements Service, TimeProvider /* , ActionListener, Cha
 	public MetroGui getGui() {
 		if (gui == null)
 			gui = new MetroGui(this);
-			listeners.add(gui);
+			timeProvider.addListener(gui);
 		return gui;
 	}
 	
 	public static void main(String[] args) {
-		
 		File midiFile = (args.length == 1) ? new File(args[0]) : 
 				new File("/home/judah/git/JudahZone/resources/metronome/Latin16.mid");
 		try {
+	    	MidiClient midi = new MidiClient(CLIENT_NAME, new String[] {}, new String[] {DRUM_PORT});
 			JFrame frame = new JFrame("Metronome");
 	        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			frame.setContentPane(new Metronome(midiFile, null).getGui());
+			frame.setContentPane(new Metronome(midiFile, null, midi).getGui());
 	        frame.setLocation(200, 50);
 	        frame.setSize(330, 165);  
 	        frame.setVisible(true);
@@ -297,6 +285,14 @@ public class Metronome implements Service, TimeProvider /* , ActionListener, Cha
 	@Override
 	public long getLastPulse() {
 		return -1; // not implemented yet
+	}
+
+	@Override
+	public void update(Property prop, Object value) {
+		if (Property.TEMPO == prop) {
+			setTempo((int)value);
+		}
+		
 	}
 
 	

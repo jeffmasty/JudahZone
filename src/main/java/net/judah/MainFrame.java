@@ -7,21 +7,23 @@ import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
+import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.MenuBar;
+import net.judah.util.SheetMusicTest;
 
 @Log4j
 public class MainFrame extends JFrame {
 	
 	private static MainFrame instance;
+	@Getter private final MixerPane right;
+	
 	private final JTabbedPane tabs;
 	private final JPanel content;
 	private final String prefix;
-	
 	private final JPanel left;
-	private final RightPane right;
 	
 	MainFrame(String name) {
 		super(name);
@@ -46,7 +48,7 @@ public class MainFrame extends JFrame {
         left.add(Console.getInstance().getInput());
         
         content.add(left);
-        right = new RightPane();
+        right = new MixerPane();
         content.add(right);
 
         invalidate();
@@ -56,12 +58,12 @@ public class MainFrame extends JFrame {
 
 	}
 	
-	public void closeTab(Page c) {
+	public void closeTab(SongPane c) {
 		c.getSequencer().stop();
 		tabs.remove(c);
 	}
 
-	public void openPage(Page page) {
+	public void openPage(SongPane page) {
 		for(int i = 0; i < tabs.getTabCount(); i++)
 			if (tabs.getTitleAt(i).contains(Constants.CUTE_NOTE)) 
 				tabs.setTitleAt(i, tabs.getTitleAt(i).replace(Constants.CUTE_NOTE, ""));
@@ -71,6 +73,11 @@ public class MainFrame extends JFrame {
 		setTitle(prefix + " - " + page.getName());
 		
 		invalidate();
+		
+		if (page.getSequencer().getSheetMusic() != null) {
+			new SheetMusicTest(page.getSequencer().getSheetMusic()).setVisible(true);
+		}
+
 	}
 	
 	public static MainFrame get() {

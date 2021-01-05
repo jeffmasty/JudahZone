@@ -225,6 +225,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 
 	}
 	
+
 	private void help() {
 		
 		addText("volume carla_plugin_index value");
@@ -392,7 +393,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 	}
 
 	private Carla getCarla() {
-		return Sequencer.getCarla();
+		return JudahZone.getCarla();
 	}
 
 	@Override

@@ -11,7 +11,7 @@ import javax.sound.midi.ShortMessage;
 
 import lombok.extern.log4j.Log4j;
 import net.judah.api.Midi;
-import net.judah.api.MidiClient;
+import net.judah.api.MidiQueue;
 import net.judah.api.Status;
 import net.judah.util.Constants;
 
@@ -22,7 +22,7 @@ public class TickTock implements Player {
 
 	public static final int DEFAULT_DOWNBEAT = 34;
 	public static final int DEFAULT_BEAT = 33;
-	private final MidiClient midi;
+	private final MidiQueue midi;
 	private final Metronome metronome;
     private int measure = 4;
     private float tempo = 85;
@@ -43,7 +43,6 @@ public class TickTock implements Player {
 		private int count = 0;
 		@Override public void run() {
 
-			log.debug("wakeup " + count + " " + changed.get() + " " + intro + " " + duration );
 			if (changed.compareAndSet(true, false)) { // initilization or tempo update
 				beeperHandle.cancel(true);
 		        beeperHandle = scheduler.scheduleAtFixedRate(
@@ -83,7 +82,7 @@ public class TickTock implements Player {
 	 * @param tempo
 	 */
 	TickTock(Metronome metro, int downbeat, int beat, int channel) {
-		this.midi = Metronome.getMidi();
+		this.midi = metro.getMidi();
 		this.metronome = metro;
     	try {
     		downbeatOn = new Midi(ShortMessage.NOTE_ON, channel, downbeat, 100); 
@@ -121,8 +120,6 @@ public class TickTock implements Player {
 
 	@Override
 	public void stop() {
-		log.debug("stop called", new Exception());
-		
 		if (!isRunning()) return;
 		beeperHandle.cancel(true);
 		beeperHandle = null;

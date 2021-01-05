@@ -8,7 +8,6 @@ public class MidiSetup {
 	public static final int SYNTH_CHANNEL = 0;
 	public static final int DRUMS_CHANNEL = 9;
 	public static final int AUX_CHANNEL = 6;
-	public static final int KOMPLETE_CHANNEL = 7;
 
 	@RequiredArgsConstructor
 	public static enum IN { // in ports
@@ -24,7 +23,7 @@ public class MidiSetup {
 		SYNTH("synth", AUX_CHANNEL), 
 		DRUMS("drums", DRUMS_CHANNEL), 
 		AUX("aux", AUX_CHANNEL), 
-		KOMPLETE("komplete", KOMPLETE_CHANNEL);
+		;
 		
 		public final String name;
 		public final int channel;

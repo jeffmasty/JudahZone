@@ -8,21 +8,15 @@ import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.api.Midi;
-import net.judah.api.MidiClient;
 import net.judah.api.MidiQueue;
-import net.judah.metronome.Metronome;
-import net.judah.midi.JudahMidi;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 
 public class Steps extends ArrayList<Step> implements MidiQueue {
 	
-	/** to speakers only */
-	@Setter private MidiClient externalMidi = Metronome.getMidi();
-	/** to loopers */
-	@Setter private JudahMidi internalMidi = JudahZone.getMidi();
-	
-	@Getter int translate = 0;
+	@Setter @Getter private MidiQueue midi = JudahZone.getMidi();
+
+	@Getter @Setter int translate = 0;
 
 	public void process(int step) {
 		try {
@@ -36,10 +30,10 @@ public class Steps extends ArrayList<Step> implements MidiQueue {
 						if (note.getChannel() != 9) {
 							note = Constants.transpose(note, translate);
 						}
-						if (s.isRecord())
-							internalMidi.queue(note);
-						else
-							externalMidi.queue(note);
+						
+						// if (s.isRecord())  midi.queue(note);
+						// else externalMidi.queue(note);
+						midi.queue(note);
 					}
 			}
 		} catch (Throwable t) {

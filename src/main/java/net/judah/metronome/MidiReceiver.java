@@ -7,13 +7,13 @@ import javax.sound.midi.ShortMessage;
 
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import net.judah.api.MidiClient;
+import net.judah.api.MidiQueue;
 
 /** Volume adjusted javax midi sender */
 @RequiredArgsConstructor
 public class MidiReceiver implements Receiver {
 
-	private final MidiClient midi;
+	private final MidiQueue queue;
 	@Setter private float gain = 1f;
 	
 	private ShortMessage current;
@@ -29,7 +29,7 @@ public class MidiReceiver implements Receiver {
 				System.err.println(e.getClass().getSimpleName() + ": " + e.getMessage());
 			}
 		}
-		midi.queue((ShortMessage)message);
+		queue.queue((ShortMessage)message);
 	}
 
 	@Override

@@ -23,7 +23,7 @@ import net.judah.util.JsonUtil;
 import net.judah.util.PropertiesTable;
 
 @Log4j
-public class Page extends JPanel {
+public class SongPane extends JPanel {
 
 	@Getter private final Sequencer sequencer;
 	private final PropertiesTable properties;
@@ -31,9 +31,9 @@ public class Page extends JPanel {
 	private final TriggersTable triggers;
 	private final RouterTable router;
 	private final JButton save, close, reload;
-	private final JTabbedPane cards = new JTabbedPane();
+	@Getter private final JTabbedPane cards = new JTabbedPane();
 	
-	public Page(Sequencer sequencer) {
+	public SongPane(Sequencer sequencer) {
 		
 		this.sequencer = sequencer;
 		setName(FilenameUtils.removeExtension(sequencer.getSongfile().getName()));

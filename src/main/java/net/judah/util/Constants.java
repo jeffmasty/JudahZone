@@ -11,7 +11,6 @@ import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.swing.JOptionPane;
-import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
@@ -19,6 +18,10 @@ import net.judah.api.Midi;
 
 public class Constants {
 
+	// TODO generalize
+	public static int _SAMPLERATE = 48000;
+	public static int _BUFSIZE = 512;
+	
 	// TODO
     public static final File defaultSetlist = new File("/home/judah/git/JudahZone/resources/Songs/list1.songs"); 
     public static final File defaultFolder = new File("/home/judah/git/JudahZone/resources/Songs/"); 
@@ -42,11 +45,16 @@ public class Constants {
 		public static final String MAX = "max";
 		public static final String STEPS = "steps";
 		public static final String PRESET = "preset";
+		public static final String IMAGE = "image";
 		
 		public static boolean parseActive(HashMap<String, Object> props) {
 			return (Boolean.parseBoolean(props.get(ACTIVE).toString()));
 		}
 		
+		public static String parseString(String key, HashMap<String, Object> props) {
+			return props.get(key).toString();
+		}
+
 		public static HashMap<String, Class<?>> singleTemplate(String name, Class<?> clazz) {
 			HashMap<String, Class<?>> params = new HashMap<String, Class<?>>();
 			params.put(name, clazz);
@@ -83,6 +91,7 @@ public class Constants {
     }
 
 	public static final Midi BASSDRUM;
+	
 	static { 
 		Midi temp = null;
 		try { temp = new Midi(Midi.NOTE_ON, 9, 36, 100);
@@ -117,33 +126,11 @@ public class Constants {
 		return b.toString();
 	}
 
-	public static void main(String[] args) {
-		 UIManager.LookAndFeelInfo[] looks = UIManager.getInstalledLookAndFeels(); 
-	        for (UIManager.LookAndFeelInfo look : looks) { 
-	            System.out.println(look.getClassName()); 
-	        } 
-//		for (Info info :  MidiSystem.getMidiDeviceInfo()) {
-//			System.out.println(info.getName() + " - " + info.getDescription() + " / " + info.getVendor());
-//		}
-		try {
-			
-			System.out.println(MidiSystem.getSequencer().getClass().getCanonicalName());
-//			System.out.println("Synthesizer instruments: " + synth.getDeviceInfo().getName() + 
-//					" - " + synth.getDeviceInfo().getDescription());
-//			System.out.println(Arrays.toString(synth.getDefaultSoundbank().getResources()));
-			
-			
-		} catch (MidiUnavailableException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-
-	/**If loopTime contains x beats, what is that in bpm?*/
-	public static float toTempo(long loopTime, int beats) {
-		return 60 * ((loopTime / 1000f) / beats);
-	}
+	
+	
+	public static float toBPM(long delta, int beats) {
+		return 60000 / (delta / beats);
+	} 
 	
 	public static HashMap<String, Class<?>> template(String key, Class<?> clazz) {
 		HashMap<String, Class<?>> result = new HashMap<String, Class<?>>();
@@ -169,7 +156,35 @@ public class Constants {
 	public static Midi transpose(Midi in, int steps, int channel) throws InvalidMidiDataException {
 		return new Midi(in.getCommand(), channel, in.getData1() + steps, in.getData2());
 	}
-	
+
+	public static void main(String[] args) {
+		System.out.println(toBPM(1000, 1) + " bpm");
+		System.out.println(toBPM(3000, 3) + " bpm");
+		System.out.println(toBPM(1000, 2) + " bpm");
+		
+		
+		
+		//for (Info info :  MidiSystem.getMidiDeviceInfo()) {
+		//	System.out.println(info.getName() + " - " + info.getDescription() + " / " + info.getVendor());
+		//}
+		try {
+			
+			System.out.println(MidiSystem.getSequencer().getClass().getCanonicalName());
+			//System.out.println("Synthesizer instruments: " + synth.getDeviceInfo().getName() + 
+			//		" - " + synth.getDeviceInfo().getDescription());
+			//System.out.println(Arrays.toString(synth.getDefaultSoundbank().getResources()));
+			
+			
+		} catch (MidiUnavailableException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+}
+//UIManager.LookAndFeelInfo[] looks = UIManager.getInstalledLookAndFeels(); 
+//for (UIManager.LookAndFeelInfo look : looks) { 
+//    System.out.println(look.getClassName()); 
+//} 
 //	// list out standard swing ui setting names
 //		public static void main(String[] args) {
 //			List<String> colors = new ArrayList<String>();
@@ -182,12 +197,3 @@ public class Constants {
 //			for (String name : colors)
 //			    System.out.println(name);
 //		}
-}
-
-// public static final String IN_PORT = "MIDI in";
-// public static final String MPK_IN = "Keyboard";
-// public static final String FOOT_IN = "FootPedal";
-// public static final String SYNTH_OUT = "midi_out";
-// public static final String DR5_OUT = "Drum_out";
-// public static final String AUTOMATION_PORT = "Automation";
-// public static final String CONTROL = "Control";

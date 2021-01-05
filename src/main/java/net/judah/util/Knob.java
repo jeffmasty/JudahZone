@@ -225,9 +225,9 @@ public class Knob extends JComponent{
 			return (int) Math.round(pct * thisKnob.getValRange());
 		}
 
-		public void setValue(int volume) {
+		public void setValue(int value) {
 			double range = thisKnob.getMaxPos() - thisKnob.getMinPos();
-			double result = thisKnob.getMinPos() - (volume / 40f) * range;
+			double result = thisKnob.getMinPos() - (value / 40f) * range;
 			setAngleDeg(result);
 			repaint();
 		}
@@ -379,6 +379,10 @@ public class Knob extends JComponent{
 				 moveHandles(e);				
 			 }
 		});
+	 }
+	 
+	 public void setValue(int value) {
+		 getHandle(0).setValue(value);
 	 }
 	 
 	 /**

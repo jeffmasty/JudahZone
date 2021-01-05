@@ -16,8 +16,6 @@ public class ClickTrack extends Command {
 
 	private final Metronome metronome;
 	
-	
-	
 	/** midi file of click track (optional) */
 	public static final String PARAM_MIDIFILE = "midi.file"; 
 	/** total loops to play (midi file) */
@@ -84,7 +82,7 @@ public class ClickTrack extends Command {
 						log.error("unparsable clicktrack loop count " + o);
 					}
 				ticktock = new MidiPlayer(new File(file.toString()), 
-						loops, new MidiReceiver(Metronome.getMidi()));
+						loops, new MidiReceiver(metronome.getMidi()));
 			} catch (Exception e) {
 				String msg = e.getMessage() + " for " + props.get(PARAM_MIDIFILE);
 				log.error(msg, e);

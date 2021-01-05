@@ -32,7 +32,7 @@ public class LoopGui extends JPanel implements KnobListener {
 	}
 	
 	public void setVolume(int volume) {
-		knob.getHandle(0).setValue(volume);
+		knob.setValue(volume);
 	}
 
 	@Override

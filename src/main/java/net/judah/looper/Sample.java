@@ -34,14 +34,14 @@ public class Sample implements ProcessAudio, TimeNotifier {
 	
 	protected final transient List<JackPort> outputPorts = new ArrayList<>();
 	@Getter protected final transient AtomicInteger tapeCounter = new AtomicInteger();
-	@Getter @Setter boolean timeSync = false;
-	private final ArrayList<TimeListener> listeners = new ArrayList<>();
-	private int loopCount = 0;
-	
+	protected final ArrayList<TimeListener> listeners = new ArrayList<>();
 	protected final transient AtomicReference<AudioMode> isPlaying = new AtomicReference<AudioMode>(STOPPED);
+	@Getter @Setter protected boolean timeSync = false;
+	private int loopCount = 0;
 	
 	@Setter @Getter protected transient float gain = 1f;
 	@Setter @Getter private float gainFactor = 2f;
+	private float unmute = -1f;
 	
 	protected Integer length;
 	
@@ -65,6 +65,17 @@ public class Sample implements ProcessAudio, TimeNotifier {
 		synchronized (outputPorts) {
 			outputPorts.clear();
 			outputPorts.addAll(ports);
+		}
+	}
+	
+	public void mute(boolean mute) {
+		if (mute) {
+			unmute = gain;
+			gain = 0f;
+		}
+		else {
+			gain = unmute;
+			unmute = -1f;
 		}
 	}
 	
@@ -111,7 +122,7 @@ public class Sample implements ProcessAudio, TimeNotifier {
 		
 		if (isPlaying.compareAndSet(STOPPED, active ? STARTING : STOPPED)) {
 			if (active) 
-				Console.addText(name + " playing. sample has " + recording.size() + " buffers.");
+				Console.info(name + " playing. sample has " + recording.size() + " buffers.");
 		}
 	}
 	public boolean hasRecording() {
@@ -136,6 +147,7 @@ public class Sample implements ProcessAudio, TimeNotifier {
 		tapeCounter.set(0);
 		recording = null;
 		length = null;
+		Console.info(name + " flushed.");
 	}
 
 	public void setRecording(Recording sample) {
@@ -143,7 +155,7 @@ public class Sample implements ProcessAudio, TimeNotifier {
 			recording.close();
 		recording = sample;
 		length = recording.size();
-		Console.addText("Recording loaded, " + length + " frames.");
+		Console.info("Recording loaded, " + length + " frames.");
 		isPlaying.set(STOPPED);
 	}
 

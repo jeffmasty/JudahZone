@@ -14,172 +14,450 @@
   <BeatsPerMinute>120</BeatsPerMinute>
  </Transport>
 
- <!-- GxCabinet -->
+ <!-- Calf Fluidsynth -->
  <Plugin>
   <Info>
    <Type>LV2</Type>
-   <Name>Guitar Cabinet</Name>
-   <URI>http://guitarix.sourceforge.net/plugins/gx_cabinet#CABINET</URI>
+   <Name>Calf Fluidsynth</Name>
+   <URI>http://calf.sourceforge.net/plugins/Fluidsynth</URI>
   </Info>
 
   <Data>
    <Active>Yes</Active>
-   <Volume>1.27</Volume>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x3f1</Options>
+
+   <Parameter>
+    <Index>0</Index>
+    <Name>Volume</Name>
+    <Symbol>master</Symbol>
+    <Value>0.5</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>Interpolation</Name>
+    <Symbol>interpolation</Symbol>
+    <Value>2</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>2</Index>
+    <Name>Reverb</Name>
+    <Symbol>reverb</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>3</Index>
+    <Name>Chorus</Name>
+    <Symbol>chorus</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <CustomData>
+    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
+    <Key>CarlaSkinIsCompacted</Key>
+    <Value>false</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#String</Type>
+    <Key>urn:calf:soundfont</Key>
+    <Value></Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#String</Type>
+    <Key>urn:calf:preset_key_set</Key>
+    <Value>-1</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#String</Type>
+    <Key>urn:calf:preset_key_set2</Key>
+    <Value>-1</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#String</Type>
+    <Key>urn:calf:preset_key_set3</Key>
+    <Value>-1</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#String</Type>
+    <Key>urn:calf:preset_key_set4</Key>
+    <Value>-1</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#String</Type>
+    <Key>urn:calf:preset_key_set5</Key>
+    <Value>-1</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#String</Type>
+    <Key>urn:calf:preset_key_set6</Key>
+    <Value>-1</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#String</Type>
+    <Key>urn:calf:preset_key_set7</Key>
+    <Value>-1</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#String</Type>
+    <Key>urn:calf:preset_key_set8</Key>
+    <Value>-1</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#String</Type>
+    <Key>urn:calf:preset_key_set9</Key>
+    <Value>-1</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#String</Type>
+    <Key>urn:calf:preset_key_set10</Key>
+    <Value>-1</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#String</Type>
+    <Key>urn:calf:preset_key_set11</Key>
+    <Value>-1</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#String</Type>
+    <Key>urn:calf:preset_key_set12</Key>
+    <Value>-1</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#String</Type>
+    <Key>urn:calf:preset_key_set13</Key>
+    <Value>-1</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#String</Type>
+    <Key>urn:calf:preset_key_set14</Key>
+    <Value>-1</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#String</Type>
+    <Key>urn:calf:preset_key_set15</Key>
+    <Value>-1</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#String</Type>
+    <Key>urn:calf:preset_key_set16</Key>
+    <Value>-1</Value>
+   </CustomData>
+  </Data>
+ </Plugin>
+
+ <!-- rkr Harmonizer (no midi) -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>rkr Harmonizer (no midi)</Name>
+   <URI>http://rakarrack.sourceforge.net/effects.html#har_no_mid</URI>
+  </Info>
+
+  <Data>
+   <Active>No</Active>
    <ControlChannel>1</ControlChannel>
    <Options>0x0</Options>
 
    <Parameter>
     <Index>0</Index>
-    <Name>Cabinet</Name>
-    <Symbol>CLevel</Symbol>
-    <Value>4.21750068664551</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>1</Index>
-    <Name>Bass</Name>
-    <Symbol>CBass</Symbol>
-    <Value>0.557862877845764</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>2</Index>
-    <Name>Treble</Name>
-    <Symbol>CTreble</Symbol>
-    <Value>6.41248512268066</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>3</Index>
-    <Name>Cab Model</Name>
-    <Symbol>c_model</Symbol>
-    <Value>9</Value>
-   </Parameter>
-
-   <CustomData>
-    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
-    <Key>CarlaSkinIsCompacted</Key>
-    <Value>true</Value>
-   </CustomData>
-
-   <CustomData>
-    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
-    <Key>CarlaSkin</Key>
-    <Value>classic</Value>
-   </CustomData>
-  </Data>
- </Plugin>
-
- <!-- Calf Mono Input -->
- <Plugin>
-  <Info>
-   <Type>LV2</Type>
-   <Name>Mic Stereo</Name>
-   <URI>http://calf.sourceforge.net/plugins/MonoInput</URI>
-  </Info>
-
-  <Data>
-   <Active>No</Active>
-   <Volume>1.27</Volume>
-   <ControlChannel>1</ControlChannel>
-   <Options>0x1e1</Options>
-
-   <Parameter>
-    <Index>0</Index>
     <Name>Bypass</Name>
-    <Symbol>bypass</Symbol>
+    <Symbol>BYPASS</Symbol>
     <Value>0</Value>
    </Parameter>
 
    <Parameter>
     <Index>1</Index>
-    <Name>Input</Name>
-    <Symbol>level_in</Symbol>
-    <Value>1.26225197315216</Value>
+    <Name>Wet/Dry</Name>
+    <Symbol>WETDRY</Symbol>
+    <Value>0</Value>
    </Parameter>
 
    <Parameter>
     <Index>2</Index>
-    <Name>Output</Name>
+    <Name>Pan</Name>
+    <Symbol>PAN</Symbol>
+    <Value>2</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>3</Index>
+    <Name>Gain</Name>
+    <Symbol>GAIN</Symbol>
+    <Value>50</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>4</Index>
+    <Name>Interval</Name>
+    <Symbol>INT</Symbol>
+    <Value>-12</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>5</Index>
+    <Name>Filter Frequency</Name>
+    <Symbol>FREQ</Symbol>
+    <Value>1261</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>6</Index>
+    <Name>Select Chord Mode</Name>
+    <Symbol>SELECT</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>7</Index>
+    <Name>Note</Name>
+    <Symbol>NOTE</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>8</Index>
+    <Name>Chord</Name>
+    <Symbol>CHORD</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>9</Index>
+    <Name>Filter Gain</Name>
+    <Symbol>FGAIN</Symbol>
+    <Value>-24</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>10</Index>
+    <Name>Filter Q</Name>
+    <Symbol>FQ</Symbol>
+    <Value>19</Value>
+   </Parameter>
+
+   <CustomData>
+    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
+    <Key>CarlaSkinIsCompacted</Key>
+    <Value>false</Value>
+   </CustomData>
+  </Data>
+ </Plugin>
+
+ <!-- Calf Vintage Delay -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>Calf Vintage Delay</Name>
+   <URI>http://calf.sourceforge.net/plugins/VintageDelay</URI>
+  </Info>
+
+  <Data>
+   <Active>No</Active>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x3f1</Options>
+
+   <Parameter>
+    <Index>0</Index>
+    <Name>Active</Name>
+    <Symbol>on</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>Input Gain</Name>
+    <Symbol>level_in</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>2</Index>
+    <Name>Output Gain</Name>
     <Symbol>level_out</Symbol>
     <Value>1</Value>
    </Parameter>
 
    <Parameter>
-    <Index>9</Index>
-    <Name>Balance</Name>
-    <Symbol>balance_out</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>10</Index>
-    <Name>Softclip</Name>
-    <Symbol>softclip</Symbol>
-    <Value>1</Value>
-   </Parameter>
-
-   <Parameter>
     <Index>11</Index>
-    <Name>Mute L</Name>
-    <Symbol>mutel</Symbol>
-    <Value>0</Value>
+    <Name>Subdivide</Name>
+    <Symbol>subdiv</Symbol>
+    <Value>4</Value>
    </Parameter>
 
    <Parameter>
     <Index>12</Index>
-    <Name>Mute R</Name>
-    <Symbol>muter</Symbol>
-    <Value>0</Value>
+    <Name>Time L</Name>
+    <Symbol>time_l</Symbol>
+    <Value>3</Value>
    </Parameter>
 
    <Parameter>
     <Index>13</Index>
-    <Name>Phase L</Name>
-    <Symbol>phasel</Symbol>
-    <Value>0</Value>
+    <Name>Time R</Name>
+    <Symbol>time_r</Symbol>
+    <Value>5</Value>
    </Parameter>
 
    <Parameter>
     <Index>14</Index>
-    <Name>Phase R</Name>
-    <Symbol>phaser</Symbol>
-    <Value>0</Value>
+    <Name>Feedback</Name>
+    <Symbol>feedback</Symbol>
+    <Value>0.5</Value>
    </Parameter>
 
    <Parameter>
     <Index>15</Index>
-    <Name>Delay</Name>
-    <Symbol>delay</Symbol>
-    <Value>0</Value>
+    <Name>Wet</Name>
+    <Symbol>amount</Symbol>
+    <Value>0.25</Value>
    </Parameter>
 
    <Parameter>
     <Index>16</Index>
-    <Name>Stereo Base</Name>
-    <Symbol>stereo_base</Symbol>
-    <Value>0</Value>
+    <Name>Mix mode</Name>
+    <Symbol>mix_mode</Symbol>
+    <Value>1</Value>
    </Parameter>
 
    <Parameter>
     <Index>17</Index>
-    <Name>Stereo Phase</Name>
-    <Symbol>stereo_phase</Symbol>
-    <Value>0</Value>
+    <Name>Medium</Name>
+    <Symbol>medium</Symbol>
+    <Value>1</Value>
    </Parameter>
 
    <Parameter>
     <Index>18</Index>
-    <Name>S/C Level</Name>
-    <Symbol>sc_level</Symbol>
+    <Name>Dry</Name>
+    <Symbol>dry</Symbol>
     <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>19</Index>
+    <Name>Stereo Width</Name>
+    <Symbol>width</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>20</Index>
+    <Name>Fragmentation</Name>
+    <Symbol>fragmentation</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>21</Index>
+    <Name>Pattern Beats</Name>
+    <Symbol>pbeats</Symbol>
+    <Value>4</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>22</Index>
+    <Name>Pattern Fragmentation</Name>
+    <Symbol>pfrag</Symbol>
+    <Value>4</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>23</Index>
+    <Name>Timing</Name>
+    <Symbol>timing</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>24</Index>
+    <Name>BPM</Name>
+    <Symbol>bpm</Symbol>
+    <Value>120</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>25</Index>
+    <Name>ms</Name>
+    <Symbol>ms</Symbol>
+    <Value>500</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>26</Index>
+    <Name>Frequency</Name>
+    <Symbol>hz</Symbol>
+    <Value>2</Value>
    </Parameter>
 
    <CustomData>
     <Type>http://kxstudio.sf.net/ns/carla/property</Type>
     <Key>CarlaSkinIsCompacted</Key>
-    <Value>true</Value>
+    <Value>false</Value>
    </CustomData>
+  </Data>
+ </Plugin>
+
+ <!-- dRowAudio: Flanger -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>dRowAudio. Flanger</Name>
+   <URI>http://www.drowaudio.co.uk/audio/audio_plugins/flanger</URI>
+  </Info>
+
+  <Data>
+   <Active>No</Active>
+   <DryWet>0.8505402</DryWet>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x4</Options>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>Rate</Name>
+    <Symbol>rate</Symbol>
+    <Value>0.0180000010877848</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>2</Index>
+    <Name>Intensity</Name>
+    <Symbol>intensity</Symbol>
+    <Value>0.0653000026941299</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>3</Index>
+    <Name>Feedback</Name>
+    <Symbol>feedback</Symbol>
+    <Value>0.060606062412262</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>4</Index>
+    <Name>Wet/Dry Mix</Name>
+    <Symbol>wet_dry_mix</Symbol>
+    <Value>1</Value>
+   </Parameter>
   </Data>
  </Plugin>
 
@@ -189,115 +467,15 @@
    <Target>PulseAudio JACK Source:front-left</Target>
   </Connection>
   <Connection>
-   <Source>system:capture_1</Source>
-   <Target>Guitar Cabinet:in</Target>
-  </Connection>
-  <Connection>
-   <Source>system:capture_2</Source>
-   <Target>system:playback_1</Target>
-  </Connection>
-  <Connection>
-   <Source>system:capture_2</Source>
-   <Target>system:playback_2</Target>
-  </Connection>
-  <Connection>
    <Source>system:capture_2</Source>
    <Target>PulseAudio JACK Source:front-right</Target>
   </Connection>
   <Connection>
-   <Source>system:capture_3</Source>
-   <Target>JudahZone:aux_left</Target>
-  </Connection>
-  <Connection>
-   <Source>system:capture_3</Source>
-   <Target>JudahZone:aux_right</Target>
-  </Connection>
-  <Connection>
-   <Source>a2j:ActitioN MIDI Controller [24] (capture): ActitioN MIDI Controller MIDI 1</Source>
-   <Target>JudahMidi:pedal</Target>
-  </Connection>
-  <Connection>
-   <Source>a2j:MPKmini2 [32] (capture): MPKmini2 MIDI 1</Source>
-   <Target>JudahMidi:keyboard</Target>
-  </Connection>
-  <Connection>
    <Source>PulseAudio JACK Sink:front-left</Source>
    <Target>system:playback_1</Target>
   </Connection>
   <Connection>
-   <Source>PulseAudio JACK Sink:front-left</Source>
-   <Target>JudahZone:aux_left</Target>
-  </Connection>
-  <Connection>
    <Source>PulseAudio JACK Sink:front-right</Source>
-   <Target>system:playback_2</Target>
-  </Connection>
-  <Connection>
-   <Source>PulseAudio JACK Sink:front-right</Source>
-   <Target>JudahZone:aux_right</Target>
-  </Connection>
-  <Connection>
-   <Source>JudahMidi:synth</Source>
-   <Target>fluidsynth-midi:midi_00</Target>
-  </Connection>
-  <Connection>
-   <Source>JudahMidi:drums</Source>
-   <Target>fluidsynth-midi:midi_00</Target>
-  </Connection>
-  <Connection>
-   <Source>JudahMidi:komplete</Source>
-   <Target>a2j:Komplete Audio 6 [28] (playback): Komplete Audio 6 MIDI 1</Target>
-  </Connection>
-  <Connection>
-   <Source>fluidsynth-midi:left</Source>
-   <Target>system:playback_1</Target>
-  </Connection>
-  <Connection>
-   <Source>fluidsynth-midi:left</Source>
-   <Target>JudahZone:synth_left</Target>
-  </Connection>
-  <Connection>
-   <Source>fluidsynth-midi:right</Source>
-   <Target>system:playback_2</Target>
-  </Connection>
-  <Connection>
-   <Source>fluidsynth-midi:right</Source>
-   <Target>JudahZone:synth_right</Target>
-  </Connection>
-  <Connection>
-   <Source>JudahTime:drums_out</Source>
-   <Target>Calf Fluidsynth:events-in</Target>
-  </Connection>
-  <Connection>
-   <Source>JudahZone:left</Source>
-   <Target>system:playback_1</Target>
-  </Connection>
-  <Connection>
-   <Source>JudahZone:right</Source>
-   <Target>system:playback_2</Target>
-  </Connection>
-  <Connection>
-   <Source>Calf Fluidsynth:Out L</Source>
-   <Target>system:playback_1</Target>
-  </Connection>
-  <Connection>
-   <Source>Calf Fluidsynth:Out R</Source>
-   <Target>system:playback_2</Target>
-  </Connection>
-  <Connection>
-   <Source>Guitar Cabinet:Out</Source>
-   <Target>JudahZone:guitar_left</Target>
-  </Connection>
-  <Connection>
-   <Source>Guitar Cabinet:Out</Source>
-   <Target>JudahZone:guitar_right</Target>
-  </Connection>
-  <Connection>
-   <Source>Guitar Cabinet:Out</Source>
-   <Target>system:playback_1</Target>
-  </Connection>
-  <Connection>
-   <Source>Guitar Cabinet:Out</Source>
    <Target>system:playback_2</Target>
   </Connection>
  </ExternalPatchbay>

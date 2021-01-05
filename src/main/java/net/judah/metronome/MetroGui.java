@@ -94,10 +94,10 @@ public class MetroGui extends JPanel implements TimeListener {
 		JLabel tempoLbl = new JLabel("Tempo");
 		tempoLbl.setFont(FONT13);
 		tempoPanel.add(tempoLbl);
-
-		bpm = new JSlider(JSlider.HORIZONTAL, 45, 155, Math.round(metro.getTempo()));
+		
+		bpm = new JSlider(JSlider.HORIZONTAL, 30, 230, Math.round(metro.getTempo()));
 		bpm.setFont(FONT9);
-		bpm.setMajorTickSpacing(25);
+		bpm.setMajorTickSpacing(40);
 		bpm.setPaintTicks(false);
 		bpm.setPaintLabels(true);
 		tempoPanel.add(bpm);
@@ -147,9 +147,6 @@ public class MetroGui extends JPanel implements TimeListener {
 
 	@Override
 	public void update(Property prop, Object value) {
-		bpmText.setText("" + metro.getTempo());
-		bpm.setValue(Math.round(metro.getTempo()));
-		volume.setValue(Math.round(100f * metro.getGain()));
 		if (Status.ACTIVE == value) {
 			playBtn.setSelected(true);
 			stopBtn.setSelected(false);
@@ -157,6 +154,11 @@ public class MetroGui extends JPanel implements TimeListener {
 		else if (Status.TERMINATED == value) {
 			playBtn.setSelected(false);
 			stopBtn.setSelected(true);
+		}
+		else {
+			bpmText.setText("" + metro.getTempo());
+			bpm.setValue(Math.round(metro.getTempo()));
+			volume.setValue(Math.round(100f * metro.getGain()));
 		}
 	}
 	

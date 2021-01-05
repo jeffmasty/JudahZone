@@ -171,7 +171,7 @@
     "notes" : "bassdrum sequence",
     "params" : {
       "sequence" : "0,2,4,6",
-      "midi.record" : "false",
+      "midi.record" : "true",
       "data2" : "115",
       "channel" : "9",
       "data1" : "35",

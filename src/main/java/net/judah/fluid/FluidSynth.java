@@ -15,9 +15,7 @@ import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
 import org.jaudiolibs.jnajack.Jack;
-import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
-import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
@@ -68,20 +66,20 @@ public class FluidSynth implements Service {
 	private float roomSize = 0.75f;
 	private float dampness = 0.75f;
 
-	public FluidSynth (JudahMidi midi, boolean startListeners) throws JackException, JudahException, IOException {
-		this(midi, SOUND_FONT, startListeners);
+	public FluidSynth (int sampleRate, boolean startListeners) throws JackException, JudahException, IOException {
+		this(sampleRate, SOUND_FONT, startListeners);
 	}
 	
-	public FluidSynth (JudahMidi midi) throws JackException, JudahException, IOException {
-		this(midi, SOUND_FONT, true);
+	public FluidSynth (int sampleRate) throws JackException, JudahException, IOException {
+		this(sampleRate, SOUND_FONT, true);
 	}
 	
 	@SuppressWarnings("deprecation")
-	public FluidSynth (JudahMidi midi, File soundFont, boolean startListeners) throws JackException, JudahException, IOException {
+	public FluidSynth (int sampleRate, File soundFont, boolean startListeners) throws JackException, JudahException, IOException {
 	    instance = this;
 		shellCommand = "fluidsynth" +
 				" --midi-driver=jack --audio-driver=jack" +
-	    		" -o synth.ladspa.active=0  --sample-rate " + midi.getJackclient().getSampleRate() + " " +
+	    		" -o synth.ladspa.active=0  --sample-rate " + sampleRate + " " +
 				SOUND_FONT.getAbsolutePath();
 		
 		console = new FluidConsole(this);
@@ -106,8 +104,8 @@ public class FluidSynth implements Service {
 	    	}
 	    	gain(gain);
 	    	Thread.sleep(40);
-	    	connect(midi.getJackclient(), midi.getSynth());
-	    	connect(midi.getJackclient(), midi.getDrums());
+//	    	connect(midi.getJackclient(), midi.getSynth());
+//	    	connect(midi.getJackclient(), midi.getDrums());
 //	    	Jack.getInstance().connect(LEFT_PORT, "system:playback_1");
 //			Jack.getInstance().connect(RIGHT_PORT, "system:playback_2");
 	    	
@@ -127,7 +125,7 @@ public class FluidSynth implements Service {
 						channel = Integer.parseInt(props.get("channel").toString());
 					} catch (Throwable t) { 
 						log.debug(t.getMessage()); }
-					midi.queue(progChange(channel, Integer.parseInt(props.get("preset").toString())));
+					JudahMidi.getInstance().queue(progChange(channel, Integer.parseInt(props.get("preset").toString())));
 		}};
 		
 		instUp = new Command(INSTUP.name, INSTUP.desc) {
@@ -215,13 +213,11 @@ public class FluidSynth implements Service {
 	}
 
 	private void initReverb() {
-		//		toggleReverb();
-		//		toggleChorus();
+		sendCommand("chorus off");
+		sendCommand("reverb on");
 		reverb(reverbLevel);
 		roomSize(roomSize);
 		dampness(dampness);
-		sendCommand("reverb off");
-		sendCommand("chorus off");
 	}
 
 	public Midi bankUp() {
@@ -407,10 +403,10 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
   	  	} catch (JudahException e) { log.warn(e); }
 	}
 
-	public void connect(JackClient jackclient, JackPort port) throws JackException {
-		log.warn("Trying to connect " + port.getName() +" to " + MIDI_PORT);
-	    Jack.getInstance().connect(jackclient, port.getName(), MIDI_PORT);
-	}
+//	public void connect(JackClient jackclient, JackPort port) throws JackException {
+//		log.warn("Trying to connect " + port.getName() +" to " + MIDI_PORT);
+//	    Jack.getInstance().connect(jackclient, port.getName(), MIDI_PORT);
+//	}
 
 
 	public static class Channels extends ArrayList<FluidChannel> {

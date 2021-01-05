@@ -11,6 +11,7 @@ import org.jaudiolibs.jnajack.JackPort;
 import org.jaudiolibs.jnajack.JackPortFlags;
 import org.jaudiolibs.jnajack.JackPortType;
 
+import net.judah.JudahZone;
 import net.judah.looper.Recording;
 
 
@@ -59,13 +60,13 @@ public class AudioTools  {
 		}
 	}
 
-    
-	public static String portName(String client, String port) {
-		
-		return client + ":" + port;
+	public static String prefixClient(String port) {
+		return JudahZone.getInstance().getJackclient().getName() + ":" + port;
 	}
 	
-
+//	public static String portName(String client, String port) {
+//		return client + ":" + port;
+//	}
     
     public static float[][] bufToArray(final List<FloatBuffer> buf) {
     	float[][] result = new float[buf.size()][];

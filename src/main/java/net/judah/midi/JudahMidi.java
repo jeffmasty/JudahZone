@@ -4,7 +4,6 @@ import static org.jaudiolibs.jnajack.JackPortFlags.*;
 import static org.jaudiolibs.jnajack.JackPortType.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -19,12 +18,13 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
-import net.judah.JudahZone;
+import net.judah.StageCommands;
 import net.judah.api.BasicClient;
 import net.judah.api.Midi;
 import net.judah.api.MidiQueue;
 import net.judah.api.Service;
 import net.judah.api.Status;
+import net.judah.fluid.FluidSynth;
 import net.judah.plugin.MPK;
 import net.judah.plugin.Pedal;
 import net.judah.sequencer.Sequencer;
@@ -58,46 +58,11 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 	@Getter private JackPort synth;
 	@Getter private JackPort drums;
 	@Getter private JackPort aux;
-	@Getter private JackPort komplete; 
 
     private final ConcurrentLinkedQueue<ShortMessage> queue = new ConcurrentLinkedQueue<ShortMessage>();
-
-	// for future Timebase interface
-	ConcurrentLinkedQueue<Long> timeRequest = new ConcurrentLinkedQueue<>(); 
-
-//	private final Transposer octaver = new Transposer(this);
-//
-//	private final Command routeChannel = new Command(ROUTECHANNEL.name, ROUTECHANNEL.desc, channelTemplate()) {
-//		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-//			routeChannel(props);}};
-//	private final Command midiNote = new Command(MIDINOTE.name, MIDINOTE.desc, Midi.midiTemplate()) {
-//		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-//			queue(Midi.fromProps(props));}};
-//    private final Command midiPlay = new Command(MIDIFILE.name, MIDIFILE.desc, playTemplate()) {
-//		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-//			boolean active = false;
-//			if (midiData2 > 0)
-//				active = true;
-//			else if (props.containsKey(ACTIVE))
-//				try { active = Boolean.parseBoolean("" + props.get(ACTIVE));
-//				} catch (Throwable t) { log.debug(props.get(ACTIVE) + " " + t.getMessage());  }
-//			Object o = props.get(FILE);
-//			if (false == o instanceof String)  throw new JudahException("Missing midi file to play");
-//			File midi = new File(o.toString());
-//			if (!midi.isFile()) throw new JudahException("Not a midi file: " + o);
-//			if (active) { 
-//				JudahZone.getMetronome().setMidiFile(midi);
-//				JudahZone.getMetronome().play();
-//			}
-//			else
-//				JudahZone.getMetronome().stop();
-//		}
-//    };
-//	private final List<Command> cmds = Arrays.asList(new Command[] 
-//			{routeChannel, midiNote, midiPlay, octaver});
-//	// Service interface
-//	@Override public List<Command> getCommands() { return cmds; }
-@Getter MidiCommands commands = new MidiCommands(this);
+    private final MidiClock clock;
+    
+    @Getter MidiCommands commands = new MidiCommands(this);
 	
     // for process()
 	private Event midiEvent = new JackMidi.Event();
@@ -105,13 +70,14 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
     private int index, eventCount, size;
 	private ShortMessage poll;
 	private Midi midi;
+	private final StageCommands stage = new StageCommands();
 
-	public JudahMidi(String name) throws JackException {
+	public JudahMidi(String name, MidiClock clock) throws JackException {
 		super(name);
 		instance = this;
+		this.clock = clock;
 		start();
 	}
-	
 
 	public void routeChannel(HashMap<String, Object> props) {
 		try {
@@ -144,7 +110,6 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
         if (outPorts.size() > 0) synth = outPorts.get(0);
         if (outPorts.size() > 1) drums = outPorts.get(1);
         if (outPorts.size() > 2) aux = outPorts.get(2);
-        if (outPorts.size() > 3) komplete = outPorts.get(3);
         
 		//	jackclient.setTimebaseCallback(this, false);
         new Thread(scheduler).start();
@@ -156,19 +121,31 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 	protected void makeConnections() throws JackException {
 
     	for (String port : jack.getPorts(jackclient, Pedal.NAME, MIDI, EnumSet.of(JackPortIsOutput))) {
-    		log.debug("connecting foot pedal: " + port + " to " + midiIn.getName());
+    		log.debug("connecting foot pedal: " + port + " to " + pedal.getName());
     		jack.connect(jackclient, port, pedal.getName());
     	}
     	for (String port : jack.getPorts(jackclient, MPK.NAME, MIDI, EnumSet.of(JackPortIsOutput))) {
-        	log.debug("connecting keyboard: " + port + " to " + midiIn.getName());
+        	log.debug("connecting keyboard: " + port + " to " + keyboard.getName());
         	jack.connect(jackclient, port, keyboard.getName());
     	}
     	
-    	String [] audioInterface = jack.getPorts("Komplete", MIDI, EnumSet.of(JackPortIsInput));
-		if (audioInterface.length == 1)
-			jack.connect(komplete.getName(), audioInterface[0]);
-		else 
-			log.warn(Arrays.toString(jack.getPorts("Komplete", MIDI, EnumSet.of(JackPortIsInput))));
+    	log.debug("Connecting Midi Clock");
+
+//    	jack.connect(jackclient, 
+//    			"a2j:Komplete Audio 6 [24] (capture): Komplete Audio 6 MIDI 1", 
+//    			midiIn.getName());
+    	
+    	String [] usbMidi = jack.getPorts("Komplete", MIDI, EnumSet.of(JackPortIsInput));
+		if (usbMidi.length == 1)
+			jack.connect(jackclient, drums.getName(), usbMidi[0]);
+		
+		usbMidi = jack.getPorts("Komplete", MIDI, EnumSet.of(JackPortIsOutput));
+		if (usbMidi.length == 1)
+			jack.connect(jackclient, usbMidi[0], midiIn.getName());
+    	
+		jack.connect(jackclient, synth.getName(), FluidSynth.MIDI_PORT);
+		//fluid connect(midi.getJackclient(), midi.getSynth());
+    	
 	}
 
 
@@ -182,7 +159,6 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
     		JackMidi.clearBuffer(synth);
     		JackMidi.clearBuffer(drums);
     		JackMidi.clearBuffer(aux);
-    		JackMidi.clearBuffer(komplete);
     		
         	for (JackPort port : inPorts) {
         		eventCount = JackMidi.getEventCount(port);
@@ -199,14 +175,19 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
                         data = new byte[size];
                     }
                     midiEvent.read(data);
+                    if (port == midiIn) {
+                    	clock.process(data);
+                    	continue;
+                    }
+
                     midi = router.process(new Midi(data));
                     
                     if (Sequencer.getCurrent() == null) { 
-                    	if (!JudahZone.midiProcessed(midi)) 
+                    	if (!stage.midiProcessed(midi)) 
                     		write(midi, midiEvent.time());
                     }
                     else if (!Sequencer.getCurrent().midiProcessed(midi)) { 
-                    	if (!JudahZone.midiProcessed(midi))
+                    	if (!stage.midiProcessed(midi))
                     		write(midi, midiEvent.time());
                     }
                     
@@ -228,10 +209,10 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 
 	private void write(ShortMessage midi, int time) throws JackException {
     	switch (midi.getChannel()) {
-    	case KOMPLETE_CHANNEL:
-    		JackMidi.eventWrite(komplete, time, midi.getMessage(), midi.getLength());
-    		break;
-    	case DRUMS_CHANNEL:
+		//	case KOMPLETE_CHANNEL:
+		//		JackMidi.eventWrite(komplete, time, midi.getMessage(), midi.getLength());
+		//		break;
+    	case DRUMS_CHANNEL: // sending drum notes to external drum machine
     		JackMidi.eventWrite(drums, time, midi.getMessage(), midi.getLength());
     		break;
     	case AUX_CHANNEL:
@@ -254,7 +235,6 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 	}
 	
 }
-
 
 // jack.connect(jackclient, dr5Port.getName(), "a2j:Komplete Audio 6 [20] (playback): Komplete Audio 6 MIDI 1");
 //public void disconnectDrums() {

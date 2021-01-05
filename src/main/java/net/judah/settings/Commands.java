@@ -27,6 +27,7 @@ public class Commands {
 		TOGGLE_PLAY	("loop:play", 		"Activate/deactivate playing a recorded loop with the Sample number"),
 		CLEAR		("loop:clear", 		"Reset the given looper"), 
 		LOAD_SAMPLE	("loop:loadSample", "load looper or sample, can be empty"),
+		DRUMTRACK   ("loop:drumtrack", "record drums separately while recording loop A"),
 		VOLUME		("mixer:volume", 	"Adjust loop or input gain between 0 and 1"),
 		MUTE		("mixer:mute", 		"Mute/unmute the recording of a given looper channel"),
 		AUDIOPLAY	("audio:play", 		"play an audio sample"),

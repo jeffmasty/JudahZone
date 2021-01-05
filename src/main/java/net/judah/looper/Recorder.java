@@ -13,6 +13,8 @@ import org.jaudiolibs.jnajack.JackPort;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
+import net.judah.api.Status;
+import net.judah.api.TimeListener.Property;
 import net.judah.jack.AudioMode;
 import net.judah.jack.RecordAudio;
 import net.judah.midi.JudahMidi;
@@ -56,6 +58,9 @@ public class Recorder extends Sample implements RecordAudio {
 		if (active && (recording == null || mode == NEW)) {
 			recording = new Recording(true); // threaded to accept live stream
 			isRecording.set(STARTING);
+			
+			listeners.forEach(listener -> {listener.update(Property.STATUS, Status.ACTIVE); });
+			
 			Console.addText(name + " recording starting");
 		} else if (active && (isPlaying.get() == RUNNING || isPlaying.get() == STARTING)) {
 			isRecording.set(STARTING);
@@ -67,6 +72,10 @@ public class Recorder extends Sample implements RecordAudio {
 		
 		else if (mode == RUNNING && !active) {
 			isRecording.set(STOPPING);
+			
+			if (length == null) // first time
+				listeners.forEach(listener -> {listener.update(Property.STATUS, Status.TERMINATED);});
+			
 			length = recording.size();
 			recordedLength = System.currentTimeMillis() - _start;
 			isPlaying.compareAndSet(NEW, STOPPED);
@@ -143,6 +152,9 @@ public class Recorder extends Sample implements RecordAudio {
 		for (Channel channel : JudahZone.getChannels()) {
 			if (channel.isOnMute() || channel.isMuteRecord())
 				continue;
+			if (channel.isSolo() && type != Type.SOLO) continue;
+			if (!inputPorts.contains(channel.getLeftPort())) continue;
+			
 			fromJack = channel.getLeftPort().getFloatBuffer();
 			if (firstTime) {
 				FloatBuffer.wrap(newBuffer[LEFT_CHANNEL]).put(fromJack); // processEcho

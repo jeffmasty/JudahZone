@@ -1,6 +1,5 @@
 package net.judah.mixer;
 import static net.judah.settings.Commands.MixerLbls.*;
-import static net.judah.settings.Commands.OtherLbls.*;
 import static net.judah.util.Constants.Param.*;
 
 import java.util.ArrayList;
@@ -17,7 +16,6 @@ import net.judah.looper.AudioPlay;
 import net.judah.looper.Recorder;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
-import net.judah.mixer.plugin.Plugin;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.JudahException;
@@ -39,6 +37,14 @@ public class MixerCommands extends ArrayList<Command> {
 	@Getter protected final Command recordCmd;
 	
 	public MixerCommands() {
+		
+		add(new Command(DRUMTRACK.name, DRUMTRACK.desc) {
+			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+				JudahZone.getLooper().drumtrack();
+			}
+			
+		});
+		
 		recordCmd = new Command(TOGGLE_RECORD.name, TOGGLE_RECORD.desc, loopProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				boolean active = false;
@@ -76,14 +82,19 @@ public class MixerCommands extends ArrayList<Command> {
 		
 		add(new Command(MUTE.name, MUTE.desc, muteProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				boolean mute = Boolean.parseBoolean(props.get("mute").toString());
-				String channel = props.get(CHANNEL).toString();
+				// String channel = props.get(CHANNEL).toString();
 				int loopNum = getLoopNum(props);
+				
+				boolean mute = false;
+				if (midiData2 >= 0)
+					mute = midiData2 > 0;
+				else mute = parseActive(props); 
+					
 				if (loopNum == ALL)
 					for (Sample loop : JudahZone.getLooper()) 
-						((Recorder)loop).mute(channel, mute);
+						((Recorder)loop).mute(mute);
 				else 
-					((Recorder)JudahZone.getLooper().get(loopNum)).mute(channel, mute);
+					((Recorder)JudahZone.getLooper().get(loopNum)).mute(mute);
 				return;
 			}});
 		add(new Command(CLEAR.name, CLEAR.desc, loopProps()) {
@@ -97,34 +108,36 @@ public class MixerCommands extends ArrayList<Command> {
 			
 		add(new Command(VOLUME.name, VOLUME.desc, gainProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				int gain = 0;
+				int volume = 0;
 					if (midiData2 >= 0)
-						gain = midiData2;
-					else gain = Integer.parseInt("" + props.get(GAIN)); 
+						volume = midiData2;
+					else volume = Integer.parseInt("" + props.get(GAIN)); 
 					
 				boolean isInput = Boolean.parseBoolean(props.get(IS_INPUT).toString());
 				int idx = Integer.parseInt(props.get(INDEX).toString());
 				log.trace((isInput ? JudahZone.getChannels().get(idx).getName() : 
-						JudahZone.getLooper().get(idx).getName()) + " gain: " + gain);
+						JudahZone.getLooper().get(idx).getName()) + " gain: " + volume);
 				if (isInput) 
-					JudahZone.getChannels().get(idx).setVolume(gain);
-				else
-					JudahZone.getLooper().get(idx).setGain(gain);
-				// TODO mixer.getGui().update();
+					JudahZone.getChannels().get(idx).setVolume(volume);
+				else {
+					JudahZone.getLooper().get(idx).setGain(volume / 100f);
+					JudahZone.getLooper().get(idx).getGui().setVolume(volume);
+				}
+
 			}});
 
 		add(new Command(LOAD_SAMPLE.name, LOAD_SAMPLE.desc, sampleProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				loadSample(props);}});
 		
-		add(new Command(PLUGIN.name, PLUGIN.desc, pluginTemplate()) {
-			@Override
-			public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				String name = props.get(NAME).toString();
-				int index = Integer.parseInt(props.get(INDEX).toString());
-				LineType type = LineType.valueOf(props.get(TYPE).toString());
-				JudahZone.getPlugins().add(new Plugin(name, index, type));
-			}});
+//		add(new Command(PLUGIN.name, PLUGIN.desc, pluginTemplate()) {
+//			@Override
+//			public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+//				String name = props.get(NAME).toString();
+//				int index = Integer.parseInt(props.get(INDEX).toString());
+//				LineType type = LineType.valueOf(props.get(TYPE).toString());
+//				JudahZone.getPlugins().add(new Plugin(name, index, type));
+//			}});
 		
 		add(new AudioPlay());
 

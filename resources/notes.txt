@@ -1,9 +1,15 @@
 TODO:
 
+reverb after compression
+listen on volume knob in channel highlight
+sample highlight + compression + reverb
+channel highlight pane in metronome tabs
+keyboard handler for channels/samples
+hi/low pass filter
+
+
 play: type, active, index, name, input, output
 record: type, active, index, name
-redo carla/plugins/octaver
-
 BeatBuddy
 display sheet music command
 
@@ -74,6 +80,13 @@ https://github.com/PedalController/Lv2Library/blob/master/src/br/com/srmourasilv
         <artifactId>pipes-units</artifactId>
         <version>2.0.0</version>
     </dependency>
+<!--     Swing gui widgets https://harmoniccode.blogspot.com/search/label/swing -->
+<!--    <dependency> -->
+<!--      <groupId>eu.hansolo</groupId> -->
+<!--      <artifactId>SteelSeries</artifactId> -->
+<!--      <version>3.9.30</version> -->
+<!--    </dependency> -->
+
 
 
 Done:
@@ -92,7 +105,9 @@ save loops to disk and play samples from disk
 unify consoles
 handle relative and trigger type,  
 octaver, phaser knob
- 
+redo carla/plugins/octaver
+    on foot switch: activate/deactive plugins, route/unroute ports
+LFO on organ volume 
 
 
 

@@ -18,7 +18,7 @@
   }, {
     "name" : "bass and snare volume",
     "command" : "seq:volume",
-    "midi" : "sA47",
+    "midi" : "sBAA",
     "props" : {
       "volume" : null,
       "name" : "bassdrum,snare"
@@ -26,29 +26,10 @@
   }, {
     "name" : "hi hats volume",
     "command" : "seq:volume",
-    "midi" : "sA8t",
+    "midi" : "sBEA",
     "props" : {
       "volume" : null,
       "name" : "hihats"
-    }
-  }, {
-    "name" : "",
-    "command" : "mixer:volume",
-    "midi" : "sBAr",
-    "props" : {
-      "volume" : null,
-      "index" : "0",
-      "isInput" : "false"
-    }
-  }, {
-    "name" : "",
-    "command" : "mixer:volume",
-    "midi" : "sBFG",
-    "props" : {
-      "volume" : null,
-      "index" : "1",
-      "isInput" : "false",
-      "gain" : null
     }
   }, {
     "name" : "hi hats",
@@ -67,29 +48,19 @@
       "file" : "/home/judah/git/JudahZone/resources/samples/FeelGoodInc.wav"
     }
   }, {
-    "name" : "knob 7 - Synth Vol",
-    "command" : "mixer:volume",
-    "midi" : "sBUA",
-    "props" : {
-      "volume" : null,
-      "index" : "3",
-      "isInput" : "true",
-      "gain" : null
-    }
-  }, {
     "name" : "turn on Phaser",
-    "command" : "carla:drywet",
+    "command" : "carla:flanger",
     "midi" : "uSN/",
     "props" : {
-      "index" : "1",
-      "value" : null
+      "channel" : "drums",
+      "active" : null
     }
   }, {
     "name" : "",
     "command" : "carla:param",
     "midi" : "sBI6",
     "props" : {
-      "index" : "1",
+      "index" : "4",
       "paramIdx" : "3",
       "value" : null
     }
@@ -98,17 +69,8 @@
     "command" : "carla:param",
     "midi" : "sBM1",
     "props" : {
-      "index" : "1",
+      "index" : "4",
       "paramIdx" : "2",
-      "value" : null
-    }
-  }, {
-    "name" : "",
-    "command" : "carla:param",
-    "midi" : "sBQ9",
-    "props" : {
-      "index" : "1",
-      "paramIdx" : "1",
       "value" : null
     }
   }, {
@@ -151,7 +113,7 @@
     "notes" : "phaser",
     "params" : {
       "paramIdx" : "4",
-      "index" : "1",
+      "index" : "4",
       "value" : "0.8"
     }
   }, {
@@ -161,7 +123,7 @@
     "notes" : "",
     "params" : {
       "paramIdx" : "2",
-      "index" : "1",
+      "index" : "4",
       "value" : "0.5"
     }
   }, {
@@ -260,12 +222,20 @@
   }, {
     "type" : "INIT",
     "timestamp" : 0,
-    "command" : "mixer:volume",
+    "command" : "loop:play",
+    "notes" : "turned off recent auto-arm feature",
+    "params" : {
+      "loop" : "0",
+      "active" : "false"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "loop:play",
     "notes" : "",
     "params" : {
-      "volume" : "0.9",
-      "isInput" : "true",
-      "index" : "3"
+      "loop" : "1",
+      "active" : "false"
     }
   }, {
     "type" : "TRIG",
@@ -310,16 +280,6 @@
     "params" : {
       "loop" : "0",
       "active" : "true"
-    }
-  }, {
-    "type" : "REL",
-    "timestamp" : 0,
-    "command" : "mixer:volume",
-    "notes" : "",
-    "params" : {
-      "volume" : "0.35",
-      "isInput" : "true",
-      "index" : "3"
     }
   }, {
     "type" : "ABS",
@@ -454,22 +414,22 @@
   }, {
     "type" : "REL",
     "timestamp" : 0,
+    "command" : "mixer:volume",
+    "notes" : "",
+    "params" : {
+      "volume" : "90",
+      "isInput" : "true",
+      "index" : "3"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
     "command" : "midi:octaver",
     "notes" : "",
     "params" : {
       "channel" : "0",
       "active" : "true",
       "steps" : "-24"
-    }
-  }, {
-    "type" : "REL",
-    "timestamp" : 0,
-    "command" : "mixer:volume",
-    "notes" : "",
-    "params" : {
-      "volume" : "0.95",
-      "isInput" : "true",
-      "index" : "3"
     }
   }, {
     "type" : "REL",
