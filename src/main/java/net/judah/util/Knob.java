@@ -381,6 +381,10 @@ public class Knob extends JComponent{
 		});
 	 }
 	 
+	 public int getValue() {
+		 return getHandle(0).getVal();
+	 }
+	 
 	 public void setValue(int value) {
 		 getHandle(0).setValue(value);
 	 }

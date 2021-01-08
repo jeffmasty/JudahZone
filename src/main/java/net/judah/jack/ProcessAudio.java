@@ -12,7 +12,7 @@ public interface ProcessAudio {
 	public enum Type {ONE_TIME, CONTROLLED, DUPLICATE, FREE, SOLO}
 	
 	/** in Real-Time thread */
-	void process(int nframes);
+	void process();
 	
 	/** stop or play audio in process() thread, if any */
 	void play(boolean active);

@@ -1,6 +1,5 @@
 package net.judah;
 
-import java.awt.GridLayout;
 import java.util.ArrayList;
 
 import javax.swing.JPanel;
@@ -20,7 +19,7 @@ public class Plugins extends ArrayList<Plugin> {
 
 	private void createGui() {
 		gui = new JPanel();
-		gui.setLayout(new GridLayout(0, 2));
+		// gui.setLayout(new GridLayout(0, 2));
 		for (Plugin plugin : this) { 
 			gui.add(new PluginGui(plugin));
 		}

@@ -11,13 +11,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**JudahZone mixer Channels come with built-in compression, reverb and gain */
-public class Channel {
+public class Channel extends MixerBus {
 
-	@Getter protected final String name;
 	@Getter protected final boolean isStereo;
-    
-    @Getter private Compression compression = new Compression();
-    @Getter private Reverb reverb = new Reverb();
     
     @Getter @Setter protected JackPort leftPort;
     @Getter @Setter protected JackPort rightPort;
@@ -38,11 +34,11 @@ public class Channel {
 	
     @Getter protected final ArrayList<Plugin> plugins = new ArrayList<>();
 	
-    protected transient FloatBuffer buf;
+    private FloatBuffer left, right;
 	
 	/** Mono channel uses left signal */
 	public Channel(String channelName, String sourcePort, String connectionPort) {
-		this.name = channelName;
+		super(channelName);
 		this.leftSource = sourcePort;
 		this.leftConnection = connectionPort;
 		rightSource = rightConnection = null;
@@ -51,7 +47,7 @@ public class Channel {
 	
 	/** Stereo channel */
 	public Channel(String channelName, String[] sourcePorts, String[] connectionPorts) {
-		this.name = channelName;
+		super(channelName);
 		this.leftSource = sourcePorts[LEFT_CHANNEL];
 		this.leftConnection = connectionPorts[LEFT_CHANNEL];
 		this.rightSource = sourcePorts[RIGHT_CHANNEL];
@@ -59,52 +55,90 @@ public class Channel {
 		isStereo = true;
 	}
 	
+	
+	@Override
+	public int getVolume() {
+		return Math.round(gain * 100f / gainFactor);
+	}
+	
 	/** percent of maximum */
+	@Override
 	public void setVolume(int volume) {
 		gain = volume / 100f * gainFactor;
-		if (gui != null) {
-			gui.setVolume(volume);
-		}
+		EffectsGui.volume(this);
+		gui.setVolume(volume);
 	}
 
+	@Override
 	public ChannelGui getGui() {
 		if (gui == null) // lazy load
 			gui = new ChannelGui(this);
 		return gui;
 	}
-    
 
 	public void process() {
+		left = leftPort.getFloatBuffer();
+		if (isStereo)
+			right = rightPort.getFloatBuffer();
 		
-		if (reverb.isActive()) {
-			reverb.process(leftPort.getFloatBuffer(), gain);
-			if (isStereo)
-				reverb.process(rightPort.getFloatBuffer(), gain);
-
-			if (compression.isActive()) { // gain already applied
-				leftPort.getFloatBuffer().rewind();
-				compression.process(leftPort.getFloatBuffer(), 1f); 
+		if (eq.isActive()) {
+			eq.process(left, gain);
+			if (isStereo())
+				eq.process(right, gain);
+			
+			if (compression.isActive()) {
+				left.rewind();
+				compression.process(left, 1);
 				if (isStereo) {
-					rightPort.getFloatBuffer().rewind();
-					compression.process(rightPort.getFloatBuffer(), 1f);
+					right.rewind();
+					compression.process(right, 1);
+				}
+				
+				if (reverb.isActive()) { // gain already applied
+					left.rewind();
+					reverb.process(left, 1);
+					if (isStereo) {
+						right.rewind();
+						reverb.process(right, 1);
+					}
+				}
+			}
+			else if (reverb.isActive()) {
+				left.rewind();
+				reverb.process(left, 1);
+				if (isStereo) {
+					right.rewind();
+					reverb.process(right, 1);
+				}
+			}
+		}
+		else if (compression.isActive()) {
+			compression.process(left, gain);
+			if (isStereo)
+				compression.process(right, gain);
+			
+			if (reverb.isActive()) { // gain already applied
+				left.rewind();
+				reverb.process(left, 1);
+				if (isStereo) {
+					right.rewind();
+					reverb.process(right, 1);
 				}
 			}
 		}
 		
-		else if (compression.isActive()) {
-			compression.process(leftPort.getFloatBuffer(), gain);
+		else if (reverb.isActive()) {
+			reverb.process(left, gain);
 			if (isStereo)
-				compression.process(rightPort.getFloatBuffer(), gain);
+				reverb.process(right, gain);
 		}
-
+		
 		else if (gain != 1f) { // standard (no effects) volume
-			buf = leftPort.getFloatBuffer();
-			for (int z = 0; z < buf.capacity(); z++)
-				buf.put(buf.get(z) * gain);
+			for (int z = 0; z < left.capacity(); z++)
+				left.put(left.get(z) * gain);
 			if (!isStereo) return;
-			buf = rightPort.getFloatBuffer();
-			for (int z = 0; z < buf.capacity(); z++)
-				buf.put(buf.get(z) * gain);
+			for (int z = 0; z < right.capacity(); z++)
+				right.put(right.get(z) * gain);
 		}
 	}
 

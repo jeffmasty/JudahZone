@@ -1,6 +1,7 @@
 package net.judah.looper;
 
 import static net.judah.jack.AudioMode.*;
+import static net.judah.jack.AudioTools.*;
 import static net.judah.util.Constants.*;
 
 import java.nio.FloatBuffer;
@@ -19,56 +20,61 @@ import net.judah.api.TimeListener;
 import net.judah.api.TimeListener.Property;
 import net.judah.api.TimeNotifier;
 import net.judah.jack.AudioMode;
+import net.judah.jack.AudioTools;
 import net.judah.jack.ProcessAudio;
 import net.judah.midi.JudahMidi;
+import net.judah.mixer.EffectsGui;
 import net.judah.mixer.LoopGui;
+import net.judah.mixer.MixerBus;
 import net.judah.util.Console;
 
 @Log4j
-public class Sample implements ProcessAudio, TimeNotifier {
+public class Sample extends MixerBus implements ProcessAudio, TimeNotifier {
+	
+	private final int bufferSize = JudahMidi.getInstance().getBufferSize();
 	
     @Getter protected Recording recording; 
-	@Getter @Setter protected String name;
 	@Getter @Setter protected Type type;
-	protected LoopGui gui;
-	
-	protected final transient List<JackPort> outputPorts = new ArrayList<>();
-	@Getter protected final transient AtomicInteger tapeCounter = new AtomicInteger();
-	protected final ArrayList<TimeListener> listeners = new ArrayList<>();
-	protected final transient AtomicReference<AudioMode> isPlaying = new AtomicReference<AudioMode>(STOPPED);
+	@Getter protected final List<JackPort> outputPorts = new ArrayList<>();
+
+	@Getter protected final AtomicInteger tapeCounter = new AtomicInteger();
+	@Getter protected final AtomicReference<AudioMode> isPlaying = new AtomicReference<AudioMode>(STOPPED);
 	@Getter @Setter protected boolean timeSync = false;
-	private int loopCount = 0;
+	@Getter private int loopCount = 0;
 	
-	@Setter @Getter protected transient float gain = 1f;
+	@Setter @Getter protected float gain = 1f;
 	@Setter @Getter private float gainFactor = 2f;
+	@Getter protected Integer length;
+	protected final ArrayList<TimeListener> listeners = new ArrayList<>();
+	protected LoopGui gui;
 	private float unmute = -1f;
-	
-	protected Integer length;
-	
+
 	// for process()
-	protected transient float[][] recordedBuffer;
-	private transient int updated; // tape position counter
-	private transient final float[] workArea = new float[JudahMidi.getInstance().getBufferSize()];
-	private transient FloatBuffer toJackLeft, toJackRight;
-	private transient int z;
+	private int updated; // tape position counter
+	private FloatBuffer toJackLeft, toJackRight;
+	protected float[][] recordedBuffer;
+	private final float[] workL = new float[bufferSize];
+	private final float[] workR = new float[bufferSize];
 
 	public Sample(String name, Recording recording, Type type) {
-		this.name = name;
+		super(name);
 		this.recording = recording;
 		length = recording.size();
 	}
 	
-	protected Sample() { }
+	protected Sample() {super("?"); }
 	
 	@Override
 	public void setOutputPorts(List<JackPort> ports) {
 		synchronized (outputPorts) {
 			outputPorts.clear();
 			outputPorts.addAll(ports);
+			getGui();
 		}
 	}
 	
-	public void mute(boolean mute) {
+	@Override
+	public void setOnMute(boolean mute) {
 		if (mute) {
 			unmute = gain;
 			gain = 0f;
@@ -78,33 +84,16 @@ public class Sample implements ProcessAudio, TimeNotifier {
 			unmute = -1f;
 		}
 	}
+	@Override
+	public boolean isOnMute() {
+		return unmute != -1;
+	}
 	
 	public int getSize() {
 		if (recording == null) return 0;
 		return recording.size();
 	}
 	
-	protected void readRecordedBuffer() {
-		recordedBuffer = recording.get(tapeCounter.get());
-		
-		updated = tapeCounter.get() + 1;
-		if (updated == recording.size()) {
-			if (type == Type.ONE_TIME) {
-				isPlaying.set(STOPPING);
-				JudahZone.getLooper().remove(Sample.this);
-			}
-			updated = 0;
-			loopCount++;
-			new Thread() {
-				@Override public void run() {
-					for (int i = 0; i < listeners.size(); i++)
-						listeners.get(i).update(Property.LOOP, loopCount);	
-			}}.start();
-			
-		}
-		tapeCounter.set(updated);
-	}
-
 	@Override public final AudioMode isPlaying() {
 		return isPlaying.get();
 	}
@@ -164,6 +153,7 @@ public class Sample implements ProcessAudio, TimeNotifier {
 		return "Sample " + name;
 	}
 
+	@Override
 	public LoopGui getGui() {
 		if (gui == null)
 			gui = new LoopGui(this);
@@ -186,38 +176,79 @@ public class Sample implements ProcessAudio, TimeNotifier {
 	}
 	
 	/** percent of maximum */
+	@Override
 	public void setVolume(int volume) {
 		gain = volume / 100f * gainFactor;
-		if (gui != null) {
-			gui.setVolume(volume);
-		}
+		EffectsGui.volume(this);
+		gui.setVolume(volume);
 	}
 
+	protected void readRecordedBuffer() {
+		
+		recordedBuffer = recording.get(tapeCounter.get());
 
+		updated = tapeCounter.get() + 1;
+		if (updated == recording.size()) {
+			if (type == Type.ONE_TIME) {
+				isPlaying.set(STOPPING);
+				new Thread() { @Override public void run() {
+					JudahZone.getLooper().remove(Sample.this);
+				}}.start();
+			}
+			updated = 0;
+			loopCount++;
+			new Thread() { @Override public void run() {
+				for (int i = 0; i < listeners.size(); i++)
+					listeners.get(i).update(Property.LOOP, loopCount);	
+			}}.start();
+		}
+		tapeCounter.set(updated);
+	}
+	
 	////////////////////////////////////
 	//     Process Realtime Audio     //
 	////////////////////////////////////
 	@Override
-	public void process(int nframes) {
+	public void process() {
+		
+		if (!playing()) return;
 		
 		// output
-		if (playing()) {
-			toJackLeft = outputPorts.get(LEFT_CHANNEL).getFloatBuffer();
-			toJackLeft.rewind();
-			toJackRight = outputPorts.get(RIGHT_CHANNEL).getFloatBuffer();
-			toJackRight.rewind();
-			readRecordedBuffer();
-			processMix(recordedBuffer[LEFT_CHANNEL], toJackLeft, nframes);
-			processMix(recordedBuffer[RIGHT_CHANNEL], toJackRight, nframes);
-		} 
+		toJackLeft = outputPorts.get(LEFT_CHANNEL).getFloatBuffer();
+		toJackLeft.rewind();
+		toJackRight = outputPorts.get(RIGHT_CHANNEL).getFloatBuffer();
+		toJackRight.rewind();
+		readRecordedBuffer();
+		
+		if (eq.isActive()) {
+			AudioTools.processGain(recordedBuffer[LEFT_CHANNEL], workL, gain);
+			AudioTools.processGain(recordedBuffer[RIGHT_CHANNEL], workR, gain);
+			
+			eq.process(FloatBuffer.wrap(workL), FloatBuffer.wrap(workR), 1);
+			
+			if (compression.isActive()) {
+				compression.process(workL, toJackLeft, 1);
+				compression.process(workR, toJackRight, 1);
+			}
+			else {
+				processMix(workL, toJackLeft, 1);
+				processMix(workR, toJackRight, 1);
+			}
+		}
+		else if (compression.isActive()) {
+			compression.process(recordedBuffer[LEFT_CHANNEL], toJackLeft, gain);
+			compression.process(recordedBuffer[RIGHT_CHANNEL], toJackRight, gain);
+		}
+		else {
+			processMix(recordedBuffer[LEFT_CHANNEL], toJackLeft, gain);
+			processMix(recordedBuffer[RIGHT_CHANNEL], toJackRight, gain);
+		}
+		// TODO reverb
 	}
 
-	protected void processMix(float[] in, FloatBuffer out, int nframes) {
-		out.get(workArea);
-		out.rewind();
-		for (z = 0; z < nframes; z++) {
-			out.put(workArea[z] + gain * in[z]);
-		}
+	@Override
+	public int getVolume() {
+		return Math.round(gain * 100);
 	}
 
 }

@@ -13,19 +13,13 @@ import org.jaudiolibs.jnajack.JackPortType;
 
 import net.judah.JudahZone;
 import net.judah.looper.Recording;
+import net.judah.util.Constants;
 
 
 public class AudioTools  {
 
-    private final static float DEF_SRATE = 44100;
-    private final static float DEF_MAX_DELAY = 2;
-
-    private float gain;
-    @SuppressWarnings("unused")
-	private float samplerate;
-    private float delaytime;
-    private float maxdelay;
-
+    private static int z;
+    private static float[] workArea = new float[Constants._BUFSIZE];
 
     /** standard play through, put inputs on the output buffer */
     public static void processEcho(List<FloatBuffer> inputs, List<FloatBuffer> outputs) {
@@ -41,6 +35,7 @@ public class AudioTools  {
 
 
     public static void processSilence(FloatBuffer a) {
+    	a.rewind();
     	while(a.hasRemaining()) 
     		a.put(0f);
     	a.rewind();
@@ -103,56 +98,6 @@ public class AudioTools  {
 		}
 	}
 
-    protected AudioTools() {
-        this(DEF_MAX_DELAY);
-    }
-
-
-    public AudioTools(float maxdelay) {
-        if (maxdelay > 0) {
-            this.maxdelay = maxdelay;
-        }
-        this.samplerate = DEF_SRATE;
-        this.gain = 1;
-
-    }
-
-
-	public void setDelay(float time) {
-        if (time < 0 || time > maxdelay) {
-            throw new IllegalArgumentException();
-        }
-        this.delaytime = time;
-    }
-
-    public float getDelay() {
-        return this.delaytime;
-    }
-
-    public float getMaxDelay() {
-        return this.maxdelay;
-    }
-
-    public void setGain(float gain) {
-        if (gain < 0) {
-            throw new IllegalArgumentException();
-        }
-        this.gain = gain;
-    }
-
-    public float getGain() {
-        return this.gain;
-    }
-
-
-	public void initialize(float samplerate, int maxBufferSize) {
-        if (samplerate < 1) {
-            throw new IllegalArgumentException();
-        }
-        this.samplerate = samplerate;
-    }
-
-	
 	public static void makeConnecction(JackClient client, JackPort port, String client2, String port2)
 			throws JackException {
 	
@@ -238,6 +183,31 @@ public class AudioTools  {
 		
 	}
 	
+	public static void processGain(float[] in, float gain) {
+		for (z = 0; z < Constants._BUFSIZE; z++)
+			in[z] = in[z] * gain;
+	}
+	
+	public static void processMix(float[] in, FloatBuffer out) {
+		out.get(workArea);
+		out.rewind();
+		for (z = 0; z < Constants._BUFSIZE; z++) 
+			out.put(workArea[z] + in[z]);
+	}
+	public static void processMix(float[] in, FloatBuffer out, float gain) {
+		out.get(workArea);
+		out.rewind();
+		for (z = 0; z < Constants._BUFSIZE; z++) 
+			out.put(workArea[z] + in[z] * gain);
+	}
+
+	
+	public static void processGain(float[] in, float[] out, float vol) {
+		for (z = 0; z < Constants._BUFSIZE; z++) 
+			out[z] = in[z] * vol;
+	}
+
+
 }
 
 

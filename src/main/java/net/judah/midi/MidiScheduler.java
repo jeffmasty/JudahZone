@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
+import net.judah.JudahZone;
 import net.judah.api.Midi;
 import net.judah.api.MidiQueue;
 import net.judah.sequencer.MidiEvent;
@@ -17,6 +18,9 @@ import net.judah.util.Constants;
 @Log4j @Data @EqualsAndHashCode(callSuper=false)
 public class MidiScheduler extends MidiTrack implements Runnable {
 
+	// frames between checking active LFOs
+	public static final long LFO_PULSE = 3; 
+	
 	@Getter private long current = -1;
 	private final MidiQueue queue;
 	private final BlockingQueue<Long> offering;
@@ -35,6 +39,9 @@ public class MidiScheduler extends MidiTrack implements Runnable {
 		while (true) {
 			try {
 				current = offering.take();
+				if (current % LFO_PULSE == 0) 
+					JudahZone.lfoPulse(); // query any running LFOs
+				
 				if (isEmpty()) continue;
 				e = get(0);
 				if (e.getOffset() < current - 2) {

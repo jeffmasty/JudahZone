@@ -17,11 +17,16 @@ import net.judah.midi.JudahMidi;
 public class Recording extends Vector<float[][]> {
 	
 	@Getter @Setter private String notes;
-	@Getter transient private long creationTime = System.currentTimeMillis(); 
-	transient private BlockingQueue<float[][]> newQueue;
-	transient private BlockingQueue<float[][]> oldQueue;
-	transient private BlockingQueue<Integer> locationQueue; 
-	transient private Runner runner;
+	
+	@Getter private long creationTime = System.currentTimeMillis(); 
+	private BlockingQueue<float[][]> newQueue;
+	private BlockingQueue<float[][]> oldQueue;
+	private BlockingQueue<Integer> locationQueue; 
+	private Runner runner;
+	
+	public boolean isListening() {
+		return newQueue != null;
+	}
 	
 	public void startListeners() {
 		newQueue = new LinkedBlockingQueue<>();

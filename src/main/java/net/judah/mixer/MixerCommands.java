@@ -92,9 +92,9 @@ public class MixerCommands extends ArrayList<Command> {
 					
 				if (loopNum == ALL)
 					for (Sample loop : JudahZone.getLooper()) 
-						((Recorder)loop).mute(mute);
+						((Recorder)loop).setOnMute(mute);
 				else 
-					((Recorder)JudahZone.getLooper().get(loopNum)).mute(mute);
+					((Recorder)JudahZone.getLooper().get(loopNum)).setOnMute(mute);
 				return;
 			}});
 		add(new Command(CLEAR.name, CLEAR.desc, loopProps()) {
@@ -119,10 +119,8 @@ public class MixerCommands extends ArrayList<Command> {
 						JudahZone.getLooper().get(idx).getName()) + " gain: " + volume);
 				if (isInput) 
 					JudahZone.getChannels().get(idx).setVolume(volume);
-				else {
-					JudahZone.getLooper().get(idx).setGain(volume / 100f);
-					JudahZone.getLooper().get(idx).getGui().setVolume(volume);
-				}
+				else 
+					JudahZone.getLooper().get(idx).setVolume(volume);
 
 			}});
 

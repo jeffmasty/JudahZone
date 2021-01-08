@@ -15,6 +15,7 @@ public class PluginGui extends JPanel {
 		btn.setToolTipText("Prog Change: " + plugin.getDefaultProgChange());
 		btn.addActionListener(listener -> {Console.info(plugin.toString()); });
 		add(btn);
+		
 		JCheckBox active = new JCheckBox();
 		active.setSelected(plugin.isActive());
 		active.addActionListener(listener -> { plugin.activate(JudahZone.getChannels().getGuitar());});

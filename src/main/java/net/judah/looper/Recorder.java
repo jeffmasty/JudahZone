@@ -141,9 +141,9 @@ public class Recorder extends Sample implements RecordAudio {
     ////////////////////////////////////////////////////
 
 	@Override
-	public void process(int nframes) {
+	public void process() {
 		counter = tapeCounter.get();
-		super.process(nframes);
+		super.process();
 		if (!recording()) return;
 		
 		newBuffer = memory.getArray();

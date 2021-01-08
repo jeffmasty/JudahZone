@@ -1,28 +1,22 @@
 TODO:
 
-reverb after compression
-listen on volume knob in channel highlight
-sample highlight + compression + reverb
-channel highlight pane in metronome tabs
-keyboard handler for channels/samples
-hi/low pass filter
-
+Master MixerBus
+BeatBuddy & Midi upgrades
+pArTy EQ
 
 play: type, active, index, name, input, output
 record: type, active, index, name
-BeatBuddy
-display sheet music command
+LFO triggered to clock, assign to room, width, freq, etc
+display sheet music 
 
 multi-delete, upgrade properties table (enum, int, boolean types)
+joystick  (pitch bend logarithmic to 1 octave) (left cc = distortion or vocoder right cc = delay)
 Latency + bleeding edge
 settings/default files
-stereo/mono
 Undo/Redo/Copy/Paste
 patch bay needed. see jack_lsp, jack_connect
 Plugins, ttl 
 walking bassline midi bot
-joystick  (pitch bend logarithmic to 1 octave) (left cc = distortion or vocoder right cc = delay)
-
 fix songs.
 
 Knobs:
@@ -108,6 +102,8 @@ octaver, phaser knob
 redo carla/plugins/octaver
     on foot switch: activate/deactive plugins, route/unroute ports
 LFO on organ volume 
+sample highlight + compression + reverb
+keyboard handler for channels/samples
 
 
 

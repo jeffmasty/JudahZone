@@ -84,11 +84,12 @@ public final class Reverb {
     private static final float scaledamp = 0.4f;
     private static final float scaleroom = 0.28f;
     private static final float offsetroom = 0.7f;
-    private static final float initialroom = 0.55f;
-    private static final float initialdamp = 0.75f;
+    
+    private static final float initialroom = 0.25f;
+    private static final float initialdamp = 0.45f;
     private static final float initialwet = 1 / scalewet;
     private static final float initialdry = 0f;//1;
-    private static final float initialwidth = 0.4f;
+    private static final float initialwidth = 0.35f;
     
     @Getter private boolean active;
     private float roomsize, roomsize1;
@@ -195,7 +196,7 @@ public final class Reverb {
         outScratchR = new float[maxBufferSize];
 
         /* Prepare all buffers*/
-        dirty = true;
+        update();
     }
 
 	public void setRoomSize(float value) {
@@ -243,14 +244,17 @@ public final class Reverb {
         return width;
     }
 
-    public void process(FloatBuffer buf, float gain) {
-    	int buffersize = buf.capacity();
+	public void processMix(float[] in, FloatBuffer out, float gain) {
+    	int buffersize = out.capacity();
         if (dirty) {
             update();
             dirty = false;
         }
+        
+        float ourGain = fixedgain * gain;
+        
         for (int i = 0; i < buffersize; i++) 
-            inScratch[i] = buf.get(i) * fixedgain * gain;
+            inScratch[i] = in[i] * ourGain;
         
         Arrays.fill(outScratchL, 0);
         
@@ -260,20 +264,42 @@ public final class Reverb {
         for (int i = 0; i < numallpasses; i++) 
             allpassL[i].processReplace(outScratchL, outScratchL, buffersize);
         
+        for (int i = 0; i < buffersize; i++)  
+            out.put(out.get(i) + // from mixer board
+            		in[i] * gain + // process add
+            		outScratchL[i] * wet1 * gain + outScratchR[i] * wet2 * gain);                		
+	}
+
+    public void process(FloatBuffer buf, float gain) {
+    	int buffersize = buf.capacity();
+        if (dirty) {
+            update();
+            dirty = false;
+        }
+        float ourGain = fixedgain * gain;
+        for (int i = 0; i < buffersize; i++) 
+            inScratch[i] = buf.get(i) * ourGain;
         
-        if (dry == 0) 
+        Arrays.fill(outScratchL, 0);
+        
+        for (int i = 0; i < numcombs; i++) 
+            combL[i].processMix(inScratch, outScratchL, buffersize);
+
+        for (int i = 0; i < numallpasses; i++) 
+            allpassL[i].processReplace(outScratchL, outScratchL, buffersize);
+        
+//        if (dry == 0)  
             for (int i = 0; i < buffersize; i++)  
                 buf.put(buf.get(i) * gain + // process add
-                		outScratchL[i] * wet1 + outScratchR[i] * wet2 * gain);
-         else 
-            for (int i = 0; i < buffersize; i++) 
-                buf.put(buf.get(i) * gain + // process add
-                		outScratchL[i] * wet1 + outScratchR[i] * wet2 + buf.get(i) * dry * gain);
+                		outScratchL[i] * wet1 * gain + outScratchR[i] * wet2 * gain);
+//         else 
+//            for (int i = 0; i < buffersize; i++) 
+//                buf.put(buf.get(i) * gain + // process add
+//                		outScratchL[i] * wet1 + outScratchR[i] * wet2 + buf.get(i) * dry * gain);
     	
     }
     
     public void setActive(boolean on) {
-    	if (active == on) return;
     	active = on;
     }
     
@@ -405,4 +431,5 @@ public final class Reverb {
 		return "reverb room: " + getRoomSize() + " damp: " + getDamp() + 
 				" dry: " + getDry() + " width: " + getWidth(); 
     }
+
 }

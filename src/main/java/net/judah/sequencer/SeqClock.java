@@ -43,7 +43,8 @@ public class SeqClock extends Thread implements TimeProvider {
 	@Setter @Getter private int measure = 4;
 
 	private int count = -1;
-	private int steps = 8;
+	@Getter private int steps = 8;
+	@Getter private int intro = 0;
 	private int step = 0;
 	private int loopCount = -1;
 	private long msecLength = -1;
@@ -61,6 +62,7 @@ public class SeqClock extends Thread implements TimeProvider {
 	public SeqClock(Sequencer sequencer, int intro, int steps) throws InvalidMidiDataException {
 		this(sequencer);
 		this.steps = steps;
+		this.intro = intro;
 		count = -1 - intro;
 	}
 

@@ -166,7 +166,8 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
         		for (index = 0; index < eventCount; index++) {
         			
         			if (JackMidi.getEventCount(port) != eventCount) {
-        				RTLogger.warn(this, "eventCount found " + JackMidi.getEventCount(port) + " expected " + eventCount);
+        				RTLogger.warn(this, "eventCount found " + 
+        						JackMidi.getEventCount(port) + " expected " + eventCount);
         				return true;
         			}
         			JackMidi.eventGet(midiEvent, port, index);

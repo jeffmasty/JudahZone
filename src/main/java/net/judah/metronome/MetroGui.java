@@ -104,7 +104,7 @@ public class MetroGui extends JPanel implements TimeListener {
 		add(tempoPanel);
 
 		JPanel volumePanel = new JPanel();
-		JLabel volumeLbl = new JLabel("Volume");
+		JLabel volumeLbl = new JLabel("Velocity");
 		volumeLbl.setFont(FONT13);
 		volumePanel.add(volumeLbl);
 		

@@ -6,6 +6,7 @@ import java.nio.FloatBuffer;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.util.Console;
 import net.judah.util.Constants;
 
 public class Compression {
@@ -19,8 +20,8 @@ public class Compression {
 	private static final int PRESET_SIZE = 7;
     private static int[][] presets = new int[][] { // TODO make enum
         /* 2:1 */ {-30, 2, -13, 20, 120, 0},
-        /* 4:1 */ {-26, 4, -16, 20, 200, 10},
-        /* 8:1 */ {-24, 8, -17, 20, 35, 30} };
+        /* 4:1 */ {-26, 4, -17, 30, 270, 10},
+        /* 8:1 */ {-24, 8, -18, 20, 35, 30} };
 
     @Setter @Getter private boolean active; 
     @Getter private int preset = -1;
@@ -94,6 +95,22 @@ public class Compression {
 		this.preset = preset;
         for (int n = 1; n < PRESET_SIZE; n++)
             setPreset(n , presets[preset][n-1]);
+	}
+
+	public void incrementPreset() {
+		//boolean active = channel.getCompression().isActive();
+		if (!isActive()) {
+			setPreset(0);
+			setActive(true);
+		}
+		else {
+			int preset = 1 + getPreset();
+			if (preset < Compression.COMPRESSION_PRESETS)
+				setPreset(preset);
+			else
+				setActive(false);
+		}
+		Console.info("Compression on: " + isActive() + " / " + getPreset());
 	}
 	
     /** @return attack in milliseconds */
@@ -209,5 +226,50 @@ public class Compression {
             boost_old = boost;
 	    }
 	}
+	
+	public void process(float[] in, FloatBuffer out, float gain) {
+		float val;
+	    for (int z = 0; z < out.capacity(); z++) {
+	    	val = in[z] * gain;
+	        float ldelta = 0.0f;
+	        peak = val;
+
+  	        //Mono Channel
+	        ldelta = abs (peak);
+	        
+	        if(lvolume < 0.9f) {
+	            attl = att;
+	            rell = rel;
+	        } else if (lvolume < 1.0f) {
+	            attl = att + ((1.0f - att)*(lvolume - 0.9f)*10.0f);	//dynamically change attack time for limiting mode
+	            rell = rel/(1.0f + (lvolume - 0.9f)*9.0f);  //release time gets longer when signal is above limiting
+	        } else {
+	            attl = 1.0f;
+	            rell = rel*0.1f;
+	        }
+
+	        if (ldelta > lvolume)
+	            lvolume = attl * ldelta + (1.0f - attl)*lvolume;
+	        else
+	            lvolume = rell*ldelta + (1.0f - rell)*lvolume;
+
+	        lvolume_db = rap2dB (lvolume);
+
+	        if (lvolume_db < thres_db) {
+	            boost = outlevel;
+	        } else if (lvolume_db < thres_mx) { //knee region
+	            eratio = 1.0f + (kratio-1.0f)*(lvolume_db-thres_db)* coeff_knee;
+	            boost =   outlevel*dB2rap(thres_db + (lvolume_db-thres_db)/eratio - lvolume_db);
+	        } else {
+	            boost = outlevel*dB2rap(thres_db + coeff_kk + (lvolume_db-thres_mx)*coeff_ratio - lvolume_db);
+	        }
+
+	        if ( boost < MIN_GAIN) boost = MIN_GAIN;
+	        gain_t = .4f * boost + .6f * boost_old;
+	        out.put(out.get(z) + (val * gain_t));
+            boost_old = boost;
+	    }
+	}
+ 
 	
 }

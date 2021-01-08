@@ -4,19 +4,20 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/** default amplitude returns queries between 0 and 100 */
+/** A calculated sin wave LFO.  Default amplitude returns queries between 0 and 100 */
 @Data @NoArgsConstructor @AllArgsConstructor
 public class LFO {
 	
+	private boolean active;
+	
 	/** in kilohertz (msec per cycle). default: 1000 (1 per second)*/
-	private double frequency = 1000;
+	private double frequency = 666;
 	
 	/** align the wave on the jack frame buffer by millisecond */
 	private long shift;
 	
 	/** set output level of queries. default: 0 to 100. */
 	private double amplitude = 100;
-
 	
 	/** query the oscillator at a specific time, System.currentTimeMillis(), for example. */
 	public double query(long millis) {

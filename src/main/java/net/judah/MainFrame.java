@@ -12,18 +12,17 @@ import lombok.extern.log4j.Log4j;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.MenuBar;
-import net.judah.util.SheetMusicTest;
 
 @Log4j
 public class MainFrame extends JFrame {
 	
 	private static MainFrame instance;
+	private final JPanel left;
 	@Getter private final MixerPane right;
-	
+	@Getter private final MenuBar menu;
 	private final JTabbedPane tabs;
 	private final JPanel content;
 	private final String prefix;
-	private final JPanel left;
 	
 	MainFrame(String name) {
 		super(name);
@@ -34,7 +33,8 @@ public class MainFrame extends JFrame {
 		prefix = name;
 		
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setJMenuBar(new MenuBar());
+        menu = new MenuBar(); 
+        setJMenuBar(menu);
         content = (JPanel)getContentPane();
         content.setLayout(new BoxLayout(content, BoxLayout.X_AXIS));
         
@@ -49,13 +49,13 @@ public class MainFrame extends JFrame {
         
         content.add(left);
         right = new MixerPane();
+        menu.setMixerPane(right);
         content.add(right);
 
         invalidate();
         setLocation(30, 30);
         setSize(1050, 600); // setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);  
         setVisible(true);
-
 	}
 	
 	public void closeTab(SongPane c) {
@@ -74,9 +74,9 @@ public class MainFrame extends JFrame {
 		
 		invalidate();
 		
-		if (page.getSequencer().getSheetMusic() != null) {
-			new SheetMusicTest(page.getSequencer().getSheetMusic()).setVisible(true);
-		}
+//		if (page.getSequencer().getSheetMusic() != null) {
+//			new SheetMusicTest(page.getSequencer().getSheetMusic()).setVisible(true);
+//		}
 
 	}
 	

@@ -102,11 +102,11 @@ public class StageCommands {
     		}
 
     		if (data1 == MPK.PEDAL.get(1)) { // mute Loop A foot pedal
-    			getLooper().get(0).mute(midi.getData2() > 0);
+    			getLooper().get(0).setOnMute(midi.getData2() > 0);
     			return true;
     		}
     		if (data1 == MPK.PEDAL.get(2)) { // mute Loop B foot pedal
-    			getLooper().get(1).mute(midi.getData2() > 0);
+    			getLooper().get(1).setOnMute(midi.getData2() > 0);
     			return true;
     		}
     		

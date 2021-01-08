@@ -1,8 +1,12 @@
 package net.judah.util;
 
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.event.KeyListener;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -88,6 +92,14 @@ public class Constants {
     	public static final Font FONT10 = new Font("Arial", Font.PLAIN, 10);
     	public static final Font FONT9 = new Font("Arial", Font.PLAIN, 9);
     	public static final Border GRAY1 = new LineBorder(Color.GRAY, 1);
+    	public static Dimension SLIDER_SZ = new Dimension(90, 40);
+		public static void attachKeyListener(Container p, KeyListener l) {
+			for(Component c : p.getComponents()) {
+				c.addKeyListener(l);
+				if (c instanceof Container)
+					attachKeyListener((Container)c, l);
+			}
+		}
     }
 
 	public static final Midi BASSDRUM;

@@ -23,13 +23,31 @@ public class Looper extends ArrayList<Sample> {
 	
 	private final List<JackPort> outports;
 	@Getter private DrumTrack drumtrack; 
+	private LooperGui gui;
 	
     @Override
 	public boolean add(Sample s) {
 		s.setOutputPorts(outports);
+		if (gui != null)
+			gui.addSample(s);
 		return super.add(s);
     }
-	
+    
+    @Override
+	public boolean remove(Object o) {
+    	if (o instanceof Sample == false) return false;
+    	if (gui != null)
+    		gui.removeSample((Sample)o);
+		return super.remove(o);
+	}
+    
+    @Override public void clear() {
+    	if (gui != null)
+    		gui.removeAll();
+    	drumtrack = null;
+		super.clear();
+	}
+    
 	public void stopAll() {
 		for (Sample s : this) {
 			if (s instanceof Recorder) 
@@ -75,10 +93,10 @@ public class Looper extends ArrayList<Sample> {
 	}
 	
 	/** in Real-Time thread */
-	public void process(int nframes) {
+	public void process() {
 		// do any recording or playing
 		for (Sample sample : this) {
-			sample.process(nframes);
+			sample.process();
 		}
 	}
 
@@ -93,21 +111,20 @@ public class Looper extends ArrayList<Sample> {
 
 	public void drumtrack() {
 
-		for (Sample s : this) 
-			if (s.getName().equals(DrumTrack.NAME)) {
-				s.clear();
-				MixerPane.getInstance().removeSample(drumtrack);
-				drumtrack = null;
-				Console.info("drumtrack off");
-				return;
-
-			}
+		if (drumtrack != null) {
+			remove(drumtrack);
+			drumtrack = null;
+			Console.info("drumtrack off");
+			return;
+		}
 		
 		drumtrack = new DrumTrack(get(0), JudahZone.getChannels().getDrums());				
 		add(drumtrack);
-		MixerPane.getInstance().addSample(drumtrack);
-		
-		Console.info("drumtrack");
+		Console.info("drumtrack created.");
+	}
+
+	public void registerListener(LooperGui looperGui) {
+		gui = looperGui;
 	}
 	
 }

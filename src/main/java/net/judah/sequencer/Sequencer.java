@@ -191,7 +191,7 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 			clock.end();
 		}
 		JudahZone.getLooper().stopAll();
-		count = 0;
+		count = -1;
 	}
 	
 	@Override public void run() { // Thread
@@ -213,9 +213,14 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 		if (Property.TRANSPORT == prop) {
 			if (value == JackTransportState.JackTransportStarting) {
 				if (control == ControlMode.INTERNAL) {
-					if (clock == null) clock = new SeqClock(this);
 					JudahZone.getMetronome().removeListener(this);
-					clock.start();
+					try {
+						if (clock == null) clock = new SeqClock(this);
+						else {
+							clock = new SeqClock(this, clock.getIntro(), clock.getSteps());
+						}
+						clock.start();
+					} catch (Exception e) { Console.warn(e); }
 				}
 			}
 			else if (value == JackTransportState.JackTransportStopped)

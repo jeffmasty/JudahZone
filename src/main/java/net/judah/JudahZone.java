@@ -18,6 +18,7 @@ import lombok.extern.log4j.Log4j;
 import net.judah.api.BasicClient;
 import net.judah.api.Service;
 import net.judah.fluid.FluidSynth;
+import net.judah.looper.Sample;
 import net.judah.metronome.Metronome;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
@@ -141,6 +142,8 @@ public class JudahZone extends BasicClient {
 		commands.initializeCommands();
 		new MainFrame(JUDAHZONE);
 		
+		channels.initVolume();
+		
 		// Open a default song 
 		File file = new File("/home/judah/git/JudahZone/resources/Songs/LoveStory");
 		try {
@@ -148,6 +151,7 @@ public class JudahZone extends BasicClient {
 		} catch (Exception e) { 
 			Console.warn(e.getMessage() + " " + file.getAbsolutePath(), e); }
 
+		
 	}
 	
 	private class ShutdownHook extends Thread {
@@ -183,8 +187,23 @@ public class JudahZone extends BasicClient {
 		}
 
 		// get looper in on process()
-		looper.process(nframes);
+		looper.process();
 		return true;
+	}
+
+	/** called every MidiScheduler.LFO_PULSE jack frames */
+	public static void lfoPulse() {
+		
+		for (Channel ch : channels)
+			if (ch.getLfo().isActive())
+				new Thread() { @Override public void run() {
+					ch.setVolume((int)ch.getLfo().query());
+				}}.start();
+		for (Sample s : looper) 
+			if (s.getLfo().isActive())
+				new Thread() { @Override public void run() {
+					s.setVolume((int)s.getLfo().query());
+				}}.start();
 	}
 
 }
