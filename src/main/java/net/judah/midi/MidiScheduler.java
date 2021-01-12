@@ -7,9 +7,10 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
-import net.judah.JudahZone;
 import net.judah.api.Midi;
 import net.judah.api.MidiQueue;
+import net.judah.mixer.bus.Fader;
+import net.judah.mixer.bus.LFO;
 import net.judah.sequencer.MidiEvent;
 import net.judah.sequencer.MidiTrack;
 import net.judah.util.Console;
@@ -40,7 +41,8 @@ public class MidiScheduler extends MidiTrack implements Runnable {
 			try {
 				current = offering.take();
 				if (current % LFO_PULSE == 0) 
-					JudahZone.lfoPulse(); // query any running LFOs
+					LFO.pulse(); // query any running LFOs
+					Fader.pulse();
 				
 				if (isEmpty()) continue;
 				e = get(0);

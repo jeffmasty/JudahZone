@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import net.judah.api.Command;
 import net.judah.api.Service;
 import net.judah.midi.MidiListener;
-import net.judah.mixer.MixerCommands;
+import net.judah.mixer.MixCommands;
 import net.judah.sequencer.SeqCommands;
 
 @RequiredArgsConstructor  
@@ -21,7 +21,7 @@ public class CommandHandler {
 		for (Service s : JudahZone.getServices()) 
 			available.addAll(s.getCommands());
 		available.addAll(new SeqCommands());
-		available.addAll(new MixerCommands());
+		available.addAll(new MixCommands());
 		available.sort((p1, p2) -> p1.getName().compareTo(p2.getName()));
 	}
 

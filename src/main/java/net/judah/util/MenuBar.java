@@ -1,7 +1,6 @@
 package net.judah.util;
 
 import static java.awt.event.KeyEvent.*;
-import static org.jaudiolibs.jnajack.JackTransportState.*;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -17,24 +16,23 @@ import net.judah.JudahZone;
 import net.judah.Looper;
 import net.judah.MainFrame;
 import net.judah.MixerPane;
-import net.judah.api.TimeListener.Property;
 import net.judah.jack.AudioMode;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
 import net.judah.mixer.Channel;
-import net.judah.mixer.Compression;
-import net.judah.mixer.MixerBus;
-import net.judah.mixer.EffectsGui;
-import net.judah.mixer.Reverb;
+import net.judah.mixer.LineIn;
+import net.judah.mixer.SoloTrack;
 import net.judah.sequencer.Sequencer;
 import net.judah.song.Song;
 
 @Log4j
 public class MenuBar extends JMenuBar implements KeyListener {
+	
 	private static final int ASCII_ONE = 49;
+	private static MenuBar instance;
 	
 	private MixerPane mixer;
-	private EffectsGui focus;
+	private SoloTrack focus;
 	private Channels channels;
 	private Looper looper;
 	
@@ -48,7 +46,7 @@ public class MenuBar extends JMenuBar implements KeyListener {
     JMenuItem exit = new JMenuItem("Exit");
     JMenuItem metronome = new JMenuItem("Metronome");
 	
-	public MenuBar() {
+	private MenuBar() {
 
 		fileMenu.setMnemonic(KeyEvent.VK_F);
         load.addActionListener( (event) -> load());
@@ -132,9 +130,11 @@ public class MenuBar extends JMenuBar implements KeyListener {
 	
 	@Override public void keyPressed(KeyEvent e) {
 		int code = e.getKeyCode();
-		
 
 		switch(code) {
+		
+			case VK_ESCAPE: JudahZone.getMasterTrack().setOnMute(
+					!JudahZone.getMasterTrack().isOnMute());return;
 			case VK_F1: mixer.setFocus(channels.get(0)); return;
 			case VK_F2: mixer.setFocus(channels.get(1)); return;
 			case VK_F3: mixer.setFocus(channels.get(2)); return;
@@ -143,30 +143,22 @@ public class MenuBar extends JMenuBar implements KeyListener {
 			case VK_F6: mixer.setFocus(channels.get(5)); return;
 			case VK_F9: if (Sequencer.getCurrent() != null) Sequencer.getCurrent().getPage().reload(); return;
 			case VK_F10: /* used by MenuBar */ return;
-			case VK_F11: transport(); return; 
+			case VK_F11: Sequencer.transport(); return; 
 			case VK_UP: volume(true); return;
 			case VK_DOWN: volume(false); return;
 			case VK_LEFT: nextChannel(false); return;
 			case VK_RIGHT: nextChannel(true); return;
 			case VK_SPACE: case VK_M: mute(); return;
 			case VK_ENTER: enterKey(); return;
-			case VK_F: lfo(); return;
-			
-	        /*case KeyEvent.VK_LEFT:*/
-		}
-		int ch = e.getKeyChar();
-		if (ch >= ASCII_ONE && ch < looper.size() + ASCII_ONE) {
-			mixer.setFocus(looper.get(ch - (ASCII_ONE) ));
-			return;
-		}
 
-		char key = e.getKeyChar();
-		switch(key) {
-			case ' ': Console.info("space bar."); break;
-			case 'x': { // zero out loop or mute channel record 
-				MixerBus bus = focus.getFocus();
-				if (bus instanceof Channel) 
-					((Channel)bus).setMuteRecord(!((Channel)bus).isMuteRecord());
+			case VK_Q: focus.getCutFilter().setActive(!focus.getCutFilter().isActive()); focus.update(); return;
+			case VK_C: focus.getCompression().setActive(!focus.getCompression().isActive()); focus.update(); return;
+			case VK_V: focus.getReverb().setActive(!focus.getReverb().isActive()); focus.update(); return;
+			case VK_F: focus.lfo(); return;			
+			case VK_X: { // zero out loop or mute channel record 
+				Channel bus = focus.getFocus();
+				if (bus instanceof LineIn) 
+					((LineIn)bus).setMuteRecord(!((LineIn)bus).isMuteRecord());
 				else if (bus instanceof Sample) {
 					Sample s = (Sample)bus;
 					s.setRecording(new Recording(s.getRecording().size(), 
@@ -174,17 +166,14 @@ public class MenuBar extends JMenuBar implements KeyListener {
 				}
 				focus.update();
 				break; }
-			case 'c': // Compression
-				Compression comp = focus.getFocus().getCompression();
-				comp.setActive(!comp.isActive());
-				focus.update();
-				break; 
-			case 'v': // Reverb
-				Reverb rev = focus.getFocus().getReverb();
-				rev.setActive(!rev.isActive());
-				focus.update();
-				break;
 		}
+		
+		int ch = e.getKeyChar(); // 1 to sampleCount pressed, focus on specific loop idx
+		if (ch >= ASCII_ONE && ch < looper.size() + ASCII_ONE) {
+			mixer.setFocus(looper.get(ch - (ASCII_ONE) ));
+			return;
+		}
+
 	}
 
 	private void enterKey() {
@@ -193,8 +182,8 @@ public class MenuBar extends JMenuBar implements KeyListener {
 			((Sample)focus.getFocus()).play(
 					((Sample)focus.getFocus()).isPlaying() != AudioMode.RUNNING);
 		else  
-			((Channel)focus.getFocus()).setMuteRecord(
-					!((Channel)focus.getFocus()).isMuteRecord());
+			((LineIn)focus.getFocus()).setMuteRecord(
+					!((LineIn)focus.getFocus()).isMuteRecord());
 	}
 	
 	private void mute() {
@@ -203,7 +192,7 @@ public class MenuBar extends JMenuBar implements KeyListener {
 	}
 	
 	private void volume(boolean up) {
-		MixerBus bus = focus.getFocus();
+		Channel bus = focus.getFocus();
 		int vol = bus.getVolume();
 		vol += up? 5 : -5;
 		if (vol > 100) vol = 100;
@@ -211,21 +200,9 @@ public class MenuBar extends JMenuBar implements KeyListener {
 		bus.setVolume(vol);
 	}
 
-	private void lfo() {
-		focus.getFocus().getLfo().setActive(!focus.getFocus().getLfo().isActive());
-		focus.update();
-	}
-	
-	private void transport() {
-		Sequencer seq = Sequencer.getCurrent();
-		if (seq == null) return;
-		Console.info("tranpsort " + !seq.isRunning());
-		seq.update(Property.TRANSPORT, seq.isRunning() ? JackTransportStopped : JackTransportStarting);
-	}
-	
 	private void nextChannel(boolean toRight) {
-		MixerBus bus = focus.getFocus();
-		if (bus instanceof Channel) {
+		Channel bus = focus.getFocus();
+		if (bus instanceof LineIn) {
 			int i = channels.indexOf(bus);
 			if (toRight) {
 				if (i == channels.size() -1) {
@@ -262,7 +239,12 @@ public class MenuBar extends JMenuBar implements KeyListener {
 		mixer = mixerPane;
 		channels = JudahZone.getChannels();
 		looper = JudahZone.getLooper();
-		focus = EffectsGui.getInstance();
+		focus = SoloTrack.getInstance();
+	}
+
+	public static MenuBar getInstance() {
+		if (instance == null) instance = new MenuBar();
+		return instance;
 	}
 	
 	

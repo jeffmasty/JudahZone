@@ -1,4 +1,4 @@
-package net.judah.mixer;
+package net.judah.mixer.bus;
 
 import java.nio.FloatBuffer;
 
@@ -52,10 +52,12 @@ import net.judah.util.RTLogger;
  * buffers may be the same.
  * @author Neil C Smith (derived from code by Karl Helgason)
  */
-public class EQ {
-// TODO https://github.com/T-5dotEU/ladspa-t5-plugins
-// TODO https://github.com/adiblol/jackiir
-// TODO https://github.com/Dragerus/parametricEQ-jack
+public class CutFilter {
+	// More options:
+	// TODO https://github.com/adiblol/jackiir (used as java class EQ)
+	// TODO https://github.com/T-5dotEU/ladspa-t5-plugins
+	// TODO https://github.com/Dragerus/parametricEQ-jack
+	// TODO	https://github.com/hathagat/Equalizer
 	
     @RequiredArgsConstructor @Getter
     public static enum Type {
@@ -66,21 +68,33 @@ public class EQ {
         NP12("12dB two pole notch pass"), 
         LP24("24dB four pole low pass"), 
         HP24("24dB four pole high pass"),
-        // pArTy("low freq low pass, high freq hi pass")
+        pArTy("low freq low pass, high freq hi pass")
         ;
-        
         private final String description;
     };
-
+    private static final int PARTY_FREQUENCY = 420;
+    
     /** y = 1/30 * x ^ 2.81 + bassFloor */
 	public static float knobToFrequency(int val) { 
-		return (float)(0.033333 * Math.pow(val, 2.81)) + 70f;
+		return (float)(0.033333 * Math.pow(val, 2.81)) + 80f;
+		
 	}
 	
 	public static int frequencyToKnob(float freq) {
-		return (int)Math.round(30 * Math.pow(freq, 0.35587)) - 70;
+		//return Math.round(30 * Math.)
+		return (int)Math.round(  30 * ((Math.log1p(freq))/ 2.81 * 1.97)) - 95;
 	}
 
+	public static void main2(String[] args) {
+		System.out.println("knob 10 = " + knobToFrequency(10));
+		System.out.println("knob 50 = " + knobToFrequency(50));
+		System.out.println("knob 90 = " + knobToFrequency(90));
+		
+		System.out.println("91.52159hz = " + frequencyToKnob(91.52159f));
+		System.out.println("2051.4363hz = " + frequencyToKnob(2051.4363f));
+		System.out.println("10404.652hz = " + frequencyToKnob(10404.652f));
+	}
+	
     private final double sampleRate;
     private final int bufferSize;
     
@@ -91,14 +105,15 @@ public class EQ {
     
     @Getter private Type filterType = Type.BP12;
     @Setter @Getter private boolean active;
-    private double freqeuncy = 750.;
+    private double freqeuncy = 650.;
     private double resonancedB = 12.;
+    private Type oldParty;
 
-	public EQ() {
+	public CutFilter() {
     	this(Constants._SAMPLERATE, Constants._BUFSIZE);
     }
 
-    public EQ(int sampleRate, int bufferSize) {
+    public CutFilter(int sampleRate, int bufferSize) {
     	this.sampleRate = sampleRate;
     	this.bufferSize = bufferSize;
     	eq1.reset();
@@ -142,13 +157,16 @@ public class EQ {
         if (this.filterType == filtertype) return;
         this.filterType = filtertype;
         eq1.dirty = eq2.dirty = true;
-        
+        if (filterType == Type.pArTy) {
+        	oldParty = freqeuncy <= PARTY_FREQUENCY ? Type.LP12 : Type.HP12;
+        }
         RTLogger.log(this, "filter type: " + filterType);
-        
     }
+    
 
     /** process replace mono */
     public void process(FloatBuffer mono, float gain) {
+    	mono.rewind();
         switch (filterType) {
         case LP6:
     		eq1.filter1Replace(mono, gain);
@@ -163,11 +181,17 @@ public class EQ {
         case HP24:
         	eq1.filter4Replace(mono, gain);
             break;
+        case pArTy: 
+        	checkParty();
+        	eq1.filter2Replace(mono, gain * 2.5f);
+        	break;
         }
     }
     
     /** process replace stereo */
     public void process(FloatBuffer left, FloatBuffer right, float gain) {
+    	left.rewind();
+    	right.rewind();
         switch (filterType) {
         case LP6:
     		eq1.filter1Replace(left, gain);
@@ -185,10 +209,28 @@ public class EQ {
         	eq1.filter4Replace(left, gain);
         	eq2.filter4Replace(right, gain);
             break;
+        case pArTy: 
+        	checkParty();
+        	eq1.filter2Replace(left, gain * 2.5f);
+        	eq2.filter2Replace(right, gain * 2.5f);
         }
     	
     }
     
+    private void checkParty() {
+		if (freqeuncy <= PARTY_FREQUENCY) {
+			if (oldParty != Type.LP12) {
+				eq1.dirty = eq2.dirty = true;
+				oldParty = Type.LP12;
+			}
+		}
+		else {
+			if (oldParty != Type.HP12) {
+				eq1.dirty = eq2.dirty = true;
+				oldParty = Type.HP12;
+			}
+		}
+    }
     
     
     class IIRFilter {
@@ -588,7 +630,8 @@ public class EQ {
 	            this.a2 = (_b2 * cf);
 	        }
 	
-	        if (filterType == Type.LP12 || filterType == Type.LP24) {
+	        if (filterType == Type.LP12 || filterType == Type.LP24 ||
+	        		(filterType == Type.pArTy && freqeuncy <= PARTY_FREQUENCY)) {
 	            double r = (freqeuncy / sampleRate);
 	            if (r > 0.45) {
 	                if (wet == 0) {
@@ -621,7 +664,8 @@ public class EQ {
 	
 	        }
 	
-	        if (filterType == Type.HP12 || filterType == Type.HP24) {
+	        if (filterType == Type.HP12 || filterType == Type.HP24 ||
+	        		(filterType == Type.pArTy && freqeuncy > PARTY_FREQUENCY)) {
 	            double r = (freqeuncy / sampleRate);
 	            if (r > 0.45) {
 	                r = 0.45;
@@ -1004,7 +1048,6 @@ public class EQ {
 	    
 	    
 	    protected void filter1Replace(FloatBuffer data, float vol) {
-	    // protected void filter1Replace(float[] in, float[] out) {
 	
 	        if (dirty) {
 	            filter1calc();

@@ -23,13 +23,6 @@ public abstract class Command {
 	@Getter protected final String description;
 	@Getter protected final HashMap<String, Class<?>> template;
 
-//	public Command(String name, Service service, HashMap<String, Class<?>> props, String description) {
-//		this.name = name;
-//		this.description = description;
-//		this.service = service;
-//		this.props = props;
-//	}
-
 	public Command(String name, String description) {
 		this(name, description, new HashMap<String, Class<?>>());
 	}
@@ -66,7 +59,8 @@ public abstract class Command {
 	@Override
 	public String toString() {
 		return name;
-		// return "Command [name=" + name + ", service=" + service.getServiceName() + " " + props.values().size() + " properties.";
+		// return "Command [name=" + name + ", service=" + service.getServiceName() 
+		// + " " + props.values().size() + " properties.";
 	}
 
 	@SuppressWarnings("rawtypes")

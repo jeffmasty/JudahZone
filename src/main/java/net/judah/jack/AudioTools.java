@@ -207,6 +207,13 @@ public class AudioTools  {
 			out[z] = in[z] * vol;
 	}
 
+	public static void processGain(FloatBuffer buffer, float gain) {
+		buffer.rewind();
+		for (z = 0; z < Constants._BUFSIZE; z++)
+			buffer.put(buffer.get(z) * gain);
+		
+	}
+
 
 }
 

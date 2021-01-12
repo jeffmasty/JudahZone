@@ -6,6 +6,8 @@ import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +17,6 @@ import javax.swing.JComponent;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j;
 
 /**<a href="https://github.com/mploof/JKnobFancy">From Michael Ploof on Github</a><br/><br/>
 * JFancyKnob.java - 
@@ -40,7 +41,6 @@ import lombok.extern.log4j.Log4j;
 *
 * @author Michael ploof
 */
-@Log4j
 public class Knob extends JComponent{
 	private static final long serialVersionUID = -3331634859451614043L;
 	
@@ -242,7 +242,7 @@ public class Knob extends JComponent{
 		
 		ImageIcon knobIcon = new ImageIcon(loader.getResource("knob.png"));
 		ImageIcon knobHandle = new ImageIcon(loader.getResource("knobhandle.png"));
-		init(90, new Point2D.Double(0.5, 0.5), 0.5, knobIcon, 25, knobHandle);
+		init(90, new Point2D.Double(0.5, 0.5), 0.5, knobIcon, 30, knobHandle);
 		setCwDirection(true);
 		setMinPos(220);
 		setMaxPos(320);
@@ -253,6 +253,21 @@ public class Knob extends JComponent{
 				 listener.knobChanged(getHandle(0).getVal());
 				 moveHandles(e);
 			 }
+		});
+		addMouseWheelListener(new MouseWheelListener() {
+			@Override public void mouseWheelMoved(MouseWheelEvent e) {
+				int notches = e.getWheelRotation();
+				int target = 0;
+				if (notches < 0) {
+					target = getValue() + 5; // responsive
+					if (target > getMaxVal()) target = getMaxVal();
+				}
+				else {
+					target = getValue() - 2;
+					if (target < getMinVal()) target = getMinVal();
+				}
+				listener.knobChanged(target);
+			}
 		});
 		
 	}
@@ -379,6 +394,7 @@ public class Knob extends JComponent{
 				 moveHandles(e);				
 			 }
 		});
+		
 	 }
 	 
 	 public int getValue() {

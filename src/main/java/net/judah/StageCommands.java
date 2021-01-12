@@ -4,10 +4,10 @@ import static net.judah.JudahZone.*;
 
 import net.judah.api.Midi;
 import net.judah.looper.Recorder;
-import net.judah.mixer.Channel;
-import net.judah.mixer.Plugin;
+import net.judah.mixer.LineIn;
 import net.judah.plugin.BeatBuddy;
 import net.judah.plugin.MPK;
+import net.judah.plugin.Plugin;
 import net.judah.util.Console;
 
 public class StageCommands {
@@ -18,7 +18,7 @@ public class StageCommands {
     	if (midi.isCC()) {
     		int data1 = midi.getData1();
     		
-    		for (Channel c : getChannels()) {
+    		for (LineIn c : getChannels()) {
     			if (data1 == c.getDefaultCC()) {
     				c.setVolume(midi.getData2());
     				return true;
@@ -38,11 +38,9 @@ public class StageCommands {
     		// TODO tie with beat buddy volume
     		if (data1 == MPK.KNOBS.get(6)) {
     			getChannels().getDrums().setVolume(midi.getData2());
-    			if (getLooper().getDrumtrack() != null) 
-    				getLooper().getDrumtrack().setVolume(midi.getData2());
+    			if (getLooper().getDrumTrack() != null) 
+    				getLooper().getDrumTrack().setVolume(midi.getData2());
     			return true;
-    			
-    			
 			}
     		
     		if (data1 == 31) {// record loop A cc pad
@@ -65,7 +63,9 @@ public class StageCommands {
     			getLooper().stopAll();
     			new Thread() {
     				@Override public void run() {
-    					getLooper().init(); 
+    					getLooper().clear();
+    					getLooper().defaultLoops(); 
+    					getLooper().getDrumTrack().toggle();
     				}
     			}.start();
     			return true;
@@ -81,14 +81,14 @@ public class StageCommands {
     		
     		// play beat buddy
     		if (data1 == 37 && midi.getData2() > 0) {
-    			getDrummachine().setOut(JudahZone.getMidi().getDrums());
     			getDrummachine().play();
+				//JudahZone.getDrummachine().setQueue(BeatBuddy.PLAY_MIDI);
     			return true;
     		}
 
     		
     		if (data1 == 38 && midi.getData2() > 0) { // setup a drumtrack slave loop
-    			getLooper().drumtrack();
+    			getLooper().getDrumTrack().toggle();
     			return true;
     		}
 
@@ -105,14 +105,18 @@ public class StageCommands {
     			getLooper().get(0).setOnMute(midi.getData2() > 0);
     			return true;
     		}
-    		if (data1 == MPK.PEDAL.get(2)) { // mute Loop B foot pedal
-    			getLooper().get(1).setOnMute(midi.getData2() > 0);
+    		if (data1 == MPK.PEDAL.get(2) && midi.getData2() > 0) { // mute Loop B foot pedal
+    			Console.info("foot pedal 3");
+    			JudahZone.getDrummachine().send(BeatBuddy.CYMBOL, 100);
     			return true;
     		}
     		
-    		if (data1 == MPK.PEDAL.get(3) && midi.getData2() > 0) { // let's hear some cymbols
-    			getMidi().queue(BeatBuddy.CYMBOL_HIT);
+    		if (data1 == MPK.PEDAL.get(3) ) {
+    			Console.info("foot pedal 3");
+    			if (midi.getData2() > 0) { // let's hear some cymbols
+    			JudahZone.getDrummachine().send(BeatBuddy.VOLUME, 0);
     			return true;
+    			}
     		}
     		if (data1 == MPK.PEDAL.get(4)) { // record Loop B foot pedal
     			((Recorder)getLooper().get(1)).record(midi.getData2() > 0);

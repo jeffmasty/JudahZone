@@ -5,7 +5,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 
 import net.judah.JudahZone;
-import net.judah.mixer.Plugin;
 import net.judah.util.Console;
 
 public class PluginGui extends JPanel {

@@ -24,6 +24,7 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.Looper;
+import net.judah.MixerPane;
 import net.judah.api.Midi;
 import net.judah.fluid.FluidSynth;
 import net.judah.jack.ProcessAudio;
@@ -49,6 +50,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 	private static final String routerHelp = "router - prints current midi translations";
 	private static final String routeHelp = "route/unroute channel fromChannel# toChannel#";
 	private static final String activeHelp ="active - prints the current sequencer command from the top of the stack.";
+	private static final String buddyHelp = "buddy intCmd intValue or buddy songNum";
 	
 	private static Console instance;
 	public static Console getInstance() {
@@ -219,6 +221,19 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 			unroute(input);
 		else if (text.equals("active"))
 			Console.info("" + Sequencer.getCurrent().getActive());
+		else if (text.equals("buddy"))
+			try { 
+			if (input.length == 2) 
+				JudahZone.getDrummachine().song(Integer.parseInt(input[1]));
+			else if (input.length == 3)
+				JudahZone.getDrummachine().send(
+					Integer.parseInt(input[1]), Integer.parseInt(input[2]));
+			} catch (Throwable t) { Console.info(buddyHelp);}
+		else if (text.equals("update")) { 
+			MixerPane.getInstance().update();
+			Console.info("...updated");
+		}
+			
 		else if (text.equals("test")) {
 			test();
 		}
@@ -242,6 +257,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 		addText(midiPlay);
 		addText(listenHelp);
 		addText(activeHelp);
+		addText(buddyHelp);
 		addText("fluid help");
 		
 	}

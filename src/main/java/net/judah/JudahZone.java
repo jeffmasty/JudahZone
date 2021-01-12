@@ -18,14 +18,16 @@ import lombok.extern.log4j.Log4j;
 import net.judah.api.BasicClient;
 import net.judah.api.Service;
 import net.judah.fluid.FluidSynth;
-import net.judah.looper.Sample;
 import net.judah.metronome.Metronome;
 import net.judah.midi.JudahMidi;
-import net.judah.mixer.Channel;
+import net.judah.mixer.LineIn;
+import net.judah.mixer.MasterTrack;
+import net.judah.mixer.bus.Fader;
 import net.judah.plugin.BeatBuddy;
 import net.judah.plugin.Carla;
 import net.judah.sequencer.Sequencer;
 import net.judah.util.Console;
+import net.judah.util.Icons;
 import net.judah.util.RTLogger;
 import net.judah.util.Services;
 
@@ -48,7 +50,8 @@ public class JudahZone extends BasicClient {
     @Getter private static final Services services = new Services();
     @Getter private static final CommandHandler commands = new CommandHandler(); 
     
-	@Getter private static final Channels channels = new Channels();
+	@Getter private static MasterTrack masterTrack;
+    @Getter private static final Channels channels = new Channels();
 	@Getter private static final Looper looper = new Looper(outPorts);
 	@Getter private static final Plugins plugins = new Plugins();
 	
@@ -89,7 +92,7 @@ public class JudahZone extends BasicClient {
 	@Override
 	protected void initialize() throws JackException {
 		JackPort port;
-		for (Channel ch : channels) {
+		for (LineIn ch : channels) {
 			port = jackclient.registerPort(ch.getLeftConnection(), AUDIO, JackPortIsInput);
 			ch.setLeftPort(port);
 			inPorts.add(port);
@@ -104,9 +107,11 @@ public class JudahZone extends BasicClient {
 			outPorts.add(jackclient.registerPort(name, AUDIO, JackPortIsOutput));
 		outL = outPorts.get(LEFT_CHANNEL);
 		outR = outPorts.get(RIGHT_CHANNEL);
+		masterTrack = new MasterTrack(outL, outR);
+		masterTrack.setIcon(Icons.load("Speakers.png"));
 		
 		String debug = "channels: ";
-		for (Channel ch : channels)
+		for (LineIn ch : channels)
 			debug += ch.getName() + " "; 
 		log.debug(debug);
 		
@@ -117,7 +122,7 @@ public class JudahZone extends BasicClient {
 			plugins.addAll(carla.getPlugins());
 			
 		} catch (Exception e) { throw new JackException(e); }
-		
+
 		looper.init();
     	
 	}
@@ -125,7 +130,7 @@ public class JudahZone extends BasicClient {
 	@Override
 	protected void makeConnections() throws JackException {
 		// inputs
-		for (Channel ch : channels) {
+		for (LineIn ch : channels) {
 			if (ch.getLeftSource() != null && ch.getLeftConnection() != null)
 				jack.connect(jackclient, ch.getLeftSource(), 
 						prefixClient(ch.getLeftConnection()));
@@ -151,11 +156,15 @@ public class JudahZone extends BasicClient {
 		} catch (Exception e) { 
 			Console.warn(e.getMessage() + " " + file.getAbsolutePath(), e); }
 
-		
+		// Fader.execute(Fader.fadeOut(4000));
+		masterTrack.setOnMute(false);
+		Fader.execute(Fader.fadeIn());
+		MixerPane.getInstance().update();
 	}
 	
 	private class ShutdownHook extends Thread {
 		@Override public void run() {
+			masterTrack.setOnMute(true);
 			if (Sequencer.getCurrent() != null) 
 				Sequencer.getCurrent().close();
 			
@@ -170,13 +179,14 @@ public class JudahZone extends BasicClient {
 	
 	@Override
 	public boolean process(JackClient client, int nframes) {
-		
+
 		// channels and looper will be additive
 		processSilence(outL.getFloatBuffer());
 		processSilence(outR.getFloatBuffer());
+		if (masterTrack == null || masterTrack.isOnMute()) return true;		
 		
 		// mix the live stream 
-		for (Channel ch : channels) {
+		for (LineIn ch : channels) {
 			if (ch.isOnMute()) continue;
 			ch.process(); // calc gain/compression for both live mix and loopers
 			processAdd(ch.getLeftPort().getFloatBuffer(), outL.getFloatBuffer());
@@ -188,22 +198,9 @@ public class JudahZone extends BasicClient {
 
 		// get looper in on process()
 		looper.process();
-		return true;
-	}
-
-	/** called every MidiScheduler.LFO_PULSE jack frames */
-	public static void lfoPulse() {
 		
-		for (Channel ch : channels)
-			if (ch.getLfo().isActive())
-				new Thread() { @Override public void run() {
-					ch.setVolume((int)ch.getLfo().query());
-				}}.start();
-		for (Sample s : looper) 
-			if (s.getLfo().isActive())
-				new Thread() { @Override public void run() {
-					s.setVolume((int)s.getLfo().query());
-				}}.start();
+		masterTrack.process();
+		return true;
 	}
 
 }

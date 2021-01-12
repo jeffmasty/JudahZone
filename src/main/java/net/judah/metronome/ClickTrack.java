@@ -50,7 +50,7 @@ public class ClickTrack extends Command {
 	@Override
 	public void execute(final HashMap<String, Object> props, int midiData2) {
 		log.warn("Click Track execute: " + Constants.prettyPrint(props));
-		int channel = MidiSetup.OUT.DRUMS.channel;
+		int channel = MidiSetup.OUT.DRUMS_OUT.channel;
 		try {
 			channel = Integer.parseInt("" + props.get(CHANNEL));
 		} catch (NumberFormatException e) { /** default use channel 9 */}

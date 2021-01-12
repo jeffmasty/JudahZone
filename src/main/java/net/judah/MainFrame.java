@@ -19,7 +19,6 @@ public class MainFrame extends JFrame {
 	private static MainFrame instance;
 	private final JPanel left;
 	@Getter private final MixerPane right;
-	@Getter private final MenuBar menu;
 	private final JTabbedPane tabs;
 	private final JPanel content;
 	private final String prefix;
@@ -33,8 +32,7 @@ public class MainFrame extends JFrame {
 		prefix = name;
 		
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        menu = new MenuBar(); 
-        setJMenuBar(menu);
+        setJMenuBar(MenuBar.getInstance());
         content = (JPanel)getContentPane();
         content.setLayout(new BoxLayout(content, BoxLayout.X_AXIS));
         
@@ -49,12 +47,12 @@ public class MainFrame extends JFrame {
         
         content.add(left);
         right = new MixerPane();
-        menu.setMixerPane(right);
+        MenuBar.getInstance().setMixerPane(right);
         content.add(right);
 
         invalidate();
         setLocation(30, 30);
-        setSize(1050, 600); // setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);  
+        setSize(1150, 650); // setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);  
         setVisible(true);
 	}
 	

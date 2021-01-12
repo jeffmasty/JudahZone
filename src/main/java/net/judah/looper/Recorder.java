@@ -18,7 +18,7 @@ import net.judah.api.TimeListener.Property;
 import net.judah.jack.AudioMode;
 import net.judah.jack.RecordAudio;
 import net.judah.midi.JudahMidi;
-import net.judah.mixer.Channel;
+import net.judah.mixer.LineIn;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 
@@ -60,11 +60,11 @@ public class Recorder extends Sample implements RecordAudio {
 			isRecording.set(STARTING);
 			
 			listeners.forEach(listener -> {listener.update(Property.STATUS, Status.ACTIVE); });
-			
 			Console.addText(name + " recording starting");
 		} else if (active && (isPlaying.get() == RUNNING || isPlaying.get() == STARTING)) {
 			isRecording.set(STARTING);
 			Console.addText(name + " overdub starting");
+			
 		} else if (active && (recording != null || mode == STOPPED)) {
 			isRecording.set(STARTING);
 			Console.addText("silently overdubbing on " + name);
@@ -83,7 +83,7 @@ public class Recorder extends Sample implements RecordAudio {
 			isRecording.set(STOPPED);
 			Console.addText(name + " recording stopped, tape is " + recording.size() + " buffers long");
 		} 
-		
+		if (gui != null) gui.update();
 	}
 
 	@Override
@@ -111,31 +111,6 @@ public class Recorder extends Sample implements RecordAudio {
 		sample.startListeners();
 	}
 
-	// TODO
-	public void mute(String channel, boolean mute) {
-		Console.info("Mute Record Channel currently not implemented");
-//		for (MixerPort p : inputPorts) 
-//			if (p.getName().contains(channel)) {
-//				p.setOnLoop(!mute);
-//				
-//				log.info( (mute ? "Muted " : "Unmuted ") + p.getName() + " on recording track: " + getName());
-//			}
-	}
-
-	/** for process() thread */
-	private final boolean recording() {
-		isRecording.compareAndSet(STOPPING, STOPPED);
-			
-		if (isRecording.compareAndSet(STARTING, RUNNING)) {
-			_start = System.currentTimeMillis();
-		}
-
-		if (isRecording.get() == RUNNING)
-			for (Channel m : JudahZone.getChannels())
-				if (!m.isMuteRecord()) return true;
-		return false;
-	}
-	
 	////////////////////////////////////////////////////
     //                PROCESS AUDIO                   //
     ////////////////////////////////////////////////////
@@ -149,7 +124,7 @@ public class Recorder extends Sample implements RecordAudio {
 		newBuffer = memory.getArray();
 		firstTime = true;
 		
-		for (Channel channel : JudahZone.getChannels()) {
+		for (LineIn channel : JudahZone.getChannels()) {
 			if (channel.isOnMute() || channel.isMuteRecord())
 				continue;
 			if (channel.isSolo() && type != Type.SOLO) continue;
@@ -185,6 +160,31 @@ public class Recorder extends Sample implements RecordAudio {
 		else 
 			recording.add(newBuffer);
 	}
+	
+	/** for process() thread */
+	private final boolean recording() {
+		isRecording.compareAndSet(STOPPING, STOPPED);
+		
+		if (isRecording.compareAndSet(STARTING, RUNNING)) {
+			_start = System.currentTimeMillis();
+		}
+
+		if (isRecording.get() == RUNNING)
+			for (LineIn m : JudahZone.getChannels())
+				if (!m.isMuteRecord()) return true;
+		return false;
+	}
+	
 
 }
+
+
+
+
+// TODO public void mute(String channel, boolean mute) { 
+// Console.info("Mute Record Channel currently not implemented"); 
+// for (MixerPort p : inputPorts) 
+//	if (p.getName().contains(channel)) {
+//		p.setOnLoop(!mute);
+//		log.info( (mute ? "Muted " : "Unmuted ") + p.getName() + " on recording track: " + getName()); } }
 

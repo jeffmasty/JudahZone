@@ -1,4 +1,4 @@
-package net.judah.mixer;
+package net.judah.plugin;
 
 import static net.judah.jack.AudioTools.*;
 import static net.judah.util.Constants.*;
@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
+import net.judah.mixer.LineIn;
 import net.judah.util.Console;
 
 @Data @AllArgsConstructor @RequiredArgsConstructor
@@ -28,7 +29,7 @@ public class Plugin {
 		return inports.length == 2 && outports.length == 2;
 	}
 
-	public void activate(Channel ch) {
+	public void activate(LineIn ch) {
 		new Thread() {
 			
 			@Override

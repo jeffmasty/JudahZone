@@ -15,7 +15,7 @@ import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.Command;
 import net.judah.api.TimeListener.Property;
-import net.judah.mixer.MixerCommands;
+import net.judah.mixer.MixCommands;
 import net.judah.sequencer.Sequencer.ControlMode;
 import net.judah.util.CommandWrapper;
 import net.judah.util.Console;
@@ -263,7 +263,7 @@ public class SeqCommands extends ArrayList<Command> {
 	}
 
 	public static HashMap<String, Class<?>> queueTemplate() {
-		HashMap<String, Class<?>> result = MixerCommands.loopProps();
+		HashMap<String, Class<?>> result = MixCommands.loopProps();
 		result.put("command", String.class);
 		return result;
 	}

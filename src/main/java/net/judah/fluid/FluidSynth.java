@@ -104,10 +104,6 @@ public class FluidSynth implements Service {
 	    	}
 	    	gain(gain);
 	    	Thread.sleep(40);
-//	    	connect(midi.getJackclient(), midi.getSynth());
-//	    	connect(midi.getJackclient(), midi.getDrums());
-//	    	Jack.getInstance().connect(LEFT_PORT, "system:playback_1");
-//			Jack.getInstance().connect(RIGHT_PORT, "system:playback_2");
 	    	
 	    } catch (InterruptedException e) {
 	    	log.error(e);

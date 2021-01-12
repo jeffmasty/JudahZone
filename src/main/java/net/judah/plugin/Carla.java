@@ -23,9 +23,7 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.api.Service;
-import net.judah.mixer.Channel;
-import net.judah.mixer.LineType;
-import net.judah.mixer.Plugin;
+import net.judah.mixer.LineIn;
 import net.judah.util.Console;
 
 // locked into the ubuntu20 version of Carla, don't preferr the current KStudio version 
@@ -202,7 +200,7 @@ public class Carla implements Service {
 
 	@Override public void properties(HashMap<String, Object> props) { }
 
-	public void flanger(boolean active, Channel ch) throws OSCSerializeException, IOException, JackException {
+	public void flanger(boolean active, LineIn ch) throws OSCSerializeException, IOException, JackException {
 		
 		int idx = flanger.getIndex();
 		
@@ -214,9 +212,9 @@ public class Carla implements Service {
 		toAux2(flanger, ch, active);
 	}
 		
-	private void toAux2(Plugin plugin, Channel ch, boolean active) throws JackException {
+	private void toAux2(Plugin plugin, LineIn ch, boolean active) throws JackException {
 		JackClient client = JudahZone.getInstance().getJackclient();
-		Channel aux2 = JudahZone.getChannels().getAux2();
+		LineIn aux2 = JudahZone.getChannels().getAux2();
 		
 		if (active) {
 			// disconnect standard stage
@@ -270,8 +268,8 @@ public class Carla implements Service {
 	
 	public void octaver(boolean active) throws OSCSerializeException, IOException, JackException {
 		JackClient client = JudahZone.getInstance().getJackclient();
-		Channel guitar = JudahZone.getChannels().getGuitar();
-		Channel aux2 = JudahZone.getChannels().getAux2();
+		LineIn guitar = JudahZone.getChannels().getGuitar();
+		LineIn aux2 = JudahZone.getChannels().getAux2();
 		
 		// setActive(bassEQ.getIndex(), active);
 		setActive(harmonizer.getIndex(), active);

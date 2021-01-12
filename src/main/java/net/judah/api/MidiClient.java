@@ -15,6 +15,7 @@ import org.jaudiolibs.jnajack.JackMidi;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
+import net.judah.util.RTLogger;
 
 /** Create a Jack midi port and process queue'd messages<br>
  assisted by: https://github.com/jaudiolibs/examples/blob/master/src/main/java/org/jaudiolibs/examples/MidiThru.java */
@@ -72,7 +73,7 @@ public class MidiClient extends BasicClient implements MidiQueue {
     		}
     		
     	} catch (Exception e) {
-    		System.err.println(e.getMessage());
+    		RTLogger.warn(this, e);
     		return false;
     	}
     	return state.get() == Status.ACTIVE;
@@ -85,7 +86,7 @@ public class MidiClient extends BasicClient implements MidiQueue {
     
 	@Override
 	public void queue(ShortMessage message) {
-		// log.debug("queued " + message);
+		// log.trace("queued " + message);
 		queue.add(message);
 	}
 

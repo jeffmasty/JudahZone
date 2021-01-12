@@ -1,4 +1,4 @@
-package net.judah.mixer;
+package net.judah.mixer.bus;
 
 import static java.lang.Math.*;
 
@@ -13,14 +13,14 @@ public class Compression {
 
     static final float LOG_10 = 2.302585f;
 	static final float LOG_2  = 0.693147f;
-	static final float MIN_GAIN  = 0.00001f;        // -100dB  This will help prevent evaluation of denormal numbers
+	static final float MIN_GAIN  = 0.00001f; // -100dB help prevents evaluation of denormal numbers
 
 	/** number of compression presets, default = 1 */
 	public static final int COMPRESSION_PRESETS = 3;
 	private static final int PRESET_SIZE = 7;
     private static int[][] presets = new int[][] { // TODO make enum
         /* 2:1 */ {-30, 2, -13, 20, 120, 0},
-        /* 4:1 */ {-26, 4, -17, 30, 270, 10},
+        /* 5:1 */ {-26, 5, -17, 30, 270, 10}, // default setting
         /* 8:1 */ {-24, 8, -18, 20, 35, 30} };
 
     @Setter @Getter private boolean active; 
@@ -98,7 +98,6 @@ public class Compression {
 	}
 
 	public void incrementPreset() {
-		//boolean active = channel.getCompression().isActive();
 		if (!isActive()) {
 			setPreset(0);
 			setActive(true);
@@ -184,6 +183,7 @@ public class Compression {
 
 	
 	public void process(FloatBuffer buf, float gain) {
+		buf.rewind();
 		float val;
 	    for (int z = 0; z < buf.capacity(); z++) {
 	    	val = buf.get(z) * gain;

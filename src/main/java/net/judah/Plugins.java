@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
-import net.judah.mixer.Plugin;
+import net.judah.plugin.Plugin;
 import net.judah.plugin.PluginGui;
 
 public class Plugins extends ArrayList<Plugin> {

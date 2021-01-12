@@ -1,5 +1,6 @@
 package net.judah.sequencer;
 import static net.judah.util.Constants.Param.*;
+import static org.jaudiolibs.jnajack.JackTransportState.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -128,7 +129,8 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 			current = null;
 		}
 		metronome.addListener(this);
-		JudahZone.getLooper().init();
+		JudahZone.getLooper().clear();
+		JudahZone.getLooper().defaultLoops();
 		log.debug("loaded song: " + songfile.getAbsolutePath());
 		return this;
 	}
@@ -168,6 +170,14 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 
 	}
 ///////////////////////////////////////////////////////////////////////////////////////////	
+	
+	public static void transport() {
+		Sequencer seq = getCurrent();
+		if (seq == null) return;
+		Console.info("transport " + !seq.isRunning());
+		seq.update(Property.TRANSPORT, seq.isRunning() ? JackTransportStopped : JackTransportStarting);
+		
+	}
 	
 	public boolean isRunning() {
 		return count >= 0;
@@ -330,7 +340,7 @@ public class Sequencer implements Service, Runnable, TimeListener /* , Controlle
 		Object o2 = props.get(PARAM_PULSE);
 		if (o2 != null && StringUtils.isNumeric(o2.toString())) 
 			pulse = Integer.parseInt(o2.toString());
-		JudahZone.getLooper().get(loop).setTimeSync(true);
+		JudahZone.getLooper().get(loop).setSync(true);
 		log.warn("Looper " + loop + " has time control with pulse of " + pulse + " beats.");
 	}
 

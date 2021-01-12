@@ -1,28 +1,29 @@
 TODO:
-
-Master MixerBus
 BeatBuddy & Midi upgrades
-pArTy EQ
-
+Alternate reverb plugins
 play: type, active, index, name, input, output
 record: type, active, index, name
-LFO triggered to clock, assign to room, width, freq, etc
+LFO triggered to clock, LFO/Fader cleanUp()
 display sheet music 
-
+UI: upgrade knobs
+MoogMPK = ADSR knobs (for I Feel Love bass)
 multi-delete, upgrade properties table (enum, int, boolean types)
 joystick  (pitch bend logarithmic to 1 octave) (left cc = distortion or vocoder right cc = delay)
+fix songs.
 Latency + bleeding edge
 settings/default files
+Sequencer can really swing.
 Undo/Redo/Copy/Paste
 patch bay needed. see jack_lsp, jack_connect
+magically calculate make-up gain during Compression
 Plugins, ttl 
 walking bassline midi bot
-fix songs.
+MPK Sequencer
 
-Knobs:
-Fluid synth knobs: Volume, Chorus, reverb, ...
-Volume track/master, pan, 
-Input/output/gain lvl, pedal knobs
+button icons: https://www.elharrakfonts.com/2019/04/font-bottons-music-pro.html
+
+Knobs: 
+fluid reverb, track/master pan, 
 Other knobs: calf, Jackrack, mixer
 
 drum options:  DrMr, drumkv1-jack, hydrogen, fluid, drumsynth, black pearl
@@ -101,11 +102,11 @@ handle relative and trigger type,
 octaver, phaser knob
 redo carla/plugins/octaver
     on foot switch: activate/deactive plugins, route/unroute ports
-LFO on organ volume 
+LFO assign gain(organ volume), EQ, reverb 
 sample highlight + compression + reverb
 keyboard handler for channels/samples
-
-
+pArTy EQ
+Master MixerBus, Input/output/gain lvl, pedal knobs
 
 
 

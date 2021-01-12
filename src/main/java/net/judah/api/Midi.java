@@ -5,7 +5,10 @@ import java.util.HashMap;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
+import lombok.extern.log4j.Log4j;
+
 /** serialization isn't working, save as byte[] */
+@Log4j
 public class Midi extends ShortMessage {
 
 	public static final String PARAM_COMMAND = "command";
@@ -17,6 +20,13 @@ public class Midi extends ShortMessage {
 		super(bytes);
 	}
 
+	/** @return null on internally handled exception */
+	public static Midi create(int command, int channel, int data1, int data2) {
+		try { return new Midi(command, channel, data1, data2);
+		} catch(Throwable t) { log.error(t.getMessage(), t); }
+		return null;
+	}
+	
 	/** @see javax.sound.midi.ShortMessage#setMessage(int, int, int, int) */
 	public Midi(int command, int channel, int data1, int data2) throws InvalidMidiDataException {
 		super(command, channel, data1, data2);

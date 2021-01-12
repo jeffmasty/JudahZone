@@ -16,12 +16,13 @@ import net.judah.looper.AudioPlay;
 import net.judah.looper.Recorder;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
+import net.judah.plugin.LineType;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.JudahException;
 
 @Log4j
-public class MixerCommands extends ArrayList<Command> {
+public class MixCommands extends ArrayList<Command> {
 	
 	
 	public static final String IS_INPUT = "isInput";
@@ -36,13 +37,12 @@ public class MixerCommands extends ArrayList<Command> {
 	@Getter protected final Command playCmd;
 	@Getter protected final Command recordCmd;
 	
-	public MixerCommands() {
+	public MixCommands() {
 		
 		add(new Command(DRUMTRACK.name, DRUMTRACK.desc) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				JudahZone.getLooper().drumtrack();
+				JudahZone.getLooper().getDrumTrack().toggle();
 			}
-			
 		});
 		
 		recordCmd = new Command(TOGGLE_RECORD.name, TOGGLE_RECORD.desc, loopProps()) {
@@ -234,12 +234,8 @@ public class MixerCommands extends ArrayList<Command> {
 }
 
 //TODO
-
 //toggleLoopRecord = new Command(TOGGLE_LOOP.name, TOGGLE_LOOP.desc, new HashMap<>()) {
-//	@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-//		// TODO
-//	}};
-
+//	@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {	}};
 //	final Command pluginCommand;
 //	final Command undoCommand;
 //	final Command redoCommand;

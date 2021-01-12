@@ -1,4 +1,4 @@
-package net.judah.mixer;
+package net.judah.mixer.bus;
 
 /*https://github.com/jaudiolibs/audioops/blob/master/audioops-impl/src/main/java/org/jaudiolibs/audioops/impl/FreeverbOp.java*/
 /*
@@ -91,7 +91,8 @@ public final class Reverb {
     private static final float initialdry = 0f;//1;
     private static final float initialwidth = 0.35f;
     
-    @Getter private boolean active;
+    @Getter @Setter private boolean active;
+    private int nframes = 512;
     private float roomsize, roomsize1;
     private float damp, damp1;
     private float wet, wet1, wet2;
@@ -116,6 +117,7 @@ public final class Reverb {
     }
 
 	public void initialize(float samplerate, int maxBufferSize) {
+		nframes = maxBufferSize;
         setWet(initialwet);
         setRoomSize(initialroom);
         setDry(initialdry);
@@ -271,36 +273,27 @@ public final class Reverb {
 	}
 
     public void process(FloatBuffer buf, float gain) {
-    	int buffersize = buf.capacity();
+    	buf.rewind();
         if (dirty) {
             update();
             dirty = false;
         }
         float ourGain = fixedgain * gain;
-        for (int i = 0; i < buffersize; i++) 
+        for (int i = 0; i < nframes; i++) 
             inScratch[i] = buf.get(i) * ourGain;
         
         Arrays.fill(outScratchL, 0);
         
         for (int i = 0; i < numcombs; i++) 
-            combL[i].processMix(inScratch, outScratchL, buffersize);
+            combL[i].processMix(inScratch, outScratchL, nframes);
 
         for (int i = 0; i < numallpasses; i++) 
-            allpassL[i].processReplace(outScratchL, outScratchL, buffersize);
+            allpassL[i].processReplace(outScratchL, outScratchL, nframes);
         
-//        if (dry == 0)  
-            for (int i = 0; i < buffersize; i++)  
+            for (int i = 0; i < nframes; i++)  
                 buf.put(buf.get(i) * gain + // process add
                 		outScratchL[i] * wet1 * gain + outScratchR[i] * wet2 * gain);
-//         else 
-//            for (int i = 0; i < buffersize; i++) 
-//                buf.put(buf.get(i) * gain + // process add
-//                		outScratchL[i] * wet1 + outScratchR[i] * wet2 + buf.get(i) * dry * gain);
     	
-    }
-    
-    public void setActive(boolean on) {
-    	active = on;
     }
     
     private void update() {

@@ -290,7 +290,7 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 	@Override
 	public void update(Property prop, Object value) {
 		if (Property.TEMPO == prop) {
-			setTempo((int)value);
+			setTempo((float)value);
 		}
 		
 	}
