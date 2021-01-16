@@ -23,12 +23,12 @@ public class Compression {
         /* 5:1 */ {-26, 5, -17, 30, 270, 10}, // default setting
         /* 8:1 */ {-24, 8, -18, 20, 35, 30} };
 
-    @Setter @Getter private boolean active; 
+    @Setter @Getter private boolean active;
     @Getter private int preset = -1;
-    
+
     // private int hold = (int) (samplerate*0.0125);  //12.5ms;
     private double cSAMPLE_RATE;
-    
+
     private float lvolume = 0.0f;
     private float lvolume_db = 0.0f;
     private int tratio = 4;
@@ -49,7 +49,7 @@ public class Compression {
     private int attStash;
     private float rel;
     private int relStash;
-    
+
     private double eratio;
     private double kratio;
     private float knee;
@@ -57,7 +57,7 @@ public class Compression {
     private double coeff_ratio;
     private double coeff_knee;
     private double coeff_kk;
-    private float thres_mx; 
+    private float thres_mx;
     private double makeup;
     private float makeuplin;
     private float outlevel;
@@ -70,18 +70,18 @@ public class Compression {
     public void setSampleRate(int sampleRate) {
     	cSAMPLE_RATE = 1.0/sampleRate;
     }
-    
+
     /** @return release in milliseconds */
     public int getRelease() {
     	return relStash;
     }
-    
-	public float dB2rap(double dB) { 
-		return (float)((Math.exp((dB)*LOG_10/20.0f))); 
+
+	public float dB2rap(double dB) {
+		return (float)((Math.exp((dB)*LOG_10/20.0f)));
 	}
-	
-	public float rap2dB(float rap) { 
-		return (float)((20*log(rap)/LOG_10)); 
+
+	public float rap2dB(float rap) {
+		return (float)((20*log(rap)/LOG_10));
 	}
 
 	public void reset() {
@@ -111,32 +111,32 @@ public class Compression {
 		}
 		Console.info("Compression on: " + isActive() + " / " + getPreset());
 	}
-	
+
     /** @return attack in milliseconds */
     public int getAttack() {
     	return attStash;
     }
-    
+
     public void setAttack(int milliseconds) {
     	setPreset(4, milliseconds);
     }
-    
+
     public void setRelease(int milliseconds) {
     	setPreset(5, milliseconds);
     }
-    
+
     public int getRatio() {
     	return tratio;
     }
     public float getThreshold() {
     	return thres_db;
     }
-    
+
 	public void setRatio(int val) {
 		setPreset(2, val);
 	}
 	public void setThreshold(int val) {
-		setPreset(1, val); 
+		setPreset(1, val);
 	}
 
 	public void setPreset(int np, int value) {
@@ -181,7 +181,7 @@ public class Compression {
         outlevel = dB2rap(toutput) * makeuplin;
 	}
 
-	
+
 	public void process(FloatBuffer buf, float gain) {
 		buf.rewind();
 		float val;
@@ -192,7 +192,7 @@ public class Compression {
 
   	        //Mono Channel
 	        ldelta = abs (peak);
-	        
+
 	        if(lvolume < 0.9f) {
 	            attl = att;
 	            rell = rel;
@@ -226,17 +226,17 @@ public class Compression {
             boost_old = boost;
 	    }
 	}
-	
-	public void process(float[] in, FloatBuffer out, float gain) {
+
+	public void process(float[] in, FloatBuffer out) {
 		float val;
 	    for (int z = 0; z < out.capacity(); z++) {
-	    	val = in[z] * gain;
+	    	val = in[z];
 	        float ldelta = 0.0f;
 	        peak = val;
 
   	        //Mono Channel
 	        ldelta = abs (peak);
-	        
+
 	        if(lvolume < 0.9f) {
 	            attl = att;
 	            rell = rel;
@@ -270,6 +270,6 @@ public class Compression {
             boost_old = boost;
 	    }
 	}
- 
-	
+
+
 }

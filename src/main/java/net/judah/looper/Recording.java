@@ -11,8 +11,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.jack.AudioTools;
 import net.judah.midi.JudahMidi;
+import net.judah.util.AudioTools;
 
 public class Recording extends Vector<float[][]> {
 	

@@ -1,9 +1,10 @@
 {
   "props" : {
     "switch to reggae 1 @82 and play all blues" : "",
-    "image" : "/home/judah/git/JudahZone/resources/sheets/LoveStory.png",
+    "image" : "/home/judah/sheets/LoveStory.png",
+    "beatbuddy" : "Funk5@100",
+    "notes" : "or Funk8",
     "tempo" : "101",
-    "drum track" : "funk 5 @100 bpm  or funk 8 @ 102",
     "dr5 on pattern 255" : ""
   },
   "links" : [ ],

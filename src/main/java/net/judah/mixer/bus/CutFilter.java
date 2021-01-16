@@ -1,7 +1,6 @@
 package net.judah.mixer.bus;
 
-import java.nio.FloatBuffer;
-
+//https://github.com/jaudiolibs/audioops/blob/master/audioops-impl/src/main/java/org/jaudiolibs/audioops/impl/IIRFilterOp.java
 /*
 * Adapted from code in Gervill.
 *
@@ -22,7 +21,7 @@ import java.nio.FloatBuffer;
 *
 * You should have received a copy of the GNU General Public License version
 * 2 along with this work; if not, see http://www.gnu.org/licenses/
-* 
+*
 *
 * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
 * CA 95054 USA or visit www.sun.com if you need additional information or
@@ -37,6 +36,7 @@ import java.nio.FloatBuffer;
 *
 * @author Karl Helgason
 */
+import java.nio.FloatBuffer;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +44,6 @@ import lombok.Setter;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
-//https://github.com/jaudiolibs/audioops/blob/master/audioops-impl/src/main/java/org/jaudiolibs/audioops/impl/IIRFilterOp.java
 /**
  * IIR Filter op ported from Gervill in OpenJDK.
  *
@@ -54,34 +53,34 @@ import net.judah.util.RTLogger;
  */
 public class CutFilter {
 	// More options:
-	// TODO https://github.com/adiblol/jackiir (used as java class EQ)
-	// TODO https://github.com/T-5dotEU/ladspa-t5-plugins
-	// TODO https://github.com/Dragerus/parametricEQ-jack
-	// TODO	https://github.com/hathagat/Equalizer
-	
+	// https://github.com/adiblol/jackiir (implemented as java class EQ)
+	// https://github.com/T-5dotEU/ladspa-t5-plugins
+	// https://github.com/Dragerus/parametricEQ-jack
+	// https://github.com/hathagat/Equalizer
+
     @RequiredArgsConstructor @Getter
     public static enum Type {
-        LP6("6dB one pole low pass"), 
-        LP12("12dB two pole low pass"), 
-        HP12("12dB two pole high pass"), 
-        BP12("12dB two pole band pass"), 
-        NP12("12dB two pole notch pass"), 
-        LP24("24dB four pole low pass"), 
+        LP6("6dB one pole low pass"),
+        LP12("12dB two pole low pass"),
+        HP12("12dB two pole high pass"),
+        BP12("12dB two pole band pass"),
+        NP12("12dB two pole notch pass"),
+        LP24("24dB four pole low pass"),
         HP24("24dB four pole high pass"),
         pArTy("low freq low pass, high freq hi pass")
         ;
         private final String description;
     };
     private static final int PARTY_FREQUENCY = 420;
-    
+
     /** y = 1/30 * x ^ 2.81 + bassFloor */
-	public static float knobToFrequency(int val) { 
+	public static float knobToFrequency(int val) {
 		return (float)(0.033333 * Math.pow(val, 2.81)) + 80f;
-		
+
 	}
-	
+
+	/* TODO this is inaccurate */
 	public static int frequencyToKnob(float freq) {
-		//return Math.round(30 * Math.)
 		return (int)Math.round(  30 * ((Math.log1p(freq))/ 2.81 * 1.97)) - 95;
 	}
 
@@ -89,21 +88,21 @@ public class CutFilter {
 		System.out.println("knob 10 = " + knobToFrequency(10));
 		System.out.println("knob 50 = " + knobToFrequency(50));
 		System.out.println("knob 90 = " + knobToFrequency(90));
-		
+
 		System.out.println("91.52159hz = " + frequencyToKnob(91.52159f));
 		System.out.println("2051.4363hz = " + frequencyToKnob(2051.4363f));
 		System.out.println("10404.652hz = " + frequencyToKnob(10404.652f));
 	}
-	
+
     private final double sampleRate;
     private final int bufferSize;
-    
+
     /** left channel */
     private final IIRFilter eq1 = new IIRFilter();
     /** right channel */
     private final IIRFilter eq2 = new IIRFilter();
-    
-    @Getter private Type filterType = Type.BP12;
+
+    @Getter private Type filterType = Type.HP12;
     @Setter @Getter private boolean active;
     private double freqeuncy = 650.;
     private double resonancedB = 12.;
@@ -119,11 +118,11 @@ public class CutFilter {
     	eq1.reset();
     	eq2.reset();
     }
-    
+
     /**Set frequency of filter in Hz. <br/>
      *  Recommended range (20 - samplerate/2) */
     public void setFrequency(float hz) {
-        if (freqeuncy == hz) 
+        if (freqeuncy == hz)
             return;
         freqeuncy = hz;
         eq1.dirty = eq2.dirty = true;
@@ -137,7 +136,7 @@ public class CutFilter {
     /**Set resonance of filter in dB. <br/>
      * Recommended range (0 - 30)*/
     public void setResonance(float db) {
-        if (resonancedB == db) 
+        if (resonancedB == db)
             return;
         resonancedB = db;
         eq1.dirty = eq2.dirty = true;
@@ -162,7 +161,7 @@ public class CutFilter {
         }
         RTLogger.log(this, "filter type: " + filterType);
     }
-    
+
 
     /** process replace mono */
     public void process(FloatBuffer mono, float gain) {
@@ -181,13 +180,13 @@ public class CutFilter {
         case HP24:
         	eq1.filter4Replace(mono, gain);
             break;
-        case pArTy: 
+        case pArTy:
         	checkParty();
         	eq1.filter2Replace(mono, gain * 2.5f);
         	break;
         }
     }
-    
+
     /** process replace stereo */
     public void process(FloatBuffer left, FloatBuffer right, float gain) {
     	left.rewind();
@@ -209,14 +208,14 @@ public class CutFilter {
         	eq1.filter4Replace(left, gain);
         	eq2.filter4Replace(right, gain);
             break;
-        case pArTy: 
+        case pArTy:
         	checkParty();
         	eq1.filter2Replace(left, gain * 2.5f);
         	eq2.filter2Replace(right, gain * 2.5f);
         }
-    	
+
     }
-    
+
     private void checkParty() {
 		if (freqeuncy <= PARTY_FREQUENCY) {
 			if (oldParty != Type.LP12) {
@@ -231,8 +230,8 @@ public class CutFilter {
 			}
 		}
     }
-    
-    
+
+
     class IIRFilter {
 
         private boolean dirty = true;
@@ -261,22 +260,22 @@ public class CutFilter {
 	    private double last_q;
 	    private double last_gain;
 	    private boolean last_set = false;
-	
+
 		public void reset() {
 	        dirty = true;
 	        last_set = false;
 	        wet = 0.0f;
 	        gain = 1.0f;
-	
+
 	        x1 = 0; x2 = 0;
 	        y1 = 0; y2 = 0;
 	        xx1 = 0; xx2 = 0;
 	        yy1 = 0; yy2 = 0;
 	        a0 = 0; a1 = 0;
-	        a2 = 0; 
-	        b1 = 0; b2 = 0;     
+	        a2 = 0;
+	        b1 = 0; b2 = 0;
 	    }
-		
+
 		protected void filter4Replace(FloatBuffer data, float vol) {
 
 			if (dirty) {
@@ -293,9 +292,9 @@ public class CutFilter {
 	            last_wet = wet;
 	            last_set = true;
 	        }
-	
+
 	        if (wet > 0 || last_wet > 0) {
-	
+
 	            double _a0 = this.last_a0;
 	            double _a1 = this.last_a1;
 	            double _a2 = this.last_a2;
@@ -318,7 +317,7 @@ public class CutFilter {
 	            double _xx2 = this.xx2;
 	            double _yy1 = this.yy1;
 	            double _yy2 = this.yy2;
-	
+
 	            if (wet_delta != 0) {
 	                for (int i = 0; i < bufferSize; i++) {
 	                    _a0 += a0_delta;
@@ -381,7 +380,7 @@ public class CutFilter {
 	                    _yy1 = yy;
 	                }
 	            }
-	
+
 	            if (Math.abs(_x1) < 1.0E-8) {
 	                _x1 = 0;
 	            }
@@ -402,8 +401,8 @@ public class CutFilter {
 	            this.xx2 = _xx2;
 	            this.yy1 = _yy1;
 	            this.yy2 = _yy2;
-	        } 
-	        
+	        }
+
 	        this.last_a0 = this.a0;
 	        this.last_a1 = this.a1;
 	        this.last_a2 = this.a2;
@@ -411,11 +410,11 @@ public class CutFilter {
 	        this.last_b2 = this.b2;
 	        this.last_gain = this.gain;
 	        this.last_wet = this.wet;
-	
+
 	    }
-	
+
 	    protected void filter4Add(float[] in, float[] out) {
-	
+
 	        if (dirty) {
 	            filter2calc();
 	            dirty = false;
@@ -430,9 +429,9 @@ public class CutFilter {
 	            last_wet = wet;
 	            last_set = true;
 	        }
-	
+
 	        if (wet > 0 || last_wet > 0) {
-	
+
 	            double _a0 = this.last_a0;
 	            double _a1 = this.last_a1;
 	            double _a2 = this.last_a2;
@@ -455,7 +454,7 @@ public class CutFilter {
 	            double _xx2 = this.xx2;
 	            double _yy1 = this.yy1;
 	            double _yy2 = this.yy2;
-	
+
 	            if (wet_delta != 0) {
 	                for (int i = 0; i < bufferSize; i++) {
 	                    _a0 += a0_delta;
@@ -518,7 +517,7 @@ public class CutFilter {
 	                    _yy1 = yy;
 	                }
 	            }
-	
+
 	            if (Math.abs(_x1) < 1.0E-8) {
 	                _x1 = 0;
 	            }
@@ -544,7 +543,7 @@ public class CutFilter {
 	                out[i] += in[i];
 	            }
 	        }
-	
+
 	        this.last_a0 = this.a0;
 	        this.last_a1 = this.a1;
 	        this.last_a2 = this.a2;
@@ -552,15 +551,15 @@ public class CutFilter {
 	        this.last_b2 = this.b2;
 	        this.last_gain = this.gain;
 	        this.last_wet = this.wet;
-	
+
 	    }
-	
+
 	    private double sinh(double x) {
 	        return (Math.exp(x) - Math.exp(-x)) * 0.5;
 	    }
-	
+
 	    protected void filter2calc() {
-	
+
 	        double rdB = resonancedB;
 	        if (rdB < 0) {
 	            rdB = 0;    // Negative dB are illegal.
@@ -571,28 +570,28 @@ public class CutFilter {
 	        if (filterType == Type.LP24 || filterType == Type.HP24) {
 	            rdB *= 0.6;
 	        }
-	
+
 	        if (filterType == Type.BP12) {
 	            wet = 1;
 	            double r = (freqeuncy / sampleRate);
 	            if (r > 0.45) {
 	                r = 0.45;
 	            }
-	
+
 	            double bandwidth = Math.PI * Math.pow(10.0, -(rdB / 20));
-	
+
 	            double omega = 2 * Math.PI * r;
 	            double cs = Math.cos(omega);
 	            double sn = Math.sin(omega);
 	            double alpha = sn * sinh((Math.log(2) * bandwidth * omega) / (sn * 2));
-	
+
 	            double _b0 = alpha;
 	            double _b1 = 0;
 	            double _b2 = -alpha;
 	            double _a0 = 1 + alpha;
 	            double _a1 = -2 * cs;
 	            double _a2 = 1 - alpha;
-	
+
 	            double cf = 1.0 / _a0;
 	            this.b1 = (_a1 * cf);
 	            this.b2 = (_a2 * cf);
@@ -600,28 +599,28 @@ public class CutFilter {
 	            this.a1 = (_b1 * cf);
 	            this.a2 = (_b2 * cf);
 	        }
-	
+
 	        if (filterType == Type.NP12) {
 	            wet = 1;
 	            double r = (freqeuncy / sampleRate);
 	            if (r > 0.45) {
 	                r = 0.45;
 	            }
-	
+
 	            double bandwidth = Math.PI * Math.pow(10.0, -(rdB / 20));
-	
+
 	            double omega = 2 * Math.PI * r;
 	            double cs = Math.cos(omega);
 	            double sn = Math.sin(omega);
 	            double alpha = sn * sinh((Math.log(2) * bandwidth * omega) / (sn * 2));
-	
+
 	            double _b0 = 1;
 	            double _b1 = -2 * cs;
 	            double _b2 = 1;
 	            double _a0 = 1 + alpha;
 	            double _a1 = -2 * cs;
 	            double _a2 = 1 - alpha;
-	
+
 	            double cf = 1.0 / _a0;
 	            this.b1 = (_a1 * cf);
 	            this.b2 = (_a2 * cf);
@@ -629,7 +628,7 @@ public class CutFilter {
 	            this.a1 = (_b1 * cf);
 	            this.a2 = (_b2 * cf);
 	        }
-	
+
 	        if (filterType == Type.LP12 || filterType == Type.LP24 ||
 	        		(filterType == Type.pArTy && freqeuncy <= PARTY_FREQUENCY)) {
 	            double r = (freqeuncy / sampleRate);
@@ -645,7 +644,7 @@ public class CutFilter {
 	            } else {
 	                wet = 1.0f;
 	            }
-	
+
 	            double c = 1.0 / (Math.tan(Math.PI * r));
 	            double csq = c * c;
 	            double resonance = Math.pow(10.0, -(rdB / 20));
@@ -655,15 +654,15 @@ public class CutFilter {
 	            double _a2 = _a0;
 	            double _b1 = (2.0 * _a0) * (1.0 - csq);
 	            double _b2 = _a0 * (1.0 - (_q * c) + csq);
-	
+
 	            this.a0 = _a0;
 	            this.a1 = _a1;
 	            this.a2 = _a2;
 	            this.b1 = _b1;
 	            this.b2 = _b2;
-	
+
 	        }
-	
+
 	        if (filterType == Type.HP12 || filterType == Type.HP24 ||
 	        		(filterType == Type.pArTy && freqeuncy > PARTY_FREQUENCY)) {
 	            double r = (freqeuncy / sampleRate);
@@ -683,19 +682,19 @@ public class CutFilter {
 	            double _a2 = _a0;
 	            double _b1 = (2.0 * _a0) * (csq - 1.0);
 	            double _b2 = _a0 * (1.0 - (_q * c) + csq);
-	
+
 	            this.a0 = _a0;
 	            this.a1 = _a1;
 	            this.a2 = _a2;
 	            this.b1 = _b1;
 	            this.b2 = _b2;
-	
+
 	        }
-	
+
 	    }
-	
+
 	    protected void filter2Replace(FloatBuffer data, float vol) {
-	
+
 	        if (dirty) {
 	            filter2calc();
 	            dirty = false;
@@ -711,9 +710,9 @@ public class CutFilter {
 	            last_wet = wet;
 	            last_set = true;
 	        }
-	
+
 	        if (wet > 0 || last_wet > 0) {
-	
+
 	            double _a0 = this.last_a0;
 	            double _a1 = this.last_a1;
 	            double _a2 = this.last_a2;
@@ -732,7 +731,7 @@ public class CutFilter {
 	            double _x2 = this.x2;
 	            double _y1 = this.y1;
 	            double _y2 = this.y2;
-	
+
 	            if (wet_delta != 0) {
 	                for (int i = 0; i < bufferSize; i++) {
 	                    _a0 += a0_delta;
@@ -777,7 +776,7 @@ public class CutFilter {
 	                    _y1 = y;
 	                }
 	            }
-	
+
 	            if (Math.abs(_x1) < 1.0E-8) {
 	                _x1 = 0;
 	            }
@@ -794,8 +793,8 @@ public class CutFilter {
 	            this.x2 = _x2;
 	            this.y1 = _y1;
 	            this.y2 = _y2;
-	        } 
-	
+	        }
+
 	        this.last_a0 = this.a0;
 	        this.last_a1 = this.a1;
 	        this.last_a2 = this.a2;
@@ -804,11 +803,11 @@ public class CutFilter {
 	        this.last_q = this.q;
 	        this.last_gain = this.gain;
 	        this.last_wet = this.wet;
-	
+
 	    }
-	
+
 	    protected void filter2Add(float[] in, float[] out) {
-	
+
 	        if (dirty) {
 	            filter2calc();
 	            dirty = false;
@@ -824,9 +823,9 @@ public class CutFilter {
 	            last_wet = wet;
 	            last_set = true;
 	        }
-	
+
 	        if (wet > 0 || last_wet > 0) {
-	
+
 	            double _a0 = this.last_a0;
 	            double _a1 = this.last_a1;
 	            double _a2 = this.last_a2;
@@ -845,7 +844,7 @@ public class CutFilter {
 	            double _x2 = this.x2;
 	            double _y1 = this.y1;
 	            double _y2 = this.y2;
-	
+
 	            if (wet_delta != 0) {
 	                for (int i = 0; i < bufferSize; i++) {
 	                    _a0 += a0_delta;
@@ -890,7 +889,7 @@ public class CutFilter {
 	                    _y1 = y;
 	                }
 	            }
-	
+
 	            if (Math.abs(_x1) < 1.0E-8) {
 	                _x1 = 0;
 	            }
@@ -912,7 +911,7 @@ public class CutFilter {
 	                out[i] += in[i];
 	            }
 	        }
-	
+
 	        this.last_a0 = this.a0;
 	        this.last_a1 = this.a1;
 	        this.last_a2 = this.a2;
@@ -921,9 +920,9 @@ public class CutFilter {
 	        this.last_q = this.q;
 	        this.last_gain = this.gain;
 	        this.last_wet = this.wet;
-	
+
 	    }
-	
+
 	    protected void filter1calc() {
 	        if (freqeuncy < 110) {
 	            freqeuncy = 110;
@@ -947,9 +946,9 @@ public class CutFilter {
 	            }
 	        }
 	    }
-	
+
 	    protected void filter1Add(float[] data, float vol) {
-	
+
 	        if (dirty) {
 	            filter1calc();
 	            dirty = false;
@@ -961,9 +960,9 @@ public class CutFilter {
 	            last_wet = wet;
 	            last_set = true;
 	        }
-	
+
 	        if (wet > 0 || last_wet > 0) {
-	
+
 	            double _a0 = this.last_a0;
 	            double _q = this.last_q;
 	            double _gain = this.last_gain;
@@ -974,7 +973,7 @@ public class CutFilter {
 	            double wet_delta = (this.wet - this.last_wet) / bufferSize;
 	            double _y2 = this.y2;
 	            double _y1 = this.y1;
-	
+
 	            if (wet_delta != 0) {
 	            	if (vol == 1f)
 		                for (int i = 0; i < bufferSize; i++) {
@@ -986,7 +985,7 @@ public class CutFilter {
 		                    _y2 = (1 - _q * _a0) * _y2 + (_a0) * _y1;
 		                    data[i] = data[i] + (float) (_y2 * _gain * _wet + data[i] * (1 - _wet));
 		                }
-	            	else 
+	            	else
 		                for (int i = 0; i < bufferSize; i++) {
 		                    _a0 += a0_delta;
 		                    _q += q_delta;
@@ -997,13 +996,13 @@ public class CutFilter {
 		                    data[i] = data[i] + (float) (_y2 * _gain * _wet + (data[i] * vol) * (1 - _wet));
 		                }
 	            } else if (a0_delta == 0 && q_delta == 0) {
-	            	if (vol == 1f) 
+	            	if (vol == 1f)
 		                for (int i = 0; i < bufferSize; i++) {
 		                    _y1 = (1 - _q * _a0) * _y1 - (_a0) * _y2 + (_a0) * data[i];
 		                    _y2 = (1 - _q * _a0) * _y2 + (_a0) * _y1;
 		                    data[i] = data[i] + (float) (_y2 * _gain);
 		                }
-	            	else	            		
+	            	else
 		                for (int i = 0; i < bufferSize; i++) {
 		                    _y1 = (1 - _q * _a0) * _y1 - (_a0) * _y2 + (_a0) * (data[i] * vol);
 		                    _y2 = (1 - _q * _a0) * _y2 + (_a0) * _y1;
@@ -1029,7 +1028,7 @@ public class CutFilter {
 		                    data[i] = data[i] + (float) (_y2 * _gain);
 		                }
 	            }
-	
+
 	            if (Math.abs(_y2) < 1.0E-8) {
 	                _y2 = 0;
 	            }
@@ -1039,16 +1038,16 @@ public class CutFilter {
 	            this.y2 = _y2;
 	            this.y1 = _y1;
 	        }
-	        
+
 	        this.last_a0 = this.a0;
 	        this.last_q = this.q;
 	        this.last_gain = this.gain;
 	        this.last_wet = this.wet;
 	    }
-	    
-	    
+
+
 	    protected void filter1Replace(FloatBuffer data, float vol) {
-	
+
 	        if (dirty) {
 	            filter1calc();
 	            dirty = false;
@@ -1060,9 +1059,9 @@ public class CutFilter {
 	            last_wet = wet;
 	            last_set = true;
 	        }
-	
+
 	        if (wet > 0 || last_wet > 0) {
-	
+
 	            double _a0 = this.last_a0;
 	            double _q = this.last_q;
 	            double _gain = this.last_gain;
@@ -1073,7 +1072,7 @@ public class CutFilter {
 	            double wet_delta = (this.wet - this.last_wet) / bufferSize;
 	            double _y2 = this.y2;
 	            double _y1 = this.y1;
-	
+
 	            if (wet_delta != 0) {
 	            	if (vol == 1f)
 		                for (int i = 0; i < bufferSize; i++) {
@@ -1085,7 +1084,7 @@ public class CutFilter {
 		                    _y2 = (1 - _q * _a0) * _y2 + (_a0) * _y1;
 		                    data.put( (float) (_y2 * _gain * _wet + data.get(i) * (1 - _wet)) );
 		                }
-	            	else 
+	            	else
 		                for (int i = 0; i < bufferSize; i++) {
 		                    _a0 += a0_delta;
 		                    _q += q_delta;
@@ -1096,13 +1095,13 @@ public class CutFilter {
 		                    data.put( (float) (_y2 * _gain * _wet + (data.get(i) * vol) * (1 - _wet)) );
 		                }
 	            } else if (a0_delta == 0 && q_delta == 0) {
-	            	if (vol == 1f) 
+	            	if (vol == 1f)
 		                for (int i = 0; i < bufferSize; i++) {
 		                    _y1 = (1 - _q * _a0) * _y1 - (_a0) * _y2 + (_a0) * data.get(i);
 		                    _y2 = (1 - _q * _a0) * _y2 + (_a0) * _y1;
 		                    data.put( (float) (_y2 * _gain) );
 		                }
-	            	else	            		
+	            	else
 		                for (int i = 0; i < bufferSize; i++) {
 		                    _y1 = (1 - _q * _a0) * _y1 - (_a0) * _y2 + (_a0) * (data.get(i) * vol);
 		                    _y2 = (1 - _q * _a0) * _y2 + (_a0) * _y1;
@@ -1128,7 +1127,7 @@ public class CutFilter {
 		                    data.put( (float) (_y2 * _gain) );
 		                }
 	            }
-	
+
 	            if (Math.abs(_y2) < 1.0E-8) {
 	                _y2 = 0;
 	            }
@@ -1138,15 +1137,15 @@ public class CutFilter {
 	            this.y2 = _y2;
 	            this.y1 = _y1;
 	        }
-	        
+
 	        this.last_a0 = this.a0;
 	        this.last_q = this.q;
 	        this.last_gain = this.gain;
 	        this.last_wet = this.wet;
 	    }
-	
+
 	    protected void filter1Add(float[] in, float[] out) {
-	
+
 	        if (dirty) {
 	            filter1calc();
 	            dirty = false;
@@ -1158,9 +1157,9 @@ public class CutFilter {
 	            last_wet = wet;
 	            last_set = true;
 	        }
-	
+
 	        if (wet > 0 || last_wet > 0) {
-	
+
 	            double _a0 = this.last_a0;
 	            double _q = this.last_q;
 	            double _gain = this.last_gain;
@@ -1171,7 +1170,7 @@ public class CutFilter {
 	            double wet_delta = (this.wet - this.last_wet) / bufferSize;
 	            double _y2 = this.y2;
 	            double _y1 = this.y1;
-	
+
 	            if (wet_delta != 0) {
 	                for (int i = 0; i < bufferSize; i++) {
 	                    _a0 += a0_delta;
@@ -1198,7 +1197,7 @@ public class CutFilter {
 	                    out[i] += _y2 * _gain;
 	                }
 	            }
-	
+
 	            if (Math.abs(_y2) < 1.0E-8) {
 	                _y2 = 0;
 	            }
@@ -1212,7 +1211,7 @@ public class CutFilter {
 	                out[i] += in[i];
 	            }
 	        }
-	
+
 	        this.last_a0 = this.a0;
 	        this.last_q = this.q;
 	        this.last_gain = this.gain;

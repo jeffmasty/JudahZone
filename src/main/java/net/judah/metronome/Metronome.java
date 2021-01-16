@@ -32,54 +32,58 @@ import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeProvider;
 import net.judah.midi.ProgMsg;
+import net.judah.plugin.BeatBuddy;
 import net.judah.plugin.Carla;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 
 @Log4j
-/**Metronome uses it's own somewhat persistent Carla instance with 
- * custom OSC ports started from a custom executable script */ 
+/**Metronome uses it's own somewhat persistent Carla instance with
+ * custom OSC ports started from a custom executable script */
 public class Metronome implements Service, TimeProvider, TimeListener {
-	
+
 	public static final String CLIENT_NAME = "JudahTime";
 	public static final String DRUM_PORT = "drums_out";
 	public static int CARLA_UDP_PORT = 11199;
 	public static int CARLA_TCP_PORT = 11198;
-	
+
 	public static final String PARAM_FILE = "midi.file";
-	
+
 	@Getter private final String serviceName = Metronome.class.getSimpleName();
-	
+
 	@Getter private final MidiQueue midi;
 	@Getter private final TimeProvider timeProvider;
 	private static final ArrayList<TimeListener> listeners = new ArrayList<>();
-	
+
 	/** bpm */
-	@Getter private float tempo = 100f;
+	private int tempo = 100;
 	/** beats per measure */
 	@Getter private int measure = 4;
 	@Getter private float gain = 0.75f;
 	/** if null, generate midi notes ourself */
 	@Getter private File midiFile;
-	
+
 	private Player playa;
-	private static Carla carla; 
+	private static Carla carla;
 	private MetroGui gui;
 	private boolean clicktrack;
 	public boolean hasClicktrack() {return clicktrack;}
-	
-	// private final Command start, tempoCmd, volumeCmd;
+
 	@Getter private final List<Command> commands = new ArrayList<>();
-	
-    public Metronome(File midiFile, TimeProvider master, MidiQueue queue) throws JackException, IOException, InvalidMidiDataException, OSCSerializeException {
+
+    public Metronome(File midiFile, BeatBuddy master, MidiQueue queue) throws JackException, IOException, InvalidMidiDataException, OSCSerializeException {
     	this.midi = queue;
     	Runtime.getRuntime().addShutdownHook(new Thread() {
         	@Override public void run() { if (carla != null) carla.close(); }});
-    	timeProvider = master == null ? this : master;
-    	if (timeProvider != this) timeProvider.addListener(this);
-    	
+    	if (master == null)
+    	    timeProvider = this;
+    	else {
+    	    timeProvider = master;
+    	    timeProvider.addListener(this);
+    	}
+
     	this.midiFile = midiFile;
-    	
+
         commands.add(new Command(TICKTOCK.name, TICKTOCK.desc) {
     		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
     			if (midiData2 == 0) stop();
@@ -88,13 +92,13 @@ public class Metronome implements Service, TimeProvider, TimeListener {
         commands.add(new Command(TEMPO.name, TEMPO.desc) {
     		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
     			setTempo((midiData2 + 35) * 1.15f);}});
-        commands.add(new Command(VOLUME.name, VOLUME.desc, 
+        commands.add(new Command(VOLUME.name, VOLUME.desc,
         		Constants.template(GAIN, Float.class)) {
     		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
     			if (midiData2 >= 0)
     				setVolume(midiData2 * 0.01f);
     			else setVolume(Float.parseFloat("" + props.get(GAIN)));}});
-		HashMap<String, Class<?>> template = new HashMap<String, Class<?>>();
+		HashMap<String, Class<?>> template = new HashMap<>();
 		template.put(CHANNEL, Integer.class);
 		template.put(PRESET, Integer.class);
 
@@ -107,24 +111,24 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 					channel = Integer.parseInt(props.get("channel").toString());
 					Midi msg = new ProgMsg(channel, preset);
 					queue.queue(msg);
-				} catch (Throwable t) { 
+				} catch (Throwable t) {
 					log.debug(t.getMessage()); }}});
-        
+
         commands.add(new ClickTrack(this));
     }
-	
+
     public void openGui() {
 		try {
 			JFrame frame = new JFrame("Metronome");
 			frame.setContentPane(getGui());
 	        frame.setLocation(200, 50);
-	        frame.setSize(330, 200);  
+	        frame.setSize(330, 200);
 	        frame.setVisible(true);
 		} catch (Exception e) {
 			Console.warn(e.getMessage(), e);
 		}
     }
-    
+
     /** Created and cached upon request */
 	public MetroGui getGui() {
 		if (gui == null)
@@ -132,9 +136,9 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 			timeProvider.addListener(gui);
 		return gui;
 	}
-	
-	public static void main(String[] args) {
-		File midiFile = (args.length == 1) ? new File(args[0]) : 
+
+	public static void main2(String[] args) {
+		File midiFile = (args.length == 1) ? new File(args[0]) :
 				new File("/home/judah/git/JudahZone/resources/metronome/Latin16.mid");
 		try {
 	    	MidiClient midi = new MidiClient(CLIENT_NAME, new String[] {}, new String[] {DRUM_PORT});
@@ -142,13 +146,13 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 	        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			frame.setContentPane(new Metronome(midiFile, null, midi).getGui());
 	        frame.setLocation(200, 50);
-	        frame.setSize(330, 165);  
+	        frame.setSize(330, 165);
 	        frame.setVisible(true);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
 	}
-		
+
 	public void setMidiFile(File file) {
 		midiFile = file;
 		boolean wasRunning = isRunning();
@@ -161,17 +165,17 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 			}
 		}
 	}
-	
+
 	public boolean isRunning() {
 		return playa != null && playa.isRunning();
 	}
-	
+
 	public void setVolume(float gain) {
 		if (gain > 1 || gain < 0) throw new InvalidParameterException("volume between 0 and 1: " + gain);
 		this.gain = gain;
 		listeners.forEach( listener -> { listener.update(Property.VOLUME, gain);});
 	}
-	
+
 	@Override
 	public void close() {
 		if (playa != null) {
@@ -180,18 +184,15 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 			playa = null;
 		}
 	}
-	
+
 	public void stop() {
-		
+
 		listeners.forEach( (listener) -> {listener.update(Property.STATUS, Status.TERMINATED);});
 		if (playa!= null) {
 			listeners.remove(playa);
 			playa.close();
 		}
 		clicktrack = false;
-		//try { carla.setActive(0, 0); // set fluid in bypass
-		//} catch (Exception e) { Console.warn(e.getMessage()); }
-
 	}
 
 	public void play() throws IOException, InvalidMidiDataException, MidiUnavailableException {
@@ -201,22 +202,19 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 			listeners.remove(playa);
 			playa.close();
 		}
-		
-		//try { carla.setActive(0, 1);
-		//} catch (Exception e) { Console.warn(e.getMessage()); }
-		
+
 		if (!clicktrack)
 			playa = (midiFile == null) ?
-					new TickTock(this) : 
+					new TickTock(this) :
 					new MidiPlayer(midiFile, Sequencer.LOOP_CONTINUOUSLY, new MidiReceiver(midi));
 		addListener(playa);
 		listeners.forEach( listener -> {listener.update(Property.MEASURE, measure);});
 		listeners.forEach( listener -> {listener.update(Property.VOLUME, gain);});
-		listeners.forEach( listener -> {listener.update(Property.TEMPO, tempo);});
+		listeners.forEach( listener -> {listener.update(Property.TEMPO, tempo * 1f);});
 		listeners.forEach( listener -> {listener.update(Property.STATUS, Status.ACTIVE);});
 		clicktrack = false;
 	}
-	
+
 	/** store a ticktock object configured and ready to begin transport */
 	void setPlayer(Player ticktock) {
 		if (isRunning()) stop();
@@ -224,13 +222,23 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 		listeners.add(playa);
 		clicktrack = true;
 		log.info("ClickTrack set");
-		
+
+	}
+
+	@Override public float getTempo() {
+	    return tempo;
 	}
 
 	@Override
 	public boolean setTempo(float tempo) {
-		this.tempo = tempo;
-		listeners.forEach( listener -> {listener.update(Property.TEMPO, tempo);});
+	    if (this.tempo != Math.round(tempo)) {
+	        this.tempo = Math.round(tempo);
+    	    new Thread() { // off RT thread
+    	        @Override public void run() {
+    	            listeners.forEach( listener -> {
+    	                    listener.update(Property.TEMPO, tempo);
+    	    });}}.start();
+	    }
 		return true;
 	}
 
@@ -239,7 +247,7 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 		if (bpb < 2 || bpb > 30) return;
 		boolean wasRunning = isRunning();
 		if (isRunning()) stop();
-		
+
 		measure = bpb;
 		if (playa != null) playa.close();
 		midiFile = null;
@@ -250,7 +258,7 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 				log.error(e.getMessage(), e);
 			}
 	}
-	
+
 	@Override
 	public void addListener(TimeListener l) {
 		if (!listeners.contains(l))
@@ -260,24 +268,24 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 	public void removeListener(TimeListener l) {
 		listeners.remove(l);
 	}
-	
+
 
 	void rollTransport() {
 		if (this != timeProvider) return;
 		listeners.forEach(listener -> {listener.update(Property.TRANSPORT, JackTransportState.JackTransportStarting);});
 	}
-	
+
 	@Override
 	public void properties(HashMap<String, Object> props) {
 		clicktrack = false;
-		
+
 		if (StringUtils.isNumeric("" + props.get(BPM))) {
 			setTempo(Integer.parseInt("" + props.get(BPM)));
 		}
 		if (StringUtils.isNumeric("" + props.get(MEASURE)))
 			setMeasure(Integer.parseInt("" + props.get(MEASURE)));
 	}
-	
+
 	public static void remove(TimeListener l) {
 		listeners.remove(l);
 	}
@@ -292,15 +300,12 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 		if (Property.TEMPO == prop) {
 			setTempo((float)value);
 		}
-		
+
 	}
 
-	
-//	public static void setActive(boolean active) throws OSCSerializeException, IOException {
-//		carla.setActive(0, (active) ? 1 : 0);
-//	}
 }
 
+// private final Command start, tempoCmd, volumeCmd;
 //private Request togglePlay = new Request("MidiPlay:start/stop") {
 //	@Override public void process(HashMap<String, Object> props) throws Exception {
 //		if (isRunning()) stop();

@@ -25,10 +25,10 @@ public class Constants {
 	// TODO generalize
 	public static int _SAMPLERATE = 48000;
 	public static int _BUFSIZE = 512;
-	
+
 	// TODO
-    public static final File defaultSetlist = new File("/home/judah/git/JudahZone/resources/Songs/list1.songs"); 
-    public static final File defaultFolder = new File("/home/judah/git/JudahZone/resources/Songs/"); 
+    public static final File defaultSetlist = new File("/home/judah/git/JudahZone/resources/Songs/list1.songs");
+    public static final File defaultFolder = new File("/home/judah/git/JudahZone/resources/Songs/");
 
 	public static class Param {
 		public static final String ACTIVE = "active";
@@ -50,27 +50,27 @@ public class Constants {
 		public static final String STEPS = "steps";
 		public static final String PRESET = "preset";
 		public static final String IMAGE = "image";
-		
+
 		public static boolean parseActive(HashMap<String, Object> props) {
 			return (Boolean.parseBoolean(props.get(ACTIVE).toString()));
 		}
-		
+
 		public static String parseString(String key, HashMap<String, Object> props) {
 			return props.get(key).toString();
 		}
 
 		public static HashMap<String, Class<?>> singleTemplate(String name, Class<?> clazz) {
-			HashMap<String, Class<?>> params = new HashMap<String, Class<?>>();
+			HashMap<String, Class<?>> params = new HashMap<>();
 			params.put(name, clazz);
 			return params;
 		}
-		
+
 		public static HashMap<String, Class<?>> activeTemplate() {
 			return singleTemplate(ACTIVE, Boolean.class);
 		}
 
 	}
-	
+
 	public static final String NL = System.getProperty("line.separator", "\r\n");
 	public static final String CUTE_NOTE = "♫ ";
 	public static final String FILE_SEPERATOR = System.getProperty("file.separator");
@@ -103,15 +103,15 @@ public class Constants {
     }
 
 	public static final Midi BASSDRUM;
-	
-	static { 
+
+	static {
 		Midi temp = null;
 		try { temp = new Midi(Midi.NOTE_ON, 9, 36, 100);
 		} catch (InvalidMidiDataException e) {e.printStackTrace();}
 		BASSDRUM = temp;}
-	
-		
-	
+
+
+
     public static int gain2midi(float gain) {
     	return Math.round(gain * 127);
     }
@@ -138,23 +138,23 @@ public class Constants {
 		return b.toString();
 	}
 
-	
-	
+
+
 	public static float toBPM(long delta, int beats) {
 		return 60000 / (delta / beats);
-	} 
-	
+	}
+
 	public static HashMap<String, Class<?>> template(String key, Class<?> clazz) {
-		HashMap<String, Class<?>> result = new HashMap<String, Class<?>>();
+		HashMap<String, Class<?>> result = new HashMap<>();
 		result.put(key, clazz);
 		return result;
 	}
-	
+
 	public static Midi transpose(Midi in, int steps) throws InvalidMidiDataException {
 		if (steps == 0) return in;
 		return new Midi(in.getCommand(), in.getChannel(), in.getData1() + steps, in.getData2());
 	}
-	
+
 	public static Midi transpose(Midi in, int steps, float gain) throws InvalidMidiDataException {
 		if (steps == 0 && gain >= 1f) return in;
 		return new Midi(in.getCommand(), in.getChannel(), in.getData1() + steps, (int)(in.getData2() * gain));
@@ -164,39 +164,47 @@ public class Constants {
 		if (gain == 1f) return in;
 		return new Midi(in.getCommand(), in.getChannel(), in.getData1(), (int)(in.getData2() * gain));
 	}
-	
+
 	public static Midi transpose(Midi in, int steps, int channel) throws InvalidMidiDataException {
 		return new Midi(in.getCommand(), channel, in.getData1() + steps, in.getData2());
+	}
+
+	public static void sleep(long millis) {
+	    try {
+	        Thread.sleep(millis);
+	    } catch(Throwable t) {
+	        System.err.println(t.getMessage());
+	    }
 	}
 
 	public static void main(String[] args) {
 		System.out.println(toBPM(1000, 1) + " bpm");
 		System.out.println(toBPM(3000, 3) + " bpm");
 		System.out.println(toBPM(1000, 2) + " bpm");
-		
-		
-		
+
+
+
 		//for (Info info :  MidiSystem.getMidiDeviceInfo()) {
 		//	System.out.println(info.getName() + " - " + info.getDescription() + " / " + info.getVendor());
 		//}
 		try {
-			
+
 			System.out.println(MidiSystem.getSequencer().getClass().getCanonicalName());
-			//System.out.println("Synthesizer instruments: " + synth.getDeviceInfo().getName() + 
+			//System.out.println("Synthesizer instruments: " + synth.getDeviceInfo().getName() +
 			//		" - " + synth.getDeviceInfo().getDescription());
 			//System.out.println(Arrays.toString(synth.getDefaultSoundbank().getResources()));
-			
-			
+
+
 		} catch (MidiUnavailableException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 }
-//UIManager.LookAndFeelInfo[] looks = UIManager.getInstalledLookAndFeels(); 
-//for (UIManager.LookAndFeelInfo look : looks) { 
-//    System.out.println(look.getClassName()); 
-//} 
+//UIManager.LookAndFeelInfo[] looks = UIManager.getInstalledLookAndFeels();
+//for (UIManager.LookAndFeelInfo look : looks) {
+//    System.out.println(look.getClassName());
+//}
 //	// list out standard swing ui setting names
 //		public static void main(String[] args) {
 //			List<String> colors = new ArrayList<String>();

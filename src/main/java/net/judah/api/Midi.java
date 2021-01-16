@@ -15,7 +15,7 @@ public class Midi extends ShortMessage {
 	public static final String PARAM_CHANNEL = "channel";
 	public static final String PARAM_DATA1 = "data1";
 	public static final String PARAM_DATA2 = "data2";
-	
+
 	public Midi(byte[] bytes) {
 		super(bytes);
 	}
@@ -26,7 +26,14 @@ public class Midi extends ShortMessage {
 		} catch(Throwable t) { log.error(t.getMessage(), t); }
 		return null;
 	}
-	
+
+	/**Create a midi message for Channel 0
+	 * @return null on internally handled exception */
+    public static Midi create(int command, int data1, int data2) {
+        return create(command, 0, data1, data2);
+    }
+
+
 	/** @see javax.sound.midi.ShortMessage#setMessage(int, int, int, int) */
 	public Midi(int command, int channel, int data1, int data2) throws InvalidMidiDataException {
 		super(command, channel, data1, data2);
@@ -42,7 +49,7 @@ public class Midi extends ShortMessage {
 
 	@Override
 	public String toString() {
-		
+
         StringBuffer sb = new StringBuffer("" + getCommand());
         if (getLength() > 1)
         	sb.append(".").append(getData1());
@@ -91,21 +98,21 @@ public class Midi extends ShortMessage {
 	public void setVelocity(int velocity) throws InvalidMidiDataException {
 		setMessage(getCommand(), getChannel(), getData1(), velocity);
 	}
-	
-	
+
+
 	public static boolean isCC(ShortMessage msg) {
 		 return msg.getStatus() - msg.getChannel() == ShortMessage.CONTROL_CHANGE;
 	}
 	public boolean isCC() { return isCC(this); }
-	
+
 	public static boolean isProgChange(ShortMessage msg) {
 		return msg.getStatus() - msg.getChannel() == ShortMessage.PROGRAM_CHANGE;
 	}
 	public boolean isProgChange() { return isProgChange(this); }
-	
+
 	public static boolean isNote(ShortMessage msg) {
 		int stat = msg.getStatus() - msg.getChannel();
-		return stat == Midi.NOTE_OFF || stat == NOTE_ON; 
+		return stat == Midi.NOTE_OFF || stat == NOTE_ON;
 	}
 	public boolean isNote() { return isNote(this); }
 
@@ -132,9 +139,9 @@ public class Midi extends ShortMessage {
 	}
 
 	public static void main(String[] args) {
-		
-		
-		
+
+
+
 	}
 }
 

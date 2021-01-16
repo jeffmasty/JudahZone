@@ -10,39 +10,41 @@ import net.judah.looper.Sample;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 
-/** A calculated sin wave LFO.  Default amplitude returns queries between 0 and 100 */
+/** A calculated sin wave LFO.  Default amplitude returns queries between 0 and 85 */
 @Data @NoArgsConstructor @AllArgsConstructor
 public class LFO {
-	
+
 	public static enum Target{
-		Gain, CutEQ, Reverb, Delay
+		CutEQ, Gain, Reverb, Delay
 	};
-	
+
 	private boolean active;
-	private Target target = Target.Gain;
-	
-	/** in kilohertz (msec per cycle). default: 1000 (1 per second)*/
-	private double frequency = 666;
-	
+	private Target target = Target.CutEQ;
+
+	/** in kilohertz (msec per cycle). default: oscillates over a 1.2 seconds. */
+	private double frequency = 1200;
+
 	/** align the wave on the jack frame buffer by millisecond */
 	private long shift;
-	
-	/** set output level of queries. default: 0 to 100. */
-	private double amplitude = 100;
-	
+
+	/** set output level of queries. default: 0 to 85. */
+	private double amplitude = 85;
+
 	private static final ArrayList<Channel> lfoPulse = new ArrayList<>();
-	
+
 	/** called every MidiScheduler.LFO_PULSE jack frames in RT thread */
 	public static void pulse() {
 		for (LineIn ch : JudahZone.getChannels())
 			if (ch.getLfo().isActive())
 				lfoPulse.add(ch);
-		for (Sample s : JudahZone.getLooper()) 
+		for (Sample s : JudahZone.getLooper())
 			if (s.getLfo().isActive())
 				lfoPulse.add(s);
+		if (JudahZone.getMasterTrack().getLfo().isActive())
+		    lfoPulse.add(JudahZone.getMasterTrack());
 		if (lfoPulse.isEmpty()) return;
 		new Thread() { @Override public void run() {
-			for (Channel ch : lfoPulse) 
+			for (Channel ch : lfoPulse)
 				ch.getLfo().pulse(ch);
 			lfoPulse.clear();
 		}}.start();
@@ -56,12 +58,12 @@ public class LFO {
 		double wave = 1 + Math.sin(Math.toRadians(phase * 360));
 		return (wave * (amplitude / 2));
 	}
-	
+
 	/** query for right now. */
 	public double query() {
 		return query(System.currentTimeMillis());
 	}
-	
+
 	/** execute the LFO on the channel's target */
 	public void pulse(Channel ch) {
 		int val = (int)query();
@@ -69,8 +71,8 @@ public class LFO {
 			case Gain: ch.setVolume(val); break;
 			case CutEQ: ch.getCutFilter().setFrequency(
 					CutFilter.knobToFrequency((int)ch.getLfo().query())); break;
-			case Reverb: ch.getReverb().setRoomSize(val / 100f);  
-						 ch.getReverb().setWidth(val / 100f); 
+			case Reverb: ch.getReverb().setRoomSize(val / 100f);
+						 ch.getReverb().setWidth(val / 100f);
 						 ch.getReverb().setDamp(val / 100f); break;
 			case Delay: ch.getDelay().setFeedback(val / 100f);
 		}
@@ -94,11 +96,11 @@ public class LFO {
 
 		double min = Double.MAX_VALUE;
 		double max = Double.MIN_VALUE;
-		
+
 		public LFOTest(int freq) {
-			lfo.setFrequency(freq); 
+			lfo.setFrequency(freq);
 		}
-		
+
 		@Override
 		public void run() {
 			while(count <= spells) {
@@ -112,7 +114,7 @@ public class LFO {
 					display += " ";
 				display += "*";
 				System.out.println(display + "       " + query);
-				
+
 				count++;
 				try { Thread.sleep(sleep);
 				} catch (Throwable t) { }

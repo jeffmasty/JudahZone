@@ -1,6 +1,6 @@
 package net.judah.plugin;
 
-import static net.judah.jack.AudioTools.*;
+import static net.judah.util.AudioTools.*;
 import static net.judah.util.Constants.*;
 
 import org.jaudiolibs.jnajack.Jack;

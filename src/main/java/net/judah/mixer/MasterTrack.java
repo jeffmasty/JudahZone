@@ -1,40 +1,62 @@
 package net.judah.mixer;
 
+import static net.judah.util.AudioTools.*;
+
 import java.nio.FloatBuffer;
 
 import org.jaudiolibs.jnajack.JackPort;
 
-import lombok.Getter;
-import net.judah.jack.AudioTools;
+import net.judah.JudahZone;
+import net.judah.mixer.bus.Reverb;
+import net.judah.util.AudioTools;
 
+/**The unified effects/volume track just before hitting the speakers/external effects.
+ * A master track initializes in a muted state.*/
 public class MasterTrack extends Channel {
 
-	final JackPort left, right;
-	
-	@Getter private int volume = 50;
-	
-	public MasterTrack(JackPort left, JackPort right) {
-		super("ZONE");
-		this.left = left;
-		this.right = right;
+	final JackPort speakersLeft, speakersRight, effectsL, effectsR;
+	FloatBuffer left, right;
+
+	public MasterTrack(JackPort left, JackPort right,
+	        JackPort effectsL, JackPort effectsR, Reverb reverb) {
+		super(JudahZone.JUDAHZONE);
+		this.speakersLeft = left;
+		this.speakersRight = right;
+		this.effectsL = effectsL;
+		this.effectsR = effectsR;
+		setReverb(reverb);
 		setOnMute(true);
 	}
 
-	FloatBuffer toJackLeft, toJackRight;
 	public void process() {
-		
-		if (cutFilter.isActive()) {
-			left.getFloatBuffer().rewind();
-			right.getFloatBuffer().rewind();
-			cutFilter.process(left.getFloatBuffer(), right.getFloatBuffer(), volume / 100f);
+	    left = speakersLeft.getFloatBuffer();
+	    right = speakersRight.getFloatBuffer();
+
+        if (eq.isActive()) {
+            eq.process(left, true);
+            eq.process(right, false);
+        }
+
+        if (cutFilter.isActive()) {
+            cutFilter.process(left, right, 1);
+        }
+
+        if (delay.isActive()) {
+            delay.processAdd(left, left, true);
+            delay.processAdd(right, right, false);
+        }
+
+		if (reverb.isActive()) {
+            processAdd(left, volume / 50f, effectsL.getFloatBuffer());
+            processAdd(right, volume / 50f, effectsR.getFloatBuffer());
+            processSilence(left);
+            processSilence(right);
 		}
 		else if (volume != 50) {
-			right.getFloatBuffer().rewind();
-			AudioTools.processGain(right.getFloatBuffer(), volume / 50f);
-			left.getFloatBuffer().rewind();
-			AudioTools.processGain(left.getFloatBuffer(), volume / 50f);
+			AudioTools.processGain(speakersRight.getFloatBuffer(), volume / 50f);
+			AudioTools.processGain(speakersLeft.getFloatBuffer(), volume / 50f);
 		}
-				
+
 	}
-	
+
 }

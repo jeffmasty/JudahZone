@@ -20,24 +20,24 @@ import net.judah.util.Constants;
 @Log4j
 public class TickTock implements Player {
 
-	public static final int DEFAULT_DOWNBEAT = 34;
-	public static final int DEFAULT_BEAT = 33;
+	public static final int DEFAULT_DOWNBEAT = 45;
+	public static final int DEFAULT_BEAT = 37;
 	private final MidiQueue midi;
 	private final Metronome metronome;
     private int measure = 4;
     private float tempo = 85;
-	
+
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 	private ScheduledFuture<?> beeperHandle;
     private final WakeUp wakeUp = new WakeUp();
 	private final AtomicBoolean changed = new AtomicBoolean(true);
-	
+
 	@SuppressWarnings("unused")
 	private Midi downbeatOn, downbeatOff, beatOn, beatOff; //:>
-	
+
 	private Integer duration;
-	private Integer intro; 
-	
+	private Integer intro;
+
 	class WakeUp implements Runnable {
 
 		private int count = 0;
@@ -52,25 +52,25 @@ public class TickTock implements Player {
 		        		24, TimeUnit.HOURS);
 		        return;
 			}
-			
+
 			// count beats then trigger timebase or stop ticktock
 			if (intro != null && count == intro) {
 				metronome.rollTransport(); // roll transport
 			}
 			if (duration != null && count >= duration) {
-				
+
 				log.info("duration hit " + count);
-				
+
 				// metronome.beat(duration - intro);
 				beeperHandle.cancel(true);
 				metronome.stop();
 				return;
 			}
-			
+
 			boolean first = count % measure == 0;
 			midi.queue(first ? downbeatOn : beatOn);
 			// drum machines don't like note off, Fluid synth doesn't mind...
-			// midi.queue(first ? downbeatOff : beatOff);  
+			// midi.queue(first ? downbeatOff : beatOff);
 			count++;
 		}
 	}
@@ -85,9 +85,9 @@ public class TickTock implements Player {
 		this.midi = metro.getMidi();
 		this.metronome = metro;
     	try {
-    		downbeatOn = new Midi(ShortMessage.NOTE_ON, channel, downbeat, 100); 
+    		downbeatOn = new Midi(ShortMessage.NOTE_ON, channel, downbeat, 100);
     		downbeatOff = new Midi(ShortMessage.NOTE_OFF, channel, downbeat);
-    		beatOn = new Midi(ShortMessage.NOTE_ON, channel, beat, 100); 
+    		beatOn = new Midi(ShortMessage.NOTE_ON, channel, beat, 100);
     		beatOff = new Midi(ShortMessage.NOTE_OFF, channel, beat);
     	} catch (InvalidMidiDataException e) {
     		log.error(e.getMessage(), e);
@@ -96,7 +96,7 @@ public class TickTock implements Player {
 
 	/** bell and woodblock on channel 9 */
 	TickTock(Metronome metro) {
-		this(metro, 34, 33, 9); 
+		this(metro, DEFAULT_DOWNBEAT, DEFAULT_BEAT, 9);
 	}
 
 	@Override
@@ -110,8 +110,8 @@ public class TickTock implements Player {
 
 		long cycle = Constants.millisPerBeat(tempo);
 		log.debug("TickTock starting with a cycle of " + cycle + " for bpm: " + tempo);
-		
-		beeperHandle = scheduler.scheduleAtFixedRate(wakeUp, 0, 
+
+		beeperHandle = scheduler.scheduleAtFixedRate(wakeUp, 0,
 				Constants.millisPerBeat(tempo), TimeUnit.MILLISECONDS);
 		scheduler.schedule(
     		new Runnable() {@Override public void run() {beeperHandle.cancel(true);}},
@@ -139,12 +139,12 @@ public class TickTock implements Player {
 		this.tempo = tempo;
 		changed.set(true);
 	}
-	
+
 	@Override
 	public void close() {
 		stop();
 	}
-	
+
 	// @Override from TimeProvider
 	@Override
 	public void setDuration(Integer intro, Integer duration) {
@@ -160,5 +160,5 @@ public class TickTock implements Player {
 		if (prop == Property.VOLUME) setGain((Float)value);
 		if (prop == Property.MEASURE) measure = (Integer)value;
 	}
-	
+
 }

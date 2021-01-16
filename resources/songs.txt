@@ -2,10 +2,22 @@ ideas:
 with a little help from my dub friends https://youtu.be/o2Qa-0pfoco
 Quando quando quando
 
+Jazz:
+
+Duets #3 flutes
+I Only Have Eyes for You Reggae#4@97 new fakebook pg 170
+My funny valentine Reggae4@102 on Ethereal drum set, Phaser guitar chords, flute melody, synth bass2 playing around/solo. 
+Nature Boy new fake pg 258 REeggae 8 @77  full delay, bass can play a melody line  
+Moonlight Serenade Rock Organ, Rumba Guag... half time @ 184bpm
+love story techno #5 rock organ
+1/2 of Dolphin Dance techno 4 @ 125 (half time) punch in piano chords
+I'm in the mood for love  
+Emily OddTime4@95
+All Blues bass
+
+
 I Feel Love:
-
 Move bass/delay to external synth
-
 
 Wave:
 shakers midi track, volume adjusted
@@ -16,6 +28,19 @@ come back in on the bridge and sequence a Ritardo at the end.
 
 Feel Good: 
  Octave up bass at the end? (requires midi record)
+
+And I Love her:
+click track 5 bars (1 bar intro)
+record 4 bars Loop1 woodblock 2, 3& 4&  (closed high hat on 1)
+queue 10 bars record Loop2 arpeggios 
+Melody
+Stop Loop2 for bridge
+Start Loop2 for ending.
+Stop (ritardando?)
+
+
+Dead Flowers: 0-53 Ohh Voices 3x octave low bass walkdown dmajor
+
 
 See It:
 Scenes: A A A B
@@ -30,33 +55,6 @@ Scene B
 loop 5:  Arpeggiator
 loop 6:  drums3
 loop 7:  melody B 
-
-
-And I Love her:
-click track 5 bars (1 bar intro)
-record 4 bars Loop1 woodblock 2, 3& 4&  (closed high hat on 1)
-queue 10 bars record Loop2 arpeggios 
-Melody
-Stop Loop2 for bridge
-Start Loop2 for ending.
-Stop (ritardando?)
-
-Dead Flowers: 0-53 Ohh Voices 3x octave low bass walkdown dmajor
-
-
-Jazz:
-
-Duets #3 flutes
-I Only Have Eyes for You Reggae#4@97 new face pg 170
-My funny valentine Reggae4@102 on Ethereal drum set, Phaser guitar chords, flute melody, synth bass2 playing around/solo. 
-Nature Boy new fake pg 258 REeggae 8 @77  full delay, bass can play a melody line  
-Moonlight Serenage Rock Organ, Rumba Guag... half time @ 184bpm
-love story techno #5 rock organ
-1/2 of Dolphin Dance techno 4 @ 125 (half time) punch in piano chords
-  
-
-
-
 
 Checklist:
 PulseAudio volume

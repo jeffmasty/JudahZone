@@ -35,8 +35,8 @@ import org.jaudiolibs.jnajack.JackPortFlags;
 import org.jaudiolibs.jnajack.JackPortType;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j;
-import net.judah.jack.ClientConfig;
 
 /**
  * Implementation of an Audio Client using Jack (via JNAJack)
@@ -46,72 +46,96 @@ import net.judah.jack.ClientConfig;
 @Log4j
 public abstract class AudioClient extends BasicClient {
 
+	@RequiredArgsConstructor
+	public static class ClientConfig {
+
+		public static final String LEFT_IN = "left_in";
+		public static final String RIGHT_IN = "right_in";
+		public static final String LEFT_OUT = "left_out";
+		public static final String RIGHT_OUT = "right_out";
+
+		@Getter final private String name;
+		@Getter final private String[] audioInputNames;
+		@Getter final private String[] audioOutputNames;
+		@Getter final private String[] midiInputNames;
+		@Getter final private String[] midiOutputNames;
+
+		public ClientConfig(String name, String[] audioInputNames, String[] audioOutputNames) {
+			this(name, audioInputNames, audioOutputNames, new String[0], new String[0]);
+		}
+
+		/** stereo audio client */
+		public ClientConfig(String name) {
+			this(name, new String[] {LEFT_IN, RIGHT_IN}, new String[] {LEFT_OUT, RIGHT_OUT}, new String[0], new String[0]);
+		}
+	}
+
 	/** pass-through client */
-	public static class Dummy extends AudioClient { 
+	public static class Dummy extends AudioClient {
 		public Dummy(ClientConfig config) throws JackException {
 			super(config); start(); }
 		@Override protected void makeConnections() throws JackException { }
-    }
-	
-    @Getter protected ClientConfig config;
+	}
 
-    /** input audio ports */
-    @Getter protected JackPort[] inputPorts;
-    /** output audio ports */
-    @Getter protected JackPort[] outputPorts;
-    
+	@Getter protected ClientConfig config;
+
+	/** input audio ports */
+	@Getter protected JackPort[] inputPorts;
+	/** output audio ports */
+	@Getter protected JackPort[] outputPorts;
+
 	protected List<FloatBuffer> inputs;
-    protected List<FloatBuffer> outputs;
+	protected List<FloatBuffer> outputs;
 
 	/** roll your own config, ports and name */
 	protected AudioClient(String name) throws JackException { super(name); }
 
-    public AudioClient(ClientConfig config) throws JackException {
-    	super(config.getName());
-    	this.config = config;
-    	inputPorts = new JackPort[config.getAudioInputNames().length];
-    	outputPorts = new JackPort[config.getAudioOutputNames().length];
-    }
+	public AudioClient(ClientConfig config) throws JackException {
+		super(config.getName());
+		this.config = config;
+		inputPorts = new JackPort[config.getAudioInputNames().length];
+		outputPorts = new JackPort[config.getAudioOutputNames().length];
+	}
 
 	@Override
 	protected void initialize() throws JackException {
-        if (config == null) return; // roll your own ports
+		if (config == null) return; // roll your own ports
 
-        int count = config.getAudioInputNames().length;
+		int count = config.getAudioInputNames().length;
 		inputs = Arrays.asList(new FloatBuffer[config.getAudioInputNames().length]);
-		
-        for (int i = 0; i < count; i++) {
-        	log.debug("registering port " + config.getAudioInputNames()[i]);  
-        	inputPorts[i] = jackclient.registerPort(config.getAudioInputNames()[i], JackPortType.AUDIO, JackPortFlags.JackPortIsInput);
-        }
 
-        count = config.getAudioOutputNames().length;
-	    outputs = Arrays.asList(new FloatBuffer[config.getAudioOutputNames().length]);
-        for (int i = 0; i < count; i++) {
-        	outputPorts[i] = jackclient.registerPort(config.getAudioOutputNames()[i], JackPortType.AUDIO, JackPortFlags.JackPortIsOutput);
-        }
+		for (int i = 0; i < count; i++) {
+			log.debug("registering port " + config.getAudioInputNames()[i]);
+			inputPorts[i] = jackclient.registerPort(config.getAudioInputNames()[i], JackPortType.AUDIO, JackPortFlags.JackPortIsInput);
+		}
+
+		count = config.getAudioOutputNames().length;
+		outputs = Arrays.asList(new FloatBuffer[config.getAudioOutputNames().length]);
+		for (int i = 0; i < count; i++) {
+			outputPorts[i] = jackclient.registerPort(config.getAudioOutputNames()[i], JackPortType.AUDIO, JackPortFlags.JackPortIsOutput);
+		}
 	}
 
-    ////////////////////////////////////////////////////
-    //                PROCESS AUDIO                   //
-    ////////////////////////////////////////////////////
+	////////////////////////////////////////////////////
+	//                PROCESS AUDIO                   //
+	////////////////////////////////////////////////////
 	@Override
 	public boolean process(JackClient client, int nframes) {
 
-        if (state.get() != Status.ACTIVE) 
-            return false;
-        
-        for (int i = 0; i < inputPorts.length; i++) 
-            inputs.set(i, inputPorts[i].getFloatBuffer());
+		if (state.get() != Status.ACTIVE)
+			return false;
 
-        for (int i = 0; i < outputPorts.length; i++) 
-            outputs.set(i, outputPorts[i].getFloatBuffer());
-        
-        // see AudioTools.processEcho(inputs, outputs);
-        for (int c = 0; c < outputs.size(); c++) 
-        	outputs.get(c).put(inputs.get(c));
+		for (int i = 0; i < inputPorts.length; i++)
+			inputs.set(i, inputPorts[i].getFloatBuffer());
 
-        return true;
+		for (int i = 0; i < outputPorts.length; i++)
+			outputs.set(i, outputPorts[i].getFloatBuffer());
+
+		// see AudioTools.processEcho(inputs, outputs);
+		for (int c = 0; c < outputs.size(); c++)
+			outputs.get(c).put(inputs.get(c));
+
+		return true;
 	}
 
 }

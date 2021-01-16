@@ -11,7 +11,7 @@ import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.api.Command;
-import net.judah.jack.RecordAudio;
+import net.judah.api.RecordAudio;
 import net.judah.looper.AudioPlay;
 import net.judah.looper.Recorder;
 import net.judah.looper.Recording;

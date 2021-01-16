@@ -28,60 +28,52 @@ import net.judah.util.Console;
 import net.judah.util.JudahException;
 
 
-/** runs and then connects to FluidSynth stdin and stdout ports, connects midi and speakers */
+/** runs fluid command line and connects to FluidSynth stdin and stdout ports */
 @Log4j
 public class FluidSynth implements Service {
 
 	@Getter private static FluidSynth instance;
-	
+
 	public static final String LEFT_PORT = "fluidsynth-midi:left"; // "fluidsynth:l_00";
 	public static final String RIGHT_PORT = "fluidsynth-midi:right"; // "fluidsynth:r_00";
 	public static final String MIDI_PORT = "fluidsynth-midi:midi_00"; // "fluidsynth:midi";
-
-    public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // "/usr/share/sounds/sf2/JJazzLab-SoundFont.sf2"
-    
-    /** Drums midi channel */
-    private static final int DRUMS = 9;
-    
-	final String MIDI_DRIVER = "jack";
-	final String AUDIO_DRIVER = "jack";
+	public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // "/usr/share/sounds/sf2/JJazzLab-SoundFont.sf2"
+	/** Drums midi channel */
+	private static final int DRUMS = 9;
 
 	private final String shellCommand;
 	private Process process;
 
 	private FluidListener listener;
 	/** talks to FluidSynth on it's stdin */
-    private OutputStream outStream;
-    
-    @Getter private final FluidConsole console;
-    
+	private OutputStream outStream;
+
+	@Getter private final FluidConsole console;
+	@Getter private final FluidReverb reverb;
 	@Getter private Instruments instruments = new Instruments();
 	@Getter private Channels channels = new Channels();
 
 	private final Command progChange, instUp, instDown, drumBank, direct;
 	@Getter private final List<Command> commands;
-	
+
 	private float gain = 2.5f; // max 5
-	private float reverbLevel = 0.75f;
-	private float roomSize = 0.75f;
-	private float dampness = 0.75f;
 
 	public FluidSynth (int sampleRate, boolean startListeners) throws JackException, JudahException, IOException {
 		this(sampleRate, SOUND_FONT, startListeners);
 	}
-	
+
 	public FluidSynth (int sampleRate) throws JackException, JudahException, IOException {
 		this(sampleRate, SOUND_FONT, true);
 	}
-	
+
 	@SuppressWarnings("deprecation")
 	public FluidSynth (int sampleRate, File soundFont, boolean startListeners) throws JackException, JudahException, IOException {
-	    instance = this;
+		instance = this;
 		shellCommand = "fluidsynth" +
 				" --midi-driver=jack --audio-driver=jack" +
-	    		" -o synth.ladspa.active=0  --sample-rate " + sampleRate + " " +
+				" -o synth.ladspa.active=0  --sample-rate " + sampleRate + " " +
 				SOUND_FONT.getAbsolutePath();
-		
+
 		console = new FluidConsole(this);
 		log.debug(shellCommand);
 		try {
@@ -90,80 +82,83 @@ public class FluidSynth implements Service {
 			log.error(e.getMessage(), e);
 		}
 
-	    // read FluidSynth output
-	    listener = new FluidListener(process.getInputStream(), false);
-	    new FluidListener(process.getErrorStream(), true).start();
-	    if (startListeners)
-	    	listener.start();
-	    outStream = process.getOutputStream();
+		// read FluidSynth output
+		listener = new FluidListener(process.getInputStream(), false);
+		new FluidListener(process.getErrorStream(), true).start();
+		if (startListeners)
+			listener.start();
+		outStream = process.getOutputStream();
 
-	    Jack jack = Jack.getInstance();
-	    try { // wait for fluid synth to init
-	    	while (jack.getPorts(LEFT_PORT, null, null).length == 0) {
-		    	Thread.sleep(50);
-	    	}
-	    	gain(gain);
-	    	Thread.sleep(40);
-	    	
-	    } catch (InterruptedException e) {
-	    	log.error(e);
-	    }
-	    if (startListeners)
-	    	sync();
-		initReverb();
-		HashMap<String, Class<?>> template = new HashMap<String, Class<?>>();
+		Jack jack = Jack.getInstance();
+		try { // wait for fluid synth to init
+			while (jack.getPorts(LEFT_PORT, null, null).length == 0) {
+				Thread.sleep(50);
+			}
+			gain(gain);
+			Thread.sleep(40);
+
+		} catch (InterruptedException e) {
+			log.error(e);
+		}
+		if (startListeners)
+			sync();
+
+        sendCommand("chorus off");
+		reverb = new FluidReverb(this);
+
+		HashMap<String, Class<?>> template = new HashMap<>();
 		template.put("channel", Integer.class);
 		template.put("preset", Integer.class);
 		progChange = new Command(PROGCHANGE.name, PROGCHANGE.desc, template) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-					int channel = 0;
-					try {
-						channel = Integer.parseInt(props.get("channel").toString());
-					} catch (Throwable t) { 
-						log.debug(t.getMessage()); }
-					JudahMidi.getInstance().queue(progChange(channel, Integer.parseInt(props.get("preset").toString())));
-		}};
-		
-		instUp = new Command(INSTUP.name, INSTUP.desc) {
-			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				instUp(0, true);
-			}};
-		instDown = new Command(INSTDOWN.name, INSTDOWN.desc) {
-			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				instUp(0, false);
-			}};
-		template = new HashMap<String, Class<?>>();
-		template.put("up", Boolean.class);
-		template.put("preset", Integer.class);
-		drumBank = new Command(DRUMBANK.name, DRUMBANK.desc, template) {
-			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				
-				Integer preset = null;
+				int channel = 0;
 				try {
-					preset = Integer.parseInt("" + props.get("preset"));
-					sendCommand(FluidCommand.PROG_CHANGE, "9 " + preset);
-					return;
-				} catch (Throwable t) { }
-				
-				try {
-					boolean up = Boolean.parseBoolean("" + props.get("up"));
-					instUp(DRUMS, up);
-				} catch (Throwable t) { }
-			}
-		};
-		template = new HashMap<String, Class<?>>();
-		template.put("string", String.class);
-		direct = new Command(DIRECT.name, DIRECT.desc, template) {
-			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				String[] split = props.get("string").toString().split(";");
-				for (String cmd : split)
-					sendCommand(cmd);
-			}
-		};
+					channel = Integer.parseInt(props.get("channel").toString());
+				} catch (Throwable t) {
+					log.debug(t.getMessage()); }
+				JudahMidi.getInstance().queue(progChange(channel, Integer.parseInt(props.get("preset").toString())));
+			}};
 
-	    commands = Arrays.asList(new Command[] {progChange, instUp, instDown, drumBank, direct});				
-		// doHelp();
-		Console.addText( "FluidSynth channels: " + channels.size() + " instruments: " + instruments.size());
+			instUp = new Command(INSTUP.name, INSTUP.desc) {
+				@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+					instUp(0, true);
+				}};
+				instDown = new Command(INSTDOWN.name, INSTDOWN.desc) {
+					@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+						instUp(0, false);
+					}};
+					template = new HashMap<>();
+					template.put("up", Boolean.class);
+					template.put("preset", Integer.class);
+					drumBank = new Command(DRUMBANK.name, DRUMBANK.desc, template) {
+						@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+
+							Integer preset = null;
+							try {
+								preset = Integer.parseInt("" + props.get("preset"));
+								sendCommand(FluidCommand.PROG_CHANGE, "9 " + preset);
+								return;
+							} catch (Throwable t) { }
+
+							try {
+								boolean up = Boolean.parseBoolean("" + props.get("up"));
+								instUp(DRUMS, up);
+							} catch (Throwable t) { }
+						}
+					};
+					template = new HashMap<>();
+					template.put("string", String.class);
+					direct = new Command(DIRECT.name, DIRECT.desc, template) {
+						@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+							String[] split = props.get("string").toString().split(";");
+							for (String cmd : split)
+								sendCommand(cmd);
+						}
+					};
+
+					commands = Arrays.asList(new Command[] {progChange, instUp, instDown, drumBank, direct});
+					// doHelp();
+					Console.addText( "FluidSynth channels: " + channels.size() + " instruments: " + instruments.size());
 	}
 
 	private void syncChannels() throws InterruptedException, IOException, JudahException {
@@ -208,13 +203,6 @@ public class FluidSynth implements Service {
 
 	}
 
-	private void initReverb() {
-		sendCommand("chorus off");
-		sendCommand("reverb on");
-		reverb(reverbLevel);
-		roomSize(roomSize);
-		dampness(dampness);
-	}
 
 	public Midi bankUp() {
 		try {
@@ -234,18 +222,16 @@ public class FluidSynth implements Service {
 		return null;
 	}
 
-	/** MIDI
-	The MIDI message used to specify the instrument is called a "program change" message. It has one STATUS byte and one DATA byte :
-Status byte : 1100 CCCC
-Data byte 1 : 0XXX XXXX
-where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number from 0 to 127. */
-
+	/**The MIDI message used to specify the instrument has one STATUS byte and one DATA byte :
+        Status byte : 1100 CCCC
+        Data byte 1 : 0XXX XXXX
+    where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number from 0 to 127. */
 	public Midi progChange(final int channel, int preset) {
 		final int before = channels.getCurrentPreset(channel);
 		try {
 			if (++preset == 129)
-			preset = 1; 
-				
+				preset = 1;
+
 			final Midi msg = new ProgMsg(channel, preset);
 
 			new Thread() {
@@ -266,14 +252,14 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 			return null;
 		}
 	}
-	
+
 	public void instUp(int channel, boolean up) {
 		int current = channels.getCurrentPreset(channel);
 		int bank = channels.getBank(channel);
 		int preset = instruments.getNextPreset(bank, current, up);
 		progChangeConsole(channel, preset);
 	}
-	
+
 	public int progChangeConsole(int channel, int preset) {
 		try {
 			String progChange = FluidCommand.PROG_CHANGE.code + channel + " " + preset;
@@ -281,8 +267,8 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 			syncChannels();
 			int result = channels.getCurrentPreset(channel);
 			int bank = channels.getBank(channel);
-			for (FluidInstrument f : instruments) 
-				if (f.group == bank && f.index == preset) 
+			for (FluidInstrument f : instruments)
+				if (f.group == bank && f.index == preset)
 					Console.addText(f.toString());
 			return result;
 		} catch (Throwable t) {
@@ -298,7 +284,7 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 		sendCommand(cmd.code);
 	}
 
-	private void sendCommand(FluidCommand cmd, Object value) {
+	void sendCommand(FluidCommand cmd, Object value) {
 		String send = cmd.code + value;
 		sendCommand(send);
 	}
@@ -309,8 +295,8 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 			string = string + NL;
 
 		try {
-		    outStream.write((string).getBytes());
-		    outStream.flush();
+			outStream.write((string).getBytes());
+			outStream.flush();
 		} catch(IOException e) {
 			log.error(e.getMessage(), e);
 		}
@@ -329,27 +315,6 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 		if (value > 5) value = 5;
 		sendCommand(FluidCommand.GAIN, value);
 		this.gain = value;
-	}
-
-	public void reverb(float val) {
-		if (val > 1) val = 1;
-		if (val < 0) val = 0;
-		sendCommand(FluidCommand.REVERB, val);
-		this.reverbLevel = val;
-	}
-
-	public void roomSize(float val) {
-		if (val > 1) val = 1;
-		if (val < 0) val = 0;
-		sendCommand(FluidCommand.ROOM_SIZE, val);
-		this.roomSize = val;
-	}
-
-	public void dampness(float val) {
-		if (val > 1) val = 1;
-		if (val < 0) val = 0;
-		sendCommand(FluidCommand.DAMPNESS, val);
-		this.dampness = val;
 	}
 
 	// TODO chorus routines to MIDI "SF2 default modulators" (too many jack hangs on stdin)
@@ -395,21 +360,15 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 	@Override
 	public void close() {
 		try {
-  	  		sendCommand(FluidCommand.QUIT);
-  	  	} catch (JudahException e) { log.warn(e); }
+			sendCommand(FluidCommand.QUIT);
+		} catch (JudahException e) { log.warn(e); }
 	}
-
-//	public void connect(JackClient jackclient, JackPort port) throws JackException {
-//		log.warn("Trying to connect " + port.getName() +" to " + MIDI_PORT);
-//	    Jack.getInstance().connect(jackclient, port.getName(), MIDI_PORT);
-//	}
-
 
 	public static class Channels extends ArrayList<FluidChannel> {
 		/** @return preset instrument index for the channel */
 		public int getCurrentPreset(int channel) {
-			for (FluidChannel c : this) 
-				if (c.channel == channel) 
+			for (FluidChannel c : this)
+				if (c.channel == channel)
 					return c.preset;
 			return -1;
 		}
@@ -421,23 +380,21 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 		}
 	}
 
-	
-	
 	public static class Instruments extends ArrayList<FluidInstrument> {
 		public int getNextPreset(int bank, int current, boolean up) {
 			int index = -1;
 			int count = -1;
 			// extract bank
-			ArrayList<FluidInstrument> roll = new ArrayList<FluidInstrument>();
-			for (FluidInstrument i : this) 
-				if (i.group == bank) {   
+			ArrayList<FluidInstrument> roll = new ArrayList<>();
+			for (FluidInstrument i : this)
+				if (i.group == bank) {
 					count++;
 					roll.add(i);
 					if (i.index == current) {
 						index = count;
 					}
 				}
-			if (index == -1) 
+			if (index == -1)
 				throw new IndexOutOfBoundsException("preset " + current + " for bank " + bank + ": " + Arrays.toString(roll.toArray()));
 			if (up) {
 				index++;
@@ -462,8 +419,12 @@ where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number fr
 				sendCommand(cmd);
 		}
 	}
-	
+
 }
 
+//  public void connect(JackClient jackclient, JackPort port) throws JackException {
+//      log.warn("Trying to connect " + port.getName() +" to " + MIDI_PORT);
+//      Jack.getInstance().connect(jackclient, port.getName(), MIDI_PORT);
+//  }
 // sendCommand( on ? "reverb on" : "reverb off");
 // sendCommand( on ? "chorus on" : "chorus off");

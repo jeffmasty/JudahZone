@@ -39,159 +39,159 @@ import net.judah.util.RTLogger;
 @Log4j
 public class JudahMidi extends BasicClient implements Service, MidiQueue {
 
-	public static final String JACKCLIENT_NAME = "JudahMidi";
-	private long frame = 0;
-	
-	@Getter private static JudahMidi instance;
-	/** Jack Frame */
-	public static long getCurrent() {
-		return instance.scheduler.getCurrent();
-	}
-	
-	@Getter private final MidiScheduler scheduler = new MidiScheduler(this);
-	@Getter private final Router router = new Router();
+    public static final String JACKCLIENT_NAME = "JudahMidi";
+    private long frame = 0;
 
-	private ArrayList<JackPort> inPorts = new ArrayList<JackPort>();  // Keyboard, Pedal, MidiIn
-	@Getter private JackPort keyboard;
-	@Getter private JackPort pedal;
-	@Getter private JackPort drumsIn;
-	@Getter private JackPort auxIn1;
-	@Getter private JackPort auxIn2;
-	@Getter private JackPort auxIn3;
-	
-	private ArrayList<JackPort> outPorts = new ArrayList<>(); // Synth, Effects, MidiOut
-	@Getter private JackPort synthOut;
-	@Getter private JackPort drumsOut;
-	@Getter private JackPort auxOut1;
-	@Getter private JackPort auxOut2;
-	@Getter private JackPort auxOut3;
-	
-    private final ConcurrentLinkedQueue<ShortMessage> queue = new ConcurrentLinkedQueue<ShortMessage>();
+    @Getter private static JudahMidi instance;
+    /** Jack Frame */
+    public static long getCurrent() {
+        return instance.scheduler.getCurrent();
+    }
+
+    @Getter private final MidiScheduler scheduler = new MidiScheduler(this);
+    @Getter private final Router router = new Router();
+
+    private ArrayList<JackPort> inPorts = new ArrayList<>();  // Keyboard, Pedal, MidiIn
+    @Getter private JackPort keyboard;
+    @Getter private JackPort pedal;
+    @Getter private JackPort drumsIn;
+    @Getter private JackPort auxIn1;
+    @Getter private JackPort auxIn2;
+    @Getter private JackPort auxIn3;
+
+    private ArrayList<JackPort> outPorts = new ArrayList<>(); // Synth, Effects, MidiOut
+    @Getter private JackPort synthOut;
+    @Getter private JackPort drumsOut;
+    @Getter private JackPort auxOut1;
+    @Getter private JackPort auxOut2;
+    @Getter private JackPort auxOut3;
+
+    private final ConcurrentLinkedQueue<ShortMessage> queue = new ConcurrentLinkedQueue<>();
     private final BeatBuddy clock;
-    
+
     @Getter MidiCommands commands = new MidiCommands(this);
-	
+
     // for process()
-	private Event midiEvent = new JackMidi.Event();
-	private byte[] data = null;
+    private Event midiEvent = new JackMidi.Event();
+    private byte[] data = null;
     private int index, eventCount, size;
-	private ShortMessage poll;
-	private Midi midi;
-	private final StageCommands stage = new StageCommands();
+    private ShortMessage poll;
+    private Midi midi;
+    private final StageCommands stage = new StageCommands();
 
-	public JudahMidi(String name, BeatBuddy drumMachine) throws JackException {
-		super(name);
-		instance = this;
-		this.clock = drumMachine;
-		start();
-	}
+    public JudahMidi(String name, BeatBuddy drumMachine) throws JackException {
+        super(name);
+        instance = this;
+        this.clock = drumMachine;
+        start();
+    }
 
-	public void routeChannel(HashMap<String, Object> props) {
-		try {
-			boolean active = Boolean.parseBoolean("" + props.get("Active"));
-			int from = Integer.parseInt("" + props.get("from"));
-			int to = Integer.parseInt("" + props.get("to"));
-			Route route = new Route(from, to);
-			if (active)
-				JudahMidi.getInstance().getRouter().add(route);
-			else 
-				JudahMidi.getInstance().getRouter().remove(route);
-		} catch (NumberFormatException e) {
-			log.error(e.getMessage() + " " + Constants.prettyPrint(props));
-		}
-		
-	}
+    public void routeChannel(HashMap<String, Object> props) {
+        try {
+            boolean active = Boolean.parseBoolean("" + props.get("Active"));
+            int from = Integer.parseInt("" + props.get("from"));
+            int to = Integer.parseInt("" + props.get("to"));
+            Route route = new Route(from, to);
+            if (active)
+                JudahMidi.getInstance().getRouter().add(route);
+            else
+                JudahMidi.getInstance().getRouter().remove(route);
+        } catch (NumberFormatException e) {
+            log.error(e.getMessage() + " " + Constants.prettyPrint(props));
+        }
 
-	@Override
-	protected void initialize() throws JackException {
-		
-		for (OUT port : OUT.values())
-        	outPorts.add(jackclient.registerPort(port.name, MIDI, JackPortIsOutput));
-		
-        for (IN port : IN.values()) 
-        	inPorts.add(jackclient.registerPort(port.name, MIDI, JackPortIsInput));
+    }
+
+    @Override
+    protected void initialize() throws JackException {
+
+        for (OUT port : OUT.values())
+            outPorts.add(jackclient.registerPort(port.name, MIDI, JackPortIsOutput));
+
+        for (IN port : IN.values())
+            inPorts.add(jackclient.registerPort(port.name, MIDI, JackPortIsInput));
 
         int sz = inPorts.size();
-        
+
         if (sz > IN.KEYBOARD.ordinal()) keyboard = inPorts.get(IN.KEYBOARD.ordinal());
         if (sz > IN.PEDAL.ordinal()) pedal = inPorts.get(IN.PEDAL.ordinal());
         if (sz > IN.DRUMS_IN.ordinal()) drumsIn = inPorts.get(IN.DRUMS_IN.ordinal());
         if (sz > IN.AUX1_IN.ordinal()) auxIn1 = inPorts.get(IN.AUX1_IN.ordinal());
         if (sz > IN.AUX2_IN.ordinal()) auxIn2 = inPorts.get(IN.AUX2_IN.ordinal());
         if (sz > IN.AUX3_IN.ordinal()) auxIn3= inPorts.get(IN.AUX3_IN.ordinal());
-        
+
         sz = outPorts.size();
         if (sz > OUT.SYNTH_OUT.ordinal()) synthOut = outPorts.get(OUT.SYNTH_OUT.ordinal());
         if (sz > OUT.DRUMS_OUT.ordinal()) drumsOut = outPorts.get(OUT.DRUMS_OUT.ordinal());
         if (sz > OUT.AUX1_OUT.ordinal()) auxOut1 = outPorts.get(OUT.AUX1_OUT.ordinal());
         if (sz > OUT.AUX2_OUT.ordinal()) auxOut2 = outPorts.get(OUT.AUX2_OUT.ordinal());
         if (sz > OUT.AUX2_OUT.ordinal()) auxOut3 = outPorts.get(OUT.AUX2_OUT.ordinal());
-		//	jackclient.setTimebaseCallback(this, false);
+        //	jackclient.setTimebaseCallback(this, false);
         new Thread(scheduler).start();
 
         clock.setOut(drumsOut);// wire-up drum machine midi messages
-        
-	}
 
-	@SuppressWarnings("deprecation")
-	@Override 
-	protected void makeConnections() throws JackException {
+    }
 
-    	for (String port : jack.getPorts(jackclient, Pedal.NAME, MIDI, EnumSet.of(JackPortIsOutput))) {
-    		log.debug("connecting foot pedal: " + port + " to " + pedal.getName());
-    		jack.connect(jackclient, port, pedal.getName());
-    	}
-    	for (String port : jack.getPorts(jackclient, MPK.NAME, MIDI, EnumSet.of(JackPortIsOutput))) {
-        	log.debug("connecting keyboard: " + port + " to " + keyboard.getName());
-        	jack.connect(jackclient, port, keyboard.getName());
-    	}
-    	
-    	String[] usbSource = jack.getPorts("MIDI2x2", MIDI, EnumSet.of(JackPortIsOutput));
-    	if (usbSource.length == 2) {
-    		for (String portname : usbSource) {
-    			if (portname.contains(" MIDI 1"))
-    				jack.connect(jackclient, portname, drumsIn.getName());
-    			else if (portname.contains(" MIDI 2"))
-    				jack.connect(jackclient, portname, auxIn1.getName());
-    		}
-    	}
-    	
-    	String[] usbSink = jack.getPorts("MIDI2x2", MIDI, EnumSet.of(JackPortIsInput));
-    	if (usbSink.length == 2) {
-    		for (String portname : usbSink) {
-    			if (portname.contains(" MIDI 1")) {
-    				jack.connect(jackclient, drumsOut.getName(), portname);
-    				log.debug("Connected Midi Clock");
-    			}
-    			else if (portname.contains(" MIDI 2"))
-    				jack.connect(jackclient, auxOut1.getName(), portname);
-    		}
-    	}
-    	String [] kompleteMidi = jack.getPorts("Komplete", MIDI, EnumSet.of(JackPortIsInput));
-		if (kompleteMidi.length == 1)
-			jack.connect(jackclient, auxOut2.getName(), kompleteMidi[0]);
-		jack.connect(jackclient, synthOut.getName(), FluidSynth.MIDI_PORT);
-	}
+    @SuppressWarnings("deprecation")
+    @Override
+    protected void makeConnections() throws JackException {
+
+        for (String port : jack.getPorts(jackclient, Pedal.NAME, MIDI, EnumSet.of(JackPortIsOutput))) {
+            log.debug("connecting foot pedal: " + port + " to " + pedal.getName());
+            jack.connect(jackclient, port, pedal.getName());
+        }
+        for (String port : jack.getPorts(jackclient, MPK.NAME, MIDI, EnumSet.of(JackPortIsOutput))) {
+            log.debug("connecting keyboard: " + port + " to " + keyboard.getName());
+            jack.connect(jackclient, port, keyboard.getName());
+        }
+
+        String[] usbSource = jack.getPorts("MIDI2x2", MIDI, EnumSet.of(JackPortIsOutput));
+        if (usbSource.length == 2) {
+            for (String portname : usbSource) {
+                if (portname.contains(" MIDI 1"))
+                    jack.connect(jackclient, portname, drumsIn.getName());
+                else if (portname.contains(" MIDI 2"))
+                    jack.connect(jackclient, portname, auxIn1.getName());
+            }
+        }
+
+        String[] usbSink = jack.getPorts("MIDI2x2", MIDI, EnumSet.of(JackPortIsInput));
+        if (usbSink.length == 2) {
+            for (String portname : usbSink) {
+                if (portname.contains(" MIDI 1")) {
+                    jack.connect(jackclient, drumsOut.getName(), portname);
+                    log.debug("Connected Midi Clock");
+                }
+                else if (portname.contains(" MIDI 2"))
+                    jack.connect(jackclient, auxOut1.getName(), portname);
+            }
+        }
+        String [] kompleteMidi = jack.getPorts("Komplete", MIDI, EnumSet.of(JackPortIsInput));
+        if (kompleteMidi.length == 1)
+            jack.connect(jackclient, auxOut2.getName(), kompleteMidi[0]);
+        jack.connect(jackclient, synthOut.getName(), FluidSynth.MIDI_PORT);
+    }
 
 
-	@Override
-	public boolean process(JackClient client, int nframes) {
-		if (JudahZone.getMasterTrack() == null || JudahZone.getMasterTrack().isOnMute()) return true;
-    	try {
-    		
-    		scheduler.offer(frame++);
-    		for (JackPort port : outPorts) 
-    			JackMidi.clearBuffer(port);
+    @Override
+    public boolean process(JackClient client, int nframes) {
+        if (JudahZone.getMasterTrack() == null || JudahZone.getMasterTrack().isOnMute()) return true;
+        try {
 
-        	for (JackPort port : inPorts) {
-        		eventCount = JackMidi.getEventCount(port);
-        		for (index = 0; index < eventCount; index++) {
-        			if (JackMidi.getEventCount(port) != eventCount) {
-        				RTLogger.warn(this, "eventCount found " + 
-        						JackMidi.getEventCount(port) + " expected " + eventCount);
-        				return true;
-        			}
-        			JackMidi.eventGet(midiEvent, port, index);
+            scheduler.offer(frame++);
+            for (JackPort port : outPorts)
+                JackMidi.clearBuffer(port);
+
+            for (JackPort port : inPorts) {
+                eventCount = JackMidi.getEventCount(port);
+                for (index = 0; index < eventCount; index++) {
+                    if (JackMidi.getEventCount(port) != eventCount) {
+                        RTLogger.warn(this, "eventCount found " +
+                                JackMidi.getEventCount(port) + " expected " + eventCount);
+                        return true;
+                    }
+                    JackMidi.eventGet(midiEvent, port, index);
                     size = midiEvent.size();
                     if (data == null || data.length != size) {
                         data = new byte[size];
@@ -199,73 +199,71 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 
                     midiEvent.read(data);
                     if (port == drumsIn) {
-                    	clock.processTime(data);
-                    	continue;
+                        clock.processTime(data);
+                        continue;
                     }
-                    
+
                     midi = router.process(new Midi(data));
-                    
-                    if (Sequencer.getCurrent() == null) { 
-                    	if (!stage.midiProcessed(midi)) 
-                    		write(midi, midiEvent.time());
+
+                    if (Sequencer.getCurrent() == null) {
+                        if (!stage.midiProcessed(midi))
+                            write(midi, midiEvent.time());
                     }
-                    else if (!Sequencer.getCurrent().midiProcessed(midi)) { 
-                    	if (!stage.midiProcessed(midi))
-                    		write(midi, midiEvent.time());
+                    else if (!Sequencer.getCurrent().midiProcessed(midi)) {
+                        if (!stage.midiProcessed(midi))
+                            write(midi, midiEvent.time());
                     }
-                    
-        		}
-    		}
-        	
-    		if (clock.getQueue() != null) {
-				Midi mid = clock.getQueue();
-				clock.setQueue(null);
-    			try {
-    				RTLogger.log(this, "to beat buddy: " + mid);
-    				JackMidi.eventWrite(drumsOut, 0, mid.getMessage(), mid.getLength());
-    			} catch (JackException e) { RTLogger.warn(this, e); }
-    		}
-    		
-    		poll = queue.poll();
-    		while (poll != null) {
-    			write(poll, 0);
-    			poll = queue.poll();
-    		}
-    		
-    	} catch (Exception e) {
-    		RTLogger.warn(this, e);
-    		return false;
-    	}
-    	return state.get() == Status.ACTIVE;
+
+                }
+            }
+
+            poll = clock.getQueue().poll();
+            while (poll != null) {
+                JackMidi.eventWrite(drumsOut, 0, poll.getMessage(), poll.getLength());
+                RTLogger.log(this, "to beat buddy: " + poll);
+                poll = clock.getQueue().poll();
+            }
+
+            poll = queue.poll();
+            while (poll != null) {
+                write(poll, 0);
+                poll = queue.poll();
+            }
+
+        } catch (Exception e) {
+            RTLogger.warn(this, e);
+            return false;
+        }
+        return state.get() == Status.ACTIVE;
     }
 
-	private void write(ShortMessage midi, int time) throws JackException {
-    	switch (midi.getChannel()) {
-		//	case KOMPLETE_CHANNEL:
-		//		JackMidi.eventWrite(komplete, time, midi.getMessage(), midi.getLength());
-		//		break;
-    	case DRUMS_CHANNEL: // sending drum notes to external drum machine
-    		JackMidi.eventWrite(drumsOut, time, midi.getMessage(), midi.getLength());
-    		break;
-    	case AUX_CHANNEL:
-    		JackMidi.eventWrite(auxOut1, time, midi.getMessage(), midi.getLength());
-    		break;
-    	default:
-    		JackMidi.eventWrite(synthOut, time, midi.getMessage(), midi.getLength());
-    	}
+    private void write(ShortMessage midi, int time) throws JackException {
+        switch (midi.getChannel()) {
+        //	case KOMPLETE_CHANNEL:
+        //		JackMidi.eventWrite(komplete, time, midi.getMessage(), midi.getLength());
+        //		break;
+        case DRUMS_CHANNEL: // sending drum notes to external drum machine
+            JackMidi.eventWrite(drumsOut, time, midi.getMessage(), midi.getLength());
+            break;
+        case AUX_CHANNEL:
+            JackMidi.eventWrite(auxOut1, time, midi.getMessage(), midi.getLength());
+            break;
+        default:
+            JackMidi.eventWrite(synthOut, time, midi.getMessage(), midi.getLength());
+        }
     }
-    
-	@Override
-	public void queue(ShortMessage message) {
-		// log.trace("queued " + message);
-		queue.add(message);
-	}
 
-	@Override
-	public void properties(HashMap<String, Object> props) {
-		scheduler.clear();
-	}
-	
+    @Override
+    public void queue(ShortMessage message) {
+        // log.trace("queued " + message);
+        queue.add(message);
+    }
+
+    @Override
+    public void properties(HashMap<String, Object> props) {
+        scheduler.clear();
+    }
+
 }
 
 // jack.connect(jackclient, dr5Port.getName(), "a2j:Komplete Audio 6 [20] (playback): Komplete Audio 6 MIDI 1");

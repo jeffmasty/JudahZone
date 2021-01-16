@@ -4,156 +4,159 @@ import static net.judah.JudahZone.*;
 
 import net.judah.api.Midi;
 import net.judah.looper.Recorder;
-import net.judah.mixer.LineIn;
-import net.judah.plugin.BeatBuddy;
 import net.judah.plugin.MPK;
 import net.judah.plugin.Plugin;
 import net.judah.util.Console;
 
 public class StageCommands {
-	
-	/** if the midi msg is a hard-coded mixer setting, run the setting and return false */ 
+
+    /** if the midi msg is a hard-coded mixer setting, run the setting and return false */
     public boolean midiProcessed(Midi midi) {
-    	
-    	if (midi.isCC()) {
-    		int data1 = midi.getData1();
-    		
-    		for (LineIn c : getChannels()) {
-    			if (data1 == c.getDefaultCC()) {
-    				c.setVolume(midi.getData2());
-    				return true;
-    			}
-    		}
-    		
-    		if (data1 == MPK.KNOBS.get(0)) {// loop A volume knob
-    			getLooper().get(0).setVolume(midi.getData2());
-    			return true;
-    		}
-    		
-    		if (data1 == MPK.KNOBS.get(1)) {// loop B volume knob
-    			getLooper().get(1).setVolume(midi.getData2());
-    			return true;
-    		}
-    		
-    		// TODO tie with beat buddy volume
-    		if (data1 == MPK.KNOBS.get(6)) {
-    			getChannels().getDrums().setVolume(midi.getData2());
-    			if (getLooper().getDrumTrack() != null) 
-    				getLooper().getDrumTrack().setVolume(midi.getData2());
-    			return true;
-			}
-    		
-    		if (data1 == 31) {// record loop A cc pad
-    			((Recorder)getLooper().get(0)).record(midi.getData2() > 0);
-    			return true;
-    		}
-    		if (data1 == 32) {// record loop B cc pad
-    			((Recorder)getLooper().get(1)).record(midi.getData2() > 0);
-    			return true;
-    		}
-    		
-    		// TODO drum track record, double loop b length
-    		if (data1 == 33 ) {// CC pad 2: slave loop B
-    			new Thread() {
-    				@Override public void run() {
-    					getLooper().slave(); }}.start();
 
-    		}
-    		if (data1 == 34) { // clear loopers cc pad
-    			getLooper().stopAll();
-    			new Thread() {
-    				@Override public void run() {
-    					getLooper().clear();
-    					getLooper().defaultLoops(); 
-    					getLooper().getDrumTrack().toggle();
-    				}
-    			}.start();
-    			return true;
-    		}
-    		if (data1 == 35) {// play loop A cc pad
-    			getLooper().get(0).play(midi.getData2() > 0);
-    			return true;
-    		}
-    		if (data1 == 36) {// play loop B cc pad
-    			getLooper().get(1).play(midi.getData2() > 0);
-    			return true;
-    		}
-    		
-    		// play beat buddy
-    		if (data1 == 37 && midi.getData2() > 0) {
-    			getDrummachine().play();
-				//JudahZone.getDrummachine().setQueue(BeatBuddy.PLAY_MIDI);
-    			return true;
-    		}
+        if (midi.isCC()) {
+            int data1 = midi.getData1();
+            int data2 = midi.getData2();
 
-    		
-    		if (data1 == 38 && midi.getData2() > 0) { // setup a drumtrack slave loop
-    			getLooper().getDrumTrack().toggle();
-    			return true;
-    		}
+            // Master Volume
+            if (data1 == MPK.KNOBS.get(0)) {
+                getMasterTrack().setVolume(data2); return true;
+            }
+            // Toggle BeatBuddy / Drum Loop Volume
+            if (data1 == MPK.KNOBS.get(1)) {
+                if (getLooper().getDrumTrack().hasRecording())
+                    getLooper().getDrumTrack().setVolume(midi.getData2());
+                else
+                    getChannels().getDrums().setVolume(midi.getData2());
+                return true;
+            }
+            // Guitar Volume
+            if (data1 == MPK.KNOBS.get(2)) {
+                getChannels().getGuitar().setVolume(data2); return true;}
+            // Mic Volume
+            if (data1 == MPK.KNOBS.get(3)) {
+                getChannels().getMic().setVolume(data2); return true;}
+            // Loop A Volume
+            if (data1 == MPK.KNOBS.get(4)) {
+                getLooper().get(0).setVolume(data2); return true;}
+            // Loop B Volume
+            if (data1 == MPK.KNOBS.get(5)) {
+                getLooper().get(1).setVolume(data2); return true;}
+            // Combined Aux1 & 2 Volume
+            if (data1 == MPK.KNOBS.get(6)) {
+                getChannels().getAux1().setVolume(data2);
+                getChannels().getAux2().setVolume(data2); return true;}
+            // Synth Volume
+            if (data1 == MPK.KNOBS.get(7)) {
+                getChannels().getSynth().setVolume(data2); return true;}
 
-    		// foot pedal[0] octaver effect
-    		if (data1 == MPK.PEDAL.get(0)) {
-    			new Thread() {
-    				@Override public void run() {
-    	    			try { getCarla().octaver(midi.getData2() > 0);
-    	    			} catch (Throwable t) { Console.warn(t);}
-    				}}.start();
-    		}
+            // first row of CC pads
+            if (data1 == MPK.PRIMARY_CC.get(0)) {// record loop A cc pad
+                ((Recorder)getLooper().get(0)).record(midi.getData2() > 0);
+                return true;
+            }
+            if (data1 == MPK.PRIMARY_CC.get(1)) {// record loop B cc pad
+                ((Recorder)getLooper().get(1)).record(midi.getData2() > 0);
+                return true;
+            }
 
-    		if (data1 == MPK.PEDAL.get(1)) { // mute Loop A foot pedal
-    			getLooper().get(0).setOnMute(midi.getData2() > 0);
-    			return true;
-    		}
-    		if (data1 == MPK.PEDAL.get(2) && midi.getData2() > 0) { // mute Loop B foot pedal
-    			Console.info("foot pedal 3");
-    			JudahZone.getDrummachine().send(BeatBuddy.CYMBOL, 100);
-    			return true;
-    		}
-    		
-    		if (data1 == MPK.PEDAL.get(3) ) {
-    			Console.info("foot pedal 3");
-    			if (midi.getData2() > 0) { // let's hear some cymbols
-    			JudahZone.getDrummachine().send(BeatBuddy.VOLUME, 0);
-    			return true;
-    			}
-    		}
-    		if (data1 == MPK.PEDAL.get(4)) { // record Loop B foot pedal
-    			((Recorder)getLooper().get(1)).record(midi.getData2() > 0);
-    			return true;
-    		}
-    		if (data1 == MPK.PEDAL.get(5)) { // record Loop A foot pedal
-    			((Recorder)getLooper().get(0)).record(midi.getData2() > 0);
-    			return true;
-    		}
-    	} // end is CC
-    	
-    	else if (midi.isProgChange()) {
-    		int data1 = midi.getData1();
-    		
-    		boolean result = false;
-    		for (Plugin plugin : getPlugins()) 
-    			if (plugin.getDefaultProgChange() == data1) {
-    				plugin.activate(getChannels().getGuitar());
-    				result = true;
-    			}
-    		if (result) return true;
-    		
-    		if (data1 == MPK.PRIMARY_PROG[3]) { // up instrument
-    			new Thread() { @Override public void run() {
-        			getSynth().instUp(0, true);    				
-    			}}.start();
-    			return true;
-    		}
-    		if (data1 == MPK.PRIMARY_PROG[7]) { // up instrument
-    			new Thread() { @Override public void run() {
-    				getSynth().instUp(0, false);
-    			}}.start();
-    			return true;
-    		}
+            // TODO drum track record, double loop b length
+            if (data1 == MPK.PRIMARY_CC.get(2) && midi.getData2() > 0) {// CC pad 2: slave loop B
+                new Thread() {
+                    @Override public void run() {
+                        getLooper().slave(); }}.start();
 
-    	}
-		return false;
-	}
+            }
+            if (data1 == MPK.PRIMARY_CC.get(3) && midi.getData2() > 0) { // clear loopers cc pad
+                getLooper().stopAll();
+                new Thread() {
+                    @Override public void run() {
+                        getLooper().clear();
+                        getLooper().getDrumTrack().toggle();
+                    }
+                }.start();
+                return true;
+            }
+
+            // 2nd row of CC pads
+            if (data1 == MPK.PRIMARY_CC.get(4)) {// play loop A cc pad
+                getLooper().get(0).play(midi.getData2() > 0);
+                return true;
+            }
+            if (data1 == MPK.PRIMARY_CC.get(5)) {// play loop B cc pad
+                getLooper().get(1).play(midi.getData2() > 0);
+                return true;
+            }
+
+            // play beat buddy
+            if (data1 == MPK.PRIMARY_CC.get(6) && midi.getData2() > 0) {
+                getDrummachine().play();
+                return true;
+            }
+
+
+            if (data1 == MPK.PRIMARY_CC.get(7) && midi.getData2() > 0) { // setup a drumtrack slave loop
+                getLooper().getDrumTrack().toggle();
+                return true;
+            }
+
+            // foot pedal[0] octaver effect
+            if (data1 == MPK.PEDAL.get(0)) {
+                new Thread() {
+                    @Override public void run() {
+                        try { getCarla().octaver(midi.getData2() > 0);
+                        } catch (Throwable t) { Console.warn(t);}
+                    }}.start();
+            }
+
+            if (data1 == MPK.PEDAL.get(1)) { // mute Loop A foot pedal
+                getLooper().get(0).setOnMute(midi.getData2() > 0);
+                return true;
+            }
+            if (data1 == MPK.PEDAL.get(2) && midi.getData2() > 0) { // trigger only foot pedal
+                getDrummachine().transission(); // drummachine.send(BeatBuddy.CYMBOL, 100);
+                return true;
+            }
+
+            if (data1 == MPK.PEDAL.get(3) ) { // record Drum Track
+                Console.info("Record Drum Track Toggle");
+                getLooper().getDrumTrack().record(midi.getData2() > 0);
+            }
+            if (data1 == MPK.PEDAL.get(4)) { // record Loop B foot pedal
+                ((Recorder)getLooper().get(1)).record(midi.getData2() > 0);
+                return true;
+            }
+            if (data1 == MPK.PEDAL.get(5)) { // record Loop A foot pedal
+                ((Recorder)getLooper().get(0)).record(midi.getData2() > 0);
+                return true;
+            }
+        } // end is CC
+
+        else if (midi.isProgChange()) {
+            int data1 = midi.getData1();
+
+            boolean result = false;
+            for (Plugin plugin : getPlugins())
+                if (plugin.getDefaultProgChange() == data1) {
+                    plugin.activate(getChannels().getGuitar());
+                    result = true;
+                }
+            if (result) return true;
+
+            if (data1 == MPK.PRIMARY_PROG[3]) { // up instrument
+                new Thread() { @Override public void run() {
+                    getSynth().instUp(0, true);
+                }}.start();
+                return true;
+            }
+            if (data1 == MPK.PRIMARY_PROG[7]) { // up instrument
+                new Thread() { @Override public void run() {
+                    getSynth().instUp(0, false);
+                }}.start();
+                return true;
+            }
+
+        }
+        return false;
+    }
 
 }

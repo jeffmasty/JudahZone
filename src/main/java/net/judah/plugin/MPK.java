@@ -12,7 +12,7 @@ import net.judah.api.Midi;
 
 /* TODO upJoystick, downJoystick
 cc codes 14-63,75-83, 85-90, 96-127
-           31-63            90,96-127 
+           31-63            90,96-127
 cc reserved
  0 - 13 except 3
  5 (Portamento Time), 7 (Volume), 8 (Balance) ,10 (pan), 11 (Expression), 12, 13
@@ -41,21 +41,21 @@ public class MPK {
 	public static final int BBANK = 1;
 
 	// joystick cc 0 and cc 100
-	
-	// Not MPK 
-	public static final List<Integer> PEDAL = Arrays.asList(new Integer[] 
+
+	// Not MPK
+	public static final List<Integer> PEDAL = Arrays.asList(new Integer[]
 			{96, 97, 98, 99, 100, 101});
-	
-	public static final List<Integer> DRUMS_A = Arrays.asList(new Integer[] 
+
+	public static final List<Integer> DRUMS_A = Arrays.asList(new Integer[]
 		{48, 49, 50, 51, 44, 45, 46, 47});
 	public static final List<Integer> DRUMS_B = Arrays.asList(new Integer[]
 			{36, 37, 38, 39, 32, 33, 34, 35});
-	
+
 	/** handles Prog Select 0 */
 	public static String format(Midi midi) {
 		if (midi == null) return "null";
 		int val = midi.getData1();
-		
+
 		if (Midi.isNote(midi)) {
 			if (DRUMS_A.contains(val))
 				return "Drums " + DRUMS_A.indexOf(val) + quote(midi);
@@ -78,8 +78,8 @@ public class MPK {
 		}
 		return midi.toString();
 	}
-	
-	public static final List<Integer> KNOBS = Arrays.asList(new Integer[] 
+
+	public static final List<Integer> KNOBS = Arrays.asList(new Integer[]
 			{14, 15, 16, 17, 18, 19, 20, 21});
 	private static final List<Integer> knobs1 = Arrays.asList(new Integer[]
 			{22, 23, 24, 25, 26, 27, 28, 29});
@@ -87,20 +87,20 @@ public class MPK {
 			{75, 76, 77, 78, 79, 80, 81, 82});
 	private static final List<Integer> knobs3 = Arrays.asList(new Integer[]
 			{30, 83, 126, 7, 84, 94, 95,  8});
-	
+
 	@SuppressWarnings("unchecked")
 	public static final List<Integer>[] KNOB_BANKS = new List[] {KNOBS, knobs1, knobs2, knobs3};
-	
+
 	public static ArrayList<ShortMessage[]> KNOBS_MIDI = genKnobs( KNOB_BANKS );
-	
+
 	public static ShortMessage knob(int bank, int knobNum) {
 		return KNOBS_MIDI.get(bank)[knobNum];
 	}
 	public static ShortMessage knob(int knobNum) {
 		return knob(0, knobNum);
 	}
-	
-	
+
+
 	public static int [][][] CC_PADS = {
 			{ // green A bank
 				{31, 32, 33, 34, 35, 36, 37, 38},
@@ -115,8 +115,9 @@ public class MPK {
 				{118, 119, 120, 121, 122, 123, 124, 125}
 			}
 	};
-	public static final List<Integer> PRIMARY_CC = Arrays.asList(new Integer[]{31, 32, 33, 34, 35, 36, 37, 38});
-	
+	public static final List<Integer> PRIMARY_CC = Arrays.asList(
+	        new Integer[]{31, 32, 33, 34, 35, 36, 37, 38});
+
 	public static int [][][] PROG_CHANGES = {
 			{ 									   // green
 				{ 1,  2,  3,  4,  5,  6,  7,  8}, // lvl1
@@ -132,9 +133,9 @@ public class MPK {
 			}
 	};
 	public static final int[] PRIMARY_PROG = PROG_CHANGES[0][0];
-	
+
 	private static ArrayList<ShortMessage[]> genKnobs(List<Integer>[] in) {
-		
+
 		ArrayList<ShortMessage[]> result = new ArrayList<>();
 		try {
 			for (int i = 0; i < in.length; i++) {
@@ -144,7 +145,7 @@ public class MPK {
 					program[j] = new ShortMessage(ShortMessage.CONTROL_CHANGE, 0, in[i].get(j), 0);
 				}
 				result.add(program);
-			} 
+			}
 		} catch (InvalidMidiDataException e) {
 			log.error(e.getMessage(), e);
 		}
@@ -216,11 +217,11 @@ public class MPK {
 //		int cmd = msg.getCommand();
 //		if (cmd >= ShortMessage.PROGRAM_CHANGE && cmd <= 208) {
 //			int data1 = msg.getData1();
-//			for (int ab = 0; ab < 2; ab++) 
-//				for (int i = 0; i < PAD_STYLES; i++) 
+//			for (int ab = 0; ab < 2; ab++)
+//				for (int i = 0; i < PAD_STYLES; i++)
 //					if (progchanges[ab][i][INSTRUMENT_UP] == data1)
 //						return true;
-//		}	
+//		}
 //		return false;
 //	}
 //	public static boolean isKnobType(Midi msg, int knobType) {
@@ -235,8 +236,8 @@ public class MPK {
 //		int cmd = msg.getCommand();
 //		if (cmd >= ShortMessage.PROGRAM_CHANGE && cmd <= 208) {
 //			int data1 = msg.getData1();
-//			for (int ab = 0; ab < 2; ab++) 
-//				for (int i = 0; i < PAD_STYLES; i++) 
+//			for (int ab = 0; ab < 2; ab++)
+//				for (int i = 0; i < PAD_STYLES; i++)
 //					if (progchanges[ab][i][INSTRUMENT_DOWN] == data1)
 //						return true;
 //		}
@@ -333,7 +334,7 @@ public class MPK {
 ////        		fluid.chorusDepth((int)(msg.getData2() * 0.42f));
 ////        		return null;
 ////        	}
-////        	if (isCCPad(msg, TOGGLE_REVERB)) 
+////        	if (isCCPad(msg, TOGGLE_REVERB))
 ////        		fluid.toggle(Constants.Toggles.REVERB, msg.getData2() > 0);
 ////        	if (isCCPad(msg, TOGGLE_CHORUS)) {
 ////        		fluid.toggle(Constants.Toggles.CHORUS, msg.getData2() > 0);

@@ -16,26 +16,26 @@ import net.judah.util.Constants;
 public class LineIn extends Channel {
 
 	@Getter protected final boolean isStereo;
-    
+
     @Getter @Setter protected JackPort leftPort;
     @Getter @Setter protected JackPort rightPort;
-	
+
     @Getter protected float gain = 1f;
     @Getter @Setter protected float gainFactor = 1f;
-	
+
     @Getter protected boolean muteRecord;
     @Getter @Setter protected boolean solo;
-    @Getter @Setter protected int defaultCC;
+//    @Getter @Setter protected int defaultCC;
 
     @Getter protected final String leftSource;
     @Getter protected final String leftConnection;
     @Getter protected final String rightSource; // for stereo
     @Getter protected final String rightConnection;
-	
+
     @Getter protected final ArrayList<Plugin> plugins = new ArrayList<>();
-	
+
     private FloatBuffer left, right;
-	
+
 	/** Mono channel uses left signal */
 	public LineIn(String channelName, String sourcePort, String connectionPort) {
 		super(channelName);
@@ -44,7 +44,7 @@ public class LineIn extends Channel {
 		rightSource = rightConnection = null;
 		isStereo = false;
 	}
-	
+
 	/** Stereo channel */
 	public LineIn(String channelName, String[] sourcePorts, String[] connectionPorts) {
 		super(channelName);
@@ -54,13 +54,13 @@ public class LineIn extends Channel {
 		this.rightConnection = connectionPorts[RIGHT_CHANNEL];
 		isStereo = true;
 	}
-	
-	
+
+
 	@Override
 	public int getVolume() {
 		return Math.round(gain * 100f / gainFactor);
 	}
-	
+
 	/** percent of maximum */
 	@Override
 	public void setVolume(int volume) {
@@ -72,7 +72,7 @@ public class LineIn extends Channel {
 		this.muteRecord = muteRecord;
 		if (gui != null) gui.update();
 	}
-	
+
 	public void process() {
 		left = leftPort.getFloatBuffer();
 		if (isStereo)
@@ -86,26 +86,26 @@ public class LineIn extends Channel {
 				for (int z = 0; z < Constants._BUFSIZE; z++)
 					right.put(right.get(z) * gain);
 		}
-		
+
 		if (eq.isActive()) {
 			eq.process(left, true);
-			if (isStereo) 
+			if (isStereo)
 				eq.process(right, false);
 		}
 		if (compression.isActive()) {
 			compression.process(left, 1);
-			if (isStereo) 
+			if (isStereo)
 				compression.process(right, 1);
 		}
 		if (delay.isActive()) {
-			delay.processAdd(left, left, true, 1);
+			delay.processAdd(left, left, true);
 			if (isStereo)
-				delay.processAdd(right, right, false, 1);
+				delay.processAdd(right, right, false);
 		}
-		if (reverb.isActive()) { 
-			reverb.process(left, 1);
-			if (isStereo) 
-				reverb.process(right, 1);
+		if (reverb.isActive() && reverb.isInternal()) {
+			reverb.process(left);
+			if (isStereo)
+				reverb.process(right);
 		}
 		if (cutFilter.isActive()) {
 			cutFilter.process(left, 1);

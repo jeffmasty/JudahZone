@@ -1,8 +1,8 @@
 package net.judah.looper;
 
 import lombok.Data;
-import net.judah.jack.ProcessAudio;
-import net.judah.jack.ProcessAudio.Type;
+import net.judah.api.ProcessAudio;
+import net.judah.api.ProcessAudio.Type;
 
 @Data
 public class LoopSettings {

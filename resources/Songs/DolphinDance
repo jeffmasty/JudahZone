@@ -1,0 +1,11 @@
+{
+  "props" : {
+    "image" : "/home/judah/sheets/DolphinDance.png",
+    "beatbuddy" : "Techno4@110:Ethereal",
+    "drumset" : "ethereal",
+    "ideas" : "fluid prog 0 44  octave down bass note strings, lfo party on chords"
+  },
+  "links" : [ ],
+  "sequencer" : [ ],
+  "router" : [ ]
+}

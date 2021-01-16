@@ -18,7 +18,7 @@ import java.nio.FloatBuffer;
  *
  * You should have received a copy of the GNU General Public License version 2
  * along with this work; if not, see http://www.gnu.org/licenses/
- * 
+ *
  *
  * Linking this work statically or dynamically with other modules is making a
  * combined work based on this work. Thus, the terms and conditions of the GNU
@@ -36,10 +36,10 @@ import java.nio.FloatBuffer;
  *
  * Please visit http://neilcsmith.net if you need additional information or
  * have any questions.
- *  * 
- * 
+ *  *
+ *
  * Derived from code in Gervill / OpenJDK
- * 
+ *
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -73,7 +73,7 @@ import net.judah.util.Constants;
 /**
  * Delay op. Delay time and feedback are variable. Changes in delay time are
  * interpolated over the period of one buffer.
- * 
+ *
  * This is a mono op and requires one input and output channel. Input and output
  * buffers may be the same.
  *
@@ -82,18 +82,18 @@ import net.judah.util.Constants;
 public class Delay {
 
     private final static float DEF_SRATE = 48000;
-    private final static float DEF_MAX_DELAY = 2;
+    private final static float DEF_MAX_DELAY = 1.3f;
 
     private float samplerate;
-    private float len; // jack buffer size
-    private float delaytime;
+    private float nframes; // jack buffer size
+    private float delaytime = .1f;
     private float maxdelay;
-    private float feedback;
+    private float feedback = 0.4f;
 
     @Getter @Setter private boolean active;
     private final VariableDelayOp left;
     private final VariableDelayOp right;
-    
+
     public Delay() {
         this(Constants._SAMPLERATE, Constants._BUFSIZE, DEF_MAX_DELAY);
     }
@@ -103,18 +103,17 @@ public class Delay {
             this.maxdelay = maxdelay;
         }
         this.samplerate = DEF_SRATE;
-        this.feedback = 0;
         if (samplerate < 1) {
             throw new IllegalArgumentException();
         }
         this.samplerate = samplerate;
-        this.len = bufferSize;
+        this.nframes = bufferSize;
 
         int delayBufSize = (int) (maxdelay * samplerate) + 10;
         left = new VariableDelayOp(delayBufSize);
         right = new VariableDelayOp(delayBufSize);
     }
-    
+
     public void setDelay(float time) {
         if (time < 0 || time > maxdelay) {
             throw new IllegalArgumentException();
@@ -142,20 +141,20 @@ public class Delay {
     }
 
 	public void reset() {
-        if (left.delaybuffer != null) 
+        if (left.delaybuffer != null)
             Arrays.fill(left.delaybuffer, 0);
-        if (right.delaybuffer != null) 
+        if (right.delaybuffer != null)
             Arrays.fill(right.delaybuffer, 0);
     }
-        
-	public void processReplace(FloatBuffer in, FloatBuffer out, boolean isLeft, float gain) {
-        if (isLeft) left.process(in, out, true, gain);
-        else right.process(in, out, true, gain);
+
+	public void processReplace(FloatBuffer in, FloatBuffer out, boolean isLeft) {
+        if (isLeft) left.process(in, out, true);
+        else right.process(in, out, true);
     }
 
-	public void processAdd(FloatBuffer in, FloatBuffer out, boolean isLeft, float gain) {
-		if (isLeft) left.process(in, out, false, gain);
-		else right.process(in, out, false, gain);
+	public void processAdd(FloatBuffer in, FloatBuffer out, boolean isLeft) {
+		if (isLeft) left.process(in, out, false);
+		else right.process(in, out, false);
     }
 
 
@@ -169,8 +168,8 @@ public class Delay {
 	        this.rovepos = 0;
 	        this.lastdelay = 0;
 		}
-	    
-    public void process(FloatBuffer in, FloatBuffer out, boolean replace, float gain) {
+
+    public void process(FloatBuffer in, FloatBuffer out, boolean replace) {
 
     	out.rewind();
         float[] buf = this.delaybuffer;
@@ -179,18 +178,17 @@ public class Delay {
             throw new IllegalStateException();
         }
         float srate = samplerate;
-        float g = gain;
         float delay = delaytime * srate;
         float ldelay = this.lastdelay;
         float fb = feedback;
         int rnlen = buf.length;
         int pos = this.rovepos;
-        float delta = (delay - ldelay) / len;
+        float delta = (delay - ldelay) / nframes;
 
         float r, s, a, b, o;
         int ri;
         if (replace) {
-            for (int i = 0; i < len; i++) {
+            for (int i = 0; i < nframes; i++) {
                 r = pos - (ldelay + 2) + rnlen;
                 ri = (int) r;
                 s = r - ri;
@@ -198,13 +196,13 @@ public class Delay {
                 b = buf[(ri + 1) % rnlen];
                 o = a * (1 - s) + b * s;
                 buf[pos] = in.get(i) + o * fb;
-                out.put(o * g);
+                out.put(o);
                 pos = (pos + 1) % rnlen;
                 ldelay += delta;
             }
 
         } else {
-            for (int i = 0; i < len; i++) {
+            for (int i = 0; i < nframes; i++) {
                 r = pos - (ldelay + 2) + rnlen;
                 ri = (int) r;
                 s = r - ri;
@@ -212,7 +210,7 @@ public class Delay {
                 b = buf[(ri + 1) % rnlen];
                 o = a * (1 - s) + b * s;
                 buf[pos] = in.get(i) + o * fb;
-                out.put(out.get(i) + o * g);
+                out.put(out.get(i) + o);
                 pos = (pos + 1) % rnlen;
                 ldelay += delta;
             }

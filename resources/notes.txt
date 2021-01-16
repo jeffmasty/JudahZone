@@ -1,12 +1,11 @@
 TODO:
-BeatBuddy & Midi upgrades
-Alternate reverb plugins
-play: type, active, index, name, input, output
-record: type, active, index, name
+Midi router is input port aware.
+commands commands commands
+unified play and record commands
+record record record youtubes
 LFO triggered to clock, LFO/Fader cleanUp()
-display sheet music 
-UI: upgrade knobs
-MoogMPK = ADSR knobs (for I Feel Love bass)
+clipping/xruns filter
+MoogMPK = ADSR knobs (I Feel Love bassline)
 multi-delete, upgrade properties table (enum, int, boolean types)
 joystick  (pitch bend logarithmic to 1 octave) (left cc = distortion or vocoder right cc = delay)
 fix songs.
@@ -15,12 +14,11 @@ settings/default files
 Sequencer can really swing.
 Undo/Redo/Copy/Paste
 patch bay needed. see jack_lsp, jack_connect
-magically calculate make-up gain during Compression
+calculate make-up gain during Compression
 Plugins, ttl 
 walking bassline midi bot
 MPK Sequencer
 
-button icons: https://www.elharrakfonts.com/2019/04/font-bottons-music-pro.html
 
 Knobs: 
 fluid reverb, track/master pan, 
@@ -107,7 +105,9 @@ sample highlight + compression + reverb
 keyboard handler for channels/samples
 pArTy EQ
 Master MixerBus, Input/output/gain lvl, pedal knobs
-
-
-
+UI: upgrade knobs 
+button icons: https://www.elharrakfonts.com/2019/04/font-bottons-music-pro.html
+display sheet music 
+BeatBuddy & Midi upgrades
+reverb on output mix, gain and reverb to fluidsynth.
 

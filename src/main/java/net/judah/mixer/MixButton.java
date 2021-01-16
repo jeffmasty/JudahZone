@@ -4,7 +4,7 @@ import javax.swing.JLabel;
 
 import lombok.Getter;
 import lombok.ToString;
-import net.judah.jack.AudioMode;
+import net.judah.api.AudioMode;
 import net.judah.looper.Recorder;
 import net.judah.looper.Sample;
 import net.judah.sequencer.Sequencer;
