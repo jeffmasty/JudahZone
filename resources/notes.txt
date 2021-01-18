@@ -1,13 +1,15 @@
 TODO:
-Midi router is input port aware.
+
+stereo pan
 commands commands commands
 unified play and record commands
 record record record youtubes
+make drumtrack a full-fledged 3rd loop
 LFO triggered to clock, LFO/Fader cleanUp()
 clipping/xruns filter
 MoogMPK = ADSR knobs (I Feel Love bassline)
 multi-delete, upgrade properties table (enum, int, boolean types)
-joystick  (pitch bend logarithmic to 1 octave) (left cc = distortion or vocoder right cc = delay)
+Phasor, Shepard
 fix songs.
 Latency + bleeding edge
 settings/default files
@@ -33,7 +35,10 @@ signed 32-bit PCM little endian,
 which is the format used by all current 24 bit audio cards except for some USB interfaces
 
 arpeggio this! https://github.com/ybalcanci/Sequence-Player/blob/master/RecamanSequence.java
+java sequencer https://github.com/sebastianruizva/JMidiSequencer
+java launchpad sequencer https://github.com/perkowitz/sequence/wiki/User%20Manual
 
+plugins https://github.com/ssj71/infamousPlugins
 https://github.com/VCVRack  modular synth
 
 jvsthost:
@@ -110,4 +115,5 @@ button icons: https://www.elharrakfonts.com/2019/04/font-bottons-music-pro.html
 display sheet music 
 BeatBuddy & Midi upgrades
 reverb on output mix, gain and reverb to fluidsynth.
-
+Midi router is input port aware.
+joystick  (pitch bend logarithmic to 1 octave) (left cc = distortion or vocoder right cc = delay)

@@ -213,8 +213,6 @@ public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service 
      *  folderX@YY:Z  <br/>
      *  where X = song#, YY = tempo and Z = an optional drumset index*/
     public void parseConfig(String config) {
-        Console.info("BeatBuddy parse config " + config);
-
         String[] split = config.split("@");
         if (split.length != 2) {
             Console.info(config + " does not match " + CONFIG_FORMAT);

@@ -11,6 +11,7 @@ import net.judah.mixer.bus.Delay;
 import net.judah.mixer.bus.EQ;
 import net.judah.mixer.bus.Freeverb;
 import net.judah.mixer.bus.LFO;
+import net.judah.mixer.bus.Overdrive;
 import net.judah.mixer.bus.Reverb;
 
 /** A mixer bus for both Input and Output processes*/
@@ -19,6 +20,7 @@ public abstract class Channel {
 
 	/** volume at 50 (knob at midnight) means +/- no gain */
 	protected int volume = 50;
+    @Setter @Getter protected float pan = 0.5f;
 
 	protected String name;
 	protected ChannelGui gui;
@@ -30,6 +32,7 @@ public abstract class Channel {
 	protected CutFilter cutFilter = new CutFilter();
 	protected Delay delay = new Delay();
 	protected EQ eq = new EQ();
+    protected Overdrive overdrive = new Overdrive();
 
 	public final ChannelGui getGui() { // lazy load
 		if (gui == null) gui = ChannelGui.create(this);

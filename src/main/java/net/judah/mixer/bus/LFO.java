@@ -15,7 +15,7 @@ import net.judah.mixer.LineIn;
 public class LFO {
 
 	public static enum Target{
-		CutEQ, Gain, Reverb, Delay
+		CutEQ, Gain, Reverb, Delay, Pan
 	};
 
 	private boolean active;
@@ -27,8 +27,21 @@ public class LFO {
 	/** align the wave on the jack frame buffer by millisecond */
 	private long shift;
 
-	/** set output level of queries. default: 0 to 85. */
-	private double amplitude = 85;
+
+	/** set maximum output level of queries. default: 85. */
+	private float max = 85;
+	/** set minimum level of queries. default 0. */
+	private float min = 0;
+
+	public void setMax(float val) {
+	    if (val < min) return;
+	    max = val;
+	}
+
+	public void setMin(float val) {
+	    if (val > max) return;
+	    min = val;
+	}
 
 	private static final ArrayList<Channel> lfoPulse = new ArrayList<>();
 
@@ -44,7 +57,7 @@ public class LFO {
 		    lfoPulse.add(JudahZone.getMasterTrack());
 		if (lfoPulse.isEmpty()) return;
 		new Thread() { @Override public void run() {
-			for (Channel ch : lfoPulse)
+			for (Channel ch : new ArrayList<>(lfoPulse))
 				ch.getLfo().pulse(ch);
 			lfoPulse.clear();
 		}}.start();
@@ -56,7 +69,7 @@ public class LFO {
 		long time = millis + shift;
 		double phase = (time % frequency) / frequency;
 		double wave = 1 + Math.sin(Math.toRadians(phase * 360));
-		return (wave * (amplitude / 2));
+		return (wave * ( (max - min) / 2)) + min;
 	}
 
 	/** query for right now. */
@@ -75,6 +88,7 @@ public class LFO {
 						 ch.getReverb().setWidth(val / 100f);
 						 ch.getReverb().setDamp(val / 100f); break;
 			case Delay: ch.getDelay().setFeedback(val / 100f);
+			case Pan: ch.setPan(val / 100f);
 		}
 	}
 

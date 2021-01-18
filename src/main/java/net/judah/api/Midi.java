@@ -1,14 +1,30 @@
 package net.judah.api;
 
+import java.io.IOException;
 import java.util.HashMap;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
-import lombok.extern.log4j.Log4j;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
-/** serialization isn't working, save as byte[] */
-@Log4j
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.log4j.Log4j;
+import net.judah.util.Console;
+
+/** Utilities added to javax ShortMessage, with an optional source Midi port */
+@JsonDeserialize(using = Midi.Deserialization.class)
+@JsonSerialize(using = Midi.Serialization.class) @Log4j
 public class Midi extends ShortMessage {
 
 	public static final String PARAM_COMMAND = "command";
@@ -16,8 +32,15 @@ public class Midi extends ShortMessage {
 	public static final String PARAM_DATA1 = "data1";
 	public static final String PARAM_DATA2 = "data2";
 
+	@Getter @Setter protected String port;
+
 	public Midi(byte[] bytes) {
 		super(bytes);
+	}
+
+	public Midi(byte[] bytes, String sourcePort) {
+	    super(bytes);
+	    this.port = sourcePort;
 	}
 
 	/** @return null on internally handled exception */
@@ -47,21 +70,21 @@ public class Midi extends ShortMessage {
 		super(command, channel, 0, 0);
 	}
 
-	@Override
-	public String toString() {
+	public Midi(int command, int channel, int data1, String port) throws InvalidMidiDataException {
+	    this(command, channel, data1);
+	    this.port = port;
+	}
 
-        StringBuffer sb = new StringBuffer("" + getCommand());
-        if (getLength() > 1)
-        	sb.append(".").append(getData1());
-        if (getLength() > 2)
-        	sb.append(".").append(getData2());
-        return sb.append("/").append(getChannel()).toString();
-//        if (data == null || data.length == 0) return "";
-//        sb.append( (data[0] - getChannel()) & 0xFF );
-//        for (int j = 1; j < getLength(); j++) {
-//            sb.append(".").append(data[j] & 0xFF);
-//        }
-//        return sb.append("/").append(getChannel()).toString();
+
+    @Override
+	public String toString() {
+        StringBuilder b = new StringBuilder();
+        b.append(getCommand()).append("/");
+        b.append(getChannel()).append("/");
+        b.append(getData1()).append("/");
+        b.append(getData2());
+        if (port != null) b.append("(").append(port).append(")");
+        return b.toString();
 	}
 
 	@Override
@@ -138,14 +161,79 @@ public class Midi extends ShortMessage {
 		}
 	}
 
-	public static void main(String[] args) {
+	public static Midi deserialize(String raw) {
+        String[] src = raw.split("[(]");
+        String source = null;
+        if (src.length == 2)
+            source = src[1].substring(0, src[1].length() - 1); // remove last parentheses
 
+        String[] values = src[0].split("/");
 
-
+        int command = Integer.parseInt(values[0]);
+        int channel = Integer.parseInt(values[1]);
+        int data1 = -1;
+        if (values.length >= 3 && values[2].length() > 0)
+            data1 = Integer.parseInt(values[2]);
+        int data2 = -1;
+        if (values.length == 4 && values[3].length() > 0)
+            data2 = Integer.parseInt(values[3]);
+        Midi result = null;
+        try {
+            if (data1 >= 0) {
+                if (data2 >= 0)
+                    result = new Midi(command, channel, data1, data2);
+                else
+                    result = new Midi(command, channel, data1);
+            }
+            else
+                result = new Midi(command, channel);
+            if (source != null)
+                result.setPort(source);
+        } catch (Throwable t) {
+            Console.warn(t);
+        }
+        return result;
 	}
-}
 
-/* sys message
-11111010	none	 	Start (song)
-11111011	none	 	Stop
- */
+    public static Midi copy(Midi copy) {
+        if (copy == null) return null;
+        byte[] clone = new byte[copy.getMessage().length];
+        System.arraycopy(copy.getMessage(), 0, clone, 0, clone.length);
+        Midi result = new Midi(clone);
+        result.setPort(copy.getPort());
+        return result;
+    }
+
+    public static class Serialization extends StdSerializer<Midi> {
+        public Serialization() {this(null);}
+        public Serialization(Class<Midi> vc) {super(vc);}
+        @Override
+        public void serialize(Midi value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+            gen.writeString(value.toString());
+//            gen.writeStartObject();
+//            gen.writeStringField("midi", value.toString());
+//            gen.writeEndObject();
+        }
+    }
+
+    public static class Deserialization extends StdDeserializer<Midi> {
+        public Deserialization() {this(null);}
+        public Deserialization(Class<?> vc) {super(vc);}
+        /**@return null on parsing errors */
+        @Override public Midi deserialize(JsonParser p, DeserializationContext ctxt)
+                throws IOException, JsonProcessingException {
+            JsonNode node = p.getCodec().readTree(p);
+            // various contexts where we will be parsing Midi messages:
+            return Midi.deserialize(node.asText());
+//            JsonNode n = node.get("midi");
+//            if (n == null)
+//                n = node.get("fromMidi");
+//            if (n == null)
+//                n = node.get("toMidi");
+//            if (n == null) return null;
+//            String raw = n.asText();
+//            return Midi.deserialize(raw);
+        }
+    }
+
+}

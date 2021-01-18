@@ -8,7 +8,7 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import net.judah.midi.MidiPair;
+import net.judah.midi.MidiRule;
 import net.judah.util.Constants;
 
 @Data @AllArgsConstructor @NoArgsConstructor
@@ -30,6 +30,8 @@ public class Song {
 
 	private List<Trigger> sequencer = new ArrayList<>();
 
-	private List<MidiPair> router = new ArrayList<>();
+	private List<MidiRule> router = new ArrayList<>();
+
+	// private List<MidiPair> router = new ArrayList<>();
 
 }

@@ -85,7 +85,7 @@ public class Commands {
         TRANSPOSE   ("midi:transpose",  "translate a midi track"),
         MIDIGAIN	("midi:volume", 	"adjust a midi track volume"),
         MIDIFILE	("midi:file", 		"play a midi file"),
-        ROUTECHANNEL("midi:routeChannel", "take all commands on a given channel and route them to another"),
+        // ROUTECHANNEL("midi:routeChannel", "take all commands on a given channel and route them to another"),
         PLUGIN		("carla:load",     	"define a plugin"),
         DRYWET  	("carla:drywet",	"set dry/wet of a plugin"),
         PARAMETER	("carla:param", 	"set the parameter value of a plugin"),

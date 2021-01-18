@@ -12,7 +12,6 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSlider;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
@@ -30,6 +29,7 @@ import net.judah.util.Constants;
 import net.judah.util.Constants.Gui;
 import net.judah.util.Knob;
 import net.judah.util.MenuBar;
+import net.judah.util.Slider;
 
 public class SoloTrack extends JPanel {
     // TODO tap tempo, lfo recover // play/stop/rec button icons
@@ -48,11 +48,14 @@ public class SoloTrack extends JPanel {
     eqRow, compRow, reverbRow, delayRow, lfoRow;
 
     @Getter private CutFilter cutFilter;
-    @Getter private Compression compression;
     @Getter private LFO lfo;
 
     private final JLabel name = new JLabel();
-    private JSlider volume;
+    private Slider volume;
+    private Knob pan;
+
+    // TODO overdrive, pan
+    private Knob overdrive;
 
     private JToggleButton eqActive;
     private Knob eqBass, eqMid, eqTreble;
@@ -64,11 +67,11 @@ public class SoloTrack extends JPanel {
     private Knob revRoom, revDamp, revWidth;
 
     private JToggleButton delActive;
-    private JSlider delFeedback, delTime;
+    private Slider delFeedback, delTime;
 
     private JToggleButton lfoActive, cutActive;
-    private Knob lfoAmp, cutRes;
-    private JSlider lfoFreq, cutFreq;
+    private Knob lfoMin, lfoMax, cutRes;
+    private Slider lfoFreq, cutFreq;
     private JComboBox<String> lfoTarget, cutType;
 
     public SoloTrack() {
@@ -96,7 +99,6 @@ public class SoloTrack extends JPanel {
     /** you probably want to use MixerPane.setFocus() */
     public void setFocus(Channel bus) {
         this.focus = bus;
-        compression = bus.getCompression();
         lfo = bus.getLfo();
         cutFilter = bus.getCutFilter();
         compActive.setEnabled(focus instanceof MasterTrack == false);
@@ -104,17 +106,23 @@ public class SoloTrack extends JPanel {
     }
 
     public static void volume(Channel o) {
-        if (o == instance.focus)
+        if (o == instance.focus) {
             instance.volume.setValue(o.getVolume());
+        }
+
     }
 
     public void update() {
-        name.setText(focus.getName());
-        revActive.setSelected(focus.getReverb().isActive());
-        revRoom.setValue(Math.round(focus.getReverb().getRoomSize() * 100));
-        revDamp.setValue(Math.round(focus.getReverb().getDamp() * 100));
-        revWidth.setValue(Math.round(focus.getReverb().getWidth() * 100));
 
+        name.setText(focus.getName());
+        volume.setValue(focus.getVolume());
+        overdrive.setValue((int)Math.round(focus.getOverdrive().getDrive() * 100));
+        revActive.setSelected(focus.getReverb().isActive());
+        revRoom.setValue(Math.round(focus.getReverb().getRoomSize() * 100f));
+        revDamp.setValue(Math.round(focus.getReverb().getDamp() * 100f));
+        revWidth.setValue(Math.round(focus.getReverb().getWidth() * 100f));
+
+        Compression compression = focus.getCompression();
         compActive.setSelected(compression.isActive());
         compThresh.setValue((int) ((compression.getThreshold() + 40) * 2.5));
         int attack = (int)Math.round(compression.getAttack() / 0.75);
@@ -126,7 +134,8 @@ public class SoloTrack extends JPanel {
 
         lfoActive.setSelected(lfo.isActive());
         if (lfo.isActive()) {
-            lfoAmp.setValue((int)lfo.getAmplitude());
+            lfoMax.setValue((int)lfo.getMax());
+            lfoMin.setValue((int)lfo.getMin());
             lfoFreq.setValue((int)lfo.getFrequency());
         }
 
@@ -135,21 +144,39 @@ public class SoloTrack extends JPanel {
         cutFreq.setValue( CutFilter.frequencyToKnob(cutFilter.getFrequency()));
         cutRes.setValue((int)(cutFilter.getResonance() * 4));
 
-        delFeedback.setValue(Math.round(focus.getDelay().getFeedback() * 100f));
+        delFeedback.setValue(Math.round(focus.getDelay().getFeedback() * 100));
         delTime.setValue(delTime());
         delActive.setSelected(focus.getDelay().isActive());
+
+        eqUpdate();
+        pan.setValue(Math.round( focus.getPan() * 100));
+
     }
 
     // Header ////////////////////////////////////////////////////////////////////////////
     private JPanel headerRow() {
-        JPanel result = new JPanel();
+        JPanel result = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 0));
         result.setLayout(new FlowLayout());
-        volume = new JSlider(0, 200);
+        volume = new Slider(0, 100);
         volume.addChangeListener(l -> { focus.setVolume(volume.getValue()); });
+        volume.setToolTipText("Volume");
         result.add(volume);
         name.setFont(Constants.Gui.BOLD);
         result.add(name);
-        // MixerButton mute = new JLabel(Icons.muteActive); result.add(mute);
+        pan = new Knob(val -> {focus.setPan(val / 100f);});
+        pan.setToolTipText("pan left/right");
+
+        overdrive = new Knob(val -> {
+            focus.getOverdrive().setDrive(val / 100f);
+            focus.getOverdrive().setActive(val > 10);});
+        overdrive.setToolTipText("Overdrive");
+
+
+        result.add(pan);
+        JLabel lbl = new JLabel("pan  drive");
+        lbl.setFont(Constants.Gui.FONT11);
+        result.add(lbl);
+        result.add(overdrive);
         return result;
     }
 
@@ -188,6 +215,11 @@ public class SoloTrack extends JPanel {
         focus.getEq().update(eqBand, EqParam.GAIN, result);
         Console.info("eq gain: " + result);
     }
+    private void eqUpdate() {
+        eqBass.setValue(Math.round( (focus.getEq().getGain(EqBand.BASS) * 2 + 50)));
+        eqMid.setValue(Math.round( (focus.getEq().getGain(EqBand.MID) * 2 + 50)));
+        eqTreble.setValue(Math.round( (focus.getEq().getGain(EqBand.TREBLE) * 2 + 50)));
+    }
 
     private void eqFilterType() {
         switch(cutType.getSelectedItem().toString()) {
@@ -204,23 +236,26 @@ public class SoloTrack extends JPanel {
         result.addMouseListener(new MouseAdapter() { // right click re-initialize reverb
             @Override public void mouseReleased(MouseEvent e) {
                 if (!SwingUtilities.isRightMouseButton(e)) return;
-                compression.setPreset(compression.getPreset());
+                focus.getCompression().setPreset(focus.getCompression().getPreset());
                 update();
                 Console.info("compression init()");
             }});
 
         compActive = new JToggleButton("Comp.");
         compActive.addActionListener(listener -> {
-            compression.setActive(!compression.isActive());
+            focus.getCompression().setActive(!focus.getCompression().isActive());
             update();
-            Console.info(name.getText() + " Compression: " + (compression.isActive() ? " On" : " Off"));
+            Console.info(name.getText() + " Compression: " +
+            (focus.getCompression().isActive() ? " On" : " Off"));
         });
         compActive.setAlignmentX(JLabel.LEFT_ALIGNMENT);
-        compThresh = new Knob(val -> {compression.setThreshold((int)((val - 100) / 2.5));});
+        compThresh = new Knob(val -> {
+                focus.getCompression().setThreshold((int)((val - 100) / 2.5));});
         compThresh.setToolTipText("-40 to 0");
-        compAtt = new Knob(val -> {compression.setAttack((int)Math.round(val * 1.5));});
+        compAtt = new Knob(val -> {
+                focus.getCompression().setAttack((int)Math.round(val * 1.5));});
         compAtt.setToolTipText("0 to 150 milliseconds");
-        compRel = new Knob(val -> {compression.setRelease(Math.round(val * 3));});
+        compRel = new Knob(val -> {focus.getCompression().setRelease(Math.round(val * 3));});
         compRel.setToolTipText("0 to 300 milliseconds");
 
         result.add(compActive);
@@ -280,18 +315,17 @@ public class SoloTrack extends JPanel {
         delActive = new JToggleButton(" Delay ");
         delActive.addActionListener(listener -> {
             focus.getDelay().setActive(!focus.getDelay().isActive());
-            update();
             Console.info(name.getText() + " Delay : " +
                     (focus.getDelay().isActive() ? " On" : " Off"));
-            if (focus.getDelay().isActive()) focus.getDelay().reset();
+            // if (focus.getDelay().isActive()) // focus.getDelay().reset();
         });
         // delActive.setAlignmentX(JLabel.LEFT_ALIGNMENT);
-        delFeedback = new JSlider(0, 100);
+        delFeedback = new Slider(0, 100);
         delFeedback.setMaximumSize(Gui.SLIDER_SZ);
         delFeedback.setPreferredSize(Gui.SLIDER_SZ);
         delFeedback.addChangeListener(e -> {delFeedback(delFeedback.getValue());});
 
-        delTime = new JSlider(0, 100);
+        delTime = new Slider(0, 100);
         delTime.setMaximumSize(Gui.SLIDER_SZ);
         delTime.setPreferredSize(Gui.SLIDER_SZ);
         delTime.addChangeListener(e -> {delTime(delTime.getValue());});
@@ -322,10 +356,13 @@ public class SoloTrack extends JPanel {
         lp.setBorder(Gui.GRAY1);
         lfoActive = new JToggleButton("  LFO   ");
         lfoActive.addActionListener(listener -> {lfo();});
-        lfoAmp = new Knob(val -> {lfo.setAmplitude(val);});
-        lfoAmp.setValue(100);
-        lfoFreq = new JSlider(200, 2600);
-        lfoFreq.setValue(1250);
+        lfoMax = new Knob(val -> {lfo.setMax(val);});
+        lfoMax.setValue(85);
+        lfoMin = new Knob(val -> {lfo.setMin(val);});
+        lfoMin.setValue(0);
+
+        lfoFreq = new Slider(120, 2120);
+        lfoFreq.setValue(1000);
         lfoFreq.setMaximumSize(Gui.SLIDER_SZ);
         lfoFreq.setPreferredSize(Gui.SLIDER_SZ);
         lfoFreq.addChangeListener(e -> {lfo.setFrequency(lfoFreq.getValue());});
@@ -336,13 +373,17 @@ public class SoloTrack extends JPanel {
         lfoTarget.addActionListener(e -> { lfo.setTarget(Target.valueOf(lfoTarget.getSelectedItem().toString()));});
 
         lp.setLayout(new BoxLayout(lp,BoxLayout.Y_AXIS));
-        JPanel row1 = new JPanel();
+        JPanel row1 = new JPanel(new FlowLayout(FlowLayout.CENTER, 3, 0));
         row1.add(lfoActive);
         row1.add(lfoFreq);
         row1.add(new JLabel("time"));
-        JPanel row2 = new JPanel();
+        JPanel row2 = new JPanel(new FlowLayout(FlowLayout.CENTER, 3, 0));
         row2.add(lfoTarget);
-        row2.add(labelPanel("max", lfoAmp));
+
+        row2.add(lfoMin);
+        row2.add(new JLabel("min/max"));
+        row2.add(lfoMax);
+        // row2.add(labelPanel("max", lfoMax));
         lp.add(row1);
         lp.add(row2);
 
@@ -356,7 +397,7 @@ public class SoloTrack extends JPanel {
         cutType = new JComboBox<>(cutModel);
         //cutType.setMaximumSize(new Dimension(65, 40));
         cutType.addActionListener(e -> {eqFilterType();});
-        cutFreq = new JSlider(0, 100);
+        cutFreq = new Slider(0, 100);
         cutFreq.addKeyListener(MenuBar.getInstance());
         cutFreq.setMaximumSize(Gui.SLIDER_SZ);
         cutFreq.setPreferredSize(Gui.SLIDER_SZ);
@@ -375,12 +416,11 @@ public class SoloTrack extends JPanel {
                 Console.info("eq init(no-op)");
             }});
         cp.setLayout(new BoxLayout(cp,BoxLayout.Y_AXIS));
-        row1 = new JPanel();
+        row1 = new JPanel(new FlowLayout(FlowLayout.CENTER, 3, 0));
         row1.add(cutActive);
-        // row1.add(labelPanel("hz.", cutFreq));
         row1.add(cutFreq);
         row1.add(new JLabel("hz."));
-        row2 = new JPanel();
+        row2 = new JPanel(new FlowLayout(FlowLayout.CENTER, 3, 0));
         row2.add(cutType);
         row2.add(labelPanel("res", cutRes));
         cp.add(row1);

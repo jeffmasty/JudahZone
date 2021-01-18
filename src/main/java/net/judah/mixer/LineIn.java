@@ -20,12 +20,10 @@ public class LineIn extends Channel {
     @Getter @Setter protected JackPort leftPort;
     @Getter @Setter protected JackPort rightPort;
 
-    @Getter protected float gain = 1f;
     @Getter @Setter protected float gainFactor = 1f;
 
     @Getter protected boolean muteRecord;
     @Getter @Setter protected boolean solo;
-//    @Getter @Setter protected int defaultCC;
 
     @Getter protected final String leftSource;
     @Getter protected final String leftConnection;
@@ -56,17 +54,17 @@ public class LineIn extends Channel {
 	}
 
 
-	@Override
-	public int getVolume() {
-		return Math.round(gain * 100f / gainFactor);
-	}
+//	@Override
+//	public int getVolume() {
+//		return Math.round(gain * 100f / gainFactor);
+//	}
 
-	/** percent of maximum */
-	@Override
-	public void setVolume(int volume) {
-		gain = volume / 100f * gainFactor;
-		super.setVolume(volume);
-	}
+//	/** percent of maximum */
+//	@Override
+//	public void setVolume(int volume) {
+//		gain = volume / 100f * gainFactor;
+//		super.setVolume(volume);
+//	}
 
 	public void setMuteRecord(boolean muteRecord) {
 		this.muteRecord = muteRecord;
@@ -78,14 +76,12 @@ public class LineIn extends Channel {
 		if (isStereo)
 			right = rightPort.getFloatBuffer();
 
-		// standard gain
-		if (gain != 1) {
+		float gain = volume / 50f;
+		for (int z = 0; z < Constants._BUFSIZE; z++)
+		    left.put(left.get(z) * gain);
+		if (isStereo)
 			for (int z = 0; z < Constants._BUFSIZE; z++)
-				left.put(left.get(z) * gain);
-			if (isStereo)
-				for (int z = 0; z < Constants._BUFSIZE; z++)
-					right.put(right.get(z) * gain);
-		}
+				right.put(right.get(z) * gain);
 
 		if (eq.isActive()) {
 			eq.process(left, true);
@@ -96,6 +92,11 @@ public class LineIn extends Channel {
 			compression.process(left, 1);
 			if (isStereo)
 				compression.process(right, 1);
+		}
+		if (overdrive.isActive()) {
+		    overdrive.processAdd(left);
+		    if (isStereo)
+		        overdrive.processAdd(right);
 		}
 		if (delay.isActive()) {
 			delay.processAdd(left, left, true);

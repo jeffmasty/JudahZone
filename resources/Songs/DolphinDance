@@ -1,11 +1,18 @@
 {
   "props" : {
     "image" : "/home/judah/sheets/DolphinDance.png",
-    "beatbuddy" : "Techno4@110:Ethereal",
-    "drumset" : "ethereal",
+    "beatbuddy" : "RnB2@90:Liverpool",
     "ideas" : "fluid prog 0 44  octave down bass note strings, lfo party on chords"
   },
-  "links" : [ ],
+  "links" : [ {
+    "name" : "",
+    "command" : "loop:clear",
+    "midi" : "176/0/98/127",
+    "props" : { }
+  } ],
   "sequencer" : [ ],
-  "router" : [ ]
+  "router" : [ {
+    "fromMidi" : "144/9/48/119(keyboard)",
+    "toMidi" : "144/9/36/0(drumsOut)"
+  } ]
 }

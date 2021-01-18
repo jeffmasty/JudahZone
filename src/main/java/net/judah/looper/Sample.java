@@ -153,9 +153,9 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
 
         if (isOnMute()) return; // ok, we're on mute and we've progressed the tape counter.
 
-        // gain
-        AudioTools.processGain(recordedBuffer[LEFT_CHANNEL], workL, volume / 100f);
-        AudioTools.processGain(recordedBuffer[RIGHT_CHANNEL], workR, volume / 100f);
+        // gain & pan stereo
+        AudioTools.processGain(recordedBuffer[LEFT_CHANNEL], workL, (volume / 25f) * (1 - pan));
+        AudioTools.processGain(recordedBuffer[RIGHT_CHANNEL], workR, (volume / 25f) * pan);
 
         if (eq.isActive()) {
             eq.process(workL, true);
@@ -165,6 +165,10 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
         if (compression.isActive()) {
             compression.process(workL, bufL);
             compression.process(workR, bufR);
+        }
+        if (overdrive.isActive()) {
+            overdrive.processAdd(bufL);
+            overdrive.processAdd(bufR);
         }
         if (delay.isActive()) {
             delay.processAdd(bufL, bufL, true);

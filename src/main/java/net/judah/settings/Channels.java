@@ -43,7 +43,7 @@ public class Channels extends ArrayList<LineIn> {
 
 		aux1 = new LineIn(AUX1, "system:capture_3", "aux1"); // boss dr5 drum machine
 		aux1.getCompression().setActive(true);
-		aux1.setGainFactor(3f);
+		aux1.setGainFactor(2.5f);
 
 		aux2 = new LineIn(AUX2, new String[]
 				{null, null}, // {"Calf Fluidsynth:Out L", "Calf Fluidsynth:Out R"} not started up yet here

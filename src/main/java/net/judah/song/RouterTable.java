@@ -9,8 +9,9 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.midi.MidiPair;
+import net.judah.midi.MidiRule;
 import net.judah.midi.NoteOn;
+import net.judah.util.Console;
 import net.judah.util.EditsPane;
 import net.judah.util.PopupMenu;
 
@@ -20,36 +21,36 @@ public class RouterTable extends JPanel implements Edits {
 	private final DefaultTableModel model;
 	private final JTable list;
 
-	public RouterTable(List<MidiPair> routes) {
+	public RouterTable(List<MidiRule> routes) {
 		model = toTableModel(routes);
 		list = new JTable(model);
-		list.setDefaultEditor(MidiPair.class, new RouterEditor());
+		list.setDefaultEditor(MidiRule.class, new RouterEditor());
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		PopupMenu menu = new PopupMenu(this);
 		list.setComponentPopupMenu(menu);
 		add(new EditsPane(list, menu));
 	}
-	
-	public static DefaultTableModel toTableModel(List<MidiPair> routes) {
+
+	public static DefaultTableModel toTableModel(List<MidiRule> routes) {
 	    DefaultTableModel model = new DefaultTableModel(new String[] { " From  -->   To " }, 0) {
-    		@Override public Class<?> getColumnClass(int idx) {return MidiPair.class;}};
+    		@Override public Class<?> getColumnClass(int idx) {return MidiRule.class;}};
         if (routes == null || routes.isEmpty()) return model;
-        for (MidiPair pair : routes) 
+        for (MidiRule pair : routes)
         	model.addRow(new Object[] {pair});
         return model;
 	}
-	
-	public List<MidiPair> getRoutes() {
-		ArrayList<MidiPair> routes = new ArrayList<MidiPair>();
+
+	public List<MidiRule> getRoutes() {
+		ArrayList<MidiRule> routes = new ArrayList<>();
 		for (int i = 0; i < model.getRowCount(); i++) {
-			routes.add((MidiPair)model.getValueAt(i, 0));
+			routes.add((MidiRule)model.getValueAt(i, 0));
 		}
 		return routes;
 	}
-	
+
 	@Override public void editAdd() {
 		try {
-			model.addRow(new Object[] {new MidiPair(new NoteOn(), new NoteOn())});
+			model.addRow(new Object[] {new MidiRule(new NoteOn(), new NoteOn())});
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
@@ -60,15 +61,15 @@ public class RouterTable extends JPanel implements Edits {
 		if (selected < 0) return;
 		model.removeRow(selected);
 	}
-	
+
 	@Override
 	public void paste(List<Copyable> clipboard) {
 		if (clipboard == null || clipboard.isEmpty()) return;
 		int selected = list.getSelectedRow();
 		if (selected < 0) selected = 0;
 		for (int i = clipboard.size() -1; i >= 0; i--)
-			model.insertRow(selected, new Object[] {(MidiPair)clipboard.get(i)});
-		
+			model.insertRow(selected, new Object[] {(MidiRule)clipboard.get(i)});
+
 	}
 
 	@Override
@@ -78,14 +79,16 @@ public class RouterTable extends JPanel implements Edits {
 			editDelete();
 		return result;
 	}
-	
+
 	@Override
 	public List<Copyable> copy() {
 		int selected = list.getSelectedRow();
 		if (selected < 0) return null;
 		ArrayList<Copyable> result = new ArrayList<>();
 		for (int rownum : list.getSelectedRows()) {
-			result.add(new MidiPair((MidiPair)model.getValueAt(rownum, 0)));
+			try {
+                result.add( ((MidiRule)model.getValueAt(rownum, 0)).clone());
+            } catch (CloneNotSupportedException e) { Console.warn(e); }
 		}
 		return result;
 	}
@@ -94,5 +97,5 @@ public class RouterTable extends JPanel implements Edits {
 	//		if (selected < 0) return;
 	//		model.addRow(new Object[] { new MidiPair((MidiPair)model.getValueAt(selected, 0))});
 	//	}
-	
+
 }

@@ -85,8 +85,8 @@ public final class Freeverb implements Reverb {
     private static final float scaleroom = 0.28f;
     private static final float offsetroom = 0.7f;
 
-    private static final float initialroom = 0.55f;
-    private static final float initialdamp = 0.7f;
+    private static final float initialroom = 0.4f;
+    private static final float initialdamp = 0.8f;
     private static final float initialwet = 1 / scalewet;
     private static final float initialdry = 0f;//1;
     private static final float initialwidth = 0.6f;

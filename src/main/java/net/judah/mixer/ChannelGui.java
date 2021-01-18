@@ -18,10 +18,12 @@ import javax.swing.KeyStroke;
 import javax.swing.border.LineBorder;
 
 import lombok.Getter;
+import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.looper.Recorder;
 import net.judah.looper.Sample;
+import net.judah.mixer.bus.Fader;
 import net.judah.sequencer.Sequencer;
 import net.judah.util.Console;
 import net.judah.util.Constants;
@@ -37,13 +39,14 @@ public abstract class ChannelGui extends JPanel {
 
     @Getter protected final JToggleButton labelButton;
     protected final Knob volume;
+    protected Knob overdrive;
     protected final MixButton onMute;
     protected final List<MixButton> customActions;
 
     public ChannelGui(Channel channel) {
         this.channel = channel;
 
-        setLayout(new FlowLayout(FlowLayout.CENTER, 3, 1));
+        setLayout(new FlowLayout(FlowLayout.CENTER, 2, 0));
 
         setPreferredSize(new Dimension(MainFrame.WIDTH_MIXER / 2 - 1, LBL_SZ.height + 10));
         setMaximumSize(new Dimension(MainFrame.WIDTH_MIXER / 2 - 1, LBL_SZ.height + 10));
@@ -64,6 +67,7 @@ public abstract class ChannelGui extends JPanel {
 
         add(labelButton);
         add(volume);
+
         JPanel boxes = new JPanel();
 
         onMute = new MixButton(Icons.MUTE, channel);
@@ -84,6 +88,11 @@ public abstract class ChannelGui extends JPanel {
             boxes.add(btn);
         }
         add(boxes);
+        if (this instanceof Input) {
+            overdrive = new Knob(val -> {overdrive(val);});
+            overdrive.setToolTipText("Overdrive");
+            add(overdrive);
+        }
 
         labelButton.addActionListener(listener -> {
             if (labelButton.isSelected())
@@ -105,17 +114,25 @@ public abstract class ChannelGui extends JPanel {
             btn.update();
         if (channel == SoloTrack.getInstance().getFocus())
             SoloTrack.getInstance().update();
+        if (overdrive != null)
+            overdrive.setValue(Math.round((float)channel.getOverdrive().getDrive() * 100));
+
     }
 
     public void setVolume(int vol) {
         volume.setValue(vol);
     }
 
+    private void overdrive(int val) {
+        channel.getOverdrive().setDrive(val / 100f);
+        channel.getOverdrive().setActive(val > 10);
+    }
+
     public static class Input extends ChannelGui {
 
         public Input(LineIn channel) {
             super(channel);
-            // setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+            setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
         }
 
         @Override protected List<MixButton> customInit() {
@@ -195,6 +212,9 @@ public abstract class ChannelGui extends JPanel {
     }
 
     public static class Master extends ChannelGui {
+        MixButton fader, transport;
+
+
 
         public Master(MasterTrack master) {
             super(master);
@@ -202,10 +222,10 @@ public abstract class ChannelGui extends JPanel {
 
         @Override
         protected List<MixButton> customInit() {
-            MixButton fader = new MixButton(Icons.FADE, channel);
+            fader = new MixButton(Icons.FADE, channel);
             fader.setToolTipText("Fade in or out");
             fader.setSelected(true);
-            MixButton transport = new MixButton(Icons.PLAY, channel);
+            transport = new MixButton(Icons.PLAY, channel);
             transport.setToolTipText("Transport start/stop");
             return Arrays.asList(new MixButton[] { fader, transport });
 
@@ -213,8 +233,18 @@ public abstract class ChannelGui extends JPanel {
 
         @Override
         protected void customAction(MixButton btn) {
-            Sequencer.transport();
+            if (btn == fader) {
+                if (channel.getVolume() == 0 || channel.isOnMute()) {
+                    JudahZone.getMasterTrack().setOnMute(false);
+                    Fader.execute(Fader.fadeIn());
+                }
+                else
+                    Fader.execute(Fader.fadeOut());
+            }
+            else if (btn == transport)
+                Sequencer.transport();
         }
+
     }
 
     public static ChannelGui create(Channel ch) {

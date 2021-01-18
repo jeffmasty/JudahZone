@@ -12,7 +12,7 @@ import net.judah.util.JudahException;
 
 public class LinkModel extends DefaultTableModel {
 	private final CommandHandler commander;
-	
+
 	public LinkModel(LinkedHashSet<Link> links, CommandHandler commander) {
 		super (new Object[] { "Name", "Command", "Midi", "Param"}, 0);
 		this.commander = commander;
@@ -33,12 +33,12 @@ public class LinkModel extends DefaultTableModel {
 	}
 
 	public void addRow(Link link) {
-		addRow(new Object[] { link.getName(), commander.find(link.getCommand()), 
-        		new Midi(link.getMidi()), link.getProps()});
+		addRow(new Object[] { link.getName(), commander.find(link.getCommand()),
+        		Midi.copy(link.getMidi()), link.getProps()});
 	}
 
 	public LinkedHashSet<Link> getData() throws JudahException {
-		LinkedHashSet<Link> result = new LinkedHashSet<Link>();
+		LinkedHashSet<Link> result = new LinkedHashSet<>();
 		for (int i = 0; i < getRowCount(); i++)
 			result.add(getRow(i));
 		return result;
@@ -49,7 +49,7 @@ public class LinkModel extends DefaultTableModel {
 		Command cmd = ((Command)getValueAt(i,1));
 		if (cmd == null) throw new JudahException("no command for midi link");
 		Link link = new Link(getValueAt(i, 0).toString(), cmd.getName(),
-				((Midi)getValueAt(i, 2)).getMessage(), new HashMap((HashMap)getValueAt(i, 3)), null);
+				(Midi)getValueAt(i, 2), new HashMap((HashMap)getValueAt(i, 3)), null);
 		return link;
 	}
 

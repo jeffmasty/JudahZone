@@ -83,12 +83,13 @@ public class Delay {
 
     private final static float DEF_SRATE = 48000;
     private final static float DEF_MAX_DELAY = 1.3f;
+    public final static float DEF_TIME = 0.12f;
 
     private float samplerate;
     private float nframes; // jack buffer size
-    private float delaytime = .1f;
+    private float delaytime = DEF_TIME;
     private float maxdelay;
-    private float feedback = 0.4f;
+    private float feedback = 0.36f;
 
     @Getter @Setter private boolean active;
     private final VariableDelayOp left;
@@ -96,6 +97,7 @@ public class Delay {
 
     public Delay() {
         this(Constants._SAMPLERATE, Constants._BUFSIZE, DEF_MAX_DELAY);
+        reset();
     }
 
     public Delay(float samplerate, int bufferSize, float maxdelay) {
@@ -141,10 +143,13 @@ public class Delay {
     }
 
 	public void reset() {
-        if (left.delaybuffer != null)
+        active = false;
+	    if (left.delaybuffer != null)
             Arrays.fill(left.delaybuffer, 0);
         if (right.delaybuffer != null)
             Arrays.fill(right.delaybuffer, 0);
+        delaytime = .12f;
+        feedback = 0.36f;
     }
 
 	public void processReplace(FloatBuffer in, FloatBuffer out, boolean isLeft) {

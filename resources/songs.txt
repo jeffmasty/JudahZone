@@ -1,5 +1,4 @@
 ideas:
-with a little help from my dub friends https://youtu.be/o2Qa-0pfoco
 Quando quando quando
 
 Jazz:
@@ -59,5 +58,5 @@ loop 7:  melody B
 Checklist:
 PulseAudio volume
 
-
-
+Englishman in New York https://youtu.be/rDj8kDZBjdc
+with a little help from my dub friends https://youtu.be/o2Qa-0pfoco

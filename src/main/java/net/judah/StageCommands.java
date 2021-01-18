@@ -4,6 +4,8 @@ import static net.judah.JudahZone.*;
 
 import net.judah.api.Midi;
 import net.judah.looper.Recorder;
+import net.judah.midi.JudahMidi;
+import net.judah.mixer.bus.Delay;
 import net.judah.plugin.MPK;
 import net.judah.plugin.Plugin;
 import net.judah.util.Console;
@@ -78,12 +80,12 @@ public class StageCommands {
             }
 
             // 2nd row of CC pads
-            if (data1 == MPK.PRIMARY_CC.get(4)) {// play loop A cc pad
-                getLooper().get(0).play(midi.getData2() > 0);
+            if (data1 == MPK.PRIMARY_CC.get(4)) {// mute loop A cc pad
+                getLooper().get(0).setOnMute(midi.getData2() != 0);
                 return true;
             }
-            if (data1 == MPK.PRIMARY_CC.get(5)) {// play loop B cc pad
-                getLooper().get(1).play(midi.getData2() > 0);
+            if (data1 == MPK.PRIMARY_CC.get(5)) {// mute loop B cc pad
+                getLooper().get(1).setOnMute(midi.getData2() != 0);
                 return true;
             }
 
@@ -99,36 +101,61 @@ public class StageCommands {
                 return true;
             }
 
-            // foot pedal[0] octaver effect
-            if (data1 == MPK.PEDAL.get(0)) {
-                new Thread() {
-                    @Override public void run() {
-                        try { getCarla().octaver(midi.getData2() > 0);
-                        } catch (Throwable t) { Console.warn(t);}
-                    }}.start();
+            if (midi.getPort().equals(JudahMidi.getInstance().getPedal().getShortName())) {
+                // foot pedal[0] octaver effect
+                if (data1 == MPK.PEDAL.get(0)) {
+                    new Thread() {
+                        @Override public void run() {
+                            try { getCarla().octaver(midi.getData2() > 0);
+                            } catch (Throwable t) { Console.warn(t);}
+                        }}.start();
+                }
+
+                if (data1 == MPK.PEDAL.get(1)) { // mute Loop A foot pedal
+                    getLooper().get(0).setOnMute(midi.getData2() > 0);
+                    return true;
+                }
+                if (data1 == MPK.PEDAL.get(2) && midi.getData2() > 0) { // trigger only foot pedal
+                    getDrummachine().transission(); // drummachine.send(BeatBuddy.CYMBOL, 100);
+                    return true;
+                }
+
+                if (data1 == MPK.PEDAL.get(3) ) { // record Drum Track
+                    Console.info("Record Drum Track Toggle");
+                    getLooper().getDrumTrack().record(midi.getData2() > 0);
+                }
+                if (data1 == MPK.PEDAL.get(4)) { // record Loop B foot pedal
+                    ((Recorder)getLooper().get(1)).record(midi.getData2() > 0);
+                    return true;
+                }
+                if (data1 == MPK.PEDAL.get(5)) { // record Loop A foot pedal
+                    ((Recorder)getLooper().get(0)).record(midi.getData2() > 0);
+                    return true;
+                }
             }
 
-            if (data1 == MPK.PEDAL.get(1)) { // mute Loop A foot pedal
-                getLooper().get(0).setOnMute(midi.getData2() > 0);
-                return true;
-            }
-            if (data1 == MPK.PEDAL.get(2) && midi.getData2() > 0) { // trigger only foot pedal
-                getDrummachine().transission(); // drummachine.send(BeatBuddy.CYMBOL, 100);
+            if (data1 == MPK.JOYSTICK_DOWN_CC && midi.getPort().equals(JudahMidi.getInstance().getKeyboard().getShortName())) {
+                if (data2 < 20) {
+                    getMasterTrack().getOverdrive().setActive(false);
+                }
+                else {
+                    getMasterTrack().getOverdrive().setActive(true);
+                    getMasterTrack().getOverdrive().setDrive((data2 - 27) / 100f);
+                }
                 return true;
             }
 
-            if (data1 == MPK.PEDAL.get(3) ) { // record Drum Track
-                Console.info("Record Drum Track Toggle");
-                getLooper().getDrumTrack().record(midi.getData2() > 0);
+            if (data1 == MPK.JOYSTICK_UP_CC) {
+                if (data2 < 77)
+                    getMasterTrack().getDelay().reset();
+                else {
+                    Delay d = getMasterTrack().getDelay();
+                    d.setActive(true);
+                    if (d.getDelay() < Delay.DEF_TIME) d.setDelay(Delay.DEF_TIME);
+                    getMasterTrack().getDelay().setFeedback((data2 - 77) / 50f); // 77 to 127;
+                }
             }
-            if (data1 == MPK.PEDAL.get(4)) { // record Loop B foot pedal
-                ((Recorder)getLooper().get(1)).record(midi.getData2() > 0);
-                return true;
-            }
-            if (data1 == MPK.PEDAL.get(5)) { // record Loop A foot pedal
-                ((Recorder)getLooper().get(0)).record(midi.getData2() > 0);
-                return true;
-            }
+
         } // end is CC
 
         else if (midi.isProgChange()) {

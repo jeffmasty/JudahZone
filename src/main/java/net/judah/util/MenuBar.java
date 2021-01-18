@@ -141,7 +141,8 @@ public class MenuBar extends JMenuBar implements KeyListener {
 			case VK_F4: mixer.setFocus(channels.get(3)); return;
 			case VK_F5: mixer.setFocus(channels.get(4)); return;
 			case VK_F6: mixer.setFocus(channels.get(5)); return;
-			case VK_F9: if (Sequencer.getCurrent() != null) Sequencer.getCurrent().getPage().reload(); return;
+			case VK_F9: if (Sequencer.getCurrent() != null)
+			        Sequencer.getCurrent().getPage().reload(); return;
 			case VK_F10: /* used by MenuBar */ return;
 			case VK_F11: Sequencer.transport(); return;
 			case VK_UP: volume(true); return;
@@ -151,9 +152,12 @@ public class MenuBar extends JMenuBar implements KeyListener {
 			case VK_SPACE: case VK_M: mute(); return;
 			case VK_ENTER: enterKey(); return;
 
-			case VK_Q: focus.getCutFilter().setActive(!focus.getCutFilter().isActive()); focus.update(); return;
-			case VK_C: focus.getCompression().setActive(!focus.getCompression().isActive()); focus.update(); return;
-			case VK_V: focus.getFocus().getReverb().setActive(!focus.getFocus().getReverb().isActive()); focus.update(); return;
+			case VK_Q: focus.getCutFilter().setActive(
+			        !focus.getCutFilter().isActive()); focus.update(); return;
+			case VK_C: focus.getFocus().getCompression().setActive(
+			        !focus.getFocus().getCompression().isActive()); focus.update(); return;
+			case VK_V: focus.getFocus().getReverb().setActive(
+			        !focus.getFocus().getReverb().isActive()); focus.update(); return;
 			case VK_F: focus.lfo(); return;
 			case VK_X: { // zero out loop or mute channel record
 				Channel bus = focus.getFocus();

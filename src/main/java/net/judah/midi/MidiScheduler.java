@@ -16,21 +16,22 @@ import net.judah.sequencer.MidiTrack;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 
+/** Checks up on any running LFOs and queues midi notes when the appropriate audio frame comes to pass*/
 @Log4j @Data @EqualsAndHashCode(callSuper=false)
 public class MidiScheduler extends MidiTrack implements Runnable {
 
 	// frames between checking active LFOs
-	public static final long LFO_PULSE = 3; 
-	
+	public static final long LFO_PULSE = 2;
+
 	@Getter private long current = -1;
 	private final MidiQueue queue;
 	private final BlockingQueue<Long> offering;
-	
+
 	public MidiScheduler(MidiQueue queue) {
 		this.queue = queue;
-		offering = new LinkedBlockingQueue<Long>(2);
+		offering = new LinkedBlockingQueue<>(2);
 	}
-	
+
 	@Override
 	public void run() {
 		MidiEvent e;
@@ -40,10 +41,10 @@ public class MidiScheduler extends MidiTrack implements Runnable {
 		while (true) {
 			try {
 				current = offering.take();
-				if (current % LFO_PULSE == 0) 
+				if (current % LFO_PULSE == 0)
 					LFO.pulse(); // query any running LFOs
 					Fader.pulse();
-				
+
 				if (isEmpty()) continue;
 				e = get(0);
 				if (e.getOffset() < current - 2) {
@@ -54,7 +55,7 @@ public class MidiScheduler extends MidiTrack implements Runnable {
 					event = (ScheduledEvent)remove(0);
 					track = event.getOwner();
 					if (!track.isActive()) continue;
-					msg = Constants.transpose(event.getMsg(), 
+					msg = Constants.transpose(event.getMsg(),
 							track.getTranspose(), track.getGain());
 					if (track.getOutput() == null)
 						queue.queue(msg);
@@ -67,7 +68,7 @@ public class MidiScheduler extends MidiTrack implements Runnable {
 			}
 		}
 	}
-	
+
 	public void addTrack(Long reference, MidiTrack track) {
 		for (MidiEvent e : track) {
 			long time = reference + e.getOffset();
@@ -84,5 +85,5 @@ public class MidiScheduler extends MidiTrack implements Runnable {
 	public void offer(long currentTransportFrame) {
 		offering.offer(currentTransportFrame);
 	}
-	
+
 }

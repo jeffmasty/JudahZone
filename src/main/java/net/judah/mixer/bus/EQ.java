@@ -2,10 +2,13 @@ package net.judah.mixer.bus;
 
 import java.nio.FloatBuffer;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /*https://github.com/adiblol/jackiir*/
 /*
 jackiir
-IIR parametric equalizer for JACK without GUI 
+IIR parametric equalizer for JACK without GUI
 
 Copyright (C) 2014 adiblol
 
@@ -28,30 +31,22 @@ public class EQ {
 	public static final int CHANNELS_MAX = 32;
 	public static final int FILTERS_MAX = 32;
 	static final float LOG_2  = 0.693147f;
-	
+
 	final int samplerate = 48000; // roll your own
 	final int nframes = 512; // also
-	
-	private boolean active;
-	public void setActive(boolean active) {
-		this.active = active;
-	}
-	public boolean isActive() {
-		return active;
-	}
-	
+
 	public static enum EqParam {
 		GAIN, FREQUENCY, BANDWIDTH
 	}
-	
+
 	public static enum EqBand {
 		BASS, MID, TREBLE
 	}
-	
+
 	public static enum FilterType {
 		Gain, LowPass, HighPass, Peaking
 	};
-	
+
 	public static enum BWQType {
 		Q, BW, S
 	};
@@ -59,27 +54,25 @@ public class EQ {
 	class Channel {
 		BiquadFilter[] filters = new BiquadFilter[EqBand.values().length];
 	}
-	private final Channel leftCh = new Channel();
-	private final Channel rightCh = new Channel();
 
 	class BiquadFilter {
-		
+
 		private	float a0, a1, a2, b0, b1, b2;
 		private float xn1, xn2, yn1, yn2 = 0;
-		
-		float frequency; 
+
+		float frequency;
 		float bandwidth;
-		float gain_db = 0; 
+		float gain_db = 0;
 		final FilterType filter_type;
 		BWQType bwq_type = BWQType.BW;
-		
+
 		public BiquadFilter(float frequency, float bandwidth, FilterType type) {
 			this.frequency = frequency;
 			this.filter_type = type;
 			this.bandwidth = bandwidth;
 			update();
 		}
-		
+
 		public BiquadFilter(BiquadFilter copy) {
 			this(copy.frequency, copy.bandwidth, copy.filter_type);
 		}
@@ -125,7 +118,7 @@ public class EQ {
 			} else if (filter_type==FilterType.Gain) {
 			}
 		};
-		
+
 		void processBuffer(FloatBuffer buff) {
 			buff.rewind();
 			for (int i=0; i<nframes; i++) {
@@ -150,30 +143,32 @@ public class EQ {
 			}
 		};
 	}
-	
+
+	private final Channel leftCh = new Channel();
+	private final Channel rightCh = new Channel();
+	@Getter @Setter private boolean active;
+
+	/** create 3 peak EQs: 120hz, 666hz and 3100hz, each spanning more than an octave */
 	public EQ() {
-		 /*f <channels_separated_by_commas> <filter_type> <freq> <bandwidth> <gain>
-		 # filter_type can be: g (gain without EQ), pk (peaking), hp/lc (highpass/lowcut), lp/hc (lowpass/highcut)
+		 /*filter_type can be: g (gain without EQ), pk (peaking), hp/lc (highpass/lowcut), lp/hc (lowpass/highcut)
 		 # freq is center frequency (for peaking) or cut/boost frequency
 		 # bandwidth: 1 = 1 octave
-		 # gain is in dB
-		 f 1,2 g 0 0 -9 # attenuate before boosting to prevent clipping
-		 f 1,2 lc 20 60 0 # remove DC and subsonic
-		 f 1,2 pk 80 60 +6 # boost lows
-		 #f 1,2 pk 8000 90 +9 # boost highs */
-		BiquadFilter bass = new BiquadFilter(120, 1.1f, FilterType.Peaking);
+		 lc 20 60 0 # remove DC and subsonic
+		 pk 80 60 +6 # boost lows
+		 pk 8000 90 +9 # boost highs */
+		BiquadFilter bass = new BiquadFilter(120, 1.3f, FilterType.Peaking);
 		leftCh.filters[EqBand.BASS.ordinal()] = bass;
 		rightCh.filters[EqBand.BASS.ordinal()] = new BiquadFilter(bass);
-		
-		BiquadFilter mid = new BiquadFilter(666, 1.2f, FilterType.Peaking);
+
+		BiquadFilter mid = new BiquadFilter(666, 1.5f, FilterType.Peaking);
 		leftCh.filters[EqBand.MID.ordinal()] = mid;
 		rightCh.filters[EqBand.MID.ordinal()] = new BiquadFilter(mid);
-		
-		BiquadFilter treble = new BiquadFilter(3100, 1.7f, FilterType.Peaking);
+
+		BiquadFilter treble = new BiquadFilter(3100, 1.8f, FilterType.Peaking);
 		leftCh.filters[EqBand.TREBLE.ordinal()] = treble;
 		rightCh.filters[EqBand.TREBLE.ordinal()] = new BiquadFilter(treble);
 	}
-	
+
 	public void update(EqBand band, EqParam param, float value) {
 		BiquadFilter filter = leftCh.filters[band.ordinal()];
 		switch (param) {
@@ -182,7 +177,7 @@ public class EQ {
 			case GAIN: filter.gain_db = value; break;
 		}
 		filter.update();
-		
+
 		filter = rightCh.filters[band.ordinal()];
 		switch (param) {
 			case BANDWIDTH: filter.bandwidth = value; break;
@@ -191,26 +186,30 @@ public class EQ {
 		}
 		filter.update();
 	}
-	
+
+	public float getGain(EqBand band) {
+	    return leftCh.filters[band.ordinal()].gain_db;
+	}
+
 	public void process(FloatBuffer data, boolean left) {
 		if (left)
-			for (BiquadFilter filter : leftCh.filters) 
+			for (BiquadFilter filter : leftCh.filters)
 				filter.processBuffer(data);
 		else
-			for (BiquadFilter filter : rightCh.filters) 
+			for (BiquadFilter filter : rightCh.filters)
 				filter.processBuffer(data);
-		
+
 	}
 	public void process(float[] data, boolean left) {
 		// TODO watch for Java's handling of denormals/flush-to-zero/etc...
-		
+
 		// start filtering:
 		if (left)
-			for (BiquadFilter filter : leftCh.filters) 
+			for (BiquadFilter filter : leftCh.filters)
 				filter.processBuffer(data);
 		else
-			for (BiquadFilter filter : rightCh.filters) 
+			for (BiquadFilter filter : rightCh.filters)
 				filter.processBuffer(data);
 	 }
-	 
+
 }

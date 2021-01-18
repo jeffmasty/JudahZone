@@ -106,8 +106,11 @@ public class Sequencer implements Service, Runnable, TimeListener {
             initializeProperties();
             initializeFiles();
             initializeTriggers();
-            Router midi = JudahMidi.getInstance().getRouter();
-            song.getRouter().forEach( pair -> { midi.add(
+            Router midiRouter = JudahMidi.getInstance().getRouter();
+
+
+
+            song.getRouter().forEach( pair -> { midiRouter.add(
                     new Route(pair.getFromMidi(), pair.getToMidi()));});
 
             page = new SongPane(this);

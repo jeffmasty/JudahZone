@@ -72,12 +72,13 @@ public class Carla implements Service {
 	@Getter private Plugins plugins = new Plugins();
 	private Plugin fluid;
 	private Plugin harmonizer;
-	// private Plugin bassEQ;
 	private Plugin echo;
 	private Plugin flanger;
 	private Plugin talReverb;
+	private Plugin theShepard;
 
 	@Getter private TalReverb reverb;
+
 
 	/** Default JudahZone load, initializes {@link #plugins} hard-coded from the settings file
 	 * @throws JackException */
@@ -107,7 +108,9 @@ public class Carla implements Service {
 
 		talReverb = new Plugin("talReverb", 4, LineType.CARLA);
 
-		plugins.addAll(Arrays.asList(new Plugin[] {fluid, harmonizer, echo, flanger, talReverb}));
+		theShepard = new Plugin("theShepard", 5, LineType.CARLA);
+
+		plugins.addAll(Arrays.asList(new Plugin[] {fluid, harmonizer, echo, flanger, talReverb, theShepard}));
 
 		reverb = new TalReverb(this, talReverb);
 	}

@@ -32,7 +32,6 @@ import net.judah.plugin.Pedal;
 import net.judah.sequencer.Sequencer;
 import net.judah.settings.MidiSetup.IN;
 import net.judah.settings.MidiSetup.OUT;
-import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 /** handle MIDI for the project */
@@ -41,6 +40,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 
     public static final String JACKCLIENT_NAME = "JudahMidi";
     private long frame = 0;
+    private String[] sources, destinations; // for GUI
 
     @Getter private static JudahMidi instance;
     /** Jack Frame */
@@ -86,21 +86,21 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
         start();
     }
 
-    public void routeChannel(HashMap<String, Object> props) {
-        try {
-            boolean active = Boolean.parseBoolean("" + props.get("Active"));
-            int from = Integer.parseInt("" + props.get("from"));
-            int to = Integer.parseInt("" + props.get("to"));
-            Route route = new Route(from, to);
-            if (active)
-                JudahMidi.getInstance().getRouter().add(route);
-            else
-                JudahMidi.getInstance().getRouter().remove(route);
-        } catch (NumberFormatException e) {
-            log.error(e.getMessage() + " " + Constants.prettyPrint(props));
-        }
-
-    }
+    //public void routeChannel(HashMap<String, Object> props) {
+    //    try {
+    //        boolean active = Boolean.parseBoolean("" + props.get("Active"));
+    //        int from = Integer.parseInt("" + props.get("from"));
+    //        int to = Integer.parseInt("" + props.get("to"));
+    //        Route route = new Route(from, to);
+    //        if (active)
+    //            JudahMidi.getInstance().getRouter().add(route);
+    //        else
+    //            JudahMidi.getInstance().getRouter().remove(route);
+    //    } catch (NumberFormatException e) {
+    //        log.error(e.getMessage() + " " + Constants.prettyPrint(props));
+    //    }
+    //
+    //}
 
     @Override
     protected void initialize() throws JackException {
@@ -203,7 +203,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
                         continue;
                     }
 
-                    midi = router.process(new Midi(data));
+                    midi = router.process(new Midi(data, port.getShortName()));
 
                     if (Sequencer.getCurrent() == null) {
                         if (!stage.midiProcessed(midi))
@@ -263,6 +263,25 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
     public void properties(HashMap<String, Object> props) {
         scheduler.clear();
     }
+
+    public String[] getSources() {
+        if (sources != null) return sources;
+        String[] sources = new String[inPorts.size() + 1];
+        sources[0] = ""; // drop-down option for no source port selected
+        for (int i = 0; i < inPorts.size(); i++)
+            sources[i + 1] = inPorts.get(i).getShortName();
+        return sources;
+    }
+
+    public String[] getDestinations() {
+        if (destinations != null) return destinations;
+        destinations = new String[outPorts.size() + 1];
+        destinations[0] = ""; // drop-down option for no destination port selected
+        for (int i = 0; i < outPorts.size(); i++)
+            destinations[i + 1] = outPorts.get(i).getShortName();
+        return destinations;
+    }
+
 
 }
 

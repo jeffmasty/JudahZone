@@ -26,6 +26,7 @@ import net.judah.sequencer.Sequencer;
 import net.judah.song.SheetMusic;
 import net.judah.util.Console;
 import net.judah.util.Constants;
+import net.judah.util.Icons;
 import net.judah.util.MenuBar;
 
 @Log4j
@@ -50,7 +51,9 @@ public class MainFrame extends JFrame {
 
     MainFrame(String name) {
         super(name);
-        try { UIManager.setLookAndFeel ("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+        try {
+            UIManager.setLookAndFeel ("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+            UIManager.getDefaults().put("Slider.horizontalThumbIcon", Icons.load("slider.png"));
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException
                 | UnsupportedLookAndFeelException e) { log.info(e.getMessage(), e); }
         instance = this;

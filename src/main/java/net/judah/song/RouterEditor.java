@@ -14,7 +14,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 
 import net.judah.midi.JudahMidi;
-import net.judah.midi.MidiPair;
+import net.judah.midi.MidiRule;
 import net.judah.midi.Route;
 import net.judah.util.EditorDialog;
 import net.judah.util.MidiForm;
@@ -26,15 +26,15 @@ public class RouterEditor implements TableCellEditor {
 	private JCheckBox channel9;
 	int column;
 	private EditorDialog dialog;
-	
+
 	@Override
 	public Object getCellEditorValue() {
 		switch (column) {
-			case 1: return toCard.getMidi();
-			default: return fromCard.getMidi();
+			case 1: return toCard.getParsed();
+			default: return fromCard.getParsed();
 		}
 	}
-	
+
 	@Override
 	public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
 		this.column = column;
@@ -44,25 +44,22 @@ public class RouterEditor implements TableCellEditor {
 				toggleAudition();
 				super.dispose();
 			}};
-		MidiPair val = (MidiPair)table.getModel().getValueAt(row, 0);
-		fromCard = new MidiForm(val.getFromMidi(), true);
-		fromCard.hideData2();
-		fromCard.hideDynamic();
-		toCard = new MidiForm(val.getToMidi(), true);
-		toCard.hideData2();
-		toCard.hideDynamic();
+		MidiRule val = (MidiRule)table.getModel().getValueAt(row, 0);
+		fromCard = new MidiForm(val.getFromMidi());
+		toCard = new MidiForm(val.getToMidi(), JudahMidi.getInstance().getDestinations());
+
 		Component c = table.getCellRenderer(row, column).getTableCellRendererComponent(
 				table, value, isSelected, isSelected, row, column);
-		
+
 		JPanel cards = new JPanel();
 		cards.setLayout(new BoxLayout(cards, BoxLayout.PAGE_AXIS));
 		cards.add(new JLabel(" "));
 		cards.add(new JLabel("From Midi"));
 		cards.add(fromCard);
-		
+
 		JPanel aisle9 = new JPanel(new FlowLayout());
 		channel9 = new JCheckBox("Sample on channel 9");
-		boolean selected = val.getFrom() != null && val.getFromMidi().getChannel() == 9;
+		boolean selected = val.getFromMidi() != null && val.getFromMidi().getChannel() == 9;
 		channel9.setSelected(selected);
 		if (selected) {
 			toggleAudition();
@@ -70,14 +67,14 @@ public class RouterEditor implements TableCellEditor {
 		channel9.addActionListener( (event) -> toggleAudition());
 		aisle9.add(new JLabel("To Midi"));
 		aisle9.add(channel9);
-		
+
 		cards.add(new JLabel(" "));
 		cards.add(aisle9);
 		cards.add(toCard);
-		
+
 		boolean result = dialog.showContent(cards);
 		if (result) {
-			MidiPair route = new MidiPair(fromCard.getMidi(), toCard.getMidi());
+			MidiRule route = new MidiRule(fromCard.getParsed(), toCard.getParsed());
 			if (c != null && c instanceof JLabel)
 				((JLabel)c).setText("" + route);
 			table.getModel().setValueAt(route, row, 0);
@@ -91,13 +88,13 @@ public class RouterEditor implements TableCellEditor {
 		}
 		return c;
 	}
-	
+
 	private void toggleAudition() {
 		if (channel9.isSelected())  {
 			JudahMidi.getInstance().getRouter().add(new Route(0, 9));
 			toCard.setChannel(9);
 		}
-		else 
+		else
 			JudahMidi.getInstance().getRouter().remove(new Route(0, 9));
 	}
 

@@ -228,6 +228,7 @@ public class Compression {
 	}
 
 	public void process(float[] in, FloatBuffer out) {
+	    out.rewind();
 		float val;
 	    for (int z = 0; z < out.capacity(); z++) {
 	    	val = in[z];

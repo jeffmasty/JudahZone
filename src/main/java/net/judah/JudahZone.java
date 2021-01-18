@@ -49,7 +49,6 @@ public class JudahZone extends BasicClient {
     /** external reverb, for instance */
     @Getter private static JackPort effectsL, effectsR;
 
-    // (midi handler, fluidsynth, metronome)
     @Getter private static final Services services = new Services();
     @Getter private static final CommandHandler commands = new CommandHandler();
 
@@ -149,10 +148,6 @@ public class JudahZone extends BasicClient {
         jack.connect(jackclient, outL.getName(), "system:playback_1");
         jack.connect(jackclient, outR.getName(), "system:playback_2");
 
-
-        //jack.connect(jackclient, effectsL.getName(), DragonflyReverb.IN_LEFT);
-        //jack.connect(jackclient, effectsR.getName(), DragonflyReverb.IN_RIGHT);
-
         // Initialize command registry and start GUI
         commands.initializeCommands();
         new MainFrame(JUDAHZONE);
@@ -167,12 +162,11 @@ public class JudahZone extends BasicClient {
             Console.warn(e.getMessage() + " " + file.getAbsolutePath(), e); }
 
 
-        // Fader.execute(Fader.fadeOut(4000));
-        masterTrack.setOnMute(false);
         drummachine.setVolume(50);
         Fader.execute(Fader.fadeIn());
+        masterTrack.setOnMute(false);
         MixerPane.getInstance().update();
-
+        // now the system is live!
     }
 
     private class ShutdownHook extends Thread {
@@ -201,21 +195,27 @@ public class JudahZone extends BasicClient {
 
         if (masterTrack == null || masterTrack.isOnMute()) return true;
 
-        // mix the live stream
+        // mix the live streams
         for (LineIn ch : channels) {
             if (ch.isOnMute()) continue;
-            ch.process(); // calc gain/compression for both live mix and loopers
-            processAdd(ch.getLeftPort().getFloatBuffer(), outL.getFloatBuffer());
+            ch.process(); // internal effects
+
+            // do line-in stereo pan here (0.5 pan = 1.0 gain)
+            float gainL = (1 - ch.getPan()) * 2;
+            float gainR = ch.getPan() * 2;
+            processAdd(ch.getLeftPort().getFloatBuffer(), gainL, outL.getFloatBuffer());
             if (ch.isStereo())
-                processAdd(ch.getRightPort().getFloatBuffer(), outR.getFloatBuffer());
+                processAdd(ch.getRightPort().getFloatBuffer(), gainR, outR.getFloatBuffer());
             else
-                processAdd(ch.getLeftPort().getFloatBuffer(), outR.getFloatBuffer());
+                processAdd(ch.getLeftPort().getFloatBuffer(), gainR, outR.getFloatBuffer());
         }
 
         // get looper in on process()
         looper.process();
 
+        // final mix bus effects:
         masterTrack.process();
+
         return true;
     }
 

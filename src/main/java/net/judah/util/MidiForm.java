@@ -6,11 +6,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.sound.midi.InvalidMidiDataException;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 
 import lombok.Getter;
@@ -29,7 +30,7 @@ public class MidiForm extends JPanel implements MidiListener {
 	public static final int MAX_DATA = 128;
 
 	@RequiredArgsConstructor
-	/** handled commands (TODO) */
+	/** handled commands */
 	public static enum MidiCommands {
 		CONTROL_CHANGE(0xB0),  // 176
 		PROGRAM_CHANGE(0xC0),  // 192
@@ -38,93 +39,95 @@ public class MidiForm extends JPanel implements MidiListener {
 		;
 		@Getter private final int val;
 	}
-	
-	private static final int COMMENTS = 0;
-	private static final int LABELS = 1;
-	private static final int DATA = 2;
-	
-	private final JComboBox<MidiCommands> command; 
-	private final JComboBox<Integer> data1, data2, channel;
+
+	private static final int LABELS = 0;
+	private static final int DATA = 1;
+
+	private final JComboBox<MidiCommands> command;
+	private final JComboBox<Integer> data1, channel;
+	private final JComboBox<String> port;
+	private final JTextField parsed;
+
 	private final JToggleButton midiRecord;
 	private final JButton midiPlay;
 	private final JLabel comment;
-	private final JCheckBox dynamic;
-	
+
+	public MidiForm(Midi midi, String[] ports) {
+	    command = new JComboBox<>(MidiCommands.values());
+	    data1 = new JComboBox<>(generateCombo(MAX_DATA));
+	    channel = new JComboBox<>(generateCombo(MAX_CHANNELS));
+        port = new JComboBox<>(ports);
+
+	    midiRecord = new JToggleButton("⚫ Rec");
+        midiRecord.addActionListener( (event) -> midiLearn());
+        midiPlay = new JButton("▶ Play");
+        midiPlay.addActionListener( (event) -> midiPlay());
+        comment = new JLabel();
+
+        if (midi != null) {
+            for(MidiCommands cmd : MidiCommands.values())
+                if (cmd.getVal() == midi.getCommand())
+                    command.setSelectedItem(cmd);
+            channel.setSelectedItem(midi.getChannel());
+            data1.setSelectedItem(midi.getData1());
+            if (midi.getPort() != null)
+                port.setSelectedItem(midi.getPort());
+        }
+
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        JPanel buttons = new JPanel();
+        buttons.add(midiRecord);
+        buttons.add(midiPlay);
+        buttons.add(new JLabel(" parsed:"));
+        parsed = new JTextField(24);
+        buttons.add(parsed);
+        add(buttons);
+
+        JPanel form = new JPanel(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+
+        c.gridy = LABELS;
+        form.add(new JLabel("Port"), c);
+        c.gridy = DATA;
+        form.add(port, c);
+
+        c.gridy = LABELS;
+        form.add(new JLabel("Channel"), c);
+        c.gridy = DATA;
+        form.add(channel, c);
+
+        c.gridx = 2;
+        c.gridy = LABELS;
+        c.gridwidth = 3;
+        form.add(comment, c);
+        c.gridwidth = 1;
+        c.gridy = LABELS;
+        form.add(new JLabel("Command"), c);
+        c.gridy = DATA;
+        form.add(command, c);
+
+        c.gridx = 3;
+        c.gridy = LABELS;
+        form.add(new JLabel("Data1"), c);
+        c.gridy = DATA;
+        form.add(data1, c);
+        add(form);
+
+        command.addActionListener(l -> {parsed.setText(getMidi().toString());});
+        data1.addActionListener(l -> {parsed.setText(getMidi().toString());});
+        channel.addActionListener(l -> {parsed.setText(getMidi().toString());});
+        port.addActionListener(l -> {parsed.setText(getMidi().toString());});
+	}
+
 	public MidiForm(Midi midi) {
-		this(midi, false);
+	    this(midi, JudahMidi.getInstance().getSources());
 	}
-	
-	public MidiForm(Midi midi, boolean isDynamic) {
-		
-		command = new JComboBox<MidiCommands>(MidiCommands.values());
-		data1 = new JComboBox<Integer>(generateCombo(MAX_DATA));
-		data2 = new JComboBox<Integer>(generateCombo(MAX_DATA));
-		data2.setVisible(!isDynamic);
-		channel = new JComboBox<Integer>(generateCombo(MAX_CHANNELS));
-		midiRecord = new JToggleButton("⚫ Rec");
-		midiRecord.addActionListener( (event) -> midiLearn());
-		midiPlay = new JButton("▶ Play");
-		midiPlay.addActionListener( (event) -> midiPlay());
-		comment = new JLabel();
-		dynamic = new JCheckBox("", isDynamic);
-		dynamic.setEnabled(false);
 
-		if (midi != null) {
-			for(MidiCommands cmd : MidiCommands.values()) 
-				if (cmd.getVal() == midi.getCommand())
-					command.setSelectedItem(cmd);
-			channel.setSelectedItem(midi.getChannel());
-			data1.setSelectedItem(midi.getData1());
-			data2.setSelectedItem(midi.getData2());
-		}
-		
-		setLayout(new GridBagLayout());
-		GridBagConstraints c = new GridBagConstraints();
-
-		c.gridx = 0;
-		c.gridy = COMMENTS;
-		add(midiRecord, c);
-		c.gridy = LABELS;
-		add(new JLabel("Dynamic"), c);
-		c.gridy = DATA;
-		add(dynamic, c);
-		
-		c.gridx = 1;
-		c.gridy = COMMENTS;
-		add(midiPlay, c);
-		c.gridy = LABELS;
-		add(new JLabel("Channel"), c);
-		c.gridy = DATA;
-		add(channel, c);
-		
-		c.gridx = 2;
-		c.gridy = LABELS;
-		c.gridwidth = 3;
-		add(comment, c);
-		c.gridwidth = 1;
-		c.gridy = LABELS;
-		add(new JLabel("Command"), c);
-		c.gridy = DATA;
-		add(command, c);
-		
-		c.gridx = 3;
-		c.gridy = LABELS;
-		add(new JLabel("Data1"), c);
-		c.gridy = DATA;
-		add(data1, c);
-
-		c.gridx = 4;
-		c.gridy = LABELS;
-		add(new JLabel(isDynamic ? "" : "Data2"), c);
-		c.gridy = DATA;
-		add(data2, c);
-	}
-	
 	private void midiLearn() {
 		ArrayList<MidiListener> listeners = Sequencer.getCurrent().getListeners();
-		if (midiRecord.isSelected()) 
+		if (midiRecord.isSelected())
 			listeners.add(this);
-		else 
+		else
 			listeners.remove(this);
 	}
 
@@ -140,40 +143,30 @@ public class MidiForm extends JPanel implements MidiListener {
 		return result;
 	}
 
-	public void hideDynamic() {
-		dynamic.setVisible(false);
-	}
-	
 	public void hideMidiRecord() {
 		midiRecord.setVisible(false);
 	}
-	
+
 	public void hideMidiPlay() {
 		midiPlay.setVisible(false);
 	}
-	
-	public void hideData2() {
-		data2.setVisible(false);
-	}
-	
-	public Midi getMidi() {
+
+	private Midi getMidi() {
 		Sequencer.getCurrent().getListeners().remove(this);
 		int cmd = ((MidiCommands)command.getSelectedItem()).getVal();
 		int chan = (int)channel.getSelectedItem();
 		int dat1 = (int)data1.getSelectedItem();
+
 		try {
-			if (data2 == null || data2.isVisible() == false)
-				return new Midi(cmd, chan, dat1);
-			else {
-				int dat2 = (int)data2.getSelectedItem();
-				return new Midi(cmd, chan, dat1, dat2);
-			}
+		    if (port.getSelectedIndex() == 0)
+		        return new Midi(cmd, chan, dat1);
+		    return new Midi(cmd, chan, dat1, port.getSelectedItem().toString());
 		} catch (InvalidMidiDataException e) {
 			log.error(e.getMessage() + " " + Arrays.toString(new Object[] {cmd, chan, dat1}), e);
 			Constants.infoBox(e.getMessage(), "MIDI Error");
 			return null;
 		}
-		
+
 	}
 
 	public void setChannel(int i) {
@@ -182,12 +175,13 @@ public class MidiForm extends JPanel implements MidiListener {
 
 	@Override
 	public void feed(Midi midi) {
-		for (MidiCommands cmd : MidiCommands.values()) 
+		for (MidiCommands cmd : MidiCommands.values())
 			if (cmd.getVal() == midi.getCommand()) {
 				command.setSelectedItem(cmd);
 				channel.setSelectedItem(midi.getChannel());
 				data1.setSelectedItem(midi.getData1());
-				data2.setSelectedItem(midi.getData2());
+				port.setSelectedItem(midi.getPort());
+				parsed.setText(midi.toString());
 			}
 	}
 
@@ -195,5 +189,9 @@ public class MidiForm extends JPanel implements MidiListener {
 	public PassThrough getPassThroughMode() {
 		return PassThrough.NOTES;
 	}
+
+    public Midi getParsed() {
+        return Midi.deserialize(parsed.getText());
+    }
 
 }

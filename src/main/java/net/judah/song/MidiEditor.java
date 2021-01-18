@@ -14,34 +14,34 @@ import net.judah.util.EditorDialog;
 import net.judah.util.MidiForm;
 
 public class MidiEditor implements TableCellEditor {
-	
+
 	private MidiForm midiCard;
 	private EditorDialog dialog;
-	
+
 	@Override
 	public Object getCellEditorValue() {
-		
-		return MPK.format(midiCard.getMidi());
+		return MPK.format(midiCard.getParsed());
 	}
-	
+
 	@Override
 	public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
 		dialog = new EditorDialog("Midi");
 		Object o = table.getModel().getValueAt(row, LinkTable.COMMAND_COL);
-		midiCard = (o == null) ? new MidiForm((Midi)value) : new MidiForm((Midi)value, true);  
+
+		midiCard = new MidiForm((Midi)value);
 		Component c = table.getCellRenderer(row, column).getTableCellRendererComponent(
 				table, value, isSelected, isSelected, row, column);
 		boolean result = dialog.showContent(midiCard);
 		if (result) {
-			table.setValueAt(midiCard.getMidi(), row, column);
-			table.getModel().setValueAt(new Midi(midiCard.getMidi().getMessage()), row, column);
-			if (c != null && c instanceof JLabel) 
-				((JLabel)c).setText(midiCard.getMidi().toString());
+			table.setValueAt(midiCard.getParsed(), row, column);
+			table.getModel().setValueAt(new Midi(midiCard.getParsed().getMessage()), row, column);
+			if (c != null && c instanceof JLabel)
+				((JLabel)c).setText(midiCard.getParsed().toString());
 			table.invalidate();
 		}
 		return c;
 	}
-	
+
 	@Override public void cancelCellEditing() {
 		if (dialog != null && dialog.isVisible()) {
 			dialog.cancel();
