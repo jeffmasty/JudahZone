@@ -1,6 +1,7 @@
 package net.judah.util;
 
 import static java.awt.event.KeyEvent.*;
+import static net.judah.JudahZone.*;
 import static net.judah.util.Constants.*;
 
 import java.awt.event.ActionEvent;
@@ -28,6 +29,9 @@ import net.judah.MainFrame;
 import net.judah.MixerPane;
 import net.judah.api.Midi;
 import net.judah.api.ProcessAudio;
+import net.judah.effects.api.Effect;
+import net.judah.effects.api.SavePreset;
+import net.judah.effects.gui.EffectsRack;
 import net.judah.fluid.FluidSynth;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
@@ -35,7 +39,6 @@ import net.judah.metronome.JMidiPlay;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiListener;
 import net.judah.midi.Route;
-import net.judah.plugin.Carla;
 import net.judah.sequencer.Sequencer;
 
 @Log4j
@@ -52,6 +55,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
     private static final String routeHelp = "route/unroute channel fromChannel# toChannel#";
     private static final String activeHelp ="active - prints the current sequencer command from the top of the stack.";
     private static final String buddyHelp = "buddy intCmd intValue or buddy songNum";
+    private static final String presetHelp = "preset - print the current EffectsRack settings";
 
     private static Console instance;
     public static Console getInstance() {
@@ -227,23 +231,24 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
         else if (text.equals("active"))
             Console.info("" + Sequencer.getCurrent().getActive());
         else if (text.equals("buddy") && input.length == 2)
-            JudahZone.getDrummachine().parseConfig(input[1]);
+            getDrummachine().parseConfig(input[1]);
         else if (text.equals("drumset") && input.length == 2)
-            JudahZone.getDrummachine().drumset(Integer.parseInt(input[1]));
-
-        //            try {
-        //                if (input.length == 2)
-        //                    JudahZone.getDrummachine().song(Integer.parseInt(input[1]));
-        //                else if (input.length == 3)
-        //                    JudahZone.getDrummachine().send(
-        //                            Integer.parseInt(input[1]), Integer.parseInt(input[2]));
-        //            } catch (Throwable t) { Console.info(buddyHelp);}
+            getDrummachine().drumset(Integer.parseInt(input[1]));
         else if (text.equals("update")) {
             MixerPane.getInstance().update();
             Console.info("...updated");
         }
         else if (text.equalsIgnoreCase("sheetMusic")) {
             MainFrame.get().sheetMusic();
+        }
+        else if (text.equals("preset")) {
+            SavePreset save = new SavePreset("Hallelujah", Arrays.asList(
+                    new Effect[] {EffectsRack.getInstance().getFocus().getReverb()}));
+            try {
+                File f = new File(System.getProperty("user.dir"), "presets.zone");
+                SavePreset.write(f, save.toString());
+            } catch (Exception e) {Console.warn(e);}
+
         }
 
         else if (text.equals("test")) {
@@ -270,6 +275,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
         addText(listenHelp);
         addText(activeHelp);
         addText(buddyHelp);
+        addText(presetHelp);
         addText("fluid help");
 
     }
@@ -420,10 +426,6 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
         }
     }
 
-    private Carla getCarla() {
-        return JudahZone.getCarla();
-    }
-
     @Override
     public void feed(Midi midi) {
         addText("midilisten: " + midi);
@@ -435,14 +437,8 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
     }
 
     public static void test() {
-        info("main size: " +  MainFrame.get().getContentPane().getSize());
-        info("main location " + MainFrame.get().getContentPane().getLocation());
-        info("main on screen " + MainFrame.get().getContentPane().getLocation());
-        //        info("Console size: " + Console.getInstance().getOutput().getSize());
-        //        info("Console locations: " + Console.getInstance().getOutput().getLocation());
-        //        info("Console on screen " + Console.getInstance().getOutput().getLocationOnScreen());
-        //	try { new QuantizationTest(); addText("success.");
-        //	} catch (Throwable t) { warn(t.getMessage(), t); }
+        getChannels().getGuitar().getChorus().setActive(!getChannels().getGuitar().getChorus().isActive());
+        Console.info("Chorus: " + getChannels().getGuitar().getChorus().isActive());
     }
 
 }

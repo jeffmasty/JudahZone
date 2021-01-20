@@ -1,4 +1,4 @@
-package net.judah.mixer.bus;
+package net.judah.effects;
 
 /*https://github.com/jaudiolibs/audioops/blob/master/audioops-impl/src/main/java/org/jaudiolibs/audioops/impl/FreeverbOp.java*/
 /*
@@ -69,10 +69,12 @@ package net.judah.mixer.bus;
  */
 
 import java.nio.FloatBuffer;
+import java.security.InvalidParameterException;
 import java.util.Arrays;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.effects.api.Reverb;
 import net.judah.util.Constants;
 
 /** initialize your own sample and buffer rate.  Don't try this reverb with software synths, it doesn't sound good */
@@ -88,13 +90,13 @@ public final class Freeverb implements Reverb {
     private static final float initialroom = 0.4f;
     private static final float initialdamp = 0.8f;
     private static final float initialwet = 1 / scalewet;
-    private static final float initialdry = 0f;//1;
+    private static final float initialdry = 0.5f;//1;
     private static final float initialwidth = 0.6f;
 
     @Getter @Setter private boolean active;
     private int nframes = 512;
-    private float roomsize, roomsize1;
-    private float damp, damp1;
+    private float roomsize;
+    private float damp;
     private float wet, wet1, wet2;
     private float dry;
     private float width;
@@ -201,6 +203,33 @@ public final class Freeverb implements Reverb {
         /* Prepare all buffers*/
         update();
     }
+    @Override
+    public int getParamCount() {
+        return Settings.values().length;
+    }
+
+
+    @Override
+    public Number get(int idx) {
+        if (idx == Settings.Room.ordinal())
+            return getRoomSize();
+        if (idx == Settings.Damp.ordinal())
+            return getDamp();
+        if (idx == Settings.Wet.ordinal())
+            return getWet();
+        throw new InvalidParameterException();
+    }
+
+    @Override
+    public void set(int idx, float value) {
+        if (idx == Settings.Room.ordinal())
+            setRoomSize(value);
+        else if (idx == Settings.Damp.ordinal())
+            setDamp(value);
+        else if (idx == Settings.Wet.ordinal())
+            setWet(value);
+        else throw new InvalidParameterException();
+    }
 
     @Override public boolean isInternal() { return true; }
 
@@ -226,11 +255,13 @@ public final class Freeverb implements Reverb {
         return damp / scaledamp;
     }
 
+    @Override
     public void setWet(float value) {
         wet = value * scalewet;
         dirty = true;
     }
 
+    @Override
     public float getWet() {
         return wet / scalewet;
     }
@@ -313,17 +344,14 @@ public final class Freeverb implements Reverb {
         wet1 = wet * (width / 2 + 0.5f);
         wet2 = wet * ((1 - width) / 2);
 
-        roomsize1 = roomsize;
-        damp1 = damp;
-
         for (i = 0; i < numcombs; i++) {
-            combL[i].setFeedback(roomsize1);
-            combR[i].setFeedback(roomsize1);
+            combL[i].setFeedback(roomsize);
+            combR[i].setFeedback(roomsize);
         }
 
         for (i = 0; i < numcombs; i++) {
-            combL[i].setdamp(damp1);
-            combR[i].setdamp(damp1);
+            combL[i].setdamp(damp);
+            combR[i].setdamp(damp);
         }
     }
 
@@ -348,12 +376,12 @@ public final class Freeverb implements Reverb {
 
                 //undenormalise(output);
                 if (output > 0.0) {
-                    if (output < 1.0E-10) {
+                    if (output < 1.0E-9) {
                         output = 0;
                     }
                 }
                 if (output < 0.0) {
-                    if (output > -1.0E-10) {
+                    if (output > -1.0E-9) {
                         output = 0;
                     }
                 }
@@ -361,12 +389,12 @@ public final class Freeverb implements Reverb {
                 filterstore = (output * damp2) + (filterstore * damp1);
                 //undenormalise(filterstore);
                 if (filterstore > 0.0) {
-                    if (filterstore < 1.0E-10) {
+                    if (filterstore < 1.0E-9) {
                         filterstore = 0;
                     }
                 }
                 if (filterstore < 0.0) {
-                    if (filterstore > -1.0E-10) {
+                    if (filterstore > -1.0E-9) {
                         filterstore = 0;
                     }
                 }
@@ -409,12 +437,12 @@ public final class Freeverb implements Reverb {
 
                 //undenormalise
                 if (bufout > 0.0) {
-                    if (bufout < 1.0E-10) {
+                    if (bufout < 1.0E-9) {
                         bufout = 0;
                     }
                 }
                 if (bufout < 0.0) {
-                    if (bufout > -1.0E-10) {
+                    if (bufout > -1.0E-9) {
                         bufout = 0;
                     }
                 }
@@ -429,10 +457,5 @@ public final class Freeverb implements Reverb {
         }
    }
 
-    @Override
-    public String toString() {
-		return "reverb room: " + getRoomSize() + " damp: " + getDamp() +
-				" dry: " + getDry() + " width: " + getWidth();
-    }
 
 }

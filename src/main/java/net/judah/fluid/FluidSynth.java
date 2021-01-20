@@ -25,6 +25,7 @@ import net.judah.api.Service;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.ProgMsg;
 import net.judah.util.Console;
+import net.judah.util.Constants;
 import net.judah.util.JudahException;
 
 
@@ -56,7 +57,7 @@ public class FluidSynth implements Service {
 	private final Command progChange, instUp, instDown, drumBank, direct;
 	@Getter private final List<Command> commands;
 
-	private float gain = 2.5f; // max 5
+	private float gain = 1.3f; // max 5
 
 	public FluidSynth (int sampleRate, boolean startListeners) throws JackException, JudahException, IOException {
 		this(sampleRate, SOUND_FONT, startListeners);
@@ -90,21 +91,18 @@ public class FluidSynth implements Service {
 		outStream = process.getOutputStream();
 
 		Jack jack = Jack.getInstance();
-		try { // wait for fluid synth to init
-			while (jack.getPorts(LEFT_PORT, null, null).length == 0) {
-				Thread.sleep(50);
-			}
-			gain(gain);
-			Thread.sleep(40);
-
-		} catch (InterruptedException e) {
-			log.error(e);
+		while (jack.getPorts(LEFT_PORT, null, null).length == 0) {
+			Constants.sleep(50);
 		}
+		gain(gain);
+		Constants.sleep(50);
 		if (startListeners)
-			sync();
-
+            sync();
         sendCommand("chorus off");
-		reverb = new FluidReverb(this);
+        reverb = new FluidReverb(this);
+        Constants.sleep(50);
+        progChangeConsole(0, 19); // how about some church organ??
+
 
 		HashMap<String, Class<?>> template = new HashMap<>();
 		template.put("channel", Integer.class);
@@ -159,6 +157,7 @@ public class FluidSynth implements Service {
 					commands = Arrays.asList(new Command[] {progChange, instUp, instDown, drumBank, direct});
 					// doHelp();
 					Console.addText( "FluidSynth channels: " + channels.size() + " instruments: " + instruments.size());
+
 	}
 
 	private void syncChannels() throws InterruptedException, IOException, JudahException {

@@ -16,11 +16,11 @@ import net.judah.Looper;
 import net.judah.MainFrame;
 import net.judah.MixerPane;
 import net.judah.api.AudioMode;
+import net.judah.effects.gui.EffectsRack;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
-import net.judah.mixer.SoloTrack;
 import net.judah.sequencer.Sequencer;
 import net.judah.settings.Channels;
 import net.judah.song.Song;
@@ -32,7 +32,7 @@ public class MenuBar extends JMenuBar implements KeyListener {
 	private static MenuBar instance;
 
 	private MixerPane mixer;
-	private SoloTrack focus;
+	private EffectsRack focus;
 	private Channels channels;
 	private Looper looper;
 
@@ -46,7 +46,7 @@ public class MenuBar extends JMenuBar implements KeyListener {
     JMenuItem exit = new JMenuItem("Exit");
     JMenuItem metronome = new JMenuItem("Metronome");
 
-	private MenuBar() {
+	public MenuBar() {
 
 		fileMenu.setMnemonic(KeyEvent.VK_F);
         load.addActionListener( (event) -> load());
@@ -243,7 +243,7 @@ public class MenuBar extends JMenuBar implements KeyListener {
 		mixer = mixerPane;
 		channels = JudahZone.getChannels();
 		looper = JudahZone.getLooper();
-		focus = SoloTrack.getInstance();
+		focus = EffectsRack.getInstance();
 	}
 
 	public static MenuBar getInstance() {

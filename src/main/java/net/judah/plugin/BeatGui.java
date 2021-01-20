@@ -79,7 +79,7 @@ public class BeatGui extends JPanel {
 
         JPanel topRow = new JPanel(new FlowLayout(FlowLayout.CENTER, PAD, PAD));
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER, PAD, PAD));
-        buttons.setBorder(BorderFactory.createTitledBorder("Control"));
+        buttons.setBorder(BorderFactory.createTitledBorder("BeatBuddy"));
 
         buttons.add(startBtn);
         buttons.add(pauseBtn);

@@ -19,11 +19,10 @@ public class LooperGui extends JPanel {
     public LooperGui(Looper looper) {
         setLayout(new GridLayout(0, 2));
         setBorder(BorderFactory.createTitledBorder(
-                // BorderFactory.createEmptyBorder(),
-                BorderFactory.createLineBorder(Color.DARK_GRAY),
-                "Output", TitledBorder.CENTER, TitledBorder.BELOW_TOP, Constants.Gui.FONT11));
+                BorderFactory.createEmptyBorder(),
+                //BorderFactory.createLineBorder(Color.DARK_GRAY),
+                "Mixer", TitledBorder.CENTER, TitledBorder.BELOW_TOP, Constants.Gui.FONT11));
         add(JudahZone.getMasterTrack().getGui());
-        add(looper.getDrumTrack().getGui());
 
         for (Sample loop : JudahZone.getLooper())
             add(loop.getGui());

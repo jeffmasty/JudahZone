@@ -13,6 +13,7 @@ import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
+import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -26,21 +27,22 @@ import net.judah.sequencer.Sequencer;
 import net.judah.song.SheetMusic;
 import net.judah.util.Console;
 import net.judah.util.Constants;
-import net.judah.util.Icons;
 import net.judah.util.MenuBar;
 
 @Log4j
 public class MainFrame extends JFrame {
 
+
     public static final int WIDTH_FRAME = 1279;
     public static final int HEIGHT_FRAME = 740;
-    public static final int WIDTH_MIXER = 460;
+    public static final int HEIGHT_MENU = 21;
+    public static final int WIDTH_MIXER = 448;
     public static final int WIDTH_SONG = WIDTH_FRAME - WIDTH_MIXER;
     public static final int HEIGHT_CONSOLE = 138;
     public static final int HEIGHT_TABS = HEIGHT_FRAME - (HEIGHT_CONSOLE + 40);
 
     private static MainFrame instance;
-    private final JPanel songPanel;
+    private final JDesktopPane songPanel;
     private final JPanel consoles;
     private MusicPanel sheetMusic;
 
@@ -53,14 +55,13 @@ public class MainFrame extends JFrame {
         super(name);
         try {
             UIManager.setLookAndFeel ("javax.swing.plaf.nimbus.NimbusLookAndFeel");
-            UIManager.getDefaults().put("Slider.horizontalThumbIcon", Icons.load("slider.png"));
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException
                 | UnsupportedLookAndFeelException e) { log.info(e.getMessage(), e); }
         instance = this;
         prefix = name;
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setJMenuBar(MenuBar.getInstance());
+        // setJMenuBar(MenuBar.getInstance());
 
         content = (JPanel)getContentPane();
         content.setLayout(null);
@@ -68,9 +69,13 @@ public class MainFrame extends JFrame {
         tabs = new JTabbedPane();
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 
-        songPanel = new JPanel();
+        songPanel = new JDesktopPane();
+
         songPanel.setLayout(null);
         songPanel.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
+
+        MenuBar menu = MenuBar.getInstance();
+        songPanel.add(menu);
         songPanel.add(tabs);
 
         content.add(songPanel);
@@ -78,27 +83,29 @@ public class MainFrame extends JFrame {
         mixer = new MixerPane();
         MenuBar.getInstance().setMixerPane(mixer);
 
-        tabs.setBounds(0, 0, WIDTH_SONG - 1, HEIGHT_TABS);
+        tabs.setBounds(0, HEIGHT_MENU, WIDTH_SONG - 1, HEIGHT_TABS);
+        menu.setBounds(0, 0, WIDTH_SONG, HEIGHT_MENU);
 
         consoles = new JPanel();
         consoles.setLayout(new BoxLayout(consoles, BoxLayout.Y_AXIS));
-        consoles.setBounds(0, HEIGHT_TABS, WIDTH_SONG - 1, HEIGHT_CONSOLE);
+        consoles.setBounds(0, HEIGHT_TABS + HEIGHT_MENU, WIDTH_SONG - 1, HEIGHT_CONSOLE);
         songPanel.add(consoles);
         consoles.add(Console.getInstance().getScroller());
 
         consoles.add(new Footer());
 
         songPanel.setBounds(0, 0, WIDTH_SONG, HEIGHT_FRAME);
-        mixer.setBounds(WIDTH_SONG, 0, WIDTH_MIXER, HEIGHT_FRAME - 40);
-        mixer.doLayout();
+//        mixer.setBounds(WIDTH_SONG, 0, WIDTH_MIXER, HEIGHT_FRAME - 40);
+        // mixer.doLayout();
 
         content.add(mixer);
         setLocation(0, 0);
         setSize(WIDTH_FRAME, HEIGHT_FRAME);
         // setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
+        mixer.setBounds(WIDTH_SONG, 0, WIDTH_MIXER, HEIGHT_FRAME);
         invalidate();
         setVisible(true);
-        mixer.setBounds(WIDTH_SONG, 0, WIDTH_MIXER, HEIGHT_FRAME);
+
 
     }
 

@@ -1,4 +1,4 @@
-package net.judah.mixer.bus;
+package net.judah.effects;
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *

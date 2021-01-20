@@ -3,9 +3,9 @@ package net.judah;
 import static net.judah.JudahZone.*;
 
 import net.judah.api.Midi;
-import net.judah.looper.Recorder;
+import net.judah.effects.Delay;
+import net.judah.fluid.FluidSynth;
 import net.judah.midi.JudahMidi;
-import net.judah.mixer.bus.Delay;
 import net.judah.plugin.MPK;
 import net.judah.plugin.Plugin;
 import net.judah.util.Console;
@@ -39,10 +39,10 @@ public class StageCommands {
                 getChannels().getMic().setVolume(data2); return true;}
             // Loop A Volume
             if (data1 == MPK.KNOBS.get(4)) {
-                getLooper().get(0).setVolume(data2); return true;}
+                getLooper().getLoopA().setVolume(data2); return true;}
             // Loop B Volume
             if (data1 == MPK.KNOBS.get(5)) {
-                getLooper().get(1).setVolume(data2); return true;}
+                getLooper().getLoopB().setVolume(data2); return true;}
             // Combined Aux1 & 2 Volume
             if (data1 == MPK.KNOBS.get(6)) {
                 getChannels().getAux1().setVolume(data2);
@@ -53,11 +53,11 @@ public class StageCommands {
 
             // first row of CC pads
             if (data1 == MPK.PRIMARY_CC.get(0)) {// record loop A cc pad
-                ((Recorder)getLooper().get(0)).record(midi.getData2() > 0);
+                getLooper().getLoopA().record(midi.getData2() > 0);
                 return true;
             }
             if (data1 == MPK.PRIMARY_CC.get(1)) {// record loop B cc pad
-                ((Recorder)getLooper().get(1)).record(midi.getData2() > 0);
+                getLooper().getLoopB().record(midi.getData2() > 0);
                 return true;
             }
 
@@ -66,7 +66,7 @@ public class StageCommands {
                 new Thread() {
                     @Override public void run() {
                         getLooper().slave(); }}.start();
-
+                return true;
             }
             if (data1 == MPK.PRIMARY_CC.get(3) && midi.getData2() > 0) { // clear loopers cc pad
                 getLooper().stopAll();
@@ -81,11 +81,11 @@ public class StageCommands {
 
             // 2nd row of CC pads
             if (data1 == MPK.PRIMARY_CC.get(4)) {// mute loop A cc pad
-                getLooper().get(0).setOnMute(midi.getData2() != 0);
+                getLooper().getLoopA().setOnMute(midi.getData2() != 0);
                 return true;
             }
             if (data1 == MPK.PRIMARY_CC.get(5)) {// mute loop B cc pad
-                getLooper().get(1).setOnMute(midi.getData2() != 0);
+                getLooper().getLoopB().setOnMute(midi.getData2() != 0);
                 return true;
             }
 
@@ -112,7 +112,7 @@ public class StageCommands {
                 }
 
                 if (data1 == MPK.PEDAL.get(1)) { // mute Loop A foot pedal
-                    getLooper().get(0).setOnMute(midi.getData2() > 0);
+                    getLooper().getLoopA().setOnMute(midi.getData2() > 0);
                     return true;
                 }
                 if (data1 == MPK.PEDAL.get(2) && midi.getData2() > 0) { // trigger only foot pedal
@@ -125,11 +125,11 @@ public class StageCommands {
                     getLooper().getDrumTrack().record(midi.getData2() > 0);
                 }
                 if (data1 == MPK.PEDAL.get(4)) { // record Loop B foot pedal
-                    ((Recorder)getLooper().get(1)).record(midi.getData2() > 0);
+                    getLooper().getLoopB().record(midi.getData2() > 0);
                     return true;
                 }
                 if (data1 == MPK.PEDAL.get(5)) { // record Loop A foot pedal
-                    ((Recorder)getLooper().get(0)).record(midi.getData2() > 0);
+                    getLooper().getLoopA().record(midi.getData2() > 0);
                     return true;
                 }
             }
@@ -164,6 +164,7 @@ public class StageCommands {
             boolean result = false;
             for (Plugin plugin : getPlugins())
                 if (plugin.getDefaultProgChange() == data1) {
+                    // octaver..
                     plugin.activate(getChannels().getGuitar());
                     result = true;
                 }
@@ -176,11 +177,38 @@ public class StageCommands {
                 return true;
             }
             if (data1 == MPK.PRIMARY_PROG[7]) { // up instrument
-                new Thread() { @Override public void run() {
-                    getSynth().instUp(0, false);
-                }}.start();
+                new Thread(()->{getSynth().instUp(0, false);}).start();
                 return true;
             }
+
+            if (data1 == MPK.PRIMARY_PROG[0]) { // I want bass
+                JudahMidi.getInstance().queue(FluidSynth.getInstance().progChange(0, 33));
+                return true;
+            }
+            if (data1 == MPK.PRIMARY_PROG[1]) { // harp
+                JudahMidi.getInstance().queue(FluidSynth.getInstance().progChange(0, 46));
+                return true;
+            }
+            if (data1 == MPK.PRIMARY_PROG[2]) { // piano
+                JudahMidi.getInstance().queue(FluidSynth.getInstance().progChange(0, 1));
+                return true;
+            }
+            if (data1 == MPK.PRIMARY_PROG[4]) { // strings
+                JudahMidi.getInstance().queue(FluidSynth.getInstance().progChange(0, 44));
+                return true;
+            }
+            if (data1 == MPK.PRIMARY_PROG[5]) { // church organ
+                JudahMidi.getInstance().queue(FluidSynth.getInstance().progChange(0, 19));
+                return true;
+            }
+            if (data1 == MPK.PRIMARY_PROG[6]) { // electric piano
+                JudahMidi.getInstance().queue(FluidSynth.getInstance().progChange(0, 5));
+                return true;
+            }
+
+
+
+
 
         }
         return false;

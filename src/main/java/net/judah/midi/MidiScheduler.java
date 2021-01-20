@@ -9,19 +9,17 @@ import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.api.Midi;
 import net.judah.api.MidiQueue;
-import net.judah.mixer.bus.Fader;
-import net.judah.mixer.bus.LFO;
+import net.judah.effects.Fader;
+import net.judah.effects.LFO;
 import net.judah.sequencer.MidiEvent;
 import net.judah.sequencer.MidiTrack;
 import net.judah.util.Console;
 import net.judah.util.Constants;
+import net.judah.util.RTLogger;
 
 /** Checks up on any running LFOs and queues midi notes when the appropriate audio frame comes to pass*/
 @Log4j @Data @EqualsAndHashCode(callSuper=false)
 public class MidiScheduler extends MidiTrack implements Runnable {
-
-	// frames between checking active LFOs
-	public static final long LFO_PULSE = 2;
 
 	@Getter private long current = -1;
 	private final MidiQueue queue;
@@ -34,24 +32,23 @@ public class MidiScheduler extends MidiTrack implements Runnable {
 
 	@Override
 	public void run() {
-		MidiEvent e;
+		MidiEvent schedule;
 		MidiTrack track;
 		ScheduledEvent event;
 		Midi msg;
 		while (true) {
 			try {
 				current = offering.take();
-				if (current % LFO_PULSE == 0)
-					LFO.pulse(); // query any running LFOs
-					Fader.pulse();
+				LFO.pulse(); // query any running LFOs
+				Fader.pulse();
 
 				if (isEmpty()) continue;
-				e = get(0);
-				if (e.getOffset() < current - 2) {
-					log.debug("skipping " + e.getMsg() + " " + e.getOffset() + " vs. " + current);
+				schedule = get(0);
+				if (schedule.getOffset() < current - 2) {
+					RTLogger.warn(this, "skipping " + schedule.getMsg() + " " + schedule.getOffset() + " vs. " + current);
 					remove(0);
 				}
-				else if (e.getOffset() <= current) {
+				else if (schedule.getOffset() <= current) {
 					event = (ScheduledEvent)remove(0);
 					track = event.getOwner();
 					if (!track.isActive()) continue;

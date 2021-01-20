@@ -166,10 +166,13 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
             compression.process(workL, bufL);
             compression.process(workR, bufR);
         }
+        if (chorus.isActive())
+            chorus.processStereo(bufL, bufR);
         if (overdrive.isActive()) {
             overdrive.processAdd(bufL);
             overdrive.processAdd(bufR);
         }
+
         if (delay.isActive()) {
             delay.processAdd(bufL, bufL, true);
             delay.processAdd(bufR, bufR, false);

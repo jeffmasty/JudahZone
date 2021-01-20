@@ -1,4 +1,4 @@
-package net.judah.util;
+package net.judah.effects.gui;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -10,6 +10,9 @@ import javax.swing.JComponent;
 import javax.swing.JSlider;
 import javax.swing.Painter;
 import javax.swing.UIDefaults;
+import javax.swing.event.ChangeListener;
+
+import net.judah.util.Icons;
 
 /**Source: ThemeDemo https://jasperpotts.com/blog/2008/08/skinning-a-slider-with-nimbus/
  * @author Created by Jasper Potts (May 7, 2008) */
@@ -25,7 +28,6 @@ public class Slider extends JSlider {
         sliderDefaults.put("Slider:SliderThumb.backgroundPainter", new Painter<JComponent>() {
             @Override
             public void paint(Graphics2D g, JComponent c, int w, int h) {
-                // g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g.drawImage(fader, 0, 0, null);
             }
         });
@@ -34,16 +36,29 @@ public class Slider extends JSlider {
             public void paint(Graphics2D g, JComponent c, int w, int h) {
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g.setStroke(new BasicStroke(2f));
+                g.setColor(Color.WHITE);
+                g.fillRoundRect(0, 8, w-1, 4, 4, 4);
                 g.setColor(Color.GRAY);
                 g.drawRoundRect(0, 8, w-1, 4, 4, 4);
             }
         });
     }
 
-    public Slider(int min, int max) {
+    public Slider(ChangeListener l) {
+        this(0, 100, 0, l, "");
+    }
+
+    public Slider(int min, int max, ChangeListener l) {
+        this(min, max, 0, l, "");
+    }
+
+    public Slider(int min, int max, int current, ChangeListener l, String tooltip) {
         super(min, max);
         putClientProperty("Nimbus.Overrides",sliderDefaults);
         putClientProperty("Nimbus.Overrides.InheritDefaults",false);
+        setValue(current);
+        setToolTipText(tooltip);
+        addChangeListener(l);
     }
 
 }

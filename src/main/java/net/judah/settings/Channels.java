@@ -24,32 +24,26 @@ public class Channels extends ArrayList<LineIn> {
 
 		guitar = new LineIn(GUITAR, "system:capture_1", "guitar");
 		guitar.setIcon(Icons.load("Guitar.png"));
-		guitar.setGainFactor(2.5f);
 
 		mic = new LineIn(MIC, "system:capture_2", "mic");
-		mic.setGainFactor(3.5f);
 		mic.setIcon(Icons.load("Microphone.png"));
 
 		drums = new LineIn(DRUMS, "system:capture_4", "drums");
-		drums.getCompression().setActive(true);
-		drums.setGainFactor(6f);
+		// drums.getCompression().setActive(true);
 		drums.setIcon(Icons.load("Drums.png"));
 
 		synth = new LineIn(SYNTH,
 				new String[] {FluidSynth.LEFT_PORT, FluidSynth.RIGHT_PORT},
 				new String[] {"synthL", "synthR"});
-		synth.setGainFactor(0.75f);
 		synth.setIcon(Icons.load("Synth.png"));
 
 		aux1 = new LineIn(AUX1, "system:capture_3", "aux1"); // boss dr5 drum machine
-		aux1.getCompression().setActive(true);
-		aux1.setGainFactor(2.5f);
+		// aux1.getCompression().setActive(true);
 
 		aux2 = new LineIn(AUX2, new String[]
 				{null, null}, // {"Calf Fluidsynth:Out L", "Calf Fluidsynth:Out R"} not started up yet here
 				new String[] {"aux2", "aux3"});
 		// aux2.setMuteRecord(true);
-		aux2.setGainFactor(3f);
 
 		addAll(Arrays.asList(new LineIn[] { guitar, mic, drums, synth, aux1, aux2 }));
 

@@ -1,4 +1,4 @@
-package net.judah.mixer.bus;
+package net.judah.effects;
 
 //https://github.com/jaudiolibs/audioops/blob/master/audioops-impl/src/main/java/org/jaudiolibs/audioops/impl/IIRFilterOp.java
 /*

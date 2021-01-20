@@ -21,9 +21,10 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
+import net.judah.effects.Fader;
+import net.judah.effects.gui.EffectsRack;
 import net.judah.looper.Recorder;
 import net.judah.looper.Sample;
-import net.judah.mixer.bus.Fader;
 import net.judah.sequencer.Sequencer;
 import net.judah.util.Console;
 import net.judah.util.Constants;
@@ -46,7 +47,7 @@ public abstract class ChannelGui extends JPanel {
     public ChannelGui(Channel channel) {
         this.channel = channel;
 
-        setLayout(new FlowLayout(FlowLayout.CENTER, 2, 0));
+        setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
 
         setPreferredSize(new Dimension(MainFrame.WIDTH_MIXER / 2 - 1, LBL_SZ.height + 10));
         setMaximumSize(new Dimension(MainFrame.WIDTH_MIXER / 2 - 1, LBL_SZ.height + 10));
@@ -112,8 +113,8 @@ public abstract class ChannelGui extends JPanel {
         onMute.update();
         for (MixButton btn : customActions)
             btn.update();
-        if (channel == SoloTrack.getInstance().getFocus())
-            SoloTrack.getInstance().update();
+        if (channel == EffectsRack.getInstance().getFocus())
+            EffectsRack.getInstance().update();
         if (overdrive != null)
             overdrive.setValue(Math.round((float)channel.getOverdrive().getDrive() * 100));
 

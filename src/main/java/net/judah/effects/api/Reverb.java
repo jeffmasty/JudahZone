@@ -1,12 +1,18 @@
-package net.judah.mixer.bus;
+package net.judah.effects.api;
 
 import java.nio.FloatBuffer;
 
-public interface Reverb {
+public interface Reverb extends Effect {
+
+    public enum Settings {
+        Room, Damp, Wet
+    }
 
     void initialize(int sampleRate, int bufferSize);
 
+    @Override
     void setActive(boolean active);
+    @Override
     boolean isActive();
 
     /**@param size 0 to 1 */
@@ -21,9 +27,11 @@ public interface Reverb {
     void setWidth(float width);
     float getWidth();
 
+    void setWet(float wet);
+    float getWet();
+
     /** if true, process() must be implemented */
     boolean isInternal();
     public void process(FloatBuffer buf);
-
 
 }

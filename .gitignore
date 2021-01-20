@@ -2,6 +2,7 @@
 .settings
 .classpath
 *.log
+*.log.*
 **.class
 target/**
 pom.properties

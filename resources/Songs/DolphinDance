@@ -2,14 +2,10 @@
   "props" : {
     "image" : "/home/judah/sheets/DolphinDance.png",
     "beatbuddy" : "RnB2@90:Liverpool",
-    "ideas" : "fluid prog 0 44  octave down bass note strings, lfo party on chords"
+    "ideas" : "fluid prog 0 44  octave down bass note strings, lfo party on chords",
+    "ideas2" : "tremelo gtr chords, phaser drums on roll-around, plink some harp, clean gtr melody"
   },
-  "links" : [ {
-    "name" : "",
-    "command" : "loop:clear",
-    "midi" : "176/0/98/127",
-    "props" : { }
-  } ],
+  "links" : [ ],
   "sequencer" : [ ],
   "router" : [ {
     "fromMidi" : "144/9/48/119(keyboard)",

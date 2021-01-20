@@ -43,13 +43,10 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
     private String[] sources, destinations; // for GUI
 
     @Getter private static JudahMidi instance;
-    /** Jack Frame */
+    /** current Jack Frame */
     public static long getCurrent() {
         return instance.scheduler.getCurrent();
     }
-
-    @Getter private final MidiScheduler scheduler = new MidiScheduler(this);
-    @Getter private final Router router = new Router();
 
     private ArrayList<JackPort> inPorts = new ArrayList<>();  // Keyboard, Pedal, MidiIn
     @Getter private JackPort keyboard;
@@ -66,10 +63,13 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
     @Getter private JackPort auxOut2;
     @Getter private JackPort auxOut3;
 
-    private final ConcurrentLinkedQueue<ShortMessage> queue = new ConcurrentLinkedQueue<>();
-    private final BeatBuddy clock;
+    @Getter private final MidiScheduler scheduler = new MidiScheduler(this);
+    @Getter private final Router router = new Router();
+    @Getter private final ConcurrentLinkedQueue<ShortMessage> queue = new ConcurrentLinkedQueue<>();
+    @Getter private final BeatBuddy clock;
 
     @Getter MidiCommands commands = new MidiCommands(this);
+    private final StageCommands stage = new StageCommands();
 
     // for process()
     private Event midiEvent = new JackMidi.Event();
@@ -77,7 +77,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
     private int index, eventCount, size;
     private ShortMessage poll;
     private Midi midi;
-    private final StageCommands stage = new StageCommands();
+
 
     public JudahMidi(String name, BeatBuddy drumMachine) throws JackException {
         super(name);
@@ -86,6 +86,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
         start();
     }
 
+    // To be revived
     //public void routeChannel(HashMap<String, Object> props) {
     //    try {
     //        boolean active = Boolean.parseBoolean("" + props.get("Active"));

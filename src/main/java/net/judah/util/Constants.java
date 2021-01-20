@@ -26,6 +26,7 @@ public class Constants {
 	public static int _SAMPLERATE = 48000;
 	public static int _BUFSIZE = 512;
 
+
 	// TODO
     public static final File defaultSetlist = new File("/home/judah/git/JudahZone/resources/Songs/list1.songs");
     public static final File defaultFolder = new File("/home/judah/git/JudahZone/resources/Songs/");
@@ -85,14 +86,14 @@ public class Constants {
     	public static final int STD_HEIGHT = 18;
     	public static final Insets BTN_MARGIN = new Insets(1,1,1,1);
     	public static final Insets ZERO_MARGIN = new Insets(0,0,0,0);
-    	public static final Font BOLD = new Font("Arial", Font.BOLD, 12);
+    	public static final Font BOLD = new Font("Arial", Font.BOLD, 11);
     	public static final Font FONT13 = new Font("Arial", Font.PLAIN, 13);
     	public static final Font FONT12 = new Font("Arial", Font.PLAIN, 12);
     	public static final Font FONT11 = new Font("Arial", Font.PLAIN, 11);
     	public static final Font FONT10 = new Font("Arial", Font.PLAIN, 10);
     	public static final Font FONT9 = new Font("Arial", Font.PLAIN, 9);
     	public static final Border GRAY1 = new LineBorder(Color.GRAY, 1);
-    	public static Dimension SLIDER_SZ = new Dimension(90, 40);
+    	public static Dimension SLIDER_SZ = new Dimension(86, 40);
 		public static void attachKeyListener(Container p, KeyListener l) {
 			for(Component c : p.getComponents()) {
 				c.addKeyListener(l);
@@ -128,6 +129,10 @@ public class Constants {
     public static void infoBox(String infoMessage, String titleBar) {
         JOptionPane.showMessageDialog(null, infoMessage, titleBar, JOptionPane.INFORMATION_MESSAGE);
     }
+    public static String inputBox(String infoMessage) {
+        return JOptionPane.showInputDialog(infoMessage);
+    }
+
 
 	@SuppressWarnings("rawtypes")
 	public static String prettyPrint(HashMap<String, Object> p) {
@@ -169,6 +174,18 @@ public class Constants {
 		return new Midi(in.getCommand(), channel, in.getData1() + steps, in.getData2());
 	}
 
+	public static void timer(long msec, Runnable r) {
+	    new Thread( () -> {
+	        try {
+	            Thread.sleep(msec);
+	            r.run();
+	        } catch(Throwable t) {
+	            System.err.println(t.getMessage());
+	        }
+
+	    }).start();
+	}
+
 	public static void sleep(long millis) {
 	    try {
 	        Thread.sleep(millis);
@@ -177,7 +194,18 @@ public class Constants {
 	    }
 	}
 
-	public static void main(String[] args) {
+	private static ClassLoader loader = Constants.class.getClassLoader();
+	public static File resource(String filename) {
+	    try {
+	        return new File(loader.getResource(filename).getFile());
+	    } catch (Throwable t) {
+	        Console.warn(t);
+	        return null;
+	    }
+	}
+
+
+	public static void main2(String[] args) {
 		System.out.println(toBPM(1000, 1) + " bpm");
 		System.out.println(toBPM(3000, 3) + " bpm");
 		System.out.println(toBPM(1000, 2) + " bpm");

@@ -1,13 +1,13 @@
-package net.judah.mixer.bus;
+package net.judah.effects;
 
 import java.util.ArrayList;
 
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
+import net.judah.effects.LFO.Target;
+import net.judah.effects.gui.EffectsRack;
 import net.judah.mixer.Channel;
 import net.judah.mixer.MasterTrack;
-import net.judah.mixer.SoloTrack;
-import net.judah.mixer.bus.LFO.Target;
 
 @RequiredArgsConstructor
 public class Fader {
@@ -23,7 +23,7 @@ public class Fader {
 	public static Fader fadeIn() {
 		return new Fader(JudahZone.getMasterTrack(), Target.Gain, 3000, 0, 51, new Runnable() {
 		    @Override public void run() {
-		        SoloTrack.volume(JudahZone.getMasterTrack());
+		        EffectsRack.volume(JudahZone.getMasterTrack());
 		        JudahZone.getMasterTrack().getGui().update();
 		    }
 		});

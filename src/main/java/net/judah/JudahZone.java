@@ -17,17 +17,20 @@ import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.api.BasicClient;
 import net.judah.api.Service;
+import net.judah.effects.Fader;
+import net.judah.effects.api.PresetsHandler;
 import net.judah.fluid.FluidSynth;
 import net.judah.metronome.Metronome;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.LineIn;
 import net.judah.mixer.MasterTrack;
-import net.judah.mixer.bus.Fader;
 import net.judah.plugin.BeatBuddy;
 import net.judah.plugin.Carla;
+import net.judah.plugin.TalReverb;
 import net.judah.sequencer.Sequencer;
 import net.judah.settings.Channels;
 import net.judah.util.Console;
+import net.judah.util.Constants;
 import net.judah.util.Icons;
 import net.judah.util.RTLogger;
 import net.judah.util.Services;
@@ -42,6 +45,7 @@ public class JudahZone extends BasicClient {
     public static final String JUDAHZONE = JudahZone.class.getSimpleName();
 
     @Getter private static JudahZone instance;
+    @Getter private static boolean initialized;
 
     @Getter private static final ArrayList<JackPort> inPorts = new ArrayList<>();
     @Getter private static final ArrayList<JackPort> outPorts = new ArrayList<>();
@@ -56,6 +60,7 @@ public class JudahZone extends BasicClient {
     @Getter private static final Channels channels = new Channels();
     @Getter private static final Looper looper = new Looper(outPorts);
     @Getter private static final Plugins plugins = new Plugins();
+    @Getter private static final PresetsHandler presets = new PresetsHandler();
 
     @Getter private static JudahMidi midi;
     @Getter private static Carla carla;
@@ -126,7 +131,7 @@ public class JudahZone extends BasicClient {
         masterTrack = new MasterTrack(outL, outR, effectsL, effectsR, carla.getReverb());
         masterTrack.setIcon(Icons.load("Speakers.png"));
 
-        looper.init(carla.getReverb());
+        looper.init(carla);
 
     }
 
@@ -148,11 +153,12 @@ public class JudahZone extends BasicClient {
         jack.connect(jackclient, outL.getName(), "system:playback_1");
         jack.connect(jackclient, outR.getName(), "system:playback_2");
 
-        // Initialize command registry and start GUI
+        // Initialize command registry and presets, and start GUI
         commands.initializeCommands();
-        new MainFrame(JUDAHZONE);
 
+        new MainFrame(JUDAHZONE);
         channels.initVolume();
+        new TalReverb(carla, carla.getPlugins().byName(TalReverb.NAME)).initialize(Constants._SAMPLERATE, Constants._BUFSIZE);
 
         // Open a default song
         File file = new File("/home/judah/git/JudahZone/resources/Songs/DolphinDance");
@@ -161,12 +167,16 @@ public class JudahZone extends BasicClient {
         } catch (Exception e) {
             Console.warn(e.getMessage() + " " + file.getAbsolutePath(), e); }
 
+        drummachine.setVolume(55);
 
-        drummachine.setVolume(50);
+        initialized = true; // now the system is live!
         Fader.execute(Fader.fadeIn());
         masterTrack.setOnMute(false);
-        MixerPane.getInstance().update();
-        // now the system is live!
+        Constants.timer(90, () -> {
+            presets.applyPreset("Compression", channels.getDrums().getEffects());
+            presets.applyPreset("Compression", channels.getAux1().getEffects());
+            MixerPane.getInstance().setFocus(masterTrack);
+        });
     }
 
     private class ShutdownHook extends Thread {

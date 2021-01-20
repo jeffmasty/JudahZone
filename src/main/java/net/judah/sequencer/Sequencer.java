@@ -126,9 +126,8 @@ public class Sequencer implements Service, Runnable, TimeListener {
                 current = null;
                 MainFrame.get().sheetMusicOff();
             }
-            metronome.addListener(this);
+            // metronome.addListener(this);
             JudahZone.getLooper().clear();
-            // JudahZone.getLooper().defaultLoops();
             log.debug("loaded song: " + songfile.getAbsolutePath());
             return this;
         }

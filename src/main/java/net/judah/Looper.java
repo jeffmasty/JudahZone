@@ -14,7 +14,7 @@ import net.judah.looper.Recording;
 import net.judah.looper.Sample;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DrumTrack;
-import net.judah.mixer.bus.Reverb;
+import net.judah.plugin.Carla;
 import net.judah.util.Console;
 import net.judah.util.Icons;
 
@@ -25,7 +25,11 @@ public class Looper implements Iterable<Sample> {
     private final ArrayList<Sample> loops = new ArrayList<>();
 
     private final List<JackPort> outports;
+
     @Getter private DrumTrack drumTrack;
+    @Getter private Recorder loopA;
+    @Getter private Recorder loopB;
+
     private LooperGui gui;
 
     public void add(Sample s) {
@@ -47,7 +51,6 @@ public class Looper implements Iterable<Sample> {
     }
 
     public void clear() {
-        drumTrack.clear();
         for (Sample s : loops) {
             s.clear();
             s.play(true); // armed;
@@ -55,8 +58,6 @@ public class Looper implements Iterable<Sample> {
     }
 
     public void stopAll() {
-        drumTrack.record(false);
-        drumTrack.play(false);
         for (Sample s : loops) {
             if (s instanceof Recorder)
                 ((Recorder) s).record(false);
@@ -64,24 +65,26 @@ public class Looper implements Iterable<Sample> {
         }
     }
 
-    public void init(Reverb reverb) {
+    public void init(Carla carla) {
         // TODO...
-        Recorder loopA = new Recorder("A", ProcessAudio.Type.FREE);
-        loopA.setIcon(Icons.load("LoopA.png"));
-        loopA.setReverb(reverb);
-        loopA.play(true); // armed;
-        add(loopA);
-        Recorder loopB = new Recorder("B", ProcessAudio.Type.FREE);
-        loopB.setIcon(Icons.load("LoopB.png"));
-        loopB.setReverb(reverb);
-        loopB.play(true);
-        add(loopB);
 
-        drumTrack = new DrumTrack(loops.get(0),
+        loopA = new Recorder("A", ProcessAudio.Type.FREE);
+        loopA.setIcon(Icons.load("LoopA.png"));
+        loopA.setReverb(carla.getReverb());
+        loopA.play(true); // armed;
+        loopB = new Recorder("B", ProcessAudio.Type.FREE);
+        loopB.setIcon(Icons.load("LoopB.png"));
+        loopB.setReverb(carla.getReverb());
+        loopB.play(true);
+        drumTrack = new DrumTrack(loopA,
                 JudahZone.getChannels().getDrums());
         drumTrack.setIcon(Icons.load("Drums.png"));
-        drumTrack.setReverb(reverb);
+        drumTrack.setReverb(carla.getReverb());
         drumTrack.toggle();
+
+        add(drumTrack);
+        add(loopA);
+        add(loopB);
 
 
     }
@@ -97,15 +100,15 @@ public class Looper implements Iterable<Sample> {
     }
 
     public void slave() {
-        if (loops.get(0).getRecording() == null || loops.get(0).getRecording().isEmpty()) {
+        if (loopA.getRecording() == null || loopA.getRecording().isEmpty()) {
             // Arm Record on B
-            ((Recorder)loops.get(1)).armRecord(loops.get(0));
+            loopB.armRecord(loopA);
             return;
         }
-        ((Recorder)loops.get(0)).record(false);
-        loops.get(1).setRecording(new Recording(loops.get(0).getRecording().size(), true));
-        Console.info("Slave b. buffers: " + loops.get(1).getRecording().size());
-        loops.get(1).play(true);
+        loopB.record(false);
+        loopB.setRecording(new Recording(loopA.getRecording().size(), true));
+        Console.info("Slave b. buffers: " + loopB.getRecording().size());
+        loopB.play(true);
     }
 
     public void registerListener(LooperGui looperGui) {

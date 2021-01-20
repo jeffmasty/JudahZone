@@ -1,4 +1,4 @@
-package net.judah.mixer.bus;
+package net.judah.effects;
 
 import java.util.ArrayList;
 

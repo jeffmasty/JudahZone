@@ -22,6 +22,7 @@ import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.api.Service;
+import net.judah.effects.api.Reverb;
 import net.judah.mixer.LineIn;
 import net.judah.util.Console;
 
@@ -77,9 +78,6 @@ public class Carla implements Service {
 	private Plugin talReverb;
 	private Plugin theShepard;
 
-	@Getter private TalReverb reverb;
-
-
 	/** Default JudahZone load, initializes {@link #plugins} hard-coded from the settings file
 	 * @throws JackException */
 	public Carla(boolean showGui) throws IOException, JackException {
@@ -94,27 +92,30 @@ public class Carla implements Service {
 					"rkr Harmonizer (no midi):Audio In R"},
 				new String[] {"rkr Harmonizer (no midi):Audio Out L",
 					"rkr Harmonizer (no midi):Audio Out R"},
-				null, false, MPK.PRIMARY_PROG[5]);
+				null, false, 666/*MPK.PRIMARY_PROG[5]*/);
 
 		echo = new Plugin("echo", 2, LineType.CARLA,
 				new String[] {"Calf Vintage Delay:In L", "Calf Vintage Delay:In R"},
 				new String[] {"Calf Vintage Delay:Out L", "Calf Vintage Delay:Out R"},
-				null, false, MPK.PRIMARY_PROG[1]);
+				null, false, 666/*MPK.PRIMARY_PROG[1]*/);
 
 		flanger = new Plugin("flanger", 3, LineType.CARLA,
 				new String[] {"dRowAudio. Flanger:Audio Input 1", "dRowAudio. Flanger:Audio Input 2"},
 				new String[] {"dRowAudio. Flanger:Audio Output 1", "dRowAudio. Flanger:Audio Output 2"},
-				null, false, MPK.PRIMARY_PROG[4]);
+				null, false, 666/*MPK.PRIMARY_PROG[4]*/);
 
-		talReverb = new Plugin("talReverb", 4, LineType.CARLA);
+		talReverb = new Plugin(TalReverb.NAME, 4, LineType.CARLA);
 
 		theShepard = new Plugin("theShepard", 5, LineType.CARLA);
 
-		plugins.addAll(Arrays.asList(new Plugin[] {fluid, harmonizer, echo, flanger, talReverb, theShepard}));
+		plugins.addAll(Arrays.asList(new Plugin[] {
+		        fluid, harmonizer, echo, flanger, talReverb, theShepard}));
 
-		reverb = new TalReverb(this, talReverb);
 	}
 
+	public Reverb getReverb() {
+	    return new TalReverb(this, talReverb);
+	}
 
 	// default ports
 	public Carla(String carlaSettings, boolean showGui) throws IOException, JackException {

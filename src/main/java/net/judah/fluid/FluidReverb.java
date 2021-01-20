@@ -1,9 +1,11 @@
 package net.judah.fluid;
 
 import java.nio.FloatBuffer;
+import java.security.InvalidParameterException;
 
 import lombok.Getter;
-import net.judah.mixer.bus.Reverb;
+import net.judah.effects.api.Reverb;
+import net.judah.util.Constants;
 
 public class FluidReverb implements Reverb {
 
@@ -23,9 +25,9 @@ public class FluidReverb implements Reverb {
     @Override
     public void initialize(int sampleRate, int bufferSize) {
         setRoomSize(0.4f);
-        setDamp(0.4f);
-        setWidth(0.7f);
-        setActive(true);
+        Constants.timer(100, () -> {setDamp(0.4f);});
+        Constants.timer(200, () -> {setWidth(0.7f);});
+        Constants.timer(300, () -> {setActive(true);});
     }
 
     @Override public boolean isInternal() { return false; }
@@ -60,5 +62,32 @@ public class FluidReverb implements Reverb {
         fluid.sendCommand("set synth.reverb.damp " + val);
         this.damp = val;
     }
+
+    /** no-op, forward to width() */
+    @Override
+    public void setWet(float wet) {
+        setWidth(wet);
+
+    }
+    @Override
+    public float getWet() {
+        return getWidth();
+    }
+
+    @Override
+    public void set(int ordinal, float value) {
+        throw new InvalidParameterException(); // TODO
+    }
+    @Override
+    public Number get(int idx) {
+        throw new InvalidParameterException(); // TODO
+    }
+
+    @Override
+    public int getParamCount() {
+        // TODO
+        return 0;
+    }
+
 
 }

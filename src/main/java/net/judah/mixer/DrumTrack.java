@@ -16,6 +16,7 @@ import net.judah.looper.Sample;
 import net.judah.mixer.ChannelGui.Drums;
 import net.judah.plugin.BeatBuddy;
 import net.judah.util.Console;
+import net.judah.util.Constants;
 
 @Data @EqualsAndHashCode(callSuper = true) @Log4j
 public class DrumTrack extends Recorder implements TimeListener {
@@ -49,8 +50,7 @@ public class DrumTrack extends Recorder implements TimeListener {
                 // play(true); // already armed
                 new Thread() { // concurrent modification
                     @Override public void run() {
-                        try {Thread.sleep(1);
-                        } catch (Throwable t) { }
+                        Constants.sleep(40);
                         master.removeListener(DrumTrack.this);
                         JudahZone.getDrummachine().getQueue().offer(BeatBuddy.PAUSE_MIDI);
                     };
@@ -64,9 +64,9 @@ public class DrumTrack extends Recorder implements TimeListener {
 
     public void toggle(boolean engage) {
         if (engage) {
-            Sample s = JudahZone.getLooper().get(0);
-            s.addListener(this);
-            master = s;
+            Sample loopA = JudahZone.getLooper().getLoopA();
+            loopA.addListener(this);
+            master = loopA;
             soloTrack.setSolo(true);
             play(true); // armed
             Console.info("drumtrack sync'd.");
@@ -88,8 +88,6 @@ public class DrumTrack extends Recorder implements TimeListener {
         else { // engage drumtrack
             toggle(true);
         }
-        //        if (gui != null)
-        //            gui.update();
     }
 
 }

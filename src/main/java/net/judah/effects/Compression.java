@@ -1,15 +1,21 @@
-package net.judah.mixer.bus;
+package net.judah.effects;
 
 import static java.lang.Math.*;
 
 import java.nio.FloatBuffer;
+import java.security.InvalidParameterException;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.effects.api.Effect;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 
-public class Compression {
+public class Compression implements Effect {
+
+    public enum Settings {
+        Threshold, Attack, Release
+    }
 
     static final float LOG_10 = 2.302585f;
 	static final float LOG_2  = 0.693147f;
@@ -71,6 +77,34 @@ public class Compression {
     	cSAMPLE_RATE = 1.0/sampleRate;
     }
 
+    @Override
+    public int getParamCount() {
+        return Settings.values().length;
+    }
+
+
+    @Override
+    public Number get(int idx) {
+        if (idx == Settings.Threshold.ordinal())
+            return getThreshold();
+        if (idx == Settings.Attack.ordinal())
+            return getAttack();
+        if (idx == Settings.Release.ordinal())
+            return getRelease();
+        throw new InvalidParameterException();
+    }
+
+    @Override
+    public void set(int idx, float value) {
+        if (idx == Settings.Threshold.ordinal())
+            setThreshold(value);
+        else if (idx == Settings.Attack.ordinal())
+            setAttack(value);
+        else if (idx == Settings.Release.ordinal())
+            setRelease(value);
+        else throw new InvalidParameterException();
+    }
+
     /** @return release in milliseconds */
     public int getRelease() {
     	return relStash;
@@ -117,11 +151,11 @@ public class Compression {
     	return attStash;
     }
 
-    public void setAttack(int milliseconds) {
+    public void setAttack(float milliseconds) {
     	setPreset(4, milliseconds);
     }
 
-    public void setRelease(int milliseconds) {
+    public void setRelease(float milliseconds) {
     	setPreset(5, milliseconds);
     }
 
@@ -132,37 +166,37 @@ public class Compression {
     	return thres_db;
     }
 
-	public void setRatio(int val) {
+	public void setRatio(float val) {
 		setPreset(2, val);
 	}
-	public void setThreshold(int val) {
+	public void setThreshold(float val) {
 		setPreset(1, val);
 	}
 
-	public void setPreset(int np, int value) {
+	public void setPreset(int np, float value) {
 	    switch (np) {
 	    case 1:
 	        thres_db = value;    //implicit type cast int to float
 	        break;
 	    case 2:
-	        tratio = value;
+	        tratio = (int)value;
 	        ratio = tratio;
 	        break;
 	    case 3:
-	        toutput = value;
+	        toutput = (int)value;
 	        break;
 	    case 4:
-	    	attStash = value;
+	    	attStash = (int)value;
 	        att = (float) (cSAMPLE_RATE /((value / 1000.0f) + cSAMPLE_RATE));
 	        attl = att;
 	        break;
 	    case 5:
-	    	relStash = value;
+	    	relStash = (int)value;
 	        rel = (float) (cSAMPLE_RATE /((value / 1000.0f) + cSAMPLE_RATE));
 	        rell = rel;
 	        break;
 	    case 6:
-	        tknee = value;  //knee expressed a percentage of range between thresh and zero dB
+	        tknee = (int)value;  //knee expressed a percentage of range between thresh and zero dB
 	        kpct = tknee/100.1f;
 	        break;
 	    }

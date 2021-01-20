@@ -6,8 +6,7 @@ import java.nio.FloatBuffer;
 
 import org.jaudiolibs.jnajack.JackPort;
 
-import net.judah.JudahZone;
-import net.judah.mixer.bus.Reverb;
+import net.judah.effects.api.Reverb;
 import net.judah.util.AudioTools;
 
 /**The unified effects/volume track just before hitting the speakers/external effects.
@@ -19,7 +18,7 @@ public class MasterTrack extends Channel {
 
 	public MasterTrack(JackPort left, JackPort right,
 	        JackPort effectsL, JackPort effectsR, Reverb reverb) {
-		super(JudahZone.JUDAHZONE);
+		super("MAIN");
 		this.speakersLeft = left;
 		this.speakersRight = right;
 		this.effectsL = effectsL;
@@ -40,6 +39,9 @@ public class MasterTrack extends Channel {
         if (cutFilter.isActive()) {
             cutFilter.process(left, right, 1);
         }
+
+        if (chorus.isActive())
+            chorus.processStereo(left, right);
 
         if (overdrive.isActive()) {
             overdrive.processAdd(left);

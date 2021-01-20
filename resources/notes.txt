@@ -1,11 +1,14 @@
 TODO:
 
-stereo pan
+Chorus triggers -9db treble EQ drop and -5db bass drop (resonance)
+presets presets presets
 commands commands commands
 unified play and record commands
 record record record youtubes
-make drumtrack a full-fledged 3rd loop
+TODO, loops on reverb not getting master effects/gain
+
 LFO triggered to clock, LFO/Fader cleanUp()
+README credits
 clipping/xruns filter
 MoogMPK = ADSR knobs (I Feel Love bassline)
 multi-delete, upgrade properties table (enum, int, boolean types)
@@ -117,3 +120,6 @@ BeatBuddy & Midi upgrades
 reverb on output mix, gain and reverb to fluidsynth.
 Midi router is input port aware.
 joystick  (pitch bend logarithmic to 1 octave) (left cc = distortion or vocoder right cc = delay)
+stereo pan
+chorus
+make drumtrack a full-fledged 3rd loop

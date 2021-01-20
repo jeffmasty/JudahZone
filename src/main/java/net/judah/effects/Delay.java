@@ -1,4 +1,4 @@
-package net.judah.mixer.bus;
+package net.judah.effects;
 
 import java.nio.FloatBuffer;
 
@@ -81,15 +81,14 @@ import net.judah.util.Constants;
  */
 public class Delay {
 
-    private final static float DEF_SRATE = 48000;
     private final static float DEF_MAX_DELAY = 1.3f;
     public final static float DEF_TIME = 0.12f;
 
-    private float samplerate;
-    private float nframes; // jack buffer size
+    private final float sampleRate;
+    private final float nframes; // jack buffer size
     private float delaytime = DEF_TIME;
-    private float maxdelay;
-    private float feedback = 0.36f;
+    @Getter private float maxDelay = DEF_MAX_DELAY;
+    @Getter private float feedback = 0.36f;
 
     @Getter @Setter private boolean active;
     private final VariableDelayOp left;
@@ -100,35 +99,25 @@ public class Delay {
         reset();
     }
 
-    public Delay(float samplerate, int bufferSize, float maxdelay) {
-        if (maxdelay > 0) {
-            this.maxdelay = maxdelay;
-        }
-        this.samplerate = DEF_SRATE;
-        if (samplerate < 1) {
-            throw new IllegalArgumentException();
-        }
-        this.samplerate = samplerate;
-        this.nframes = bufferSize;
+    public Delay(float sampleRate, int bufferSize, float maxdelay) {
+        if (sampleRate < 1) throw new IllegalArgumentException();
 
-        int delayBufSize = (int) (maxdelay * samplerate) + 10;
+        this.sampleRate = sampleRate;
+        this.nframes = bufferSize;
+        if (maxdelay > 0)
+            this.maxDelay = maxdelay;
+
+        int delayBufSize = (int) (maxdelay * sampleRate) + 10;
         left = new VariableDelayOp(delayBufSize);
         right = new VariableDelayOp(delayBufSize);
     }
 
     public void setDelay(float time) {
-        if (time < 0 || time > maxdelay) {
-            throw new IllegalArgumentException();
-        }
         this.delaytime = time;
     }
 
     public float getDelay() {
         return this.delaytime;
-    }
-
-    public float getMaxDelay() {
-        return this.maxdelay;
     }
 
     public void setFeedback(float feedback) {
@@ -138,16 +127,12 @@ public class Delay {
         this.feedback = feedback;
     }
 
-    public float getFeedback() {
-        return this.feedback;
-    }
-
 	public void reset() {
         active = false;
-	    if (left.delaybuffer != null)
-            Arrays.fill(left.delaybuffer, 0);
-        if (right.delaybuffer != null)
-            Arrays.fill(right.delaybuffer, 0);
+	    if (left.workArea != null)
+            Arrays.fill(left.workArea, 0);
+        if (right.workArea != null)
+            Arrays.fill(right.workArea, 0);
         delaytime = .12f;
         feedback = 0.36f;
     }
@@ -162,67 +147,61 @@ public class Delay {
 		else right.process(in, out, false);
     }
 
-
 	private class VariableDelayOp {
-	    private float[] delaybuffer;
-	    private int rovepos = 0;
-	    private float lastdelay;
+	    float[] workArea;
+	    int rovepos = 0;
+	    float lastdelay;
 
-	    public VariableDelayOp(int bufSize) {
-	        this.delaybuffer = new float[bufSize];
+	    VariableDelayOp(int bufSize) {
+	        this.workArea = new float[bufSize];
 	        this.rovepos = 0;
 	        this.lastdelay = 0;
 		}
 
-    public void process(FloatBuffer in, FloatBuffer out, boolean replace) {
+	    void process(FloatBuffer in, FloatBuffer out, boolean replace) {
 
-    	out.rewind();
-        float[] buf = this.delaybuffer;
-        if (buf == null) {
-            // not been initialized
-            throw new IllegalStateException();
-        }
-        float srate = samplerate;
-        float delay = delaytime * srate;
-        float ldelay = this.lastdelay;
-        float fb = feedback;
-        int rnlen = buf.length;
-        int pos = this.rovepos;
-        float delta = (delay - ldelay) / nframes;
+        	out.rewind();
+            float srate = sampleRate;
+            float delay = delaytime * srate;
+            float ldelay = lastdelay;
+            float fb = feedback;
+            int rnlen = workArea.length;
+            int pos = rovepos;
+            float delta = (delay - ldelay) / nframes;
 
-        float r, s, a, b, o;
-        int ri;
-        if (replace) {
-            for (int i = 0; i < nframes; i++) {
-                r = pos - (ldelay + 2) + rnlen;
-                ri = (int) r;
-                s = r - ri;
-                a = buf[ri % rnlen];
-                b = buf[(ri + 1) % rnlen];
-                o = a * (1 - s) + b * s;
-                buf[pos] = in.get(i) + o * fb;
-                out.put(o);
-                pos = (pos + 1) % rnlen;
-                ldelay += delta;
+            float r, s, a, b, o;
+            int ri;
+            if (replace) {
+                for (int i = 0; i < nframes; i++) {
+                    r = pos - (ldelay + 2) + rnlen;
+                    ri = (int) r;
+                    s = r - ri;
+                    a = workArea[ri % rnlen];
+                    b = workArea[(ri + 1) % rnlen];
+                    o = a * (1 - s) + b * s;
+                    workArea[pos] = in.get(i) + o * fb;
+                    out.put(o);
+                    pos = (pos + 1) % rnlen;
+                    ldelay += delta;
+                }
+
+            } else {
+                for (int i = 0; i < nframes; i++) {
+                    r = pos - (ldelay + 2) + rnlen;
+                    ri = (int) r;
+                    s = r - ri;
+                    a = workArea[ri % rnlen];
+                    b = workArea[(ri + 1) % rnlen];
+                    o = a * (1 - s) + b * s;
+                    workArea[pos] = in.get(i) + o * fb;
+                    out.put(out.get(i) + o);
+                    pos = (pos + 1) % rnlen;
+                    ldelay += delta;
+                }
             }
-
-        } else {
-            for (int i = 0; i < nframes; i++) {
-                r = pos - (ldelay + 2) + rnlen;
-                ri = (int) r;
-                s = r - ri;
-                a = buf[ri % rnlen];
-                b = buf[(ri + 1) % rnlen];
-                o = a * (1 - s) + b * s;
-                buf[pos] = in.get(i) + o * fb;
-                out.put(out.get(i) + o);
-                pos = (pos + 1) % rnlen;
-                ldelay += delta;
-            }
+            rovepos = pos;
+            lastdelay = delay;
         }
-        this.rovepos = pos;
-        this.lastdelay = delay;
-    }
 	}
 }
 

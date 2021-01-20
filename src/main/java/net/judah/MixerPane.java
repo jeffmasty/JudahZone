@@ -11,17 +11,15 @@ import javax.swing.JTabbedPane;
 import javax.swing.border.TitledBorder;
 
 import lombok.Getter;
+import net.judah.effects.gui.EffectsRack;
 import net.judah.looper.Sample;
 import net.judah.mixer.Channel;
 import net.judah.mixer.ChannelGui;
 import net.judah.mixer.LineIn;
-import net.judah.mixer.SoloTrack;
 import net.judah.song.SonglistTab;
 import net.judah.util.Constants;
 
 public class MixerPane extends JPanel {
-
-    //public static final int WIDTH = 360;
 
     @Getter private static MixerPane instance;
 
@@ -29,46 +27,43 @@ public class MixerPane extends JPanel {
     @Getter private final JTabbedPane tabs;
     private final JPanel mixer = new JPanel();
     private final LooperGui looper;
-    @Getter private final SoloTrack highlight = new SoloTrack();
+    @Getter private final EffectsRack highlight = new EffectsRack();
 
     public MixerPane() {
 
         instance = this;
         setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
 
-        tabs = new JTabbedPane();
-        songlist = new SonglistTab(Constants.defaultSetlist);
-        tabs.add("Setlist", songlist);
-        // tabs.add("Metronome", JudahZone.getMetronome().getGui());
-
-        tabs.add("BeatBuddy", JudahZone.getDrummachine().getGui());
-
-        tabs.add("Channel", highlight);
-        tabs.setSelectedIndex(tabs.getComponentCount() - 1);
-        add(tabs);
-
+        looper = new LooperGui(JudahZone.getLooper());
         mixer.setLayout(new GridLayout(0,2));
         mixer.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createEmptyBorder(), // BorderFactory.createLineBorder(Color.DARK_GRAY),
                 "Input", TitledBorder.CENTER, TitledBorder.ABOVE_TOP, Constants.Gui.FONT11));
-
-        looper = new LooperGui(JudahZone.getLooper());
-        add(looper);
-        add(mixer);
         for (LineIn channel : JudahZone.getChannels())
             mixer.add(channel.getGui());
 
-        setFocus(JudahZone.getMasterTrack());
-        JudahZone.getLooper().getDrumTrack().getGui().doLayout();
+        tabs = new JTabbedPane();
+        songlist = new SonglistTab(Constants.defaultSetlist);
+        tabs.add("Setlist", songlist);
 
+        tabs.add("BeatBuddy", JudahZone.getDrummachine().getGui());
+
+        // tabs.add("Presets", new PresetsGui());
+
+        tabs.add("Channel", highlight);
+        tabs.setSelectedIndex(tabs.getComponentCount() - 1);
+
+        add(looper);
+        add(mixer);
+        add(tabs);
     }
 
     public void update() {
         for (Channel c : JudahZone.getChannels()) c.getGui().update();
         for (Sample s : JudahZone.getLooper()) s.getGui().update();
-        JudahZone.getLooper().getDrumTrack().getGui().update();
+
         JudahZone.getMasterTrack().getGui().update();
-        SoloTrack.getInstance().update();
+        EffectsRack.getInstance().update();
     }
 
     public void setFocus(Channel bus) {
