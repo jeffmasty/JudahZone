@@ -3,9 +3,12 @@ package net.judah.effects.api;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+
+import net.judah.mixer.Channel;
 import net.judah.util.Console;
 
 public class PresetsHandler extends ArrayList<Preset> {
@@ -49,12 +52,6 @@ public class PresetsHandler extends ArrayList<Preset> {
 
     }
 
-    public void applyPreset(String name, List<Effect> channel) {
-        for (Preset p : this)
-            if (p.getName().equals(name))
-                p.applyPreset(channel);
-    }
-
     @Override
     public String toString() {
         StringBuffer result = new StringBuffer();
@@ -63,4 +60,15 @@ public class PresetsHandler extends ArrayList<Preset> {
         return result.toString();
     }
 
+    public JPopupMenu getMenu(Channel ch, boolean active) {
+        JPopupMenu result = new JPopupMenu();
+        for (Preset p : this) {
+            JMenuItem item = new JMenuItem(p.getName());
+            item.addActionListener(e -> {p.applyPreset(ch, active);});
+            result.add(item);
+        }
+        return result;
+    }
+
 }
+

@@ -15,19 +15,19 @@ import net.judah.midi.JudahMidi;
 import net.judah.util.AudioTools;
 
 public class Recording extends Vector<float[][]> {
-	
+
 	@Getter @Setter private String notes;
-	
-	@Getter private long creationTime = System.currentTimeMillis(); 
+
+	@Getter private long creationTime = System.currentTimeMillis();
 	private BlockingQueue<float[][]> newQueue;
 	private BlockingQueue<float[][]> oldQueue;
-	private BlockingQueue<Integer> locationQueue; 
+	private BlockingQueue<Integer> locationQueue;
 	private Runner runner;
-	
+
 	public boolean isListening() {
 		return newQueue != null;
 	}
-	
+
 	public void startListeners() {
 		newQueue = new LinkedBlockingQueue<>();
 		oldQueue = new LinkedBlockingQueue<>();
@@ -35,13 +35,13 @@ public class Recording extends Vector<float[][]> {
 		runner = new Runner();
 		runner.start();
 	}
-	
+
 	public Recording(boolean startListeners) {
 		if (startListeners) {
 			startListeners();
 		}
 	}
-	
+
 	/** deep copy the 2D float array */
 	Recording(Recording toCopy, boolean startListeners) {
 		this(startListeners);
@@ -55,7 +55,7 @@ public class Recording extends Vector<float[][]> {
 		}
 		notes = toCopy.notes;
 	}
-	
+
 	/** create empty recording of size */
 	public Recording(int size, boolean startListeners) {
 		this(startListeners);
@@ -69,12 +69,12 @@ public class Recording extends Vector<float[][]> {
 
 	public static Recording readAudio(String filename) throws IOException, ClassNotFoundException {
 		ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filename));
-		Recording result = (Recording)ois.readObject(); 
+		Recording result = (Recording)ois.readObject();
 		ois.close();
 		result.startListeners();
 		return result;
 	}
-	
+
 	public void saveAudio(String filename) throws IOException {
 		ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename));
 		oos.writeObject(this);
@@ -84,13 +84,10 @@ public class Recording extends Vector<float[][]> {
 	class Runner extends Thread {
 		@Override public void run() {
 			try {
-				while (true) {
-					// MIX 
-					float[][] in = newQueue.take();
-					float[][] old = oldQueue.take();
-					set(locationQueue.take(), AudioTools.overdub(in, old));
-				}
-			} catch (InterruptedException e) {  }
+			while (true) {
+				// MIX
+				set(locationQueue.take(), AudioTools.overdub(newQueue.take(), oldQueue.take()));
+			}} catch (InterruptedException e) {  }
 		}
 	}
 
@@ -100,7 +97,7 @@ public class Recording extends Vector<float[][]> {
 		assert oldBuffer != null;
 		assert runner != null;
 		assert newQueue != null;
-		
+
 		newQueue.add(newBuffer);
 		oldQueue.add(oldBuffer);
 		locationQueue.add(location);
@@ -112,5 +109,5 @@ public class Recording extends Vector<float[][]> {
 			runner = null;
 		}
 	}
-	
+
 }

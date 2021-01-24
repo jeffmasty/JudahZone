@@ -8,17 +8,27 @@ import java.awt.Font;
 import java.awt.Insets;
 import java.awt.event.KeyListener;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
+import javax.swing.JComboBox;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
+import net.judah.JudahZone;
 import net.judah.api.Midi;
+import net.judah.mixer.Channel;
 
 public class Constants {
 
@@ -49,7 +59,7 @@ public class Constants {
 		public static final String SEQUENCE = "sequence";
 		public static final String MAX = "max";
 		public static final String STEPS = "steps";
-		public static final String PRESET = "preset";
+		// public static final String PRESET = "preset";
 		public static final String IMAGE = "image";
 
 		public static boolean parseActive(HashMap<String, Object> props) {
@@ -228,6 +238,57 @@ public class Constants {
 			e.printStackTrace();
 		}
 	}
+
+	private static final String MASTER = "Master";
+	private static final String DRUMS = "Drumtrack";
+	private static final String LOOPA = "Loop A";
+	private static final String LOOPB = "Loop B";
+	private static final String[] DEFAULT_OUT = new String[] {MASTER, DRUMS, LOOPA, LOOPB};
+
+	public static JMenu createMixerMenu(String lbl) {
+	    JMenu result = new JMenu(lbl);
+	    JMenuItem menu;
+	    for (String out : DEFAULT_OUT) {
+	        result.add(new JMenuItem(out));
+	    }
+	    for (Channel ch : JudahZone.getChannels()) {
+	        result.add(new JMenuItem(ch.getName()));
+	    }
+        return result;
+	}
+
+	public static JComboBox<String> createMixerCombo() {
+	    ArrayList<String> channels = new ArrayList<>(Arrays.asList(DEFAULT_OUT));
+        for (Channel c : JudahZone.getChannels())
+            channels.add(c.getName());
+        JComboBox<String> result = new JComboBox<>(
+                channels.toArray(new String[channels.size()]));
+	    return result;
+	}
+    public static Channel getChannel(String name) {
+        switch(name) {
+            case MASTER: JudahZone.getMasterTrack();
+            case DRUMS: return JudahZone.getLooper().getDrumTrack();
+            case LOOPA: return JudahZone.getLooper().getLoopA();
+            case LOOPB: return JudahZone.getLooper().getLoopB();
+        }
+        return JudahZone.getChannels().byName(name);
+    }
+
+    public static Channel getChannel(int idx) {
+        switch(idx) {
+            case 0: return JudahZone.getMasterTrack();
+            case 1: return JudahZone.getLooper().getDrumTrack();
+            case 2: return JudahZone.getLooper().getLoopA();
+            case 3: return JudahZone.getLooper().getLoopB();
+        }
+        return JudahZone.getChannels().get(idx - 4);
+    }
+
+    public static void writeToFile(File file, String content) throws IOException {
+        Files.write(Paths.get(file.toURI()), content.getBytes());
+    }
+
 }
 //UIManager.LookAndFeelInfo[] looks = UIManager.getInstalledLookAndFeels();
 //for (UIManager.LookAndFeelInfo look : looks) {

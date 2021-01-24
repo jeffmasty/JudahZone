@@ -6,7 +6,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.extern.log4j.Log4j;
 import net.judah.api.Midi;
 import net.judah.api.MidiQueue;
 import net.judah.effects.Fader;
@@ -18,7 +17,7 @@ import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 /** Checks up on any running LFOs and queues midi notes when the appropriate audio frame comes to pass*/
-@Log4j @Data @EqualsAndHashCode(callSuper=false)
+@Data @EqualsAndHashCode(callSuper=false)
 public class MidiScheduler extends MidiTrack implements Runnable {
 
 	@Getter private long current = -1;

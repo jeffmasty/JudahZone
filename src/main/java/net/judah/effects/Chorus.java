@@ -1,14 +1,20 @@
 package net.judah.effects;
 
 import java.nio.FloatBuffer;
+import java.security.InvalidParameterException;
 import java.util.Arrays;
 
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.effects.api.Effect;
 import net.judah.util.Constants;
 
-public class Chorus {
+public class Chorus implements Effect {
+
+    public enum Settings {
+        Rate, Depth, Feedback
+    }
 
     public static final float MAX_DELAY = 1;
     private static final float PI2 = (float) Math.PI * 2;
@@ -47,6 +53,37 @@ public class Chorus {
 
     public Chorus() {
         this(Constants._SAMPLERATE, Constants._BUFSIZE);
+    }
+
+    @Override public String getName() {
+        return Chorus.class.getSimpleName();
+    }
+
+    @Override
+    public int getParamCount() {
+        return Settings.values().length;
+    }
+
+    @Override
+    public float get(int idx) {
+        if (idx == Settings.Rate.ordinal())
+            return getRate();
+        if (idx == Settings.Depth.ordinal())
+            return getDepth();
+        if (idx == Settings.Feedback.ordinal())
+            return getFeedback();
+        throw new InvalidParameterException();
+    }
+
+    @Override
+    public void set(int idx, float value) {
+        if (idx == Settings.Rate.ordinal())
+            setRate(value);
+        else if (idx == Settings.Depth.ordinal())
+            setDepth(value);
+        else if (idx == Settings.Feedback.ordinal())
+            setFeedback(value);
+        else throw new InvalidParameterException();
     }
 
     public void setDepth(float depth) {

@@ -4,6 +4,7 @@ import java.nio.FloatBuffer;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.effects.api.Effect;
 
 /*https://github.com/adiblol/jackiir*/
 /*
@@ -27,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-public class EQ {
+public class EQ implements Effect {
 	public static final int CHANNELS_MAX = 32;
 	public static final int FILTERS_MAX = 32;
 	static final float LOG_2  = 0.693147f;
@@ -186,6 +187,23 @@ public class EQ {
 		}
 		filter.update();
 	}
+
+    @Override public String getName() {
+        return EQ.class.getSimpleName();
+    }
+
+    @Override public int getParamCount() {
+        return EqBand.values().length;
+    }
+
+    @Override public float get(int idx) {
+        return getGain(EqBand.values()[idx]);
+    }
+
+    @Override public void set(int idx, float value) {
+        update(EqBand.values()[idx], EqParam.GAIN, value);
+    }
+
 
 	public float getGain(EqBand band) {
 	    return leftCh.filters[band.ordinal()].gain_db;

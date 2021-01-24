@@ -1,6 +1,5 @@
 package net.judah.plugin;
 
-import static net.judah.util.AudioTools.*;
 import static net.judah.util.Constants.*;
 
 import org.jaudiolibs.jnajack.Jack;
@@ -31,7 +30,7 @@ public class Plugin {
 
 	public void activate(LineIn ch) {
 		new Thread() {
-			
+
 			@Override
 			public void run() {
 				active = !active;
@@ -40,60 +39,60 @@ public class Plugin {
 					JackClient client = JudahZone.getInstance().getJackclient();
 					if (active) {
 						// disconnect standard stage
-						jack.disconnect(client, ch.getLeftSource(), prefixClient(ch.getLeftConnection()));
+						jack.disconnect(client, ch.getLeftSource(), ch.getLeftConnection());
 						if (ch.isStereo())
-							jack.disconnect(client, ch.getRightSource(), prefixClient(ch.getLeftConnection()));
-						
+							jack.disconnect(client, ch.getRightSource(), ch.getLeftConnection());
+
 						// connect plugin to System port.
 						jack.connect(client, ch.getLeftSource(), getInports()[LEFT_CHANNEL]);
 						if (isStereo()) {
-							if (ch.isStereo()) 
+							if (ch.isStereo())
 								jack.connect(client, ch.getRightSource(), getInports()[RIGHT_CHANNEL]);
 							else
 								jack.connect(client, ch.getLeftSource(), getInports()[RIGHT_CHANNEL]);
 						}
-						else if (ch.isStereo()) 
+						else if (ch.isStereo())
 							jack.connect(client, ch.getRightSource(), getInports()[LEFT_CHANNEL]);
-						
-						// connect plugin to JudahZone channel 
-						jack.connect(client, getOutports()[LEFT_CHANNEL], prefixClient(ch.getLeftConnection()));
+
+						// connect plugin to JudahZone channel
+						jack.connect(client, getOutports()[LEFT_CHANNEL], ch.getLeftConnection());
 						if (isStereo()) {
 							if (ch.isStereo())
-								jack.connect(client, getOutports()[RIGHT_CHANNEL], prefixClient(ch.getRightConnection()));	
+								jack.connect(client, getOutports()[RIGHT_CHANNEL], ch.getRightConnection());
 							else
-								jack.connect(client, getOutports()[RIGHT_CHANNEL], prefixClient(ch.getLeftConnection()));
+								jack.connect(client, getOutports()[RIGHT_CHANNEL], ch.getLeftConnection());
 						}
 						else if (ch.isStereo())
-							jack.connect(client, getOutports()[LEFT_CHANNEL], prefixClient(ch.getRightConnection()));
-						
+							jack.connect(client, getOutports()[LEFT_CHANNEL], ch.getRightConnection());
+
 					}
 					else {
 						// disconnect plugin from JudahZone
-						jack.disconnect(client, getOutports()[LEFT_CHANNEL], prefixClient(ch.getLeftConnection()));
+						jack.disconnect(client, getOutports()[LEFT_CHANNEL], ch.getLeftConnection());
 						if (isStereo()) {
 							if (ch.isStereo())
-								jack.disconnect(client, getOutports()[RIGHT_CHANNEL], prefixClient(ch.getRightConnection()));
+								jack.disconnect(client, getOutports()[RIGHT_CHANNEL], ch.getRightConnection());
 							else
-								jack.disconnect(client, getOutports()[RIGHT_CHANNEL], prefixClient(ch.getLeftConnection()));
+								jack.disconnect(client, getOutports()[RIGHT_CHANNEL], ch.getLeftConnection());
 						}
 						else if (ch.isStereo())
-							jack.disconnect(client, getOutports()[LEFT_CHANNEL], prefixClient(ch.getRightConnection()));
-						
+							jack.disconnect(client, getOutports()[LEFT_CHANNEL], ch.getRightConnection());
+
 						// disconnect plugin from system
 						jack.disconnect(client, ch.getLeftSource(), getInports()[LEFT_CHANNEL]);
 						if (isStereo()) {
-							if (ch.isStereo()) 
+							if (ch.isStereo())
 								jack.disconnect(client, ch.getRightSource(), getInports()[RIGHT_CHANNEL]);
 							else
 								jack.disconnect(client, ch.getLeftSource(), getInports()[RIGHT_CHANNEL]);
 						}
-						else if (ch.isStereo()) 
+						else if (ch.isStereo())
 							jack.disconnect(client, ch.getRightSource(), getInports()[LEFT_CHANNEL]);
-						
+
 						// connect standard stage
-						jack.connect(client, ch.getLeftSource(), prefixClient(ch.getLeftConnection()));
+						jack.connect(client, ch.getLeftSource(), ch.getLeftConnection());
 						if (ch.isStereo())
-							jack.connect(client, ch.getRightSource(), prefixClient(ch.getRightConnection()));
+							jack.connect(client, ch.getRightSource(), ch.getRightConnection());
 					}
 					JudahZone.getCarla().setActive(index, active);
 					Console.info("Plugin " + name + ((active) ? " activate" : " de-activate"));
@@ -104,5 +103,5 @@ public class Plugin {
 			}
 		}.start();
 	}
-	
+
 }

@@ -16,7 +16,6 @@ import net.judah.Looper;
 import net.judah.MainFrame;
 import net.judah.MixerPane;
 import net.judah.api.AudioMode;
-import net.judah.effects.gui.EffectsRack;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
 import net.judah.mixer.Channel;
@@ -32,7 +31,7 @@ public class MenuBar extends JMenuBar implements KeyListener {
 	private static MenuBar instance;
 
 	private MixerPane mixer;
-	private EffectsRack focus;
+//	private EffectsRack focus;
 	private Channels channels;
 	private Looper looper;
 
@@ -130,6 +129,7 @@ public class MenuBar extends JMenuBar implements KeyListener {
 
 	@Override public void keyPressed(KeyEvent e) {
 		int code = e.getKeyCode();
+		Channel focus = MixerPane.getInstance().getChannel();
 
 		switch(code) {
 
@@ -152,23 +152,21 @@ public class MenuBar extends JMenuBar implements KeyListener {
 			case VK_SPACE: case VK_M: mute(); return;
 			case VK_ENTER: enterKey(); return;
 
-			case VK_Q: focus.getCutFilter().setActive(
-			        !focus.getCutFilter().isActive()); focus.update(); return;
-			case VK_C: focus.getFocus().getCompression().setActive(
-			        !focus.getFocus().getCompression().isActive()); focus.update(); return;
-			case VK_V: focus.getFocus().getReverb().setActive(
-			        !focus.getFocus().getReverb().isActive()); focus.update(); return;
-			case VK_F: focus.lfo(); return;
+//			case VK_Q: focus.getCutFilter().setActive(
+//			        !focus.getCutFilter().isActive()); focus.update(); return;
+//			case VK_C: focus.getCompression().setActive(
+//			        !focus.getCompression().isActive()); focus.update(); return;
+//			case VK_V: focus.getReverb().setActive(
+//			        !focus.getReverb().isActive()); focus.update(); return;
 			case VK_X: { // zero out loop or mute channel record
-				Channel bus = focus.getFocus();
-				if (bus instanceof LineIn)
-					((LineIn)bus).setMuteRecord(!((LineIn)bus).isMuteRecord());
-				else if (bus instanceof Sample) {
-					Sample s = (Sample)bus;
+				if (focus instanceof LineIn)
+					((LineIn)focus).setMuteRecord(!((LineIn)focus).isMuteRecord());
+				else if (focus instanceof Sample) {
+					Sample s = (Sample)focus;
 					s.setRecording(new Recording(s.getRecording().size(),
 							s.getRecording().isListening()));
 				}
-				focus.update();
+//				focus.update();
 				break; }
 		}
 
@@ -182,21 +180,22 @@ public class MenuBar extends JMenuBar implements KeyListener {
 
 	private void enterKey() {
 		Console.info("enter key handled");
-		if (focus.getFocus() instanceof Sample)
-			((Sample)focus.getFocus()).play(
-					((Sample)focus.getFocus()).isPlaying() != AudioMode.RUNNING);
+		Channel ch = MixerPane.getInstance().getChannel();
+		if (ch instanceof Sample)
+			((Sample)ch).play(
+					((Sample)ch).isPlaying() != AudioMode.RUNNING);
 		else
-			((LineIn)focus.getFocus()).setMuteRecord(
-					!((LineIn)focus.getFocus()).isMuteRecord());
+			((LineIn)ch).setMuteRecord(
+					!((LineIn)ch).isMuteRecord());
 	}
 
 	private void mute() {
-		focus.getFocus().setOnMute(!focus.getFocus().isOnMute());
-		focus.update();
+	    MixerPane.getInstance().getChannel().setOnMute(!MixerPane.getInstance().getChannel().isOnMute());
+	    // MixerPane.getInstance().getEffects().update();
 	}
 
 	private void volume(boolean up) {
-		Channel bus = focus.getFocus();
+		Channel bus = MixerPane.getInstance().getChannel();
 		int vol = bus.getVolume();
 		vol += up? 5 : -5;
 		if (vol > 100) vol = 100;
@@ -205,7 +204,7 @@ public class MenuBar extends JMenuBar implements KeyListener {
 	}
 
 	private void nextChannel(boolean toRight) {
-		Channel bus = focus.getFocus();
+		Channel bus = MixerPane.getInstance().getChannel();
 		if (bus instanceof LineIn) {
 			int i = channels.indexOf(bus);
 			if (toRight) {
@@ -236,14 +235,14 @@ public class MenuBar extends JMenuBar implements KeyListener {
 			mixer.setFocus(channels.get(channels.size() - 1));
 			return;
 		}
-		focus.setFocus(looper.get(i - 1));
+		MixerPane.getInstance().setFocus(looper.get(i - 1));
+
 	}
 
 	public void setMixerPane(MixerPane mixerPane) {
 		mixer = mixerPane;
 		channels = JudahZone.getChannels();
 		looper = JudahZone.getLooper();
-		focus = EffectsRack.getInstance();
 	}
 
 	public static MenuBar getInstance() {

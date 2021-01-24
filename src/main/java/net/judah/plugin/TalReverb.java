@@ -13,7 +13,7 @@ import net.judah.util.Constants;
  *  Carla params: 3 (roomsize), 4 (width), and 6 (highcut)*/
 /** If active output audio ports pass through Reverb before hitting the speakers.
  *  Talks to the TAL3 lv2 reverb plugin over Carla's OSC interface */
-public class TalReverb implements Reverb {
+public class TalReverb extends Reverb {
     public static final int PARAM_WET = 3;
     public static final int PARAM_ROOMSIZE = 4;
     public static final int PARAM_LOWPASS = 7;
@@ -44,9 +44,9 @@ public class TalReverb implements Reverb {
     @Override
     public void initialize(int sampleRate, int bufferSize) {
         setRoomSize(defRoom);
-        Constants.timer(30, () -> {setWet(defWet);});
-        Constants.timer(60, () -> {setDamp(defDamp);});
-        Constants.timer(90, () -> {setWidth(defWidth);});
+        Constants.timer(45, () -> {setWet(defWet);});
+        Constants.timer(90, () -> {setDamp(defDamp);});
+        Constants.timer(150, () -> {setWidth(defWidth);});
     }
 
     @Override public boolean isInternal() { return false; }
@@ -127,7 +127,7 @@ public class TalReverb implements Reverb {
         else throw new InvalidParameterException();
     }
     @Override
-    public Number get(int idx) {
+    public float get(int idx) {
         if (idx == Settings.Room.ordinal())
             return getRoomSize();
         if (idx == Settings.Damp.ordinal())

@@ -4,14 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
-import lombok.Setter;
+import net.judah.MixerPane;
+import net.judah.mixer.Channel;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 
 public class Preset extends ArrayList<Setting> {
 
     @Getter private final String name;
-    @Getter @Setter private boolean active;
 
     public Preset(String name, List<String> raw) {
         this.name = name;
@@ -23,9 +23,7 @@ public class Preset extends ArrayList<Setting> {
             for (int i = 0; i < values.length; i++)
                 setting.add(Float.parseFloat(values[i]));
             add(setting);
-
         }
-
     }
 
     public Preset(String name, ArrayList<Setting> settings) {
@@ -41,21 +39,35 @@ public class Preset extends ArrayList<Setting> {
         return sb.toString();
     }
 
-    public void applyPreset(List<Effect> channel) {
+    /**@return comma separated list of used effects enclosed in parentheses*/
+    public String condenseEffects() {
+        String result = " (";
+        for (int i = 0; i < size(); i++) {
+            result += get(i).getEffectName();
+            if (i < size() - 1)
+                result += ",";
+        }
+        return result + ")";
+    }
+
+    public void applyPreset(Channel channel, boolean active) {
         setting:
         for (Setting s : this) {
             for (Effect e : channel) {
-                if (e.getClass().getSimpleName().equals(s.getEffect().getSimpleName())) {
+                if (e.getName().equals(s.getEffectName())) {
                     for (int i = 0; i < s.size(); i++)
                         e.set(i, s.get(i));
-                    e.setActive(true);
+                    e.setActive(active);
                     continue setting;
                 }
             }
-            Console.info("Preset Error. not found: " + s.getEffect().getClass().getCanonicalName());
+            Console.info("Preset Error. not found: " + s.getEffectName());
         }
-        Console.info(name + " preset applied.");
+        channel.setPreset(this);
+        channel.setPresetActive(active);
+        if (MixerPane.getInstance().getChannel().equals(channel))
+            MixerPane.getInstance().getEffects().update();
+        Console.info(name + " preset applied to " + channel.getName());
     }
-
 
 }

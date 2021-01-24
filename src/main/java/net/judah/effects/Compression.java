@@ -82,9 +82,12 @@ public class Compression implements Effect {
         return Settings.values().length;
     }
 
+    @Override public String getName() {
+        return Compression.class.getSimpleName();
+    }
 
     @Override
-    public Number get(int idx) {
+    public float get(int idx) {
         if (idx == Settings.Threshold.ordinal())
             return getThreshold();
         if (idx == Settings.Attack.ordinal())

@@ -1,6 +1,5 @@
 package net.judah.plugin;
 
-import static net.judah.util.AudioTools.*;
 import static net.judah.util.Constants.*;
 
 import java.io.IOException;
@@ -26,7 +25,7 @@ import net.judah.effects.api.Reverb;
 import net.judah.mixer.LineIn;
 import net.judah.util.Console;
 
-// locked into the ubuntu20 version of Carla, don't preferr the current KStudio version
+// locked into the ubuntu20 version of Carla, do not prefer the current KStudio version
 
 /**
  *
@@ -229,7 +228,7 @@ public class Carla implements Service {
 
 		if (active) {
 			// disconnect standard stage
-			jack.disconnect(client, ch.getLeftSource(), prefixClient(ch.getLeftConnection()));
+			jack.disconnect(client, ch.getLeftSource(), ch.getLeftConnection());
 
 			// connect plugin to System port.
 			jack.connect(client, ch.getLeftSource(), plugin.getInports()[LEFT_CHANNEL]);
@@ -243,20 +242,20 @@ public class Carla implements Service {
 				jack.connect(client, ch.getRightSource(), plugin.getInports()[LEFT_CHANNEL]);
 
 			// connect plugin to JudahZone (aux2)
-			jack.connect(client, plugin.getOutports()[LEFT_CHANNEL], prefixClient(aux2.getLeftConnection()));
+			jack.connect(client, plugin.getOutports()[LEFT_CHANNEL], aux2.getLeftConnection());
 			if (plugin.isStereo())
-				jack.connect(client, plugin.getOutports()[RIGHT_CHANNEL], prefixClient(aux2.getRightConnection()));
+				jack.connect(client, plugin.getOutports()[RIGHT_CHANNEL], aux2.getRightConnection());
 			else
-				jack.connect(client, plugin.getOutports()[LEFT_CHANNEL], prefixClient(aux2.getRightConnection()));
+				jack.connect(client, plugin.getOutports()[LEFT_CHANNEL], aux2.getRightConnection());
 
 		}
 		else {
 			// disconnect plugin from JudahZone (aux2)
-			jack.disconnect(client, plugin.getOutports()[LEFT_CHANNEL], prefixClient(aux2.getLeftConnection()));
+			jack.disconnect(client, plugin.getOutports()[LEFT_CHANNEL], aux2.getLeftConnection());
 			if (plugin.isStereo())
-				jack.disconnect(client, plugin.getOutports()[RIGHT_CHANNEL], prefixClient(aux2.getRightConnection()));
+				jack.disconnect(client, plugin.getOutports()[RIGHT_CHANNEL], aux2.getRightConnection());
 			else
-				jack.connect(client, plugin.getOutports()[LEFT_CHANNEL], prefixClient(aux2.getRightConnection()));
+				jack.connect(client, plugin.getOutports()[LEFT_CHANNEL], aux2.getRightConnection());
 
 			// disconnect plugin from system
 			jack.disconnect(client, ch.getLeftSource(), plugin.getInports()[LEFT_CHANNEL]);
@@ -270,9 +269,9 @@ public class Carla implements Service {
 				jack.disconnect(client, ch.getRightSource(), plugin.getInports()[LEFT_CHANNEL]);
 
 			// connect standard stage
-			jack.connect(client, ch.getLeftSource(), prefixClient(ch.getLeftConnection()));
+			jack.connect(client, ch.getLeftSource(), ch.getLeftConnection());
 			if (ch.isStereo())
-				jack.connect(client, ch.getRightSource(), prefixClient(ch.getRightConnection()));
+				jack.connect(client, ch.getRightSource(), ch.getRightConnection());
 
 		}
 	}
@@ -300,8 +299,8 @@ public class Carla implements Service {
 			jack.connect(client, guitar.getLeftSource(), harmonizer.getInports()[LEFT_CHANNEL]);
 			jack.connect(client, guitar.getLeftSource(), harmonizer.getInports()[RIGHT_CHANNEL]);
 
-			jack.connect(client, harmonizer.getOutports()[LEFT_CHANNEL], prefixClient(aux2.getLeftConnection()));
-			jack.connect(client, harmonizer.getOutports()[RIGHT_CHANNEL], prefixClient(aux2.getRightConnection()));
+			jack.connect(client, harmonizer.getOutports()[LEFT_CHANNEL], aux2.getLeftConnection());
+			jack.connect(client, harmonizer.getOutports()[RIGHT_CHANNEL], aux2.getRightConnection());
 			Console.info("Bass beast mode engaged.");
 		}
 		else {
@@ -309,8 +308,8 @@ public class Carla implements Service {
 			jack.disconnect(client,  guitar.getLeftSource(), harmonizer.getInports()[LEFT_CHANNEL]);
 			jack.disconnect(client, guitar.getLeftSource(), harmonizer.getInports()[RIGHT_CHANNEL]);
 
-			jack.disconnect(client, harmonizer.getOutports()[LEFT_CHANNEL], prefixClient(aux2.getLeftConnection()));
-			jack.disconnect(client, harmonizer.getOutports()[RIGHT_CHANNEL], prefixClient(aux2.getRightConnection()));
+			jack.disconnect(client, harmonizer.getOutports()[LEFT_CHANNEL], aux2.getLeftConnection());
+			jack.disconnect(client, harmonizer.getOutports()[RIGHT_CHANNEL], aux2.getRightConnection());
 			Console.info("Octaver off");
 			} catch (Throwable t) {log.debug("disconnect: " + t.getMessage());}
 		}

@@ -96,10 +96,9 @@ public class Looper implements Iterable<Sample> {
         for (Sample sample : loops) {
             sample.process();
         }
-        drumTrack.process();
     }
 
-    public void slave() {
+    public void syncLoopB() {
         if (loopA.getRecording() == null || loopA.getRecording().isEmpty()) {
             // Arm Record on B
             loopB.armRecord(loopA);

@@ -1,20 +1,26 @@
 package net.judah.effects;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import net.judah.JudahZone;
+import net.judah.effects.api.Effect;
 import net.judah.looper.Sample;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 
 /** A calculated sin wave LFO.  Default amplitude returns queries between 0 and 85 */
 @Data @NoArgsConstructor @AllArgsConstructor
-public class LFO {
+public class LFO implements Effect {
 
-	public static enum Target{
+    public enum Settings {
+        Target, Min, Max, MSec
+    }
+
+	public enum Target{
 		CutEQ, Gain, Reverb, Delay, Pan
 	};
 
@@ -24,14 +30,19 @@ public class LFO {
 	/** in kilohertz (msec per cycle). default: oscillates over a 1.2 seconds. */
 	private double frequency = 1200;
 
-	/** align the wave on the jack frame buffer by millisecond */
-	private long shift;
+	public float getFrequency() {
+	    return (float)frequency;
+	}
 
+	/** align the wave on the jack frame buffer by millisecond (not implemented)*/
+	private long shift;
 
 	/** set maximum output level of queries. default: 85. */
 	private float max = 85;
 	/** set minimum level of queries. default 0. */
 	private float min = 0;
+
+    private static final ArrayList<Channel> lfoPulse = new ArrayList<>();
 
 	public void setMax(float val) {
 	    if (val < min) return;
@@ -43,7 +54,37 @@ public class LFO {
 	    min = val;
 	}
 
-	private static final ArrayList<Channel> lfoPulse = new ArrayList<>();
+    @Override public int getParamCount() {
+        return Settings.values().length; }
+
+    @Override public String getName() {
+        return LFO.class.getSimpleName(); }
+
+    @Override
+    public float get(int idx) {
+        if (idx == Settings.Target.ordinal())
+            return target.ordinal();
+        if (idx == Settings.Min.ordinal())
+            return getMin();
+        if (idx == Settings.Max.ordinal())
+            return getMax();
+        if (idx == Settings.MSec.ordinal())
+            return getFrequency();
+        throw new InvalidParameterException();
+    }
+
+    @Override
+    public void set(int idx, float value) {
+        if (idx == Settings.Target.ordinal())
+            target = Target.values()[(int)value];
+        else if (idx == Settings.Min.ordinal())
+            setMin(value);
+        else if (idx == Settings.Max.ordinal())
+            setMax(value);
+        else if (idx == Settings.MSec.ordinal())
+            setFrequency(value);
+        else throw new InvalidParameterException();
+    }
 
 	/** called every MidiScheduler.LFO_PULSE jack frames in RT thread */
 	public static void pulse() {
@@ -104,8 +145,8 @@ public class LFO {
 	public static class LFOTest extends Thread {
 		final LFO lfo = new LFO();
 
-		long sleep = 100;
-		final long spells = 150;
+		long sleep = 80;
+		final long spells = 50;
 		int count;
 
 		double min = Double.MAX_VALUE;
@@ -133,10 +174,10 @@ public class LFO {
 				try { Thread.sleep(sleep);
 				} catch (Throwable t) { }
 			}
-			System.out.println("done. min: " + min + " max: " + max);
+			System.out.println("done. min: " + min + " max: " + max + " frequency: " + lfo.getFrequency());
 		}
 		public static void main(String[] args) {
-			new LFOTest(3000).start(); // 3 second LFO
+			new LFOTest(1200).start(); // 3 second LFO
 		}
 	}
 

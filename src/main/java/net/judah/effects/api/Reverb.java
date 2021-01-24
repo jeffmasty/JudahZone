@@ -1,37 +1,53 @@
 package net.judah.effects.api;
 
 import java.nio.FloatBuffer;
+import java.security.InvalidParameterException;
 
-public interface Reverb extends Effect {
+public abstract class Reverb implements Effect {
 
     public enum Settings {
         Room, Damp, Wet
     }
 
-    void initialize(int sampleRate, int bufferSize);
+    @Override public String getName() {
+        return Reverb.class.getSimpleName();
+    }
 
-    @Override
-    void setActive(boolean active);
-    @Override
-    boolean isActive();
+    public abstract void initialize(int sampleRate, int bufferSize);
 
     /**@param size 0 to 1 */
-    void setRoomSize(float size);
-    float getRoomSize();
+    public abstract void setRoomSize(float size);
+    public abstract float getRoomSize();
 
     /**@param dampness 0 to 1 */
-    void setDamp(float dampness);
-    float getDamp();
+    public abstract void setDamp(float dampness);
+    public abstract float getDamp();
 
     /**@param width 0 to 1 */
-    void setWidth(float width);
-    float getWidth();
+    public abstract void setWidth(float width);
+    public abstract float getWidth();
 
-    void setWet(float wet);
-    float getWet();
+    public abstract void setWet(float wet);
+    public abstract float getWet();
 
     /** if true, process() must be implemented */
-    boolean isInternal();
-    public void process(FloatBuffer buf);
+    public abstract boolean isInternal();
+    public void process(FloatBuffer buf) {}
+
+    // NO-OPs, overwrite in subclass
+    @Override
+    public void set(int ordinal, float value) {
+        throw new InvalidParameterException();
+    }
+    @Override
+    public float get(int idx) {
+        throw new InvalidParameterException();
+    }
+
+    @Override
+    public int getParamCount() {
+        return 0;
+    }
+
 
 }

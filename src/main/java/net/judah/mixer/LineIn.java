@@ -1,5 +1,6 @@
 package net.judah.mixer;
 
+import static net.judah.JudahZone.*;
 import static net.judah.util.Constants.*;
 
 import java.nio.FloatBuffer;
@@ -36,7 +37,7 @@ public class LineIn extends Channel {
 	public LineIn(String channelName, String sourcePort, String connectionPort) {
 		super(channelName);
 		this.leftSource = sourcePort;
-		this.leftConnection = connectionPort;
+		this.leftConnection = JUDAHZONE + ":" + connectionPort;
 		rightSource = rightConnection = null;
 		isStereo = false;
 	}
@@ -45,9 +46,9 @@ public class LineIn extends Channel {
 	public LineIn(String channelName, String[] sourcePorts, String[] connectionPorts) {
 		super(channelName);
 		this.leftSource = sourcePorts[LEFT_CHANNEL];
-		this.leftConnection = connectionPorts[LEFT_CHANNEL];
+		this.leftConnection = JUDAHZONE + ":" + connectionPorts[LEFT_CHANNEL];
 		this.rightSource = sourcePorts[RIGHT_CHANNEL];
-		this.rightConnection = connectionPorts[RIGHT_CHANNEL];
+		this.rightConnection = JUDAHZONE + ":" + connectionPorts[RIGHT_CHANNEL];
 		isStereo = true;
 	}
 
@@ -61,7 +62,7 @@ public class LineIn extends Channel {
 		if (isStereo)
 			right = rightPort.getFloatBuffer();
 
-		float gain = volume / 50f; // per channel gain factor adjustment removed
+		float gain = volume / 37f; // gain boost
 		for (int z = 0; z < Constants._BUFSIZE; z++)
 		    left.put(left.get(z) * gain);
 		if (isStereo)

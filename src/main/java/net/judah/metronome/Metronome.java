@@ -24,14 +24,12 @@ import com.illposed.osc.OSCSerializeException;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.api.Command;
-import net.judah.api.Midi;
 import net.judah.api.MidiClient;
 import net.judah.api.MidiQueue;
 import net.judah.api.Service;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeProvider;
-import net.judah.midi.ProgMsg;
 import net.judah.plugin.BeatBuddy;
 import net.judah.plugin.Carla;
 import net.judah.util.Console;
@@ -71,8 +69,11 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 
 	@Getter private final List<Command> commands = new ArrayList<>();
 
-    public Metronome(File midiFile, BeatBuddy master, MidiQueue queue) throws JackException, IOException, InvalidMidiDataException, OSCSerializeException {
+    public Metronome(BeatBuddy master, MidiQueue queue, File midiFile)
+            throws JackException, IOException, InvalidMidiDataException, OSCSerializeException {
+
     	this.midi = queue;
+        this.midiFile = midiFile;
     	Runtime.getRuntime().addShutdownHook(new Thread() {
         	@Override public void run() { if (carla != null) carla.close(); }});
     	if (master == null)
@@ -81,8 +82,6 @@ public class Metronome implements Service, TimeProvider, TimeListener {
     	    timeProvider = master;
     	    timeProvider.addListener(this);
     	}
-
-    	this.midiFile = midiFile;
 
         commands.add(new Command(TICKTOCK.name, TICKTOCK.desc) {
     		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
@@ -98,21 +97,21 @@ public class Metronome implements Service, TimeProvider, TimeListener {
     			if (midiData2 >= 0)
     				setVolume(midiData2 * 0.01f);
     			else setVolume(Float.parseFloat("" + props.get(GAIN)));}});
-		HashMap<String, Class<?>> template = new HashMap<>();
-		template.put(CHANNEL, Integer.class);
-		template.put(PRESET, Integer.class);
+//		HashMap<String, Class<?>> template = new HashMap<>();
+//		template.put(CHANNEL, Integer.class);
+//		template.put(PRESET, Integer.class);
 
-        commands.add(new Command(METROCHANGE.name, METROCHANGE.desc, template) {
-			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				int channel = 0;
-				int preset = 0;
-				try {
-					preset = Integer.parseInt(props.get("preset").toString());
-					channel = Integer.parseInt(props.get("channel").toString());
-					Midi msg = new ProgMsg(channel, preset);
-					queue.queue(msg);
-				} catch (Throwable t) {
-					log.debug(t.getMessage()); }}});
+//        commands.add(new Command(METROCHANGE.name, METROCHANGE.desc, template) {
+//			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+//				int channel = 0;
+//				int preset = 0;
+//				try {
+//					preset = Integer.parseInt(props.get("preset").toString());
+//					channel = Integer.parseInt(props.get("channel").toString());
+//					Midi msg = new ProgMsg(channel, preset);
+//					queue.queue(msg);
+//				} catch (Throwable t) {
+//					log.debug(t.getMessage()); }}});
 
         commands.add(new ClickTrack(this));
     }
@@ -144,7 +143,7 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 	    	MidiClient midi = new MidiClient(CLIENT_NAME, new String[] {}, new String[] {DRUM_PORT});
 			JFrame frame = new JFrame("Metronome");
 	        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			frame.setContentPane(new Metronome(midiFile, null, midi).getGui());
+			frame.setContentPane(new Metronome(null, midi, midiFile).getGui());
 	        frame.setLocation(200, 50);
 	        frame.setSize(330, 165);
 	        frame.setVisible(true);

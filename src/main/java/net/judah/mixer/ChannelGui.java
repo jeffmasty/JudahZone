@@ -22,7 +22,6 @@ import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.effects.Fader;
-import net.judah.effects.gui.EffectsRack;
 import net.judah.looper.Recorder;
 import net.judah.looper.Sample;
 import net.judah.sequencer.Sequencer;
@@ -100,7 +99,6 @@ public abstract class ChannelGui extends JPanel {
                 MainFrame.get().getMixer().setFocus(channel);
         });
 
-        update();
         Constants.Gui.attachKeyListener(this, MenuBar.getInstance());
 
     }
@@ -109,14 +107,15 @@ public abstract class ChannelGui extends JPanel {
     protected abstract List<MixButton> customInit();
 
     public void update() {
+        if (!JudahZone.isInitialized()) return;
         volume.setValue(channel.getVolume());
         onMute.update();
         for (MixButton btn : customActions)
             btn.update();
-        if (channel == EffectsRack.getInstance().getFocus())
-            EffectsRack.getInstance().update();
+//        if (channel == MixerPane.getInstance().getChannel())
+//            MixerPane.getInstance().getEffects().update();
         if (overdrive != null)
-            overdrive.setValue(Math.round((float)channel.getOverdrive().getDrive() * 100));
+            overdrive.setValue(Math.round(channel.getOverdrive().getDrive() * 100));
 
     }
 

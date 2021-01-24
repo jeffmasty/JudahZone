@@ -62,7 +62,7 @@ public class DrumTrack extends Recorder implements TimeListener {
         }
     }
 
-    public void toggle(boolean engage) {
+    public void sync(boolean engage) {
         if (engage) {
             Sample loopA = JudahZone.getLooper().getLoopA();
             loopA.addListener(this);
@@ -84,9 +84,9 @@ public class DrumTrack extends Recorder implements TimeListener {
 
     public void toggle() {
         if (soloTrack.isSolo()) // disengage drumtrack
-            toggle(false);
+            sync(false);
         else { // engage drumtrack
-            toggle(true);
+            sync(true);
         }
     }
 

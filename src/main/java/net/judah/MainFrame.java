@@ -61,7 +61,7 @@ public class MainFrame extends JFrame {
         prefix = name;
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        // setJMenuBar(MenuBar.getInstance());
+//        setJMenuBar(MenuBar.getInstance());
 
         content = (JPanel)getContentPane();
         content.setLayout(null);
@@ -74,17 +74,19 @@ public class MainFrame extends JFrame {
         songPanel.setLayout(null);
         songPanel.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
 
-        MenuBar menu = MenuBar.getInstance();
-        songPanel.add(menu);
-        songPanel.add(tabs);
-
-        content.add(songPanel);
 
         mixer = new MixerPane();
-        MenuBar.getInstance().setMixerPane(mixer);
+        MenuBar menu = MenuBar.getInstance();
+        menu.setMixerPane(mixer);
 
         tabs.setBounds(0, HEIGHT_MENU, WIDTH_SONG - 1, HEIGHT_TABS);
         menu.setBounds(0, 0, WIDTH_SONG, HEIGHT_MENU);
+
+        songPanel.add(menu);
+        songPanel.add(tabs);
+        content.add(songPanel);
+
+
 
         consoles = new JPanel();
         consoles.setLayout(new BoxLayout(consoles, BoxLayout.Y_AXIS));
@@ -95,8 +97,6 @@ public class MainFrame extends JFrame {
         consoles.add(new Footer());
 
         songPanel.setBounds(0, 0, WIDTH_SONG, HEIGHT_FRAME);
-//        mixer.setBounds(WIDTH_SONG, 0, WIDTH_MIXER, HEIGHT_FRAME - 40);
-        // mixer.doLayout();
 
         content.add(mixer);
         setLocation(0, 0);

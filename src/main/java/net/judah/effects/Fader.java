@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
 import net.judah.effects.LFO.Target;
-import net.judah.effects.gui.EffectsRack;
 import net.judah.mixer.Channel;
 import net.judah.mixer.MasterTrack;
 
@@ -23,7 +22,6 @@ public class Fader {
 	public static Fader fadeIn() {
 		return new Fader(JudahZone.getMasterTrack(), Target.Gain, 3000, 0, 51, new Runnable() {
 		    @Override public void run() {
-		        EffectsRack.volume(JudahZone.getMasterTrack());
 		        JudahZone.getMasterTrack().getGui().update();
 		    }
 		});

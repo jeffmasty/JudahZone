@@ -351,6 +351,8 @@ public class Sequencer implements Service, Runnable, TimeListener {
                 _feelGoodInc();
             if ("IFeelLove".equals(name))
                 _iFeelLove();
+            if ("AutumnLeaves".equalsIgnoreCase(name))
+                _autumnLeaves();
             // if ("bassdrum".equals(name)) _bassdrum(param);
         }
 
@@ -405,6 +407,14 @@ public class Sequencer implements Service, Runnable, TimeListener {
 
         private void _iFeelLove() {
 
+        }
+
+        private void _autumnLeaves() {
+            JudahZone.getLooper().getLoopB().setOverwrite(true);
+            JudahZone.getLooper().getDrumTrack().sync(true);
+            JudahZone.getLooper().getLoopA().setOnMute(true);
+            JudahZone.getLooper().syncLoopB();
+            Console.info("internal: _andILoveHer()");
         }
 
         /** @return true if consumed */

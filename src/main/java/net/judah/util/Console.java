@@ -29,9 +29,7 @@ import net.judah.MainFrame;
 import net.judah.MixerPane;
 import net.judah.api.Midi;
 import net.judah.api.ProcessAudio;
-import net.judah.effects.api.Effect;
-import net.judah.effects.api.SavePreset;
-import net.judah.effects.gui.EffectsRack;
+import net.judah.effects.api.Preset;
 import net.judah.fluid.FluidSynth;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
@@ -242,13 +240,8 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
             MainFrame.get().sheetMusic();
         }
         else if (text.equals("preset")) {
-            SavePreset save = new SavePreset("Hallelujah", Arrays.asList(
-                    new Effect[] {EffectsRack.getInstance().getFocus().getReverb()}));
-            try {
-                File f = new File(System.getProperty("user.dir"), "presets.zone");
-                SavePreset.write(f, save.toString());
-            } catch (Exception e) {Console.warn(e);}
-
+            for(Preset p : getPresets())
+                addText(p.toString());
         }
 
         else if (text.equals("test")) {

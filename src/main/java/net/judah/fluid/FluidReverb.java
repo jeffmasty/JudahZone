@@ -1,13 +1,12 @@
 package net.judah.fluid;
 
 import java.nio.FloatBuffer;
-import java.security.InvalidParameterException;
 
 import lombok.Getter;
 import net.judah.effects.api.Reverb;
 import net.judah.util.Constants;
 
-public class FluidReverb implements Reverb {
+public class FluidReverb extends Reverb {
 
     private final FluidSynth fluid;
 
@@ -73,21 +72,5 @@ public class FluidReverb implements Reverb {
     public float getWet() {
         return getWidth();
     }
-
-    @Override
-    public void set(int ordinal, float value) {
-        throw new InvalidParameterException(); // TODO
-    }
-    @Override
-    public Number get(int idx) {
-        throw new InvalidParameterException(); // TODO
-    }
-
-    @Override
-    public int getParamCount() {
-        // TODO
-        return 0;
-    }
-
 
 }

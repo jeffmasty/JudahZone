@@ -78,7 +78,7 @@ import net.judah.effects.api.Reverb;
 import net.judah.util.Constants;
 
 /** initialize your own sample and buffer rate.  Don't try this reverb with software synths, it doesn't sound good */
-public final class Freeverb implements Reverb {
+public final class Freeverb extends Reverb {
 
     private static final float fixedgain = 0.015f * 2;
     private static final float scalewet = 3;
@@ -203,14 +203,14 @@ public final class Freeverb implements Reverb {
         /* Prepare all buffers*/
         update();
     }
+
     @Override
     public int getParamCount() {
         return Settings.values().length;
     }
 
-
     @Override
-    public Number get(int idx) {
+    public float get(int idx) {
         if (idx == Settings.Room.ordinal())
             return getRoomSize();
         if (idx == Settings.Damp.ordinal())

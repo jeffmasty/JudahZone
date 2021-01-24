@@ -65,7 +65,7 @@ public class StageCommands {
             if (data1 == MPK.PRIMARY_CC.get(2) && midi.getData2() > 0) {// CC pad 2: slave loop B
                 new Thread() {
                     @Override public void run() {
-                        getLooper().slave(); }}.start();
+                        getLooper().syncLoopB(); }}.start();
                 return true;
             }
             if (data1 == MPK.PRIMARY_CC.get(3) && midi.getData2() > 0) { // clear loopers cc pad
@@ -137,10 +137,13 @@ public class StageCommands {
             if (data1 == MPK.JOYSTICK_DOWN_CC && midi.getPort().equals(JudahMidi.getInstance().getKeyboard().getShortName())) {
                 if (data2 < 20) {
                     getMasterTrack().getOverdrive().setActive(false);
+                    getMasterTrack().getChorus().setActive(false);
                 }
                 else {
                     getMasterTrack().getOverdrive().setActive(true);
                     getMasterTrack().getOverdrive().setDrive((data2 - 27) / 100f);
+                    getMasterTrack().getChorus().setActive(true);
+                    getMasterTrack().getChorus().setFeedback((data2 - 27) / 100f);
                 }
                 return true;
             }

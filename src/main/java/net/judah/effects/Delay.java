@@ -1,6 +1,7 @@
 package net.judah.effects;
 
 import java.nio.FloatBuffer;
+import java.security.InvalidParameterException;
 
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
@@ -68,6 +69,7 @@ import java.util.Arrays;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.effects.api.Effect;
 import net.judah.util.Constants;
 
 /**
@@ -79,7 +81,11 @@ import net.judah.util.Constants;
  *
  * @author Neil C Smith (derived from code by Karl Helgason)
  */
-public class Delay {
+public class Delay implements Effect {
+
+    public enum Settings {
+        DelayTime, Feedback
+    }
 
     private final static float DEF_MAX_DELAY = 1.3f;
     public final static float DEF_TIME = 0.12f;
@@ -110,6 +116,33 @@ public class Delay {
         int delayBufSize = (int) (maxdelay * sampleRate) + 10;
         left = new VariableDelayOp(delayBufSize);
         right = new VariableDelayOp(delayBufSize);
+    }
+
+    @Override
+    public int getParamCount() {
+        return Settings.values().length;
+    }
+
+    @Override public String getName() {
+        return Delay.class.getSimpleName();
+    }
+
+    @Override
+    public float get(int idx) {
+        if (idx == Settings.DelayTime.ordinal())
+            return getDelay();
+        if (idx == Settings.Feedback.ordinal())
+            return getFeedback();
+        throw new InvalidParameterException();
+    }
+
+    @Override
+    public void set(int idx, float value) {
+        if (idx == Settings.DelayTime.ordinal())
+            setDelay(value);
+        else if (idx == Settings.Feedback.ordinal())
+            setFeedback(value);
+        else throw new InvalidParameterException();
     }
 
     public void setDelay(float time) {

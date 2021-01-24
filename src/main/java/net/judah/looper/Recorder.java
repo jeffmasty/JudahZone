@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.api.AudioMode;
@@ -26,8 +27,9 @@ import net.judah.util.Constants;
 @Log4j
 public class Recorder extends Sample implements RecordAudio, TimeListener {
 
-    @Getter protected final List<JackPort> inputPorts = new ArrayList<>();
     protected final AtomicReference<AudioMode> isRecording = new AtomicReference<>(AudioMode.NEW);
+    @Getter @Setter protected boolean overwrite;
+    @Getter protected final List<JackPort> inputPorts = new ArrayList<>();
 
     private final Memory memory;
     private float[][] newBuffer;
@@ -59,7 +61,7 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
             play(true);
             record(true);
             master.removeListener(this);
-            Console.info("Slave b recording. buffers: " + getRecording().size());
+            Console.info("Sync'd B recording. buffers: " + getRecording().size());
             new Thread() {
                 @Override
                 public void run() {
@@ -76,7 +78,7 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
         master = loopA;
         loopA.addListener(this);
         if (gui != null) ((Output)gui).armRecord(true);
-        Console.info("Loop B slaved and armed");
+        Console.info("Loop B sync'd and armed");
     }
 
     @Override
@@ -187,7 +189,10 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
                 assert !playing();
                 readRecordedBuffer();
             }
-            recording.dub(newBuffer, recordedBuffer, counter);
+            if (overwrite) // uncommon
+                recording.set(counter, newBuffer);
+            else
+                recording.dub(newBuffer, recordedBuffer, counter);
         }
         else
             recording.add(newBuffer);
@@ -208,7 +213,6 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
     }
 
 }
-
 
 
 // TODO public void mute(String channel, boolean mute) {

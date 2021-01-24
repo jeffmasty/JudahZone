@@ -37,10 +37,12 @@ package net.judah.effects;
 * @author Karl Helgason
 */
 import java.nio.FloatBuffer;
+import java.security.InvalidParameterException;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.judah.effects.api.Effect;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -51,9 +53,13 @@ import net.judah.util.RTLogger;
  * buffers may be the same.
  * @author Neil C Smith (derived from code by Karl Helgason)
  */
-public class CutFilter {
+public class CutFilter implements Effect {
+
+    public enum Settings {
+        Type, Frequency, Resonance
+    }
 	// More options:
-	// https://github.com/adiblol/jackiir (implemented as java class EQ)
+	// https://github.com/adiblol/jackiir (implemented here as java class EQ)
 	// https://github.com/T-5dotEU/ladspa-t5-plugins
 	// https://github.com/Dragerus/parametricEQ-jack
 	// https://github.com/hathagat/Equalizer
@@ -75,23 +81,19 @@ public class CutFilter {
 
     /** y = 1/30 * x ^ 2.81 + bassFloor */
 	public static float knobToFrequency(int val) {
-		return (float)(0.033333 * Math.pow(val, 2.81)) + 80f;
-
+		return (float)(0.033333 * Math.pow(val, 2.81)) + 70f;
+	}
+	static float[] reverse = new float[100];
+	static {
+	    for (int i = 0; i < reverse.length; i++)
+	        reverse[i] = knobToFrequency(i);
 	}
 
-	/* TODO this is inaccurate */
 	public static int frequencyToKnob(float freq) {
-		return (int)Math.round(  30 * ((Math.log1p(freq))/ 2.81 * 1.97)) - 95;
-	}
-
-	public static void main2(String[] args) {
-		System.out.println("knob 10 = " + knobToFrequency(10));
-		System.out.println("knob 50 = " + knobToFrequency(50));
-		System.out.println("knob 90 = " + knobToFrequency(90));
-
-		System.out.println("91.52159hz = " + frequencyToKnob(91.52159f));
-		System.out.println("2051.4363hz = " + frequencyToKnob(2051.4363f));
-		System.out.println("10404.652hz = " + frequencyToKnob(10404.652f));
+	    for (int i = 0; i < reverse.length; i++)
+	        if (reverse[i] >= freq)
+	            return i;
+	    return 100;
 	}
 
     private final double sampleRate;
@@ -104,7 +106,7 @@ public class CutFilter {
 
     @Getter private Type filterType = Type.HP12;
     @Setter @Getter private boolean active;
-    private double freqeuncy = 650.;
+    @Getter private float frequency = 650;
     private double resonancedB = 12.;
     private Type oldParty;
 
@@ -119,18 +121,42 @@ public class CutFilter {
     	eq2.reset();
     }
 
+    @Override public int getParamCount() {
+        return Settings.values().length; }
+
+    @Override public String getName() {
+        return CutFilter.class.getSimpleName(); }
+
+    @Override
+    public float get(int idx) {
+        if (idx == Settings.Type.ordinal())
+            return getFilterType().ordinal();
+        if (idx == Settings.Frequency.ordinal())
+            return getFrequency();
+        if (idx == Settings.Resonance.ordinal())
+            return getResonance();
+        throw new InvalidParameterException();
+    }
+
+    @Override
+    public void set(int idx, float value) {
+        if (idx == Settings.Type.ordinal())
+            setFilterType(Type.values()[(int)value]);
+        else if (idx == Settings.Frequency.ordinal())
+            setFrequency(value);
+        else if (idx == Settings.Resonance.ordinal())
+            setResonance(value);
+        else throw new InvalidParameterException();
+    }
+
     /**Set frequency of filter in Hz. <br/>
      *  Recommended range (20 - samplerate/2) */
     public void setFrequency(float hz) {
-        if (freqeuncy == hz)
+        if (frequency == hz)
             return;
-        freqeuncy = hz;
-        eq1.dirty = eq2.dirty = true;
-    }
-
-    /** @return frequency of filter */
-    public float getFrequency() {
-        return (float) freqeuncy;
+        frequency = hz;
+        eq1.dirty = true;
+        eq2.dirty = true;
     }
 
     /**Set resonance of filter in dB. <br/>
@@ -157,7 +183,7 @@ public class CutFilter {
         this.filterType = filtertype;
         eq1.dirty = eq2.dirty = true;
         if (filterType == Type.pArTy) {
-        	oldParty = freqeuncy <= PARTY_FREQUENCY ? Type.LP12 : Type.HP12;
+        	oldParty = frequency <= PARTY_FREQUENCY ? Type.LP12 : Type.HP12;
         }
         RTLogger.log(this, "filter type: " + filterType);
     }
@@ -217,7 +243,7 @@ public class CutFilter {
     }
 
     private void checkParty() {
-		if (freqeuncy <= PARTY_FREQUENCY) {
+		if (frequency <= PARTY_FREQUENCY) {
 			if (oldParty != Type.LP12) {
 				eq1.dirty = eq2.dirty = true;
 				oldParty = Type.LP12;
@@ -573,7 +599,7 @@ public class CutFilter {
 
 	        if (filterType == Type.BP12) {
 	            wet = 1;
-	            double r = (freqeuncy / sampleRate);
+	            double r = (frequency / sampleRate);
 	            if (r > 0.45) {
 	                r = 0.45;
 	            }
@@ -602,7 +628,7 @@ public class CutFilter {
 
 	        if (filterType == Type.NP12) {
 	            wet = 1;
-	            double r = (freqeuncy / sampleRate);
+	            double r = (frequency / sampleRate);
 	            if (r > 0.45) {
 	                r = 0.45;
 	            }
@@ -630,8 +656,8 @@ public class CutFilter {
 	        }
 
 	        if (filterType == Type.LP12 || filterType == Type.LP24 ||
-	        		(filterType == Type.pArTy && freqeuncy <= PARTY_FREQUENCY)) {
-	            double r = (freqeuncy / sampleRate);
+	        		(filterType == Type.pArTy && frequency <= PARTY_FREQUENCY)) {
+	            double r = (frequency / sampleRate);
 	            if (r > 0.45) {
 	                if (wet == 0) {
 	                    if (rdB < 0.00001) {
@@ -664,8 +690,8 @@ public class CutFilter {
 	        }
 
 	        if (filterType == Type.HP12 || filterType == Type.HP24 ||
-	        		(filterType == Type.pArTy && freqeuncy > PARTY_FREQUENCY)) {
-	            double r = (freqeuncy / sampleRate);
+	        		(filterType == Type.pArTy && frequency > PARTY_FREQUENCY)) {
+	            double r = (frequency / sampleRate);
 	            if (r > 0.45) {
 	                r = 0.45;
 	            }
@@ -924,10 +950,10 @@ public class CutFilter {
 	    }
 
 	    protected void filter1calc() {
-	        if (freqeuncy < 110) {
-	            freqeuncy = 110;
+	        if (frequency < 110) {
+	            frequency = 110;
 	        }
-	        double c = (7.0 / 6.0) * Math.PI * 2 * freqeuncy / sampleRate;
+	        double c = (7.0 / 6.0) * Math.PI * 2 * frequency / sampleRate;
 	        if (c > 1) {
 	            c = 1;
 	        }

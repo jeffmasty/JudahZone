@@ -21,13 +21,14 @@ import java.nio.FloatBuffer;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.effects.api.Effect;
 import net.judah.util.Constants;
 
 /** A single channel unit that processes audio through a simple overdrive effect. */
-public final class Overdrive {
+public final class Overdrive implements Effect {
 
     @Getter @Setter boolean active;
-    @Getter private double drive;
+    @Getter private float drive;
     private int nframes;
 
     public Overdrive() {
@@ -39,7 +40,23 @@ public final class Overdrive {
         this.nframes = buffersize;
     }
 
-    public void setDrive(double drive) {
+    @Override public String getName() {
+        return Overdrive.class.getSimpleName();
+    }
+
+    @Override public int getParamCount() {
+        return 1;
+    }
+
+    @Override public float get(int idx) {
+        return drive;
+    }
+
+    @Override public void set(int idx, float value) {
+        setDrive(value);
+    }
+
+    public void setDrive(float drive) {
         this.drive = drive < 0 ? 0 : drive > 1 ? 1 : drive;
     }
 

@@ -1,7 +1,6 @@
 TODO:
 
-Chorus triggers -9db treble EQ drop and -5db bass drop (resonance)
-presets presets presets
+stereo channel pan bug?
 commands commands commands
 unified play and record commands
 record record record youtubes
@@ -9,8 +8,9 @@ TODO, loops on reverb not getting master effects/gain
 
 LFO triggered to clock, LFO/Fader cleanUp()
 README credits
-clipping/xruns filter
+clipping/xruns filter see https://github.com/psambit9791/jDSP  Peak and Spike
 MoogMPK = ADSR knobs (I Feel Love bassline)
+pads in scale
 multi-delete, upgrade properties table (enum, int, boolean types)
 Phasor, Shepard
 fix songs.
@@ -23,18 +23,18 @@ calculate make-up gain during Compression
 Plugins, ttl 
 walking bassline midi bot
 MPK Sequencer
-
-
 Knobs: 
 fluid reverb, track/master pan, 
 Other knobs: calf, Jackrack, mixer
 
 drum options:  DrMr, drumkv1-jack, hydrogen, fluid, drumsynth, black pearl
 
+Java Music API: https://github.com/psambit9791/jDSP
+Java Music API: https://github.com/chdh/dsp-collection-java
 java analyse and sequence music https://github.com/arnaudh/elusive-sound
+Java music visualization: https://github.com/trungd/acoustic-signal-processing
 https://github.com/a-schild/jave2
-Jack's alsa driver/client tries to use SND_PCM_FMT_S32_LE,
-signed 32-bit PCM little endian, 
+Jack's alsa driver/client tries to use SND_PCM_FMT_S32_LE, signed 32-bit PCM little endian, 
 which is the format used by all current 24 bit audio cards except for some USB interfaces
 
 arpeggio this! https://github.com/ybalcanci/Sequence-Player/blob/master/RecamanSequence.java
@@ -61,34 +61,12 @@ Drum machine w/ Hydrogen drums https://github.com/nicklan/drmr/wiki
 Simple converter ttl to JSON
 https://github.com/PedalController/Lv2Library/blob/master/src/br/com/srmourasilva/lv2library/Lv2Mapper.java
 
-    <dependency>
-      <groupId>org.jaudiolibs</groupId>
-    <artifactId>audioservers-jack</artifactId>
-    <version>2.0.0</version>
-    </dependency>
-    <dependency>
-        <groupId>org.jaudiolibs</groupId>
-        <artifactId>pipes-core</artifactId>
-        <version>2.0.0</version>
-    </dependency>
-      <dependency>
-        <groupId>org.jaudiolibs</groupId>
-        <artifactId>pipes-graph</artifactId>
-        <version>2.0.0</version>
-    </dependency>
-    <dependency>
-        <groupId>org.jaudiolibs</groupId>
-        <artifactId>pipes-units</artifactId>
-        <version>2.0.0</version>
-    </dependency>
 <!--     Swing gui widgets https://harmoniccode.blogspot.com/search/label/swing -->
 <!--    <dependency> -->
 <!--      <groupId>eu.hansolo</groupId> -->
 <!--      <artifactId>SteelSeries</artifactId> -->
 <!--      <version>3.9.30</version> -->
 <!--    </dependency> -->
-
-
 
 Done:
 arpeggiator, overdub midi
@@ -123,3 +101,4 @@ joystick  (pitch bend logarithmic to 1 octave) (left cc = distortion or vocoder 
 stereo pan
 chorus
 make drumtrack a full-fledged 3rd loop
+"Apply to" and Presets menu options

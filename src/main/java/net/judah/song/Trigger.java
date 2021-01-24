@@ -16,27 +16,27 @@ public class Trigger implements Copyable {
 	public static enum Type {
 		INIT, ABS, REL, TRIG, END
 	}
-	
+
 	public Trigger(long timestamp, Command cmd) {
 		this(Type.ABS, timestamp, cmd.getName(), "", new HashMap<>(), cmd);
 	}
-	
-	Type type = Type.ABS;
+
+	Type type = Type.INIT;
 	Long timestamp = 0l;
-	
+
 	String command;
 	String notes;
 	HashMap<String, Object> params;
-	
+
 	@JsonIgnore
 	private transient Command cmd;
-	
+
 	public Command getCmd() {
-		if (cmd == null) 
+		if (cmd == null)
 			cmd = JudahZone.getCommands().find(command);
 		return cmd;
 	}
-	
+
 	public boolean go(int count) {
 		if (type == Type.INIT && count < 0) return true;
 		if (type == Type.ABS && timestamp == count) return true;
@@ -54,6 +54,6 @@ public class Trigger implements Copyable {
 		result.setType(type);
 		return result;
 	}
-	
+
 }
 

@@ -15,7 +15,6 @@ public class Commands {
         VOLUME("metro:volume", "Set Gain for the volume"),
         HIHATS("metro:hihats", "play some hi hats"),
         CLICKTRACK("metro:clicktrack", "Click Track settings"),
-        METROCHANGE("metro:progChange", "Change external synth patch");
         ;
         public final String name;
         public final String desc;
@@ -23,7 +22,6 @@ public class Commands {
 
     @RequiredArgsConstructor
     public static enum MixerLbls {
-        FX          ("mixer:fx",       "set a effects setting"), // boolean input, int channelIdx, ParamName, int Value
         TOGGLE_RECORD("loop:record", 	"Activate/deactivate recording on the provided looper number."),
         TOGGLE_PLAY	("loop:play", 		"Activate/deactivate playing a recorded loop with the Sample number"),
         CLEAR		("loop:clear", 		"Reset the given looper"),
@@ -32,7 +30,9 @@ public class Commands {
         VOLUME		("mixer:volume", 	"Adjust loop or input gain between 0 and 1"),
         MUTE		("mixer:mute", 		"Mute/unmute the recording of a given looper channel"),
         AUDIOPLAY	("audio:play", 		"play an audio sample"),
+        PRESET      ("mixer:preset",    "load a channel with Preset effects"),
         //UNDO("undo recording", ), // REDO("redo recording", ),
+        //FX          ("mixer:fx",       "set a effects setting"), // boolean input, int channelIdx, ParamName, int Value
         ;
         public final String name;
         public final String desc;

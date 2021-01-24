@@ -3,6 +3,8 @@ package net.judah;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.security.InvalidParameterException;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -12,6 +14,7 @@ import javax.swing.border.TitledBorder;
 
 import lombok.Getter;
 import net.judah.effects.gui.EffectsRack;
+import net.judah.effects.gui.PresetsGui;
 import net.judah.looper.Sample;
 import net.judah.mixer.Channel;
 import net.judah.mixer.ChannelGui;
@@ -23,36 +26,35 @@ public class MixerPane extends JPanel {
 
     @Getter private static MixerPane instance;
 
+    private final EffectsList effectsTab = new EffectsList();
+
+    @Getter private EffectsRack current;
     private JComponent songlist;
-    @Getter private final JTabbedPane tabs;
+    private final JTabbedPane tabs;
     private final JPanel mixer = new JPanel();
     private final LooperGui looper;
-    @Getter private final EffectsRack highlight = new EffectsRack();
 
     public MixerPane() {
 
         instance = this;
         setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
 
-        looper = new LooperGui(JudahZone.getLooper());
+        looper = new LooperGui(JudahZone.getLooper(), effectsTab);
+
         mixer.setLayout(new GridLayout(0,2));
         mixer.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createEmptyBorder(), // BorderFactory.createLineBorder(Color.DARK_GRAY),
                 "Input", TitledBorder.CENTER, TitledBorder.ABOVE_TOP, Constants.Gui.FONT11));
-        for (LineIn channel : JudahZone.getChannels())
+        for (LineIn channel : JudahZone.getChannels()) {
             mixer.add(channel.getGui());
+            effectsTab.add(new EffectsRack(channel));
+        }
 
         tabs = new JTabbedPane();
         songlist = new SonglistTab(Constants.defaultSetlist);
         tabs.add("Setlist", songlist);
-
         tabs.add("BeatBuddy", JudahZone.getDrummachine().getGui());
-
-        // tabs.add("Presets", new PresetsGui());
-
-        tabs.add("Channel", highlight);
-        tabs.setSelectedIndex(tabs.getComponentCount() - 1);
-
+        tabs.add("Presets", new PresetsGui(JudahZone.getPresets()));
         add(looper);
         add(mixer);
         add(tabs);
@@ -61,23 +63,72 @@ public class MixerPane extends JPanel {
     public void update() {
         for (Channel c : JudahZone.getChannels()) c.getGui().update();
         for (Sample s : JudahZone.getLooper()) s.getGui().update();
-
         JudahZone.getMasterTrack().getGui().update();
-        EffectsRack.getInstance().update();
+        if (current != null) current.update();
     }
 
-    public void setFocus(Channel bus) {
-        highlight.setFocus(bus);
-        tabs.setSelectedComponent(highlight);
-        tabs.setTitleAt(tabs.indexOfComponent(highlight), bus.getName());
-        bus.getGui().getLabelButton().requestFocus();
+    public void setFocus(Channel ch) {
+        if (ch.equals(getChannel())) {
+            tabs.setSelectedComponent(current);
+            return;
+        }
+        int idx = -1;
+        for (int i = 0; i < tabs.getComponentCount(); i++) {
+            if (tabs.getTitleAt(i).equals(EffectsRack.TAB_NAME)) {
+                idx = i;
+                break;
+            }
+        }
+
+        current = effectsTab.get(ch);
+
+        if (idx < 0) {
+            tabs.add(EffectsRack.TAB_NAME, current);
+        }
+        else {
+            current.update();
+            tabs.getComponentAt(idx).setVisible(false);
+            current.setVisible(true);
+            tabs.setComponentAt(idx, current);
+        }
+
+        tabs.setSelectedComponent(current);
         for(Component c : mixer.getComponents()) {
             if (c instanceof ChannelGui.Input) {
                 ChannelGui.Input gui = (ChannelGui.Input)c;
-                gui.getLabelButton().setSelected(gui.getChannel() == bus);
+                gui.getLabelButton().setSelected(gui.getChannel() == ch);
             }
         }
-        looper.setSelected(bus);
+        looper.setSelected(ch);
+        JudahZone.getMasterTrack().getGui().getLabelButton().setSelected(
+                ch == JudahZone.getMasterTrack());
+        ch.getGui().getLabelButton().requestFocus();
     }
+
+    public Channel getChannel() {
+        if (current == null) return null;
+        return current.getChannel();
+    }
+
+    public EffectsRack getEffects() {
+        return current;
+    }
+
+    // TODO overdrive?
+    public static void volume(Channel ch) {
+        if (getInstance() == null || getInstance().getChannel() == null) return;
+        if (!getInstance().getChannel().equals(ch)) return;
+        getInstance().getEffects().getVolume().setValue(ch.getVolume());
+    }
+
+    class EffectsList extends ArrayList<EffectsRack> {
+        EffectsRack get(Channel ch) {
+            for (EffectsRack r : this)
+                if (r.getChannel().equals(ch))
+                    return r;
+            throw new InvalidParameterException("" + ch);
+        }
+    }
+
 
 }

@@ -1,0 +1,38 @@
+{
+  "props" : {
+    "image" : "/home/judah/sheets/AutumnLeaves.png",
+    "beatbuddy" : "HipHop8@90:Brushes"
+  },
+  "links" : [ ],
+  "sequencer" : [ {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "mixer:preset",
+    "notes" : "",
+    "params" : {
+      "name" : "DrumsVerb",
+      "channel" : "6",
+      "active" : "true"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "mixer:preset",
+    "notes" : "",
+    "params" : {
+      "name" : "Chorus2",
+      "channel" : "4",
+      "active" : "true"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "seq:internal",
+    "notes" : "",
+    "params" : {
+      "patch" : "autumnLeaves",
+      "param" : null
+    }
+  } ],
+  "router" : [ ]
+}

@@ -83,11 +83,11 @@ public class JudahZone extends BasicClient {
         instance = this;
         Runtime.getRuntime().addShutdownHook(new ShutdownHook());
 
-        synth = new FluidSynth(48000);
+        synth = new FluidSynth(Constants._SAMPLERATE);
         drummachine = new BeatBuddy();
         midi = new JudahMidi("JudahMidi", drummachine);
-        File clickTrack = new File(this.getClass().getClassLoader().getResource("metronome/JudahZone.mid").getFile());
-        metronome = new Metronome(clickTrack, drummachine, midi);
+        metronome = new Metronome(drummachine, midi,
+                Constants.resource("metronome/JudahZone.mid"));
 
         services.addAll(Arrays.asList(new Service[] {drummachine, synth, metronome, midi}));
 
@@ -98,11 +98,12 @@ public class JudahZone extends BasicClient {
     protected void initialize() throws JackException {
         JackPort port;
         for (LineIn ch : channels) {
-            port = jackclient.registerPort(ch.getLeftConnection(), AUDIO, JackPortIsInput);
+            port = jackclient.registerPort(ch.getLeftConnection().replace(JUDAHZONE + ":", ""),
+                    AUDIO, JackPortIsInput);
             ch.setLeftPort(port);
             inPorts.add(port);
             if (ch.isStereo()) {
-                port = jackclient.registerPort(ch.getRightConnection(), AUDIO, JackPortIsInput);
+                port = jackclient.registerPort(ch.getRightConnection().replace(JUDAHZONE + ":", ""), AUDIO, JackPortIsInput);
                 ch.setRightPort(port);
                 inPorts.add(port);
             }
@@ -140,11 +141,9 @@ public class JudahZone extends BasicClient {
         // inputs
         for (LineIn ch : channels) {
             if (ch.getLeftSource() != null && ch.getLeftConnection() != null)
-                jack.connect(jackclient, ch.getLeftSource(),
-                        prefixClient(ch.getLeftConnection()));
+                jack.connect(jackclient, ch.getLeftSource(), ch.getLeftConnection());
             if (ch.getRightSource() != null && ch.getRightConnection() != null)
-                jack.connect(jackclient, ch.getRightSource(),
-                        prefixClient(ch.getRightConnection()));
+                jack.connect(jackclient, ch.getRightSource(), ch.getRightConnection());
         }
         // Synth input has custom Reverb
         channels.getSynth().setReverb(synth.getReverb());
@@ -160,23 +159,23 @@ public class JudahZone extends BasicClient {
         channels.initVolume();
         new TalReverb(carla, carla.getPlugins().byName(TalReverb.NAME)).initialize(Constants._SAMPLERATE, Constants._BUFSIZE);
 
-        // Open a default song
-        File file = new File("/home/judah/git/JudahZone/resources/Songs/DolphinDance");
-        try {
-            new Sequencer(file);
-        } catch (Exception e) {
-            Console.warn(e.getMessage() + " " + file.getAbsolutePath(), e); }
-
         drummachine.setVolume(55);
 
-        initialized = true; // now the system is live!
+        MixerPane.getInstance().setFocus(masterTrack);
+        initialized = true;
+        /////////////////////////////////////////////////////////////////////////
+        //                    now the system is live                           //
+        /////////////////////////////////////////////////////////////////////////
+        // Open a default song
+        Constants.timer(100, () ->{
+            File file = new File("/home/judah/git/JudahZone/resources/Songs/AutumnLeaves");
+            try { new Sequencer(file);
+            } catch (Exception e) {
+                Console.warn(e.getMessage() + " " + file.getAbsolutePath(), e); }
+        });
         Fader.execute(Fader.fadeIn());
         masterTrack.setOnMute(false);
-        Constants.timer(90, () -> {
-            presets.applyPreset("Compression", channels.getDrums().getEffects());
-            presets.applyPreset("Compression", channels.getAux1().getEffects());
-            MixerPane.getInstance().setFocus(masterTrack);
-        });
+
     }
 
     private class ShutdownHook extends Thread {
