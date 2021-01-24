@@ -63,10 +63,10 @@ public class LineIn extends Channel {
 			right = rightPort.getFloatBuffer();
 
 		float gain = volume / 37f; // gain boost
-		for (int z = 0; z < Constants._BUFSIZE; z++)
+		for (int z = 0; z < Constants.bufSize(); z++)
 		    left.put(left.get(z) * gain);
 		if (isStereo)
-			for (int z = 0; z < Constants._BUFSIZE; z++)
+			for (int z = 0; z < Constants.bufSize(); z++)
 				right.put(right.get(z) * gain);
 
 		if (eq.isActive()) {

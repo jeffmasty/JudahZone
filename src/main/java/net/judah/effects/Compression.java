@@ -70,7 +70,7 @@ public class Compression implements Effect {
 
     /** initializes Preset[1] at 48000 sampleRate */
     public Compression() {
-    	setSampleRate(Constants._SAMPLERATE);
+    	setSampleRate(Constants.sampleRate());
     	setPreset(1);
     }
     public void setSampleRate(int sampleRate) {

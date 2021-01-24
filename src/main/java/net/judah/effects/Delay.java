@@ -101,7 +101,7 @@ public class Delay implements Effect {
     private final VariableDelayOp right;
 
     public Delay() {
-        this(Constants._SAMPLERATE, Constants._BUFSIZE, DEF_MAX_DELAY);
+        this(Constants.sampleRate(), Constants.bufSize(), DEF_MAX_DELAY);
         reset();
     }
 

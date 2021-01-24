@@ -414,7 +414,7 @@ public class Sequencer implements Service, Runnable, TimeListener {
             JudahZone.getLooper().getDrumTrack().sync(true);
             JudahZone.getLooper().getLoopA().setOnMute(true);
             JudahZone.getLooper().syncLoopB();
-            Console.info("internal: _andILoveHer()");
+            Console.info("internal: _autumnLeaves()");
         }
 
         /** @return true if consumed */

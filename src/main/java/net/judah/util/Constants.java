@@ -33,9 +33,11 @@ import net.judah.mixer.Channel;
 public class Constants {
 
 	// TODO generalize
-	public static int _SAMPLERATE = 48000;
-	public static int _BUFSIZE = 512;
+	private static int _SAMPLERATE = 48000;
+	private static int _BUFSIZE = 512;
 
+	public static int sampleRate() { return _SAMPLERATE; }
+	public static int bufSize() { return _BUFSIZE; }
 
 	// TODO
     public static final File defaultSetlist = new File("/home/judah/git/JudahZone/resources/Songs/list1.songs");

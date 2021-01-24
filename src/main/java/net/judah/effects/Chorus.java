@@ -52,7 +52,7 @@ public class Chorus implements Effect {
     }
 
     public Chorus() {
-        this(Constants._SAMPLERATE, Constants._BUFSIZE);
+        this(Constants.sampleRate(), Constants.bufSize());
     }
 
     @Override public String getName() {

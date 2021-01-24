@@ -21,6 +21,7 @@ import net.judah.mixer.ChannelGui;
 import net.judah.mixer.LineIn;
 import net.judah.song.SonglistTab;
 import net.judah.util.Constants;
+import net.judah.util.Tuner;
 
 public class MixerPane extends JPanel {
 
@@ -58,6 +59,8 @@ public class MixerPane extends JPanel {
         add(looper);
         add(mixer);
         add(tabs);
+        add(new Tuner());
+        doLayout();
     }
 
     public void update() {
@@ -87,8 +90,6 @@ public class MixerPane extends JPanel {
         }
         else {
             current.update();
-            tabs.getComponentAt(idx).setVisible(false);
-            current.setVisible(true);
             tabs.setComponentAt(idx, current);
         }
 

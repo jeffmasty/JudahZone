@@ -5,7 +5,7 @@ import java.nio.FloatBuffer;
 public class AudioTools  {
 
 	private static int z;
-	private static float[] workArea = new float[Constants._BUFSIZE];
+	private static float[] workArea = new float[Constants.bufSize()];
 
 	public static void processSilence(FloatBuffer a) {
 		a.rewind();
@@ -60,7 +60,7 @@ public class AudioTools  {
 
 	/** process replace */
 	public static void processGain(float[] in, float[] out, float vol) {
-	     for (z = 0; z < Constants._BUFSIZE; z++)
+	     for (z = 0; z < Constants.bufSize(); z++)
 	         out[z] = in[z] * vol;
 	}
 
@@ -74,12 +74,12 @@ public class AudioTools  {
 	public static void processMix(float[] in, FloatBuffer out) {
 		out.get(workArea);
 		out.rewind();
-		for (z = 0; z < Constants._BUFSIZE; z++)
+		for (z = 0; z < Constants.bufSize(); z++)
 			out.put(workArea[z] + in[z]);
 	}
 	public static void processGain(FloatBuffer buffer, float gain) {
 		buffer.rewind();
-		for (z = 0; z < Constants._BUFSIZE; z++)
+		for (z = 0; z < Constants.bufSize(); z++)
 			buffer.put(buffer.get(z) * gain);
 
 	}

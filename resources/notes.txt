@@ -1,6 +1,6 @@
 TODO:
 
-stereo channel pan bug?
+guitar tuner: PitchDetector.java and MPM algo: github.com/JorenSix/TarsosDSP/blob/master/src/examples/be/tarsos/dsp/example/PitchDetectorExample.java
 commands commands commands
 unified play and record commands
 record record record youtubes
@@ -34,6 +34,7 @@ Java Music API: https://github.com/chdh/dsp-collection-java
 java analyse and sequence music https://github.com/arnaudh/elusive-sound
 Java music visualization: https://github.com/trungd/acoustic-signal-processing
 https://github.com/a-schild/jave2
+https://github.com/ryukau/LV2Plugins
 Jack's alsa driver/client tries to use SND_PCM_FMT_S32_LE, signed 32-bit PCM little endian, 
 which is the format used by all current 24 bit audio cards except for some USB interfaces
 

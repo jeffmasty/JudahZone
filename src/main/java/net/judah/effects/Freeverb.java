@@ -115,7 +115,7 @@ public final class Freeverb extends Reverb {
     private float[] outScratchR = null;
 
     public Freeverb() {
-        initialize(Constants._SAMPLERATE, Constants._BUFSIZE);
+        initialize(Constants.sampleRate(), Constants.bufSize());
     }
 
     @Override

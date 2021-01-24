@@ -111,7 +111,7 @@ public class CutFilter implements Effect {
     private Type oldParty;
 
 	public CutFilter() {
-    	this(Constants._SAMPLERATE, Constants._BUFSIZE);
+    	this(Constants.sampleRate(), Constants.bufSize());
     }
 
     public CutFilter(int sampleRate, int bufferSize) {

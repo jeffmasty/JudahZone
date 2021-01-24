@@ -32,7 +32,7 @@ public final class Overdrive implements Effect {
     private int nframes;
 
     public Overdrive() {
-        initialize(Constants._SAMPLERATE, Constants._BUFSIZE);
+        initialize(Constants.sampleRate(), Constants.bufSize());
         reset();
     }
 

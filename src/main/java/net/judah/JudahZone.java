@@ -83,7 +83,7 @@ public class JudahZone extends BasicClient {
         instance = this;
         Runtime.getRuntime().addShutdownHook(new ShutdownHook());
 
-        synth = new FluidSynth(Constants._SAMPLERATE);
+        synth = new FluidSynth(Constants.sampleRate());
         drummachine = new BeatBuddy();
         midi = new JudahMidi("JudahMidi", drummachine);
         metronome = new Metronome(drummachine, midi,
@@ -157,7 +157,8 @@ public class JudahZone extends BasicClient {
 
         new MainFrame(JUDAHZONE);
         channels.initVolume();
-        new TalReverb(carla, carla.getPlugins().byName(TalReverb.NAME)).initialize(Constants._SAMPLERATE, Constants._BUFSIZE);
+        new TalReverb(carla, carla.getPlugins().byName(TalReverb.NAME))
+            .initialize(Constants.sampleRate(), Constants.bufSize());
 
         drummachine.setVolume(55);
 
