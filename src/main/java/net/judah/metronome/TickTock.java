@@ -63,7 +63,7 @@ public class TickTock implements Player {
 
 				// metronome.beat(duration - intro);
 				beeperHandle.cancel(true);
-				metronome.stop();
+				metronome.end();
 				return;
 			}
 

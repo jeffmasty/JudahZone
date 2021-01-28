@@ -23,6 +23,7 @@ import javax.swing.SwingConstants;
 import javax.swing.border.BevelBorder;
 
 import net.judah.JudahZone;
+import net.judah.effects.gui.Slider;
 import net.judah.plugin.BeatBuddy.Dir;
 import net.judah.plugin.BeatBuddy.Drumset;
 import net.judah.plugin.BeatBuddy.Track;
@@ -30,7 +31,7 @@ import net.judah.util.Constants;
 import net.judah.util.Knob;
 import net.judah.util.MenuBar;
 
-public class BeatGui extends JPanel {
+public class BeatBuddyGui extends JPanel {
 
     private static final int PAD = 1;
 
@@ -53,7 +54,7 @@ public class BeatGui extends JPanel {
     private JButton transBtn;
     private JPanel tapPanel;
 
-    public BeatGui(BeatBuddy drum) {
+    public BeatBuddyGui(BeatBuddy drum) {
         this.buddy = drum;
         gui();
         actionListeners();
@@ -100,7 +101,10 @@ public class BeatGui extends JPanel {
         JLabel tempoLbl = new JLabel("Tempo");
         tempoLbl.setFont(FONT12);
 
-        bpm = new JSlider(JSlider.HORIZONTAL, 30, 230, Math.round(buddy.getTempo()));
+        bpm = new Slider(e -> {/*see actionListeners()*/});
+        bpm.setMinimum(30);
+        bpm.setMaximum(230);
+        bpm.setValue(Math.round(buddy.getTempo()));
         bpm.setFont(FONT9);
         bpm.setMajorTickSpacing(40);
         bpm.setPaintTicks(false);

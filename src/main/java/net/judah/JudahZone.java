@@ -124,7 +124,7 @@ public class JudahZone extends BasicClient {
 
         try { // Initialize the Carla lv2 plugin host (now that our ports are created)
             carla = new Carla(true);
-            Thread.sleep(1000);
+            Thread.sleep(950);
             services.add(carla);
             plugins.addAll(carla.getPlugins());
 
@@ -169,7 +169,7 @@ public class JudahZone extends BasicClient {
         /////////////////////////////////////////////////////////////////////////
         // Open a default song
         Constants.timer(100, () ->{
-            File file = new File("/home/judah/git/JudahZone/resources/Songs/AutumnLeaves");
+            File file = new File("/home/judah/git/JudahZone/resources/Songs/BeatBox");
             try { new Sequencer(file);
             } catch (Exception e) {
                 Console.warn(e.getMessage() + " " + file.getAbsolutePath(), e); }
@@ -214,6 +214,8 @@ public class JudahZone extends BasicClient {
             float gainL = (1 - ch.getPan()) * 2;
             float gainR = ch.getPan() * 2;
             processAdd(ch.getLeftPort().getFloatBuffer(), gainL, outL.getFloatBuffer());
+
+            //line-in todo PAN
             if (ch.isStereo())
                 processAdd(ch.getRightPort().getFloatBuffer(), gainR, outR.getFloatBuffer());
             else

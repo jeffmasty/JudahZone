@@ -25,6 +25,7 @@ import net.judah.api.Midi;
 import net.judah.api.MidiQueue;
 import net.judah.api.Service;
 import net.judah.api.Status;
+import net.judah.beatbox.BeatBox;
 import net.judah.fluid.FluidSynth;
 import net.judah.plugin.BeatBuddy;
 import net.judah.plugin.MPK;
@@ -126,7 +127,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
         if (sz > OUT.DRUMS_OUT.ordinal()) drumsOut = outPorts.get(OUT.DRUMS_OUT.ordinal());
         if (sz > OUT.AUX1_OUT.ordinal()) auxOut1 = outPorts.get(OUT.AUX1_OUT.ordinal());
         if (sz > OUT.AUX2_OUT.ordinal()) auxOut2 = outPorts.get(OUT.AUX2_OUT.ordinal());
-        if (sz > OUT.AUX2_OUT.ordinal()) auxOut3 = outPorts.get(OUT.AUX2_OUT.ordinal());
+        if (sz > OUT.AUX2_OUT.ordinal()) auxOut3 = outPorts.get(OUT.AUX3_OUT.ordinal());
         //	jackclient.setTimebaseCallback(this, false);
         new Thread(scheduler).start();
 
@@ -218,6 +219,12 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
                 }
             }
 
+            poll = BeatBox.getQueue().poll();
+            while (poll != null) {
+                JackMidi.eventWrite(auxOut3, 0, poll.getMessage(), poll.getLength());
+                poll = clock.getQueue().poll();
+            }
+
             poll = clock.getQueue().poll();
             while (poll != null) {
                 JackMidi.eventWrite(drumsOut, 0, poll.getMessage(), poll.getLength());
@@ -281,6 +288,11 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
         for (int i = 0; i < outPorts.size(); i++)
             destinations[i + 1] = outPorts.get(i).getShortName();
         return destinations;
+    }
+
+    public static void queueSynth(Midi msg) {
+
+
     }
 
 

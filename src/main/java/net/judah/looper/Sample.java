@@ -1,5 +1,6 @@
 package net.judah.looper;
 
+import static net.judah.JudahZone.*;
 import static net.judah.api.AudioMode.*;
 import static net.judah.util.AudioTools.*;
 import static net.judah.util.Constants.*;
@@ -57,7 +58,7 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
         super(name);
         this.recording = recording;
         length = recording.size();
-        setReverb(JudahZone.getCarla().getReverb());
+        setReverb(getCarla().getReverb());
     }
 
     protected Sample() {super("?"); }
@@ -154,8 +155,11 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
         if (isOnMute()) return; // ok, we're on mute and we've progressed the tape counter.
 
         // gain & pan stereo
-        AudioTools.processGain(recordedBuffer[LEFT_CHANNEL], workL, (volume / 25f) * (1 - pan));
-        AudioTools.processGain(recordedBuffer[RIGHT_CHANNEL], workR, (volume / 25f) * pan);
+        float leftVol = (volume / 37f) * (1 - pan);
+        float rightVol = (volume / 37f) * pan;
+
+        AudioTools.processGain(recordedBuffer[LEFT_CHANNEL], workL, leftVol);
+        AudioTools.processGain(recordedBuffer[RIGHT_CHANNEL], workR, rightVol);
 
         if (eq.isActive()) {
             eq.process(workL, true);
@@ -182,20 +186,22 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
         }
 
         // output
-        if (reverb.isActive()) {
-            toJackLeft = JudahZone.getEffectsL().getFloatBuffer();
+        if (reverb.isActive()) { // external reverb
+            toJackLeft = getEffectsL().getFloatBuffer();
             toJackLeft.rewind();
-            toJackRight = JudahZone.getEffectsR().getFloatBuffer();
+            toJackRight = getEffectsR().getFloatBuffer();
             toJackRight.rewind();
+            processAdd(bufL, getMasterTrack().getGainL(), toJackLeft); // grab master track gain
+            processAdd(bufR, getMasterTrack().getGainR(), toJackRight); // on the way out to reverb
         }
         else {
             toJackLeft = outputPorts.get(LEFT_CHANNEL).getFloatBuffer();
             toJackLeft.rewind();
             toJackRight = outputPorts.get(RIGHT_CHANNEL).getFloatBuffer();
             toJackRight.rewind();
+            processMix(workL, toJackLeft);
+            processMix(workR, toJackRight);
         }
-        processMix(workL, toJackLeft);
-        processMix(workR, toJackRight);
 
     }
 

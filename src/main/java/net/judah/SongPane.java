@@ -11,7 +11,6 @@ import org.apache.commons.io.FilenameUtils;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
-import net.judah.sequencer.SeqDisplay;
 import net.judah.sequencer.Sequencer;
 import net.judah.song.LinkTable;
 import net.judah.song.RouterTable;
@@ -32,13 +31,13 @@ public class SongPane extends JPanel {
 	private final RouterTable router;
 	private final JButton save, close, reload;
 	@Getter private final JTabbedPane cards = new JTabbedPane();
-	
+
 	public SongPane(Sequencer sequencer) {
-		
+
 		this.sequencer = sequencer;
 		setName(FilenameUtils.removeExtension(sequencer.getSongfile().getName()));
 		Song song = sequencer.getSong();
-		
+
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
 		JPanel buttons = new JPanel();
@@ -52,7 +51,7 @@ public class SongPane extends JPanel {
 		buttons.add(save);
 		buttons.add(close);
 		buttons.add(reload);
-		
+
 		properties = new PropertiesTable(song.getProps());
 		links = new LinkTable(song.getLinks(), JudahZone.getCommands());
 		triggers = new TriggersTable(song.getSequencer(), JudahZone.getCommands());
@@ -62,13 +61,12 @@ public class SongPane extends JPanel {
 		cards.addTab("Midi Map", links);
 		cards.addTab("Router", router);
 		cards.addTab("Properties", properties);
-		cards.addTab("Sequencer", new SeqDisplay());
-		
+
 		add(buttons);
 		add(triggers);
 		add(cards);
 	}
-	
+
 	public void reload() {
 		MainFrame.get().closeTab(this);
 		try {
@@ -80,7 +78,7 @@ public class SongPane extends JPanel {
 	}
 
 	public void save(File file) {
-		
+
 		Song song = sequencer.getSong();
 		try {
 			song.setProps(properties.getMap());
@@ -88,7 +86,7 @@ public class SongPane extends JPanel {
 			song.setSequencer(triggers.getFilteredData());
 			song.setRouter(router.getRoutes());
 			JsonUtil.saveString(JsonUtil.MAPPER.writeValueAsString(song), file);
-			
+
 			Console.info("Saved: " + file.getAbsolutePath());
 		} catch (Throwable e) {
 			log.error(file.getAbsolutePath() + ": " + e.getMessage(), e);

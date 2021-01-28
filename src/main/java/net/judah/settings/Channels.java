@@ -60,7 +60,7 @@ public class Channels extends ArrayList<LineIn> {
 		mic.setVolume(0);
 		guitar.setVolume(60);
 		drums.setVolume(55);
-		synth.setVolume(25);
+		synth.setVolume(40);
 		aux1.setVolume(30);
 		aux2.setVolume(88); // for octaver plugin
 	}

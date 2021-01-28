@@ -22,7 +22,7 @@ Jackson (https://github.com/FasterXML/jackson) for JSON handling and serializati
 Apache Jena (https://jena.apache.org/) to open LV2 .ttl plugin descriptors.
 
 ## Build
-Built with Maven. 
+Built with Maven and Lombok. 
 
 ## Running
 You need to have Jack up and running.  This project uses the "a2jmidid -e" ALSA midi bindings along with Jack.  This project uses FluidSynth (with the fluid soundfount) and the Carla plugin host.  

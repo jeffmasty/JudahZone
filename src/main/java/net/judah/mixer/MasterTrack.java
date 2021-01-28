@@ -53,20 +53,24 @@ public class MasterTrack extends Channel {
             delay.processAdd(right, right, false);
         }
 
-        float gainL = (volume / 25f) * (1 - pan);
-        float gainR = (volume / 25f) * pan;
-
 		if (reverb.isActive()) {
-            processAdd(left, gainL, effectsL.getFloatBuffer());
-            processAdd(right, gainR, effectsR.getFloatBuffer());
+            processAdd(left, getGainL(), effectsL.getFloatBuffer());
+            processAdd(right, getGainR(), effectsR.getFloatBuffer());
             processSilence(left);
             processSilence(right);
 		}
 		else {
-		    AudioTools.processGain(speakersLeft.getFloatBuffer(), gainL);
-		    AudioTools.processGain(speakersRight.getFloatBuffer(), gainR);
+		    AudioTools.processGain(speakersLeft.getFloatBuffer(), getGainL());
+		    AudioTools.processGain(speakersRight.getFloatBuffer(), getGainR());
 		}
 
 	}
 
+	public float getGainL() {
+	    return (volume / 50f) * (1 - pan);
+	}
+
+	public float getGainR() {
+	    return (volume / 50f) * pan;
+	}
 }

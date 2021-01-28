@@ -26,6 +26,7 @@ import net.judah.api.Midi;
 import net.judah.api.Service;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeListener.Property;
+import net.judah.beatbox.JudahClock;
 import net.judah.midi.MidiClock;
 import net.judah.midi.ProgMsg;
 import net.judah.util.Console;
@@ -99,7 +100,7 @@ public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service 
     @Getter @Setter
     private ConcurrentLinkedQueue<ShortMessage> queue =
             new ConcurrentLinkedQueue<>();
-    private BeatGui gui;
+    private BeatBuddyGui gui;
 
     int pulse;
     long ticker;
@@ -121,6 +122,7 @@ public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service 
     public BeatBuddy() {
         try {
             loadSDCard();
+            addListener(JudahClock.getInstance());
         } catch (Throwable t) { Console.warn(t); }
         // add Commands: song, nextSong, partNum, nextPart, drumset, tempo, volume, start, pause, outro
     }
@@ -165,9 +167,9 @@ public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service 
 
     @Override public long getLastPulse() { return ticker; }
 
-    public BeatGui getGui() {
+    public BeatBuddyGui getGui() {
         if (gui == null)
-            gui = new BeatGui(this);
+            gui = new BeatBuddyGui(this);
         return gui;
     }
 
@@ -413,6 +415,12 @@ public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service 
         else
             RTLogger.log(this, "unknown beat buddy " + new Midi(midi));
     }
+
+    @Override
+    public void begin() { play(true); }
+
+    @Override
+    public void end() { play(false); }
 
 
 }

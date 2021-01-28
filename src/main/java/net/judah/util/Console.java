@@ -64,7 +64,6 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
     private Looper looper = JudahZone.getLooper();
     @Getter @Setter private static Level level = Level.DEBUG;
     private final JTextArea textarea;
-    //@Getter private final JPanel output;
     @Getter private final JScrollPane scroller;
     @Getter private final JTextField input;
     private boolean midiListen = false;
@@ -79,14 +78,8 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
         scroller = new JScrollPane(textarea);
         scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
-        // output = new JPanel();
-        // output.setLayout(new BoxLayout(output, BoxLayout.Y_AXIS));
-        // output.add(scroller);
-
-        input = new JTextField(70);
-        // input.setMaximumSize(new Dimension(625, 75));
+        input = new JTextField(35);
         input.addActionListener(this);
-        // input.grabFocus();
         input.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {

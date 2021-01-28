@@ -1,0 +1,34 @@
+{
+  "props" : { },
+  "links" : [ ],
+  "sequencer" : [ {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "seq:setup",
+    "notes" : "",
+    "params" : {
+      "intro.beats" : "0",
+      "bpb" : "4",
+      "beats.per.pulse" : "4",
+      "bpm" : "86"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "loop:drumtrack",
+    "notes" : "",
+    "params" : {
+      "soloTrack" : "5"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "synth:progChange",
+    "notes" : "",
+    "params" : {
+      "channel" : "0",
+      "preset" : "2"
+    }
+  } ],
+  "router" : [ ]
+}

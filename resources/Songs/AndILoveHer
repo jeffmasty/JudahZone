@@ -1,61 +1,8 @@
 {
   "props" : {
-    "carla" : "/home/judah/git/JudahZone/resources/carla/JudahZone.carxp"
+    "image" : "/home/judah/sheets/AndILoveHer.png"
   },
-  "links" : [ {
-    "name" : "trigger",
-    "command" : "seq:trigger",
-    "midi" : "sGIA",
-    "props" : { }
-  }, {
-    "name" : "",
-    "command" : "seq:trigger",
-    "midi" : "uSYA",
-    "props" : { }
-  }, {
-    "name" : "knob 7 - Synth Vol",
-    "command" : "mixer:volume",
-    "midi" : "sBUA",
-    "props" : {
-      "volume" : null,
-      "index" : "3",
-      "isInput" : "true"
-    }
-  }, {
-    "name" : "loop A vol",
-    "command" : "mixer:volume",
-    "midi" : "sBAr",
-    "props" : {
-      "volume" : null,
-      "index" : "0",
-      "isInput" : "false"
-    }
-  }, {
-    "name" : "loop B vol",
-    "command" : "mixer:volume",
-    "midi" : "sBFG",
-    "props" : {
-      "volume" : null,
-      "index" : "1",
-      "isInput" : "false",
-      "gain" : null
-    }
-  }, {
-    "name" : "",
-    "command" : "seq:volume",
-    "midi" : "sBIA",
-    "props" : {
-      "volume" : null,
-      "name" : "bassdrum,snare,hihats"
-    }
-  }, {
-    "name" : "",
-    "command" : "midi:volume",
-    "midi" : "sBMA",
-    "props" : {
-      "volume" : null
-    }
-  } ],
+  "links" : [ ],
   "sequencer" : [ {
     "type" : "INIT",
     "timestamp" : 0,
@@ -473,11 +420,5 @@
       "file" : "/home/judah/git/JudahZone/resources/Songs/AndIOutro"
     }
   } ],
-  "router" : [ {
-    "from" : "iTAA",
-    "to" : "iUsA"
-  }, {
-    "from" : "iTEA",
-    "to" : "iUUA"
-  } ]
+  "router" : [ ]
 }

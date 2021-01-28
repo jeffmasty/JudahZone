@@ -26,7 +26,11 @@ import net.judah.api.Command;
 import net.judah.api.Loadable;
 import net.judah.api.Midi;
 import net.judah.api.Service;
+import net.judah.api.Status;
 import net.judah.api.TimeListener;
+import net.judah.api.TimeProvider;
+import net.judah.effects.api.Preset;
+import net.judah.effects.api.PresetsHandler.Raw;
 import net.judah.looper.Recorder;
 import net.judah.looper.Recording;
 import net.judah.metronome.Metronome;
@@ -35,6 +39,8 @@ import net.judah.midi.MidiListener;
 import net.judah.midi.MidiListener.PassThrough;
 import net.judah.midi.Route;
 import net.judah.midi.Router;
+import net.judah.mixer.DrumTrack;
+import net.judah.mixer.LineIn;
 import net.judah.song.Song;
 import net.judah.song.Trigger;
 import net.judah.util.CommandWrapper;
@@ -72,7 +78,6 @@ public class Sequencer implements Service, Runnable, TimeListener {
         private final Metronome metronome;
         private final SongPane page;
         private SeqCommands commands = new SeqCommands();
-        private SeqDisplay display;
         /** see {@link #properties(HashMap)} */
         @Getter private File sheetMusic;
 
@@ -80,7 +85,8 @@ public class Sequencer implements Service, Runnable, TimeListener {
         @Setter(value = AccessLevel.PACKAGE) @Getter
         private ControlMode control = ControlMode.INTERNAL;
         /** internal clock */
-        private SeqClock clock;
+        TimeProvider clock;
+        // private SeqClock clock;
 
         /** a sense of the current beat */
         private int count = -1;
@@ -208,8 +214,8 @@ public class Sequencer implements Service, Runnable, TimeListener {
             checkQueue();
         }
 
-        void setClock(SeqClock clock) {
-            if (this.clock != null)
+        public void setClock(TimeProvider clock) {
+            if (this.clock != null && this.clock instanceof SeqClock)
                 this.clock.end();
             this.clock = clock;
         }
@@ -222,11 +228,14 @@ public class Sequencer implements Service, Runnable, TimeListener {
                     if (control == ControlMode.INTERNAL) {
                         JudahZone.getMetronome().removeListener(this);
                         try {
-                            if (clock == null) clock = new SeqClock(this);
-                            else {
-                                clock = new SeqClock(this, clock.getIntro(), clock.getSteps());
+                            if (clock == null) {
+                                clock = new SeqClock(this);
+                                clock.begin();
                             }
-                            clock.start();
+                            else if (clock instanceof SeqClock) {
+                                clock = new SeqClock(this, (SeqClock)clock);
+                                clock.begin();
+                            }
                         } catch (Exception e) { Console.warn(e); }
                     }
                 }
@@ -238,9 +247,8 @@ public class Sequencer implements Service, Runnable, TimeListener {
                 if (control == ControlMode.INTERNAL) {
                     log.trace("beat update: " + value);
                     count = (int)value;
-                    while (active.go(count))
+                    while (active != null && active.go(count))
                         execute(active);
-
                     checkQueue();
                 }
             }
@@ -252,8 +260,8 @@ public class Sequencer implements Service, Runnable, TimeListener {
                     while (active.go(count))
                         execute(active);
                     checkQueue();
-                    if (clock != null)
-                        clock.pulse();
+                    if (clock instanceof SeqClock)
+                        ((SeqClock)clock).pulse();
                 }
             }
         }
@@ -296,16 +304,12 @@ public class Sequencer implements Service, Runnable, TimeListener {
             }
         }
 
-        public SeqDisplay getGui() {
-            if (display == null) {
-                display = new SeqDisplay();
-                if (clock != null)
-                    clock.addListener(display);
-                else
-                    log.debug("gui: no clock");
-            }
-            return display;
-        }
+//        public BeatBox getGui() {
+//            if (gui == null) {
+//                gui = new BeatBox(16, 4);
+//            }
+//            return gui;
+//        }
 
         /////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -342,6 +346,32 @@ public class Sequencer implements Service, Runnable, TimeListener {
         void queue(CommandWrapper command) {
             if (command != null)
                 queue.push(command);
+        }
+
+        /** @return true if consumed */
+        public boolean midiProcessed(Midi midi) {
+            PassThrough mode = PassThrough.ALL;
+            for (MidiListener listener : listeners) {
+                new Thread() {
+                    @Override public void run() {
+                        listener.feed(midi);};
+                }.start();
+
+                PassThrough current = listener.getPassThroughMode();
+                if (current == PassThrough.NONE)
+                    mode = PassThrough.NONE;
+                else if (current == PassThrough.NOTES && mode != PassThrough.NONE)
+                    mode = PassThrough.NOTES;
+                else if (current == PassThrough.NOT_NOTES && mode != PassThrough.NONE)
+                    mode = PassThrough.NOT_NOTES;
+            }
+            if (PassThrough.NONE == mode)
+                return true;
+            else if (PassThrough.NOTES == mode)
+                return !Midi.isNote(midi);
+            else if (PassThrough.NOT_NOTES == mode && Midi.isNote(midi))
+                return true;
+            return mappings.midiProcessed(midi);
         }
 
         void internal(String name, String param) {
@@ -395,14 +425,14 @@ public class Sequencer implements Service, Runnable, TimeListener {
             clock.end();
             clock.removeListener(this);
             drums.addListener(this);
-            clock.setLength(drums.getRecordedLength(), drums.getSize());
+            ((SeqClock)clock).setLength(drums.getRecordedLength(), drums.getSize());
             Console.info("internal: _andILoveHer()");
 
         }
 
         private void _feelGoodInc() {
             Recorder drums = (Recorder)JudahZone.getLooper().get(0);
-            clock.setLength(drums.getRecordedLength(), drums.getSize());
+            ((SeqClock)clock).setLength(drums.getRecordedLength(), drums.getSize());
         }
 
         private void _iFeelLove() {
@@ -410,38 +440,79 @@ public class Sequencer implements Service, Runnable, TimeListener {
         }
 
         private void _autumnLeaves() {
-            JudahZone.getLooper().getLoopB().setOverwrite(true);
-            JudahZone.getLooper().getDrumTrack().sync(true);
-            JudahZone.getLooper().getLoopA().setOnMute(true);
-            JudahZone.getLooper().syncLoopB();
+            control = ControlMode.EXTERNAL;
+            DrumTrack drums = JudahZone.getLooper().getDrumTrack();
+            Recorder loopA = JudahZone.getLooper().getLoopA();
+            Recorder loopB = JudahZone.getLooper().getLoopB();
+
+            drums.sync(true);
+            loopA.play(false); // not armed (record bridge for later)
+            loopA.addListener( (prop, value)-> {
+                if (Property.STATUS != prop || Status.TERMINATED != value)
+                    return;
+                JudahZone.getDrummachine().play(false);
+
+                Constants.sleep(1); // let drumTrack listener process end of LoopA
+
+                drums.setTapeCounter(0);
+                loopA.setTapeCounter(0);
+                loopB.setTapeCounter(0);
+
+                int length = loopA.getRecording().size();
+                if (length % 2 != 0) { // make even
+                    loopA.getRecording().remove(loopA.getRecording().size() - 1);
+                    length --;
+                }
+                if (length != drums.getRecording().size()) {
+                    Recording reel = drums.getRecording();
+                    if (length > reel.size()) {
+                        Console.info("TOO SMALL by " + (length - reel.size()));
+                        while (reel.size() < length)
+                            reel.add(reel.get(reel.size() - 1));
+                    }
+                    else {
+                        Console.info("cleaning up " + (reel.size() - length) + " frames on drumTrack");
+                        while (reel.size() > length)
+                            reel.remove(reel.size() -1);
+                    }
+                }
+
+                length = length / 2;
+                loopB.setRecording(new Recording(length, true));
+
+                loopB.play(true);
+                loopB.record(true);
+                loopA.removeListener(this);
+                Console.info("Sync'd B recording. buffers: " +
+                        loopB.getRecording().size() + " vs. " + loopA.getRecording().size());
+                new Thread() { @Override public void run() {
+                    try {Thread.sleep(8);} catch(Throwable t) { }
+                    JudahZone.getDrummachine().play(false);
+                    control = ControlMode.EXTERNAL;
+                    Console.info("internal: _autumnLeaves2()");
+                };}.start();
+
+            });
+
+            JudahZone.getLooper().getLoopB().addListener( (prop, value)-> {
+
+                if (Property.LOOP != prop) return;
+                LineIn guitar = JudahZone.getChannels().getGuitar();
+                Preset crunch = JudahZone.getPresets().get(Raw.StdCrunch);
+                if (crunch.equals(guitar.getPreset()) && guitar.isPresetActive())
+                    return;
+                if (guitar.getPreset() != null)
+                    guitar.getPreset().applyPreset(guitar, false);
+                crunch.applyPreset(guitar, true);
+
+                JudahZone.getLooper().getLoopB().record(false);
+
+                Console.info("internal: _autumnLeaves3()");
+            });
+
             Console.info("internal: _autumnLeaves()");
         }
 
-        /** @return true if consumed */
-        public boolean midiProcessed(Midi midi) {
-            PassThrough mode = PassThrough.ALL;
-            for (MidiListener listener : listeners) {
-                new Thread() {
-                    @Override public void run() {
-                        listener.feed(midi);};
-                }.start();
-
-                PassThrough current = listener.getPassThroughMode();
-                if (current == PassThrough.NONE)
-                    mode = PassThrough.NONE;
-                else if (current == PassThrough.NOTES && mode != PassThrough.NONE)
-                    mode = PassThrough.NOTES;
-                else if (current == PassThrough.NOT_NOTES && mode != PassThrough.NONE)
-                    mode = PassThrough.NOT_NOTES;
-            }
-            if (PassThrough.NONE == mode)
-                return true;
-            else if (PassThrough.NOTES == mode)
-                return !Midi.isNote(midi);
-            else if (PassThrough.NOT_NOTES == mode && Midi.isNote(midi))
-                return true;
-            return mappings.midiProcessed(midi);
-        }
 
 
 }
@@ -521,22 +592,5 @@ public class Sequencer implements Service, Runnable, TimeListener {
 ///** external clock */
 //@Override // ControlChange Listener deprecate? see TimeListener
 //public void controlChange(ShortMessage event) {
-//	if (event.getData1() != 3)
-//		return;
-//	if (isRunning())
-//		pulse();
-//}
-//private Carla initializeCarla(String carlaSettings, boolean showGui) {
-//try {
-//	if (carla != null) {
-//		if (carla.getSettings().equals(carlaSettings))
-//			return carla;
-//		carla.close();
-//	}
-//	return new Carla(carlaSettings, showGui);
-//} catch (Throwable t) {
-//	log.error(carlaSettings + ": " + t.getMessage(), t);
-//	Constants.infoBox(t.getMessage() + " for " + carlaSettings, "Song Error");
-//	return null;
-//}
-//}
+//	if (event.getData1() != 3) return;
+//	if (isRunning()) pulse();}

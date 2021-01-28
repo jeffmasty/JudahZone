@@ -1,9 +1,32 @@
 {
   "props" : {
     "image" : "/home/judah/sheets/AutumnLeaves.png",
-    "beatbuddy" : "HipHop8@90:Brushes"
+    "beatbuddy" : "HipHop8@87:Brushes",
+    "notes" : " bridge (chorus) - head (distortion --> chorus) --> bridge (distortion) -> head (distortion)"
   },
-  "links" : [ ],
+  "links" : [ {
+    "name" : "",
+    "command" : "seq:queue",
+    "midi" : "176/0/98/127",
+    "props" : {
+      "active" : null,
+      "loop" : "",
+      "command" : "play"
+    }
+  }, {
+    "name" : "",
+    "command" : "song:reload",
+    "midi" : "176/0/97/127",
+    "props" : { }
+  }, {
+    "name" : "",
+    "command" : "loop:record",
+    "midi" : "176/0/100/127",
+    "props" : {
+      "active" : null,
+      "loop" : "0"
+    }
+  } ],
   "sequencer" : [ {
     "type" : "INIT",
     "timestamp" : 0,
@@ -20,9 +43,29 @@
     "command" : "mixer:preset",
     "notes" : "",
     "params" : {
-      "name" : "Chorus2",
+      "name" : "Slap",
       "channel" : "4",
       "active" : "true"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "mixer:preset",
+    "notes" : "",
+    "params" : {
+      "name" : "Faze1",
+      "channel" : "2",
+      "active" : "false"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "mixer:preset",
+    "notes" : "",
+    "params" : {
+      "name" : "Faze1",
+      "channel" : "3",
+      "active" : "false"
     }
   }, {
     "type" : "INIT",

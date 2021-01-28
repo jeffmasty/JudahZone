@@ -21,7 +21,6 @@ import net.judah.mixer.ChannelGui;
 import net.judah.mixer.LineIn;
 import net.judah.song.SonglistTab;
 import net.judah.util.Constants;
-import net.judah.util.Tuner;
 
 public class MixerPane extends JPanel {
 
@@ -45,7 +44,7 @@ public class MixerPane extends JPanel {
         mixer.setLayout(new GridLayout(0,2));
         mixer.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createEmptyBorder(), // BorderFactory.createLineBorder(Color.DARK_GRAY),
-                "Input", TitledBorder.CENTER, TitledBorder.ABOVE_TOP, Constants.Gui.FONT11));
+                "Mixer", TitledBorder.CENTER, TitledBorder.ABOVE_TOP, Constants.Gui.FONT11));
         for (LineIn channel : JudahZone.getChannels()) {
             mixer.add(channel.getGui());
             effectsTab.add(new EffectsRack(channel));
@@ -59,7 +58,6 @@ public class MixerPane extends JPanel {
         add(looper);
         add(mixer);
         add(tabs);
-        add(new Tuner());
         doLayout();
     }
 
@@ -89,8 +87,8 @@ public class MixerPane extends JPanel {
             tabs.add(EffectsRack.TAB_NAME, current);
         }
         else {
-            current.update();
             tabs.setComponentAt(idx, current);
+            current.update();
         }
 
         tabs.setSelectedComponent(current);

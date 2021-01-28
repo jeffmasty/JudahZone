@@ -23,11 +23,13 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
+import net.judah.beatbox.JudahClock;
 import net.judah.sequencer.Sequencer;
 import net.judah.song.SheetMusic;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.MenuBar;
+import net.judah.util.Tuner;
 
 @Log4j
 public class MainFrame extends JFrame {
@@ -69,6 +71,7 @@ public class MainFrame extends JFrame {
         tabs = new JTabbedPane();
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 
+        tabs.add("BeatBox", JudahClock.getInstance().getGui());
         songPanel = new JDesktopPane();
 
         songPanel.setLayout(null);
@@ -85,8 +88,6 @@ public class MainFrame extends JFrame {
         songPanel.add(menu);
         songPanel.add(tabs);
         content.add(songPanel);
-
-
 
         consoles = new JPanel();
         consoles.setLayout(new BoxLayout(consoles, BoxLayout.Y_AXIS));
@@ -142,6 +143,7 @@ public class MainFrame extends JFrame {
             songPanel.add(tabs);
             tabs.setVisible(true);
             songPanel.add(consoles);
+
         }
 
         songPanel.doLayout();
@@ -183,6 +185,7 @@ public class MainFrame extends JFrame {
     private class Footer extends JPanel {
         Footer() {
             add(Console.getInstance().getInput());
+            add(new Tuner());
         }
     }
 
@@ -194,7 +197,7 @@ public class MainFrame extends JFrame {
         tabs.add(name, page);
         tabs.setSelectedComponent(page);
         setTitle(prefix + " - " + page.getName());
-        sheetMusic();
+        // sheetMusic();
     }
 
     public static MainFrame get() {

@@ -162,7 +162,7 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
             if (channel.isOnMute() || channel.isMuteRecord())
                 continue;
             if (channel.isSolo() && type != Type.SOLO) continue;
-            if (!inputPorts.contains(channel.getLeftPort())) continue;
+            if (type == Type.SOLO && !channel.isSolo()) continue;
 
             fromJack = channel.getLeftPort().getFloatBuffer();
             if (firstTime) {

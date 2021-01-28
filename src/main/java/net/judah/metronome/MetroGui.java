@@ -72,9 +72,9 @@ implements TimeListener {
 
 	private void actionListeners() {
 		playBtn.addActionListener(event -> {
-			try { metro.play();}
+			try { metro.begin();}
 			catch (Exception e) { log.error(e.getMessage(), e);}});
-		stopBtn.addActionListener(e -> { metro.stop(); });
+		stopBtn.addActionListener(e -> { metro.end(); });
 		fileBtn.addActionListener( e -> loadMidi());
 		bpbBtn.addActionListener(e -> {
 			int measure = openBeatsDialog();

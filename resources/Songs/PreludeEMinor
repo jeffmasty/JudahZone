@@ -1,0 +1,96 @@
+{
+  "props" : {
+    "image" : "/home/judah/sheets/PreludeEm.png"
+  },
+  "links" : [ {
+    "name" : "",
+    "command" : "seq:trigger",
+    "midi" : "176/0/98/127",
+    "props" : { }
+  } ],
+  "sequencer" : [ {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "seq:setup",
+    "notes" : "",
+    "params" : {
+      "intro.beats" : "0",
+      "bpb" : "4",
+      "beats.per.pulse" : "99999",
+      "bpm" : "92"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "synth:progChange",
+    "notes" : "",
+    "params" : {
+      "channel" : "0",
+      "preset" : "16"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "mixer:preset",
+    "notes" : "",
+    "params" : {
+      "name" : "BeatBox",
+      "channel" : "9",
+      "active" : "true"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "mixer:preset",
+    "notes" : "",
+    "params" : {
+      "name" : "SmoothDrive",
+      "channel" : "2",
+      "active" : "false"
+    }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "loop:drumtrack",
+    "notes" : "",
+    "params" : {
+      "soloTrack" : "5"
+    }
+  }, {
+    "type" : "TRIG",
+    "timestamp" : 0,
+    "command" : "loop:sync",
+    "notes" : "",
+    "params" : { }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "loop:record",
+    "notes" : "",
+    "params" : {
+      "loop" : "2",
+      "active" : "true"
+    }
+  }, {
+    "type" : "REL",
+    "timestamp" : 0,
+    "command" : "mixer:fade",
+    "notes" : "",
+    "params" : {
+      "fadeOut" : "true",
+      "msec" : "2000",
+      "channel" : "1"
+    }
+  }, {
+    "type" : "TRIG",
+    "timestamp" : 0,
+    "command" : "mixer:volume",
+    "notes" : "",
+    "params" : {
+      "volume" : "50",
+      "isInput" : "false",
+      "index" : "0"
+    }
+  } ],
+  "router" : [ ]
+}

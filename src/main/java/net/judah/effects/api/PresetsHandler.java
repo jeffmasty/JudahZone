@@ -13,6 +13,10 @@ import net.judah.util.Console;
 
 public class PresetsHandler extends ArrayList<Preset> {
 
+    public enum Raw {
+        StdCrunch, Chorus2, DrumsVerb, Tremelo
+    }
+
     public PresetsHandler() {
 
         this(new File(System.getProperty("user.dir"), "presets.zone"));
@@ -68,6 +72,13 @@ public class PresetsHandler extends ArrayList<Preset> {
             result.add(item);
         }
         return result;
+    }
+
+    public Preset get(Raw raw) {
+        for (Preset p : this)
+            if (p.getName().equals(raw.name()))
+                return p;
+        return null;
     }
 
 }

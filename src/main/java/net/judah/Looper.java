@@ -86,7 +86,6 @@ public class Looper implements Iterable<Sample> {
         add(loopA);
         add(loopB);
 
-
     }
 
 

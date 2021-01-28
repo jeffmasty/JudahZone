@@ -23,7 +23,7 @@ public class LooperGui extends JPanel {
         setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createEmptyBorder(),
                 //BorderFactory.createLineBorder(Color.DARK_GRAY),
-                "Mixer", TitledBorder.CENTER, TitledBorder.BELOW_TOP, Constants.Gui.FONT11));
+                "Looper", TitledBorder.CENTER, TitledBorder.BELOW_TOP, Constants.Gui.FONT11));
         add(JudahZone.getMasterTrack().getGui());
         effectsTab.add(new EffectsRack(JudahZone.getMasterTrack()));
 

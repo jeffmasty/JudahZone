@@ -42,6 +42,7 @@ public class Constants {
 	// TODO
     public static final File defaultSetlist = new File("/home/judah/git/JudahZone/resources/Songs/list1.songs");
     public static final File defaultFolder = new File("/home/judah/git/JudahZone/resources/Songs/");
+    public static final File ROOT = new File("/home/judah/git/JudahZone/resources/");
 
 	public static class Param {
 		public static final String ACTIVE = "active";

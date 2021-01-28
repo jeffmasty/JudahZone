@@ -1,5 +1,7 @@
 package net.judah.util;
 
+import java.awt.Dimension;
+
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -24,6 +26,8 @@ import be.tarsos.dsp.pitch.PitchProcessor;
 import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
 import lombok.Getter;
 
+
+/* see also: https://github.com/yoda-jm/pitch-detection.lv2 */
 public class Tuner extends JPanel implements PitchDetectionHandler {
 
     public static final PitchEstimationAlgorithm algo = PitchEstimationAlgorithm.MPM;
@@ -36,7 +40,7 @@ public class Tuner extends JPanel implements PitchDetectionHandler {
     private final PitchProcessor dsp = new PitchProcessor(
             algo, Constants.sampleRate(), Constants.bufSize(), this);
     private final JCheckBox activeBtn;
-    private final JLabel string;
+    private final JLabel note;
 
     private final JSlider tuning;
 
@@ -47,8 +51,13 @@ public class Tuner extends JPanel implements PitchDetectionHandler {
 
         activeBtn = new JCheckBox();
         activeBtn.addActionListener(l -> {listen(activeBtn.isSelected());});
-        string = new JLabel(" ");
+        note = new JLabel(" ");
+        Dimension d = new Dimension(35, 20);
+        note.setMinimumSize(d);
+        note.setPreferredSize(d);
         tuning = new JSlider(0, 80);
+        d = new Dimension(140, 30);
+        tuning.setPreferredSize(d);
         tuning.setMajorTickSpacing(20);
         tuning.setMinorTickSpacing(5);
         tuning.setPaintTicks(true);
@@ -60,7 +69,7 @@ public class Tuner extends JPanel implements PitchDetectionHandler {
         add(Box.createHorizontalStrut(10));
         add(tuning);
         add(Box.createHorizontalStrut(10));
-        add(string);
+        add(note);
         add(Box.createHorizontalGlue());
 
         new PitchProcessor(algo, Constants.sampleRate(), Constants.bufSize(), this);
@@ -75,7 +84,7 @@ public class Tuner extends JPanel implements PitchDetectionHandler {
             dispatcher.stop();
         }
         if (!active) {
-            string.setText(" ");
+            note.setText(" ");
             return;
         }
 
@@ -109,19 +118,19 @@ public class Tuner extends JPanel implements PitchDetectionHandler {
     @Override
     public void handlePitch(PitchDetectionResult info,AudioEvent audioEvent) {
         if (info.getPitch() == -1 || info.getProbability() < 0.9f) {
-            string.setText(" ");
+            note.setText(" ");
             return;
         }
         frequency = info.getPitch();
 
         int idx = detectString(frequency);
         if (idx == -1) {
-            string.setText(" ");
+            note.setText(" ");
             return;
         }
-        string.setText(GUITAR_STRINGS[idx]);
+        note.setText(GUITAR_STRINGS[idx]);
 
-        // 8 = frequencyWindow / 2
+        // slider shows +/- 4 hz of frequencies
         tuning.setValue(40 - Math.round((GUITAR_FREQUENCIES[idx] - frequency) * 10));
 
     }

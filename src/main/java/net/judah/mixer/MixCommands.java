@@ -1,4 +1,5 @@
 package net.judah.mixer;
+import static net.judah.JudahZone.*;
 import static net.judah.settings.Commands.MixerLbls.*;
 import static net.judah.util.Constants.Param.*;
 
@@ -10,14 +11,18 @@ import org.apache.commons.lang3.StringUtils;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
+import net.judah.api.AudioMode;
 import net.judah.api.Command;
 import net.judah.api.RecordAudio;
+import net.judah.effects.Fader;
+import net.judah.effects.LFO.Target;
 import net.judah.effects.api.Preset;
 import net.judah.looper.AudioPlay;
 import net.judah.looper.Recorder;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
 import net.judah.plugin.LineType;
+import net.judah.settings.Commands;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.JudahException;
@@ -39,10 +44,43 @@ public class MixCommands extends ArrayList<Command> {
 
 	public MixCommands() {
 
-		add(new Command(DRUMTRACK.name, DRUMTRACK.desc) {
+	    add(new Command(LOOP_SYNC.name, LOOP_SYNC.desc) {
+            @Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+                getLooper().syncLoopB();
+            }
+	    });
+
+		add(new Command(DRUMTRACK.name, DRUMTRACK.desc, Commands.template("soloTrack", Integer.class)) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				JudahZone.getLooper().getDrumTrack().toggle();
+			    DrumTrack drums = getLooper().getDrumTrack();
+			    if (props.containsKey("soloTrack")) {
+			        int solo = Integer.parseInt(props.get("soloTrack").toString());
+			        drums.setSoloTrack(JudahZone.getChannels().get(solo));
+			    }
+				drums.sync(true);
 			}
+		});
+
+		add(new Command(FADE.name, FADE.desc, faderTemplate()) {
+            @Override
+            public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+                int chan = Integer.parseInt(props.get(CHANNEL).toString());
+                int msec = 2000;
+                if (props.containsKey("msec"))
+                        msec = Integer.parseInt(props.get("msec").toString());
+                Channel channel;
+                if (chan == 0) channel = getMasterTrack();
+                else if (chan <= getLooper().size())
+                    channel = getLooper().get(chan + 1);
+                else channel = getChannels().get(chan - getLooper().size() - 1);
+                boolean out = true;
+                if (props.containsKey("fadeOut"))
+                    out = Boolean.parseBoolean(props.get("fadeOut").toString());
+
+                Fader.execute(
+                    new Fader(channel, Target.Gain, msec,
+                        out ? channel.getVolume() : 0, out ? 0 : 50));
+            }
 		});
 
 		recordCmd = new Command(TOGGLE_RECORD.name, TOGGLE_RECORD.desc, loopProps()) {
@@ -73,12 +111,27 @@ public class MixCommands extends ArrayList<Command> {
 					active = midiData2 > 0;
 				int idx = getLoopNum(props);
 				if (idx == ALL)
-					for (Sample loop : JudahZone.getLooper())
+					for (Sample loop : getLooper())
 						loop.play(active);
 				else
-					JudahZone.getLooper().get(idx).play(active);
+					getLooper().get(idx).play(active);
 			}};
 		add(playCmd);
+
+		add(new Command(TOGGLE.name, TOGGLE.desc) {
+            @Override
+            public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+                Recorder loopA = getLooper().getLoopA();
+                Recorder loopB = getLooper().getLoopB();
+                if (loopA.isPlaying() == AudioMode.RUNNING) {
+                    loopB.play(true);
+                    loopA.play(false);
+                }
+                else {
+                    loopA.play(true);
+                    loopB.play(false);
+                }
+            }});
 
 		add(new Command(MUTE.name, MUTE.desc, muteProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
@@ -91,19 +144,19 @@ public class MixCommands extends ArrayList<Command> {
 				else mute = parseActive(props);
 
 				if (loopNum == ALL)
-					for (Sample loop : JudahZone.getLooper())
+					for (Sample loop : getLooper())
 						((Recorder)loop).setOnMute(mute);
 				else
-					((Recorder)JudahZone.getLooper().get(loopNum)).setOnMute(mute);
+					((Recorder)getLooper().get(loopNum)).setOnMute(mute);
 				return;
 			}});
 		add(new Command(CLEAR.name, CLEAR.desc, loopProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				int idx = getLoopNum(props);
 				if (idx == ALL)
-					JudahZone.getLooper().forEach(loop -> loop.clear());
+					getLooper().forEach(loop -> loop.clear());
 				else
-					JudahZone.getLooper().get(idx).clear();
+					getLooper().get(idx).clear();
 			}});
 
 		add(new Command(VOLUME.name, VOLUME.desc, gainProps()) {
@@ -116,11 +169,11 @@ public class MixCommands extends ArrayList<Command> {
 				boolean isInput = Boolean.parseBoolean(props.get(IS_INPUT).toString());
 				int idx = Integer.parseInt(props.get(INDEX).toString());
 				log.trace((isInput ? JudahZone.getChannels().get(idx).getName() :
-						JudahZone.getLooper().get(idx).getName()) + " gain: " + volume);
+						getLooper().get(idx).getName()) + " gain: " + volume);
 				if (isInput)
-					JudahZone.getChannels().get(idx).setVolume(volume);
+					getChannels().get(idx).setVolume(volume);
 				else
-					JudahZone.getLooper().get(idx).setVolume(volume);
+					getLooper().get(idx).setVolume(volume);
 
 			}});
 
@@ -157,6 +210,14 @@ public class MixCommands extends ArrayList<Command> {
 		});
 
 	}
+
+    private HashMap<String, Class<?>> faderTemplate() {
+        HashMap<String, Class<?>> result = new HashMap<>();
+        result.put(CHANNEL, Integer.class);
+        result.put("msec", Integer.class);
+        result.put("fadeOut", Boolean.class);
+        return result;
+    }
 
     public static HashMap<String, Class<?>> presetTemplate() {
         HashMap<String, Class<?>> result = new HashMap<>();

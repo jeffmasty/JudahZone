@@ -1,10 +1,10 @@
 TODO:
 
-guitar tuner: PitchDetector.java and MPM algo: github.com/JorenSix/TarsosDSP/blob/master/src/examples/be/tarsos/dsp/example/PitchDetectorExample.java
+Calf Fluid Synth reverb
 commands commands commands
 unified play and record commands
 record record record youtubes
-TODO, loops on reverb not getting master effects/gain
+songs: andILoveHer, FeelGoodInc, 
 
 LFO triggered to clock, LFO/Fader cleanUp()
 README credits
@@ -103,3 +103,5 @@ stereo pan
 chorus
 make drumtrack a full-fledged 3rd loop
 "Apply to" and Presets menu options
+guitar tuner: MPM algo on github.com/JorenSix/TarsosDSP/blob/master/src/examples/be/tarsos/dsp/example/PitchDetectorExample.java
+TODO, loops on reverb not getting master effects/gain

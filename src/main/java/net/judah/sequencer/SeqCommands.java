@@ -13,8 +13,10 @@ import org.jaudiolibs.jnajack.JackTransportState;
 
 import net.judah.JudahZone;
 import net.judah.MainFrame;
+import net.judah.api.AudioMode;
 import net.judah.api.Command;
 import net.judah.api.TimeListener.Property;
+import net.judah.looper.Recorder;
 import net.judah.mixer.MixCommands;
 import net.judah.sequencer.Sequencer.ControlMode;
 import net.judah.util.CommandWrapper;
@@ -35,6 +37,9 @@ public class SeqCommands extends ArrayList<Command> {
 	public static final String PARAM_PATCH = "patch";
 
 	final Command transport;
+
+	private final LoopCallback callback = new LoopCallback();
+
 
 	public SeqCommands() {
 
@@ -103,10 +108,10 @@ public class SeqCommands extends ArrayList<Command> {
 				String[] names =  props.get(NAME).toString().split(",");
 
 				for (String name : names) {
-					Step data = seq.getClock().getSequence(name);
+					Step data = ((SeqClock)seq.getClock()).getSequence(name);
 					if (data == null)
 						throw new JudahException("Unknown named sequence: " + props.get(NAME) + " in " +
-								Arrays.toString(seq.getClock().getSequences().toArray()));
+								Arrays.toString(((SeqClock)seq.getClock()).getSequences().toArray()));
 					else
 						data.setActive(active);
 				}}});
@@ -120,25 +125,34 @@ public class SeqCommands extends ArrayList<Command> {
 					gain = Float.parseFloat("" + props.get(GAIN));
 				String[] names =  props.get(NAME).toString().split(",");
 				for (String name : names) {
-					Step data = seq.getClock().getSequence(name);
+					Step data = ((SeqClock)seq.getClock()).getSequence(name);
 					if (data == null)
 						throw new JudahException("Unknown named sequence: " + props.get(NAME) + " in " +
-								Arrays.toString(seq.getClock().getSequences().toArray()));
+								Arrays.toString(((SeqClock)seq.getClock()).getSequences().toArray()));
 					else
 						data.setVolume(gain);
 				}}});
 
 		add(new Command(QUEUE.name, QUEUE.desc, queueTemplate()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				Command target = JudahZone.getCommands().find("" + props.get("command"));
-				if (target == null) throw new NullPointerException("command " + props.get("command"));
-				int seqInternal = seq.getCount() + 1;
+
 				if (ControlMode.INTERNAL == seq.getControl()) {
+	                Command target = JudahZone.getCommands().find("" + props.get("command"));
+	                if (target == null) throw new NullPointerException(
+	                        "command " + props.get("command"));
+				    int seqInternal = seq.getCount() + 1;
 					while (seqInternal % seq.getClock().getMeasure() != 0)
 						seqInternal++;
+					seq.queue(new CommandWrapper(target, props, seqInternal));
 				}
-				seq.queue(new CommandWrapper(target, props, seqInternal));
-			}});
+				else { // looper/external controlled
+	                Recorder loopA = JudahZone.getLooper().getLoopA();
+	                Recorder loopB = JudahZone.getLooper().getLoopB();
+	                if (loopA.isPlaying() == AudioMode.RUNNING)
+	                    callback.configure(loopA, loopB);
+	                else if (loopB.isPlaying() == AudioMode.RUNNING)
+	                    callback.configure(loopB, loopA);
+				}}});
 
 		add(new Command(RELOAD.name, RELOAD.desc) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
@@ -169,7 +183,7 @@ public class SeqCommands extends ArrayList<Command> {
 				try {
 					onLoop = Boolean.parseBoolean(props.get(LOOP).toString());
 				} catch(Throwable t) { }
-				seq.getClock().record(active, onLoop);
+				((SeqClock)seq.getClock()).record(active, onLoop);
 			}});
 
 		add(new Command(MIDIPLAY.name, MIDIPLAY.desc, indexTemplate()) {
@@ -179,7 +193,7 @@ public class SeqCommands extends ArrayList<Command> {
 					active = midiData2 > 0;
 				else
 					active = Boolean.parseBoolean(props.get(ACTIVE).toString());
-				seq.getClock().play(Integer.parseInt("" + props.get(INDEX)), active);
+				((SeqClock)seq.getClock()).play(Integer.parseInt("" + props.get(INDEX)), active);
 			}});
 		add(new Command(TRANSPOSE.name, TRANSPOSE.desc, transposeTemplate()) {
 
@@ -190,10 +204,10 @@ public class SeqCommands extends ArrayList<Command> {
 					if (props.containsKey(STEPS) && props.get(STEPS) != null) {
 						 if (midiData2 > 0) {
 							 steps = Integer.parseInt(props.get(STEPS).toString());
-							 seq.getClock().getTracks().setTranspose(steps);
+							 ((SeqClock)seq.getClock()).getTracks().setTranspose(steps);
 						 }
 						 else {
-							 seq.getClock().getTracks().setTranspose(0);
+						     ((SeqClock)seq.getClock()).getTracks().setTranspose(0);
 						 }
 						 return;
 					}
@@ -203,7 +217,7 @@ public class SeqCommands extends ArrayList<Command> {
 				else {
 					steps = Integer.parseInt(props.get(STEPS).toString());
 				}
-				seq.getClock().getTracks().setTranspose(steps);
+				((SeqClock)seq.getClock()).getTracks().setTranspose(steps);
 			}});
 		add(new Arpeggiate());
 
@@ -215,9 +229,9 @@ public class SeqCommands extends ArrayList<Command> {
 				else
 					gain = Float.parseFloat("" + props.get(GAIN));
 				int idx = Integer.parseInt("" + props.get(INDEX));
-				if (seq.getClock() == null || seq.getClock().getTracks().size() <= idx)
+				if (seq.getClock() instanceof SeqClock || ((SeqClock)seq.getClock()).getTracks().size() <= idx)
 					throw new JudahException("no midi track");
-				seq.getClock().getTracks().setGain(idx, gain);
+				((SeqClock)seq.getClock()).getTracks().setGain(idx, gain);
 				}});
 	}
 

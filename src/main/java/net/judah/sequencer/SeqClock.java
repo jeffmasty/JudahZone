@@ -27,10 +27,10 @@ import net.judah.util.Constants;
 import net.judah.util.JudahException;
 
 public class SeqClock extends Thread implements TimeProvider {
-	
+
 	private final Sequencer seq;
 	private final MidiScheduler midischeduler = JudahMidi.getInstance().getScheduler();
-	
+
 	@Getter private final Steps sequences = new Steps();
 	@Getter private MidiTracks tracks = new MidiTracks();
 	@Getter private MidiTrack activeRecording;
@@ -41,22 +41,23 @@ public class SeqClock extends Thread implements TimeProvider {
 
 	@Getter private float tempo = 80f;
 	@Setter @Getter private int measure = 4;
+	@Setter @Getter private int subdivision = 4;
 
 	private int count = -1;
-	@Getter private int steps = 8;
+	@Getter private int steps = 16;
 	@Getter private int intro = 0;
 	private int step = 0;
 	private int loopCount = -1;
 	private long msecLength = -1;
 	private long frameLength = -1;
-	
+
 	/** jack frames since transport start or frames between pulses */
 	@Getter private long lastPulse;
-	
+
 	SeqClock(Sequencer seq) {
 		this.seq = seq;
 		addListener(seq);
-		steps = measure * 2;
+		steps = measure * 4;
 	}
 
 	public SeqClock(Sequencer sequencer, int intro, int steps) throws InvalidMidiDataException {
@@ -71,33 +72,37 @@ public class SeqClock extends Thread implements TimeProvider {
 		tempo = Float.parseFloat("" + props.get(BPM));
 		measure = Integer.parseInt("" + props.get(MEASURE));
 		seq.setPulse(Integer.parseInt("" + props.get(Sequencer.PARAM_PULSE)));
-		steps = measure * 2;
+		steps = measure * subdivision;
 		int intro = Integer.parseInt("" + props.get(SeqCommands.PARAM_INTRO));
 		count = -1 - intro;
 	}
 
-	@Override public void run() {
+	public SeqClock(Sequencer seq, SeqClock clock) throws InvalidMidiDataException {
+	    this(seq, clock.getIntro(), clock.getSteps());
+    }
+
+    @Override public void run() {
 		// setup looping
 		if (beeperHandle == null) {
 			// lastPulse = JudahMidi.getCurrent();
-			
-			long period = Constants.millisPerBeat(tempo * 2);
-			Console.addText("Internal Sequencer Clock starting with a bpm of " 
+
+			long period = Constants.millisPerBeat(tempo * subdivision);
+			Console.addText("Internal Sequencer Clock starting with a bpm of "
 					+ getTempo() + " msec period of " + period);
 			beeperHandle = scheduler.scheduleAtFixedRate(this, period, period, TimeUnit.MILLISECONDS);
 			scheduler.schedule(new Runnable() {
 				@Override public void run() {
-					beeperHandle.cancel(true);}}, 
+					beeperHandle.cancel(true);}},
 				12, TimeUnit.HOURS);
 		}
 
 		// run the current beat
-		if (step % 2 == 0) {
+		if (step % subdivision == 0) {
 			count++;
 
 			// Console.info("step: " + step + " beat: " + step/2f + " count: " + count);
 			listeners.forEach(listener -> {listener.update(Property.BEAT, count);});
-			
+
 			if (count % seq.getPulse() == 0) {
 				loopCount++;
 				lastPulse = JudahMidi.getCurrent();
@@ -108,6 +113,8 @@ public class SeqClock extends Thread implements TimeProvider {
 				midischeduler.sort(midischeduler);
 			}
 		}
+
+		listeners.forEach(listener -> {listener.update(Property.STEP, step);});
 		sequences.process(step);
 
 		step++;
@@ -120,12 +127,13 @@ public class SeqClock extends Thread implements TimeProvider {
 		for (Step sequence : getSequences())
 			if (sequence.getName().equals(sequenceName))
 				return sequence;
-		Console.warn(sequenceName + " not found. current seqeunces: " 
+		Console.warn(sequenceName + " not found. current seqeunces: "
 				+ Arrays.toString(getSequences().toArray()), null);
 		return null;
 	}
 
-	public void end() {
+	@Override
+    public void end() {
 		if (beeperHandle == null)
 			return;
 		beeperHandle.cancel(true);
@@ -142,8 +150,8 @@ public class SeqClock extends Thread implements TimeProvider {
 			if (activeRecording != null && !activeRecording.isEmpty()) {
 				seq.getListeners().remove(activeRecording);
 			}
-			
-			activeRecording = (onLoop) ? 
+
+			activeRecording = (onLoop) ?
 				new MidiTrack(this) : new MidiTrack(lastPulse);
 			if (!onLoop)
 				for (Link l : seq.getSong().getLinks())
@@ -151,7 +159,7 @@ public class SeqClock extends Thread implements TimeProvider {
 						// kludge: hookup the output of the track to transpose on the sequencer/arpeggiator
 						activeRecording.setOutput(sequences);
 					}
-						
+
 			tracks.add(activeRecording);
 			seq.getListeners().add(activeRecording);
 		} else if (activeRecording != null && !activeRecording.isEmpty()) {
@@ -202,9 +210,9 @@ public class SeqClock extends Thread implements TimeProvider {
 	public void pulse() {
 		// Console.info("clock pulsed. now=" + JudahMidi.getCurrent() + " lastPulse = " + lastPulse);
 		lastPulse = JudahMidi.getCurrent();
-		
-		for (MidiTrack t : tracks) 
-		if (t.isActive() && this == t.getTime()) 
+
+		for (MidiTrack t : tracks)
+		if (t.isActive() && this == t.getTime())
 			midischeduler.addTrack(lastPulse, t);
 		midischeduler.sort(midischeduler);
 
@@ -215,7 +223,7 @@ public class SeqClock extends Thread implements TimeProvider {
 				break;
 			}
 		if (active) {
-			
+
 			long unit = (long) Math.floor(msecLength / (seq.getPulse() * 2));
 
 			if (beeperHandle != null) {
@@ -249,6 +257,12 @@ public class SeqClock extends Thread implements TimeProvider {
 		return lastPulse + frameLength;
 	}
 
+    @Override
+    public void begin() {
+        // TODO Auto-generated method stub
+
+    }
+
 }
 
 //public static final int DEFAULT_DOWNBEAT = 34;
@@ -256,7 +270,7 @@ public class SeqClock extends Thread implements TimeProvider {
 //if (duration != null && count <= duration) {
 //	boolean first = count % seq.getMeasure() == 0;
 //	internalMidi.queue(first ? downbeat : beat);
-////	if (count == duration) 
+////	if (count == duration)
 ////		log.debug("tick tock shutting down");
 ////		try {// Metronome.setActive(false);
 ////		} catch (Exception e) { log.warn(e.getMessage(), e); }
@@ -273,7 +287,7 @@ public class SeqClock extends Thread implements TimeProvider {
 //	if (chunks == seq.getPulse() / seq.getMeasure()) {
 //		chunks = 0;
 //		if (seq.getControl() == ControlMode.INTERNAL)
-//			for (MidiTrack t : tracks) 
+//			for (MidiTrack t : tracks)
 //				if (t.isActive())
 //					t.play();
 //	}}

@@ -19,23 +19,22 @@ public class Arpeggiate extends Command implements MidiListener {
 		boolean active = false;
 		if (midiData2 >= 0)
 			active = midiData2 > 0;
-		else 
+		else
 			active = Boolean.parseBoolean(props.get(ACTIVE).toString());
 		if (active)
 			seq.getListeners().add(this);
 		else
 			seq.getListeners().remove(this);
-		
 	}
 
 	@Override
 	public void feed(Midi midi) {
-		seq.getClock().getSequences().queue(midi);
+	    ((SeqClock)seq.getClock()).getSequences().queue(midi);
 	}
 
 	@Override
 	public PassThrough getPassThroughMode() {
 		return PassThrough.NOT_NOTES;
 	}
-	
+
 }

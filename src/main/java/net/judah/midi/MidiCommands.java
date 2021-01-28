@@ -39,10 +39,10 @@ public class MidiCommands extends ArrayList<Command> {
 			if (!midi.isFile()) throw new JudahException("Not a midi file: " + o);
 			if (active) {
 				JudahZone.getMetronome().setMidiFile(midi);
-				JudahZone.getMetronome().play();
+				JudahZone.getMetronome().begin();
 			}
 			else
-				JudahZone.getMetronome().stop();
+				JudahZone.getMetronome().end();
 		}
     });
 	}

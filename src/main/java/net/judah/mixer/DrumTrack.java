@@ -11,10 +11,9 @@ import net.judah.JudahZone;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeNotifier;
+import net.judah.beatbox.JudahClock;
 import net.judah.looper.Recorder;
-import net.judah.looper.Sample;
 import net.judah.mixer.ChannelGui.Drums;
-import net.judah.plugin.BeatBuddy;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 
@@ -22,8 +21,9 @@ import net.judah.util.Constants;
 public class DrumTrack extends Recorder implements TimeListener {
 
     public static final String NAME = "_drums";
-    final LineIn soloTrack;
-    TimeNotifier master;
+
+    private LineIn soloTrack;
+    private TimeNotifier master;
 
     public DrumTrack(TimeNotifier master, LineIn soloTrack) {
         super(NAME, Type.SOLO, Arrays.asList(new JackPort[] {
@@ -44,32 +44,30 @@ public class DrumTrack extends Recorder implements TimeListener {
             if (Status.ACTIVE == value)
                 record(true);
             if (Status.TERMINATED == value) {
-
-
                 record(false);
-                // play(true); // already armed
+                soloTrack.setSolo(false);
+                setType(Type.DRUMTRACK);
                 new Thread() { // concurrent modification
                     @Override public void run() {
                         Constants.sleep(40);
                         master.removeListener(DrumTrack.this);
-                        JudahZone.getDrummachine().getQueue().offer(BeatBuddy.PAUSE_MIDI);
+                        if (JudahZone.getChannels().getDrums().equals(soloTrack))
+                            JudahZone.getDrummachine().play(false);
+                        else if (JudahZone.getChannels().getAux2().equals(soloTrack))
+                            JudahClock.getInstance().end();
                     };
                 }.start();
-                soloTrack.setSolo(false);
-                JudahZone.getDrummachine().play(false);
-
             }
         }
     }
 
     public void sync(boolean engage) {
         if (engage) {
-            Sample loopA = JudahZone.getLooper().getLoopA();
-            loopA.addListener(this);
-            master = loopA;
+            master = JudahZone.getLooper().getLoopA();
+            master.addListener(this);
             soloTrack.setSolo(true);
             play(true); // armed
-            Console.info("drumtrack sync'd.");
+            Console.info("drumtrack sync'd. to " + soloTrack.getName());
             if (gui != null) ((Drums)gui).armRecord(true);
         }
         else {
@@ -77,9 +75,11 @@ public class DrumTrack extends Recorder implements TimeListener {
                 master.removeListener(this);
             master = null;
             soloTrack.setSolo(false);
+            soloTrack = JudahZone.getChannels().getDrums();
             Console.info("drumtrack disengaged.");
             if (gui != null) ((Drums)gui).armRecord(false);
         }
+        setType( soloTrack.isSolo() ? Type.SOLO : Type.DRUMTRACK);
     }
 
     public void toggle() {

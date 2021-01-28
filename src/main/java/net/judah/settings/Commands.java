@@ -24,9 +24,13 @@ public class Commands {
     public static enum MixerLbls {
         TOGGLE_RECORD("loop:record", 	"Activate/deactivate recording on the provided looper number."),
         TOGGLE_PLAY	("loop:play", 		"Activate/deactivate playing a recorded loop with the Sample number"),
+        TOGGLE      ("loop:toggle",     "Toggle play or mute on loops A vs. B"),
         CLEAR		("loop:clear", 		"Reset the given looper"),
+        LOOP_SYNC   ("loop:sync",       "Sync a loop to an already existing loop"),
         LOAD_SAMPLE	("loop:loadSample", "load looper or sample, can be empty"),
         DRUMTRACK   ("loop:drumtrack", "record drums separately while recording loop A"),
+
+        FADE        ("mixer:fade",      "Fade a channel in or out"),
         VOLUME		("mixer:volume", 	"Adjust loop or input gain between 0 and 1"),
         MUTE		("mixer:mute", 		"Mute/unmute the recording of a given looper channel"),
         AUDIOPLAY	("audio:play", 		"play an audio sample"),
@@ -103,6 +107,12 @@ public class Commands {
             return result;
         }
 
+
+    }
+    public static HashMap<String, Class<?>> template(String key, Class<?> value) {
+        HashMap<String, Class<?>> result = new HashMap<>();
+        result.put(key, value);
+        return result;
     }
 
 }

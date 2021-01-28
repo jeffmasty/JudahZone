@@ -1,25 +1,27 @@
 package net.judah.api;
 
 public interface TimeListener {
-	
+
 	public enum Property {
-		/**current tempo*/			
-		TEMPO, 
-		/**TimeProvider's current status */	
+		/**current tempo*/
+		TEMPO,
+		/**TimeProvider's current status */
 		STATUS,
 		/** beats per measure */
-		MEASURE, 
+		MEASURE,
 		/** volume change */
-		VOLUME, 
+		VOLUME,
 		/** transport change */
-		TRANSPORT, 
+		TRANSPORT,
 		/** current beat of TimeProvider */
 		BEAT,
 		/** current loop count */
-		LOOP
+		LOOP,
+		/** current step in step sequencer */
+		STEP;
 	}
-	
-	
+
+
 	void update(Property prop, Object value);
 
 }

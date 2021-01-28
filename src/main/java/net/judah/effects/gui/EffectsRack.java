@@ -88,8 +88,10 @@ public class EffectsRack extends JPanel implements GUI {
         delay.update();
         lfo.update();
         cut.update();
-
         inUpdate = false;
+        revalidate();
+        repaint();
+
     }
 
     // Header ////////////////////////////////////////////////////////////////////////////

@@ -85,8 +85,8 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 
         commands.add(new Command(TICKTOCK.name, TICKTOCK.desc) {
     		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-    			if (midiData2 == 0) stop();
-    			else try { play(); } catch (Exception e) {
+    			if (midiData2 == 0) end();
+    			else try { begin(); } catch (Exception e) {
     				Console.warn(e.getMessage(), e); }}});
         commands.add(new Command(TEMPO.name, TEMPO.desc) {
     		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
@@ -156,9 +156,9 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 		midiFile = file;
 		boolean wasRunning = isRunning();
 		if (wasRunning) {
-			stop();
+			end();
 			try {
-				play();
+				begin();
 			} catch (Exception e) {
 				log.error(e.getMessage(),e);
 			}
@@ -184,7 +184,8 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 		}
 	}
 
-	public void stop() {
+	@Override
+    public void end() {
 
 		listeners.forEach( (listener) -> {listener.update(Property.STATUS, Status.TERMINATED);});
 		if (playa!= null) {
@@ -194,29 +195,34 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 		clicktrack = false;
 	}
 
-	public void play() throws IOException, InvalidMidiDataException, MidiUnavailableException {
-		if (isRunning())
-			stop();
-		else if (playa != null && !clicktrack) {
-			listeners.remove(playa);
-			playa.close();
-		}
+	@Override
+    public void begin() {
+	    try {
+    		if (isRunning())
+    			end();
+    		else if (playa != null && !clicktrack) {
+    			listeners.remove(playa);
+    			playa.close();
+    		}
 
-		if (!clicktrack)
-			playa = (midiFile == null) ?
-					new TickTock(this) :
-					new MidiPlayer(midiFile, Sequencer.LOOP_CONTINUOUSLY, new MidiReceiver(midi));
-		addListener(playa);
-		listeners.forEach( listener -> {listener.update(Property.MEASURE, measure);});
-		listeners.forEach( listener -> {listener.update(Property.VOLUME, gain);});
-		listeners.forEach( listener -> {listener.update(Property.TEMPO, tempo * 1f);});
-		listeners.forEach( listener -> {listener.update(Property.STATUS, Status.ACTIVE);});
-		clicktrack = false;
+    		if (!clicktrack)
+    			playa = (midiFile == null) ?
+    					new TickTock(this) :
+    					new MidiPlayer(midiFile, Sequencer.LOOP_CONTINUOUSLY, new MidiReceiver(midi));
+    		addListener(playa);
+    		listeners.forEach( listener -> {listener.update(Property.MEASURE, measure);});
+    		listeners.forEach( listener -> {listener.update(Property.VOLUME, gain);});
+    		listeners.forEach( listener -> {listener.update(Property.TEMPO, tempo * 1f);});
+    		listeners.forEach( listener -> {listener.update(Property.STATUS, Status.ACTIVE);});
+    		clicktrack = false;
+	    } catch (IOException| InvalidMidiDataException| MidiUnavailableException e) {
+	        Console.warn(e);
+	    }
 	}
 
 	/** store a ticktock object configured and ready to begin transport */
 	void setPlayer(Player ticktock) {
-		if (isRunning()) stop();
+		if (isRunning()) end();
 		playa = ticktock;
 		listeners.add(playa);
 		clicktrack = true;
@@ -246,17 +252,13 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 	public void setMeasure(int bpb) {
 		if (bpb < 2 || bpb > 30) return;
 		boolean wasRunning = isRunning();
-		if (isRunning()) stop();
+		if (isRunning()) end();
 
 		measure = bpb;
 		if (playa != null) playa.close();
 		midiFile = null;
 		if (wasRunning)
-			try {
-				play();
-			} catch (IOException | InvalidMidiDataException | MidiUnavailableException e) {
-				log.error(e.getMessage(), e);
-			}
+		    begin();
 	}
 
 	@Override
