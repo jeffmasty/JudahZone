@@ -1,4 +1,4 @@
-package net.judah.beatbox;
+package net.judah.notebox;
 /** Inspiration: https://github.com/void-false/sequencer */
 
 import java.awt.BorderLayout;
@@ -9,7 +9,6 @@ import java.util.ArrayList;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
@@ -18,17 +17,17 @@ import net.judah.JudahClock;
 import net.judah.api.TimeListener;
 import net.judah.effects.gui.Slider;
 import net.judah.util.BeatLabel;
-import net.judah.util.Constants.Pastels;
 import net.judah.util.CurrentBeat;
+import net.judah.util.Constants.Pastels;
 
 /** A Drum Grid Sequencer Table */
-public class BeatBoxGui extends JPanel implements TimeListener, Pastels {
+public class NoteBoxGui extends JPanel implements TimeListener, Pastels {
 
 	private final JudahClock clock = JudahClock.getInstance();
-	private final BeatBox tracks;
+	private final NoteBox tracks;
 	private CurrentBeat current;
 
-	public BeatBoxGui(BeatBox box) {
+	public NoteBoxGui(NoteBox box) {
 	    this.tracks = box;
 	    setLayout(new BorderLayout());
 	    initialize();
@@ -37,7 +36,7 @@ public class BeatBoxGui extends JPanel implements TimeListener, Pastels {
 
 	public void initialize() {
 	    removeAll();
-        BeatButtons buttonBox = new BeatButtons(tracks);
+        NoteButtons buttonBox = new NoteButtons(tracks);
 	    int count = tracks.size();
 
         JPanel nameBox = new JPanel();
@@ -49,33 +48,35 @@ public class BeatBoxGui extends JPanel implements TimeListener, Pastels {
         Dimension nombre = new Dimension(128, 25);
         Dimension rigid = new Dimension(5, 1);
         for(int i = 0; i < count; i++) {
-            final DrumTrack drum = tracks.get(i);
+            final NoteTrack note = tracks.get(i);
+
             Slider slider = new Slider(e -> {
-                drum.setVelocity(((Slider)e.getSource()).getValue() * .01f);});
-            slider.setValue((int)(drum.getVelocity() * 100));
+                note.setVelocity(((Slider)e.getSource()).getValue() * .01f);});
+            slider.setValue((int)(note.getVelocity() * 100));
             slider.setSize(slide);
             slider.setMaximumSize(slide);
             slider.setSize(slide);
             slider.setPreferredSize(slide);
-            JComboBox<GMDrum> combo = new JComboBox<>(GMDrum.values());
-            combo.setSize(nombre);
-            combo.setMaximumSize(nombre);
-            combo.setSelectedItem(drum.getDrum());
-            combo.addActionListener(e -> { drum.setDrum((GMDrum)combo.getSelectedItem()); });
+
+            JLabel noteLbl = new JLabel("" + note.getMidi());
+            noteLbl.setSize(nombre);
+            noteLbl.setMaximumSize(nombre);
+            // combo.setSelectedItem(note);
+            // combo.addActionListener(e -> { note.setMidi(combo.getSelectedIndex()); });
 
             JPanel pnl = new JPanel();
             pnl.setLayout(new BoxLayout(pnl, BoxLayout.X_AXIS));
             pnl.add(Box.createRigidArea(rigid));
             pnl.add(slider);
             pnl.add(Box.createRigidArea(rigid));
-            pnl.add(combo);
+            pnl.add(noteLbl);
 
             JToggleButton mute = new JToggleButton("▷");
-            mute.setBackground(drum.isMute() ? RED : GREEN);
-            mute.setSelected(drum.isMute());
+            mute.setBackground(note.isMute() ? RED : GREEN);
+            mute.setSelected(note.isMute());
             mute.addActionListener(e -> {
-                drum.setMute(mute.isSelected());
-                mute.setBackground(drum.isMute() ? RED : GREEN);
+                note.setMute(mute.isSelected());
+                mute.setBackground(note.isMute() ? RED : GREEN);
             });
 
             pnl.add(mute);
@@ -91,7 +92,7 @@ public class BeatBoxGui extends JPanel implements TimeListener, Pastels {
             grid.add(l);
 
         for (int y = 0; y < count; y++) {
-            DrumTrack track = tracks.get(y);
+            NoteTrack track = tracks.get(y);
             track.getTicks().clear();
             for(int x = 0; x < clock.getSteps(); x++) {
                 JToggleButton btn = new JToggleButton();
@@ -112,18 +113,18 @@ public class BeatBoxGui extends JPanel implements TimeListener, Pastels {
 
 	}
 
-    private void clicked(JToggleButton btn, DrumTrack track) {
+    private void clicked(JToggleButton btn, NoteTrack track) {
         if (btn.isSelected()) {
             for (int step = 0; step < track.getTicks().size(); step++)
                 if (track.getTicks().get(step).equals(btn)) {
-                    track.getBeats().add(new Beat(step));
+                    track.getBeats().add(new Note(step));
                     if (step % clock.getSubdivision() == 0)
                         btn.setBackground(Color.LIGHT_GRAY);
                 }
         }
         else {
             int step = track.getTicks().indexOf(btn);
-            for (Beat b : new ArrayList<>(track.getBeats()))
+            for (Note b : new ArrayList<>(track.getBeats()))
                 if (b.getStep() == step)
                     track.getBeats().remove(b);
             if (step % clock.getSubdivision() == 0)

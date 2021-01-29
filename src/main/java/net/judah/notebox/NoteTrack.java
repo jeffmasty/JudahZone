@@ -1,4 +1,4 @@
-package net.judah.beatbox;
+package net.judah.notebox;
 
 import java.util.ArrayList;
 
@@ -10,42 +10,41 @@ import lombok.Data;
 import net.judah.util.Constants;
 
 @Data
-public class DrumTrack {
+public class NoteTrack {
 
-    private GMDrum drum;
-
+    private int midi;
 
     private float velocity = 1;
     private boolean mute = false;
-    private final ArrayList<Beat> beats = new ArrayList<>();
+    private final ArrayList<Note> beats = new ArrayList<>();
 
     @JsonIgnore /* gui element */
     final transient ArrayList<JToggleButton> ticks = new ArrayList<>();
 
-    public DrumTrack(GMDrum drum) {
-        this.drum = drum;
+    public NoteTrack(int midi) {
+        this.midi = midi;
     }
 
-    public DrumTrack(String saved) {
+    public NoteTrack(String saved) {
         if (saved.startsWith("MUTE")) {
             mute = true;
             saved = saved.replace("MUTE", "");
         }
         String[] split = saved.split("[/]");
         String[] track = split[0].split("[,]");
-        this.drum = GMDrum.values()[Integer.parseInt(track[0])];
+        this.midi = Integer.parseInt(track[0]);
         this.velocity = Float.parseFloat(track[1]);
         if (split.length > 1) {
             String[] steps = split[1].split("[,]");
             for (String step : steps)
-                beats.add((new Beat(Integer.parseInt(step))));
+                beats.add((new Note(Integer.parseInt(step))));
         }
     }
 
     public String forSave() {
         StringBuffer sb = new StringBuffer("");
         if (mute) sb.append("MUTE");
-        sb.append(drum.ordinal()).append(",");
+        sb.append(midi).append(",");
         sb.append(velocity);
         sb.append("/");
         int last = beats.size() -1;
@@ -57,7 +56,7 @@ public class DrumTrack {
     }
 
     public boolean hasStep(int x) {
-        for (Beat b : beats)
+        for (Note b : beats)
             if (b.step == x) return true;
         return false;
     }

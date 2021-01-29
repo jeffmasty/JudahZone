@@ -9,7 +9,7 @@ import net.judah.util.ConsoleParticipant;
 public class FluidConsole implements ConsoleParticipant {
 	public static final String PREFIX = "fluid";
 	private final FluidSynth fluid;
-	
+
 	public FluidConsole(FluidSynth fluidSynth) {
 		this.fluid = fluidSynth;
 	}
@@ -23,7 +23,7 @@ public class FluidConsole implements ConsoleParticipant {
 		if (input == null || input.length < 2 || !PREFIX.equals(input[0])) return;
 		String text = input [1];
 		if (text.equals("help") && input.length == 2) {
-			doHelp(); 
+			doHelp();
 			return;
 		}
 		if (text.equals("sync"))
@@ -36,13 +36,13 @@ public class FluidConsole implements ConsoleParticipant {
 			}
 		}
 		if (text.equals("inst") || text.equals("instruments")) {
-			Console.addText("instruments: " + fluid.getInstruments().size() + NL);
-			for (FluidInstrument instrument : fluid.getInstruments()) {
+			Console.addText("instruments: " + FluidSynth.getInstruments().size() + NL);
+			for (FluidInstrument instrument : FluidSynth.getInstruments()) {
 				Console.addText(instrument.toString() + NL);
 			}
 		}
 		if (text.equals("current")) {
-			Console.addText("current: " + fluid.getInstruments().get(fluid.getChannels().getCurrentPreset(0)));
+			Console.addText("current: " + FluidSynth.getInstruments().get(fluid.getChannels().getCurrentPreset(0)));
 		}
 		if (text.equals("mute")) {
 			fluid.mute();
@@ -59,7 +59,7 @@ public class FluidConsole implements ConsoleParticipant {
 			if (input.length > 3) text = text + " " + input[3];
 			fluid.sendCommand(text);
 		}
-		
+
 	}
 
 	private void doHelp() {
@@ -74,5 +74,5 @@ public class FluidConsole implements ConsoleParticipant {
 
 
 
-	
+
 }

@@ -51,7 +51,8 @@ public class FluidSynth implements Service {
 
 	@Getter private final FluidConsole console;
 	@Getter private final FluidReverb reverb;
-	@Getter private Instruments instruments = new Instruments();
+
+	@Getter private static Instruments instruments = new Instruments();
 	@Getter private Channels channels = new Channels();
 
 	private final Command progChange, instUp, instDown, drumBank, direct;
@@ -408,6 +409,7 @@ public class FluidSynth implements Service {
 				return roll.get(index).index;
 			}
 		}
+
 	}
 
 	@Override

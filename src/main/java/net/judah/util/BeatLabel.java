@@ -1,4 +1,4 @@
-package net.judah.beatbox;
+package net.judah.util;
 
 import java.awt.Color;
 
@@ -7,7 +7,7 @@ import javax.swing.JLabel;
 
 public class BeatLabel extends JLabel {
 
-    BeatLabel(String s) {
+    public BeatLabel(String s) {
         super(s);
         setBorder(BorderFactory.createLineBorder(Color.GRAY));
         setAlignmentX(0.5f);

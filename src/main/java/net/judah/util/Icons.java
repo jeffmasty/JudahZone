@@ -7,8 +7,6 @@ import lombok.Getter;
 /* https://www.elharrakfonts.com/2019/04/font-bottons-music-pro.html */
 public class Icons {
 
-    private static ClassLoader loader = Icons.class.getClassLoader();
-
     public static final Pair MUTE = new Pair("Mute");
     public static final Pair MUTE_RECORD = new Pair("MuteRecord");
     public static final Pair PLAY = new Pair("Play");
@@ -17,7 +15,7 @@ public class Icons {
     // public static final Pair RECORDING = new Pair("Recording");
 
     public static ImageIcon load(String filename) {
-        return new ImageIcon(loader.getResource("icons/" + filename));
+        return new ImageIcon("/home/judah/git/JudahZone/resources/icons/" + filename);
     }
 
     public static class Pair {
@@ -27,8 +25,8 @@ public class Icons {
         @Getter private final String name;
 
         public Pair(String name) {
-            active = new ImageIcon(loader.getResource("icons/" + name + "Active.png"));
-            inactive = new ImageIcon(loader.getResource("icons/" + name + "Inactive.png"));
+            active = new ImageIcon("/home/judah/git/JudahZone/resources/icons/" + name + "Active.png");
+            inactive = new ImageIcon("/home/judah/git/JudahZone/resources/icons/" + name + "Inactive.png");
             this.name = name;
         }
 

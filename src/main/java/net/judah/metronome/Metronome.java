@@ -241,7 +241,6 @@ public class Metronome implements Service, TimeProvider, TimeListener {
     	    new Thread() { // off RT thread
     	        @Override public void run() {
     	            listeners.forEach( listener -> {
-    	                Console.info("updating " + listener + " " + tempo);
     	                    listener.update(Property.TEMPO, tempo);
     	    });}}.start();
 	    }

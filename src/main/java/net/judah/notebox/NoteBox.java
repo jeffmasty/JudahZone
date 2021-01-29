@@ -1,4 +1,4 @@
-package net.judah.beatbox;
+package net.judah.notebox;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -14,26 +14,35 @@ import lombok.Setter;
 import net.judah.JudahClock;
 import net.judah.JudahZone;
 import net.judah.api.Midi;
+import net.judah.fluid.FluidInstrument;
+import net.judah.fluid.FluidSynth;
 import net.judah.midi.JudahMidi;
 import net.judah.settings.Channels;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 
 
-public class BeatBox extends ArrayList<DrumTrack> {
-    public static final File FOLDER = new File(Constants.ROOT, "patterns");
+public class NoteBox extends ArrayList<NoteTrack> {
+    public static final File FOLDER = new File(Constants.ROOT, "sequences");
 
     @Getter private static final ConcurrentLinkedQueue<ShortMessage>
         queue = new ConcurrentLinkedQueue<>();
 
     private final JudahClock clock;
     @Setter @Getter private File file;
-    @Getter GMKit kit = GMKit.Standard1;
-    @Setter @Getter private static JackPort midiOut = JudahMidi.getInstance().getAuxOut3();
 
-    BeatBoxGui gui;
+    @Getter int channel = 1;
+    @Getter Scale scale = Scale.Major;
+    @Getter Key key = Key.C;
+    int root = 48;
 
-    public BeatBox() {
+    @Getter FluidInstrument instrument = FluidSynth.getInstruments().get(0);
+
+    @Setter @Getter private static JackPort midiOut = JudahMidi.getInstance().getSynthOut();
+
+    NoteBoxGui gui;
+
+    public NoteBox() {
         clock = JudahClock.getInstance();
         assert clock != null;
         initialize();
@@ -42,21 +51,21 @@ public class BeatBox extends ArrayList<DrumTrack> {
     public void initialize() {
         file = null;
         clear();
-        for (GMDrum drum : GMDrum.STANDARD_KIT)
-            add(new DrumTrack(drum));
+        for (int i = 20; i >= 0; i--)
+            add(new NoteTrack(i));
         if (gui != null) gui.initialize();
     }
 
     public void process(int step) {
         try {
-            for (DrumTrack track : this) {
+            for (NoteTrack track : this) {
                 if (track.isMute()) continue;
-                for (Beat b : track.getBeats())
+                for (Note b : track.getBeats())
                     if (b.step == step) {
                         int volume = Math.round(
                                 track.getVelocity() * b.getVelocity() * 127f);
                         Midi msg = Midi.create(
-                                Midi.NOTE_ON, 9, track.getDrum().getMidi(), volume);
+                                Midi.NOTE_ON, channel, track.getMidi() + root, volume);
                         queue.add(msg);
                     }
             }
@@ -65,14 +74,14 @@ public class BeatBox extends ArrayList<DrumTrack> {
         }
     }
 
-    public void setKit(GMKit gmKit) {
-        this.kit = gmKit;
-        getQueue().add(Midi.create(Midi.PROGRAM_CHANGE, 9, gmKit.progChange, 0));
+    public void setInstrument(FluidInstrument instrument) {
+        this.instrument = instrument;
+        getQueue().add(Midi.create(Midi.PROGRAM_CHANGE, 9, instrument.index, 0));
     }
 
-    public BeatBoxGui getGui() {
+    public NoteBoxGui getGui() {
         if (gui == null)
-            gui = new BeatBoxGui(this);
+            gui = new NoteBoxGui(this);
         return gui;
     }
 
@@ -89,15 +98,16 @@ public class BeatBox extends ArrayList<DrumTrack> {
             clear();
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
+                //Console.info(new String(line));
                 if (first) {
                     String[] split = line.split("[/]");
-                    setKit(GMKit.valueOf(split[0]));
+                    setInstrument(FluidSynth.getInstruments().get(Integer.parseInt(split[0])));
                     clock.setSteps(Integer.parseInt(split[1]));
                     clock.setSubdivision(Integer.parseInt(split[2]));
                     first = false;
                 }
                 else
-                    add(new DrumTrack(line));
+                    add(new NoteTrack(line));
             }
             this.file = file;
         } catch (Throwable t) {
@@ -106,17 +116,17 @@ public class BeatBox extends ArrayList<DrumTrack> {
             if (scanner != null) scanner.close();
         }
         for (String saved: raw)
-            add(new DrumTrack(saved));
+            add(new NoteTrack(saved));
         if (gui != null) gui.initialize();
-        Console.info("Loaded beatbox " + file.getName());
+        Console.info("Loaded notebox " + file.getName());
         return true;
     }
 
     public void write(File f) {
-        StringBuffer raw = new StringBuffer(getKit().name());
-        raw.append("/").append(clock.getSteps());
+        StringBuffer raw = new StringBuffer();
+        raw.append(instrument.index).append("/").append(clock.getSteps());
         raw.append("/").append(clock.getSubdivision()).append(Constants.NL);
-        for (DrumTrack t : this)
+        for (NoteTrack t : this)
             raw.append(t.forSave());
         try {
             Constants.writeToFile(f, raw.toString());

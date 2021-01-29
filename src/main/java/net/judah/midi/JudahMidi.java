@@ -27,6 +27,7 @@ import net.judah.api.Service;
 import net.judah.api.Status;
 import net.judah.beatbox.BeatBox;
 import net.judah.fluid.FluidSynth;
+import net.judah.notebox.NoteBox;
 import net.judah.plugin.BeatBuddy;
 import net.judah.plugin.MPK;
 import net.judah.plugin.Pedal;
@@ -49,7 +50,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
         return instance.scheduler.getCurrent();
     }
 
-    private ArrayList<JackPort> inPorts = new ArrayList<>();  // Keyboard, Pedal, MidiIn
+    @Getter private ArrayList<JackPort> inPorts = new ArrayList<>();  // Keyboard, Pedal, MidiIn
     @Getter private JackPort keyboard;
     @Getter private JackPort pedal;
     @Getter private JackPort drumsIn;
@@ -57,7 +58,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
     @Getter private JackPort auxIn2;
     @Getter private JackPort auxIn3;
 
-    private ArrayList<JackPort> outPorts = new ArrayList<>(); // Synth, Effects, MidiOut
+    @Getter private ArrayList<JackPort> outPorts = new ArrayList<>(); // Synth, Effects, MidiOut
     @Getter private JackPort synthOut;
     @Getter private JackPort drumsOut;
     @Getter private JackPort auxOut1;
@@ -221,9 +222,17 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 
             poll = BeatBox.getQueue().poll();
             while (poll != null) {
-                JackMidi.eventWrite(auxOut3, 0, poll.getMessage(), poll.getLength());
+                JackMidi.eventWrite(BeatBox.getMidiOut(),
+                        0, poll.getMessage(), poll.getLength());
                 poll = clock.getQueue().poll();
             }
+            poll = NoteBox.getQueue().poll();
+            while (poll != null) {
+                JackMidi.eventWrite(NoteBox.getMidiOut(),
+                        0, poll.getMessage(), poll.getLength());
+                poll = clock.getQueue().poll();
+            }
+
 
             poll = clock.getQueue().poll();
             while (poll != null) {
@@ -293,6 +302,16 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
     public static void queueSynth(Midi msg) {
 
 
+    }
+
+    public static JackPort getByName(String name) {
+        for (JackPort p : instance.outPorts)
+            if (p.getShortName().equals(name))
+                return p;
+        for (JackPort p : instance.inPorts)
+            if (p.getShortName().equals(name))
+                return p;
+        return null;
     }
 
 

@@ -99,7 +99,7 @@ public abstract class ChannelGui extends JPanel {
                 MainFrame.get().getMixer().setFocus(channel);
         });
 
-        Constants.Gui.attachKeyListener(this, MenuBar.getInstance());
+        Constants.attachKeyListener(this, MenuBar.getInstance());
 
     }
 

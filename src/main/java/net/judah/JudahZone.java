@@ -70,7 +70,14 @@ public class JudahZone extends BasicClient {
 
     public static void main(String[] args) {
         try {
-            new JudahZone();
+            Thread t = new Thread(() -> {
+                try {
+                    new JudahZone();
+                } catch (Throwable ex) {
+                    log.error(ex.getMessage(), ex);
+                }});
+            t.setPriority(2);
+            t.start();
             while (true)
                 RTLogger.poll();
         } catch (Throwable ex) {
@@ -124,20 +131,21 @@ public class JudahZone extends BasicClient {
 
         try { // Initialize the Carla lv2 plugin host (now that our ports are created)
             carla = new Carla(true);
-            Thread.sleep(950);
+            Thread.sleep(800);
             services.add(carla);
             plugins.addAll(carla.getPlugins());
-
+            masterTrack = new MasterTrack(outL, outR, effectsL, effectsR, carla.getReverb());
+            masterTrack.setIcon(Icons.load("Speakers.png"));
+            looper.init(carla);
         } catch (Exception e) { throw new JackException(e); }
-        masterTrack = new MasterTrack(outL, outR, effectsL, effectsR, carla.getReverb());
-        masterTrack.setIcon(Icons.load("Speakers.png"));
-
-        looper.init(carla);
-
     }
 
     @Override
     protected void makeConnections() throws JackException {
+        if (masterTrack == null) {
+            Console.info("Initialization failed.");
+            return;
+        }
         // inputs
         for (LineIn ch : channels) {
             if (ch.getLeftSource() != null && ch.getLeftConnection() != null)
@@ -162,15 +170,19 @@ public class JudahZone extends BasicClient {
 
         drummachine.setVolume(55);
 
-        MixerPane.getInstance().setFocus(masterTrack);
         initialized = true;
         /////////////////////////////////////////////////////////////////////////
         //                    now the system is live                           //
         /////////////////////////////////////////////////////////////////////////
         // Open a default song
         Constants.timer(100, () ->{
-            File file = new File("/home/judah/git/JudahZone/resources/Songs/BeatBox");
-            try { new Sequencer(file);
+            MixerPane.getInstance().setFocus(masterTrack);
+            File file = new File(Constants.ROOT, "Songs/BeatBox");
+            try {
+                new Sequencer(file);
+                MainFrame.get().noteBox();
+                JudahClock.getInstance().getBeatBox().load(
+                    new File(Constants.ROOT, "patterns/hihats"));
             } catch (Exception e) {
                 Console.warn(e.getMessage() + " " + file.getAbsolutePath(), e); }
         });

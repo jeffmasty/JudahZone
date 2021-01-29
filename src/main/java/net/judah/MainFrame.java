@@ -23,7 +23,8 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
-import net.judah.beatbox.JudahClock;
+import net.judah.beatbox.BeatBoxGui;
+import net.judah.notebox.NoteBoxGui;
 import net.judah.sequencer.Sequencer;
 import net.judah.song.SheetMusic;
 import net.judah.util.Console;
@@ -63,7 +64,7 @@ public class MainFrame extends JFrame {
         prefix = name;
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//        setJMenuBar(MenuBar.getInstance());
+        // setJMenuBar(MenuBar.getInstance());
 
         content = (JPanel)getContentPane();
         content.setLayout(null);
@@ -72,10 +73,8 @@ public class MainFrame extends JFrame {
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 
         songPanel = new JDesktopPane();
-
         songPanel.setLayout(null);
         songPanel.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
-
 
         mixer = new MixerPane();
         MenuBar menu = MenuBar.getInstance();
@@ -108,7 +107,14 @@ public class MainFrame extends JFrame {
     }
 
     public void beatBox() {
-        tabs.add("BeatBox", JudahClock.getInstance().getGui());
+        BeatBoxGui gui = JudahClock.getInstance().getBeatBox().getGui();
+        tabs.add("BeatBox", gui);
+        tabs.setSelectedComponent(gui);
+    }
+    public void noteBox() {
+        NoteBoxGui gui = JudahClock.getInstance().getNoteBox().getGui();
+        tabs.add("NoteBox", gui);
+        tabs.setSelectedComponent(gui);
     }
 
     public void closeTab(SongPane c) {

@@ -1,19 +1,20 @@
-package net.judah.beatbox;
+package net.judah.util;
 
 import java.util.ArrayList;
 
 import lombok.RequiredArgsConstructor;
+import net.judah.JudahClock;
 
 @RequiredArgsConstructor
 public class CurrentBeat {
 
-    private final int steps;
-    private final int stepsPerBeat;
-    ArrayList<BeatLabel> all = new ArrayList<>();
-
-    BeatLabel previous;
+    private final JudahClock clock;
+    private ArrayList<BeatLabel> all = new ArrayList<>();
+    private BeatLabel previous;
 
     public ArrayList<BeatLabel> getLabels() {
+        int steps = clock.getSteps();
+        int stepsPerBeat = clock.getSubdivision();
         int beat = 1;
         for (int x = 0; x < steps; x++)
             if (x % stepsPerBeat == 0)

@@ -26,7 +26,7 @@ public class MidiEditor implements TableCellEditor {
 	@Override
 	public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
 		dialog = new EditorDialog("Midi");
-		Object o = table.getModel().getValueAt(row, LinkTable.COMMAND_COL);
+		// Object o = table.getModel().getValueAt(row, LinkTable.COMMAND_COL);
 
 		midiCard = new MidiForm((Midi)value);
 		Component c = table.getCellRenderer(row, column).getTableCellRendererComponent(

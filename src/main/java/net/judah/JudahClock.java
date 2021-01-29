@@ -1,14 +1,13 @@
-package net.judah.beatbox;
+package net.judah;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Scanner;
 
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeProvider;
+import net.judah.beatbox.BeatBox;
+import net.judah.notebox.NoteBox;
 import net.judah.sequencer.Sequencer;
 import net.judah.util.Console;
 import net.judah.util.Constants;
@@ -16,10 +15,12 @@ import net.judah.util.Constants;
 public class JudahClock implements TimeProvider, Runnable, TimeListener {
 
     @Getter private static JudahClock instance = new JudahClock();
-	@Getter final BeatBox beatBox = new BeatBox();
 
-	private final ArrayList<TimeListener> listeners = new ArrayList<>();
+    private final ArrayList<TimeListener> listeners = new ArrayList<>();
 
+    @Setter @Getter private BeatBox beatBox;
+    @Setter @Getter private NoteBox noteBox;
+    @Getter @Setter private boolean active;
 	@Getter private float tempo = 80f;
 	@Setter @Getter private int measure = 4;
 	@Setter @Getter private int subdivision = 4;
@@ -29,25 +30,18 @@ public class JudahClock implements TimeProvider, Runnable, TimeListener {
 
 	/** current step */
 	@Setter @Getter private int step = 0;
-	@Setter @Getter private File file;
-
-	private BeatBoxGui gui;
-	@Getter @Setter private boolean active;
-
 	/** jack frames since transport start or frames between pulses */
 	@Getter private long lastPulse;
 
 	private JudahClock() {
-	}
-
-	public BeatBoxGui getGui() {
-	    if (gui == null) gui = new BeatBoxGui(this);
-	    return gui;
+	    instance = this;
+	    beatBox = new BeatBox();
+	    noteBox = new NoteBox();
 	}
 
 	@Override public void run() {
-
-        Console.info("beatbox start");
+	    String clazz = JudahClock.class.getSimpleName();
+        Console.info(clazz + " start");
 	    while (active) {
 
 	        // run the current beat
@@ -59,7 +53,7 @@ public class JudahClock implements TimeProvider, Runnable, TimeListener {
 
 	        listeners.forEach(listener -> {listener.update(Property.STEP, step);});
 	        beatBox.process(step);
-
+	        noteBox.process(step);
 	        step++;
 	        if (step == steps) {
 	            step = 0;
@@ -68,7 +62,7 @@ public class JudahClock implements TimeProvider, Runnable, TimeListener {
 	        long period = Constants.millisPerBeat(tempo * subdivision);
 	        Constants.sleep(period);
 	    }
-
+	    Console.info(clazz + " end");
 	}
 
 	@Override
@@ -82,7 +76,6 @@ public class JudahClock implements TimeProvider, Runnable, TimeListener {
 	@Override
     public void end() {
 	    active = false;
-		Console.info("beatbox end");
 	}
 
 	@Override
@@ -111,52 +104,6 @@ public class JudahClock implements TimeProvider, Runnable, TimeListener {
 	        setTempo((float)value);
 	    }
 	}
-
-    public void parse(File file) {
-        if (file == null || !file.isFile()) {
-            Console.info("no pattern file " + file);
-            return;
-        }
-        ArrayList<String> raw = new ArrayList<>();
-        Scanner scanner = null;
-        try {
-            boolean first = true;
-            scanner = new Scanner(file);
-            beatBox.clear();
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-                if (first) {
-                    String[] split = line.split("[/]");
-                    beatBox.kit = GMKit.valueOf(split[0]);
-                    steps = Integer.parseInt(split[1]);
-                    subdivision = Integer.parseInt(split[2]);
-                    first = false;
-                }
-                else
-                    beatBox.add(new DrumTrack(line));
-            }
-            this.file = file;
-        } catch (FileNotFoundException ex) {
-            Console.warn(ex); return;
-        } finally {
-            if (scanner != null) scanner.close();
-        }
-        for (String saved: raw)
-            beatBox.add(new DrumTrack(saved));
-        if (gui != null) gui.initialize();
-    }
-
-    public void write(File f) {
-        StringBuffer raw = new StringBuffer(beatBox.getKit().name());
-        raw.append("/").append(steps);
-        raw.append("/").append(subdivision).append(Constants.NL);
-        for (DrumTrack t : beatBox)
-            raw.append(t.forSave());
-        try {
-            Constants.writeToFile(f, raw.toString());
-        } catch (Exception e) { Console.warn(e); }
-    }
-
 
 }
 

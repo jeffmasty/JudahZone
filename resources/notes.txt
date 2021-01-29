@@ -1,4 +1,5 @@
 TODO:
+BeatBox pulse on JackFrame
 scales, melodic step sequencer, arpegiator
 Calf Fluid Synth reverb
 ENOBUF

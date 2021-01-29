@@ -107,8 +107,9 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
     }
 
     //** output to console */
-    public static void addText(String s) {
-        log.debug(s);
+    public static void addText(String in) {
+        log.debug(in);
+        String s = in == null ? null : new String(in);
         if (instance == null || instance.textarea == null) {
             return;
         }

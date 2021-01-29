@@ -95,29 +95,35 @@ public class Constants {
 	public static final int STEREO = 2;
 	public static final int MONO = 1;
 
-    public static class Gui {
-    	public static final int STD_HEIGHT = 18;
-    	public static final Insets BTN_MARGIN = new Insets(1,1,1,1);
-    	public static final Insets ZERO_MARGIN = new Insets(0,0,0,0);
-    	public static final Font BOLD = new Font("Arial", Font.BOLD, 11);
-    	public static final Font FONT13 = new Font("Arial", Font.PLAIN, 13);
-    	public static final Font FONT12 = new Font("Arial", Font.PLAIN, 12);
-    	public static final Font FONT11 = new Font("Arial", Font.PLAIN, 11);
-    	public static final Font FONT10 = new Font("Arial", Font.PLAIN, 10);
-    	public static final Font FONT9 = new Font("Arial", Font.PLAIN, 9);
-    	public static final Border GRAY1 = new LineBorder(Color.GRAY, 1);
-    	public static Dimension SLIDER_SZ = new Dimension(86, 40);
-		public static void attachKeyListener(Container p, KeyListener l) {
-			for(Component c : p.getComponents()) {
-				c.addKeyListener(l);
-				if (c instanceof Container)
-					attachKeyListener((Container)c, l);
-			}
-		}
+    public static interface Gui {
+    	int STD_HEIGHT = 18;
+    	Insets BTN_MARGIN = new Insets(1,1,1,1);
+    	Insets ZERO_MARGIN = new Insets(0,0,0,0);
+    	Font BOLD = new Font("Arial", Font.BOLD, 11);
+    	Font FONT13 = new Font("Arial", Font.PLAIN, 13);
+    	Font FONT12 = new Font("Arial", Font.PLAIN, 12);
+    	Font FONT11 = new Font("Arial", Font.PLAIN, 11);
+    	Font FONT10 = new Font("Arial", Font.PLAIN, 10);
+    	Border GRAY1 = new LineBorder(Color.GRAY, 1);
+    	Dimension SLIDER_SZ = new Dimension(86, 40);
+    	Font FONT9 = new Font("Arial", Font.PLAIN, 9);
+    }
+
+    public static void attachKeyListener(Container p, KeyListener l) {
+        for(Component c : p.getComponents()) {
+            c.addKeyListener(l);
+            if (c instanceof Container)
+                attachKeyListener((Container)c, l);
+        }
+    }
+
+    public interface Pastels {
+        Color RED = new Color(0xff6e8d);
+        Color GREEN = new Color(0x90da6a);
+        Color BLUE = new Color(0xa4b9cb);
     }
 
 	public static final Midi BASSDRUM;
-
 	static {
 		Midi temp = null;
 		try { temp = new Midi(Midi.NOTE_ON, 9, 36, 100);
@@ -133,6 +139,10 @@ public class Constants {
     	float result = data2/127f;
     	assert result <= 1f : data2 + " vs. " + (data2/127f);
     	return result;
+    }
+
+    public static float bpmPerBeat(long msec) {
+        return 60000 / msec;
     }
 
 	public static long millisPerBeat(float beatsPerMinute) {
