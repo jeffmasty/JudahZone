@@ -43,7 +43,7 @@ public class MenuBar extends JMenuBar implements KeyListener {
     JMenuItem saveAs = new JMenuItem("Save As...");
     JMenuItem close = new JMenuItem("Close Song");
     JMenuItem exit = new JMenuItem("Exit");
-    JMenuItem metronome = new JMenuItem("Metronome");
+    JMenuItem beatbox = new JMenuItem("BeatBox");
 
 	public MenuBar() {
 
@@ -58,8 +58,8 @@ public class MenuBar extends JMenuBar implements KeyListener {
         fileMenu.add(saveAs);
         close.addActionListener( (event) -> MainFrame.get().closeTab(Sequencer.getCurrent().getPage()));
         fileMenu.add(close);
-        metronome.addActionListener( (event) -> JudahZone.getMetronome().openGui());
-        fileMenu.add(metronome);
+        beatbox.addActionListener( (event) -> MainFrame.get().beatBox();});
+        fileMenu.add(beatbox);
 
 		exit.setMnemonic(KeyEvent.VK_E);
         exit.setToolTipText("Exit application");

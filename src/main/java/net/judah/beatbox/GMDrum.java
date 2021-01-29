@@ -74,5 +74,11 @@ public enum GMDrum {
 	    return display;
 	}
 
+    public static final GMDrum[] STANDARD_KIT = new GMDrum[] {
+            BassDrum, AcousticSnare, SideStick, HandClap,
+            PedalHiHat, ClosedHiHat, OpenHiHat, SplashCymbal,
+            HighTom, LowMidTom, Shaker, HiWoodBlock,
+            HiBongo, LowBongo, OpenHiConga, HighTimbale};
+
 }
 

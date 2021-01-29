@@ -71,7 +71,6 @@ public class MainFrame extends JFrame {
         tabs = new JTabbedPane();
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 
-        tabs.add("BeatBox", JudahClock.getInstance().getGui());
         songPanel = new JDesktopPane();
 
         songPanel.setLayout(null);
@@ -106,10 +105,11 @@ public class MainFrame extends JFrame {
         mixer.setBounds(WIDTH_SONG, 0, WIDTH_MIXER, HEIGHT_FRAME);
         invalidate();
         setVisible(true);
-
-
     }
 
+    public void beatBox() {
+        tabs.add("BeatBox", JudahClock.getInstance().getGui());
+    }
 
     public void closeTab(SongPane c) {
         c.getSequencer().stop();

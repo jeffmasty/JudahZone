@@ -1,7 +1,6 @@
 package net.judah.beatbox;
 
-import static net.judah.beatbox.GMDrum.*;
-
+import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -10,19 +9,17 @@ import javax.sound.midi.ShortMessage;
 import lombok.Getter;
 import net.judah.api.Midi;
 import net.judah.util.Console;
+import net.judah.util.Constants;
+
 
 public class BeatBox extends ArrayList<DrumTrack> {
 
-    private GMKit kit = GMKit.Standard1;
+    @Getter GMKit kit = GMKit.Standard1;
 
-    @Getter private static final GMDrum[] STANDARD_KIT = new GMDrum[] {
-            BassDrum, AcousticSnare, SideStick, HandClap,
-            PedalHiHat, ClosedHiHat, OpenHiHat, SplashCymbal,
-            HighTom, LowMidTom, Shaker, Cabasa,
-            HiBongo, LowBongo, OpenHiConga, HighTimbale,
-            HiWoodBlock, OpenCuica, RideCymbal2, Vibraslap };
+    @Getter private static final ConcurrentLinkedQueue<ShortMessage>
+        queue = new ConcurrentLinkedQueue<>();
 
-    @Getter private static final ConcurrentLinkedQueue<ShortMessage> queue = new ConcurrentLinkedQueue<>();
+    public static final File FOLDER = new File(Constants.ROOT, "patterns");
 
     public BeatBox() {
         initialize();
@@ -30,7 +27,7 @@ public class BeatBox extends ArrayList<DrumTrack> {
 
     public void initialize() {
         clear();
-        for (GMDrum drum : STANDARD_KIT)
+        for (GMDrum drum : GMDrum.STANDARD_KIT)
             add(new DrumTrack(drum));
     }
 

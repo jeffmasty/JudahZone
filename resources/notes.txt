@@ -1,6 +1,7 @@
 TODO:
-
+scales, melodic step sequencer, arpegiator
 Calf Fluid Synth reverb
+ENOBUF
 commands commands commands
 unified play and record commands
 record record record youtubes

@@ -12,39 +12,23 @@ import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
-import lombok.Getter;
 import net.judah.api.TimeListener;
 import net.judah.effects.gui.Slider;
-import net.judah.util.Constants;
-import net.judah.util.FileChooser;
 
 /** A Drum Grid Sequencer Table */
 public class BeatBoxGui extends JPanel implements TimeListener {
 
-	public static final int INSET = 15;
-	public static final int WIDTH = 800 + 2 * INSET;
-	public static final int HEIGHT = 200 + 2 * INSET;
-	private static final Color DOWNBEAT = Color.GREEN;
+	private static final Color DOWNBEAT = new Color(0xa4b9cb); // blueish
 	private static final Color SELECTED = Color.LIGHT_GRAY;
 
 	public enum Type { Drums, Melodic }
 
 	private final JudahClock clock;
-
-	CurrentBeat current;
-
-	private final JComboBox<GMKit> kits = new JComboBox<>(GMKit.values());
-    private JLabel beat = new JLabel("current: ??");
-    @Getter private JLabel tempo = new JLabel("tempo: ??");
-
-	final ArrayList<DrumTrack> tracks = new ArrayList<>();
-	//Slider/Knob volume, swing;
+	private CurrentBeat current;
 
 	public BeatBoxGui(JudahClock clock) {
 	    this.clock = clock;
@@ -56,6 +40,9 @@ public class BeatBoxGui extends JPanel implements TimeListener {
 
 	public void initialize() {
 	    removeAll();
+        ButtonBox buttonBox = new ButtonBox(clock, this);
+
+        new Thread() { @Override public void run() {
 
 	    List<DrumTrack> tracks = clock.getBeatBox();
 	    int count = tracks.size();
@@ -64,9 +51,7 @@ public class BeatBoxGui extends JPanel implements TimeListener {
         GridLayout nameLayout = new GridLayout(0, 1, 0, 0);
         nameBox.setLayout(nameLayout);
 
-        JLabel name = new JLabel(clock.getName(), JLabel.CENTER);
-        name.setFont(Constants.Gui.BOLD);
-        nameBox.add(name);
+        nameBox.add(nameCombo());
         Dimension slide = new Dimension(65, 22);
         Dimension nombre = new Dimension(130, 22);
         Dimension rigid = new Dimension(5, 1);
@@ -75,7 +60,7 @@ public class BeatBoxGui extends JPanel implements TimeListener {
             final DrumTrack drum = tracks.get(i);
             Slider slider = new Slider(e -> {
                 drum.setVelocity(((Slider)e.getSource()).getValue() * .01f);});
-            slider.setValue(100);
+            slider.setValue((int)(drum.getVelocity() * 100));
             slider.setSize(slide);
             slider.setMaximumSize(slide);
             slider.setSize(slide);
@@ -92,12 +77,10 @@ public class BeatBoxGui extends JPanel implements TimeListener {
             pnl.add(slider);
             pnl.add(Box.createRigidArea(rigid));
             pnl.add(combo);
-            pnl.add(Box.createRigidArea(rigid));
             nameBox.add(pnl);
         }
-
         GridLayout gridLayout = new GridLayout(count + 1,
-                clock.getSubdivision(), 1, 0);
+                clock.getSubdivision() + 1, 1, 0);
         JPanel grid = new JPanel(gridLayout);
 
         // top beat labels
@@ -119,52 +102,25 @@ public class BeatBoxGui extends JPanel implements TimeListener {
             }
         }
 
-        JPanel buttonBox = new JPanel();
-        buttonBox.setLayout(new GridLayout(0, 1));
-
-        buttonBox.setOpaque(false);
-        buttonBox.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 5));
-
-        JButton start = new JButton("Start");
-        start.addActionListener(e -> {clock.begin();});
-        buttonBox.add(start);
-
-        JButton stop = new JButton("Stop");
-        stop.addActionListener(e -> {clock.end();});
-        buttonBox.add(stop);
-
-        JButton load = new JButton("Load");
-        load.addActionListener(e -> {load();});
-        buttonBox.add(load);
-
-        JButton save = new JButton("Save");
-        save.addActionListener(e -> {save();});
-        buttonBox.add(save);
-
-        JButton clear = new JButton("Clear");
-        clear.addActionListener(e -> {
-            clock.getBeatBox().initialize();
-            initialize();
-        });
-        buttonBox.add(clear);
-
-        JButton random = new JButton("Randomize");
-        buttonBox.add(random);
-
-        kits.addActionListener(e -> {
-            clock.getBeatBox().setKit(((GMKit)kits.getSelectedItem()));});
-        Dimension d = new Dimension(100, 20);
-        kits.setSize(d); kits.setPreferredSize(d); kits.setMaximumSize(d);
-        buttonBox.add(new JLabel("drumkit"));
-        buttonBox.add(kits);
-
-        buttonBox.add(beat);
-        buttonBox.add(tempo);
-
+        add(BorderLayout.EAST, buttonBox);
         add(BorderLayout.WEST, nameBox);
         add(BorderLayout.CENTER, grid);
-        add(BorderLayout.EAST, buttonBox);
+
         doLayout();
+	    }}.start();
+	}
+
+	private JComboBox nameCombo() {
+//        JLabel name = new JLabel(clock.getName(), JLabel.CENTER);
+//        name.setFont(Constants.Gui.BOLD);
+
+        JComboBox<File> result = new JComboBox<>();
+        for (File f : BeatBox.FOLDER.listFiles())
+            result.addItem(f);
+        return result;
+
+
+
 	}
 
     private void clicked(JToggleButton btn, DrumTrack track) {
@@ -186,29 +142,12 @@ public class BeatBoxGui extends JPanel implements TimeListener {
         }
     }
 
-    public void load() {
-        FileChooser.setCurrentDir(new File(Constants.ROOT, "patterns"));
-        File f = FileChooser.choose();
-        if (f != null)
-            clock.parse(f);
-    }
-
-    public void save() {
-        FileChooser.setCurrentDir(new File(Constants.ROOT, "patterns"));
-        File f = FileChooser.choose();
-        if (f != null)
-            clock.write(f);
-    }
-
-
 	@Override
 	public void update(Property prop, Object value) {
 
         if (Property.STEP == prop && ((int)value) % 2 == 0) {
             current.setActive((int)value);
-        } else if (Property.BEAT == prop) {
-			beat.setText("current: " + value);
-		}
+        }
 	}
 
 
