@@ -29,7 +29,6 @@ import net.judah.plugin.BeatBuddy.Drumset;
 import net.judah.plugin.BeatBuddy.Track;
 import net.judah.util.Constants;
 import net.judah.util.Knob;
-import net.judah.util.MenuBar;
 
 public class BeatBuddyGui extends JPanel {
 
@@ -63,14 +62,14 @@ public class BeatBuddyGui extends JPanel {
     }
 
     private void keyHandler() {
-        // bpm.addKeyListener(MenuBar.getInstance());
-        transBtn.addKeyListener(MenuBar.getInstance());
-        song.addKeyListener(MenuBar.getInstance());
-        folder.addKeyListener(MenuBar.getInstance());
-        drumsets.addKeyListener(MenuBar.getInstance());
-        startBtn.addKeyListener(MenuBar.getInstance());
-        pauseBtn.addKeyListener(MenuBar.getInstance());
-        stopBtn.addKeyListener(MenuBar.getInstance());
+//        // bpm.addKeyListener(MenuBar.getInstance());
+//        transBtn.addKeyListener(JudahMenu.getInstance());
+//        song.addKeyListener(JudahMenu.getInstance());
+//        folder.addKeyListener(JudahMenu.getInstance());
+//        drumsets.addKeyListener(JudahMenu.getInstance());
+//        startBtn.addKeyListener(JudahMenu.getInstance());
+//        pauseBtn.addKeyListener(JudahMenu.getInstance());
+//        stopBtn.addKeyListener(JudahMenu.getInstance());
     }
 
     private void gui() {

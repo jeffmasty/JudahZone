@@ -33,7 +33,7 @@ public class PresetsHandler extends ArrayList<Preset> {
             Scanner scanner = new Scanner(presetFile);
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
-                Console.info(line);
+                // Console.info(line);
                 if (line.startsWith("[") && line.endsWith("]")) {
                     if (!current.isEmpty()) add(new Preset(name, current));
                     current.clear();
@@ -49,10 +49,8 @@ public class PresetsHandler extends ArrayList<Preset> {
             ex.printStackTrace();
         }
 
-        if (isEmpty()) Console.info("No Presets loaded.");
-        for (Preset p : this) {
-            Console.info(p.toString());
-        }
+        Console.info("Presets loaded: " + size());
+        // for (Preset p : this) { Console.info(p.toString()); }
 
     }
 

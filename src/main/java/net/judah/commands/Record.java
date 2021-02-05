@@ -1,4 +1,4 @@
-package net.judah.sequencer;
+package net.judah.commands;
 
 import static net.judah.util.Constants.Param.*;
 

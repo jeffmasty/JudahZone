@@ -1,6 +1,5 @@
 package net.judah.mixer;
 
-// import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -26,10 +25,8 @@ import net.judah.looper.Recorder;
 import net.judah.looper.Sample;
 import net.judah.sequencer.Sequencer;
 import net.judah.util.Console;
-import net.judah.util.Constants;
 import net.judah.util.Icons;
 import net.judah.util.Knob;
-import net.judah.util.MenuBar;
 
 public abstract class ChannelGui extends JPanel {
     final static Dimension LBL_SZ = new Dimension(65, 38);
@@ -64,6 +61,7 @@ public abstract class ChannelGui extends JPanel {
         labelButton.getInputMap().put(KeyStroke.getKeyStroke("ENTER"), "none");
 
         volume = new Knob(vol -> {channel.setVolume(vol);});
+        volume.setToolTipText("Volume");
 
         add(labelButton);
         add(volume);
@@ -98,8 +96,7 @@ public abstract class ChannelGui extends JPanel {
             if (labelButton.isSelected())
                 MainFrame.get().getMixer().setFocus(channel);
         });
-
-        Constants.attachKeyListener(this, MenuBar.getInstance());
+        // TODO Constants.attachKeyListener(this, JudahMenu.getInstance());
 
     }
 
@@ -112,8 +109,6 @@ public abstract class ChannelGui extends JPanel {
         onMute.update();
         for (MixButton btn : customActions)
             btn.update();
-//        if (channel == MixerPane.getInstance().getChannel())
-//            MixerPane.getInstance().getEffects().update();
         if (overdrive != null)
             overdrive.setValue(Math.round(channel.getOverdrive().getDrive() * 100));
 
@@ -125,7 +120,7 @@ public abstract class ChannelGui extends JPanel {
 
     private void overdrive(int val) {
         channel.getOverdrive().setDrive(val / 100f);
-        channel.getOverdrive().setActive(val > 10);
+        channel.getOverdrive().setActive(val > 4);
     }
 
     public static class Input extends ChannelGui {

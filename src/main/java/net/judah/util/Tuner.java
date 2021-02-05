@@ -56,8 +56,9 @@ public class Tuner extends JPanel implements PitchDetectionHandler {
         note.setMinimumSize(d);
         note.setPreferredSize(d);
         tuning = new JSlider(0, 80);
-        d = new Dimension(140, 30);
+        d = new Dimension(125, 30);
         tuning.setPreferredSize(d);
+        tuning.setMinimumSize(d);
         tuning.setMajorTickSpacing(20);
         tuning.setMinorTickSpacing(5);
         tuning.setPaintTicks(true);
@@ -66,11 +67,10 @@ public class Tuner extends JPanel implements PitchDetectionHandler {
         add(new JLabel("tuner"));
         add(Box.createHorizontalStrut(5));
         add(activeBtn);
-        add(Box.createHorizontalStrut(10));
+        add(Box.createHorizontalStrut(5));
         add(tuning);
-        add(Box.createHorizontalStrut(10));
+        add(Box.createHorizontalStrut(5));
         add(note);
-        add(Box.createHorizontalGlue());
 
         new PitchProcessor(algo, Constants.sampleRate(), Constants.bufSize(), this);
 

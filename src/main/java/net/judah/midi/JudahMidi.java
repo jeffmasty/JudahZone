@@ -18,6 +18,7 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
+import net.judah.JudahClock;
 import net.judah.JudahZone;
 import net.judah.StageCommands;
 import net.judah.api.BasicClient;
@@ -27,7 +28,6 @@ import net.judah.api.Service;
 import net.judah.api.Status;
 import net.judah.beatbox.BeatBox;
 import net.judah.fluid.FluidSynth;
-import net.judah.notebox.NoteBox;
 import net.judah.plugin.BeatBuddy;
 import net.judah.plugin.MPK;
 import net.judah.plugin.Pedal;
@@ -64,6 +64,11 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
     @Getter private JackPort auxOut1;
     @Getter private JackPort auxOut2;
     @Getter private JackPort auxOut3;
+    @Getter private final String[] NAMES;
+    /** name -> midiChannel */
+    @Getter private final HashMap<String, Integer> midiChannelNames = new HashMap<>();
+    /** midiChannel -> defaultJackPort */
+    @Getter private final HashMap<Integer, JackPort> defaultMidiChannelOut = new HashMap<>();
 
     @Getter private final MidiScheduler scheduler = new MidiScheduler(this);
     @Getter private final Router router = new Router();
@@ -82,10 +87,65 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 
 
     public JudahMidi(String name, BeatBuddy drumMachine) throws JackException {
+
         super(name);
         instance = this;
         this.clock = drumMachine;
         start();
+        NAMES = channelMap();
+    }
+
+    private String[] channelMap() {
+        String [] result = new String[] {
+                "DRUMS", "NOTES", "CHORD", "DRUM2", "SDRUM", "BUDDY",
+                "NOTE2", "NOTE3", "NOTE4", "NOTE5", "NOTE6",
+                "NOTE7", "NOTE8", "CHRD2", "CHRD3", "CHRD4"
+        };
+        // Melody channels
+        midiChannelNames.put("NOTES", 0);
+        defaultMidiChannelOut.put(0, synthOut);
+
+        midiChannelNames.put("NOTE2", 1);
+        defaultMidiChannelOut.put(1, synthOut);
+
+        midiChannelNames.put("NOTE3", 2);
+        defaultMidiChannelOut.put(2, synthOut);
+
+        midiChannelNames.put("NOTE4", 3);
+        defaultMidiChannelOut.put(3, synthOut);
+
+        midiChannelNames.put("NOTE5", 4);
+        defaultMidiChannelOut.put(4, auxOut3);
+
+        midiChannelNames.put("NOTE6", 5);
+        defaultMidiChannelOut.put(5, auxOut3);
+
+        midiChannelNames.put("NOTE7", 6);
+        defaultMidiChannelOut.put(6, auxOut1);
+
+        midiChannelNames.put("NOTE8", 7);
+        defaultMidiChannelOut.put(7, auxOut2);
+
+        // Drum channels
+        midiChannelNames.put("BUDDY", 8);
+        defaultMidiChannelOut.put(8, drumsOut);
+        midiChannelNames.put("SDRUM", 9);
+        defaultMidiChannelOut.put(9, synthOut);
+        midiChannelNames.put("DRUM2", 10);
+        defaultMidiChannelOut.put(10, auxOut3);
+        midiChannelNames.put("DRUMS", 11);
+        defaultMidiChannelOut.put(11, auxOut3);
+
+        // Chords channels
+        midiChannelNames.put("CHORD", 12);
+        defaultMidiChannelOut.put(12, synthOut);
+        midiChannelNames.put("CHRD2", 13);
+        defaultMidiChannelOut.put(13, synthOut);
+        midiChannelNames.put("CHRD3", 14);
+        defaultMidiChannelOut.put(14, auxOut3);
+        midiChannelNames.put("CHRD4", 15);
+        defaultMidiChannelOut.put(15, auxOut1);
+        return result;
     }
 
     // To be revived
@@ -96,13 +156,12 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
     //        int to = Integer.parseInt("" + props.get("to"));
     //        Route route = new Route(from, to);
     //        if (active)
-    //            JudahMidi.getInstance().getRouter().add(route);
+    //            getRouter().add(route);
     //        else
-    //            JudahMidi.getInstance().getRouter().remove(route);
+    //            getRouter().remove(route);
     //    } catch (NumberFormatException e) {
     //        log.error(e.getMessage() + " " + Constants.prettyPrint(props));
     //    }
-    //
     //}
 
     @Override
@@ -183,6 +242,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
         try {
 
             scheduler.offer(frame++);
+            JudahClock.getInstance().process();
             for (JackPort port : outPorts)
                 JackMidi.clearBuffer(port);
 
@@ -220,19 +280,14 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
                 }
             }
 
-            poll = BeatBox.getQueue().poll();
-            while (poll != null) {
-                JackMidi.eventWrite(BeatBox.getMidiOut(),
-                        0, poll.getMessage(), poll.getLength());
-                poll = clock.getQueue().poll();
+            for (BeatBox b : JudahClock.getInstance().getSequencers()) {
+                poll = b.getQueue().poll();
+                while (poll != null) {
+                    JackMidi.eventWrite(b.getMidiOut(),
+                            0, poll.getMessage(), poll.getLength());
+                    poll = b.getQueue().poll();
+                }
             }
-            poll = NoteBox.getQueue().poll();
-            while (poll != null) {
-                JackMidi.eventWrite(NoteBox.getMidiOut(),
-                        0, poll.getMessage(), poll.getLength());
-                poll = clock.getQueue().poll();
-            }
-
 
             poll = clock.getQueue().poll();
             while (poll != null) {
@@ -248,7 +303,12 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
             }
 
         } catch (Exception e) {
+
             RTLogger.warn(this, e);
+
+            if (e.getMessage().equals("ENOBUF"))
+                JudahZone.getInstance().recoverMidi(e);
+
             return false;
         }
         return state.get() == Status.ACTIVE;
@@ -311,7 +371,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
         for (JackPort p : instance.inPorts)
             if (p.getShortName().equals(name))
                 return p;
-        return null;
+        throw new NullPointerException(name);
     }
 
 

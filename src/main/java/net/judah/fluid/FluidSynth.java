@@ -24,6 +24,7 @@ import net.judah.api.Midi;
 import net.judah.api.Service;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.ProgMsg;
+//import net.judah.midi.ProgMsg;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.JudahException;
@@ -381,6 +382,27 @@ public class FluidSynth implements Service {
 	}
 
 	public static class Instruments extends ArrayList<FluidInstrument> {
+	    ArrayList<FluidInstrument> drums;
+	    ArrayList<FluidInstrument> instruments;
+
+	    /**@return bank 128 */
+	    public ArrayList<FluidInstrument> getDrumkits() {
+	        if (drums != null) return drums;
+	        drums = new ArrayList<>();
+	        for (FluidInstrument i : this)
+	            if (i.group == 128) drums.add(i);
+	        return drums;
+	    }
+	    /**@return bank 1*/
+	    public ArrayList<FluidInstrument> getInstruments() {
+	        if (instruments != null) return instruments;
+	        instruments = new ArrayList<>();
+	        for (FluidInstrument i : this)
+	            if (i.group == 0) instruments.add(i);
+	        return instruments;
+	    }
+
+
 		public int getNextPreset(int bank, int current, boolean up) {
 			int index = -1;
 			int count = -1;

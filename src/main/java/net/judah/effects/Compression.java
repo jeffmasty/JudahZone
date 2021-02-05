@@ -26,7 +26,7 @@ public class Compression implements Effect {
 	private static final int PRESET_SIZE = 7;
     private static int[][] presets = new int[][] { // TODO make enum
         /* 2:1 */ {-30, 2, -13, 20, 120, 0},
-        /* 5:1 */ {-26, 5, -17, 30, 270, 10}, // default setting
+        /* 5:1 */ {-26, 5, -17, 55, 185, 10}, // default setting
         /* 8:1 */ {-24, 8, -18, 20, 35, 30} };
 
     @Setter @Getter private boolean active;

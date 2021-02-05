@@ -1,5 +1,7 @@
 package net.judah.beatbox;
 
+import java.util.HashMap;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.api.Midi;
@@ -10,32 +12,32 @@ public enum GMDrum {
     AcousticBassDrum(35, "Acoustic Bass Drum"),
     BassDrum(36, "Bass Drum"),
     SideStick(37, "Side Stick"),
-    AcousticSnare(38, "Acoustic Snare"),
+    AcousticSnare(38, "Snare"),
     HandClap(39, "Hand Clap"),
-    ElectricSnare(40, "Electric Snare"),
+    ElectricSnare(40, "Elec. Snare"),
     LowFloorTom(41, "Low Floor Tom"),
-    ClosedHiHat(42, "Closed Hi-Hat"),
+    ClosedHiHat(42, "Closed HiHat"),
     HighFloorTom(43, "High Floor Tom"),
-    PedalHiHat(44, "Pedal Hi-Hat"),
+    PedalHiHat(44, "Pedal HiHat"),
     LowTom(45, "Low Tom"),
-    OpenHiHat(46, "Open Hi-Hat"),
+    OpenHiHat(46, "Open HiHat"),
     LowMidTom(47, "Low-Mid Tom"),
     HiMidTom(48, "Hi-Mid Tom"),
-    CrashCymbal1(49, "Crash Cymbal 1"),
+    CrashCymbal1(49, "Crash1"),
     HighTom(50, "High Tom"),
-    RideCymbal(51, "Ride Cymbal 1"),
-    ChineseCymbal(52, "Chinese Cymbal"),
+    RideCymbal(51, "Ride1"),
+    ChineseCymbal(52, "ChineseCym"),
     RideBell(53, "Ride Bell"),
     Tambourine(54, "Tambourine"),
     SplashCymbal(55, "Splash Cymbal"),
     Cowbell(56, "Cowbell"),
-    CrashCymbal2(57, "Crash Symbol 2"),
+    CrashCymbal2(57, "Crash2"),
     Vibraslap(58, "Vibraslap"),
-    RideCymbal2(59, "Ride Cymbal 2"),
+    RideCymbal2(59, "Ride2"),
     HiBongo(60, "Hi Bongo"), // middle C
     LowBongo(61, "Low Bongo"),
-    MuteHiConga(62, "Mute Hi Conga"),
-    OpenHiConga(63, "Open Hi Conga"),
+    MuteHiConga(62, "Mute Conga"),
+    OpenHiConga(63, "Open Conga"),
     LowConga(64, "Low Conga"),
     HighTimbale(65, "High Timbale"),
     LowTimbale(66, "Low Timbale"),
@@ -74,11 +76,22 @@ public enum GMDrum {
 	    return display;
 	}
 
-    public static final GMDrum[] STANDARD_KIT = new GMDrum[] {
+    public static final GMDrum[] Standard = new GMDrum[] {
             BassDrum, AcousticSnare, SideStick, HandClap,
-            PedalHiHat, ClosedHiHat, OpenHiHat, SplashCymbal,
-            HighTom, LowMidTom, Shaker, HiWoodBlock,
-            HiBongo, LowBongo, OpenHiConga, HighTimbale};
+            ClosedHiHat, PedalHiHat, OpenHiHat, ChineseCymbal,
+            Cabasa, Shaker, HiWoodBlock, LowMidTom,
+            HiBongo, LowBongo, OpenHiConga, HighTimbale,
+            LowAgogo, AcousticSnare, AcousticSnare, AcousticSnare};
+
+    public static final GMDrum[] Acoustic = new GMDrum[] {
+            BassDrum, SideStick, HandClap, LongGuiro,
+            ClosedHiHat, PedalHiHat, OpenHiHat, ChineseCymbal,
+            Cabasa, Shaker, HiWoodBlock, Claves,
+            HiBongo, LowBongo, OpenHiConga, MuteHiConga,
+            LowTimbale, LowConga, HighAgogo, Vibraslap};
+
+    public static final HashMap<String, GMDrum[]> KITS = new HashMap<>();
+    static {KITS.put("Standard", Standard); KITS.put("Acoustic", Acoustic);}
 
 }
 

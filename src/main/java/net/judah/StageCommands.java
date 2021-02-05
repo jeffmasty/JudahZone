@@ -141,9 +141,9 @@ public class StageCommands {
                 }
                 else {
                     getMasterTrack().getOverdrive().setActive(true);
-                    getMasterTrack().getOverdrive().setDrive((data2 - 27) / 100f);
+                    getMasterTrack().getOverdrive().setDrive((data2 - 28) / 100f);
                     getMasterTrack().getChorus().setActive(true);
-                    getMasterTrack().getChorus().setFeedback((data2 - 27) / 100f);
+                    getMasterTrack().getChorus().setFeedback((data2 - 50) / 100f);
                 }
                 return true;
             }
@@ -193,7 +193,7 @@ public class StageCommands {
                 return true;
             }
             if (data1 == MPK.PRIMARY_PROG[2]) { // piano
-                JudahMidi.getInstance().queue(FluidSynth.getInstance().progChange(0, 1));
+                JudahMidi.getInstance().queue(FluidSynth.getInstance().progChange(0, 0));
                 return true;
             }
             if (data1 == MPK.PRIMARY_PROG[4]) { // strings

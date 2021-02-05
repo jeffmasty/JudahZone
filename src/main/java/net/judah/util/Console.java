@@ -23,6 +23,7 @@ import org.apache.log4j.Level;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
+import net.judah.JudahClock;
 import net.judah.JudahZone;
 import net.judah.Looper;
 import net.judah.MainFrame;
@@ -65,7 +66,8 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
     @Getter @Setter private static Level level = Level.DEBUG;
     private final JTextArea textarea;
     @Getter private final JScrollPane scroller;
-    @Getter private final JTextField input;
+    @Getter private final JTextField input = new JTextField(23);
+
     private boolean midiListen = false;
     private String history = null;
     @Getter private ArrayList<ConsoleParticipant> participants = new ArrayList<>();
@@ -78,7 +80,6 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
         scroller = new JScrollPane(textarea);
         scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
-        input = new JTextField(35);
         input.addActionListener(this);
         input.addKeyListener(new KeyAdapter() {
             @Override
@@ -202,14 +203,20 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
             save(input);
         else if (text.equals("read"))
             read(input);
-        else if (text.equals("play"))
-            play(input);
-        else if (text.equals("stop"))
-            if (input.length == 2)
+        else if (text.equals("play")) {
+            if (input.length == 1)
+                JudahClock.getInstance().begin();
+            else
+                play(input);
+        }
+        else if (text.equals("stop")) {
+            if (input.length == 1)
+                    JudahClock.getInstance().end();
+            else if (input.length == 2)
                 looper.stopAll();
             else
                 stop(input);
-
+        }
         else if (text.equals("samples"))
             addText( Arrays.toString(looper.toArray()));
         else if (text.equals("router"))
@@ -236,9 +243,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
         else if (text.equals("preset")) {
             for(Preset p : getPresets())
                 addText(p.toString());
-        }
-
-        else if (text.equals("test")) {
+        } else if (text.equals("test")) {
             test();
         }
 

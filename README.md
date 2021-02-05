@@ -2,7 +2,7 @@
 
 A mixer/looper/live performance environment written in Java for the Jack sound system. (https://jackaudio.org/)
 
-6 mono or stereo input channels are currently handled, as well as 3 synchronized stereo recording loops. All are mixed into a master stereo output bus.  All channels have separately controlled internal gain, EQ, Hi/Lo Cut, Compression, Chorus, Overdrive, Delay, Reverb, an LFO, and stereo panning. These internal effects are supplanted by LV2 plugins hosted externally and controlled over OSC. There's also an internal Song and Pattern/Step Sequencer, Metronome, Guitar Tuner, Midi Router, Midi Recorder/Looper, Midi Transposer, Wav file Sample Player, Midi file player, and Midi integration with a BeatBuddy drum machine (Midi Clock/Tap Tempo).
+6 mono or stereo input channels are currently handled, as well as 5 synchronized stereo recording loops. All are mixed into a master stereo output bus.  All channels have separately controlled internal gain, EQ, Hi/Lo Cut, Compression, Chorus, Overdrive, Delay, Reverb, an LFO, and stereo panning. These internal effects are supplanted by LV2 plugins hosted externally and controlled over OSC. There's also an internal Song and Pattern/Step Sequencer, Metronome, Guitar Tuner, Midi Router, Midi Recorder/Looper, Midi Transposer and Arpeggiator, mp3 file Sample Player, Midi file player, and Midi integration with a BeatBuddy drum machine (Midi Clock/Tap Tempo).
 
 Works great with an Akai MPK-Mini Midi Controller and/or a guitar/mic and midi foot switch controller.
 A few recordings made: https://www.youtube.com/user/judahmu/videos
@@ -20,6 +20,8 @@ FluidSynth (https://github.com/FluidSynth/fluidsynth) a synthesizer controlled o
 
 Jackson (https://github.com/FasterXML/jackson) for JSON handling and serialization
 Apache Jena (https://jena.apache.org/) to open LV2 .ttl plugin descriptors.
+
+Using TarsosDSP (https://github.com/JorenSix/TarsosDSP) for a guitar tuner.
 
 ## Build
 Built with Maven and Lombok. 

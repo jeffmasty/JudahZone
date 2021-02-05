@@ -131,7 +131,7 @@ public class JudahZone extends BasicClient {
 
         try { // Initialize the Carla lv2 plugin host (now that our ports are created)
             carla = new Carla(true);
-            Thread.sleep(800);
+            Thread.sleep(400);
             services.add(carla);
             plugins.addAll(carla.getPlugins());
             masterTrack = new MasterTrack(outL, outR, effectsL, effectsR, carla.getReverb());
@@ -169,7 +169,6 @@ public class JudahZone extends BasicClient {
             .initialize(Constants.sampleRate(), Constants.bufSize());
 
         drummachine.setVolume(55);
-
         initialized = true;
         /////////////////////////////////////////////////////////////////////////
         //                    now the system is live                           //
@@ -177,12 +176,15 @@ public class JudahZone extends BasicClient {
         // Open a default song
         Constants.timer(100, () ->{
             MixerPane.getInstance().setFocus(masterTrack);
-            File file = new File(Constants.ROOT, "Songs/BeatBox");
+            Constants.sleep(10);
+            MixerPane.getInstance().update();
+            Constants.sleep(10);
+            MainFrame.get().beatBox();
+            File file = new File(Constants.ROOT, "Songs/InMood4Love");
             try {
-                new Sequencer(file);
-                MainFrame.get().noteBox();
-                JudahClock.getInstance().getBeatBox().load(
-                    new File(Constants.ROOT, "patterns/hihats"));
+                // new Sequencer(file);
+                // JudahClock.getInstance().getSequencer(2).getCurrent()
+                //      .load(new File(Constants.ROOT, "sequences/FunTimes"));
             } catch (Exception e) {
                 Console.warn(e.getMessage() + " " + file.getAbsolutePath(), e); }
         });
@@ -241,6 +243,18 @@ public class JudahZone extends BasicClient {
         masterTrack.process();
 
         return true;
+    }
+
+    public void recoverMidi(Exception ERNOBUF) {
+        RTLogger.warn(this, ERNOBUF);
+        new Thread(() -> {
+            Constants.sleep(100);
+            try {
+                midi = new JudahMidi("JudahMidi", drummachine);
+            } catch (Exception e) {
+                Console.warn(e);
+            }
+        }).start();
     }
 
 }

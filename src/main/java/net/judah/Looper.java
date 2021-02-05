@@ -86,6 +86,15 @@ public class Looper implements Iterable<Sample> {
         add(loopA);
         add(loopB);
 
+        Recorder loopC = new Recorder("C", ProcessAudio.Type.FREE);
+        loopC.play(true); // armed;
+        loopC.setIcon(Icons.load("LoopC.png"));
+        add(loopC);
+
+        Recorder sampler = new Recorder("D", ProcessAudio.Type.FREE);
+        sampler.setIcon(Icons.load("LoopD.png"));
+        add(sampler);
+
     }
 
 

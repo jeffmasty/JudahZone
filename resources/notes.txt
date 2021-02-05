@@ -1,17 +1,23 @@
 TODO:
-BeatBox pulse on JackFrame
-scales, melodic step sequencer, arpegiator
-Calf Fluid Synth reverb
-ENOBUF
+
+step sequencer chords
+Sampler
+DR-5 as midi-controller
+beatbox records midi_in/quantize
+arppegiator 2.0
+export beatbox as midi file
+multiple clocks, multiple beat grids
+Vocoder 
 commands commands commands
-unified play and record commands
+unified play/record/transpose commands 
 record record record youtubes
 songs: andILoveHer, FeelGoodInc, 
 
-LFO triggered to clock, LFO/Fader cleanUp()
+LFO triggered to Clock, LFO/Fader cleanUp()
 README credits
-clipping/xruns filter see https://github.com/psambit9791/jDSP  Peak and Spike
-MoogMPK = ADSR knobs (I Feel Love bassline)
+clipping/xruns filter see https://github.com/psambit9791/jDSP Peak/Spike
+Display loop/sample wave form 
+JudahSynth + ADSR knobs (I Feel Love bassline) code my own synth
 pads in scale
 multi-delete, upgrade properties table (enum, int, boolean types)
 Phasor, Shepard
@@ -26,11 +32,12 @@ Plugins, ttl
 walking bassline midi bot
 MPK Sequencer
 Knobs: 
-fluid reverb, track/master pan, 
+
 Other knobs: calf, Jackrack, mixer
+make client-server architecture
+
 
 drum options:  DrMr, drumkv1-jack, hydrogen, fluid, drumsynth, black pearl
-
 Java Music API: https://github.com/psambit9791/jDSP
 Java Music API: https://github.com/chdh/dsp-collection-java
 java analyse and sequence music https://github.com/arnaudh/elusive-sound
@@ -100,10 +107,15 @@ display sheet music
 BeatBuddy & Midi upgrades
 reverb on output mix, gain and reverb to fluidsynth.
 Midi router is input port aware.
-joystick  (pitch bend logarithmic to 1 octave) (left cc = distortion or vocoder right cc = delay)
+joystick  (pitch bend logarithmic to 1 octave) (left cc = distortion or delay)
 stereo pan
-chorus
 make drumtrack a full-fledged 3rd loop
-"Apply to" and Presets menu options
+"Apply to" and Presets menu options, chorus
 guitar tuner: MPM algo on github.com/JorenSix/TarsosDSP/blob/master/src/examples/be/tarsos/dsp/example/PitchDetectorExample.java
 TODO, loops on reverb not getting master effects/gain
+BeatBox pulse on JackFrame
+scales, melodic step sequencer, 
+Calf Fluid Synth reverb
+fluid reverb, track/master pan,
+Step sequencer note-off's
+recover from midi network ENOBUF

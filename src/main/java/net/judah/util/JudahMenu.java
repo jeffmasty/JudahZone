@@ -7,8 +7,8 @@ import java.awt.event.KeyListener;
 import java.io.File;
 
 import javax.swing.JMenu;
-import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
@@ -25,27 +25,29 @@ import net.judah.settings.Channels;
 import net.judah.song.Song;
 
 @Log4j
-public class MenuBar extends JMenuBar implements KeyListener {
+public class JudahMenu extends JPopupMenu implements KeyListener {
 
     private static final int ASCII_ONE = 49;
-    private static MenuBar instance;
-
-    private MixerPane mixer;
-    private Channels channels;
-    private Looper looper;
+    private static JudahMenu instance;
+    private static MixerPane mixer;
+    private static Channels channels;
+    private static Looper looper;
 
     JMenu fileMenu = new JMenu("Song");
 
+    JMenuItem beatsMenu = new JMenuItem("BeatBox");
+    JMenuItem sheetMusic = new JMenuItem("Sheet Music");
     JMenuItem load = new JMenuItem("Open...");
     JMenuItem create = new JMenuItem("New...");
     JMenuItem save = new JMenuItem("Save");
     JMenuItem saveAs = new JMenuItem("Save As...");
     JMenuItem close = new JMenuItem("Close Song");
-    JMenuItem beatBox = new JMenuItem("BeatBox");
-    JMenuItem noteBox = new JMenuItem("NoteBox");
     JMenuItem exit = new JMenuItem("Exit");
 
-    public MenuBar() {
+//    JMenuItem beatBox = new JMenuItem("BeatBox");
+//    JMenuItem noteBox = new JMenuItem("NoteBox");
+
+    public JudahMenu() {
 
         fileMenu.setMnemonic(KeyEvent.VK_F);
         exit.setMnemonic(KeyEvent.VK_E);
@@ -54,10 +56,11 @@ public class MenuBar extends JMenuBar implements KeyListener {
         fileMenu.add(save);
         fileMenu.add(saveAs);
         fileMenu.add(close);
-        fileMenu.add(beatBox);
-        fileMenu.add(noteBox);
-        fileMenu.add(exit);
+
         add(fileMenu);
+        add(sheetMusic);
+        add(beatsMenu);
+        add(exit);
 
         addKeyListener(this);
 
@@ -67,8 +70,8 @@ public class MenuBar extends JMenuBar implements KeyListener {
         save.addActionListener( e -> {saveAs();});
         close.addActionListener( e -> {
             MainFrame.get().closeTab(Sequencer.getCurrent().getPage());});
-        beatBox.addActionListener( e -> {MainFrame.get().beatBox();});
-        noteBox.addActionListener( e -> {MainFrame.get().noteBox();});
+        sheetMusic.addActionListener( e -> {MainFrame.get().sheetMusic();});
+        beatsMenu.addActionListener( e -> {MainFrame.get().beatBox();});
         exit.addActionListener((event) -> System.exit(0));
 
         //  editMenu.setMnemonic(KeyEvent.VK_E);
@@ -240,14 +243,14 @@ public class MenuBar extends JMenuBar implements KeyListener {
 
     }
 
-    public void setMixerPane(MixerPane mixerPane) {
+    public static void setMixerPane(MixerPane mixerPane) {
         mixer = mixerPane;
         channels = JudahZone.getChannels();
         looper = JudahZone.getLooper();
     }
 
-    public static MenuBar getInstance() {
-        if (instance == null) instance = new MenuBar();
+    public static JudahMenu getInstance() {
+        if (instance == null) instance = new JudahMenu();
         return instance;
     }
 

@@ -20,7 +20,7 @@ public class Chorus implements Effect {
     private static final float PI2 = (float) Math.PI * 2;
 
     private static final float defaultRate = 5f;
-    private static final float defaultDepth = 0.9f;
+    private static final float defaultDepth = 0.4f;
     private static final float defaultFeedback = 0.4f;
 
     private final int sampleRate;

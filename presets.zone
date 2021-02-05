@@ -45,3 +45,6 @@ Compression(-26.8/98.0/138.0)
 LFO(1.0/35.0/77.0/372.0)
 Overdrive(0.11)
 Reverb(0.45/0.84/0.35)
+[FluteLoops]
+Compression(-26.0/71.0/186.0)
+Delay(0.35099998/0.7)

@@ -1,13 +1,22 @@
 package net.judah.beatbox;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
 
-@RequiredArgsConstructor @Getter
+@Data
 public class Beat {
-    final int step;
-    @Setter float velocity = 1;
-    @Setter float gate = 0.5f;
+    public static enum Type { NoteOn, NoteOff } // TODO {Chord, CC, Sample, Effects, Tempo }
 
+    private int step;
+    private Type type = Type.NoteOn;
+    private float velocity = 1;
+    // private Object data;
+
+    public Beat(int step) {
+        this.step = step;
+    }
+
+    public Beat(int step, Type type) {
+        this.step = step;
+        this.type = type;
+    }
 }

@@ -45,12 +45,13 @@ public class Slider extends JSlider {
     }
 
     public Slider(ChangeListener l) {
-        this(0, 100, l, "");
+        this(0, 100, l, null);
     }
 
     public Slider(int min, int max, ChangeListener l, String tooltip) {
         this(min, max, l);
-        setToolTipText(tooltip);
+        if (tooltip != null)
+            setToolTipText(tooltip);
     }
 
     public Slider(int min, int max, ChangeListener l) {

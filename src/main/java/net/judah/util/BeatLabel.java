@@ -2,14 +2,18 @@ package net.judah.util;
 
 import java.awt.Color;
 
-import javax.swing.BorderFactory;
 import javax.swing.JLabel;
+import javax.swing.border.LineBorder;
+
 
 public class BeatLabel extends JLabel {
 
     public BeatLabel(String s) {
         super(s);
-        setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        setAlignmentX(0.42f);
+        setBorder(new LineBorder(Pastels.GREEN, 1, true));
+        setBackground(Color.WHITE);
+        setOpaque(true);
         setAlignmentX(0.5f);
     }
 

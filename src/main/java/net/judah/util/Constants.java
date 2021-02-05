@@ -40,9 +40,9 @@ public class Constants {
 	public static int bufSize() { return _BUFSIZE; }
 
 	// TODO
-    public static final File defaultSetlist = new File("/home/judah/git/JudahZone/resources/Songs/list1.songs");
-    public static final File defaultFolder = new File("/home/judah/git/JudahZone/resources/Songs/");
     public static final File ROOT = new File("/home/judah/git/JudahZone/resources/");
+    public static final File defaultFolder = new File(ROOT, "Songs/");
+    public static final File defaultSetlist = new File(defaultFolder, "list1.songs");
 
 	public static class Param {
 		public static final String ACTIVE = "active";
@@ -115,12 +115,6 @@ public class Constants {
             if (c instanceof Container)
                 attachKeyListener((Container)c, l);
         }
-    }
-
-    public interface Pastels {
-        Color RED = new Color(0xff6e8d);
-        Color GREEN = new Color(0x90da6a);
-        Color BLUE = new Color(0xa4b9cb);
     }
 
 	public static final Midi BASSDRUM;
@@ -232,24 +226,14 @@ public class Constants {
 		System.out.println(toBPM(1000, 1) + " bpm");
 		System.out.println(toBPM(3000, 3) + " bpm");
 		System.out.println(toBPM(1000, 2) + " bpm");
-
-
-
 		//for (Info info :  MidiSystem.getMidiDeviceInfo()) {
-		//	System.out.println(info.getName() + " - " + info.getDescription() + " / " + info.getVendor());
-		//}
+		//	System.out.println(info.getName() + " - " + info.getDescription() + " / " + info.getVendor()); }
 		try {
-
 			System.out.println(MidiSystem.getSequencer().getClass().getCanonicalName());
 			//System.out.println("Synthesizer instruments: " + synth.getDeviceInfo().getName() +
 			//		" - " + synth.getDeviceInfo().getDescription());
 			//System.out.println(Arrays.toString(synth.getDefaultSoundbank().getResources()));
-
-
-		} catch (MidiUnavailableException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		} catch (MidiUnavailableException e) { e.printStackTrace(); }
 	}
 
 	private static final String MASTER = "Master";
@@ -260,13 +244,10 @@ public class Constants {
 
 	public static JMenu createMixerMenu(String lbl) {
 	    JMenu result = new JMenu(lbl);
-	    JMenuItem menu;
-	    for (String out : DEFAULT_OUT) {
+	    for (String out : DEFAULT_OUT)
 	        result.add(new JMenuItem(out));
-	    }
-	    for (Channel ch : JudahZone.getChannels()) {
+	    for (Channel ch : JudahZone.getChannels())
 	        result.add(new JMenuItem(ch.getName()));
-	    }
         return result;
 	}
 
@@ -298,8 +279,11 @@ public class Constants {
         return JudahZone.getChannels().get(idx - 4);
     }
 
-    public static void writeToFile(File file, String content) throws IOException {
-        Files.write(Paths.get(file.toURI()), content.getBytes());
+    public static void writeToFile(File file, String content) {
+        new Thread(() -> {
+            try { Files.write(Paths.get(file.toURI()), content.getBytes());
+            } catch(IOException e) {Console.warn(e);}
+        }).start();
     }
 
 }

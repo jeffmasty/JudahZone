@@ -3,8 +3,12 @@ package net.judah.settings;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.jaudiolibs.jnajack.JackPort;
+
 import lombok.Getter;
+import net.judah.JudahZone;
 import net.judah.fluid.FluidSynth;
+import net.judah.midi.JudahMidi;
 import net.judah.mixer.LineIn;
 import net.judah.util.Icons;
 
@@ -63,7 +67,56 @@ public class Channels extends ArrayList<LineIn> {
 		synth.setVolume(40);
 		aux1.setVolume(30);
 		aux2.setVolume(65);
+		drums.getCompression().setActive(true);
 	}
+
+    public static String volumeTarget(JackPort midiOut) {
+        JudahMidi midi = JudahMidi.getInstance();
+        Channels channels = JudahZone.getChannels();
+        if (midiOut == midi.getAuxOut1())
+            return channels.getAux1().getName();
+        else if (midiOut == midi.getAuxOut2())
+            return channels.getAux2().getName();
+        else if (midiOut == midi.getAuxOut3())
+            return channels.getDrums().getName();
+        else if (midiOut == midi.getDrumsOut())
+            return channels.getDrums().getName();
+        else if (midiOut == midi.getSynthOut())
+            return channels.getSynth().getName();
+        return "?";
+    }
+
+    public static void setVolume(int vol, JackPort midiOut) {
+        JudahMidi midi = JudahMidi.getInstance();
+        Channels channels = JudahZone.getChannels();
+        if (midiOut == midi.getAuxOut1())
+            channels.getAux1().setVolume(vol);
+        else if (midiOut == midi.getAuxOut2())
+            channels.getAux2().setVolume(vol);
+        else if (midiOut == midi.getAuxOut3())
+            channels.getDrums().setVolume(vol);
+        else if (midiOut == midi.getDrumsOut())
+            channels.getDrums().setVolume(vol);
+        else if (midiOut == midi.getSynthOut())
+            channels.getSynth().setVolume(vol);
+    }
+
+    public static int getVolume(JackPort midiOut) {
+        JudahMidi midi = JudahMidi.getInstance();
+        Channels channels = JudahZone.getChannels();
+        if (midiOut == midi.getAuxOut1())
+            return channels.getAux1().getVolume();
+        else if (midiOut == midi.getAuxOut2())
+            return channels.getAux2().getVolume();
+        else if (midiOut == midi.getAuxOut3())
+            return channels.getDrums().getVolume();
+        else if (midiOut == midi.getDrumsOut())
+            return channels.getDrums().getVolume();
+        else if (midiOut == midi.getSynthOut())
+            return channels.getSynth().getVolume();
+        return 0;
+    }
+
 
 
 }
