@@ -1,7 +1,11 @@
 package net.judah.fluid;
 
-import static net.judah.settings.Commands.SynthLbls.*;
-import static net.judah.util.Constants.*;
+import static net.judah.settings.Commands.SynthLbls.DIRECT;
+import static net.judah.settings.Commands.SynthLbls.DRUMBANK;
+import static net.judah.settings.Commands.SynthLbls.INSTDOWN;
+import static net.judah.settings.Commands.SynthLbls.INSTUP;
+import static net.judah.settings.Commands.SynthLbls.PROGCHANGE;
+import static net.judah.util.Constants.NL;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,7 +63,7 @@ public class FluidSynth implements Service {
 	private final Command progChange, instUp, instDown, drumBank, direct;
 	@Getter private final List<Command> commands;
 
-	private float gain = 0.5f; // max 5
+	private float gain = 0.9f; // max 5
 
 	public FluidSynth (int sampleRate, boolean startListeners) throws JackException, JudahException, IOException {
 		this(sampleRate, SOUND_FONT, startListeners);
@@ -103,7 +107,7 @@ public class FluidSynth implements Service {
         sendCommand("chorus off");
         reverb = new FluidReverb(this);
         Constants.sleep(50);
-        progChangeConsole(0, 19); // how about some church organ??
+        progChangeConsole(0, 32); // how about some acoustic bass
 
 
 		HashMap<String, Class<?>> template = new HashMap<>();

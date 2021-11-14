@@ -23,6 +23,7 @@ import net.judah.effects.api.Effect;
 import net.judah.effects.api.Preset;
 import net.judah.effects.api.Reverb;
 import net.judah.effects.api.Setting;
+import net.judah.settings.Channels;
 import net.judah.util.Console;
 
 /** A mixer bus for both Input and Output processes*/
@@ -93,5 +94,20 @@ public abstract class Channel extends ArrayList<Effect> {
         preset = new Preset(name, presets);
         return preset;
     }
+
+	public void reset() {
+		// getEq().setActive(false); // EQ stays active
+		if (false == this.name.equals(Channels.DRUMS)) // compression for drums stays on
+			getCompression().setActive(false);
+		getReverb().setActive(false);
+		getChorus().setActive(false);
+		getCutFilter().setActive(false);
+		getDelay().setActive(false);
+		getLfo().setActive(false);
+		getOverdrive().setActive(false);
+		setPan(0.5f);
+		
+	}		
+	
 
 }

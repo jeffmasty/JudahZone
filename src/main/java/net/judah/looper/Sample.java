@@ -1,9 +1,19 @@
 package net.judah.looper;
 
-import static net.judah.JudahZone.*;
-import static net.judah.api.AudioMode.*;
-import static net.judah.util.AudioTools.*;
-import static net.judah.util.Constants.*;
+import static net.judah.JudahZone.getCarla;
+import static net.judah.JudahZone.getEffectsL;
+import static net.judah.JudahZone.getEffectsR;
+import static net.judah.JudahZone.getMasterTrack;
+import static net.judah.api.AudioMode.ARMED;
+import static net.judah.api.AudioMode.NEW;
+import static net.judah.api.AudioMode.RUNNING;
+import static net.judah.api.AudioMode.STARTING;
+import static net.judah.api.AudioMode.STOPPED;
+import static net.judah.api.AudioMode.STOPPING;
+import static net.judah.util.AudioTools.processAdd;
+import static net.judah.util.AudioTools.processMix;
+import static net.judah.util.Constants.LEFT_CHANNEL;
+import static net.judah.util.Constants.RIGHT_CHANNEL;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
@@ -125,6 +135,15 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
         isPlaying.set(STOPPED);
     }
 
+    public void erase() {
+    	if (recording != null) {
+    		recording.close();
+    	}
+    	length = 0;
+    	recording.clear();
+    	Console.info("Erased: " + getName());
+    }
+    
     @Override public String toString() {
         return "Sample " + name;
     }

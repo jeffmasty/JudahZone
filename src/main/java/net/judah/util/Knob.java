@@ -9,6 +9,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -240,8 +241,11 @@ public class Knob extends JComponent{
 	 */
 	public Knob(KnobListener listener) {
 
-		ImageIcon knobIcon = new ImageIcon(loader.getResource("knob.png"));
-		ImageIcon knobHandle = new ImageIcon(loader.getResource("knobhandle.png"));
+		File dir = new File(System.getProperty("user.dir"));
+		
+		ImageIcon knobIcon = new ImageIcon(new File(dir, "knob.png").getAbsolutePath());
+
+		ImageIcon knobHandle = new ImageIcon(new File(dir, "knobhandle.png").getAbsolutePath());
 		init(200, new Point2D.Double(0.5, 0.5), 0.5, knobIcon, 30, knobHandle);
 		setCwDirection(true);
 		setMinPos(220);

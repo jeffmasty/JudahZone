@@ -7,8 +7,8 @@ import java.awt.Rectangle;
 import javax.swing.JDesktopPane;
 
 import lombok.Getter;
-import net.judah.JudahClock;
 import net.judah.api.TimeListener;
+import net.judah.clock.JudahClock;
 import net.judah.util.Console;
 import net.judah.util.Pastels;
 

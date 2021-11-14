@@ -1,6 +1,6 @@
 package net.judah.song;
 
-import static net.judah.util.Constants.Gui.*;
+import static net.judah.util.Constants.Gui.BTN_MARGIN;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -275,7 +275,7 @@ public class SonglistTab extends JComponent implements ListSelectionListener {
 		File file = model.getElementAt(index);
 		try {
 			new Sequencer(file);
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			log.error(e.getMessage(), e);
 			log.error(file.getAbsolutePath());
 			Constants.infoBox(file.getAbsoluteFile() + " -- " + e.getMessage(), "Song Load Failed");

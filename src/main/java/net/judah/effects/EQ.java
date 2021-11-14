@@ -5,6 +5,8 @@ import java.nio.FloatBuffer;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.effects.api.Effect;
+import net.judah.util.Constants;
+import net.judah.util.RTLogger;
 
 /*https://github.com/adiblol/jackiir*/
 /*
@@ -33,8 +35,8 @@ public class EQ implements Effect {
 	public static final int FILTERS_MAX = 32;
 	static final float LOG_2  = 0.693147f;
 
-	final int samplerate = 48000; // roll your own
-	final int nframes = 512; // also
+	final int samplerate = Constants.sampleRate(); 
+	final int nframes = Constants.bufSize(); 
 
 	public static enum EqParam {
 		GAIN, FREQUENCY, BANDWIDTH
@@ -165,7 +167,7 @@ public class EQ implements Effect {
 		leftCh.filters[EqBand.MID.ordinal()] = mid;
 		rightCh.filters[EqBand.MID.ordinal()] = new BiquadFilter(mid);
 
-		BiquadFilter treble = new BiquadFilter(3100, 1.8f, FilterType.Peaking);
+		BiquadFilter treble = new BiquadFilter(3333, 1.9f, FilterType.Peaking);
 		leftCh.filters[EqBand.TREBLE.ordinal()] = treble;
 		rightCh.filters[EqBand.TREBLE.ordinal()] = new BiquadFilter(treble);
 	}
@@ -175,7 +177,10 @@ public class EQ implements Effect {
 		switch (param) {
 			case BANDWIDTH: filter.bandwidth = value; break;
 			case FREQUENCY: filter.frequency = value; break;
-			case GAIN: filter.gain_db = value; break;
+			case GAIN: filter.gain_db = value;
+			RTLogger.log(this, "gain " + value);
+			
+			break;
 		}
 		filter.update();
 
@@ -188,6 +193,13 @@ public class EQ implements Effect {
 		filter.update();
 	}
 
+	public void eqGain(EqBand eqBand, float val) {
+		        boolean negative = val < 50;
+        float result = Math.abs(50 - val) / 2;
+        if (negative) result *= -1;
+        update(eqBand, EqParam.GAIN, result);
+	}
+	
     @Override public String getName() {
         return EQ.class.getSimpleName();
     }
@@ -200,6 +212,31 @@ public class EQ implements Effect {
         return getGain(EqBand.values()[idx]);
     }
 
+    
+    public void setTone(int data2) {
+    	RTLogger.log(this, "EQ tone " + data2);
+    	if (data2 > 40 && data2 < 60) {
+    		if (active) {
+    			active = false;
+    			update(EqBand.BASS, EqParam.GAIN, 0);
+    			update(EqBand.MID, EqParam.GAIN, 0);
+    			update(EqBand.TREBLE, EqParam.GAIN, 0);
+    		}
+    		return;
+    	}
+   		active = true;
+    	float gain;
+    	if (data2 <= 40) {
+    		gain = (data2 * -1 + 40) * 0.6f;
+    		update(EqBand.BASS, EqParam.GAIN, gain);
+    	}
+    	else {
+    		gain = (data2 - 60) * 0.6f;
+    		update(EqBand.TREBLE, EqParam.GAIN, gain);
+    	}
+    	
+    }
+    
     @Override public void set(int idx, float value) {
         update(EqBand.values()[idx], EqParam.GAIN, value);
     }

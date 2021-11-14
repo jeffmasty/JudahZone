@@ -29,6 +29,8 @@ public class Looper implements Iterable<Sample> {
     @Getter private DrumTrack drumTrack;
     @Getter private Recorder loopA;
     @Getter private Recorder loopB;
+    @Getter private Recorder loopC;
+    @Getter private Recorder loopD;
 
     private LooperGui gui;
 
@@ -86,14 +88,14 @@ public class Looper implements Iterable<Sample> {
         add(loopA);
         add(loopB);
 
-        Recorder loopC = new Recorder("C", ProcessAudio.Type.FREE);
+        loopC = new Recorder("C", ProcessAudio.Type.FREE);
         loopC.play(true); // armed;
         loopC.setIcon(Icons.load("LoopC.png"));
         add(loopC);
 
-        Recorder sampler = new Recorder("D", ProcessAudio.Type.FREE);
-        sampler.setIcon(Icons.load("LoopD.png"));
-        add(sampler);
+        loopD = new Recorder("D", ProcessAudio.Type.FREE);
+        loopD.setIcon(Icons.load("LoopD.png"));
+        add(loopD);
 
     }
 
@@ -106,17 +108,43 @@ public class Looper implements Iterable<Sample> {
         }
     }
 
-    public void syncLoopB() {
-        if (loopA.getRecording() == null || loopA.getRecording().isEmpty()) {
-            // Arm Record on B
-            loopB.armRecord(loopA);
-            return;
-        }
-        loopB.record(false);
-        loopB.setRecording(new Recording(loopA.getRecording().size(), true));
-        Console.info("Slave b. buffers: " + loopB.getRecording().size());
-        loopB.play(true);
+    public void syncLoop(Recorder master, Recorder slave) {
+    	if (master.getRecording() == null || master.getRecording().isEmpty()) {
+    		// nothing recorded yet, but we are setup to sync to master loop
+    		slave.armRecord(master);
+    		return;
+    	}
+    		 
+    	if (slave.hasRecording()) 
+    		if (slave.getRecording().size() == master.getRecording().size()) 
+    			slave.setRecording(new Recording(slave.getRecording(), 2, true)); // double it
+    		else
+    			slave.erase(); // otherwise erase it
+    	else
+    		slave.setRecording(new Recording(master.getRecording().size(), true)); // normal op 
+    	
+    	slave.play(true);
+    	Console.info(slave.getName() + " sync'd to " + master.getName() 
+    			+ " size: " + slave.getRecording().size());
     }
+    
+    
+//    public void syncLoopB() {
+//        if (loopA.getRecording() == null || loopA.getRecording().isEmpty()) {
+//            // Arm Record on B
+//            loopB.armRecord(loopA);
+//            return;
+//        }
+//        if (loopB.hasRecording()) { // double it
+//        	loopB.setRecording(new Recording(loopB.getRecording(), 2, true));
+//        }
+//        else {
+//   	        loopB.record(false);
+//        	loopB.setRecording(new Recording(loopA.getRecording().size(), true));
+//        }
+//        Console.info("latched B buffers: " + loopB.getRecording().size());
+//        loopB.play(true);
+//    }
 
     public void registerListener(LooperGui looperGui) {
         gui = looperGui;
@@ -142,5 +170,15 @@ public class Looper implements Iterable<Sample> {
     public int indexOf(Channel loop) {
         return loops.indexOf(loop);
     }
+
+	public void reset() {
+			stopAll();
+			new Thread() {
+				@Override public void run() {
+					clear();
+					getDrumTrack().toggle();
+                    }}.start();
+	}
+
 
 }

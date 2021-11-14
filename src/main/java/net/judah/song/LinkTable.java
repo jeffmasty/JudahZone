@@ -18,7 +18,7 @@ import lombok.extern.log4j.Log4j;
 import net.judah.CommandHandler;
 import net.judah.api.Command;
 import net.judah.api.Midi;
-import net.judah.plugin.MPK;
+import net.judah.controllers.MPKTools;
 import net.judah.util.EditsPane;
 import net.judah.util.JudahException;
 import net.judah.util.PopupMenu;
@@ -47,7 +47,7 @@ public class LinkTable extends JPanel implements Edits {
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
 					int row, int column) {
-				return new JLabel(MPK.format((Midi)value));
+				return new JLabel(MPKTools.format((Midi)value));
 			}
 		});
 		table.setDefaultEditor(HashMap.class, new PropertiesEditor());

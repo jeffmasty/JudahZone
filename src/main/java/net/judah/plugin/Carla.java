@@ -1,7 +1,9 @@
 package net.judah.plugin;
 
-import static net.judah.util.Constants.*;
+import static net.judah.util.Constants.LEFT_CHANNEL;
+import static net.judah.util.Constants.RIGHT_CHANNEL;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -62,9 +64,7 @@ public class Carla implements Service {
 	private final String prefix;
 	@Getter private final CarlaCommands commands = new CarlaCommands(this);
 
-	private static final String OSC = "OSC:"; //log
-
-	@Getter private final String settings;
+	@Getter private final File settings;
 	private Process process;
 	private OSCPortOut out;
 
@@ -79,7 +79,7 @@ public class Carla implements Service {
 	/** Default JudahZone load, initializes {@link #plugins} hard-coded from the settings file
 	 * @throws JackException */
 	public Carla(boolean showGui) throws IOException, JackException {
-		this(Carla.class.getClassLoader().getResource("carla/JudahZone.carxp").getFile(), showGui);
+		this(new File(System.getProperty("user.dir"), "carla/JudahZone.carxp"), showGui);
 
 
 		fluid = new Plugin("Calf Fluid", 0, LineType.SYNTH, null,
@@ -116,18 +116,18 @@ public class Carla implements Service {
 	}
 
 	// default ports
-	public Carla(String carlaSettings, boolean showGui) throws IOException, JackException {
+	public Carla(File carlaSettings, boolean showGui) throws IOException, JackException {
 		this(carlaSettings, 11176, 11177, showGui);
 	}
 
-	public Carla(String carlaSettings, int tcpPort, int udpPort, boolean showGui) throws IOException, JackException {
+	public Carla(File carlaSettings, int tcpPort, int udpPort, boolean showGui) throws IOException, JackException {
 		jack = Jack.getInstance();
 		this.settings = carlaSettings;
 
 		ArrayList<String> cmds = new ArrayList<>();
 		cmds.add(CARLA_SHELL_COMMAND);
 		if (!showGui) cmds.add("--no-gui");
-		cmds.add(carlaSettings);
+		cmds.add(carlaSettings.getAbsolutePath());
     	ProcessBuilder builder = new ProcessBuilder(cmds);
     	builder.environment().put("CARLA_OSC_TCP_PORT", "" + tcpPort);
     	builder.environment().put("CARLA_OSC_UDP_PORT", "" + udpPort);
@@ -180,8 +180,8 @@ public class Carla implements Service {
 		List<Object> param = new ArrayList<>();
 		param.add(paramIdx);
 		param.add(value);
-	    Console.info(OSC + " " + plugins.get(pluginIdx).getName()
-	            + " -> " + Arrays.toString(param.toArray()));
+	    // Console.info("OSC: " + plugins.get(pluginIdx).getName()
+	    //        + " -> " + Arrays.toString(param.toArray()));
 		send(address, param);
 	}
 

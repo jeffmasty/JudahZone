@@ -13,10 +13,12 @@ public class MidiSetup {
 	public static enum IN { // in ports
 		KEYBOARD("keyboard"), 
 		PEDAL("pedal"),
+		PADS("pads"),
+		MIXER("mixer"),
 		DRUMS_IN("drumsIn"),
-		AUX1_IN("aux1In"),
-		AUX2_IN("aux2In"),
-		AUX3_IN("aux3In");
+		//AUX1_IN("audioInterface"),
+		AUX2_IN("auxIn"),
+		ARDUINO("arduino");
 		public final String name;
 	}
 

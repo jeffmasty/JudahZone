@@ -3,7 +3,6 @@ package net.judah.effects.gui;
 import javax.swing.JToggleButton;
 
 import net.judah.effects.EQ.EqBand;
-import net.judah.effects.EQ.EqParam;
 import net.judah.mixer.Channel;
 
 public class EQGui extends Widget {
@@ -37,13 +36,11 @@ public class EQGui extends Widget {
     }
 
     private void eqGain(EqBand eqBand, int val) {
-        boolean negative = val < 50;
-        float result = Math.abs(50 - val) / 2;
-        if (negative) result *= -1;
-        channel.getEq().update(eqBand, EqParam.GAIN, result);
+    	channel.getEq().eqGain(eqBand, val);
     }
+    
     @Override
-    void update() {
+    void update() { 
         activeButton.setSelected(channel.getEq().isActive());
         eqBass.setValue(Math.round( (channel.getEq().getGain(EqBand.BASS) * 2 + 50)));
         eqMid.setValue(Math.round( (channel.getEq().getGain(EqBand.MID) * 2 + 50)));

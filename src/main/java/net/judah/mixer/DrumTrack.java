@@ -7,11 +7,11 @@ import org.jaudiolibs.jnajack.JackPort;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.log4j.Log4j;
-import net.judah.JudahClock;
 import net.judah.JudahZone;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeNotifier;
+import net.judah.clock.JudahClock;
 import net.judah.looper.Recorder;
 import net.judah.mixer.ChannelGui.Drums;
 import net.judah.util.Console;
@@ -45,7 +45,6 @@ public class DrumTrack extends Recorder implements TimeListener {
                 record(true);
             if (Status.TERMINATED == value) {
                 record(false);
-                soloTrack.setSolo(false);
                 setType(Type.DRUMTRACK);
                 new Thread() { // concurrent modification
                     @Override public void run() {
@@ -55,6 +54,8 @@ public class DrumTrack extends Recorder implements TimeListener {
                             JudahZone.getDrummachine().play(false);
                         else if (JudahZone.getChannels().getAux2().equals(soloTrack))
                             JudahClock.getInstance().end();
+                        soloTrack.setSolo(false);
+
                     };
                 }.start();
             }

@@ -9,7 +9,7 @@ import javax.swing.event.CellEditorListener;
 import javax.swing.table.TableCellEditor;
 
 import net.judah.api.Midi;
-import net.judah.plugin.MPK;
+import net.judah.controllers.MPKTools;
 import net.judah.util.EditorDialog;
 import net.judah.util.MidiForm;
 
@@ -20,7 +20,7 @@ public class MidiEditor implements TableCellEditor {
 
 	@Override
 	public Object getCellEditorValue() {
-		return MPK.format(midiCard.getParsed());
+		return MPKTools.format(midiCard.getParsed());
 	}
 
 	@Override

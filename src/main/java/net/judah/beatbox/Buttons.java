@@ -22,10 +22,10 @@ import org.jaudiolibs.jnajack.JackPort;
 import com.illposed.osc.OSCSerializeException;
 
 import lombok.Getter;
-import net.judah.JudahClock;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.beatbox.BeatBox.Type;
+import net.judah.clock.JudahClock;
 import net.judah.effects.gui.Slider;
 import net.judah.fluid.FluidInstrument;
 import net.judah.fluid.FluidSynth;

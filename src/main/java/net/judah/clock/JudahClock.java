@@ -1,4 +1,4 @@
-package net.judah;
+package net.judah.clock;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -16,10 +16,12 @@ import javax.swing.SwingUtilities;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.MainFrame;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeProvider;
 import net.judah.beatbox.BeatBox;
 import net.judah.effects.gui.Slider;
+import net.judah.looper.Recorder;
 import net.judah.sequencer.Sequencer;
 import net.judah.util.Console;
 import net.judah.util.Constants;
@@ -31,6 +33,7 @@ public class JudahClock implements TimeProvider, TimeListener {
     @Getter private static JudahClock instance = new JudahClock();
 
     private final ArrayList<TimeListener> listeners = new ArrayList<>();
+    TimeListener listener;
 
     @Getter private final ArrayList<BeatBox> sequencers = new ArrayList<>();
 
@@ -222,6 +225,30 @@ public class JudahClock implements TimeProvider, TimeListener {
         }
     }
 
+	public void latch(Recorder loopA, int beats) {
+		if (loopA.hasRecording() && loopA.getRecordedLength() > 0) {
+			float milliPerBeat = loopA.getRecordedLength() / (float)beats;  
+			float tempo = Constants.bpmPerBeat(milliPerBeat);
+			setTempo(tempo); 
+			listen(loopA);
+			Console.info("JudahClock armed at " + tempo + " bpm.");
+		}
+	}
+
+	void listen(Recorder target) {
+		if (listener != null) return;
+		listener = new TimeListener() {
+			@Override public void update(Property prop, Object value) {
+				if (prop.equals(TimeListener.Property.LOOP)) {
+					begin();
+					target.removeListener(this);
+					listener = null;
+				}
+			}
+		};
+		target.addListener(listener);
+	}
+	
 }
 
 

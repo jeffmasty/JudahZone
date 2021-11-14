@@ -77,12 +77,13 @@ public class CutFilter implements Effect {
         ;
         private final String description;
     };
-    private static final int PARTY_FREQUENCY = 420;
+    private static final int PARTY_FREQUENCY = 100;
 
     /** y = 1/30 * x ^ 2.81 + bassFloor */
 	public static float knobToFrequency(int val) {
-		return (float)(0.033333 * Math.pow(val, 2.81)) + 70f;
+		return (float)(0.033333 * Math.pow(val, 2.81)) + 120f;
 	}
+	
 	static float[] reverse = new float[100];
 	static {
 	    for (int i = 0; i < reverse.length; i++)
@@ -173,12 +174,21 @@ public class CutFilter implements Effect {
     public float getResonance() {
         return (float) resonancedB;
     }
+    
+    public void setTone(int tone) {
+    	RTLogger.log(this, "Cut Tone " + tone);
+    	if (tone > 39 && tone < 60) {
+    		active = false; 
+    		return;
+    	};
+    	active = true;
+    	setFilterType(Type.pArTy);
+    	setFrequency(knobToFrequency(tone));
+    	
+    }
 
     /** Set filter type. */
     public void setFilterType(Type filtertype) {
-        if (filtertype == null) {
-            throw new NullPointerException();
-        }
         if (this.filterType == filtertype) return;
         this.filterType = filtertype;
         eq1.dirty = eq2.dirty = true;
@@ -190,25 +200,26 @@ public class CutFilter implements Effect {
 
 
     /** process replace mono */
-    public void process(FloatBuffer mono, float gain) {
+    public void process(FloatBuffer mono) {
+    	assert active;
     	mono.rewind();
         switch (filterType) {
         case LP6:
-    		eq1.filter1Replace(mono, gain);
+    		eq1.filter1Replace(mono, 1);
             break;
         case LP12:
         case HP12:
         case NP12:
         case BP12:
-        	eq1.filter2Replace(mono, gain);
+        	eq1.filter2Replace(mono, 1);
             break;
         case LP24:
         case HP24:
-        	eq1.filter4Replace(mono, gain);
+        	eq1.filter4Replace(mono, 1);
             break;
         case pArTy:
         	checkParty();
-        	eq1.filter2Replace(mono, gain * 2.5f);
+        	eq1.filter2Replace(mono, 2.5f);
         	break;
         }
     }

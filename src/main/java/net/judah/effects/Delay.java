@@ -87,8 +87,8 @@ public class Delay implements Effect {
         DelayTime, Feedback
     }
 
-    private final static float DEF_MAX_DELAY = 1.3f;
-    public final static float DEF_TIME = 0.12f;
+    private final static float DEF_MAX_DELAY = 2.51f;
+    public final static float DEF_TIME = 0.2f;
 
     private final float sampleRate;
     private final float nframes; // jack buffer size
@@ -191,8 +191,9 @@ public class Delay implements Effect {
 	        this.lastdelay = 0;
 		}
 
+	    // TODO overflow when delay time large
 	    void process(FloatBuffer in, FloatBuffer out, boolean replace) {
-
+	    	
         	out.rewind();
             float srate = sampleRate;
             float delay = delaytime * srate;

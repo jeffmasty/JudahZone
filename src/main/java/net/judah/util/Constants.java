@@ -135,7 +135,7 @@ public class Constants {
     	return result;
     }
 
-    public static float bpmPerBeat(long msec) {
+    public static float bpmPerBeat(float msec) {
         return 60000 / msec;
     }
 

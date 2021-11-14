@@ -13,8 +13,8 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import lombok.Getter;
-import net.judah.JudahClock;
 import net.judah.beatbox.Beat.Type;
+import net.judah.clock.JudahClock;
 import net.judah.util.BeatLabel;
 import net.judah.util.CurrentBeat;
 import net.judah.util.Pastels;
@@ -32,7 +32,7 @@ public class GridView extends JPanel implements MouseListener {
         setLayout(null);
 
         col = r.width  / clock.getSteps();
-        row = (int)Math.ceil((r.height - 30) / (Grid.TOTAL_SEQUENCES + 1f));
+        row = (int)Math.ceil((r.height - 30) / (Grid.TOTAL_SEQUENCES + 1f)) + 1;
 
         current = new CurrentBeat();
 

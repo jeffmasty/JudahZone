@@ -1,7 +1,27 @@
 package net.judah.mixer;
-import static net.judah.JudahZone.*;
-import static net.judah.settings.Commands.MixerLbls.*;
-import static net.judah.util.Constants.Param.*;
+import static net.judah.JudahZone.getChannels;
+import static net.judah.JudahZone.getLooper;
+import static net.judah.JudahZone.getMasterTrack;
+import static net.judah.settings.Commands.MixerLbls.CLEAR;
+import static net.judah.settings.Commands.MixerLbls.DRUMTRACK;
+import static net.judah.settings.Commands.MixerLbls.FADE;
+import static net.judah.settings.Commands.MixerLbls.LOAD_SAMPLE;
+import static net.judah.settings.Commands.MixerLbls.LOOP_SYNC;
+import static net.judah.settings.Commands.MixerLbls.MUTE;
+import static net.judah.settings.Commands.MixerLbls.PRESET;
+import static net.judah.settings.Commands.MixerLbls.TOGGLE;
+import static net.judah.settings.Commands.MixerLbls.TOGGLE_PLAY;
+import static net.judah.settings.Commands.MixerLbls.TOGGLE_RECORD;
+import static net.judah.settings.Commands.MixerLbls.VOLUME;
+import static net.judah.util.Constants.Param.ACTIVE;
+import static net.judah.util.Constants.Param.CHANNEL;
+import static net.judah.util.Constants.Param.FILE;
+import static net.judah.util.Constants.Param.GAIN;
+import static net.judah.util.Constants.Param.INDEX;
+import static net.judah.util.Constants.Param.LOOP;
+import static net.judah.util.Constants.Param.NAME;
+import static net.judah.util.Constants.Param.TYPE;
+import static net.judah.util.Constants.Param.parseActive;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,7 +66,7 @@ public class MixCommands extends ArrayList<Command> {
 
 	    add(new Command(LOOP_SYNC.name, LOOP_SYNC.desc) {
             @Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-                getLooper().syncLoopB();
+                getLooper().syncLoop(getLooper().getLoopA(), getLooper().getLoopB());
             }
 	    });
 

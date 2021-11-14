@@ -99,7 +99,7 @@ public class LFO implements Effect {
 		if (lfoPulse.isEmpty()) return;
 		new Thread() { @Override public void run() {
 			for (Channel ch : new ArrayList<>(lfoPulse))
-				ch.getLfo().pulse(ch);
+				if (ch != null) ch.getLfo().pulse(ch);
 			lfoPulse.clear();
 		}}.start();
 	}

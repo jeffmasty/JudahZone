@@ -23,13 +23,13 @@ import org.apache.log4j.Level;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
-import net.judah.JudahClock;
 import net.judah.JudahZone;
 import net.judah.Looper;
 import net.judah.MainFrame;
 import net.judah.MixerPane;
 import net.judah.api.Midi;
 import net.judah.api.ProcessAudio;
+import net.judah.clock.JudahClock;
 import net.judah.effects.api.Preset;
 import net.judah.fluid.FluidSynth;
 import net.judah.looper.Recording;
@@ -60,6 +60,14 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
     public static Console getInstance() {
         if (instance == null) instance = new Console();
         return instance;
+    }
+    
+    public static void main(String[] args) {
+    	System.out.println("hello world " +     	System.getProperty("user.dir"));
+    	
+
+    	
+    	log.warn("wow");
     }
 
     private Looper looper = JudahZone.getLooper();

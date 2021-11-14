@@ -1,7 +1,8 @@
 package net.judah.mixer;
 
-import static net.judah.JudahZone.*;
-import static net.judah.util.Constants.*;
+import static net.judah.JudahZone.JUDAHZONE;
+import static net.judah.util.Constants.LEFT_CHANNEL;
+import static net.judah.util.Constants.RIGHT_CHANNEL;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
@@ -102,9 +103,9 @@ public class LineIn extends Channel {
 				reverb.process(right);
 		}
         if (cutFilter.isActive()) {
-            cutFilter.process(left, 1);
+            cutFilter.process(left);
             if (isStereo())
-                cutFilter.process(right, 1);
+                cutFilter.process(right);
         }
 	}
 

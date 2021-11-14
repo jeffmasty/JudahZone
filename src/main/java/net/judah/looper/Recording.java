@@ -67,6 +67,21 @@ public class Recording extends Vector<float[][]> {
 		}
 	}
 
+	public Recording(Recording recording, int duplications, boolean startListeners) {
+		this(startListeners);
+		int bufferSize = JudahMidi.getInstance().getBufferSize();
+		int size = recording.size() * duplications;
+		int x = 0;
+		for (int j = 0; j < size; j++) {
+			x++;
+			if (x >= recording.size())
+				x = 0;
+			float[][] data = new float[2][bufferSize];
+			AudioTools.copy(recording.get(x), data);
+			add(data);
+		}
+	}
+
 	public static Recording readAudio(String filename) throws IOException, ClassNotFoundException {
 		ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filename));
 		Recording result = (Recording)ois.readObject();

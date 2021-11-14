@@ -1,0 +1,20 @@
+{
+  "props" : {
+    "beatbuddy" : "HipHop8@88:11"
+  },
+  "links" : [ ],
+  "sequencer" : [ {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "loop:drumtrack",
+    "notes" : "",
+    "params" : { }
+  }, {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "loop:sync",
+    "notes" : "",
+    "params" : { }
+  } ],
+  "router" : [ ]
+}

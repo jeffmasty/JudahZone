@@ -1,0 +1,9 @@
+{
+  "props" : {
+    "image" : "/home/judah/sheets/four.png",
+    "beatbuddy" : "Blues2@115:11"
+  },
+  "links" : [ ],
+  "sequencer" : [ ],
+  "router" : [ ]
+}

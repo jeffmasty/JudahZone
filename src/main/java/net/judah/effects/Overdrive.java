@@ -69,10 +69,8 @@ public final class Overdrive implements Effect {
         buf.rewind();
         double preMul = drive * 99 + 1;
         double postMul = 1 / (Math.log(preMul * 2) / Math.log(2));
-        for (int i = 0; i < nframes; i++) {
-
+        for (int i = 0; i < nframes; i++) 
             buf.put( downGain * (float) (Math.atan(buf.get(i) * preMul) * postMul));
-        }
     }
 
 

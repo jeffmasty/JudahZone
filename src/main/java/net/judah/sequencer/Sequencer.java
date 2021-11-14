@@ -1,6 +1,8 @@
 package net.judah.sequencer;
-import static net.judah.util.Constants.Param.*;
-import static org.jaudiolibs.jnajack.JackTransportState.*;
+import static net.judah.util.Constants.Param.IMAGE;
+import static net.judah.util.Constants.Param.LOOP;
+import static org.jaudiolibs.jnajack.JackTransportState.JackTransportStarting;
+import static org.jaudiolibs.jnajack.JackTransportState.JackTransportStopped;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,6 +15,7 @@ import javax.sound.midi.ShortMessage;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jaudiolibs.jnajack.JackException;
+import org.jaudiolibs.jnajack.JackPort;
 import org.jaudiolibs.jnajack.JackTransportState;
 
 import lombok.AccessLevel;
@@ -22,6 +25,7 @@ import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.SongPane;
+import net.judah.api.AudioMode;
 import net.judah.api.Command;
 import net.judah.api.Loadable;
 import net.judah.api.Midi;
@@ -114,8 +118,6 @@ public class Sequencer implements Service, Runnable, TimeListener {
             initializeTriggers();
             Router midiRouter = JudahMidi.getInstance().getRouter();
 
-
-
             song.getRouter().forEach( pair -> { midiRouter.add(
                     new Route(pair.getFromMidi(), pair.getToMidi()));});
 
@@ -148,9 +150,9 @@ public class Sequencer implements Service, Runnable, TimeListener {
 
         private void initializeTriggers() {
             List<Trigger> triggers = song.getSequencer();
-            if (triggers.size() == 0) return;
+            if (triggers.isEmpty()) return;
             active = triggers.get(0);
-            while (active.go(count))
+            while (active != null && active.go(count))
                 execute(active);
         }
 
@@ -209,7 +211,7 @@ public class Sequencer implements Service, Runnable, TimeListener {
 
         @Override public void run() { // Thread
             ++count;
-            while (active.go(count))
+            while (active != null && active.go(count))
                 execute(active);
             checkQueue();
         }
@@ -287,11 +289,11 @@ public class Sequencer implements Service, Runnable, TimeListener {
         public void properties(HashMap<String, Object> props) {
             Object o;
             o = props.get(IMAGE);
-            if (o != null) {
-                Console.info("sheet music set");
-                sheetMusic = new File(o.toString());
+            if (o != null && new File(o.toString()).isFile()) {
+        		Console.info("sheet music set");
+        		sheetMusic = new File(o.toString());
             }
-
+        
             // legacy
             o = props.get(PARAM_CONTROLLED);
             if (o != null)
@@ -304,20 +306,17 @@ public class Sequencer implements Service, Runnable, TimeListener {
             }
         }
 
-//        public BeatBox getGui() {
-//            if (gui == null) {
-//                gui = new BeatBox(16, 4);
-//            }
-//            return gui;
-//        }
-
         /////////////////////////////////////////////////////////////////////////////////////////////
 
-        void trigger() {
-            if (active != null) {
-                execute(active);
-                while (active.go(count)) {
-                    execute(active);
+        public static void trigger() {
+        	if (current == null || current.active == null) {
+        		JudahZone.getLooper().getLoopA().record(
+						JudahZone.getLooper().getLoopA().isRecording() != AudioMode.RUNNING);
+        	}
+        	else {
+                current.execute(current.active);
+                while (current.active.go(current.count)) {
+                    current.execute(current.active);
                 }
             }
 
@@ -348,8 +347,9 @@ public class Sequencer implements Service, Runnable, TimeListener {
                 queue.push(command);
         }
 
-        /** @return true if consumed */
-        public boolean midiProcessed(Midi midi) {
+        /** @param port 
+         * @return true if consumed */
+        public boolean midiProcessed(Midi midi, JackPort port) {
             PassThrough mode = PassThrough.ALL;
             for (MidiListener listener : listeners) {
                 new Thread() {
@@ -406,9 +406,10 @@ public class Sequencer implements Service, Runnable, TimeListener {
                 active = song.getSequencer().get(index);
             else {
                 log.warn("We've reached the end of the sequencer");
-                active = new Trigger(-2l, commands.transport);
-                if (clock != null)
-                    clock.end();
+                active = null;
+//                active = new Trigger(-2l, commands.transport);
+//                if (clock != null)
+//                    clock.end();
             }
         }
 
@@ -487,7 +488,7 @@ public class Sequencer implements Service, Runnable, TimeListener {
                         loopB.getRecording().size() + " vs. " + loopA.getRecording().size());
                 new Thread() { @Override public void run() {
                     try {Thread.sleep(8);} catch(Throwable t) { }
-                    JudahZone.getDrummachine().play(false);
+                    //JudahZone.getDrummachine().play(false);
                     control = ControlMode.EXTERNAL;
                     Console.info("internal: _autumnLeaves2()");
                 };}.start();

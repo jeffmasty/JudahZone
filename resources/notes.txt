@@ -1,12 +1,32 @@
 TODO:
+visual feedback from midi controllers, track select
+knob modes: efx1 efx2 beats, midiMixer, synth
 
+
+***pads
+recordA	   recordB  recordDrum recordC sequencer	sheet	SynthKnobs    Sync! 							
+reload/AAB latchB   latchDrum  latchC  guitarEfx	MicEfx  SynthEfx  	  on/off Beats
+
+effects knobs
+room   	d.time 	dist.	lfoType	 	
+dry    	d.fback pArTyEQ	lfoTime	
+
+bass    mid    	treble	pan
+chorus1  2      3       t/hold
+
+
+[Mixer][Out][In]  EFX
+1 2 3 4 5 6 7 8   1  2  3  4
+| | | | | | | |   5  6  7  8
+| | | | | | | |   9  10 11 12
+| | | | | | | |   13 14 15 16
+verse-chorus control
 step sequencer chords
 Sampler
 DR-5 as midi-controller
 beatbox records midi_in/quantize
 arppegiator 2.0
 export beatbox as midi file
-multiple clocks, multiple beat grids
 Vocoder 
 commands commands commands
 unified play/record/transpose commands 
@@ -46,6 +66,10 @@ https://github.com/a-schild/jave2
 https://github.com/ryukau/LV2Plugins
 Jack's alsa driver/client tries to use SND_PCM_FMT_S32_LE, signed 32-bit PCM little endian, 
 which is the format used by all current 24 bit audio cards except for some USB interfaces
+
+sequencer:
+https://github.com/truj/midica/tree/master/src/org/midica/midi
+https://github.com/perkowitz/sequence/tree/master/src/main/java/net/perkowitz/sequence
 
 arpeggio this! https://github.com/ybalcanci/Sequence-Player/blob/master/RecamanSequence.java
 java sequencer https://github.com/sebastianruizva/JMidiSequencer
@@ -119,3 +143,6 @@ Calf Fluid Synth reverb
 fluid reverb, track/master pan,
 Step sequencer note-off's
 recover from midi network ENOBUF
+multiple clocks, multiple beat grids
+Arduino foot pedal: load/reload  latchB
+midi mapper by instrument - mixer, pads, keys, pedal, aux

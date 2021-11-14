@@ -28,9 +28,13 @@ public class MidiPlayer implements Player {
 		this.receiver = receiver;
 		this.file = file;
 		
+
+		
 		// sequencer = new Sequenca();// TODO velocity/volume gets weird with this sequencer
 		sequencer = MidiSystem.getSequencer(false);
 		sequence = MidiSystem.getSequence(file);
+		
+		
 		sequencer.setSequence(sequence);
 		sequencer.setLoopCount(loopCount);
 		for (Receiver old : sequencer.getReceivers()) 
@@ -86,6 +90,7 @@ public class MidiPlayer implements Player {
 	}
 	
 	// @Override from TimeProvider
+	@Override
 	public void setDuration(Integer intro, Integer duration) {
 //		this.intro = intro;
 //		this.duration = duration;

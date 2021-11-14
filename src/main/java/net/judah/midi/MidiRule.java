@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import net.judah.api.Midi;
 import net.judah.beatbox.GMDrum;
-import net.judah.plugin.MPK;
+import net.judah.controllers.MPKTools;
 import net.judah.song.Edits.Copyable;
 
 /** a networking rule for the Midi Router */
@@ -17,7 +17,7 @@ public class MidiRule implements Copyable {
 
     @Override
     public String toString() {
-        return MPK.format(getFromMidi()) + " --> " + GMDrum.format(getToMidi());
+        return MPKTools.format(getFromMidi()) + " --> " + GMDrum.format(getToMidi());
     }
 
     @Override

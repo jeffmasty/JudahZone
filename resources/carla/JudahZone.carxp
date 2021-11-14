@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE CARLA-PROJECT>
-<CARLA-PROJECT VERSION='2.0'>
+<CARLA-PROJECT VERSION='2.4'>
  <EngineSettings>
   <ForceStereo>false</ForceStereo>
   <PreferPluginBridges>false</PreferPluginBridges>
@@ -24,6 +24,7 @@
 
   <Data>
    <Active>Yes</Active>
+   <Volume>1.002096</Volume>
    <ControlChannel>1</ControlChannel>
    <Options>0x3f1</Options>
 
@@ -31,7 +32,7 @@
     <Index>0</Index>
     <Name>Volume</Name>
     <Symbol>master</Symbol>
-    <Value>0.5</Value>
+    <Value>0.388068169355392</Value>
    </Parameter>
 
    <Parameter>
@@ -64,103 +65,103 @@
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:soundfont</Key>
-    <Value></Value>
+    <Value>/usr/share/sounds/sf2/FluidR3_GM.sf2</Value>
    </CustomData>
 
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set</Key>
-    <Value>-1</Value>
+    <Value>0</Value>
    </CustomData>
 
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set2</Key>
-    <Value>-1</Value>
+    <Value>0</Value>
    </CustomData>
 
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set3</Key>
-    <Value>-1</Value>
+    <Value>0</Value>
    </CustomData>
 
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set4</Key>
-    <Value>-1</Value>
+    <Value>0</Value>
    </CustomData>
 
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set5</Key>
-    <Value>-1</Value>
+    <Value>0</Value>
    </CustomData>
 
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set6</Key>
-    <Value>-1</Value>
+    <Value>0</Value>
    </CustomData>
 
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set7</Key>
-    <Value>-1</Value>
+    <Value>0</Value>
    </CustomData>
 
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set8</Key>
-    <Value>-1</Value>
+    <Value>0</Value>
    </CustomData>
 
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set9</Key>
-    <Value>-1</Value>
+    <Value>0</Value>
    </CustomData>
 
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set10</Key>
-    <Value>-1</Value>
+    <Value>16384</Value>
    </CustomData>
 
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set11</Key>
-    <Value>-1</Value>
+    <Value>0</Value>
    </CustomData>
 
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set12</Key>
-    <Value>-1</Value>
+    <Value>0</Value>
    </CustomData>
 
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set13</Key>
-    <Value>-1</Value>
+    <Value>0</Value>
    </CustomData>
 
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set14</Key>
-    <Value>-1</Value>
+    <Value>0</Value>
    </CustomData>
 
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set15</Key>
-    <Value>-1</Value>
+    <Value>0</Value>
    </CustomData>
 
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set16</Key>
-    <Value>-1</Value>
+    <Value>0</Value>
    </CustomData>
   </Data>
  </Plugin>
@@ -294,7 +295,7 @@
     <Index>2</Index>
     <Name>Output Gain</Name>
     <Symbol>level_out</Symbol>
-    <Value>0.828226566314697</Value>
+    <Value>0.98178905248642</Value>
    </Parameter>
 
    <Parameter>
@@ -487,7 +488,7 @@
     <Index>2</Index>
     <Name>dry</Name>
     <Symbol>dry</Symbol>
-    <Value>0.464000016450882</Value>
+    <Value>0.512000024318695</Value>
    </Parameter>
 
    <Parameter>
@@ -515,7 +516,7 @@
     <Index>6</Index>
     <Name>low shelf gain</Name>
     <Symbol>low_shelf_gain</Symbol>
-    <Value>0.75600004196167</Value>
+    <Value>0.624000012874603</Value>
    </Parameter>
 
    <Parameter>
@@ -529,7 +530,7 @@
     <Index>8</Index>
     <Name>stereo</Name>
     <Symbol>stereo</Symbol>
-    <Value>0.668200016021729</Value>
+    <Value>0.587999999523163</Value>
    </Parameter>
 
    <Parameter>
@@ -560,9 +561,9 @@
 
 &lt;tal curprogram=&quot;0&quot; version=&quot;1&quot;&gt;
   &lt;programs&gt;
-    &lt;program programname=&quot;Stereo Plate&quot; dry=&quot;0.46400001645088195801&quot; wet=&quot;0.58999997377395629883&quot;
-             roomsize=&quot;0.25&quot; predelay=&quot;0&quot; lowshelfgain=&quot;0.75600004196166992188&quot;
-             highshelfgain=&quot;0.69999998807907104492&quot; stereowidth=&quot;0.66820001602172851562&quot;
+    &lt;program programname=&quot;Stereo Plate&quot; dry=&quot;0.51200002431869506836&quot; wet=&quot;0.58999997377395629883&quot;
+             roomsize=&quot;0.25&quot; predelay=&quot;0&quot; lowshelfgain=&quot;0.62400001287460327148&quot;
+             highshelfgain=&quot;0.69999998807907104492&quot; stereowidth=&quot;0.5879999995231628418&quot;
              realstereomode=&quot;1&quot; power=&quot;1&quot;/&gt;
     &lt;program programname=&quot;Short Stereo Plate&quot; dry=&quot;0.5&quot; wet=&quot;0.32100000977516174316&quot;
              roomsize=&quot;0.23600001633167266846&quot; predelay=&quot;0&quot; lowshelfgain=&quot;1&quot;
@@ -604,44 +605,6 @@
   </Data>
  </Plugin>
 
- <!-- MDA Shepard -->
- <Plugin>
-  <Info>
-   <Type>LV2</Type>
-   <Name>MDA Shepard</Name>
-   <URI>http://drobilla.net/plugins/mda/Shepard</URI>
-  </Info>
-
-  <Data>
-   <Active>No</Active>
-   <DryWet>0.5</DryWet>
-   <Volume>0.5</Volume>
-   <ControlChannel>1</ControlChannel>
-   <Options>0x0</Options>
-
-   <Parameter>
-    <Index>0</Index>
-    <Name>Mode</Name>
-    <Symbol>mode</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>1</Index>
-    <Name>Rate</Name>
-    <Symbol>rate</Symbol>
-    <Value>0.699999988079071</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>2</Index>
-    <Name>Output</Name>
-    <Symbol>output</Symbol>
-    <Value>0.5</Value>
-   </Parameter>
-  </Data>
- </Plugin>
-
  <ExternalPatchbay>
   <Connection>
    <Source>system:capture_1</Source>
@@ -660,28 +623,20 @@
    <Target>JudahZone:drums</Target>
   </Connection>
   <Connection>
-   <Source>a2j:ActitioN MIDI Controller [16] (capture): ActitioN MIDI Controller MIDI 1</Source>
-   <Target>JudahMidi:pedal</Target>
-  </Connection>
-  <Connection>
-   <Source>a2j:MIDI2x2 [20] (capture): MIDI2x2 MIDI 1</Source>
-   <Target>JudahMidi:drumsIn</Target>
-  </Connection>
-  <Connection>
-   <Source>a2j:MIDI2x2 [20] (capture): MIDI2x2 MIDI 2</Source>
-   <Target>JudahMidi:aux1In</Target>
-  </Connection>
-  <Connection>
-   <Source>a2j:MPKmini2 [32] (capture): MPKmini2 MIDI 1</Source>
-   <Target>JudahMidi:keyboard</Target>
-  </Connection>
-  <Connection>
    <Source>PulseAudio JACK Sink:front-left</Source>
    <Target>system:playback_1</Target>
   </Connection>
   <Connection>
+   <Source>PulseAudio JACK Sink:front-left</Source>
+   <Target>system:playback_3</Target>
+  </Connection>
+  <Connection>
    <Source>PulseAudio JACK Sink:front-right</Source>
    <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>PulseAudio JACK Sink:front-right</Source>
+   <Target>system:playback_4</Target>
   </Connection>
   <Connection>
    <Source>fluidsynth-midi:left</Source>
@@ -697,15 +652,23 @@
   </Connection>
   <Connection>
    <Source>JudahMidi:drumsOut</Source>
-   <Target>a2j:MIDI2x2 [20] (playback): MIDI2x2 MIDI 1</Target>
+   <Target>a2j:MIDI2x2 [40] (playback): MIDI2x2 MIDI 1</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahMidi:drumsOut</Source>
+   <Target>Calf Fluidsynth:events-in</Target>
   </Connection>
   <Connection>
    <Source>JudahMidi:aux1out</Source>
-   <Target>a2j:MIDI2x2 [20] (playback): MIDI2x2 MIDI 2</Target>
+   <Target>a2j:MIDI2x2 [40] (playback): MIDI2x2 MIDI 2</Target>
   </Connection>
   <Connection>
    <Source>JudahMidi:aux2out</Source>
    <Target>a2j:Komplete Audio 6 [24] (playback): Komplete Audio 6 MIDI 1</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahMidi:aux3out</Source>
+   <Target>Calf Fluidsynth:events-in</Target>
   </Connection>
   <Connection>
    <Source>JudahZone:left</Source>
@@ -724,6 +687,14 @@
    <Target>Tal-Reverb-III:Audio Input 2</Target>
   </Connection>
   <Connection>
+   <Source>Calf Fluidsynth:Out L</Source>
+   <Target>JudahZone:drums</Target>
+  </Connection>
+  <Connection>
+   <Source>Calf Fluidsynth:Out R</Source>
+   <Target>JudahZone:drums</Target>
+  </Connection>
+  <Connection>
    <Source>Tal-Reverb-III:Audio Output 1</Source>
    <Target>system:playback_1</Target>
   </Connection>
@@ -732,12 +703,28 @@
    <Target>system:playback_2</Target>
   </Connection>
   <Connection>
-   <Source>MDA Shepard:Left Out</Source>
-   <Target>JudahZone:aux2</Target>
+   <Source>a2j:ActitioN MIDI Controller [16] (capture): ActitioN MIDI Controller MIDI 1</Source>
+   <Target>JudahMidi:pedal</Target>
   </Connection>
   <Connection>
-   <Source>MDA Shepard:Right Out</Source>
-   <Target>JudahZone:aux3</Target>
+   <Source>a2j:nanoKONTROL2 [28] (capture): nanoKONTROL2 MIDI 1</Source>
+   <Target>JudahMidi:mixer</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:MPKmini2 [32] (capture): MPKmini2 MIDI 1</Source>
+   <Target>JudahMidi:keyboard</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:nanoPAD2 [36] (capture): nanoPAD2 MIDI 1</Source>
+   <Target>JudahMidi:pads</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:MIDI2x2 [40] (capture): MIDI2x2 MIDI 1</Source>
+   <Target>JudahMidi:drumsIn</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:MIDI2x2 [40] (capture): MIDI2x2 MIDI 2</Source>
+   <Target>JudahMidi:arduino</Target>
   </Connection>
  </ExternalPatchbay>
 </CARLA-PROJECT>

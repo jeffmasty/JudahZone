@@ -21,25 +21,24 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
+import net.judah.JudahZone;
 import net.judah.api.Command;
 import net.judah.api.Midi;
 import net.judah.api.Service;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeListener.Property;
+import net.judah.looper.Recorder;
 import net.judah.midi.MidiClock;
 import net.judah.midi.ProgMsg;
 import net.judah.util.Console;
 import net.judah.util.Constants;
+import net.judah.util.Files;
 import net.judah.util.RTLogger;
 
 /** listens to an incoming Midi Clock stream and knows how to communicate to a Beat Buddy drum machine */
 @Log4j
 public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service {
 
-    /** location where BeatBuddy's SD card's SONGS are mirrored locally */
-
-    public static final File INSTALL_FOLDER = new File("/home/judah/SDCARD/SONGS");
-    public static final String CONFIG_CSV = "CONFIG.CSV";
     /** a song/temp/drumset configuration string in a song file's settings <br/>
      * x = songNum, y = tempo, z = drumset */
     public static final String CONFIG_FORMAT = "folderX@YY:Z";
@@ -100,10 +99,11 @@ public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service 
     private ConcurrentLinkedQueue<ShortMessage> queue =
             new ConcurrentLinkedQueue<>();
     private BeatBuddyGui gui;
+    private TimeListener listener;
 
-    int pulse;
-    long ticker;
-    long delta;
+    private int pulse;
+    private long ticker;
+    private long delta;
 
     @Data class Dir {
         final File dir;
@@ -122,12 +122,14 @@ public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service 
         try {
             loadSDCard();
             // addListener(JudahClock.getInstance());
-        } catch (Throwable t) { Console.warn(t); }
+        } catch (Throwable t) { Console.warn("Loading BeatBuddy SD Card: " + t, t); }
         // add Commands: song, nextSong, partNum, nextPart, drumset, tempo, volume, start, pause, outro
     }
 
     private void loadSDCard() throws IOException {
-        File config = new File(INSTALL_FOLDER, CONFIG_CSV);
+    	
+    	
+    	File config = new File(Files.INSTALL_FOLDER, Files.CONFIG_CSV);
         BufferedReader reader = new BufferedReader(new FileReader(config));
         List<String[]> list = new ArrayList<>();
         String str = null;
@@ -137,11 +139,13 @@ public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service 
         reader.close();
         for (String[] entry : list) {
             String[] suffix = entry[1].split("\\.");
-            Dir dir = new Dir(new File(INSTALL_FOLDER, entry[0]), suffix[1]);
+            Dir dir = new Dir(new File(Files.INSTALL_FOLDER, entry[0]), suffix[1]);
             directories.add(dir);
             tracks.put(dir.name, new ArrayList<>());
-            File config2 = new File(dir.dir, CONFIG_CSV);
-            reader = new BufferedReader(new FileReader(config2));
+            File config2 = new File(dir.dir, Files.CONFIG_CSV);
+            if (config2.isFile())
+            	reader = new BufferedReader(new FileReader(config2));
+            else reader = new BufferedReader(new FileReader(new File(dir.dir, "CONFIG.CSV")));
             String str2 = null;
             while((str2 = reader.readLine())!=null) {
                 String[] hash = str2.split(",");
@@ -421,6 +425,34 @@ public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service 
     @Override
     public void end() { play(false); }
 
+	public void latchA() {
+		Recorder a = JudahZone.getLooper().getLoopA(); 
+		if (a == null || a.getRecordedLength() <= 0) {
+			Console.warn(new NullPointerException("latchA(): No recording."));
+			return;
+		}
+		
+		float beats = listener == null ? 16 : 32;
+		float milliPerBeat = a.getRecordedLength() / beats;  
+		float tempo = Constants.bpmPerBeat(milliPerBeat);
+		setTempo(tempo); 
+		listen(a);
+		Console.info("Beat Buddy armed at " + tempo + " bpm.");
+	}
+
+	public void listen(Recorder target) {
+		if (listener != null) return;
+		listener = new TimeListener() {
+			@Override public void update(Property prop, Object value) {
+				if (prop.equals(TimeListener.Property.LOOP)) {
+					queue.offer(BeatBuddy.PAUSE_MIDI);
+					target.removeListener(this);
+					listener = null;
+				}
+			}
+		};
+		target.addListener(listener);
+	}
 
 }
 

@@ -1,7 +1,13 @@
 package net.judah.looper;
-import static net.judah.api.AudioMode.*;
-import static net.judah.util.AudioTools.*;
-import static net.judah.util.Constants.*;
+import static net.judah.api.AudioMode.ARMED;
+import static net.judah.api.AudioMode.NEW;
+import static net.judah.api.AudioMode.RUNNING;
+import static net.judah.api.AudioMode.STARTING;
+import static net.judah.api.AudioMode.STOPPED;
+import static net.judah.api.AudioMode.STOPPING;
+import static net.judah.util.AudioTools.processAdd;
+import static net.judah.util.Constants.LEFT_CHANNEL;
+import static net.judah.util.Constants.RIGHT_CHANNEL;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
@@ -38,7 +44,7 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
     private int counter;
     @Getter private long recordedLength = -1;
     private long _start;
-    Sample master;
+    private Sample master;
 
     public Recorder(String name, Type type) {
         this(name, type, JudahZone.getInPorts(), JudahZone.getOutPorts());
@@ -56,29 +62,36 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
     @Override
     public void update(Property prop, Object value) {
         if (Property.STATUS == prop && Status.TERMINATED == value) {
-            JudahZone.getDrummachine().play(false);
+            //JudahZone.getDrummachine().play(false);
             setRecording(new Recording(master.getRecording().size(), true));
             play(true);
             record(true);
             master.removeListener(this);
+            master = null;
             Console.info("Sync'd B recording. buffers: " + getRecording().size());
-            new Thread() {
-                @Override
-                public void run() {
-                    try {Thread.sleep(8);} catch(Throwable t) { }
-                    JudahZone.getDrummachine().play(false);
-                };
-
-            }.start();
+//            new Thread() {
+//                @Override
+//                public void run() {
+//                    try {Thread.sleep(8);} catch(Throwable t) { }
+//                    JudahZone.getDrummachine().play(false);
+//                };
+//
+//            }.start();
 
         }
     }
 
     public void armRecord(Sample loopA) {
-        master = loopA;
-        loopA.addListener(this);
-        if (gui != null) ((Output)gui).armRecord(true);
-        Console.info("Loop B sync'd and armed");
+    	if (master == null) {
+	        master = loopA;
+	        loopA.addListener(this);
+	        if (gui != null) ((Output)gui).armRecord(true);
+	        Console.info("Loop B sync'd and armed");
+    	}
+    	else {
+    		loopA.removeListener(this);
+    		master = null;
+    	}
     }
 
     @Override
@@ -109,8 +122,8 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
                 ArrayList<TimeListener> l = new ArrayList<>(listeners);
                 l.forEach(listener -> {listener.update(Property.STATUS, Status.TERMINATED);});
             }
-
             length = recording.size();
+            
             recordedLength = System.currentTimeMillis() - _start;
             isPlaying.compareAndSet(NEW, STOPPED);
             isPlaying.compareAndSet(ARMED, STARTING);

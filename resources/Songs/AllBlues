@@ -1,0 +1,18 @@
+{
+  "props" : {
+    "beatbuddy" : "BrushesBeats3@180",
+    "fluid:prog" : "0 32"
+  },
+  "links" : [ ],
+  "sequencer" : [ {
+    "type" : "INIT",
+    "timestamp" : 0,
+    "command" : "synth:progChange",
+    "notes" : "Acoustic Bass",
+    "params" : {
+      "channel" : "0",
+      "preset" : "32"
+    }
+  } ],
+  "router" : [ ]
+}

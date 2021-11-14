@@ -2,7 +2,7 @@ package net.judah.util;
 
 import java.util.ArrayList;
 
-import net.judah.JudahClock;
+import net.judah.clock.JudahClock;
 
 public class CurrentBeat {
 

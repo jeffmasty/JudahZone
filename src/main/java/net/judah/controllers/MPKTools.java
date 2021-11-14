@@ -1,4 +1,4 @@
-package net.judah.plugin;
+package net.judah.controllers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,8 +27,12 @@ cc reserved
  94 detuner
  95 phaser */
 @Log4j
-public class MPK {
+public class MPKTools {
 
+	public static enum KnobMode {
+		Effects1, Effects2;	//, MidiMixer;
+	};
+	
 	public static final String NAME = "MPKmini2"; // capture
 
 	public static final int JOYSTICK_DOWN_CC = 0; // 0 to 127
@@ -44,10 +48,6 @@ public class MPK {
 	public static final int BBANK = 1;
 
 	// joystick cc 0 and cc 100
-
-	// Not MPK
-	public static final List<Integer> PEDAL = Arrays.asList(new Integer[]
-			{96, 97, 98, 99, 100, 101});
 
 	public static final List<Integer> DRUMS_A = Arrays.asList(new Integer[]
 		{48, 49, 50, 51, 44, 45, 46, 47});
@@ -66,9 +66,10 @@ public class MPK {
 				return "DrumB " + DRUMS_B.indexOf(val) + quote(midi);
 		}
 		else if (Midi.isCC(midi)) {
-			if (PEDAL.contains(val))
-				return "Foot" + PEDAL.indexOf(val) + quote(midi);
-			else if (KNOBS.contains(val))
+//			if (PEDAL.contains(val))
+//				return "Foot" + PEDAL.indexOf(val) + quote(midi);
+//			else 
+				if (KNOBS.contains(val))
 				return "Knob  " + KNOBS.indexOf(val) + quote(midi);
 			else if (knobs1.contains(val))
 				return "Knob  " + knobs1.indexOf(val) + quote(midi) + " Bank1";

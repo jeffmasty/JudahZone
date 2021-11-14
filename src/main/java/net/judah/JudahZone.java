@@ -1,9 +1,12 @@
 package net.judah;
 
-import static net.judah.util.AudioTools.*;
-import static net.judah.util.Constants.*;
-import static org.jaudiolibs.jnajack.JackPortFlags.*;
-import static org.jaudiolibs.jnajack.JackPortType.*;
+import static net.judah.util.AudioTools.processAdd;
+import static net.judah.util.AudioTools.processSilence;
+import static net.judah.util.Constants.LEFT_CHANNEL;
+import static net.judah.util.Constants.RIGHT_CHANNEL;
+import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsInput;
+import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsOutput;
+import static org.jaudiolibs.jnajack.JackPortType.AUDIO;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -93,9 +96,8 @@ public class JudahZone extends BasicClient {
         synth = new FluidSynth(Constants.sampleRate());
         drummachine = new BeatBuddy();
         midi = new JudahMidi("JudahMidi", drummachine);
-        metronome = new Metronome(drummachine, midi,
-                Constants.resource("metronome/JudahZone.mid"));
-
+        metronome = new Metronome(drummachine, midi, null);
+        
         services.addAll(Arrays.asList(new Service[] {drummachine, synth, metronome, midi}));
 
         start();
@@ -168,7 +170,7 @@ public class JudahZone extends BasicClient {
         new TalReverb(carla, carla.getPlugins().byName(TalReverb.NAME))
             .initialize(Constants.sampleRate(), Constants.bufSize());
 
-        drummachine.setVolume(55);
+        drummachine.setVolume(127);
         initialized = true;
         /////////////////////////////////////////////////////////////////////////
         //                    now the system is live                           //

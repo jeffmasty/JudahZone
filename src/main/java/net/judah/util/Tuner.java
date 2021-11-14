@@ -1,6 +1,7 @@
 package net.judah.util;
 
 import java.awt.Dimension;
+import java.util.Vector;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -18,7 +19,6 @@ import javax.swing.JSlider;
 
 import be.tarsos.dsp.AudioDispatcher;
 import be.tarsos.dsp.AudioEvent;
-import be.tarsos.dsp.example.Shared;
 import be.tarsos.dsp.io.jvm.JVMAudioInputStream;
 import be.tarsos.dsp.pitch.PitchDetectionHandler;
 import be.tarsos.dsp.pitch.PitchDetectionResult;
@@ -74,7 +74,9 @@ public class Tuner extends JPanel implements PitchDetectionHandler {
 
         new PitchProcessor(algo, Constants.sampleRate(), Constants.bufSize(), this);
 
-        for(Mixer.Info info : Shared.getMixerInfo(false, true))
+        
+        
+        for(Mixer.Info info : JavaSound.getMixerInfo(false, true))
             if (info.getName().contains("default")) mixer = AudioSystem.getMixer(info);
     }
 
@@ -150,4 +152,22 @@ public class Tuner extends JPanel implements PitchDetectionHandler {
         return result;
     }
 
+    //from Tarsus DSP examples Shared.java
+	public static Vector<Mixer.Info> getMixerInfo(
+			final boolean supportsPlayback, final boolean supportsRecording) {
+		final Vector<Mixer.Info> infos = new Vector<Mixer.Info>();
+		final Mixer.Info[] mixers = AudioSystem.getMixerInfo();
+		for (final Mixer.Info mixerinfo : mixers) {
+			if (supportsRecording
+					&& AudioSystem.getMixer(mixerinfo).getTargetLineInfo().length != 0) {
+				// Mixer capable of recording audio if target LineWavelet length != 0
+				infos.add(mixerinfo);
+			} else if (supportsPlayback
+					&& AudioSystem.getMixer(mixerinfo).getSourceLineInfo().length != 0) {
+				// Mixer capable of audio play back if source LineWavelet length != 0
+				infos.add(mixerinfo);
+			}
+		}
+		return infos;
+	}
 }

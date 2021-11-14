@@ -10,6 +10,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
+import net.judah.clock.JudahClock;
 import net.judah.util.Console;
 import net.judah.util.Tuner;
 

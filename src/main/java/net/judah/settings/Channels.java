@@ -49,7 +49,7 @@ public class Channels extends ArrayList<LineIn> {
 				new String[] {"aux2", "aux3"});
 		// aux2.setMuteRecord(true);
 
-		addAll(Arrays.asList(new LineIn[] { guitar, mic, drums, synth, aux1, aux2 }));
+		addAll(Arrays.asList(new LineIn[] { guitar, mic, synth, drums, aux1, aux2 }));
 
 	}
 
@@ -61,7 +61,7 @@ public class Channels extends ArrayList<LineIn> {
 	}
 
 	public void initVolume() {
-		mic.setVolume(0);
+		mic.setVolume(10);
 		guitar.setVolume(60);
 		drums.setVolume(55);
 		synth.setVolume(40);
