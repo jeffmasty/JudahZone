@@ -43,8 +43,9 @@ public class Constants {
     public static final File ROOT = new File("/home/judah/git/JudahZone/resources/");
     public static final File defaultFolder = new File(ROOT, "Songs/");
     public static final File defaultSetlist = new File(defaultFolder, "list1.songs");
+    public static final File defaultDrumFile = new File(ROOT, "patterns/Drum2");
 
-	public static class Param {
+    public static class Param {
 		public static final String ACTIVE = "active";
 		/** channel to send trick track midi out on */
 		public static final String CHANNEL = "channel";
@@ -135,6 +136,10 @@ public class Constants {
     	return result;
     }
 
+    public static float computeTempo(long millis, int beats) {
+    	return bpmPerBeat(millis / (float)beats);
+    }
+    
     public static float bpmPerBeat(float msec) {
         return 60000 / msec;
     }

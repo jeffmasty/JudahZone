@@ -33,6 +33,6 @@ public class ReverbGui extends Widget {
         activeButton.setSelected(reverb.isActive());
         revRoom.setValue(Math.round(reverb.getRoomSize() * 100f));
         revDamp.setValue(Math.round(reverb.getDamp() * 100f));
-        revWet.setValue(Math.round(reverb.getWidth() * 100f));
+        revWet.setValue(Math.round(reverb.getWet() * 100f));
     }
 }

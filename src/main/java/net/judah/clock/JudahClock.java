@@ -1,95 +1,194 @@
 package net.judah.clock;
 
-import java.awt.Dimension;
-import java.awt.GridLayout;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JToggleButton;
-import javax.swing.SwingUtilities;
+import javax.sound.midi.ShortMessage;
+
+import org.jaudiolibs.jnajack.JackException;
+import org.jaudiolibs.jnajack.JackMidi;
+import org.jaudiolibs.jnajack.JackTransportState;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.MainFrame;
+import net.judah.api.Midi;
+import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeProvider;
 import net.judah.beatbox.BeatBox;
-import net.judah.effects.gui.Slider;
+import net.judah.clock.LoopSynchronization.SelectType;
 import net.judah.looper.Recorder;
+import net.judah.midi.JudahMidi;
+import net.judah.midi.MidiClock;
 import net.judah.sequencer.Sequencer;
 import net.judah.util.Console;
 import net.judah.util.Constants;
-import net.judah.util.JudahMenu;
-import net.judah.util.TapTempo;
+import net.judah.util.RTLogger;
 
-public class JudahClock implements TimeProvider, TimeListener {
+public class JudahClock implements MidiClock, TimeProvider, TimeListener {
 
-    @Getter private static JudahClock instance = new JudahClock();
+	@Getter private static JudahClock instance = new JudahClock();
+    
+	public static enum Mode { Internal, /**24 pulses per quarter note external midi clock*/ Midi24 };
+	public static final int[] LENGTHS= {1, 2, 4, 8, 12, 16, 32};
 
-    private final ArrayList<TimeListener> listeners = new ArrayList<>();
-    TimeListener listener;
-
+	@Getter private static Mode mode = Mode.Midi24;
     @Getter private final ArrayList<BeatBox> sequencers = new ArrayList<>();
-
-	@Setter @Getter private int steps = 16;
-	@Setter @Getter private int subdivision = 4;
+	@Getter private BeatBuddy drummachine = new BeatBuddy();
+    @Getter private ClockGui gui = new ClockGui(this);
+    private final ArrayList<TimeListener> listeners = new ArrayList<>();
+    private TimeListener listener;
 
     @Getter @Setter private boolean active;
-    @Getter private float tempo = 80f;
+    @Getter private float tempo = 90f;
+    /** current beat */
+    @Getter private int beat = -1;
+    /** current step */
+	@Getter private int step = 0;
+    @Setter @Getter private int steps = 16;
+	@Setter @Getter private int subdivision = 4;
+	/** 3 for a waltz, 4 is default */
     @Setter @Getter private int measure = 4;
-	@Getter private int count = -1;
+    /** current number of bars to record/computeTempo */
+	@Getter private int length = 4; 
+    private float exTempo; // tempo of external clock when running on internal clock
 
-	private Gui gui;
-    private JLabel tempoLbl;
-    private JToggleButton start;
-
-	/** current step */
-	@Setter @Getter private int step = 0;
 	/** jack frames since transport start or frames between pulses */
 	@Getter private long lastPulse;
 	private long nextPulse;
 
+	/** Loop Synchronization */
+	private static SelectType onDeck;
+	
+	// listen to midi clock
+    private int pulse;
+    private long ticker;
+    private long delta;
+
 	private JudahClock() {
-	    instance = this;
-	    for (int i = 0; i < 16; i++)
-	        sequencers.add(new BeatBox(i));
+	    for (int i = 0; i < 16; i++) {
+	        sequencers.add(new BeatBox(this, i));
+	    }
+	    if (Constants.defaultDrumFile.isFile())
+	    	sequencers.get(9).load(Constants.defaultDrumFile); // load a default drum pattern
+
 	}
 
-	public void process() {
-	    if (!active) return;
-	    if (System.currentTimeMillis() < nextPulse) return;
-	    lastPulse = nextPulse;
-	    nextPulse = computeNextPulse();
-	    step();
+	public void process() throws JackException {
+		ShortMessage poll = drummachine.getQueue().poll();
+        while (poll != null) {
+            JackMidi.eventWrite(JudahMidi.getInstance().getDrumsOut(), 0, poll.getMessage(), poll.getLength());
+            RTLogger.log(this, "to beat buddy: " + poll);
+            poll = drummachine.getQueue().poll();
+        }
+	
+        if (mode == Mode.Midi24 || !active) 
+        	return;
+        if (System.currentTimeMillis() < nextPulse) 
+        	return;
+		lastPulse = nextPulse;
+		nextPulse = computeNextPulse();
+		step();
+	}
+	
+	@Override
+	public void processTime(byte[] midi) {
+		int stat;
+        if (midi.length == 1)
+            stat = midi[0] & 0xFF;
+        else if (midi.length == 2) {
+            stat = midi[1] & 0xFF;
+            stat = (stat << 8) | (midi[0] & 0xFF);
+        }
+        else {
+            stat = 0;
+            RTLogger.log(this, midi.length + " " + new Midi(midi));
+        }
+
+        if (ShortMessage.START == stat) {
+            RTLogger.log(this, "MIDI START!");
+            listeners.forEach(l -> {l.update(Property.TRANSPORT,
+                    JackTransportState.JackTransportStarting); });
+            beat = 0;
+            pulse = 0;
+        }
+
+        else if (ShortMessage.STOP == stat) {
+            RTLogger.log(this, "MIDI STOP");
+            listeners.forEach(l -> {l.update(Property.TRANSPORT,
+                    JackTransportState.JackTransportStopped); });
+        }
+
+        else if (ShortMessage.CONTINUE == stat) {
+            RTLogger.log(this, "MIDI CONTINUE");
+            listeners.forEach(l -> {l.update(Property.TRANSPORT,
+                    JackTransportState.JackTransportRolling); });
+
+        }
+        else if (mode != Mode.Midi24) 
+        	return;
+        
+        // process time
+        if (ShortMessage.TIMING_CLOCK == stat) {
+            pulse++;
+            if (pulse == 1) {
+                ticker = System.currentTimeMillis();
+            }
+            if (pulse == 25) {
+                new Thread() {@Override public void run() {
+                	listeners.forEach(listener -> {listener.update(Property.BEAT, ++beat);});
+                }}.start();
+                
+            }
+            if (pulse == 49) { // hopefully 2 beats will be more accurate than 1
+                delta = System.currentTimeMillis() - ticker;
+	                tempo = exTempo = Constants.toBPM(delta, 2);
+	                new Thread() {@Override public void run() {
+	                	listeners.forEach(listener -> {listener.update(Property.BEAT, ++beat);});
+	                	listeners.forEach(l -> {l.update(Property.TEMPO, tempo); });
+	                	gui.update();
+	                	drummachine.tempoReceived(exTempo);
+	                	// RTLogger.log(this, "TEMPO : " + tempo);
+	                }}.start();
+//                } // mode24
+//                else {
+//                	exTempo = Constants.toBPM(delta, 2);
+//                	drummachine.tempoReceived(exTempo);
+//                }
+                pulse = 0;
+            }
+        }
+        else
+            RTLogger.log(this, "unknown beat buddy " + new Midi(midi));
+
 	}
 
+	
 	public long computeNextPulse() {
 	    return lastPulse + Constants.millisPerBeat(tempo * subdivision);
 	}
 
 	private void step() {
-        // run the current beat
-        if (step % subdivision == 0) {
-            count++;
-            // Console.info("step: " + step + " beat: " + step/2f + " count: " + count);
-            listeners.forEach(listener -> {listener.update(Property.BEAT, count);});
-        }
 
-        new Thread( () -> {
+			// run the current beat
+	        if (step % subdivision == 0) {
+	            beat++;
+//	        	new Thread( () -> {
+	            // Console.info("step: " + step + " beat: " + step/2f + " count: " + count);
+	        		listeners.forEach(listener -> {listener.update(Property.BEAT, beat);});
+	        		//Console.info(beat + ((beat % measure == 0) ? "*" : ""));
+	        		
+	        		if (beat % measure == 0) {
+	        			new ArrayList<TimeListener>(listeners).forEach(
+	        					listener -> {listener.update(Property.BARS, beat / measure);});
+	        		}
+//	        	}).start();
+	        }
             listeners.forEach(listener -> {listener.update(Property.STEP, step);});
             for (BeatBox beatbox : sequencers)
                 beatbox.process(step);
             step++;
             if (step == steps)
                 step = 0;
-
-        }).start();
 	}
 
 	@Override
@@ -97,24 +196,40 @@ public class JudahClock implements TimeProvider, TimeListener {
 	    lastPulse = System.currentTimeMillis();
 	    if (Sequencer.getCurrent() != null)
 	        Sequencer.getCurrent().setClock(this);
+	    if (!active) {
+        	active = true;
+	    	gui.update();
+        }
+	    if (mode == Mode.Midi24) {
+			drummachine.getQueue().offer(BeatBuddy.PAUSE_MIDI);
+			return;
+		}
+	    step = 0;
+		beat = -1;
 	    step();
 	    nextPulse = computeNextPulse();
-        start.setText("Stop");
-	    active = true;
 	}
 
 	@Override
     public void end() {
+		if (mode == Mode.Midi24) 
+			drummachine.getQueue().offer(BeatBuddy.PAUSE_MIDI);
 	    active = false;
-        start.setText("Start");
+	    gui.update();
 	    Console.info(JudahClock.class.getSimpleName() + " end");
 	}
 
+	public void reset() {
+		end();
+		step = 0;
+        beat = -1;
+	}
+	
 	@Override
 	public boolean setTempo(float tempo2) {
 		if (tempo2 < tempo || tempo2 > tempo) {
 			tempo = tempo2;
-			tempoLbl.setText("" + tempo);
+			gui.update();
 			listeners.forEach(l -> {l.update(Property.TEMPO, tempo);});
 		}
 		return true;
@@ -138,116 +253,88 @@ public class JudahClock implements TimeProvider, TimeListener {
 	    }
 	}
 
-    public JPanel getGui() {
-        if (gui == null) gui = new Gui();
-        return gui;
-    }
-
     public BeatBox getSequencer(int channel) {
         return sequencers.get(channel);
     }
 
-    class Gui extends JPanel {
-        final Dimension combo = new Dimension(MainFrame.WIDTH_CLOCK / 2, 19);
-        final JudahMenu popup = new JudahMenu();
-        Gui() {
-            Slider tempo = new Slider(35, 175, e -> {
-                setTempo(((Slider)e.getSource()).getValue());});
-            tempo.setValue(Math.round(getTempo()));
-            JPanel tempoPnl = new JPanel();
-            tempoPnl.setLayout(new BoxLayout(tempoPnl, BoxLayout.X_AXIS));
-            tempoPnl.add(Box.createRigidArea(new Dimension(6, 6)));
-            tempoPnl.add(tempo);
-            tempoPnl.add(Box.createRigidArea(new Dimension(6, 6)));
-
-
-            TapTempo tapButton = new TapTempo("Tempo: ", msec -> {
-                setTempo(60000 / msec);
-            });
-            tempoLbl = new JLabel("" + getTempo(), JLabel.CENTER);
-            tempoLbl.addMouseListener(new MouseAdapter() {
-                @Override public void mouseClicked(MouseEvent e) {
-                    String input = Constants.inputBox("Tempo:");
-                    if (input == null || input.isEmpty()) return;
-                    try { setTempo(Float.parseFloat(input));
-                    } catch (Throwable t) { Console.info(t.getMessage() + " " + input); }
-                }});
-            tempoLbl.setFont(Constants.Gui.BOLD);
-
-            JPanel bpmPnl = new JPanel(new GridLayout(1, 2));
-            bpmPnl.add(tapButton);
-            bpmPnl.add(tempoLbl);
-
-            JButton menu = new JButton("Menu");
-            menu.addActionListener(e -> {
-                popup.show(menu, menu.getLocation().x, menu.getLocation().y);
-            });
-            start = new JToggleButton("Start");
-            start.setSelected(isActive());
-            start.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (isActive()) {
-                        end();
-                        if (SwingUtilities.isLeftMouseButton(e)) {
-                            step = 0;
-                            count = -1;
-                        }
-                    }
-                    else
-                        begin();
-                }
-            });
-            JPanel startPnl = new JPanel(new GridLayout(1, 2));
-            startPnl.add(menu); startPnl.add(start);
-
-            // setLayout(new GridLayout(5, 1, 3, 0));
-            setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-            add(startPnl);
-
-            JPanel logPnl = new JPanel(new GridLayout(0, 3, 0, 2));
-            JToggleButton log = new JToggleButton("log");
-            log.setFont(Constants.Gui.FONT9);
-            JToggleButton seq = new JToggleButton("seq");
-            seq.setFont(Constants.Gui.FONT9);
-            JToggleButton fx = new JToggleButton("fx");
-            fx.setFont(Constants.Gui.FONT9);
-
-            logPnl.add(seq); seq.setVisible(false); // TODO
-            logPnl.add(fx);   fx.setVisible(false); // not implemented yet
-            logPnl.add(log); log.setVisible(false);
-
-            add(logPnl);
-
-            add(bpmPnl);
-            add(tempoPnl);
-            add(Box.createVerticalGlue());
-        }
+    public void latch(Recorder loopA) {
+    	latch(loopA, length * subdivision);
     }
-
+    
 	public void latch(Recorder loopA, int beats) {
 		if (loopA.hasRecording() && loopA.getRecordedLength() > 0) {
-			float milliPerBeat = loopA.getRecordedLength() / (float)beats;  
-			float tempo = Constants.bpmPerBeat(milliPerBeat);
-			setTempo(tempo); 
+			tempo = Constants.computeTempo(loopA.getRecordedLength(), beats); 
+			gui.update();
 			listen(loopA);
-			Console.info("JudahClock armed at " + tempo + " bpm.");
+			Console.info("Clock armed at " + tempo + " bpm. (" 
+					+ beats / subdivision + " bars form " + loopA.getName() + ")");
 		}
 	}
 
-	void listen(Recorder target) {
+	void listen(final Recorder target) {
 		if (listener != null) return;
 		listener = new TimeListener() {
 			@Override public void update(Property prop, Object value) {
 				if (prop.equals(TimeListener.Property.LOOP)) {
+					step = 0;
 					begin();
-					target.removeListener(this);
+				}
+				else if (Status.TERMINATED==value) {
 					listener = null;
 				}
 			}
 		};
 		target.addListener(listener);
 	}
+
+	public void togglePlay() {
+		if (isActive()) end();
+		else begin();
+	}
+
+	public void setLength(int bars) {
+		if (length != bars) {
+			length = bars;
+			RTLogger.log(this, "Latching to " + bars + " bars");
+		}
+	}
+	
+	public void synchronize(Recorder loop) {
+		listeners.add(new LoopSynchronization(loop, length));
+		RTLogger.log(this, "sync to " + loop.getName() + " " + length + " bars.");
+	}
+
+	public static boolean waiting(Recorder loop) {
+		if (onDeck == null) return false;
+		switch(onDeck) {
+			case ERASE: 
+				loop.erase();
+				break;
+			case SYNC:
+				instance.synchronize(loop);
+				break;
+		}
+		onDeck = null;
+		return true;
+	}
+
+	public static void setOnDeck(SelectType syncType) {
+		onDeck = syncType;
+		RTLogger.log(getInstance(), "Waiting... (" + syncType.name() + " " + getInstance().length + " bars)");
+	}
+
+	public static void setMode(Mode mode) {
+		JudahClock.mode = mode;
+		if (instance.gui != null)
+			instance.gui.update();
+		RTLogger.log(instance, "Clock: " + mode);
+	}
+
+	public void toggleMode() {
+		setMode(mode == Mode.Internal ? Mode.Midi24 : Mode.Internal);
+	}
+	
+	
 	
 }
 

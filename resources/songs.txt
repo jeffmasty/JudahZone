@@ -78,7 +78,6 @@ Autumn Leaves - (B)AAB  (head is 1/2 of bridge)
                *
                *
           1/2 loop -> record head, overwrite(ch2) -> bridge(drive)    
-TODO dropDaBeat
 
 
 

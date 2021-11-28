@@ -1,8 +1,10 @@
 package net.judah.util;
 
-import static java.awt.event.KeyEvent.*;
-import static net.judah.JudahZone.*;
-import static net.judah.util.Constants.*;
+import static java.awt.event.KeyEvent.VK_ESCAPE;
+import static net.judah.JudahZone.getCarla;
+import static net.judah.JudahZone.getChannels;
+import static net.judah.JudahZone.getPresets;
+import static net.judah.util.Constants.NL;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -53,7 +55,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
     private static final String routerHelp = "router - prints current midi translations";
     private static final String routeHelp = "route/unroute channel fromChannel# toChannel#";
     private static final String activeHelp ="active - prints the current sequencer command from the top of the stack.";
-    private static final String buddyHelp = "buddy intCmd intValue or buddy songNum";
+    // private static final String buddyHelp = "buddy intCmd intValue or buddy songNum";
     private static final String presetHelp = "preset - print the current EffectsRack settings";
 
     private static Console instance;
@@ -237,10 +239,10 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
             unroute(input);
         else if (text.equals("active"))
             Console.info("" + Sequencer.getCurrent().getActive());
-        else if (text.equals("buddy") && input.length == 2)
-            getDrummachine().parseConfig(input[1]);
-        else if (text.equals("drumset") && input.length == 2)
-            getDrummachine().drumset(Integer.parseInt(input[1]));
+//        else if (text.equals("buddy") && input.length == 2)
+//            getDrummachine().parseConfig(input[1]);
+//        else if (text.equals("drumset") && input.length == 2)
+//            getDrummachine().drumset(Integer.parseInt(input[1]));
         else if (text.equals("update")) {
             MixerPane.getInstance().update();
             Console.info("...updated");
@@ -274,7 +276,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
         addText(midiPlay);
         addText(listenHelp);
         addText(activeHelp);
-        addText(buddyHelp);
+        // addText(buddyHelp);
         addText(presetHelp);
         addText("fluid help");
 
@@ -321,7 +323,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
                 int idx = Integer.parseInt(file);
                 looper.get(idx).play(true);
             } catch (Throwable t) {
-                Sample sample = new Sample(new File(file).getName(), Recording.readAudio(file), ProcessAudio.Type.ONE_TIME);
+                Sample sample = new Sample(new File(file).getName(), Recording.readAudio(file), ProcessAudio.Type.ONE_SHOT);
                 looper.add(sample);
                 sample.play(true);
             }

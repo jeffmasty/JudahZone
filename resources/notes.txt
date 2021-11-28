@@ -1,15 +1,39 @@
 TODO:
-visual feedback from midi controllers, track select
+
+MPK CC:
+{playClock}	  {seq/pads}	[clock]    [fx1]
+{keyboard}    {adjust}      [lfo/seq]  [fx2]
+
+ChannelView:
+	icon
+	volume
+	status
+	menu
+
+drum pads*  getTempo (Channel src, int bars)
+copy/delete loops
+Sampler
+Midify BeatBox Sequencer
+Noise Effect generates ocean, bicycle, phonograph, pink, whips and chains  (type, frequency, wet)
+
 knob modes: efx1 efx2 beats, midiMixer, synth
 
-
 ***pads
-recordA	   recordB  recordDrum recordC sequencer	sheet	SynthKnobs    Sync! 							
-reload/AAB latchB   latchDrum  latchC  guitarEfx	MicEfx  SynthEfx  	  on/off Beats
+recordA	   recordB  recordDrum recordC sequencer	sheet	SynthKnobs    *tapTempo							
+reload/AAB latchB   latchDrum  latchC  guitarEfx	MicEfx  SynthEfx  	  on/off clock*
 
 effects knobs
 room   	d.time 	dist.	lfoType	 	
 dry    	d.fback pArTyEQ	lfoTime	
+
+	dist. pArTy pan  room
+	chorus c2   c3   r/dry
+//	room dry pan distortion
+//	chorus1 2 3  partyEq
+	
+	bass   mid    treb  d.time
+	t/hold noise1 n2    d.fback 
+
 
 bass    mid    	treble	pan
 chorus1  2      3       t/hold
@@ -146,3 +170,5 @@ recover from midi network ENOBUF
 multiple clocks, multiple beat grids
 Arduino foot pedal: load/reload  latchB
 midi mapper by instrument - mixer, pads, keys, pedal, aux
+visual feedback from midi controllers, track select
+onDeck, eraseLoop

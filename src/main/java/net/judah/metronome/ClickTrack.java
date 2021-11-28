@@ -1,14 +1,13 @@
 package net.judah.metronome;
 
-import static net.judah.settings.Commands.MetronomeLbls.*;
-import static net.judah.util.Constants.Param.*;
+import static net.judah.settings.Commands.MetronomeLbls.CLICKTRACK;
+import static net.judah.util.Constants.Param.CHANNEL;
 
 import java.io.File;
 import java.util.HashMap;
 
 import lombok.extern.log4j.Log4j;
 import net.judah.api.Command;
-import net.judah.settings.MidiSetup;
 import net.judah.util.Constants;
 
 @Log4j
@@ -50,7 +49,7 @@ public class ClickTrack extends Command {
 	@Override
 	public void execute(final HashMap<String, Object> props, int midiData2) {
 		log.warn("Click Track execute: " + Constants.prettyPrint(props));
-		int channel = MidiSetup.OUT.DRUMS_OUT.channel;
+		int channel = 9;
 		try {
 			channel = Integer.parseInt("" + props.get(CHANNEL));
 		} catch (NumberFormatException e) { /** default use channel 9 */}

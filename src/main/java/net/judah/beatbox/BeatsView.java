@@ -1,8 +1,12 @@
 package net.judah.beatbox;
 
-import static net.judah.util.Size.*;
+import static net.judah.util.Size.HEIGHT_TABS;
+import static net.judah.util.Size.WIDTH_CLOCK;
+import static net.judah.util.Size.WIDTH_SONG;
+import static net.judah.util.Size.WIDTH_TUNER;
 
 import java.awt.Rectangle;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.swing.JDesktopPane;
 
@@ -11,9 +15,13 @@ import net.judah.api.TimeListener;
 import net.judah.clock.JudahClock;
 import net.judah.util.Console;
 import net.judah.util.Pastels;
+import net.judah.util.Update;
 
 public class BeatsView extends JDesktopPane implements TimeListener, Pastels {
 
+	@Getter private static final ConcurrentLinkedQueue<Update>
+            queue = new ConcurrentLinkedQueue<>();
+	
     private static final int height = HEIGHT_TABS - 30;
     private static final Rectangle BTN_BOUNDS = new Rectangle(0, 0, WIDTH_CLOCK, height);
     private static final Rectangle KIT_BOUNDS = new Rectangle(WIDTH_CLOCK, 0, WIDTH_TUNER, height);
@@ -21,7 +29,7 @@ public class BeatsView extends JDesktopPane implements TimeListener, Pastels {
             WIDTH_SONG - WIDTH_TUNER - WIDTH_CLOCK, height);
 
     @Getter private static BeatsView instance;
-    private final JudahClock clock = JudahClock.getInstance();
+    private static final JudahClock clock = JudahClock.getInstance();
 
     @Getter private final Buttons buttons;
     @Getter private final GridView grid2;
@@ -44,6 +52,10 @@ public class BeatsView extends JDesktopPane implements TimeListener, Pastels {
 
         clock.addListener(this);
         instance = this;
+        
+        new Thread(() -> {
+        	while(true) if (queue.peek() != null) queue.poll().run();}).start();
+        
     }
 
     public void initialize(BeatBox sequencer) {
@@ -69,18 +81,6 @@ public class BeatsView extends JDesktopPane implements TimeListener, Pastels {
         // TODO
     }
 
-    /**@return currently viewed sequencer/channel */
-    public BeatBox getSequencer() {
-        return JudahClock.getInstance().getSequencer(
-                buttons.getChannelCombo().getSelectedIndex());
-    }
-
-    /**@return currently viewed pattern data*/
-    public Grid getCurrent() {
-        return JudahClock.getInstance().getSequencer(
-                buttons.getChannelCombo().getSelectedIndex()).getCurrent();
-    }
-
     public void updateKit(BeatBox seq, KitPanel tracks) {
         new Thread( () -> {
             grid2.repaint();
@@ -101,4 +101,38 @@ public class BeatsView extends JDesktopPane implements TimeListener, Pastels {
     public int getNoteOff() {
         return (int)buttons.getGate().getSelectedItem();
     }
+    
+    public static int channelCount() {
+    	return instance.buttons.getChannelCombo().getItemCount();
+    }
+            
+    public static void changeChannel(boolean up) {
+    	int channel = getChannel() + (up ? 1 : -1);
+    	int count = channelCount();
+    	if (channel == count)
+    		channel = 0;
+    	if (channel == -1)
+    		channel = count;
+    	changeChannel(channel);
+    }
+    
+    public static void changeChannel(int ch) {
+    	instance.initialize(clock.getSequencer(ch));
+    }
+
+    public static int getChannel() {
+    	return instance.buttons.getChannelCombo().getSelectedIndex();
+    }
+    
+    /**@return currently viewed sequencer/channel */
+    public static BeatBox getSequencer() {
+        return clock.getSequencer(getChannel());
+    }
+
+    /**@return currently viewed pattern data*/
+    public static Grid getCurrent() {
+        return clock.getSequencer(getChannel()).getCurrent();
+    }
+
+    
 }

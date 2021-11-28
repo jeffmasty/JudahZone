@@ -13,8 +13,10 @@ import javax.swing.JTabbedPane;
 import javax.swing.border.TitledBorder;
 
 import lombok.Getter;
+import net.judah.clock.JudahClock;
 import net.judah.effects.gui.EffectsRack;
 import net.judah.effects.gui.PresetsGui;
+import net.judah.looper.Recorder;
 import net.judah.looper.Sample;
 import net.judah.mixer.Channel;
 import net.judah.mixer.ChannelGui;
@@ -29,6 +31,9 @@ public class MixerPane extends JPanel {
     private final EffectsList effectsTab = new EffectsList();
 
     @Getter private EffectsRack current;
+    @Getter private static Recorder liveLoop = JudahZone.getLooper().getLoopA();
+    @Getter private static LineIn liveInput = JudahZone.getChannels().getGuitar();
+    
     private JComponent songlist;
     private final JTabbedPane tabs;
     private final JPanel mixer = new JPanel();
@@ -53,7 +58,7 @@ public class MixerPane extends JPanel {
         tabs = new JTabbedPane();
         songlist = new SonglistTab(Constants.defaultSetlist);
         tabs.add("Setlist", songlist);
-        tabs.add("BeatBuddy", JudahZone.getDrummachine().getGui());
+        tabs.add("BeatBuddy", JudahClock.getInstance().getDrummachine().getGui());
         tabs.add("Presets", new PresetsGui(JudahZone.getPresets()));
         add(looper);
         add(mixer);
@@ -62,10 +67,14 @@ public class MixerPane extends JPanel {
     }
 
     public void update() {
-        for (Channel c : JudahZone.getChannels()) c.getGui().update();
-        for (Sample s : JudahZone.getLooper()) s.getGui().update();
-        JudahZone.getMasterTrack().getGui().update();
-        if (current != null) current.update();
+    	new Thread() { @Override
+        	public void run() {
+		        for (Channel c : JudahZone.getChannels()) c.getGui().update();
+		        for (Sample s : JudahZone.getLooper()) s.getGui().update();
+		        JudahZone.getMasterTrack().getGui().update();
+		        current.update();
+		        // if (current != null) current.update();
+    	}}.start();
     }
 
     public void setFocus(Channel ch) {
@@ -82,6 +91,10 @@ public class MixerPane extends JPanel {
         }
 
         current = effectsTab.get(ch);
+        if (ch instanceof Recorder) 
+        	liveLoop = (Recorder)ch;
+        else if (ch instanceof LineIn)
+        	liveInput = (LineIn)ch;
 
         if (idx < 0) {
             tabs.add(EffectsRack.TAB_NAME, current);

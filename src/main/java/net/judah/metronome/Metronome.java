@@ -1,7 +1,11 @@
 package net.judah.metronome;
 
-import static net.judah.settings.Commands.MetronomeLbls.*;
-import static net.judah.util.Constants.Param.*;
+import static net.judah.settings.Commands.MetronomeLbls.TEMPO;
+import static net.judah.settings.Commands.MetronomeLbls.TICKTOCK;
+import static net.judah.settings.Commands.MetronomeLbls.VOLUME;
+import static net.judah.util.Constants.Param.BPM;
+import static net.judah.util.Constants.Param.GAIN;
+import static net.judah.util.Constants.Param.MEASURE;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,8 +34,6 @@ import net.judah.api.Service;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeProvider;
-import net.judah.plugin.BeatBuddy;
-import net.judah.plugin.Carla;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 
@@ -62,26 +64,20 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 	@Getter private File midiFile;
 
 	private Player playa;
-	private static Carla carla;
 	private MetroGui gui;
 	private boolean clicktrack;
 	public boolean hasClicktrack() {return clicktrack;}
 
 	@Getter private final List<Command> commands = new ArrayList<>();
 
-    public Metronome(BeatBuddy master, MidiQueue queue, File midiFile)
+    public Metronome(MidiQueue queue, File midiFile)
             throws JackException, IOException, InvalidMidiDataException, OSCSerializeException {
 
     	this.midi = queue;
         this.midiFile = midiFile;
-    	Runtime.getRuntime().addShutdownHook(new Thread() {
-        	@Override public void run() { if (carla != null) carla.close(); }});
-    	if (master == null)
+    	//if (master == null)
     	    timeProvider = this;
-    	else {
-    	    timeProvider = master;
-    	    timeProvider.addListener(this);
-    	}
+    	//else {timeProvider = master;timeProvider.addListener(this);}
 
         commands.add(new Command(TICKTOCK.name, TICKTOCK.desc) {
     		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
@@ -143,7 +139,7 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 	    	MidiClient midi = new MidiClient(CLIENT_NAME, new String[] {}, new String[] {DRUM_PORT});
 			JFrame frame = new JFrame("Metronome");
 	        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			frame.setContentPane(new Metronome(null, midi, midiFile).getGui());
+			frame.setContentPane(new Metronome(midi, midiFile).getGui());
 	        frame.setLocation(200, 50);
 	        frame.setSize(330, 165);
 	        frame.setVisible(true);

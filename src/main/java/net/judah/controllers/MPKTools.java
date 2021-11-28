@@ -30,7 +30,7 @@ cc reserved
 public class MPKTools {
 
 	public static enum KnobMode {
-		Effects1, Effects2;	//, MidiMixer;
+		Effects1, Effects2, Clock;	//, MidiMixer;
 	};
 	
 	public static final String NAME = "MPKmini2"; // capture
@@ -137,6 +137,7 @@ public class MPKTools {
 			}
 	};
 	public static final int[] PRIMARY_PROG = PROG_CHANGES[0][0];
+	public static final int[] B_PROG = PROG_CHANGES[1][0];
 
 	private static ArrayList<ShortMessage[]> genKnobs(List<Integer>[] in) {
 

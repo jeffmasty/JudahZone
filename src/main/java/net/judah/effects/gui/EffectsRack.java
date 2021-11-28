@@ -74,7 +74,6 @@ public class EffectsRack extends JPanel implements GUI {
     public void update() {
         if (!JudahZone.isInitialized() || inUpdate) return;
         inUpdate = true;
-
         volume.setValue(channel.getVolume());
         presetActive.setSelected(channel.isPresetActive());
         name.setToolTipText(presetActive.isSelected() ? channel.getPreset().getName() : null);
@@ -88,10 +87,9 @@ public class EffectsRack extends JPanel implements GUI {
         delay.update();
         lfo.update();
         cut.update();
-        inUpdate = false;
         revalidate();
         repaint();
-
+        inUpdate = false;
     }
 
     // Header ////////////////////////////////////////////////////////////////////////////

@@ -1,4 +1,4 @@
-package net.judah.plugin;
+package net.judah.clock;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,8 +14,6 @@ import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
 import org.apache.commons.lang3.CharUtils;
-import org.jaudiolibs.jnajack.JackPort;
-import org.jaudiolibs.jnajack.JackTransportState;
 
 import lombok.Data;
 import lombok.Getter;
@@ -26,18 +24,16 @@ import net.judah.api.Command;
 import net.judah.api.Midi;
 import net.judah.api.Service;
 import net.judah.api.TimeListener;
-import net.judah.api.TimeListener.Property;
+import net.judah.api.TimeNotifier;
 import net.judah.looper.Recorder;
-import net.judah.midi.MidiClock;
 import net.judah.midi.ProgMsg;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.Files;
-import net.judah.util.RTLogger;
 
 /** listens to an incoming Midi Clock stream and knows how to communicate to a Beat Buddy drum machine */
 @Log4j
-public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service {
+public class BeatBuddy extends ArrayList<Command> implements TimeNotifier, Service {
 
     /** a song/temp/drumset configuration string in a song file's settings <br/>
      * x = songNum, y = tempo, z = drumset */
@@ -57,7 +53,9 @@ public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service 
 
     }
 
+    
     public static final String PARAM_BUDDY = "beatbuddy";
+    public static final long DEBOUNCE = 34;
     // Song select is prog change
     public static final int FOLDER_MSB = 0;
     public static final int FOLDER_LSB = 32;
@@ -89,21 +87,16 @@ public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service 
 
     static final Midi FOLDER_FIRST = Midi.create(CC, FOLDER_MSB, 0);
 
-    @Setter JackPort out;
     ArrayList<TimeListener> listeners = new ArrayList<>();
 
-    @Getter private float tempo = 90f;
+    /**tempo of the beat buddy device (not always master clock)*/
+    @Getter private float tempo = 90f; 
     @Getter private int beat;
     @Getter private boolean play;
-    @Getter @Setter
-    private ConcurrentLinkedQueue<ShortMessage> queue =
-            new ConcurrentLinkedQueue<>();
+    @Getter @Setter private ConcurrentLinkedQueue<ShortMessage> queue 
+    		= new ConcurrentLinkedQueue<>();
     private BeatBuddyGui gui;
     private TimeListener listener;
-
-    private int pulse;
-    private long ticker;
-    private long delta;
 
     @Data class Dir {
         final File dir;
@@ -122,8 +115,8 @@ public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service 
         try {
             loadSDCard();
             // addListener(JudahClock.getInstance());
+            setVolume(120);
         } catch (Throwable t) { Console.warn("Loading BeatBuddy SD Card: " + t, t); }
-        // add Commands: song, nextSong, partNum, nextPart, drumset, tempo, volume, start, pause, outro
     }
 
     private void loadSDCard() throws IOException {
@@ -164,11 +157,7 @@ public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service 
 
     @Override public void addListener(TimeListener l) { if (!listeners.contains(l)) listeners.add(l); }
     @Override public void removeListener(TimeListener l) { listeners.remove(l); }
-    @Override public int getMeasure() { return 0; /* no-op */}
-    @Override public void setMeasure(int bpb) {/* no-op */ }
     @Override public List<Command> getCommands() { return this; }
-
-    @Override public long getLastPulse() { return ticker; }
 
     public BeatBuddyGui getGui() {
         if (gui == null)
@@ -294,7 +283,7 @@ public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service 
         ○ Value 0 → BeatBuddy ends transition and goes to the selected song part as
             specified in the original value, as specified above.</pre>
     */
-    public void transission(int destination) {
+    public void transition(int destination) {
         Midi target = Midi.create(CC, TRANSITION, destination);
         queue.offer(target);
         new Thread() { @Override public void run() {
@@ -305,8 +294,8 @@ public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service 
         }.start();
     }
     private boolean firstPart = true;
-    public void transission() {
-        transission( firstPart ? 2:1 );
+    public void transition() {
+        transition( firstPart ? 2:1 );
         firstPart = !firstPart;
     }
 
@@ -323,7 +312,7 @@ public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service 
     1       50      178
     2       0       256
     2       44      300 // max  </pre>*/
-    @Override public boolean setTempo(float tempo) {
+    public boolean setTempo(float tempo) {
         int remainder = Math.round(tempo);
         int msb = 0;
         if (tempo - 127 > 0) {
@@ -357,72 +346,8 @@ public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service 
         queue.offer(TAP_TEMPO);
     }
 
-    /** in RealTime */
-    @Override
-    public void processTime(byte[] midi) {
-        int stat;
-        if (midi.length == 1)
-            stat = midi[0] & 0xFF;
-        else if (midi.length == 2) {
-            stat = midi[1] & 0xFF;
-            stat = (stat << 8) | (midi[0] & 0xFF);
-        }
-        else {
-            stat = 0;
-            RTLogger.log(this, midi.length + " " + new Midi(midi));
-        }
-
-        if (ShortMessage.TIMING_CLOCK == stat) {
-            pulse++;
-            if (pulse == 1) {
-                ticker = System.currentTimeMillis();
-            }
-            if (pulse == 25) {
-                listeners.forEach(listener -> {listener.update(Property.BEAT, ++beat);});
-            }
-            if (pulse == 49) { // hopefully 2 beats will be more accurate than 1
-                listeners.forEach(listener -> {listener.update(Property.BEAT, ++beat);});
-                delta = System.currentTimeMillis() - ticker;
-                float temptempo = Constants.toBPM(delta, 2);
-                if (Math.round(temptempo) != tempo) {
-                    tempo = Math.round(temptempo);
-
-                    listeners.forEach(l -> {l.update(Property.TEMPO, tempo); });
-                    if (gui != null) gui.tempo((int)tempo);
-                    // RTLogger.log(this, "TEMPO : " + tempo);
-                }
-                pulse = 0;
-            }
-        }
-
-        else if (ShortMessage.START == stat) {
-            RTLogger.log(this, "MIDI START!");
-            listeners.forEach(l -> {l.update(Property.TRANSPORT,
-                    JackTransportState.JackTransportStarting); });
-            beat = 0;
-            pulse = 0;
-        }
-
-        else if (ShortMessage.STOP == stat) {
-            RTLogger.log(this, "MIDI STOP");
-            listeners.forEach(l -> {l.update(Property.TRANSPORT,
-                    JackTransportState.JackTransportStopped); });
-        }
-
-        else if (ShortMessage.CONTINUE == stat) {
-            RTLogger.log(this, "MIDI CONTINUE");
-            listeners.forEach(l -> {l.update(Property.TRANSPORT,
-                    JackTransportState.JackTransportRolling); });
-
-        }
-        else
-            RTLogger.log(this, "unknown beat buddy " + new Midi(midi));
-    }
-
-    @Override
     public void begin() { play(true); }
 
-    @Override
     public void end() { play(false); }
 
 	public void latchA() {
@@ -433,7 +358,7 @@ public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service 
 		}
 		
 		float beats = listener == null ? 16 : 32;
-		float milliPerBeat = a.getRecordedLength() / beats;  
+		float milliPerBeat = (a.getRecordedLength()) / beats;  
 		float tempo = Constants.bpmPerBeat(milliPerBeat);
 		setTempo(tempo); 
 		listen(a);
@@ -441,17 +366,44 @@ public class BeatBuddy extends ArrayList<Command> implements MidiClock, Service 
 	}
 
 	public void listen(Recorder target) {
-		if (listener != null) return;
+		if (listener != null) target.removeListener(listener);
 		listener = new TimeListener() {
+			boolean firstTime = true;
 			@Override public void update(Property prop, Object value) {
 				if (prop.equals(TimeListener.Property.LOOP)) {
 					queue.offer(BeatBuddy.PAUSE_MIDI);
-					target.removeListener(this);
-					listener = null;
+					if (firstTime) {
+						firstTime = false;
+						return;
+					}
+					new Thread() {
+						
+
+						@Override
+						public void run() {
+							try {
+								Thread.sleep(DEBOUNCE);
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							// restart drum on loop sync
+							queue.offer(BeatBuddy.PAUSE_MIDI);
+							
+						}
+					}.start();
+//					target.removeListener(this);
+//					listener = null;
 				}
 			}
 		};
 		target.addListener(listener);
+	}
+
+	/** for gui, don't forward to midi device */
+	public void tempoReceived(float bpm) {
+		tempo = bpm;
+		gui.tempo((int)tempo);
 	}
 
 }

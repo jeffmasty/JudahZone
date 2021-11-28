@@ -62,22 +62,12 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
     @Override
     public void update(Property prop, Object value) {
         if (Property.STATUS == prop && Status.TERMINATED == value) {
-            //JudahZone.getDrummachine().play(false);
             setRecording(new Recording(master.getRecording().size(), true));
             play(true);
             record(true);
             master.removeListener(this);
             master = null;
             Console.info("Sync'd B recording. buffers: " + getRecording().size());
-//            new Thread() {
-//                @Override
-//                public void run() {
-//                    try {Thread.sleep(8);} catch(Throwable t) { }
-//                    JudahZone.getDrummachine().play(false);
-//                };
-//
-//            }.start();
-
         }
     }
 
@@ -86,15 +76,17 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
 	        master = loopA;
 	        loopA.addListener(this);
 	        if (gui != null) ((Output)gui).armRecord(true);
-	        Console.info("Loop B sync'd and armed");
+	        Console.info(getName() + " sync'd and armed");
     	}
     	else {
     		loopA.removeListener(this);
     		master = null;
+    		if (gui != null) ((Output)gui).armRecord(false);
     	}
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public void record(boolean active) {
 
         AudioMode mode = isRecording.get();
@@ -103,8 +95,8 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
         if (active && (recording == null || mode == NEW)) {
             recording = new Recording(true); // threaded to accept live stream
             isRecording.set(STARTING);
-
-            listeners.forEach(listener -> {listener.update(Property.STATUS, Status.ACTIVE); });
+            new ArrayList<TimeListener>(listeners).forEach(
+            		listener -> {listener.update(Property.STATUS, Status.ACTIVE);});
             Console.addText(name + " recording starting");
         } else if (active && (isPlaying.get() == RUNNING || isPlaying.get() == STARTING)) {
             isRecording.set(STARTING);
@@ -119,8 +111,8 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
             isRecording.set(STOPPING);
 
             if (length == null) {// first time
-                ArrayList<TimeListener> l = new ArrayList<>(listeners);
-                l.forEach(listener -> {listener.update(Property.STATUS, Status.TERMINATED);});
+                new ArrayList<>(listeners).forEach(
+                		listener -> {listener.update(Property.STATUS, Status.TERMINATED);});
             }
             length = recording.size();
             
@@ -224,6 +216,24 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
                 if (!m.isMuteRecord()) return true;
         return false;
     }
+
+	public void duplicate() {
+		new Thread( () -> {
+		}).start();
+		
+			Recording source = getRecording();
+			Recording dupe =  new Recording(source, 2, source.isListening());
+			int offset = source.size();
+			float[][] sound;
+			for (int i = 0; i < offset; i++) {
+				sound = source.elementAt(i);
+				dupe.set(i, sound);
+				dupe.set(i + offset, sound);
+			}
+			setRecording(dupe); 
+			recordedLength = recordedLength * 2;
+			Console.info(name + " duplicated (" + recordedLength * 1000 + " sec");
+	}
 
 }
 

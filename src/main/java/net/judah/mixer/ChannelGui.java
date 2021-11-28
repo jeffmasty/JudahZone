@@ -120,7 +120,7 @@ public abstract class ChannelGui extends JPanel {
 
     private void overdrive(int val) {
         channel.getOverdrive().setDrive(val / 100f);
-        channel.getOverdrive().setActive(val > 4);
+        channel.getOverdrive().setActive(val > 1);
     }
 
     public static class Input extends ChannelGui {
@@ -168,7 +168,7 @@ public abstract class ChannelGui extends JPanel {
         @Override
         public void update() {
             armPlay(AudioMode.ARMED == ((Sample)channel).isPlaying());
-            armRecord(AudioMode.ARMED == ((Recorder)channel).isRecording());
+            //armRecord(AudioMode.ARMED == ((Recorder)channel).isRecording());
             if (((Sample)channel).hasRecording())
                 setBorder(new LineBorder(GREEN));
             else setBorder(BorderFactory.createEmptyBorder());

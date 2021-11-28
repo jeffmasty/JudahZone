@@ -65,6 +65,7 @@ public class Recording extends Vector<float[][]> {
 			AudioTools.processSilence(data);
 			add(data);
 		}
+		
 	}
 
 	public Recording(Recording recording, int duplications, boolean startListeners) {

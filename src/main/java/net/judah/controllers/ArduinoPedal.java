@@ -1,16 +1,16 @@
-package net.judah.plugin;
+package net.judah.controllers;
 
 import net.judah.JudahZone;
 import net.judah.api.AudioMode;
 import net.judah.api.Midi;
-import net.judah.controllers.Controller;
+import net.judah.clock.JudahClock;
+import net.judah.looper.Recorder;
 import net.judah.sequencer.Sequencer;
 import net.judah.util.RTLogger;
 
 public class ArduinoPedal implements Controller {
 
-	@Override
-	public boolean midiProcessed(Midi midi) {
+	@Override public boolean midiProcessed(Midi midi) {
 		RTLogger.log(this, midi.toString());
 		if (midi.isCC()) {
 			if (midi.getData1() == 1) {
@@ -18,8 +18,10 @@ public class ArduinoPedal implements Controller {
 				return true;
 			}
 			else if (midi.getData1() == 2) {
-				JudahZone.getLooper().getLoopB().record(
-						JudahZone.getLooper().getLoopB().isRecording() != AudioMode.RUNNING);
+				Recorder b = JudahZone.getLooper().getLoopB();
+				if (JudahClock.waiting(b))
+					return true;
+				b.record(b.isRecording() != AudioMode.RUNNING);
 				return true;
 			}
 		}

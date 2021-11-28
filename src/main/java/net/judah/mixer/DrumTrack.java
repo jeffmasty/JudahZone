@@ -51,10 +51,11 @@ public class DrumTrack extends Recorder implements TimeListener {
                         Constants.sleep(40);
                         master.removeListener(DrumTrack.this);
                         if (JudahZone.getChannels().getDrums().equals(soloTrack))
-                            JudahZone.getDrummachine().play(false);
+                            JudahClock.getInstance().end();
                         else if (JudahZone.getChannels().getAux2().equals(soloTrack))
                             JudahClock.getInstance().end();
                         soloTrack.setSolo(false);
+                        soloTrack.setVolume(0);
 
                     };
                 }.start();
@@ -68,8 +69,8 @@ public class DrumTrack extends Recorder implements TimeListener {
             master.addListener(this);
             soloTrack.setSolo(true);
             play(true); // armed
-            Console.info("drumtrack sync'd. to " + soloTrack.getName());
             if (gui != null) ((Drums)gui).armRecord(true);
+            Console.info("drumtrack sync'd. to " + soloTrack.getName());
         }
         else {
             if (master != null)

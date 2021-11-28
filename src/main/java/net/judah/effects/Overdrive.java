@@ -28,7 +28,7 @@ import net.judah.util.Constants;
 public final class Overdrive implements Effect {
 
     @Getter @Setter boolean active;
-    @Getter private float drive;
+    @Getter private float drive = 0.2f;
     private int nframes;
 
     public Overdrive() {
@@ -61,7 +61,7 @@ public final class Overdrive implements Effect {
     }
 
     public void reset() {
-        drive = 0;
+        drive = 0.2f;
     }
 
     private final float downGain = 0.5f;

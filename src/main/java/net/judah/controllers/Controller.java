@@ -5,4 +5,5 @@ import net.judah.api.Midi;
 public interface Controller {
  	
 	boolean midiProcessed(Midi midi);
+	
 }

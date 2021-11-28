@@ -1,6 +1,7 @@
 package net.judah.mixer;
 
-import static net.judah.util.AudioTools.*;
+import static net.judah.util.AudioTools.processAdd;
+import static net.judah.util.AudioTools.processSilence;
 
 import java.nio.FloatBuffer;
 
@@ -16,6 +17,8 @@ public class MasterTrack extends Channel {
 	final JackPort speakersLeft, speakersRight, effectsL, effectsR;
 	FloatBuffer left, right;
 
+	
+	
 	public MasterTrack(JackPort left, JackPort right,
 	        JackPort effectsL, JackPort effectsR, Reverb reverb) {
 		super("MAIN");
@@ -23,7 +26,7 @@ public class MasterTrack extends Channel {
 		this.speakersRight = right;
 		this.effectsL = effectsL;
 		this.effectsR = effectsR;
-		setReverb(reverb);
+		if (reverb != null) setReverb(reverb);
 		setOnMute(true);
 	}
 
@@ -53,16 +56,19 @@ public class MasterTrack extends Channel {
             delay.processAdd(right, right, false);
         }
 
-		if (reverb.isActive()) {
+		if (reverb.isActive() && reverb.isInternal()) {
+			reverb.process(left);
+			// reverb.process(right);
+		}
+		else if (reverb.isActive()) { // external reverb
             processAdd(left, getGainL(), effectsL.getFloatBuffer());
             processAdd(right, getGainR(), effectsR.getFloatBuffer());
             processSilence(left);
             processSilence(right);
+            return;
 		}
-		else {
-		    AudioTools.processGain(speakersLeft.getFloatBuffer(), getGainL());
-		    AudioTools.processGain(speakersRight.getFloatBuffer(), getGainR());
-		}
+	    AudioTools.processGain(speakersLeft.getFloatBuffer(), getGainL());
+	    AudioTools.processGain(speakersRight.getFloatBuffer(), getGainR());
 
 	}
 

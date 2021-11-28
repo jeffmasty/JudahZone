@@ -8,15 +8,18 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.judah.api.AudioMode;
 import net.judah.api.ProcessAudio;
+import net.judah.clock.JudahClock;
 import net.judah.looper.Recorder;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
 import net.judah.mixer.Channel;
+import net.judah.mixer.ChannelGui.Output;
 import net.judah.mixer.DrumTrack;
 import net.judah.plugin.Carla;
-import net.judah.util.Console;
 import net.judah.util.Icons;
+import net.judah.util.RTLogger;
 
 /** use {@link #addSample(Sample)} instead of add() */
 @RequiredArgsConstructor
@@ -31,9 +34,16 @@ public class Looper implements Iterable<Sample> {
     @Getter private Recorder loopB;
     @Getter private Recorder loopC;
     @Getter private Recorder loopD;
-
+    
     private LooperGui gui;
-
+    /** pause/unpause specific loops, clock-aware */
+    @RequiredArgsConstructor @Getter
+    private class Pause extends ArrayList<Sample> {
+    	private final boolean activeClock;
+    }
+    /** pause/unpause specific loops */
+    private Pause suspended = null; 
+    
     public void add(Sample s) {
         s.setOutputPorts(outports);
         synchronized (this) {
@@ -55,6 +65,7 @@ public class Looper implements Iterable<Sample> {
     public void clear() {
         for (Sample s : loops) {
             s.clear();
+            ((Output)s.getGui()).armRecord(false);
             s.play(true); // armed;
         }
     }
@@ -81,8 +92,6 @@ public class Looper implements Iterable<Sample> {
         drumTrack = new DrumTrack(loopA,
                 JudahZone.getChannels().getDrums());
         drumTrack.setIcon(Icons.load("Drums.png"));
-        drumTrack.setReverb(carla.getReverb());
-        drumTrack.toggle();
 
         add(drumTrack);
         add(loopA);
@@ -93,9 +102,11 @@ public class Looper implements Iterable<Sample> {
         loopC.setIcon(Icons.load("LoopC.png"));
         add(loopC);
 
-        loopD = new Recorder("D", ProcessAudio.Type.FREE);
+        loopD = new Recorder("D", ProcessAudio.Type.ONE_SHOT);
         loopD.setIcon(Icons.load("LoopD.png"));
         add(loopD);
+
+        drumTrack.toggle();
 
     }
 
@@ -108,44 +119,21 @@ public class Looper implements Iterable<Sample> {
         }
     }
 
-    public void syncLoop(Recorder master, Recorder slave) {
-    	if (master.getRecording() == null || master.getRecording().isEmpty()) {
+    public void syncLoop(Recorder source, Recorder target) {
+    	if (source.getRecording() == null || source.getRecording().isEmpty()) 
     		// nothing recorded yet, but we are setup to sync to master loop
-    		slave.armRecord(master);
-    		return;
+    		target.armRecord(source);
+    	else if (target.hasRecording()) 
+    		target.duplicate(); 
+    	else {
+    		target.setRecording(new Recording(source.getRecording().size(), true)); // normal op 
+    		target.setTapeCounter(source.getTapeCounter().get());
+    		target.play(true);
+    		RTLogger.log(this, target.getName() + " sync'd to " + source.getName() + " " + 
+    			+ target.getRecording().size() + " frames");
     	}
-    		 
-    	if (slave.hasRecording()) 
-    		if (slave.getRecording().size() == master.getRecording().size()) 
-    			slave.setRecording(new Recording(slave.getRecording(), 2, true)); // double it
-    		else
-    			slave.erase(); // otherwise erase it
-    	else
-    		slave.setRecording(new Recording(master.getRecording().size(), true)); // normal op 
-    	
-    	slave.play(true);
-    	Console.info(slave.getName() + " sync'd to " + master.getName() 
-    			+ " size: " + slave.getRecording().size());
     }
     
-    
-//    public void syncLoopB() {
-//        if (loopA.getRecording() == null || loopA.getRecording().isEmpty()) {
-//            // Arm Record on B
-//            loopB.armRecord(loopA);
-//            return;
-//        }
-//        if (loopB.hasRecording()) { // double it
-//        	loopB.setRecording(new Recording(loopB.getRecording(), 2, true));
-//        }
-//        else {
-//   	        loopB.record(false);
-//        	loopB.setRecording(new Recording(loopA.getRecording().size(), true));
-//        }
-//        Console.info("latched B buffers: " + loopB.getRecording().size());
-//        loopB.play(true);
-//    }
-
     public void registerListener(LooperGui looperGui) {
         gui = looperGui;
     }
@@ -176,8 +164,34 @@ public class Looper implements Iterable<Sample> {
 			new Thread() {
 				@Override public void run() {
 					clear();
-					getDrumTrack().toggle();
+					//getDrumTrack().toggle();
                     }}.start();
+	}
+
+	/** pause/unpause any running loops, stop/restart clock if it is running */
+	public void pause(boolean pauseClock) {
+		if (suspended == null) {
+			boolean clock = JudahClock.getInstance().isActive();
+			
+			suspended = new Pause(pauseClock? false : clock);
+			if (clock && pauseClock) 
+				JudahClock.getInstance().end();
+			for (Sample s : loops) 
+				if (s.isPlaying() == AudioMode.RUNNING) {
+					s.setTapeCounter(0);
+					suspended.add(s);
+				}
+			stopAll();
+		}
+		else {
+			for (Sample s : suspended) 
+				s.play(true);
+			if (suspended.isActiveClock()) 
+				JudahClock.getInstance().begin();
+			else if (pauseClock == false && JudahClock.getInstance().isActive())
+				JudahClock.getInstance().begin(); // re-sync
+			suspended = null;
+		}
 	}
 
 

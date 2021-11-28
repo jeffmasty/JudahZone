@@ -20,8 +20,7 @@ public class Grid extends ArrayList<Sequence> {
     @Getter @Setter private Scale scale = Scale.Major;
     @Getter @Setter private Key key = Key.C;
     @Getter @Setter private int octave = 4;
-    @Setter @Getter private int volume = 90;
-    @Getter @Setter private boolean mute;
+    @Setter @Getter private int volume = 60;
 
     public Grid(BeatBox sequencer, boolean internal) {
         this.sequencer = sequencer;

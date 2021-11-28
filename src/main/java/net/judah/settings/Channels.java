@@ -62,12 +62,12 @@ public class Channels extends ArrayList<LineIn> {
 
 	public void initVolume() {
 		mic.setVolume(10);
-		guitar.setVolume(60);
-		drums.setVolume(55);
-		synth.setVolume(40);
-		aux1.setVolume(30);
-		aux2.setVolume(65);
-		drums.getCompression().setActive(true);
+		guitar.setVolume(50);
+		drums.setVolume(50);
+		synth.setVolume(50);
+		aux1.setVolume(50);
+		aux2.setVolume(50);
+		// drums.getCompression().setActive(true);
 	}
 
     public static String volumeTarget(JackPort midiOut) {
@@ -75,9 +75,7 @@ public class Channels extends ArrayList<LineIn> {
         Channels channels = JudahZone.getChannels();
         if (midiOut == midi.getAuxOut1())
             return channels.getAux1().getName();
-        else if (midiOut == midi.getAuxOut2())
-            return channels.getAux2().getName();
-        else if (midiOut == midi.getAuxOut3())
+        else if (midiOut == midi.getCalfOut())
             return channels.getDrums().getName();
         else if (midiOut == midi.getDrumsOut())
             return channels.getDrums().getName();
@@ -91,9 +89,7 @@ public class Channels extends ArrayList<LineIn> {
         Channels channels = JudahZone.getChannels();
         if (midiOut == midi.getAuxOut1())
             channels.getAux1().setVolume(vol);
-        else if (midiOut == midi.getAuxOut2())
-            channels.getAux2().setVolume(vol);
-        else if (midiOut == midi.getAuxOut3())
+        else if (midiOut == midi.getCalfOut())
             channels.getDrums().setVolume(vol);
         else if (midiOut == midi.getDrumsOut())
             channels.getDrums().setVolume(vol);
@@ -106,9 +102,7 @@ public class Channels extends ArrayList<LineIn> {
         Channels channels = JudahZone.getChannels();
         if (midiOut == midi.getAuxOut1())
             return channels.getAux1().getVolume();
-        else if (midiOut == midi.getAuxOut2())
-            return channels.getAux2().getVolume();
-        else if (midiOut == midi.getAuxOut3())
+        else if (midiOut == midi.getCalfOut())
             return channels.getDrums().getVolume();
         else if (midiOut == midi.getDrumsOut())
             return channels.getDrums().getVolume();

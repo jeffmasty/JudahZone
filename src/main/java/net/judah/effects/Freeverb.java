@@ -91,7 +91,7 @@ public final class Freeverb extends Reverb {
     private static final float initialdamp = 0.8f;
     private static final float initialwet = 1 / scalewet;
     private static final float initialdry = 0.5f;//1;
-    private static final float initialwidth = 0.6f;
+    private static final float initialwidth = 1.0f;
 
     @Getter @Setter private boolean active;
     private int nframes = 512;
@@ -333,7 +333,7 @@ public final class Freeverb extends Reverb {
 
             for (int i = 0; i < nframes; i++)
                 buf.put(buf.get(i) + // process add
-                		outScratchL[i] * wet1 + outScratchR[i] * wet2);
+                		outScratchL[i] * wet1);// + outScratchR[i] * wet2);
 
     }
 

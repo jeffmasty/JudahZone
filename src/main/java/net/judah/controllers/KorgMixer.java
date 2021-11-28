@@ -5,13 +5,17 @@ import java.util.Arrays;
 
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.Looper;
 import net.judah.MixerPane;
 import net.judah.api.Midi;
+import net.judah.beatbox.BeatsView;
+import net.judah.clock.JudahClock;
 import net.judah.controllers.MapEntry.TYPE;
 import net.judah.effects.api.Reverb;
+import net.judah.looper.Recorder;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
-
+import net.judah.util.Update;
 
 /** Korg nanoKONTROL2 midi controller custom codes */ 	
 public class KorgMixer implements Controller {
@@ -44,6 +48,8 @@ public class KorgMixer implements Controller {
 	private static final MapEntry PLAY = new MapEntry("PLAY", TYPE.TOGGLE, 41);
 	private static final MapEntry RECORD = new MapEntry("REC", TYPE.MOMENTARY, 45);
 	
+	private Looper looper;
+	
 	public KorgMixer() {
 		for (int x = 0; x < 8; x++) {
 			faders.add(new MapEntry(new String("Fade" + x), TYPE.KNOB, x));
@@ -68,11 +74,15 @@ public class KorgMixer implements Controller {
 	public boolean midiProcessed(Midi midi) {
 		int data1 = midi.getData1();
 		int data2 = (int)Math.floor(midi.getData2() / 1.27f);
-		if (channels.isEmpty()) {
-			channels.add(JudahZone.getMasterTrack());
-			channels.add(JudahZone.getLooper().getLoopA());
-			channels.add(JudahZone.getLooper().getLoopB());
-			channels.add(JudahZone.getLooper().getDrumTrack());
+		
+		if (looper == null) {
+			looper = JudahZone.getLooper();
+			//channels.add(JudahZone.getMasterTrack());
+			channels.add(looper.getLoopA());
+			channels.add(looper.getLoopB());
+			channels.add(looper.getLoopC());
+			channels.add(looper.getDrumTrack());
+			
 			channels.add(JudahZone.getChannels().getGuitar());
 			channels.add(JudahZone.getChannels().getMic());
 			channels.add(JudahZone.getChannels().getSynth());
@@ -90,8 +100,11 @@ public class KorgMixer implements Controller {
 			return true;
 		}
 		if (data1 >= soff && data1 < soff + 8) { // SELECT CHANNEL EFFECTS
-			new Thread() { @Override public void run() {
-					MixerPane.getInstance().setFocus(channels.get(data1 - soff));}}.start();
+			if (data1 < soff + 4)  // output channels, check latch
+				JudahClock.waiting((Recorder)channels.get(data1 - soff)); 
+			new Thread( () -> {
+				MixerPane.getInstance().setFocus(channels.get(data1 - soff));
+			}).start();
 			return true;
 		}
 		if (data1 >= moff && data1 < moff + 4) { // MUTE OUTPUT
@@ -106,7 +119,60 @@ public class KorgMixer implements Controller {
 			channels.get(data1 - roff).getReverb().setActive(data2 > 0);
 			return true;
 		}
-			
+		if (data1 == SET.getVal() && data2 != 0) {
+			// JudahClock.getInstance().toggleMode();
+			return true;
+		}
+		
+		if (data1 == PREV.getVal() && data2 != 0) {
+			BeatsView.getQueue().add(new Update() {
+				@Override public void run() {
+					BeatsView.changeChannel(false);
+				}});
+			return true;
+		}
+		if (data1 == NEXT.getVal() && data2 != 0) {
+			BeatsView.getQueue().add(new Update() {
+				@Override public void run() {
+					BeatsView.changeChannel(true);
+				}});
+			return true;
+		}
+		
+		if (data1 == RWND.getVal() && data2 != 0) {
+			// TODO
+			return true;
+		}
+		if (data1 == FWRD.getVal() && data2 != 0) {
+			// TODO
+			return true;
+		}
+		if (data1 == STOP.getVal() && data2 != 0) {
+			BeatsView.getSequencer().setMute(!BeatsView.getSequencer().isMute());
+			new Thread(() -> {BeatsView.getInstance().getButtons().update();}).start();
+			return true;
+		}
+		if (data1 == PLAY.getVal()) {
+			if (data2 == 0) JudahClock.getInstance().end();
+			else JudahClock.getInstance().begin();
+		}
+		
+		
+		if (data1 == PREV2.getVal() && data2 != 0) {
+			BeatsView.getQueue().offer(new Update() {
+				@Override public void run() {
+					BeatsView.getSequencer().next(false);
+				}});
+			return true;
+		}
+		if (data1 == NEXT2.getVal() && data2 != 0) {
+			BeatsView.getQueue().offer(new Update() {
+				@Override public void run() {
+					BeatsView.getSequencer().next(true);
+				}});
+			return true;
+		}
+		
 		return false;
 	}
 	

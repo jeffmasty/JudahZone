@@ -1,6 +1,9 @@
-package net.judah.plugin;
+package net.judah.clock;
 
-import static net.judah.util.Constants.Gui.*;
+import static net.judah.util.Constants.Gui.BOLD;
+import static net.judah.util.Constants.Gui.FONT11;
+import static net.judah.util.Constants.Gui.FONT12;
+import static net.judah.util.Constants.Gui.FONT9;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -23,12 +26,13 @@ import javax.swing.SwingConstants;
 import javax.swing.border.BevelBorder;
 
 import net.judah.JudahZone;
+import net.judah.clock.BeatBuddy.Dir;
+import net.judah.clock.BeatBuddy.Drumset;
+import net.judah.clock.BeatBuddy.Track;
 import net.judah.effects.gui.Slider;
-import net.judah.plugin.BeatBuddy.Dir;
-import net.judah.plugin.BeatBuddy.Drumset;
-import net.judah.plugin.BeatBuddy.Track;
 import net.judah.util.Constants;
 import net.judah.util.Knob;
+import net.judah.util.ToggleSwitch;
 
 public class BeatBuddyGui extends JPanel {
 
@@ -100,6 +104,9 @@ public class BeatBuddyGui extends JPanel {
         JLabel tempoLbl = new JLabel("Tempo");
         tempoLbl.setFont(FONT12);
 
+        ToggleSwitch switch1 = new ToggleSwitch();
+        
+        
         bpm = new Slider(e -> {/*see actionListeners()*/});
         bpm.setMinimum(30);
         bpm.setMaximum(230);
@@ -135,6 +142,7 @@ public class BeatBuddyGui extends JPanel {
         volume = new Knob(val -> {buddy.setVolume(volume.getValue()); });
 
         JPanel tempoPnl = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        tempoPnl.add(switch1);
         tempoPnl.setBorder(BorderFactory.createTitledBorder("Tempo"));
         tempoPnl.add(tapPanel);
         tempoPnl.add(bpm);
@@ -235,7 +243,7 @@ public class BeatBuddyGui extends JPanel {
         });
 
         transBtn.addActionListener(e -> {
-            buddy.transission();});
+            buddy.transition();});
 
     }
 

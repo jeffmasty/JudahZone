@@ -17,7 +17,7 @@ public class CompressionGui extends Widget {
         compThresh.setPreferredSize(MINI); compThresh.setMaximumSize(MINI);
         compThresh.setToolTipText("-40 to 0");
         compAtt = new Slider(l -> {
-                channel.getCompression().setAttack(Math.round(compAtt.getValue() * 1.5f));});
+                channel.getCompression().setAttack((int)(compAtt.getValue() * 1.5f));});
         compAtt.setPreferredSize(MINI); compAtt.setMaximumSize(MINI);
         compAtt.setToolTipText("0 to 150 milliseconds");
         compRel = new Slider(l -> {channel.getCompression().setRelease(Math.round(compRel.getValue() * 3));});
@@ -38,10 +38,13 @@ public class CompressionGui extends Widget {
         Compression compression = channel.getCompression();
         activeButton.setSelected(compression.isActive());
         compThresh.setValue((int) ((compression.getThreshold() + 40) * 2.5));
-        int attack = Math.round(compression.getAttack() * 0.75f);
+        
+        int attack = Math.round(compression.getAttack() * 0.66666f);
         if (attack > 100) attack = 100;
         compAtt.setValue(attack);
-        int release = Math.round(compression.getRelease() * 0.333f);
+        
+        
+        int release = Math.round(compression.getRelease() * 0.33333f);
         if (release > 100) release = 100;
         compRel.setValue(release);
     }

@@ -21,6 +21,7 @@ import net.judah.fluid.FluidSynth;
 import net.judah.midi.JudahMidi;
 import net.judah.util.Console;
 import net.judah.util.Constants;
+import net.judah.util.RTLogger;
 
 @Getter @EqualsAndHashCode(callSuper=true)
 public class BeatBox extends ArrayList<Grid> implements Runnable {
@@ -29,27 +30,32 @@ public class BeatBox extends ArrayList<Grid> implements Runnable {
     private static final String NONE = "none";
 
     @Setter @Getter private JackPort midiOut;
-    @Getter private final ConcurrentLinkedQueue<ShortMessage>
+	private final ConcurrentLinkedQueue<ShortMessage>
             queue = new ConcurrentLinkedQueue<>();
-    File file;
+    private File file;
     private final JudahClock clock;
     private final int midiChannel;
     private final Type type;
     private FluidInstrument instrument;
     Grid current; // current grid pattern
+    @Getter @Setter private boolean mute;
 
-    public BeatBox(int midiChannel) {
-        clock = JudahClock.getInstance();
+
+    public BeatBox(JudahClock clock, int midiChannel) {
+    	this.clock = clock;
         this.midiChannel = midiChannel;
-        this.type = midiChannel == 9 ? Type.Drums : Type.Melodic;
+        this.type = midiChannel >= 9 ? Type.Drums : Type.Melodic;
         midiOut = type == Type.Drums
-                ? JudahMidi.getInstance().getAuxOut3()
+                ? JudahMidi.getInstance().getDrumsOut()
                 : JudahMidi.getInstance().getSynthOut();
         current = create();
     }
 
+    // [Ax3BDx4]{
+    
     public void process(int step) {
-        if (current.isMute()) return;
+    	
+        if (isMute()) return;
         for (Sequence seq : current) {
             if (seq.isMute()) continue;
             for (Beat note : seq)
@@ -59,11 +65,11 @@ public class BeatBox extends ArrayList<Grid> implements Runnable {
                     Midi msg = null;
                     Beat.Type type = note.getType();
                     if (Beat.Type.NoteOn == type) {
-                        msg = Midi.create(Midi.NOTE_ON, midiChannel,
+                        msg = Midi.create(Midi.NOTE_ON, midiChannel > 9 ? 9 : midiChannel,
                                 seq.getReference().getData1(), volume);
                     }
                     else if (Beat.Type.NoteOff == type) {
-                        msg = Midi.create(Midi.NOTE_OFF, midiChannel,
+                        msg = Midi.create(Midi.NOTE_OFF, midiChannel > 9 ? 9 : midiChannel,
                                 seq.getReference().getData1(), volume);
                     }
                     // TODO internal commands/CC and chords
@@ -93,7 +99,7 @@ public class BeatBox extends ArrayList<Grid> implements Runnable {
 
     public void setCurrent(Grid g) {
         if (contains(g) == false) throw new InvalidParameterException();
-        Console.info("ch:" + midiChannel + " to pattern " + indexOf(g) + (g.isMute() ? " MUTE" : ""));
+        RTLogger.log(this, "ch:" + midiChannel + " to pattern " + indexOf(g) + (isMute() ? " MUTE" : ""));
         current = g;
     }
 
@@ -121,7 +127,7 @@ public class BeatBox extends ArrayList<Grid> implements Runnable {
     public void setInstrument(FluidInstrument patch) {
         instrument = patch;
         try {
-            Midi midi = new Midi(ShortMessage.PROGRAM_CHANGE, midiChannel, instrument.index);
+            Midi midi = new Midi(ShortMessage.PROGRAM_CHANGE, midiChannel > 9 ? 9 : midiChannel, instrument.index);
             queue.add(midi);
         } catch (InvalidMidiDataException e) { Console.warn(e); }
     }
@@ -145,7 +151,7 @@ public class BeatBox extends ArrayList<Grid> implements Runnable {
         raw.append("/").append(clock.getSubdivision()).append(Constants.NL);
         for (Grid grid : this) {
             raw.append("!");
-            if (grid.isMute())
+            if (isMute())
                 raw.append("MUTE");
 
             raw.append(Constants.NL);
@@ -182,8 +188,8 @@ public class BeatBox extends ArrayList<Grid> implements Runnable {
                         add(onDeck);
                     onDeck = new Grid(this, true);
                     if (line.contains(MUTE)) {
-                        onDeck.setMute(true);
-                        if (type == Type.Drums) continue;
+                    	setMute(true);
+                    	if (type == Type.Drums) continue;
                         line = line.substring(line.indexOf(MUTE) + MUTE.length());
                         if (line.length() < 10) continue;
                         Chord chord = Chord.fromFile(line);
@@ -203,7 +209,8 @@ public class BeatBox extends ArrayList<Grid> implements Runnable {
             if (scanner != null) scanner.close();
         }
         current = get(0);
-        if (this == BeatsView.getInstance().getSequencer())
+        
+        if (BeatsView.getInstance() != null && this == BeatsView.getInstance().getSequencer())
             BeatsView.getInstance().updateKit(this, current.createTracks());
 
     }
@@ -225,7 +232,6 @@ public class BeatBox extends ArrayList<Grid> implements Runnable {
             else current = get(idx - 1);
         }
         BeatsView.getInstance().updateKit(this, current.createTracks());
-
 
     }
 

@@ -11,6 +11,7 @@ import net.judah.effects.api.Effect;
 import net.judah.looper.Sample;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
+import net.judah.util.RTLogger;
 
 /** A calculated sin wave LFO.  Default amplitude returns queries between 0 and 85 */
 @Data @NoArgsConstructor @AllArgsConstructor
@@ -25,7 +26,20 @@ public class LFO implements Effect {
 	};
 
 	private boolean active;
-	private Target target = Target.CutEQ;
+	@Override
+	public void setActive(boolean active) {
+		if (this.active != active) {
+			this.active = active;
+			RTLogger.log(this, "active: " + active);
+		}
+	}
+	private Target target = Target.Pan;
+	public void setTarget(Target target) {
+		if (this.target != target) {
+			this.target = target;
+			RTLogger.log(this, target.name());
+		}
+	}
 
 	/** in kilohertz (msec per cycle). default: oscillates over a 1.2 seconds. */
 	private double frequency = 1200;
@@ -37,10 +51,10 @@ public class LFO implements Effect {
 	/** align the wave on the jack frame buffer by millisecond (not implemented)*/
 	private long shift;
 
-	/** set maximum output level of queries. default: 85. */
-	private float max = 85;
-	/** set minimum level of queries. default 0. */
-	private float min = 0;
+	/** set maximum output level of queries. default: 90. */
+	private float max = 90;
+	/** set minimum level of queries. default 10. */
+	private float min = 10;
 
     private static final ArrayList<Channel> lfoPulse = new ArrayList<>();
 
@@ -75,8 +89,11 @@ public class LFO implements Effect {
 
     @Override
     public void set(int idx, float value) {
-        if (idx == Settings.Target.ordinal())
+        if (idx == Settings.Target.ordinal()) {
+        	Target old = target;
             target = Target.values()[(int)value];
+            if (target != old) 
+            	RTLogger.log(this, target.name());}
         else if (idx == Settings.Min.ordinal())
             setMin(value);
         else if (idx == Settings.Max.ordinal())

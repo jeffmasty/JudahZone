@@ -29,6 +29,7 @@ import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.api.AudioMode;
 import net.judah.api.ProcessAudio;
+import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeListener.Property;
 import net.judah.api.TimeNotifier;
@@ -36,6 +37,8 @@ import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.util.AudioTools;
 import net.judah.util.Console;
+import net.judah.util.Constants;
+import net.judah.util.RTLogger;
 
 @Log4j
 public class Sample extends Channel implements ProcessAudio, TimeNotifier {
@@ -122,6 +125,8 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
         tapeCounter.set(0);
         recording = null;
         length = null;
+        new ArrayList<TimeListener>(listeners).forEach(listener -> {listener.update(Property.STATUS, Status.TERMINATED); });
+        // ?? listeners.clear();
         if (gui != null) gui.update();
         Console.info(name + " flushed.");
     }
@@ -135,17 +140,28 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
         isPlaying.set(STOPPED);
     }
 
+    public void delete() {
+    	new Thread(() -> {
+	    	if (recording != null) 
+	    		recording.close();
+	    	length = 0;
+	    	recording.clear();
+	    	Console.info("Deleted: " + getName());
+    	}).start();
+    }
+    
+    /** keep length, erase music */
     public void erase() {
-    	if (recording != null) {
-    		recording.close();
-    	}
-    	length = 0;
-    	recording.clear();
-    	Console.info("Erased: " + getName());
+    	if (recording == null) return;
+    	new Thread( () -> {
+    		for (int i = 0; i < recording.size(); i++)
+    			recording.set(i, new float[Constants.STEREO][Constants.bufSize()]);
+    		RTLogger.log(this, "Erased: " + getName());
+    	}).start(); 
     }
     
     @Override public String toString() {
-        return "Sample " + name;
+        return "Loop " + name;
     }
 
     @Override public void addListener(TimeListener l) {
@@ -191,11 +207,19 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
         }
         if (chorus.isActive())
             chorus.processStereo(bufL, bufR);
+        
         if (overdrive.isActive()) {
             overdrive.processAdd(bufL);
             overdrive.processAdd(bufR);
         }
-
+        
+        if (reverb.isActive() && !reverb.isInternal() 
+        		&& getMasterTrack().getOverdrive().isActive()) {
+        	// if sending to external reverb, add Master Track overdrive if active
+        	getMasterTrack().getOverdrive().processAdd(bufL);
+        	getMasterTrack().getOverdrive().processAdd(bufR);
+        }
+        
         if (delay.isActive()) {
             delay.processAdd(bufL, bufL, true);
             delay.processAdd(bufR, bufR, false);
@@ -205,7 +229,7 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
         }
 
         // output
-        if (reverb.isActive()) { // external reverb
+        if (!reverb.isInternal() && reverb.isActive()) {
             toJackLeft = getEffectsL().getFloatBuffer();
             toJackLeft.rewind();
             toJackRight = getEffectsR().getFloatBuffer();
@@ -214,14 +238,19 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
             processAdd(bufR, getMasterTrack().getGainR(), toJackRight); // on the way out to reverb
         }
         else {
-            toJackLeft = outputPorts.get(LEFT_CHANNEL).getFloatBuffer();
-            toJackLeft.rewind();
-            toJackRight = outputPorts.get(RIGHT_CHANNEL).getFloatBuffer();
-            toJackRight.rewind();
-            processMix(workL, toJackLeft);
+        	toJackLeft = outputPorts.get(LEFT_CHANNEL).getFloatBuffer();
+        	toJackRight = outputPorts.get(RIGHT_CHANNEL).getFloatBuffer();
+        	if (reverb.isActive() && reverb.isInternal()) {
+        		reverb.process(bufL);
+        		//reverb.process(bufR);
+        	}
+        	toJackLeft.rewind();
+        	toJackRight.rewind();
+        	
+        	processMix(workL, toJackLeft);
             processMix(workR, toJackRight);
         }
-
+        
     }
 
     protected final boolean playing() {
@@ -236,7 +265,7 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
 
         updated = tapeCounter.get() + 1;
         if (updated == recording.size()) {
-            if (type == Type.ONE_TIME) {
+            if (type == Type.ONE_SHOT) {
                 isPlaying.set(STOPPING);
                 new Thread() { @Override public void run() {
                     JudahZone.getLooper().remove(Sample.this);

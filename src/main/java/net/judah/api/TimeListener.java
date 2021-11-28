@@ -15,6 +15,8 @@ public interface TimeListener {
 		TRANSPORT,
 		/** current beat of TimeProvider */
 		BEAT,
+		/** current measure count */
+		BARS,
 		/** current loop count */
 		LOOP,
 		/** current step in step sequencer */

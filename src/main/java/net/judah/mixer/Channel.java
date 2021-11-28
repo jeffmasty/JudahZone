@@ -9,7 +9,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.MixerPane;
 import net.judah.effects.Chorus;
 import net.judah.effects.Compression;
 import net.judah.effects.CutFilter;
@@ -80,7 +79,7 @@ public abstract class Channel extends ArrayList<Effect> {
 		if (lfo.isActive() && lfo.getTarget() == Target.Gain)
 		    return; // well, let's not overload GUI and audio
 		if (gui != null) gui.update();
-		MixerPane.volume(this);
+		//MixerPane.volume(this);
 	}
 
     public Preset toPreset(String name) {
@@ -96,7 +95,7 @@ public abstract class Channel extends ArrayList<Effect> {
     }
 
 	public void reset() {
-		// getEq().setActive(false); // EQ stays active
+		getEq().setActive(false); 
 		if (false == this.name.equals(Channels.DRUMS)) // compression for drums stays on
 			getCompression().setActive(false);
 		getReverb().setActive(false);
@@ -107,7 +106,6 @@ public abstract class Channel extends ArrayList<Effect> {
 		getOverdrive().setActive(false);
 		setPan(0.5f);
 		
-	}		
-	
+	}
 
 }

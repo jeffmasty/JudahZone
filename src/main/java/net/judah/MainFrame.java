@@ -2,6 +2,8 @@ package net.judah;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
@@ -88,14 +90,27 @@ public class MainFrame extends JFrame implements Size {
         try { setIconImage(Toolkit.getDefaultToolkit().getImage(
                 new File(Constants.ROOT, "icon.png").toURI().toURL()));
         } catch (Throwable t) {log.error(t.getMessage(), t); }
-        setLocation(0, 0);
+        
+        
+        
         setSize(WIDTH_FRAME, HEIGHT_FRAME);
 
-
         // setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
+        
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] screens = ge.getScreenDevices();
+        int n = screens.length;
+        
+        if (n == 2) {
+            JFrame dummy = new JFrame(screens[1].getDefaultConfiguration());
+            setLocationRelativeTo(dummy);
+            dummy.dispose();
+        }
+        setLocation(1, 0);
         invalidate();
         setVisible(true);
     }
+        
 
     public void beatBox() {
         BeatsView gui = new BeatsView();

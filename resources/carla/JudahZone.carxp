@@ -46,7 +46,7 @@
     <Index>2</Index>
     <Name>Reverb</Name>
     <Symbol>reverb</Symbol>
-    <Value>1</Value>
+    <Value>0</Value>
    </Parameter>
 
    <Parameter>
@@ -125,7 +125,7 @@
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set10</Key>
-    <Value>16384</Value>
+    <Value>16425</Value>
    </CustomData>
 
    <CustomData>
@@ -488,14 +488,14 @@
     <Index>2</Index>
     <Name>dry</Name>
     <Symbol>dry</Symbol>
-    <Value>0.512000024318695</Value>
+    <Value>0.38400000333786</Value>
    </Parameter>
 
    <Parameter>
     <Index>3</Index>
     <Name>wet</Name>
     <Symbol>wet</Symbol>
-    <Value>0.589999973773956</Value>
+    <Value>0.300000011920929</Value>
    </Parameter>
 
    <Parameter>
@@ -561,7 +561,7 @@
 
 &lt;tal curprogram=&quot;0&quot; version=&quot;1&quot;&gt;
   &lt;programs&gt;
-    &lt;program programname=&quot;Stereo Plate&quot; dry=&quot;0.51200002431869506836&quot; wet=&quot;0.58999997377395629883&quot;
+    &lt;program programname=&quot;Stereo Plate&quot; dry=&quot;0.38400000333786010742&quot; wet=&quot;0.30000001192092895508&quot;
              roomsize=&quot;0.25&quot; predelay=&quot;0&quot; lowshelfgain=&quot;0.62400001287460327148&quot;
              highshelfgain=&quot;0.69999998807907104492&quot; stereowidth=&quot;0.5879999995231628418&quot;
              realstereomode=&quot;1&quot; power=&quot;1&quot;/&gt;
@@ -655,20 +655,12 @@
    <Target>a2j:MIDI2x2 [40] (playback): MIDI2x2 MIDI 1</Target>
   </Connection>
   <Connection>
-   <Source>JudahMidi:drumsOut</Source>
+   <Source>JudahMidi:calfOut</Source>
    <Target>Calf Fluidsynth:events-in</Target>
   </Connection>
   <Connection>
-   <Source>JudahMidi:aux1out</Source>
+   <Source>JudahMidi:auxOut</Source>
    <Target>a2j:MIDI2x2 [40] (playback): MIDI2x2 MIDI 2</Target>
-  </Connection>
-  <Connection>
-   <Source>JudahMidi:aux2out</Source>
-   <Target>a2j:Komplete Audio 6 [24] (playback): Komplete Audio 6 MIDI 1</Target>
-  </Connection>
-  <Connection>
-   <Source>JudahMidi:aux3out</Source>
-   <Target>Calf Fluidsynth:events-in</Target>
   </Connection>
   <Connection>
    <Source>JudahZone:left</Source>

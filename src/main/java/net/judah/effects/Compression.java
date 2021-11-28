@@ -1,6 +1,7 @@
 package net.judah.effects;
 
-import static java.lang.Math.*;
+import static java.lang.Math.abs;
+import static java.lang.Math.log;
 
 import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
@@ -26,7 +27,7 @@ public class Compression implements Effect {
 	private static final int PRESET_SIZE = 7;
     private static int[][] presets = new int[][] { // TODO make enum
         /* 2:1 */ {-30, 2, -13, 20, 120, 0},
-        /* 5:1 */ {-26, 5, -17, 55, 185, 10}, // default setting
+        /* 5:1 */ {-26, 5, -17, 55, 120, 10}, // default setting
         /* 8:1 */ {-24, 8, -18, 20, 35, 30} };
 
     @Setter @Getter private boolean active;
@@ -51,7 +52,9 @@ public class Compression implements Effect {
     private float attl = 1f;
 
     private float thres_db = -24;
+    /** computed attack value */
     private float att;
+    /** attack represented in milliseconds (0-150)*/
     private int attStash;
     private float rel;
     private int relStash;
@@ -102,7 +105,7 @@ public class Compression implements Effect {
         if (idx == Settings.Threshold.ordinal())
             setThreshold(value);
         else if (idx == Settings.Attack.ordinal())
-            setAttack(value);
+            setAttack((int)value);
         else if (idx == Settings.Release.ordinal())
             setRelease(value);
         else throw new InvalidParameterException();
@@ -154,7 +157,7 @@ public class Compression implements Effect {
     	return attStash;
     }
 
-    public void setAttack(float milliseconds) {
+    public void setAttack(int milliseconds) {
     	setPreset(4, milliseconds);
     }
 

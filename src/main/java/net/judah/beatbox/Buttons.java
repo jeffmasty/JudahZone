@@ -40,6 +40,15 @@ import net.judah.util.FileChooser;
 import net.judah.util.Pastels;
 import net.judah.util.Size;
 
+
+// if channel = 9, 
+
+// if channel >= 9 && midiOut == drumsOut, instrument = BeatBuddy, else GM
+
+// if channel > 9 && midiout != drums out, translate midi to channel 9
+
+
+/** <pre>
     // GUI                  // MODEL
     ///////////////////////////////////////
     // channel              // beatBox
@@ -55,6 +64,7 @@ import net.judah.util.Size;
     // drum reverb          // transient
     // Tracks               // scale key octave/drumkit in tuner area
     // Steps/Division       // clock
+</pre>*/ 
 
 public class Buttons extends JPanel implements Size {
     public static final File DRUM_FOLDER = new File(Constants.ROOT, "patterns");
@@ -144,7 +154,7 @@ public class Buttons extends JPanel implements Size {
             steps.setSelectedItem(clock.getSteps());
         if (clock.getSubdivision() != div.getSelectedIndex())
         div.setSelectedItem(clock.getSubdivision());
-        mute.setSelected((sequencer.getCurrent().isMute()));
+        mute.setSelected((sequencer.isMute()));
         for (ItemListener l : mute.getItemListeners()) {
             l.itemStateChanged(new ItemEvent(mute, 1, Boolean.TRUE, ItemEvent.RESERVED_ID_MAX));
         }
@@ -276,7 +286,7 @@ public class Buttons extends JPanel implements Size {
         mute.setText(" mute");
         mute.setHorizontalTextPosition(JCheckBox.LEFT);
         mute.addActionListener(e -> {
-            sequencer.getCurrent().setMute(mute.isSelected());});
+            sequencer.setMute(mute.isSelected());});
 
         JPanel mutePnl = new JPanel(new GridLayout(1, 2));
         mutePnl.add(saveBtn);

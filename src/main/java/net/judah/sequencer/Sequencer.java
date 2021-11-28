@@ -33,6 +33,7 @@ import net.judah.api.Service;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeProvider;
+import net.judah.clock.JudahClock;
 import net.judah.effects.api.Preset;
 import net.judah.effects.api.PresetsHandler.Raw;
 import net.judah.looper.Recorder;
@@ -309,17 +310,17 @@ public class Sequencer implements Service, Runnable, TimeListener {
         /////////////////////////////////////////////////////////////////////////////////////////////
 
         public static void trigger() {
-        	if (current == null || current.active == null) {
-        		JudahZone.getLooper().getLoopA().record(
-						JudahZone.getLooper().getLoopA().isRecording() != AudioMode.RUNNING);
-        	}
+        	Recorder a = JudahZone.getLooper().getLoopA();
+        	if (JudahClock.waiting(a)) 
+        		return;
+        	if (current == null || current.active == null) 
+        		a.record(a.isRecording() != AudioMode.RUNNING);
         	else {
                 current.execute(current.active);
                 while (current.active.go(current.count)) {
                     current.execute(current.active);
                 }
             }
-
         }
 
         void externalControl(HashMap<String, Object> props) {
@@ -451,7 +452,7 @@ public class Sequencer implements Service, Runnable, TimeListener {
             loopA.addListener( (prop, value)-> {
                 if (Property.STATUS != prop || Status.TERMINATED != value)
                     return;
-                JudahZone.getDrummachine().play(false);
+                // JudahZone.getDrummachine().play(false);
 
                 Constants.sleep(1); // let drumTrack listener process end of LoopA
 
