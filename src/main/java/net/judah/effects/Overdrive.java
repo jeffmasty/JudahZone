@@ -48,12 +48,12 @@ public final class Overdrive implements Effect {
         return 1;
     }
 
-    @Override public float get(int idx) {
-        return drive;
+    @Override public int get(int idx) {
+    	return Math.round(drive * 100);
     }
 
-    @Override public void set(int idx, float value) {
-        setDrive(value);
+    @Override public void set(int idx, int value) {
+    	setDrive(value / 100f);
     }
 
     public void setDrive(float drive) {
@@ -64,13 +64,13 @@ public final class Overdrive implements Effect {
         drive = 0.2f;
     }
 
-    private final float downGain = 0.5f;
+    //private final float downGain = 0.5f;
     public void processAdd(FloatBuffer buf) {
         buf.rewind();
         double preMul = drive * 99 + 1;
         double postMul = 1 / (Math.log(preMul * 2) / Math.log(2));
         for (int i = 0; i < nframes; i++) 
-            buf.put( downGain * (float) (Math.atan(buf.get(i) * preMul) * postMul));
+			buf.put( /* downGain* */(float) (Math.atan(buf.get(i) * preMul) * postMul));
     }
 
 

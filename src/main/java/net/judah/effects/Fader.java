@@ -4,7 +4,9 @@ import java.util.ArrayList;
 
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
+import net.judah.MainFrame;
 import net.judah.effects.LFO.Target;
+import net.judah.effects.api.Gain;
 import net.judah.mixer.Channel;
 import net.judah.mixer.MasterTrack;
 
@@ -22,7 +24,7 @@ public class Fader {
 	public static Fader fadeIn() {
 		return new Fader(JudahZone.getMasterTrack(), Target.Gain, 3000, 0, 51, new Runnable() {
 		    @Override public void run() {
-		        JudahZone.getMasterTrack().getGui().update();
+		        JudahZone.getMasterTrack().getFader().update();
 		    }
 		});
 	}
@@ -34,7 +36,7 @@ public class Fader {
             @Override
             public void run() {
                 master.setOnMute(true);
-                master.setVolume(51);
+                master.getGain().setVol(50);
             }
         });
 	}
@@ -61,12 +63,13 @@ public class Fader {
 
 		// set target value on channel
 		switch (target) {
-			case Gain:  channel.setVolume((int)val); break;
+			case Gain:  channel.getGain().setVol((int)val); break;
 			case CutEQ: channel.getCutFilter().setFrequency(CutFilter.knobToFrequency((int)val)); break;
-			case Reverb: channel.getReverb().setRoomSize((float) val/100f); break;
-			case Delay: channel.getDelay().setFeedback((float) val/100f); break;
-			case Pan: channel.setPan((float) val/100f); break;
+			case Reverb: channel.getReverb().setRoomSize((float) val * 0.01f); break;
+			case Delay: channel.getDelay().setFeedback((float) val * 0.01f); break;
+			case Pan: channel.getGain().set(Gain.PAN, (int)val); break;
 		}
+		MainFrame.update(channel);
 	}
 
 	public static void execute(Fader f) {

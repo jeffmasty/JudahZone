@@ -29,10 +29,6 @@ cc reserved
 @Log4j
 public class MPKTools {
 
-	public static enum KnobMode {
-		Effects1, Effects2, Clock;	//, MidiMixer;
-	};
-	
 	public static final String NAME = "MPKmini2"; // capture
 
 	public static final int JOYSTICK_DOWN_CC = 0; // 0 to 127

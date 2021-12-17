@@ -6,6 +6,7 @@ import static net.judah.JudahZone.getChannels;
 import static net.judah.JudahZone.getPresets;
 import static net.judah.util.Constants.NL;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -28,7 +29,6 @@ import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.Looper;
 import net.judah.MainFrame;
-import net.judah.MixerPane;
 import net.judah.api.Midi;
 import net.judah.api.ProcessAudio;
 import net.judah.clock.JudahClock;
@@ -64,19 +64,11 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
         return instance;
     }
     
-    public static void main(String[] args) {
-    	System.out.println("hello world " +     	System.getProperty("user.dir"));
-    	
-
-    	
-    	log.warn("wow");
-    }
-
     private Looper looper = JudahZone.getLooper();
     @Getter @Setter private static Level level = Level.DEBUG;
-    private final JTextArea textarea;
     @Getter private final JScrollPane scroller;
-    @Getter private final JTextField input = new JTextField(23);
+    private final JTextArea textarea = new JTextArea(3, 30);
+    @Getter private final JTextField input = new JTextField(26);
 
     private boolean midiListen = false;
     private String history = null;
@@ -84,13 +76,14 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 
     private Console() {
 
-        textarea = new JTextArea(3, 60);
         textarea.setEditable(false);
-
+		textarea.setForeground(Color.GREEN/* new Color(1, 77, 13) *//* dark green */);
+        
         scroller = new JScrollPane(textarea);
         scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
         input.addActionListener(this);
+        input.setBackground(Pastels.GREEN);
         input.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -117,7 +110,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
         return text;
     }
 
-    //** output to console */
+    /** output to console */
     public static void addText(String in) {
         log.debug(in);
         String s = in == null ? null : new String(in);
@@ -243,10 +236,10 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 //            getDrummachine().parseConfig(input[1]);
 //        else if (text.equals("drumset") && input.length == 2)
 //            getDrummachine().drumset(Integer.parseInt(input[1]));
-        else if (text.equals("update")) {
-            MixerPane.getInstance().update();
-            Console.info("...updated");
-        }
+//        else if (text.equals("update")) {
+//            MixerPane.getInstance().update();
+//            Console.info("...updated");
+//        }
         else if (text.equalsIgnoreCase("sheetMusic")) {
             MainFrame.get().sheetMusic();
         }

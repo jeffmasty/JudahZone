@@ -26,7 +26,6 @@ import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.beatbox.BeatBox.Type;
 import net.judah.clock.JudahClock;
-import net.judah.effects.gui.Slider;
 import net.judah.fluid.FluidInstrument;
 import net.judah.fluid.FluidSynth;
 import net.judah.midi.JudahMidi;
@@ -39,6 +38,7 @@ import net.judah.util.Constants;
 import net.judah.util.FileChooser;
 import net.judah.util.Pastels;
 import net.judah.util.Size;
+import net.judah.util.Slider;
 
 
 // if channel = 9, 
@@ -312,7 +312,7 @@ public class Buttons extends JPanel implements Size {
         outLbl.addActionListener( e -> {
             JackPort out = JudahMidi.getByName(
                 midiOut.getSelectedItem().toString());
-            MainFrame.get().getMixer().setFocus(
+            MainFrame.setFocus(
                     JudahZone.getChannels().byName(Channels.volumeTarget(out)));});
 
         JPanel midi = new JPanel();

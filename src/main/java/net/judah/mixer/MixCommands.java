@@ -191,9 +191,9 @@ public class MixCommands extends ArrayList<Command> {
 				log.trace((isInput ? JudahZone.getChannels().get(idx).getName() :
 						getLooper().get(idx).getName()) + " gain: " + volume);
 				if (isInput)
-					getChannels().get(idx).setVolume(volume);
+					getChannels().get(idx).getGain().setVol(volume);
 				else
-					getLooper().get(idx).setVolume(volume);
+					getLooper().get(idx).getGain().setVol(volume);
 
 			}});
 

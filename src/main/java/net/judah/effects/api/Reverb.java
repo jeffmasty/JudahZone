@@ -36,13 +36,13 @@ public abstract class Reverb implements Effect {
 
     // NO-OPs, overwrite in subclass
     @Override
-    public void set(int ordinal, float value) {
+    public void set(int ordinal, int value) {
         throw new InvalidParameterException();
     }
-    @Override
-    public float get(int idx) {
-        throw new InvalidParameterException();
-    }
+//    @Override
+//    public int get(int idx) {
+//        throw new InvalidParameterException();
+//    }
 
     @Override
     public int getParamCount() {

@@ -11,6 +11,7 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.MainFrame;
 import net.judah.plugin.Plugin;
 import net.judah.util.Constants;
 
@@ -55,7 +56,7 @@ public class LineIn extends Channel {
 
 	public void setMuteRecord(boolean muteRecord) {
 		this.muteRecord = muteRecord;
-		if (gui != null) gui.update();
+		MainFrame.update(this);
 	}
 
 	public void process() {
@@ -63,9 +64,9 @@ public class LineIn extends Channel {
 		if (isStereo)
 			right = rightPort.getFloatBuffer();
 
-		float gain = volume / 37f; // gain boost
+		float gain = getVolume() * 0.4f;
 		for (int z = 0; z < Constants.bufSize(); z++)
-		    left.put(left.get(z) * gain);
+			left.put(left.get(z) * gain);
 		if (isStereo)
 			for (int z = 0; z < Constants.bufSize(); z++)
 				right.put(right.get(z) * gain);
@@ -80,16 +81,16 @@ public class LineIn extends Channel {
 			if (isStereo)
 				compression.process(right, 1);
 		}
-        if (chorus.isActive()) {
-            if (isStereo)
-                chorus.processStereo(left, right);
-            else
-                chorus.processMono(left);
-        }
+		if (chorus.isActive()) {
+			if (isStereo)
+				chorus.processStereo(left, right);
+			else
+				chorus.processMono(left);
+		}
 		if (overdrive.isActive()) {
-		    overdrive.processAdd(left);
-		    if (isStereo)
-		        overdrive.processAdd(right);
+			overdrive.processAdd(left);
+			if (isStereo)
+				overdrive.processAdd(right);
 		}
 
 		if (delay.isActive()) {
@@ -102,11 +103,11 @@ public class LineIn extends Channel {
 			if (isStereo)
 				reverb.process(right);
 		}
-        if (cutFilter.isActive()) {
-            cutFilter.process(left);
-            if (isStereo())
-                cutFilter.process(right);
-        }
+		if (cutFilter.isActive()) {
+			cutFilter.process(left);
+			if (isStereo())
+				cutFilter.process(right);
+		}
 	}
 
 }

@@ -29,9 +29,9 @@ import net.judah.JudahZone;
 import net.judah.clock.BeatBuddy.Dir;
 import net.judah.clock.BeatBuddy.Drumset;
 import net.judah.clock.BeatBuddy.Track;
-import net.judah.effects.gui.Slider;
 import net.judah.util.Constants;
 import net.judah.util.Knob;
+import net.judah.util.Slider;
 import net.judah.util.ToggleSwitch;
 
 public class BeatBuddyGui extends JPanel {

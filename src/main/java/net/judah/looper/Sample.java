@@ -27,6 +27,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
+import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.api.ProcessAudio;
 import net.judah.api.Status;
@@ -36,7 +37,6 @@ import net.judah.api.TimeNotifier;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.util.AudioTools;
-import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -98,7 +98,7 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
         log.trace(name + " playing active: " + active);
 
         if (isPlaying.compareAndSet(NEW, active ? ARMED : NEW)) {
-            if (active) Console.info(name + " Play is armed.");
+            if (active) RTLogger.log(this, name + " Play is armed.");
         }
         isPlaying.compareAndSet(ARMED, active ? ARMED : ( hasRecording() ? STOPPED : NEW));
 
@@ -106,9 +106,9 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
 
         if (isPlaying.compareAndSet(STOPPED, active ? STARTING : STOPPED)) {
             if (active)
-                Console.info(name + " playing. sample has " + recording.size() + " buffers.");
+                RTLogger.log(this, name + " playing. sample has " + recording.size() + " buffers.");
         }
-        if (gui != null) gui.update();
+        if (fader != null) fader.update();
     }
     public boolean hasRecording() {
         return recording != null && length != null && length > 0;
@@ -126,9 +126,8 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
         recording = null;
         length = null;
         new ArrayList<TimeListener>(listeners).forEach(listener -> {listener.update(Property.STATUS, Status.TERMINATED); });
-        // ?? listeners.clear();
-        if (gui != null) gui.update();
-        Console.info(name + " flushed.");
+        listeners.clear();
+        RTLogger.log(this, name + " flushed.");
     }
 
     public void setRecording(Recording sample) {
@@ -136,8 +135,9 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
             recording.close();
         recording = sample;
         length = recording.size();
-        Console.info("Recording loaded, " + length + " frames.");
+        RTLogger.log(this, "Recording loaded, " + length + " frames.");
         isPlaying.set(STOPPED);
+        MainFrame.update(this);
     }
 
     public void delete() {
@@ -146,7 +146,8 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
 	    		recording.close();
 	    	length = 0;
 	    	recording.clear();
-	    	Console.info("Deleted: " + getName());
+	    	RTLogger.log(this, "Deleted: " + getName());
+	    	MainFrame.update(this);
     	}).start();
     }
     
@@ -157,6 +158,7 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
     		for (int i = 0; i < recording.size(); i++)
     			recording.set(i, new float[Constants.STEREO][Constants.bufSize()]);
     		RTLogger.log(this, "Erased: " + getName());
+    		MainFrame.update(this);
     	}).start(); 
     }
     
@@ -165,12 +167,17 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
     }
 
     @Override public void addListener(TimeListener l) {
-        if (!listeners.contains(l))
+        if (!listeners.contains(l)) {
             listeners.add(l);
+            if (l instanceof Channel) {
+            	MainFrame.update((Channel)l);
+            }
+        }
     }
 
     @Override public void removeListener(TimeListener l) {
-        listeners.remove(l);
+        if (listeners.remove(l) && l instanceof Channel) 
+            	MainFrame.update((Channel)l);
     }
 
     public void setTapeCounter(int current) {
@@ -190,8 +197,8 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
         if (isOnMute()) return; // ok, we're on mute and we've progressed the tape counter.
 
         // gain & pan stereo
-        float leftVol = (volume / 37f) * (1 - pan);
-        float rightVol = (volume / 37f) * pan;
+        float leftVol = (gain.getVol() * 0.025f) * (1 - getPan());
+        float rightVol = (gain.getVol() * 0.025f) * getPan();
 
         AudioTools.processGain(recordedBuffer[LEFT_CHANNEL], workL, leftVol);
         AudioTools.processGain(recordedBuffer[RIGHT_CHANNEL], workR, rightVol);
@@ -254,8 +261,8 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
     }
 
     protected final boolean playing() {
-        isPlaying.compareAndSet(STOPPING, STOPPED);
-        isPlaying.compareAndSet(STARTING, RUNNING);
+        if (isPlaying.compareAndSet(STOPPING, STOPPED)) MainFrame.update(this);
+        if (isPlaying.compareAndSet(STARTING, RUNNING)) MainFrame.update(this);
         return isPlaying.get() == RUNNING;
     }
 

@@ -73,10 +73,10 @@ public class MasterTrack extends Channel {
 	}
 
 	public float getGainL() {
-	    return (volume / 50f) * (1 - pan);
+	    return gain.getVol() * 0.01f * 0.5f * (1 - getPan());
 	}
 
 	public float getGainR() {
-	    return (volume / 50f) * pan;
+	    return gain.getVol() * 0.01f * 0.5f * getPan();
 	}
 }

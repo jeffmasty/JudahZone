@@ -1,5 +1,5 @@
 package net.judah.effects.gui;
-import static net.judah.JudahZone.*;
+import static net.judah.JudahZone.getPresets;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -22,7 +22,7 @@ import javax.swing.JScrollPane;
 
 import net.judah.JudahZone;
 import net.judah.MainFrame;
-import net.judah.MixerPane;
+import net.judah.ControlPanel;
 import net.judah.effects.api.Preset;
 import net.judah.effects.api.PresetsHandler;
 import net.judah.mixer.Channel;
@@ -41,7 +41,7 @@ public class PresetsGui extends JDesktopPane {
         this.presets = presets;
         int offset = 6;
         int buttonsWidth = 100;
-        int presetsWidth = MainFrame.WIDTH_MIXER - buttonsWidth - (int)(2.5 * offset);
+        int presetsWidth = MainFrame.WIDTH_MIXER - buttonsWidth - (int)(2.5 * offset) - 50;
         int presetsHeigth = 333;
         int buttonsX = presetsWidth + offset;
 
@@ -117,7 +117,7 @@ public class PresetsGui extends JDesktopPane {
     public void create() {
         String name = Constants.inputBox("Preset Name:");
         if (name == null || name.isEmpty()) return;
-        JudahZone.getPresets().add(MixerPane.getInstance().getChannel().toPreset(name));
+        JudahZone.getPresets().add(ControlPanel.getInstance().getChannel().toPreset(name));
         save();
     }
 
@@ -126,7 +126,7 @@ public class PresetsGui extends JDesktopPane {
             throw new InvalidParameterException("" + idx);
 
 
-        Channel channel = MixerPane.getInstance().getChannel();
+        Channel channel = ControlPanel.getInstance().getChannel();
         Preset old = getPresets().get(idx);
         Preset replace = channel.toPreset(old.getName());
         getPresets().set(idx, replace);

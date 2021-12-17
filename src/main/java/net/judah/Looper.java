@@ -15,7 +15,6 @@ import net.judah.looper.Recorder;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
 import net.judah.mixer.Channel;
-import net.judah.mixer.ChannelGui.Output;
 import net.judah.mixer.DrumTrack;
 import net.judah.plugin.Carla;
 import net.judah.util.Icons;
@@ -35,7 +34,6 @@ public class Looper implements Iterable<Sample> {
     @Getter private Recorder loopC;
     @Getter private Recorder loopD;
     
-    private LooperGui gui;
     /** pause/unpause specific loops, clock-aware */
     @RequiredArgsConstructor @Getter
     private class Pause extends ArrayList<Sample> {
@@ -49,14 +47,10 @@ public class Looper implements Iterable<Sample> {
         synchronized (this) {
             loops.add(s);
         }
-        if (gui != null)
-            gui.addSample(s);
     }
 
     public boolean remove(Object o) {
         if (o instanceof Sample == false) return false;
-        if (gui != null)
-            gui.removeSample((Sample)o);
         synchronized (this) {
             return loops.remove(o);
         }
@@ -65,7 +59,6 @@ public class Looper implements Iterable<Sample> {
     public void clear() {
         for (Sample s : loops) {
             s.clear();
-            ((Output)s.getGui()).armRecord(false);
             s.play(true); // armed;
         }
     }
@@ -85,16 +78,12 @@ public class Looper implements Iterable<Sample> {
         loopA.setIcon(Icons.load("LoopA.png"));
         loopA.setReverb(carla.getReverb());
         loopA.play(true); // armed;
+        add(loopA);
+
         loopB = new Recorder("B", ProcessAudio.Type.FREE);
         loopB.setIcon(Icons.load("LoopB.png"));
         loopB.setReverb(carla.getReverb());
         loopB.play(true);
-        drumTrack = new DrumTrack(loopA,
-                JudahZone.getChannels().getDrums());
-        drumTrack.setIcon(Icons.load("Drums.png"));
-
-        add(drumTrack);
-        add(loopA);
         add(loopB);
 
         loopC = new Recorder("C", ProcessAudio.Type.FREE);
@@ -102,6 +91,11 @@ public class Looper implements Iterable<Sample> {
         loopC.setIcon(Icons.load("LoopC.png"));
         add(loopC);
 
+        drumTrack = new DrumTrack(loopA, JudahZone.getChannels().getDrums());
+        drumTrack.setIcon(Icons.load("Drums.png"));
+        add(drumTrack);
+
+        // TODO for MIDI and samples
         loopD = new Recorder("D", ProcessAudio.Type.ONE_SHOT);
         loopD.setIcon(Icons.load("LoopD.png"));
         add(loopD);
@@ -133,10 +127,6 @@ public class Looper implements Iterable<Sample> {
     			+ target.getRecording().size() + " frames");
     	}
     }
-    
-    public void registerListener(LooperGui looperGui) {
-        gui = looperGui;
-    }
 
     @Override
     public Iterator<Sample> iterator() {
@@ -163,6 +153,8 @@ public class Looper implements Iterable<Sample> {
 			stopAll();
 			new Thread() {
 				@Override public void run() {
+					try { // to get a process() in
+						Thread.sleep(20);} catch (Exception e) {} 
 					clear();
 					//getDrumTrack().toggle();
                     }}.start();

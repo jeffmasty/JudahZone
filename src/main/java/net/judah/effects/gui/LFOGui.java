@@ -16,6 +16,7 @@ import net.judah.mixer.Channel;
 import net.judah.util.Console;
 import net.judah.util.Constants.Gui;
 import net.judah.util.Knob;
+import net.judah.util.Slider;
 import net.judah.util.TapTempo;
 
 public class LFOGui extends JPanel implements GUI {
@@ -57,7 +58,7 @@ public class LFOGui extends JPanel implements GUI {
         row1.add(lfoFreq);
         TapTempo time = new TapTempo(" time/sync ", msec -> {
             if (msec > 0) {
-                channel.getLfo().setFrequency(msec);
+                channel.getLfo().setFrequency((int)msec);
                 lfoFreq.setValue((int)channel.getLfo().getFrequency());
                 Console.info("LFO Tap Tempo: " + channel.getLfo().getFrequency());
             }
@@ -92,8 +93,8 @@ public class LFOGui extends JPanel implements GUI {
     public void update() {
         LFO lfo = channel.getLfo();
         activeButton.setSelected(lfo.isActive());
-        lfoMax.setValue((int)lfo.getMax());
-        lfoMin.setValue((int)lfo.getMin());
+        lfoMax.setValue(lfo.getMax());
+        lfoMin.setValue(lfo.getMin());
         lfoFreq.setValue((int)lfo.getFrequency());
         lfoTarget.setSelectedIndex(lfo.getTarget().ordinal());
     }

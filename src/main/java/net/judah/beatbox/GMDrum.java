@@ -78,17 +78,15 @@ public enum GMDrum {
 
     public static final GMDrum[] Standard = new GMDrum[] {
             BassDrum, AcousticSnare, SideStick, HandClap,
-            ClosedHiHat, PedalHiHat, OpenHiHat, ChineseCymbal,
-            Cabasa, Shaker, HiWoodBlock, LowMidTom,
+            ClosedHiHat, PedalHiHat, OpenHiHat, Shaker,
             HiBongo, LowBongo, OpenHiConga, HighTimbale,
-            LowAgogo, AcousticSnare, AcousticSnare, AcousticSnare};
+    };
 
     public static final GMDrum[] Acoustic = new GMDrum[] {
             BassDrum, SideStick, HandClap, LongGuiro,
             ClosedHiHat, PedalHiHat, OpenHiHat, ChineseCymbal,
             Cabasa, Shaker, HiWoodBlock, Claves,
-            HiBongo, LowBongo, OpenHiConga, MuteHiConga,
-            LowTimbale, LowConga, HighAgogo, Vibraslap};
+    };
 
     public static final HashMap<String, GMDrum[]> KITS = new HashMap<>();
     static {KITS.put("Standard", Standard); KITS.put("Acoustic", Acoustic);}

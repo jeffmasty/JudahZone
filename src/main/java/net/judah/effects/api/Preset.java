@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
-import net.judah.MixerPane;
+import net.judah.MainFrame;
+import net.judah.ControlPanel;
 import net.judah.mixer.Channel;
 import net.judah.util.Console;
 import net.judah.util.Constants;
@@ -21,7 +22,7 @@ public class Preset extends ArrayList<Setting> {
             String[] values = raw2.split("[/]");
             Setting setting = new Setting(first[0]);
             for (int i = 0; i < values.length; i++)
-                setting.add(Float.parseFloat(values[i]));
+                setting.add(Integer.parseInt(values[i]));
             add(setting);
         }
     }
@@ -65,8 +66,8 @@ public class Preset extends ArrayList<Setting> {
         }
         channel.setPreset(this);
         channel.setPresetActive(active);
-        if (MixerPane.getInstance().getChannel().equals(channel))
-            MixerPane.getInstance().getEffects().update();
+        if (ControlPanel.getInstance().getChannel().equals(channel))
+            MainFrame.update(channel);
         Console.info(name + " preset applied to " + channel.getName());
     }
 

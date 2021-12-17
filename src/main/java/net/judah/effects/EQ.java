@@ -43,7 +43,7 @@ public class EQ implements Effect {
 	}
 
 	public static enum EqBand {
-		BASS, MID, TREBLE
+		Bass, Mid, High
 	}
 
 	public static enum FilterType {
@@ -160,16 +160,16 @@ public class EQ implements Effect {
 		 pk 80 60 +6 # boost lows
 		 pk 8000 90 +9 # boost highs */
 		BiquadFilter bass = new BiquadFilter(120, 1.3f, FilterType.Peaking);
-		leftCh.filters[EqBand.BASS.ordinal()] = bass;
-		rightCh.filters[EqBand.BASS.ordinal()] = new BiquadFilter(bass);
+		leftCh.filters[EqBand.Bass.ordinal()] = bass;
+		rightCh.filters[EqBand.Bass.ordinal()] = new BiquadFilter(bass);
 
 		BiquadFilter mid = new BiquadFilter(666, 1.5f, FilterType.Peaking);
-		leftCh.filters[EqBand.MID.ordinal()] = mid;
-		rightCh.filters[EqBand.MID.ordinal()] = new BiquadFilter(mid);
+		leftCh.filters[EqBand.Mid.ordinal()] = mid;
+		rightCh.filters[EqBand.Mid.ordinal()] = new BiquadFilter(mid);
 
 		BiquadFilter treble = new BiquadFilter(3333, 1.9f, FilterType.Peaking);
-		leftCh.filters[EqBand.TREBLE.ordinal()] = treble;
-		rightCh.filters[EqBand.TREBLE.ordinal()] = new BiquadFilter(treble);
+		leftCh.filters[EqBand.High.ordinal()] = treble;
+		rightCh.filters[EqBand.High.ordinal()] = new BiquadFilter(treble);
 	}
 
 	public void update(EqBand band, EqParam param, float value) {
@@ -178,7 +178,6 @@ public class EQ implements Effect {
 			case BANDWIDTH: filter.bandwidth = value; break;
 			case FREQUENCY: filter.frequency = value; break;
 			case GAIN: filter.gain_db = value;
-			RTLogger.log(this, "gain " + value);
 			
 			break;
 		}
@@ -208,19 +207,23 @@ public class EQ implements Effect {
         return EqBand.values().length;
     }
 
-    @Override public float get(int idx) {
-        return getGain(EqBand.values()[idx]);
+    // TODO support hz
+    @Override public int get(int idx) {
+    	return Math.round(getGain(EqBand.values()[idx]) * 2 + 50);
     }
-
+    // TODO support hz
+    @Override public void set(int idx, int value) {
+    	eqGain(EqBand.values()[idx], value);
+    }
     
     public void setTone(int data2) {
     	RTLogger.log(this, "EQ tone " + data2);
     	if (data2 > 40 && data2 < 60) {
     		if (active) {
     			active = false;
-    			update(EqBand.BASS, EqParam.GAIN, 0);
-    			update(EqBand.MID, EqParam.GAIN, 0);
-    			update(EqBand.TREBLE, EqParam.GAIN, 0);
+    			update(EqBand.Bass, EqParam.GAIN, 0);
+    			update(EqBand.Mid, EqParam.GAIN, 0);
+    			update(EqBand.High, EqParam.GAIN, 0);
     		}
     		return;
     	}
@@ -228,20 +231,15 @@ public class EQ implements Effect {
     	float gain;
     	if (data2 <= 40) {
     		gain = (data2 * -1 + 40) * 0.6f;
-    		update(EqBand.BASS, EqParam.GAIN, gain);
+    		update(EqBand.Bass, EqParam.GAIN, gain);
     	}
     	else {
     		gain = (data2 - 60) * 0.6f;
-    		update(EqBand.TREBLE, EqParam.GAIN, gain);
+    		update(EqBand.High, EqParam.GAIN, gain);
     	}
     	
     }
     
-    @Override public void set(int idx, float value) {
-        update(EqBand.values()[idx], EqParam.GAIN, value);
-    }
-
-
 	public float getGain(EqBand band) {
 	    return leftCh.filters[band.ordinal()].gain_db;
 	}

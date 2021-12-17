@@ -17,6 +17,7 @@ import net.judah.api.TimeProvider;
 import net.judah.beatbox.BeatBox;
 import net.judah.clock.LoopSynchronization.SelectType;
 import net.judah.looper.Recorder;
+import net.judah.metronome.MidiGnome;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiClock;
 import net.judah.sequencer.Sequencer;
@@ -28,10 +29,9 @@ public class JudahClock implements MidiClock, TimeProvider, TimeListener {
 
 	@Getter private static JudahClock instance = new JudahClock();
     
+	public static final int[] LENGTHS= {1, 2, 4, 8, 10, 12, 16, 20, 24, 32, 36};
 	public static enum Mode { Internal, /**24 pulses per quarter note external midi clock*/ Midi24 };
-	public static final int[] LENGTHS= {1, 2, 4, 8, 12, 16, 32};
-
-	@Getter private static Mode mode = Mode.Midi24;
+	@Getter private static Mode mode = Mode.Internal;
     @Getter private final ArrayList<BeatBox> sequencers = new ArrayList<>();
 	@Getter private BeatBuddy drummachine = new BeatBuddy();
     @Getter private ClockGui gui = new ClockGui(this);
@@ -44,10 +44,10 @@ public class JudahClock implements MidiClock, TimeProvider, TimeListener {
     @Getter private int beat = -1;
     /** current step */
 	@Getter private int step = 0;
-    @Setter @Getter private int steps = 16;
-	@Setter @Getter private int subdivision = 4;
-	/** 3 for a waltz, 4 is default */
-    @Setter @Getter private int measure = 4;
+    @Getter private int steps = 16;
+	@Getter private int subdivision = 4;
+	private int _measure = steps / subdivision;
+	
     /** current number of bars to record/computeTempo */
 	@Getter private int length = 4; 
     private float exTempo; // tempo of external clock when running on internal clock
@@ -59,6 +59,9 @@ public class JudahClock implements MidiClock, TimeProvider, TimeListener {
 	/** Loop Synchronization */
 	private static SelectType onDeck;
 	
+	
+	MidiGnome gnome;
+	
 	// listen to midi clock
     private int pulse;
     private long ticker;
@@ -68,9 +71,15 @@ public class JudahClock implements MidiClock, TimeProvider, TimeListener {
 	    for (int i = 0; i < 16; i++) {
 	        sequencers.add(new BeatBox(this, i));
 	    }
-	    if (Constants.defaultDrumFile.isFile())
-	    	sequencers.get(9).load(Constants.defaultDrumFile); // load a default drum pattern
-
+//	    if (Constants.defaultDrumFile.isFile())
+//	    	sequencers.get(9).load(Constants.defaultDrumFile); // load a default drum pattern
+	    try {
+	    	gnome = new MidiGnome(this, JudahMidi.getInstance());
+	    } catch (Exception e) {
+	    	RTLogger.warn(this, e);
+	    }
+	    
+	    
 	}
 
 	public void process() throws JackException {
@@ -177,9 +186,9 @@ public class JudahClock implements MidiClock, TimeProvider, TimeListener {
 	        		listeners.forEach(listener -> {listener.update(Property.BEAT, beat);});
 	        		//Console.info(beat + ((beat % measure == 0) ? "*" : ""));
 	        		
-	        		if (beat % measure == 0) {
+	        		if (beat % getMeasure()== 0) {
 	        			new ArrayList<TimeListener>(listeners).forEach(
-	        					listener -> {listener.update(Property.BARS, beat / measure);});
+	        					listener -> {listener.update(Property.BARS, beat / getMeasure());});
 	        		}
 //	        	}).start();
 	        }
@@ -208,6 +217,17 @@ public class JudahClock implements MidiClock, TimeProvider, TimeListener {
 		beat = -1;
 	    step();
 	    nextPulse = computeNextPulse();
+//	    try {
+//	    	if (gnome.isRunning()) gnome.stop();
+//	    	if (3 == getMeasure())
+//	    		gnome.setFile(new File("/home/judah/tracks/beatbuddy/midi_sources/BRUSHES BEATS/Brushes Song 4- 3_4 Shuffle Waltz/BRUSHES- beat 44- 3_4 Shuffle Waltz !!.mid"));
+//	    	else if (4 == getMeasure()) {
+//	    		gnome.setFile(new File("/home/judah/tracks/beatbuddy/midi_sources/BLUES/Blues Song 2/BLUES- beat 2b straight 8 ride!.mid"));
+//	    	}
+//	    	gnome.start();
+//	    } catch (Exception e) {
+//	    	RTLogger.warn(this, e);
+//	    }
 	}
 
 	@Override
@@ -217,6 +237,7 @@ public class JudahClock implements MidiClock, TimeProvider, TimeListener {
 	    active = false;
 	    gui.update();
 	    Console.info(JudahClock.class.getSimpleName() + " end");
+//	    if (gnome.isRunning()) gnome.stop();
 	}
 
 	public void reset() {
@@ -258,7 +279,7 @@ public class JudahClock implements MidiClock, TimeProvider, TimeListener {
     }
 
     public void latch(Recorder loopA) {
-    	latch(loopA, length * subdivision);
+    	latch(loopA, length * getMeasure());
     }
     
 	public void latch(Recorder loopA, int beats) {
@@ -266,8 +287,7 @@ public class JudahClock implements MidiClock, TimeProvider, TimeListener {
 			tempo = Constants.computeTempo(loopA.getRecordedLength(), beats); 
 			gui.update();
 			listen(loopA);
-			Console.info("Clock armed at " + tempo + " bpm. (" 
-					+ beats / subdivision + " bars form " + loopA.getName() + ")");
+			Console.info("Clock armed at " + tempo + " bpm form " + loopA.getName() + ")");
 		}
 	}
 
@@ -334,7 +354,18 @@ public class JudahClock implements MidiClock, TimeProvider, TimeListener {
 		setMode(mode == Mode.Internal ? Mode.Midi24 : Mode.Internal);
 	}
 	
-	
+	@Override
+	public int getMeasure() {
+		return _measure;
+	}
+	public void setSubdivision(int sub) {
+		subdivision = sub;
+		_measure = steps / subdivision;
+	}
+	public void setSteps(int s) {
+		steps = s;
+		_measure = steps/subdivision;
+	}
 	
 }
 

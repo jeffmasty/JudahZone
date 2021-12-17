@@ -50,9 +50,7 @@ public class BeatBuddy extends ArrayList<Command> implements TimeNotifier, Servi
     public static enum Drumset {
         _notUsed, Standard, Rock, Metal, Jazz, Brushes, Percussion, Latin,
         Dance, Ethereal, Voice, Liverpool, TR808, TR707, STAXStrings
-
     }
-
     
     public static final String PARAM_BUDDY = "beatbuddy";
     public static final long DEBOUNCE = 34;
@@ -115,7 +113,21 @@ public class BeatBuddy extends ArrayList<Command> implements TimeNotifier, Servi
         try {
             loadSDCard();
             // addListener(JudahClock.getInstance());
-            setVolume(120);
+            setVolume(125);
+            new Thread(() -> {
+            	try {
+            		Thread.sleep(3000);
+            		queue.offer(BeatBuddy.STOP_MIDI); 
+            		Thread.sleep(500);
+            		queue.offer(BeatBuddy.PLAY_MIDI);
+            		Thread.sleep(1000);
+            		queue.offer(BeatBuddy.PAUSE_MIDI);
+            		play = true;
+            	} catch (InterruptedException e) {}
+            	
+            });
+            
+            
         } catch (Throwable t) { Console.warn("Loading BeatBuddy SD Card: " + t, t); }
     }
 

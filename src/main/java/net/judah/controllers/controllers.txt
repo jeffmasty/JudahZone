@@ -1,0 +1,11 @@
+Pedal 1 guitar overdrive
+Pedal 2 guitar reverb
+Pedal 3 guitar octaver
+pedal 4 latch b/reset
+pedal 5 stop/restart
+pedal 6 A -> B
+
+pads
+
+recA   recB   recC   recDrum     eraseX   syncX    clockKnobs  efxKnobx
+reload latchB latchC latchDrum   copyXtoY efxReset clockMode   ClockStart

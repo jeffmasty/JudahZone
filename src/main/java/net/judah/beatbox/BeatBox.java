@@ -210,7 +210,7 @@ public class BeatBox extends ArrayList<Grid> implements Runnable {
         }
         current = get(0);
         
-        if (BeatsView.getInstance() != null && this == BeatsView.getInstance().getSequencer())
+        if (BeatsView.getInstance() != null && this == BeatsView.getSequencer())
             BeatsView.getInstance().updateKit(this, current.createTracks());
 
     }

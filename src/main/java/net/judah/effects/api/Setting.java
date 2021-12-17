@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 
 @Data @EqualsAndHashCode(callSuper=true) @RequiredArgsConstructor
-public class Setting extends ArrayList<Float> {
+public class Setting extends ArrayList<Integer> {
 
     private final String effectName;
 

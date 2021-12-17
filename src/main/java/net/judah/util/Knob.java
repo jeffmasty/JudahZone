@@ -51,8 +51,6 @@ public class Knob extends JComponent{
 
 	private static final double DEG_PER_ROT = 360;
 
-	private static final ClassLoader loader = Knob.class.getClassLoader();
-
 	//~~~~~~~~ Knob Value Vars ~~~~~~~~//
 	/** Minimum value the knob can report*/
 	int minVal;

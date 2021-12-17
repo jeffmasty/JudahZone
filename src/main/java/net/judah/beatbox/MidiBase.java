@@ -3,9 +3,8 @@ package net.judah.beatbox;
 import javax.sound.midi.ShortMessage;
 
 import lombok.Data;
-//import lombok.RequiredArgsConstructor;
 
-@Data //@RequiredArgsConstructor
+@Data 
 public class MidiBase {
 
     private final int command;

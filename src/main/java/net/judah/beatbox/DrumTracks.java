@@ -9,16 +9,20 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
-import net.judah.effects.gui.Slider;
 import net.judah.util.CenteredCombo;
 import net.judah.util.Constants;
 import net.judah.util.Pastels;
+import net.judah.util.Size;
+import net.judah.util.Slider;
 
 public class DrumTracks extends KitPanel implements Pastels {
 
     public DrumTracks(Grid grid) {
-
-        // first row
+    	
+    	setLayout(null);
+    	
+        int rowHeight = BeatsView.getInstance().getGrid2().getRowHeight(); 
+    	// first row
         CenteredCombo<String> kits = new CenteredCombo<>();
         for (String key : GMDrum.KITS.keySet())
             kits.addItem(key);
@@ -36,7 +40,7 @@ public class DrumTracks extends KitPanel implements Pastels {
         firstRow.add(Box.createRigidArea(rigid));
         firstRow.add(kits);
         firstRow.add(Box.createRigidArea(rigid));
-
+        firstRow.setBounds(0, 0, Size.WIDTH_KIT, rowHeight);
         // tracks
         int count = grid.size();
         for(int i = 0; i < count; i++) {
@@ -69,6 +73,7 @@ public class DrumTracks extends KitPanel implements Pastels {
             pnl.add(volume);
             pnl.add(drumCombo);
             pnl.add(mute);
+            pnl.setBounds(0, rowHeight * (i + 1) + 5, Size.WIDTH_KIT, rowHeight);
             add(pnl);
         }
         doLayout();

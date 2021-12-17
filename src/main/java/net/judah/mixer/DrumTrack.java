@@ -8,14 +8,14 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
+import net.judah.MainFrame;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeNotifier;
 import net.judah.clock.JudahClock;
 import net.judah.looper.Recorder;
-import net.judah.mixer.ChannelGui.Drums;
-import net.judah.util.Console;
 import net.judah.util.Constants;
+import net.judah.util.RTLogger;
 
 @Data @EqualsAndHashCode(callSuper = true) @Log4j
 public class DrumTrack extends Recorder implements TimeListener {
@@ -55,7 +55,7 @@ public class DrumTrack extends Recorder implements TimeListener {
                         else if (JudahZone.getChannels().getAux2().equals(soloTrack))
                             JudahClock.getInstance().end();
                         soloTrack.setSolo(false);
-                        soloTrack.setVolume(0);
+                        // soloTrack.setVolume(0);
 
                     };
                 }.start();
@@ -69,8 +69,8 @@ public class DrumTrack extends Recorder implements TimeListener {
             master.addListener(this);
             soloTrack.setSolo(true);
             play(true); // armed
-            if (gui != null) ((Drums)gui).armRecord(true);
-            Console.info("drumtrack sync'd. to " + soloTrack.getName());
+            MainFrame.update(this);
+            RTLogger.log(this, "drumtrack sync'd. to " + soloTrack.getName());
         }
         else {
             if (master != null)
@@ -78,12 +78,14 @@ public class DrumTrack extends Recorder implements TimeListener {
             master = null;
             soloTrack.setSolo(false);
             soloTrack = JudahZone.getChannels().getDrums();
-            Console.info("drumtrack disengaged.");
-            if (gui != null) ((Drums)gui).armRecord(false);
+            RTLogger.log(this, "drumtrack disengaged.");
+            MainFrame.update(this);
         }
         setType( soloTrack.isSolo() ? Type.SOLO : Type.DRUMTRACK);
     }
 
+    
+    
     public void toggle() {
         if (soloTrack.isSolo()) // disengage drumtrack
             sync(false);

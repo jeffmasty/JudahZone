@@ -8,7 +8,7 @@ import javax.swing.ImageIcon;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.Setter;
+import net.judah.MainFrame;
 import net.judah.effects.Chorus;
 import net.judah.effects.Compression;
 import net.judah.effects.CutFilter;
@@ -16,12 +16,13 @@ import net.judah.effects.Delay;
 import net.judah.effects.EQ;
 import net.judah.effects.Freeverb;
 import net.judah.effects.LFO;
-import net.judah.effects.LFO.Target;
 import net.judah.effects.Overdrive;
 import net.judah.effects.api.Effect;
+import net.judah.effects.api.Gain;
 import net.judah.effects.api.Preset;
 import net.judah.effects.api.Reverb;
 import net.judah.effects.api.Setting;
+import net.judah.effects.gui.EffectsRack;
 import net.judah.settings.Channels;
 import net.judah.util.Console;
 
@@ -29,17 +30,16 @@ import net.judah.util.Console;
 @Data @EqualsAndHashCode(callSuper = false)
 public abstract class Channel extends ArrayList<Effect> {
 
-	/** volume at 50 (knob at midnight) means +/- no gain */
-	protected int volume = 50;
-    @Setter @Getter protected float pan = 0.5f;
-
 	protected String name;
-	protected ChannelGui gui;
+	protected DJJefe fader;
+	protected EffectsRack effects;
+	
 	protected ImageIcon icon;
 
 	protected Preset preset;
 	protected boolean presetActive;
 
+	protected Gain gain = new Gain();
     protected LFO lfo = new LFO();
     protected CutFilter cutFilter = new CutFilter();
     protected EQ eq = new EQ();
@@ -63,30 +63,18 @@ public abstract class Channel extends ArrayList<Effect> {
         add(reverb);
     }
 
-    public final ChannelGui getGui() { // lazy load
-		if (gui == null) gui = ChannelGui.create(this);
-		return gui;
-	}
-
 	@Getter protected boolean onMute;
 	public void setOnMute(boolean mute) {
 		onMute = mute;
-		if (gui != null) gui.update();
+		if (fader != null) fader.update();
+		MainFrame.update(this);
 	}
 
-	public void setVolume(int vol) {
-		this.volume = vol;
-		if (lfo.isActive() && lfo.getTarget() == Target.Gain)
-		    return; // well, let's not overload GUI and audio
-		if (gui != null) gui.update();
-		//MixerPane.volume(this);
-	}
-
-    public Preset toPreset(String name) {
+    public Preset toPreset(String name) { 
         ArrayList<Setting> presets = new ArrayList<>();
         for (Effect e : this) {
             if (!e.isActive()) continue;
-            presets.add(new Setting(e));
+            presets.add(new Setting(e)); // saving gain?
         }
         Console.info("Saving " + getName() + " to preset " + name +
                 " with " + presets.size() + " effect settings");
@@ -104,8 +92,16 @@ public abstract class Channel extends ArrayList<Effect> {
 		getDelay().setActive(false);
 		getLfo().setActive(false);
 		getOverdrive().setActive(false);
-		setPan(0.5f);
-		
+		getGain().setPan(50);
+		getGain().setVol(50);
 	}
 
+	public float getPan() { 
+		return gain.getPan() * 0.01f;
+	}
+
+	/**@return 0 to 100*/
+	public int getVolume() {
+		return gain.getVol();
+	}
 }

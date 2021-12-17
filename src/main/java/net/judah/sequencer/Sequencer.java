@@ -52,6 +52,7 @@ import net.judah.util.CommandWrapper;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.JsonUtil;
+import net.judah.util.RTLogger;
 
 @Log4j @Getter
 public class Sequencer implements Service, Runnable, TimeListener {
@@ -485,7 +486,7 @@ public class Sequencer implements Service, Runnable, TimeListener {
                 loopB.play(true);
                 loopB.record(true);
                 loopA.removeListener(this);
-                Console.info("Sync'd B recording. buffers: " +
+                RTLogger.log(this, "Sync'd B recording. buffers: " +
                         loopB.getRecording().size() + " vs. " + loopA.getRecording().size());
                 new Thread() { @Override public void run() {
                     try {Thread.sleep(8);} catch(Throwable t) { }

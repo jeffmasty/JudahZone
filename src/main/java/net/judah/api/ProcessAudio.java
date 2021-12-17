@@ -21,10 +21,6 @@ public interface ProcessAudio {
 
 	Recording getRecording();
 
-	/** not below 0 but be prepared for volumes towards 1.5f */
-	//void setGain(float volume);
-	void setVolume(int volume);
-
 	/** destination for audio output */
 	void setOutputPorts(List<JackPort> output);
 

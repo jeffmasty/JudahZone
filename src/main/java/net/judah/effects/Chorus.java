@@ -65,24 +65,24 @@ public class Chorus implements Effect {
     }
 
     @Override
-    public float get(int idx) {
+    public int get(int idx) {
         if (idx == Settings.Rate.ordinal())
-            return getRate();
+            return Math.round(getRate() * 10);
         if (idx == Settings.Depth.ordinal())
-            return getDepth();
+            return Math.round(getDepth() * 100);
         if (idx == Settings.Feedback.ordinal())
-            return getFeedback();
+            return Math.round(getFeedback() * 100);
         throw new InvalidParameterException();
     }
 
     @Override
-    public void set(int idx, float value) {
+    public void set(int idx, int value) {
         if (idx == Settings.Rate.ordinal())
-            setRate(value);
+        	setRate(value/10f);
         else if (idx == Settings.Depth.ordinal())
-            setDepth(value);
+            setDepth(value/100f);
         else if (idx == Settings.Feedback.ordinal())
-            setFeedback(value);
+            setFeedback(value/100f);
         else throw new InvalidParameterException();
     }
 

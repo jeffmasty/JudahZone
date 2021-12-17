@@ -5,9 +5,11 @@ import java.util.ArrayList;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import net.judah.JudahZone;
 import net.judah.effects.api.Effect;
+import net.judah.effects.api.Reverb;
 import net.judah.looper.Sample;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
@@ -42,28 +44,24 @@ public class LFO implements Effect {
 	}
 
 	/** in kilohertz (msec per cycle). default: oscillates over a 1.2 seconds. */
-	private double frequency = 1200;
-
-	public float getFrequency() {
-	    return (float)frequency;
-	}
+	@Getter private double frequency = 1200;
 
 	/** align the wave on the jack frame buffer by millisecond (not implemented)*/
 	private long shift;
 
 	/** set maximum output level of queries. default: 90. */
-	private float max = 90;
+	private int max = 90;
 	/** set minimum level of queries. default 10. */
-	private float min = 10;
+	private int min = 10;
 
     private static final ArrayList<Channel> lfoPulse = new ArrayList<>();
 
-	public void setMax(float val) {
+	public void setMax(int val) {
 	    if (val < min) return;
 	    max = val;
 	}
 
-	public void setMin(float val) {
+	public void setMin(int val) {
 	    if (val > max) return;
 	    min = val;
 	}
@@ -75,50 +73,57 @@ public class LFO implements Effect {
         return LFO.class.getSimpleName(); }
 
     @Override
-    public float get(int idx) {
+    public int get(int idx) {
         if (idx == Settings.Target.ordinal())
             return target.ordinal();
         if (idx == Settings.Min.ordinal())
             return getMin();
         if (idx == Settings.Max.ordinal())
             return getMax();
-        if (idx == Settings.MSec.ordinal())
-            return getFrequency();
+        if (idx == Settings.MSec.ordinal()) {
+        	// map 90 to 1990 to 0 to 100
+        	int result = ((int)(getFrequency() / 19f)) - 90;
+        	if (result < 0) result = 0;
+        	else if (result > 100) result = 100;
+            return result;
+        }
         throw new InvalidParameterException();
     }
 
     @Override
-    public void set(int idx, float value) {
+    public void set(int idx, int value) {
         if (idx == Settings.Target.ordinal()) {
         	Target old = target;
-            target = Target.values()[(int)value];
+            target = Target.values()[value];
             if (target != old) 
             	RTLogger.log(this, target.name());}
         else if (idx == Settings.Min.ordinal())
             setMin(value);
         else if (idx == Settings.Max.ordinal())
             setMax(value);
-        else if (idx == Settings.MSec.ordinal())
-            setFrequency(value);
+        else if (idx == Settings.MSec.ordinal()) 
+        	setFrequency(value * 19 + 90);   // 90msec to 1990msec
         else throw new InvalidParameterException();
     }
 
 	/** called every MidiScheduler.LFO_PULSE jack frames in RT thread */
 	public static void pulse() {
-		for (LineIn ch : JudahZone.getChannels())
-			if (ch.getLfo().isActive())
-				lfoPulse.add(ch);
-		for (Sample s : JudahZone.getLooper())
-			if (s.getLfo().isActive())
-				lfoPulse.add(s);
-		if (JudahZone.getMasterTrack().getLfo().isActive())
-		    lfoPulse.add(JudahZone.getMasterTrack());
-		if (lfoPulse.isEmpty()) return;
-		new Thread() { @Override public void run() {
+		synchronized (lfoPulse) {
+			lfoPulse.clear();
+			for (LineIn ch : JudahZone.getChannels())
+				if (ch.getLfo().isActive())
+					lfoPulse.add(ch);
+			for (Sample s : JudahZone.getLooper())
+				if (s.getLfo().isActive())
+					lfoPulse.add(s);
+			if (JudahZone.getMasterTrack().getLfo().isActive())
+			    lfoPulse.add(JudahZone.getMasterTrack());
+			if (lfoPulse.isEmpty()) return;
+		}
+		new Thread(() -> {
 			for (Channel ch : new ArrayList<>(lfoPulse))
 				if (ch != null) ch.getLfo().pulse(ch);
-			lfoPulse.clear();
-		}}.start();
+		}).start();
 	}
 
 	/** query the oscillator at a specific time, System.currentTimeMillis(), for example. */
@@ -139,14 +144,12 @@ public class LFO implements Effect {
 	public void pulse(Channel ch) {
 		int val = (int)query();
 		switch(target) {
-			case Gain: ch.setVolume(val); break;
+			case Gain: ch.getGain().setVol(val); break;
 			case CutEQ: ch.getCutFilter().setFrequency(
 					CutFilter.knobToFrequency((int)ch.getLfo().query())); break;
-			case Reverb: ch.getReverb().setRoomSize(val / 100f);
-						 ch.getReverb().setWidth(val / 100f);
-						 ch.getReverb().setDamp(val / 100f); break;
-			case Delay: ch.getDelay().setFeedback(val / 100f);
-			case Pan: ch.setPan(val / 100f);
+			case Reverb: ch.getReverb().set(Reverb.Settings.Wet.ordinal(), val); break;
+			case Delay: ch.getDelay().setFeedback(val / 100f); break;
+			case Pan: ch.getGain().setPan(val); break;
 		}
 	}
 

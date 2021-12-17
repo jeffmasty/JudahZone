@@ -18,19 +18,18 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
+import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.api.RecordAudio;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.midi.JudahMidi;
-import net.judah.mixer.ChannelGui.Output;
 import net.judah.mixer.LineIn;
 import net.judah.util.Console;
 import net.judah.util.Constants;
+import net.judah.util.RTLogger;
 
-@Log4j
 public class Recorder extends Sample implements RecordAudio, TimeListener {
 
     protected final AtomicReference<AudioMode> isRecording = new AtomicReference<>(AudioMode.NEW);
@@ -62,12 +61,14 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
     @Override
     public void update(Property prop, Object value) {
         if (Property.STATUS == prop && Status.TERMINATED == value) {
-            setRecording(new Recording(master.getRecording().size(), true));
-            play(true);
+        	if (master.getRecording() != null) {
+        		setRecording(new Recording(master.getRecording().size(), true));
+        		RTLogger.log(this, "Sync'd B recording. buffers: " + getRecording().size());
+        	}
+       		play(true);
             record(true);
             master.removeListener(this);
             master = null;
-            Console.info("Sync'd B recording. buffers: " + getRecording().size());
         }
     }
 
@@ -75,44 +76,44 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
     	if (master == null) {
 	        master = loopA;
 	        loopA.addListener(this);
-	        if (gui != null) ((Output)gui).armRecord(true);
-	        Console.info(getName() + " sync'd and armed");
+	        //if (gui != null) ((Output)gui).armRecord(true);
+	        RTLogger.log(this, " sync'd and armed");
     	}
     	else {
     		loopA.removeListener(this);
     		master = null;
-    		if (gui != null) ((Output)gui).armRecord(false);
+    		//if (gui != null) ((Output)gui).armRecord(false);
     	}
+    	MainFrame.update(this);
     }
 
-    @SuppressWarnings("unchecked")
 	@Override
     public void record(boolean active) {
 
         AudioMode mode = isRecording.get();
-        log.trace((active ? "Activate recording from " : "de-activate recording from ") + mode);
 
         if (active && (recording == null || mode == NEW)) {
             recording = new Recording(true); // threaded to accept live stream
             isRecording.set(STARTING);
             new ArrayList<TimeListener>(listeners).forEach(
             		listener -> {listener.update(Property.STATUS, Status.ACTIVE);});
-            Console.addText(name + " recording starting");
+            RTLogger.log(this, name + " recording starting");
         } else if (active && (isPlaying.get() == RUNNING || isPlaying.get() == STARTING)) {
             isRecording.set(STARTING);
-            Console.addText(name + " overdub starting");
+            RTLogger.log(this, name + " overdub starting");
 
         } else if (active && (recording != null || mode == STOPPED)) {
             isRecording.set(STARTING);
-            Console.addText("silently overdubbing on " + name);
+            RTLogger.log(this, "silently overdubbing on " + name);
         }
 
         else if (mode == RUNNING && !active) {
             isRecording.set(STOPPING);
 
-            if (length == null) {// first time
+            if (length == null) { // Initial Recording, start other loopers
                 new ArrayList<>(listeners).forEach(
                 		listener -> {listener.update(Property.STATUS, Status.TERMINATED);});
+                
             }
             length = recording.size();
             
@@ -120,9 +121,9 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
             isPlaying.compareAndSet(NEW, STOPPED);
             isPlaying.compareAndSet(ARMED, STARTING);
             isRecording.set(STOPPED);
-            Console.addText(name + " recording stopped, tape is " + recording.size() + " buffers long");
+            RTLogger.log(this, name + " recording stopped, tape is " + recording.size() + " buffers long");
+            MainFrame.update(this);
         }
-        if (gui != null) gui.update();
     }
 
     @Override
@@ -136,6 +137,7 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
         super.clear();
         isRecording.set(NEW);
         recording = null;
+        MainFrame.update(this);
     }
 
     @Override
@@ -205,10 +207,11 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
 
     /** for process() thread */
     private final boolean recording() {
-        isRecording.compareAndSet(STOPPING, STOPPED);
+        if (isRecording.compareAndSet(STOPPING, STOPPED)) MainFrame.update(this);
 
         if (isRecording.compareAndSet(STARTING, RUNNING)) {
             _start = System.currentTimeMillis();
+            MainFrame.update(this);
         }
 
         if (isRecording.get() == RUNNING)

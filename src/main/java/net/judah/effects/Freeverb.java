@@ -210,24 +210,24 @@ public final class Freeverb extends Reverb {
     }
 
     @Override
-    public float get(int idx) {
+    public int get(int idx) {
         if (idx == Settings.Room.ordinal())
-            return getRoomSize();
+            return Math.round(getRoomSize() * 100);
         if (idx == Settings.Damp.ordinal())
-            return getDamp();
+            return Math.round(getDamp() * 100);
         if (idx == Settings.Wet.ordinal())
-            return getWet();
+            return Math.round(getWet() * 100);
         throw new InvalidParameterException();
     }
 
     @Override
-    public void set(int idx, float value) {
+    public void set(int idx, int value) {
         if (idx == Settings.Room.ordinal())
-            setRoomSize(value);
+            setRoomSize(value / 100f);
         else if (idx == Settings.Damp.ordinal())
-            setDamp(value);
+            setDamp(value / 100f);
         else if (idx == Settings.Wet.ordinal())
-            setWet(value);
+            setWet(value / 100f);
         else throw new InvalidParameterException();
     }
 

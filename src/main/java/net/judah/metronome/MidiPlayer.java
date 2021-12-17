@@ -20,22 +20,18 @@ public class MidiPlayer implements Player {
 	@Getter private final File file; 
 	@Getter private final Sequencer sequencer;
 	@Getter private final Sequence sequence;
-	private final MidiReceiver receiver;
+	private final Receiver receiver;
 
-	public MidiPlayer(File file, int loopCount, MidiReceiver receiver) 
+	public MidiPlayer(File file, int loopCount, Receiver receiver) 
 			throws InvalidMidiDataException, MidiUnavailableException, IOException {
 		
 		this.receiver = receiver;
 		this.file = file;
 		
-
-		
-		// sequencer = new Sequenca();// TODO velocity/volume gets weird with this sequencer
 		sequencer = MidiSystem.getSequencer(false);
 		sequence = MidiSystem.getSequence(file);
-		
-		
 		sequencer.setSequence(sequence);
+		
 		sequencer.setLoopCount(loopCount);
 		for (Receiver old : sequencer.getReceivers()) 
 			old.close();
@@ -49,10 +45,6 @@ public class MidiPlayer implements Player {
 		}
 		log.debug("Midi player starting. " + file.getAbsolutePath());
 		sequencer.start();
-//		if (intro != null && intro == 0) {
-//			sequenca.rollTransport();
-//			sequencer.addControllerEventListener(sequenca, controllers);
-//		}
 		new Thread() {
 			@Override public void run() {
 				do {try { 
@@ -77,7 +69,8 @@ public class MidiPlayer implements Player {
 	}
 
 	public void setGain(float gain) {
-		receiver.setGain(gain);
+		if (receiver instanceof MidiReceiver)
+			((MidiReceiver)receiver).setGain(gain);
 	}
 	
 	@Override
@@ -114,23 +107,6 @@ public class MidiPlayer implements Player {
 		if (prop == Property.VOLUME) 
 			setGain((Float)value);
 	}
-	
-	
-//	/** for now this only handles 1 bar midi clicktracks */
-//	@Override
-//	public void controlChange(ShortMessage event) {
-//		if (event.getData1() != 3) return;
-//		int beats = ++cc3 * sequenca.getMeasure();
-//		if (intro != null && beats == intro) 
-//			sequenca.rollTransport();
-//			sequencer.addControllerEventListener(sequenca, controllers);
-//		if (duration != null && beats == duration)
-//			stop();
-//	}
+}	
 
-//	@Override
-//	public void meta(MetaMessage meta) {
-//		// log.warn("meta midi: " + meta.getStatus() + "." + meta.getType());
-//	}
 
-}

@@ -13,12 +13,11 @@ import org.jaudiolibs.jnajack.JackException;
 
 import net.judah.api.MidiClient;
 
-
 /** plays a Midi file through the active fluid synth instance or creates one */
 public class JMidiPlay {
 	
 	public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); 
-
+	
 	public static final String SYNTH_LEFT = "fluidsynth-midi:left"; // "fluidsynth:l_00";
 	public static final String SYNTH_RIGHT = "fluidsynth-midi:right"; // "fluidsynth:r_00";
 	public static final String SYNTH_MIDI = "fluidsynth-midi:midi_00"; // "fluidsynth:midi";
@@ -55,6 +54,7 @@ public class JMidiPlay {
     	
 		player = new MidiPlayer(midiFile, 0, new MidiReceiver(midi));
 		player.start();
+
 		player.getSequencer();
 		while (player.isRunning()) {
 			// do nothing

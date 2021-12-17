@@ -1,6 +1,7 @@
 package net.judah.fluid;
 
 import java.nio.FloatBuffer;
+import java.security.InvalidParameterException;
 
 import lombok.Getter;
 import net.judah.effects.api.Reverb;
@@ -13,6 +14,7 @@ public class FluidReverb extends Reverb {
     @Getter private boolean active;
     @Getter private float roomSize;
     @Getter private float damp;
+    @Getter private float wet;
     @Getter private float width;
 
     public FluidReverb(FluidSynth synth) {
@@ -34,6 +36,7 @@ public class FluidReverb extends Reverb {
 
     @Override
     public void setActive(boolean active) {
+    	if (this.active == active) return;
         this.active = active;
         fluid.sendCommand("reverb " + (active ? "on" : "off"));
     }
@@ -62,15 +65,35 @@ public class FluidReverb extends Reverb {
         this.damp = val;
     }
 
-    /** no-op, forward to width() */
+    /** */
     @Override
-    public void setWet(float wet) {
-        setWidth(wet);
-
+    public void setWet(float val) {
+        if (val > 1) val = 1;
+        if (val < 0) val = 0;
+        fluid.sendCommand("set synth.reverb.level " + val);
+        this.wet = val;
     }
+    
     @Override
-    public float getWet() {
-        return getWidth();
+    public int get(int idx) {
+        if (idx == Settings.Room.ordinal())
+            return Math.round(getRoomSize() * 100);
+        if (idx == Settings.Damp.ordinal())
+            return Math.round(getDamp() * 100);
+        if (idx == Settings.Wet.ordinal())
+            return Math.round(getWet() * 100);
+        throw new InvalidParameterException();
+    }
+
+    @Override
+    public void set(int idx, int value) {
+        if (idx == Settings.Room.ordinal())
+            setRoomSize(value / 100f);
+        else if (idx == Settings.Damp.ordinal())
+            setDamp(value / 100f);
+        else if (idx == Settings.Wet.ordinal())
+            setWet(value / 100f);
+        else throw new InvalidParameterException();
     }
 
 }

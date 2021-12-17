@@ -1,4 +1,4 @@
-package net.judah.effects.gui;
+package net.judah.util;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -11,8 +11,6 @@ import javax.swing.JSlider;
 import javax.swing.Painter;
 import javax.swing.UIDefaults;
 import javax.swing.event.ChangeListener;
-
-import net.judah.util.Icons;
 
 /**Source: ThemeDemo https://jasperpotts.com/blog/2008/08/skinning-a-slider-with-nimbus/
  * @author Created by Jasper Potts (May 7, 2008) */

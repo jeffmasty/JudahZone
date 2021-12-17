@@ -90,24 +90,28 @@ public class Compression implements Effect {
     }
 
     @Override
-    public float get(int idx) {
+    public int get(int idx) {
         if (idx == Settings.Threshold.ordinal())
-            return getThreshold();
-        if (idx == Settings.Attack.ordinal())
-            return getAttack();
-        if (idx == Settings.Release.ordinal())
-            return getRelease();
+            return (int)((getThreshold() + 40) * 2.5f);
+        if (idx == Settings.Attack.ordinal()) {
+        	int attack = Math.round(getAttack() * 0.66666f);
+        	return attack > 100 ? 100 : attack;
+        }
+        if (idx == Settings.Release.ordinal()) {
+        	int release = (int)(getRelease() * 0.33333f);
+        	return release > 100 ? 100 : release;
+        }
         throw new InvalidParameterException();
     }
 
     @Override
-    public void set(int idx, float value) {
+    public void set(int idx, int value) {
         if (idx == Settings.Threshold.ordinal())
-            setThreshold(value);
+            setThreshold((value - 100) / 2.5f);
         else if (idx == Settings.Attack.ordinal())
-            setAttack((int)value);
+            setAttack((int)(value * 1.5f));
         else if (idx == Settings.Release.ordinal())
-            setRelease(value);
+            setRelease(Math.round(value * 3));
         else throw new InvalidParameterException();
     }
 

@@ -11,5 +11,8 @@ public interface GUI {
     Dimension MINI_LBL = new Dimension(40, 15);
     Dimension MINI = new Dimension(Gui.SLIDER_SZ.width - 5, Gui.SLIDER_SZ.height);
     Dimension SPACER = new Dimension(2, 1);
-
+    
+    int SHADE = 10;
+    Dimension KNOB_LBL = new Dimension(40, 15);
+    
 }

@@ -8,6 +8,7 @@ import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsInput;
 import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsOutput;
 import static org.jaudiolibs.jnajack.JackPortType.AUDIO;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -89,14 +90,16 @@ public class JudahZone extends BasicClient {
         }
     }
 
-    JudahZone() throws Throwable {
+    private JudahZone() throws Throwable {
         super(JUDAHZONE);
         instance = this;
         Runtime.getRuntime().addShutdownHook(new ShutdownHook());
 
         synth = new FluidSynth(Constants.sampleRate());
         midi = new JudahMidi("JudahMidi");
-        metronome = new Metronome(midi, null);
+        
+        File midiTrack = new File(new File(Constants.ROOT, "metronome"), "JudahZone.mid");
+        metronome = new Metronome(midi, midiTrack);
         
         services.addAll(Arrays.asList(new Service[] {synth, metronome, midi}));
 
@@ -136,9 +139,9 @@ public class JudahZone extends BasicClient {
             Thread.sleep(400);
             services.add(carla);
             plugins.addAll(carla.getPlugins());
+            looper.init(carla);
             masterTrack = new MasterTrack(outL, outR, effectsL, effectsR, null);
             masterTrack.setIcon(Icons.load("Speakers.png"));
-            looper.init(carla);
         } catch (Exception e) { throw new JackException(e); }
     }
 
@@ -164,9 +167,9 @@ public class JudahZone extends BasicClient {
 
         // Initialize command registry and presets, and start GUI
         commands.initializeCommands();
-
-        new MainFrame(JUDAHZONE);
         channels.initVolume();
+        
+        new MainFrame(JUDAHZONE);
         new TalReverb(carla, carla.getPlugins().byName(TalReverb.NAME))
             .initialize(Constants.sampleRate(), Constants.bufSize());
 
@@ -175,10 +178,8 @@ public class JudahZone extends BasicClient {
         //                    now the system is live                           //
         /////////////////////////////////////////////////////////////////////////
         // Open a default song
-        Constants.timer(100, () ->{
-            MixerPane.getInstance().setFocus(masterTrack);
-            Constants.sleep(10);
-            MixerPane.getInstance().update();
+        Constants.timer(100, () -> {
+            ControlPanel.getInstance().setFocus(masterTrack);
             Constants.sleep(10);
             MainFrame.get().beatBox();
 

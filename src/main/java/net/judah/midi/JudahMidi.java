@@ -1,5 +1,4 @@
 package net.judah.midi;
-import static net.judah.settings.MidiSetup.AUX_CHANNEL;
 import static net.judah.settings.MidiSetup.DRUMS_CHANNEL;
 import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsInput;
 import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsOutput;
@@ -21,7 +20,7 @@ import org.jaudiolibs.jnajack.JackPort;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
-import net.judah.MixerPane;
+import net.judah.MainFrame;
 import net.judah.api.BasicClient;
 import net.judah.api.Midi;
 import net.judah.api.MidiQueue;
@@ -50,11 +49,14 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
     private String[] sources, destinations; // for GUI
 
     @Getter private static JudahMidi instance;
+   
     /** current Jack Frame */
     public static long getCurrent() {
         return instance.scheduler.getCurrent();
     }
-
+    
+    private JudahClock clock;
+    
     @Getter private ArrayList<JackPort> inPorts = new ArrayList<>();  // Keyboard, Pedal, MidiIn
     @Getter private JackPort keyboard;
     @Getter private JackPort pedal;
@@ -93,7 +95,6 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
     public JudahMidi(String name) throws JackException {
         super(name);
         instance = this;
-        
         start();
         NAMES = channelMap();
     }
@@ -203,7 +204,8 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
         //if (sz > OUT.AUX1_OUT.ordinal()) auxOut1 = outPorts.get(OUT.AUX1_OUT.ordinal());
         //	jackclient.setTimebaseCallback(this, false);
         new Thread(scheduler).start();
-
+        clock = JudahClock.getInstance();
+        
     }
 
     @SuppressWarnings("deprecation")
@@ -264,7 +266,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
             scheduler.offer(frame++);
             for (JackPort port : outPorts)
                 JackMidi.clearBuffer(port);
-            JudahClock.getInstance().process();
+            clock.process();
 
             // any incoming midi?
             for (JackPort port : inPorts) {
@@ -283,7 +285,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 
                     midiEvent.read(data);
                     if (port == drumsIn) {
-                    	JudahClock.getInstance().processTime(data);
+                    	clock.processTime(data);
                         continue;
                     }
 
@@ -293,7 +295,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
                     		false == Sequencer.getCurrent().midiProcessed(midi, port)) {
                     	if (switchboard.get(port) != null) {
                     		if (switchboard.get(port).midiProcessed(midi))
-                    			MixerPane.getInstance().update();
+                    			MainFrame.updateCurrent();
                     		else 
                     			write(midi, midiEvent.time());
                     	}
@@ -302,7 +304,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
             }
 
             // check sequencers for output
-            for (BeatBox b : JudahClock.getInstance().getSequencers()) {
+            for (BeatBox b : clock.getSequencers()) {
                 poll = b.getQueue().poll();
                 while (poll != null) {
                 	
@@ -334,12 +336,12 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
     private void write(ShortMessage midi, int time) throws JackException {
         switch (midi.getChannel()) {
 	        case DRUMS_CHANNEL: // sending drum notes to external drum machine
-	            JackMidi.eventWrite(drumsOut, time, midi.getMessage(), midi.getLength());
+	            JackMidi.eventWrite(clock.getSequencer(9).getMidiOut(), time, midi.getMessage(), midi.getLength());
 	            break;
-	        case AUX_CHANNEL:
-	            JackMidi.eventWrite(auxOut1, time, midi.getMessage(), midi.getLength());
-	            break;
-	        default: JackMidi.eventWrite(synthOut, time, midi.getMessage(), midi.getLength());
+//	        case AUX_CHANNEL:
+//	            JackMidi.eventWrite(auxOut1, time, midi.getMessage(), midi.getLength());
+//	            break;
+	        default: JackMidi.eventWrite(clock.getSequencer(0).getMidiOut(), time, midi.getMessage(), midi.getLength());
         }
     }
 

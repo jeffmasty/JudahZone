@@ -42,11 +42,14 @@ public class Channels extends ArrayList<LineIn> {
 		synth.setIcon(Icons.load("Synth.png"));
 
 		aux1 = new LineIn(AUX1, "system:capture_3", "aux1"); // boss dr5 drum machine
+		//aux1.setIcon(Icons.load("LoopA.png"));
+		
 		// aux1.getCompression().setActive(true);
 
 		aux2 = new LineIn(AUX2, new String[]
 				{null, null}, // {"Calf Fluidsynth:Out L", "Calf Fluidsynth:Out R"} not started up yet here
 				new String[] {"aux2", "aux3"});
+		//aux2.setIcon(Icons.load("LoopB.png"));
 		// aux2.setMuteRecord(true);
 
 		addAll(Arrays.asList(new LineIn[] { guitar, mic, synth, drums, aux1, aux2 }));
@@ -61,12 +64,12 @@ public class Channels extends ArrayList<LineIn> {
 	}
 
 	public void initVolume() {
-		mic.setVolume(10);
-		guitar.setVolume(50);
-		drums.setVolume(50);
-		synth.setVolume(50);
-		aux1.setVolume(50);
-		aux2.setVolume(50);
+		mic.getGain().setVol(10);
+		guitar.getGain().setVol(50);
+		drums.getGain().setVol(50);
+		synth.getGain().setVol(50);
+		aux1.getGain().setVol(50);
+		aux2.getGain().setVol(50);
 		// drums.getCompression().setActive(true);
 	}
 
@@ -88,13 +91,13 @@ public class Channels extends ArrayList<LineIn> {
         JudahMidi midi = JudahMidi.getInstance();
         Channels channels = JudahZone.getChannels();
         if (midiOut == midi.getAuxOut1())
-            channels.getAux1().setVolume(vol);
+            channels.getAux1().getGain().setVol(vol);
         else if (midiOut == midi.getCalfOut())
-            channels.getDrums().setVolume(vol);
+            channels.getDrums().getGain().setVol(vol);
         else if (midiOut == midi.getDrumsOut())
-            channels.getDrums().setVolume(vol);
+            channels.getDrums().getGain().setVol(vol);
         else if (midiOut == midi.getSynthOut())
-            channels.getSynth().setVolume(vol);
+            channels.getSynth().getGain().setVol(vol);
     }
 
     public static int getVolume(JackPort midiOut) {

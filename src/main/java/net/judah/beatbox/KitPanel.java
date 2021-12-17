@@ -1,10 +1,9 @@
 package net.judah.beatbox;
 
-import static net.judah.util.Size.*;
+import static net.judah.util.Size.STD_HEIGHT;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridLayout;
 
 import javax.swing.JPanel;
 
@@ -17,7 +16,6 @@ public abstract class KitPanel extends JPanel {
     protected final JPanel firstRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
 
     public KitPanel() {
-        setLayout(new GridLayout(0, 1, 0, 0));
         add(firstRow);
     }
 

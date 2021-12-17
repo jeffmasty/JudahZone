@@ -1,6 +1,23 @@
 package net.judah.util;
 
-import static java.awt.event.KeyEvent.*;
+import static java.awt.event.KeyEvent.VK_DOWN;
+import static java.awt.event.KeyEvent.VK_ENTER;
+import static java.awt.event.KeyEvent.VK_ESCAPE;
+import static java.awt.event.KeyEvent.VK_F1;
+import static java.awt.event.KeyEvent.VK_F10;
+import static java.awt.event.KeyEvent.VK_F11;
+import static java.awt.event.KeyEvent.VK_F2;
+import static java.awt.event.KeyEvent.VK_F3;
+import static java.awt.event.KeyEvent.VK_F4;
+import static java.awt.event.KeyEvent.VK_F5;
+import static java.awt.event.KeyEvent.VK_F6;
+import static java.awt.event.KeyEvent.VK_F9;
+import static java.awt.event.KeyEvent.VK_LEFT;
+import static java.awt.event.KeyEvent.VK_M;
+import static java.awt.event.KeyEvent.VK_RIGHT;
+import static java.awt.event.KeyEvent.VK_SPACE;
+import static java.awt.event.KeyEvent.VK_UP;
+import static java.awt.event.KeyEvent.VK_X;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -14,7 +31,7 @@ import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.Looper;
 import net.judah.MainFrame;
-import net.judah.MixerPane;
+import net.judah.ControlPanel;
 import net.judah.api.AudioMode;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
@@ -29,7 +46,7 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
 
     private static final int ASCII_ONE = 49;
     private static JudahMenu instance;
-    private static MixerPane mixer;
+    private static ControlPanel mixer;
     private static Channels channels;
     private static Looper looper;
 
@@ -134,7 +151,7 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
 
     @Override public void keyPressed(KeyEvent e) {
         int code = e.getKeyCode();
-        Channel focus = MixerPane.getInstance().getChannel();
+        Channel focus = ControlPanel.getInstance().getChannel();
 
         switch(code) {
 
@@ -184,7 +201,7 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
 
     private void enterKey() {
         Console.info("enter key handled");
-        Channel ch = MixerPane.getInstance().getChannel();
+        Channel ch = ControlPanel.getInstance().getChannel();
         if (ch instanceof Sample)
             ((Sample)ch).play(
                     ((Sample)ch).isPlaying() != AudioMode.RUNNING);
@@ -194,21 +211,21 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
     }
 
     private void mute() {
-        MixerPane.getInstance().getChannel().setOnMute(!MixerPane.getInstance().getChannel().isOnMute());
+        ControlPanel.getInstance().getChannel().setOnMute(!ControlPanel.getInstance().getChannel().isOnMute());
         // MixerPane.getInstance().getEffects().update();
     }
 
     private void volume(boolean up) {
-        Channel bus = MixerPane.getInstance().getChannel();
+        Channel bus = ControlPanel.getInstance().getChannel();
         int vol = bus.getVolume();
         vol += up? 5 : -5;
         if (vol > 100) vol = 100;
         if (vol < 0) vol = 0;
-        bus.setVolume(vol);
+        bus.getGain().setVol(vol);
     }
 
     private void nextChannel(boolean toRight) {
-        Channel bus = MixerPane.getInstance().getChannel();
+        Channel bus = ControlPanel.getInstance().getChannel();
         if (bus instanceof LineIn) {
             int i = channels.indexOf(bus);
             if (toRight) {
@@ -239,11 +256,11 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
             mixer.setFocus(channels.get(channels.size() - 1));
             return;
         }
-        MixerPane.getInstance().setFocus(looper.get(i - 1));
+        ControlPanel.getInstance().setFocus(looper.get(i - 1));
 
     }
 
-    public static void setMixerPane(MixerPane mixerPane) {
+    public static void setMixerPane(ControlPanel mixerPane) {
         mixer = mixerPane;
         channels = JudahZone.getChannels();
         looper = JudahZone.getLooper();

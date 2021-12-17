@@ -2,8 +2,8 @@ package net.judah.beatbox;
 
 import static net.judah.util.Size.HEIGHT_TABS;
 import static net.judah.util.Size.WIDTH_CLOCK;
+import static net.judah.util.Size.WIDTH_KIT;
 import static net.judah.util.Size.WIDTH_SONG;
-import static net.judah.util.Size.WIDTH_TUNER;
 
 import java.awt.Rectangle;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -24,9 +24,9 @@ public class BeatsView extends JDesktopPane implements TimeListener, Pastels {
 	
     private static final int height = HEIGHT_TABS - 30;
     private static final Rectangle BTN_BOUNDS = new Rectangle(0, 0, WIDTH_CLOCK, height);
-    private static final Rectangle KIT_BOUNDS = new Rectangle(WIDTH_CLOCK, 0, WIDTH_TUNER, height);
-    private static final Rectangle GRID_BOUNDS = new Rectangle(WIDTH_TUNER + WIDTH_CLOCK, 0,
-            WIDTH_SONG - WIDTH_TUNER - WIDTH_CLOCK, height);
+    private static final Rectangle KIT_BOUNDS = new Rectangle(WIDTH_CLOCK, 0, WIDTH_KIT, height);
+    private static final Rectangle GRID_BOUNDS = new Rectangle(WIDTH_KIT + WIDTH_CLOCK, 0,
+            WIDTH_SONG - WIDTH_KIT - WIDTH_CLOCK, height);
 
     @Getter private static BeatsView instance;
     private static final JudahClock clock = JudahClock.getInstance();
@@ -108,11 +108,11 @@ public class BeatsView extends JDesktopPane implements TimeListener, Pastels {
             
     public static void changeChannel(boolean up) {
     	int channel = getChannel() + (up ? 1 : -1);
-    	int count = channelCount();
-    	if (channel == count)
+    	int total = channelCount();
+    	if (channel == total)
     		channel = 0;
     	if (channel == -1)
-    		channel = count;
+    		channel = total - 1;
     	changeChannel(channel);
     }
     

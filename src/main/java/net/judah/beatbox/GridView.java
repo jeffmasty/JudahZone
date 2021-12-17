@@ -21,33 +21,35 @@ import net.judah.util.Pastels;
 
 public class GridView extends JPanel implements MouseListener {
 
+	public static final int ROW_HEIGHT = 24;
+	
     @Getter private final CurrentBeat current;
 
     private final JudahClock clock = JudahClock.getInstance();
-    private final int row;
-    private final int col;
+    @Getter private final int rowHeight;
+    private final int colWidth;
 
     public GridView(Rectangle r) {
         setOpaque(false);
         setLayout(null);
 
-        col = r.width  / clock.getSteps();
-        row = (int)Math.ceil((r.height - 30) / (Grid.TOTAL_SEQUENCES + 1f)) + 1;
+        colWidth = r.width  / clock.getSteps();
+        rowHeight = (int)Math.ceil((r.height - 30) / (Grid.TOTAL_SEQUENCES + 1f)) + 1;
 
         current = new CurrentBeat();
 
         ArrayList<BeatLabel> lbls = current.createLabels();
         for (int i = 0; i < lbls.size(); i++) {
             BeatLabel lbl = lbls.get(i);
-            lbl.setBounds(i * col + 3, 1, 26, 26);
+            lbl.setBounds(i * colWidth + 3, 1, 26, 26);
             add(lbl);
         }
         addMouseListener(this);
     }
 
     private Point translate(Point p) {
-        if (p.y < row + 2) return new Point(p.x / col, -1);
-        return new Point(p.x / col,  (p.y - row) / row);
+        if (p.y < rowHeight + 2) return new Point(p.x / colWidth, -1);
+        return new Point(p.x / colWidth,  (p.y - rowHeight) / rowHeight);
     }
 
     Color color;
@@ -56,7 +58,7 @@ public class GridView extends JPanel implements MouseListener {
         super.paint(g);
         Graphics2D g2d = (Graphics2D) g;
 
-        Grid grid = BeatsView.getInstance().getCurrent();
+        Grid grid = BeatsView.getCurrent();
         for (int x = 0; x < clock.getSteps(); x++) {
             color = x % clock.getSubdivision() == 0 ? Pastels.BLUE :Color.WHITE;
             // g2d.setPaint(color);
@@ -66,7 +68,7 @@ public class GridView extends JPanel implements MouseListener {
                     g2d.setPaint(Pastels.forType(grid.get(y).getStep(x).getType()));
                 else
                     g2d.setPaint(color);
-                g2d.fillOval(x * col + 3, y * row + row + 5, 24, 24);
+                g2d.fillOval(x * colWidth + 3, y * rowHeight + rowHeight + 5, ROW_HEIGHT, ROW_HEIGHT);
             }
         }
     }
@@ -79,11 +81,11 @@ public class GridView extends JPanel implements MouseListener {
                     for (BeatBox beatbox : JudahClock.getInstance().getSequencers())
                         beatbox.process(xy.x);
                 else
-                    BeatsView.getInstance().getSequencer().process(xy.x);
+                    BeatsView.getSequencer().process(xy.x);
             return;
         }
         if (xy.x >= clock.getSteps() || xy.x < 0) return; // off grid
-        Sequence beats = BeatsView.getInstance().getCurrent().get((xy.y));
+        Sequence beats = BeatsView.getCurrent().get((xy.y));
         Beat b = beats.getStep(xy.x);
         if (b == null) {
             Beat created = new Beat(xy.x);
@@ -96,7 +98,7 @@ public class GridView extends JPanel implements MouseListener {
     }
 
     private void processNoteOff(Sequence seq, Beat created) {
-        if (BeatBox.Type.Drums == BeatsView.getInstance().getSequencer().getType())
+        if (BeatBox.Type.Drums == BeatsView.getSequencer().getType())
             return;
         int gate = BeatsView.getInstance().getNoteOff();
         if (gate == 0) return; // no note off

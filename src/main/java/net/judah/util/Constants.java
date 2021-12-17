@@ -19,6 +19,7 @@ import java.util.Map.Entry;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
+import javax.sound.midi.Sequence;
 import javax.swing.JComboBox;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -125,7 +126,11 @@ public class Constants {
 		} catch (InvalidMidiDataException e) {e.printStackTrace();}
 		BASSDRUM = temp;}
 
-
+	/** @return the length in resolved beats of a full sequence 
+	 * (some midi files do not define ticks to the end of the bar) */
+	public static int requeueBeats(Sequence sequence) {
+		return (int) Math.ceil( (sequence.getTickLength() - 1) / (float)sequence.getResolution());
+	}
 
     public static int gain2midi(float gain) {
     	return Math.round(gain * 127);

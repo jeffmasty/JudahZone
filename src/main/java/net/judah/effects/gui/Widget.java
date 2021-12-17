@@ -10,6 +10,7 @@ import javax.swing.JToggleButton;
 
 import net.judah.mixer.Channel;
 import net.judah.util.Constants.Gui;
+import net.judah.util.Pastels;
 
 public abstract class Widget extends JPanel implements GUI {
 
@@ -18,18 +19,17 @@ public abstract class Widget extends JPanel implements GUI {
 
     Widget(Channel channel, JToggleButton activeButton, ActionListener action) {
         this.channel = channel;
+        setBackground(Pastels.EGGSHELL);
         setBorder(Gui.GRAY1);
         this.activeButton = activeButton;
         activeButton.addActionListener(action);
         activeButton.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         add(Box.createRigidArea(EffectsRack.SPACER));
         add(activeButton);
         add(Box.createHorizontalGlue());
 
     }
-
 
     abstract void update();
 

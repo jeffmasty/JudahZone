@@ -6,7 +6,8 @@ import java.util.Arrays;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.Looper;
-import net.judah.MixerPane;
+import net.judah.MainFrame;
+import net.judah.ControlPanel;
 import net.judah.api.Midi;
 import net.judah.beatbox.BeatsView;
 import net.judah.clock.JudahClock;
@@ -77,7 +78,7 @@ public class KorgMixer implements Controller {
 		
 		if (looper == null) {
 			looper = JudahZone.getLooper();
-			//channels.add(JudahZone.getMasterTrack());
+			
 			channels.add(looper.getLoopA());
 			channels.add(looper.getLoopB());
 			channels.add(looper.getLoopC());
@@ -90,37 +91,45 @@ public class KorgMixer implements Controller {
 		}
 		
 		if (data1 >= 0 && data1 < 8) {
-			channels.get(data1).setVolume(data2);
+			channels.get(data1).getGain().setVol(data2);
+			MainFrame.update(channels.get(data1));
 			return true;
 		}
 		if (data1 >= knoboff && data1 < knoboff + 8) {
-			Reverb reverb = channels.get(data1 - knoboff).getReverb();
+			Channel ch = channels.get(data1 - knoboff);
+			Reverb reverb = ch.getReverb();
 			reverb.setWet(data2 * 0.01f);
 			reverb.setActive(data1 > 3);
+			MainFrame.update(ch);
 			return true;
 		}
 		if (data1 >= soff && data1 < soff + 8) { // SELECT CHANNEL EFFECTS
 			if (data1 < soff + 4)  // output channels, check latch
 				JudahClock.waiting((Recorder)channels.get(data1 - soff)); 
 			new Thread( () -> {
-				MixerPane.getInstance().setFocus(channels.get(data1 - soff));
+				ControlPanel.getInstance().setFocus(channels.get(data1 - soff));
 			}).start();
 			return true;
 		}
 		if (data1 >= moff && data1 < moff + 4) { // MUTE OUTPUT
-			channels.get(data1 - moff).setOnMute(data2 > 0);
+			Channel ch = channels.get(data1 - moff);
+			ch.setOnMute(data2 > 0);
 			return true;
 		}
 		if (data1 >= moff + 4 && data1 < moff + 8) { // MUTE RECORD INPUT
-			((LineIn)channels.get(data1 - moff)).setMuteRecord(data2 > 0);
+			LineIn ch = ((LineIn)channels.get(data1 - moff));
+			ch.setMuteRecord(data2 > 0);
+			MainFrame.update(ch);
 			return true;
 		}
 		if (data1 >= roff && data1 < roff + 8) {
-			channels.get(data1 - roff).getReverb().setActive(data2 > 0);
+			Channel ch = channels.get(data1 - roff);
+			ch.getReverb().setActive(data2 > 0);
+			MainFrame.update(ch);
 			return true;
 		}
 		if (data1 == SET.getVal() && data2 != 0) {
-			// JudahClock.getInstance().toggleMode();
+			// TODO
 			return true;
 		}
 		

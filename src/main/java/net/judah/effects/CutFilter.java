@@ -105,7 +105,7 @@ public class CutFilter implements Effect {
     /** right channel */
     private final IIRFilter eq2 = new IIRFilter();
 
-    @Getter private Type filterType = Type.HP12;
+    @Getter private Type filterType = Type.pArTy;
     @Setter @Getter private boolean active;
     @Getter private float frequency = 650;
     private double resonancedB = 12.;
@@ -129,24 +129,24 @@ public class CutFilter implements Effect {
         return CutFilter.class.getSimpleName(); }
 
     @Override
-    public float get(int idx) {
+    public int get(int idx) {
         if (idx == Settings.Type.ordinal())
             return getFilterType().ordinal();
         if (idx == Settings.Frequency.ordinal())
-            return getFrequency();
+            return frequencyToKnob(getFrequency());
         if (idx == Settings.Resonance.ordinal())
-            return getResonance();
+            return (int)(getResonance() * 4);
         throw new InvalidParameterException();
     }
 
     @Override
-    public void set(int idx, float value) {
+    public void set(int idx, int value) {
         if (idx == Settings.Type.ordinal())
-            setFilterType(Type.values()[(int)value]);
+            setFilterType(Type.values()[value]);
         else if (idx == Settings.Frequency.ordinal())
-            setFrequency(value);
+            setFrequency(knobToFrequency(value));
         else if (idx == Settings.Resonance.ordinal())
-            setResonance(value);
+        	setResonance(value * 0.25f);
         else throw new InvalidParameterException();
     }
 
@@ -167,7 +167,7 @@ public class CutFilter implements Effect {
             return;
         resonancedB = db;
         eq1.dirty = eq2.dirty = true;
-        RTLogger.log(this, "resonance: " + resonancedB);
+        //RTLogger.log(this, "resonance: " + resonancedB);
     }
 
     /** @return resonance of filter. */

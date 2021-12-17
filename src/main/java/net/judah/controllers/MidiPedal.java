@@ -7,7 +7,7 @@ import static net.judah.JudahZone.getLooper;
 import java.util.Arrays;
 import java.util.List;
 
-import net.judah.MixerPane;
+import net.judah.MainFrame;
 import net.judah.api.Midi;
 import net.judah.looper.Sample;
 import net.judah.mixer.DrumTrack;
@@ -29,11 +29,11 @@ public class MidiPedal implements Controller {
 		
         if (data1 == PEDAL.get(0)) { // overdrive
         	getChannels().getGuitar().getOverdrive().setActive(data2 > 0);
-        	
+        	MainFrame.update(getChannels().getGuitar());
         }
         if (data1 == PEDAL.get(1)) { // reverb
         	getChannels().getGuitar().getReverb().setActive(data2 > 0);
-        	MixerPane.getInstance().update();
+        	MainFrame.update(getChannels().getGuitar());
         }
         if (data1 == PEDAL.get(2) && midi.getData2() > 0) { // trigger only foot pedal
             new Thread() {@Override public void run() {try {

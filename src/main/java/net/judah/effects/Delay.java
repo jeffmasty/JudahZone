@@ -68,7 +68,6 @@ import java.security.InvalidParameterException;
 import java.util.Arrays;
 
 import lombok.Getter;
-import lombok.Setter;
 import net.judah.effects.api.Effect;
 import net.judah.util.Constants;
 
@@ -96,7 +95,7 @@ public class Delay implements Effect {
     @Getter private float maxDelay = DEF_MAX_DELAY;
     @Getter private float feedback = 0.36f;
 
-    @Getter @Setter private boolean active;
+    @Getter private boolean active;
     private final VariableDelayOp left;
     private final VariableDelayOp right;
 
@@ -119,6 +118,14 @@ public class Delay implements Effect {
     }
 
     @Override
+	public void setActive(boolean active) {
+    	if (!active) {
+    		reset();
+    	}
+    	this.active = active;
+    }
+    
+    @Override
     public int getParamCount() {
         return Settings.values().length;
     }
@@ -128,20 +135,21 @@ public class Delay implements Effect {
     }
 
     @Override
-    public float get(int idx) {
+    public int get(int idx) {
         if (idx == Settings.DelayTime.ordinal())
-            return getDelay();
+            return Math.round(100 * getDelay() / getMaxDelay());
         if (idx == Settings.Feedback.ordinal())
-            return getFeedback();
+            return Math.round(getFeedback() * 100);
         throw new InvalidParameterException();
     }
-
+    
     @Override
-    public void set(int idx, float value) {
-        if (idx == Settings.DelayTime.ordinal())
-            setDelay(value);
+    public void set(int idx, int value) {
+        if (idx == Settings.DelayTime.ordinal()) {
+            setDelay(value * getMaxDelay() / 100f);
+        }
         else if (idx == Settings.Feedback.ordinal())
-            setFeedback(value);
+            setFeedback(value / 100f);
         else throw new InvalidParameterException();
     }
 

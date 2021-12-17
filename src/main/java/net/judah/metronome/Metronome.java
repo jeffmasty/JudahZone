@@ -243,7 +243,6 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 		return true;
 	}
 
-	@Override
 	public void setMeasure(int bpb) {
 		if (bpb < 2 || bpb > 30) return;
 		boolean wasRunning = isRunning();

@@ -6,12 +6,11 @@ import java.util.ArrayList;
 
 import lombok.Getter;
 import net.judah.Looper;
-import net.judah.MixerPane;
+import net.judah.ControlPanel;
 import net.judah.api.AudioMode;
 import net.judah.api.Midi;
 import net.judah.clock.JudahClock;
 import net.judah.clock.LoopSynchronization.SelectType;
-import net.judah.controllers.MPKTools.KnobMode;
 import net.judah.controllers.MapEntry.TYPE;
 import net.judah.looper.Recorder;
 
@@ -119,7 +118,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			new Events.LatchEfx().run();
 			return true;
 		case 14: // reset effects for current channel
-			MixerPane.getInstance().getChannel().reset();
+			ControlPanel.getInstance().getChannel().reset();
 			return true;
 		case 15: // 
 			JudahClock.getInstance().toggleMode();

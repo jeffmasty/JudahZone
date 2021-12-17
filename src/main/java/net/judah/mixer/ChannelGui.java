@@ -60,8 +60,7 @@ public abstract class ChannelGui extends JPanel {
         labelButton.getInputMap().put(KeyStroke.getKeyStroke("SPACE"), "none");
         labelButton.getInputMap().put(KeyStroke.getKeyStroke("ENTER"), "none");
 
-        volume = new Knob(vol -> {channel.setVolume(vol);});
-        volume.setToolTipText("Volume");
+        volume = new Knob(vol -> {channel.getGain().setVol(vol);});
 
         add(labelButton);
         add(volume);
@@ -94,7 +93,7 @@ public abstract class ChannelGui extends JPanel {
 
         labelButton.addActionListener(listener -> {
             if (labelButton.isSelected())
-                MainFrame.get().getMixer().setFocus(channel);
+                MainFrame.setFocus(channel);
         });
         // TODO Constants.attachKeyListener(this, JudahMenu.getInstance());
 

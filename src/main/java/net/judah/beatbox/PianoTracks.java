@@ -8,9 +8,9 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
-import net.judah.effects.gui.Slider;
 import net.judah.util.Constants.Gui;
 import net.judah.util.Pastels;
+import net.judah.util.Slider;
 
 public class PianoTracks extends KitPanel implements Pastels {
 
@@ -22,8 +22,10 @@ public class PianoTracks extends KitPanel implements Pastels {
     private JComboBox<Integer> octaveCombo;
 
     public PianoTracks(Grid grid) {
-        this.grid = grid;
+    	setLayout(new GridLayout(0, 1, 0, 0));
 
+    	this.grid = grid;
+        
         // first (scale/key) row
         scaleCombo = new JComboBox<>();
         for (Scale s : Scale.values()) scaleCombo.addItem(s);
