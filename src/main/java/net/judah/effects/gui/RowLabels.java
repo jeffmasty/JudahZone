@@ -23,7 +23,6 @@ import net.judah.util.KeyPair;
 public class RowLabels extends Row2 {
 	
 	@Getter private final ArrayList<Component> controls = new ArrayList<>();
-	private final KeyPair[] source;
 	
 	private Font model = Gui.FONT11;
 	
@@ -55,7 +54,6 @@ public class RowLabels extends Row2 {
 		super(ch, mode);
 		if (source.length != KNOBS) 
 			throw new InvalidParameterException("source knobs " + source.length);
-		this.source = source;
 		for (KeyPair item : source) {
 			controls.add(new FxTrigger(item));
 		}

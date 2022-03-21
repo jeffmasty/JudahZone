@@ -25,7 +25,6 @@ public class GridView extends JPanel implements MouseListener {
 	
     @Getter private final CurrentBeat current;
 
-    private final JudahClock clock = JudahClock.getInstance();
     @Getter private final int rowHeight;
     private final int colWidth;
 
@@ -33,7 +32,7 @@ public class GridView extends JPanel implements MouseListener {
         setOpaque(false);
         setLayout(null);
 
-        colWidth = r.width  / clock.getSteps();
+        colWidth = r.width  / JudahClock.getSteps();
         rowHeight = (int)Math.ceil((r.height - 30) / (Grid.TOTAL_SEQUENCES + 1f)) + 1;
 
         current = new CurrentBeat();
@@ -59,8 +58,8 @@ public class GridView extends JPanel implements MouseListener {
         Graphics2D g2d = (Graphics2D) g;
 
         Grid grid = BeatsView.getCurrent();
-        for (int x = 0; x < clock.getSteps(); x++) {
-            color = x % clock.getSubdivision() == 0 ? Pastels.BLUE :Color.WHITE;
+        for (int x = 0; x < JudahClock.getSteps(); x++) {
+            color = x % JudahClock.getSubdivision() == 0 ? Pastels.BLUE :Color.WHITE;
             // g2d.setPaint(color);
 
             for (int y = 0; y < grid.size(); y++) {
@@ -76,15 +75,15 @@ public class GridView extends JPanel implements MouseListener {
     @Override public void mouseClicked(MouseEvent e) {
         Point xy = translate(e.getPoint());
         if (xy.y < 0) { // label row clicked, user wants to hear this step
-            if (xy.x >= 0 && xy.x< clock.getSteps())
+            if (xy.x >= 0 && xy.x< JudahClock.getSteps())
                 if (SwingUtilities.isRightMouseButton(e))
                     for (BeatBox beatbox : JudahClock.getInstance().getSequencers())
-                        beatbox.process(xy.x);
+                        beatbox.step(xy.x);
                 else
-                    BeatsView.getSequencer().process(xy.x);
+                    BeatsView.getSequencer().step(xy.x);
             return;
         }
-        if (xy.x >= clock.getSteps() || xy.x < 0) return; // off grid
+        if (xy.x >= JudahClock.getSteps() || xy.x < 0) return; // off grid
         Sequence beats = BeatsView.getCurrent().get((xy.y));
         Beat b = beats.getStep(xy.x);
         if (b == null) {
@@ -103,8 +102,8 @@ public class GridView extends JPanel implements MouseListener {
         int gate = BeatsView.getInstance().getNoteOff();
         if (gate == 0) return; // no note off
         int next = gate + created.getStep();
-        if (next >= clock.getSteps())
-            next -= clock.getSteps();
+        if (next >= JudahClock.getSteps())
+            next -= JudahClock.getSteps();
         if (!seq.hasStep(next))
             seq.add(new Beat(next, Type.NoteOff));
     }

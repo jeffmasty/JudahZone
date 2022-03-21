@@ -26,13 +26,14 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 
 import lombok.extern.log4j.Log4j;
 import net.judah.beatbox.BeatsView;
 import net.judah.clock.JudahClock;
 import net.judah.mixer.Channel;
-import net.judah.sequencer.Overview;
+import net.judah.mixer.DJJefe;
+import net.judah.mixer.Menu;
+import net.judah.mixer.SyncWidget;
 import net.judah.sequencer.Sequencer;
 import net.judah.song.SheetMusic;
 import net.judah.util.Console;
@@ -46,37 +47,38 @@ public class MainFrame extends JFrame implements Size, Runnable {
 
     private static MainFrame instance;
     private final JDesktopPane songPanel;
-    private final MixerView mixer;
+    private final DJJefe mixer;
     private MusicPanel sheetMusic;
     private final ControlPanel controls;
    
-    private Overview overview = new Overview();
+    //private Overview overview = new Overview();
     
     private final JTabbedPane tabs;
     private final JPanel content;
     private final String prefix;
 
     private static BlockingQueue<Object> updates = new LinkedBlockingQueue<>();
-    private static final Object effectsToken = new Object();
+    private static final Object effectsToken = "EFX";
     
     MainFrame(String name) {
         super(name);
-        
+
         try {
             UIManager.setLookAndFeel ("javax.swing.plaf.nimbus.NimbusLookAndFeel");
             UIManager.put("nimbusBase", Pastels.EGGSHELL);
             UIManager.put("control", Pastels.EGGSHELL); 
             UIManager.put("nimbusBlueGrey", Pastels.MY_GRAY);
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException
-                | UnsupportedLookAndFeelException e) { log.info(e.getMessage(), e); }
+	        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	        Thread.sleep(70);
+        } catch (Exception e) { log.info(e.getMessage(), e); }
 
+        content = (JPanel)getContentPane();
+        content.setBackground(Pastels.EGGSHELL);
+        content.setLayout(null);
+        
         instance = this;
         prefix = name;
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        content = (JPanel)getContentPane();
-                content.setBackground(Pastels.EGGSHELL);
-        content.setLayout(null);
-
+        
         tabs = new JTabbedPane();
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         tabs.addMouseListener(new MouseAdapter() {
@@ -91,22 +93,22 @@ public class MainFrame extends JFrame implements Size, Runnable {
         songPanel = new JDesktopPane();
         songPanel.setLayout(null);
         songPanel.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
-        controls = new ControlPanel();
-        JudahMenu.setMixerPane(controls);
         
         Rectangle footerBounds = new Rectangle(0, HEIGHT_TABS, WIDTH_SONG - 1, HEIGHT_MIXER);
-        mixer = new MixerView(footerBounds);
+        mixer = new DJJefe(footerBounds);
         
         tabs.setBounds(0, 0, WIDTH_SONG - 1, HEIGHT_TABS);
         
-        tabs.add("Overview", overview.getScroller());
+        tabs.add("Tracks", JudahClock.getInstance().getOverview());
         
         songPanel.add(tabs);
         songPanel.add(mixer);
         songPanel.setBounds(0, 0, WIDTH_SONG, HEIGHT_FRAME);
+        controls = new ControlPanel();
         controls.setBounds(WIDTH_SONG + 5, 0, WIDTH_MIXER, HEIGHT_FRAME - 5);
         content.add(songPanel);
         content.add(controls);
+        JudahMenu.setMixerPane(controls);
         try { setIconImage(Toolkit.getDefaultToolkit().getImage(
                 new File(Constants.ROOT, "icon.png").toURI().toURL()));
         } catch (Throwable t) {log.error(t.getMessage(), t); }
@@ -124,10 +126,11 @@ public class MainFrame extends JFrame implements Size, Runnable {
         }
         setLocation(1, 0);
         invalidate();
+        Constants.sleep(10);
         setVisible(true);
         
         Thread updates = new Thread(this);
-        updates.setPriority(Thread.MIN_PRIORITY);
+        updates.setPriority(4);
         updates.start();
     }
         
@@ -247,6 +250,10 @@ public class MainFrame extends JFrame implements Size, Runnable {
         return instance;
     }
     
+    public static void updateCurrent() {
+		updates.offer(effectsToken);
+	}
+
     public static void updateTime() {
     	updates.offer(JudahClock.getInstance());
     }
@@ -254,7 +261,11 @@ public class MainFrame extends JFrame implements Size, Runnable {
     public static void update(Channel ch) {
     	updates.offer(ch);
     }
-    
+
+    public static void update(Menu sync) {
+		updates.offer(sync);
+	}
+
     public static void setFocus(Object o) {
     	if (o instanceof Channel) {
     		instance.controls.setFocus((Channel)o);
@@ -264,28 +275,34 @@ public class MainFrame extends JFrame implements Size, Runnable {
 
 	@Override
 	public void run() {
+		Object o = null;
 		while (true) {
-			if (updates.peek() != null) {
-				Object o = updates.poll();
-				if (o instanceof Channel) {
-					Channel ch = (Channel)o;
-					instance.mixer.update(ch);
-					if (instance.controls.getChannel() == ch)
-						instance.controls.getCurrent().update();
-				}
-				else if (effectsToken == o) {
+			
+			o = updates.poll();
+			if (o == null) {
+				Constants.sleep(Constants.GUI_REFRESH);
+				continue;
+			}
+
+			if (o instanceof Channel) {
+				Channel ch = (Channel)o;
+				instance.mixer.update(ch);
+				if (instance.controls.getChannel() == ch)
 					instance.controls.getCurrent().update();
-					instance.mixer.update(instance.controls.getChannel());
-				}
-				else  {
-					instance.mixer.updateAll();
-				}
+			}
+			else if (effectsToken == o) {
+				instance.controls.getCurrent().update();
+				instance.mixer.update(instance.controls.getChannel());
+			}
+			else if (o instanceof SyncWidget) 
+				((SyncWidget)o).updateLoop();
+			else  {
+				instance.mixer.updateAll();
+				instance.controls.getCurrent().update();
 			}
 		}
 	}
 
-	public static void updateCurrent() {
-		updates.offer(effectsToken);
-	}
+
     
 }

@@ -9,7 +9,6 @@ import java.security.InvalidParameterException;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.effects.api.Effect;
-import net.judah.util.Console;
 import net.judah.util.Constants;
 
 public class Compression implements Effect {
@@ -22,20 +21,10 @@ public class Compression implements Effect {
 	static final float LOG_2  = 0.693147f;
 	static final float MIN_GAIN  = 0.00001f; // -100dB help prevents evaluation of denormal numbers
 
-	/** number of compression presets, default = 1 */
-	public static final int COMPRESSION_PRESETS = 3;
-	private static final int PRESET_SIZE = 7;
-    private static int[][] presets = new int[][] { // TODO make enum
-        /* 2:1 */ {-30, 2, -13, 20, 120, 0},
-        /* 5:1 */ {-26, 5, -17, 55, 120, 10}, // default setting
-        /* 8:1 */ {-24, 8, -18, 20, 35, 30} };
-
     @Setter @Getter private boolean active;
-    @Getter private int preset = -1;
 
     // private int hold = (int) (samplerate*0.0125);  //12.5ms;
     private double cSAMPLE_RATE;
-
     private float lvolume = 0.0f;
     private float lvolume_db = 0.0f;
     private int tratio = 4;
@@ -71,11 +60,16 @@ public class Compression implements Effect {
     private float makeuplin;
     private float outlevel;
 
-    /** initializes Preset[1] at 48000 sampleRate */
     public Compression() {
     	setSampleRate(Constants.sampleRate());
-    	setPreset(1);
+    	setThreshold(-26);
+    	setRatio(6);
+    	setOutput(-6);
+    	setAttack(20);
+    	setRelease(60);
+    	setKnee(30);
     }
+    
     public void setSampleRate(int sampleRate) {
     	cSAMPLE_RATE = 1.0/sampleRate;
     }
@@ -134,39 +128,10 @@ public class Compression implements Effect {
 	    peak = 0.0f;
 	}
 
-    /** Compression preset 0 (2:1) , 1 (4:1), or 2 (8:1) */
-	public void setPreset (int preset) {
-		this.preset = preset;
-        for (int n = 1; n < PRESET_SIZE; n++)
-            setPreset(n , presets[preset][n-1]);
-	}
 
-	public void incrementPreset() {
-		if (!isActive()) {
-			setPreset(0);
-			setActive(true);
-		}
-		else {
-			int preset = 1 + getPreset();
-			if (preset < Compression.COMPRESSION_PRESETS)
-				setPreset(preset);
-			else
-				setActive(false);
-		}
-		Console.info("Compression on: " + isActive() + " / " + getPreset());
-	}
-
-    /** @return attack in milliseconds */
+    /**@return attack in milliseconds */
     public int getAttack() {
     	return attStash;
-    }
-
-    public void setAttack(int milliseconds) {
-    	setPreset(4, milliseconds);
-    }
-
-    public void setRelease(float milliseconds) {
-    	setPreset(5, milliseconds);
     }
 
     public int getRatio() {
@@ -176,41 +141,43 @@ public class Compression implements Effect {
     	return thres_db;
     }
 
-	public void setRatio(float val) {
-		setPreset(2, val);
+	public void setRatio(int val) {
+		ratio = tratio = val;
+		compute();
 	}
+	
 	public void setThreshold(float val) {
-		setPreset(1, val);
+		thres_db = val;
+		compute();
 	}
 
-	public void setPreset(int np, float value) {
-	    switch (np) {
-	    case 1:
-	        thres_db = value;    //implicit type cast int to float
-	        break;
-	    case 2:
-	        tratio = (int)value;
-	        ratio = tratio;
-	        break;
-	    case 3:
-	        toutput = (int)value;
-	        break;
-	    case 4:
-	    	attStash = (int)value;
-	        att = (float) (cSAMPLE_RATE /((value / 1000.0f) + cSAMPLE_RATE));
-	        attl = att;
-	        break;
-	    case 5:
-	    	relStash = (int)value;
-	        rel = (float) (cSAMPLE_RATE /((value / 1000.0f) + cSAMPLE_RATE));
-	        rell = rel;
-	        break;
-	    case 6:
-	        tknee = (int)value;  //knee expressed a percentage of range between thresh and zero dB
-	        kpct = tknee/100.1f;
-	        break;
-	    }
+	public void setOutput(int val) {
+		toutput = val;
+		compute();
+	}
+	
+	public void setKnee(int val) {
+		tknee = val;  //knee expressed a percentage of range between thresh and zero dB
+	    kpct = tknee/100.1f;
+	    compute();
+	}
+	
+	public void setAttack(int milliseconds) {
+		attStash = milliseconds;
+        att = (float) (cSAMPLE_RATE /((milliseconds / 1000.0f) + cSAMPLE_RATE));
+        attl = att;
+        compute();
+    }
 
+    public void setRelease(int milliseconds) {
+    	relStash = milliseconds;
+    	rel = (float) (cSAMPLE_RATE /((milliseconds / 1000.0f) + cSAMPLE_RATE));
+    	rell = rel;
+    	compute();
+    }
+
+	
+	private void compute() {
 	    kratio = Math.log(ratio)/ LOG_2;  //  Log base 2 relationship matches slope
 	    knee = -kpct*thres_db;
 
@@ -224,7 +191,7 @@ public class Compression implements Effect {
 	    makeuplin = dB2rap(makeup);
         outlevel = dB2rap(toutput) * makeuplin;
 	}
-
+	
 
 	public void process(FloatBuffer buf, float gain) {
 		buf.rewind();

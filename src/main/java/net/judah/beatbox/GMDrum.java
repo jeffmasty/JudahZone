@@ -61,6 +61,13 @@ public enum GMDrum {
     private final int midi;
     private final String display;
 
+    public static GMDrum lookup(int midi) {
+    	for (GMDrum x : GMDrum.values())
+    		if (x.midi ==  midi)
+    			return x;
+    	return null;
+    }
+    
 	public static String format(Midi midi) {
 		if (midi == null) return "null";
 		int val = midi.getData1();
@@ -71,6 +78,10 @@ public enum GMDrum {
 		return midi.toString();
 	}
 
+	public byte toByte() {
+		return Integer.valueOf(midi).byteValue();
+	}
+	
 	@Override
 	public String toString() {
 	    return display;

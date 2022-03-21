@@ -19,6 +19,28 @@ public class Sequence extends ArrayList<Beat> {
     private float velocity = 0.8f;
     private boolean mute = false;
 
+        public Sequence(String saved, Type type) {
+        if (saved.startsWith("MUTE")) {
+            mute = true;
+            saved = saved.replace("MUTE", "");
+        }
+        String[] split = saved.split("[/]");
+        String[] track = split[0].split("[,]");
+
+        reference = (type == Type.Drums)
+            ? new MidiBase(GMDrum.values()[Integer.parseInt(track[0])])
+            : new MidiBase(Integer.parseInt(track[0]));
+
+        this.velocity = Float.parseFloat(track[1]);
+        if (split.length > 1) {
+            String[] steps = split[1].split("[,]");
+            for (int i = 0; i < steps.length; i++) {
+                String[] step = steps[i].split("[:]");
+                add(new Beat(Integer.parseInt(step[0]), Beat.Type.valueOf(step[1])));
+            }
+        }
+    }
+    
     public Sequence(MidiBase reference) {
         this.reference = reference;
     }
@@ -53,28 +75,6 @@ public class Sequence extends ArrayList<Beat> {
             if (i != last) sb.append(",");
         }
         return sb.append(Constants.NL).toString();
-    }
-
-    public Sequence(String saved, Type type) {
-        if (saved.startsWith("MUTE")) {
-            mute = true;
-            saved = saved.replace("MUTE", "");
-        }
-        String[] split = saved.split("[/]");
-        String[] track = split[0].split("[,]");
-
-        reference = (type == Type.Drums)
-            ? new MidiBase(GMDrum.values()[Integer.parseInt(track[0])])
-            : new MidiBase(Integer.parseInt(track[0]));
-
-        this.velocity = Float.parseFloat(track[1]);
-        if (split.length > 1) {
-            String[] steps = split[1].split("[,]");
-            for (int i = 0; i < steps.length; i++) {
-                String[] step = steps[i].split("[:]");
-                add(new Beat(Integer.parseInt(step[0]), Beat.Type.valueOf(step[1])));
-            }
-        }
     }
 
 

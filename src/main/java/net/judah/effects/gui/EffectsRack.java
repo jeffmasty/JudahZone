@@ -12,7 +12,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import net.judah.JudahZone;
 import net.judah.controllers.KnobMode;
 import net.judah.mixer.Channel;
 import net.judah.util.KeyPair;
@@ -97,10 +96,7 @@ public class EffectsRack extends JPanel implements GUI {
         
     }
 
-    private boolean inUpdate;
     public void update() {
-        if (!JudahZone.isInitialized() || inUpdate) return;
-        inUpdate = true;
         title.update();
         for (RowLabels lbl : labels) 
         	lbl.update();
@@ -108,7 +104,6 @@ public class EffectsRack extends JPanel implements GUI {
         	knob.update();
 
         repaint();
-        inUpdate = false;
     }
 
 }

@@ -9,9 +9,10 @@ import javax.sound.midi.Sequence;
 import javax.sound.midi.Sequencer;
 
 import lombok.Getter;
-import net.judah.api.MidiQueue;
 import net.judah.api.TimeListener;
+import net.judah.api.TimeProvider;
 import net.judah.clock.JudahClock;
+import net.judah.midi.JudahMidi;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -29,12 +30,16 @@ public class MidiGnome implements Player, TimeListener {
 	@Getter private boolean running;
 	private final Receiver receiver;
 	private int barCount, restart;
-	private final JudahClock clock;
+	private final TimeProvider clock;
 	
+	public MidiGnome(File file) throws MidiUnavailableException {
+		this(JudahClock.getInstance(), JudahMidi.getInstance());
+		setFile(file);
+	}
 	
-	public MidiGnome(JudahClock clock, MidiQueue queue) throws MidiUnavailableException {
+	public MidiGnome(TimeProvider clock, JudahMidi queue) throws MidiUnavailableException {
 		this.clock = clock;
-		receiver = new MidiReceiver(queue);
+		receiver = new JackReceiver(JudahMidi.getInstance().getSynthOut());
 		sequencer = MidiSystem.getSequencer(false);
 		sequencer.setLoopCount(0); // listener fires off each repetition
 		for (Receiver old : sequencer.getReceivers()) 
@@ -46,8 +51,10 @@ public class MidiGnome implements Player, TimeListener {
 	}
 	
 	public void setFile(File file) {
+		stop();
 		this.file = file;
-		if (file == null) return;
+		if (file == null) 
+			return;
 		try {
 			sequence = MidiSystem.getSequence(file);
 			restart = Constants.requeueBeats(sequence) / clock.getMeasure();
@@ -58,7 +65,6 @@ public class MidiGnome implements Player, TimeListener {
 		}
 		
 	}
-	
 	
 	@Override
 	public void update(Property prop, Object value) {
@@ -95,7 +101,7 @@ public class MidiGnome implements Player, TimeListener {
 			sequencer.start();
 			barCount = 0;
 			running = true;
-			JudahClock.getInstance().addListener(this);
+			clock.addListener(this);
 		} catch (Exception e) {
 			RTLogger.warn(this, e);
 		}
@@ -104,14 +110,16 @@ public class MidiGnome implements Player, TimeListener {
 	@Override
 	public void stop() {
 		if (sequencer.isRunning()) sequencer.stop();
-		JudahClock.getInstance().removeListener(this);
+		clock.removeListener(this);
 		running = false;
 	}
 
 	@Override
 	public void close() {
+		stop();
 		receiver.close();
 		if (sequencer.isOpen()) sequencer.close();
+		
 	}
 
 	@Override

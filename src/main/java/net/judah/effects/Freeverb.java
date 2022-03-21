@@ -81,19 +81,19 @@ import net.judah.util.Constants;
 public final class Freeverb extends Reverb {
 
     private static final float fixedgain = 0.015f * 2;
-    private static final float scalewet = 3;
+    private static final float scalewet = 4;
     private static final float scaledry = 2;
     private static final float scaledamp = 0.4f;
     private static final float scaleroom = 0.28f;
     private static final float offsetroom = 0.7f;
 
     private static final float initialroom = 0.4f;
-    private static final float initialdamp = 0.8f;
+    private static final float initialdamp = 0.9f;
     private static final float initialwet = 1 / scalewet;
     private static final float initialdry = 0.5f;//1;
     private static final float initialwidth = 1.0f;
 
-    @Getter @Setter private boolean active;
+    @Getter private boolean active;
     private int nframes = 512;
     private float roomsize;
     private float damp;
@@ -366,9 +366,14 @@ public final class Freeverb extends Reverb {
         int bufidx = 0;
 
         public Comb(int size) {
-            buffer = new float[size];
             bufsize = size;
+            reset();
         }
+        
+        public void reset() {
+        	buffer = new float[bufsize];
+        }
+        
 
         public void processMix(float inputs[], float outputs[], int buffersize) {
             for (int i = 0; i < buffersize; i++) {
@@ -425,10 +430,14 @@ public final class Freeverb extends Reverb {
         int bufidx = 0;
 
         public Allpass(int size) {
-            buffer = new float[size];
             bufsize = size;
+        	reset();
         }
 
+        public void reset() {
+        	buffer = new float[bufsize];
+        }
+        
         public void processReplace(float inputs[], float outputs[], int buffersize) {
 
             for (int i = 0; i < buffersize; i++) {
@@ -456,6 +465,22 @@ public final class Freeverb extends Reverb {
             }
         }
    }
+
+	@Override
+	public void setActive(boolean active) {
+		this.active = active;
+		if (active) return;
+		new Thread( () -> { // clear the echo
+			for (Allpass l : allpassL)
+				l.reset();
+			for (Allpass r : allpassR)
+				r.reset();
+			for (Comb l : combL)
+				l.reset();
+			for (Comb r : combR)
+				r.reset();
+		}).start();
+	}
 
 
 }

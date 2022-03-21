@@ -22,11 +22,11 @@ import javax.swing.event.ListSelectionListener;
 
 import lombok.extern.log4j.Log4j;
 import net.judah.sequencer.Sequencer;
-import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.FileCellRenderer;
 import net.judah.util.FileChooser;
 import net.judah.util.JsonUtil;
+import net.judah.util.RTLogger;
 
 @Log4j
 public class SonglistTab extends JComponent implements ListSelectionListener {
@@ -56,7 +56,7 @@ public class SonglistTab extends JComponent implements ListSelectionListener {
 		
 		loadSetlist(setlist);
 		if (setlist == null) {
-			Console.addText("No Set List");
+			RTLogger.log(this, "No Set List");
 			return;
 		}
 

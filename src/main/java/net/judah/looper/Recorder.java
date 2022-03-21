@@ -19,6 +19,7 @@ import org.jaudiolibs.jnajack.JackPort;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
+import net.judah.Looper;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.api.RecordAudio;
@@ -26,7 +27,6 @@ import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.LineIn;
-import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -50,8 +50,7 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
     }
 
     public Recorder(String name, Type type, List<JackPort> inputPorts, List<JackPort> outputPorts) {
-        this.name = name;
-        this.type = type;
+    	super(name);
         this.inputPorts.addAll(inputPorts);
         this.outputPorts.addAll(outputPorts);
         memory = new Memory(Constants.STEREO, JudahMidi.getInstance().getBufferSize());
@@ -63,7 +62,7 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
         if (Property.STATUS == prop && Status.TERMINATED == value) {
         	if (master.getRecording() != null) {
         		setRecording(new Recording(master.getRecording().size(), true));
-        		RTLogger.log(this, "Sync'd B recording. buffers: " + getRecording().size());
+        		RTLogger.log(this, name + " sync'd recording. buffers: " + getRecording().size());
         	}
        		play(true);
             record(true);
@@ -76,13 +75,11 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
     	if (master == null) {
 	        master = loopA;
 	        loopA.addListener(this);
-	        //if (gui != null) ((Output)gui).armRecord(true);
-	        RTLogger.log(this, " sync'd and armed");
+	        RTLogger.log(this, name + " sync'd and armed");
     	}
     	else {
     		loopA.removeListener(this);
     		master = null;
-    		//if (gui != null) ((Output)gui).armRecord(false);
     	}
     	MainFrame.update(this);
     }
@@ -104,16 +101,30 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
 
         } else if (active && (recording != null || mode == STOPPED)) {
             isRecording.set(STARTING);
-            RTLogger.log(this, "silently overdubbing on " + name);
+            RTLogger.log(this, name + "silently overdubbing");
         }
 
         else if (mode == RUNNING && !active) {
             isRecording.set(STOPPING);
 
             if (length == null) { // Initial Recording, start other loopers
-                new ArrayList<>(listeners).forEach(
-                		listener -> {listener.update(Property.STATUS, Status.TERMINATED);});
-                
+                Looper looper = JudahZone.getLooper();
+                if (this == looper.getLoopA()) {
+            		if (looper.getDrumTrack().isSync()) {
+            			looper.getDrumTrack().record(false);
+            		}
+            		for (Sample s : looper.getLoops()) {
+	            		if (s == this) continue;
+	            		if (s.isSync()) s.sync = false;
+	            		else looper.syncLoop(this, (Recorder)s); // preset blank loop of proper size
+	        		}
+            		new Thread( () -> {new ArrayList<>(listeners).forEach(
+	                		listener -> {listener.update(Property.STATUS, Status.TERMINATED);});}).start();
+            	}
+            	RTLogger.log(this, name + " initial recording " + recording.size() + " buffers long");
+            }
+            else {
+            	RTLogger.log(this, name + " overdubbed.");
             }
             length = recording.size();
             
@@ -121,7 +132,6 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
             isPlaying.compareAndSet(NEW, STOPPED);
             isPlaying.compareAndSet(ARMED, STARTING);
             isRecording.set(STOPPED);
-            RTLogger.log(this, name + " recording stopped, tape is " + recording.size() + " buffers long");
             MainFrame.update(this);
         }
     }
@@ -235,7 +245,7 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
 			}
 			setRecording(dupe); 
 			recordedLength = recordedLength * 2;
-			Console.info(name + " duplicated (" + recordedLength * 1000 + " sec");
+			RTLogger.log(this, name + " duplicated (" + recording.size() + " frames)");
 	}
 
 }

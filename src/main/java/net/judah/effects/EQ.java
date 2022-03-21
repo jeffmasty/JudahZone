@@ -159,15 +159,15 @@ public class EQ implements Effect {
 		 lc 20 60 0 # remove DC and subsonic
 		 pk 80 60 +6 # boost lows
 		 pk 8000 90 +9 # boost highs */
-		BiquadFilter bass = new BiquadFilter(120, 1.3f, FilterType.Peaking);
+		BiquadFilter bass = new BiquadFilter(100, 1.3f, FilterType.Peaking);
 		leftCh.filters[EqBand.Bass.ordinal()] = bass;
 		rightCh.filters[EqBand.Bass.ordinal()] = new BiquadFilter(bass);
 
-		BiquadFilter mid = new BiquadFilter(666, 1.5f, FilterType.Peaking);
+		BiquadFilter mid = new BiquadFilter(650, 1.5f, FilterType.Peaking);
 		leftCh.filters[EqBand.Mid.ordinal()] = mid;
 		rightCh.filters[EqBand.Mid.ordinal()] = new BiquadFilter(mid);
 
-		BiquadFilter treble = new BiquadFilter(3333, 1.9f, FilterType.Peaking);
+		BiquadFilter treble = new BiquadFilter(6000, 2f, FilterType.Peaking);
 		leftCh.filters[EqBand.High.ordinal()] = treble;
 		rightCh.filters[EqBand.High.ordinal()] = new BiquadFilter(treble);
 	}

@@ -28,12 +28,12 @@ import com.illposed.osc.OSCSerializeException;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.api.Command;
-import net.judah.api.MidiClient;
-import net.judah.api.MidiQueue;
 import net.judah.api.Service;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeProvider;
+import net.judah.clock.JudahClock;
+import net.judah.midi.JudahMidi;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 
@@ -51,7 +51,7 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 
 	@Getter private final String serviceName = Metronome.class.getSimpleName();
 
-	@Getter private final MidiQueue midi;
+	@Getter private final JudahMidi midi;
 	@Getter private final TimeProvider timeProvider;
 	private static final ArrayList<TimeListener> listeners = new ArrayList<>();
 
@@ -70,7 +70,7 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 
 	@Getter private final List<Command> commands = new ArrayList<>();
 
-    public Metronome(MidiQueue queue, File midiFile)
+    public Metronome(JudahMidi queue, File midiFile)
             throws JackException, IOException, InvalidMidiDataException, OSCSerializeException {
 
     	this.midi = queue;
@@ -132,22 +132,6 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 		return gui;
 	}
 
-	public static void main2(String[] args) {
-		File midiFile = (args.length == 1) ? new File(args[0]) :
-				new File("/home/judah/git/JudahZone/resources/metronome/Latin16.mid");
-		try {
-	    	MidiClient midi = new MidiClient(CLIENT_NAME, new String[] {}, new String[] {DRUM_PORT});
-			JFrame frame = new JFrame("Metronome");
-	        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			frame.setContentPane(new Metronome(midi, midiFile).getGui());
-	        frame.setLocation(200, 50);
-	        frame.setSize(330, 165);
-	        frame.setVisible(true);
-		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-		}
-	}
-
 	public void setMidiFile(File file) {
 		midiFile = file;
 		boolean wasRunning = isRunning();
@@ -204,7 +188,10 @@ public class Metronome implements Service, TimeProvider, TimeListener {
     		if (!clicktrack)
     			playa = (midiFile == null) ?
     					new TickTock(this) :
-    					new MidiPlayer(midiFile, Sequencer.LOOP_CONTINUOUSLY, new MidiReceiver(midi));
+//    					new MidiPlayer(midiFile, Sequencer.LOOP_CONTINUOUSLY, new MidiReceiver(midi));
+    					new MidiPlayer(midiFile, Sequencer.LOOP_CONTINUOUSLY, 
+    							new JackReceiver(JudahClock.getInstance().getSequencer(0).getMidiOut()));
+
     		addListener(playa);
     		listeners.forEach( listener -> {listener.update(Property.MEASURE, measure);});
     		listeners.forEach( listener -> {listener.update(Property.VOLUME, gain);});

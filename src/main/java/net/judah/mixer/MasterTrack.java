@@ -15,10 +15,7 @@ import net.judah.util.AudioTools;
 public class MasterTrack extends Channel {
 
 	final JackPort speakersLeft, speakersRight, effectsL, effectsR;
-	FloatBuffer left, right;
 
-	
-	
 	public MasterTrack(JackPort left, JackPort right,
 	        JackPort effectsL, JackPort effectsR, Reverb reverb) {
 		super("MAIN");
@@ -31,6 +28,7 @@ public class MasterTrack extends Channel {
 	}
 
 	public void process() {
+		FloatBuffer left, right;
 	    left = speakersLeft.getFloatBuffer();
 	    right = speakersRight.getFloatBuffer();
 

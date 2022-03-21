@@ -28,10 +28,10 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
 import lombok.extern.log4j.Log4j;
+import net.judah.ControlPanel;
 import net.judah.JudahZone;
 import net.judah.Looper;
 import net.judah.MainFrame;
-import net.judah.ControlPanel;
 import net.judah.api.AudioMode;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
@@ -185,8 +185,7 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
                     ((LineIn)focus).setMuteRecord(!((LineIn)focus).isMuteRecord());
                 else if (focus instanceof Sample) {
                     Sample s = (Sample)focus;
-                    s.setRecording(new Recording(s.getRecording().size(),
-                            s.getRecording().isListening()));
+                    s.setRecording(new Recording(s.getRecording().size()));
                 }
                 break; }
         }
@@ -242,7 +241,8 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
             }
             mixer.setFocus(channels.get(i - 1));
             return;
-        } // else instanceof Sample
+        } 
+        // else instanceof Sample
         int i = looper.indexOf(bus);
         if (toRight) {
             if (i == looper.size() - 1) {

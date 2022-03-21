@@ -7,12 +7,11 @@ import static net.judah.JudahZone.getPresets;
 import static net.judah.util.Constants.NL;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -30,13 +29,12 @@ import net.judah.JudahZone;
 import net.judah.Looper;
 import net.judah.MainFrame;
 import net.judah.api.Midi;
-import net.judah.api.ProcessAudio;
+import net.judah.api.ProcessAudio.Type;
 import net.judah.clock.JudahClock;
 import net.judah.effects.api.Preset;
 import net.judah.fluid.FluidSynth;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
-import net.judah.metronome.JMidiPlay;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiListener;
 import net.judah.midi.Route;
@@ -45,7 +43,6 @@ import net.judah.sequencer.Sequencer;
 @Log4j
 public class Console implements ActionListener, ConsoleParticipant, MidiListener {
 
-    private static final String midiPlay = "midi filename (play a midi file)";
     private static final String listenHelp = "midilisten (toggle midi output to console)";
     private static final String saveHelp = "save loop_num filename (saves looper to disc)";
     private static final String readHelp = "read loop_num filename (reads Sample audio from disk into looper)";
@@ -67,7 +64,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
     private Looper looper = JudahZone.getLooper();
     @Getter @Setter private static Level level = Level.DEBUG;
     @Getter private final JScrollPane scroller;
-    private final JTextArea textarea = new JTextArea(3, 30);
+    private final JTextArea textarea = new JTextArea(5, 30);
     @Getter private final JTextField input = new JTextField(26);
 
     private boolean midiListen = false;
@@ -89,6 +86,10 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == VK_ESCAPE)
                     MainFrame.get().sheetMusic();}});
+        Dimension d = new Dimension(Size.WIDTH_MIXER - 25, 25);
+        input.setPreferredSize(d);
+        input.setMaximumSize(d);
+        input.setMinimumSize(d);
 
         participants.add(this);
         participants.add(FluidSynth.getInstance().getConsole());
@@ -110,7 +111,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
         return text;
     }
 
-    /** output to console */
+    /** output to console (not for realtime) */
     public static void addText(String in) {
         log.debug(in);
         String s = in == null ? null : new String(in);
@@ -198,9 +199,16 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
             Console.warn(e.getMessage(), e);
         }
 
-        if (text.equals("midi"))
-            midiPlay(input);
-        else if (text.equals("midilisten"))
+//        if (text.equals("yo")) {
+//        	AudioMetaData mdataObj = new AudioMetaData();
+//        	String mp3 = "/home/judah/Music/AntonioCarlosJobim-VerveJazzMasters13/11 Insensatez.mp3";
+//        	int sr = Constants.sampleRate();
+//        	float[] samples = AudioData.readAudio(mp3, sr, 0f, mdataObj);
+//        	looper.get(0).setRecording(new Recording(samples));
+//        	looper.get(0).play(true);
+//        }
+        
+        if (text.equals("midilisten"))
             midiListen();
         else if (text.equals("save"))
             save(input);
@@ -217,11 +225,11 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
                     JudahClock.getInstance().end();
             else if (input.length == 2)
                 looper.stopAll();
-            else
-                stop(input);
+			//    else
+			//        stop(input);
         }
         else if (text.equals("samples"))
-            addText( Arrays.toString(looper.toArray()));
+            addText( Arrays.toString(looper.getLoops()));
         else if (text.equals("router"))
             for (Route r : JudahMidi.getInstance().getRouter())
                 addText("" + r);
@@ -252,7 +260,6 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 
     }
 
-
     private void help() {
 
         addText("volume carla_plugin_index value");
@@ -266,7 +273,6 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
         addText(playHelp);
         addText(routeHelp);
         addText(routerHelp);
-        addText(midiPlay);
         addText(listenHelp);
         addText(activeHelp);
         // addText(buddyHelp);
@@ -283,27 +289,6 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
             listeners.remove(this);
     }
 
-    private void midiPlay(String[] split) {
-        try {
-            File midiFile = null;
-            if (split.length == 2) {
-                midiFile = new File(split[1]);
-                if (!midiFile.isFile()) {
-                    throw new FileNotFoundException(split[1]);
-                }
-            }
-            if (midiFile == null) {
-                addText("uh-oh, no midi file.");
-                midiFile = new File("/home/judah/Tracks/midi/dance/dance21.mid");
-            }
-
-            new JMidiPlay(midiFile);
-
-        } catch (Throwable t) {
-            addText(t.getMessage());
-            log.error(t.getMessage(), t);
-        }
-    }
 
     private void play(String[] split) {
         if (split.length != 2) {
@@ -316,9 +301,9 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
                 int idx = Integer.parseInt(file);
                 looper.get(idx).play(true);
             } catch (Throwable t) {
-                Sample sample = new Sample(new File(file).getName(), Recording.readAudio(file), ProcessAudio.Type.ONE_SHOT);
-                looper.add(sample);
-                sample.play(true);
+            	looper.getDrumTrack().setRecording(Recording.readAudio(file));
+            	looper.getDrumTrack().setType(Type.ONE_SHOT);
+                looper.getDrumTrack().play(true);
             }
         } catch (Throwable t) {
             addText(t.getMessage());
@@ -326,16 +311,16 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
         }
     }
 
-    private void stop(String[] split) {
-        if (split.length != 2) {
-            addText("usage: " + stopHelp);
-            return;
-        }
-        int idx = Integer.parseInt(split[1]);
-        looper.remove(idx);
-        addText("Sample removed");
-
-    }
+//    private void stop(String[] split) {
+//        if (split.length != 2) {
+//            addText("usage: " + stopHelp);
+//            return;
+//        }
+//        int idx = Integer.parseInt(split[1]);
+//        looper.remove(idx);
+//        addText("Sample removed");
+//
+//    }
     private void read(String[] split) {
         if (split.length != 3 || !NumberUtils.isDigits(split[1])) {
             addText("Format: " + readHelp);
@@ -354,7 +339,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
             Recording recording = Recording.readAudio(filename);
             loop.setRecording(recording);
             float seconds = recording.size() / JudahMidi.getInstance().getSampleRate();
-            addText(seconds + " of " + filename + " read, stored in loop " + loopNum + ". " + recording.getNotes());
+            addText(seconds + " of " + filename + " read, stored in loop " + loopNum + ". ");
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             addText(e.getMessage());
@@ -385,7 +370,6 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
             return;
         }
         try {
-            recording.setNotes("Hello, world");
             recording.saveAudio(filename);
             float seconds = recording.size() / JudahMidi.getInstance().getSampleRate();
             addText(seconds + " of loop " + loopNum + " saved to " + filename);

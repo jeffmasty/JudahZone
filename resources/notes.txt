@@ -1,17 +1,46 @@
 TODO:
 
-MPK CC:
-{playClock}	  {seq/pads}	[clock]    [fx1]
-{keyboard}    {adjust}      [lfo/seq]  [fx2]
-
-drum pads*  getTempo (Channel src, int bars)
+Improve Master Clock & Loop GUI
+synth tuner, separate external reverb
+MidiGnome DrumGnome(9)  PianoRoll(8)
+Ritardando
+guitar efx selector
+song&pattern parser: AAB  *AAB   *B[AAB] etc
+Noise Effect generates ocean, heartbeat, birds, crickets, walking, thunder, rain, 
+	bicycle, phonograph, whips and chains  (sampleFile, frequency, wet, granularity)
+arpeggiator & chords upgrade
+LFO upgrade, fix compression
 copy/delete loops
 Sampler
-Midify BeatBox Sequencer
-Noise Effect generates ocean, heartbeat, birds, crickets, walking, thunder, rain, bicycle, 
-phonograph, pink, whips and chains  (type, frequency, wet)
-
 knob modes: efx1 efx2 beats, midiMixer, synth
+
+track:  Ch#,  fileType: step/midi, file, midiOut/(AudioIn)      mono/poly/drum/step/midi  isMidi   isMono  isDrum
+  extra:   transpose(midi/kybd), split, arp(file)(inKey/abs), chords,  reverse,random
+tracks have patterns, midiOut, gain.  (pattern sequencer)
+Patterns have type, a file and options for arpeggio/transpose (step/midi sequencer) channel handling
+Gain, Mute, Type   if midi, drums or notes? mono or poly? which midiOut?, if fluid/calf, which channel? which instrument?
+	gain type file midiOut (channel)   
+		steps can trigger a chord midi file or arpegiator into a chord midi file 
+transpose: mode note 
+0: Crave-out midi channel 0;
+1: Fluid-out midi channel 1;
+2: beat drums 
+3: midi Drums 
+2:   /SYS
+3:
+4:
+5:  
+6:  melody
+7:  chords
+8:  bass 
+9:  step drums
+10: midi drums
+11: bassDrum
+12: snare
+13: hats1
+14: hats2
+15: tom
+
 
 ***pads
 recordA	   recordB  recordDrum recordC sequencer	sheet	SynthKnobs    *tapTempo							
@@ -24,12 +53,6 @@ effects knobs
 	bass   mid    treb   d.time
 	vol    pan    t/hold d.fback 
 
-
-[Mixer][Out][In]  EFX
-1 2 3 4 5 6 7 8   1  2  3  4
-| | | | | | | |   5  6  7  8
-| | | | | | | |   9  10 11 12
-| | | | | | | |   13 14 15 16
 verse-chorus control
 step sequencer chords
 Sampler
@@ -61,7 +84,6 @@ calculate make-up gain during Compression
 Plugins, ttl 
 walking bassline midi bot
 MPK Sequencer
-Knobs: 
 
 Other knobs: calf, Jackrack, mixer
 make client-server architecture
@@ -70,11 +92,15 @@ make client-server architecture
 drum options:  DrMr, drumkv1-jack, hydrogen, fluid, drumsynth, black pearl
 Java Music API: https://github.com/psambit9791/jDSP
 Java Music API: https://github.com/chdh/dsp-collection-java
-https://github.com/mmitch/apsynth
-jsyn
-https://github.com/YuMuuu/SynthesizerRemastered/blob/master/src/main/java/Oscillator.java
 
-"" https://github.com/orsjb/beads
+transport https://github.com/SpotlightKid/jack-audio-tools/blob/master/transport/timebase_master.py
+
+https://explodingart.com/jmusic/index.html
+jsyn https://github.com/philburk/jsyn
+https://github.com/YuMuuu/SynthesizerRemastered/blob/master/src/main/java/Oscillator.java
+https://github.com/mmitch/apsynth
+
+https://github.com/orsjb/beads
 https://evanxmerz.com/soundsynthjava/Sound_Synth_Java.html#getting_started
 
 java analyse and sequence music https://github.com/arnaudh/elusive-sound
@@ -87,23 +113,23 @@ which is the format used by all current 24 bit audio cards except for some USB i
 sequencer:
 https://github.com/truj/midica/tree/master/src/org/midica/midi
 https://github.com/perkowitz/sequence/tree/master/src/main/java/net/perkowitz/sequence
-
+odin purplepip
 arpeggio this! https://github.com/ybalcanci/Sequence-Player/blob/master/RecamanSequence.java
 java sequencer https://github.com/sebastianruizva/JMidiSequencer
 java launchpad sequencer https://github.com/perkowitz/sequence/wiki/User%20Manual
-
-plugins https://github.com/ssj71/infamousPlugins
-https://github.com/VCVRack  modular synth
-
-javafx
-eclipse plugin: https://www.eclipse.org/efxclipse/install.html#for-the-lazy
-export PATH_TO_FX=path/to/javafx-sdk-13/lib
-javac --module-path $PATH_TO_FX --add-modules javafx.controls HelloFX.java
 
 LV2 plugins
 ARty effects  https://github.com/openAVproductions/openAV-ArtyFX/blob/master/manual.md
 Rudolf556 drum machine http://ll-plugins.nongnu.org/lv2/rudolf556.html
 Drum machine w/ Hydrogen drums https://github.com/nicklan/drmr/wiki
+plugins https://github.com/ssj71/infamousPlugins
+https://github.com/VCVRack  modular synth
+distortion plugins: https://github.com/olegkapitonov/Kapitonov-Plugins-Pack
+
+javafx
+eclipse plugin: https://www.eclipse.org/efxclipse/install.html#for-the-lazy
+export PATH_TO_FX=path/to/javafx-sdk-13/lib
+javac --module-path $PATH_TO_FX --add-modules javafx.controls HelloFX.java
 
 Simple converter ttl to JSON
 https://github.com/PedalController/Lv2Library/blob/master/src/br/com/srmourasilva/lv2library/Lv2Mapper.java
@@ -161,3 +187,9 @@ Arduino foot pedal: load/reload  latchB
 midi mapper by instrument - mixer, pads, keys, pedal, aux
 visual feedback from midi controllers, track select
 onDeck, eraseLoop
+[Mixer][Out][In]  EFX
+1 2 3 4 5 6 7 8   1  2  3  4
+| | | | | | | |   5  6  7  8
+| | | | | | | |   9  10 11 12
+| | | | | | | |   13 14 15 16
+Midi24 out: inside step sequencer 

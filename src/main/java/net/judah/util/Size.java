@@ -6,7 +6,7 @@ public interface Size {
 
     int WIDTH_FRAME = 1350;
     int HEIGHT_FRAME = 744;
-    int WIDTH_MIXER = 398;
+    int WIDTH_MIXER = 390;
     int WIDTH_SONG = WIDTH_FRAME - WIDTH_MIXER; // about 950
     int HEIGHT_MIXER = 195;
     int HEIGHT_TABS = HEIGHT_FRAME - HEIGHT_MIXER - 34;

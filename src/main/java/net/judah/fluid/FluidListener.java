@@ -1,14 +1,13 @@
 package net.judah.fluid;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
 
-import net.judah.util.Console;
+import net.judah.util.RTLogger;
 
 class FluidListener extends Thread {
 	static final Logger log = Logger.getLogger(FluidListener.class);
@@ -72,10 +71,10 @@ class FluidListener extends Thread {
 
             	}
             	else if (!line.contains("> gain ")) 
-            		Console.addText("fluid: " + line);
+            		RTLogger.log(this, line);
             }
-        } catch (IOException ioe) {
-        	ioe.printStackTrace();
+        } catch (Exception e) {
+        	RTLogger.warn(this, e);
         }
     }
 

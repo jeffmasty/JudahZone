@@ -1,14 +1,14 @@
-calfOut/Brush 2/16/4
+synthOut/Power/16/4
 !
-1,0.78999996/0:NoteOn,8:NoteOn,6:NoteOn
+1,0.78999996/0:NoteOn
 3,0.78999996/
 2,0.78999996/4:NoteOn,12:NoteOn
 4,0.78999996/0:NoteOn
-7,0.78999996/1:NoteOn,5:NoteOn,7:NoteOn,10:NoteOn,15:NoteOn
-9,0.78999996/
-11,0.78999996/3:NoteOn,6:NoteOn,12:NoteOn
-47,0.78999996/2:NoteOn,10:NoteOn,6:NoteOn,14:NoteOn
-3,0.78999996/13:NoteOn,15:NoteOn
+7,0.78999996/1:NoteOn,5:NoteOn,7:NoteOn,15:NoteOn
+19,0.45/6:NoteOn,7:NoteOn,14:NoteOn,15:NoteOn,9:NoteOn,10:NoteOn
+11,0.78999996/3:NoteOn,12:NoteOn
+47,0.57/2:NoteOn,10:NoteOn,6:NoteOn,14:NoteOn
+5,0.55/13:NoteOn,15:NoteOn
 !
 1,0.78999996/0:NoteOn,4:NoteOn,8:NoteOn,12:NoteOn
 16,0.78999996/3:NoteOn,6:NoteOn,9:NoteOn,12:NoteOn,15:NoteOn

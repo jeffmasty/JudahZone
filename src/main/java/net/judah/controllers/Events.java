@@ -1,8 +1,9 @@
 package net.judah.controllers;
 
 import lombok.RequiredArgsConstructor;
-import net.judah.JudahZone;
 import net.judah.ControlPanel;
+import net.judah.JudahZone;
+import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
@@ -28,6 +29,7 @@ public class Events {
 	@RequiredArgsConstructor
 	public static class LatchEfx implements Runnable {
 		private final Effect reverb;
+		
 		public LatchEfx() {
 			this.reverb = JudahZone.getChannels().getGuitar().getReverb();
 		}
@@ -38,6 +40,7 @@ public class Events {
 					if (Property.STATUS == prop && Status.TERMINATED == value) {
 						reverb.setActive(!reverb.isActive());
 						target.removeListener(this);
+						MainFrame.update(JudahZone.getChannels().getGuitar());
 					}
 				}
 			});

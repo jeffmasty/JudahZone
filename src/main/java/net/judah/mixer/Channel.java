@@ -26,12 +26,12 @@ import net.judah.effects.gui.EffectsRack;
 import net.judah.settings.Channels;
 import net.judah.util.Console;
 
-/** A mixer bus for both Input and Output processes*/
+/** A mixer bus for either Input or Output audio */
 @Data @EqualsAndHashCode(callSuper = false)
 public abstract class Channel extends ArrayList<Effect> {
 
-	protected String name;
-	protected DJJefe fader;
+	protected final String name;
+	protected ChannelFader fader;
 	protected EffectsRack effects;
 	
 	protected ImageIcon icon;
@@ -66,7 +66,6 @@ public abstract class Channel extends ArrayList<Effect> {
 	@Getter protected boolean onMute;
 	public void setOnMute(boolean mute) {
 		onMute = mute;
-		if (fader != null) fader.update();
 		MainFrame.update(this);
 	}
 
@@ -103,5 +102,11 @@ public abstract class Channel extends ArrayList<Effect> {
 	/**@return 0 to 100*/
 	public int getVolume() {
 		return gain.getVol();
+	}
+	
+	public ChannelFader getFader() {
+		if (fader == null) 
+			fader = new ChannelFader(this);
+		return fader;
 	}
 }

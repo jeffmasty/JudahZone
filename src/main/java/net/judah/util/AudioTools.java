@@ -48,7 +48,7 @@ public class AudioTools  {
 
 	/** MIX in and out with gain applied to the input*/
 	public static void processAdd(FloatBuffer in, float gain, FloatBuffer out) {
-		if (1 == gain) {
+		if (1f == gain) {
 			processAdd(in, out);
 			return;
 		}
@@ -83,6 +83,7 @@ public class AudioTools  {
 			buffer.put(buffer.get(z) * gain);
 
 	}
+	
 	public static void copy(float[][] in, float[][] out) {
 		for (int i = 0; i < in.length; i++) {
 			for (int j = 0; j < out[i].length; j++) {

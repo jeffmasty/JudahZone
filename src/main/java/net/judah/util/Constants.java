@@ -44,7 +44,7 @@ public class Constants {
     public static final File ROOT = new File("/home/judah/git/JudahZone/resources/");
     public static final File defaultFolder = new File(ROOT, "Songs/");
     public static final File defaultSetlist = new File(defaultFolder, "list1.songs");
-    public static final File defaultDrumFile = new File(ROOT, "patterns/Drum2");
+    public static final File defaultDrumFile = new File(ROOT, "patterns/Drum1");
 
     public static class Param {
 		public static final String ACTIVE = "active";
@@ -97,6 +97,9 @@ public class Constants {
 	public static final int STEREO = 2;
 	public static final int MONO = 1;
 
+	/** milliseconds between checking the update queue */
+	public static final int GUI_REFRESH = 5;
+	
     public static interface Gui {
     	int STD_HEIGHT = 18;
     	Insets BTN_MARGIN = new Insets(1,1,1,1);
@@ -297,19 +300,3 @@ public class Constants {
     }
 
 }
-//UIManager.LookAndFeelInfo[] looks = UIManager.getInstalledLookAndFeels();
-//for (UIManager.LookAndFeelInfo look : looks) {
-//    System.out.println(look.getClassName());
-//}
-//	// list out standard swing ui setting names
-//		public static void main(String[] args) {
-//			List<String> colors = new ArrayList<String>();
-//			for (Map.Entry<Object, Object> entry : UIManager.getDefaults().entrySet()) {
-//			    if (entry.getValue() instanceof Color) {
-//			        colors.add((String) entry.getKey()); // all the keys are strings
-//			    }
-//			}
-//			Collections.sort(colors);
-//			for (String name : colors)
-//			    System.out.println(name);
-//		}

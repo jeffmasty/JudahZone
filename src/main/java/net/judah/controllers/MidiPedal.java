@@ -9,6 +9,7 @@ import java.util.List;
 
 import net.judah.MainFrame;
 import net.judah.api.Midi;
+import net.judah.clock.JudahClock;
 import net.judah.looper.Sample;
 import net.judah.mixer.DrumTrack;
 import net.judah.util.Console;
@@ -50,17 +51,18 @@ public class MidiPedal implements Controller {
         }
 
         if (data1 == PEDAL.get(3) ) {// latch Loop B
-        	new Thread() { @Override public void run() {
-                getLooper().syncLoop(getLooper().getLoopA(), getLooper().getLoopB()); }}.start();
+        	getLooper().syncLoop(getLooper().getLoopA(), getLooper().getLoopB()); 
             return true;
-
         }
         if (data1 == PEDAL.get(4)) { 
-        	getLooper().pause(false);
+        	if (getLooper().getLoopA().hasRecording())
+        		getLooper().pause(false);
+        	else JudahClock.getInstance().togglePlay();
+        		
         }
         if (data1 == PEDAL.get(5)) { 
         	// toggle Verse/Chorus sections by muting different tracks
-        	for (Sample s : getLooper().toArray()) {
+        	for (Sample s : getLooper().getLoops()) {
         		if (s.hasRecording() && s instanceof DrumTrack == false)
         			s.setOnMute(!s.isOnMute());
         	}

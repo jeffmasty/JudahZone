@@ -24,7 +24,7 @@ public class Fader {
 	public static Fader fadeIn() {
 		return new Fader(JudahZone.getMasterTrack(), Target.Gain, 3000, 0, 51, new Runnable() {
 		    @Override public void run() {
-		        JudahZone.getMasterTrack().getFader().update();
+		        JudahZone.getMasterTrack().getFader().updateVolume();
 		    }
 		});
 	}

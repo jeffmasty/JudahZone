@@ -4,31 +4,35 @@ import javax.sound.midi.MidiMessage;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
 
-import org.jaudiolibs.jnajack.JackMidi;
+import org.jaudiolibs.jnajack.JackPort;
 
-import lombok.RequiredArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.judah.beatbox.BeatBox;
+import net.judah.midi.JudahMidi;
 import net.judah.util.RTLogger;
 
 /** Volume adjusted javax midi sender */
-@RequiredArgsConstructor
+@NoArgsConstructor 
 public class JackReceiver implements Receiver {
 
-	@Setter private float gain = 1f;
-	private ShortMessage current;
-	private final BeatBox midiOut;
-	
+	@Setter @Getter private float gain = 1f;
+	@Setter @Getter private JackPort midiOut;
+
+	public JackReceiver(JackPort midiOut) {
+		this.midiOut = midiOut;
+	}
+
 	@Override
 	public void send(MidiMessage message, long timeStamp) {
 		if (message instanceof ShortMessage) {
 			try {
-				current = (ShortMessage)message;
+				ShortMessage current = (ShortMessage)message;
 				if (current.getCommand() == ShortMessage.NOTE_ON) {
 				current.setMessage(ShortMessage.NOTE_ON, current.getChannel(), current.getData1(), 
 						Math.round(current.getData2() * gain));
 				}
-				JackMidi.eventWrite(midiOut.getMidiOut(), 0, current.getMessage(), current.getLength());
+				JudahMidi.queue(current, midiOut);
 			} catch (Exception e) {
 				RTLogger.warn(this, e);
 			}

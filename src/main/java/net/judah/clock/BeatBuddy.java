@@ -17,7 +17,6 @@ import org.apache.commons.lang3.CharUtils;
 
 import lombok.Data;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.api.Command;
@@ -91,7 +90,7 @@ public class BeatBuddy extends ArrayList<Command> implements TimeNotifier, Servi
     @Getter private float tempo = 90f; 
     @Getter private int beat;
     @Getter private boolean play;
-    @Getter @Setter private ConcurrentLinkedQueue<ShortMessage> queue 
+    @Getter private static final ConcurrentLinkedQueue<ShortMessage> queue 
     		= new ConcurrentLinkedQueue<>();
     private BeatBuddyGui gui;
     private TimeListener listener;
@@ -113,12 +112,12 @@ public class BeatBuddy extends ArrayList<Command> implements TimeNotifier, Servi
         try {
             loadSDCard();
             // addListener(JudahClock.getInstance());
-            setVolume(125);
+            setVolume(0);
             new Thread(() -> {
             	try {
-            		Thread.sleep(3000);
+            		Thread.sleep(2000);
             		queue.offer(BeatBuddy.STOP_MIDI); 
-            		Thread.sleep(500);
+            		Thread.sleep(1000);
             		queue.offer(BeatBuddy.PLAY_MIDI);
             		Thread.sleep(1000);
             		queue.offer(BeatBuddy.PAUSE_MIDI);
@@ -324,7 +323,7 @@ public class BeatBuddy extends ArrayList<Command> implements TimeNotifier, Servi
     1       50      178
     2       0       256
     2       44      300 // max  </pre>*/
-    public boolean setTempo(float tempo) {
+    public static boolean setTempo(float tempo) {
         int remainder = Math.round(tempo);
         int msb = 0;
         if (tempo - 127 > 0) {

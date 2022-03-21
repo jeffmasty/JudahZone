@@ -64,13 +64,13 @@ public final class Overdrive implements Effect {
         drive = 0.2f;
     }
 
-    //private final float downGain = 0.5f;
+    private final float makupGain = 1.5f;
     public void processAdd(FloatBuffer buf) {
         buf.rewind();
         double preMul = drive * 99 + 1;
         double postMul = 1 / (Math.log(preMul * 2) / Math.log(2));
         for (int i = 0; i < nframes; i++) 
-			buf.put( /* downGain* */(float) (Math.atan(buf.get(i) * preMul) * postMul));
+			buf.put( makupGain * (float) (Math.atan(buf.get(i) * preMul) * postMul));
     }
 
 

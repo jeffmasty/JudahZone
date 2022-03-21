@@ -150,10 +150,10 @@ public class Buttons extends JPanel implements Size {
             instruments.setSelectedItem(sequencer.getInstrument().name);
         gridVolume.setValue(sequencer.getCurrent().getVolume());
 
-        if (clock.getSteps() != (Integer)steps.getSelectedItem())
-            steps.setSelectedItem(clock.getSteps());
-        if (clock.getSubdivision() != div.getSelectedIndex())
-        div.setSelectedItem(clock.getSubdivision());
+        if (JudahClock.getSteps() != (Integer)steps.getSelectedItem())
+            steps.setSelectedItem(JudahClock.getSteps());
+        if (JudahClock.getSubdivision() != div.getSelectedIndex())
+        div.setSelectedItem(JudahClock.getSubdivision());
         mute.setSelected((sequencer.isMute()));
         for (ItemListener l : mute.getItemListeners()) {
             l.itemStateChanged(new ItemEvent(mute, 1, Boolean.TRUE, ItemEvent.RESERVED_ID_MAX));
@@ -286,7 +286,10 @@ public class Buttons extends JPanel implements Size {
         mute.setText(" mute");
         mute.setHorizontalTextPosition(JCheckBox.LEFT);
         mute.addActionListener(e -> {
-            sequencer.setMute(mute.isSelected());});
+            sequencer.setMute(mute.isSelected());
+            if (sequencer.isMute())
+            	sequencer.noteOff();    	
+        });
 
         JPanel mutePnl = new JPanel(new GridLayout(1, 2));
         mutePnl.add(saveBtn);
@@ -373,7 +376,7 @@ public class Buttons extends JPanel implements Size {
     private void createSteps() {
         steps = new JComboBox<>();
         for (int i = 4; i < 33; i++) steps.addItem(i);
-        steps.setSelectedItem(clock.getSteps());
+        steps.setSelectedItem(JudahClock.getSteps());
         steps.setFont(Constants.Gui.FONT11);
         steps.addActionListener(e ->{
             if (inUpdate) return;
@@ -383,7 +386,7 @@ public class Buttons extends JPanel implements Size {
 
         div = new JComboBox<>();
         for (int i = 2; i < 7; i++) div.addItem(i);
-        div.setSelectedItem(clock.getSubdivision());
+        div.setSelectedItem(JudahClock.getSubdivision());
         div.setFont(Constants.Gui.FONT11);
         div.addActionListener(e -> {
             if (inUpdate) return;
@@ -419,7 +422,7 @@ public class Buttons extends JPanel implements Size {
 
     private void createGate() {
         gate = new JComboBox<>();
-        for (int i = 0; i < clock.getSteps(); i++)
+        for (int i = 0; i < JudahClock.getSteps(); i++)
             gate.addItem(i);
         gate.setSelectedItem(2);
         gatePnl = new JPanel(new GridLayout(1, 2));

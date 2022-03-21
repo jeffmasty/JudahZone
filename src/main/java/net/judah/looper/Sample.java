@@ -26,7 +26,6 @@ import org.jaudiolibs.jnajack.JackPort;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
-import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.api.ProcessAudio;
@@ -74,9 +73,11 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
         setReverb(getCarla().getReverb());
     }
 
-    protected Sample() {super("?"); }
+    public Sample(String name) {
+    	super(name);
+    }
 
-    @Override public void setOutputPorts(List<JackPort> ports) {
+	@Override public void setOutputPorts(List<JackPort> ports) {
         synchronized (outputPorts) {
             outputPorts.clear();
             outputPorts.addAll(ports);
@@ -135,8 +136,8 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
             recording.close();
         recording = sample;
         length = recording.size();
-        RTLogger.log(this, "Recording loaded, " + length + " frames.");
-        isPlaying.set(STOPPED);
+        RTLogger.log(this, "Recording loaded on " + name + ", " + length + " frames.");
+        isPlaying.set(STARTING);
         MainFrame.update(this);
     }
 
@@ -274,9 +275,6 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
         if (updated == recording.size()) {
             if (type == Type.ONE_SHOT) {
                 isPlaying.set(STOPPING);
-                new Thread() { @Override public void run() {
-                    JudahZone.getLooper().remove(Sample.this);
-                }}.start();
             }
             updated = 0;
             loopCount++;
@@ -286,6 +284,7 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
             }}.start();
         }
         tapeCounter.set(updated);
+        MainFrame.update(fader.getMenu());
     }
 
 

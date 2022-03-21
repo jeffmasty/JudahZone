@@ -17,6 +17,7 @@ public enum FluidCommand {
 		INST		("inst ", ValueType.INT, 0, 127),
 		PROG_CHANGE ("prog ", ValueType.POINT),
 		QUIT		("quit", ValueType.NONE),
+		RESET		("reset", ValueType.NONE),
 
 		CHORUS_DELAY_LINES ("cho_set_nr ", ValueType.INT, 0, 99),
 		CHORUS_OUTPUT      ("cho_set_level ", ValueType.FLOAT, 0, 1.25),

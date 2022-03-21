@@ -222,7 +222,7 @@ public class Carla implements Service {
 
 	private void toAux2(Plugin plugin, LineIn ch, boolean active) throws JackException {
 		JackClient client = JudahZone.getInstance().getJackclient();
-		LineIn aux2 = JudahZone.getChannels().getAux2();
+		LineIn aux2 = JudahZone.getChannels().getCrave();
 
 		if (active) {
 			// disconnect standard stage
@@ -277,7 +277,7 @@ public class Carla implements Service {
 	public void octaver(boolean active) throws OSCSerializeException, IOException, JackException {
 		JackClient client = JudahZone.getInstance().getJackclient();
 		LineIn guitar = JudahZone.getChannels().getGuitar();
-		LineIn aux2 = JudahZone.getChannels().getAux2();
+		LineIn aux2 = JudahZone.getChannels().getCrave();
 
 		// setActive(bassEQ.getIndex(), active);
 		setActive(harmonizer.getIndex(), active);
@@ -298,7 +298,7 @@ public class Carla implements Service {
 			jack.connect(client, guitar.getLeftSource(), harmonizer.getInports()[RIGHT_CHANNEL]);
 
 			jack.connect(client, harmonizer.getOutports()[LEFT_CHANNEL], aux2.getLeftConnection());
-			jack.connect(client, harmonizer.getOutports()[RIGHT_CHANNEL], aux2.getRightConnection());
+			//jack.connect(client, harmonizer.getOutports()[RIGHT_CHANNEL], aux2.getRightConnection());
 			Console.info("Bass beast mode engaged.");
 		}
 		else {
@@ -307,7 +307,7 @@ public class Carla implements Service {
 			jack.disconnect(client, guitar.getLeftSource(), harmonizer.getInports()[RIGHT_CHANNEL]);
 
 			jack.disconnect(client, harmonizer.getOutports()[LEFT_CHANNEL], aux2.getLeftConnection());
-			jack.disconnect(client, harmonizer.getOutports()[RIGHT_CHANNEL], aux2.getRightConnection());
+			//jack.disconnect(client, harmonizer.getOutports()[RIGHT_CHANNEL], aux2.getRightConnection());
 			Console.info("Octaver off");
 			} catch (Throwable t) {log.debug("disconnect: " + t.getMessage());}
 		}

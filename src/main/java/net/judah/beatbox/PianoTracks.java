@@ -42,7 +42,7 @@ public class PianoTracks extends KitPanel implements Pastels {
         JButton go = new JButton("!");
         go.setFont(Gui.BOLD);
         go.addActionListener(e -> {
-            BeatsView.getInstance().getSequencer().noteOff();
+			BeatsView.getSequencer().noteOff();
             grid.setOctave((int)octaveCombo.getSelectedItem());
             grid.setKey((Key)keyCombo.getSelectedItem());
             grid.setScale((Scale)scaleCombo.getSelectedItem());

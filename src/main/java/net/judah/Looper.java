@@ -1,7 +1,6 @@
 package net.judah;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.jaudiolibs.jnajack.JackPort;
@@ -11,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import net.judah.api.AudioMode;
 import net.judah.api.ProcessAudio;
 import net.judah.clock.JudahClock;
+import net.judah.clock.LoopSynchronization.SelectType;
 import net.judah.looper.Recorder;
 import net.judah.looper.Recording;
 import net.judah.looper.Sample;
@@ -22,9 +22,10 @@ import net.judah.util.RTLogger;
 
 /** use {@link #addSample(Sample)} instead of add() */
 @RequiredArgsConstructor
-public class Looper implements Iterable<Sample> {
+public class Looper {
 
-    private final ArrayList<Sample> loops = new ArrayList<>();
+	public static final int LOOPERS = 4;
+    @Getter private final Sample[] loops = new Sample[LOOPERS];
 
     private final List<JackPort> outports;
 
@@ -32,7 +33,6 @@ public class Looper implements Iterable<Sample> {
     @Getter private Recorder loopA;
     @Getter private Recorder loopB;
     @Getter private Recorder loopC;
-    @Getter private Recorder loopD;
     
     /** pause/unpause specific loops, clock-aware */
     @RequiredArgsConstructor @Getter
@@ -44,22 +44,20 @@ public class Looper implements Iterable<Sample> {
     
     public void add(Sample s) {
         s.setOutputPorts(outports);
-        synchronized (this) {
-            loops.add(s);
-        }
-    }
-
-    public boolean remove(Object o) {
-        if (o instanceof Sample == false) return false;
-        synchronized (this) {
-            return loops.remove(o);
-        }
+        for (int i = 0; i < loops.length; i++)
+        	if (loops[i] == null) {
+        		loops[i] = s;
+        		break;
+        	}
     }
 
     public void clear() {
         for (Sample s : loops) {
             s.clear();
             s.play(true); // armed;
+        }
+        if (JudahClock.isLoopSync()) {
+        	JudahClock.setOnDeck(SelectType.SYNC);
         }
     }
 
@@ -79,7 +77,7 @@ public class Looper implements Iterable<Sample> {
         loopA.setReverb(carla.getReverb());
         loopA.play(true); // armed;
         add(loopA);
-
+        
         loopB = new Recorder("B", ProcessAudio.Type.FREE);
         loopB.setIcon(Icons.load("LoopB.png"));
         loopB.setReverb(carla.getReverb());
@@ -95,12 +93,12 @@ public class Looper implements Iterable<Sample> {
         drumTrack.setIcon(Icons.load("Drums.png"));
         add(drumTrack);
 
-        // TODO for MIDI and samples
-        loopD = new Recorder("D", ProcessAudio.Type.ONE_SHOT);
-        loopD.setIcon(Icons.load("LoopD.png"));
-        add(loopD);
+//        // TODO for MIDI and samples
+//        loopD = new Recorder("D", ProcessAudio.Type.ONE_SHOT);
+//        loopD.setIcon(Icons.load("LoopD.png"));
+//        add(loopD);
 
-        drumTrack.toggle();
+        // drumTrack.toggle();
 
     }
 
@@ -113,40 +111,37 @@ public class Looper implements Iterable<Sample> {
         }
     }
 
+    /** multi-threaded */
     public void syncLoop(Recorder source, Recorder target) {
-    	if (source.getRecording() == null || source.getRecording().isEmpty()) 
+    	if (source.getRecording() == null || source.getRecording().isEmpty()) {
     		// nothing recorded yet, but we are setup to sync to master loop
     		target.armRecord(source);
-    	else if (target.hasRecording()) 
-    		target.duplicate(); 
+    		RTLogger.log(this, "Wait, what?");
+    	}
     	else {
-    		target.setRecording(new Recording(source.getRecording().size(), true)); // normal op 
-    		target.setTapeCounter(source.getTapeCounter().get());
-    		target.play(true);
-    		RTLogger.log(this, target.getName() + " sync'd to " + source.getName() + " " + 
-    			+ target.getRecording().size() + " frames");
+    		new Thread(() -> {
+	    		if (target.hasRecording()) 
+	    			target.duplicate(); 
+	    		else {
+	    			target.setRecording(new Recording(source.getRecording().size()));
+		    		target.getIsPlaying().set(AudioMode.STARTING);
+	    		}}).start();
     	}
     }
 
-    @Override
-    public Iterator<Sample> iterator() {
-        return loops.iterator();
-    }
-
     public Sample get(int i) {
-        return loops.get(i);
+        return loops[i];
     }
 
     public int size() {
-        return loops.size();
-    }
-
-    public Sample[] toArray() {
-        return (loops.toArray(new Sample[loops.size()]));
+        return loops.length;
     }
 
     public int indexOf(Channel loop) {
-        return loops.indexOf(loop);
+    	for (int i = 0; i < loops.length; i++)
+    		if (loops[i] == loop)
+    			return i;
+    	return -1;
     }
 
 	public void reset() {
@@ -154,7 +149,7 @@ public class Looper implements Iterable<Sample> {
 			new Thread() {
 				@Override public void run() {
 					try { // to get a process() in
-						Thread.sleep(20);} catch (Exception e) {} 
+						Thread.sleep(40);} catch (Exception e) {} 
 					clear();
 					//getDrumTrack().toggle();
                     }}.start();
@@ -185,6 +180,13 @@ public class Looper implements Iterable<Sample> {
 			suspended = null;
 		}
 	}
+
+	//    public boolean remove(Object o) {
+	//        if (o instanceof Sample == false) return false;
+	//        synchronized (this) {
+	//            return loops.remove(o);
+	//        }
+	//    }
 
 
 }

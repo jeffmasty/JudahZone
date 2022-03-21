@@ -2,16 +2,15 @@ package net.judah.controllers;
 
 import static net.judah.JudahZone.getSynth;
 
-import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
-import org.jaudiolibs.jnajack.JackException;
 import org.jaudiolibs.jnajack.JackMidi;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
-import net.judah.MainFrame;
 import net.judah.ControlPanel;
+import net.judah.JudahZone;
+import net.judah.MainFrame;
 import net.judah.api.Midi;
 import net.judah.beatbox.GMDrum;
 import net.judah.clock.JudahClock;
@@ -34,10 +33,10 @@ public class MPK extends MPKTools implements Controller {
 	public static final int thresholdLo = 1;
 	public static final int thresholdHi = 98;
 	
+	
 	public static void setMode(KnobMode knobs) {
 		mode = knobs;
-		MainFrame.updateCurrent();
-		//RTLogger.log(instance, "Knobs*: " + mode.toString());
+		RTLogger.log(knobs, mode.toString());
 	}
 	
 	@Override
@@ -46,51 +45,50 @@ public class MPK extends MPKTools implements Controller {
 		if (midi.isProgChange()) return doProgChange(midi.getData1(), midi.getData2());
 		if (midi.getChannel() == 9 && (midi.getCommand() == Midi.NOTE_ON || midi.getCommand() == Midi.NOTE_OFF) 
 				&& (DRUMS_A.contains(midi.getData1()) || DRUMS_B.contains(midi.getData1())))
-			try {
 				return doDrumPad(midi);
-			} catch (Throwable t) {
-				RTLogger.warn(this,  t.getMessage());
-			}
 		return false;
 	}
 
-	private boolean doDrumPad(ShortMessage midi) throws InvalidMidiDataException, JackException {
+	private boolean doDrumPad(ShortMessage midi)  {
 		JackPort out = JudahClock.getInstance().getSequencer(0).getMidiOut();
 		int data1 = midi.getData1();
-		if (data1 == DRUMS_A.get(0)) {
-			midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.BassDrum.getMidi(), midi.getData2());
-			JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-		} else if (data1 == DRUMS_A.get(1)) {
-			midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.AcousticSnare.getMidi(), midi.getData2());
-			JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-		} 
-		else if (data1 == DRUMS_A.get(2)) {
-			midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.Claves.getMidi(), midi.getData2());
-			JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-		} 
-			
-		else if (data1 == DRUMS_A.get(3)) {
-			midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.ChineseCymbal.getMidi(), midi.getData2());
-			JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-		} 
-		else if (data1 == DRUMS_A.get(4)) {
-			midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.ClosedHiHat.getMidi(), midi.getData2());
-			JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-		} 
-		else if (data1 == DRUMS_A.get(5)) {
-			midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.OpenHiHat.getMidi(), midi.getData2());
-			JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-		} 
-		else if (data1 == DRUMS_A.get(6)) {
-			midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.Shaker.getMidi(), midi.getData2());
-			JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-		} 
-		else if (data1 == DRUMS_A.get(7)) {
-			midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.LowMidTom.getMidi(), midi.getData2());
-			JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-		} 
-			
-			return true;
+		try {
+			if (data1 == DRUMS_A.get(0)) {
+				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.BassDrum.getMidi(), midi.getData2());
+				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
+			} else if (data1 == DRUMS_A.get(1)) {
+				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.AcousticSnare.getMidi(), midi.getData2());
+				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
+			} 
+			else if (data1 == DRUMS_A.get(2)) {
+				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.Claves.getMidi(), midi.getData2());
+				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
+			} 
+				
+			else if (data1 == DRUMS_A.get(3)) {
+				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.ChineseCymbal.getMidi(), midi.getData2());
+				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
+			} 
+			else if (data1 == DRUMS_A.get(4)) {
+				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.ClosedHiHat.getMidi(), midi.getData2());
+				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
+			} 
+			else if (data1 == DRUMS_A.get(5)) {
+				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.OpenHiHat.getMidi(), midi.getData2());
+				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
+			} 
+			else if (data1 == DRUMS_A.get(6)) {
+				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.Shaker.getMidi(), midi.getData2());
+				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
+			} 
+			else if (data1 == DRUMS_A.get(7)) {
+				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.LowMidTom.getMidi(), midi.getData2());
+				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
+			} 
+		} catch (Exception e) {
+			RTLogger.warn(this, e);
+		}
+		return true;
 	}
 
 	private boolean checkCC(int data1, int data2) {
@@ -109,23 +107,28 @@ public class MPK extends MPKTools implements Controller {
 		if (data1 == PRIMARY_CC.get(0))
 			// toggle clock
 			JudahClock.setMode(data2 > 0 ? Mode.Internal : Mode.Midi24);
+		
 		else if (data1 == PRIMARY_CC.get(1)) {
-			// toggle korg pads
-			;
+			// looper sync to clock toggle
+			JudahClock.setLoopSync(data2 > 0);
+			MainFrame.update(JudahZone.getLooper().getLoopA());
 		}
+		
 		else if (data1 == PRIMARY_CC.get(2) && data2 > 0) 
 			MPK.setMode(KnobMode.Clock); // clock knobs
 		else if (data1 == PRIMARY_CC.get(3) && data2 > 0)  
 			MPK.setMode(KnobMode.Effects1); // fx1 knobs
-//		else if (data1 == PRIMARY_CC.get(4))
-//			// toggle keys out
-//			;
-//		else if (data1 == PRIMARY_CC.get(5))
-//			// freeze
-//			;
-		else if (data1 == PRIMARY_CC.get(6)) {
-			// lfo knobs
-			;
+		else if (data1 == PRIMARY_CC.get(4)) // toggle keys out
+			JudahMidi.getInstance().setKeyboardSynth(
+					data2 > 0 ? JudahMidi.getInstance().getCraveOut()
+					: JudahMidi.getInstance().getSynthOut());
+		
+		else if (data1 == PRIMARY_CC.get(5)) // sync Crave to Clock
+			JudahClock.getInstance().setSyncCrave(data2 > 0); 
+
+		else if (data1 == PRIMARY_CC.get(6) && data2 > 0) {
+			// ControlPanel.getInstance().beatBuddy();
+			MPK.setMode(KnobMode.Tracks);
 		}
 		else if (data1 == PRIMARY_CC.get(7) && data2 > 0) 
 			MPK.setMode(KnobMode.Effects2); // fx2 knobs
@@ -135,11 +138,6 @@ public class MPK extends MPKTools implements Controller {
 	}
 
 	
-	/*	room dry pan distortion
-	chorus1 2 3  partyEq
-	
-	  bass mid treb t/hold
-	d.time d.fback noise1 noise2 */
 	private boolean doKnob(int data1, int data2) {
 		switch(mode) {
 			case Effects1:
@@ -309,7 +307,6 @@ public class MPK extends MPKTools implements Controller {
 	}
 	
 		private boolean doProgChange(int data1, int data2) {
-
             if (data1 == PRIMARY_PROG[3]) { // up instrument
                 new Thread() { @Override public void run() {
                     getSynth().instUp(0, true);

@@ -179,23 +179,23 @@ public class BeatBuddyGui extends JPanel {
     }
     private void actionListeners() {
         startBtn.addActionListener(e -> {
-            buddy.getQueue().offer(BeatBuddy.PLAY_MIDI);});
+            BeatBuddy.getQueue().offer(BeatBuddy.PLAY_MIDI);});
         pauseBtn.addActionListener(e -> {
-            buddy.getQueue().offer(BeatBuddy.PAUSE_MIDI);});
+            BeatBuddy.getQueue().offer(BeatBuddy.PAUSE_MIDI);});
         stopBtn.addActionListener(e -> {
-            buddy.getQueue().offer(BeatBuddy.STOP_MIDI); });
+            BeatBuddy.getQueue().offer(BeatBuddy.STOP_MIDI); });
 
         bpm.addMouseListener(new MouseAdapter() {
             @Override public void mouseReleased(MouseEvent e) {
-                buddy.setTempo(bpm.getValue());
+                BeatBuddy.setTempo(bpm.getValue());
         }});
 
         bpm.addKeyListener(new KeyAdapter() {
             @Override public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_RIGHT)
-                    buddy.setTempo(Math.round(buddy.getTempo()) + 3);
+                    BeatBuddy.setTempo(Math.round(buddy.getTempo()) + 3);
                 else if (e.getKeyCode() == KeyEvent.VK_LEFT)
-                    buddy.setTempo(Math.round(buddy.getTempo()) - 3);
+                    BeatBuddy.setTempo(Math.round(buddy.getTempo()) - 3);
             }
         });
 
@@ -237,7 +237,7 @@ public class BeatBuddyGui extends JPanel {
                 @Override
                 public void run() {
                     Constants.sleep(111);
-                    buddy.getQueue().offer(BeatBuddy.PLAY_MIDI);
+                    BeatBuddy.getQueue().offer(BeatBuddy.PLAY_MIDI);
                 }
             }.start();
         });

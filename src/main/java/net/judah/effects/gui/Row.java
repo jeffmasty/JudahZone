@@ -19,7 +19,6 @@ import net.judah.util.JudahKnob;
 
 public class Row extends JPanel {
 	
-	private final Channel channel;
 	private final JPanel labels = new JPanel();
 	private final JPanel controls = new JPanel();
 	private final int row;
@@ -29,7 +28,6 @@ public class Row extends JPanel {
 	
 	public Row(final Channel ch, final int idx) {
 
-		channel = ch;
 		row = idx;
 		
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));

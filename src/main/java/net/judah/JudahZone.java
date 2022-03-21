@@ -9,12 +9,17 @@ import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsOutput;
 import static org.jaudiolibs.jnajack.JackPortType.AUDIO;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import javax.sound.midi.InvalidMidiDataException;
 
 import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
 import org.jaudiolibs.jnajack.JackPort;
+
+import com.illposed.osc.OSCSerializeException;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -22,6 +27,7 @@ import lombok.extern.log4j.Log4j;
 import net.judah.api.BasicClient;
 import net.judah.api.Command;
 import net.judah.api.Service;
+import net.judah.clock.JudahClock;
 import net.judah.effects.Fader;
 import net.judah.effects.api.PresetsHandler;
 import net.judah.fluid.FluidSynth;
@@ -36,6 +42,7 @@ import net.judah.settings.Channels;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.Icons;
+import net.judah.util.JudahException;
 import net.judah.util.RTLogger;
 import net.judah.util.Services;
 
@@ -75,22 +82,14 @@ public class JudahZone extends BasicClient {
     
     public static void main(String[] args) {
         try {
-            Thread t = new Thread(() -> {
-                try {
-                    new JudahZone();
-                } catch (Throwable ex) {
-                    log.error(ex.getMessage(), ex);
-                }});
-            t.setPriority(Thread.MAX_PRIORITY);
-            t.start();
-            while (true)
-                RTLogger.poll();
-        } catch (Throwable ex) {
-            log.error(ex.getMessage(), ex);
+            new JudahZone();
+            RTLogger.monitor(); // blocks thread
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
         }
     }
 
-    private JudahZone() throws Throwable {
+    private JudahZone() throws JackException, JudahException, IOException, InvalidMidiDataException, OSCSerializeException {
         super(JUDAHZONE);
         instance = this;
         Runtime.getRuntime().addShutdownHook(new ShutdownHook());
@@ -151,6 +150,8 @@ public class JudahZone extends BasicClient {
             Console.info("Initialization failed.");
             return;
         }
+        
+        
         // inputs
         for (LineIn ch : channels) {
             if (ch.getLeftSource() != null && ch.getLeftConnection() != null)
@@ -160,7 +161,10 @@ public class JudahZone extends BasicClient {
         }
         // Synth input has custom Reverb
         channels.getSynth().setReverb(synth.getReverb());
-
+        // By default, don't record drum track or microphone
+        channels.getMic().setMuteRecord(true);
+        channels.getDrums().setMuteRecord(true);
+                
         // outputs
         jack.connect(jackclient, outL.getName(), "system:playback_1");
         jack.connect(jackclient, outR.getName(), "system:playback_2");
@@ -169,6 +173,13 @@ public class JudahZone extends BasicClient {
         commands.initializeCommands();
         channels.initVolume();
         
+        initializeGui();
+        // jackclient.setTimebaseCallback(JudahClock.getInstance(), false);
+        
+    }
+    
+    private void initializeGui() {
+    	
         new MainFrame(JUDAHZONE);
         new TalReverb(carla, carla.getPlugins().byName(TalReverb.NAME))
             .initialize(Constants.sampleRate(), Constants.bufSize());
@@ -177,23 +188,23 @@ public class JudahZone extends BasicClient {
         /////////////////////////////////////////////////////////////////////////
         //                    now the system is live                           //
         /////////////////////////////////////////////////////////////////////////
-        // Open a default song
-        Constants.timer(100, () -> {
-            ControlPanel.getInstance().setFocus(masterTrack);
-            Constants.sleep(10);
-            MainFrame.get().beatBox();
-
-            // load default song
-			//    File file = new File(Constants.ROOT, "Songs/InMood4Love");
-			//    try {
-			//    	// new Sequencer(file);
-			//        // JudahClock.getInstance().getSequencer(2).getCurrent()
-			//        //      .load(new File(Constants.ROOT, "sequences/FunTimes"));
-			//    } catch (Exception e) {
-			//        Console.warn(e.getMessage() + " " + file.getAbsolutePath(), e); }
-        });
+        
+        ControlPanel.getInstance().setFocus(channels.getGuitar());
         Fader.execute(Fader.fadeIn());
         masterTrack.setOnMute(false);
+
+        System.gc();
+        // Open a default song
+        Constants.timer(100, () -> {
+            // load default song
+			// new Sequencer(new File(Constants.ROOT, "Songs/InMood4Love"));
+
+            // step sequencer
+            JudahClock.getInstance().getSequencer(9).load(Constants.defaultDrumFile);
+            MainFrame.get().beatBox();
+            MainFrame.updateTime();
+
+        });
 
     }
 
@@ -249,9 +260,9 @@ public class JudahZone extends BasicClient {
         return true;
     }
 
-    public void recoverMidi(Exception ERNOBUF) {
-        RTLogger.warn(this, ERNOBUF);
+    public void recoverMidi() {
         new Thread(() -> {
+        	if (midi != null) midi.close();
             Constants.sleep(100);
             try {
                 midi = new JudahMidi("JudahMidi");

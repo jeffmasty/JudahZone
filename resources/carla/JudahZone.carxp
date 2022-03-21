@@ -32,7 +32,7 @@
     <Index>0</Index>
     <Name>Volume</Name>
     <Symbol>master</Symbol>
-    <Value>0.388068169355392</Value>
+    <Value>0.482386380434036</Value>
    </Parameter>
 
    <Parameter>
@@ -616,11 +616,31 @@
   </Connection>
   <Connection>
    <Source>system:capture_3</Source>
-   <Target>JudahZone:aux1</Target>
+   <Target>JudahZone:craveIn</Target>
   </Connection>
   <Connection>
    <Source>system:capture_4</Source>
    <Target>JudahZone:drums</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:CRAVE [24] (capture): CRAVE MIDI 1</Source>
+   <Target>JudahMidi:craveIn</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:nanoKONTROL2 [32] (capture): nanoKONTROL2 nanoKONTROL2 _ CTR</Source>
+   <Target>JudahMidi:mixer</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:MPKmini2 [36] (capture): MPKmini2 MIDI 1</Source>
+   <Target>JudahMidi:keyboard</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:MIDI2x2 [40] (capture): MIDI2x2 Midi Out 1</Source>
+   <Target>JudahMidi:drumsIn</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:MIDI2x2 [40] (capture): MIDI2x2 Midi Out 2</Source>
+   <Target>JudahMidi:arduino</Target>
   </Connection>
   <Connection>
    <Source>PulseAudio JACK Sink:front-left</Source>
@@ -631,12 +651,20 @@
    <Target>system:playback_3</Target>
   </Connection>
   <Connection>
+   <Source>a2j:nanoPAD2 [44] (capture): nanoPAD2 nanoPAD2 _ CTRL</Source>
+   <Target>JudahMidi:pads</Target>
+  </Connection>
+  <Connection>
    <Source>PulseAudio JACK Sink:front-right</Source>
    <Target>system:playback_2</Target>
   </Connection>
   <Connection>
    <Source>PulseAudio JACK Sink:front-right</Source>
    <Target>system:playback_4</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:ActitioN MIDI Controller [48] (capture): ActitioN MIDI Controller MIDI 1</Source>
+   <Target>JudahMidi:pedal</Target>
   </Connection>
   <Connection>
    <Source>fluidsynth-midi:left</Source>
@@ -652,15 +680,15 @@
   </Connection>
   <Connection>
    <Source>JudahMidi:drumsOut</Source>
-   <Target>a2j:MIDI2x2 [40] (playback): MIDI2x2 MIDI 1</Target>
+   <Target>a2j:MIDI2x2 [40] (playback): MIDI2x2 Midi Out 1</Target>
   </Connection>
   <Connection>
    <Source>JudahMidi:calfOut</Source>
    <Target>Calf Fluidsynth:events-in</Target>
   </Connection>
   <Connection>
-   <Source>JudahMidi:auxOut</Source>
-   <Target>a2j:MIDI2x2 [40] (playback): MIDI2x2 MIDI 2</Target>
+   <Source>JudahMidi:craveOut</Source>
+   <Target>a2j:CRAVE [24] (playback): CRAVE MIDI 1</Target>
   </Connection>
   <Connection>
    <Source>JudahZone:left</Source>
@@ -693,30 +721,6 @@
   <Connection>
    <Source>Tal-Reverb-III:Audio Output 2</Source>
    <Target>system:playback_2</Target>
-  </Connection>
-  <Connection>
-   <Source>a2j:ActitioN MIDI Controller [16] (capture): ActitioN MIDI Controller MIDI 1</Source>
-   <Target>JudahMidi:pedal</Target>
-  </Connection>
-  <Connection>
-   <Source>a2j:nanoKONTROL2 [28] (capture): nanoKONTROL2 MIDI 1</Source>
-   <Target>JudahMidi:mixer</Target>
-  </Connection>
-  <Connection>
-   <Source>a2j:MPKmini2 [32] (capture): MPKmini2 MIDI 1</Source>
-   <Target>JudahMidi:keyboard</Target>
-  </Connection>
-  <Connection>
-   <Source>a2j:nanoPAD2 [36] (capture): nanoPAD2 MIDI 1</Source>
-   <Target>JudahMidi:pads</Target>
-  </Connection>
-  <Connection>
-   <Source>a2j:MIDI2x2 [40] (capture): MIDI2x2 MIDI 1</Source>
-   <Target>JudahMidi:drumsIn</Target>
-  </Connection>
-  <Connection>
-   <Source>a2j:MIDI2x2 [40] (capture): MIDI2x2 MIDI 2</Source>
-   <Target>JudahMidi:arduino</Target>
   </Connection>
  </ExternalPatchbay>
 </CARLA-PROJECT>

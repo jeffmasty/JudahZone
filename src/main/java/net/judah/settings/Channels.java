@@ -10,6 +10,7 @@ import net.judah.JudahZone;
 import net.judah.fluid.FluidSynth;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.LineIn;
+import net.judah.settings.MidiSetup.IN;
 import net.judah.util.Icons;
 
 @Getter
@@ -18,10 +19,10 @@ public class Channels extends ArrayList<LineIn> {
 	public static final String MIC = "MIC";
 	public static final String DRUMS = "DRUMS";
 	public static final String SYNTH = "SYNTH";
-	public static final String AUX1 = "AUX1";
-	public static final String AUX2 = "AUX2";
-
-	private final LineIn guitar, mic, synth, aux1, aux2;
+	public static final String AUX = "AUX";
+	public static final String CRAVE = "CRAVE";
+	
+	private final LineIn guitar, mic, synth, crave /*, aux2 */;
 	private final LineIn drums;
 
 	public Channels() {
@@ -41,18 +42,19 @@ public class Channels extends ArrayList<LineIn> {
 				new String[] {"synthL", "synthR"});
 		synth.setIcon(Icons.load("Synth.png"));
 
-		aux1 = new LineIn(AUX1, "system:capture_3", "aux1"); // boss dr5 drum machine
+		crave = new LineIn(CRAVE, "system:capture_3", IN.CRAVE_IN.port); 
+		crave.setIcon(Icons.load("Crave.png"));
 		//aux1.setIcon(Icons.load("LoopA.png"));
 		
 		// aux1.getCompression().setActive(true);
 
-		aux2 = new LineIn(AUX2, new String[]
-				{null, null}, // {"Calf Fluidsynth:Out L", "Calf Fluidsynth:Out R"} not started up yet here
-				new String[] {"aux2", "aux3"});
+//		aux2 = new LineIn(AUX, new String[]
+//				{null, null}, // {"Calf Fluidsynth:Out L", "Calf Fluidsynth:Out R"} not started up yet here
+//				new String[] {"aux2", "aux3"});
 		//aux2.setIcon(Icons.load("LoopB.png"));
 		// aux2.setMuteRecord(true);
 
-		addAll(Arrays.asList(new LineIn[] { guitar, mic, synth, drums, aux1, aux2 }));
+		addAll(Arrays.asList(new LineIn[] { guitar, mic, synth, drums, crave, /* aux2 */ }));
 
 	}
 
@@ -68,16 +70,16 @@ public class Channels extends ArrayList<LineIn> {
 		guitar.getGain().setVol(50);
 		drums.getGain().setVol(50);
 		synth.getGain().setVol(50);
-		aux1.getGain().setVol(50);
-		aux2.getGain().setVol(50);
+		crave.getGain().setVol(33);
+		//aux2.getGain().setVol(50);
 		// drums.getCompression().setActive(true);
 	}
 
     public static String volumeTarget(JackPort midiOut) {
         JudahMidi midi = JudahMidi.getInstance();
         Channels channels = JudahZone.getChannels();
-        if (midiOut == midi.getAuxOut1())
-            return channels.getAux1().getName();
+        if (midiOut == midi.getCraveOut())
+            return channels.getCrave().getName();
         else if (midiOut == midi.getCalfOut())
             return channels.getDrums().getName();
         else if (midiOut == midi.getDrumsOut())
@@ -91,7 +93,7 @@ public class Channels extends ArrayList<LineIn> {
         JudahMidi midi = JudahMidi.getInstance();
         Channels channels = JudahZone.getChannels();
         if (midiOut == midi.getAuxOut1())
-            channels.getAux1().getGain().setVol(vol);
+            channels.getCrave().getGain().setVol(vol);
         else if (midiOut == midi.getCalfOut())
             channels.getDrums().getGain().setVol(vol);
         else if (midiOut == midi.getDrumsOut())
@@ -104,7 +106,7 @@ public class Channels extends ArrayList<LineIn> {
         JudahMidi midi = JudahMidi.getInstance();
         Channels channels = JudahZone.getChannels();
         if (midiOut == midi.getAuxOut1())
-            return channels.getAux1().getVolume();
+            return channels.getCrave().getVolume();
         else if (midiOut == midi.getCalfOut())
             return channels.getDrums().getVolume();
         else if (midiOut == midi.getDrumsOut())

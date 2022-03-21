@@ -36,6 +36,9 @@ public class Recording extends Vector<float[][]> {
 		runner.start();
 	}
 
+	public Recording(int size) {
+		this(size, true);
+	}
 	public Recording(boolean startListeners) {
 		if (startListeners) {
 			startListeners();

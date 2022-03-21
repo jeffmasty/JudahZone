@@ -1,5 +1,7 @@
 package net.judah.util;
 
+import java.util.Objects;
+
 import javax.swing.ImageIcon;
 
 import lombok.Getter;
@@ -29,6 +31,11 @@ public class Icons {
             inactive = new ImageIcon("/home/judah/git/JudahZone/resources/icons/" + name + "Inactive.png");
             this.name = name;
         }
+
+        @Override
+		public int hashCode() {
+			return Objects.hash(active, name);
+		}
 
         @Override
         public boolean equals(Object obj) {

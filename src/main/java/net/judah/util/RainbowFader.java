@@ -18,7 +18,7 @@ import javax.swing.event.ChangeListener;
 /**An extended JSlider that paints the Thumb chromatically based on the slider position.
  * <br/><br/>
  * Source: <a href="https://jasperpotts.com/blog/2008/08/skinning-a-slider-with-nimbus/">Skinning a Slider with Nimbus</a>
- * @author Jasper Potts (May 7, 2008) ThemeDemo.java 
+ * @author Jasper Potts (May 7, 2008) SliderSkinDemo.java 
  * @author Tsukino, Fumino and Jeff Masty (Nov 28, 2021) */
 public class RainbowFader extends JSlider {
 	
@@ -34,7 +34,7 @@ public class RainbowFader extends JSlider {
     		blue = 1;
     		green = percent * slope ;
     	}
-    	else if (percent <= 50) { // blue down
+    	else if (percent < 50) { // blue down
     		green = 1;
     		blue = 2 - slope * percent;
     	}

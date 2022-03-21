@@ -6,14 +6,13 @@ import net.judah.clock.JudahClock;
 
 public class CurrentBeat {
 
-    private final JudahClock clock = JudahClock.getInstance();
     private ArrayList<BeatLabel> all = new ArrayList<>();
     private BeatLabel previous;
 
     public ArrayList<BeatLabel> createLabels() {
         all.clear();
-        int steps = clock.getSteps();
-        int stepsPerBeat = clock.getSubdivision();
+        int steps = JudahClock.getSteps();
+        int stepsPerBeat = JudahClock.getSubdivision();
         int beat = 1;
         for (int x = 0; x < steps; x++)
             if (x % stepsPerBeat == 0) {

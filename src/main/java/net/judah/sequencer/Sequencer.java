@@ -33,7 +33,6 @@ import net.judah.api.Service;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeProvider;
-import net.judah.clock.JudahClock;
 import net.judah.effects.api.Preset;
 import net.judah.effects.api.PresetsHandler.Raw;
 import net.judah.looper.Recorder;
@@ -309,11 +308,8 @@ public class Sequencer implements Service, Runnable, TimeListener {
         }
 
         /////////////////////////////////////////////////////////////////////////////////////////////
-
-        public static void trigger() {
+        public void songTrigger() {
         	Recorder a = JudahZone.getLooper().getLoopA();
-        	if (JudahClock.waiting(a)) 
-        		return;
         	if (current == null || current.active == null) 
         		a.record(a.isRecording() != AudioMode.RUNNING);
         	else {
@@ -323,6 +319,7 @@ public class Sequencer implements Service, Runnable, TimeListener {
                 }
             }
         }
+
 
         void externalControl(HashMap<String, Object> props) {
             Object o = props.get(LOOP);
@@ -340,7 +337,9 @@ public class Sequencer implements Service, Runnable, TimeListener {
             Object o2 = props.get(PARAM_PULSE);
             if (o2 != null && StringUtils.isNumeric(o2.toString()))
                 pulse = Integer.parseInt(o2.toString());
-            JudahZone.getLooper().get(loop).setSync(true);
+            
+            RTLogger.warn(this, "TODO: ARM LOOP??");
+            // JudahZone.getLooper().get(loop).setSync(true);
             log.warn("Looper " + loop + " has time control with pulse of " + pulse + " beats.");
         }
 
@@ -420,7 +419,7 @@ public class Sequencer implements Service, Runnable, TimeListener {
         private void _andILoveHer() {
             Recorder drums = (Recorder)JudahZone.getLooper().get(0);
             Recording sample = drums.getRecording();
-            JudahZone.getLooper().get(1).setRecording(new Recording(sample.size() * 5, true));
+            JudahZone.getLooper().get(1).setRecording(new Recording(sample.size() * 5));
             // if (clock != null) clock.removeListener(this);
             pulse = 8;
             Metronome.remove(this);
@@ -481,7 +480,7 @@ public class Sequencer implements Service, Runnable, TimeListener {
                 }
 
                 length = length / 2;
-                loopB.setRecording(new Recording(length, true));
+                loopB.setRecording(new Recording(length));
 
                 loopB.play(true);
                 loopB.record(true);

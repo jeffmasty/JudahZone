@@ -22,20 +22,17 @@ import org.jaudiolibs.jnajack.Jack;
 import org.jaudiolibs.jnajack.JackException;
 
 import lombok.Getter;
-import lombok.extern.log4j.Log4j;
 import net.judah.api.Command;
 import net.judah.api.Midi;
 import net.judah.api.Service;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.ProgMsg;
-//import net.judah.midi.ProgMsg;
-import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.JudahException;
+import net.judah.util.RTLogger;
 
 
 /** runs fluid command line and connects to FluidSynth stdin and stdout ports */
-@Log4j
 public class FluidSynth implements Service {
 
 	@Getter private static FluidSynth instance;
@@ -63,7 +60,7 @@ public class FluidSynth implements Service {
 	private final Command progChange, instUp, instDown, drumBank, direct;
 	@Getter private final List<Command> commands;
 
-	private float gain = 0.8f; // max 5
+	private float gain = 0.6f; // max 5
 
 	public FluidSynth (int sampleRate, boolean startListeners) throws JackException, JudahException, IOException {
 		this(sampleRate, SOUND_FONT, startListeners);
@@ -82,11 +79,11 @@ public class FluidSynth implements Service {
 				SOUND_FONT.getAbsolutePath();
 
 		console = new FluidConsole(this);
-		log.debug(shellCommand);
+		// log.debug(shellCommand);
 		try {
 			process = Runtime.getRuntime().exec(shellCommand);
 		} catch (IOException e) {
-			log.error(e.getMessage(), e);
+			RTLogger.warn(this, e);
 		}
 
 		// read FluidSynth output
@@ -107,7 +104,7 @@ public class FluidSynth implements Service {
         sendCommand("chorus off");
         reverb = new FluidReverb(this);
         Constants.sleep(50);
-        progChangeConsole(0, 32); // how about some acoustic bass
+        progChangeConsole(0, 48); // set String section instrument
 
 
 		HashMap<String, Class<?>> template = new HashMap<>();
@@ -119,8 +116,10 @@ public class FluidSynth implements Service {
 				try {
 					channel = Integer.parseInt(props.get("channel").toString());
 				} catch (Throwable t) {
-					log.debug(t.getMessage()); }
-				JudahMidi.getInstance().queue(progChange(channel, Integer.parseInt(props.get("preset").toString())));
+					RTLogger.warn(this, t.getMessage()); }
+				
+				JudahMidi.getInstance().queue(
+						progChange(channel, Integer.parseInt(props.get("preset").toString())));
 			}};
 
 			instUp = new Command(INSTUP.name, INSTUP.desc) {
@@ -162,7 +161,7 @@ public class FluidSynth implements Service {
 
 					commands = Arrays.asList(new Command[] {progChange, instUp, instDown, drumBank, direct});
 					// doHelp();
-					Console.addText( "FluidSynth channels: " + channels.size() + " instruments: " + instruments.size());
+					RTLogger.log(this, "FluidSynth channels: " + channels.size() + " instruments: " + instruments.size());
 
 	}
 
@@ -203,7 +202,7 @@ public class FluidSynth implements Service {
 			syncChannels();
 			syncInstruments();
 		} catch (Throwable t) {
-			Console.addText("sync failed. " + t.getMessage());
+			RTLogger.warn(this, "sync failed. " + t.getMessage());
 		}
 
 	}
@@ -213,7 +212,7 @@ public class FluidSynth implements Service {
 		try {
 			return new Midi(ShortMessage.CONTROL_CHANGE, 0, 0, 3);
 		} catch (InvalidMidiDataException e) {
-			log.error(e);
+			RTLogger.warn(this, e);
 		}
 		return null;
 	}
@@ -222,7 +221,7 @@ public class FluidSynth implements Service {
 		try {
 			return new Midi(ShortMessage.CONTROL_CHANGE, 0, 0, 2);
 		} catch (InvalidMidiDataException e) {
-			log.error(e);
+			RTLogger.warn(this, e);
 		}
 		return null;
 	}
@@ -246,14 +245,16 @@ public class FluidSynth implements Service {
 						syncChannels();
 						Thread.sleep(40);
 						int after = channels.getCurrentPreset(channel);
-						Console.info("PROG CHNG " + instruments.get(after) + " (from " + instruments.get(before) + ")");
-					} catch (Throwable e) { log.warn(e.getMessage(), e); }
+						RTLogger.log(this, "PROG CHNG " + instruments.get(after) + " (from " + instruments.get(before) + ")");
+					} catch (Throwable e) { 			
+						RTLogger.warn(this, e);
+					}
 				};
 			}.start();
 
 			return msg;
 		} catch (Throwable t) {
-			Console.warn(t.getMessage(), t);
+			RTLogger.warn(this, t);
 			return null;
 		}
 	}
@@ -274,10 +275,10 @@ public class FluidSynth implements Service {
 			int bank = channels.getBank(channel);
 			for (FluidInstrument f : instruments)
 				if (f.group == bank && f.index == preset)
-					Console.addText(f.toString());
+					RTLogger.log(this, f.toString());
 			return result;
 		} catch (Throwable t) {
-			log.error(t.getMessage(), t);
+			RTLogger.warn(this, t);
 			return -1;
 		}
 	}
@@ -295,7 +296,7 @@ public class FluidSynth implements Service {
 	}
 
 	public void sendCommand(String string) {
-		log.trace("sendCommand: " + string);
+		//log.trace("sendCommand: " + string);
 		if (false == string.endsWith(NL))
 			string = string + NL;
 
@@ -303,7 +304,7 @@ public class FluidSynth implements Service {
 			outStream.write((string).getBytes());
 			outStream.flush();
 		} catch(IOException e) {
-			log.error(e.getMessage(), e);
+			RTLogger.warn(this, e);
 		}
 	}
 
@@ -366,7 +367,9 @@ public class FluidSynth implements Service {
 	public void close() {
 		try {
 			sendCommand(FluidCommand.QUIT);
-		} catch (JudahException e) { log.warn(e); }
+		} catch (JudahException e) { 
+			RTLogger.warn(this, e);
+		}
 	}
 
 	public static class Channels extends ArrayList<FluidChannel> {

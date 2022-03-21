@@ -1,6 +1,7 @@
 package net.judah.sequencer;
 
-import static net.judah.util.Constants.Param.*;
+import static net.judah.util.Constants.Param.BPM;
+import static net.judah.util.Constants.Param.MEASURE;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +26,7 @@ import net.judah.song.Link;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.JudahException;
+import net.judah.util.RTLogger;
 
 public class SeqClock extends Thread implements TimeProvider {
 
@@ -87,7 +89,7 @@ public class SeqClock extends Thread implements TimeProvider {
 			// lastPulse = JudahMidi.getCurrent();
 
 			long period = Constants.millisPerBeat(tempo * subdivision);
-			Console.addText("Internal Sequencer Clock starting with a bpm of "
+			RTLogger.log(this, "Internal Sequencer Clock starting with a bpm of "
 					+ getTempo() + " msec period of " + period);
 			beeperHandle = scheduler.scheduleAtFixedRate(this, period, period, TimeUnit.MILLISECONDS);
 			scheduler.schedule(new Runnable() {

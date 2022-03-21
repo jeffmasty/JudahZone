@@ -25,10 +25,11 @@ public class FluidReverb extends Reverb {
     /** Fluid Synth already started, we will initialize size/damp settings and activate */
     @Override
     public void initialize(int sampleRate, int bufferSize) {
-        setRoomSize(0.4f);
-        Constants.timer(100, () -> {setDamp(0.4f);});
+        setRoomSize(0.75f);
+        Constants.timer(100, () -> {setDamp(0.6f);});
         Constants.timer(200, () -> {setWidth(0.7f);});
-        Constants.timer(300, () -> {setActive(true);});
+        Constants.timer(300, () -> {setWet(0.1f);});
+        Constants.timer(400, () -> {setActive(true);});
     }
 
     @Override public boolean isInternal() { return false; }

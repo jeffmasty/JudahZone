@@ -1,6 +1,10 @@
 package net.judah.api;
 
-import static net.judah.api.Status.*;
+import static net.judah.api.Status.ACTIVE;
+import static net.judah.api.Status.CLOSING;
+import static net.judah.api.Status.INITIALISING;
+import static net.judah.api.Status.NEW;
+import static net.judah.api.Status.TERMINATED;
 
 import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicReference;
@@ -14,7 +18,8 @@ import org.jaudiolibs.jnajack.JackShutdownCallback;
 import org.jaudiolibs.jnajack.JackStatus;
 
 import lombok.Getter;
-import net.judah.util.Console;
+import net.judah.util.Constants;
+import net.judah.util.RTLogger;
 
 /** Creators of BasicClients must manually {@link #start()} the client */ 
 public abstract class BasicClient extends Thread implements JackProcessCallback, JackShutdownCallback  {
@@ -29,18 +34,22 @@ public abstract class BasicClient extends Thread implements JackProcessCallback,
     @Getter private int bufferSize;
 	@Getter private int sampleRate;
     
+	/**Once you manually start your BasicClient thread, it should 
+	 * connect to Jack and call lifecycle events: {@link #initialize()} and {@link #makeConnections()}
+	 * 
+	 * @param name
+	 * @throws JackException */
     public BasicClient(String name) throws JackException {
     	clientName = name;
-		jack = Jack.getInstance();
     	setPriority(Thread.MAX_PRIORITY);
+    	setName(name);
+    	jack = Jack.getInstance();
     }
 
     /** NOTE: blocks while Midi jack client is initialized */
 	public JackClient getJackclient() {
     	while (jackclient == null) { // wait for initialization
-    		try {
-				Thread.sleep(10);
-			} catch (InterruptedException e) { }
+    		Constants.sleep(10);
     	}
     	return jackclient;
     }
@@ -61,11 +70,11 @@ public abstract class BasicClient extends Thread implements JackProcessCallback,
 	                jackclient.activate();
 	                makeConnections();
 		            while (state.get() == Status.ACTIVE) {
-		                Thread.sleep(100); // @TODO switch to wait()
+		                Thread.sleep(251); // @TODO switch to wait()
 		            }
 	        }
         } catch (Exception e) {
-        	Console.warn(e);
+        	RTLogger.warn(this, e);
         }
 
         close();

@@ -40,20 +40,17 @@ public class BeatBox extends ArrayList<Grid> implements Runnable {
     Grid current; // current grid pattern
     @Getter @Setter private boolean mute;
 
-
     public BeatBox(JudahClock clock, int midiChannel) {
     	this.clock = clock;
         this.midiChannel = midiChannel;
         this.type = midiChannel >= 9 ? Type.Drums : Type.Melodic;
         midiOut = type == Type.Drums
-                ? JudahMidi.getInstance().getDrumsOut()
+                ? JudahMidi.getInstance().getCalfOut()
                 : JudahMidi.getInstance().getSynthOut();
         current = create();
     }
 
-    // [Ax3BDx4]{
-    
-    public void process(int step) {
+    public void step(int step) {
     	
         if (isMute()) return;
         for (Sequence seq : current) {
@@ -74,7 +71,7 @@ public class BeatBox extends ArrayList<Grid> implements Runnable {
                     }
                     // TODO internal commands/CC and chords
                     if (msg != null)
-                        queue.add(msg);
+                    	JudahMidi.queue(msg, getMidiOut());
 
                 }
         }
@@ -147,8 +144,8 @@ public class BeatBox extends ArrayList<Grid> implements Runnable {
         StringBuffer raw = new StringBuffer();
         raw.append(getMidiOut().getShortName()).append("/");
         raw.append(getInstrument() == null ? NONE : getInstrument().name);
-        raw.append("/").append(clock.getSteps());
-        raw.append("/").append(clock.getSubdivision()).append(Constants.NL);
+        raw.append("/").append(JudahClock.getSteps());
+        raw.append("/").append(JudahClock.getSubdivision()).append(Constants.NL);
         for (Grid grid : this) {
             raw.append("!");
             if (isMute())

@@ -1,8 +1,31 @@
 package net.judah.sequencer;
 
-import static net.judah.settings.Commands.OtherLbls.*;
-import static net.judah.settings.Commands.SequencerLbls.*;
-import static net.judah.util.Constants.Param.*;
+import static net.judah.settings.Commands.OtherLbls.MIDIGAIN;
+import static net.judah.settings.Commands.OtherLbls.MIDIPLAY;
+import static net.judah.settings.Commands.OtherLbls.MIDIRECORD;
+import static net.judah.settings.Commands.OtherLbls.TRANSPOSE;
+import static net.judah.settings.Commands.OtherLbls.transposeTemplate;
+import static net.judah.settings.Commands.SequencerLbls.ACTIVATE;
+import static net.judah.settings.Commands.SequencerLbls.CLICKTRACK;
+import static net.judah.settings.Commands.SequencerLbls.INTERNAL;
+import static net.judah.settings.Commands.SequencerLbls.NEXT;
+import static net.judah.settings.Commands.SequencerLbls.QUEUE;
+import static net.judah.settings.Commands.SequencerLbls.RELOAD;
+import static net.judah.settings.Commands.SequencerLbls.SETUP;
+import static net.judah.settings.Commands.SequencerLbls.TRANSPORT;
+import static net.judah.settings.Commands.SequencerLbls.TRIGGER;
+import static net.judah.settings.Commands.SequencerLbls.VOLUME;
+import static net.judah.util.Constants.Param.ACTIVE;
+import static net.judah.util.Constants.Param.BPM;
+import static net.judah.util.Constants.Param.FILE;
+import static net.judah.util.Constants.Param.GAIN;
+import static net.judah.util.Constants.Param.INDEX;
+import static net.judah.util.Constants.Param.LOOP;
+import static net.judah.util.Constants.Param.MEASURE;
+import static net.judah.util.Constants.Param.NAME;
+import static net.judah.util.Constants.Param.STEPS;
+import static net.judah.util.Constants.Param.activeTemplate;
+import static net.judah.util.Constants.Param.singleTemplate;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -22,6 +45,7 @@ import net.judah.sequencer.Sequencer.ControlMode;
 import net.judah.util.CommandWrapper;
 import net.judah.util.Console;
 import net.judah.util.JudahException;
+import net.judah.util.RTLogger;
 
 public class SeqCommands extends ArrayList<Command> {
 
@@ -58,7 +82,7 @@ public class SeqCommands extends ArrayList<Command> {
 		add(new Command(TRIGGER.name, TRIGGER.desc) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				if (midiData2 == 0)
-					seq.trigger();
+					seq.songTrigger();
 			}});
 
 		add(new Command(CLICKTRACK.name, CLICKTRACK.desc, clicktrackTemplate()) {
@@ -164,7 +188,7 @@ public class SeqCommands extends ArrayList<Command> {
 					new Sequencer(song);
 					MainFrame.get().closeTab(seq.getPage());
 				} catch (Exception e) {
-					Console.addText(song.getName() + " -- " + e.getMessage() + " " + song.getAbsoluteFile());
+					RTLogger.log(this, song.getName() + " -- " + e.getMessage() + " " + song.getAbsoluteFile());
 				}
 
 			};

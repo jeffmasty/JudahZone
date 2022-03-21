@@ -131,7 +131,7 @@ public class MixCommands extends ArrayList<Command> {
 					active = midiData2 > 0;
 				int idx = getLoopNum(props);
 				if (idx == ALL)
-					for (Sample loop : getLooper())
+					for (Sample loop : getLooper().getLoops())
 						loop.play(active);
 				else
 					getLooper().get(idx).play(active);
@@ -164,7 +164,7 @@ public class MixCommands extends ArrayList<Command> {
 				else mute = parseActive(props);
 
 				if (loopNum == ALL)
-					for (Sample loop : getLooper())
+					for (Sample loop : getLooper().getLoops())
 						((Recorder)loop).setOnMute(mute);
 				else
 					((Recorder)getLooper().get(loopNum)).setOnMute(mute);
@@ -174,7 +174,8 @@ public class MixCommands extends ArrayList<Command> {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				int idx = getLoopNum(props);
 				if (idx == ALL)
-					getLooper().forEach(loop -> loop.clear());
+					for (Sample s : getLooper().getLoops())
+						s.clear();
 				else
 					getLooper().get(idx).clear();
 			}});
@@ -324,14 +325,14 @@ public class MixCommands extends ArrayList<Command> {
 			}
 			if (destination.equals(source)) {
 				// DUPLICATE source
-				Recording result = new Recording(source.getRecording().size(), true);
+				Recording result = new Recording(source.getRecording().size());
 				result.addAll(source.getRecording());
 				result.addAll(source.getRecording());
 				destination.setRecording(result);
 				// destination.setRecording(new Recording(source.getRecording().size() * 2, true));
 			}
 			else { // create blank recording of source's size in destination
-				destination.setRecording(new Recording(source.getRecording().size(), true));
+				destination.setRecording(new Recording(source.getRecording().size()));
 			}
 			return;
 		}

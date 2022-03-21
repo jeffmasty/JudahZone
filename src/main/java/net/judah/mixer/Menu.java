@@ -17,4 +17,7 @@ public class Menu extends MixWidget {
 		RTLogger.log(this, channel.getName() + "'s menu is under construction.");
 	}
 
+	public void update() {
+		// subclass
+	}
 }

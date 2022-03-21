@@ -32,8 +32,8 @@ public class BeatsView extends JDesktopPane implements TimeListener, Pastels {
     private static final JudahClock clock = JudahClock.getInstance();
 
     @Getter private final Buttons buttons;
-    @Getter private final GridView grid2;
     @Getter private KitPanel kitPanel;
+    @Getter private final GridView grid2;
 
     public BeatsView() {
 
@@ -54,7 +54,15 @@ public class BeatsView extends JDesktopPane implements TimeListener, Pastels {
         instance = this;
         
         new Thread(() -> {
-        	while(true) if (queue.peek() != null) queue.poll().run();}).start();
+        	try {
+	        	while(true) 
+	        		if (queue.peek() == null) 
+	        			Thread.sleep(2);
+	        		else 
+	        			queue.poll().run();
+        	} catch (InterruptedException e) {}
+        }
+        ).start();
         
     }
 

@@ -20,8 +20,8 @@ public class MidiTrack extends ArrayList<MidiEvent> implements MidiListener, Com
 	/** in milliseconds */
 	protected long length = -1;
 	protected PassThrough passThroughMode = PassThrough.ALL;
-	protected boolean active = true; // autostart
-	protected float gain = 1f;
+	protected boolean active;
+	protected float gain = 0.9f;
 	protected int transpose = 0;
 	protected Quantize quantize = Quantize.EIGHTH;
 	protected TimeProvider time;

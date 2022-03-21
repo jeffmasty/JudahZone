@@ -13,6 +13,7 @@ import javax.sound.midi.Sequencer;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.api.Status;
+import net.judah.util.RTLogger;
 
 @Log4j
 public class MidiPlayer implements Player {
@@ -43,7 +44,7 @@ public class MidiPlayer implements Player {
 		if (!sequencer.isOpen()) {
 			sequencer.open();
 		}
-		log.debug("Midi player starting. " + file.getAbsolutePath());
+		RTLogger.log(this, "Midi start. " + file.getName() + " at " + sequencer.getTempoInBPM() + " (" + sequencer.getTempoFactor() + ")");
 		sequencer.start();
 		new Thread() {
 			@Override public void run() {

@@ -15,6 +15,7 @@ import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
 import net.judah.MainFrame;
+import net.judah.api.TimeListener;
 import net.judah.clock.JudahClock.Mode;
 import net.judah.util.Console;
 import net.judah.util.Constants;
@@ -23,7 +24,7 @@ import net.judah.util.Slider;
 import net.judah.util.TapTempo;
 import net.judah.util.ToggleSwitch;
 
-public class ClockGui extends JPanel implements ActionListener {
+public class ClockGui extends JPanel implements ActionListener, TimeListener {
 	
 	// latch
 	// stomp
@@ -35,12 +36,19 @@ public class ClockGui extends JPanel implements ActionListener {
 	private Slider tempo;
     private JToggleButton start;
     private ToggleSwitch mode = new ToggleSwitch(this);
+    
+//    File test = new File("metronome/44_Minor_4-4_i_-III_iv_V.mid");
+//    MidiPlayer playa;
+//    JackReceiver jackMidi;
+//    private JButton fileBtn = new JButton(test.getName());
+    private JLabel beatLbl = new JLabel("0");
 	
 	final Dimension combo = new Dimension(MainFrame.WIDTH_CLOCK / 2, 19);
 		final JudahMenu popup = new JudahMenu();
 		
         ClockGui(JudahClock clock) {
         	this.clock = clock;
+        	clock.addListener(this);
             tempo = new Slider(35, 175, e -> {
                 clock.setTempo(((Slider)e.getSource()).getValue());});
             JPanel tempoPnl = new JPanel();
@@ -63,9 +71,11 @@ public class ClockGui extends JPanel implements ActionListener {
                 }});
             tempoLbl.setFont(Constants.Gui.BOLD);
 
-            JPanel bpmPnl = new JPanel(new GridLayout(1, 2));
+            JPanel bpmPnl = new JPanel(new GridLayout(1, 4));
             bpmPnl.add(tapButton);
             bpmPnl.add(tempoLbl);
+            bpmPnl.add(new JLabel("Beat"));
+            bpmPnl.add(beatLbl);
 
             JButton menu = new JButton("Menu");
             menu.addActionListener(e -> {
@@ -92,38 +102,77 @@ public class ClockGui extends JPanel implements ActionListener {
 
             add(mode);
 
-//            JPanel logPnl = new JPanel(new GridLayout(0, 3, 0, 2));
-//            JToggleButton log = new JToggleButton("log");
-//            log.setFont(Constants.Gui.FONT9);
-//            JToggleButton seq = new JToggleButton("seq");
-//            seq.setFont(Constants.Gui.FONT9);
-//            JToggleButton fx = new JToggleButton("fx");
-//            fx.setFont(Constants.Gui.FONT9);
-//            logPnl.add(seq); //seq.setVisible(false); // TODO
-//            logPnl.add(fx);  // fx.setVisible(false); // not implemented yet
-//            logPnl.add(log); // log.setVisible(false);
-//            add(logPnl);
-            
             add(bpmPnl);
             add(tempoPnl);
+
+//            JPanel testPnl = new JPanel(new GridLayout(0, 3, 0, 2));
+//            testPnl.add(beatLbl);
+//            testPnl.add(new JLabel("[crave]"));
+//            testPnl.add(fileBtn);
+//            add(testPnl);
+//            fileBtn.addActionListener(e -> {gnome.stop();});
+
             add(Box.createVerticalGlue());
             doLayout();
-            update();
+
+            update(null, null);
         }
         
-        void update() { 
-        	new Thread() { @Override public void run() {
-        			tempo.setValue(Math.round(clock.getTempo()));
-        			tempoLbl.setText("" + clock.getTempo());
-        			start.setText(clock.isActive() ? "Stop" : "Start");
-        			mode.setActivated(JudahClock.getMode() == Mode.Internal);
-        			mode.invalidate();
-        			repaint();
-            	}}.start();
-        	}
+//        void update() { 
+//        }
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			JudahClock.setMode(mode.isActivated() ? Mode.Internal : Mode.Midi24);
+		}
+
+		@Override
+		public void update(Property prop, Object value) {
+			if (Property.TEMPO == prop) { 
+				tempo.setValue(Math.round(clock.getTempo()));
+				tempoLbl.setText("" + clock.getTempo());
+			}
+			else if (Property.TRANSPORT == prop) {
+				start.setText(clock.isActive() ? "Stop" : "Start");
+			}
+			if (mode.isActivated() != (JudahClock.getMode() == Mode.Internal))
+				mode.setActivated(JudahClock.getMode() == Mode.Internal);
+			beatLbl.setText("" + JudahClock.getBeat());
+			repaint();
+
+// TODO
+//			if (Property.BEAT == prop)
+//				new Thread( () -> {
+//					beatLbl.setText(value.toString());
+//					beatLbl.repaint();
+//				}).start();
+//			else if (Property.TRANSPORT == prop) {
+//				if (value == JackTransportState.JackTransportStopped && gnome != null) {
+//					gnome.stop();
+//				}
+//				else if (value == JackTransportState.JackTransportStarting) {
+//					
+//					
+//					if (playa != null) playa.stop();
+//					try {
+//						if (gnome != null)
+//							gnome.stop();
+//							
+//						gnome = new MidiGnome(clock, JudahMidi.getInstance());
+//						gnome.setFile(test);
+//						gnome.start();
+//						
+////						if (jackMidi == null)
+////							jackMidi = new JackReceiver(JudahMidi.getInstance().getCraveOut());
+////						playa = new MidiPlayer(test, 0, jackMidi);
+////						playa.setTempo(clock.getTempo());
+////						playa.start();
+//					} catch (Exception e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//					}
+//				}
+//				update();
+//			}
 		}
     }

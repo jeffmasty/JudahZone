@@ -33,9 +33,7 @@ public class LineIn extends Channel {
 
     @Getter protected final ArrayList<Plugin> plugins = new ArrayList<>();
 
-    private FloatBuffer left, right;
-
-	/** Mono channel uses left signal */
+    /** Mono channel uses left signal */
 	public LineIn(String channelName, String sourcePort, String connectionPort) {
 		super(channelName);
 		this.leftSource = sourcePort;
@@ -60,10 +58,9 @@ public class LineIn extends Channel {
 	}
 
 	public void process() {
-		left = leftPort.getFloatBuffer();
-		if (isStereo)
-			right = rightPort.getFloatBuffer();
-
+		FloatBuffer left = leftPort.getFloatBuffer();
+		FloatBuffer right = (isStereo) ? rightPort.getFloatBuffer() : null; 
+		
 		float gain = getVolume() * 0.4f;
 		for (int z = 0; z < Constants.bufSize(); z++)
 			left.put(left.get(z) * gain);
