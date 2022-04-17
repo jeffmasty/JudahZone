@@ -91,6 +91,13 @@ public class AudioTools  {
 			}
 		}
 	}
+	public static float[] copy(FloatBuffer input) {
+		input.rewind();
+		float[] result = new float[input.capacity()];
+		for (int i = 0 ; i < result.length; i++) 
+			result[i] = input.get();
+		return result;
+	}
 
 }
 

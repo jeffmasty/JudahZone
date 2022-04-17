@@ -1,15 +1,6 @@
 package net.judah;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Image;
-import java.awt.Insets;
-import java.awt.Rectangle;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -18,24 +9,19 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.imageio.ImageIO;
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JDesktopPane;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
-import javax.swing.UIManager;
+import javax.swing.*;
 
+import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.beatbox.BeatsView;
 import net.judah.clock.JudahClock;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
-import net.judah.mixer.Menu;
 import net.judah.mixer.SyncWidget;
 import net.judah.sequencer.Sequencer;
 import net.judah.song.SheetMusic;
+import net.judah.tracks.Track;
+import net.judah.tracks.Tracker;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.JudahMenu;
@@ -50,6 +36,7 @@ public class MainFrame extends JFrame implements Size, Runnable {
     private final DJJefe mixer;
     private MusicPanel sheetMusic;
     private final ControlPanel controls;
+    @Getter private final Tracker tracker;
    
     //private Overview overview = new Overview();
     
@@ -62,15 +49,7 @@ public class MainFrame extends JFrame implements Size, Runnable {
     
     MainFrame(String name) {
         super(name);
-
-        try {
-            UIManager.setLookAndFeel ("javax.swing.plaf.nimbus.NimbusLookAndFeel");
-            UIManager.put("nimbusBase", Pastels.EGGSHELL);
-            UIManager.put("control", Pastels.EGGSHELL); 
-            UIManager.put("nimbusBlueGrey", Pastels.MY_GRAY);
-	        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	        Thread.sleep(70);
-        } catch (Exception e) { log.info(e.getMessage(), e); }
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         content = (JPanel)getContentPane();
         content.setBackground(Pastels.EGGSHELL);
@@ -99,7 +78,8 @@ public class MainFrame extends JFrame implements Size, Runnable {
         
         tabs.setBounds(0, 0, WIDTH_SONG - 1, HEIGHT_TABS);
         
-        tabs.add("Tracks", JudahClock.getInstance().getOverview());
+        tracker = JudahClock.getInstance().getTracker();
+        tabs.add("Tracks", tracker);
         
         songPanel.add(tabs);
         songPanel.add(mixer);
@@ -126,7 +106,6 @@ public class MainFrame extends JFrame implements Size, Runnable {
         }
         setLocation(1, 0);
         invalidate();
-        Constants.sleep(10);
         setVisible(true);
         
         Thread updates = new Thread(this);
@@ -223,18 +202,6 @@ public class MainFrame extends JFrame implements Size, Runnable {
         }
     }
 
-//    private class Footer extends JPanel {
-//        Footer() {
-//            JPanel clock = JudahClock.getInstance().getGui();
-//            JPanel tuner = new Tuner();
-//            JTextField input = Console.getInstance().getInput();
-////            add(JudahClock.getInstance().getGui());
-//            add(new Tuner());
-//            add(Console.getInstance().getInput());
-//
-//        }
-//    }
-
     public void openPage(SongPane page) {
         for(int i = 0; i < tabs.getTabCount(); i++)
             if (tabs.getTitleAt(i).contains(Constants.CUTE_NOTE))
@@ -258,19 +225,19 @@ public class MainFrame extends JFrame implements Size, Runnable {
     	updates.offer(JudahClock.getInstance());
     }
     
-    public static void update(Channel ch) {
-    	updates.offer(ch);
+    public static void update(Object o) {
+    	updates.offer(o);
     }
-
-    public static void update(Menu sync) {
-		updates.offer(sync);
-	}
 
     public static void setFocus(Object o) {
     	if (o instanceof Channel) {
     		instance.controls.setFocus((Channel)o);
     	}
+    	else if (o instanceof Track) {
+    		instance.tracker.setFocus((Track)o);
+    	}
     }
+
 
 
 	@Override
@@ -296,12 +263,31 @@ public class MainFrame extends JFrame implements Size, Runnable {
 			}
 			else if (o instanceof SyncWidget) 
 				((SyncWidget)o).updateLoop();
+			else if (o instanceof float[] /*PitchDetectionResult*/) {
+				controls.getTuner().process((float[])o);
+			}
+			else if (o instanceof Track) {
+				tracker.update((Track)o);
+			}
 			else  {
 				instance.mixer.updateAll();
 				instance.controls.getCurrent().update();
 			}
 		}
 	}
+
+
+	public static void startNimbus() {
+		try {
+            UIManager.setLookAndFeel ("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+            UIManager.put("nimbusBase", Pastels.EGGSHELL);
+            UIManager.put("control", Pastels.EGGSHELL); 
+            UIManager.put("nimbusBlueGrey", Pastels.MY_GRAY);
+        } catch (Exception e) { log.info(e.getMessage(), e); }
+
+	}
+
+
 
 
     

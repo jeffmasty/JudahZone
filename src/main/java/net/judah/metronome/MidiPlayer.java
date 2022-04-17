@@ -12,6 +12,7 @@ import javax.sound.midi.Sequencer;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
+import net.judah.api.Notification;
 import net.judah.api.Status;
 import net.judah.util.RTLogger;
 
@@ -96,16 +97,16 @@ public class MidiPlayer implements Player {
 	}
 
 	@Override
-	public void update(Property prop, Object value) {
+	public void update(Notification.Property prop, Object value) {
 		if (value == Status.ACTIVE) 
 			try { start();
 			} catch (MidiUnavailableException e) {
 				log.error(e.getMessage(), e);
 			}
 		if (value == Status.TERMINATED) stop();
-		if (prop == Property.TEMPO) 
+		if (prop == Notification.Property.TEMPO) 
 			setTempo((Float)value);
-		if (prop == Property.VOLUME) 
+		if (prop == Notification.Property.VOLUME) 
 			setGain((Float)value);
 	}
 }	

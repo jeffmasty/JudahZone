@@ -12,7 +12,7 @@ public class ProgMsg extends Midi {
 	 * @throws InvalidMidiDataException */
 	public ProgMsg(int channel, int preset) throws InvalidMidiDataException {
 		// first data1 bit not used (preset - 1)...
-		super(ShortMessage.PROGRAM_CHANGE, channel, preset - 1, 0);
+		super(ShortMessage.PROGRAM_CHANGE, channel, preset - 1);
 	}
 
 }

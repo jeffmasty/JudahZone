@@ -38,7 +38,7 @@ import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.api.Command;
-import net.judah.api.TimeListener.Property;
+import net.judah.api.Notification.Property;
 import net.judah.looper.Recorder;
 import net.judah.mixer.MixCommands;
 import net.judah.sequencer.Sequencer.ControlMode;

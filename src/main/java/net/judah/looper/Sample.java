@@ -25,13 +25,12 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
+import net.judah.api.Notification;
 import net.judah.api.ProcessAudio;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
-import net.judah.api.TimeListener.Property;
 import net.judah.api.TimeNotifier;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
@@ -39,7 +38,6 @@ import net.judah.util.AudioTools;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
-@Log4j
 public class Sample extends Channel implements ProcessAudio, TimeNotifier {
 
     private final int bufferSize = JudahMidi.getInstance().getBufferSize();
@@ -96,21 +94,13 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
     /** sets the playing flag (actual start/stop happens in the Jack thread) */
     @Override
     public void play(boolean active) {
-        log.trace(name + " playing active: " + active);
-
-        if (isPlaying.compareAndSet(NEW, active ? ARMED : NEW)) {
-            if (active) RTLogger.log(this, name + " Play is armed.");
-        }
+        isPlaying.compareAndSet(NEW, active ? ARMED : NEW);
         isPlaying.compareAndSet(ARMED, active ? ARMED : ( hasRecording() ? STOPPED : NEW));
-
         isPlaying.compareAndSet(RUNNING, active ? RUNNING : STOPPING);
-
-        if (isPlaying.compareAndSet(STOPPED, active ? STARTING : STOPPED)) {
-            if (active)
-                RTLogger.log(this, name + " playing. sample has " + recording.size() + " buffers.");
-        }
+        isPlaying.compareAndSet(STOPPED, active ? STARTING : STOPPED);
         if (fader != null) fader.update();
     }
+    
     public boolean hasRecording() {
         return recording != null && length != null && length > 0;
     }
@@ -126,9 +116,8 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
         tapeCounter.set(0);
         recording = null;
         length = null;
-        new ArrayList<TimeListener>(listeners).forEach(listener -> {listener.update(Property.STATUS, Status.TERMINATED); });
+        new ArrayList<TimeListener>(listeners).forEach(listener -> {listener.update(Notification.Property.STATUS, Status.TERMINATED); });
         listeners.clear();
-        RTLogger.log(this, name + " flushed.");
     }
 
     public void setRecording(Recording sample) {
@@ -136,7 +125,7 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
             recording.close();
         recording = sample;
         length = recording.size();
-        RTLogger.log(this, "Recording loaded on " + name + ", " + length + " frames.");
+        //RTLogger.log(this, "Recording loaded on " + name + ", " + length + " frames.");
         isPlaying.set(STARTING);
         MainFrame.update(this);
     }
@@ -158,6 +147,8 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
     	new Thread( () -> {
     		for (int i = 0; i < recording.size(); i++)
     			recording.set(i, new float[Constants.STEREO][Constants.bufSize()]);
+    		if (this instanceof Recorder)
+    			((Recorder)this).record(false);
     		RTLogger.log(this, "Erased: " + getName());
     		MainFrame.update(this);
     	}).start(); 
@@ -171,14 +162,14 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
         if (!listeners.contains(l)) {
             listeners.add(l);
             if (l instanceof Channel) {
-            	MainFrame.update((Channel)l);
+            	MainFrame.update(l);
             }
         }
     }
 
     @Override public void removeListener(TimeListener l) {
         if (listeners.remove(l) && l instanceof Channel) 
-            	MainFrame.update((Channel)l);
+            	MainFrame.update(l);
     }
 
     public void setTapeCounter(int current) {
@@ -269,6 +260,8 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
 
     protected void readRecordedBuffer() {
 
+    	
+    	
         recordedBuffer = recording.get(tapeCounter.get());
 
         updated = tapeCounter.get() + 1;
@@ -280,7 +273,7 @@ public class Sample extends Channel implements ProcessAudio, TimeNotifier {
             loopCount++;
             new Thread() { @Override public void run() {
                 for (int i = 0; i < listeners.size(); i++)
-                    listeners.get(i).update(Property.LOOP, loopCount);
+                    listeners.get(i).update(Notification.Property.LOOP, loopCount);
             }}.start();
         }
         tapeCounter.set(updated);

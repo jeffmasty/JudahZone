@@ -1,4 +1,4 @@
-drumsOut/none/16/4
+calfOut/none/16/4
 !
 9,0.78999996/0:NoteOn
 3,0.78999996/
@@ -105,8 +105,8 @@ drumsOut/none/16/4
 3,0.78999996/
 3,0.78999996/
 !
-9,1.0/4:NoteOn,8:NoteOn,10:NoteOn,12:NoteOn
-7,0.51/0:NoteOn,2:NoteOn,3:NoteOn,6:NoteOn,7:NoteOn,9:NoteOn,11:NoteOn,13:NoteOn
+9,0.61/4:NoteOn,8:NoteOn,12:NoteOn
+7,0.51/0:NoteOn,2:NoteOn,3:NoteOn,6:NoteOn,7:NoteOn,9:NoteOn,11:NoteOn,13:NoteOn,10:NoteOn
 11,0.71/14:NoteOn
 4,0.78999996/
 7,0.78999996/
@@ -126,8 +126,8 @@ drumsOut/none/16/4
 3,0.78999996/
 3,0.78999996/
 !
-7,0.78999996/0:NoteOn,1:NoteOn,2:NoteOn,3:NoteOn,4:NoteOn,5:NoteOn,6:NoteOn,7:NoteOn,8:NoteOn,9:NoteOn,10:NoteOn,11:NoteOn,12:NoteOn,13:NoteOn,14:NoteOn,15:NoteOn
-3,0.78999996/
+45,0.51/0:NoteOn,2:NoteOn,3:NoteOn,6:NoteOn,7:NoteOn,8:NoteOn,10:NoteOn,12:NoteOn,13:NoteOn,15:NoteOn
+7,0.61/1:NoteOn,4:NoteOn,5:NoteOn,9:NoteOn,11:NoteOn,14:NoteOn
 2,0.78999996/
 4,0.78999996/
 7,0.78999996/

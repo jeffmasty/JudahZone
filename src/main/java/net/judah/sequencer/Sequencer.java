@@ -29,6 +29,7 @@ import net.judah.api.AudioMode;
 import net.judah.api.Command;
 import net.judah.api.Loadable;
 import net.judah.api.Midi;
+import net.judah.api.Notification.Property;
 import net.judah.api.Service;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;

@@ -84,6 +84,8 @@ public class GridView extends JPanel implements MouseListener {
             return;
         }
         if (xy.x >= JudahClock.getSteps() || xy.x < 0) return; // off grid
+        if (xy.y >= BeatsView.getCurrent().size()) return; // off grid
+        
         Sequence beats = BeatsView.getCurrent().get((xy.y));
         Beat b = beats.getStep(xy.x);
         if (b == null) {

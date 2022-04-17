@@ -1,11 +1,6 @@
 package net.judah.util;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Insets;
+import java.awt.*;
 import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.IOException;
@@ -14,9 +9,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map.Entry;
 
 import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Sequence;
@@ -25,6 +22,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
 import net.judah.JudahZone;
@@ -99,12 +97,16 @@ public class Constants {
 
 	/** milliseconds between checking the update queue */
 	public static final int GUI_REFRESH = 5;
-	
+	public static final long DOUBLE_CLICK = 400;
+
     public static interface Gui {
+    	
+    	
     	int STD_HEIGHT = 18;
     	Insets BTN_MARGIN = new Insets(1,1,1,1);
     	Insets ZERO_MARGIN = new Insets(0,0,0,0);
     	Font BOLD = new Font("Arial", Font.BOLD, 11);
+    	Font BOLD13 = new Font("Arial", Font.BOLD, 13);
     	Font FONT13 = new Font("Arial", Font.PLAIN, 13);
     	Font FONT12 = new Font("Arial", Font.PLAIN, 12);
     	Font FONT11 = new Font("Arial", Font.PLAIN, 11);
@@ -112,6 +114,10 @@ public class Constants {
     	Border GRAY1 = new LineBorder(Color.GRAY, 1);
     	Dimension SLIDER_SZ = new Dimension(86, 40);
     	Font FONT9 = new Font("Arial", Font.PLAIN, 9);
+
+    	Border NO_BORDERS = new EmptyBorder(BTN_MARGIN);
+    	Border FOCUS_BORDER = new LineBorder(Color.BLACK, 2, true);
+
     }
 
     public static void attachKeyListener(Container p, KeyListener l) {
@@ -122,17 +128,26 @@ public class Constants {
         }
     }
 
-	public static final Midi BASSDRUM;
-	static {
-		Midi temp = null;
-		try { temp = new Midi(Midi.NOTE_ON, 9, 36, 100);
+    
+    public static final Midi DUMBDRUM = create(1, 0);
+	public static final Midi BASSDRUM = create(36, 100);
+	static Midi create(int dat1, int velocity) {
+		Midi result = null;
+		try { result = new Midi(Midi.NOTE_ON, 9, dat1, velocity);
 		} catch (InvalidMidiDataException e) {e.printStackTrace();}
-		BASSDRUM = temp;}
-
-	/** @return the length in resolved beats of a full sequence 
+		return result;
+	}
+	
+	/**Normalize midi track[0] 
+	 * @return the length in resolved bars of a full sequence 
 	 * (some midi files do not define ticks to the end of the bar) */
 	public static int requeueBeats(Sequence sequence) {
-		return (int) Math.ceil( (sequence.getTickLength() - 1) / (float)sequence.getResolution());
+		int result = (int) Math.ceil( (sequence.getTickLength() - 1) / (float)sequence.getResolution());
+		// long old = sequence.getTickLength();
+		long normalized = sequence.getResolution() * result;
+		sequence.getTracks()[0].add(new MidiEvent(DUMBDRUM, normalized));
+		// RTLogger.log(sequence, "From " + old + " to " + normalized + " @ " + sequence.getResolution());
+		return result;
 	}
 
     public static int gain2midi(float gain) {
@@ -149,7 +164,7 @@ public class Constants {
     }
     
     public static float bpmPerBeat(float msec) {
-        return 60000 / msec;
+        return 60000f / msec;
     }
 
 	public static long millisPerBeat(float beatsPerMinute) {
@@ -298,5 +313,50 @@ public class Constants {
             } catch(IOException e) {Console.warn(e);}
         }).start();
     }
+    
+    
+    /** see https://stackoverflow.com/a/846249 */ 	
+	public static float logarithmic(int percent, float min, float max) {
+		
+		// percent will be between 0 and 100
+		final int minp = 1;
+		final int maxp = 100;
+		assert percent <= max && percent >= min;
+		
+		// The result should be between min and max
+		if (min <= 0) min = 0.001f;
+		double minv = Math.log(min);
+		double maxv = Math.log(max);
+	
+		// calculate adjustment factor
+		double scale = (maxv-minv) / (maxp-minp);
+		return (float)Math.exp(minv + scale * (percent - minp));
+	}
+	
+	/** untested */
+	public static int reverseLog(float val, float min, float max) {
+		// result will be between 0 and 100
+		var minp = 0;
+		var maxp = 100;
+		// input should be between min and max
+		assert val >= min && val <= max;
+		
+		var minv = Math.log(min);
+		var maxv = Math.log(max);
+		// calculate adjustment factor
+		var scale = (maxv-minv) / (maxp-minp);
+		
+		return Math.round((float)((Math.log(val)-minv) / scale + minp));
+	}
+	
+	public static Object ratio(int data2, List<?> input) {
+        return input.get((int) ((data2 - 1) / (100 / (float)input.size())));
+	}
+	public static Object ratio(int data2, Object[] input) {
+		return input[(int) ((data2 - 1) / (100 / (float)input.length))];
+	}
+	public static int ratio(long data2, long size) {
+		return (int) (data2 / (100 / (float)size));
+	}
 
 }

@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
+import net.judah.api.Notification;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeNotifier;
@@ -34,8 +35,8 @@ public class DrumTrack extends Recorder implements TimeListener {
     }
 
     @Override
-    public void update(Property prop, Object value) {
-        if (Property.STATUS == prop) {
+    public void update(Notification.Property prop, Object value) {
+        if (Notification.Property.STATUS == prop) {
             if (Status.ACTIVE == value)
                 record(true);
             else if (Status.TERMINATED == value) {

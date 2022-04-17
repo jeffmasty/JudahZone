@@ -12,7 +12,6 @@ import net.judah.effects.Fader;
 import net.judah.effects.LFO;
 import net.judah.sequencer.MidiEvent;
 import net.judah.sequencer.MidiTrack;
-import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -35,8 +34,8 @@ public class MidiScheduler extends MidiTrack implements Runnable {
 		MidiTrack track;
 		ScheduledEvent event;
 		Midi msg;
-		while (true) {
-			try {
+		try {
+			while (true) {
 				current = offering.take();
 				LFO.pulse(); // query any running LFOs
 				Fader.pulse();
@@ -59,9 +58,9 @@ public class MidiScheduler extends MidiTrack implements Runnable {
 						track.getOutput().queue(msg);
 					}
 				}
-			} catch (Throwable t) {
-				Console.warn(t);
 			}
+		} catch (Throwable t) {
+			RTLogger.warn(this, t);
 		}
 	}
 

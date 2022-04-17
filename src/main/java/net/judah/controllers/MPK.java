@@ -25,6 +25,7 @@ import net.judah.effects.api.Reverb;
 import net.judah.fluid.FluidSynth;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
+import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 public class MPK extends MPKTools implements Controller {
@@ -35,8 +36,9 @@ public class MPK extends MPKTools implements Controller {
 	
 	
 	public static void setMode(KnobMode knobs) {
+		ControlPanel.getInstance().getTuner().setChannel(null);
 		mode = knobs;
-		RTLogger.log(knobs, mode.toString());
+		// RTLogger.log(knobs, mode.toString());
 	}
 	
 	@Override
@@ -104,28 +106,40 @@ public class MPK extends MPKTools implements Controller {
 	}
 
 	private boolean cc_pad(int data1, int data2) {
+		///////// ROW 2 /////////////////
+		// Int/Ext Clock [] . . .
 		if (data1 == PRIMARY_CC.get(0))
 			// toggle clock
 			JudahClock.setMode(data2 > 0 ? Mode.Internal : Mode.Midi24);
-		
+		// Loop Sync . [] . .
 		else if (data1 == PRIMARY_CC.get(1)) {
 			// looper sync to clock toggle
 			JudahClock.setLoopSync(data2 > 0);
 			MainFrame.update(JudahZone.getLooper().getLoopA());
 		}
-		
+		// Clock . . [] .
 		else if (data1 == PRIMARY_CC.get(2) && data2 > 0) 
 			MPK.setMode(KnobMode.Clock); // clock knobs
+		// FX . . . []
 		else if (data1 == PRIMARY_CC.get(3) && data2 > 0)  
-			MPK.setMode(KnobMode.Effects1); // fx1 knobs
+			if (MPK.getMode() == KnobMode.Effects1)
+				MPK.setMode(KnobMode.Effects2);
+			else 
+				MPK.setMode(KnobMode.Effects1);
+		
+		///////// ROW 2 /////////////////
+
+		// Crave/Fluid [] . . .
 		else if (data1 == PRIMARY_CC.get(4)) // toggle keys out
 			JudahMidi.getInstance().setKeyboardSynth(
 					data2 > 0 ? JudahMidi.getInstance().getCraveOut()
 					: JudahMidi.getInstance().getSynthOut());
-		
-		else if (data1 == PRIMARY_CC.get(5)) // sync Crave to Clock
+		// Crave Sync . [] . . 
+		else if (data1 == PRIMARY_CC.get(5)) { // sync Crave to Clock
 			JudahClock.getInstance().setSyncCrave(data2 > 0); 
-
+			MainFrame.update(JudahZone.getChannels().getCrave());
+		}
+		// TODO 
 		else if (data1 == PRIMARY_CC.get(6) && data2 > 0) {
 			// ControlPanel.getInstance().beatBuddy();
 			MPK.setMode(KnobMode.Tracks);
@@ -149,21 +163,11 @@ public class MPK extends MPKTools implements Controller {
 			case Clock:
 				clockKnobs(data1, data2);
 				return true;
+			case Tracks:
+				trackKnobs(data1, data2);
 		}
 		return false;
 	}
-		// TODO
-    // channel.getLfo().setFrequency((data2 + 1) * 33);
-    // channel.getLfo().setActive(data2 < thresholdHi);
-	//	Target target = lfoLookup(data2);
-	//	if (target != null) 
-	//		channel.getLfo().setTarget(target); 
-	//	if (target == null) channel.getLfo().setActive(false);
-//	private Target lfoLookup(int data2) {
-//		if (data2 / 20 < Target.values().length)
-//			return Target.values()[data2 / 20];
-//		return null;
-//	}
 	
 	private void effects1(int data1, int data2) {
 		Channel channel = ControlPanel.getInstance().getChannel();
@@ -205,10 +209,6 @@ public class MPK extends MPKTools implements Controller {
         	CutFilter party = channel.getCutFilter();
         	party.setFilterType(Type.pArTy);
         	party.setFrequency(CutFilter.knobToFrequency(data2));
-        	float res = (data2 > 50) ? 
-        		8 + (data2 - 50) * 0.2f :
-        		8 + (50 - data2) * 0.2f;
-        	party.setResonance(res);
         }
 	}
 
@@ -262,9 +262,11 @@ public class MPK extends MPKTools implements Controller {
         else if (data1 == MPKTools.KNOBS.get(1)) {
         	if (data2 == 0) 
         		clock.setLength(1);
-        	else 
-        		clock.setLength(JudahClock.LENGTHS[ (int)((data2 - 1) / (100 / (float)JudahClock.LENGTHS.length))]);
-		}
+        	else {
+        		// clock.setLength(JudahClock.LENGTHS[ (int)((data2 - 1) / (100 / (float)JudahClock.LENGTHS.length))]);
+        		clock.setLength((int)Constants.ratio(data2, JudahClock.LENGTHS));
+        	}
+        }
         else if (data1 == MPKTools.KNOBS.get(2)) {
         }
         else if (data1 == MPKTools.KNOBS.get(3)) {
@@ -279,6 +281,13 @@ public class MPK extends MPKTools implements Controller {
         }
 	}
 	
+	private void trackKnobs(int data1, int data2) {
+		for (int i = 0; i < MPKTools.KNOBS.size(); i++) {
+			if (data1 == MPKTools.KNOBS.get(i))
+				MainFrame.get().getTracker().knob(i, data2);
+		}
+	}
+	
 	private boolean joystick(boolean up, int data2) {
 		Channel channel = ControlPanel.getInstance().getChannel();
 		if (up) // delay
@@ -287,7 +296,7 @@ public class MPK extends MPKTools implements Controller {
 			else {
 				Delay d = channel.getDelay();
 				d.setActive(true);
-				if (d.getDelay() < Delay.DEF_TIME) d.setDelay(Delay.DEF_TIME);
+				if (d.getDelay() < Delay.DEFAULT_TIME) d.setDelay(Delay.DEFAULT_TIME);
 				d.setFeedback((data2 - 77) / 50f); // 77 to 127;
 			}
 		else { // distortion and chorus
@@ -327,7 +336,7 @@ public class MPK extends MPKTools implements Controller {
                 return true;
             }
             if (data1 == PRIMARY_PROG[2]) { // elec piano
-                JudahMidi.getInstance().queue(FluidSynth.getInstance().progChange(0, 5));
+                JudahMidi.getInstance().queue(FluidSynth.getInstance().progChange(0, 4));
                 return true;
             }
             if (data1 == PRIMARY_PROG[4]) { // strings

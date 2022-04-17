@@ -308,11 +308,6 @@ public class Knob extends JComponent{
 				 backgroundWidth, handleIcon);
 	 }
 
-//	 /** Empty public constructor available so the object may be
-//	  * instantiated before being fully initialized. */
-//	 public Knob(){
-//	 }
-
     /**
 	  * This method is called from the constructors or explicitly after creation of
 	  * a JKnobFancy object using the empty no-args constructor to finish initialization. <br>

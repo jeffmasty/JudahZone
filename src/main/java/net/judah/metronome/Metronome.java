@@ -28,6 +28,7 @@ import com.illposed.osc.OSCSerializeException;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.api.Command;
+import net.judah.api.Notification;
 import net.judah.api.Service;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
@@ -152,7 +153,7 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 	public void setVolume(float gain) {
 		if (gain > 1 || gain < 0) throw new InvalidParameterException("volume between 0 and 1: " + gain);
 		this.gain = gain;
-		listeners.forEach( listener -> { listener.update(Property.VOLUME, gain);});
+		listeners.forEach( listener -> { listener.update(Notification.Property.VOLUME, gain);});
 	}
 
 	@Override
@@ -167,7 +168,7 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 	@Override
     public void end() {
 
-		listeners.forEach( (listener) -> {listener.update(Property.STATUS, Status.TERMINATED);});
+		listeners.forEach( (listener) -> {listener.update(Notification.Property.STATUS, Status.TERMINATED);});
 		if (playa!= null) {
 			listeners.remove(playa);
 			playa.close();
@@ -193,10 +194,10 @@ public class Metronome implements Service, TimeProvider, TimeListener {
     							new JackReceiver(JudahClock.getInstance().getSequencer(0).getMidiOut()));
 
     		addListener(playa);
-    		listeners.forEach( listener -> {listener.update(Property.MEASURE, measure);});
-    		listeners.forEach( listener -> {listener.update(Property.VOLUME, gain);});
-    		listeners.forEach( listener -> {listener.update(Property.TEMPO, tempo * 1f);});
-    		listeners.forEach( listener -> {listener.update(Property.STATUS, Status.ACTIVE);});
+    		listeners.forEach( listener -> {listener.update(Notification.Property.MEASURE, measure);});
+    		listeners.forEach( listener -> {listener.update(Notification.Property.VOLUME, gain);});
+    		listeners.forEach( listener -> {listener.update(Notification.Property.TEMPO, tempo * 1f);});
+    		listeners.forEach( listener -> {listener.update(Notification.Property.STATUS, Status.ACTIVE);});
     		clicktrack = false;
 	    } catch (IOException| InvalidMidiDataException| MidiUnavailableException e) {
 	        Console.warn(e);
@@ -224,7 +225,7 @@ public class Metronome implements Service, TimeProvider, TimeListener {
     	    new Thread() { // off RT thread
     	        @Override public void run() {
     	            listeners.forEach( listener -> {
-    	                    listener.update(Property.TEMPO, tempo);
+    	                    listener.update(Notification.Property.TEMPO, tempo);
     	    });}}.start();
 	    }
 		return true;
@@ -255,7 +256,7 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 
 	void rollTransport() {
 		if (this != timeProvider) return;
-		listeners.forEach(listener -> {listener.update(Property.TRANSPORT, JackTransportState.JackTransportStarting);});
+		listeners.forEach(listener -> {listener.update(Notification.Property.TRANSPORT, JackTransportState.JackTransportStarting);});
 	}
 
 	@Override
@@ -279,8 +280,8 @@ public class Metronome implements Service, TimeProvider, TimeListener {
 	}
 
 	@Override
-	public void update(Property prop, Object value) {
-		if (Property.TEMPO == prop) {
+	public void update(Notification.Property prop, Object value) {
+		if (Notification.Property.TEMPO == prop) {
 			setTempo((float)value);
 		}
 

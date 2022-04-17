@@ -8,13 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JToggleButton;
+import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 
 import org.jaudiolibs.jnajack.JackPort;
@@ -31,14 +25,7 @@ import net.judah.fluid.FluidSynth;
 import net.judah.midi.JudahMidi;
 import net.judah.plugin.Carla;
 import net.judah.settings.Channels;
-import net.judah.util.CenteredCombo;
-import net.judah.util.Click;
-import net.judah.util.Console;
-import net.judah.util.Constants;
-import net.judah.util.FileChooser;
-import net.judah.util.Pastels;
-import net.judah.util.Size;
-import net.judah.util.Slider;
+import net.judah.util.*;
 
 
 // if channel = 9, 
@@ -153,7 +140,7 @@ public class Buttons extends JPanel implements Size {
         if (JudahClock.getSteps() != (Integer)steps.getSelectedItem())
             steps.setSelectedItem(JudahClock.getSteps());
         if (JudahClock.getSubdivision() != div.getSelectedIndex())
-        div.setSelectedItem(JudahClock.getSubdivision());
+        	div.setSelectedItem(JudahClock.getSubdivision());
         mute.setSelected((sequencer.isMute()));
         for (ItemListener l : mute.getItemListeners()) {
             l.itemStateChanged(new ItemEvent(mute, 1, Boolean.TRUE, ItemEvent.RESERVED_ID_MAX));

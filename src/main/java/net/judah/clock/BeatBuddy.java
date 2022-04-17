@@ -21,6 +21,7 @@ import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.api.Command;
 import net.judah.api.Midi;
+import net.judah.api.Notification;
 import net.judah.api.Service;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeNotifier;
@@ -380,8 +381,8 @@ public class BeatBuddy extends ArrayList<Command> implements TimeNotifier, Servi
 		if (listener != null) target.removeListener(listener);
 		listener = new TimeListener() {
 			boolean firstTime = true;
-			@Override public void update(Property prop, Object value) {
-				if (prop.equals(TimeListener.Property.LOOP)) {
+			@Override public void update(Notification.Property prop, Object value) {
+				if (prop.equals(Notification.Property.LOOP)) {
 					queue.offer(BeatBuddy.PAUSE_MIDI);
 					if (firstTime) {
 						firstTime = false;

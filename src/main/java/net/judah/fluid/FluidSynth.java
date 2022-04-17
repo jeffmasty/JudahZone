@@ -1,10 +1,6 @@
 package net.judah.fluid;
 
-import static net.judah.settings.Commands.SynthLbls.DIRECT;
-import static net.judah.settings.Commands.SynthLbls.DRUMBANK;
-import static net.judah.settings.Commands.SynthLbls.INSTDOWN;
-import static net.judah.settings.Commands.SynthLbls.INSTUP;
-import static net.judah.settings.Commands.SynthLbls.PROGCHANGE;
+import static net.judah.settings.Commands.SynthLbls.*;
 import static net.judah.util.Constants.NL;
 
 import java.io.File;
@@ -60,7 +56,7 @@ public class FluidSynth implements Service {
 	private final Command progChange, instUp, instDown, drumBank, direct;
 	@Getter private final List<Command> commands;
 
-	private float gain = 0.6f; // max 5
+	private float gain = 0.5f; // max 5.0
 
 	public FluidSynth (int sampleRate, boolean startListeners) throws JackException, JudahException, IOException {
 		this(sampleRate, SOUND_FONT, startListeners);
@@ -296,7 +292,6 @@ public class FluidSynth implements Service {
 	}
 
 	public void sendCommand(String string) {
-		//log.trace("sendCommand: " + string);
 		if (false == string.endsWith(NL))
 			string = string + NL;
 

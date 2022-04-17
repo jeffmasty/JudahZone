@@ -1,11 +1,8 @@
 package net.judah;
 
-import static net.judah.util.AudioTools.processAdd;
-import static net.judah.util.AudioTools.processSilence;
-import static net.judah.util.Constants.LEFT_CHANNEL;
-import static net.judah.util.Constants.RIGHT_CHANNEL;
-import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsInput;
-import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsOutput;
+import static net.judah.util.AudioTools.*;
+import static net.judah.util.Constants.*;
+import static org.jaudiolibs.jnajack.JackPortFlags.*;
 import static org.jaudiolibs.jnajack.JackPortType.AUDIO;
 
 import java.io.File;
@@ -27,7 +24,6 @@ import lombok.extern.log4j.Log4j;
 import net.judah.api.BasicClient;
 import net.judah.api.Command;
 import net.judah.api.Service;
-import net.judah.clock.JudahClock;
 import net.judah.effects.Fader;
 import net.judah.effects.api.PresetsHandler;
 import net.judah.fluid.FluidSynth;
@@ -39,7 +35,6 @@ import net.judah.plugin.Carla;
 import net.judah.plugin.TalReverb;
 import net.judah.sequencer.Sequencer;
 import net.judah.settings.Channels;
-import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.Icons;
 import net.judah.util.JudahException;
@@ -93,6 +88,7 @@ public class JudahZone extends BasicClient {
         super(JUDAHZONE);
         instance = this;
         Runtime.getRuntime().addShutdownHook(new ShutdownHook());
+        MainFrame.startNimbus();
 
         synth = new FluidSynth(Constants.sampleRate());
         midi = new JudahMidi("JudahMidi");
@@ -135,7 +131,7 @@ public class JudahZone extends BasicClient {
 
         try { // Initialize the Carla lv2 plugin host (now that our ports are created)
             carla = new Carla(true);
-            Thread.sleep(400);
+            Thread.sleep(100);
             services.add(carla);
             plugins.addAll(carla.getPlugins());
             looper.init(carla);
@@ -147,10 +143,9 @@ public class JudahZone extends BasicClient {
     @Override
     protected void makeConnections() throws JackException {
         if (masterTrack == null) {
-            Console.info("Initialization failed.");
+            RTLogger.log(this, "Initialization failed.");
             return;
         }
-        
         
         // inputs
         for (LineIn ch : channels) {
@@ -180,16 +175,17 @@ public class JudahZone extends BasicClient {
     
     private void initializeGui() {
     	
+    	Constants.sleep(500); // allow external plug-in host to startup
         new MainFrame(JUDAHZONE);
         new TalReverb(carla, carla.getPlugins().byName(TalReverb.NAME))
             .initialize(Constants.sampleRate(), Constants.bufSize());
-
+        ControlPanel.getInstance().setFocus(channels.getGuitar());
+        
         initialized = true;
         /////////////////////////////////////////////////////////////////////////
         //                    now the system is live                           //
         /////////////////////////////////////////////////////////////////////////
         
-        ControlPanel.getInstance().setFocus(channels.getGuitar());
         Fader.execute(Fader.fadeIn());
         masterTrack.setOnMute(false);
 
@@ -200,8 +196,8 @@ public class JudahZone extends BasicClient {
 			// new Sequencer(new File(Constants.ROOT, "Songs/InMood4Love"));
 
             // step sequencer
-            JudahClock.getInstance().getSequencer(9).load(Constants.defaultDrumFile);
-            MainFrame.get().beatBox();
+            // JudahClock.getInstance().getSequencer(9).load(Constants.defaultDrumFile);
+            // MainFrame.get().beatBox();
             MainFrame.updateTime();
 
         });
@@ -267,7 +263,7 @@ public class JudahZone extends BasicClient {
             try {
                 midi = new JudahMidi("JudahMidi");
             } catch (Exception e) {
-                Console.warn(e);
+                RTLogger.warn(this, e);
             }
         }).start();
     }

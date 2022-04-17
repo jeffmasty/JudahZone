@@ -12,6 +12,7 @@ import javax.sound.midi.ShortMessage;
 import lombok.extern.log4j.Log4j;
 import net.judah.api.Midi;
 import net.judah.api.MidiQueue;
+import net.judah.api.Notification;
 import net.judah.api.Status;
 import net.judah.util.Constants;
 
@@ -153,12 +154,12 @@ public class TickTock implements Player {
 	}
 
 	@Override
-	public void update(Property prop, Object value) {
+	public void update(Notification.Property prop, Object value) {
 		if (value == Status.ACTIVE) start();
 		if (value == Status.TERMINATED) stop();
-		if (prop == Property.TEMPO) setTempo((Float)value);
-		if (prop == Property.VOLUME) setGain((Float)value);
-		if (prop == Property.MEASURE) measure = (Integer)value;
+		if (prop == Notification.Property.TEMPO) setTempo((Float)value);
+		if (prop == Notification.Property.VOLUME) setGain((Float)value);
+		if (prop == Notification.Property.MEASURE) measure = (Integer)value;
 	}
 
 }

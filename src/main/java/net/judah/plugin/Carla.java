@@ -1,7 +1,6 @@
 package net.judah.plugin;
 
-import static net.judah.util.Constants.LEFT_CHANNEL;
-import static net.judah.util.Constants.RIGHT_CHANNEL;
+import static net.judah.util.Constants.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -139,6 +138,7 @@ public class Carla implements Service {
     	out = new OSCPortOut(InetAddress.getLocalHost(), udpPort);
     	log.debug("Carla created. " + carlaSettings);
     	instance = this;
+    	
 	}
 
 	/** @return true if message sent

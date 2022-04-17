@@ -56,7 +56,8 @@ public class Slider extends JSlider {
         super(min, max);
         putClientProperty("Nimbus.Overrides",sliderDefaults);
         putClientProperty("Nimbus.Overrides.InheritDefaults",false);
-        addChangeListener(l);
+        if (l != null)
+        	addChangeListener(l);
     }
 
 }

@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.swing.JDesktopPane;
 
 import lombok.Getter;
+import net.judah.api.Notification;
 import net.judah.api.TimeListener;
 import net.judah.clock.JudahClock;
 import net.judah.util.Console;
@@ -85,7 +86,7 @@ public class BeatsView extends JDesktopPane implements TimeListener, Pastels {
     }
 
     @Override
-    public void update(Property prop, Object value) {
+    public void update(Notification.Property prop, Object value) {
         // TODO
     }
 

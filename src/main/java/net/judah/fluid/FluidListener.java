@@ -5,13 +5,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
-
 import net.judah.util.RTLogger;
 
 class FluidListener extends Thread {
-	static final Logger log = Logger.getLogger(FluidListener.class);
-
 	final static String PREFIX = ">";
 	final static String JACK = "Jack:";
 	final static String PREFIX_JACK = "> Jack: ";
@@ -57,7 +53,7 @@ class FluidListener extends Thread {
             				FluidInstrument instrument = new FluidInstrument(line);
             				instruments.add(instrument);
             			} catch (Throwable t) {
-            				log.error("error reading instrument line " + line, t);
+            				RTLogger.warn(this, "error reading instrument line " + line + " " + t.getMessage());
             				sysOverride = null;
             			}
             		}
@@ -70,7 +66,7 @@ class FluidListener extends Thread {
             		}
 
             	}
-            	else if (!line.contains("> gain ")) 
+            	else if (!line.contains("> gain ") && !line.contains("synth.reverb")) 
             		RTLogger.log(this, line);
             }
         } catch (Exception e) {

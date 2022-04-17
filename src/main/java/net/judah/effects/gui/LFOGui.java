@@ -35,8 +35,10 @@ public class LFOGui extends JPanel implements GUI {
         activeButton = new JToggleButton("  LFO   ");
         activeButton.addActionListener(e -> {lfo();});
         lfoMax = new Knob(val -> {channel.getLfo().setMax(val);});
+        lfoMax.setValue(90);
         lfoMin = new Knob(val -> {channel.getLfo().setMin(val);});
-
+        lfoMin.setValue(10);
+        
         lfoFreq = new Slider(90, 1990, e -> {channel.getLfo().setFrequency(
                 lfoFreq.getValue());}, "0.1 to 2 seconds");
         lfoFreq.setMaximumSize(Gui.SLIDER_SZ);
@@ -45,6 +47,9 @@ public class LFOGui extends JPanel implements GUI {
         for (Target t : LFO.Target.values())
             lfoModel.addElement(t.name());
         lfoTarget = new JComboBox<>(lfoModel);
+
+        lfoTarget.setSelectedItem(channel.getLfo().getTarget().toString());
+        
         lfoTarget.addActionListener(e -> { channel.getLfo().setTarget(
                 Target.valueOf(lfoTarget.getSelectedItem().toString()));});
         lfoTarget.setPreferredSize(TARGET_SZ);

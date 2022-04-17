@@ -8,8 +8,7 @@ public class Beat {
 
     private int step;
     private Type type = Type.NoteOn;
-    private float velocity = 1;
-    // private Object data;
+    private int velocity = 100;
 
     public Beat(int step) {
         this.step = step;

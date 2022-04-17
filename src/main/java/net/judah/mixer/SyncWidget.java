@@ -3,6 +3,9 @@ package net.judah.mixer;
 import java.awt.Color;
 import java.awt.Dimension;
 
+import net.judah.JudahZone;
+import net.judah.api.AudioMode;
+import net.judah.api.Notification;
 import net.judah.api.TimeListener;
 import net.judah.clock.JudahClock;
 import net.judah.looper.Recorder;
@@ -19,12 +22,13 @@ public class SyncWidget extends Menu implements TimeListener {
 		super(channel);
 		loop = channel;
 		setIcon(null);
-		JudahClock.getInstance().addListener(this);
-		setFont(Constants.Gui.FONT13);
-		setText("hi.");
+		setFont(Constants.Gui.BOLD13);
+		setText(loop.getName() + " ");
 		
 		setPreferredSize(sz);
 		setMinimumSize(sz);
+		JudahClock.getInstance().addListener(this);
+
 	}
 
 	@Override
@@ -35,6 +39,7 @@ public class SyncWidget extends Menu implements TimeListener {
 	}
 	
 	public void updateLoop() {
+		// TODO update sensitive to length of loop
 		if (loop.hasRecording() && 100 * loop.getTapeCounter().intValue() / loop.getRecording().size() != local) {
 			// every 5%
 			local = 20 * loop.getTapeCounter().intValue() / loop.getRecording().size() ;
@@ -45,40 +50,25 @@ public class SyncWidget extends Menu implements TimeListener {
 	
 	@Override
 	public void update() {
-//		else 
-//			if (JudahClock.isLoopSync()) {
-//			if (loop.isRecording() == AudioMode.RUNNING) 
-//				if (!getText().equals(JudahClock.display())) {
-//					setText(JudahClock.display());
-//				} 
-//			else if (!getText().equals("" + JudahClock.getLength())) {
-//				setText("" + JudahClock.getLength());
-//			}
-//		}
-//		else if (loop.isRecording() == AudioMode.RUNNING) {
-//			if (local != (System.currentTimeMillis() - loop.getRecording().getCreationTime()) / 1000) {
-//				local = (int) ((System.currentTimeMillis() - loop.getRecording().getCreationTime()) / 1000);
-//				setText(local + " s.");
-//			}
-//		}
-//		else 
-//			if (!getText().equals("hmm"))
-//				setText("hmm");
-//		
+		
+		if (loop.isPlaying() != AudioMode.RUNNING && !loop.hasRecording()) 
+			if (loop == JudahZone.getLooper().getLoopA()) {
+				if (JudahClock.isLoopSync()) {
+					// display sync measures
+					setText("-- " + JudahClock.getLength() + " --");
+					setBackground(Color.WHITE);
+				}
+				else {
+					setText("free ");
+				}
+			}
+			else 				
+				setText("");
+		
 	}
 
-
-//	@Override
-//	public void update(int percent) {
-//		if (local != percent) {
-//			local = percent;
-//			setText(local + "%");
-//		}
-//	}
-	
-	
 	@Override
-	public void update(Property prop, Object value) {
+	public void update(Notification.Property prop, Object value) {
 //		if (prop == Property.BEAT)
 //			update();
 	}

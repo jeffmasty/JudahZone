@@ -13,7 +13,9 @@ import lombok.Getter;
 import lombok.Setter;
 import net.judah.MainFrame;
 import net.judah.plugin.Plugin;
+import net.judah.util.AudioTools;
 import net.judah.util.Constants;
+import net.judah.util.GuitarTuner;
 
 /**JudahZone mixer Channels come with built-in compression, reverb and gain */
 public class LineIn extends Channel {
@@ -25,6 +27,9 @@ public class LineIn extends Channel {
 
     @Getter protected boolean muteRecord;
     @Getter @Setter protected boolean solo;
+
+    /** set to <code>null</code> for no processing */
+    @Getter @Setter protected GuitarTuner tuner;
 
     @Getter protected final String leftSource;
     @Getter protected final String leftConnection;
@@ -61,13 +66,20 @@ public class LineIn extends Channel {
 		FloatBuffer left = leftPort.getFloatBuffer();
 		FloatBuffer right = (isStereo) ? rightPort.getFloatBuffer() : null; 
 		
-		float gain = getVolume() * 0.4f;
+		if (this == GuitarTuner.getChannel()) {
+			left.rewind();
+			MainFrame.update(AudioTools.copy(left));
+			left.rewind();
+		}
+		
+		float gain = getVolume() * 0.5f;
 		for (int z = 0; z < Constants.bufSize(); z++)
 			left.put(left.get(z) * gain);
 		if (isStereo)
 			for (int z = 0; z < Constants.bufSize(); z++)
 				right.put(right.get(z) * gain);
 
+		
 		if (eq.isActive()) {
 			eq.process(left, true);
 			if (isStereo)

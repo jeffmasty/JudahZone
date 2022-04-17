@@ -163,11 +163,11 @@ public class EQ implements Effect {
 		leftCh.filters[EqBand.Bass.ordinal()] = bass;
 		rightCh.filters[EqBand.Bass.ordinal()] = new BiquadFilter(bass);
 
-		BiquadFilter mid = new BiquadFilter(650, 1.5f, FilterType.Peaking);
+		BiquadFilter mid = new BiquadFilter(550, 1.5f, FilterType.Peaking);
 		leftCh.filters[EqBand.Mid.ordinal()] = mid;
 		rightCh.filters[EqBand.Mid.ordinal()] = new BiquadFilter(mid);
 
-		BiquadFilter treble = new BiquadFilter(6000, 2f, FilterType.Peaking);
+		BiquadFilter treble = new BiquadFilter(5800, 2f, FilterType.Peaking);
 		leftCh.filters[EqBand.High.ordinal()] = treble;
 		rightCh.filters[EqBand.High.ordinal()] = new BiquadFilter(treble);
 	}

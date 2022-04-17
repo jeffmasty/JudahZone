@@ -9,6 +9,7 @@ import javax.sound.midi.Sequence;
 import javax.sound.midi.Sequencer;
 
 import lombok.Getter;
+import net.judah.api.Notification;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeProvider;
 import net.judah.clock.JudahClock;
@@ -67,12 +68,12 @@ public class MidiGnome implements Player, TimeListener {
 	}
 	
 	@Override
-	public void update(Property prop, Object value) {
+	public void update(Notification.Property prop, Object value) {
 		// restart loop or update tempo
-		if (Property.TEMPO == prop) {
+		if (Notification.Property.TEMPO == prop) {
 			sequencer.setTempoFactor(clock.getTempo() * 0.01f);
 		}
-		else if (Property.BARS == prop) {
+		else if (Notification.Property.BARS == prop) {
 			barCount++;
 			if (barCount == restart && running) {
 				sequencer.setMicrosecondPosition(0);

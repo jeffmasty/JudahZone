@@ -85,13 +85,15 @@ public class Delay implements Effect {
     public enum Settings {
         DelayTime, Feedback
     }
-
-    private final static float DEF_MAX_DELAY = 2.51f;
-    public final static float DEF_TIME = 0.2f;
-
+    
+    // in seconds
+    public static final float DEF_MAX_DELAY = 4f; 
+    public static final float DEF_MIN_DELAY = 0.02f;
+    public static final float DEFAULT_TIME = .15f;
+    
     private final float sampleRate;
     private final float nframes; // jack buffer size
-    private float delaytime = DEF_TIME;
+    private float delaytime = DEFAULT_TIME;
     @Getter private float maxDelay = DEF_MAX_DELAY;
     @Getter private float feedback = 0.36f;
 
@@ -136,8 +138,12 @@ public class Delay implements Effect {
 
     @Override
     public int get(int idx) {
-        if (idx == Settings.DelayTime.ordinal())
-            return Math.round(100 * getDelay() / getMaxDelay());
+        if (idx == Settings.DelayTime.ordinal()) {
+        	// pre-logarithmic: return Math.round(100 * getDelay() / getMaxDelay());
+        	return Constants.reverseLog(getDelay(), DEF_MIN_DELAY, getMaxDelay());
+        }
+        	
+            
         if (idx == Settings.Feedback.ordinal())
             return Math.round(getFeedback() * 100);
         throw new InvalidParameterException();
@@ -146,7 +152,8 @@ public class Delay implements Effect {
     @Override
     public void set(int idx, int value) {
         if (idx == Settings.DelayTime.ordinal()) {
-            setDelay(value * getMaxDelay() / 100f);
+        	// pre-logarithmic: setDelay(value * getMaxDelay() / 100f);
+        	setDelay(Constants.logarithmic(value, DEF_MIN_DELAY, maxDelay));
         }
         else if (idx == Settings.Feedback.ordinal())
             setFeedback(value / 100f);
@@ -174,8 +181,6 @@ public class Delay implements Effect {
             Arrays.fill(left.workArea, 0);
         if (right.workArea != null)
             Arrays.fill(right.workArea, 0);
-        delaytime = .12f;
-        feedback = 0.36f;
     }
 
 	public void processReplace(FloatBuffer in, FloatBuffer out, boolean isLeft) {

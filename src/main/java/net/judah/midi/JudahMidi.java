@@ -1,7 +1,6 @@
 package net.judah.midi;
 import static net.judah.settings.MidiSetup.DRUMS_CHANNEL;
-import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsInput;
-import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsOutput;
+import static org.jaudiolibs.jnajack.JackPortFlags.*;
 import static org.jaudiolibs.jnajack.JackPortType.MIDI;
 
 import java.util.ArrayList;
@@ -29,13 +28,7 @@ import net.judah.api.Service;
 import net.judah.beatbox.BeatBox;
 import net.judah.clock.BeatBuddy;
 import net.judah.clock.JudahClock;
-import net.judah.controllers.ArduinoPedal;
-import net.judah.controllers.Controller;
-import net.judah.controllers.Crave;
-import net.judah.controllers.KorgMixer;
-import net.judah.controllers.KorgPads;
-import net.judah.controllers.MPK;
-import net.judah.controllers.MidiPedal;
+import net.judah.controllers.*;
 import net.judah.fluid.FluidSynth;
 import net.judah.sequencer.Sequencer;
 import net.judah.settings.MidiSetup.IN;
@@ -99,7 +92,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
         NAMES = channelMap();
     }
 
-    private String[] channelMap() {
+    private String[] channelMap() {  // TODO remove?
         String [] result = new String[] {
                 "DRUMS", "NOTES", "CHORD", "DRUM2", "SDRUM", "BUDDY",
                 "NOTE2", "NOTE3", "NOTE4", "NOTE5", "NOTE6",
@@ -276,18 +269,14 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 
     }
     
-//    private byte[] data = null;
     private final byte[] DATA1 = new byte[1], DATA2 = new byte[2], DATA3 = new byte[3];
-//    private int index, eventCount;
-//    private ShortMessage poll;
-//    private PortMessage route;
-//    private Midi midi;
-	    
+
+    private int offset;
+    
     @Override
     public boolean process(JackClient client, int nframes) {
         if (JudahZone.getMasterTrack() == null || JudahZone.getMasterTrack().isOnMute()) return true;
-
-        
+        offset = 0;
         try {
 
             scheduler.offer(frame++);
@@ -297,7 +286,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
             
             ShortMessage poll = BeatBuddy.getQueue().poll();
         	while (poll != null) {
-        		JackMidi.eventWrite(drumsOut, 0, poll.getMessage(), poll.getLength());
+        		JackMidi.eventWrite(drumsOut, offset++, poll.getMessage(), poll.getLength());
         		// RTLogger.log(this, "to beat buddy: " + poll);
         		poll = BeatBuddy.getQueue().poll();
         	}
@@ -348,7 +337,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
                 poll = b.getQueue().poll();
                 while (poll != null) {
                     JackMidi.eventWrite(b.getMidiOut(),
-                            0, poll.getMessage(), poll.getLength());
+                            offset++, poll.getMessage(), poll.getLength());
                 	poll = b.getQueue().poll();
                 }
             }
@@ -356,10 +345,10 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
             PortMessage route = queue.poll();
             while(route != null) {
             	if (route.getPort() == null) 
-            		write(route.getMidi(), 0);
+            		write(route.getMidi(), offset++);
             	else 
             		JackMidi.eventWrite(route.getPort(), 
-            				0, route.getMidi().getMessage(), route.getMidi().getLength());
+            				offset++, route.getMidi().getMessage(), route.getMidi().getLength());
             	route = queue.poll();
             }
 
@@ -440,14 +429,11 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
     //        int from = Integer.parseInt("" + props.get("from"));
     //        int to = Integer.parseInt("" + props.get("to"));
     //        Route route = new Route(from, to);
-    //        if (active)
-    //            getRouter().add(route);
-    //        else
-    //            getRouter().remove(route);
+    //        if (active) getRouter().add(route);
+    //        else  getRouter().remove(route);
     //    } catch (NumberFormatException e) {
     //        log.error(e.getMessage() + " " + Constants.prettyPrint(props));
-    //    }
-    //}
+    //    }}
 
 //	case KOMPLETE_CHANNEL:
 //		JackMidi.eventWrite(komplete, time, midi.getMessage(), midi.getLength());
@@ -455,10 +441,8 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 
 // jack.connect(jackclient, dr5Port.getName(), "a2j:Komplete Audio 6 [20] (playback): Komplete Audio 6 MIDI 1");
 //public void disconnectDrums() {
-//	try {
-//    	for (String port : jack.getPorts(jackclient, drums.getShortName(), MIDI, EnumSet.of(JackPortIsOutput))) {
+//	try { for (String port : jack.getPorts(jackclient, drums.getShortName(), MIDI, EnumSet.of(JackPortIsOutput))) {
 //    		RTLogger.log(this, "disconnecting " + port + " from " + FluidSynth.MIDI_PORT);
 //    		jack.disconnect(jackclient, port, FluidSynth.MIDI_PORT);
-//    	}
-//	} catch (JackException e) { log.error("disconnecting drums error, " + e.getMessage());}}
+//    	} } catch (JackException e) { log.error("disconnecting drums error, " + e.getMessage());}}
 

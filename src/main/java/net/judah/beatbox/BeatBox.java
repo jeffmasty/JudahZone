@@ -58,7 +58,7 @@ public class BeatBox extends ArrayList<Grid> implements Runnable {
             for (Beat note : seq)
                 if (note.getStep() == step) {
                     int volume = Math.round(note.getVelocity() *
-                            seq.getVelocity() *  (current.getVolume() * 1.27f));
+                            seq.getVelocity() *  (current.getVolume() * 0.0127f));
                     Midi msg = null;
                     Beat.Type type = note.getType();
                     if (Beat.Type.NoteOn == type) {
@@ -231,5 +231,5 @@ public class BeatBox extends ArrayList<Grid> implements Runnable {
         BeatsView.getInstance().updateKit(this, current.createTracks());
 
     }
-
+    
 }

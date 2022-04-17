@@ -82,7 +82,11 @@ public class ToggleSwitch extends JPanel {
         return activated;
     }
     public void setActivated(boolean activated) {
-        this.activated = activated;
+        if (this.activated != activated) {
+        	this.activated = activated;
+        	repaint();
+        }
+        
     }
     public Color getSwitchColor() {
         return switchColor;

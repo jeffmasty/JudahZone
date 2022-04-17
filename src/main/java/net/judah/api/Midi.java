@@ -19,12 +19,12 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j;
 import net.judah.util.Console;
+import net.judah.util.RTLogger;
 
 /** Utilities added to javax ShortMessage, with an optional source Midi port */
 @JsonDeserialize(using = Midi.Deserialization.class)
-@JsonSerialize(using = Midi.Serialization.class) @Log4j
+@JsonSerialize(using = Midi.Serialization.class) 
 public class Midi extends ShortMessage {
 
 	public static final String PARAM_COMMAND = "command";
@@ -46,7 +46,8 @@ public class Midi extends ShortMessage {
 	/** @return null on internally handled exception */
 	public static Midi create(int command, int channel, int data1, int data2) {
 		try { return new Midi(command, channel, data1, data2);
-		} catch(Throwable t) { log.error(t.getMessage(), t); }
+		} catch(Throwable t) { 
+			RTLogger.warn("Midi.create()", t); }
 		return null;
 	}
 

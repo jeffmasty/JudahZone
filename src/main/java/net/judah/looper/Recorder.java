@@ -22,6 +22,7 @@ import net.judah.JudahZone;
 import net.judah.Looper;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
+import net.judah.api.Notification;
 import net.judah.api.RecordAudio;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
@@ -43,7 +44,7 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
     private int counter;
     @Getter private long recordedLength = -1;
     private long _start;
-    private Sample master;
+    @Getter protected Sample primary;
 
     public Recorder(String name, Type type) {
         this(name, type, JudahZone.getInPorts(), JudahZone.getOutPorts());
@@ -58,28 +59,29 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
     }
 
     @Override
-    public void update(Property prop, Object value) {
-        if (Property.STATUS == prop && Status.TERMINATED == value) {
-        	if (master.getRecording() != null) {
-        		setRecording(new Recording(master.getRecording().size(), true));
+    public void update(Notification.Property prop, Object value) {
+        if (Notification.Property.STATUS == prop && Status.TERMINATED == value) {
+        	if (primary.getRecording() != null) {
+        		setRecording(new Recording(primary.getRecording().size(), true));
         		RTLogger.log(this, name + " sync'd recording. buffers: " + getRecording().size());
         	}
        		play(true);
             record(true);
-            master.removeListener(this);
-            master = null;
+            primary.removeListener(this);
+            primary = null;
         }
     }
 
     public void armRecord(Sample loopA) {
-    	if (master == null) {
-	        master = loopA;
+    	if (primary == null) {
+	        primary = loopA;
 	        loopA.addListener(this);
-	        RTLogger.log(this, name + " sync'd and armed");
+	        sync = false;
     	}
     	else {
     		loopA.removeListener(this);
-    		master = null;
+    		primary = null;
+    		sync = true;
     	}
     	MainFrame.update(this);
     }
@@ -93,7 +95,7 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
             recording = new Recording(true); // threaded to accept live stream
             isRecording.set(STARTING);
             new ArrayList<TimeListener>(listeners).forEach(
-            		listener -> {listener.update(Property.STATUS, Status.ACTIVE);});
+            		listener -> {listener.update(Notification.Property.STATUS, Status.ACTIVE);});
             RTLogger.log(this, name + " recording starting");
         } else if (active && (isPlaying.get() == RUNNING || isPlaying.get() == STARTING)) {
             isRecording.set(STARTING);
@@ -119,7 +121,7 @@ public class Recorder extends Sample implements RecordAudio, TimeListener {
 	            		else looper.syncLoop(this, (Recorder)s); // preset blank loop of proper size
 	        		}
             		new Thread( () -> {new ArrayList<>(listeners).forEach(
-	                		listener -> {listener.update(Property.STATUS, Status.TERMINATED);});}).start();
+	                		listener -> {listener.update(Notification.Property.STATUS, Status.TERMINATED);});}).start();
             	}
             	RTLogger.log(this, name + " initial recording " + recording.size() + " buffers long");
             }

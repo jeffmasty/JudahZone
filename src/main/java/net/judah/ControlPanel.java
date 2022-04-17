@@ -5,13 +5,7 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 
 import javax.sound.midi.MidiUnavailableException;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextField;
+import javax.swing.*;
 
 import lombok.Getter;
 import net.judah.clock.JudahClock;
@@ -19,7 +13,6 @@ import net.judah.controllers.KnobMode;
 import net.judah.controllers.MPK;
 import net.judah.effects.gui.EffectsRack;
 import net.judah.effects.gui.PresetsGui;
-import net.judah.looper.Recorder;
 import net.judah.looper.Sample;
 import net.judah.metronome.MidiGnome;
 import net.judah.mixer.Channel;
@@ -27,15 +20,15 @@ import net.judah.mixer.LineIn;
 import net.judah.song.SonglistTab;
 import net.judah.util.Console;
 import net.judah.util.Constants;
+import net.judah.util.GuitarTuner;
 import net.judah.util.RTLogger;
 
 public class ControlPanel extends JPanel {
 
     @Getter private static ControlPanel instance;
     @Getter private EffectsRack current;
-    // proper class??
-    @Getter private static Recorder liveLoop = JudahZone.getLooper().getLoopA();  
-    @Getter private static LineIn liveInput = JudahZone.getChannels().getGuitar();
+    @Getter private final GuitarTuner tuner = new GuitarTuner();
+
     private JComponent songlist;
     private final JTabbedPane tabs;
     
@@ -59,7 +52,6 @@ public class ControlPanel extends JPanel {
             effectsTab.add(new EffectsRack(loop));
         for (LineIn input : JudahZone.getChannels()) 
         	effectsTab.add(new EffectsRack(input));
-        // register listener?
 
         tabs = new JTabbedPane();
         songlist = new SonglistTab(Constants.defaultSetlist);
@@ -77,17 +69,18 @@ public class ControlPanel extends JPanel {
 
         add(JudahClock.getInstance().getGui());
 
-        //add(new JLabel(" ")); // filler
+        add(tuner);
+        
         add(tabs);
-        add(metronome(new String[] {"JudahZone.mid", "44_Minor_4-4_i_-III_iv_V.mid", "BoogieWoogie.mid"}));
+        //add(metronome(new String[] {"JudahZone.mid", "44_Minor_4-4_i_-III_iv_V.mid", "BoogieWoogie.mid"}));
 
-        //add(new JLabel(" ")); // filler
         add(console);        
 
         doLayout();
     }
 
-    private JPanel metronome(String[] files) {
+    @SuppressWarnings("unused")
+	private JPanel metronome(String[] files) {
     	JPanel result = new JPanel();
     	for (String file : files) {
 			try {
@@ -130,10 +123,6 @@ public class ControlPanel extends JPanel {
         }
 
         current = effectsTab.get(ch);
-        if (ch instanceof Recorder) 
-        	liveLoop = (Recorder)ch;
-        else if (ch instanceof LineIn)
-        	liveInput = (LineIn)ch;
 
         if (idx < 0) {
             tabs.add(EffectsRack.TAB_NAME, current);
@@ -154,6 +143,22 @@ public class ControlPanel extends JPanel {
 	public void beatBuddy() {
 		tabs.setSelectedComponent(JudahClock.getInstance().getDrummachine().getGui());
 	}
+
+//	public void tunerOn(float[] data) {
+//		tuner.process(data);
+//				if (tuner.isVisible() == false)
+//					tuner.setVisible(true);
+//
+//	}
+
+//	public static void tunerOff() {
+//		instance.tuner.setChannel(null);
+//	}
+//
+//	public static void startTuner(Channel ch) {
+//		instance.tuner.setChannel(ch);
+//
+//	}
 
 
 }

@@ -18,7 +18,6 @@ import net.judah.mixer.Channel;
 import net.judah.mixer.DrumTrack;
 import net.judah.plugin.Carla;
 import net.judah.util.Icons;
-import net.judah.util.RTLogger;
 
 /** use {@link #addSample(Sample)} instead of add() */
 @RequiredArgsConstructor
@@ -58,6 +57,7 @@ public class Looper {
         }
         if (JudahClock.isLoopSync()) {
         	JudahClock.setOnDeck(SelectType.SYNC);
+        	MainFrame.update(loopA);
         }
     }
 
@@ -116,7 +116,6 @@ public class Looper {
     	if (source.getRecording() == null || source.getRecording().isEmpty()) {
     		// nothing recorded yet, but we are setup to sync to master loop
     		target.armRecord(source);
-    		RTLogger.log(this, "Wait, what?");
     	}
     	else {
     		new Thread(() -> {
@@ -149,9 +148,8 @@ public class Looper {
 			new Thread() {
 				@Override public void run() {
 					try { // to get a process() in
-						Thread.sleep(40);} catch (Exception e) {} 
+						Thread.sleep(23);} catch (Exception e) {} 
 					clear();
-					//getDrumTrack().toggle();
                     }}.start();
 	}
 

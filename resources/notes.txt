@@ -1,62 +1,21 @@
 TODO:
 
-Improve Master Clock & Loop GUI
-synth tuner, separate external reverb
-MidiGnome DrumGnome(9)  PianoRoll(8)
+Midi Mixer: style/arp/pattern/song/chords/channel    
+		AAB  *AAB   *B[AAB] SWING vs 3/4 etc 
+Loop GUI, refactor Recorder & Sample into Loop
+separate external reverb
 Ritardando
 guitar efx selector
-song&pattern parser: AAB  *AAB   *B[AAB] etc
 Noise Effect generates ocean, heartbeat, birds, crickets, walking, thunder, rain, 
 	bicycle, phonograph, whips and chains  (sampleFile, frequency, wet, granularity)
-arpeggiator & chords upgrade
-LFO upgrade, fix compression
+LFO upgrade (triggered to Clock, LFO/Fader cleanUp())
+fix compression
 copy/delete loops
 Sampler
-knob modes: efx1 efx2 beats, midiMixer, synth
-
-track:  Ch#,  fileType: step/midi, file, midiOut/(AudioIn)      mono/poly/drum/step/midi  isMidi   isMono  isDrum
-  extra:   transpose(midi/kybd), split, arp(file)(inKey/abs), chords,  reverse,random
-tracks have patterns, midiOut, gain.  (pattern sequencer)
-Patterns have type, a file and options for arpeggio/transpose (step/midi sequencer) channel handling
-Gain, Mute, Type   if midi, drums or notes? mono or poly? which midiOut?, if fluid/calf, which channel? which instrument?
-	gain type file midiOut (channel)   
-		steps can trigger a chord midi file or arpegiator into a chord midi file 
-transpose: mode note 
-0: Crave-out midi channel 0;
-1: Fluid-out midi channel 1;
-2: beat drums 
-3: midi Drums 
-2:   /SYS
-3:
-4:
-5:  
-6:  melody
-7:  chords
-8:  bass 
-9:  step drums
-10: midi drums
-11: bassDrum
-12: snare
-13: hats1
-14: hats2
-15: tom
-
-
-***pads
-recordA	   recordB  recordDrum recordC sequencer	sheet	SynthKnobs    *tapTempo							
-reload/AAB latchB   latchDrum  latchC  guitarEfx	MicEfx  SynthEfx  	  on/off clock*
-
-effects knobs
-	wet    room dry  dist.  
-	chorus c2   c3   pArTy  
-	
-	bass   mid    treb   d.time
-	vol    pan    t/hold d.fback 
-
+solo lineIn to specific loop
 verse-chorus control
 step sequencer chords
 Sampler
-DR-5 as midi-controller
 beatbox records midi_in/quantize
 arppegiator 2.0
 export beatbox as midi file
@@ -66,7 +25,7 @@ unified play/record/transpose commands
 record record record youtubes
 songs: andILoveHer, FeelGoodInc, 
 
-LFO triggered to Clock, LFO/Fader cleanUp()
+
 README credits
 clipping/xruns filter see https://github.com/psambit9791/jDSP Peak/Spike
 Display loop/sample wave form 
@@ -187,9 +146,32 @@ Arduino foot pedal: load/reload  latchB
 midi mapper by instrument - mixer, pads, keys, pedal, aux
 visual feedback from midi controllers, track select
 onDeck, eraseLoop
+Midi24 out: inside step sequencer 
+synth tuner
+migrate beatbox to 8-track
+Track KnobMode
+
+
+
+REF-----------------------------------------------------------------
+
 [Mixer][Out][In]  EFX
 1 2 3 4 5 6 7 8   1  2  3  4
 | | | | | | | |   5  6  7  8
 | | | | | | | |   9  10 11 12
 | | | | | | | |   13 14 15 16
-Midi24 out: inside step sequencer 
+
+track:  Ch#,  fileType: step/midi, file, midiOut/(AudioIn)      mono/poly/drum/step/midi  isMidi   isMono  isDrum
+  extra:   transpose(midi/kybd), split, arp(file)(inKey/abs), chords,  reverse,random
+***pads
+recordA	   recordB  recordDrum recordC sequencer	sheet	SynthKnobs    *tapTempo							
+reload/AAB latchB   latchDrum  latchC  guitarEfx	MicEfx  SynthEfx  	  on/off clock*
+
+effects knobs
+	wet    room dry  dist.  
+	chorus c2   c3   pArTy  
+	
+	bass   mid    treb   d.time
+	vol    pan    t/hold d.fback 
+
+  

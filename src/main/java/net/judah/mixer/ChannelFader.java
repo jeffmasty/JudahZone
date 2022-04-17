@@ -78,15 +78,22 @@ public class ChannelFader extends JPanel implements Pastels {
 				bg = GREEN;
 			else if (s.isSync()) 
 				bg = ORANGE;
-			else if (channel == JudahZone.getLooper().getLoopA() && JudahClock.isLoopSync())
-				bg = ORANGE;
-			
+			else {
+				Recorder a = JudahZone.getLooper().getLoopA();
+				if (a == channel && JudahClock.isLoopSync())
+					bg = ORANGE;
+				else if (a != channel && ((Recorder)s).getPrimary() != null) {
+					bg = PINK;
+				}
+			}
 		}
 		else { // line in/master track
 			if (channel.isOnMute()) 
 				bg = PURPLE;
 			else if (channel instanceof LineIn && ((LineIn)channel).isMuteRecord())
 				bg = ORANGE;
+			else if (channel == JudahZone.getChannels().getCrave() && JudahClock.getInstance().isSyncCrave())
+				bg = PINK;
 			else 
 				bg = GREEN;
 		}

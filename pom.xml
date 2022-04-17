@@ -38,11 +38,11 @@
     <version>2.4-1</version>
   </dependency>
   
-  <dependency>
+  <!-- talk to an arduino over serial port <dependency>
     <groupId>io.github.java-native</groupId>
   <artifactId>jssc</artifactId>
   <version>2.9.3</version>
-  </dependency>
+  </dependency> -->
   
   
 	<dependency>
@@ -93,11 +93,11 @@
 	    <version>0.6</version>
 	</dependency>
 
-    <dependency>
+<!--    <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
         <version>2.11.1</version>
-    </dependency>
+    </dependency> -->
 
 <!--  <dependency>
     <groupId>net.beadsproject</groupId>

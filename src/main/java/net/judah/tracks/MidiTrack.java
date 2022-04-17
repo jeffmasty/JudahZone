@@ -1,22 +1,20 @@
 package net.judah.tracks;
 
-import java.awt.Color;
-import java.io.File;
+import static net.judah.api.AudioMode.*;
 
-import javax.sound.midi.MidiMessage;
-import javax.sound.midi.MidiSystem;
-import javax.sound.midi.MidiUnavailableException;
-import javax.sound.midi.Receiver;
-import javax.sound.midi.Sequence;
-import javax.sound.midi.Sequencer;
-import javax.sound.midi.ShortMessage;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import java.io.File;
+import java.util.concurrent.atomic.AtomicReference;
+
+import javax.sound.midi.*;
+
+import org.jaudiolibs.jnajack.JackTransportState;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import net.judah.api.TimeProvider;
+import net.judah.api.AudioMode;
+import net.judah.api.Notification.Property;
+import net.judah.clock.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.settings.MidiSetup.OUT;
 import net.judah.util.Constants;
@@ -25,20 +23,22 @@ import net.judah.util.RTLogger;
 @Data @EqualsAndHashCode(callSuper = true)
 public class MidiTrack extends Track implements Receiver {
 
+	@Getter private final MidiFeedback display = new MidiFeedback();
 	@Getter private Sequencer sequencer;
 	@Getter private Sequence sequence;
 	private int barCount, restart;
-	private final JLabel filename;
+	private AtomicReference<AudioMode> mode = new AtomicReference<>(AudioMode.NEW);
 
-	public MidiTrack(TimeProvider clock, String name, Type type, int channel, OUT port) {
-		super(clock, name, type, channel, port);
-		filename = new JLabel("()");
-		add(filename);
-
+	public MidiTrack(JudahClock clock, String name, Type type, OUT port, File folder) {
+		super(clock, name, type, port, folder);
+		feedback = display;
+	}
+	
+	private void open() {
 		try {
 			sequencer = MidiSystem.getSequencer(false);
+			sequencer.open();
 			sequencer.setLoopCount(0); // listener fires off each repetition
-			sequencer.setTempoInBPM(100);
 			for (Receiver old : sequencer.getReceivers()) 
 				old.close();
 			sequencer.getTransmitter().setReceiver(this);
@@ -46,46 +46,65 @@ public class MidiTrack extends Track implements Receiver {
 			RTLogger.warn(this, e);
 		}
 	}
-	
 
 	@Override
 	public void setFile(File file) {
-		stop();
-		if (file != null) 
+		boolean wasRunning = isActive();
+		this.file = file;
+		if (file == null) {
+			return;
+		}
+		new Thread(() -> {
 			try {
+				open();
 				sequence = MidiSystem.getSequence(file);
+				stop();
 				sequencer.setSequence(sequence);
-				sequencer.setMicrosecondPosition(0);
-				repaint();
+				restart = Constants.requeueBeats(sequence) / clock.getMeasure();
+				display.setSequence(sequencer, restart);
+				setup();
+				if (wasRunning) 
+					start();
 			} catch (Exception e) {
 				RTLogger.warn(this, e);
-				file = null;
+				this.file = null;
 			}
-		this.file = file;
-		filename.setText(file == null ? "--" : file.getName());
+		}).start();
 	}
 	
 	/*----- Player Interface ------*/
-	public void start() throws MidiUnavailableException {
-		restart = Constants.requeueBeats(sequence) / clock.getMeasure();
-
+	public void start() {
 		if (file == null) 
 			return;
-		if (!sequencer.isOpen())
-			sequencer.open();
 		try {
-			sequencer.setTempoInBPM(100);
-			sequencer.setTempoFactor(clock.getTempo() * 0.01f);
+			if (sequencer.isRunning()) sequencer.stop();
+			setup();
+			// TODO try to get current beat from clock, set micro position
+			// JudahClock.getStep(); JudahClock.getSubdivision();
+			// RTLogger.log(this, file.getName() + " bars: " + restart);
 			sequencer.start();
-			barCount = 0;
 		} catch (Exception e) {
 			RTLogger.warn(this, e);
 		}
 	}
 
+	private void setup() {
+		if (file == null) 
+			return;
+		try {
+			sequencer.setMicrosecondPosition(0);
+			sequencer.setTempoInBPM(clock.getTempo() + 0.01f);
+			sequencer.setTempoFactor(1f);
+			barCount = 1;
+		} catch (Exception e) {
+			RTLogger.warn(this, e);
+		}
+	}
+	
 	public void stop() {
-		if (sequencer.isRunning()) sequencer.stop();
-		clock.removeListener(this);
+		if (sequencer != null && sequencer.isRunning()) 
+			sequencer.stop();
+		mode.set(STOPPED);
 	}
 	
 	@Override
@@ -95,57 +114,55 @@ public class MidiTrack extends Track implements Receiver {
 		super.close();
 	}
 	
-//	@Override
-//	public void setActive(boolean active) {
-//		super.setActive(active);
-//		if (file == null) return;
-//		if (active)
-//			barCount = 0;
-//			try {
-//				start();
-//			} catch (MidiUnavailableException e) {
-//				RTLogger.warn(this, e);
-//			}
-//			stop();
-//	}
-	
-	public void setDuration(Integer intro, Integer duration) {
-		
-	}
-
 	@Override
 	public void setActive(boolean active) {
-		super.setActive(active);
 		if (!active && sequencer.isRunning())
 			sequencer.stop();
+		if (active)
+			if (mode.get() != RUNNING) 
+				mode.set(STARTING);
+		else 
+			mode.set(STOPPING);
+		
+		super.setActive(active);
 	}
 	
 	@Override
 	public void update(Property prop, Object value) {
-		// restart loop or update tempo
-		if (Property.TEMPO == prop) {
-			sequencer.setTempoFactor(clock.getTempo() * 0.01f);
+		if (mode.get() == STOPPING) {
+			stop();
+			return;
 		}
-		else if (!sequencer.isRunning() && Property.STEP == prop && 0 == (int)value) {
-			try {
+		if (Property.BARS == prop) {
+			if (mode.get() == STARTING) {
+				setup();
+				if (!sequencer.isRunning()) 
+					sequencer.start();
+				mode.set(RUNNING);
+				barCount = 1;
+			} 
+			else  if (++barCount > restart) { // restart midi loop
 				start();
-			} catch (MidiUnavailableException e) {
-				RTLogger.warn(this, e);
-			}
+			} 
+			display.barCount(barCount);
 		}
-		else if (Property.BARS == prop) {
-			barCount++;
-			if (barCount == restart) {
-				sequencer.stop();
-				try {
-					start();
-				} catch (MidiUnavailableException e) {
-					RTLogger.warn(this, e);
-				}
-			}
+
+		else if (active && Property.BEAT == prop)
+			display.tick();
+		
+		else if (Property.TEMPO == prop) {
+			if (sequencer == null || sequencer.isOpen() == false) return;
+			sequencer.setTempoFactor(clock.getTempo() / sequencer.getTempoInBPM());
+		}
+		else if (prop == Property.TRANSPORT 
+				&& JackTransportState.JackTransportStopped == value)
+			stop();
+		else if (active && prop == Property.TRANSPORT 
+				&& JackTransportState.JackTransportStarting == value) {
+			mode.set(STARTING);
+			start();
 		}
 	}
-	
 
 	@Override
 	public void send(MidiMessage message, long timeStamp) {
@@ -161,15 +178,21 @@ public class MidiTrack extends Track implements Receiver {
 				RTLogger.warn(this, e);
 			}
 		}
+	}
 	
+	@Override
+	public boolean process(int knob, int data2) {
+		switch (knob) { // TODO
+			case 4: // Channel
+				if (JudahMidi.getInstance().getCraveOut() == midiOut)
+					return true; // no-op
+				//ch = Constants.ratio(data2, 16);
+				return true; 
+			case 7: // 
+				return true;
+		}
+		return false;
 	}
 
-	@Override
-	public JPanel subGui() {
-		JPanel result = new JPanel();
-		result.add(new JLabel("todo"));
-		result.setBackground(Color.pink);
-		return result;
-	}
 
 }

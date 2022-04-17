@@ -13,6 +13,8 @@ import net.judah.mixer.MasterTrack;
 @RequiredArgsConstructor
 public class Fader {
 
+	public static final int DEFAULT_FADE = 4000;
+	
 	final Channel channel;
 	final LFO.Target target;
 	final long msec;
@@ -22,7 +24,7 @@ public class Fader {
 
 	/** 3 second fade-in on master bus */
 	public static Fader fadeIn() {
-		return new Fader(JudahZone.getMasterTrack(), Target.Gain, 3000, 0, 51, new Runnable() {
+		return new Fader(JudahZone.getMasterTrack(), Target.Gain, DEFAULT_FADE, 0, 51, new Runnable() {
 		    @Override public void run() {
 		        JudahZone.getMasterTrack().getFader().updateVolume();
 		    }
@@ -32,11 +34,11 @@ public class Fader {
 	/** Fade out Master track over 4 seconds */
 	public static Fader fadeOut() {
 	    final MasterTrack master = JudahZone.getMasterTrack();
-	    return new Fader(master, Target.Gain, 4000, master.getVolume(), 0, new Runnable() {
+	    return new Fader(master, Target.Gain, DEFAULT_FADE, master.getVolume(), 0, new Runnable() {
             @Override
             public void run() {
-                master.setOnMute(true);
-                master.getGain().setVol(50);
+//                master.setOnMute(true);
+//                master.getGain().setVol(50);
             }
         });
 	}

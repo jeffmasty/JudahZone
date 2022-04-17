@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import net.judah.JudahZone;
+import net.judah.MainFrame;
 import net.judah.effects.api.Effect;
 import net.judah.effects.api.Reverb;
 import net.judah.looper.Sample;
@@ -28,13 +29,6 @@ public class LFO implements Effect {
 	};
 
 	private boolean active;
-	@Override
-	public void setActive(boolean active) {
-		if (this.active != active) {
-			this.active = active;
-			RTLogger.log(this, "active: " + active);
-		}
-	}
 	private Target target = Target.Pan;
 	public void setTarget(Target target) {
 		if (this.target != target) {
@@ -151,6 +145,7 @@ public class LFO implements Effect {
 			case Delay: ch.getDelay().setFeedback(val / 100f); break;
 			case Pan: ch.getGain().setPan(val); break;
 		}
+		MainFrame.update(ch);
 	}
 
 	// TODO saw wave

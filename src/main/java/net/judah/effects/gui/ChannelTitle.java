@@ -2,36 +2,55 @@ package net.judah.effects.gui;
 
 import java.awt.Color;
 
+import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 
+import net.judah.ControlPanel;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
+import net.judah.util.GuitarTuner;
 import net.judah.util.Pastels;
 
 public class ChannelTitle extends JPanel {
 
 	private final Mute mute;
-	
 	private final PresetCheckBox presetActive = new PresetCheckBox();
+	private final JToggleButton tunerBtn;
 	
 	private final Channel channel;
 	private final JLabel name;
 	
 	public ChannelTitle(Channel channel) {
+		JPanel main = new JPanel();
+		
 		this.channel = channel;
 		name = new JLabel(channel.getName(), JLabel.CENTER);
 		if (channel.getIcon() != null)
-			add(new JLabel(channel.getIcon(), JLabel.CENTER));
-		add(name);
+			main.add(new JLabel(channel.getIcon(), JLabel.CENTER));
+		main.add(name);
 		
-		add(new JLabel("  fx;"));
-		add(presetActive);
-		add(new JLabel("  mute:"));
+		main.add(new JLabel(" fx:"));
+		main.add(presetActive);
+		main.add(new JLabel(" mute:"));
 		mute = new Mute();
-		add(mute); 
+		main.add(mute); 
 		
+		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+		add(main);
+		
+		tunerBtn = (channel instanceof LineIn) ?
+			 new JToggleButton("tuner") : null;
+		if (tunerBtn != null) {
+			tunerBtn.setSelected(false);
+			tunerBtn.addChangeListener(e -> {
+				ControlPanel.getInstance().getTuner()
+						.setChannel(tunerBtn.isSelected() ? channel : null);
+			});
+			main.add(tunerBtn);
+		}
 	}
 
 	private class PresetCheckBox extends JCheckBox {
@@ -96,6 +115,8 @@ public class ChannelTitle extends JPanel {
 		mute.ignore();
 		mute.update();
 		mute.listen();
+		if (tunerBtn != null)
+			tunerBtn.setSelected(GuitarTuner.getChannel() == channel);
 	}
 
 	

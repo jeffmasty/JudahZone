@@ -14,6 +14,7 @@ import javax.swing.SwingConstants;
 import javax.swing.border.BevelBorder;
 
 import lombok.extern.log4j.Log4j;
+import net.judah.api.Notification;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.util.FileChooser;
@@ -96,7 +97,7 @@ implements TimeListener {
 	}
 
 	@Override
-	public void update(Property prop, Object value) {
+	public void update(Notification.Property prop, Object value) {
         if (Status.ACTIVE == value) {
 			playBtn.setSelected(true);
 			stopBtn.setSelected(false);
