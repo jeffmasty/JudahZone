@@ -2,6 +2,8 @@ package net.judah.controllers;
 
 import static net.judah.JudahZone.getSynth;
 
+import java.util.ArrayList;
+
 import javax.sound.midi.ShortMessage;
 
 import org.jaudiolibs.jnajack.JackMidi;
@@ -14,7 +16,6 @@ import net.judah.MainFrame;
 import net.judah.api.Midi;
 import net.judah.beatbox.GMDrum;
 import net.judah.clock.JudahClock;
-import net.judah.clock.JudahClock.Mode;
 import net.judah.effects.Chorus;
 import net.judah.effects.Compression;
 import net.judah.effects.CutFilter;
@@ -34,17 +35,15 @@ public class MPK extends MPKTools implements Controller {
 	public static final int thresholdLo = 1;
 	public static final int thresholdHi = 98;
 	
-	
 	public static void setMode(KnobMode knobs) {
 		ControlPanel.getInstance().getTuner().setChannel(null);
 		mode = knobs;
-		// RTLogger.log(knobs, mode.toString());
 	}
 	
 	@Override
 	public boolean midiProcessed(Midi midi) {
-		if (midi.isCC()) return checkCC(midi.getData1(), midi.getData2());
-		if (midi.isProgChange()) return doProgChange(midi.getData1(), midi.getData2());
+		if (Midi.isCC(midi)) return checkCC(midi.getData1(), midi.getData2());
+		if (Midi.isProgChange(midi)) return doProgChange(midi.getData1(), midi.getData2());
 		if (midi.getChannel() == 9 && (midi.getCommand() == Midi.NOTE_ON || midi.getCommand() == Midi.NOTE_OFF) 
 				&& (DRUMS_A.contains(midi.getData1()) || DRUMS_B.contains(midi.getData1())))
 				return doDrumPad(midi);
@@ -108,19 +107,31 @@ public class MPK extends MPKTools implements Controller {
 	private boolean cc_pad(int data1, int data2) {
 		///////// ROW 2 /////////////////
 		// Int/Ext Clock [] . . .
-		if (data1 == PRIMARY_CC.get(0))
-			// toggle clock
-			JudahClock.setMode(data2 > 0 ? Mode.Internal : Mode.Midi24);
-		// Loop Sync . [] . .
-		else if (data1 == PRIMARY_CC.get(1)) {
-			// looper sync to clock toggle
-			JudahClock.setLoopSync(data2 > 0);
-			MainFrame.update(JudahZone.getLooper().getLoopA());
+		if (data1 == PRIMARY_CC.get(0))  {// sync Crave
+			JackPort port = JudahMidi.getInstance().getCraveOut();
+			ArrayList<JackPort> sync = JudahMidi.getInstance().getSync();
+			if (sync.contains(port))
+				sync.remove(port);
+			else
+				sync.add(port);
+			MainFrame.update(JudahZone.getChannels().getCrave());
 		}
-		// Clock . . [] .
-		else if (data1 == PRIMARY_CC.get(2) && data2 > 0) 
-			MPK.setMode(KnobMode.Clock); // clock knobs
-		// FX . . . []
+		else if (data1 == PRIMARY_CC.get(1)) { // sync Uno
+			JackPort port = JudahMidi.getInstance().getUnoOut();
+			ArrayList<JackPort> sync = JudahMidi.getInstance().getSync();
+			if (sync.contains(port))
+				sync.remove(port);
+			else
+				sync.add(port);
+			MainFrame.update(JudahZone.getChannels().getUno());
+		}
+		// Clock or Tracks
+		else if (data1 == PRIMARY_CC.get(2) && data2 > 0)
+			if (MPK.getMode() == KnobMode.Clock)
+				MPK.setMode(KnobMode.Tracks);
+			else 
+				MPK.setMode(KnobMode.Clock); 
+		// EFX . . . []
 		else if (data1 == PRIMARY_CC.get(3) && data2 > 0)  
 			if (MPK.getMode() == KnobMode.Effects1)
 				MPK.setMode(KnobMode.Effects2);
@@ -130,22 +141,18 @@ public class MPK extends MPKTools implements Controller {
 		///////// ROW 2 /////////////////
 
 		// Crave/Fluid [] . . .
-		else if (data1 == PRIMARY_CC.get(4)) // toggle keys out
-			JudahMidi.getInstance().setKeyboardSynth(
-					data2 > 0 ? JudahMidi.getInstance().getCraveOut()
-					: JudahMidi.getInstance().getSynthOut());
-		// Crave Sync . [] . . 
-		else if (data1 == PRIMARY_CC.get(5)) { // sync Crave to Clock
-			JudahClock.getInstance().setSyncCrave(data2 > 0); 
-			MainFrame.update(JudahZone.getChannels().getCrave());
+		else if (data1 == PRIMARY_CC.get(4)) { // looper sync to clock toggle
+			JudahClock.setLoopSync(data2 > 0);
+			MainFrame.update(JudahZone.getLooper().getLoopA());
 		}
-		// TODO 
+		else if (data1 == PRIMARY_CC.get(5)) { // Jamstik midi on/off
+			Jamstik.toggle();
+		}
 		else if (data1 == PRIMARY_CC.get(6) && data2 > 0) {
-			// ControlPanel.getInstance().beatBuddy();
-			MPK.setMode(KnobMode.Tracks);
+			Jamstik.nextMidiOut();
 		}
 		else if (data1 == PRIMARY_CC.get(7) && data2 > 0) 
-			MPK.setMode(KnobMode.Effects2); // fx2 knobs
+			JudahMidi.getInstance().nextKeyboardSynth();
 		else 
 			return false;
 		return true;
@@ -186,8 +193,7 @@ public class MPK extends MPKTools implements Controller {
         	channel.getReverb().set(Reverb.Settings.Damp.ordinal(), data2);
         }
         else if (data1 == MPKTools.KNOBS.get(3)) {
-        	channel.getOverdrive().set(0, data2);
-            channel.getOverdrive().setActive(data2 > 0);
+        	channel.getGain().setVol(data2);
         }
         
         
@@ -235,7 +241,8 @@ public class MPK extends MPKTools implements Controller {
         }
         
         if (data1 == MPKTools.KNOBS.get(4)) {
-        	channel.getGain().setVol(data2);
+        	channel.getOverdrive().setDrive(Constants.logarithmic(data2, 0, 1));
+            channel.getOverdrive().setActive(data2 > 0);
         }
         if (data1 == MPKTools.KNOBS.get(5)) {
         	channel.getGain().setPan(data2);
@@ -327,39 +334,41 @@ public class MPK extends MPKTools implements Controller {
                 return true;
             }
 
+            JackPort fluidOut = JudahMidi.getInstance().getFluidOut();
+            FluidSynth synth = FluidSynth.getInstance();
             if (data1 == PRIMARY_PROG[0]) { // I want bass
-                JudahMidi.getInstance().queue(FluidSynth.getInstance().progChange(0, 32));
+                JudahMidi.queue(synth.progChange(0, 32), fluidOut);
                 return true;
             }
             if (data1 == PRIMARY_PROG[1]) { // harp
-                JudahMidi.getInstance().queue(FluidSynth.getInstance().progChange(0, 46));
+                JudahMidi.queue(synth.progChange(0, 46), fluidOut);
                 return true;
             }
             if (data1 == PRIMARY_PROG[2]) { // elec piano
-                JudahMidi.getInstance().queue(FluidSynth.getInstance().progChange(0, 4));
+                JudahMidi.queue(synth.progChange(0, 4), fluidOut);
                 return true;
             }
             if (data1 == PRIMARY_PROG[4]) { // strings
-                JudahMidi.getInstance().queue(FluidSynth.getInstance().progChange(0, 44));
+                JudahMidi.queue(synth.progChange(0, 44), fluidOut);
                 return true;
             }
             if (data1 == PRIMARY_PROG[5]) { // vibraphone
-                JudahMidi.getInstance().queue(FluidSynth.getInstance().progChange(0, 11));
+                JudahMidi.queue(synth.progChange(0, 11), fluidOut);
                 return true;
             }
             if (data1 == PRIMARY_PROG[6]) { // rock organ
-                JudahMidi.getInstance().queue(FluidSynth.getInstance().progChange(0, 18));
+                JudahMidi.queue(synth.progChange(0, 18), fluidOut);
                 return true;
             }
 		
             // B BANK
             if (data1 == B_PROG[0]) { // sitar
-            	JudahMidi.getInstance().queue(FluidSynth.getInstance().progChange(0, 104));
+            	JudahMidi.queue(synth.progChange(0, 104), fluidOut);
             	RTLogger.log(this, "B Bank!");
             }
             
             if (data1 == B_PROG[4]) { // honky tonk piano
-            	JudahMidi.getInstance().queue(FluidSynth.getInstance().progChange(0, 3));
+            	JudahMidi.queue(synth.progChange(0, 3), fluidOut);
             	RTLogger.log(this, "B Bank!");
             }
             

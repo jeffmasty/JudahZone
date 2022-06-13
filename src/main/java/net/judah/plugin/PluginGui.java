@@ -11,7 +11,6 @@ public class PluginGui extends JPanel {
 
 	public PluginGui(Plugin plugin) {
 		JButton btn = new JButton(plugin.getName());
-		btn.setToolTipText("Prog Change: " + plugin.getDefaultProgChange());
 		btn.addActionListener(listener -> {Console.info(plugin.toString()); });
 		add(btn);
 		

@@ -1,31 +1,8 @@
 package net.judah.sequencer;
 
-import static net.judah.settings.Commands.OtherLbls.MIDIGAIN;
-import static net.judah.settings.Commands.OtherLbls.MIDIPLAY;
-import static net.judah.settings.Commands.OtherLbls.MIDIRECORD;
-import static net.judah.settings.Commands.OtherLbls.TRANSPOSE;
-import static net.judah.settings.Commands.OtherLbls.transposeTemplate;
-import static net.judah.settings.Commands.SequencerLbls.ACTIVATE;
-import static net.judah.settings.Commands.SequencerLbls.CLICKTRACK;
-import static net.judah.settings.Commands.SequencerLbls.INTERNAL;
-import static net.judah.settings.Commands.SequencerLbls.NEXT;
-import static net.judah.settings.Commands.SequencerLbls.QUEUE;
-import static net.judah.settings.Commands.SequencerLbls.RELOAD;
-import static net.judah.settings.Commands.SequencerLbls.SETUP;
-import static net.judah.settings.Commands.SequencerLbls.TRANSPORT;
-import static net.judah.settings.Commands.SequencerLbls.TRIGGER;
-import static net.judah.settings.Commands.SequencerLbls.VOLUME;
-import static net.judah.util.Constants.Param.ACTIVE;
-import static net.judah.util.Constants.Param.BPM;
-import static net.judah.util.Constants.Param.FILE;
-import static net.judah.util.Constants.Param.GAIN;
-import static net.judah.util.Constants.Param.INDEX;
-import static net.judah.util.Constants.Param.LOOP;
-import static net.judah.util.Constants.Param.MEASURE;
-import static net.judah.util.Constants.Param.NAME;
-import static net.judah.util.Constants.Param.STEPS;
-import static net.judah.util.Constants.Param.activeTemplate;
-import static net.judah.util.Constants.Param.singleTemplate;
+import static net.judah.settings.Commands.OtherLbls.*;
+import static net.judah.settings.Commands.SequencerLbls.*;
+import static net.judah.util.Constants.Param.*;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -39,7 +16,7 @@ import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.api.Command;
 import net.judah.api.Notification.Property;
-import net.judah.looper.Recorder;
+import net.judah.looper.Loop;
 import net.judah.mixer.MixCommands;
 import net.judah.sequencer.Sequencer.ControlMode;
 import net.judah.util.CommandWrapper;
@@ -170,8 +147,8 @@ public class SeqCommands extends ArrayList<Command> {
 					seq.queue(new CommandWrapper(target, props, seqInternal));
 				}
 				else { // looper/external controlled
-	                Recorder loopA = JudahZone.getLooper().getLoopA();
-	                Recorder loopB = JudahZone.getLooper().getLoopB();
+	                Loop loopA = JudahZone.getLooper().getLoopA();
+	                Loop loopB = JudahZone.getLooper().getLoopB();
 	                if (loopA.isPlaying() == AudioMode.RUNNING)
 	                    callback.configure(loopA, loopB);
 	                else if (loopB.isPlaying() == AudioMode.RUNNING)

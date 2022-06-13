@@ -13,7 +13,7 @@ import net.judah.controllers.KnobMode;
 import net.judah.controllers.MPK;
 import net.judah.effects.gui.EffectsRack;
 import net.judah.effects.gui.PresetsGui;
-import net.judah.looper.Sample;
+import net.judah.looper.Loop;
 import net.judah.metronome.MidiGnome;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
@@ -48,7 +48,7 @@ public class ControlPanel extends JPanel {
         
         effectsTab.add(new EffectsRack(JudahZone.getMasterTrack()));
 
-        for (Sample loop : JudahZone.getLooper().getLoops()) 
+        for (Loop loop : JudahZone.getLooper().getLoops()) 
             effectsTab.add(new EffectsRack(loop));
         for (LineIn input : JudahZone.getChannels()) 
         	effectsTab.add(new EffectsRack(input));
@@ -109,30 +109,34 @@ public class ControlPanel extends JPanel {
     
     public void setFocus(Channel ch) {
     	MPK.setMode(KnobMode.Effects1);
+    	new Thread(()->{
+    		
+    		if (ch.equals(getChannel())) {
+    			tabs.setSelectedComponent(current);
+	            return;
+	        }
+	        int idx = -1;
+	        for (int i = 0; i < tabs.getComponentCount(); i++) {
+	            if (tabs.getTitleAt(i).equals(EffectsRack.TAB_NAME)) {
+	                idx = i;
+	                break;
+	            }
+	        }
+	
+	        current = effectsTab.get(ch);
+	
+	        if (idx < 0) {
+	            tabs.add(EffectsRack.TAB_NAME, current);
+	        }
+	        else {
+	            tabs.setComponentAt(idx, current);
+	            current.update();
+	        }
+	        tabs.setSelectedComponent(current);
+	        MainFrame.updateCurrent();
+    
+    	}).start();
 
-    	if (ch.equals(getChannel())) {
-        	tabs.setSelectedComponent(current);
-            return;
-        }
-        int idx = -1;
-        for (int i = 0; i < tabs.getComponentCount(); i++) {
-            if (tabs.getTitleAt(i).equals(EffectsRack.TAB_NAME)) {
-                idx = i;
-                break;
-            }
-        }
-
-        current = effectsTab.get(ch);
-
-        if (idx < 0) {
-            tabs.add(EffectsRack.TAB_NAME, current);
-        }
-        else {
-            tabs.setComponentAt(idx, current);
-            current.update();
-        }
-        tabs.setSelectedComponent(current);
-        MainFrame.updateCurrent();
     }
 
     public Channel getChannel() {
@@ -143,22 +147,5 @@ public class ControlPanel extends JPanel {
 	public void beatBuddy() {
 		tabs.setSelectedComponent(JudahClock.getInstance().getDrummachine().getGui());
 	}
-
-//	public void tunerOn(float[] data) {
-//		tuner.process(data);
-//				if (tuner.isVisible() == false)
-//					tuner.setVisible(true);
-//
-//	}
-
-//	public static void tunerOff() {
-//		instance.tuner.setChannel(null);
-//	}
-//
-//	public static void startTuner(Channel ch) {
-//		instance.tuner.setChannel(ch);
-//
-//	}
-
 
 }

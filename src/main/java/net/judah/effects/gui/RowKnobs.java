@@ -16,7 +16,7 @@ import net.judah.effects.api.Reverb;
 import net.judah.mixer.Channel;
 import net.judah.util.JudahKnob;
 
-public class RowKnobs extends Row2 {
+public class RowKnobs extends Row {
 
 	@Getter private final ArrayList<Component> controls = new ArrayList<>();
 	private final int row;
@@ -29,7 +29,7 @@ public class RowKnobs extends Row2 {
 			controls.add(new JudahKnob(ch, ch.getReverb(), Reverb.Settings.Wet.ordinal(), Reverb.Settings.Wet.name()));
 			controls.add(new JudahKnob(ch, ch.getReverb(), Reverb.Settings.Room.ordinal(), Reverb.Settings.Room.name()));
 			controls.add(new JudahKnob(ch, ch.getReverb(), Reverb.Settings.Damp.ordinal(), Reverb.Settings.Damp.name()));
-			controls.add(new JudahKnob(ch, ch.getOverdrive(), 0, "Gain"));
+			controls.add(new JudahKnob(ch, ch.getGain(), Gain.VOLUME, ""));
 			break;
 		case 1: 
 			controls.add(new JudahKnob(ch, ch.getChorus(), Chorus.Settings.Rate.ordinal(), Chorus.Settings.Rate.name()));
@@ -44,7 +44,7 @@ public class RowKnobs extends Row2 {
 			controls.add(new JudahKnob(ch, ch.getDelay(), Delay.Settings.DelayTime.ordinal(), "Time"));
 			break;
 		case 3: 
-			controls.add(new JudahKnob(ch, ch.getGain(), Gain.VOLUME, ""));
+			controls.add(new JudahKnob(ch, ch.getOverdrive(), 0, "Gain"));
 			controls.add(new JudahKnob(ch, ch.getGain(), Gain.PAN, ""));
 			controls.add(new JudahKnob(ch, ch.getCompression(), Compression.Settings.Threshold.ordinal(), "Thold"));
 			controls.add(new JudahKnob(ch, ch.getDelay(), Delay.Settings.Feedback.ordinal(), "F/B"));

@@ -15,7 +15,6 @@ import org.jaudiolibs.jnajack.JackPort;
 import lombok.Getter;
 import net.judah.api.Midi;
 import net.judah.beatbox.JudahKit;
-import net.judah.clock.BeatBuddy;
 import net.judah.fluid.FluidInstrument;
 import net.judah.fluid.FluidSynth;
 import net.judah.midi.JudahMidi;
@@ -42,10 +41,10 @@ public class Instrument extends JComboBox<String> implements ActionListener{
 		if (getItemCount() > 0)
 			removeAllItems();
         	
-        if (track.getMidiOut() == JudahMidi.getInstance().getDrumsOut())
-        	for (int i = 1; i < BeatBuddy.Drumset.values().length; i++)
-        		addItem(BeatBuddy.Drumset.values()[i].name());
-        else if (track instanceof StepTrack)
+		//if (track.getMidiOut() == JudahMidi.getInstance().getDrumsOut())
+		//	for (int i = 1; i < BeatBuddy.Drumset.values().length; i++)
+		//		addItem(BeatBuddy.Drumset.values()[i].name()); else 
+        if (track instanceof StepTrack)
         	for (int i = 0; i < JudahKit.values().length; i++)
         		addItem(JudahKit.values()[i].getDisplay());
         else {
@@ -71,9 +70,8 @@ public class Instrument extends JComboBox<String> implements ActionListener{
      * @throws InvalidMidiDataException */
     public static ShortMessage reverseLookup(Track track, int selected) throws InvalidMidiDataException {
     	if (track.isDrums()) {
-    		if (track.getMidiOut() == JudahMidi.getInstance().getDrumsOut()) {
-    			return Midi.create(ShortMessage.CONTROL_CHANGE, BeatBuddy.DRUMSET, selected + 1);
-    		}
+			//if (track.getMidiOut() == JudahMidi.getInstance().getDrumsOut()) {
+			//	return Midi.create(ShortMessage.CONTROL_CHANGE, BeatBuddy.DRUMSET, selected + 1); }
     		return new Midi(ShortMessage.PROGRAM_CHANGE, 9, 
     				FluidSynth.getInstruments().getDrumkits().get(selected).index);
     	}

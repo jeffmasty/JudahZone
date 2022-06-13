@@ -39,10 +39,6 @@ public abstract class Reverb implements Effect {
     public void set(int ordinal, int value) {
         throw new InvalidParameterException();
     }
-//    @Override
-//    public int get(int idx) {
-//        throw new InvalidParameterException();
-//    }
 
     @Override
     public int getParamCount() {

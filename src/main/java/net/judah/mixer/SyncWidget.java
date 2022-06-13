@@ -8,17 +8,17 @@ import net.judah.api.AudioMode;
 import net.judah.api.Notification;
 import net.judah.api.TimeListener;
 import net.judah.clock.JudahClock;
-import net.judah.looper.Recorder;
+import net.judah.looper.Loop;
 import net.judah.util.Constants;
 import net.judah.util.RainbowFader;
 
 public class SyncWidget extends Menu implements TimeListener {
 
-	private final Recorder loop;
+	private final Loop loop;
 	int local;
 	static Dimension sz = new Dimension(40, 35);
 	
-	public SyncWidget(Recorder channel) {
+	public SyncWidget(Loop channel) {
 		super(channel);
 		loop = channel;
 		setIcon(null);

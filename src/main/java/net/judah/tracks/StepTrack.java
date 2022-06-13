@@ -29,6 +29,7 @@ public class StepTrack extends Track implements Runnable {
     
 	@Getter private Box beatbox = new Box();
 	private StepFeedback display;
+	private Cycle cycle = new Cycle();
 	
     public StepTrack(JudahClock clock, StepDrum sequencer, File folder) {
     	super(clock, sequencer.getClass().getSimpleName(), Type.STEP_DRUM, OUT.CALF_OUT, folder);
@@ -64,10 +65,8 @@ public class StepTrack extends Track implements Runnable {
             beatbox.clear();
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
-                if (first) {
-                	// String[] split = line.split("[/]"); if (!split[1].equals(NONE)) //;
+                if (first) 
                     first = false;
-                }
                 else if (line.startsWith("!")) {
                     if (onDeck != null)
                         beatbox.add(onDeck);
@@ -84,9 +83,9 @@ public class StepTrack extends Track implements Runnable {
             if (scanner != null) scanner.close();
         }
         beatbox.setCurrent(beatbox.get(0));
-        display.refresh();
         RTLogger.log(this, "loaded step track " + file.getName());
         display.refresh();
+        MainFrame.update(this);
     }
 
 	/*----- Player Interface ------*/
@@ -97,6 +96,14 @@ public class StepTrack extends Track implements Runnable {
 			step((int)value);
 			display.step((int)value);
 		}
+		else if (prop == Notification.Property.BARS) {
+			ArrayList<Sequence> next = cycle.cycle(beatbox);
+			if (next != beatbox.getCurrent()) {
+				beatbox.setCurrent(next);
+				MainFrame.update(this);
+			}
+		}
+
 	}
 
 	public void step(int step) {
@@ -158,6 +165,13 @@ public class StepTrack extends Track implements Runnable {
 	@Override
 	public boolean process(int knob, int data2) {
 		switch (knob) {
+			case 4: // pattern
+				beatbox.setCurrent(beatbox.get(Constants.ratio(data2 -1, beatbox.size())));
+				MainFrame.update(this);
+				return true;
+			case 5: // cycle
+				cycle.setSelectedIndex(Constants.ratio(data2 - 1, Cycle.CYCLES.length));
+				return true;
 			case 6: // GMDRUM 2
 				setInstrument(1, data2);
 				return true;

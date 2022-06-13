@@ -11,6 +11,7 @@ import javax.swing.JToggleButton;
 import net.judah.ControlPanel;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
+import net.judah.util.Constants;
 import net.judah.util.GuitarTuner;
 import net.judah.util.Pastels;
 
@@ -28,6 +29,7 @@ public class ChannelTitle extends JPanel {
 		
 		this.channel = channel;
 		name = new JLabel(channel.getName(), JLabel.CENTER);
+		name.setFont(Constants.Gui.BOLD13);
 		if (channel.getIcon() != null)
 			main.add(new JLabel(channel.getIcon(), JLabel.CENTER));
 		main.add(name);

@@ -22,7 +22,6 @@ public class Plugin {
 	private String[] outports;
 	private String midiport;
 	private boolean active;
-	private int defaultProgChange;
 
 	public boolean isStereo() {
 		return inports.length == 2 && outports.length == 2;

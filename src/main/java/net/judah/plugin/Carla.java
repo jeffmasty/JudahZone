@@ -71,49 +71,57 @@ public class Carla implements Service {
 	private Plugin fluid;
 	private Plugin harmonizer;
 	private Plugin echo;
-	private Plugin flanger;
+	//private Plugin flanger;
+	
+	
 	private Plugin talReverb;
-	private Plugin theShepard;
+	private Plugin talReverb2;
+	//private Plugin theShepard;
+	private TalReverb rev1;
+	private TalReverb rev2;
 
 	/** Default JudahZone load, initializes {@link #plugins} hard-coded from the settings file
 	 * @throws JackException */
 	public Carla(boolean showGui) throws IOException, JackException {
 		this(new File(System.getProperty("user.dir"), "carla/JudahZone.carxp"), showGui);
 
-
 		fluid = new Plugin("Calf Fluid", 0, LineType.SYNTH, null,
 				new String[] {"Calf Fluidsynth:Out L", "Calf Fluidsynth:Out R"},
-						"Calf Fluidsynth:events-in", false, -1);
+						"Calf Fluidsynth:events-in", false);
 		harmonizer = new Plugin("harmonizer", 1, LineType.CARLA,
 				new String[] {"rkr Harmonizer (no midi):Audio In L",
 					"rkr Harmonizer (no midi):Audio In R"},
 				new String[] {"rkr Harmonizer (no midi):Audio Out L",
 					"rkr Harmonizer (no midi):Audio Out R"},
-				null, false, 666/*MPK.PRIMARY_PROG[5]*/);
+				null, false);
 
 		echo = new Plugin("echo", 2, LineType.CARLA,
 				new String[] {"Calf Vintage Delay:In L", "Calf Vintage Delay:In R"},
 				new String[] {"Calf Vintage Delay:Out L", "Calf Vintage Delay:Out R"},
-				null, false, 666/*MPK.PRIMARY_PROG[1]*/);
+				null, false);
 
-		flanger = new Plugin("flanger", 3, LineType.CARLA,
-				new String[] {"dRowAudio. Flanger:Audio Input 1", "dRowAudio. Flanger:Audio Input 2"},
-				new String[] {"dRowAudio. Flanger:Audio Output 1", "dRowAudio. Flanger:Audio Output 2"},
-				null, false, 666/*MPK.PRIMARY_PROG[4]*/);
+		talReverb = new Plugin(TalReverb.NAME, 3, LineType.CARLA);
+		talReverb2 = new Plugin(TalReverb.NAME + "2", 4, LineType.CARLA);
 
-		talReverb = new Plugin(TalReverb.NAME, 4, LineType.CARLA);
-
-		theShepard = new Plugin("theShepard", 5, LineType.CARLA);
+		//theShepard = new Plugin("theShepard", 5, LineType.CARLA);
 
 		plugins.addAll(Arrays.asList(new Plugin[] {
-		        fluid, harmonizer, echo, flanger, talReverb, theShepard}));
+		        fluid, harmonizer, echo, talReverb, talReverb2}));
 
 	}
 
 	public Reverb getReverb() {
-	    return new TalReverb(this, talReverb);
+		if (rev1 == null)
+			rev1 = new TalReverb(this, talReverb, 600);
+	    return rev1;
 	}
-
+	public Reverb getReverb2() {
+		if (rev2 == null)
+			rev2 = new TalReverb(this, talReverb2, 900);
+		return rev2;
+	}
+	
+	
 	// default ports
 	public Carla(File carlaSettings, boolean showGui) throws IOException, JackException {
 		this(carlaSettings, 11176, 11177, showGui);
@@ -208,76 +216,65 @@ public class Carla implements Service {
 
 	@Override public void properties(HashMap<String, Object> props) { }
 
-	public void flanger(boolean active, LineIn ch) throws OSCSerializeException, IOException, JackException {
-
-		int idx = flanger.getIndex();
-
-		// some defaults
-		setParameterValue(idx, 4, 0.8f);
-		setParameterValue(idx, 2, 0.5f);
-
-		setActive(idx, active);
-		toAux2(flanger, ch, active);
-	}
-
-	private void toAux2(Plugin plugin, LineIn ch, boolean active) throws JackException {
-		JackClient client = JudahZone.getInstance().getJackclient();
-		LineIn aux2 = JudahZone.getChannels().getCrave();
-
-		if (active) {
-			// disconnect standard stage
-			jack.disconnect(client, ch.getLeftSource(), ch.getLeftConnection());
-
-			// connect plugin to System port.
-			jack.connect(client, ch.getLeftSource(), plugin.getInports()[LEFT_CHANNEL]);
-			if (plugin.isStereo()) {
-				if (ch.isStereo())
-					jack.connect(client, ch.getRightSource(), plugin.getInports()[RIGHT_CHANNEL]);
-				else
-					jack.connect(client, ch.getLeftSource(), plugin.getInports()[RIGHT_CHANNEL]);
-			}
-			else if (ch.isStereo())
-				jack.connect(client, ch.getRightSource(), plugin.getInports()[LEFT_CHANNEL]);
-
-			// connect plugin to JudahZone (aux2)
-			jack.connect(client, plugin.getOutports()[LEFT_CHANNEL], aux2.getLeftConnection());
-			if (plugin.isStereo())
-				jack.connect(client, plugin.getOutports()[RIGHT_CHANNEL], aux2.getRightConnection());
-			else
-				jack.connect(client, plugin.getOutports()[LEFT_CHANNEL], aux2.getRightConnection());
-
-		}
-		else {
-			// disconnect plugin from JudahZone (aux2)
-			jack.disconnect(client, plugin.getOutports()[LEFT_CHANNEL], aux2.getLeftConnection());
-			if (plugin.isStereo())
-				jack.disconnect(client, plugin.getOutports()[RIGHT_CHANNEL], aux2.getRightConnection());
-			else
-				jack.connect(client, plugin.getOutports()[LEFT_CHANNEL], aux2.getRightConnection());
-
-			// disconnect plugin from system
-			jack.disconnect(client, ch.getLeftSource(), plugin.getInports()[LEFT_CHANNEL]);
-			if (plugin.isStereo()) {
-				if (ch.isStereo())
-					jack.disconnect(client, ch.getRightSource(), plugin.getInports()[RIGHT_CHANNEL]);
-				else
-					jack.disconnect(client, ch.getLeftSource(), plugin.getInports()[RIGHT_CHANNEL]);
-			}
-			else if (ch.isStereo())
-				jack.disconnect(client, ch.getRightSource(), plugin.getInports()[LEFT_CHANNEL]);
-
-			// connect standard stage
-			jack.connect(client, ch.getLeftSource(), ch.getLeftConnection());
-			if (ch.isStereo())
-				jack.connect(client, ch.getRightSource(), ch.getRightConnection());
-
-		}
-	}
+//	@SuppressWarnings("unused")
+//	private void toAux2(Plugin plugin, LineIn ch, boolean active) throws JackException {
+//		JackClient client = JudahZone.getInstance().getJackclient();
+//		LineIn aux2 = JudahZone.getChannels().getCrave();
+//
+//		if (active) {
+//			// disconnect standard stage
+//			jack.disconnect(client, ch.getLeftSource(), ch.getLeftConnection());
+//
+//			// connect plugin to System port.
+//			jack.connect(client, ch.getLeftSource(), plugin.getInports()[LEFT_CHANNEL]);
+//			if (plugin.isStereo()) {
+//				if (ch.isStereo())
+//					jack.connect(client, ch.getRightSource(), plugin.getInports()[RIGHT_CHANNEL]);
+//				else
+//					jack.connect(client, ch.getLeftSource(), plugin.getInports()[RIGHT_CHANNEL]);
+//			}
+//			else if (ch.isStereo())
+//				jack.connect(client, ch.getRightSource(), plugin.getInports()[LEFT_CHANNEL]);
+//
+//			// connect plugin to JudahZone (aux2)
+//			jack.connect(client, plugin.getOutports()[LEFT_CHANNEL], aux2.getLeftConnection());
+//			if (plugin.isStereo())
+//				jack.connect(client, plugin.getOutports()[RIGHT_CHANNEL], aux2.getRightConnection());
+//			else
+//				jack.connect(client, plugin.getOutports()[LEFT_CHANNEL], aux2.getRightConnection());
+//
+//		}
+//		else {
+//			// disconnect plugin from JudahZone (aux2)
+//			jack.disconnect(client, plugin.getOutports()[LEFT_CHANNEL], aux2.getLeftConnection());
+//			if (plugin.isStereo())
+//				jack.disconnect(client, plugin.getOutports()[RIGHT_CHANNEL], aux2.getRightConnection());
+//			else
+//				jack.connect(client, plugin.getOutports()[LEFT_CHANNEL], aux2.getRightConnection());
+//
+//			// disconnect plugin from system
+//			jack.disconnect(client, ch.getLeftSource(), plugin.getInports()[LEFT_CHANNEL]);
+//			if (plugin.isStereo()) {
+//				if (ch.isStereo())
+//					jack.disconnect(client, ch.getRightSource(), plugin.getInports()[RIGHT_CHANNEL]);
+//				else
+//					jack.disconnect(client, ch.getLeftSource(), plugin.getInports()[RIGHT_CHANNEL]);
+//			}
+//			else if (ch.isStereo())
+//				jack.disconnect(client, ch.getRightSource(), plugin.getInports()[LEFT_CHANNEL]);
+//
+//			// connect standard stage
+//			jack.connect(client, ch.getLeftSource(), ch.getLeftConnection());
+//			if (ch.isStereo())
+//				jack.connect(client, ch.getRightSource(), ch.getRightConnection());
+//
+//		}
+//	}
 
 	public void octaver(boolean active) throws OSCSerializeException, IOException, JackException {
 		JackClient client = JudahZone.getInstance().getJackclient();
 		LineIn guitar = JudahZone.getChannels().getGuitar();
-		LineIn aux2 = JudahZone.getChannels().getCrave();
+		LineIn aux2 = JudahZone.getChannels().getFluid();
 
 		// setActive(bassEQ.getIndex(), active);
 		setActive(harmonizer.getIndex(), active);
@@ -298,7 +295,7 @@ public class Carla implements Service {
 			jack.connect(client, guitar.getLeftSource(), harmonizer.getInports()[RIGHT_CHANNEL]);
 
 			jack.connect(client, harmonizer.getOutports()[LEFT_CHANNEL], aux2.getLeftConnection());
-			//jack.connect(client, harmonizer.getOutports()[RIGHT_CHANNEL], aux2.getRightConnection());
+			jack.connect(client, harmonizer.getOutports()[RIGHT_CHANNEL], aux2.getRightConnection());
 			Console.info("Bass beast mode engaged.");
 		}
 		else {
@@ -307,7 +304,7 @@ public class Carla implements Service {
 			jack.disconnect(client, guitar.getLeftSource(), harmonizer.getInports()[RIGHT_CHANNEL]);
 
 			jack.disconnect(client, harmonizer.getOutports()[LEFT_CHANNEL], aux2.getLeftConnection());
-			//jack.disconnect(client, harmonizer.getOutports()[RIGHT_CHANNEL], aux2.getRightConnection());
+			jack.disconnect(client, harmonizer.getOutports()[RIGHT_CHANNEL], aux2.getRightConnection());
 			Console.info("Octaver off");
 			} catch (Throwable t) {log.debug("disconnect: " + t.getMessage());}
 		}

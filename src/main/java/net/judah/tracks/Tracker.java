@@ -11,6 +11,7 @@ import lombok.Getter;
 import net.judah.MainFrame;
 import net.judah.controllers.KnobMode;
 import net.judah.controllers.MPK;
+import net.judah.midi.Panic;
 import net.judah.util.Constants;
 
 public class Tracker extends JPanel {
@@ -86,8 +87,11 @@ public class Tracker extends JPanel {
 		if (focus == null) focus = tracks.get(0).getTrack();
 		if (focus instanceof StepTrack) 
 			((StepTrack)focus).changePattern(up);
-		else if (focus instanceof KitTrack)
-			((KitTrack)focus).changePattern(up);
+		else if (focus instanceof KitTrack) {
+			Box box = ((KitTrack)focus).getBeatbox();
+			Box.next(true, box, box.getCurrent());
+		}
+		MainFrame.update(focus);
 	}
 
 	public void knob(int knob, int data2) {
@@ -103,8 +107,13 @@ public class Tracker extends JPanel {
 			TrackView view = getView(focus);
 			ArrayList<JackPort> available = view.getMidiOut().getPorts();
 			Object obj = Constants.ratio(data2, available);
-			if (focus.setMidiOut((JackPort)obj))
+			JackPort old = focus.getMidiOut();
+			if (focus.setMidiOut((JackPort)obj)) {
 				view.redoInstruments();
+				if (old != null) 
+					new Panic(old).start();
+			}
+				
 			MainFrame.update(focus);
 		}
 		else if (knob == 2) { // instrument
@@ -121,6 +130,12 @@ public class Tracker extends JPanel {
 			focus.setGain(data2 * 0.01f);
 			MainFrame.update(focus);
 		}
+	}
+
+	public void loadMidi() {
+		// file box
+		// setFile on Track 7
+		
 	}
 	
 }

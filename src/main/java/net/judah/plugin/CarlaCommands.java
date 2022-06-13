@@ -6,7 +6,6 @@ import static net.judah.util.Constants.Param.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import net.judah.JudahZone;
 import net.judah.api.Command;
 
 public class CarlaCommands extends ArrayList<Command> {
@@ -32,14 +31,10 @@ public class CarlaCommands extends ArrayList<Command> {
 			}
 		});
 		
-		
-		add(new Command("carla:flanger", "turn on/off flanger", channelTemplate()) {
-			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				boolean active = (midiData2 >= 0) 
-						? midiData2 > 0 : parseActive(props);
-				carla.flanger(active, JudahZone.getChannels().byName(parseString(CHANNEL, props)));
-			}			
-		});
+		// add(new Command("carla:flanger", "turn on/off flanger", channelTemplate()) {
+		//	@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+		//		boolean active = (midiData2 >= 0) ? midiData2 > 0 : parseActive(props);
+		//		carla.flanger(active, JudahZone.getChannels().byName(parseString(CHANNEL, props)));}});
 	}
 
 	public static HashMap<String, Class<?>> template() {

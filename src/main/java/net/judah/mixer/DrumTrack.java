@@ -1,6 +1,7 @@
 package net.judah.mixer;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.jaudiolibs.jnajack.JackPort;
 
@@ -13,25 +14,25 @@ import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeNotifier;
 import net.judah.clock.JudahClock;
-import net.judah.looper.Recorder;
+import net.judah.looper.Loop;
 import net.judah.util.RTLogger;
 
 @Data @EqualsAndHashCode(callSuper = true) 
-public class DrumTrack extends Recorder implements TimeListener {
+public class DrumTrack extends Loop implements TimeListener {
 
     public static final String NAME = "_drums";
 
     private boolean muteStash = true;
-    
+    protected final List<JackPort> inputPorts;
     private LineIn soloTrack;
     private TimeNotifier master;
 
     public DrumTrack(TimeNotifier master, LineIn soloTrack) {
-        super(NAME, Type.SOLO, Arrays.asList(new JackPort[] {
-                soloTrack.getLeftPort(), soloTrack.getRightPort()
-        }), JudahZone.getOutPorts());
+        super(NAME);
         this.master = master;
         this.soloTrack = soloTrack;
+        inputPorts = Arrays.asList(new JackPort[] {
+                soloTrack.getLeftPort(), soloTrack.getRightPort()});
     }
 
     @Override
@@ -41,7 +42,7 @@ public class DrumTrack extends Recorder implements TimeListener {
                 record(true);
             else if (Status.TERMINATED == value) {
                 setType(Type.DRUMTRACK);
-                if (JudahZone.getChannels().getDrums().equals(soloTrack))
+                if (JudahZone.getChannels().getCalf().equals(soloTrack))
                 	JudahClock.getInstance().end();
                 sync(false);
             }
@@ -55,7 +56,7 @@ public class DrumTrack extends Recorder implements TimeListener {
             master.addListener(this);
             soloTrack.setSolo(true);
             play(true); // armed
-            LineIn drums = JudahZone.getChannels().getDrums();
+            LineIn drums = JudahZone.getChannels().getCalf();
             muteStash = drums.isMuteRecord();
             drums.setMuteRecord(false);
             RTLogger.log(this, "drumtrack sync'd. to " + soloTrack.getName());
@@ -65,8 +66,8 @@ public class DrumTrack extends Recorder implements TimeListener {
                 master.removeListener(this);
             master = null;
             soloTrack.setSolo(false);
-            soloTrack = JudahZone.getChannels().getDrums();
-            JudahZone.getChannels().getDrums().setMuteRecord(muteStash);
+            soloTrack = JudahZone.getChannels().getCalf();
+            soloTrack.setMuteRecord(muteStash);
             RTLogger.log(this, "drumtrack disengaged.");
         }
         setType(soloTrack.isSolo() ? Type.SOLO : Type.DRUMTRACK);

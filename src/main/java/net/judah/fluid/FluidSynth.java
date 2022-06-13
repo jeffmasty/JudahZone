@@ -56,7 +56,7 @@ public class FluidSynth implements Service {
 	private final Command progChange, instUp, instDown, drumBank, direct;
 	@Getter private final List<Command> commands;
 
-	private float gain = 0.5f; // max 5.0
+	private float gain = 0.35f; // max 5.0
 
 	public FluidSynth (int sampleRate, boolean startListeners) throws JackException, JudahException, IOException {
 		this(sampleRate, SOUND_FONT, startListeners);
@@ -75,7 +75,6 @@ public class FluidSynth implements Service {
 				SOUND_FONT.getAbsolutePath();
 
 		console = new FluidConsole(this);
-		// log.debug(shellCommand);
 		try {
 			process = Runtime.getRuntime().exec(shellCommand);
 		} catch (IOException e) {

@@ -7,22 +7,11 @@ import java.awt.Dimension;
 import java.io.File;
 import java.security.InvalidParameterException;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.DefaultListModel;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JDesktopPane;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
+import javax.swing.*;
 
+import net.judah.ControlPanel;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
-import net.judah.ControlPanel;
 import net.judah.effects.api.Preset;
 import net.judah.effects.api.PresetsHandler;
 import net.judah.mixer.Channel;
@@ -41,7 +30,7 @@ public class PresetsGui extends JDesktopPane {
         this.presets = presets;
         int offset = 6;
         int buttonsWidth = 100;
-        int presetsWidth = MainFrame.WIDTH_MIXER - buttonsWidth - (int)(2.5 * offset) - 50;
+        int presetsWidth = MainFrame.WIDTH_CONTROLS - buttonsWidth - (int)(2.5 * offset) - 50;
         int presetsHeigth = 333;
         int buttonsX = presetsWidth + offset;
 

@@ -16,7 +16,7 @@ import org.jaudiolibs.jnajack.JackPort;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
-import net.judah.midi.JudahMidi;
+import net.judah.midi.Panic;
 import net.judah.settings.Channels;
 import net.judah.tracks.Track.Type;
 import net.judah.util.Click;
@@ -52,7 +52,7 @@ public abstract class TrackView extends JPanel {
 		midiOut = new MidiOut(track);
         Click outLbl = new Click(track.getName());
         outLbl.addActionListener( e -> {
-            JackPort out = JudahMidi.getByName(midiOut.getSelectedItem().toString());
+            JackPort out = (JackPort)midiOut.getSelectedItem();
             MainFrame.setFocus(JudahZone.getChannels().byName(Channels.volumeTarget(out)));});
 		volume.setPreferredSize(SLIDESZ);
 		volume.addChangeListener(e -> {
@@ -92,8 +92,11 @@ public abstract class TrackView extends JPanel {
 		else playWidget.setBackground(Pastels.EGGSHELL);
 		volume.setValue((int) (track.getGain() * 100f));
 		if (midiOut.getSelectedItem() != track.getMidiOut()) {
+			JackPort old = (JackPort) midiOut.getSelectedItem();
 			// there is a change
 			midiOut.setSelectedItem(track.getMidiOut());
+			if (old != null)
+				new Panic(old).start();
 		}
 	}
 

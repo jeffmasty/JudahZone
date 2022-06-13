@@ -46,7 +46,7 @@ public class EffectsRack extends JPanel implements GUI {
         		new KeyPair("", channel.getReverb()),
         		new KeyPair("Reverb", channel.getReverb()),
         		new KeyPair("", channel.getReverb()),
-        		new KeyPair("Dist.", channel.getOverdrive()),
+        		new KeyPair("Vol.", channel.getGain()),
         }));
 
         labels.add(new RowLabels(channel, KnobMode.Effects1, new KeyPair[]{
@@ -64,7 +64,7 @@ public class EffectsRack extends JPanel implements GUI {
         }));
         
         labels.add(new RowLabels(channel, KnobMode.Effects2, new KeyPair[]{
-	    		new KeyPair("Volume", channel.getGain()),
+	    		new KeyPair("Dist.", channel.getOverdrive()),
 	    		new KeyPair("Pan", channel.getGain()),
 	    		new KeyPair("Comp.", channel.getCompression()),
 	    		new KeyPair("", channel.getDelay()),

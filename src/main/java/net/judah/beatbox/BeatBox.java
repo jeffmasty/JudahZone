@@ -46,7 +46,7 @@ public class BeatBox extends ArrayList<Grid> implements Runnable {
         this.type = midiChannel >= 9 ? Type.Drums : Type.Melodic;
         midiOut = type == Type.Drums
                 ? JudahMidi.getInstance().getCalfOut()
-                : JudahMidi.getInstance().getSynthOut();
+                : JudahMidi.getInstance().getFluidOut();
         current = create();
     }
 

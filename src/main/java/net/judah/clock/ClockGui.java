@@ -12,6 +12,7 @@ import javax.swing.*;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
 import net.judah.clock.JudahClock.Mode;
+import net.judah.controllers.Jamstik;
 import net.judah.util.*;
 
 public class ClockGui extends JPanel implements ActionListener, TimeListener {
@@ -25,6 +26,7 @@ public class ClockGui extends JPanel implements ActionListener, TimeListener {
     private JLabel beat = new JLabel("0", JLabel.CENTER);
     private JPanel bpmPnl = new JPanel();
 	private final JLabel syncLbl;
+	private final JLabel keyboardSynth = new JLabel("MPK->Fluid", JLabel.CENTER);
 	
 	private final JudahMenu popup = new JudahMenu();
 
@@ -40,6 +42,14 @@ public class ClockGui extends JPanel implements ActionListener, TimeListener {
         tempoPnl.setLayout(new BoxLayout(tempoPnl, BoxLayout.X_AXIS));
         tempoPnl.add(Box.createRigidArea(spacer));
         tempoPnl.add(tempo);
+        tempoPnl.add(Box.createRigidArea(spacer));
+        tempoPnl.add(Jamstik.getWidget());
+        tempoPnl.add(Box.createRigidArea(spacer));
+        
+        keyboardSynth.setOpaque(true);
+        keyboardSynth.setBackground(Pastels.MY_GRAY);
+        
+        tempoPnl.add(keyboardSynth); 
         tempoPnl.add(Box.createRigidArea(spacer));
         tempoPnl.add(mode);
         mode.setPreferredSize(new Dimension(50, 20));
@@ -65,9 +75,9 @@ public class ClockGui extends JPanel implements ActionListener, TimeListener {
         bpmPnl = new JPanel(new GridLayout(1, 6));
         bpmPnl.add(tapButton);
         bpmPnl.add(tempoLbl);
-        bpmPnl.add(new JLabel("Sync:", JLabel.CENTER));
+        bpmPnl.add(new JLabel("LoopSync:", JLabel.RIGHT));
         syncLbl = new JLabel("" + JudahClock.getLength(), JLabel.CENTER);
-        syncLbl.setFont(Constants.Gui.BOLD);
+        syncLbl.setFont(Constants.Gui.BOLD13);
         
         bpmPnl.add(syncLbl);
         
@@ -75,7 +85,7 @@ public class ClockGui extends JPanel implements ActionListener, TimeListener {
         for (String s : JudahClock.getTimeSignatures())
         	timeSignature.addItem(s);
         timeSignature.setAlignmentX(0.5f);
-        bpmPnl.add(new JLabel("Style:", JLabel.CENTER));
+        bpmPnl.add(new JLabel("Style:", JLabel.RIGHT));
         bpmPnl.add(timeSignature);
 
 
@@ -88,7 +98,10 @@ public class ClockGui extends JPanel implements ActionListener, TimeListener {
         start.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (clock.isActive()) {
+            	if (e.getButton() == MouseEvent.BUTTON3) {
+        			clock.reset();
+        		}
+            	else if (clock.isActive()) {
                     clock.reset();
                 }
                 else
@@ -105,6 +118,13 @@ public class ClockGui extends JPanel implements ActionListener, TimeListener {
         beatPnl.add(beatLbl);
         beatPnl.add(beat);
         startPnl.add(beatPnl);
+        beatPnl.addMouseListener(new MouseAdapter() {
+        	@Override
+        	public void mouseClicked(MouseEvent e) {
+        		if (e.getButton() == MouseEvent.BUTTON3)
+        			clock.reset();
+        	}
+        });
 
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         add(startPnl);
@@ -162,6 +182,12 @@ public class ClockGui extends JPanel implements ActionListener, TimeListener {
 
 	public void sync(int bars) {
 		syncLbl.setText("" + bars);
+	}
+
+	public void keyboardSynth(final String text) {
+		new Thread(()->{
+			keyboardSynth.setText("MPK->" + text);
+    	}).start();
 	}
 
 //    private void createSteps() {

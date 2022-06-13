@@ -21,8 +21,7 @@ import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.effects.Fader;
-import net.judah.looper.Recorder;
-import net.judah.looper.Sample;
+import net.judah.looper.Loop;
 import net.judah.sequencer.Sequencer;
 import net.judah.util.Console;
 import net.judah.util.Icons;
@@ -45,8 +44,8 @@ public abstract class ChannelGui extends JPanel {
 
         setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
 
-        setPreferredSize(new Dimension(MainFrame.WIDTH_MIXER / 2 - 1, LBL_SZ.height + 10));
-        setMaximumSize(new Dimension(MainFrame.WIDTH_MIXER / 2 - 1, LBL_SZ.height + 10));
+        setPreferredSize(new Dimension(MainFrame.WIDTH_CONTROLS / 2 - 1, LBL_SZ.height + 10));
+        setMaximumSize(new Dimension(MainFrame.WIDTH_CONTROLS / 2 - 1, LBL_SZ.height + 10));
 
         labelButton = new JToggleButton();
         if (channel.getIcon() == null)
@@ -166,9 +165,9 @@ public abstract class ChannelGui extends JPanel {
 
         @Override
         public void update() {
-            armPlay(AudioMode.ARMED == ((Sample)channel).isPlaying());
-            //armRecord(AudioMode.ARMED == ((Recorder)channel).isRecording());
-            if (((Sample)channel).hasRecording())
+            armPlay(AudioMode.ARMED == ((Loop)channel).isPlaying());
+            //armRecord(AudioMode.ARMED == ((Loop)channel).isRecording());
+            if (((Loop)channel).hasRecording())
                 setBorder(new LineBorder(GREEN));
             else setBorder(BorderFactory.createEmptyBorder());
             super.update();
@@ -184,12 +183,12 @@ public abstract class ChannelGui extends JPanel {
 
         @Override protected void customAction(MixButton customAction) {
             if (Icons.PLAY.getName().equals(customAction.getName())) {
-                Sample sample = (Sample)channel;
+                Loop sample = (Loop)channel;
                 sample.play(AudioMode.RUNNING != sample.isPlaying());
             }
-            else if (Icons.MICROPHONE.getName().equals(customAction.getName()) && channel instanceof Recorder) {
-                Recorder recorder = (Recorder)channel;
-                recorder.record(AudioMode.RUNNING != recorder.isRecording());
+            else if (Icons.MICROPHONE.getName().equals(customAction.getName()) && channel instanceof Loop) {
+                Loop Loop = (Loop)channel;
+                Loop.record(AudioMode.RUNNING != Loop.isRecording());
                 recordBtn.setBorder(BorderFactory.createEmptyBorder());
             }
             else
@@ -245,7 +244,7 @@ public abstract class ChannelGui extends JPanel {
         if (ch instanceof DrumTrack) return new ChannelGui.Drums(ch);
         if (ch instanceof MasterTrack) return new ChannelGui.Master((MasterTrack)ch);
         if (ch instanceof LineIn) return new ChannelGui.Input((LineIn)ch);
-        if (ch instanceof Sample) return new ChannelGui.Output(ch);
+        if (ch instanceof Loop) return new ChannelGui.Output(ch);
         throw new InvalidParameterException(ch.getClass().getCanonicalName());
     }
 

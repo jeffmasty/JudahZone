@@ -19,7 +19,8 @@ public class CommandHandler {
 	/** call after all services have been initialized */
 	public void initializeCommands() {
 		for (Service s : JudahZone.getServices()) 
-			available.addAll(s.getCommands());
+			if (s.getCommands() != null)
+				available.addAll(s.getCommands());
 		available.addAll(new SeqCommands());
 		available.addAll(new MixCommands());
 		available.sort((p1, p2) -> p1.getName().compareTo(p2.getName()));

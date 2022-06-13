@@ -5,18 +5,13 @@ import java.util.Arrays;
 
 import javax.swing.ImageIcon;
 
+import org.jaudiolibs.jnajack.JackPort;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import net.judah.MainFrame;
-import net.judah.effects.Chorus;
-import net.judah.effects.Compression;
-import net.judah.effects.CutFilter;
-import net.judah.effects.Delay;
-import net.judah.effects.EQ;
-import net.judah.effects.Freeverb;
-import net.judah.effects.LFO;
-import net.judah.effects.Overdrive;
+import net.judah.effects.*;
 import net.judah.effects.api.Effect;
 import net.judah.effects.api.Gain;
 import net.judah.effects.api.Preset;
@@ -49,6 +44,8 @@ public abstract class Channel extends ArrayList<Effect> {
 	protected Delay delay = new Delay();
     protected Reverb reverb = new Freeverb();
 
+    protected JackPort sync;
+    
     public Channel(String name) {
         this.name = name;
         addAll(Arrays.asList(new Effect[] {
@@ -83,7 +80,7 @@ public abstract class Channel extends ArrayList<Effect> {
 
 	public void reset() {
 		getEq().setActive(false); 
-		if (false == this.name.equals(Channels.DRUMS)) // compression for drums stays on
+		if (false == this.name.equals(Channels.CALF)) // compression for drums stays on
 			getCompression().setActive(false);
 		getReverb().setActive(false);
 		getChorus().setActive(false);

@@ -11,8 +11,8 @@ import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.clock.JudahClock;
-import net.judah.looper.Recorder;
-import net.judah.looper.Sample;
+import net.judah.looper.Loop;
+import net.judah.midi.JudahMidi;
 import net.judah.util.Pastels;
 import net.judah.util.RainbowFader;
 
@@ -42,23 +42,31 @@ public class ChannelFader extends JPanel implements Pastels {
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
 		icon = new Thumbnail(channel);
-		add(icon);
 		indicators = new LEDs(channel);
-		add(indicators);
+
 		
 		volume = new RainbowFader(vol -> {
 			channel.getGain().setVol(volume.getValue());
 			MainFrame.update(channel);
 		});
-		JPanel temp = new JPanel();
-		temp.add(volume);
-		add(temp);
+		JPanel volPnl = new JPanel();
+		volPnl.add(volume);
 		//add(volume);
 
-		menu = (channel instanceof Recorder) ?
-			new SyncWidget((Recorder)channel) : new Menu(channel);
-		add(menu);
+		menu = (channel instanceof Loop) ?
+			new SyncWidget((Loop)channel) : new Menu(channel);
 
+		if (channel instanceof LineIn) {
+			add(icon);
+			add(indicators);
+			add(volPnl);
+			add(menu);
+		} else {
+			add(menu);
+			add(indicators);
+			add(volPnl);
+			add(icon);
+		}
 		
 	}
 
@@ -66,9 +74,9 @@ public class ChannelFader extends JPanel implements Pastels {
 		indicators.sync();		
 		Color bg = BLUE;
 		
-		if (channel instanceof Sample) {
-			Sample s = (Sample) channel;
-			if (channel instanceof Recorder && (((Recorder)channel).isRecording() == AudioMode.RUNNING)) 
+		if (channel instanceof Loop) {
+			Loop s = (Loop) channel;
+			if (channel instanceof Loop && (((Loop)channel).isRecording() == AudioMode.RUNNING)) 
 				bg = RED;
 			else if (s.isOnMute())
 				bg = PURPLE;
@@ -79,20 +87,23 @@ public class ChannelFader extends JPanel implements Pastels {
 			else if (s.isSync()) 
 				bg = ORANGE;
 			else {
-				Recorder a = JudahZone.getLooper().getLoopA();
+				Loop a = JudahZone.getLooper().getLoopA();
 				if (a == channel && JudahClock.isLoopSync())
 					bg = ORANGE;
-				else if (a != channel && ((Recorder)s).getPrimary() != null) {
+				else if (a != channel && s.getPrimary() != null) {
 					bg = PINK;
 				}
 			}
 		}
-		else { // line in/master track
+		else { // line in/master track // TODO upper and lower indicator color
 			if (channel.isOnMute()) 
+				bg = Color.BLACK;
+			else if (channel instanceof LineIn && ((LineIn)channel).isMuteRecord()) {
 				bg = PURPLE;
-			else if (channel instanceof LineIn && ((LineIn)channel).isMuteRecord())
-				bg = ORANGE;
-			else if (channel == JudahZone.getChannels().getCrave() && JudahClock.getInstance().isSyncCrave())
+				if (channel.getSync() != null && JudahMidi.getInstance().getSync().contains(channel.getSync()))
+					bg = YELLOW;
+			}
+			else if (channel.getSync() != null && JudahMidi.getInstance().getSync().contains(channel.getSync()))
 				bg = PINK;
 			else 
 				bg = GREEN;

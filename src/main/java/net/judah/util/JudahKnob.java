@@ -20,6 +20,8 @@ public class JudahKnob extends JPanel {
 	private final RainbowKnob knob;
 	private final JLabel label;
 
+	
+	
 	public JudahKnob(Channel ch, Effect fx, int idx, String lbl) {
 		effect = fx;
 		this.idx = idx;
@@ -39,7 +41,7 @@ public class JudahKnob extends JPanel {
 		if (knob.isOnMode() != active) {
 			knob.setOnMode(active);
 			// label.setFont(active ? Gui.BOLD : Gui.FONT11);
-			repaint();
+			// repaint();
 		}
 	}
 

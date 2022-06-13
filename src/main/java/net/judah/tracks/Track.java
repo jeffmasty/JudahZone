@@ -31,6 +31,7 @@ public abstract class Track implements TimeListener {
 	protected final File folder;
 	protected JackPort midiOut;
 	protected final OUT initial;
+	protected int index;
 	protected int ch;
 	
 	protected boolean active = false;
@@ -69,7 +70,6 @@ public abstract class Track implements TimeListener {
 			clock.addListener(this);
 		else 
 			clock.removeListener(this);
-		if (!JudahClock.getInstance().isActive()) JudahClock.getInstance().begin();
 		MainFrame.update(this);
 	}
 	
@@ -96,7 +96,7 @@ public abstract class Track implements TimeListener {
 	}
 
 	public void selectFile(int data2) {
-		
+		// TODO!	
 	}
 	
 }

@@ -16,7 +16,6 @@ public class BassAndSnare extends StepDrum {
 
 	@Override
 	public Box getBeatBox() {
-		int idx = 0;
 		Box result = new Box();
 		
 		ArrayList<Sequence> current;

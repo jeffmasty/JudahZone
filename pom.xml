@@ -23,49 +23,26 @@
   </repository>
 </repositories>
 
-
-
 <dependencies>
-    <dependency>
-        <groupId>org.apache.logging.log4j</groupId>
-        <artifactId>log4j-slf4j-impl</artifactId>
-        <version>2.15.0</version>
-    </dependency>
-
-  <dependency>
-    <groupId>com.github.axet</groupId>
-    <artifactId>TarsosDSP</artifactId>
-    <version>2.4-1</version>
-  </dependency>
-  
-  <!-- talk to an arduino over serial port <dependency>
-    <groupId>io.github.java-native</groupId>
-  <artifactId>jssc</artifactId>
-  <version>2.9.3</version>
-  </dependency> -->
-  
-  
-	<dependency>
+	<!-- Jack Support -->
+  	<dependency>
     	<groupId>net.java.dev.jna</groupId>
       	<artifactId>jna</artifactId>
       	<version>[5.0.0,6.0)</version>
       	<scope>compile</scope>
     </dependency>
-    
     <dependency>
         <groupId>org.jaudiolibs</groupId>
         <artifactId>jnajack</artifactId>
         <version>1.4.0</version>
         <scope>provided</scope>
     </dependency>
-    
     <dependency>
         <groupId>org.jaudiolibs</groupId>
         <artifactId>audioservers-api</artifactId>
        	<version>2.0.0</version>
         <scope>provided</scope>
     </dependency>
-    
     
     <dependency>
         <groupId>org.projectlombok</groupId>
@@ -74,12 +51,6 @@
         <scope>provided</scope>
     </dependency>
 
-    <dependency>
-        <groupId>commons-io</groupId>
-        <artifactId>commons-io</artifactId>
-        <version>2.7</version>
-    </dependency>
-    
     <dependency>
 	    <groupId>org.apache.jena</groupId>
 	    <artifactId>apache-jena-libs</artifactId>
@@ -92,20 +63,45 @@
 	    <artifactId>javaosc-core</artifactId>
 	    <version>0.6</version>
 	</dependency>
-
-<!--    <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-databind</artifactId>
-        <version>2.11.1</version>
-    </dependency> -->
+	
+    <dependency>
+    	<groupId>com.github.axet</groupId>
+    	<artifactId>TarsosDSP</artifactId>
+	    <version>2.4-1</version>
+	</dependency>
 
 <!--  <dependency>
     <groupId>net.beadsproject</groupId>
     <artifactId>beads</artifactId>
     <version>3.2</version>
   </dependency> -->
-  
 
-  </dependencies>
+<!-- talk to an arduino over serial port <dependency>
+    <groupId>io.github.java-native</groupId>
+  <artifactId>jssc</artifactId>
+  <version>2.9.3</version>
+  </dependency> -->
+
+<!-- <dependency>
+  	<groupId>dev.atsushieno</groupId>
+  	<artifactId>ktmidi-jvm-desktop</artifactId>
+  	<version>0.3.16</version>
+  </dependency>
+  <dependency>
+  	<groupId>dev.atsushieno</groupId>
+  	<artifactId>alsakt</artifactId>
+  	<version>0.1.4.3</version>
+  </dependency>
+  <dependency>
+  	<groupId>dev.atsushieno</groupId>
+  	<artifactId>ktmidi-jvm</artifactId>
+  	<version>0.3.16</version>
+  </dependency>
+  <dependency>
+  	<groupId>dev.atsushieno</groupId>
+  	<artifactId>ktmidi</artifactId>
+  	<version>0.3.8</version>
+  </dependency> -->
+</dependencies>
   
 </project>

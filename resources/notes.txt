@@ -1,30 +1,31 @@
 TODO:
 
+fx preset instead of compression, function 2
+synth presets on clock gui 
+route circuit midi tracks
+verse-chorus control
+midi recorder/looper - beatbox records midi_in/quantize
+Loop GUI
+double tap erase - stop drums
 Midi Mixer: style/arp/pattern/song/chords/channel    
 		AAB  *AAB   *B[AAB] SWING vs 3/4 etc 
-Loop GUI, refactor Recorder & Sample into Loop
-separate external reverb
-Ritardando
-guitar efx selector
-Noise Effect generates ocean, heartbeat, birds, crickets, walking, thunder, rain, 
-	bicycle, phonograph, whips and chains  (sampleFile, frequency, wet, granularity)
-LFO upgrade (triggered to Clock, LFO/Fader cleanUp())
-fix compression
 copy/delete loops
-Sampler
 solo lineIn to specific loop
-verse-chorus control
+sheetMusic 2.0
 step sequencer chords
-Sampler
-beatbox records midi_in/quantize
 arppegiator 2.0
 export beatbox as midi file
+separate external reverb
+Ritardando
+Noise Effect generates ocean, heartbeat, birds, crickets, walking, thunder, rain, 
+	bicy6cle, phonograph, whips and chains  (sampleFile, frequency, wet, granularity)
+LFO upgrade (triggered to Clock, LFO/Fader cleanUp())
 Vocoder 
+Sampler
 commands commands commands
 unified play/record/transpose commands 
 record record record youtubes
 songs: andILoveHer, FeelGoodInc, 
-
 
 README credits
 clipping/xruns filter see https://github.com/psambit9791/jDSP Peak/Spike
@@ -150,8 +151,9 @@ Midi24 out: inside step sequencer
 synth tuner
 migrate beatbox to 8-track
 Track KnobMode
-
-
+Sync BeatBox to external time control,	process time from Circuit, 
+route Jamstik and MPK
+sync start/stop external sequencers
 
 REF-----------------------------------------------------------------
 

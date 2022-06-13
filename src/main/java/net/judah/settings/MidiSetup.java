@@ -10,27 +10,33 @@ public class MidiSetup {
 	public static final int DRUMS_CHANNEL = 9;
 
 	@RequiredArgsConstructor
-	public static enum IN { // in ports
+	public static enum IN { 
+		// in Midi ports
 		KEYBOARD("keyboard"), 
-		PEDAL("pedal"),
 		MIXER("mixer"),
 		PADS("pads"),
-		ARDUINO("arduino"),
-		CRAVE_IN("craveIn"),
-		DRUMS_IN("drumsIn"),
-		AUX_IN("auxIn"); //AUX1_IN("audioInterface"),
-		
+		CIRCUIT_IN("circuitIn"),
+		LINE6_IN("line6In"),
+		// JAMSTIK_IN("jamstikIn"),
+		AUX_IN("auxIn"); //audioInterface
+
+		// Old controllers
+		//	ARDUINO("arduino"),
+		//	CRAVE_IN("craveIn"),
+		//	PEDAL("pedal"),
+
 		@Getter public final String port;
 	}
 
 	@RequiredArgsConstructor
 	public enum OUT { // out ports
+		CLOCK_OUT("clockOut"),
 		SYNTH_OUT("synthOut"), 
-		DRUMS_OUT("drumsOut"), 
 		CALF_OUT("calfOut"),
 		CRAVE_OUT("craveOut"),
-		AUX1_OUT("auxOut"),
-		CLOCK_OUT("clockOut");
+		UNO_OUT("unoOut"),
+		CIRCUIT_OUT("circuitOut"),
+		AUX1_OUT("auxOut");
 		
 		@Getter public final String port;
 		

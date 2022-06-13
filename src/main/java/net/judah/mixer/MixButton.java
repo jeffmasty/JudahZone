@@ -5,8 +5,7 @@ import javax.swing.JLabel;
 import lombok.Getter;
 import lombok.ToString;
 import net.judah.api.AudioMode;
-import net.judah.looper.Recorder;
-import net.judah.looper.Sample;
+import net.judah.looper.Loop;
 import net.judah.sequencer.Sequencer;
 import net.judah.util.Icons;
 
@@ -29,8 +28,8 @@ public class MixButton extends JLabel {
 			setSelected(!channel.isOnMute());
 		else if (icon == Icons.MUTE_RECORD)
 			setSelected( (! ((LineIn)channel).isMuteRecord()));
-		else if (icon == Icons.MICROPHONE && channel instanceof Recorder) {
-			AudioMode mode = ((Recorder)channel).isRecording();
+		else if (icon == Icons.MICROPHONE && channel instanceof Loop) {
+			AudioMode mode = ((Loop)channel).isRecording();
 			if (AudioMode.STOPPED == mode || AudioMode.NEW == mode || AudioMode.ARMED == mode || AudioMode.STOPPING == mode)
 				setSelected(false);
 			else setSelected(true);
@@ -44,8 +43,8 @@ public class MixButton extends JLabel {
 				}
 				setSelected(seq.isRunning());
 			}
-			else if (channel instanceof Sample) {
-				AudioMode mode = ((Sample)channel).isPlaying();
+			else if (channel instanceof Loop) {
+				AudioMode mode = ((Loop)channel).isPlaying();
 				if (AudioMode.STOPPED == mode || AudioMode.NEW == mode || AudioMode.ARMED == mode || AudioMode.STOPPING == mode)
 					setSelected(false);
 				else if (AudioMode.STARTING == mode || AudioMode.RUNNING == mode)

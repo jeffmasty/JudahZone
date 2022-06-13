@@ -8,40 +8,38 @@ import org.jaudiolibs.jnajack.JackPort;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.api.AudioMode;
-import net.judah.api.ProcessAudio;
 import net.judah.clock.JudahClock;
 import net.judah.clock.LoopSynchronization.SelectType;
-import net.judah.looper.Recorder;
+import net.judah.looper.Loop;
 import net.judah.looper.Recording;
-import net.judah.looper.Sample;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DrumTrack;
 import net.judah.plugin.Carla;
 import net.judah.util.Icons;
 
-/** use {@link #addSample(Sample)} instead of add() */
+/** use {@link #addSample(Loop)} instead of add() */
 @RequiredArgsConstructor
 public class Looper {
 
 	public static final int LOOPERS = 4;
-    @Getter private final Sample[] loops = new Sample[LOOPERS];
+    @Getter private final Loop[] loops = new Loop[LOOPERS];
 
     private final List<JackPort> outports;
 
+    @Getter private Loop loopA;
+    @Getter private Loop loopB;
+    @Getter private Loop loopC;
     @Getter private DrumTrack drumTrack;
-    @Getter private Recorder loopA;
-    @Getter private Recorder loopB;
-    @Getter private Recorder loopC;
     
     /** pause/unpause specific loops, clock-aware */
     @RequiredArgsConstructor @Getter
-    private class Pause extends ArrayList<Sample> {
+    private class Pause extends ArrayList<Loop> {
     	private final boolean activeClock;
     }
     /** pause/unpause specific loops */
     private Pause suspended = null; 
     
-    public void add(Sample s) {
+    public void add(Loop s) {
         s.setOutputPorts(outports);
         for (int i = 0; i < loops.length; i++)
         	if (loops[i] == null) {
@@ -51,7 +49,7 @@ public class Looper {
     }
 
     public void clear() {
-        for (Sample s : loops) {
+        for (Loop s : loops) {
             s.clear();
             s.play(true); // armed;
         }
@@ -62,9 +60,8 @@ public class Looper {
     }
 
     public void stopAll() {
-        for (Sample s : loops) {
-            if (s instanceof Recorder)
-                ((Recorder) s).record(false);
+        for (Loop s : loops) {
+        	s.record(false);
             s.play(false);
         }
     }
@@ -72,24 +69,24 @@ public class Looper {
     public void init(Carla carla) {
         // TODO...
 
-        loopA = new Recorder("A", ProcessAudio.Type.FREE);
+        loopA = new Loop("A");
         loopA.setIcon(Icons.load("LoopA.png"));
         loopA.setReverb(carla.getReverb());
-        loopA.play(true); // armed;
+        //loopA.play(true); // armed;
         add(loopA);
         
-        loopB = new Recorder("B", ProcessAudio.Type.FREE);
+        loopB = new Loop("B");
         loopB.setIcon(Icons.load("LoopB.png"));
-        loopB.setReverb(carla.getReverb());
-        loopB.play(true);
+        loopB.setReverb(carla.getReverb2());
+        //loopB.play(true);
         add(loopB);
 
-        loopC = new Recorder("C", ProcessAudio.Type.FREE);
-        loopC.play(true); // armed;
+        loopC = new Loop("C");
+        //loopC.play(true); // armed;
         loopC.setIcon(Icons.load("LoopC.png"));
         add(loopC);
 
-        drumTrack = new DrumTrack(loopA, JudahZone.getChannels().getDrums());
+        drumTrack = new DrumTrack(loopA, JudahZone.getChannels().getCalf());
         drumTrack.setIcon(Icons.load("Drums.png"));
         add(drumTrack);
 
@@ -106,13 +103,13 @@ public class Looper {
     /** in Real-Time thread */
     public void process() {
         // do any recording or playing
-        for (Sample sample : loops) {
+        for (Loop sample : loops) {
             sample.process();
         }
     }
 
     /** multi-threaded */
-    public void syncLoop(Recorder source, Recorder target) {
+    public void syncLoop(Loop source, Loop target) {
     	if (source.getRecording() == null || source.getRecording().isEmpty()) {
     		// nothing recorded yet, but we are setup to sync to master loop
     		target.armRecord(source);
@@ -128,7 +125,7 @@ public class Looper {
     	}
     }
 
-    public Sample get(int i) {
+    public Loop get(int i) {
         return loops[i];
     }
 
@@ -161,7 +158,7 @@ public class Looper {
 			suspended = new Pause(pauseClock? false : clock);
 			if (clock && pauseClock) 
 				JudahClock.getInstance().end();
-			for (Sample s : loops) 
+			for (Loop s : loops) 
 				if (s.isPlaying() == AudioMode.RUNNING) {
 					s.setTapeCounter(0);
 					suspended.add(s);
@@ -169,7 +166,7 @@ public class Looper {
 			stopAll();
 		}
 		else {
-			for (Sample s : suspended) 
+			for (Loop s : suspended) 
 				s.play(true);
 			if (suspended.isActiveClock()) 
 				JudahClock.getInstance().begin();

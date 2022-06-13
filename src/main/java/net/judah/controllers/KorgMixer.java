@@ -141,11 +141,11 @@ public class KorgMixer implements Controller {
 			return true;
 		}
 		if (data1 == PREV2.getVal() && data2 != 0) {
-			MainFrame.get().getTracker().changePattern(true);
+			MainFrame.get().getTracker().changePattern(false);
 			return true;
 		}
 		if (data1 == NEXT2.getVal() && data2 != 0) {
-			MainFrame.get().getTracker().changePattern(false);
+			MainFrame.get().getTracker().changePattern(true);
 			return true;
 		}
 
@@ -214,10 +214,11 @@ public class KorgMixer implements Controller {
 		channels.add(looper.getLoopC());
 		channels.add(looper.getDrumTrack());
 		
+		
 		channels.add(JudahZone.getChannels().getGuitar());
 		channels.add(JudahZone.getChannels().getMic());
-		channels.add(JudahZone.getChannels().getSynth());
-		channels.add(JudahZone.getChannels().getDrums());
+		channels.add(JudahZone.getChannels().getFluid());
+		channels.add(JudahZone.getChannels().getCalf());
 	}
 	
 	

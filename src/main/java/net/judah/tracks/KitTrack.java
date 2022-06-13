@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import lombok.Getter;
 import net.judah.MainFrame;
 import net.judah.api.Midi;
 import net.judah.api.Notification;
@@ -21,16 +22,13 @@ import net.judah.util.RTLogger;
 
 public class KitTrack extends Track implements Runnable {
 
-	private final Box beatbox = new Box();
+	@Getter private final Box beatbox = new Box();
 	ArrayList<Sequence> current = new ArrayList<>();
 	private StepFeedback display;
-	
-	private void setCurrent(ArrayList<Sequence> pattern) {
-		current = pattern;
-	}
-	
+	private Cycle cycle = new Cycle();
+		
 	public KitTrack(JudahClock clock, File file, File folder) {
-		super(clock, "DrumKit", Type.DRUM_KIT, 9, OUT.DRUMS_OUT, folder);
+		super(clock, "DrumKit", Type.DRUM_KIT, 9, OUT.SYNTH_OUT, folder);
 		setFile(file);
 		display = new StepFeedback(beatbox);
 		feedback.add(display);
@@ -56,11 +54,8 @@ public class KitTrack extends Track implements Runnable {
                 String line = scanner.nextLine();
                 if (first) {
                     String[] split = line.split("[/]");
-                    //setMidiOut(JudahMidi.getByName(split[0]));
                     if (!split[1].equals("none"))
                         setInstrument(split[1]);
-//TODO                    clock.setSteps(Integer.parseInt(split[2]));
-//                    clock.setSubdivision(Integer.parseInt(split[3]));
                     first = false;
                 }
                 else if (line.startsWith("!")) {
@@ -139,9 +134,9 @@ public class KitTrack extends Track implements Runnable {
 		return false;
 	}
 
-	public void changePattern(boolean up) {
-		setCurrent(Box.next(up, beatbox, current));
-	}
+//	public void changePattern(boolean up) {
+//		setCurrent(Box.next(up, beatbox, current));
+//	}
 
 	
 }

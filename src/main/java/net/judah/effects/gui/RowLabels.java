@@ -20,7 +20,7 @@ import net.judah.mixer.Channel;
 import net.judah.util.Constants.Gui;
 import net.judah.util.KeyPair;
 
-public class RowLabels extends Row2 {
+public class RowLabels extends Row {
 	
 	@Getter private final ArrayList<Component> controls = new ArrayList<>();
 	

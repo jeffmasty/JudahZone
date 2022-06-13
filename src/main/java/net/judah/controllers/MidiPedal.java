@@ -10,7 +10,7 @@ import java.util.List;
 import net.judah.MainFrame;
 import net.judah.api.Midi;
 import net.judah.clock.JudahClock;
-import net.judah.looper.Sample;
+import net.judah.looper.Loop;
 import net.judah.mixer.DrumTrack;
 import net.judah.util.Console;
 
@@ -62,7 +62,7 @@ public class MidiPedal implements Controller {
         }
         if (data1 == PEDAL.get(5)) { 
         	// toggle Verse/Chorus sections by muting different tracks
-        	for (Sample s : getLooper().getLoops()) {
+        	for (Loop s : getLooper().getLoops()) {
         		if (s.hasRecording() && s instanceof DrumTrack == false)
         			s.setOnMute(!s.isOnMute());
         	}

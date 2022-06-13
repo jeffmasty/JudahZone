@@ -9,14 +9,14 @@ import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.clock.JudahClock;
 import net.judah.effects.api.Effect;
-import net.judah.looper.Recorder;
+import net.judah.looper.Loop;
 import net.judah.util.RTLogger;
 
 public class Events {
 
 	@RequiredArgsConstructor
 	public static class Record implements Runnable {
-		private final Recorder target;
+		private final Loop target;
 		
 		@Override public void run() {
 			target.record(target.isRecording() != AudioMode.RUNNING);		
@@ -25,7 +25,7 @@ public class Events {
 
 	@RequiredArgsConstructor
 	public static class LatchEfx /* implements Runnable */ {
-		private final Recorder target;
+		private final Loop target;
 		private final Effect reverb;
 		
 		public LatchEfx() {

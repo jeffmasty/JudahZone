@@ -16,11 +16,13 @@ public class RTLogger {
     private static final BlockingQueue<Log> debugQueue = new LinkedBlockingQueue<>(); // logging for Realtime threads
 
     public static void log(Object o, String msg) {
-        debugQueue.offer(new Log(o.getClass().getSimpleName(), msg, false));
+        debugQueue.offer(new Log(o instanceof String 
+        		? o.toString() : o.getClass().getSimpleName(), msg, false));
     }
 
     public static void warn(Object o, String msg) {
-        debugQueue.offer(new Log(o.getClass().getCanonicalName(), msg, true));
+        debugQueue.offer(new Log(o instanceof String 
+        		? o.toString() : o.getClass().getSimpleName(), msg, true));
     }
 
     public static void warn(Object o, Throwable e) {

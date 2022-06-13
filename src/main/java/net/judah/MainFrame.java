@@ -51,10 +51,6 @@ public class MainFrame extends JFrame implements Size, Runnable {
         super(name);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        content = (JPanel)getContentPane();
-        content.setBackground(Pastels.EGGSHELL);
-        content.setLayout(null);
-        
         instance = this;
         prefix = name;
         
@@ -83,11 +79,18 @@ public class MainFrame extends JFrame implements Size, Runnable {
         
         songPanel.add(tabs);
         songPanel.add(mixer);
-        songPanel.setBounds(0, 0, WIDTH_SONG, HEIGHT_FRAME);
+        songPanel.setBounds(WIDTH_CONTROLS, 0, WIDTH_SONG, HEIGHT_FRAME);
+        
+        
         controls = new ControlPanel();
-        controls.setBounds(WIDTH_SONG + 5, 0, WIDTH_MIXER, HEIGHT_FRAME - 5);
+        controls.setBounds(0, 0, WIDTH_CONTROLS, HEIGHT_FRAME - 5);
+        
+        content = (JPanel)getContentPane();
+        content.setBackground(Pastels.EGGSHELL);
+        content.setLayout(null);
         content.add(songPanel);
         content.add(controls);
+        
         JudahMenu.setMixerPane(controls);
         try { setIconImage(Toolkit.getDefaultToolkit().getImage(
                 new File(Constants.ROOT, "icon.png").toURI().toURL()));

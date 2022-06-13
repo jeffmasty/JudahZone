@@ -1,8 +1,7 @@
 package net.judah.mixer;
 
 import static net.judah.JudahZone.JUDAHZONE;
-import static net.judah.util.Constants.LEFT_CHANNEL;
-import static net.judah.util.Constants.RIGHT_CHANNEL;
+import static net.judah.util.Constants.*;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
@@ -62,6 +61,11 @@ public class LineIn extends Channel {
 		MainFrame.update(this);
 	}
 
+	@Override
+	public String toString() {
+		return name + ": " + leftConnection + " . " + rightConnection;
+	}
+	
 	public void process() {
 		FloatBuffer left = leftPort.getFloatBuffer();
 		FloatBuffer right = (isStereo) ? rightPort.getFloatBuffer() : null; 

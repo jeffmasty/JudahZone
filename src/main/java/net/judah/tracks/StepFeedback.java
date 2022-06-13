@@ -4,6 +4,8 @@ import java.awt.Color;
 
 import javax.swing.JTable;
 
+
+// TODO offer queue 
 public class StepFeedback extends JTable implements Runnable {
 
 	Box beatbox;

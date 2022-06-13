@@ -28,12 +28,12 @@ import net.judah.util.Constants;
 public final class Overdrive implements Effect {
 
     @Getter @Setter boolean active;
-    @Getter private float drive = 0.2f;
+    @Getter private float drive = 0.0175f;
+    private final float makupGain = 1.75f;
     private int nframes;
-
+    
     public Overdrive() {
         initialize(Constants.sampleRate(), Constants.bufSize());
-        reset();
     }
 
     public void initialize(int samplerate, int buffersize) {
@@ -53,18 +53,13 @@ public final class Overdrive implements Effect {
     }
 
     @Override public void set(int idx, int value) {
-    	setDrive(value / 100f);
+    	setDrive(Constants.logarithmic(value, 0, 1));
     }
 
     public void setDrive(float drive) {
         this.drive = drive < 0 ? 0 : drive > 1 ? 1 : drive;
     }
 
-    public void reset() {
-        drive = 0.2f;
-    }
-
-    private final float makupGain = 1.5f;
     public void processAdd(FloatBuffer buf) {
         buf.rewind();
         double preMul = drive * 99 + 1;

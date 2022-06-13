@@ -40,7 +40,7 @@ public class MidiGnome implements Player, TimeListener {
 	
 	public MidiGnome(TimeProvider clock, JudahMidi queue) throws MidiUnavailableException {
 		this.clock = clock;
-		receiver = new JackReceiver(JudahMidi.getInstance().getSynthOut());
+		receiver = new JackReceiver(JudahMidi.getInstance().getFluidOut());
 		sequencer = MidiSystem.getSequencer(false);
 		sequencer.setLoopCount(0); // listener fires off each repetition
 		for (Receiver old : sequencer.getReceivers()) 

@@ -10,13 +10,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import lombok.Getter;
-import lombok.Setter;
 import net.judah.midi.JudahMidi;
 import net.judah.util.AudioTools;
 
 public class Recording extends Vector<float[][]> {
-
-	@Getter @Setter private String notes;
 
 	@Getter private long creationTime = System.currentTimeMillis();
 	private BlockingQueue<float[][]> newQueue;
@@ -56,9 +53,14 @@ public class Recording extends Vector<float[][]> {
 		    }
 		    add(copy);
 		}
-		notes = toCopy.notes;
 	}
 
+	/** throw away first and last frames */
+	public void trim() {
+		remove(size() - 1);
+		remove(0);
+	}
+	
 	/** create empty recording of size */
 	public Recording(int size, boolean startListeners) {
 		this(startListeners);

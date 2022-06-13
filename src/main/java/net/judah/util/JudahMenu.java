@@ -1,23 +1,6 @@
 package net.judah.util;
 
-import static java.awt.event.KeyEvent.VK_DOWN;
-import static java.awt.event.KeyEvent.VK_ENTER;
-import static java.awt.event.KeyEvent.VK_ESCAPE;
-import static java.awt.event.KeyEvent.VK_F1;
-import static java.awt.event.KeyEvent.VK_F10;
-import static java.awt.event.KeyEvent.VK_F11;
-import static java.awt.event.KeyEvent.VK_F2;
-import static java.awt.event.KeyEvent.VK_F3;
-import static java.awt.event.KeyEvent.VK_F4;
-import static java.awt.event.KeyEvent.VK_F5;
-import static java.awt.event.KeyEvent.VK_F6;
-import static java.awt.event.KeyEvent.VK_F9;
-import static java.awt.event.KeyEvent.VK_LEFT;
-import static java.awt.event.KeyEvent.VK_M;
-import static java.awt.event.KeyEvent.VK_RIGHT;
-import static java.awt.event.KeyEvent.VK_SPACE;
-import static java.awt.event.KeyEvent.VK_UP;
-import static java.awt.event.KeyEvent.VK_X;
+import static java.awt.event.KeyEvent.*;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -34,7 +17,7 @@ import net.judah.Looper;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.looper.Recording;
-import net.judah.looper.Sample;
+import net.judah.looper.Loop;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.sequencer.Sequencer;
@@ -54,6 +37,7 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
 
     JMenuItem beatsMenu = new JMenuItem("BeatBox");
     JMenuItem sheetMusic = new JMenuItem("Sheet Music");
+    JMenuItem loadMidi = new JMenuItem("Open Midi");
     JMenuItem load = new JMenuItem("Open...");
     JMenuItem create = new JMenuItem("New...");
     JMenuItem save = new JMenuItem("Save");
@@ -89,6 +73,7 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
             MainFrame.get().closeTab(Sequencer.getCurrent().getPage());});
         sheetMusic.addActionListener( e -> {MainFrame.get().sheetMusic();});
         beatsMenu.addActionListener( e -> {MainFrame.get().beatBox();});
+//        loadMidi.addActionListener(e -> {MainFrame.get().getTracker().loadMidi());
         exit.addActionListener((event) -> System.exit(0));
 
         //  editMenu.setMnemonic(KeyEvent.VK_E);
@@ -183,8 +168,8 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
             case VK_X: { // zero out loop or mute channel record
                 if (focus instanceof LineIn)
                     ((LineIn)focus).setMuteRecord(!((LineIn)focus).isMuteRecord());
-                else if (focus instanceof Sample) {
-                    Sample s = (Sample)focus;
+                else if (focus instanceof Loop) {
+                    Loop s = (Loop)focus;
                     s.setRecording(new Recording(s.getRecording().size()));
                 }
                 break; }
@@ -201,9 +186,9 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
     private void enterKey() {
         Console.info("enter key handled");
         Channel ch = ControlPanel.getInstance().getChannel();
-        if (ch instanceof Sample)
-            ((Sample)ch).play(
-                    ((Sample)ch).isPlaying() != AudioMode.RUNNING);
+        if (ch instanceof Loop)
+            ((Loop)ch).play(
+                    ((Loop)ch).isPlaying() != AudioMode.RUNNING);
         else
             ((LineIn)ch).setMuteRecord(
                     !((LineIn)ch).isMuteRecord());

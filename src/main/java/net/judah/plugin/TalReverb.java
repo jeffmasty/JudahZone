@@ -20,7 +20,7 @@ public class TalReverb extends Reverb {
     public static final int PARAM_WIDTH = 8;
 
     private static final float defRoom = 0.25f;
-    private static final float defDamp = 0.3f;
+    private static final float defDamp = 0.75f;
     private static final float defWidth = 0.588f;
     private static final float defWet = 0.3f;
     public static final String NAME = "talReverb";
@@ -29,24 +29,24 @@ public class TalReverb extends Reverb {
     private final int pluginIdx;
 
     @Getter private boolean active;
+    private float roomSize = defRoom;
+    private float damp = defDamp;
+    private float width = defWidth;
+    private float wet = defWet;
 
-    // static because all instances share the same external plugin
-    private static float roomSize = defRoom;
-    private static float damp = defDamp;
-    private static float width = defWidth;
-    private static float wet = defWet;
-
-    public TalReverb(Carla carla, Plugin plugin) {
+    public TalReverb(Carla carla, Plugin plugin, long startupWait) {
         this.carla = carla;
         this.pluginIdx = plugin.getIndex();
+        Constants.timer(startupWait, () ->{ // wait for host to start, set defaults
+        	initialize(0,0);});
     }
 
     @Override
     public void initialize(int sampleRate, int bufferSize) {
-        setRoomSize(defRoom);
-        Constants.timer(45, () -> {setWet(defWet);});
-        Constants.timer(90, () -> {setDamp(defDamp);});
-        Constants.timer(150, () -> {setWidth(defWidth);});
+//        setRoomSize(defRoom);
+//        Constants.timer(55, () -> {setWet(defWet);});
+//        Constants.timer(110, () -> {setDamp(defDamp);});
+//        Constants.timer(165, () -> {setWidth(defWidth);});
     }
 
     @Override public boolean isInternal() { return false; }
@@ -61,7 +61,7 @@ public class TalReverb extends Reverb {
     public void setRoomSize(float size) {
         try {
             carla.setParameterValue(pluginIdx, PARAM_ROOMSIZE, size);
-            TalReverb.roomSize = size;
+            roomSize = size;
         } catch (Exception e) { Console.warn(e); }
     }
 
@@ -70,7 +70,7 @@ public class TalReverb extends Reverb {
 
         try {
             carla.setParameterValue(pluginIdx, PARAM_LOWPASS, damp * -1 + 1);
-            TalReverb.damp = damp;
+            this.damp = damp;
         } catch (Exception e) { Console.warn(e); }
     }
 
@@ -78,7 +78,7 @@ public class TalReverb extends Reverb {
     public void setWidth(float width) {
         try {
             carla.setParameterValue(pluginIdx, PARAM_WIDTH, width);
-            TalReverb.width = width;
+            this.width = width;
         } catch (Exception e) { Console.warn(e); }
 
     }
@@ -87,7 +87,7 @@ public class TalReverb extends Reverb {
     public void setWet(float wet) {
         try {
             carla.setParameterValue(pluginIdx, PARAM_WET, wet);
-            TalReverb.wet = wet;
+            this.wet = wet;
         } catch (Exception e) { Console.warn(e); }
     }
 

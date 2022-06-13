@@ -29,15 +29,13 @@ public class Route {
 
 	public Route(int fromChannel, int toChannel) {
 	    source = JudahMidi.getInstance().getKeyboard().getShortName();
-	    dest = JudahMidi.getInstance().getSynthOut().getShortName();
+	    dest = JudahMidi.getInstance().getFluidOut().getShortName();
 		this.fromChannel = fromChannel;
 		this.toChannel = toChannel;
 		fromCommand = toCommand = fromData1 = toData1 = null;
 	}
 
 	public Route(Midi from, Midi to) {
-
-
 
 		fromChannel = from.getChannel();
 		fromCommand = from.getCommand();

@@ -94,7 +94,7 @@ public final class Freeverb extends Reverb {
     private static final float initialwidth = 1.0f;
 
     @Getter private boolean active;
-    private int nframes = 512;
+    private int nframes = Constants.bufSize();
     private float roomsize;
     private float damp;
     private float wet, wet1, wet2;

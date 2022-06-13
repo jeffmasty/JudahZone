@@ -1,9 +1,7 @@
 package net.judah.util;
 
 import static java.awt.event.KeyEvent.VK_ESCAPE;
-import static net.judah.JudahZone.getCarla;
-import static net.judah.JudahZone.getChannels;
-import static net.judah.JudahZone.getPresets;
+import static net.judah.JudahZone.*;
 import static net.judah.util.Constants.NL;
 
 import java.awt.Color;
@@ -33,8 +31,8 @@ import net.judah.api.ProcessAudio.Type;
 import net.judah.clock.JudahClock;
 import net.judah.effects.api.Preset;
 import net.judah.fluid.FluidSynth;
+import net.judah.looper.Loop;
 import net.judah.looper.Recording;
-import net.judah.looper.Sample;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiListener;
 import net.judah.midi.Route;
@@ -86,7 +84,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == VK_ESCAPE)
                     MainFrame.get().sheetMusic();}});
-        Dimension d = new Dimension(Size.WIDTH_MIXER - 25, 25);
+        Dimension d = new Dimension(Size.WIDTH_CONTROLS - 25, 25);
         input.setPreferredSize(d);
         input.setMaximumSize(d);
         input.setMinimumSize(d);
@@ -333,7 +331,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
             addText("loop " + loopNum + " does not exist.");
             return;
         }
-        Sample loop = looper.get(loopNum);
+        Loop loop = looper.get(loopNum);
 
         try {
             Recording recording = Recording.readAudio(filename);
@@ -358,7 +356,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
             addText("loop " + loopNum + " does not exist.");
             return;
         }
-        Sample loop = looper.get(loopNum);
+        Loop loop = looper.get(loopNum);
         if (!loop.hasRecording()) {
             addText("Nothing in Loop " + loopNum);
             return;

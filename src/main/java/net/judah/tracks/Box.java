@@ -10,7 +10,7 @@ public class Box extends ArrayList<ArrayList<Sequence>> {
 
 	@Setter @Getter private ArrayList<Sequence> current = new ArrayList<>();
 
-	public static ArrayList<Sequence> next(boolean forward, ArrayList<ArrayList<Sequence>> beatbox, ArrayList<Sequence> current) {
+	public static ArrayList<Sequence> next(boolean forward, Box beatbox, ArrayList<Sequence> current) {
         int idx = beatbox.indexOf(current);
         if (idx < 0) throw new NullPointerException("current sequence not found");
         if (forward) {
@@ -23,5 +23,7 @@ public class Box extends ArrayList<ArrayList<Sequence>> {
         return beatbox.get(idx - 1);
 	}
 
+	
+	
 	
 }

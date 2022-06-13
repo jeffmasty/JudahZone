@@ -1,27 +1,7 @@
 package net.judah.mixer;
-import static net.judah.JudahZone.getChannels;
-import static net.judah.JudahZone.getLooper;
-import static net.judah.JudahZone.getMasterTrack;
-import static net.judah.settings.Commands.MixerLbls.CLEAR;
-import static net.judah.settings.Commands.MixerLbls.DRUMTRACK;
-import static net.judah.settings.Commands.MixerLbls.FADE;
-import static net.judah.settings.Commands.MixerLbls.LOAD_SAMPLE;
-import static net.judah.settings.Commands.MixerLbls.LOOP_SYNC;
-import static net.judah.settings.Commands.MixerLbls.MUTE;
-import static net.judah.settings.Commands.MixerLbls.PRESET;
-import static net.judah.settings.Commands.MixerLbls.TOGGLE;
-import static net.judah.settings.Commands.MixerLbls.TOGGLE_PLAY;
-import static net.judah.settings.Commands.MixerLbls.TOGGLE_RECORD;
-import static net.judah.settings.Commands.MixerLbls.VOLUME;
-import static net.judah.util.Constants.Param.ACTIVE;
-import static net.judah.util.Constants.Param.CHANNEL;
-import static net.judah.util.Constants.Param.FILE;
-import static net.judah.util.Constants.Param.GAIN;
-import static net.judah.util.Constants.Param.INDEX;
-import static net.judah.util.Constants.Param.LOOP;
-import static net.judah.util.Constants.Param.NAME;
-import static net.judah.util.Constants.Param.TYPE;
-import static net.judah.util.Constants.Param.parseActive;
+import static net.judah.JudahZone.*;
+import static net.judah.settings.Commands.MixerLbls.*;
+import static net.judah.util.Constants.Param.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,9 +18,8 @@ import net.judah.effects.Fader;
 import net.judah.effects.LFO.Target;
 import net.judah.effects.api.Preset;
 import net.judah.looper.AudioPlay;
-import net.judah.looper.Recorder;
+import net.judah.looper.Loop;
 import net.judah.looper.Recording;
-import net.judah.looper.Sample;
 import net.judah.plugin.LineType;
 import net.judah.settings.Commands;
 import net.judah.util.Console;
@@ -113,7 +92,7 @@ public class MixCommands extends ArrayList<Command> {
 				else
 					active = midiData2 > 0;
 				int idx = getLoopNum(props);
-				Sample s = JudahZone.getLooper().get(idx);
+				Loop s = JudahZone.getLooper().get(idx);
 				if (false == s instanceof RecordAudio)
 					throw new JudahException("Sample " + idx + " (" + s.getName() + ") does not record audio.");
 				((RecordAudio)s).record(active);
@@ -131,7 +110,7 @@ public class MixCommands extends ArrayList<Command> {
 					active = midiData2 > 0;
 				int idx = getLoopNum(props);
 				if (idx == ALL)
-					for (Sample loop : getLooper().getLoops())
+					for (Loop loop : getLooper().getLoops())
 						loop.play(active);
 				else
 					getLooper().get(idx).play(active);
@@ -141,8 +120,8 @@ public class MixCommands extends ArrayList<Command> {
 		add(new Command(TOGGLE.name, TOGGLE.desc) {
             @Override
             public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-                Recorder loopA = getLooper().getLoopA();
-                Recorder loopB = getLooper().getLoopB();
+                Loop loopA = getLooper().getLoopA();
+                Loop loopB = getLooper().getLoopB();
                 if (loopA.isPlaying() == AudioMode.RUNNING) {
                     loopB.play(true);
                     loopA.play(false);
@@ -164,17 +143,17 @@ public class MixCommands extends ArrayList<Command> {
 				else mute = parseActive(props);
 
 				if (loopNum == ALL)
-					for (Sample loop : getLooper().getLoops())
-						((Recorder)loop).setOnMute(mute);
+					for (Loop loop : getLooper().getLoops())
+						loop.setOnMute(mute);
 				else
-					((Recorder)getLooper().get(loopNum)).setOnMute(mute);
+					getLooper().get(loopNum).setOnMute(mute);
 				return;
 			}});
 		add(new Command(CLEAR.name, CLEAR.desc, loopProps()) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 				int idx = getLoopNum(props);
 				if (idx == ALL)
-					for (Sample s : getLooper().getLoops())
+					for (Loop s : getLooper().getLoops())
 						s.clear();
 				else
 					getLooper().get(idx).clear();
@@ -313,10 +292,10 @@ public class MixCommands extends ArrayList<Command> {
 		else {
 			// TODO, quick implement an empty loop[1] based on size of loop[0] for now
 			Object sauce = props.get(SOURCE_LOOP);
-			Sample source = JudahZone.getLooper().get(0);
+			Loop source = JudahZone.getLooper().get(0);
 			if (sauce != null && StringUtils.isNumeric(sauce.toString()))
 				source = JudahZone.getLooper().get(Integer.parseInt(sauce.toString()));
-			Sample destination = JudahZone.getLooper().get(0);
+			Loop destination = JudahZone.getLooper().get(0);
 			if (LOOP != null && StringUtils.isNumeric(loop.toString()))
 				destination = JudahZone.getLooper().get(Integer.parseInt(loop.toString()));
 			if (!source.hasRecording()) {

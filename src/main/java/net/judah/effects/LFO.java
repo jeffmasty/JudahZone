@@ -11,7 +11,7 @@ import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.effects.api.Effect;
 import net.judah.effects.api.Reverb;
-import net.judah.looper.Sample;
+import net.judah.looper.Loop;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.util.RTLogger;
@@ -107,7 +107,7 @@ public class LFO implements Effect {
 			for (LineIn ch : JudahZone.getChannels())
 				if (ch.getLfo().isActive())
 					lfoPulse.add(ch);
-			for (Sample s : JudahZone.getLooper().getLoops())
+			for (Loop s : JudahZone.getLooper().getLoops())
 				if (s.getLfo().isActive())
 					lfoPulse.add(s);
 			if (JudahZone.getMasterTrack().getLfo().isActive())

@@ -19,13 +19,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
-import net.judah.api.Command;
-import net.judah.api.Midi;
-import net.judah.api.Notification;
-import net.judah.api.Service;
-import net.judah.api.TimeListener;
-import net.judah.api.TimeNotifier;
-import net.judah.looper.Recorder;
+import net.judah.api.*;
+import net.judah.looper.Loop;
 import net.judah.midi.ProgMsg;
 import net.judah.util.Console;
 import net.judah.util.Constants;
@@ -363,7 +358,7 @@ public class BeatBuddy extends ArrayList<Command> implements TimeNotifier, Servi
     public void end() { play(false); }
 
 	public void latchA() {
-		Recorder a = JudahZone.getLooper().getLoopA(); 
+		Loop a = JudahZone.getLooper().getLoopA(); 
 		if (a == null || a.getRecordedLength() <= 0) {
 			Console.warn(new NullPointerException("latchA(): No recording."));
 			return;
@@ -377,7 +372,7 @@ public class BeatBuddy extends ArrayList<Command> implements TimeNotifier, Servi
 		Console.info("Beat Buddy armed at " + tempo + " bpm.");
 	}
 
-	public void listen(Recorder target) {
+	public void listen(Loop target) {
 		if (listener != null) target.removeListener(listener);
 		listener = new TimeListener() {
 			boolean firstTime = true;

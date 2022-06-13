@@ -1,8 +1,6 @@
 package net.judah.sequencer;
-import static net.judah.util.Constants.Param.IMAGE;
-import static net.judah.util.Constants.Param.LOOP;
-import static org.jaudiolibs.jnajack.JackTransportState.JackTransportStarting;
-import static org.jaudiolibs.jnajack.JackTransportState.JackTransportStopped;
+import static net.judah.util.Constants.Param.*;
+import static org.jaudiolibs.jnajack.JackTransportState.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,18 +23,11 @@ import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.SongPane;
-import net.judah.api.AudioMode;
-import net.judah.api.Command;
-import net.judah.api.Loadable;
-import net.judah.api.Midi;
+import net.judah.api.*;
 import net.judah.api.Notification.Property;
-import net.judah.api.Service;
-import net.judah.api.Status;
-import net.judah.api.TimeListener;
-import net.judah.api.TimeProvider;
 import net.judah.effects.api.Preset;
 import net.judah.effects.api.PresetsHandler.Raw;
-import net.judah.looper.Recorder;
+import net.judah.looper.Loop;
 import net.judah.looper.Recording;
 import net.judah.metronome.Metronome;
 import net.judah.midi.JudahMidi;
@@ -310,7 +301,7 @@ public class Sequencer implements Service, Runnable, TimeListener {
 
         /////////////////////////////////////////////////////////////////////////////////////////////
         public void songTrigger() {
-        	Recorder a = JudahZone.getLooper().getLoopA();
+        	Loop a = JudahZone.getLooper().getLoopA();
         	if (current == null || current.active == null) 
         		a.record(a.isRecording() != AudioMode.RUNNING);
         	else {
@@ -377,12 +368,12 @@ public class Sequencer implements Service, Runnable, TimeListener {
         }
 
         void internal(String name, String param) {
-            if ("AndILoveHer".equals(name))
-                _andILoveHer();
-            if ("FeelGoodInc".equals(name))
-                _feelGoodInc();
-            if ("IFeelLove".equals(name))
-                _iFeelLove();
+//            if ("AndILoveHer".equals(name))
+//                _andILoveHer();
+//            if ("FeelGoodInc".equals(name))
+//                _feelGoodInc();
+//            if ("IFeelLove".equals(name))
+//                _iFeelLove();
             if ("AutumnLeaves".equalsIgnoreCase(name))
                 _autumnLeaves();
             // if ("bassdrum".equals(name)) _bassdrum(param);
@@ -415,28 +406,28 @@ public class Sequencer implements Service, Runnable, TimeListener {
             }
         }
 
-        /**Play sample 0 and it becomes time master.
-         * sample 1 is 5 times longer and is empty */
-        private void _andILoveHer() {
-            Recorder drums = (Recorder)JudahZone.getLooper().get(0);
-            Recording sample = drums.getRecording();
-            JudahZone.getLooper().get(1).setRecording(new Recording(sample.size() * 5));
-            // if (clock != null) clock.removeListener(this);
-            pulse = 8;
-            Metronome.remove(this);
-            control = ControlMode.EXTERNAL;
-            clock.end();
-            clock.removeListener(this);
-            drums.addListener(this);
-            ((SeqClock)clock).setLength(drums.getRecordedLength(), drums.getSize());
-            Console.info("internal: _andILoveHer()");
+//        /**Play sample 0 and it becomes time master.
+//         * sample 1 is 5 times longer and is empty */
+//        private void _andILoveHer() {
+//            Loop drums = (Loop)JudahZone.getLooper().get(0);
+//            Recording sample = drums.getRecording();
+//            JudahZone.getLooper().get(1).setRecording(new Recording(sample.size() * 5));
+//            // if (clock != null) clock.removeListener(this);
+//            pulse = 8;
+//            Metronome.remove(this);
+//            control = ControlMode.EXTERNAL;
+//            clock.end();
+//            clock.removeListener(this);
+//            drums.addListener(this);
+//            ((SeqClock)clock).setLength(drums.getRecordedLength(), drums.getSize());
+//            Console.info("internal: _andILoveHer()");
+//
+//        }
 
-        }
-
-        private void _feelGoodInc() {
-            Recorder drums = (Recorder)JudahZone.getLooper().get(0);
-            ((SeqClock)clock).setLength(drums.getRecordedLength(), drums.getSize());
-        }
+//        private void _feelGoodInc() {
+//            Loop drums = (Loop)JudahZone.getLooper().get(0);
+//            ((SeqClock)clock).setLength(drums.getRecordedLength(), drums.getSize());
+//        }
 
         private void _iFeelLove() {
 
@@ -445,8 +436,8 @@ public class Sequencer implements Service, Runnable, TimeListener {
         private void _autumnLeaves() {
             control = ControlMode.EXTERNAL;
             DrumTrack drums = JudahZone.getLooper().getDrumTrack();
-            Recorder loopA = JudahZone.getLooper().getLoopA();
-            Recorder loopB = JudahZone.getLooper().getLoopB();
+            Loop loopA = JudahZone.getLooper().getLoopA();
+            Loop loopB = JudahZone.getLooper().getLoopB();
 
             drums.sync(true);
             loopA.play(false); // not armed (record bridge for later)

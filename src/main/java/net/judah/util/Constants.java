@@ -33,7 +33,7 @@ public class Constants {
 
 	// TODO generalize
 	private static int _SAMPLERATE = 48000;
-	private static int _BUFSIZE = 512;
+	private static int _BUFSIZE = 256;//TODO:(512)
 
 	public static int sampleRate() { return _SAMPLERATE; }
 	public static int bufSize() { return _BUFSIZE; }
@@ -335,11 +335,12 @@ public class Constants {
 	
 	/** untested */
 	public static int reverseLog(float val, float min, float max) {
+		// input should be between min and max
+		assert val >= min && val <= max;
+
 		// result will be between 0 and 100
 		var minp = 0;
 		var maxp = 100;
-		// input should be between min and max
-		assert val >= min && val <= max;
 		
 		var minv = Math.log(min);
 		var maxv = Math.log(max);

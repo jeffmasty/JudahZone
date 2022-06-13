@@ -60,6 +60,8 @@ public class MidiTrack extends Track implements Receiver {
 				sequence = MidiSystem.getSequence(file);
 				stop();
 				sequencer.setSequence(sequence);
+				sequencer.setMicrosecondPosition(0);
+				sequencer.setTempoFactor(clock.getTempo() / sequencer.getTempoInBPM());
 				restart = Constants.requeueBeats(sequence) / clock.getMeasure();
 				display.setSequence(sequencer, restart);
 				setup();
@@ -93,8 +95,7 @@ public class MidiTrack extends Track implements Receiver {
 			return;
 		try {
 			sequencer.setMicrosecondPosition(0);
-			sequencer.setTempoInBPM(clock.getTempo() + 0.01f);
-			sequencer.setTempoFactor(1f);
+			sequencer.setTempoFactor(clock.getTempo() / sequencer.getTempoInBPM());
 			barCount = 1;
 		} catch (Exception e) {
 			RTLogger.warn(this, e);

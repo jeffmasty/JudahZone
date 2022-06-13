@@ -24,7 +24,6 @@
 
   <Data>
    <Active>Yes</Active>
-   <Volume>1.002096</Volume>
    <ControlChannel>1</ControlChannel>
    <Options>0x3f1</Options>
 
@@ -32,7 +31,7 @@
     <Index>0</Index>
     <Name>Volume</Name>
     <Symbol>master</Symbol>
-    <Value>0.482386380434036</Value>
+    <Value>0.214204549789429</Value>
    </Parameter>
 
    <Parameter>
@@ -46,14 +45,14 @@
     <Index>2</Index>
     <Name>Reverb</Name>
     <Symbol>reverb</Symbol>
-    <Value>0</Value>
+    <Value>1</Value>
    </Parameter>
 
    <Parameter>
     <Index>3</Index>
     <Name>Chorus</Name>
     <Symbol>chorus</Symbol>
-    <Value>1</Value>
+    <Value>0</Value>
    </Parameter>
 
    <CustomData>
@@ -71,7 +70,7 @@
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set</Key>
-    <Value>0</Value>
+    <Value>18</Value>
    </CustomData>
 
    <CustomData>
@@ -418,51 +417,6 @@
   </Data>
  </Plugin>
 
- <!-- dRowAudio: Flanger -->
- <Plugin>
-  <Info>
-   <Type>LV2</Type>
-   <Name>dRowAudio. Flanger</Name>
-   <URI>http://www.drowaudio.co.uk/audio/audio_plugins/flanger</URI>
-  </Info>
-
-  <Data>
-   <Active>No</Active>
-   <DryWet>0.8505402</DryWet>
-   <Volume>1.27</Volume>
-   <ControlChannel>1</ControlChannel>
-   <Options>0x4</Options>
-
-   <Parameter>
-    <Index>1</Index>
-    <Name>Rate</Name>
-    <Symbol>rate</Symbol>
-    <Value>0.0180000010877848</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>2</Index>
-    <Name>Intensity</Name>
-    <Symbol>intensity</Symbol>
-    <Value>0.0653000026941299</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>3</Index>
-    <Name>Feedback</Name>
-    <Symbol>feedback</Symbol>
-    <Value>0.060606062412262</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>4</Index>
-    <Name>Wet/Dry Mix</Name>
-    <Symbol>wet_dry_mix</Symbol>
-    <Value>1</Value>
-   </Parameter>
-  </Data>
- </Plugin>
-
  <!-- Tal-Reverb-III -->
  <Plugin>
   <Info>
@@ -495,14 +449,14 @@
     <Index>3</Index>
     <Name>wet</Name>
     <Symbol>wet</Symbol>
-    <Value>0.300000011920929</Value>
+    <Value>0</Value>
    </Parameter>
 
    <Parameter>
     <Index>4</Index>
     <Name>room size</Name>
     <Symbol>room_size</Symbol>
-    <Value>0.25</Value>
+    <Value>0.370000004768372</Value>
    </Parameter>
 
    <Parameter>
@@ -523,7 +477,7 @@
     <Index>7</Index>
     <Name>high shelf gain</Name>
     <Symbol>high_shelf_gain</Symbol>
-    <Value>0.699999988079071</Value>
+    <Value>0.259999990463257</Value>
    </Parameter>
 
    <Parameter>
@@ -561,10 +515,151 @@
 
 &lt;tal curprogram=&quot;0&quot; version=&quot;1&quot;&gt;
   &lt;programs&gt;
-    &lt;program programname=&quot;Stereo Plate&quot; dry=&quot;0.38400000333786010742&quot; wet=&quot;0.30000001192092895508&quot;
-             roomsize=&quot;0.25&quot; predelay=&quot;0&quot; lowshelfgain=&quot;0.62400001287460327148&quot;
-             highshelfgain=&quot;0.69999998807907104492&quot; stereowidth=&quot;0.5879999995231628418&quot;
+    &lt;program programname=&quot;Stereo Plate&quot; dry=&quot;0.38400000333786010742&quot; wet=&quot;0&quot;
+             roomsize=&quot;0.37000000476837158203&quot; predelay=&quot;0&quot; lowshelfgain=&quot;0.62400001287460327148&quot;
+             highshelfgain=&quot;0.25999999046325683594&quot; stereowidth=&quot;0.5879999995231628418&quot;
              realstereomode=&quot;1&quot; power=&quot;1&quot;/&gt;
+    &lt;program programname=&quot;Short Stereo Plate&quot; dry=&quot;0.5&quot; wet=&quot;0.32100000977516174316&quot;
+             roomsize=&quot;0.23600001633167266846&quot; predelay=&quot;0&quot; lowshelfgain=&quot;1&quot;
+             highshelfgain=&quot;0.3160000145435333252&quot; stereowidth=&quot;1&quot; realstereomode=&quot;1&quot;
+             power=&quot;1&quot;/&gt;
+    &lt;program programname=&quot;High Plate&quot; dry=&quot;0.50400000810623168945&quot; wet=&quot;0.24500000476837158203&quot;
+             roomsize=&quot;0.46000000834465026855&quot; predelay=&quot;0&quot; lowshelfgain=&quot;0.57200002670288085938&quot;
+             highshelfgain=&quot;1&quot; stereowidth=&quot;1&quot; realstereomode=&quot;1&quot; power=&quot;1&quot;/&gt;
+    &lt;program programname=&quot;Long Mono Plate&quot; dry=&quot;0.5&quot; wet=&quot;0.36300000548362731934&quot;
+             roomsize=&quot;0.75600004196166992188&quot; predelay=&quot;0&quot; lowshelfgain=&quot;0.96800005435943603516&quot;
+             highshelfgain=&quot;0.38800001144409179688&quot; stereowidth=&quot;0&quot; realstereomode=&quot;1&quot;
+             power=&quot;1&quot;/&gt;
+    &lt;program programname=&quot;Big Fx Plate&quot; dry=&quot;0.5&quot; wet=&quot;0.31000000238418579102&quot;
+             roomsize=&quot;1&quot; predelay=&quot;0&quot; lowshelfgain=&quot;1&quot; highshelfgain=&quot;1&quot;
+             stereowidth=&quot;1&quot; realstereomode=&quot;1&quot; power=&quot;1&quot;/&gt;
+    &lt;program programname=&quot;Air Plate&quot; dry=&quot;0.5&quot; wet=&quot;0.15700000524520874023&quot;
+             roomsize=&quot;0.66800004243850708008&quot; predelay=&quot;0&quot; lowshelfgain=&quot;0&quot;
+             highshelfgain=&quot;1&quot; stereowidth=&quot;1&quot; realstereomode=&quot;0&quot; power=&quot;1&quot;/&gt;
+    &lt;program programname=&quot;Bass Plate&quot; dry=&quot;0.5&quot; wet=&quot;0.3310000300407409668&quot;
+             roomsize=&quot;0.60400003194808959961&quot; predelay=&quot;0&quot; lowshelfgain=&quot;1&quot;
+             highshelfgain=&quot;0&quot; stereowidth=&quot;1&quot; realstereomode=&quot;1&quot; power=&quot;1&quot;/&gt;
+    &lt;program programname=&quot;Mono Air Plate&quot; dry=&quot;0.5&quot; wet=&quot;0.32100000977516174316&quot;
+             roomsize=&quot;0.52400004863739013672&quot; predelay=&quot;0&quot; lowshelfgain=&quot;0.50400000810623168945&quot;
+             highshelfgain=&quot;0.50800001621246337891&quot; stereowidth=&quot;0&quot; realstereomode=&quot;1&quot;
+             power=&quot;1&quot;/&gt;
+    &lt;program programname=&quot;Short Mono Plate&quot; dry=&quot;0.5&quot; wet=&quot;0.35200002789497375488&quot;
+             roomsize=&quot;0.2280000150203704834&quot; predelay=&quot;0.072000004351139068604&quot;
+             lowshelfgain=&quot;0.8240000605583190918&quot; highshelfgain=&quot;0.064000003039836883545&quot;
+             stereowidth=&quot;0&quot; realstereomode=&quot;1&quot; power=&quot;1&quot;/&gt;
+    &lt;program programname=&quot;Gentle Plate&quot; dry=&quot;0.5&quot; wet=&quot;0.26600000262260437012&quot;
+             roomsize=&quot;0.34000000357627868652&quot; predelay=&quot;0&quot; lowshelfgain=&quot;0.75600004196166992188&quot;
+             highshelfgain=&quot;0.24800001084804534912&quot; stereowidth=&quot;1&quot; realstereomode=&quot;1&quot;
+             power=&quot;1&quot;/&gt;
+  &lt;/programs&gt;
+&lt;/tal&gt;
+
+    </Value>
+   </CustomData>
+  </Data>
+ </Plugin>
+
+ <!-- Tal-Reverb-III -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>Tal-Reverb-III (2)</Name>
+   <URI>urn:juce:TalReverb3</URI>
+  </Info>
+
+  <Data>
+   <Active>Yes</Active>
+   <Volume>1.191529</Volume>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x4</Options>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>unused</Name>
+    <Symbol>unused</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>2</Index>
+    <Name>dry</Name>
+    <Symbol>dry</Symbol>
+    <Value>0.5</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>3</Index>
+    <Name>wet</Name>
+    <Symbol>wet</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>4</Index>
+    <Name>room size</Name>
+    <Symbol>room_size</Symbol>
+    <Value>0.41200003027916</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>5</Index>
+    <Name>pre delay</Name>
+    <Symbol>pre_delay</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>6</Index>
+    <Name>low shelf gain</Name>
+    <Symbol>low_shelf_gain</Symbol>
+    <Value>0.892000019550323</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>7</Index>
+    <Name>high shelf gain</Name>
+    <Symbol>high_shelf_gain</Symbol>
+    <Value>0.328000009059906</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>8</Index>
+    <Name>stereo</Name>
+    <Symbol>stereo</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>9</Index>
+    <Name>stereo input</Name>
+    <Symbol>stereo_input</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>10</Index>
+    <Name>power</Name>
+    <Symbol>power</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <CustomData>
+    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
+    <Key>CarlaSkinIsCompacted</Key>
+    <Value>false</Value>
+   </CustomData>
+
+   <CustomData>
+    <Type>http://lv2plug.in/ns/ext/atom#String</Type>
+    <Key>urn:juce:stateString</Key>
+    <Value>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+
+&lt;tal curprogram=&quot;0&quot; version=&quot;1&quot;&gt;
+  &lt;programs&gt;
+    &lt;program programname=&quot;Stereo Plate&quot; dry=&quot;0.5&quot; wet=&quot;0&quot; roomsize=&quot;0.4120000302791595459&quot;
+             predelay=&quot;0&quot; lowshelfgain=&quot;0.89200001955032348633&quot; highshelfgain=&quot;0.32800000905990600586&quot;
+             stereowidth=&quot;1&quot; realstereomode=&quot;1&quot; power=&quot;1&quot;/&gt;
     &lt;program programname=&quot;Short Stereo Plate&quot; dry=&quot;0.5&quot; wet=&quot;0.32100000977516174316&quot;
              roomsize=&quot;0.23600001633167266846&quot; predelay=&quot;0&quot; lowshelfgain=&quot;1&quot;
              highshelfgain=&quot;0.3160000145435333252&quot; stereowidth=&quot;1&quot; realstereomode=&quot;1&quot;
@@ -611,76 +706,72 @@
    <Target>JudahZone:guitar</Target>
   </Connection>
   <Connection>
-   <Source>system:capture_2</Source>
-   <Target>JudahZone:mic</Target>
-  </Connection>
-  <Connection>
    <Source>system:capture_3</Source>
-   <Target>JudahZone:craveIn</Target>
+   <Target>JudahZone:crave_in</Target>
   </Connection>
   <Connection>
    <Source>system:capture_4</Source>
-   <Target>JudahZone:drums</Target>
+   <Target>JudahZone:mic</Target>
   </Connection>
   <Connection>
-   <Source>a2j:CRAVE [24] (capture): CRAVE MIDI 1</Source>
-   <Target>JudahMidi:craveIn</Target>
+   <Source>system:capture_5</Source>
+   <Target>JudahZone:CircuitL</Target>
   </Connection>
   <Connection>
-   <Source>a2j:nanoKONTROL2 [32] (capture): nanoKONTROL2 nanoKONTROL2 _ CTR</Source>
-   <Target>JudahMidi:mixer</Target>
+   <Source>system:capture_6</Source>
+   <Target>JudahZone:CircuitR</Target>
   </Connection>
   <Connection>
-   <Source>a2j:MPKmini2 [36] (capture): MPKmini2 MIDI 1</Source>
-   <Target>JudahMidi:keyboard</Target>
+   <Source>system:capture_7</Source>
+   <Target>JudahZone:UnoL</Target>
   </Connection>
   <Connection>
-   <Source>a2j:MIDI2x2 [40] (capture): MIDI2x2 Midi Out 1</Source>
-   <Target>JudahMidi:drumsIn</Target>
-  </Connection>
-  <Connection>
-   <Source>a2j:MIDI2x2 [40] (capture): MIDI2x2 Midi Out 2</Source>
-   <Target>JudahMidi:arduino</Target>
+   <Source>system:capture_8</Source>
+   <Target>JudahZone:UnoR</Target>
   </Connection>
   <Connection>
    <Source>PulseAudio JACK Sink:front-left</Source>
    <Target>system:playback_1</Target>
   </Connection>
   <Connection>
-   <Source>PulseAudio JACK Sink:front-left</Source>
-   <Target>system:playback_3</Target>
-  </Connection>
-  <Connection>
-   <Source>a2j:nanoPAD2 [44] (capture): nanoPAD2 nanoPAD2 _ CTRL</Source>
-   <Target>JudahMidi:pads</Target>
-  </Connection>
-  <Connection>
    <Source>PulseAudio JACK Sink:front-right</Source>
    <Target>system:playback_2</Target>
   </Connection>
   <Connection>
-   <Source>PulseAudio JACK Sink:front-right</Source>
-   <Target>system:playback_4</Target>
+   <Source>a2j:FBV Shortboard Mk II [24] (capture): FBV Shortboard Mk II MIDI 1</Source>
+   <Target>JudahMidi:line6In</Target>
   </Connection>
   <Connection>
-   <Source>a2j:ActitioN MIDI Controller [48] (capture): ActitioN MIDI Controller MIDI 1</Source>
-   <Target>JudahMidi:pedal</Target>
+   <Source>a2j:nanoPAD2 [32] (capture): nanoPAD2 nanoPAD2 _ CTRL</Source>
+   <Target>JudahMidi:pads</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:nanoKONTROL2 [36] (capture): nanoKONTROL2 nanoKONTROL2 _ CTR</Source>
+   <Target>JudahMidi:mixer</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:MPKmini2 [40] (capture): MPKmini2 MIDI 1</Source>
+   <Target>JudahMidi:keyboard</Target>
   </Connection>
   <Connection>
    <Source>fluidsynth-midi:left</Source>
-   <Target>JudahZone:synthL</Target>
+   <Target>JudahZone:fluidL</Target>
   </Connection>
   <Connection>
    <Source>fluidsynth-midi:right</Source>
-   <Target>JudahZone:synthR</Target>
+   <Target>JudahZone:fluidR</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahMidi:clockOut</Source>
+   <Target>a2j:UNO Synth Pro [44] (playback): UNO Synth Pro MIDI 1</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahMidi:clockOut</Source>
+   <Target>a2j:UMC1820 [16] (playback): UMC1820 MIDI 1</Target>
   </Connection>
   <Connection>
    <Source>JudahMidi:synthOut</Source>
    <Target>fluidsynth-midi:midi_00</Target>
-  </Connection>
-  <Connection>
-   <Source>JudahMidi:drumsOut</Source>
-   <Target>a2j:MIDI2x2 [40] (playback): MIDI2x2 Midi Out 1</Target>
   </Connection>
   <Connection>
    <Source>JudahMidi:calfOut</Source>
@@ -688,7 +779,11 @@
   </Connection>
   <Connection>
    <Source>JudahMidi:craveOut</Source>
-   <Target>a2j:CRAVE [24] (playback): CRAVE MIDI 1</Target>
+   <Target>a2j:UMC1820 [16] (playback): UMC1820 MIDI 1</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahMidi:unoOut</Source>
+   <Target>a2j:UNO Synth Pro [44] (playback): UNO Synth Pro MIDI 1</Target>
   </Connection>
   <Connection>
    <Source>JudahZone:left</Source>
@@ -699,20 +794,28 @@
    <Target>system:playback_2</Target>
   </Connection>
   <Connection>
-   <Source>JudahZone:effectsL</Source>
-   <Target>Tal-Reverb-III:Audio Input 1</Target>
-  </Connection>
-  <Connection>
-   <Source>JudahZone:effectsR</Source>
+   <Source>JudahZone:reverbR1</Source>
    <Target>Tal-Reverb-III:Audio Input 2</Target>
   </Connection>
   <Connection>
+   <Source>JudahZone:reverbR2</Source>
+   <Target>Tal-Reverb-III (2):Audio Input 2</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahZone:reverbL1</Source>
+   <Target>Tal-Reverb-III:Audio Input 1</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahZone:reverbL2</Source>
+   <Target>Tal-Reverb-III (2):Audio Input 1</Target>
+  </Connection>
+  <Connection>
    <Source>Calf Fluidsynth:Out L</Source>
-   <Target>JudahZone:drums</Target>
+   <Target>JudahZone:calfL</Target>
   </Connection>
   <Connection>
    <Source>Calf Fluidsynth:Out R</Source>
-   <Target>JudahZone:drums</Target>
+   <Target>JudahZone:calfR</Target>
   </Connection>
   <Connection>
    <Source>Tal-Reverb-III:Audio Output 1</Source>
@@ -721,6 +824,18 @@
   <Connection>
    <Source>Tal-Reverb-III:Audio Output 2</Source>
    <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>Tal-Reverb-III (2):Audio Output 1</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>Tal-Reverb-III (2):Audio Output 2</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:Circuit Tracks [48] (capture): Circuit Tracks MIDI</Source>
+   <Target>JudahMidi:circuitIn</Target>
   </Connection>
  </ExternalPatchbay>
 </CARLA-PROJECT>

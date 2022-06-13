@@ -13,8 +13,7 @@ import net.judah.clock.LoopSynchronization.SelectType;
 import net.judah.controllers.MapEntry.TYPE;
 import net.judah.effects.Fader;
 import net.judah.effects.LFO.Target;
-import net.judah.looper.Recorder;
-import net.judah.looper.Sample;
+import net.judah.looper.Loop;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.util.Constants;
@@ -28,7 +27,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 	private final Looper looper;
 	
 	private long lastPress;
-	private Sample lastLoop;
+	private Loop lastLoop;
 	
 	public KorgPads(KorgMixer mixer, Looper looper) {
 		assert looper != null;
@@ -38,7 +37,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 	}
 	
 	/** on double tap */
-	private boolean doErase(Sample ch) {
+	private boolean doErase(Loop ch) {
 		if (lastLoop == ch && System.currentTimeMillis() - lastPress < Constants.DOUBLE_CLICK) {
 			lastPress = 0;
 			
@@ -56,9 +55,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		// only trigger commands on pad press, not on pad release, but stop processing release midi bytes
 		if (midi.getData2() == 0) return true;
 
-		int data1 = midi.getData1();
-		
-		switch (data1) {
+		switch (midi.getData1()) {
 		// top row pads
 		case 1: // toggle record loop A
 			if (doErase(looper.getLoopA())) 
@@ -86,29 +83,23 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		case 6: 
 			JudahClock.setOnDeck(SelectType.SYNC);
 			return true; 
-		case 7: // focus on Main channel volume
+		case 7: // focus efx on Main or Circuit Trax channel 
 			ControlPanel controls = ControlPanel.getInstance();
-			if (controls.getCurrent() == null || 
-				controls.getCurrent().getChannel() != JudahZone.getMasterTrack()) {
+			if (controls.getCurrent() == null) 
 				controls.setFocus(JudahZone.getMasterTrack());
-			}
-			else { // Main already selected
-				if (MPK.getMode() == KnobMode.Effects1)
-					MPK.setMode(KnobMode.Effects2); 
-				else 
-					MPK.setMode(KnobMode.Effects1);
-			}
+			else if (controls.getCurrent().getChannel() == JudahZone.getMasterTrack())
+				controls.setFocus(JudahZone.getChannels().getCircuit());
+			else 
+				controls.setFocus(JudahZone.getMasterTrack());
 			return true;
 		case 8: // TODO Tuner/PlayStop Loop/FadeOut Main
 			Channel ch = ControlPanel.getInstance().getChannel();
 			if (ch == null) return true; // ? 
-			if (ch instanceof LineIn && ch != JudahZone.getChannels().getDrums()) {
+			if (ch instanceof LineIn && (ch == JudahZone.getChannels().getGuitar() ||
+					ch == JudahZone.getChannels().getCircuit())) {
 				ControlPanel.getInstance().getTuner().setChannel(
 						GuitarTuner.getChannel() == ch ? null : ch);
 			} else {
-				// loop.play(loop.isPlaying() != AudioMode.RUNNING);
-				// MasterTrack main = ((MasterTrack)ch);
-				
 				if (ch.isOnMute() || ch.getGain().getVol() < 5) {
 					ch.setOnMute(false);
 					Fader.execute(new Fader(ch, Target.Gain, Fader.DEFAULT_FADE, 0, 51));
@@ -148,20 +139,29 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		case 14: // reset effects for current channel
 			ControlPanel.getInstance().getChannel().reset();
 			return true;
-		case 15: // focus efx on Crave synth channel
+		case 15: // focus efx on Uno or Crave synth channels
 			ControlPanel panel = ControlPanel.getInstance();
-			Channel monoSynth = JudahZone.getChannels().getCrave();
-			if (panel.getCurrent() == null || 
-				panel.getCurrent().getChannel() != monoSynth) {
-				panel.setFocus(monoSynth);
-			}
-			else { // Crave already selected
-				if (MPK.getMode() == KnobMode.Effects1)
-					MPK.setMode(KnobMode.Effects2); 
-				else 
-					MPK.setMode(KnobMode.Effects1);
-			}
+			if (panel.getCurrent() == null) 
+				panel.setFocus(JudahZone.getChannels().getUno());
+			else if (panel.getCurrent().getChannel() == JudahZone.getChannels().getUno())
+				panel.setFocus(JudahZone.getChannels().getCrave());
+			else 
+				panel.setFocus(JudahZone.getChannels().getUno());
 			return true;
+			
+//			ControlPanel panel = ControlPanel.getInstance();
+//			Channel synth = JudahZone.getChannels().getUno();
+//			if (panel.getCurrent() == null || 
+//				panel.getCurrent().getChannel() != synth) {
+//				panel.setFocus(synth);
+//			}
+//			else { // Crave already selected
+//				if (MPK.getMode() == KnobMode.Effects1)
+//					MPK.setMode(KnobMode.Effects2); 
+//				else 
+//					MPK.setMode(KnobMode.Effects1);
+//			}
+//			return true;
 		case 16: // play/stop/sync drum machine
 			JudahClock clock = JudahClock.getInstance();
 			if (clock.isActive()) 
@@ -176,12 +176,12 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		return false;
 	}
 
-	public static boolean record(Recorder target) {
+	public static boolean record(Loop target) {
 		target.record(target.isRecording() != AudioMode.RUNNING);
 		return true;
 	}
 	
-	public static void trigger(Recorder loop) {
+	public static void trigger(Loop loop) {
 		if (loop.isRecording() == AudioMode.RUNNING) 
 			loop.record(false);
 		else if (!loop.hasRecording() && JudahClock.isLoopSync()) {
