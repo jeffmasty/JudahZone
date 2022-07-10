@@ -5,7 +5,6 @@ import static net.judah.JudahZone.*;
 import static net.judah.util.Constants.NL;
 
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -84,10 +83,6 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == VK_ESCAPE)
                     MainFrame.get().sheetMusic();}});
-        Dimension d = new Dimension(Size.WIDTH_CONTROLS - 25, 25);
-        input.setPreferredSize(d);
-        input.setMaximumSize(d);
-        input.setMinimumSize(d);
 
         participants.add(this);
         participants.add(FluidSynth.getInstance().getConsole());
@@ -229,7 +224,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
         else if (text.equals("samples"))
             addText( Arrays.toString(looper.getLoops()));
         else if (text.equals("router"))
-            for (Route r : JudahMidi.getInstance().getRouter())
+            for (Route r : JudahMidi.getRouter())
                 addText("" + r);
 
         else if (text.equals("route"))
@@ -382,7 +377,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
             try {
                 int from = Integer.parseInt(split[2]);
                 int to = Integer.parseInt(split[3]);
-                JudahMidi.getInstance().getRouter().add(new Route(from, to));
+                JudahMidi.getRouter().add(new Route(from, to));
 
             } catch (NumberFormatException e) {
                 addText(routeHelp + " (" + Arrays.toString(split) + ")");
@@ -395,7 +390,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
             try {
                 int from = Integer.parseInt(split[2]);
                 int to = Integer.parseInt(split[3]);
-                JudahMidi.getInstance().getRouter().remove(new Route(from, to));
+                JudahMidi.getRouter().remove(new Route(from, to));
 
             } catch (NumberFormatException e) {
                 addText(routeHelp + " (" + Arrays.toString(split) + ")");

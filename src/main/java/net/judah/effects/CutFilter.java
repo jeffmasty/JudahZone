@@ -108,7 +108,7 @@ public class CutFilter implements Effect {
     @Getter private Type filterType = Type.pArTy;
     @Setter @Getter private boolean active;
     @Getter private float frequency = 650;
-    private double resonancedB = 12.;
+    private double resonancedB = 9.;
     private Type oldParty;
 
 	public CutFilter() {

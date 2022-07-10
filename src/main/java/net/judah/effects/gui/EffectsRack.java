@@ -106,5 +106,6 @@ public class EffectsRack extends JPanel implements GUI {
         repaint();
     }
 
+
 }
 

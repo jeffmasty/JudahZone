@@ -10,6 +10,7 @@ import net.judah.JudahZone;
 import net.judah.fluid.FluidSynth;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.LineIn;
+import net.judah.util.Constants;
 import net.judah.util.Icons;
 
 @Getter
@@ -24,12 +25,35 @@ public class Channels extends ArrayList<LineIn> {
 	public static final String AUX = "AUX";
 	public static final String CRAVE = "CRAVE";
 	
-	private final LineIn guitar, mic, fluid;
-	private final LineIn uno, circuit, calf; 
-	private final LineIn crave; //aux1,2
+	private LineIn guitar, mic, fluid;
+	private LineIn uno, circuit, calf; 
+	private LineIn crave; //aux1,2
 
+	private void miniSetup() {
+		guitar = new LineIn(GUITAR, "system:capture_1", "guitar");
+		guitar.setIcon(Icons.load("Guitar.png"));
+		mic = new LineIn(MIC, "system:capture_2", "mic");
+		mic.setIcon(Icons.load("Microphone.png"));
+
+		fluid = new LineIn(SYNTH,
+				new String[] {FluidSynth.LEFT_PORT, FluidSynth.RIGHT_PORT},
+				new String[] {"fluidL", "fluidR"});
+		fluid.setIcon(Icons.load("Synth.png"));
+
+		calf = new LineIn(CALF, new String[] {null, null}, new String[] {"calfL", "calfR"});
+		calf.setIcon(Icons.load("Drums.png"));
+
+		uno = new LineIn(UNO, 
+				"system:capture_3", "uno");
+		addAll(Arrays.asList(new LineIn[] { guitar, mic, fluid, calf, uno}));
+		
+	}
+	
 	public Channels() {
-
+		if (Constants.getDi().contains("Komplete")) {
+			miniSetup();
+			return;
+		}
 		guitar = new LineIn(GUITAR, "system:capture_1", "guitar");
 		guitar.setIcon(Icons.load("Guitar.png"));
 
@@ -66,18 +90,18 @@ public class Channels extends ArrayList<LineIn> {
 	}
 
 	public void initVolume() {
-		mic.getGain().setVol(10);
-		guitar.getGain().setVol(50);
+		if (mic != null) mic.getGain().setVol(10);
 		fluid.getGain().setVol(33);
 		calf.getGain().setVol(40);
+		crave.getGain().setVol(40);
 		uno.getGain().setVol(40);
 	}
 
 	/** By default, don't record drum track, microphone, sequencer */
     public void initMutes() {
 	    getCalf().setMuteRecord(true);
-        getMic().setMuteRecord(true);
-        getCircuit().setMuteRecord(true);
+        if (mic != null) getMic().setMuteRecord(true);
+        if (circuit != null) getCircuit().setMuteRecord(true);
 	}
 
 

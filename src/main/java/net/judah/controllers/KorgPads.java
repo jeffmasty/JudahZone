@@ -6,18 +6,25 @@ import lombok.Getter;
 import net.judah.ControlPanel;
 import net.judah.JudahZone;
 import net.judah.Looper;
+import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.api.Midi;
 import net.judah.clock.JudahClock;
-import net.judah.clock.LoopSynchronization.SelectType;
+import net.judah.clock.JudahClock.Mode;
 import net.judah.controllers.MapEntry.TYPE;
+import net.judah.effects.Chorus;
+import net.judah.effects.CutFilter;
+import net.judah.effects.Delay;
 import net.judah.effects.Fader;
 import net.judah.effects.LFO.Target;
+import net.judah.effects.Overdrive;
 import net.judah.looper.Loop;
+import net.judah.looper.SyncWidget.SelectType;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.util.Constants;
 import net.judah.util.GuitarTuner;
+import net.judah.util.RTLogger;
 
 /** CC 1 - 16 on channel 13 */
 public class KorgPads extends ArrayList<Runnable> implements Controller {
@@ -28,6 +35,12 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 	
 	private long lastPress;
 	private Loop lastLoop;
+	
+	private final int JOYSTICK_ON = 75;
+	private final int JOYSTICK_X = 73;
+	private final int JOYSTICK_Y = 74;
+	private final int LEFT = 55;
+	private final int RIGHT = 74;
 	
 	public KorgPads(KorgMixer mixer, Looper looper) {
 		assert looper != null;
@@ -50,12 +63,18 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 	}
 
 	// TODO tap tempo
+	// TODO song pattern select
 	@Override public boolean midiProcessed(Midi midi) {
-		
+		int data1 = midi.getData1();
+		int data2 = midi.getData2();
 		// only trigger commands on pad press, not on pad release, but stop processing release midi bytes
-		if (midi.getData2() == 0) return true;
+		if (data2 == 0) {
+			if (JOYSTICK_ON == data1) 
+				joystick(false);
+			return true;
+		}
 
-		switch (midi.getData1()) {
+		switch (data1) {
 		// top row pads
 		case 1: // toggle record loop A
 			if (doErase(looper.getLoopA())) 
@@ -96,7 +115,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			Channel ch = ControlPanel.getInstance().getChannel();
 			if (ch == null) return true; // ? 
 			if (ch instanceof LineIn && (ch == JudahZone.getChannels().getGuitar() ||
-					ch == JudahZone.getChannels().getCircuit())) {
+					ch == JudahZone.getChannels().getCrave())) {
 				ControlPanel.getInstance().getTuner().setChannel(
 						GuitarTuner.getChannel() == ch ? null : ch);
 			} else {
@@ -107,25 +126,37 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 				else 
 					Fader.execute(new Fader(ch, Target.Gain, Fader.DEFAULT_FADE, ch.getVolume(), 0));
 			}
-			
 			return true;
 			
 		// bottom row pads
 		case 9: 
-			if (looper.getLoopA().hasRecording())  
+			Loop a = looper.getLoopA();
+			if (a.hasRecording())  
 				looper.reset();
 			else {
-				// TODO song pattern select
+				a.setArmed(!a.isArmed());
+				MainFrame.update(a);
 			}
             return true;
 		
 		case 10:  // latch B
-			looper.syncLoop(looper.getLoopA(), looper.getLoopB()); 
+			Loop b = looper.getLoopB();
+			if (b.hasRecording())
+				b.duplicate();
+			else {
+				b.setArmed(!b.isArmed());
+				MainFrame.update(b);
+			}
 			return true;
 		case 11:  // latch C
-			looper.syncLoop(looper.getLoopA(), looper.getLoopC()); 
+			Loop c = looper.getLoopC();
+			if (c.hasRecording())
+				c.duplicate(); // TODO set Tempo as per clock.length in bars and free loop C
+			else { 
+				c.setArmed(!c.isArmed());
+				MainFrame.update(c);
+			}
 			return true;
-		
 		case 12: // latch Drums
 			if (looper.getLoopA().hasRecording() == false) 
 				looper.getDrumTrack().toggle();
@@ -142,11 +173,11 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		case 15: // focus efx on Uno or Crave synth channels
 			ControlPanel panel = ControlPanel.getInstance();
 			if (panel.getCurrent() == null) 
-				panel.setFocus(JudahZone.getChannels().getUno());
-			else if (panel.getCurrent().getChannel() == JudahZone.getChannels().getUno())
 				panel.setFocus(JudahZone.getChannels().getCrave());
-			else 
+			else if (panel.getCurrent().getChannel() == JudahZone.getChannels().getCrave())
 				panel.setFocus(JudahZone.getChannels().getUno());
+			else 
+				panel.setFocus(JudahZone.getChannels().getCrave());
 			return true;
 			
 //			ControlPanel panel = ControlPanel.getInstance();
@@ -171,10 +202,69 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			else 
 				clock.begin();
 			return true; 
+			
+			
+		case JOYSTICK_ON: 
+			joystick(true);
+			return true;
+		case JOYSTICK_X:
+			Channel fx = ControlPanel.getInstance().getChannel();
+			Delay delay = fx.getDelay();
+			Chorus chorus = fx.getChorus();
+			Overdrive od = fx.getOverdrive();
+			boolean left = data2 < 50;
+			boolean right = data2 > RIGHT;
+			if (left) {
+				if (delay.getDelay() < Delay.DEFAULT_TIME) 
+					delay.setDelay(Delay.DEFAULT_TIME);
+				// cc 50 to 0 = 0 to max delay
+				delay.setFeedback(.02f * (50 - data2));
+				delay.setActive(true);
+			}
+			else if (right) {
+				od.setDrive(Constants.logarithmic((data2 - 77) * 2, 0, 1));
+				chorus.setActive(true);
+				od.setActive(true);
+			}
+			else { // dead zone
+				delay.setActive(false);
+				od.setActive(false);
+				chorus.setActive(false);
+			}
+			return true;
+		case JOYSTICK_Y: 
+			CutFilter party = ControlPanel.getInstance().getChannel().getCutFilter();
+			boolean down = data2 < LEFT - 10;
+			boolean up = data2 > RIGHT + 10;
+			if (up) {
+				party.setFrequency(CutFilter.knobToFrequency(data2 - 60));
+				party.setActive(true);
+			}
+			else if (down) {
+				party.setFrequency(CutFilter.knobToFrequency(data2));
+				party.setActive(true);
+			}
+			else {
+				party.setActive(false);
+			}
+			return true;
 		}
-		
 		return false;
 	}
+
+	private void joystick(boolean active) {
+		if (active) {
+			ControlPanel.getInstance().getChannel().reset();
+			// TODO stash preset
+		}
+		else {
+			ControlPanel.getInstance().getChannel().reset();
+			RTLogger.log(this, "joystick " + (active ? "on" : "off"));
+			// TODO restore preset
+		}
+		
+	}
+	
 
 	public static boolean record(Loop target) {
 		target.record(target.isRecording() != AudioMode.RUNNING);
@@ -182,11 +272,13 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 	}
 	
 	public static void trigger(Loop loop) {
-		if (loop.isRecording() == AudioMode.RUNNING) 
+		if (loop.isRecording() == AudioMode.RUNNING) {
 			loop.record(false);
+			JudahClock.getInstance().removeListener(loop.getSync());
+		}
 		else if (!loop.hasRecording() && JudahClock.isLoopSync()) {
-			JudahClock.getInstance().synchronize(loop);
-			if (!JudahClock.getInstance().isActive())
+			loop.getSync().init();
+			if (!JudahClock.getInstance().isActive() && JudahClock.getMode() == Mode.Internal)
 				JudahClock.getInstance().begin();
 		}
 		else 

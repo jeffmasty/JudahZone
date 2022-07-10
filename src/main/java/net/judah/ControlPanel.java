@@ -1,36 +1,36 @@
 package net.judah;
 
+import java.awt.Dimension;
 import java.io.File;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 
 import javax.sound.midi.MidiUnavailableException;
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 
 import lombok.Getter;
-import net.judah.clock.JudahClock;
 import net.judah.controllers.KnobMode;
 import net.judah.controllers.MPK;
 import net.judah.effects.gui.EffectsRack;
-import net.judah.effects.gui.PresetsGui;
 import net.judah.looper.Loop;
 import net.judah.metronome.MidiGnome;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
-import net.judah.song.SonglistTab;
-import net.judah.util.Console;
-import net.judah.util.Constants;
-import net.judah.util.GuitarTuner;
-import net.judah.util.RTLogger;
+import net.judah.util.*;
 
 public class ControlPanel extends JPanel {
 
     @Getter private static ControlPanel instance;
     @Getter private EffectsRack current;
     @Getter private final GuitarTuner tuner = new GuitarTuner();
-
-    private JComponent songlist;
-    private final JTabbedPane tabs;
+    private JPanel placeholder = new JPanel();
+    
+    //private JComponent songlist;
+    //private final JTabbedPane tabs;
     
     private class EffectsList extends ArrayList<EffectsRack> {
         EffectsRack get(Channel ch) {
@@ -53,26 +53,31 @@ public class ControlPanel extends JPanel {
         for (LineIn input : JudahZone.getChannels()) 
         	effectsTab.add(new EffectsRack(input));
 
-        tabs = new JTabbedPane();
-        songlist = new SonglistTab(Constants.defaultSetlist);
-        tabs.add("Setlist", songlist);
-        tabs.add("BeatBuddy", JudahClock.getInstance().getDrummachine().getGui());
-        tabs.add("Presets", new PresetsGui(JudahZone.getPresets()));
-
+        placeholder.addKeyListener(JudahMenu.getInstance());
+        placeholder.setFocusTraversalKeysEnabled(false);
+        
         JPanel console = new JPanel();
         console.setLayout(new BoxLayout(console, BoxLayout.Y_AXIS));
         JTextField input = Console.getInstance().getInput();
         JScrollPane output = Console.getInstance().getScroller();
 
+        Dimension d = new Dimension(Size.WIDTH_CONTROLS - 10, 25);
+        input.setPreferredSize(d);
+        input.setMaximumSize(d);
+        input.setMinimumSize(d);
+        d = new Dimension(Size.WIDTH_CONTROLS - 10, 90);
+        output.setPreferredSize(d);
+        output.setMaximumSize(d);
+
+        
         console.add(output);
         console.add(input);
 
-        add(JudahClock.getInstance().getGui());
-
         add(tuner);
+
+        add(placeholder);
+        placeholder.add(effectsTab.get(0));
         
-        add(tabs);
-        //add(metronome(new String[] {"JudahZone.mid", "44_Minor_4-4_i_-III_iv_V.mid", "BoogieWoogie.mid"}));
 
         add(console);        
 
@@ -109,30 +114,15 @@ public class ControlPanel extends JPanel {
     
     public void setFocus(Channel ch) {
     	MPK.setMode(KnobMode.Effects1);
+    	if (ch.equals(getChannel())) {
+    		return;
+    	}
     	new Thread(()->{
-    		
-    		if (ch.equals(getChannel())) {
-    			tabs.setSelectedComponent(current);
-	            return;
-	        }
-	        int idx = -1;
-	        for (int i = 0; i < tabs.getComponentCount(); i++) {
-	            if (tabs.getTitleAt(i).equals(EffectsRack.TAB_NAME)) {
-	                idx = i;
-	                break;
-	            }
-	        }
-	
 	        current = effectsTab.get(ch);
-	
-	        if (idx < 0) {
-	            tabs.add(EffectsRack.TAB_NAME, current);
-	        }
-	        else {
-	            tabs.setComponentAt(idx, current);
-	            current.update();
-	        }
-	        tabs.setSelectedComponent(current);
+	        placeholder.removeAll();
+	        placeholder.add(current);
+	        placeholder.requestFocus();
+	        validate();
 	        MainFrame.updateCurrent();
     
     	}).start();
@@ -144,8 +134,5 @@ public class ControlPanel extends JPanel {
         return current.getChannel();
     }
 
-	public void beatBuddy() {
-		tabs.setSelectedComponent(JudahClock.getInstance().getDrummachine().getGui());
-	}
 
 }

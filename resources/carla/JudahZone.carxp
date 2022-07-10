@@ -70,7 +70,7 @@
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set</Key>
-    <Value>18</Value>
+    <Value>66</Value>
    </CustomData>
 
    <CustomData>
@@ -703,7 +703,15 @@
  <ExternalPatchbay>
   <Connection>
    <Source>system:capture_1</Source>
+   <Target>PulseAudio JACK Source:front-left</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_1</Source>
    <Target>JudahZone:guitar</Target>
+  </Connection>
+  <Connection>
+   <Source>system:capture_2</Source>
+   <Target>PulseAudio JACK Source:front-right</Target>
   </Connection>
   <Connection>
    <Source>system:capture_3</Source>
@@ -738,7 +746,7 @@
    <Target>system:playback_2</Target>
   </Connection>
   <Connection>
-   <Source>a2j:FBV Shortboard Mk II [24] (capture): FBV Shortboard Mk II MIDI 1</Source>
+   <Source>a2j:FBV Shortboard Mk II [28] (capture): FBV Shortboard Mk II MIDI 1</Source>
    <Target>JudahMidi:line6In</Target>
   </Connection>
   <Connection>
@@ -751,7 +759,15 @@
   </Connection>
   <Connection>
    <Source>a2j:MPKmini2 [40] (capture): MPKmini2 MIDI 1</Source>
+   <Target>a2j:qmidiroute [134] (playback): in</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:MPKmini2 [40] (capture): MPKmini2 MIDI 1</Source>
    <Target>JudahMidi:keyboard</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:Circuit Tracks [44] (capture): Circuit Tracks MIDI</Source>
+   <Target>JudahMidi:circuitIn</Target>
   </Connection>
   <Connection>
    <Source>fluidsynth-midi:left</Source>
@@ -762,28 +778,28 @@
    <Target>JudahZone:fluidR</Target>
   </Connection>
   <Connection>
-   <Source>JudahMidi:clockOut</Source>
-   <Target>a2j:UNO Synth Pro [44] (playback): UNO Synth Pro MIDI 1</Target>
+   <Source>JudahMidi:Clock</Source>
+   <Target>a2j:UMC1820 [24] (playback): UMC1820 MIDI 1</Target>
   </Connection>
   <Connection>
-   <Source>JudahMidi:clockOut</Source>
-   <Target>a2j:UMC1820 [16] (playback): UMC1820 MIDI 1</Target>
+   <Source>JudahMidi:Clock</Source>
+   <Target>a2j:MPKmini2 [40] (playback): MPKmini2 MIDI 1</Target>
   </Connection>
   <Connection>
-   <Source>JudahMidi:synthOut</Source>
+   <Source>JudahMidi:Fluid</Source>
    <Target>fluidsynth-midi:midi_00</Target>
   </Connection>
   <Connection>
-   <Source>JudahMidi:calfOut</Source>
+   <Source>JudahMidi:Calf</Source>
    <Target>Calf Fluidsynth:events-in</Target>
   </Connection>
   <Connection>
-   <Source>JudahMidi:craveOut</Source>
-   <Target>a2j:UMC1820 [16] (playback): UMC1820 MIDI 1</Target>
+   <Source>JudahMidi:Crave</Source>
+   <Target>a2j:UMC1820 [24] (playback): UMC1820 MIDI 1</Target>
   </Connection>
   <Connection>
-   <Source>JudahMidi:unoOut</Source>
-   <Target>a2j:UNO Synth Pro [44] (playback): UNO Synth Pro MIDI 1</Target>
+   <Source>JudahMidi:Circuit</Source>
+   <Target>a2j:Circuit Tracks [44] (playback): Circuit Tracks MIDI</Target>
   </Connection>
   <Connection>
    <Source>JudahZone:left</Source>
@@ -832,10 +848,6 @@
   <Connection>
    <Source>Tal-Reverb-III (2):Audio Output 2</Source>
    <Target>system:playback_2</Target>
-  </Connection>
-  <Connection>
-   <Source>a2j:Circuit Tracks [48] (capture): Circuit Tracks MIDI</Source>
-   <Target>JudahMidi:circuitIn</Target>
   </Connection>
  </ExternalPatchbay>
 </CARLA-PROJECT>

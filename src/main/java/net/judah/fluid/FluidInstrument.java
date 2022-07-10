@@ -27,7 +27,7 @@ public class FluidInstrument {
 
 	@Override
 	public String toString() {
-		return group + "-" + index + " " + name;
+		return name;
 	}
 
 }

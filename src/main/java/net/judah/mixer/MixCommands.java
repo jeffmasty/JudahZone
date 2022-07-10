@@ -43,11 +43,11 @@ public class MixCommands extends ArrayList<Command> {
 
 	public MixCommands() {
 
-	    add(new Command(LOOP_SYNC.name, LOOP_SYNC.desc) {
-            @Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-                getLooper().syncLoop(getLooper().getLoopA(), getLooper().getLoopB());
-            }
-	    });
+//	    add(new Command(LOOP_SYNC.name, LOOP_SYNC.desc) {
+//            @Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+//                getLooper().syncLoop(getLooper().getLoopA(), getLooper().getLoopB());
+//            }
+//	    });
 
 		add(new Command(DRUMTRACK.name, DRUMTRACK.desc, Commands.template("soloTrack", Integer.class)) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
@@ -56,7 +56,7 @@ public class MixCommands extends ArrayList<Command> {
 			        int solo = Integer.parseInt(props.get("soloTrack").toString());
 			        drums.setSoloTrack(JudahZone.getChannels().get(solo));
 			    }
-				drums.sync(true);
+				drums.solo(true);
 			}
 		});
 

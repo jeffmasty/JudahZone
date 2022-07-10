@@ -1,26 +1,27 @@
 package net.judah.controllers;
 
-import static net.judah.JudahZone.getLooper;
-
 import net.judah.ControlPanel;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.Midi;
+import net.judah.looper.Loop;
 import net.judah.mixer.Channel;
+import net.judah.mixer.DrumTrack;
 import net.judah.mixer.LineIn;
 import net.judah.util.RTLogger;
 
 public class Line6FBV implements Controller {
 
 	private int pedalMemory = 50;
+	private boolean mutes;
 
 	@Override
 	public boolean midiProcessed(Midi midi) {
 		
 		if (Midi.isProgChange(midi)) {
 			if (midi.getData1() == 0) {
-				if (Jamstik.isActive()) {
-					Jamstik.nextMidiOut();
+				if (Jamstik.getInstance().isActive()) {
+					Jamstik.getInstance().nextMidiOut();
 				}
 				else {
 					RTLogger.log(this, "DOWN");
@@ -28,8 +29,8 @@ public class Line6FBV implements Controller {
 				return true;
 			}
 			if (midi.getData1() == 1) {
-				if (Jamstik.isActive()) {
-					Jamstik.nextMidiOut(); 
+				if (Jamstik.getInstance().isActive()) {
+					Jamstik.getInstance().nextMidiOut(); 
 				}
 				else {
 					RTLogger.log(this, "UP");
@@ -41,35 +42,55 @@ public class Line6FBV implements Controller {
 		if (!Midi.isCC(midi)) return false;
 		
 		LineIn guitar = JudahZone.getChannels().getGuitar();
-		
+		Loop loop;
 		switch (midi.getData1()) {
 		case 1: // Loop A
 			if (midi.getData2() == 0) return true;
-			KorgPads.trigger(JudahZone.getLooper().getLoopA());
+			loop = JudahZone.getLooper().getLoopA();
+			if (mutes) 
+				loop.setOnMute(!loop.isOnMute());
+			else 
+				KorgPads.trigger(loop);
 			return true;
 		case 2: // overdub B
 			if (midi.getData2() == 0) return true;
-			if (JudahZone.getLooper().getLoopB().hasRecording())
-				KorgPads.record(JudahZone.getLooper().getLoopB());
-			else // or Sync B
-				getLooper().syncLoop(getLooper().getLoopA(), getLooper().getLoopB()); 
+			loop = JudahZone.getLooper().getLoopB();
+			if (mutes) 
+				loop.setOnMute(!loop.isOnMute());
+			else {
+				if (loop.hasRecording())
+					KorgPads.record(JudahZone.getLooper().getLoopB());
+				else { // or Sync B
+					loop.setArmed(!loop.isArmed());
+					MainFrame.update(loop);
+				}
+			}
 			return true;
 		case 3: // record C (free)
 			if (midi.getData2() == 0) return true;
-			return KorgPads.record(JudahZone.getLooper().getLoopC());
+			loop = JudahZone.getLooper().getLoopC();
+			if (mutes) 
+				loop.setOnMute(!loop.isOnMute());
+			else // can be free-style loop
+				KorgPads.record(JudahZone.getLooper().getLoopC());
+			return true;
 		case 4: // overdub D
 			if (midi.getData2() == 0) return true;
-			if (JudahZone.getLooper().getLoopB().hasRecording())
-				KorgPads.record(JudahZone.getLooper().getDrumTrack());
+			DrumTrack drums = JudahZone.getLooper().getDrumTrack();
+			if (mutes) 
+				drums.setOnMute(!drums.isOnMute());
+			else if (JudahZone.getLooper().getLoopB().hasRecording()) // TODO
+				KorgPads.record(drums);
 			else // or Toggle Drum Track recording
-				JudahZone.getLooper().getDrumTrack().toggle();
+				drums.toggle();
 			return true;
 		case 5: // Func(1) turn on/off Jamstik midi 
-			Jamstik.toggle();
+			Jamstik.getInstance().toggle();
 			return true;
 		case 6: // Func(2) // TODO Preset on/off  or mute record in Synth mode
 			return true;
 		case 7: // TAP() // TODO A/B looper
+			mutes = midi.getData2() > 0;
 			return true;
 		case 8: // Stomp
 			guitar.getOverdrive().setActive(midi.getData2() > 0);

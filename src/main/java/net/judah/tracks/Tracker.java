@@ -1,8 +1,8 @@
 package net.judah.tracks;
 
-import java.awt.GridLayout;
 import java.util.ArrayList;
 
+import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
 import org.jaudiolibs.jnajack.JackPort;
@@ -20,12 +20,17 @@ public class Tracker extends JPanel {
 	private Track focus;
 	
 	public Tracker(Track[] tracks) {
-		setLayout(new GridLayout(8, 2));
+		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+		
+		// setLayout(new GridLayout(8, 2));
 		for(Track track : tracks) {
+			JPanel slice = new JPanel();
+			slice.setLayout(new BoxLayout(slice, BoxLayout.LINE_AXIS));
 			TrackView view = TrackView.create(track);
 			this.tracks.add(view);
-			add(view);
-			add(track.getFeedback());
+			slice.add(view);
+			slice.add(track.getFeedback());
+			add(slice);
 		}
 		focus = tracks[0];
 			

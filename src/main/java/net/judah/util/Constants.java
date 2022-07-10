@@ -18,6 +18,7 @@ import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Sequence;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -25,19 +26,21 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
+import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.api.Midi;
 import net.judah.mixer.Channel;
 
 public class Constants {
-
+	
 	// TODO generalize
 	private static int _SAMPLERATE = 48000;
 	private static int _BUFSIZE = 256;//TODO:(512)
-
 	public static int sampleRate() { return _SAMPLERATE; }
 	public static int bufSize() { return _BUFSIZE; }
-
+	/** Digital interface name */
+	@Getter static String di = "UMC1820 MIDI 1"; //return "Komplete ";
+	
 	// TODO
     public static final File ROOT = new File("/home/judah/git/JudahZone/resources/");
     public static final File defaultFolder = new File(ROOT, "Songs/");
@@ -62,7 +65,6 @@ public class Constants {
 		public static final String SEQUENCE = "sequence";
 		public static final String MAX = "max";
 		public static final String STEPS = "steps";
-		// public static final String PRESET = "preset";
 		public static final String IMAGE = "image";
 
 		public static boolean parseActive(HashMap<String, Object> props) {
@@ -85,6 +87,13 @@ public class Constants {
 
 	}
 
+    public static final Dimension MAX = new Dimension(120, 30);
+    public static JComponent max(JComponent c) {
+		c.setMaximumSize(MAX);
+		c.setPreferredSize(MAX);
+		return c;
+    }
+    
 	public static final String NL = System.getProperty("line.separator", "\r\n");
 	public static final String CUTE_NOTE = "♫ ";
 	public static final String FILE_SEPERATOR = System.getProperty("file.separator");
@@ -101,7 +110,7 @@ public class Constants {
 
     public static interface Gui {
     	
-    	
+
     	int STD_HEIGHT = 18;
     	Insets BTN_MARGIN = new Insets(1,1,1,1);
     	Insets ZERO_MARGIN = new Insets(0,0,0,0);

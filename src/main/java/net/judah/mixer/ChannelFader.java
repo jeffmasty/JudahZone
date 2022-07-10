@@ -12,6 +12,7 @@ import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.clock.JudahClock;
 import net.judah.looper.Loop;
+import net.judah.looper.SyncWidget;
 import net.judah.midi.JudahMidi;
 import net.judah.util.Pastels;
 import net.judah.util.RainbowFader;
@@ -54,7 +55,7 @@ public class ChannelFader extends JPanel implements Pastels {
 		//add(volume);
 
 		menu = (channel instanceof Loop) ?
-			new SyncWidget((Loop)channel) : new Menu(channel);
+			((Loop)channel).getSync() : new Menu(channel);
 
 		if (channel instanceof LineIn) {
 			add(icon);
@@ -84,29 +85,30 @@ public class ChannelFader extends JPanel implements Pastels {
 				bg = Color.DARK_GRAY;
 			else if (s.isPlaying() == AudioMode.RUNNING)
 				bg = GREEN;
-			else if (s.isSync()) 
-				bg = ORANGE;
+			else if (s.isArmed()) 
+				bg = PINK;
 			else {
 				Loop a = JudahZone.getLooper().getLoopA();
 				if (a == channel && JudahClock.isLoopSync())
-					bg = ORANGE;
+					bg = YELLOW;
 				else if (a != channel && s.getPrimary() != null) {
 					bg = PINK;
 				}
 			}
 		}
-		else { // line in/master track // TODO upper and lower indicator color
-			if (channel.isOnMute()) 
-				bg = Color.BLACK;
-			else if (channel instanceof LineIn && ((LineIn)channel).isMuteRecord()) {
-				bg = PURPLE;
-				if (channel.getSync() != null && JudahMidi.getInstance().getSync().contains(channel.getSync()))
-					bg = YELLOW;
-			}
-			else if (channel.getSync() != null && JudahMidi.getInstance().getSync().contains(channel.getSync()))
-				bg = PINK;
-			else 
-				bg = GREEN;
+		else if (channel.isOnMute())  // line in/master track // TODO upper and lower indicator color
+			bg = Color.BLACK;
+		else if (channel instanceof LineIn) {
+				LineIn in = (LineIn)channel;
+				if (in.isMuteRecord()) {
+					bg = PURPLE;
+					//if (channel.getSync() != null && JudahMidi.getInstance().getSync().contains(channel.getSync()))
+					// bg = YELLOW;
+				}
+				else if (in.getSync() != null && JudahMidi.getInstance().getSync().contains(in.getSync()))
+					bg = PINK;
+				else 
+					bg = GREEN;
 		}
 		
 		if (false == getBackground().equals(bg)) {

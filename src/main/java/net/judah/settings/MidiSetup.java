@@ -30,13 +30,13 @@ public class MidiSetup {
 
 	@RequiredArgsConstructor
 	public enum OUT { // out ports
-		CLOCK_OUT("clockOut"),
-		SYNTH_OUT("synthOut"), 
-		CALF_OUT("calfOut"),
-		CRAVE_OUT("craveOut"),
-		UNO_OUT("unoOut"),
-		CIRCUIT_OUT("circuitOut"),
-		AUX1_OUT("auxOut");
+		CLOCK_OUT("Clock"),
+		SYNTH_OUT("Fluid"), 
+		CALF_OUT("Calf"),
+		CRAVE_OUT("Crave"),
+		CIRCUIT_OUT("Circuit"),
+		AUX1_OUT("Aux");//,
+		//UNO_OUT("unoOut");
 		
 		@Getter public final String port;
 		

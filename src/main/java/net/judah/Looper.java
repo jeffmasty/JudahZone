@@ -9,9 +9,8 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.api.AudioMode;
 import net.judah.clock.JudahClock;
-import net.judah.clock.LoopSynchronization.SelectType;
 import net.judah.looper.Loop;
-import net.judah.looper.Recording;
+import net.judah.looper.SyncWidget.SelectType;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DrumTrack;
 import net.judah.plugin.Carla;
@@ -69,24 +68,24 @@ public class Looper {
     public void init(Carla carla) {
         // TODO...
 
-        loopA = new Loop("A");
+        loopA = new Loop("A", this);
         loopA.setIcon(Icons.load("LoopA.png"));
         loopA.setReverb(carla.getReverb());
         //loopA.play(true); // armed;
         add(loopA);
         
-        loopB = new Loop("B");
+        loopB = new Loop("B", this);
         loopB.setIcon(Icons.load("LoopB.png"));
         loopB.setReverb(carla.getReverb2());
         //loopB.play(true);
         add(loopB);
 
-        loopC = new Loop("C");
+        loopC = new Loop("C", this);
         //loopC.play(true); // armed;
         loopC.setIcon(Icons.load("LoopC.png"));
         add(loopC);
 
-        drumTrack = new DrumTrack(loopA, JudahZone.getChannels().getCalf());
+        drumTrack = new DrumTrack(loopA, JudahZone.getChannels().getCalf(), this);
         drumTrack.setIcon(Icons.load("Drums.png"));
         add(drumTrack);
 
@@ -108,22 +107,27 @@ public class Looper {
         }
     }
 
-    /** multi-threaded */
-    public void syncLoop(Loop source, Loop target) {
-    	if (source.getRecording() == null || source.getRecording().isEmpty()) {
-    		// nothing recorded yet, but we are setup to sync to master loop
-    		target.armRecord(source);
-    	}
-    	else {
-    		new Thread(() -> {
-	    		if (target.hasRecording()) 
-	    			target.duplicate(); 
-	    		else {
-	    			target.setRecording(new Recording(source.getRecording().size()));
-		    		target.getIsPlaying().set(AudioMode.STARTING);
-	    		}}).start();
-    	}
-    }
+//    /** multi-threaded */
+//    public void syncLoop(Loop source, Loop target) {
+//    	if (source.getRecording() == null || source.getRecording().isEmpty()) {
+//    		// nothing recorded yet, but we are setup to sync to master loop
+//    		target.armRecord(source);
+//    	}
+//    	else {
+//    		new Thread(() -> {
+//	    		if (target.hasRecording()) 
+//	    			target.duplicate(); 
+//	    		else {
+//	    			target.setRecording(new Recording(source.getRecording().size()));
+//		    		target.getIsPlaying().set(AudioMode.STARTING);
+//		    		if (target.isSync()) {
+//            			target.setSync(false);
+//            			target.record(true);
+//            		}
+//		    		
+//	    		}}).start();
+//    	}
+//    }
 
     public Loop get(int i) {
         return loops[i];

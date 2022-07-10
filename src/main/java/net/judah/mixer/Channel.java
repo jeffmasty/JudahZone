@@ -5,8 +5,6 @@ import java.util.Arrays;
 
 import javax.swing.ImageIcon;
 
-import org.jaudiolibs.jnajack.JackPort;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -44,8 +42,6 @@ public abstract class Channel extends ArrayList<Effect> {
 	protected Delay delay = new Delay();
     protected Reverb reverb = new Freeverb();
 
-    protected JackPort sync;
-    
     public Channel(String name) {
         this.name = name;
         addAll(Arrays.asList(new Effect[] {

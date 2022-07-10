@@ -28,7 +28,9 @@ import net.judah.beatbox.BeatBox;
 import net.judah.clock.JudahClock;
 import net.judah.clock.JudahClock.Mode;
 import net.judah.controllers.*;
+import net.judah.mixer.Channel;
 import net.judah.sequencer.Sequencer;
+import net.judah.settings.Channels;
 import net.judah.settings.MidiSetup.IN;
 import net.judah.settings.MidiSetup.OUT;
 import net.judah.util.Console;
@@ -42,12 +44,13 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
     @Getter private static final Router router = new Router();
     @Getter private static final ConcurrentLinkedQueue<PortMessage> queue = new ConcurrentLinkedQueue<>();
 
+    private JudahClock clock;
+    @Getter private MidiGui gui;
 	private long frame = 0;
     private String[] sources, destinations; // for GUI
     private final byte[] DATA1 = new byte[1], DATA2 = new byte[2], DATA3 = new byte[3]; // for process()
     private final Event midiEvent = new JackMidi.Event(); // for process()
 
-    private JudahClock clock;
     @Getter private ArrayList<JackPort> inPorts = new ArrayList<>();  // Keyboard, Pedal, MidiIn
     @Getter private JackPort keyboard;
     @Getter private JackPort pedal;
@@ -68,14 +71,15 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
     @Getter private JackPort craveOut;
     @Getter private JackPort clockOut;
     @Getter private JackPort calfOut;
+    
+    @Getter private JackPort keyboardSynth;
+    @Getter private final ArrayList<Path> paths = new ArrayList<>();
     @Getter private final ArrayList<JackPort> sync = new ArrayList<>();
     
-    private JackPort keyboardSynth;
-
-    
     @Getter private final MidiScheduler scheduler = new MidiScheduler(this);
-    
     @Getter MidiCommands commands = new MidiCommands(this);
+
+    @Getter int ticker;
     private final HashMap<JackPort, Controller> switchboard = new HashMap<>();
 
     public JudahMidi(String name) throws JackException {
@@ -91,35 +95,51 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 
     @Override
     protected void initialize() throws JackException {
-
+    	Channels ch = JudahZone.getChannels();
+    	
     	// init getters for out ports
         for (OUT port : OUT.values())
             outPorts.add(jackclient.registerPort(port.port, MIDI, JackPortIsOutput));
+        
         int sz = outPorts.size();
         if (sz > OUT.CLOCK_OUT.ordinal()) clockOut = outPorts.get(OUT.CLOCK_OUT.ordinal());
         if (sz > OUT.SYNTH_OUT.ordinal()) {
         	fluidOut = outPorts.get(OUT.SYNTH_OUT.ordinal());
         	keyboardSynth = fluidOut;
+        	paths.add(new Path(fluidOut, ch.getFluid()));
         }
-        if (sz > OUT.CALF_OUT.ordinal()) calfOut = outPorts.get(OUT.CALF_OUT.ordinal());
+        if (sz > OUT.CALF_OUT.ordinal()) {
+        	calfOut = outPorts.get(OUT.CALF_OUT.ordinal());
+        	CircuitTracks.setOut2(calfOut);
+        	paths.add(new Path(calfOut, ch.getCalf()));
+        }
         if (sz > OUT.CRAVE_OUT.ordinal()) {
         	craveOut = outPorts.get(OUT.CRAVE_OUT.ordinal());
-        	JudahZone.getChannels().getCrave().setSync(craveOut);
+        	if (JudahZone.getChannels().getCrave() != null) 
+        		JudahZone.getChannels().getCrave().setSync(craveOut);
+        	CircuitTracks.setOut1(craveOut);
+        	paths.add(new Path(craveOut, ch.getCrave()));
         }
-        if (sz > OUT.UNO_OUT.ordinal()) {
-        	unoOut = outPorts.get(OUT.UNO_OUT.ordinal());
-        	JudahZone.getChannels().getUno().setSync(unoOut);
+        if (sz > OUT.CIRCUIT_OUT.ordinal()) {
+        	circuitOut = outPorts.get(OUT.CIRCUIT_OUT.ordinal());
+        	paths.add(new Path(circuitOut, ch.getCircuit()));
         }
-        if (sz > OUT.CIRCUIT_OUT.ordinal()) circuitOut = outPorts.get(OUT.CIRCUIT_OUT.ordinal());
-        if (sz > OUT.AUX1_OUT.ordinal()) auxOut1 = outPorts.get(OUT.AUX1_OUT.ordinal());
-
+        if (sz > OUT.AUX1_OUT.ordinal()) 
+        	auxOut1 = outPorts.get(OUT.AUX1_OUT.ordinal());
+//        if (sz > OUT.UNO_OUT.ordinal()) {
+//        	unoOut = outPorts.get(OUT.UNO_OUT.ordinal());
+//        	JudahZone.getChannels().getUno().setSync(unoOut);
+//			paths.add(new Path(getUnoOut(), ch.getUno());        
+//        }
+    	;
+        
         // connect midi controllers to software handlers
         for (IN port : IN.values())
             inPorts.add(jackclient.registerPort(port.port, MIDI, JackPortIsInput));
         sz = inPorts.size();
         if (sz > IN.KEYBOARD.ordinal()) {
         	keyboard = inPorts.get(IN.KEYBOARD.ordinal());
-        	switchboard.put(keyboard, new MPK());
+        	switchboard.put(keyboard, new MPK(this));
         }
         if (sz > IN.MIXER.ordinal()) {
         	mixer = inPorts.get(IN.MIXER.ordinal());
@@ -139,10 +159,6 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
         	line6 = inPorts.get(IN.LINE6_IN.ordinal());
         	switchboard.put(line6, new Line6FBV());
         }
-		//    if (sz > IN.JAMSTIK_IN.ordinal()) {
-		//    	jamstikIn = inPorts.get(IN.JAMSTIK_IN.ordinal());
-		//    	switchboard.put(jamstikIn, new Jamstik());
-		//    }
         if (sz > IN.AUX_IN.ordinal()) {
         	auxIn = inPorts.get(IN.AUX_IN.ordinal());
         }
@@ -153,8 +169,9 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
         timePolling.setName(scheduler.getClass().getSimpleName());
         timePolling.start();
         
+        JudahClock.setClockOut(clockOut);
         clock = JudahClock.getInstance();
-        clock.setClockOut(clockOut);
+        gui = new MidiGui(this, clock);
 
 		//    if (sz > IN.CRAVE_IN.ordinal()) {
 		//    	craveIn = inPorts.get(IN.CRAVE_IN.ordinal());
@@ -220,6 +237,8 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 //            jack.connect(jackclient, craveOut.getName(), port);
 //        }
 
+        JudahZone.getInstance().initializeGui();
+        
     }
     
     @Override
@@ -262,7 +281,7 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
                     midiEvent.read(data);
                     midi = router.process(new Midi(data, port.getShortName()));
 
-                    if (Sequencer.getCurrent() == null) {
+                    if (Sequencer.getCurrent() == null) { // remove 
                     	if (switchboard.get(port) != null) {
                     		if (switchboard.get(port).midiProcessed(midi))
                     			MainFrame.updateCurrent();
@@ -270,19 +289,20 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
                     			write(midi, midiEvent.time());
                     	}
                     }
+                    // old ?
                     else if (Sequencer.getCurrent().midiProcessed(midi, port)) 
-                    	MainFrame.updateTime(); // ?
+                    	MainFrame.updateTime(); 
                 }
             }
 
             // check sequencers for output
         	ShortMessage poll;
-        	int offset = 0;
+        	ticker = 0;
             for (BeatBox b : clock.getSequencers()) {
                 poll = b.getQueue().poll();
                 while (poll != null) {
                     JackMidi.eventWrite(b.getMidiOut(),
-                            offset++, poll.getMessage(), poll.getLength());
+                            ticker(), poll.getMessage(), poll.getLength());
                 	poll = b.getQueue().poll();
                 }
             }
@@ -290,10 +310,10 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
             PortMessage route = queue.poll();
             while(route != null) {
             	if (route.getPort() == null) 
-            		write(route.getMidi(), offset++);
+            		write(route.getMidi(), ticker());
             	else 
             		JackMidi.eventWrite(route.getPort(), 
-            				offset++, route.getMidi().getMessage(), route.getMidi().getLength());
+            				ticker(), route.getMidi().getMessage(), route.getMidi().getLength());
             	route = queue.poll();
             }
 
@@ -309,6 +329,10 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
         return true;
     }
 
+    public int ticker() {
+    	return ++ticker;
+    }
+    
     private void write(ShortMessage midi, int time) throws JackException {
         switch (midi.getChannel()) {
 	        case DRUMS_CHANNEL: // sending drum notes to external drum machine
@@ -318,26 +342,9 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 			//	    JackMidi.eventWrite(auxOut1, time, midi.getMessage(), midi.getLength());
 			//	    break;
 	            
-	        default: JackMidi.eventWrite(keyboardSynth, time, midi.getMessage(), midi.getLength());
+	        default: 
+	        	JackMidi.eventWrite(keyboardSynth, time, midi.getMessage(), midi.getLength());
         }
-    }
-
-    public void nextKeyboardSynth() {
-    	JackPort old = keyboardSynth;
-    	if (fluidOut == keyboardSynth) {
-    		keyboardSynth = craveOut;
-    		clock.getGui().keyboardSynth("Crave");
-    	}
-    	else if (craveOut == keyboardSynth) {
-    		keyboardSynth = unoOut;
-    		clock.getGui().keyboardSynth("Uno");
-    	}
-    	else {
-    		keyboardSynth = fluidOut;
-    		clock.getGui().keyboardSynth("Fluid");
-    	}
-    	if (old != null)
-    		new Panic(old).start();
     }
 
 	public static void queue(ShortMessage midi, JackPort midiOut) {
@@ -392,6 +399,29 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
 		}
 	}
 
+	public Path getPath(JackPort port) {
+		for (Path p : paths)
+			if (p.getPort().equals(port))
+				return p;
+		return null;
+	}
+
+	public Path getPath(Channel ch) {
+		for (Path p : paths)
+			if (p.getChannel().equals(ch))
+				return p;
+		return null;
+	}
+
+	public void setKeyboardSynth(JackPort port) {
+		if (keyboardSynth == port)
+			return;
+		JackPort old = keyboardSynth;
+		keyboardSynth = port;
+		if (old != null)
+    		new Panic(old).start();
+	}
+	
 }
 
     // To be revived

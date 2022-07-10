@@ -29,7 +29,6 @@ import net.judah.effects.api.Preset;
 import net.judah.effects.api.PresetsHandler.Raw;
 import net.judah.looper.Loop;
 import net.judah.looper.Recording;
-import net.judah.metronome.Metronome;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiListener;
 import net.judah.midi.MidiListener.PassThrough;
@@ -72,7 +71,7 @@ public class Sequencer implements Service, Runnable, TimeListener {
         private final Mappings mappings;
 
         private final JudahZone mixer;
-        private final Metronome metronome;
+        //private final Metronome metronome;
         private final SongPane page;
         private SeqCommands commands = new SeqCommands();
         /** see {@link #properties(HashMap)} */
@@ -102,7 +101,7 @@ public class Sequencer implements Service, Runnable, TimeListener {
             this.songfile = songfile;
             song = (Song)JsonUtil.readJson(songfile, Song.class);
             mappings = new Mappings(song.getLinks());
-            metronome = JudahZone.getMetronome();
+            //metronome = JudahZone.getMetronome();
 
             handlePrevious();
             current = this;
@@ -122,7 +121,7 @@ public class Sequencer implements Service, Runnable, TimeListener {
             JudahMidi.getInstance().getRouter().clear();
             Sequencer previous = Sequencer.getCurrent();
             if (previous != null) {
-                JudahZone.getMetronome().removeListener(previous);
+                //JudahZone.getMetronome().removeListener(previous);
                 previous.close();
                 current = null;
                 MainFrame.get().sheetMusicOff();
@@ -221,7 +220,7 @@ public class Sequencer implements Service, Runnable, TimeListener {
             if (Property.TRANSPORT == prop) {
                 if (value == JackTransportState.JackTransportStarting) {
                     if (control == ControlMode.INTERNAL) {
-                        JudahZone.getMetronome().removeListener(this);
+                        //JudahZone.getMetronome().removeListener(this);
                         try {
                             if (clock == null) {
                                 clock = new SeqClock(this);
@@ -439,7 +438,7 @@ public class Sequencer implements Service, Runnable, TimeListener {
             Loop loopA = JudahZone.getLooper().getLoopA();
             Loop loopB = JudahZone.getLooper().getLoopB();
 
-            drums.sync(true);
+            drums.solo(true);
             loopA.play(false); // not armed (record bridge for later)
             loopA.addListener( (prop, value)-> {
                 if (Property.STATUS != prop || Status.TERMINATED != value)

@@ -1,8 +1,6 @@
 package net.judah.controllers;
 
-import static net.judah.JudahZone.getCarla;
-import static net.judah.JudahZone.getChannels;
-import static net.judah.JudahZone.getLooper;
+import static net.judah.JudahZone.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -51,8 +49,10 @@ public class MidiPedal implements Controller {
         }
 
         if (data1 == PEDAL.get(3) ) {// latch Loop B
-        	getLooper().syncLoop(getLooper().getLoopA(), getLooper().getLoopB()); 
-            return true;
+        	Loop b = getLooper().getLoopB();
+        	b.setArmed(!b.isArmed());
+        	MainFrame.update(b);
+        	return true;
         }
         if (data1 == PEDAL.get(4)) { 
         	if (getLooper().getLoopA().hasRecording())

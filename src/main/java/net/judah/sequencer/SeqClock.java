@@ -1,7 +1,6 @@
 package net.judah.sequencer;
 
-import static net.judah.util.Constants.Param.BPM;
-import static net.judah.util.Constants.Param.MEASURE;
+import static net.judah.util.Constants.Param.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,7 +14,6 @@ import javax.sound.midi.InvalidMidiDataException;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeProvider;
@@ -191,8 +189,8 @@ public class SeqClock extends Thread implements TimeProvider {
 	public boolean setTempo(float tempo2) {
 		if (tempo2 < tempo || tempo2 > tempo) {
 			tempo = tempo2;
-			if (JudahZone.getMetronome() != null)
-				JudahZone.getMetronome().setTempo(tempo2);
+//			if (JudahZone.getMetronome() != null)
+//				JudahZone.getMetronome().setTempo(tempo2);
 		}
 		return true;
 	}

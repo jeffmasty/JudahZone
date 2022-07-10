@@ -41,12 +41,16 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
     @Getter protected final AtomicReference<AudioMode> isPlaying = new AtomicReference<>(AudioMode.ARMED);
     @Getter protected final AtomicReference<AudioMode> isRecording = new AtomicReference<>(AudioMode.NEW);
 
+    protected final Looper looper;
+    @Getter protected final SyncWidget sync = new SyncWidget(this);
+
     @Getter private int loopCount = 0;
     @Getter protected Integer length;
 
     protected final ArrayList<TimeListener> listeners = new ArrayList<>();
     /** synchronize loop to Time.. */
-    @Getter @Setter protected boolean sync = false;
+    @Getter @Setter protected boolean armed = false;
+
     @Getter protected Loop primary;
     
     // for process()
@@ -56,15 +60,17 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
     private final float[] workR = new float[bufferSize];
     private final FloatBuffer bufL = FloatBuffer.wrap(workL);
     private final FloatBuffer bufR = FloatBuffer.wrap(workR);
+    private int counter;
     
     // for recording
     private final Memory memory;
     @Getter @Setter protected boolean overwrite;
     @Getter private long recordedLength = -1;
     private long _start;
-
-    public Loop(String name) {
+    
+    public Loop(String name, Looper parent) {
     	super(name);
+    	looper = parent;
     	memory = new Memory(Constants.STEREO, JudahMidi.getInstance().getBufferSize());
     	setOutputPorts(JudahZone.getOutPorts());
     }
@@ -106,7 +112,7 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
         if (isPlaying.compareAndSet(RUNNING, STOPPING)) {
             wasRunning = true;
             try { // to get a process() in
-                Thread.sleep(20); } catch (Exception e) {	}
+                Thread.sleep(25); } catch (Exception e) {	}
         }
         isPlaying.set(wasRunning ? ARMED : NEW);
         tapeCounter.set(0);
@@ -118,6 +124,8 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
         isRecording.set(NEW);
         recording = null;
         MainFrame.update(this);
+        if (this == looper.getLoopA())
+        	MainFrame.update(LoopWidget.getInstance());
     }
 
     public void setRecording(Recording sample) {
@@ -133,6 +141,7 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
     }
 
     public void delete() {
+    	if (recording == null) return;
     	new Thread(() -> {
 	    	if (recording != null) 
 	    		recording.close();
@@ -177,43 +186,44 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
         } else if (active && (isPlaying.get() == RUNNING || isPlaying.get() == STARTING)) {
             isRecording.set(STARTING);
             RTLogger.log(this, name + " overdub starting");
-
-        } else if (active && (recording != null || mode == STOPPED)) {
-            isRecording.set(STARTING);
-            RTLogger.log(this, name + "silently overdubbing");
         }
 
         else if (mode == RUNNING && !active) {
-            isRecording.set(STOPPING);
+        	isRecording.set(STOPPED);
 
             if (length == null) { // Initial Recording, start other loopers
-                Looper looper = JudahZone.getLooper();
-                if (this == looper.getLoopA()) {
-                	if (JudahClock.getMode() == Mode.Internal)
+            	new ArrayList<>(listeners).forEach(
+                		listener -> {listener.update(Notification.Property.STATUS, Status.TERMINATED);});
+                if (this == looper.getLoopA() && JudahClock.getMode() == Mode.Internal)
                 		recording.trim();
-            		if (looper.getDrumTrack().isSync()) {
-            			looper.getDrumTrack().record(false);
-            			looper.getDrumTrack().getRecording().trim();
-            		}
-            		for (Loop s : looper.getLoops()) {
-	            		if (s == this) continue;
-	            		if (s.isSync()) s.sync = false;
-	            		else looper.syncLoop(this, s); // preset blank loop of proper size
-	        		}
-            		new Thread( () -> {new ArrayList<>(listeners).forEach(
-	                		listener -> {listener.update(Notification.Property.STATUS, Status.TERMINATED);});}).start();
-            	}
+                new Thread(() -> { // set blank tape on other loopers
+	        		for (Loop loop : looper.getLoops()) {
+		        			if (loop != this) {
+		        				if (loop == looper.getDrumTrack() && looper.getDrumTrack().isArmed()) {
+		        					looper.getDrumTrack().record(false);
+		        					looper.getDrumTrack().getRecording().trim();
+		        				}
+		        				else {
+			            			loop.setRecording(new Recording(getRecording().size()));
+					    			loop.getIsPlaying().set(AudioMode.STARTING);
+		        				}
+			    			}
+		        			if (loop.isArmed()) { // start overdub
+		        				loop.setArmed(false);
+		        				new Thread( () -> loop.record(true)).start(); 
+		        			}
+			    	}
+	        	}).start();
+                length = recording.size();
+                recordedLength = System.currentTimeMillis() - _start;
             	RTLogger.log(this, name + " initial recording " + recording.size() + " buffers long");
             }
             else {
             	RTLogger.log(this, name + " overdubbed."); // TODO mark loop as not blank
             }
-            length = recording.size();
-            
-            recordedLength = System.currentTimeMillis() - _start;
             isPlaying.compareAndSet(NEW, STOPPED);
             isPlaying.compareAndSet(ARMED, STARTING);
-            isRecording.set(STOPPED);
+            
             MainFrame.update(this);
         }
     }
@@ -252,31 +262,18 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
             	MainFrame.update(l);
     }
 
-    public void armRecord(Loop loopA) {
-    	if (primary == null) {
-	        primary = loopA;
-	        loopA.addListener(this);
-	        sync = false;
-    	}
-    	else {
-    		loopA.removeListener(this);
-    		primary = null;
-    		sync = true;
-    	}
-    	MainFrame.update(this);
-    }
     @Override
     public void update(Notification.Property prop, Object value) {
-        if (Notification.Property.STATUS == prop && Status.TERMINATED == value) {
-        	if (primary.getRecording() != null) {
-        		setRecording(new Recording(primary.getRecording().size(), true));
-        		RTLogger.log(this, name + " sync'd recording. buffers: " + getRecording().size());
-        	}
-       		play(true);
-            record(true);
-            primary.removeListener(this);
-            primary = null;
-        }
+//        if (Notification.Property.STATUS == prop && Status.TERMINATED == value) {
+//        	if (primary.getRecording() != null) {
+//        		setRecording(new Recording(primary.getRecording().size(), true));
+//        		RTLogger.log(this, name + " sync'd recording. buffers: " + getRecording().size());
+//        	}
+//       		play(true);
+//            record(true);
+//            primary.removeListener(this);
+//            primary = null;
+//        }
     }
 
     
@@ -342,6 +339,11 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
     	readRecordedBuffer();
         if (isOnMute()) return; // ok, we're on mute and we've progressed the tape counter.
 
+        if (this == looper.getLoopA() && ++ counter > 7) { 
+        	MainFrame.update(LoopWidget.getInstance());
+        	counter = 0;
+        }
+        
         // gain & pan stereo
         float leftVol = (gain.getVol() * 0.025f) * (1 - getPan());
         float rightVol = (gain.getVol() * 0.025f) * getPan();
@@ -411,6 +413,7 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
         	processMix(workL, toJackLeft);
             processMix(workR, toJackRight);
         }
+        
     }
    
     

@@ -5,7 +5,6 @@ import static net.judah.util.Constants.*;
 import static org.jaudiolibs.jnajack.JackPortFlags.*;
 import static org.jaudiolibs.jnajack.JackPortType.AUDIO;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,8 +27,8 @@ import net.judah.controllers.Jamstik;
 import net.judah.effects.Fader;
 import net.judah.effects.api.PresetsHandler;
 import net.judah.fluid.FluidSynth;
-import net.judah.metronome.Metronome;
 import net.judah.midi.JudahMidi;
+import net.judah.midi.Path;
 import net.judah.mixer.LineIn;
 import net.judah.mixer.MasterTrack;
 import net.judah.plugin.Carla;
@@ -71,7 +70,7 @@ public class JudahZone extends BasicClient {
     @Getter private static JudahMidi midi;
     @Getter private static Carla carla;
     @Getter private static FluidSynth synth;
-    @Getter private static Metronome metronome;
+//    @Getter private static Metronome metronome;
 
     @Getter @Setter private static Command onDeck;
     
@@ -93,10 +92,10 @@ public class JudahZone extends BasicClient {
         synth = new FluidSynth(Constants.sampleRate());
         midi = new JudahMidi("JudahMidi");
         
-        File midiTrack = new File(new File(Constants.ROOT, "metronome"), "JudahZone.mid");
-        metronome = new Metronome(midi, midiTrack);
+//        File midiTrack = new File(new File(Constants.ROOT, "metronome"), "JudahZone.mid");
+//        metronome = new Metronome(midi, midiTrack);
         
-        services.addAll(Arrays.asList(new Service[] {new Jamstik(), synth, metronome, midi}));
+        services.addAll(Arrays.asList(new Service[] {synth, midi})); // Jamstik added later
 
         start();
     }
@@ -171,11 +170,9 @@ public class JudahZone extends BasicClient {
         channels.initVolume();
         channels.initMutes();
         
-        initializeGui();
-        
     }
     
-    private void initializeGui() {
+    public void initializeGui() {
     	
     	Constants.sleep(700); // allow external plug-in host to startup
         new MainFrame(JUDAHZONE);
@@ -193,9 +190,7 @@ public class JudahZone extends BasicClient {
             // load default song?: new Sequencer(new File(Constants.ROOT, "Songs/InMood4Love"));
             MainFrame.updateTime();
         });
-        Constants.timer(90, () -> {Jamstik.setMidiOut(midi.getUnoOut(), channels.getUno());});
-//        Constants.timer(500, () -> {Jamstik.toggle();});
-//        Constants.timer(1000, () -> {Jamstik.toggle();});
+        Jamstik.getInstance().setMidiOut(new Path(midi.getCraveOut(), channels.getCrave()));
         
     }
 

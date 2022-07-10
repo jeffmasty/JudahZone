@@ -1,25 +1,28 @@
 TODO:
 
-fx preset instead of compression, function 2
-synth presets on clock gui 
-route circuit midi tracks
+fix Jamstick midiout
+focus/highlight system of knobs
+fx/preset instead of compression, function 2
+fix cutfilter & freeverb stereo
+Delay on Trax is Midi1/midi2 outs, compression changes project
+solo lineIn to loop D (instead of Compression on Loop D)
+
 verse-chorus control
+sheetMusic 2.0
+
 midi recorder/looper - beatbox records midi_in/quantize
-Loop GUI
+Loop commands/copy/paste/length
 double tap erase - stop drums
 Midi Mixer: style/arp/pattern/song/chords/channel    
 		AAB  *AAB   *B[AAB] SWING vs 3/4 etc 
-copy/delete loops
-solo lineIn to specific loop
-sheetMusic 2.0
 step sequencer chords
 arppegiator 2.0
+Delay and LFO upgrade (triggered to Clock, LFO/Fader cleanUp())
 export beatbox as midi file
 separate external reverb
 Ritardando
 Noise Effect generates ocean, heartbeat, birds, crickets, walking, thunder, rain, 
 	bicy6cle, phonograph, whips and chains  (sampleFile, frequency, wet, granularity)
-LFO upgrade (triggered to Clock, LFO/Fader cleanUp())
 Vocoder 
 Sampler
 commands commands commands
@@ -123,6 +126,7 @@ LFO assign gain(organ volume), EQ, reverb
 sample highlight + compression + reverb
 keyboard handler for channels/samples
 pArTy EQ
+walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
 Master MixerBus, Input/output/gain lvl, pedal knobs
 UI: upgrade knobs 
 button icons: https://www.elharrakfonts.com/2019/04/font-bottons-music-pro.html
@@ -130,7 +134,6 @@ display sheet music
 BeatBuddy & Midi upgrades
 reverb on output mix, gain and reverb to fluidsynth.
 Midi router is input port aware.
-joystick  (pitch bend logarithmic to 1 octave) (left cc = distortion or delay)
 stereo pan
 make drumtrack a full-fledged 3rd loop
 "Apply to" and Presets menu options, chorus
@@ -148,14 +151,19 @@ midi mapper by instrument - mixer, pads, keys, pedal, aux
 visual feedback from midi controllers, track select
 onDeck, eraseLoop
 Midi24 out: inside step sequencer 
-synth tuner
 migrate beatbox to 8-track
 Track KnobMode
 Sync BeatBox to external time control,	process time from Circuit, 
 route Jamstik and MPK
+route circuit midi tracks
 sync start/stop external sequencers
+synth presets on clock gui 
+joystick  (pitch bend) (left/right cc = distortion or delay)
+
 
 REF-----------------------------------------------------------------
+
+
 
 [Mixer][Out][In]  EFX
 1 2 3 4 5 6 7 8   1  2  3  4
@@ -175,5 +183,9 @@ effects knobs
 	
 	bass   mid    treb   d.time
 	vol    pan    t/hold d.fback 
+
+midi knobs
+	sync tempo calf    fluid
+	trx1 trx2  jamstik mpk
 
   

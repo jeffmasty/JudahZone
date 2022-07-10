@@ -1,9 +1,6 @@
 package net.judah.clock;
 
-import static net.judah.util.Constants.Gui.BOLD;
-import static net.judah.util.Constants.Gui.FONT11;
-import static net.judah.util.Constants.Gui.FONT12;
-import static net.judah.util.Constants.Gui.FONT9;
+import static net.judah.util.Constants.Gui.*;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -13,19 +10,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSlider;
-import javax.swing.SwingConstants;
+import javax.swing.*;
 import javax.swing.border.BevelBorder;
 
-import net.judah.JudahZone;
 import net.judah.clock.BeatBuddy.Dir;
 import net.judah.clock.BeatBuddy.Drumset;
 import net.judah.clock.BeatBuddy.Track;
@@ -173,8 +160,8 @@ public class BeatBuddyGui extends JPanel {
         songPanel.add(transBtn);
         add(songPanel);
 
-        if (JudahZone.getMetronome() != null)
-            add(JudahZone.getMetronome().getGui());
+//        if (JudahZone.getMetronome() != null)
+//            add(JudahZone.getMetronome().getGui());
 
     }
     private void actionListeners() {

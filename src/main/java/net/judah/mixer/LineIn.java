@@ -34,7 +34,9 @@ public class LineIn extends Channel {
     @Getter protected final String leftConnection;
     @Getter protected final String rightSource; // for stereo
     @Getter protected final String rightConnection;
-
+    
+    @Setter @Getter protected JackPort sync;
+    
     @Getter protected final ArrayList<Plugin> plugins = new ArrayList<>();
 
     /** Mono channel uses left signal */

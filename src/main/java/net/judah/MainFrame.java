@@ -15,11 +15,15 @@ import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.beatbox.BeatsView;
 import net.judah.clock.JudahClock;
+import net.judah.effects.gui.PresetsGui;
+import net.judah.looper.LoopWidget;
+import net.judah.looper.SyncWidget;
+import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
-import net.judah.mixer.SyncWidget;
 import net.judah.sequencer.Sequencer;
 import net.judah.song.SheetMusic;
+import net.judah.song.SonglistTab;
 import net.judah.tracks.Track;
 import net.judah.tracks.Tracker;
 import net.judah.util.Console;
@@ -27,19 +31,19 @@ import net.judah.util.Constants;
 import net.judah.util.JudahMenu;
 import net.judah.util.Pastels;
 import net.judah.util.Size;
+//import net.judah.util.Size;
 
 @Log4j
 public class MainFrame extends JFrame implements Size, Runnable {
 
     private static MainFrame instance;
-    private final JDesktopPane songPanel;
     private final DJJefe mixer;
     private MusicPanel sheetMusic;
     private final ControlPanel controls;
     @Getter private final Tracker tracker;
+    private JComponent songlist;
    
     //private Overview overview = new Overview();
-    
     private final JTabbedPane tabs;
     private final JPanel content;
     private final String prefix;
@@ -54,47 +58,76 @@ public class MainFrame extends JFrame implements Size, Runnable {
         instance = this;
         prefix = name;
         
-        tabs = new JTabbedPane();
-        tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-        tabs.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if (e.getButton() == MouseEvent.BUTTON2) {
-                    Console.info("right click");
-                }
-            }
-        });
+        
+// top  // clock, [------mixer------]
+        // main tabs         | efx
+        //                   | lfo
+        //                   | log
+        
+         JPanel top = new JPanel();
+         top.setLayout(new BoxLayout(top, BoxLayout.LINE_AXIS));
+         
+         content = (JPanel)getContentPane();
+         content.setBackground(Pastels.EGGSHELL);
+         content.setLayout(new BoxLayout(content, BoxLayout.PAGE_AXIS));
+         
+         content.add(top);
+         JPanel bottom = new JPanel();
+         bottom.setLayout(new BoxLayout(bottom, BoxLayout.LINE_AXIS));
+         content.add(bottom);
 
-        songPanel = new JDesktopPane();
-        songPanel.setLayout(null);
-        songPanel.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
+         mixer = new DJJefe();
+         // setBounds(new Rectangle(0, HEIGHT_TABS, WIDTH_SONG - 1, HEIGHT_MIXER););
+         JPanel clock = JudahMidi.getInstance().getGui();
+         clock.setMaximumSize(new Dimension(450, 300));
+         top.add(clock);
+         top.add(mixer);
+         
+         tabs = new JTabbedPane();
+         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+         tabs.addMouseListener(new MouseAdapter() {
+        	 @Override public void mousePressed(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON2) 
+                    Console.info("right click");
+         }});
+
         
-        Rectangle footerBounds = new Rectangle(0, HEIGHT_TABS, WIDTH_SONG - 1, HEIGHT_MIXER);
-        mixer = new DJJefe(footerBounds);
+//        Rectangle jefeBounds = new Rectangle(0, HEIGHT_TABS, WIDTH_SONG - 1, HEIGHT_MIXER);
+//        mixer = new DJJefe();
+//        mixer.setBounds(jefeBounds);
         
-        tabs.setBounds(0, 0, WIDTH_SONG - 1, HEIGHT_TABS);
+//        tabs.setBounds(0, 0, WIDTH_SONG - 1, HEIGHT_TABS);
         
         tracker = JudahClock.getInstance().getTracker();
         tabs.add("Tracks", tracker);
-        
-        songPanel.add(tabs);
-        songPanel.add(mixer);
-        songPanel.setBounds(WIDTH_CONTROLS, 0, WIDTH_SONG, HEIGHT_FRAME);
-        
+        tabs.setMaximumSize(new Dimension(Size.WIDTH_FRAME - Size.WIDTH_CONTROLS, Size.HEIGHT_FRAME - Size.HEIGHT_MIXER));
+
+        songlist = new SonglistTab(Constants.defaultSetlist);
+        tabs.add("Setlist", songlist);
+        //tabs.add("BeatBuddy", JudahClock.getInstance().getDrummachine().getGui());
+        tabs.add("Presets", new PresetsGui(JudahZone.getPresets()));
+
         
         controls = new ControlPanel();
-        controls.setBounds(0, 0, WIDTH_CONTROLS, HEIGHT_FRAME - 5);
-        
-        content = (JPanel)getContentPane();
-        content.setBackground(Pastels.EGGSHELL);
-        content.setLayout(null);
-        content.add(songPanel);
-        content.add(controls);
+//        controls.setBounds(WIDTH_SONG + 5, 0, WIDTH_CONTROLS, HEIGHT_FRAME - 5);
+//        content = (JPanel)getContentPane();
+//        content.setBackground(Pastels.EGGSHELL);
+//        content.setLayout(null);
+//        content.add(songPanel);
+//        content.add(controls);
         
         JudahMenu.setMixerPane(controls);
+        bottom.add(controls);
+        bottom.add(tabs);
+        
+        
         try { setIconImage(Toolkit.getDefaultToolkit().getImage(
                 new File(Constants.ROOT, "icon.png").toURI().toURL()));
         } catch (Throwable t) {log.error(t.getMessage(), t); }
+        
+
+        
+        
         
         setForeground(Color.DARK_GRAY);
         
@@ -108,7 +141,7 @@ public class MainFrame extends JFrame implements Size, Runnable {
             dummy.dispose();
         }
         setLocation(1, 0);
-        invalidate();
+        validate();
         setVisible(true);
         
         Thread updates = new Thread(this);
@@ -142,7 +175,8 @@ public class MainFrame extends JFrame implements Size, Runnable {
     public void sheetMusicOff() {
         if (sheetMusic == null) return;
         sheetMusic.setVisible(false);
-        songPanel.remove(sheetMusic);
+        tabs.remove(sheetMusic);
+//        songPanel.remove(sheetMusic);
         sheetMusic = null;
     }
 
@@ -153,24 +187,25 @@ public class MainFrame extends JFrame implements Size, Runnable {
             try {
                 sheetMusic = new MusicPanel(Sequencer.getCurrent().getSheetMusic());
                 sheetMusic.setBounds(tabs.getBounds());
-                tabs.setVisible(false);
-                songPanel.removeAll();
-                songPanel.add(sheetMusic);
-                songPanel.add(mixer);
+                // tabs.setVisible(false);
+                tabs.addTab("SheetMusic", sheetMusic);
+//                songPanel.removeAll();
+//                songPanel.add(sheetMusic);
+//                songPanel.add(mixer);
                 sheetMusic.doLayout();
             } catch (IOException e) { Console.warn(Sequencer.getCurrent().getSheetMusic().getAbsolutePath(), e); }
         }
         else {
             sheetMusicOff();
-            songPanel.removeAll();
-            songPanel.add(tabs);
-            tabs.setVisible(true);
-            songPanel.add(mixer);
+//            songPanel.removeAll();
+//            songPanel.add(tabs);
+//            tabs.setVisible(true);
+//            songPanel.add(mixer);
 
         }
 
-        songPanel.doLayout();
-        songPanel.invalidate();
+//        songPanel.doLayout();
+        tabs.invalidate();
         Console.getInstance().getInput().grabFocus();
     }
 
@@ -199,7 +234,7 @@ public class MainFrame extends JFrame implements Size, Runnable {
             constraints.gridx = 0;
             constraints.gridwidth = 3;
             labelImage.setMaximumSize(new Dimension(650, 470));
-            labelImage.setPreferredSize(new Dimension(get().songPanel.getWidth(), get().songPanel.getHeight()-200));
+            labelImage.setPreferredSize(new Dimension(get().tabs.getWidth(), get().tabs.getHeight()-200));
             add(labelImage, constraints);
 
         }
@@ -272,10 +307,14 @@ public class MainFrame extends JFrame implements Size, Runnable {
 			else if (o instanceof Track) {
 				tracker.update((Track)o);
 			}
+			else if (o instanceof LoopWidget) {
+				((LoopWidget)o).update();
+			}
 			else  {
 				instance.mixer.updateAll();
 				instance.controls.getCurrent().update();
 			}
+			
 		}
 	}
 

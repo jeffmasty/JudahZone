@@ -8,6 +8,7 @@ import org.jaudiolibs.jnajack.JackPort;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import net.judah.JudahZone;
+import net.judah.Looper;
 import net.judah.MainFrame;
 import net.judah.api.Notification;
 import net.judah.api.Status;
@@ -20,22 +21,22 @@ import net.judah.util.RTLogger;
 @Data @EqualsAndHashCode(callSuper = true) 
 public class DrumTrack extends Loop implements TimeListener {
 
-    public static final String NAME = "_drums";
+    public static final String NAME = "D";
 
     private boolean muteStash = true;
     protected final List<JackPort> inputPorts;
     private LineIn soloTrack;
     private TimeNotifier master;
 
-    public DrumTrack(TimeNotifier master, LineIn soloTrack) {
-        super(NAME);
+    public DrumTrack(TimeNotifier master, LineIn soloTrack, Looper looper) {
+        super(NAME, looper);
         this.master = master;
         this.soloTrack = soloTrack;
         inputPorts = Arrays.asList(new JackPort[] {
                 soloTrack.getLeftPort(), soloTrack.getRightPort()});
     }
 
-    @Override
+	@Override
     public void update(Notification.Property prop, Object value) {
         if (Notification.Property.STATUS == prop) {
             if (Status.ACTIVE == value)
@@ -44,13 +45,13 @@ public class DrumTrack extends Loop implements TimeListener {
                 setType(Type.DRUMTRACK);
                 if (JudahZone.getChannels().getCalf().equals(soloTrack))
                 	JudahClock.getInstance().end();
-                sync(false);
+                solo(false);
             }
         }
     }
 
-    public void sync(boolean engage) {
-    	sync = engage;
+    public void solo(boolean engage) {
+    	armed = engage;
     	if (engage) {
             master = JudahZone.getLooper().getLoopA();
             master.addListener(this);
@@ -77,7 +78,7 @@ public class DrumTrack extends Loop implements TimeListener {
 
     /** engage or disengage drumtrack */
     public void toggle() {
-    	sync(!isSync());
+    	solo(!isArmed());
     }
 
 }

@@ -1,6 +1,5 @@
 package net.judah.mixer;
 
-import java.awt.Rectangle;
 import java.util.ArrayList;
 
 import javax.swing.BoxLayout;
@@ -14,14 +13,13 @@ public class DJJefe extends JPanel {
 
 	private final ArrayList<ChannelFader> channels = new ArrayList<ChannelFader>();
 	
-    public DJJefe(Rectangle bounds) {
+    public DJJefe() {
         for (Loop loop : JudahZone.getLooper().getLoops()) 
         	channels.add(loop.getFader());
         for (Channel channel : JudahZone.getChannels()) 
         	channels.add(channel.getFader());
         channels.add(JudahZone.getMasterTrack().getFader());
         
-    	setBounds(bounds);
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         add(new JLabel(" ")); // padding
 

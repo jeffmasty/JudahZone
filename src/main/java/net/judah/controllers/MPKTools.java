@@ -7,8 +7,8 @@ import java.util.List;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
-import lombok.extern.log4j.Log4j;
 import net.judah.api.Midi;
+import net.judah.util.RTLogger;
 
 /* TODO upJoystick, downJoystick
 cc codes 14-63,75-83, 85-90, 96-127
@@ -26,13 +26,12 @@ cc reserved
  93 Chorus effects
  94 detuner
  95 phaser */
-@Log4j
-public class MPKTools {
+public interface MPKTools {
 
 	public static final String NAME = "MPKmini2"; // capture
 
-	public static final int JOYSTICK_DOWN_CC = 0; // 0 to 127
-	public static final int JOYSTICK_UP_CC = 100; // 64 to 127 (to be safe)
+	//public static final int JOYSTICK_DOWN_CC = 0; // 0 to 127
+	public static final int JOYSTICK_CC = 100; // 64 to 127 (to be safe)
 
 	public static final int KNOB_COUNT = 8;
 	public static final int PAD_COUNT = 8;
@@ -81,11 +80,11 @@ public class MPKTools {
 
 	public static final List<Integer> KNOBS = Arrays.asList(new Integer[]
 			{14, 15, 16, 17, 18, 19, 20, 21});
-	private static final List<Integer> knobs1 = Arrays.asList(new Integer[]
+	public static final List<Integer> knobs1 = Arrays.asList(new Integer[]
 			{22, 23, 24, 25, 26, 27, 28, 29});
-	private static final List<Integer> knobs2 = Arrays.asList(new Integer[]
+	public static final List<Integer> knobs2 = Arrays.asList(new Integer[]
 			{75, 76, 77, 78, 79, 80, 81, 82});
-	private static final List<Integer> knobs3 = Arrays.asList(new Integer[]
+	public static final List<Integer> knobs3 = Arrays.asList(new Integer[]
 			{30, 83, 126, 7, 84, 94, 95,  8});
 
 	@SuppressWarnings("unchecked")
@@ -148,7 +147,7 @@ public class MPKTools {
 				result.add(program);
 			}
 		} catch (InvalidMidiDataException e) {
-			log.error(e.getMessage(), e);
+			RTLogger.warn(MPKTools.class, e);
 		}
 	return result;
 }

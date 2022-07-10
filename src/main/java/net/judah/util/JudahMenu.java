@@ -16,7 +16,9 @@ import net.judah.JudahZone;
 import net.judah.Looper;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
-import net.judah.looper.Recording;
+import net.judah.clock.JudahClock;
+import net.judah.clock.JudahClock.Mode;
+import net.judah.controllers.KorgPads;
 import net.judah.looper.Loop;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
@@ -76,6 +78,11 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
 //        loadMidi.addActionListener(e -> {MainFrame.get().getTracker().loadMidi());
         exit.addActionListener((event) -> System.exit(0));
 
+        ToggleSwitch mode = new ToggleSwitch();
+        mode.addActionListener(
+				e -> JudahClock.setMode(mode.isActivated() ? Mode.Internal : Mode.Midi24));
+        add(mode);
+        
         //  editMenu.setMnemonic(KeyEvent.VK_E);
         //  copy.addActionListener( (event) -> copy() );
         //  editMenu.add(copy);
@@ -142,39 +149,67 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
 
             case VK_ESCAPE: JudahZone.getMasterTrack().setOnMute(
                     !JudahZone.getMasterTrack().isOnMute());return;
-            case VK_F1: mixer.setFocus(channels.get(0)); return;
-            case VK_F2: mixer.setFocus(channels.get(1)); return;
-            case VK_F3: mixer.setFocus(channels.get(2)); return;
-            case VK_F4: mixer.setFocus(channels.get(3)); return;
-            case VK_F5: mixer.setFocus(channels.get(4)); return;
-            case VK_F6: mixer.setFocus(channels.get(5)); return;
-            case VK_F9: if (Sequencer.getCurrent() != null)
-                    Sequencer.getCurrent().getPage().reload(); return;
-            case VK_F10: /* used by MenuBar */ return;
-            case VK_F11: Sequencer.transport(); return;
+            case VK_F1: mixer.setFocus(looper.get(0)); return;
+            case VK_F2: mixer.setFocus(looper.get(1)); return;
+            case VK_F3: mixer.setFocus(looper.get(2)); return;
+            case VK_F4: mixer.setFocus(looper.get(3)); return;
+            case VK_F5: mixer.setFocus(channels.get(0)); return;
+            case VK_F6: mixer.setFocus(channels.get(1)); return;
+            case VK_F7: mixer.setFocus(channels.get(2)); return;
+            case VK_F8: mixer.setFocus(channels.get(3)); return;
+            case VK_F9: mixer.setFocus(channels.get(4)); return;
+            case VK_F10: mixer.setFocus(channels.get(5)); return;
+            case VK_F11: mixer.setFocus(channels.get(6)); return;
             case VK_UP: volume(true); return;
             case VK_DOWN: volume(false); return;
             case VK_LEFT: nextChannel(false); return;
             case VK_RIGHT: nextChannel(true); return;
+
             case VK_SPACE: case VK_M: mute(); return;
+            
             case VK_ENTER: enterKey(); return;
 
-//          case VK_Q: focus.getCutFilter().setActive(
+            case VK_R: 
+            	if (focus instanceof Loop) {
+            		Loop loop = (Loop)focus;
+            		if (loop == looper.getLoopA())
+            			KorgPads.trigger(JudahZone.getLooper().getLoopA());
+            		else 
+            			loop.record(loop.isRecording() != AudioMode.RUNNING);
+            	} else if (focus instanceof LineIn) {
+            		LineIn line = (LineIn)focus;
+            		line.setMuteRecord(!line.isMuteRecord());
+            	}
+            	return;
+            case VK_D: 
+            	if (focus instanceof Loop) 
+            		((Loop)focus).erase();
+            	return;
+            case VK_X: 
+            	if (focus instanceof Loop) 
+            		((Loop)focus).clear();
+            	return;
+            
+            
+            	//          case VK_Q: focus.getCutFilter().setActive(
 //                  !focus.getCutFilter().isActive()); focus.update(); return;
 //          case VK_C: focus.getCompression().setActive(
 //                  !focus.getCompression().isActive()); focus.update(); return;
 //          case VK_V: focus.getReverb().setActive(
 //                  !focus.getReverb().isActive()); focus.update(); return;
-            case VK_X: { // zero out loop or mute channel record
-                if (focus instanceof LineIn)
-                    ((LineIn)focus).setMuteRecord(!((LineIn)focus).isMuteRecord());
-                else if (focus instanceof Loop) {
-                    Loop s = (Loop)focus;
-                    s.setRecording(new Recording(s.getRecording().size()));
-                }
-                break; }
+//            case VK_X: { // zero out loop or mute channel record
+//                if (focus instanceof LineIn)
+//                    ((LineIn)focus).setMuteRecord(!((LineIn)focus).isMuteRecord());
+//                else if (focus instanceof Loop) {
+//                    Loop s = (Loop)focus;
+//                    s.setRecording(new Recording(s.getRecording().size()));
+//                }
+//                break; }
         }
 
+        RTLogger.log(this, "typed: " + e.getKeyChar());
+
+        
         int ch = e.getKeyChar(); // 1 to sampleCount pressed, focus on specific loop idx
         if (ch >= ASCII_ONE && ch < looper.size() + ASCII_ONE) {
             mixer.setFocus(looper.get(ch - (ASCII_ONE) ));

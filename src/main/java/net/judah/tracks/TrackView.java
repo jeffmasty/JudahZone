@@ -42,8 +42,8 @@ public abstract class TrackView extends JPanel {
 	protected JComponent custom1;
 	protected JComponent custom2;
 	
-	protected static final Dimension SLIDESZ = new Dimension(61, STD_HEIGHT);
-	protected static final Dimension NAMESZ = new Dimension(107, STD_HEIGHT);
+	protected static final Dimension SLIDESZ = new Dimension(58, STD_HEIGHT);
+	protected static final Dimension NAMESZ = new Dimension(100, STD_HEIGHT);
 
 	public TrackView(Track track) {
 		this.track = track;

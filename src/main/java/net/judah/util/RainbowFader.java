@@ -6,13 +6,7 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
-import javax.swing.JComponent;
-import javax.swing.JFrame;
-import javax.swing.JSlider;
-import javax.swing.Painter;
-import javax.swing.UIDefaults;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.*;
 import javax.swing.event.ChangeListener;
 
 /**An extended JSlider that paints the Thumb chromatically based on the slider position.
