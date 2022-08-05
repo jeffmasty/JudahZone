@@ -16,18 +16,20 @@ import net.judah.ControlPanel;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.Midi;
-import net.judah.beatbox.GMDrum;
-import net.judah.clock.JudahClock;
 import net.judah.effects.Chorus;
-import net.judah.effects.Compression;
 import net.judah.effects.CutFilter;
 import net.judah.effects.CutFilter.Type;
 import net.judah.effects.Delay;
 import net.judah.effects.EQ;
+import net.judah.effects.api.Preset;
 import net.judah.effects.api.Reverb;
+import net.judah.effects.gui.EffectsRack;
 import net.judah.fluid.FluidSynth;
+import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
+import net.judah.tracker.GMDrum;
+import net.judah.tracker.todo.Transpose;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -35,33 +37,60 @@ import net.judah.util.RTLogger;
 public class MPK implements Controller, MPKTools {
 	
 	@Getter private static KnobMode mode = KnobMode.Clock;
+	public static final int MIDDLE_C = 60;
 	public static final int thresholdLo = 1;
 	public static final int thresholdHi = 98;
+	private static final int JOYSTICK_L = 127;
+	private static final int JOYSTICK_R = 0;
+
 	private final JudahMidi sys;
 	private final byte[] NO_MODULATION = Midi.create(Midi.CONTROL_CHANGE, 0, 1, 0).getMessage();
 	private final int NO_MOD_LENGTH = NO_MODULATION.length;
 	private final byte[] SUSTAIN_ON = Midi.create(Midi.CONTROL_CHANGE, 0, 64, 127).getMessage();
+	@SuppressWarnings("unused")
 	private final byte[] SUSTAIN_OFF= Midi.create(Midi.CONTROL_CHANGE, 0, 64, 0).getMessage();
+	@SuppressWarnings("unused")
 	private final int SUSTAIN_LENGTH = SUSTAIN_ON.length;
+	private final Transpose transpose = new Transpose(); // TODO
 	
 	public static void setMode(KnobMode knobs) {
-		ControlPanel.getInstance().getTuner().setChannel(null);
 		mode = knobs;
-		JudahMidi.getInstance().getGui().mode(knobs);
+		MainFrame.setFocus(knobs);
 	}
 	
 	@Override
 	public boolean midiProcessed(Midi midi) throws JackException {
-		if (Midi.isCC(midi)) return checkCC(midi.getData1(), midi.getData2());
-		if (Midi.isProgChange(midi)) return doProgChange(midi.getData1(), midi.getData2());
-		if (midi.getChannel() == 9 && (midi.getCommand() == Midi.NOTE_ON || midi.getCommand() == Midi.NOTE_OFF) 
-				&& (DRUMS_A.contains(midi.getData1()) || DRUMS_B.contains(midi.getData1())))
-				return doDrumPad(midi);
+		if (Midi.isCC(midi)) 
+			return checkCC(midi.getData1(), midi.getData2());
+		if (Midi.isProgChange(midi)) 
+			return doProgChange(midi.getData1(), midi.getData2());
+		if (midi.getChannel() == 9) 
+			return doDrumPad(midi);
+		if (Transpose.isActive() && midi.getCommand() == Midi.NOTE_ON) {
+			Transpose.setAmount(midi.getData2() - MIDDLE_C);
+			return true; // key press consumed
+		}
+			
+		
+		/*
+		 * keys -> synth
+		 * 
+		 * 
+		 * transpose
+		 * keys -> sequencer -> synth
+		 * 
+		 * 
+		 */
+		
+		
 		return false;
 	}
 
 	private boolean doDrumPad(ShortMessage midi)  {
-		JackPort out = JudahClock.getInstance().getSequencer(0).getMidiOut();
+		if (false == ( (midi.getCommand() == Midi.NOTE_ON || midi.getCommand() == Midi.NOTE_OFF) 
+				&& (DRUMS_A.contains(midi.getData1()) || DRUMS_B.contains(midi.getData1()))))
+			return false;
+		JackPort out = JudahClock.getInstance().getTracks()[0].getMidiOut();
 		int data1 = midi.getData1();
 		try {
 			if (data1 == DRUMS_A.get(0)) {
@@ -105,10 +134,10 @@ public class MPK implements Controller, MPKTools {
 	private boolean checkCC(int data1, int data2) throws JackException {
 		if (KNOBS.contains(data1)) 
 			return doKnob(data1, data2);
-		if (data1 == JOYSTICK_CC) {
-			joystick(data2);
-			return true;
-		}
+		if (data1 == JOYSTICK_L)
+			return joystickL(data2);
+		if (data1 == JOYSTICK_R)
+			return joystickR(data2);
 		if (PRIMARY_CC.contains(data1)) 
 			return cc_pad(data1, data2);
 		return false;
@@ -116,17 +145,7 @@ public class MPK implements Controller, MPKTools {
 
 	private boolean cc_pad(int data1, int data2) throws JackException {
 		///////// ROW 1 /////////////////
-		// Int/Ext Clock [] . . .
-		if (data1 == PRIMARY_CC.get(0))  { // sync Uno
-			JackPort port = sys.getUnoOut();
-			ArrayList<JackPort> sync = sys.getSync();
-			if (sync.contains(port))
-				sync.remove(port);
-			else
-				sync.add(port);
-			MainFrame.update(JudahZone.getChannels().getUno());
-		}
-		else if (data1 == PRIMARY_CC.get(1)) { // sync Crave
+		if (data1 == PRIMARY_CC.get(0))  { // sync Crave
 			JackPort port = sys.getCraveOut();
 			ArrayList<JackPort> sync = sys.getSync();
 			if (sync.contains(port))
@@ -135,14 +154,21 @@ public class MPK implements Controller, MPKTools {
 				sync.add(port);
 			MainFrame.update(JudahZone.getChannels().getCrave());
 		}
-		// Clock or Tracks
-		else if (data1 == PRIMARY_CC.get(2) && data2 > 0)
+		else if (data1 == PRIMARY_CC.get(1)) { // sync Uno
+//			JackPort port = sys.getUnoOut();
+//			ArrayList<JackPort> sync = sys.getSync();
+//			if (sync.contains(port))
+//				sync.remove(port);
+//			else
+//				sync.add(port);
+//			MainFrame.update(JudahZone.getChannels().getUno());
+		}
+		else if (data1 == PRIMARY_CC.get(2) && data2 > 0) // Clock or Tracks
 			if (MPK.getMode() == KnobMode.Clock)
 				MPK.setMode(KnobMode.Tracks);
 			else 
 				MPK.setMode(KnobMode.Clock); 
-		// EFX . . . []
-		else if (data1 == PRIMARY_CC.get(3) && data2 > 0)  
+		else if (data1 == PRIMARY_CC.get(3) && data2 > 0) // EFX . . . []  
 			if (MPK.getMode() == KnobMode.Effects1)
 				MPK.setMode(KnobMode.Effects2);
 			else 
@@ -150,21 +176,22 @@ public class MPK implements Controller, MPKTools {
 		
 		///////// ROW 2 /////////////////
 
-		// Crave/Fluid [] . . .
-		else if (data1 == PRIMARY_CC.get(4)) { // looper sync to clock toggle
-			JackMidi.eventWrite(sys.getKeyboardSynth(), sys.getTicker(), data2 > 0 ? 
-					SUSTAIN_ON : SUSTAIN_OFF, SUSTAIN_LENGTH);
-//			JudahClock.setLoopSync(data2 > 0);
-//			MainFrame.update(JudahZone.getLooper().getLoopA());
+		else if (data1 == PRIMARY_CC.get(4)) { 
+			Transpose.toggle();
 		}
 		else if (data1 == PRIMARY_CC.get(5)) { // Jamstik midi on/off
-			Jamstik.getInstance().toggle();
+			Jamstik.toggle();
 		}
 		else if (data1 == PRIMARY_CC.get(6) && data2 > 0) {
-			Jamstik.getInstance().nextMidiOut();
+			Jamstik.nextMidiOut();
 		}
-		else if (data1 == PRIMARY_CC.get(7) && data2 > 0) 
-;//			JudahMidi.getInstance().nextKeyboardSynth();
+		else if (data1 == PRIMARY_CC.get(7) && data2 > 0) { // Turn on/off a Preset efx
+			EffectsRack current = ControlPanel.getInstance().getCurrent();
+			if (current != null) {
+				current.getChannel().setPresetActive(!current.getChannel().isPresetActive());
+				MainFrame.updateCurrent();
+			}
+		} 
 		else 
 			return false;
 		return true;
@@ -261,8 +288,8 @@ public class MPK implements Controller, MPKTools {
         	channel.getGain().setPan(data2);
         }
         else if (data1 == KNOBS.get(6)) {
-        	channel.getCompression().setActive(data2 < thresholdHi);
-        	channel.getCompression().set(Compression.Settings.Threshold.ordinal(), data2);
+        	Preset preset = (Preset)Constants.ratio(data2, JudahZone.getPresets());
+        	channel.setPreset(preset);
         }
         else if (data1 == KNOBS.get(7)) {
         	channel.getDelay().set(Delay.Settings.Feedback.ordinal(), data2);
@@ -274,38 +301,33 @@ public class MPK implements Controller, MPKTools {
 	private void trackKnobs(int data1, int data2) {
 		for (int i = 0; i < MPKTools.KNOBS.size(); i++) {
 			if (data1 == MPKTools.KNOBS.get(i))
-				MainFrame.get().getTracker().knob(i, data2);
+				JudahMidi.getClock().getTracker().knob(i, data2);
 		}
 	}
 	
 	
+	private boolean joystickL(int data2) throws JackException {
+		Delay d = sys.getPath(sys.getKeyboardSynth()).getChannel().getDelay();
+		d.setActive(data2 > 4);
+		if (data2 <= 4) 
+			return true;
+		if (d.getDelay() < Delay.DEFAULT_TIME) 
+			d.setDelay(Delay.DEFAULT_TIME);
+		// data2 / 127 = 0 to max delay
+		d.setFeedback(data2 * 0.00787f);
+		return true;
+	}
 	
-	private static final int MOD_LIMIT = 67;
-	private static final int DELAY_LIMIT = 50;
-	
-	private void joystick(int data2) throws JackException {
-		boolean left = data2 < DELAY_LIMIT;
-		boolean right = data2 > MOD_LIMIT;
-		Channel channel = sys.getPath(sys.getKeyboardSynth()).getChannel();
-		
-		if (left) { // zone delay
-			Delay d = channel.getDelay();
-			d.setActive(true);
-			if (d.getDelay() < Delay.DEFAULT_TIME) d.setDelay(Delay.DEFAULT_TIME);
-			// cc 50 to 0 = 0 to max delay
-			float val = .02f * (DELAY_LIMIT - data2);
-			// RTLogger.log(this, "feedback: " + val + " vs data2: " + data2);
-			d.setFeedback(val);
-		}
-		else if (right) {  // synth modulation wheel
-			byte[] modWheel = Midi.create(Midi.CONTROL_CHANGE, 0, 1, (data2 - MOD_LIMIT) * 2).getMessage();
+	private boolean joystickR(int data2) throws JackException {
+		if (data2 > 4) {
+			byte[] modWheel = Midi.create(Midi.CONTROL_CHANGE, 0, 1, data2).getMessage();
 			JackMidi.eventWrite(sys.getKeyboardSynth(), sys.ticker(), modWheel, modWheel.length);
 		}
-		else {// dead zone
-			channel.getDelay().setActive(false);
+		else
 			JackMidi.eventWrite(sys.getKeyboardSynth(), sys.ticker(), NO_MODULATION, NO_MOD_LENGTH);
-		}
+		return true;
 	}
+	
 	
 	private boolean doProgChange(int data1, int data2) {
             if (data1 == PRIMARY_PROG[3]) { // up instrument

@@ -51,7 +51,7 @@ public class MixCommands extends ArrayList<Command> {
 
 		add(new Command(DRUMTRACK.name, DRUMTRACK.desc, Commands.template("soloTrack", Integer.class)) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-			    DrumTrack drums = getLooper().getDrumTrack();
+			    SoloTrack drums = getLooper().getDrumTrack();
 			    if (props.containsKey("soloTrack")) {
 			        int solo = Integer.parseInt(props.get("soloTrack").toString());
 			        drums.setSoloTrack(JudahZone.getChannels().get(solo));
@@ -203,9 +203,12 @@ public class MixCommands extends ArrayList<Command> {
                 else if (props.containsKey(ACTIVE))
                     active = Boolean.parseBoolean(props.get(ACTIVE).toString());
                 for (Preset p: JudahZone.getPresets())
-                    if (p.getName().equals(name))
-                        p.applyPreset(Constants.getChannel(channel), active);
-
+                    if (p.getName().equals(name)) {
+                    	Channel ch = Constants.getChannel(channel);
+                    	ch.setPreset(p);
+                    	ch.setPresetActive(active);
+                    }
+                        
             }
 		});
 

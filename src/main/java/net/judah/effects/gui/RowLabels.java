@@ -9,6 +9,7 @@ import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
+import javax.swing.border.Border;
 
 import lombok.Getter;
 import net.judah.MainFrame;
@@ -25,30 +26,7 @@ public class RowLabels extends Row {
 	@Getter private final ArrayList<Component> controls = new ArrayList<>();
 	
 	private Font model = Gui.FONT11;
-	
-	private class FxTrigger extends JLabel {
-		final Effect fx;
-		FxTrigger(KeyPair p) {
-			super(p.getKey(), JLabel.CENTER);
-			fx = (Effect)p.getValue();
-			addMouseListener(new MouseAdapter() {
-				@Override
-				public void mouseClicked(MouseEvent e) {
-					fx.setActive(!fx.isActive());
-					MainFrame.updateCurrent();
-					//RowLabels.this.update();
-				}
-			});
-		}
-		void update(Font font) {
-			if (font != null)
-				setFont(font);
-			setBorder(fx.isActive() ? 
-					BorderFactory.createLineBorder(EffectColor.get(fx.getClass()))
-					: BorderFactory.createEmptyBorder(2, 2, 2, 2));
-			repaint();
-		}
-	}
+	final Border EMPTY = BorderFactory.createEmptyBorder(2, 2, 2, 2);	
 	
 	public RowLabels(Channel ch, KnobMode mode, KeyPair[] source) {
 		super(ch, mode);
@@ -96,8 +74,31 @@ public class RowLabels extends Row {
 //			c.repaint();
 //		}
 
-
 	}
 
+	private class FxTrigger extends JLabel {
+		final Effect fx;
+		FxTrigger(KeyPair p) {
+			super(p.getKey(), JLabel.CENTER);
+			fx = p.getValue() instanceof Effect ? (Effect)p.getValue() : null;
+			addMouseListener(new MouseAdapter() {
+				@Override public void mouseClicked(MouseEvent e) {
+					if (fx != null)
+					fx.setActive(!fx.isActive());
+					MainFrame.updateCurrent();
+					//RowLabels.this.update();
+				}
+			});
+		}
+		void update(Font font) {
+			if (font != null)
+				setFont(font);
+			if (fx != null)
+				setBorder(fx.isActive() ? 
+					BorderFactory.createLineBorder(EffectColor.get(fx.getClass()))
+					: EMPTY);
+			repaint();
+		}
+	}
 	
 }

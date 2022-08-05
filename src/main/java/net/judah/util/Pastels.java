@@ -3,7 +3,9 @@ package net.judah.util;
 import java.awt.Color;
 import java.awt.Paint;
 
-import net.judah.beatbox.Beat.Type;
+import javax.sound.midi.ShortMessage;
+
+import net.judah.tracker.Notes;
 
 public interface Pastels {
     Color RED = new Color(0xff6e8d);
@@ -18,17 +20,14 @@ public interface Pastels {
 	Color BUTTONS = new Color(238, 238, 230);
 	Color MY_GRAY = new Color(220, 220, 210);
 
-	
-    static Paint forType(Type type) {
-        if (type == Type.NoteOn)
-            return PINK;
-        if (type == Type.NoteOff)
-            return Color.GRAY;
-//        if (type == type.Chord)
-//            return GREEN;
-//        if (type == type.CC)
-//            return RED;
-        return Color.WHITE;
-    }
+	static Paint forType(Notes n) {
+		int cmd = n.get().getCommand();
+		if (ShortMessage.NOTE_ON == cmd)
+			return PINK;
+		if (ShortMessage.NOTE_OFF == cmd)
+			return Color.GRAY;
+		return Color.WHITE;
+	}
+
 }
 

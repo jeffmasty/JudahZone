@@ -6,6 +6,7 @@ import static net.judah.util.Constants.NL;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -99,64 +100,55 @@ public class FluidSynth implements Service {
         sendCommand("chorus off");
         reverb = new FluidReverb(this);
         Constants.sleep(50);
-        progChangeConsole(0, 48); // set String section instrument
-
-
+        
 		HashMap<String, Class<?>> template = new HashMap<>();
 		template.put("channel", Integer.class);
 		template.put("preset", Integer.class);
 		progChange = new Command(PROGCHANGE.name, PROGCHANGE.desc, template) {
 			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				int channel = 0;
-				try {
-					channel = Integer.parseInt(props.get("channel").toString());
-				} catch (Throwable t) {
-					RTLogger.warn(this, t.getMessage()); }
-				
-				JudahMidi.getInstance().queue(
-						progChange(channel, Integer.parseInt(props.get("preset").toString())));
+				JudahMidi.getInstance().getGui().getFluid()
+					.setSelectedIndex(Integer.parseInt(props.get("preset").toString()));
 			}};
 
-			instUp = new Command(INSTUP.name, INSTUP.desc) {
-				@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-					instUp(0, true);
-				}};
-				instDown = new Command(INSTDOWN.name, INSTDOWN.desc) {
-					@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-						instUp(0, false);
-					}};
-					template = new HashMap<>();
-					template.put("up", Boolean.class);
-					template.put("preset", Integer.class);
-					drumBank = new Command(DRUMBANK.name, DRUMBANK.desc, template) {
-						@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+		instUp = new Command(INSTUP.name, INSTUP.desc) {
+			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+				instUp(0, true);
+			}};
+		instDown = new Command(INSTDOWN.name, INSTDOWN.desc) {
+			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+				instUp(0, false);
+			}};
+			template = new HashMap<>();
+			template.put("up", Boolean.class);
+			template.put("preset", Integer.class);
+		drumBank = new Command(DRUMBANK.name, DRUMBANK.desc, template) {
+			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 
-							Integer preset = null;
-							try {
-								preset = Integer.parseInt("" + props.get("preset"));
-								sendCommand(FluidCommand.PROG_CHANGE, "9 " + preset);
-								return;
-							} catch (Throwable t) { }
+				Integer preset = null;
+				try {
+					preset = Integer.parseInt("" + props.get("preset"));
+					sendCommand(FluidCommand.PROG_CHANGE, "9 " + preset);
+					return;
+				} catch (Throwable t) { }
 
-							try {
-								boolean up = Boolean.parseBoolean("" + props.get("up"));
-								instUp(DRUMS, up);
-							} catch (Throwable t) { }
-						}
-					};
-					template = new HashMap<>();
-					template.put("string", String.class);
-					direct = new Command(DIRECT.name, DIRECT.desc, template) {
-						@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-							String[] split = props.get("string").toString().split(";");
-							for (String cmd : split)
-								sendCommand(cmd);
-						}
-					};
+				try {
+					boolean up = Boolean.parseBoolean("" + props.get("up"));
+					instUp(DRUMS, up);
+				} catch (Throwable t) { }
+			}
+		};
+		template = new HashMap<>();
+		template.put("string", String.class);
+		direct = new Command(DIRECT.name, DIRECT.desc, template) {
+			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
+				String[] split = props.get("string").toString().split(";");
+				for (String cmd : split)
+					sendCommand(cmd);
+		}};
 
-					commands = Arrays.asList(new Command[] {progChange, instUp, instDown, drumBank, direct});
-					// doHelp();
-					RTLogger.log(this, "FluidSynth channels: " + channels.size() + " instruments: " + instruments.size());
+		commands = Arrays.asList(new Command[] {progChange, instUp, instDown, drumBank, direct});
+		// doHelp();
+		RTLogger.log(this, "FluidSynth channels: " + channels.size() + " instruments: " + instruments.size());
 
 	}
 
@@ -258,13 +250,20 @@ public class FluidSynth implements Service {
 		int current = channels.getCurrentPreset(channel);
 		int bank = channels.getBank(channel);
 		int preset = instruments.getNextPreset(bank, current, up);
-		progChangeConsole(channel, preset);
+		JudahMidi.getInstance().getGui().getFluid()
+				.setSelectedIndex(preset);
 	}
 
-	public int progChangeConsole(int channel, int preset) {
+	@SuppressWarnings("unused")
+	private int progChangeSync(int channel, int preset) {
 		try {
-			String progChange = FluidCommand.PROG_CHANGE.code + channel + " " + preset;
-			sendCommand(progChange);
+//			String progChange = FluidCommand.PROG_CHANGE.code + channel + " " + preset;
+//			
+//			sendCommand(progChange);
+			
+			JudahMidi.getInstance().getGui().getFluid()
+					.setSelectedIndex(preset);
+			
 			syncChannels();
 			int result = channels.getCurrentPreset(channel);
 			int bank = channels.getBank(channel);
@@ -346,17 +345,6 @@ public class FluidSynth implements Service {
 		sendCommand(depth.code + val);
 	}
 
-	public Midi preset(int val) {
-		// TODO store in a Set
-		if (val == 1) {
-			return progChange(0, 19); // 19 church organ
-		}
-		if (val == 2) {
-			return progChange(0, 24); // 24 nylon guitar
-		}
-		return null;
-	}
-
 	@Override
 	public void close() {
 		try {
@@ -386,6 +374,13 @@ public class FluidSynth implements Service {
 	    ArrayList<FluidInstrument> drums;
 	    ArrayList<FluidInstrument> instruments;
 
+	    public int lookupKit(String name) {
+	    	for (FluidInstrument i : getDrumkits())
+	    		if (i.name.equals(name))
+	    			return i.index;
+	    	throw new InvalidParameterException(name);
+	    }
+	    
 	    /**@return bank 128 */
 	    public ArrayList<FluidInstrument> getDrumkits() {
 	        if (drums != null) return drums;

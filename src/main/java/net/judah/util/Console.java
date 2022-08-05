@@ -27,11 +27,11 @@ import net.judah.Looper;
 import net.judah.MainFrame;
 import net.judah.api.Midi;
 import net.judah.api.ProcessAudio.Type;
-import net.judah.clock.JudahClock;
 import net.judah.effects.api.Preset;
 import net.judah.fluid.FluidSynth;
 import net.judah.looper.Loop;
 import net.judah.looper.Recording;
+import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiListener;
 import net.judah.midi.Route;
@@ -74,8 +74,9 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 		textarea.setForeground(Color.GREEN/* new Color(1, 77, 13) *//* dark green */);
         
         scroller = new JScrollPane(textarea);
-        scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-
+        scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        scroller.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        
         input.addActionListener(this);
         input.setBackground(Pastels.GREEN);
         input.addKeyListener(new KeyAdapter() {

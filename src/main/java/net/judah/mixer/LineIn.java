@@ -91,11 +91,9 @@ public class LineIn extends Channel {
 			if (isStereo)
 				eq.process(right, false);
 		}
-		if (compression.isActive()) {
-			compression.process(left, 1);
-			if (isStereo)
-				compression.process(right, 1);
-		}
+		//if (compression.isActive()) {
+		//	compression.process(left, 1);
+		//	if (isStereo) compression.process(right, 1);}
 		if (chorus.isActive()) {
 			if (isStereo)
 				chorus.processStereo(left, right);

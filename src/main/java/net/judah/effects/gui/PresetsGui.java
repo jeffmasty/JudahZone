@@ -4,7 +4,6 @@ import static net.judah.JudahZone.getPresets;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.io.File;
 import java.security.InvalidParameterException;
 
 import javax.swing.*;
@@ -13,7 +12,7 @@ import net.judah.ControlPanel;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.effects.api.Preset;
-import net.judah.effects.api.PresetsHandler;
+import net.judah.effects.api.PresetsDB;
 import net.judah.mixer.Channel;
 import net.judah.util.Console;
 import net.judah.util.Constants;
@@ -24,9 +23,9 @@ public class PresetsGui extends JDesktopPane {
 
     private JList<String> list;
     JComboBox<String> target;
-    private final PresetsHandler presets;
+    private final PresetsDB presets;
 
-    public PresetsGui(PresetsHandler presets) {
+    public PresetsGui(PresetsDB presets) {
         this.presets = presets;
         int offset = 6;
         int buttonsWidth = 100;
@@ -87,7 +86,8 @@ public class PresetsGui extends JDesktopPane {
         if (list.getSelectedIndex() < 0) return;
         Channel ch = Constants.getChannel(target.getSelectedItem().toString());
         Preset p = JudahZone.getPresets().get(list.getSelectedIndex());
-        p.applyPreset(ch, true);
+        ch.setPreset(p);
+        ch.setPresetActive(true);
     }
 
     class Button extends JButton {
@@ -124,8 +124,7 @@ public class PresetsGui extends JDesktopPane {
 
     public void save() {
         try {
-            File file = new File(System.getProperty("user.dir"), "presets.zone");
-            Constants.writeToFile(file, getPresets().toString());
+            Constants.writeToFile(PresetsDB.FILE, getPresets().toString());
             list.setModel(presetModel());
             Console.info("Preset saved.");
         } catch (Exception e) {Console.warn(e);}

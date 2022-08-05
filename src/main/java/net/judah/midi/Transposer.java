@@ -16,15 +16,13 @@ import net.judah.util.Constants;
 
 @Log4j
 public class Transposer extends Command {
-
-	private JudahMidi midi;
+	
 	@Getter private boolean active = false;
 	@Getter private int channel = 0;
 	@Getter private int steps = -12;
 
-	public Transposer(JudahMidi midi) {
+	public Transposer() {
 		super(OCTAVER.name, OCTAVER.desc, transposeTemplate());
-		this.midi = midi;
 	}
 	
 	@Override
@@ -36,7 +34,7 @@ public class Transposer extends Command {
 			active = midiData2 > 0;
 			
 		if (!active) {
-			midi.getRouter().removeOctaver();
+			JudahMidi.getRouter().removeOctaver();
 			return;
 		}
 			
@@ -45,13 +43,19 @@ public class Transposer extends Command {
 			steps = Integer.parseInt("" + props.get(STEPS));
 		} catch(Throwable t) { log.debug(t.getMessage()); }
 			
-		midi.getRouter().setOctaver(this);
+		JudahMidi.getRouter().setOctaver(this);
 	}
 
 	public Midi process(Midi in) throws InvalidMidiDataException {
 		if (Midi.isNote(in))
 			return Constants.transpose(in, steps, channel);
 		return in;
+	}
+
+	public void tonic(Midi midi) {
+		
+		
+		
 	}
 
 }

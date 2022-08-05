@@ -1,5 +1,7 @@
 package net.judah.midi;
 
+import java.security.InvalidParameterException;
+
 /*
  * jVSTwRapper - The Java way into VST world!
  *
@@ -53,30 +55,31 @@ public class GMNames {
     0, 7, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128
   };
 
+
   public static final String[] GM_NAMES = new String[] {
     // Piano
-    "Acoustic Grand Piano",
-    "Bright Acoustic Piano",
-    "Electric Grand Piano",
-    "Honky-tonk Piano",
-    "Electric Piano 1",
-    "Electric Piano 2",
+    "Grand Piano",
+    "Bright Piano",
+    "Elec. Rhodes",
+    "Honkytonk",
+    "E Piano 1",
+    "E Piano 2",
     "Harpsichord",
 
     // Percussion
-    "Clavi",	                // 7
+    "Clavinet",	                // 7
     "Celesta",
     "Glockenspiel",
     "Music Box",
     "Vibraphone",
     "Marimba",
     "Xylophone",
-    "Tubular Bells",
+    "Tube Bells",
     "Dulcimer",
 
     // Organ
-    "Drawbar Organ",                // 16
-    "Percussive Organ",
+    "Draw Organ",                // 16
+    "Perc Organ",
     "Rock Organ",
     "Church Organ",
     "Reed Organ",
@@ -85,20 +88,19 @@ public class GMNames {
     "Tango Accordion",
 
     // Gitar
-    "Acoustic Guitar (nylon)",      // 24
-    "Acoustic Guitar (steel)",
-    "Electric Guitar (jazz)",
-    "Electric Guitar (clean)",
-    "Electric Guitar (muted)",
-    "Overdriven Guitar",
-    "Distortion Guitar",
-    "Guitar harmonics",
-
+    "Nylon Gtr",      // 24
+    "Steel Gtr",
+    "Jazz Gtr",
+    "Clean Gtr",
+    "Muted Gtr",
+    "Drive Gtr",
+    "Dist Gtr",   
+    "Harmonics",
     // Bass
     "Acoustic Bass",		// 32
-    "Electric Bass (finger)",
-    "Electric Bass (pick)",
-    "Fretless Bass",
+    "Finger Bass",
+    "Pick Bass",
+    "Fretless",
     "Slap Bass 1",
     "Slap Bass 2",
     "Synth Bass 1",
@@ -109,16 +111,16 @@ public class GMNames {
     "Viola",
     "Cello",
     "Contrabass",
-    "Tremolo Strings",
-    "Pizzicato Strings",
-    "Orchestral Harp",
+    "Tremolo ",
+    "Pizzicato ",
+    "Harp",
     "Timpani",
 
     // Ensemble
-    "String Ensemble 1",		// 48
-    "String Ensemble 2",
-    "SynthStrings 1",
-    "SynthStrings 2",
+    "Strings",		// 48
+    "Slow Strings",
+    "Syn Str 1",
+    "Syn Str 2",
     "Choir Aahs",
     "Voice Oohs",
     "Synth Voice",
@@ -128,7 +130,7 @@ public class GMNames {
     "Trumpet",			// 56
     "Trombone",
     "Tuba",
-    "Muted Trumpet",
+    "Mute Trumpet",
     "French Horn",
     "Brass Section",
     "SynthBrass 1",
@@ -138,7 +140,7 @@ public class GMNames {
     "Soprano Sax",			// 64
     "Alto Sax",
     "Tenor Sax",
-    "Baritone Sax",
+    "Bari Sax",
     "Oboe",
     "English Horn",
     "Bassoon",
@@ -149,30 +151,30 @@ public class GMNames {
     "Flute",
     "Recorder",
     "Pan Flute",
-    "Blown Bottle",
+    "Bottle",
     "Shakuhachi",
     "Whistle",
     "Ocarina",
 
     // Synth Lead
-    "Lead 1 (square)",		// 80
-    "Lead 2 (sawtooth)",
-    "Lead 3 (calliope)",
-    "Lead 4 (chiff)",
-    "Lead 5 (charang)",
-    "Lead 6 (voice)",
-    "Lead 7 (fifths)",
-    "Lead 8 (bass + lead)",
+    "L1 (square)",		// 80
+    "L2 (sawtooth)",
+    "L3 (calliope)",
+    "L4 (chiff)",
+    "L5 (charang)",
+    "L6 (voice)",
+    "L7 (fifths)",
+    "L8 (bass+lead)",
 
     // Synth Pad
-    "Pad 1 (new age)",		// 88
-    "Pad 2 (warm)",
-    "Pad 3 (polysynth)",
-    "Pad 4 (choir)",
-    "Pad 5 (bowed)",
-    "Pad 6 (metallic)",
-    "Pad 7 (halo)",
-    "Pad 8 (sweep)",
+    "P1 (new age)",		// 88
+    "P2 (warm)",
+    "P3 (polysynth)",
+    "P4 (choir)",
+    "P5 (bowed)",
+    "P6 (metallic)",
+    "P7 (halo)",
+    "P8 (sweep)",
 
     // Synth Fx
     "FX 1 (rain)",			// 96
@@ -230,6 +232,14 @@ public class GMNames {
   };
 
 
+  	public static int indexOf(String instrument) {
+		for (int i = 0; i < GM_NAMES.length; i++)
+			if (GM_NAMES[i].equals(instrument))
+				return i;
+		throw new InvalidParameterException(instrument);
+	}
+
+  
 }
 
 

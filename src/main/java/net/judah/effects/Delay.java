@@ -170,7 +170,7 @@ public class Delay implements Effect {
 
     public void setFeedback(float feedback) {
         if (feedback < 0 || feedback > 1) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("" + feedback);
         }
         this.feedback = feedback;
     }

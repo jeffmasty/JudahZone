@@ -1,7 +1,7 @@
 package net.judah.controllers;
 
 import net.judah.api.Midi;
-import net.judah.clock.JudahClock;
+import net.judah.midi.JudahClock;
 
 
 /** Handles input from a Behringer Crave USB connection */

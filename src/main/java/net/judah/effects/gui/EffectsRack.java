@@ -12,6 +12,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
+import net.judah.JudahZone;
 import net.judah.controllers.KnobMode;
 import net.judah.mixer.Channel;
 import net.judah.util.KeyPair;
@@ -27,6 +28,7 @@ public class EffectsRack extends JPanel implements GUI {
     private final ArrayList<RowKnobs> knobs = new ArrayList<>();
     private final JPanel rows;
     private final ChannelTitle title;
+    private final PresetCombo presets;
 
     private final LFOGui lfo;
 
@@ -35,6 +37,7 @@ public class EffectsRack extends JPanel implements GUI {
         this.channel = channel;
         setBorder(BorderFactory.createLineBorder(Pastels.MY_GRAY));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        presets = new PresetCombo(channel, JudahZone.getPresets());
         
         title = new ChannelTitle(channel);
         add(title);
@@ -66,16 +69,15 @@ public class EffectsRack extends JPanel implements GUI {
         labels.add(new RowLabels(channel, KnobMode.Effects2, new KeyPair[]{
 	    		new KeyPair("Dist.", channel.getOverdrive()),
 	    		new KeyPair("Pan", channel.getGain()),
-	    		new KeyPair("Comp.", channel.getCompression()),
+	    		new KeyPair("FX", channel.getPreset()),
 	    		new KeyPair("", channel.getDelay()),
         }));
         
         knobs.add(new RowKnobs(channel, KnobMode.Effects1, 0));
         knobs.add(new RowKnobs(channel, KnobMode.Effects1, 1));
         knobs.add(new RowKnobs(channel, KnobMode.Effects2, 2));
-        knobs.add(new RowKnobs(channel, KnobMode.Effects2, 3));
+        knobs.add(new RowKnobs(channel, KnobMode.Effects2, presets));
 
-        
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.HORIZONTAL;
         c.insets = new Insets(1, 1, 1, 1);
@@ -102,7 +104,8 @@ public class EffectsRack extends JPanel implements GUI {
         	lbl.update();
         for (RowKnobs knob : knobs)
         	knob.update();
-
+        if (channel.getPreset() != null)
+        	presets.setSelectedItem(channel.getPreset());
         repaint();
     }
 

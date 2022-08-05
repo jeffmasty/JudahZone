@@ -91,11 +91,11 @@ public class RouterEditor implements TableCellEditor {
 
 	private void toggleAudition() {
 		if (channel9.isSelected())  {
-			JudahMidi.getInstance().getRouter().add(new Route(0, 9));
+			JudahMidi.getRouter().add(new Route(0, 9));
 			toCard.setChannel(9);
 		}
 		else
-			JudahMidi.getInstance().getRouter().remove(new Route(0, 9));
+			JudahMidi.getRouter().remove(new Route(0, 9));
 	}
 
 	@Override public void cancelCellEditing() {

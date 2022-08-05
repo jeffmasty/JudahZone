@@ -7,9 +7,9 @@ import java.util.List;
 
 import net.judah.MainFrame;
 import net.judah.api.Midi;
-import net.judah.clock.JudahClock;
 import net.judah.looper.Loop;
-import net.judah.mixer.DrumTrack;
+import net.judah.midi.JudahClock;
+import net.judah.mixer.SoloTrack;
 import net.judah.util.Console;
 
 public class MidiPedal implements Controller {
@@ -63,7 +63,7 @@ public class MidiPedal implements Controller {
         if (data1 == PEDAL.get(5)) { 
         	// toggle Verse/Chorus sections by muting different tracks
         	for (Loop s : getLooper().getLoops()) {
-        		if (s.hasRecording() && s instanceof DrumTrack == false)
+        		if (s.hasRecording() && s instanceof SoloTrack == false)
         			s.setOnMute(!s.isOnMute());
         	}
             return true;

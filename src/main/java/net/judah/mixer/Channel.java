@@ -8,6 +8,7 @@ import javax.swing.ImageIcon;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.effects.*;
 import net.judah.effects.api.Effect;
@@ -16,8 +17,8 @@ import net.judah.effects.api.Preset;
 import net.judah.effects.api.Reverb;
 import net.judah.effects.api.Setting;
 import net.judah.effects.gui.EffectsRack;
-import net.judah.settings.Channels;
 import net.judah.util.Console;
+import net.judah.util.RTLogger;
 
 /** A mixer bus for either Input or Output audio */
 @Data @EqualsAndHashCode(callSuper = false)
@@ -29,14 +30,14 @@ public abstract class Channel extends ArrayList<Effect> {
 	
 	protected ImageIcon icon;
 
-	protected Preset preset;
+	protected Preset preset = JudahZone.getPresets().getFirst();
 	protected boolean presetActive;
 
 	protected Gain gain = new Gain();
     protected LFO lfo = new LFO();
     protected CutFilter cutFilter = new CutFilter();
     protected EQ eq = new EQ();
-	protected Compression compression = new Compression();
+	//protected Compression compression = new Compression();
     protected Overdrive overdrive = new Overdrive();
     protected Chorus chorus = new Chorus();
 	protected Delay delay = new Delay();
@@ -45,11 +46,41 @@ public abstract class Channel extends ArrayList<Effect> {
     public Channel(String name) {
         this.name = name;
         addAll(Arrays.asList(new Effect[] {
-                getLfo(), getCutFilter(), getEq(), getCompression(),
+                getLfo(), getCutFilter(), getEq(),
                 getChorus(), getOverdrive(),
                 getDelay(), getReverb()}));
     }
 
+    public void setPresetActive(boolean active) {
+    	if (active == presetActive) 
+    		return;
+    	presetActive = active;
+        applyPreset();
+    }
+
+    private void applyPreset() {
+    	reset();
+        setting:
+        for (Setting s : preset) {
+            for (Effect e : this) {
+                if (e.getName().equals(s.getEffectName())) {
+                    for (int i = 0; i < s.size(); i++)
+                        e.set(i, s.get(i));
+                    e.setActive(isPresetActive());
+                    continue setting;
+                }
+            }
+            Console.info("Preset Error. not found: " + s.getEffectName());
+        }
+    }
+    
+    public void setPreset(Preset p) {
+    	if (p != preset)
+    		RTLogger.log(this, name + "->" + p.getName() );
+        preset = p;
+        applyPreset();
+    }
+    
     public void setReverb(Reverb r) {
         remove(reverb);
         reverb = r;
@@ -76,8 +107,6 @@ public abstract class Channel extends ArrayList<Effect> {
 
 	public void reset() {
 		getEq().setActive(false); 
-		if (false == this.name.equals(Channels.CALF)) // compression for drums stays on
-			getCompression().setActive(false);
 		getReverb().setActive(false);
 		getChorus().setActive(false);
 		getCutFilter().setActive(false);

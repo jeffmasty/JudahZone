@@ -1,15 +1,11 @@
 TODO:
 
-fix Jamstick midiout
-focus/highlight system of knobs
-fx/preset instead of compression, function 2
-fix cutfilter & freeverb stereo
-Delay on Trax is Midi1/midi2 outs, compression changes project
-solo lineIn to loop D (instead of Compression on Loop D)
-
+transposer
+fix cutfilter & freeverb stereo, calf reverb
+*solo lineIn to loop D (instead of Compression on Loop D)
+patchbay
 verse-chorus control
 sheetMusic 2.0
-
 midi recorder/looper - beatbox records midi_in/quantize
 Loop commands/copy/paste/length
 double tap erase - stop drums
@@ -157,8 +153,10 @@ Sync BeatBox to external time control,	process time from Circuit,
 route Jamstik and MPK
 route circuit midi tracks
 sync start/stop external sequencers
-synth presets on clock gui 
+synth presets on clock gui, consolidate ProgChanges to fluid/calf
 joystick  (pitch bend) (left/right cc = distortion or delay)
+focus/highlight system of knobs
+fx/preset instead of compression, function 2
 
 
 REF-----------------------------------------------------------------

@@ -17,11 +17,7 @@ import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Sequence;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -87,7 +83,7 @@ public class Constants {
 
 	}
 
-    public static final Dimension MAX = new Dimension(120, 30);
+    public static final Dimension MAX = new Dimension(122, 30);
     public static JComponent max(JComponent c) {
 		c.setMaximumSize(MAX);
 		c.setPreferredSize(MAX);
@@ -110,8 +106,11 @@ public class Constants {
 
     public static interface Gui {
     	
+    	Border HIGHLIGHT = BorderFactory.createLineBorder(Pastels.GREEN, 4);
+    	Border NONE = BorderFactory.createLineBorder(Pastels.EGGSHELL, 4);
 
     	int STD_HEIGHT = 18;
+    	
     	Insets BTN_MARGIN = new Insets(1,1,1,1);
     	Insets ZERO_MARGIN = new Insets(0,0,0,0);
     	Font BOLD = new Font("Arial", Font.BOLD, 11);

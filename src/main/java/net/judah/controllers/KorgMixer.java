@@ -9,15 +9,15 @@ import net.judah.JudahZone;
 import net.judah.Looper;
 import net.judah.MainFrame;
 import net.judah.api.Midi;
-import net.judah.beatbox.BeatsView;
-import net.judah.clock.JudahClock;
 import net.judah.controllers.MapEntry.TYPE;
 import net.judah.effects.api.Reverb;
+import net.judah.midi.JudahClock;
+import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
-import net.judah.tracks.Track;
+import net.judah.tracker.Track;
+import net.judah.tracker.Tracker;
 import net.judah.util.Constants;
-import net.judah.util.Update;
 
 /** Korg nanoKONTROL2 midi controller custom codes */ 	
 public class KorgMixer implements Controller {
@@ -104,7 +104,7 @@ public class KorgMixer implements Controller {
 				if (doubleClick(ch))
 					MainFrame.setFocus(JudahClock.getInstance().getTracks()[ch]);
 				else 
-					ControlPanel.getInstance().setFocus(channels.get(data1 - soff));
+					MainFrame.setFocus(channels.get(data1 - soff));
 			}).start();
 			return true;
 		}
@@ -133,53 +133,47 @@ public class KorgMixer implements Controller {
 		}
 		
 		if (data1 == PREV.getVal() && data2 != 0) {
-			MainFrame.get().getTracker().changeTrack(true);
+			JudahMidi.getClock().getTracker().changeTrack(true);
 			return true;
 		}
 		if (data1 == NEXT.getVal() && data2 != 0) {
-			MainFrame.get().getTracker().changeTrack(false);
+			JudahMidi.getClock().getTracker().changeTrack(false);
 			return true;
 		}
-		if (data1 == PREV2.getVal() && data2 != 0) {
-			MainFrame.get().getTracker().changePattern(false);
+		if (data1 == PREV2.getVal() && data2 != 0) { // change pattern
+			Tracker.getCurrent().next(false);
 			return true;
 		}
-		if (data1 == NEXT2.getVal() && data2 != 0) {
-			MainFrame.get().getTracker().changePattern(true);
+		if (data1 == NEXT2.getVal() && data2 != 0) { // change pattern
+			Tracker.getCurrent().next(true);
 			return true;
 		}
 
 		if (data1 == PREV2.getVal() && data2 != 0) {
-			BeatsView.getQueue().offer(new Update() {
-				@Override public void run() {
-					BeatsView.getSequencer().next(false);
-				}});
+			new Thread(() -> Tracker.getCurrent().next(false)).start();
 			return true;
 		}
 		if (data1 == NEXT2.getVal() && data2 != 0) {
-			BeatsView.getQueue().offer(new Update() {
-				@Override public void run() {
-					BeatsView.getSequencer().next(true);
-				}});
+			new Thread(() -> Tracker.getCurrent().next(true)).start();
 			return true;
 		}
 		
-		if (data1 == RWND.getVal() && data2 != 0) {
-			// TODO
+		if (data1 == RWND.getVal() && data2 != 0) { // prev Tab
+			MainFrame.changeTab(false);
 			return true;
 		}
-		if (data1 == FWRD.getVal() && data2 != 0) {
-			// TODO
+		if (data1 == FWRD.getVal() && data2 != 0) { // next Tab
+			MainFrame.changeTab(true);
 			return true;
 		}
-		if (data1 == STOP.getVal() && data2 != 0) {
-			BeatsView.getSequencer().setMute(!BeatsView.getSequencer().isMute());
-			new Thread(() -> {BeatsView.getInstance().getButtons().update();}).start();
+		if (data1 == STOP.getVal() && data2 != 0) { // TODO
+			//BeatsView.getSequencer().setMute(!BeatsView.getSequencer().isMute());
+			//new Thread(() -> {BeatsView.getInstance().getButtons().update();}).start();
 			return true;
 		}
 		if (data1 == PLAY.getVal()) {
-			if (data2 == 0) JudahClock.getInstance().end();
-			else JudahClock.getInstance().begin();
+			if (data2 == 0) JudahMidi.getClock().end();
+			else JudahMidi.getClock().begin();
 		}
 		if (data1 == RECORD.getVal()) { // Toggle Mute
 			Channel current = ControlPanel.getInstance().getCurrent().getChannel();

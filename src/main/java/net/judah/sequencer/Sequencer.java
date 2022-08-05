@@ -26,7 +26,7 @@ import net.judah.SongPane;
 import net.judah.api.*;
 import net.judah.api.Notification.Property;
 import net.judah.effects.api.Preset;
-import net.judah.effects.api.PresetsHandler.Raw;
+import net.judah.effects.api.PresetsDB.Raw;
 import net.judah.looper.Loop;
 import net.judah.looper.Recording;
 import net.judah.midi.JudahMidi;
@@ -34,7 +34,7 @@ import net.judah.midi.MidiListener;
 import net.judah.midi.MidiListener.PassThrough;
 import net.judah.midi.Route;
 import net.judah.midi.Router;
-import net.judah.mixer.DrumTrack;
+import net.judah.mixer.SoloTrack;
 import net.judah.mixer.LineIn;
 import net.judah.song.Song;
 import net.judah.song.Trigger;
@@ -108,7 +108,7 @@ public class Sequencer implements Service, Runnable, TimeListener {
             initializeProperties();
             initializeFiles();
             initializeTriggers();
-            Router midiRouter = JudahMidi.getInstance().getRouter();
+            Router midiRouter = JudahMidi.getRouter();
 
             song.getRouter().forEach( pair -> { midiRouter.add(
                     new Route(pair.getFromMidi(), pair.getToMidi()));});
@@ -118,7 +118,7 @@ public class Sequencer implements Service, Runnable, TimeListener {
         }
 
         private Sequencer handlePrevious() {
-            JudahMidi.getInstance().getRouter().clear();
+            JudahMidi.getRouter().clear();
             Sequencer previous = Sequencer.getCurrent();
             if (previous != null) {
                 //JudahZone.getMetronome().removeListener(previous);
@@ -434,7 +434,7 @@ public class Sequencer implements Service, Runnable, TimeListener {
 
         private void _autumnLeaves() {
             control = ControlMode.EXTERNAL;
-            DrumTrack drums = JudahZone.getLooper().getDrumTrack();
+            SoloTrack drums = JudahZone.getLooper().getDrumTrack();
             Loop loopA = JudahZone.getLooper().getLoopA();
             Loop loopB = JudahZone.getLooper().getLoopB();
 
@@ -494,9 +494,9 @@ public class Sequencer implements Service, Runnable, TimeListener {
                 Preset crunch = JudahZone.getPresets().get(Raw.StdCrunch);
                 if (crunch.equals(guitar.getPreset()) && guitar.isPresetActive())
                     return;
-                if (guitar.getPreset() != null)
-                    guitar.getPreset().applyPreset(guitar, false);
-                crunch.applyPreset(guitar, true);
+//                if (guitar.getPreset() != null)
+//                    guitar.getPreset().applyPreset(guitar, false);
+//                crunch.applyPreset(guitar, true);
 
                 JudahZone.getLooper().getLoopB().record(false);
 

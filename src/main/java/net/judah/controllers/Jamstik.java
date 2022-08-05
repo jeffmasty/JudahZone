@@ -1,6 +1,7 @@
 package net.judah.controllers;
 
 import java.awt.Component;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -8,11 +9,13 @@ import java.util.List;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JComboBox;
 import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 import org.jaudiolibs.jnajack.Jack;
 import org.jaudiolibs.jnajack.JackClient;
+import org.jaudiolibs.jnajack.JackException;
 import org.jaudiolibs.jnajack.JackPortFlags;
 import org.jaudiolibs.jnajack.JackPortType;
 
@@ -33,14 +36,16 @@ import net.judah.util.RTLogger;
 /** Controller substitute, reroute guitar midi to synths */
 public class Jamstik extends JComboBox<Path> implements Service {
 	
-	@Getter private static Jamstik instance = new Jamstik();
-	@Getter private boolean active = false;
-	@Getter private Path path = JudahMidi.getInstance().getPaths().get(0);
-	private int volStash = 50;
-
-	private Jamstik() {
-		JudahZone.getServices().add(0, this);
-
+	// private static Jamstik instance;
+	@Getter private static boolean active = false;
+	@Getter private static Path path;
+	private static int volStash = 50;
+	private static JPanel frame;
+	
+	public Jamstik(JPanel parent, ArrayList<Service> services) {
+		services.add(0, this);
+		Jamstik.frame= parent;
+		
 		BasicComboBoxRenderer style = new BasicComboBoxRenderer() {
         	@Override public Component getListCellRendererComponent(
         			@SuppressWarnings("rawtypes") JList list, Object value,
@@ -53,13 +58,13 @@ public class Jamstik extends JComboBox<Path> implements Service {
         }};
         style.setHorizontalAlignment(SwingConstants.CENTER);
         setRenderer(style);
-        //setOpaque(true);
+        setOpaque(true);
         for (Path p : JudahMidi.getInstance().getPaths())
         	addItem(p);
         addActionListener(e -> setMidiOut((Path)getSelectedItem()));
 	}
 	
-	private void run() {
+	private static void run() {
 		if (path == null) 
 			return;
 		// String search = "UNO Synth Pro MIDI 1";
@@ -70,6 +75,7 @@ public class Jamstik extends JComboBox<Path> implements Service {
 			
 			String jamstik = jack.getPorts(client, Constants.getDi(), 
 					JackPortType.MIDI, EnumSet.of(JackPortFlags.JackPortIsOutput))[0];				
+
 			String search = "Circuit Tracks";
 			if (path.getPort().equals(midi.getCraveOut()))
 				search = Constants.getDi();
@@ -77,6 +83,8 @@ public class Jamstik extends JComboBox<Path> implements Service {
 				search = FluidSynth.MIDI_PORT;
 			else if (path.getPort().equals(midi.getCalfOut()))
 				search = "Calf Fluidsynth";
+//			else if (path.getPort().equals(midi.getUnoOut()))
+//				search = "UNO Synth";
 			
 			String port = jack.getPorts(client, search, 
 					JackPortType.MIDI, EnumSet.of(JackPortFlags.JackPortIsInput))[0];
@@ -85,45 +93,52 @@ public class Jamstik extends JComboBox<Path> implements Service {
 				volStash = guitar.getVol();
 				guitar.setVol(0);
 				jack.connect(client, jamstik, port);
-				//MainFrame.setFocus(path.getChannel());
+				MainFrame.update(path.getChannel());
 				MainFrame.update(JudahZone.getChannels().getGuitar());
 			} else {
-				jack.disconnect(client, jamstik, port);
+				try {
+					jack.disconnect(client, jamstik, port);
+				} catch (JackException e) {
+					RTLogger.log(Jamstik.class, "Jamstik disconnect: " + e.getMessage() );
+				}
 				new Panic(path.getPort()).start();
 				guitar.setVol(volStash);
-				//MainFrame.setFocus(JudahZone.getChannels().getGuitar());
+				MainFrame.update(JudahZone.getChannels().getGuitar()); // setFocus?
 			}
-			setBackground(active ? Pastels.GREEN : Pastels.EGGSHELL);		
+			if (frame != null)
+				frame.setBackground(active ? Pastels.GREEN : Pastels.BUTTONS);		
 		} catch (Throwable e) {
 			RTLogger.warn(Jamstik.class, e);
 		}
 		
 	}
 	
-	public void toggle() {
+	public static void toggle() {
 		active = !active;
 		new Thread(()-> run()).start();
+		if (frame != null) 
+			frame.setBackground(active ? Pastels.GREEN : Pastels.BUTTONS);
 	}
 	
-	public void setMidiOut(Path path) {
-		if (this.path == path)
+	public static void setMidiOut(Path path) {
+		if (Jamstik.path == path)
 			return;
 		if (active) {
 			new Panic(path.getPort()).start();
 			new Thread(()->{
 				active = false;
 				run();
-				this.path = path;
+				Jamstik.path = path;
 				active = true;
 				run();
 			} ).start();
 		}
 		else {
-			this.path = path;
+			Jamstik.path = path;
 		}
 	}
 
-	public void nextMidiOut() {
+	public static void nextMidiOut() {
 		JudahMidi midi = JudahMidi.getInstance();
 		List<Path> paths = midi.getPaths();
 		int idx = paths.indexOf(path) + 1;

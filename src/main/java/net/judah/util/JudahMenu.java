@@ -10,34 +10,30 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
-import lombok.extern.log4j.Log4j;
 import net.judah.ControlPanel;
 import net.judah.JudahZone;
 import net.judah.Looper;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
-import net.judah.clock.JudahClock;
-import net.judah.clock.JudahClock.Mode;
 import net.judah.controllers.KorgPads;
 import net.judah.looper.Loop;
+import net.judah.midi.JudahClock.Mode;
+import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.sequencer.Sequencer;
 import net.judah.settings.Channels;
 import net.judah.song.Song;
 
-@Log4j
 public class JudahMenu extends JPopupMenu implements KeyListener {
 
     private static final int ASCII_ONE = 49;
     private static JudahMenu instance;
-    private static ControlPanel mixer;
-    private static Channels channels;
-    private static Looper looper;
+//    private static ControlPanel mixer;
+//    private static Channels channels;
+//    private static Looper looper;
 
     JMenu fileMenu = new JMenu("Song");
-
-    JMenuItem beatsMenu = new JMenuItem("BeatBox");
     JMenuItem sheetMusic = new JMenuItem("Sheet Music");
     JMenuItem loadMidi = new JMenuItem("Open Midi");
     JMenuItem load = new JMenuItem("Open...");
@@ -62,7 +58,7 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
 
         add(fileMenu);
         add(sheetMusic);
-        add(beatsMenu);
+        // add(beatsMenu);
         add(exit);
 
         addKeyListener(this);
@@ -72,15 +68,17 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
         save.addActionListener( e -> {save();});
         save.addActionListener( e -> {saveAs();});
         close.addActionListener( e -> {
-            MainFrame.get().closeTab(Sequencer.getCurrent().getPage());});
+        	if (Sequencer.getCurrent() != null)
+        		MainFrame.get().closeTab(Sequencer.getCurrent().getPage());
+        });
         sheetMusic.addActionListener( e -> {MainFrame.get().sheetMusic();});
-        beatsMenu.addActionListener( e -> {MainFrame.get().beatBox();});
+//        beatsMenu.addActionListener( e -> {MainFrame.get().beatBox();});
 //        loadMidi.addActionListener(e -> {MainFrame.get().getTracker().loadMidi());
         exit.addActionListener((event) -> System.exit(0));
 
         ToggleSwitch mode = new ToggleSwitch();
         mode.addActionListener(
-				e -> JudahClock.setMode(mode.isActivated() ? Mode.Internal : Mode.Midi24));
+				e -> JudahMidi.getClock().setMode(mode.isActivated() ? Mode.Internal : Mode.Midi24));
         add(mode);
         
         //  editMenu.setMnemonic(KeyEvent.VK_E);
@@ -119,8 +117,7 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
         try {
             new Sequencer(file);
         } catch (Exception e) {
-            log.error(e.getMessage() + " - " + file.getAbsolutePath());
-            Constants.infoBox(file.getAbsolutePath() + ": " + e.getMessage(), "Error");
+            RTLogger.warn(this, e.getMessage() + " - " + file.getAbsolutePath());
         }
 
     }
@@ -133,8 +130,7 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
             JsonUtil.saveString(JsonUtil.MAPPER.writeValueAsString(song), file);
             new Sequencer(file);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            Constants.infoBox(e.getMessage(), "Error");
+            RTLogger.warn(this, e);
         }
     }
 
@@ -144,22 +140,24 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
     @Override public void keyPressed(KeyEvent e) {
         int code = e.getKeyCode();
         Channel focus = ControlPanel.getInstance().getChannel();
+        Looper looper = JudahZone.getLooper();
+        Channels channels = JudahZone.getChannels();
 
         switch(code) {
 
             case VK_ESCAPE: JudahZone.getMasterTrack().setOnMute(
                     !JudahZone.getMasterTrack().isOnMute());return;
-            case VK_F1: mixer.setFocus(looper.get(0)); return;
-            case VK_F2: mixer.setFocus(looper.get(1)); return;
-            case VK_F3: mixer.setFocus(looper.get(2)); return;
-            case VK_F4: mixer.setFocus(looper.get(3)); return;
-            case VK_F5: mixer.setFocus(channels.get(0)); return;
-            case VK_F6: mixer.setFocus(channels.get(1)); return;
-            case VK_F7: mixer.setFocus(channels.get(2)); return;
-            case VK_F8: mixer.setFocus(channels.get(3)); return;
-            case VK_F9: mixer.setFocus(channels.get(4)); return;
-            case VK_F10: mixer.setFocus(channels.get(5)); return;
-            case VK_F11: mixer.setFocus(channels.get(6)); return;
+            case VK_F1: MainFrame.setFocus(looper.get(0)); return;
+            case VK_F2: MainFrame.setFocus(looper.get(1)); return;
+            case VK_F3: MainFrame.setFocus(looper.get(2)); return;
+            case VK_F4: MainFrame.setFocus(looper.get(3)); return;
+            case VK_F5: MainFrame.setFocus(channels.get(0)); return;
+            case VK_F6: MainFrame.setFocus(channels.get(1)); return;
+            case VK_F7: MainFrame.setFocus(channels.get(2)); return;
+            case VK_F8: MainFrame.setFocus(channels.get(3)); return;
+            case VK_F9: MainFrame.setFocus(channels.get(4)); return;
+            case VK_F10: MainFrame.setFocus(channels.get(5)); return;
+            case VK_F11: MainFrame.setFocus(channels.get(6)); return;
             case VK_UP: volume(true); return;
             case VK_DOWN: volume(false); return;
             case VK_LEFT: nextChannel(false); return;
@@ -212,7 +210,7 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
         
         int ch = e.getKeyChar(); // 1 to sampleCount pressed, focus on specific loop idx
         if (ch >= ASCII_ONE && ch < looper.size() + ASCII_ONE) {
-            mixer.setFocus(looper.get(ch - (ASCII_ONE) ));
+            MainFrame.setFocus(looper.get(ch - (ASCII_ONE) ));
             return;
         }
 
@@ -244,46 +242,42 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
     }
 
     private void nextChannel(boolean toRight) {
+    	Looper looper = JudahZone.getLooper();
+        Channels channels = JudahZone.getChannels();
         Channel bus = ControlPanel.getInstance().getChannel();
         if (bus instanceof LineIn) {
             int i = channels.indexOf(bus);
             if (toRight) {
                 if (i == channels.size() -1) {
-                    mixer.setFocus(looper.get(0));
+                    MainFrame.setFocus(looper.get(0));
                     return;
                 }
-                mixer.setFocus(channels.get(i + 1));
+                MainFrame.setFocus(channels.get(i + 1));
                 return;
             } // else toLeft
             if (i == 0) {
-                mixer.setFocus(looper.get(looper.size()-1));
+                MainFrame.setFocus(looper.get(looper.size()-1));
                 return;
             }
-            mixer.setFocus(channels.get(i - 1));
+            MainFrame.setFocus(channels.get(i - 1));
             return;
         } 
         // else instanceof Sample
         int i = looper.indexOf(bus);
         if (toRight) {
             if (i == looper.size() - 1) {
-                mixer.setFocus(channels.get(0));
+                MainFrame.setFocus(channels.get(0));
                 return;
             }
-            mixer.setFocus(looper.get(i + 1));
+            MainFrame.setFocus(looper.get(i + 1));
             return;
         } // else toLeft
         if (i == 0) {
-            mixer.setFocus(channels.get(channels.size() - 1));
+            MainFrame.setFocus(channels.get(channels.size() - 1));
             return;
         }
-        ControlPanel.getInstance().setFocus(looper.get(i - 1));
+        MainFrame.setFocus(looper.get(i - 1));
 
-    }
-
-    public static void setMixerPane(ControlPanel mixerPane) {
-        mixer = mixerPane;
-        channels = JudahZone.getChannels();
-        looper = JudahZone.getLooper();
     }
 
     public static JudahMenu getInstance() {

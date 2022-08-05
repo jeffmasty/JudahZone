@@ -1,50 +1,47 @@
 package net.judah.mixer;
 
+import java.awt.GridLayout;
 import java.util.ArrayList;
 
-import javax.swing.BoxLayout;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import net.judah.JudahZone;
 import net.judah.looper.Loop;
+import net.judah.util.Constants;
 
+/** Mixer GUI for audio input and output faders */
 public class DJJefe extends JPanel {
 
 	private final ArrayList<ChannelFader> channels = new ArrayList<ChannelFader>();
 	
     public DJJefe() {
-        for (Loop loop : JudahZone.getLooper().getLoops()) 
+        setLayout(new GridLayout(1, channels.size()));
+
+    	for (Loop loop : JudahZone.getLooper().getLoops()) 
         	channels.add(loop.getFader());
         for (Channel channel : JudahZone.getChannels()) 
         	channels.add(channel.getFader());
         channels.add(JudahZone.getMasterTrack().getFader());
         
-        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-        add(new JLabel(" ")); // padding
-
-        int quad = 0;
-        for (ChannelFader fader : channels) {
-        	if (quad++ % 4 == 0) 
-        		add(new JLabel(" ")); // spacer
+        for (ChannelFader fader : channels) 
         	add(fader);
-        }
 
-        add(new JLabel(" ")); // padding
         doLayout();
     }
 
 	public void update(Channel channel) {
-		for (ChannelFader ch : channels) {
-			if (ch.getChannel().equals(channel)) {
+		for (ChannelFader ch : channels) 
+			if (ch.getChannel().equals(channel)) 
 				ch.update();
-			}
-		}
 	}
 
 	public void updateAll() {
-		for (ChannelFader ch : channels) {
+		for (ChannelFader ch : channels) 
 			ch.update();
-		}
+	}
+
+	public void highlight(Channel o) {
+		for (ChannelFader ch : channels) 
+			ch.setBorder(ch.getChannel() == o ? Constants.Gui.HIGHLIGHT : Constants.Gui.NO_BORDERS);
 	}
 }

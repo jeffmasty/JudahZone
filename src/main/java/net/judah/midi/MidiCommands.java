@@ -12,7 +12,7 @@ import net.judah.api.Midi;
 public class MidiCommands extends ArrayList<Command> {
 
 	public MidiCommands(JudahMidi midi) {
-		add(new Transposer(midi));
+		add(new Transposer());
 
         //	add(new Command(ROUTECHANNEL.name, ROUTECHANNEL.desc, channelTemplate()) {
         //	@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {

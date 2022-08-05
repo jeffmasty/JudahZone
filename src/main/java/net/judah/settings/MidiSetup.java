@@ -17,8 +17,9 @@ public class MidiSetup {
 		PADS("pads"),
 		CIRCUIT_IN("circuitIn"),
 		LINE6_IN("line6In"),
+		;
 		// JAMSTIK_IN("jamstikIn"),
-		AUX_IN("auxIn"); //audioInterface
+		// AUX_IN("auxIn"); //audioInterface
 
 		// Old controllers
 		//	ARDUINO("arduino"),
@@ -35,8 +36,8 @@ public class MidiSetup {
 		CALF_OUT("Calf"),
 		CRAVE_OUT("Crave"),
 		CIRCUIT_OUT("Circuit"),
-		AUX1_OUT("Aux");//,
-		//UNO_OUT("unoOut");
+		//UNO_OUT("Uno"),
+		;//AUX1_OUT("Aux");
 		
 		@Getter public final String port;
 		

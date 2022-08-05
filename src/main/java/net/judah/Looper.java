@@ -8,11 +8,11 @@ import org.jaudiolibs.jnajack.JackPort;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.api.AudioMode;
-import net.judah.clock.JudahClock;
 import net.judah.looper.Loop;
 import net.judah.looper.SyncWidget.SelectType;
+import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
-import net.judah.mixer.DrumTrack;
+import net.judah.mixer.SoloTrack;
 import net.judah.plugin.Carla;
 import net.judah.util.Icons;
 
@@ -28,7 +28,7 @@ public class Looper {
     @Getter private Loop loopA;
     @Getter private Loop loopB;
     @Getter private Loop loopC;
-    @Getter private DrumTrack drumTrack;
+    @Getter private SoloTrack drumTrack;
     
     /** pause/unpause specific loops, clock-aware */
     @RequiredArgsConstructor @Getter
@@ -66,35 +66,21 @@ public class Looper {
     }
 
     public void init(Carla carla) {
-        // TODO...
 
         loopA = new Loop("A", this);
-        loopA.setIcon(Icons.load("LoopA.png"));
         loopA.setReverb(carla.getReverb());
-        //loopA.play(true); // armed;
         add(loopA);
         
         loopB = new Loop("B", this);
-        loopB.setIcon(Icons.load("LoopB.png"));
         loopB.setReverb(carla.getReverb2());
-        //loopB.play(true);
         add(loopB);
 
         loopC = new Loop("C", this);
-        //loopC.play(true); // armed;
-        loopC.setIcon(Icons.load("LoopC.png"));
         add(loopC);
 
-        drumTrack = new DrumTrack(loopA, JudahZone.getChannels().getCalf(), this);
+        drumTrack = new SoloTrack(loopA, JudahZone.getChannels().getCalf(), this);
         drumTrack.setIcon(Icons.load("Drums.png"));
         add(drumTrack);
-
-//        // TODO for MIDI and samples
-//        loopD = new Recorder("D", ProcessAudio.Type.ONE_SHOT);
-//        loopD.setIcon(Icons.load("LoopD.png"));
-//        add(loopD);
-
-        // drumTrack.toggle();
 
     }
 
@@ -146,12 +132,12 @@ public class Looper {
 
 	public void reset() {
 			stopAll();
-			new Thread() {
-				@Override public void run() {
-					try { // to get a process() in
-						Thread.sleep(23);} catch (Exception e) {} 
-					clear();
-                    }}.start();
+			new Thread(() -> {
+				try { // to get a process() in
+					Thread.sleep(23);
+				} catch (Exception e) {} 
+				clear();
+			}).start();
 	}
 
 	/** pause/unpause any running loops, stop/restart clock if it is running */

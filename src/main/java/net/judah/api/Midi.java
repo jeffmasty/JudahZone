@@ -27,6 +27,8 @@ import net.judah.util.RTLogger;
 @JsonSerialize(using = Midi.Serialization.class) 
 public class Midi extends ShortMessage {
 
+	public static int MIDDLE_C = 60;
+
 	public static final String PARAM_COMMAND = "command";
 	public static final String PARAM_CHANNEL = "channel";
 	public static final String PARAM_DATA1 = "data1";
@@ -134,6 +136,10 @@ public class Midi extends ShortMessage {
 	}
 	public boolean isProgChange() { return isProgChange(this); }
 
+	public static boolean isNoteOn(ShortMessage msg) {
+		return msg.getStatus() - msg.getChannel() == NOTE_ON;
+	}
+	
 	public static boolean isNote(ShortMessage msg) {
 		int stat = msg.getStatus() - msg.getChannel();
 		return stat == Midi.NOTE_OFF || stat == NOTE_ON;

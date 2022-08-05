@@ -7,14 +7,15 @@ import lombok.Getter;
 import net.judah.controllers.KnobMode;
 import net.judah.controllers.MPK;
 import net.judah.effects.Chorus;
-import net.judah.effects.Compression;
 import net.judah.effects.CutFilter;
 import net.judah.effects.Delay;
 import net.judah.effects.EQ;
 import net.judah.effects.api.Gain;
 import net.judah.effects.api.Reverb;
 import net.judah.mixer.Channel;
+import net.judah.util.JudahException;
 import net.judah.util.JudahKnob;
+import net.judah.util.RTLogger;
 
 public class RowKnobs extends Row {
 
@@ -43,27 +44,38 @@ public class RowKnobs extends Row {
 			controls.add(new JudahKnob(ch, ch.getEq(), EQ.EqBand.High.ordinal(), EQ.EqBand.High.name()));
 			controls.add(new JudahKnob(ch, ch.getDelay(), Delay.Settings.DelayTime.ordinal(), "Time"));
 			break;
-		case 3: 
-			controls.add(new JudahKnob(ch, ch.getOverdrive(), 0, "Gain"));
-			controls.add(new JudahKnob(ch, ch.getGain(), Gain.PAN, ""));
-			controls.add(new JudahKnob(ch, ch.getCompression(), Compression.Settings.Threshold.ordinal(), "Thold"));
-			controls.add(new JudahKnob(ch, ch.getDelay(), Delay.Settings.Feedback.ordinal(), "F/B"));
-			break;
+		default:
+			RTLogger.warn(this, new JudahException(idx + " what? " + ch));
 		}
 		update();
 		
 	}
 
+	// Bottom Row, Preset drop down row
+	public RowKnobs(Channel ch, KnobMode effects2, PresetCombo presets) {
+			super(ch, KnobMode.Effects2);
+			row = 3;
+			controls.add(new JudahKnob(ch, ch.getOverdrive(), 0, "Gain"));
+			controls.add(new JudahKnob(ch, ch.getGain(), Gain.PAN, ""));
+			controls.add(presets);
+			controls.add(new JudahKnob(ch, ch.getDelay(), Delay.Settings.Feedback.ordinal(), "F/B"));
+			update();
+	}
+
 	@Override
 	public void update() {
 		for (Component c : controls) 
-			((JudahKnob)c).update();
+			if (c instanceof PresetCombo)
+				((PresetCombo)c).update();
+			else 
+				((JudahKnob)c).update();
 		
 		boolean on = (row == 0 || row == 1) ? 
 				KnobMode.Effects1 == MPK.getMode() : 
 				KnobMode.Effects2 == MPK.getMode(); 
 		for (Component c : controls) 
-			((JudahKnob)c).setOnMode(on);
+			if (c instanceof JudahKnob)
+				((JudahKnob)c).setOnMode(on);
 	}
 
 }

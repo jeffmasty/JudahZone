@@ -58,15 +58,8 @@ public class ChannelTitle extends JPanel {
 	private class PresetCheckBox extends JCheckBox {
         PresetCheckBox() {
             addItemListener(e -> {
-                if (isSelected()) {
-                    setBackground(Color.GREEN);
-                    setOpaque(true);
-                }
-                else {
-                    setOpaque(false);
-                }
-                if (channel.getPreset() == null) return;
-                channel.getPreset().applyPreset(channel, isSelected());
+            	setBackground(isSelected() ? Color.GREEN : null);
+                channel.setPresetActive(isSelected());
             });
         }
     }

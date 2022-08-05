@@ -9,8 +9,6 @@ import net.judah.Looper;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.api.Midi;
-import net.judah.clock.JudahClock;
-import net.judah.clock.JudahClock.Mode;
 import net.judah.controllers.MapEntry.TYPE;
 import net.judah.effects.Chorus;
 import net.judah.effects.CutFilter;
@@ -20,11 +18,13 @@ import net.judah.effects.LFO.Target;
 import net.judah.effects.Overdrive;
 import net.judah.looper.Loop;
 import net.judah.looper.SyncWidget.SelectType;
+import net.judah.midi.JudahClock;
+import net.judah.midi.JudahClock.Mode;
+import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.util.Constants;
 import net.judah.util.GuitarTuner;
-import net.judah.util.RTLogger;
 
 /** CC 1 - 16 on channel 13 */
 public class KorgPads extends ArrayList<Runnable> implements Controller {
@@ -105,11 +105,11 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		case 7: // focus efx on Main or Circuit Trax channel 
 			ControlPanel controls = ControlPanel.getInstance();
 			if (controls.getCurrent() == null) 
-				controls.setFocus(JudahZone.getMasterTrack());
+				MainFrame.setFocus(JudahZone.getMasterTrack());
 			else if (controls.getCurrent().getChannel() == JudahZone.getMasterTrack())
-				controls.setFocus(JudahZone.getChannels().getCircuit());
+				MainFrame.setFocus(JudahZone.getChannels().getCircuit());
 			else 
-				controls.setFocus(JudahZone.getMasterTrack());
+				MainFrame.setFocus(JudahZone.getMasterTrack());
 			return true;
 		case 8: // TODO Tuner/PlayStop Loop/FadeOut Main
 			Channel ch = ControlPanel.getInstance().getChannel();
@@ -161,7 +161,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			if (looper.getLoopA().hasRecording() == false) 
 				looper.getDrumTrack().toggle();
 			else if (looper.getDrumTrack().hasRecording() == false)
-					JudahClock.getInstance().latch(looper.getLoopA());
+					JudahMidi.getClock().latch(looper.getLoopA());
 			return true;
 			
 		case 13: // reverb
@@ -173,11 +173,11 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		case 15: // focus efx on Uno or Crave synth channels
 			ControlPanel panel = ControlPanel.getInstance();
 			if (panel.getCurrent() == null) 
-				panel.setFocus(JudahZone.getChannels().getCrave());
+				MainFrame.setFocus(JudahZone.getChannels().getCrave());
 			else if (panel.getCurrent().getChannel() == JudahZone.getChannels().getCrave())
-				panel.setFocus(JudahZone.getChannels().getUno());
+				MainFrame.setFocus(JudahZone.getChannels().getUno());
 			else 
-				panel.setFocus(JudahZone.getChannels().getCrave());
+				MainFrame.setFocus(JudahZone.getChannels().getCrave());
 			return true;
 			
 //			ControlPanel panel = ControlPanel.getInstance();
@@ -194,7 +194,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 //			}
 //			return true;
 		case 16: // play/stop/sync drum machine
-			JudahClock clock = JudahClock.getInstance();
+			 JudahClock clock = JudahMidi.getClock();
 			if (clock.isActive()) 
 				clock.end();
 			else if (looper.getLoopA().hasRecording())  
@@ -259,10 +259,8 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		}
 		else {
 			ControlPanel.getInstance().getChannel().reset();
-			RTLogger.log(this, "joystick " + (active ? "on" : "off"));
 			// TODO restore preset
 		}
-		
 	}
 	
 
@@ -272,14 +270,16 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 	}
 	
 	public static void trigger(Loop loop) {
+		JudahClock clock = JudahMidi.getClock();
 		if (loop.isRecording() == AudioMode.RUNNING) {
 			loop.record(false);
-			JudahClock.getInstance().removeListener(loop.getSync());
+			clock.removeListener(loop.getSync());
 		}
-		else if (!loop.hasRecording() && JudahClock.isLoopSync()) {
-			loop.getSync().init();
-			if (!JudahClock.getInstance().isActive() && JudahClock.getMode() == Mode.Internal)
-				JudahClock.getInstance().begin();
+		else if (!loop.hasRecording()) {
+			loop.getSync().syncUp();
+			
+			if (!clock.isActive() && clock.getMode() == Mode.Internal)
+				clock.begin();
 		}
 		else 
 			record (loop);

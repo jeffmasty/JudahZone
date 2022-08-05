@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE CARLA-PROJECT>
-<CARLA-PROJECT VERSION='2.4'>
+<CARLA-PROJECT VERSION='2.5'>
  <EngineSettings>
   <ForceStereo>false</ForceStereo>
   <PreferPluginBridges>false</PreferPluginBridges>
@@ -70,7 +70,7 @@
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set</Key>
-    <Value>66</Value>
+    <Value>0</Value>
    </CustomData>
 
    <CustomData>
@@ -703,15 +703,7 @@
  <ExternalPatchbay>
   <Connection>
    <Source>system:capture_1</Source>
-   <Target>PulseAudio JACK Source:front-left</Target>
-  </Connection>
-  <Connection>
-   <Source>system:capture_1</Source>
    <Target>JudahZone:guitar</Target>
-  </Connection>
-  <Connection>
-   <Source>system:capture_2</Source>
-   <Target>PulseAudio JACK Source:front-right</Target>
   </Connection>
   <Connection>
    <Source>system:capture_3</Source>
@@ -738,14 +730,6 @@
    <Target>JudahZone:UnoR</Target>
   </Connection>
   <Connection>
-   <Source>PulseAudio JACK Sink:front-left</Source>
-   <Target>system:playback_1</Target>
-  </Connection>
-  <Connection>
-   <Source>PulseAudio JACK Sink:front-right</Source>
-   <Target>system:playback_2</Target>
-  </Connection>
-  <Connection>
    <Source>a2j:FBV Shortboard Mk II [28] (capture): FBV Shortboard Mk II MIDI 1</Source>
    <Target>JudahMidi:line6In</Target>
   </Connection>
@@ -759,11 +743,15 @@
   </Connection>
   <Connection>
    <Source>a2j:MPKmini2 [40] (capture): MPKmini2 MIDI 1</Source>
-   <Target>a2j:qmidiroute [134] (playback): in</Target>
+   <Target>JudahMidi:keyboard</Target>
   </Connection>
   <Connection>
-   <Source>a2j:MPKmini2 [40] (capture): MPKmini2 MIDI 1</Source>
-   <Target>JudahMidi:keyboard</Target>
+   <Source>PulseAudio JACK Sink:front-left</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>PulseAudio JACK Sink:front-right</Source>
+   <Target>system:playback_2</Target>
   </Connection>
   <Connection>
    <Source>a2j:Circuit Tracks [44] (capture): Circuit Tracks MIDI</Source>
@@ -786,6 +774,10 @@
    <Target>a2j:MPKmini2 [40] (playback): MPKmini2 MIDI 1</Target>
   </Connection>
   <Connection>
+   <Source>JudahMidi:Clock</Source>
+   <Target>a2j:UNO Synth Pro [48] (playback): UNO Synth Pro MIDI 1</Target>
+  </Connection>
+  <Connection>
    <Source>JudahMidi:Fluid</Source>
    <Target>fluidsynth-midi:midi_00</Target>
   </Connection>
@@ -800,6 +792,10 @@
   <Connection>
    <Source>JudahMidi:Circuit</Source>
    <Target>a2j:Circuit Tracks [44] (playback): Circuit Tracks MIDI</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahMidi:Uno</Source>
+   <Target>a2j:UNO Synth Pro [48] (playback): UNO Synth Pro MIDI 1</Target>
   </Connection>
   <Connection>
    <Source>JudahZone:left</Source>

@@ -93,7 +93,6 @@ public class RainbowFader extends JSlider {
         setMajorTickSpacing(-1);
         setMinorTickSpacing(25);
         setPreferredSize(SIZE); 
-        setBackground(Color.PINK);
     }
 
     public static void main(String[] args) {

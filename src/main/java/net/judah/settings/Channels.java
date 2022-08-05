@@ -15,19 +15,19 @@ import net.judah.util.Icons;
 
 @Getter
 public class Channels extends ArrayList<LineIn> {
-	public static final String GUITAR = "GUITAR"; 
+	public static final String GUITAR = "GTR"; 
 	public static final String MIC = "MIC";
 	public static final String CIRCUIT = "TRAX";
 	public static final String UNO = "UNO";
 	
-	public static final String CALF= "CALF";
-	public static final String SYNTH = "SYNTH";
+	public static final String CALF= "DRUM";
+	public static final String SYNTH = "KEYS";
 	public static final String AUX = "AUX";
-	public static final String CRAVE = "CRAVE";
+	public static final String CRAVE = "BASS";
 	
 	private LineIn guitar, mic, fluid;
 	private LineIn uno, circuit, calf; 
-	private LineIn crave; //aux1,2
+	private LineIn crave; //aux1
 
 	private void miniSetup() {
 		guitar = new LineIn(GUITAR, "system:capture_1", "guitar");
@@ -63,10 +63,10 @@ public class Channels extends ArrayList<LineIn> {
 		fluid = new LineIn(SYNTH,
 				new String[] {FluidSynth.LEFT_PORT, FluidSynth.RIGHT_PORT},
 				new String[] {"fluidL", "fluidR"});
-		fluid.setIcon(Icons.load("Synth.png"));
+		// fluid.setIcon(Icons.load("Synth.png"));
 
 		calf = new LineIn(CALF, new String[] {null, null}, new String[] {"calfL", "calfR"});
-		calf.setIcon(Icons.load("Drums.png"));
+		// calf.setIcon(Icons.load("Drums.png"));
 
 		uno = new LineIn(UNO, 
 				new String[] {"system:capture_7", "system:capture_8"},
@@ -78,7 +78,7 @@ public class Channels extends ArrayList<LineIn> {
 				new String[] {"system:capture_5", "system:capture_6"},
 				new String[] {"CircuitL", "CircuitR"});
 		
-		addAll(Arrays.asList(new LineIn[] { guitar, mic, fluid, calf, uno, crave, circuit}));
+		addAll(Arrays.asList(new LineIn[] { guitar, mic, fluid, calf, crave, uno, circuit}));
 
 	}
 

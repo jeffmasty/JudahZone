@@ -5,9 +5,6 @@ import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 
-import lombok.extern.log4j.Log4j;
-
-@Log4j
 public class FileChooser {
 	
 	static File currentDir = new File(System.getProperty("user.dir"));
@@ -17,7 +14,6 @@ public class FileChooser {
 	}
 	
 	public static File choose(int selectionMode, final String extension, final String description) {
-		log.debug("file choose...");
 		JFileChooser fc = new JFileChooser();
 		if (selectionMode >= 0)
 			fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
@@ -35,7 +31,7 @@ public class FileChooser {
 		int result = fc.showOpenDialog(null);
 		if (result == JFileChooser.APPROVE_OPTION) {
 		    File selectedFile = fc.getSelectedFile();
-		    log.debug("Selected file: " + selectedFile.getAbsolutePath());
+		    RTLogger.log(FileChooser.class, "Selected file: " + selectedFile.getAbsolutePath());
 		    currentDir = fc.getCurrentDirectory();
 		    return selectedFile;
 		}

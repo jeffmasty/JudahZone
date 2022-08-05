@@ -31,7 +31,7 @@ public interface MPKTools {
 	public static final String NAME = "MPKmini2"; // capture
 
 	//public static final int JOYSTICK_DOWN_CC = 0; // 0 to 127
-	public static final int JOYSTICK_CC = 100; // 64 to 127 (to be safe)
+	// public static final int JOYSTICK_CC = 100; // 64 to 127 (to be safe)
 
 	public static final int KNOB_COUNT = 8;
 	public static final int PAD_COUNT = 8;
@@ -61,9 +61,6 @@ public interface MPKTools {
 				return "DrumB " + DRUMS_B.indexOf(val) + quote(midi);
 		}
 		else if (Midi.isCC(midi)) {
-//			if (PEDAL.contains(val))
-//				return "Foot" + PEDAL.indexOf(val) + quote(midi);
-//			else 
 				if (KNOBS.contains(val))
 				return "Knob  " + KNOBS.indexOf(val) + quote(midi);
 			else if (knobs1.contains(val))

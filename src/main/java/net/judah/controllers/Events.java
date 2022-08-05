@@ -7,9 +7,9 @@ import net.judah.api.AudioMode;
 import net.judah.api.Notification.Property;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
-import net.judah.clock.JudahClock;
 import net.judah.effects.api.Effect;
 import net.judah.looper.Loop;
+import net.judah.midi.JudahClock;
 import net.judah.util.RTLogger;
 
 public class Events {

@@ -25,13 +25,14 @@ import net.judah.api.Command;
 import net.judah.api.Service;
 import net.judah.controllers.Jamstik;
 import net.judah.effects.Fader;
-import net.judah.effects.api.PresetsHandler;
+import net.judah.effects.api.PresetsDB;
 import net.judah.fluid.FluidSynth;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Path;
 import net.judah.mixer.LineIn;
 import net.judah.mixer.MasterTrack;
 import net.judah.plugin.Carla;
+import net.judah.plugin.Plugins;
 import net.judah.sequencer.Sequencer;
 import net.judah.settings.Channels;
 import net.judah.util.Constants;
@@ -62,15 +63,15 @@ public class JudahZone extends BasicClient {
     @Getter private static final CommandHandler commands = new CommandHandler();
 
     @Getter private static MasterTrack masterTrack;
-    @Getter private static final Channels channels = new Channels();
     @Getter private static final Looper looper = new Looper(outPorts);
     @Getter private static final Plugins plugins = new Plugins();
-    @Getter private static final PresetsHandler presets = new PresetsHandler();
+    @Getter private static final PresetsDB presets = new PresetsDB();
+    @Getter private static final Channels channels = new Channels();
 
+    
     @Getter private static JudahMidi midi;
     @Getter private static Carla carla;
     @Getter private static FluidSynth synth;
-//    @Getter private static Metronome metronome;
 
     @Getter @Setter private static Command onDeck;
     
@@ -91,9 +92,6 @@ public class JudahZone extends BasicClient {
 
         synth = new FluidSynth(Constants.sampleRate());
         midi = new JudahMidi("JudahMidi");
-        
-//        File midiTrack = new File(new File(Constants.ROOT, "metronome"), "JudahZone.mid");
-//        metronome = new Metronome(midi, midiTrack);
         
         services.addAll(Arrays.asList(new Service[] {synth, midi})); // Jamstik added later
 
@@ -124,7 +122,6 @@ public class JudahZone extends BasicClient {
         reverbR2 = jackclient.registerPort("reverbR2", AUDIO, JackPortIsOutput);
         reverbL1 = jackclient.registerPort("reverbL1", AUDIO, JackPortIsOutput);
         reverbL2 = jackclient.registerPort("reverbL2", AUDIO, JackPortIsOutput);
-
 
         String debug = "channels: ";
         for (LineIn ch : channels)
@@ -189,8 +186,9 @@ public class JudahZone extends BasicClient {
         Constants.timer(100, () -> {
             // load default song?: new Sequencer(new File(Constants.ROOT, "Songs/InMood4Love"));
             MainFrame.updateTime();
+            MainFrame.setFocus(channels.getGuitar());
         });
-        Jamstik.getInstance().setMidiOut(new Path(midi.getCraveOut(), channels.getCrave()));
+        Jamstik.setMidiOut(new Path(midi.getFluidOut(), channels.getUno()));
         
     }
 
@@ -262,26 +260,3 @@ public class JudahZone extends BasicClient {
 
 }
 
-/*
-    	AlsaMidiAccess alsa = new AlsaMidiAccess();
-    	MidiMusic music = new MidiMusic();
-    	SimpleAdjustingMidiPlayerTimer timer = new SimpleAdjustingMidiPlayerTimer();
-    	PortCreatorContext ctx = new PortCreatorContext("Jeff Masty",
-                        "JudahZone", "virPort", "1.0");
-    	try {
-	    	File file = new File("/home/judah/tracks/midi/Walking_bass_I-IV.mid");
-	    	byte[] bytes = Files.readAllBytes(Path.of(file.toURI()));
-	    	
-	    	MidiReaderWriterKt.read(music, convert(bytes));
-	    	
-	    	alsa.createVirtualOutputReceiver(ctx, CompletedContinuation.INSTANCE);
-	    	alsa.createVirtualInputSender(ctx, CompletedContinuation.INSTANCE);
-	    	Object out = alsa.openOutputAsync("ktmidi ALSA input", CompletedContinuation.INSTANCE);
-	    	Midi1Player player = new Midi1Player(music, (MidiOutput)out, timer, true); 
-	    	
-	    	RTLogger.log(this, "BPM: " + player.getBpm());
-	    	player.play();
-    	} catch (IOException e) {
-    		RTLogger.warn(this, e);
-    	}
- */

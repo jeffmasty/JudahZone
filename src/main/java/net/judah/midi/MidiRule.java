@@ -4,9 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import net.judah.api.Midi;
-import net.judah.beatbox.GMDrum;
 import net.judah.controllers.MPKTools;
 import net.judah.song.Edits.Copyable;
+import net.judah.tracker.GMDrum;
 
 /** a networking rule for the Midi Router */
 @Data @NoArgsConstructor @AllArgsConstructor
