@@ -70,7 +70,7 @@
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set</Key>
-    <Value>0</Value>
+    <Value>44</Value>
    </CustomData>
 
    <CustomData>
@@ -118,13 +118,13 @@
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set9</Key>
-    <Value>0</Value>
+    <Value>23</Value>
    </CustomData>
 
    <CustomData>
     <Type>http://lv2plug.in/ns/ext/atom#String</Type>
     <Key>urn:calf:preset_key_set10</Key>
-    <Value>16425</Value>
+    <Value>16419</Value>
    </CustomData>
 
    <CustomData>
@@ -700,6 +700,61 @@
   </Data>
  </Plugin>
 
+ <!-- MIDI Clock Generator -->
+ <Plugin>
+  <Info>
+   <Type>LV2</Type>
+   <Name>MidiClock</Name>
+   <URI>http://gareus.org/oss/lv2/mclk</URI>
+  </Info>
+
+  <Data>
+   <Active>Yes</Active>
+   <ControlChannel>1</ControlChannel>
+   <Options>0x1</Options>
+
+   <Parameter>
+    <Index>0</Index>
+    <Name>Generator Mode</Name>
+    <Symbol>mode</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>1</Index>
+    <Name>Sync</Name>
+    <Symbol>sync</Symbol>
+    <Value>0</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>2</Index>
+    <Name>BPM</Name>
+    <Symbol>bpm</Symbol>
+    <MidiChannel>1</MidiChannel>
+    <MappedControlIndex>15</MappedControlIndex>
+    <MappedMinimum>40</MappedMinimum>
+    <MappedMaximum>208</MappedMaximum>
+    <MidiCC>15</MidiCC>
+    <Value>92.9133911132812</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>3</Index>
+    <Name>Transport</Name>
+    <Symbol>transport</Symbol>
+    <Value>1</Value>
+   </Parameter>
+
+   <Parameter>
+    <Index>4</Index>
+    <Name>Rewind</Name>
+    <Symbol>rewind</Symbol>
+    <Value>0</Value>
+   </Parameter>
+  </Data>
+ </Plugin>
+
  <ExternalPatchbay>
   <Connection>
    <Source>system:capture_1</Source>
@@ -730,6 +785,18 @@
    <Target>JudahZone:UnoR</Target>
   </Connection>
   <Connection>
+   <Source>PulseAudio JACK Sink:front-left</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>PulseAudio JACK Sink:front-right</Source>
+   <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:UMC1820 [24] (capture): UMC1820 MIDI 1</Source>
+   <Target>fluidsynth-midi:midi_00</Target>
+  </Connection>
+  <Connection>
    <Source>a2j:FBV Shortboard Mk II [28] (capture): FBV Shortboard Mk II MIDI 1</Source>
    <Target>JudahMidi:line6In</Target>
   </Connection>
@@ -742,28 +809,20 @@
    <Target>JudahMidi:mixer</Target>
   </Connection>
   <Connection>
-   <Source>a2j:MPKmini2 [40] (capture): MPKmini2 MIDI 1</Source>
-   <Target>JudahMidi:keyboard</Target>
-  </Connection>
-  <Connection>
-   <Source>PulseAudio JACK Sink:front-left</Source>
-   <Target>system:playback_1</Target>
-  </Connection>
-  <Connection>
-   <Source>PulseAudio JACK Sink:front-right</Source>
-   <Target>system:playback_2</Target>
-  </Connection>
-  <Connection>
-   <Source>a2j:Circuit Tracks [44] (capture): Circuit Tracks MIDI</Source>
-   <Target>JudahMidi:circuitIn</Target>
-  </Connection>
-  <Connection>
    <Source>fluidsynth-midi:left</Source>
    <Target>JudahZone:fluidL</Target>
   </Connection>
   <Connection>
+   <Source>a2j:MPKmini2 [44] (capture): MPKmini2 MIDI 1</Source>
+   <Target>JudahMidi:keyboard</Target>
+  </Connection>
+  <Connection>
    <Source>fluidsynth-midi:right</Source>
    <Target>JudahZone:fluidR</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahMidi:Tempo</Source>
+   <Target>MidiClock:events-in</Target>
   </Connection>
   <Connection>
    <Source>JudahMidi:Clock</Source>
@@ -771,11 +830,11 @@
   </Connection>
   <Connection>
    <Source>JudahMidi:Clock</Source>
-   <Target>a2j:MPKmini2 [40] (playback): MPKmini2 MIDI 1</Target>
+   <Target>a2j:Circuit Tracks [40] (playback): Circuit Tracks MIDI</Target>
   </Connection>
   <Connection>
    <Source>JudahMidi:Clock</Source>
-   <Target>a2j:UNO Synth Pro [48] (playback): UNO Synth Pro MIDI 1</Target>
+   <Target>a2j:MPKmini2 [44] (playback): MPKmini2 MIDI 1</Target>
   </Connection>
   <Connection>
    <Source>JudahMidi:Fluid</Source>
@@ -791,11 +850,7 @@
   </Connection>
   <Connection>
    <Source>JudahMidi:Circuit</Source>
-   <Target>a2j:Circuit Tracks [44] (playback): Circuit Tracks MIDI</Target>
-  </Connection>
-  <Connection>
-   <Source>JudahMidi:Uno</Source>
-   <Target>a2j:UNO Synth Pro [48] (playback): UNO Synth Pro MIDI 1</Target>
+   <Target>a2j:Circuit Tracks [40] (playback): Circuit Tracks MIDI</Target>
   </Connection>
   <Connection>
    <Source>JudahZone:left</Source>
@@ -844,6 +899,14 @@
   <Connection>
    <Source>Tal-Reverb-III (2):Audio Output 2</Source>
    <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>MidiClock:events-out</Source>
+   <Target>JudahMidi:pulse</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:Circuit Tracks [40] (capture): Circuit Tracks MIDI</Source>
+   <Target>JudahMidi:circuitIn</Target>
   </Connection>
  </ExternalPatchbay>
 </CARLA-PROJECT>

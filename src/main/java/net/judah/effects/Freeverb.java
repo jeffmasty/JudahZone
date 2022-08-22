@@ -88,7 +88,7 @@ public final class Freeverb extends Reverb {
     private static final float offsetroom = 0.7f;
 
     private static final float initialroom = 0.4f;
-    private static final float initialdamp = 0.9f;
+    private static final float initialdamp = 0.95f;
     private static final float initialwet = 1 / scalewet;
     private static final float initialdry = 0.5f;//1;
     private static final float initialwidth = 1.0f;
@@ -97,25 +97,27 @@ public final class Freeverb extends Reverb {
     private int nframes = Constants.bufSize();
     private float roomsize;
     private float damp;
-    private float wet, wet1, wet2;
+    private float wet, wet1;
     private float dry;
     private float width;
     private boolean dirty;
     // Comb filters
     private int numcombs;
     private Comb[] combL;
-    private Comb[] combR;
+    //private Comb[] combR;
     // Allpass filters
     private int numallpasses;
     private Allpass[] allpassL;
-    private Allpass[] allpassR;
+    //private Allpass[] allpassR;
     //scratch buffers
     private float[] inScratch = null;
     private float[] outScratchL = null;
-    private float[] outScratchR = null;
+    
+    private final Freeverb stereoReverb;
 
-    public Freeverb() {
+    public Freeverb(boolean isStereo) {
         initialize(Constants.sampleRate(), Constants.bufSize());
+        stereoReverb = isStereo ? new Freeverb(false) : null;
     }
 
     @Override
@@ -128,77 +130,49 @@ public final class Freeverb extends Reverb {
         setWidth(initialwidth);
 
         float freqscale = samplerate / 44100.0f;
-        int stereospread = 23;
 
         /* Init Comb filters */
         int combtuningL1 = (int) (freqscale * (1116));
-        int combtuningR1 = (int) (freqscale * (1116 + stereospread));
         int combtuningL2 = (int) (freqscale * (1188));
-        int combtuningR2 = (int) (freqscale * (1188 + stereospread));
         int combtuningL3 = (int) (freqscale * (1277));
-        int combtuningR3 = (int) (freqscale * (1277 + stereospread));
         int combtuningL4 = (int) (freqscale * (1356));
-        int combtuningR4 = (int) (freqscale * (1356 + stereospread));
         int combtuningL5 = (int) (freqscale * (1422));
-        int combtuningR5 = (int) (freqscale * (1422 + stereospread));
         int combtuningL6 = (int) (freqscale * (1491));
-        int combtuningR6 = (int) (freqscale * (1491 + stereospread));
         int combtuningL7 = (int) (freqscale * (1557));
-        int combtuningR7 = (int) (freqscale * (1557 + stereospread));
         int combtuningL8 = (int) (freqscale * (1617));
-        int combtuningR8 = (int) (freqscale * (1617 + stereospread));
 
         numcombs = 8;
         combL = new Comb[numcombs];
-        combR = new Comb[numcombs];
         combL[0] = new Comb(combtuningL1);
-        combR[0] = new Comb(combtuningR1);
         combL[1] = new Comb(combtuningL2);
-        combR[1] = new Comb(combtuningR2);
+
         combL[2] = new Comb(combtuningL3);
-        combR[2] = new Comb(combtuningR3);
         combL[3] = new Comb(combtuningL4);
-        combR[3] = new Comb(combtuningR4);
         combL[4] = new Comb(combtuningL5);
-        combR[4] = new Comb(combtuningR5);
         combL[5] = new Comb(combtuningL6);
-        combR[5] = new Comb(combtuningR6);
         combL[6] = new Comb(combtuningL7);
-        combR[6] = new Comb(combtuningR7);
         combL[7] = new Comb(combtuningL8);
-        combR[7] = new Comb(combtuningR8);
 
         /* Init Allpass filters*/
         int allpasstuningL1 = (int) (freqscale * (556));
-        int allpasstuningR1 = (int) (freqscale * (556 + stereospread));
         int allpasstuningL2 = (int) (freqscale * (441));
-        int allpasstuningR2 = (int) (freqscale * (441 + stereospread));
         int allpasstuningL3 = (int) (freqscale * (341));
-        int allpasstuningR3 = (int) (freqscale * (341 + stereospread));
         int allpasstuningL4 = (int) (freqscale * (225));
-        int allpasstuningR4 = (int) (freqscale * (225 + stereospread));
 
         numallpasses = 4;
         allpassL = new Allpass[numallpasses];
-        allpassR = new Allpass[numallpasses];
         allpassL[0] = new Allpass(allpasstuningL1);
-        allpassR[0] = new Allpass(allpasstuningR1);
         allpassL[1] = new Allpass(allpasstuningL2);
-        allpassR[1] = new Allpass(allpasstuningR2);
         allpassL[2] = new Allpass(allpasstuningL3);
-        allpassR[2] = new Allpass(allpasstuningR3);
         allpassL[3] = new Allpass(allpasstuningL4);
-        allpassR[3] = new Allpass(allpasstuningR4);
 
         for (int i = 0; i < numallpasses; i++) {
             allpassL[i].setFeedback(0.5f);
-            allpassR[i].setFeedback(0.5f);
         }
 
         /* Init scratch buffers*/
         inScratch = new float[maxBufferSize];
         outScratchL = new float[maxBufferSize];
-        outScratchR = new float[maxBufferSize];
 
         /* Prepare all buffers*/
         update();
@@ -237,6 +211,8 @@ public final class Freeverb extends Reverb {
     public void setRoomSize(float value) {
         roomsize = (value * scaleroom) + offsetroom;
         dirty = true;
+        if (stereoReverb != null)
+        	stereoReverb.setRoomSize(value);
     }
 
     @Override
@@ -248,6 +224,8 @@ public final class Freeverb extends Reverb {
     public void setDamp(float value) {
         damp = value * scaledamp;
         dirty = true;
+        if (stereoReverb != null)
+        	stereoReverb.setDamp(value);
     }
 
     @Override
@@ -259,6 +237,8 @@ public final class Freeverb extends Reverb {
     public void setWet(float value) {
         wet = value * scalewet;
         dirty = true;
+        if (stereoReverb != null)
+        	stereoReverb.setWet(value);
     }
 
     @Override
@@ -286,32 +266,11 @@ public final class Freeverb extends Reverb {
         return width;
     }
 
-	public void processMix(float[] in, FloatBuffer out, float gain) {
-    	int buffersize = out.capacity();
-        if (dirty) {
-            update();
-            dirty = false;
-        }
-
-        float ourGain = fixedgain * gain;
-
-        for (int i = 0; i < buffersize; i++)
-            inScratch[i] = in[i] * ourGain;
-
-        Arrays.fill(outScratchL, 0);
-
-        for (int i = 0; i < numcombs; i++)
-            combL[i].processMix(inScratch, outScratchL, buffersize);
-
-        for (int i = 0; i < numallpasses; i++)
-            allpassL[i].processReplace(outScratchL, outScratchL, buffersize);
-
-        for (int i = 0; i < buffersize; i++)
-            out.put(out.get(i) + // from mixer board
-            		in[i] * gain + // process add
-            		outScratchL[i] * wet1 * gain + outScratchR[i] * wet2 * gain);
-	}
-
+    public void process(FloatBuffer left, FloatBuffer right) {
+    	process(left);
+    	stereoReverb.process(right);
+    }
+    
     @Override
     public void process(FloatBuffer buf) {
     	buf.rewind();
@@ -342,17 +301,16 @@ public final class Freeverb extends Reverb {
         int i;
 
         wet1 = wet * (width / 2 + 0.5f);
-        wet2 = wet * ((1 - width) / 2);
 
         for (i = 0; i < numcombs; i++) {
             combL[i].setFeedback(roomsize);
-            combR[i].setFeedback(roomsize);
         }
 
         for (i = 0; i < numcombs; i++) {
             combL[i].setdamp(damp);
-            combR[i].setdamp(damp);
         }
+        if (stereoReverb != null)
+        	stereoReverb.update();
     }
 
     private class Comb {
@@ -469,16 +427,14 @@ public final class Freeverb extends Reverb {
 	@Override
 	public void setActive(boolean active) {
 		this.active = active;
+		if (stereoReverb != null)
+			stereoReverb.setActive(active);
 		if (active) return;
 		new Thread( () -> { // clear the echo
 			for (Allpass l : allpassL)
 				l.reset();
-			for (Allpass r : allpassR)
-				r.reset();
 			for (Comb l : combL)
 				l.reset();
-			for (Comb r : combR)
-				r.reset();
 		}).start();
 	}
 

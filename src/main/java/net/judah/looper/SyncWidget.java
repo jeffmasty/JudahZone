@@ -110,7 +110,7 @@ public class SyncWidget extends JLabel implements TimeListener {
 			new Thread(() -> {
 				loop.record(false);
 				clock.removeListener(this);
-				clock.latch(loop);
+				clock.listen(loop);
 			}).start();
 		}
 	}

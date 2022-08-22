@@ -1,6 +1,7 @@
-package net.judah.tracker.todo;
+package net.judah.tracker;
 
 import lombok.Data;
+import net.judah.api.Key;
 
 @Data
 public class Chord {

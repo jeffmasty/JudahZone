@@ -6,8 +6,8 @@ import net.judah.MainFrame;
 import net.judah.api.Midi;
 import net.judah.looper.Loop;
 import net.judah.mixer.Channel;
-import net.judah.mixer.SoloTrack;
 import net.judah.mixer.LineIn;
+import net.judah.mixer.SoloTrack;
 import net.judah.util.RTLogger;
 
 public class Line6FBV implements Controller {
@@ -96,14 +96,18 @@ public class Line6FBV implements Controller {
 			return true;
 		case 8: // Stomp
 			guitar.getOverdrive().setActive(data2 > 0);
+			MainFrame.update(guitar);
 			return true;
 		case 9: // Mod
 			guitar.getChorus().setActive(data2 > 0);
+			MainFrame.update(guitar);
 			return true;
 		case 10: // Delay
 			guitar.getDelay().setActive(data2 > 0);
+			MainFrame.update(guitar);
 			return true;
 		case 11: // Reverb
+			MainFrame.update(guitar);
 			guitar.getReverb().setActive(data2 > 0);
 			return true;
 

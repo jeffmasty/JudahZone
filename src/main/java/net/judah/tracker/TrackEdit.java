@@ -6,6 +6,8 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 
 import javax.swing.*;
@@ -60,6 +62,15 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
     
     public abstract void update();
     
+    public void setPattern(int idx) {
+    	if (getPattern().getSelectedIndex() != idx) {
+			pattern.removeActionListener(this);
+			pattern.setSelectedIndex(idx);
+			pattern.addActionListener(this);
+		}
+    }
+
+    
 	public final void fillInstruments() {
 		instrument.fillInstruments();
 	}
@@ -69,12 +80,17 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
 	}
 	
 	public final void fillPatterns() {
+		track.getCycle().setCount(0); // TODO
 		pattern.removeActionListener(this);
 		pattern.removeAllItems();
 		for (Pattern p : track)
 			pattern.addItem(p.getName());
 		pattern.addItem("new");
+		pattern.setSelectedItem(track.getCurrent().getName());
 		pattern.addActionListener(this);
+		if (!track.isDrums())
+			track.getCurrent().update();
+		filename.refresh();
 	}
 	
 	public final void fillTracks() {
@@ -100,6 +116,16 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
         trklbl.setFont(Constants.Gui.BOLD);
         JLabel patlbl = new JLabel("Pattern", JLabel.CENTER);
         patlbl.setFont(Constants.Gui.BOLD);
+        patlbl.addMouseListener(new MouseAdapter() {
+        	@Override
+        	public void mouseClicked(MouseEvent e) {
+        		String name = Constants.inputBox("Pattern Name:");
+        		if (name == null || name.isEmpty()) return;
+        		track.getCurrent().setName(name);
+        		fillPatterns();
+        		track.getView().fillPatterns();
+        	}
+		});
 		
         JPanel pnl;
 		pnl = new JPanel(new GridLayout(1, 2));
@@ -107,13 +133,20 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
         pnl.add(patlbl);
         buttons.add(pnl);
 
-        pnl = new JPanel(new GridLayout(1, 2));
+		pnl = new JPanel(new GridLayout(1, 2));
         trackNum.setFont(Constants.Gui.BOLD);
         pnl.add(trackNum);
         pnl.add(pattern);
         buttons.add(pnl);        
         createTrackNav();
-        buttons.add(filename);
+        
+        pnl = new JPanel();
+        JButton file = new JButton("clear");
+        file.addActionListener(e -> track.setFile(null));
+        pnl.add(new JLabel("File", JLabel.CENTER));
+        pnl.add(file);
+        pnl.add(filename);
+        buttons.add(pnl);
         
         pnl = new JPanel();
         pnl.add(new JLabel("Cycle"), JLabel.CENTER);
@@ -156,10 +189,17 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
         
         createPlayButtons();
 
+        JButton create = new JButton("New");
+        create.addActionListener(e -> track.newPattern());
+        JButton copy = new JButton("Copy");
+        copy.addActionListener(e -> track.copyPattern());
+        JButton delete = new JButton("Del");
+        delete.addActionListener(e -> track.deletePattern());
+
         pnl = new JPanel(new GridLayout(1, 3));
-        pnl.add(new JButton("New"));
-        pnl.add(new JButton("Copy"));
-        pnl.add(new JButton("Del"));
+        pnl.add(create);
+        pnl.add(copy);
+        pnl.add(delete);
         buttons.add(pnl);
         
         pnl = new JPanel(new GridLayout(1, 2));
@@ -200,15 +240,13 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
 
 	private void createPlayButtons() {
 
-        Click saveBtn = new Click("Save");
+        JButton saveBtn = new JButton("Save");
         saveBtn.addActionListener( e -> {
             FileChooser.setCurrentDir(track.getFolder());
             File f = FileChooser.choose();
             if (f != null)
                 track.write(f);
         });
-
-        
         
         playWidget.addActionListener((e) -> track.setActive(!track.isActive()));
         JPanel pnl = new JPanel(new GridLayout(1, 3));
@@ -222,7 +260,8 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
 	public boolean handled(ActionEvent e) {
 		if (e.getSource() == pattern) 
 			patternAction();
-		else if (e.getSource() == trackNum) 
+		else 
+		if (e.getSource() == trackNum) 
 			trackAction();
 		else 
 			return false;
@@ -237,15 +276,10 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
 		trackNum.setSelectedIndex(track.getNum());
 		trackNum.addActionListener(this);
 	}
-	
+
 	private void patternAction() {
 		if ("new".equals("" + pattern.getSelectedItem())) {
-			String name = "" + (char)('A' + track.size());
-			Pattern pat = new Pattern(name);
-			track.add(pat);
-        	fillPatterns();
-        	track.getView().fillPatterns();
-			track.setCurrent(pat);
+			track.newPattern();
 		}
 		else 
 			track.setCurrent(track.get(pattern.getSelectedIndex()));

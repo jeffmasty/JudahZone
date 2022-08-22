@@ -31,7 +31,7 @@ public class Constants {
 	
 	// TODO generalize
 	private static int _SAMPLERATE = 48000;
-	private static int _BUFSIZE = 256;//TODO:(512)
+	private static int _BUFSIZE = 512;//TODO:(256)
 	public static int sampleRate() { return _SAMPLERATE; }
 	public static int bufSize() { return _BUFSIZE; }
 	/** Digital interface name */

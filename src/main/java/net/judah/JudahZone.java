@@ -5,6 +5,7 @@ import static net.judah.util.Constants.*;
 import static org.jaudiolibs.jnajack.JackPortFlags.*;
 import static org.jaudiolibs.jnajack.JackPortType.AUDIO;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +36,8 @@ import net.judah.plugin.Carla;
 import net.judah.plugin.Plugins;
 import net.judah.sequencer.Sequencer;
 import net.judah.settings.Channels;
+import net.judah.tracker.Track;
+import net.judah.tracker.Tracker;
 import net.judah.util.Constants;
 import net.judah.util.Icons;
 import net.judah.util.JudahException;
@@ -183,12 +186,20 @@ public class JudahZone extends BasicClient {
         System.gc();
         Fader.execute(Fader.fadeIn());
         masterTrack.setOnMute(false);
-        Constants.timer(100, () -> {
+        Constants.timer(200, () -> {
             // load default song?: new Sequencer(new File(Constants.ROOT, "Songs/InMood4Love"));
             MainFrame.updateTime();
             MainFrame.setFocus(channels.getGuitar());
-        });
-        Jamstik.setMidiOut(new Path(midi.getFluidOut(), channels.getUno()));
+            Jamstik.setMidiOut(new Path(midi.getFluidOut(), channels.getUno()));
+			final Tracker tracks = JudahMidi.getClock().getTracker();
+			int delay = 200;
+			Constants.timer(delay, () -> tracks.getDrum3().setFile(new File(Track.DRUM_FOLDER, "SkipBeats")));
+			Constants.timer(delay * 2, () -> tracks.getDrum1().setFile(new File(Track.DRUM_FOLDER, "Rock1")));
+			Constants.timer(delay * 3, () -> tracks.getDrum2().setFile(new File(Track.DRUM_FOLDER, "Hats2")));
+			Constants.timer(delay * 4, () -> tracks.getBass().setFile(new File(Track.MELODIC_FOLDER, "tinyBass")));
+			Constants.timer(delay * 5, () -> tracks.getLead2().setFile(new File(Track.MELODIC_FOLDER, "Lollipop")));
+			Constants.timer(delay * 6, () -> tracks.getChords().setFile(new File(Track.MELODIC_FOLDER, "CanonD")));
+		});
         
     }
 

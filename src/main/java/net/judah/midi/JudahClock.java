@@ -2,12 +2,12 @@ package net.judah.midi;
 
 import static net.judah.api.Notification.Property.*;
 
-import java.io.File;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
 import org.jaudiolibs.jnajack.JackException;
@@ -24,18 +24,18 @@ import net.judah.api.Notification;
 import net.judah.api.Notification.Property;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
+import net.judah.api.TimeNotifier;
 import net.judah.api.TimeProvider;
 import net.judah.looper.Loop;
 import net.judah.looper.SyncWidget;
 import net.judah.looper.SyncWidget.SelectType;
 import net.judah.sequencer.Sequencer;
-import net.judah.tracker.DrumTrack;
 import net.judah.tracker.Track;
 import net.judah.tracker.Tracker;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
-public class JudahClock extends Thread implements TimeProvider {
+public class JudahClock extends Thread implements TimeProvider, TimeListener {
 	static final byte[] MIDI_RT_CLOCK 	 = new byte[] {(byte)ShortMessage.TIMING_CLOCK};
 	static final byte[] MIDI_RT_START    = new byte[] {(byte)ShortMessage.START}; 
 	static final byte[] MIDI_RT_CONTINUE = new byte[] {(byte)ShortMessage.CONTINUE};
@@ -79,7 +79,8 @@ public class JudahClock extends Thread implements TimeProvider {
 	private static final float MAX_TEMPO = 300f; 
 
 	private final JudahMidi midi;
-	private TimeListener listener;
+	private TimeNotifier source;
+	
     private final ArrayList<TimeListener> listeners = new ArrayList<>();
 
 	// @Getter private BeatBuddy drummachine = new BeatBuddy();
@@ -93,36 +94,11 @@ public class JudahClock extends Thread implements TimeProvider {
 		midi = midiSystem;
 		clockOut = midi.getClockOut();
 		instance = this;
-	    tracks = initTracks();
-	    tracker = new Tracker(tracks);
+	    tracker = new Tracker(this, midiSystem);
+	    tracks = tracker.getTracks();
+
 	    setPriority(8);
 	    start();
-	}
-
-	private Track[] initTracks() {
-		
-		DrumTrack drum1 = new DrumTrack(this, "Drum1", 9, midi.getCalfOut());
-		DrumTrack drum2 = new DrumTrack(this, "Drum2", 9, midi.getCalfOut());
-		DrumTrack drum3 = new DrumTrack(this, "Drum3", 9, midi.getFluidOut());
-		DrumTrack drum4 = new DrumTrack(this, "Drum4", 9, midi.getFluidOut());
-		
-//		bass = new PianoTrack(this, "Bass", 0, midi.getCraveOut());
-//		lead1 = new PianoTrack(this, "Lead1", 0, midi.getCalfOut());
-//		lead2 = new PianoTrack(this, "Lead2", 0, midi.getFluidOut());
-//		chords = new PianoTrack(this, "Chords", 0, midi.getFluidOut());
-
-		
-		Constants.timer(1500, () -> {
-			drum1.setFile(new File(Track.DRUM_FOLDER, "try1"));
-			// drum2.setFile(new File(Track.DRUM_FOLDER, "Hats2"));
-			// drum3.setFile(new File(Track.DRUM_FOLDER, "Aux1"));
-			// drum4.setFile(new File(Track.DRUM_FOLDER, "Drum2"));
-			// bass.setFile(new File(Track.MELODIC_FOLDER, "Naima"));
-			//lead.setFile(new File(Track.MELODIC_FOLDER, "BluesBass"));
-			//chords.setFile(new File(Track.MELODIC_FOLDER, "CarveOut"));
-		});
-		
-		return new Track[] {drum1, drum2, drum3, drum4 /*bass, lead1, lead2, chords */}; 
 	}
 
 	@Override
@@ -184,10 +160,15 @@ public class JudahClock extends Thread implements TimeProvider {
 
 		tempo = tempo2;
 		if (mode == Mode.Internal) {
-			// BeatBuddy.setTempo(tempo);
+			try {
+				JudahMidi.queue(new CC(0, 15, (int) (tempo - 40)), midi.getTempo());
+			} catch (InvalidMidiDataException e) {
+				RTLogger.warn(this, e);
+			}
 		}
 		interval = Constants.millisPerBeat(tempo) / MIDI_24;
 		shout(TEMPO, tempo);
+		RTLogger.log(this, "tempo " + tempo);
 		return true;
 	}
 	
@@ -206,7 +187,7 @@ public class JudahClock extends Thread implements TimeProvider {
 		
 		new Thread( () -> {
 			for (Track track : tracks)
-				track.step(step);} ).run();
+				track.step();} ).run();
 
         if (step % subdivision == 0) {
         	// run the current beat
@@ -283,7 +264,7 @@ public class JudahClock extends Thread implements TimeProvider {
 	    active = true;
 	    if (Sequencer.getCurrent() != null)
 	        Sequencer.getCurrent().setClock(this);
-
+	    
 	    shout(TRANSPORT, JackTransportState.JackTransportStarting);
 	    lastPulse = lastBeat = System.currentTimeMillis();
 	    midiPulseCount = 0;
@@ -321,38 +302,48 @@ public class JudahClock extends Thread implements TimeProvider {
 		listeners.remove(l);
 	}
 
-    public void latch(Loop loopA) {
-    	latch(loopA, length * getMeasure());
-    }
-    
-	public void latch(Loop loop, int beats) {
-		
-		if (loop.hasRecording() && loop.getRecordedLength() > 0) {
-			listen(loop); 
-			// tempo tweak to loop
-			// float tempo = Constants.computeTempo(loop.getRecordedLength(), beats);
-			// RTLogger.log(this, "[" + loop.getName() + "] " + loop.getRecordedLength()/1000f + "s. from " + 
-			//				+ getTempo() + " to " + tempo + " bpm ");
-			// setTempo(tempo);
+
+public void listen(final Loop target) {
+//		
+//		// tempo tweak to loop
+//		// float tempo = Constants.computeTempo(loop.getRecordedLength(), beats);
+//		// RTLogger.log(this, "[" + loop.getName() + "] " + loop.getRecordedLength()/1000f + "s. from " + 
+//		//				+ getTempo() + " to " + tempo + " bpm ");
+//		// setTempo(tempo);
+//
+	if (source != null)
+		source.removeListener(this);
+	source = target;
+	source.addListener(this);
+}
+//		if (listener != null) return;
+//		listener = new TimeListener() {
+//			@Override public void update(Property prop, Object value) {
+//				if (prop.equals(LOOP)) { // TODO
+//					begin();
+//					target.removeListener(this);
+//				}
+//				else if (Status.TERMINATED==value) {
+//					listener = null;
+//				}
+//			}
+//		};
+//		target.addListener(listener);
+//	}
+
+	
+	
+	@Override public void update(Property prop, Object value) {
+		if (prop.equals(LOOP)) { // TODO
+			begin();
+			source.removeListener(this);
+		}
+		else if (Status.TERMINATED == value) {
+			source.removeListener(this);
 		}
 	}
 
-	void listen(final Loop target) {
-		if (listener != null) return;
-		listener = new TimeListener() {
-			@Override public void update(Property prop, Object value) {
-				if (prop.equals(LOOP)) { // TODO
-					step = 0;
-					begin();
-				}
-				else if (Status.TERMINATED==value) {
-					listener = null;
-				}
-			}
-		};
-		target.addListener(listener);
-	}
-
+	
 	public void togglePlay() {
 		if (isActive()) 
 			end();
@@ -397,8 +388,8 @@ public class JudahClock extends Thread implements TimeProvider {
 	
 	public void setMode(Mode mode) {
 		this.mode = mode;
-		if (mode == Mode.Internal)
-			lastPulse = System.currentTimeMillis();
+//		if (mode == Mode.Internal)
+//			lastPulse = System.currentTimeMillis();
 		RTLogger.log(this, "Clock: " + mode);
 	}
 

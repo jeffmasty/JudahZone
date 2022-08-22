@@ -2,7 +2,7 @@
 
 A mixer/looper/live performance environment written in Java for the Jack sound system. (https://jackaudio.org/)
 
-6 mono or stereo input channels are currently handled, as well as 4 synchronized stereo recording loops. All are mixed into a master stereo output bus.  All channels have separately controlled internal gain, EQ, Hi/Lo Cut, Chorus, Overdrive, Delay, Reverb, an LFO, and stereo panning. These internal effects are supplanted by LV2 plugins hosted externally and controlled over OSC. There's also an internal Song and Pattern/Step Sequencer, Guitar Tuner, Midi Router, 
+6 mono or stereo input channels are currently handled, as well as 4 synchronized stereo recording loops. All are mixed into a master stereo output bus.  All channels have separately controlled internal gain, EQ, Hi/Lo Cut, Chorus, Overdrive, Delay, Reverb, an LFO, and stereo panning. These internal effects are supplanted by LV2 plugins hosted externally and controlled over OSC. There's also an internal Song and Pattern/Step Sequencer, Guitar Tuner, Midi Router. 
 
 Works great with an Akai MPK-Mini Midi Controller and/or a guitar/mic and midi foot switch controller.
 A few recordings made: https://www.youtube.com/user/judahmu/videos

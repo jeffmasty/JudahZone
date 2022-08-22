@@ -55,7 +55,7 @@ public class PresetsDB extends ArrayList<Preset> {
     public String toString() {
         StringBuffer result = new StringBuffer();
         for (Preset p : this)
-            result.append(p);
+            result.append(p.toFile());
         return result.toString();
     }
 

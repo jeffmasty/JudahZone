@@ -1,7 +1,6 @@
 package net.judah.mixer;
 
-import static net.judah.util.AudioTools.processAdd;
-import static net.judah.util.AudioTools.processSilence;
+import static net.judah.util.AudioTools.*;
 
 import java.nio.FloatBuffer;
 
@@ -18,7 +17,7 @@ public class MasterTrack extends Channel {
 
 	public MasterTrack(JackPort left, JackPort right,
 	        JackPort effectsL, JackPort effectsR, Reverb reverb) {
-		super("MAIN");
+		super("MAIN", true);
 		this.speakersLeft = left;
 		this.speakersRight = right;
 		this.effectsL = effectsL;

@@ -48,6 +48,7 @@ public class MidiGui extends JPanel implements TimeListener {
     private final MidiOut circuit1 = new MidiOut();
     private final MidiOut circuit2 = new MidiOut();
 	private final MidiOut mpk = new MidiOut();
+	private final JPanel mpkPanel = new JPanel();
 	private Jamstik jam;
     
 	private final Border NONE = BorderFactory.createLineBorder(Pastels.BUTTONS, 4);
@@ -105,7 +106,9 @@ public class MidiGui extends JPanel implements TimeListener {
                 String input = Constants.inputBox("Tempo:");
                 if (input == null || input.isEmpty()) return;
                 try { clock.setTempo(Float.parseFloat(input));
-                } catch (Throwable t) { Console.info(t.getMessage() + " " + input); }
+                } catch (Throwable t) { 
+                	RTLogger.log(this, t.getMessage() + " -> " + input); 
+                	}
             }});
         tempoLbl.setFont(Constants.Gui.BOLD);
 
@@ -170,14 +173,14 @@ public class MidiGui extends JPanel implements TimeListener {
         left4.add(circuit2);
         
         
-        JPanel p1 = new JPanel(), p2 = new JPanel(), p4 = new JPanel();
+        JPanel p1 = new JPanel(), p2 = new JPanel();
         JPanel jamPanel = new JPanel();
         jam = new Jamstik(jamPanel, JudahZone.getServices());
 
         p1.setBackground(Pastels.BUTTONS);
         p2.setBackground(Pastels.BUTTONS);
         jamPanel.setBackground(Pastels.BUTTONS);
-        p4.setBackground(Pastels.BUTTONS);
+        mpkPanel.setBackground(Pastels.BUTTONS);
         
         p1.add(new JLabel("Calf", SwingConstants.CENTER));
         p1.add(max(calf));
@@ -185,10 +188,13 @@ public class MidiGui extends JPanel implements TimeListener {
         p2.add(max(fluid));
         jamPanel.add(new JLabel("Jam", SwingConstants.CENTER));
         jamPanel.add(max(jam));
-        p4.add(new JLabel("MPK", SwingConstants.CENTER));
-        p4.add(max(mpk));
         
-        right.add(p1); right.add(p2); right.add(jamPanel); right.add(p4);
+        
+        
+        mpkPanel.add(new JLabel("MPK", SwingConstants.CENTER));
+        mpkPanel.add(max(mpk));
+        
+        right.add(p1); right.add(p2); right.add(jamPanel); right.add(mpkPanel);
 	
 	
 	}
@@ -206,8 +212,9 @@ public class MidiGui extends JPanel implements TimeListener {
 			else 
 				clock.setLength((int) Constants.ratio(data2, JudahClock.LENGTHS));
 			return;
-    	case 1: // set Tempo
-    		clock.setTempo( (data2 + 40) * 1.25f); return; 
+    	case 1: 
+    		// Tempo handled at MPK
+    		return;
     	case 2: // calf inst
     		calf.setSelectedIndex(data2);
     		return;
@@ -256,6 +263,10 @@ public class MidiGui extends JPanel implements TimeListener {
 	
 	public void mode(KnobMode knobs) {
 		setBorder(knobs == KnobMode.Clock ? Constants.Gui.HIGHLIGHT : NONE);
+	}
+
+	public void transpose(boolean active) {
+		mpkPanel.setBackground(active ? Pastels.RED: Pastels.BUTTONS);
 	}
 
 }

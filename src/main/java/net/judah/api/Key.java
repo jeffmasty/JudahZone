@@ -1,4 +1,4 @@
-package net.judah.tracker.todo;
+package net.judah.api;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -23,4 +23,9 @@ public enum Key {
     private final int flats;
     private final String alt;
 
+    public static boolean isPlain(int data1) {
+    	return Key.values()[data1 % 12].alt == null;
+    }
+    
+    
 }

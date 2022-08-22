@@ -12,6 +12,7 @@ public class MidiSetup {
 	@RequiredArgsConstructor
 	public static enum IN { 
 		// in Midi ports
+		PULSE("pulse"),
 		KEYBOARD("keyboard"), 
 		MIXER("mixer"),
 		PADS("pads"),
@@ -31,11 +32,12 @@ public class MidiSetup {
 
 	@RequiredArgsConstructor
 	public enum OUT { // out ports
+		TEMPO("Tempo"),
 		CLOCK_OUT("Clock"),
 		SYNTH_OUT("Fluid"), 
 		CALF_OUT("Calf"),
 		CRAVE_OUT("Crave"),
-		CIRCUIT_OUT("Circuit"),
+		CIRCUIT_OUT("Circuit")
 		//UNO_OUT("Uno"),
 		;//AUX1_OUT("Aux");
 		

@@ -1,51 +1,44 @@
 package net.judah.tracker;
 
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.Arrays;
 
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JComboBox;
 
-public class FileCombo extends JComboBox<String> implements ItemListener {
+public class FileCombo extends JComboBox<String> implements ActionListener {
 
-	private boolean inUpdate;
 	private final Track track;
 	
 	public FileCombo(Track track) {
 		this.track = track;
-		
+				DefaultListCellRenderer center = new DefaultListCellRenderer(); 
+		center.setHorizontalAlignment(DefaultListCellRenderer.CENTER); 
+		setRenderer(center);
 		refresh();
-
-		if (track.getFile() != null) {
-			removeActionListener(this);
-			setSelectedItem(track.getFile().getName());
-			addActionListener(this);
-		}
 		
 	}
 
-	@Override public void itemStateChanged(ItemEvent e) {
-		if (inUpdate) {
-			inUpdate = false;
-			return;
-		}
-		inUpdate = true;
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		super.actionPerformed(e);
 		String select = "" + getSelectedItem();
-		if (select.isBlank()) {
+		if (select.isBlank()) 
 			track.setFile(null);
-		}
-		else {
-			File file = new File(track.getFolder(), getSelectedItem().toString());
-			track.setFile(file);
-		}
+		else 
+			track.setFile(new File(track.getFolder(), select));
 	}
 	
 	public void refresh() {
-		String selected = "" + getSelectedItem();
+		String selected = (track.getFile() == null) ? "" : track.getFile().getName();
 		removeActionListener(this);
 		removeAllItems();
 		addItem("");
-		for (String name : track.getFolder().list()) 
+		String[] sort = track.getFolder().list();
+		Arrays.sort(sort);
+		for (String name : sort) 
 			addItem(name);
 		setSelectedItem(selected);
 		addActionListener(this);

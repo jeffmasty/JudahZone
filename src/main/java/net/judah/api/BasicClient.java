@@ -1,21 +1,11 @@
 package net.judah.api;
 
-import static net.judah.api.Status.ACTIVE;
-import static net.judah.api.Status.CLOSING;
-import static net.judah.api.Status.INITIALISING;
-import static net.judah.api.Status.NEW;
-import static net.judah.api.Status.TERMINATED;
+import static net.judah.api.Status.*;
 
 import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.jaudiolibs.jnajack.Jack;
-import org.jaudiolibs.jnajack.JackClient;
-import org.jaudiolibs.jnajack.JackException;
-import org.jaudiolibs.jnajack.JackOptions;
-import org.jaudiolibs.jnajack.JackProcessCallback;
-import org.jaudiolibs.jnajack.JackShutdownCallback;
-import org.jaudiolibs.jnajack.JackStatus;
+import org.jaudiolibs.jnajack.*;
 
 import lombok.Getter;
 import net.judah.util.Constants;
@@ -78,7 +68,6 @@ public abstract class BasicClient extends Thread implements JackProcessCallback,
         }
 
         close();
-        state.set(TERMINATED);
 	}
 
 	public void close() {
@@ -88,8 +77,8 @@ public abstract class BasicClient extends Thread implements JackProcessCallback,
 		if (jackclient != null)
 	        try {
 	            jackclient.close();
+	            state.set(TERMINATED);
 	        } catch (Throwable t) {System.err.println(t.getMessage());}
-        state.set(TERMINATED);
     }
 
     @Override

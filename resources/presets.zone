@@ -10,3 +10,10 @@ EQ(63/43/45)
 Delay(54/36)
 [ABBAsoon]
 EQ(67/52/81)
+[Crave]
+Chorus(30/31/38)
+Reverb(51/100/26)
+[FeelLove]
+Chorus(29/19/25)
+Delay(45/2)
+Reverb(21/100/4)

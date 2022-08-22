@@ -1,4 +1,4 @@
-package net.judah.tracker.todo;
+package net.judah.tracker;
 
 import static net.judah.util.Size.*;
 
@@ -11,24 +11,23 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import net.judah.tracker.Track;
-import net.judah.tracker.TrackEdit;
-
 public class PianoEdit extends TrackEdit {
 
 	private static final int OCTAVES = 6;
 	private final Dimension PIANO_ROLL = new Dimension(WIDTH_SONG - WIDTH_BUTTONS - 30, TABS.height- 10);
-	private final JudahPiano roll;
 	private final JComboBox<Integer> gate = new JComboBox<>();
+	JScrollPane scroller;
 	
-	public PianoEdit(Track track) {
+	
+	public PianoEdit(PianoTrack track) {
 		super(track);
 		JPanel pnl = new JPanel(new GridLayout(1, 4));
 		JLabel gt = new JLabel("Gate", JLabel.CENTER);
 		pnl.add(gt);
-		for (int i = 0; i < track.getSteps(); i++)
+		for (int i = 1; i < track.getSteps(); i++)
             gate.addItem(i);
-
+		gate.setSelectedItem(track.getGate());
+		gate.addActionListener(this);
 		pnl.add(gate);
 		JLabel oc = new JLabel("Octave", JLabel.CENTER);
 		for (int i = 1; i <= OCTAVES; i++)
@@ -37,9 +36,9 @@ public class PianoEdit extends TrackEdit {
 		
 		buttons.add(pnl);
 		
-		roll = new JudahPiano(track, PIANO_ROLL);
-
-        JScrollPane scroller = new JScrollPane(roll);
+        scroller = new JScrollPane();
+        if (track.getCurrent() != null)
+        	scroller.setViewportView(track.getCurrent().getTable());
         scroller.setVisible(true);
         add(scroller);
 		
@@ -54,11 +53,22 @@ public class PianoEdit extends TrackEdit {
 	public void actionPerformed(ActionEvent e) {
 		if (super.handled(e))
 			return;
+		if (e.getSource() == gate)
+			((PianoTrack)track).setGate((int)gate.getSelectedItem());
 	}
 
 	@Override
 	public void update() {
-		roll.repaint();
+		track.getCurrent().update();
+	}
+
+	@Override
+	public void setPattern(int idx) {
+		super.setPattern(idx);
+		Pattern p = track.getCurrent();
+		p.getTable().setPreferredScrollableViewportSize(PIANO_ROLL);
+		p.update();
+		scroller.setViewportView(p.getTable());
 	}
 
 }

@@ -65,12 +65,12 @@ public enum GMDrum {
             Shaker, HiBongo, LowBongo, OpenHiConga
     };
 	
-    private final int midi;
+    private final int data1;
     private final String display;
 
     public static GMDrum lookup(int midi) {
     	for (GMDrum x : GMDrum.values())
-    		if (x.midi ==  midi)
+    		if (x.data1 ==  midi)
     			return x;
     	return null;
     }
@@ -79,14 +79,14 @@ public enum GMDrum {
 		if (midi == null) return "null";
 		int val = midi.getData1();
 		for (GMDrum d : values()) {
-		    if (d.midi == val)
+		    if (d.data1 == val)
 		        return d.display + " ("+ midi + ")";
 		}
 		return midi.toString();
 	}
 
 	public byte toByte() {
-		return Integer.valueOf(midi).byteValue();
+		return Integer.valueOf(data1).byteValue();
 	}
 	
 	@Override

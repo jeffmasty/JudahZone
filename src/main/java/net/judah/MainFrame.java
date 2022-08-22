@@ -12,6 +12,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import net.judah.controllers.KnobMode;
 import net.judah.effects.gui.PresetsGui;
 import net.judah.looper.LoopWidget;
@@ -72,7 +73,7 @@ public class MainFrame extends JFrame implements Size, Runnable {
         top.setLayout(new BoxLayout(top, BoxLayout.LINE_AXIS));
         top.add(midiGui);
         top.add(mixer);
-        tabs.setTabPlacement(JTabbedPane.BOTTOM); 
+        // tabs.setTabPlacement(JTabbedPane.BOTTOM); 
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         tabs.addMouseListener(new MouseAdapter() {
         	@Override public void mousePressed(MouseEvent e) {
@@ -125,6 +126,7 @@ public class MainFrame extends JFrame implements Size, Runnable {
         Thread updates = new Thread(this);
         updates.setPriority(4);
         updates.start();
+        
     }
 
     public void closeTab(SongPane c) {
@@ -215,34 +217,42 @@ public class MainFrame extends JFrame implements Size, Runnable {
     	updates.offer(o);
     }
 
+    @RequiredArgsConstructor
+    private static class Focus extends Thread {
+    	private final Object o;
+    	@Override public void run() {
+	    	if (o instanceof Channel) {
+	    		instance.controls.setFocus((Channel)o);
+	    		instance.mixer.highlight((Channel)o);
+	    	}
+	    	else if (o instanceof Track) {
+	    		instance.mixer.highlight(null);
+	    		instance.tracker.setCurrent((Track)o);
+	    	}
+	    	else if (o instanceof KnobMode) {
+	    		KnobMode knobs = (KnobMode)o;
+	    		JudahMidi.getInstance().getGui().mode(knobs);
+	    		ControlPanel.getInstance().getTuner().setChannel(null);
+	    		if (knobs == KnobMode.Effects1 || knobs == KnobMode.Effects2) {
+	    			instance.controls.setBorder(Constants.Gui.HIGHLIGHT);
+	    			instance.tracker.setCurrent(null);
+	    			instance.mixer.highlight(instance.controls.getCurrent().getChannel());
+	    		}
+	    		else {
+	    			instance.controls.setBorder(Constants.Gui.NONE);
+	    			instance.mixer.highlight(null);
+	    			if (knobs == KnobMode.Tracks)
+	    				instance.tracker.setCurrent(Tracker.getCurrent());
+	    			else
+	    				instance.tracker.setCurrent(null);
+	    		}
+	    		instance.invalidate();
+	    	}
+    	}
+    }
+    
     public static void setFocus(Object o) {
-    	if (o instanceof Channel) {
-    		instance.controls.setFocus((Channel)o);
-    		instance.mixer.highlight((Channel)o);
-    	}
-    	else if (o instanceof Track) {
-    		instance.mixer.highlight(null);
-    		instance.tracker.setCurrent((Track)o);
-    	}
-    	else if (o instanceof KnobMode) {
-    		KnobMode knobs = (KnobMode)o;
-    		JudahMidi.getInstance().getGui().mode(knobs);
-    		ControlPanel.getInstance().getTuner().setChannel(null);
-    		if (knobs == KnobMode.Effects1 || knobs == KnobMode.Effects2) {
-    			instance.controls.setBorder(Constants.Gui.HIGHLIGHT);
-    			instance.tracker.setCurrent(null);
-    			instance.mixer.highlight(instance.controls.getCurrent().getChannel());
-    		}
-    		else {
-    			instance.controls.setBorder(Constants.Gui.NONE);
-    			instance.mixer.highlight(null);
-    			if (knobs == KnobMode.Tracks)
-    				instance.tracker.setCurrent(Tracker.getCurrent());
-    			else
-    				instance.tracker.setCurrent(null);
-    		}
-    		instance.invalidate();
-    	}
+    	new Focus(o).start();
     }
 
 
@@ -259,7 +269,8 @@ public class MainFrame extends JFrame implements Size, Runnable {
 
 			if (o instanceof Channel) {
 				Channel ch = (Channel)o;
-				instance.mixer.update(ch);
+				if (instance.mixer != null)
+					instance.mixer.update(ch);
 				if (instance.controls.getChannel() == ch)
 					instance.controls.getCurrent().update();
 			}
@@ -295,7 +306,7 @@ public class MainFrame extends JFrame implements Size, Runnable {
 		if (idx >= tabs.getTabCount())
 			idx = 0;
 		if (idx < 0)
-			idx = tabs.getTabCount();
+			idx = tabs.getTabCount() - 1;
 		tabs.setSelectedIndex(idx);
 	}
 	

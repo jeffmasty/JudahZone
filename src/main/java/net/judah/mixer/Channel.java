@@ -35,20 +35,26 @@ public abstract class Channel extends ArrayList<Effect> {
 
 	protected Gain gain = new Gain();
     protected LFO lfo = new LFO();
-    protected CutFilter cutFilter = new CutFilter();
+    protected CutFilter cutFilter;
     protected EQ eq = new EQ();
 	//protected Compression compression = new Compression();
     protected Overdrive overdrive = new Overdrive();
     protected Chorus chorus = new Chorus();
 	protected Delay delay = new Delay();
-    protected Reverb reverb = new Freeverb();
+    protected Reverb reverb;
 
-    public Channel(String name) {
+    @Getter protected final boolean isStereo;
+    
+    public Channel(String name, boolean isStereo) {
         this.name = name;
+        this.isStereo = isStereo;
+        cutFilter = new CutFilter(isStereo);
+        reverb = new Freeverb(isStereo);
         addAll(Arrays.asList(new Effect[] {
                 getLfo(), getCutFilter(), getEq(),
                 getChorus(), getOverdrive(),
                 getDelay(), getReverb()}));
+        
     }
 
     public void setPresetActive(boolean active) {
@@ -56,6 +62,7 @@ public abstract class Channel extends ArrayList<Effect> {
     		return;
     	presetActive = active;
         applyPreset();
+        MainFrame.update(this);
     }
 
     private void applyPreset() {

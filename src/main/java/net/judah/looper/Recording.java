@@ -57,7 +57,7 @@ public class Recording extends Vector<float[][]> {
 
 	/** throw away first and last frames */
 	public void trim() {
-		remove(size() - 1);
+		//remove(size() - 1);
 		remove(0);
 	}
 	

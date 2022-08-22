@@ -1,4 +1,4 @@
-package net.judah.tracker.todo;
+package net.judah.tracker;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;

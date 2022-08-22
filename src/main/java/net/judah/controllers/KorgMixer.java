@@ -123,8 +123,8 @@ public class KorgMixer implements Controller {
 			int trackNum = data1 - roff;
 			Track track = JudahClock.getInstance().getTracks()[trackNum];
 			track.setActive(data2 > 0);
-			if (doubleClick(trackNum)) 
-				MainFrame.setFocus(track);
+//			if (doubleClick(trackNum)) 
+//				MainFrame.setFocus(track);
 			return true;
 		}
 		if (data1 == SET.getVal() && data2 != 0) {

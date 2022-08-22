@@ -31,18 +31,39 @@ public class Instrument extends JComboBox<String> {
 	
 	private final ActionListener listener = new ActionListener() {
 		
+		
+		
+		
 		@Override public void actionPerformed(ActionEvent evt) {
-			String name = "" + getSelectedItem();
+			int idx = lookup(getSelectedItem() + "", track.isDrums());
+			JudahMidi.getInstance().progChange(idx, track.getMidiOut(), track.getCh());
+			track.setInstrument(getSelectedItem() + "");
+
+		}
+	};
+	
+	public static void doIt(int idx, Track track) {
+		ArrayList<FluidInstrument> pack = track.isDrums()
+                ? FluidSynth.getInstruments().getDrumkits()
+                : FluidSynth.getInstruments().getInstruments();
+		FluidInstrument patch = pack.get(idx);
+		sendProgChange(patch, track);
+	}
+
+	public static void sendProgChange(FluidInstrument patch, Track track) {
+		track.setInstrument(patch.name);
+		JudahMidi.getInstance().progChange(patch.index, track.getMidiOut(), track.getCh());
+	}
+	
+	public static void doIt(String name, Track track) {
 			ArrayList<FluidInstrument> pack = track.isDrums()
                 ? FluidSynth.getInstruments().getDrumkits()
                 : FluidSynth.getInstruments().getInstruments();
 			for (FluidInstrument patch : pack)
 				if (patch.name.equals(name)) { 
-					track.setInstrument(name);
-					JudahMidi.getInstance().progChange(patch.index, track.getMidiOut(), track.getCh());
+					sendProgChange(patch, track);
             }
-		}
-	};
+	}
 	
 	public Instrument(Track t) {
 		track = t;
@@ -108,8 +129,8 @@ public class Instrument extends JComboBox<String> {
 		return voices.get(t.getMidiOut());
 	}
 
-	public static int lookup(String name, Track t) {
-		for (FluidInstrument patch : t.isDrums() ? 
+	public static int lookup(String name, boolean isDrums) {
+		for (FluidInstrument patch : isDrums ? 
 				FluidSynth.getInstruments().getDrumkits()
 				: FluidSynth.getInstruments().getInstruments())
 			if (patch.name.equals(name)) 

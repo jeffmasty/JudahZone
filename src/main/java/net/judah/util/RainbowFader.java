@@ -19,7 +19,7 @@ public class RainbowFader extends JSlider {
     static final float slope = 0.04f;
     
     public static Color chaseTheRainbow(int percent) {
-    	
+    	if (percent < 0 || percent > 100) return Color.BLACK;
     	float red = 0;    
     	float green = 0;  
     	float blue = 0;	

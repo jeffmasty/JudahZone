@@ -44,14 +44,13 @@ public class MidiOut extends JComboBox<JackPort>  {
 		this();
 		
 		JudahMidi midi = JudahMidi.getInstance();
-		
+
+		if (!track.isDrums()) {
+			addItem(midi.getCraveOut());
+		}
 		addItem(midi.getFluidOut());
 		addItem(midi.getCalfOut());
 		addItem(midi.getCircuitOut());
-		if (!track.isDrums()) {
-			addItem(midi.getCraveOut());
-			// addItem(midi.getUnoOut());
-		}
 		setSelectedItem(track.getMidiOut());
 		addActionListener(e -> exec(track));
 	}

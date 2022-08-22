@@ -36,6 +36,8 @@ public class Midi extends ShortMessage {
 
 	@Getter @Setter protected String port;
 
+	
+	
 	public Midi(byte[] bytes) {
 		super(bytes);
 	}
@@ -137,7 +139,7 @@ public class Midi extends ShortMessage {
 	public boolean isProgChange() { return isProgChange(this); }
 
 	public static boolean isNoteOn(ShortMessage msg) {
-		return msg.getStatus() - msg.getChannel() == NOTE_ON;
+		return msg != null && msg.getStatus() - msg.getChannel() == NOTE_ON;
 	}
 	
 	public static boolean isNote(ShortMessage msg) {
@@ -243,4 +245,12 @@ public class Midi extends ShortMessage {
         }
     }
 
+    public int octave() {
+		return getData1() / 12 - 2;
+	}
+	public Key key() {
+		return Key.values()[getData1() % 12];
+	}
+
+    
 }

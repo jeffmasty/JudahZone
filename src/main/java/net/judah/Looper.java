@@ -7,6 +7,7 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import net.judah.api.AudioMode;
 import net.judah.looper.Loop;
 import net.judah.looper.SyncWidget.SelectType;
@@ -29,6 +30,8 @@ public class Looper {
     @Getter private Loop loopB;
     @Getter private Loop loopC;
     @Getter private SoloTrack drumTrack;
+    
+    @Getter @Setter private long recordedLength;
     
     /** pause/unpause specific loops, clock-aware */
     @RequiredArgsConstructor @Getter
@@ -56,6 +59,7 @@ public class Looper {
         	JudahClock.setOnDeck(SelectType.SYNC);
         	MainFrame.update(loopA);
         }
+        recordedLength = 0;
     }
 
     public void stopAll() {
@@ -78,7 +82,7 @@ public class Looper {
         loopC = new Loop("C", this);
         add(loopC);
 
-        drumTrack = new SoloTrack(loopA, JudahZone.getChannels().getCalf(), this);
+        drumTrack = new SoloTrack(JudahZone.getChannels().getCalf(), this);
         drumTrack.setIcon(Icons.load("Drums.png"));
         add(drumTrack);
 

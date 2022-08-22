@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
+import net.judah.util.Constants;
 
 public class Preset extends ArrayList<Setting> {
 
@@ -45,6 +46,13 @@ public class Preset extends ArrayList<Setting> {
                 result += ",";
         }
         return result + ")";
+    }
+
+	public Object toFile() {
+        StringBuilder sb = new StringBuilder("[").append(name).append("]").append(Constants.NL);
+        for (Setting s : this)
+            sb.append(s).append(Constants.NL);
+        return sb.toString();
     }
 
 }

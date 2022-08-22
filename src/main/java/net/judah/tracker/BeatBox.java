@@ -21,15 +21,15 @@ import net.judah.util.RTLogger;
 
 public class BeatBox extends JPanel implements MouseListener {
 
-	private final int RADIUS = 24;
+	private final int RADIUS = 23;
 	
     @Getter private final CurrentBeat current;
     @Getter private static int rowHeight;
     private final int colWidth;
-    private final Track track;
+    private final DrumTrack track;
     
     
-    public BeatBox(Track t, Rectangle r) {
+    public BeatBox(DrumTrack t, Rectangle r) {
     	setOpaque(true);
     	setBackground(Pastels.MY_GRAY);
         this.track = t;
@@ -57,16 +57,16 @@ public class BeatBox extends JPanel implements MouseListener {
         Graphics2D g2d = (Graphics2D) g;
 
         Pattern pat = track.getCurrent();
-        DrumKit kit = track.getKit();
+        ArrayList<GMDrum> kit = track.getKit();
         Color color;
         for (int x = 0; x < track.getSteps(); x++) {
             color = x % track.getDiv() == 0 ? Pastels.BLUE :Color.WHITE;
             for (int y = 0; y < kit.size(); y++) {
             	
-            	if (pat.get(x, kit.get(y).getData1()) == null)
+            	if (pat.getNote(x, kit.get(y).getData1()) == null)
                     g2d.setPaint(color);
                 else {
-                	g2d.setPaint(Pastels.forType(pat.get(x, kit.get(y).getData1())));
+                	g2d.setPaint(Pastels.forType(pat.getNote(x, kit.get(y).getData1())));
                 }
                 g2d.fillOval(x * colWidth + 3, y * rowHeight + rowHeight + 5, RADIUS, RADIUS);
             }
@@ -90,7 +90,7 @@ public class BeatBox extends JPanel implements MouseListener {
             return;
         }
         else {
-        	try {
+        	try { // see also Pattern.setValueAt(,,)
 	        	int data1 = track.getKit().get(xy.y).getData1();
 		        Notes note = track.getCurrent().get(xy.x);
 		        if (note == null) {
@@ -117,6 +117,7 @@ public class BeatBox extends JPanel implements MouseListener {
     @Override public void mouseExited(MouseEvent e) { }
 
 	public void step(int step) {
-		current.setActive(step);
+		if (step >= 0)
+			current.setActive(step);
 	}
 }

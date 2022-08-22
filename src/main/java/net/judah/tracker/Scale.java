@@ -1,4 +1,4 @@
-package net.judah.tracker.todo;
+package net.judah.tracker;
 
 import java.util.ArrayList;
 

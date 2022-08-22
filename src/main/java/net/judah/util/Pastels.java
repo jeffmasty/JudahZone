@@ -21,6 +21,7 @@ public interface Pastels {
 	Color MY_GRAY = new Color(220, 220, 210);
 
 	static Paint forType(Notes n) {
+		if (n == null) return Color.WHITE;
 		int cmd = n.get().getCommand();
 		if (ShortMessage.NOTE_ON == cmd)
 			return PINK;

@@ -17,12 +17,12 @@ import net.judah.effects.Fader;
 import net.judah.effects.LFO.Target;
 import net.judah.effects.Overdrive;
 import net.judah.looper.Loop;
-import net.judah.looper.SyncWidget.SelectType;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahClock.Mode;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
+import net.judah.tracker.Cycle;
 import net.judah.util.Constants;
 import net.judah.util.GuitarTuner;
 
@@ -95,12 +95,13 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 				return true;
 			return record(looper.getDrumTrack());
 
-		case 5: // RESET / TODO Song Type
+		case 5: // RESET 
 			if (looper.getLoopA().hasRecording())  
 				looper.reset();
 			return true; 
-		case 6: 
-			JudahClock.setOnDeck(SelectType.SYNC);
+		case 6: // verse/chorus 
+			Cycle.setVerse(true);
+			Cycle.setTrigger(true);
 			return true; 
 		case 7: // focus efx on Main or Circuit Trax channel 
 			ControlPanel controls = ControlPanel.getInstance();
@@ -141,8 +142,10 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		
 		case 10:  // latch B
 			Loop b = looper.getLoopB();
-			if (b.hasRecording())
-				b.duplicate();
+			if (b.hasRecording()) {
+				Cycle.setVerse(Cycle.isVerse());
+				Cycle.setTrigger(true);
+			}
 			else {
 				b.setArmed(!b.isArmed());
 				MainFrame.update(b);
@@ -158,14 +161,18 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			}
 			return true;
 		case 12: // latch Drums
-			if (looper.getLoopA().hasRecording() == false) 
+			if (looper.getRecordedLength() > 0)
+				JudahMidi.getClock().listen(looper.getLoopA());
+			else 
 				looper.getDrumTrack().toggle();
-			else if (looper.getDrumTrack().hasRecording() == false)
-					JudahMidi.getClock().latch(looper.getLoopA());
 			return true;
 			
-		case 13: // reverb
-			new Events.LatchEfx();
+		case 13: // latch EFX
+			Channel line = ControlPanel.getInstance().getChannel();
+			if (line instanceof LineIn)
+				((LineIn)line).getLatchEfx().latch(looper.getLoopA(), looper.getLoopB());
+			else 
+				line.setPresetActive(!line.isPresetActive());
 			return true;
 		case 14: // reset effects for current channel
 			ControlPanel.getInstance().getChannel().reset();
@@ -193,14 +200,15 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 //					MPK.setMode(KnobMode.Effects1);
 //			}
 //			return true;
-		case 16: // play/stop/sync drum machine
-			 JudahClock clock = JudahMidi.getClock();
-			if (clock.isActive()) 
-				clock.end();
-			else if (looper.getLoopA().hasRecording())  
-				clock.latch(looper.getLoopA());
+		case 16: // internal/external clock, sync clock to loop
+			
+			JudahClock clock = JudahMidi.getClock();
+			if (looper.getLoopA().hasRecording()) { 
+				clock.setMode(Mode.Internal);
+				clock.setTempo(Constants.computeTempo(looper.getRecordedLength() - 1, JudahClock.getLength() * clock.getMeasure()));
+			}
 			else 
-				clock.begin();
+				clock.toggleMode();
 			return true; 
 			
 			

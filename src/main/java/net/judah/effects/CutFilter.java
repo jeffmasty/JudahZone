@@ -55,6 +55,8 @@ import net.judah.util.RTLogger;
  */
 public class CutFilter implements Effect {
 
+	private final CutFilter stereo;
+	
     public enum Settings {
         Type, Frequency, Resonance
     }
@@ -101,9 +103,9 @@ public class CutFilter implements Effect {
     private final int bufferSize;
 
     /** left channel */
-    private final IIRFilter eq1 = new IIRFilter();
-    /** right channel */
-    private final IIRFilter eq2 = new IIRFilter();
+    private final IIRFilter filter = new IIRFilter();
+//    /** right channel */
+//    private final IIRFilter eq2 = new IIRFilter();
 
     @Getter private Type filterType = Type.pArTy;
     @Setter @Getter private boolean active;
@@ -111,15 +113,15 @@ public class CutFilter implements Effect {
     private double resonancedB = 9.;
     private Type oldParty;
 
-	public CutFilter() {
-    	this(Constants.sampleRate(), Constants.bufSize());
-    }
+	public CutFilter(boolean isStereo) {
+    	this(Constants.sampleRate(), Constants.bufSize(), isStereo);
+	}
 
-    public CutFilter(int sampleRate, int bufferSize) {
+    public CutFilter(int sampleRate, int bufferSize, boolean isStereo) {
     	this.sampleRate = sampleRate;
     	this.bufferSize = bufferSize;
-    	eq1.reset();
-    	eq2.reset();
+    	filter.reset();
+    	stereo = isStereo ? new CutFilter(sampleRate, bufferSize, false) : null;
     }
 
     @Override public int getParamCount() {
@@ -156,8 +158,9 @@ public class CutFilter implements Effect {
         if (frequency == hz)
             return;
         frequency = hz;
-        eq1.dirty = true;
-        eq2.dirty = true;
+        filter.dirty = true;
+        if (stereo != null)
+        	stereo.setFrequency(hz);
     }
 
     /**Set resonance of filter in dB. <br/>
@@ -166,8 +169,9 @@ public class CutFilter implements Effect {
         if (resonancedB == db)
             return;
         resonancedB = db;
-        eq1.dirty = eq2.dirty = true;
-        //RTLogger.log(this, "resonance: " + resonancedB);
+        filter.dirty = true;
+        if (stereo != null) 
+        	stereo.setResonance(db);
     }
 
     /** @return resonance of filter. */
@@ -184,14 +188,18 @@ public class CutFilter implements Effect {
     	active = true;
     	setFilterType(Type.pArTy);
     	setFrequency(knobToFrequency(tone));
-    	
+    	if (stereo != null) 
+    		stereo.setTone(tone);
     }
 
     /** Set filter type. */
     public void setFilterType(Type filtertype) {
-        if (this.filterType == filtertype) return;
+    	if (stereo != null) 
+    		stereo.setFilterType(filterType);
+
+    	if (this.filterType == filtertype) return;
         this.filterType = filtertype;
-        eq1.dirty = eq2.dirty = true;
+        filter.dirty = true;
         if (filterType == Type.pArTy) {
         	oldParty = frequency <= PARTY_FREQUENCY ? Type.LP12 : Type.HP12;
         }
@@ -205,21 +213,21 @@ public class CutFilter implements Effect {
     	mono.rewind();
         switch (filterType) {
         case LP6:
-    		eq1.filter1Replace(mono, 1);
+    		filter.filter1Replace(mono, 1);
             break;
         case LP12:
         case HP12:
         case NP12:
         case BP12:
-        	eq1.filter2Replace(mono, 1);
+        	filter.filter2Replace(mono, 1);
             break;
         case LP24:
         case HP24:
-        	eq1.filter4Replace(mono, 1);
+        	filter.filter4Replace(mono, 1);
             break;
         case pArTy:
         	checkParty();
-        	eq1.filter2Replace(mono, 2.5f);
+        	filter.filter2Replace(mono, 2.5f);
         	break;
         }
     }
@@ -230,25 +238,25 @@ public class CutFilter implements Effect {
     	right.rewind();
         switch (filterType) {
         case LP6:
-    		eq1.filter1Replace(left, gain);
-    		eq2.filter1Replace(right, gain);
+    		filter.filter1Replace(left, gain);
+    		stereo.process(right);
             break;
         case LP12:
         case HP12:
         case NP12:
         case BP12:
-        	eq1.filter2Replace(left, gain);
-        	eq2.filter2Replace(right, gain);
+        	filter.filter2Replace(left, gain);
+        	stereo.filter.filter2Replace(right, gain);
             break;
         case LP24:
         case HP24:
-        	eq1.filter4Replace(left, gain);
-        	eq2.filter4Replace(right, gain);
+        	filter.filter4Replace(left, gain);
+        	stereo.filter.filter4Replace(right, gain);
             break;
         case pArTy:
         	checkParty();
-        	eq1.filter2Replace(left, gain * 2.5f);
-        	eq2.filter2Replace(right, gain * 2.5f);
+        	filter.filter2Replace(left, gain * 2.5f);
+        	stereo.filter.filter2Replace(right, gain * 2.5f);
         }
 
     }
@@ -256,13 +264,17 @@ public class CutFilter implements Effect {
     private void checkParty() {
 		if (frequency <= PARTY_FREQUENCY) {
 			if (oldParty != Type.LP12) {
-				eq1.dirty = eq2.dirty = true;
+				filter.dirty = true;
+				if (stereo != null)
+					stereo.filter.dirty = true;
 				oldParty = Type.LP12;
 			}
 		}
 		else {
 			if (oldParty != Type.HP12) {
-				eq1.dirty = eq2.dirty = true;
+				filter.dirty = true;
+				if (stereo != null)
+					stereo.filter.dirty = true;
 				oldParty = Type.HP12;
 			}
 		}
