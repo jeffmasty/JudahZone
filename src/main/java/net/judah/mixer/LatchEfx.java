@@ -6,6 +6,7 @@ import net.judah.api.Notification.Property;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.looper.Loop;
+import net.judah.util.RTLogger;
 
 
 public class LatchEfx implements TimeListener {
@@ -18,10 +19,11 @@ public class LatchEfx implements TimeListener {
 	}
 
 	public void clear() {
-		for (Loop a : listenOn) {
+		for (Loop a : listenOn.toArray(new Loop[listenOn.size()])) {
 			a.removeListener(this);
 		}
 		listenOn.clear();
+		RTLogger.log(this, channel.getName() + " Efx cleared");
 	}
 	
 	public void latch(Loop... x) {
@@ -30,11 +32,16 @@ public class LatchEfx implements TimeListener {
 			listenOn.add(a);
 			a.addListener(this);
 		}
+		RTLogger.log(this, channel.getName() + " Efx waiting on looper");
 	}
 	
 	@Override
 	public void update(Property prop, Object value) {
 		if (Property.STATUS == prop && Status.TERMINATED == value) {
+			channel.setPresetActive(!channel.isPresetActive());
+			clear();
+		}
+		else if (Property.LOOP == prop) {
 			channel.setPresetActive(!channel.isPresetActive());
 			clear();
 		}

@@ -20,7 +20,7 @@ public class MidiCommands extends ArrayList<Command> {
 
 		add(new Command(MIDINOTE.name, MIDINOTE.desc, Midi.midiTemplate()) {
 		@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-			midi.queue(Midi.fromProps(props));}});
+			JudahMidi.queue(Midi.fromProps(props), midi.getKeyboardSynth());}});
 		//	add(new Command(MIDIFILE.name, MIDIFILE.desc, playTemplate()) {
 		//	@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 		//		boolean active = false;

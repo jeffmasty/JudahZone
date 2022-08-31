@@ -6,13 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.sound.midi.InvalidMidiDataException;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.JToggleButton;
+import javax.swing.*;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -132,7 +126,7 @@ public class MidiForm extends JPanel implements MidiListener {
 	}
 
 	private void midiPlay() {
-		JudahMidi.getInstance().queue(getMidi());
+		JudahMidi.queue(getMidi(), JudahMidi.getInstance().getKeyboardSynth());
 	}
 
 	private Integer[] generateCombo(int size) {

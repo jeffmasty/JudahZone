@@ -97,27 +97,6 @@ public class Looper {
         }
     }
 
-//    /** multi-threaded */
-//    public void syncLoop(Loop source, Loop target) {
-//    	if (source.getRecording() == null || source.getRecording().isEmpty()) {
-//    		// nothing recorded yet, but we are setup to sync to master loop
-//    		target.armRecord(source);
-//    	}
-//    	else {
-//    		new Thread(() -> {
-//	    		if (target.hasRecording()) 
-//	    			target.duplicate(); 
-//	    		else {
-//	    			target.setRecording(new Recording(source.getRecording().size()));
-//		    		target.getIsPlaying().set(AudioMode.STARTING);
-//		    		if (target.isSync()) {
-//            			target.setSync(false);
-//            			target.record(true);
-//            		}
-//		    		
-//	    		}}).start();
-//    	}
-//    }
 
     public Loop get(int i) {
         return loops[i];
@@ -170,12 +149,36 @@ public class Looper {
 		}
 	}
 
-	//    public boolean remove(Object o) {
-	//        if (o instanceof Sample == false) return false;
-	//        synchronized (this) {
-	//            return loops.remove(o);
-	//        }
-	//    }
-
+	public void verseChorus() {
+		for (Loop loop : loops) {
+			if (loop != drumTrack)
+				loop.setOnMute(!loop.isOnMute());
+		}
+		// Loop verse = getLoopA();
+		// Loop chorus = getLoopB();
+		// Cycle.setVerse(Cycle.isVerse()); // Cycle.setTrigger(true);
+	}
 
 }
+
+//    /** multi-threaded */
+//    public void syncLoop(Loop source, Loop target) {
+//    	if (source.getRecording() == null || source.getRecording().isEmpty()) {
+//    		// nothing recorded yet, but we are setup to sync to master loop
+//    		target.armRecord(source);
+//    	}
+//    	else {
+//    		new Thread(() -> {
+//	    		if (target.hasRecording()) 
+//	    			target.duplicate(); 
+//	    		else {
+//	    			target.setRecording(new Recording(source.getRecording().size()));
+//		    		target.getIsPlaying().set(AudioMode.STARTING);
+//		    		if (target.isSync()) {
+//            			target.setSync(false);
+//            			target.record(true);
+//            		}
+//		    		
+//	    		}}).start();
+//    	}
+//    }

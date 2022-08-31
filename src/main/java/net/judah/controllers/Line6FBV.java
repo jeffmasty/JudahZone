@@ -8,7 +8,6 @@ import net.judah.looper.Loop;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.mixer.SoloTrack;
-import net.judah.util.RTLogger;
 
 public class Line6FBV implements Controller {
 
@@ -18,23 +17,13 @@ public class Line6FBV implements Controller {
 	@Override
 	public boolean midiProcessed(Midi midi) {
 		
-		if (Midi.isProgChange(midi)) {
-			if (midi.getData1() == 0) {
-				if (Jamstik.isActive()) {
-					Jamstik.nextMidiOut();
-				}
-				else {
-					RTLogger.log(this, "DOWN");
-				}
+		if (Midi.isProgChange(midi)) { // "DOWN" button
+			if (midi.getData1() == 0) { 
+				JudahZone.getLooper().verseChorus();
 				return true;
 			}
-			if (midi.getData1() == 1) {
-				if (Jamstik.isActive()) {
-					Jamstik.nextMidiOut(); 
-				}
-				else {
-					RTLogger.log(this, "UP");
-				}
+			if (midi.getData1() == 1) { // "UP" button
+				Jamstik.nextMidiOut(); 
 				return true;
 			}
 		}
@@ -91,7 +80,7 @@ public class Line6FBV implements Controller {
 		case 6: // Func(2) // Preset on/off  or mute record in Synth mode
 			guitar.setPresetActive(data2 > 0);
 			return true;
-		case 7: // TAP() // TODO A/B looper
+		case 7: // TAP()   toggle record vs. mute controls
 			mutes = data2 > 0;
 			return true;
 		case 8: // Stomp

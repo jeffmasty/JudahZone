@@ -1,3 +1,5 @@
+[Freeverb]
+Reverb(41/82/20)
 [ChoursEcho]
 Chorus(50/64/40)
 Delay(12/36)
@@ -17,3 +19,6 @@ Reverb(51/100/26)
 Chorus(29/19/25)
 Delay(45/2)
 Reverb(21/100/4)
+[ChorV3rb]
+Chorus(31/39/66)
+Reverb(70/95/21)

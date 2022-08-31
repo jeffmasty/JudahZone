@@ -7,8 +7,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.song.Edits;
-import net.judah.song.Edits.Copyable;
+import net.judah.sequencer.editor.Edits;
+import net.judah.sequencer.editor.Edits.Copyable;
 
 @Log4j
 public class PopupMenu extends JPopupMenu {

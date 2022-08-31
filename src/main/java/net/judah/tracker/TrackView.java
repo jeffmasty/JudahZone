@@ -23,6 +23,7 @@ import net.judah.MainFrame;
 import net.judah.midi.JudahClock;
 import net.judah.midi.Panic;
 import net.judah.settings.Channels;
+import net.judah.tracker.Track.Cue;
 import net.judah.util.Click;
 import net.judah.util.Constants;
 import net.judah.util.Constants.Gui;
@@ -35,30 +36,39 @@ import net.judah.util.Slider;
 public class TrackView extends JPanel {
 
 	
-	private static final Dimension SLIDESZ = new Dimension(58, STD_HEIGHT);
+	public static final Dimension SLIDESZ = new Dimension(58, STD_HEIGHT);
 	
 	private final Track track;
 
 	private final FileCombo filename; 
 	private final Instrument instruments;
-	private final MidiOut midiOut;
-	
+	@Getter private final MidiOut midiOut;
+	private final Font font = Gui.FONT11;
+
 	private final JComboBox<String> pattern = new JComboBox<>();
-	private final JComboBox<String> custom1 = new JComboBox<>();
+	private final JComboBox<Cue> cue = new JComboBox<>();
 	private final JComboBox<String> custom2 = new JComboBox<>();
 	private final DefaultListCellRenderer center = new DefaultListCellRenderer(); 
 	private ActionListener patternListener;
-
 	
-	private JToggleButton playWidget = new JToggleButton(" Play", false); // ▶/■ 
+	private JButton playWidget = new JButton(" Play"); // ▶/■ 
+	private ActionListener playListener = new ActionListener() {
+		@Override public void actionPerformed(ActionEvent e) {
+			if (track.isActive() || track.isOnDeck())
+				track.setActive(false);
+			else 
+				track.setActive(true);
+		}
+	};
 	private final Slider volume = new Slider(null);
 	private final JComboBox<String> cycle;
 	
-	public TrackView(Track track) {
+	public TrackView(Track input) {
 		
-		setFont(Constants.Gui.FONT10);
 
-		this.track = track;
+		this.track = input;
+		setFont(font);
+		center.setHorizontalAlignment(DefaultListCellRenderer.CENTER); 
 		setLayout(new GridLayout(2, 5));
 		filename = new FileCombo(track);
 		midiOut = new MidiOut(track);
@@ -68,11 +78,13 @@ public class TrackView extends JPanel {
             MainFrame.setFocus(JudahZone.getChannels().byName(Channels.volumeTarget(out)));});
 		volume.setPreferredSize(SLIDESZ);
 		volume.addChangeListener(e -> {
-			track.setGain(((Slider)e.getSource()).getValue() * .01f);
+			float gain = ((Slider)e.getSource()).getValue() * .01f;
+			if (track.getGain() != gain)
+				track.setGain(gain);
 		});
-		
 		instruments = new Instrument(track);
-
+		playWidget.addActionListener(playListener);
+		
         add(outLbl);
 		add(filename);
         add(midiOut);
@@ -80,16 +92,9 @@ public class TrackView extends JPanel {
 		add(volume);
 		JPanel btns = new JPanel();
 		btns.add(playWidget);
-
-		//	JButton rec = new JButton("Rec");
-		//	rec.addActionListener(e -> RTLogger.log(this, "Midi Record not implemented yet"));
-		//	btns.add(rec);
-		// 		rec.setFont(Gui.FONT11);
-
-
 		JButton edit = new JButton("Edit");
 		edit.addActionListener(e -> {
-			track.getClock().getTracker().setCurrent(track);
+			JudahClock.getTracker().setCurrent(track);
 			MainFrame main = MainFrame.get();
 			main.getTabs().setSelectedComponent(main.getBeatBox());});
 		btns.add(edit);
@@ -98,7 +103,7 @@ public class TrackView extends JPanel {
 			JToggleButton mpk = new JToggleButton("MPK");
 			mpk.addActionListener(e -> {
 				track.setLatch(!track.isLatch());
-				for (Track t : JudahClock.getInstance().getTracks()) {
+				for (Track t : JudahClock.getTracks()) {
 					if (t.isLatch()) {
 						Transpose.setActive(true);
 						return;
@@ -107,61 +112,41 @@ public class TrackView extends JPanel {
 				Transpose.setActive(false);
 			});
 			btns.add(mpk);
-			mpk.setFont(Gui.FONT10);
+			mpk.setFont(font);
 		}
 		
 		add(btns);
 		
 		
-		
-		playWidget.addActionListener((e) -> track.setActive(!track.isActive()));
 		setBorder(Constants.Gui.NONE);
 		fillPatterns();
 		add(pattern);
 		cycle = track.getCycle().createComboBox();
 		add(cycle);
-		center.setHorizontalAlignment(DefaultListCellRenderer.CENTER); 
+		doCue();
+		add(cue);
+			
 		if (track.isDrums())
-			doDrums();
+			Constants.timer(300, new Runnable() {
+				@Override public void run() {
+					add(((DrumTrack)track).getCustomVol());
+			}});
 		else 
 			doPiano();
-		custom1.setRenderer(center);
-		custom2.setRenderer(center);
-		add(custom1);
-		add(custom2);
-custom1.setEnabled(false);
-custom2.setEnabled(false);
 		
-		Font font = Gui.FONT10;
 		cycle.setFont(font);
 		filename.setFont(font); 
 		instruments.setFont(font);
 		midiOut.setFont(font);
 		pattern.setFont(font);
 		playWidget.setFont(font);
-		custom2.setFont(font);
-		custom1.setFont(font);
 		edit.setFont(font);
 		outLbl.setFont(font);
 
 		update();
 	}
 	
-	private void doDrums() {
-		
-	}
-	
 	private void doPiano() {
-		custom1.addItem("None");
-		custom1.addItem("Clock");
-		custom1.addItem("MPK");
-		custom1.addItem("LoopA");
-		custom1.setSelectedItem("Clock");
-		custom1.addActionListener(e -> {
-			// TODO
-		});
-		
-
 		custom2.addItem("ArpOff");
 		custom2.addItem("Arp1");
 		custom2.addItem("Arp2");
@@ -170,7 +155,24 @@ custom2.setEnabled(false);
 		custom2.addActionListener(e -> {
 			// TODO
 		});
+		custom2.setRenderer(center);
+		custom2.setFont(font);
+custom2.setEnabled(false);
+		add(custom2);
 
+	}
+	
+	
+	private void doCue() {
+		cue.setRenderer(center);
+		cue.setFont(font);
+		for (Cue item : Track.Cue.values())
+			cue.addItem(item);
+		cue.setSelectedItem(track.getCue());
+		cue.addActionListener( e -> { 
+			Cue change = (Cue)cue.getSelectedItem();
+			if (track.getCue() != change)
+				track.setCue(change);});
 	}
 	
 	public void fillPatterns() {
@@ -195,9 +197,10 @@ custom2.setEnabled(false);
 	}
 
 	public void update() {
-		playWidget.setText(track.isActive() ? " Stop" : " Play");
-		playWidget.setBackground(track.isActive() ? Pastels.GREEN : Pastels.EGGSHELL);
+		playWidget.setText(track.isActive() ? " Stop" : track.isOnDeck() ? " " + track.cue: " Play");
+		playWidget.setBackground(track.isActive() ? Pastels.GREEN : track.isOnDeck() ? Pastels.YELLOW : Pastels.EGGSHELL);
 		volume.setValue((int) (track.getGain() * 100f));
+		
 		if (midiOut.getSelectedItem() != track.getMidiOut()) {
 			JackPort old = (JackPort) midiOut.getSelectedItem();
 			// there is a change
@@ -205,13 +208,10 @@ custom2.setEnabled(false);
 			if (old != null)
 				new Panic(old).start();
 		}
+		if (cycle.getSelectedIndex() != track.getCycle().getSelected())
+			cycle.setSelectedIndex(track.getCycle().getSelected());
+		
 	}
-
-//	public void redoInstruments() {
-//		if (instruments instanceof Instrument == false) return;
-//		instruments.fillInstruments();
-//	}
-
 
 	public boolean process(int knob, int data2) {
 		switch (knob) {
@@ -220,13 +220,7 @@ custom2.setEnabled(false);
 				return true;
 			case 1: // midiOut
 				JackPort port = (JackPort)Constants.ratio(data2, midiOut.getAvailable());
-				JackPort old = track.getMidiOut();
-				if (old == port)
-					return true;
 				track.setMidiOut(port);
-				// redoInstruments();
-				if (old != null) 
-						new Panic(old).start();
 				return true;
 			case 2:   
 				
@@ -245,6 +239,7 @@ custom2.setEnabled(false);
 				if (track.isDrums()) {
 					ArrayList<GMDrum> drumkit = ((DrumTrack)track).getKit();
 					drumkit.set(drumkit.size() - 1, (GMDrum)Constants.ratio(data2, GMDrum.values()));
+					((DrumEdit)track.getEdit()).fillKit();
 				}
 				return true;
 			case 7: // vol2

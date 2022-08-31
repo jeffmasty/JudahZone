@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import net.judah.api.Midi;
-import net.judah.api.MidiQueue;
 import net.judah.api.TimeProvider;
 import net.judah.midi.MidiListener;
 

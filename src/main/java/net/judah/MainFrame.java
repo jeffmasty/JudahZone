@@ -1,15 +1,19 @@
 package net.judah;
 
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Toolkit;
 import java.io.File;
-import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import javax.imageio.ImageIO;
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.UIManager;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -21,14 +25,12 @@ import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
-import net.judah.sequencer.Sequencer;
-import net.judah.song.SheetMusic;
-import net.judah.song.SonglistTab;
+import net.judah.sequencer.SongPane;
 import net.judah.tracker.GridTab;
 import net.judah.tracker.Track;
 import net.judah.tracker.Tracker;
-import net.judah.util.Console;
 import net.judah.util.Constants;
+import net.judah.util.MusicPanel;
 import net.judah.util.Pastels;
 import net.judah.util.RTLogger;
 import net.judah.util.Size;
@@ -43,13 +45,11 @@ public class MainFrame extends JFrame implements Size, Runnable {
 	private final Tracker tracker;
     private final DJJefe mixer;
     private final ControlPanel controls;
-    private final JComponent songlist;
     private final JPanel content;
     private final String prefix;
     private MusicPanel sheetMusic;
     @Getter private final JTabbedPane tabs = new JTabbedPane();
     @Getter private GridTab beatBox; 
-
     
     MainFrame(String name) {
     	super(name);
@@ -73,37 +73,20 @@ public class MainFrame extends JFrame implements Size, Runnable {
         top.setLayout(new BoxLayout(top, BoxLayout.LINE_AXIS));
         top.add(midiGui);
         top.add(mixer);
-        // tabs.setTabPlacement(JTabbedPane.BOTTOM); 
+
+        tracker = JudahClock.getTracker();
+        
+        beatBox = new GridTab();
+        controls = new ControlPanel();
+        
+        tabs.setTabPlacement(JTabbedPane.BOTTOM); 
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-        tabs.addMouseListener(new MouseAdapter() {
-        	@Override public void mousePressed(MouseEvent e) {
-        		if (e.getButton() == MouseEvent.BUTTON2) 
-        			Console.info("right click");
-        	}});
         tabs.setMaximumSize(TABS);
         tabs.setPreferredSize(TABS);
 
-        JudahClock clock = JudahMidi.getClock();
-        tracker = clock.getTracker();
-        
-        beatBox = new GridTab();
-        songlist = new SonglistTab(Constants.defaultSetlist);
-        controls = new ControlPanel();
-        
         tabs.add("Tracks", tracker);
         tabs.add("BeatBox", beatBox);
-        
-        tabs.add("Setlist", songlist);
         tabs.add("Presets", new PresetsGui(JudahZone.getPresets()));
-
-        content = (JPanel)getContentPane();
-        content.setLayout(new BoxLayout(content, BoxLayout.PAGE_AXIS));
-        content.add(top);
-        JPanel bottom = new JPanel();
-        bottom.setLayout(new BoxLayout(bottom, BoxLayout.LINE_AXIS));
-        content.add(bottom);
-        bottom.add(controls);
-        bottom.add(tabs);
 
         try { setIconImage(Toolkit.getDefaultToolkit().getImage(
         		new File(Constants.ROOT, "icon.png").toURI().toURL()));
@@ -118,13 +101,23 @@ public class MainFrame extends JFrame implements Size, Runnable {
         	setLocationRelativeTo(dummy);
         	dummy.dispose();
         }
+        
+        JPanel bottom = new JPanel();
+        bottom.add(controls);
+        bottom.add(tabs);
+
+        content = (JPanel)getContentPane();
+        content.setLayout(new BoxLayout(content, BoxLayout.PAGE_AXIS));
+        content.add(top);
+        content.add(bottom);
+
         setLocation(1, 0);
         setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
         validate();
         setVisible(true);
 
         Thread updates = new Thread(this);
-        updates.setPriority(4);
+        updates.setPriority(3);
         updates.start();
         
     }
@@ -134,62 +127,34 @@ public class MainFrame extends JFrame implements Size, Runnable {
         tabs.remove(c);
     }
 
-    public void sheetMusicOff() {
-        if (sheetMusic == null) return;
-        sheetMusic.setVisible(false);
-        tabs.remove(sheetMusic);
-        sheetMusic = null;
+//    public void sheetMusicOff() {
+//        if (sheetMusic == null) return;
+//        sheetMusic.setVisible(false);
+//        tabs.remove(sheetMusic);
+//        sheetMusic = null;
+//    }
+
+    public void sheetMusic(File file) { 
+    	try {
+	    	if (sheetMusic == null) {
+	    		sheetMusic = new MusicPanel(file, tabs.getBounds());
+	    		sheetMusic.doLayout();
+	    		tabs.addTab(Constants.CUTE_NOTE + sheetMusic.getName(), sheetMusic);
+	    		tabs.setSelectedComponent(sheetMusic);
+	    	}
+	    	else {
+	    		sheetMusic.setImage(file);
+	    		tabs.setSelectedComponent(sheetMusic);
+	    		for (int i = 0; i < tabs.getTabCount(); i++) {
+	    			if (tabs.getComponentAt(i) == sheetMusic)
+	    				tabs.setTitleAt(i, Constants.CUTE_NOTE + sheetMusic.getName());
+	    		}
+	    	}
+    	} catch (Throwable e) {
+    		RTLogger.warn(this, file.getAbsolutePath() + " " + e.getMessage());
+    	}
     }
-
-    public void sheetMusic() {
-        if (Sequencer.getCurrent() == null || Sequencer.getCurrent().getSheetMusic() == null)
-            return;
-        if (sheetMusic == null) {
-            try {
-                sheetMusic = new MusicPanel(Sequencer.getCurrent().getSheetMusic());
-                sheetMusic.setBounds(tabs.getBounds());
-                tabs.addTab("SheetMusic", sheetMusic);
-                sheetMusic.doLayout();
-            } catch (IOException e) { Console.warn(Sequencer.getCurrent().getSheetMusic().getAbsolutePath(), e); }
-        }
-        else {
-            sheetMusicOff();
-        }
-        tabs.invalidate();
-        Console.getInstance().getInput().grabFocus();
-    }
-
-    private class MusicPanel extends JPanel {
-        Image image;
-        JLabel labelImage;
-
-        MusicPanel(File musicImage) throws IOException {
-
-            image = ImageIO.read(musicImage);
-            labelImage = new SheetMusic();
-            labelImage.setIcon(new ImageIcon(image));
-            labelImage.setIcon(new ImageIcon(image));
-
-
-            setLayout(new GridBagLayout());
-            GridBagConstraints constraints = new GridBagConstraints();
-            constraints.insets = new Insets(3, 3, 3, 3);
-            constraints.fill = GridBagConstraints.NONE;
-            constraints.anchor = GridBagConstraints.NORTHWEST;
-            constraints.fill = GridBagConstraints.BOTH;
-            constraints.weightx = 1.0;
-            constraints.weighty = 1.0;
-
-            constraints.gridy = 1;
-            constraints.gridx = 0;
-            constraints.gridwidth = 3;
-            labelImage.setMaximumSize(new Dimension(650, 470));
-            labelImage.setPreferredSize(new Dimension(get().tabs.getWidth(), get().tabs.getHeight()-200));
-            add(labelImage, constraints);
-
-        }
-    }
-
+    
     public void openPage(SongPane page) {
         for(int i = 0; i < tabs.getTabCount(); i++)
             if (tabs.getTitleAt(i).contains(Constants.CUTE_NOTE))
@@ -198,7 +163,7 @@ public class MainFrame extends JFrame implements Size, Runnable {
         tabs.add(name, page);
         tabs.setSelectedComponent(page);
         setTitle(prefix + " - " + page.getName());
-        // sheetMusic();
+        // sheetMusic(); 
     }
 
     public static MainFrame get() {
@@ -308,8 +273,12 @@ public class MainFrame extends JFrame implements Size, Runnable {
 		if (idx < 0)
 			idx = tabs.getTabCount() - 1;
 		tabs.setSelectedIndex(idx);
+//		
+//		Component c = tabs.getTabComponentAt(idx);
+//		if (c instanceof TrackView)
+//			((TrackView)c).update();
+//		tabs.setSelectedComponent(c);
 	}
-	
 	
 	public static void startNimbus() {
 		try {
@@ -318,13 +287,10 @@ public class MainFrame extends JFrame implements Size, Runnable {
             UIManager.put("nimbusBase", Pastels.EGGSHELL);
             UIManager.put("control", Pastels.EGGSHELL); 
             UIManager.put("nimbusBlueGrey", Pastels.MY_GRAY);
+            UIManager.put("ScrollBar.buttonSize", new Dimension(7,7));
         } catch (Exception e) { RTLogger.log(MainFrame.class, e.getMessage()); }
 
 	}
-
-
-
-
 
 
     

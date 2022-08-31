@@ -25,21 +25,21 @@ public class FileCombo extends JComboBox<String> implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		super.actionPerformed(e);
 		String select = "" + getSelectedItem();
-		if (select.isBlank()) 
+		if (select.equals("_clear")) 
 			track.setFile(null);
 		else 
 			track.setFile(new File(track.getFolder(), select));
 	}
 	
 	public void refresh() {
-		String selected = (track.getFile() == null) ? "" : track.getFile().getName();
+		String selected = (track.getFile() == null) ? "_clear" : track.getFile().getName();
 		removeActionListener(this);
 		removeAllItems();
-		addItem("");
 		String[] sort = track.getFolder().list();
 		Arrays.sort(sort);
 		for (String name : sort) 
 			addItem(name);
+		addItem("_clear");
 		setSelectedItem(selected);
 		addActionListener(this);
 	}

@@ -95,11 +95,10 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 				return true;
 			return record(looper.getDrumTrack());
 
-		case 5: // RESET 
-			if (looper.getLoopA().hasRecording())  
-				looper.reset();
+		case 5: // TODO 
+			
 			return true; 
-		case 6: // verse/chorus 
+		case 6: // Cycle verse/chorus 
 			Cycle.setVerse(true);
 			Cycle.setTrigger(true);
 			return true; 
@@ -142,13 +141,12 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		
 		case 10:  // latch B
 			Loop b = looper.getLoopB();
-			if (b.hasRecording()) {
-				Cycle.setVerse(Cycle.isVerse());
-				Cycle.setTrigger(true);
-			}
-			else {
+			if (false == b.hasRecording()) {
 				b.setArmed(!b.isArmed());
 				MainFrame.update(b);
+			}
+			else {// flip A and B loop mutes
+				looper.verseChorus();
 			}
 			return true;
 		case 11:  // latch C
@@ -170,38 +168,25 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		case 13: // latch EFX
 			Channel line = ControlPanel.getInstance().getChannel();
 			if (line instanceof LineIn)
-				((LineIn)line).getLatchEfx().latch(looper.getLoopA(), looper.getLoopB());
+				((LineIn)line).getLatchEfx().latch(looper.getLoops());
 			else 
 				line.setPresetActive(!line.isPresetActive());
 			return true;
-		case 14: // reset effects for current channel
+		case 14: // reset effects for current channel // TODO double click = reset all channels
 			ControlPanel.getInstance().getChannel().reset();
 			return true;
 		case 15: // focus efx on Uno or Crave synth channels
-			ControlPanel panel = ControlPanel.getInstance();
-			if (panel.getCurrent() == null) 
-				MainFrame.setFocus(JudahZone.getChannels().getCrave());
-			else if (panel.getCurrent().getChannel() == JudahZone.getChannels().getCrave())
-				MainFrame.setFocus(JudahZone.getChannels().getUno());
-			else 
-				MainFrame.setFocus(JudahZone.getChannels().getCrave());
+			MainFrame.setFocus(JudahZone.getChannels().getCrave());
+			//	ControlPanel panel = ControlPanel.getInstance();
+			//	if (panel.getCurrent() == null) 
+			//		MainFrame.setFocus(JudahZone.getChannels().getCrave());
+			//	else if (panel.getCurrent().getChannel() == JudahZone.getChannels().getCrave())
+			//		MainFrame.setFocus(JudahZone.getChannels().getUno());
+			//	else 
+			//		MainFrame.setFocus(JudahZone.getChannels().getCrave());
 			return true;
 			
-//			ControlPanel panel = ControlPanel.getInstance();
-//			Channel synth = JudahZone.getChannels().getUno();
-//			if (panel.getCurrent() == null || 
-//				panel.getCurrent().getChannel() != synth) {
-//				panel.setFocus(synth);
-//			}
-//			else { // Crave already selected
-//				if (MPK.getMode() == KnobMode.Effects1)
-//					MPK.setMode(KnobMode.Effects2); 
-//				else 
-//					MPK.setMode(KnobMode.Effects1);
-//			}
-//			return true;
 		case 16: // internal/external clock, sync clock to loop
-			
 			JudahClock clock = JudahMidi.getClock();
 			if (looper.getLoopA().hasRecording()) { 
 				clock.setMode(Mode.Internal);

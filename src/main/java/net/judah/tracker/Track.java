@@ -11,54 +11,85 @@ import org.jaudiolibs.jnajack.JackTransportState;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.Midi;
 import net.judah.api.Notification.Property;
+import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.midi.GMNames;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Panic;
-import net.judah.util.Console;
 import net.judah.util.Constants;
+import net.judah.util.Pastels;
 import net.judah.util.RTLogger;
 
 /** a step sequencer. 
  * Ch#,  file, midiOut/(AudioIn), pattern cycle  */
 @Getter 
-public abstract class Track extends ArrayList<Pattern> implements Runnable, TimeListener {
+public abstract class Track extends ArrayList<Pattern> implements Runnable {
 
+	public static enum Cue { Cue, Loop, Bar};
 	public static final File DRUM_FOLDER = new File(Constants.ROOT, "patterns");
 	public static final File MELODIC_FOLDER = new File(Constants.ROOT, "sequences");
-
 	private static int counter;
+
 	protected final String name;
-	protected final JudahClock clock;
 	protected final int num;
-	
+	protected final int ch;
+	protected File file;
+
+	protected final JudahClock clock;
 	protected final TrackView view;
 	protected TrackEdit edit;
 
-	@Setter protected String instrument;
-	protected File file;
-	@Setter protected JackPort midiOut;
-	protected final int ch;
-	protected final Cycle cycle = new Cycle(this);
-	@Getter protected Pattern current;
-	
-    @Getter protected int steps = JudahClock.getSteps();
-    @Getter protected int div = JudahClock.getSubdivision();
-    @Getter @Setter protected boolean latch;
-
-    @Setter protected int step = -1;
 	protected boolean active;
-	@Setter protected float gain = 0.8f;
+	protected boolean record;
+	protected Pattern current;
+	protected JackPort midiOut;
+	@Setter protected String instrument;
+    protected Cue cue = Cue.Cue;
+    @Setter protected boolean onDeck;
+	protected final Cycle cycle = new Cycle(this);
+    @Setter protected int steps = JudahClock.getSteps();
+    @Setter protected int div = JudahClock.getSubdivision();
+    @Setter protected boolean latch;
+    @Setter protected int step = -1;
+	protected float gain = 0.8f;
+	
+	private TimeListener transportListener = new TimeListener() {
+		@Override public void update(Property prop, Object value) {
+		if (prop == Property.TRANSPORT && value == JackTransportState.JackTransportStarting)
+			step = -1;
+		else if (prop == Property.TRANSPORT && value == JackTransportState.JackTransportStopped)
+			if (active)
+				new Panic(midiOut, ch).start();
+		}
+	};
+	
+	private TimeListener cueListener = new TimeListener() {
+		@Override public void update(Property prop, Object value) {
+			if (prop == Property.BARS) {
+				clock.removeListener(this);
+				if (onDeck)
+					setActive(true);
+			}
+			if (prop == Property.LOOP || prop == Property.STATUS && value == Status.TERMINATED) {
+				JudahZone.getLooper().getLoopA().removeListener(this);
+				if (onDeck) {
+					setActive(true);
+					step();
+				}
+			}
+		}
+	};
 
 	public Track(JudahClock clock, String name, int ch, final JackPort port) {
 		this.ch = ch;
 		this.name = name;
 		this.clock = clock;
-		clock.addListener(this);
+		clock.addListener(transportListener);
 		this.midiOut = port;
 		num = counter++;
 		add(new Pattern("A", this));
@@ -71,14 +102,6 @@ public abstract class Track extends ArrayList<Pattern> implements Runnable, Time
 		return super.equals(o) && name.equals(((Track)o).name);
 	}
 	
-	@Override public void update(Property prop, Object value) {
-		if (prop == Property.TRANSPORT && value == JackTransportState.JackTransportStarting)
-			step = -1;
-		else if (prop == Property.TRANSPORT && value == JackTransportState.JackTransportStopped)
-			if (active)
-				new Panic(midiOut, ch).start();
-	}
-
 	
 	@Override
 	public void run() {
@@ -89,6 +112,7 @@ public abstract class Track extends ArrayList<Pattern> implements Runnable, Time
             boolean first = true;
             scanner = new Scanner(file);
             clear();
+            cycle.setSelected(0);
             ArrayList<String> contract = null;
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
@@ -109,12 +133,22 @@ public abstract class Track extends ArrayList<Pattern> implements Runnable, Time
                         	}
                         }
                     }
-                    if (split.length >= 3)
+                    if (split.length >= 3) {
                     	steps = Integer.parseInt(split[2]);
-                    if (split.length >= 4)
+                    	if (JudahClock.getTracker().getDrum1() == this) {
+                    		clock.setSteps(steps); // drum1 sets clock time signature
+                    	}
+                    }
+                    if (split.length >= 4) {
                     	div = Integer.parseInt(split[3]);
+                    	if (JudahClock.getTracker().getDrum1() == this) {
+                    		clock.setSubdivision(div); // drum1 sets clock time signature
+                    	}
+                    }
                     if (split.length >= 5) 
                     	cycle.setSelected(Integer.parseInt(split[4]));
+                    if (split.length >= 6)
+                    	clock.writeTempo(Integer.parseInt(split[5]));
                     first = false;
                 }
                 // Contract
@@ -140,7 +174,8 @@ public abstract class Track extends ArrayList<Pattern> implements Runnable, Time
             }
             add(onDeck);
         } catch (Throwable t) {
-            Console.warn(t); return;
+        	RTLogger.log(this, file.getName() + ": " + t.getMessage());
+        	return;
         } finally {
             if (scanner != null) scanner.close();
         }
@@ -184,6 +219,7 @@ public abstract class Track extends ArrayList<Pattern> implements Runnable, Time
 	}
 	
 	public void setCurrent(Pattern p) {
+		if (current == p) return;
 		current = p;
 		int idx = indexOf(p);
 		if (this.contains(p) == false) {
@@ -200,10 +236,11 @@ public abstract class Track extends ArrayList<Pattern> implements Runnable, Time
 	public void next(boolean forward) {
 		int result = indexOf(current) + (forward ? 1 : -1);
 		
-		if (result == size())
+		if (result >= size())
 			result = 0;
 		if (result < 0) 
 			result = size() - 1;
+		
         setCurrent(get(result));
 	}
 
@@ -217,12 +254,40 @@ public abstract class Track extends ArrayList<Pattern> implements Runnable, Time
 		return ch != 9;
 	}
 	
+	
+	
+	
 	public void setActive(boolean active) {
-		if (active)
-			step = JudahClock.getStep() - 1;
-		else if (isSynth())
-			new Panic(midiOut, ch).start(); 
-		this.active = active;
+		if (active) {
+			if (onDeck) {
+				step = -1;
+				this.active = true;
+				onDeck = false;
+			}
+			else switch (cue) {
+				case Bar:
+					onDeck = true;
+					JudahClock.getInstance().addListener(cueListener);
+					break;
+				case Cue:
+					step = JudahClock.getStep() - 1;
+					onDeck = false;
+					this.active = true;
+					break;
+				case Loop:
+					onDeck = true;
+					JudahZone.getLooper().getLoopA().addListener(cueListener);
+					break;
+				default:
+					break;
+				}
+		}
+		else {
+			this.active = false;
+			this.onDeck = false;
+			if (isSynth())
+				new Panic(midiOut, ch).start(); 
+		}
 		MainFrame.update(this);
 	}
 	
@@ -242,15 +307,13 @@ public abstract class Track extends ArrayList<Pattern> implements Runnable, Time
 
 	public void step() {
 		++step;
-		if (step == steps) {
+		if (step >= steps) {
 			step = 0;
-			cycle.cycle();
+			if (active)
+				cycle.cycle();
 		}
-		step(step);
-	}
-	
-	public void step(int step) {
-		if (edit.isVisible()) edit.step(step);
+		if (edit.isVisible()) 
+			edit.step(step);
 		if (!active)
 			return;
 		
@@ -258,27 +321,22 @@ public abstract class Track extends ArrayList<Pattern> implements Runnable, Time
 		if (now == null)
 			return;
 		for (ShortMessage msg : now) {
-			if (Midi.isNoteOn(msg)) {
-				if (isDrums()) {
-					Midi note = Midi.create(msg.getCommand(), msg.getChannel(), msg.getData1(),
-							((int)(msg.getData2() * ((DrumTrack)this).velocity(msg.getData1()) * gain))); 
-					JudahMidi.queue(note, midiOut);
-				}
-				else {
-					msg = Midi.create(msg.getCommand(), msg.getChannel(), msg.getData1(),
-								((int)(msg.getData2() * gain))); 
-					if (latch) {
-						JudahMidi.queue(Transpose.apply(msg), midiOut);
-					}
-					else 
-						JudahMidi.queue(msg, midiOut);
-				}
-			}
-			else 
+			if (isDrums()) {
+				msg = Midi.create(msg.getCommand(), msg.getChannel(), msg.getData1(),
+						((int)(msg.getData2() * ((DrumTrack)this).velocity(msg.getData1()) * gain))); 
 				JudahMidi.queue(msg, midiOut);
+			}
+			else {
+				msg = Midi.create(msg.getCommand(), msg.getChannel(), msg.getData1(),
+						((int)(msg.getData2() * gain))); 
+				if (latch) 
+					JudahMidi.queue(Transpose.apply(msg), midiOut);
+				else 
+					JudahMidi.queue(msg, midiOut);
+			}
 		}
 	}
-
+	
 	public final void setFile(File file) {
 		clear();
 		this.file = file;
@@ -304,13 +362,54 @@ public abstract class Track extends ArrayList<Pattern> implements Runnable, Time
         }
         try {
             Constants.writeToFile(f, raw.toString());
-        } catch (Exception e) { Console.warn(e); }
-        for (Track t : clock.getTracks()) {
+        } catch (Exception e) { RTLogger.warn(this, name + " " + f.getName() + " : " + e.getMessage()); }
+        for (Track t : JudahClock.getTracks()) {
         	t.getView().getFilename().refresh();
         	t.getEdit().fillFile1();
         }
     }
 
+	public void toggleRecord() {
+		record = !record;
+		JudahMidi.getInstance().getGui().record(JudahClock.getTracker().isRecord());
+		edit.getRecord().setBackground(record ? Pastels.RED : Pastels.BUTTONS);
+	}
+
+	public void setMidiOut(JackPort port) {
+		if (midiOut == port) return;
+		JackPort old = midiOut;
+		midiOut = port;
+		if (old != null) 
+			new Panic(old).start();
+		MidiOut out = edit.getMidiOut();
+		if (out.getSelectedItem() != midiOut) 
+			out.setSelectedItem(midiOut);
+		out = view.getMidiOut();
+		if (out.getSelectedItem() != midiOut)
+			out.setSelectedItem(midiOut);
+		
+	}
+
+	public void setGain(float vol) {
+		if (gain == vol)
+			return;
+		gain = vol;
+		int intVol = (int)(gain * 100);
+		if (edit != null && edit.getTrackVol().getValue() != intVol)
+			edit.getTrackVol().setValue(intVol);
+		if (view != null && view.getVolume().getValue() != intVol)
+			view.getVolume().setValue(intVol);
+	}
+	
+	public void setCue(Cue cue) {
+		if (this.cue == cue)
+			return;
+		this.cue = cue;
+		if (cue != edit.getCue().getSelectedItem())
+			edit.getCue().setSelectedItem(cue);
+		if (cue != view.getCue().getSelectedItem())
+			view.getCue().setSelectedItem(cue);
+	}
     
 }
 

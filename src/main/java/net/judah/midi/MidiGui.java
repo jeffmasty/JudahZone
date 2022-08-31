@@ -16,12 +16,14 @@ import org.jaudiolibs.jnajack.JackTransportState;
 
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.MainFrame;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
 import net.judah.controllers.CircuitTracks;
 import net.judah.controllers.Jamstik;
 import net.judah.controllers.KnobMode;
 import net.judah.looper.LoopWidget;
+import net.judah.songs.SmashHit;
 import net.judah.tracker.MidiOut;
 import net.judah.util.*;
 
@@ -44,9 +46,8 @@ public class MidiGui extends JPanel implements TimeListener {
     
     @Getter private final ProgChange calf;
     @Getter private final ProgChange fluid;
-    
-    private final MidiOut circuit1 = new MidiOut();
-    private final MidiOut circuit2 = new MidiOut();
+    @Getter private final JComboBox<SmashHit> setlist = new CenteredCombo<>();
+    private final MidiOut circuit = new MidiOut();
 	private final MidiOut mpk = new MidiOut();
 	private final JPanel mpkPanel = new JPanel();
 	private Jamstik jam;
@@ -63,9 +64,21 @@ public class MidiGui extends JPanel implements TimeListener {
     	setLayout(new GridLayout(1, 3));
 		calf = new ProgChange(midi.getCalfOut());
 		fluid = new ProgChange(midi.getFluidOut());
-
-		new Thread(() -> initialize()).start();
+		
+		doSetlist();
+		
+		new Thread(()-> 
+			initialize()).start();
+		
     }
+	
+	private void doSetlist() {
+		for (SmashHit song : JudahZone.getSetlist())
+			setlist.addItem(song);
+		if (setlist.getItemCount() > 0)
+			setlist.setSelectedItem(setlist.getItemAt(0));
+		// no listener, load song happens on Mixer's [Set] button
+	}
 	
 	private void initialize() {
 		
@@ -78,8 +91,6 @@ public class MidiGui extends JPanel implements TimeListener {
                     clock.end();
                 else
                     clock.begin(); }});
-        
-        
         
         JudahMenu popup = new JudahMenu();
         menu.addActionListener(e -> 
@@ -105,10 +116,11 @@ public class MidiGui extends JPanel implements TimeListener {
             @Override public void mouseClicked(MouseEvent e) {
                 String input = Constants.inputBox("Tempo:");
                 if (input == null || input.isEmpty()) return;
-                try { clock.setTempo(Float.parseFloat(input));
+                try { 
+                	clock.writeTempo((int)Float.parseFloat(input));
                 } catch (Throwable t) { 
                 	RTLogger.log(this, t.getMessage() + " -> " + input); 
-                	}
+                }
             }});
         tempoLbl.setFont(Constants.Gui.BOLD);
 
@@ -120,7 +132,10 @@ public class MidiGui extends JPanel implements TimeListener {
 				noDups.add(i);
 			}		
 		sync.setSelectedItem(JudahClock.getLength());
-
+		sync.addActionListener(e -> {
+			clock.setLength((int)sync.getSelectedItem());
+			MainFrame.update(JudahZone.getLooper().getLoopA());
+		});
 		
         // doCircuit
 		JackPort[] outs = new JackPort[] { 
@@ -128,12 +143,10 @@ public class MidiGui extends JPanel implements TimeListener {
 			/* midi.getUnoOut(), */ 
 		};
 		for (JackPort port : outs) {
-			circuit1.addItem(port);
-			circuit2.addItem(port);
+			circuit.addItem(port);
 			mpk.addItem(port);
 		}
-		circuit1.addActionListener(e -> CircuitTracks.setOut1((JackPort)circuit1.getSelectedItem()));
-		circuit2.addActionListener(e -> CircuitTracks.setOut2((JackPort)circuit2.getSelectedItem()));
+		circuit.addActionListener(e -> CircuitTracks.setOut2((JackPort)circuit.getSelectedItem()));
 		
 		
 		mpk.addItem(midi.getCircuitOut());
@@ -151,7 +164,6 @@ public class MidiGui extends JPanel implements TimeListener {
 		left3.setBackground(Pastels.BUTTONS);
         left4.setBackground(Pastels.BUTTONS);
 
-		
 		menu.setMargin(Constants.Gui.ZERO_MARGIN);
 		start.setMargin(Constants.Gui.ZERO_MARGIN);
 		
@@ -167,10 +179,9 @@ public class MidiGui extends JPanel implements TimeListener {
         left3.add(tapButton);
         left3.add(tempoLbl);
         
-        left4.add(new JLabel("T1", SwingConstants.CENTER));
-        left4.add(circuit1);
-        left4.add(new JLabel("T2", SwingConstants.CENTER));
-        left4.add(circuit2);
+        left4.add(setlist);
+        //left4.add(new JLabel("T2", SwingConstants.CENTER));
+        left4.add(circuit);
         
         
         JPanel p1 = new JPanel(), p2 = new JPanel();
@@ -212,27 +223,26 @@ public class MidiGui extends JPanel implements TimeListener {
 			else 
 				clock.setLength((int) Constants.ratio(data2, JudahClock.LENGTHS));
 			return;
-    	case 1: 
-    		// Tempo handled at MPK
-    		return;
     	case 2: // calf inst
     		calf.setSelectedIndex(data2);
     		return;
     	case 3: // fluid inst
     		fluid.setSelectedIndex(data2);
     		return;
- 	    case 4: 
- 	    	circuit1.setSelectedIndex(Constants.ratio(data2 - 1, circuit1.getItemCount()));
- 	    	// circuit midi 1 out
+ 	    case 4: // Load song
+ 	    	setlist.setSelectedIndex(Constants.ratio(data2 - 1, setlist.getItemCount()));
  	    	return;
     	case 5: // circuit midi 2 out
-    		circuit2.setSelectedIndex(Constants.ratio(data2 - 1, circuit2.getItemCount()));
+    		circuit.setSelectedIndex(Constants.ratio(data2 - 1, circuit.getItemCount()));
     		return;
     	case 6: // jamstik out
     		jam.setSelectedIndex(Constants.ratio(data2 - 1, midi.getPaths().size()));
     		return;
     	case 7: // mpk keys out
     		mpk.setSelectedIndex(Constants.ratio(data2 - 1, mpk.getItemCount()));
+    		return;
+    	case 1: 
+    		// Tempo handled at MPK
     		return;
     	}   
     }
@@ -265,8 +275,12 @@ public class MidiGui extends JPanel implements TimeListener {
 		setBorder(knobs == KnobMode.Clock ? Constants.Gui.HIGHLIGHT : NONE);
 	}
 
+	public void record(boolean active) {
+		mpkPanel.setBackground(active ? Pastels.RED : Pastels.BUTTONS);
+	}
+	
 	public void transpose(boolean active) {
-		mpkPanel.setBackground(active ? Pastels.RED: Pastels.BUTTONS);
+		mpkPanel.setBackground(active ? Pastels.PINK: Pastels.BUTTONS);
 	}
 
 }

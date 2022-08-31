@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextField;
 
 import lombok.Getter;
 import net.judah.controllers.KnobMode;
@@ -51,28 +50,23 @@ public class ControlPanel extends JPanel {
         	
         placeholder.addKeyListener(JudahMenu.getInstance());
         placeholder.setFocusTraversalKeysEnabled(false);
-        
-        JPanel console = new JPanel();
-        console.setLayout(new BoxLayout(console, BoxLayout.Y_AXIS));
-        JTextField input = Console.getInstance().getInput();
-        JScrollPane output = Console.getInstance().getScroller();
-
-        Dimension d = new Dimension(Size.WIDTH_CONTROLS - 10, 25);
-        input.setPreferredSize(d);
-        input.setMaximumSize(d);
-        input.setMinimumSize(d);
-        d = new Dimension(Size.WIDTH_CONTROLS - 10, 90);
-        output.setPreferredSize(d);
-        output.setMaximumSize(d);
-        
-        console.add(output);
-        console.add(input);
-
         add(tuner);
-
         add(placeholder);
         placeholder.add(effectsTab.get(0));
 
+        JPanel console = new JPanel();
+        console.setLayout(new BoxLayout(console, BoxLayout.Y_AXIS));
+        JScrollPane output = Console.getInstance().getScroller();
+        Dimension d = new Dimension(Size.WIDTH_CONTROLS, 90);
+        output.setPreferredSize(d);
+        output.setMaximumSize(d);
+        console.add(output);
+        // JTextField input = Console.getInstance().getInput();
+        //d = new Dimension(Size.WIDTH_CONTROLS - 10, 25);
+		//input.setPreferredSize(d);
+		//input.setMaximumSize(d);
+		//input.setMinimumSize(d);
+        // console.add(input);
         add(console);        
 
         doLayout();

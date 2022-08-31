@@ -7,12 +7,15 @@ import java.awt.FlowLayout;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
+import lombok.Getter;
+import net.judah.api.Midi;
 import net.judah.util.Constants;
 import net.judah.util.Knob;
 import net.judah.util.Pastels;
@@ -26,7 +29,7 @@ public class DrumEdit extends TrackEdit implements ActionListener, Pastels {
     protected static final Dimension NAMESZ = new Dimension(107, STD_HEIGHT);
 
 	private JPanel contract;
-	private final BeatBox grid;
+	@Getter private final BeatBox grid;
 	private final DrumTrack d;
 	
 	public DrumEdit(final DrumTrack track) {
@@ -51,7 +54,8 @@ public class DrumEdit extends TrackEdit implements ActionListener, Pastels {
 		contract.setLayout(new BoxLayout(contract, BoxLayout.PAGE_AXIS));
 		contract.removeAll();
 		contract.add(Box.createVerticalStrut(44));
-		for(int i = 0; i < d.getKit().size() ; i++) {
+		ArrayList<GMDrum> drumkit = d.getKit();
+		for(int i = 0; i < drumkit.size() ; i++) {
 			// instrument drop down
 			contract.add(contractLine(d.getKit().get(i), i));
 		}
@@ -72,11 +76,10 @@ public class DrumEdit extends TrackEdit implements ActionListener, Pastels {
 		drumCombo.setPreferredSize(NAMESZ);
             
 		drumCombo.setSelectedItem(drum);
-		final GMDrum select = (GMDrum)drumCombo.getSelectedItem();
-		
-		
 		drumCombo.addActionListener(e -> {
-			d.getKit().set(idx, select);
+			GMDrum change = (GMDrum)drumCombo.getSelectedItem();
+			translate(idx, change.getData1());
+			d.getKit().set(idx, change);
 			fillKit();
 		});
 
@@ -84,6 +87,21 @@ public class DrumEdit extends TrackEdit implements ActionListener, Pastels {
 		pnl.add(drumCombo);
 		pnl.add(volume);
 		return pnl;
+	}
+	
+	private void translate(int idx, int data1) {
+		Notes n;
+		int source = d.getKit().get(idx).getData1();
+		for (Pattern p : track)
+			for (int step = 0; step < track.getSteps(); step++) {
+				n = p.getNote(step, source);
+				if (n == null)
+					continue;
+				Midi hit = n.find(source);
+				n.remove(hit);
+				n.add(Midi.create(hit.getCommand(), track.getCh(), data1, hit.getData2()));
+			}
+			
 	}
 	
 	@Override

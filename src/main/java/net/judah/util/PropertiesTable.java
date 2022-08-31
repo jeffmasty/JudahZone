@@ -13,7 +13,7 @@ import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
-import net.judah.song.Edits;
+import net.judah.sequencer.editor.Edits;
 
 /**JTable for a HashMap
  * @author judah */

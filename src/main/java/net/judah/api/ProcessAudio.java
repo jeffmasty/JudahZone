@@ -9,7 +9,7 @@ import net.judah.looper.Recording;
 /**Participates in real time audio processing, can respond to some commands*/
 public interface ProcessAudio {
 
-	public enum Type {ONE_SHOT, CONTROLLED, DUPLICATE, FREE, SOLO, MASTER, DRUMTRACK}
+	public enum Type {ONE_SHOT, FREE, SOLO, DRUMTRACK}
 
 	/** in Real-Time thread */
 	void process();

@@ -14,6 +14,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import lombok.Getter;
+import net.judah.api.Midi;
 import net.judah.midi.JudahClock;
 import net.judah.midi.NoteOn;
 import net.judah.util.Pastels;
@@ -80,14 +81,13 @@ public class BeatBox extends JPanel implements MouseListener {
 
     @Override public void mouseClicked(MouseEvent evt) {
         Point xy = translate(evt.getPoint());
-        if (xy.y < 0) { // label row clicked, user wants to hear this step
-            if (xy.x >= 0 && xy.x< JudahClock.getSteps())
-                if (SwingUtilities.isRightMouseButton(evt))
-                    for (Track t : JudahClock.getInstance().getTracks())
-                        t.step(xy.x);
-                else
-                    track.step(xy.x);
-            return;
+        if (xy.y < 0) { // label row clicked
+        		return;
+        		// if (xy.x >= 0 && xy.x< JudahClock.getSteps()) 
+				//   if (SwingUtilities.isRightMouseButton(evt))
+				//     for (Track t : JudahClock.getInstance().getTracks())
+				// t.step(xy.x); // user wants to hear this step
+				// else track.step(xy.x);
         }
         else {
         	try { // see also Pattern.setValueAt(,,)
@@ -98,7 +98,13 @@ public class BeatBox extends JPanel implements MouseListener {
 		        } else {
 		        	if (note.find(data1) == null) {
 		        		note.add(new NoteOn(track.getCh(), data1));
-		        	} else {
+		        	} else if (SwingUtilities.isRightMouseButton(evt)) {
+		        		Midi m = note.find(data1);
+		        		Midi replace = velocity(m);
+		        		note.remove(m);
+		        		note.add(replace);
+		        	}
+		        	else {	
 		        		note.remove(note.find(data1));
 		        		if (note.isEmpty())
 		        			track.getCurrent().remove(xy.x);
@@ -116,6 +122,14 @@ public class BeatBox extends JPanel implements MouseListener {
     @Override public void mouseEntered(MouseEvent e) { }
     @Override public void mouseExited(MouseEvent e) { }
 
+
+    private Midi velocity(Midi m) {
+    	int i = 2 + (int)(m.getData2() / 32f);
+    	if (i > 4) i = 1;
+    	RTLogger.log(this, "velocity " + i);
+    	return Midi.create(m.getCommand(), m.getChannel(), m.getData1(), i * 32 - 1);
+    }
+    
 	public void step(int step) {
 		if (step >= 0)
 			current.setActive(step);

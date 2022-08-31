@@ -2,6 +2,7 @@ package net.judah.tracker;
 
 import static net.judah.util.Size.*;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -10,22 +11,25 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 
-import javax.swing.*;
-import javax.swing.border.LineBorder;
-
-import org.jaudiolibs.jnajack.JackPort;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.midi.JudahClock;
-import net.judah.midi.JudahMidi;
+import net.judah.mixer.Channel;
 import net.judah.settings.Channels;
+import net.judah.tracker.Track.Cue;
 import net.judah.util.*;
 
 public abstract class TrackEdit extends JPanel implements ActionListener {
     
 	private static final Dimension BTN_BOUNDS = new Dimension(WIDTH_BUTTONS, TABS.height);
+	private static final Dimension SLIDER = new Dimension(100, STD_HEIGHT);
 	
 	protected final Track track;
     protected final JudahClock clock = JudahClock.getInstance(); 
@@ -35,16 +39,21 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
     protected final JPanel buttons = new JPanel();
     protected final JComboBox<String> file = new CenteredCombo<>();
     protected final FileCombo filename; 
-    protected final MidiOut midiOut;
+    @Getter protected final MidiOut midiOut;
     protected final JComboBox<String> cycle;
-    protected final Slider portVol = new Slider(null);
-    protected final Slider trackVol = new Slider(null);
-    protected final JToggleButton playWidget = new JToggleButton("Play", false); // ▶/■ 
-    protected final Instrument instrument;
+    @Getter protected final JComboBox<Cue> cue = new CenteredCombo<>();
     
-    // TODO
-    //    private final JComboBox<Integer> steps = new JComboBox<>();
-    //    private final JComboBox<Integer> div;
+    @Getter protected final Slider portVol = new Slider(null);
+    @Getter protected final Slider trackVol = new Slider(null);
+    @Getter protected final JButton playWidget = new JButton("Play"); // ▶/■ 
+    @Getter protected final JButton record = new JButton("Rec");
+    @Getter protected final JButton mpk = new JButton("MPK");
+
+    protected final Instrument instrument;
+    protected boolean disable;
+    
+    protected final JComboBox<Integer> steps = new JComboBox<>();
+    protected final JComboBox<Integer> div = new JComboBox<>();
 
     protected TrackEdit(Track t) {
     	this.track = t;
@@ -52,9 +61,11 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
     	midiOut = new MidiOut(t);
     	instrument = new Instrument(t);
     	cycle = t.getCycle().createComboBox();
-
+    	
+    	buttons.setLayout(new GridLayout(0, 1));
+    	
+    	
     	setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
-		setBorder(new LineBorder(RainbowFader.chaseTheRainbow(14 * t.getNum())));
     	genericButtons();
     }
     
@@ -63,11 +74,14 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
     public abstract void update();
     
     public void setPattern(int idx) {
-    	if (getPattern().getSelectedIndex() != idx) {
-			pattern.removeActionListener(this);
-			pattern.setSelectedIndex(idx);
-			pattern.addActionListener(this);
-		}
+    	if (idx >= pattern.getItemCount()) fillPatterns();
+    	if (idx >= pattern.getItemCount()) {
+    		RTLogger.warn(this, track.getName() + " " + idx + " vs. " + pattern.getItemCount());
+    		return;
+    	}
+		pattern.removeActionListener(this);
+		pattern.setSelectedIndex(idx);
+		pattern.addActionListener(this);
     }
 
     
@@ -80,7 +94,7 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
 	}
 	
 	public final void fillPatterns() {
-		track.getCycle().setCount(0); // TODO
+		disable = true;
 		pattern.removeActionListener(this);
 		pattern.removeAllItems();
 		for (Pattern p : track)
@@ -91,6 +105,7 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
 		if (!track.isDrums())
 			track.getCurrent().update();
 		filename.refresh();
+		disable = false;
 	}
 	
 	public final void fillTracks() {
@@ -98,7 +113,7 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
 		new Thread(() -> {
 			Constants.sleep(10);
 			trackNum.removeAllItems();
-			for (int i = 0; i < clock.getTracks().length; i++)
+			for (int i = 0; i < JudahClock.getTracks().length; i++)
 				trackNum.addItem(i + 1);
 			trackNum.setSelectedIndex(track.getNum());
 			trackNum.addActionListener(this);
@@ -111,8 +126,8 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
 
 		fillInstruments();
 		fillPatterns();
-		
-        JLabel trklbl = new JLabel("Track", JLabel.CENTER);
+
+		JLabel trklbl = new JLabel("Track", JLabel.CENTER);
         trklbl.setFont(Constants.Gui.BOLD);
         JLabel patlbl = new JLabel("Pattern", JLabel.CENTER);
         patlbl.setFont(Constants.Gui.BOLD);
@@ -137,94 +152,157 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
         trackNum.setFont(Constants.Gui.BOLD);
         pnl.add(trackNum);
         pnl.add(pattern);
-        buttons.add(pnl);        
+        buttons.add(pnl);
+        
         createTrackNav();
-        
+
+        // File open/save/new
         pnl = new JPanel();
-        JButton file = new JButton("clear");
-        file.addActionListener(e -> track.setFile(null));
-        pnl.add(new JLabel("File", JLabel.CENTER));
-        pnl.add(file);
         pnl.add(filename);
+        JButton saveBtn = new JButton("Save");
+        saveBtn.addActionListener( e -> {
+            FileChooser.setCurrentDir(track.getFolder());
+            File f = FileChooser.choose();
+            if (f != null) {
+                track.write(f);
+                fillFile1();
+            }
+        });
+        pnl.add(saveBtn);
         buttons.add(pnl);
+        // play rec mpk btns
+        buttons.add(playRecMpk());
+        // new copy del btns
+        buttons.add(newCopyDelete());
+        // cycle and cue
+        buttons.add(cycleCue());
+        // probablity and trackVol
+        buttons.add(trackVol());
+        // port  and portVol
+        buttons.add(portVol());
+        // instrument
+        buttons.add(instrument());
+        // div and steps
+        buttons.add(stepsDiv());
+        // gate/octave in PianoEdit
         
-        pnl = new JPanel();
-        pnl.add(new JLabel("Cycle"), JLabel.CENTER);
-        pnl.add(cycle);
-        buttons.add(pnl);
-        
-        pnl = new JPanel();
-        Dimension SLIDER = new Dimension(85, STD_HEIGHT);
+        add(buttons);
+	}
 
-        JLabel vol1 = new JLabel("Trak Vol ", JLabel.CENTER);
-        pnl.add(vol1);
-        trackVol.setPreferredSize(SLIDER);
-        pnl.add(trackVol);
-        buttons.add(pnl);
-        
-        pnl = new JPanel();
-        JLabel vol2 = new JLabel("Port Vol ", JLabel.CENTER);
-        pnl.add(vol2);
-        portVol.setPreferredSize(SLIDER);
-        pnl.add(portVol);
-        buttons.add(pnl);
-        
-        Click outLbl = new Click("  Port  ");
-        outLbl.addActionListener( e -> {
-            JackPort out = JudahMidi.getByName(
-                midiOut.getSelectedItem().toString());
-            MainFrame.setFocus(
-                    JudahZone.getChannels().byName(Channels.volumeTarget(out)));});
-
-        JPanel midi = new JPanel();
-        midi.setLayout(new BoxLayout(midi, BoxLayout.X_AXIS));
-        midi.add(outLbl);
-        midi.add(midiOut);
-        buttons.add(midi);
-        
-        pnl = new JPanel();
-        pnl.add(new JLabel(" Patch ", JLabel.CENTER));
-        pnl.add(instrument);
-        buttons.add(pnl);
-        
-        createPlayButtons();
-
-        JButton create = new JButton("New");
+	private JPanel playRecMpk() {
+		playWidget.addActionListener((e) -> track.setActive(!track.isActive()));
+        record.addActionListener(e ->track.toggleRecord());
+        if (track.isSynth()) {
+			mpk.addActionListener(e -> {
+				track.setLatch(!track.isLatch());
+				Transpose.checkLatch();
+			});
+        }		
+        JPanel pnl = new JPanel(new GridLayout(1, 3));
+        pnl.add(playWidget);
+        pnl.add(record);
+        pnl.add(mpk);
+        return pnl;
+	}
+	
+	private JPanel newCopyDelete() {
+		JButton create = new JButton("New");
         create.addActionListener(e -> track.newPattern());
         JButton copy = new JButton("Copy");
         copy.addActionListener(e -> track.copyPattern());
         JButton delete = new JButton("Del");
         delete.addActionListener(e -> track.deletePattern());
-
-        pnl = new JPanel(new GridLayout(1, 3));
+        JPanel pnl = new JPanel(new GridLayout(1, 3));
         pnl.add(create);
         pnl.add(copy);
         pnl.add(delete);
-        buttons.add(pnl);
-        
-        pnl = new JPanel(new GridLayout(1, 2));
-        pnl.add(new JLabel("Steps: " + track.getSteps()), JLabel.CENTER);
-        pnl.add(new JLabel("Div: " + track.getDiv()), JLabel.CENTER);
-        buttons.add(pnl);
-        
-        add(buttons);
+        return pnl;
 	}
+	
+	private JPanel cycleCue() {
+		for (Cue item : Track.Cue.values())
+			cue.addItem(item);
+		cue.addActionListener( e -> {
+			Cue select = (Cue)cue.getSelectedItem();
+			if (track.getCue() != select)
+				track.setCue(select);});
+		JPanel pnl = new JPanel();
+		pnl.add(cycle);
+		pnl.add(cue);
+		return pnl;
+	}
+	
+	private Component trackVol() {
+		trackVol.addChangeListener(e -> {
+			float gain = ((Slider)e.getSource()).getValue() * .01f;
+			if (track.getGain() != gain)
+				track.setGain(gain);
+		});
 
+        trackVol.setPreferredSize(SLIDER);
+		JPanel pnl = new JPanel();
+        pnl.add(new JLabel("TrackVol", JLabel.CENTER));
+		pnl.add(trackVol);
+        return pnl;
+	}
+	
+	private JPanel portVol() {
+		portVol.setPreferredSize(SLIDER);
+		portVol.addChangeListener(e -> {
+			Channel ch = JudahZone.getChannels().byName(Channels.volumeTarget(track.getMidiOut()));
+			int vol = ((Slider)e.getSource()).getValue();
+			if (ch.getGain().getVol() != vol) {
+				ch.getGain().setVol(vol);
+				MainFrame.update(ch);
+			}
+		});
+		JPanel pnl = new JPanel();
+		pnl.add(midiOut);
+		pnl.add(portVol);
+		return pnl;
+	}
+	
+	private JPanel instrument() {
+		JPanel pnl = new JPanel();
+		pnl.add(new JLabel("Patch", JLabel.CENTER));
+        pnl.add(instrument);
+		return pnl;
+	}
+	
+	private JPanel stepsDiv() {
+		JLabel stp = new JLabel("Steps", JLabel.CENTER);
+		for (int i = 2; i <= 32; i++)
+			steps.addItem(i);
+		steps.setSelectedItem(track.getSteps());
+		steps.addActionListener(this);
+		JLabel dv = new JLabel("Div", JLabel.CENTER);
+		for (int i : new int[] {2,3,4,6,8})
+            div.addItem(i);
+		div.setSelectedItem(track.getDiv());
+		div.addActionListener(this);
+
+		JPanel pnl = new JPanel(new GridLayout(1, 4));
+		pnl.add(stp);
+		pnl.add(steps);
+		pnl.add(dv);
+		pnl.add(div);
+		return pnl;
+	}
+	
 	private void createTrackNav() {
-
         JPanel result = new JPanel(new GridLayout(1, 4, 3, 3));
 
         Click chBack = new Click("<");
         chBack.addActionListener(e -> {
             int channel = trackNum.getSelectedIndex() - 1;
             if (channel < 0) channel = trackNum.getItemCount() - 1;
-            clock.getTracker().setCurrent(clock.getTracks()[channel]);});
+            JudahClock.getTracker().setCurrent(JudahClock.getTracks()[channel]);});
 
         Click chNext = new Click(">");
         chNext.addActionListener(e -> {
             int channel = trackNum.getSelectedIndex() + 1;
             if (channel == trackNum.getItemCount()) channel = 0;
-            clock.getTracker().setCurrent(clock.getTracks()[channel]);
+            JudahClock.getTracker().setCurrent(JudahClock.getTracks()[channel]);
         });
         Click patternBack = new Click("<");
         patternBack.addActionListener(e -> {track.next(false);});
@@ -238,31 +316,19 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
         buttons.add(result);
     }	
 
-	private void createPlayButtons() {
-
-        JButton saveBtn = new JButton("Save");
-        saveBtn.addActionListener( e -> {
-            FileChooser.setCurrentDir(track.getFolder());
-            File f = FileChooser.choose();
-            if (f != null)
-                track.write(f);
-        });
-        
-        playWidget.addActionListener((e) -> track.setActive(!track.isActive()));
-        JPanel pnl = new JPanel(new GridLayout(1, 3));
-        pnl.add(saveBtn);
-        pnl.add(new JButton("Rec"));
-        pnl.add(playWidget);
-        buttons.add(pnl);
-
-    }
-
+	
 	public boolean handled(ActionEvent e) {
-		if (e.getSource() == pattern) 
+		Object src = e.getSource();
+		if (src == pattern) 
 			patternAction();
-		else 
-		if (e.getSource() == trackNum) 
+		else if (src == trackNum) 
 			trackAction();
+		else if (src == div) {
+			divAction();
+		}
+		else if (src == steps) {
+			stepsAction();
+		}
 		else 
 			return false;
 		return true;
@@ -271,7 +337,7 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
 	private void trackAction() {
 		int idx = trackNum.getSelectedIndex(); 
 		if (track.getNum() != idx)
-			clock.getTracker().setCurrent(clock.getTracks()[idx]);
+			JudahClock.getTracker().setCurrent(JudahClock.getTracks()[idx]);
 		trackNum.removeActionListener(this);
 		trackNum.setSelectedIndex(track.getNum());
 		trackNum.addActionListener(this);
@@ -281,9 +347,35 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
 		if ("new".equals("" + pattern.getSelectedItem())) {
 			track.newPattern();
 		}
-		else 
+		else if (pattern.getSelectedIndex() != -1)
 			track.setCurrent(track.get(pattern.getSelectedIndex()));
 			update();
 	}
 
+	private void divAction() {
+		int change = (int)div.getSelectedItem();
+		if (track.getDiv() == change)
+			return;
+		track.setDiv(change);
+		if (track.isDrums()) {
+			((DrumEdit)this).getGrid().repaint();
+		}
+		else {
+			((PianoEdit)this).refresh(track.getCurrent());
+		}
+	}
+	
+	private void stepsAction() {
+		int change = (int)steps.getSelectedItem();
+		if (track.getSteps() == change) 
+			return;
+		track.setSteps(change);
+		if (track.isDrums()) {
+			((DrumEdit)this).getGrid().repaint();
+		}
+		else {
+			((PianoEdit)this).refresh(track.getCurrent());
+		}
+	}
+	
 }

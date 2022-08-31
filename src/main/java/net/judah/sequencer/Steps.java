@@ -8,13 +8,13 @@ import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.api.Midi;
-import net.judah.api.MidiQueue;
+import net.judah.midi.JudahMidi;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 
 public class Steps extends ArrayList<Step> implements MidiQueue {
 	
-	@Setter @Getter private MidiQueue midi = JudahZone.getMidi();
+	@Setter @Getter private JudahMidi midi = JudahZone.getMidi();
 
 	@Getter @Setter int translate = 0;
 
@@ -33,7 +33,7 @@ public class Steps extends ArrayList<Step> implements MidiQueue {
 						
 						// if (s.isRecord())  midi.queue(note);
 						// else externalMidi.queue(note);
-						midi.queue(note);
+						JudahMidi.queue(note, note.getChannel() == 9 ? midi.getCalfOut(): midi.getKeyboardSynth());
 					}
 			}
 		} catch (Throwable t) {

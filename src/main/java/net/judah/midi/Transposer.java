@@ -11,8 +11,8 @@ import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.api.Command;
 import net.judah.api.Midi;
-import net.judah.util.Console;
 import net.judah.util.Constants;
+import net.judah.util.RTLogger;
 
 @Log4j
 public class Transposer extends Command {
@@ -29,7 +29,7 @@ public class Transposer extends Command {
 	public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 		if (midiData2 < 0) // sequencer
 			try {active = Boolean.parseBoolean("" + props.get(ACTIVE));
-			} catch(Throwable t) { Console.warn(t.getMessage(), t); }
+			} catch(Throwable t) { RTLogger.warn(this, t);}
 		else // midi controller
 			active = midiData2 > 0;
 			

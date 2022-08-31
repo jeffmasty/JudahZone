@@ -10,7 +10,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
 import net.judah.mixer.LineIn;
-import net.judah.util.Console;
+import net.judah.util.RTLogger;
 
 @Data @AllArgsConstructor @RequiredArgsConstructor
 public class Plugin {
@@ -94,10 +94,8 @@ public class Plugin {
 							jack.connect(client, ch.getRightSource(), ch.getRightConnection());
 					}
 					JudahZone.getCarla().setActive(index, active);
-					Console.info("Plugin " + name + ((active) ? " activate" : " de-activate"));
 				} catch (Exception e) {
-					Console.warn(e);
-					Console.info(this + " / " + ch);
+					RTLogger.warn(this, name + " - " + ch + " : " + e.getMessage());
 				}
 			}
 		}.start();

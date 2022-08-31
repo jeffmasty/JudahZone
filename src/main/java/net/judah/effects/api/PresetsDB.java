@@ -10,7 +10,7 @@ import net.judah.util.RTLogger;
 public class PresetsDB extends ArrayList<Preset> {
 
     public enum Raw {
-        StdCrunch, Chorus2, DrumsVerb, Tremelo
+        StdCrunch, Chorus2, DrumsVerb, Tremelo, Freeverb
     }
 
 	public static final File FILE = new File(System.getProperty("user.dir"), "presets.zone");

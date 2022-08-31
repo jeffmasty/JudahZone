@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.song.Songlist;
 
 @Log4j
 public class JsonUtil {
@@ -39,11 +38,11 @@ public class JsonUtil {
         return result;
 	}
 	
-	public static String setlist2Json(Songlist list) throws IOException {
-		String json = MAPPER.writeValueAsString(list.getSongs());
-		log.info(json);
-		return json;
-	}
+//	public static String setlist2Json(Songlist list) throws IOException {
+//		String json = MAPPER.writeValueAsString(list.getSongs());
+//		log.info(json);
+//		return json;
+//	}
 	
 	public static void saveString(String json, File toFile) throws IOException {
 		if (!toFile.isFile()) 

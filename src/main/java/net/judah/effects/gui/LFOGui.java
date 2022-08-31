@@ -2,20 +2,14 @@ package net.judah.effects.gui;
 
 import java.awt.FlowLayout;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JToggleButton;
+import javax.swing.*;
 
 import net.judah.effects.LFO;
 import net.judah.effects.LFO.Target;
 import net.judah.mixer.Channel;
-import net.judah.util.Console;
 import net.judah.util.Constants.Gui;
 import net.judah.util.Knob;
+import net.judah.util.RTLogger;
 import net.judah.util.Slider;
 import net.judah.util.TapTempo;
 
@@ -65,7 +59,7 @@ public class LFOGui extends JPanel implements GUI {
             if (msec > 0) {
                 channel.getLfo().setFrequency((int)msec);
                 lfoFreq.setValue((int)channel.getLfo().getFrequency());
-                Console.info("LFO Tap Tempo: " + channel.getLfo().getFrequency());
+                RTLogger.log(this, "LFO Tap Tempo: " + channel.getLfo().getFrequency());
             }
         });
         time.setPreferredSize(TAP_SZ);
@@ -110,7 +104,7 @@ public class LFOGui extends JPanel implements GUI {
         if (lfo.getTarget() == Target.CutEQ)
             channel.getCutFilter().setActive(lfo.isActive());
         // if (lfo.isActive()) lfoRecover = ch.getVolume(); else ch.setVolume(lfoRecover);
-        Console.info(channel.getName() + " LFO: " + (lfo.isActive() ? " On" : " Off"));
+        RTLogger.log(this, channel.getName() + " LFO: " + (lfo.isActive() ? " On" : " Off"));
     }
 
 

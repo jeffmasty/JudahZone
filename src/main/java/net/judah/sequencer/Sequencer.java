@@ -22,7 +22,6 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
-import net.judah.SongPane;
 import net.judah.api.*;
 import net.judah.api.Notification.Property;
 import net.judah.effects.api.Preset;
@@ -34,10 +33,10 @@ import net.judah.midi.MidiListener;
 import net.judah.midi.MidiListener.PassThrough;
 import net.judah.midi.Route;
 import net.judah.midi.Router;
-import net.judah.mixer.SoloTrack;
 import net.judah.mixer.LineIn;
-import net.judah.song.Song;
-import net.judah.song.Trigger;
+import net.judah.mixer.SoloTrack;
+import net.judah.sequencer.editor.Song;
+import net.judah.sequencer.editor.Trigger;
 import net.judah.util.CommandWrapper;
 import net.judah.util.Console;
 import net.judah.util.Constants;
@@ -124,7 +123,7 @@ public class Sequencer implements Service, Runnable, TimeListener {
                 //JudahZone.getMetronome().removeListener(previous);
                 previous.close();
                 current = null;
-                MainFrame.get().sheetMusicOff();
+                // MainFrame.get().sheetMusicOff();
             }
             // metronome.addListener(this);
             JudahZone.getLooper().clear();
@@ -427,10 +426,6 @@ public class Sequencer implements Service, Runnable, TimeListener {
 //            Loop drums = (Loop)JudahZone.getLooper().get(0);
 //            ((SeqClock)clock).setLength(drums.getRecordedLength(), drums.getSize());
 //        }
-
-        private void _iFeelLove() {
-
-        }
 
         private void _autumnLeaves() {
             control = ControlMode.EXTERNAL;

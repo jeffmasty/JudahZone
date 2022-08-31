@@ -8,6 +8,7 @@ import org.jaudiolibs.jnajack.JackPort;
 import lombok.Getter;
 import net.judah.midi.JudahClock;
 import net.judah.util.Constants;
+import net.judah.util.Slider;
 
 public class DrumTrack extends Track {
 
@@ -15,19 +16,24 @@ public class DrumTrack extends Track {
 	
 
 	public static final float DEF_VOL = 0.9f;
+	@Getter private final Slider customVol = new Slider(null);
+
 	
 	@Getter public final ArrayList<GMDrum> kit = new ArrayList<>();
 	@Getter public final ArrayList<Float> volume = new ArrayList<>();
 	
-	public DrumTrack(JudahClock clock, String name, int ch, JackPort port) {
-		super(clock, name, ch, port);
+	public DrumTrack(JudahClock clock, String name, JackPort port) {
+		super(clock, name, 9, port);
 		for (GMDrum d : GMDrum.Standard) {
 			kit.add(d);
 			volume.add(DEF_VOL);
 		}
 		edit = new DrumEdit(this);
 
-		
+		customVol.setPreferredSize(TrackView.SLIDESZ);
+		customVol.addChangeListener(e -> 
+			volume.set(volume.size()-1, ((Slider)e.getSource()).getValue() * .01f));
+
 	}
 
 	public float velocity(int data1) {

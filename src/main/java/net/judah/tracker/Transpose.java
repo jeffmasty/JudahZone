@@ -5,6 +5,7 @@ import javax.sound.midi.ShortMessage;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.util.RTLogger;
 
@@ -29,5 +30,16 @@ public class Transpose {
 			RTLogger.warn(Transpose.class, e);
 		}
 		return null;
+	}
+
+	public static void checkLatch() {
+		for (Track t : JudahClock.getTracks()) {
+			if (t.isLatch()) {
+				Transpose.setActive(true);
+				RTLogger.log("Transpose", "MPK -> " + t.getName());
+				return;
+			}
+		}
+		Transpose.setActive(false);
 	}
 }

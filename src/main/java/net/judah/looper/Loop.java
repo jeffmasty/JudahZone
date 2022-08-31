@@ -28,7 +28,7 @@ import net.judah.util.AudioTools;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
-public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordAudio, TimeListener {
+public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordAudio {
 
     private final int bufferSize = JudahMidi.getInstance().getBufferSize();
 
@@ -194,29 +194,32 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
         }
 
         else if (mode == RUNNING && !active) {
-        	new Thread(() -> endRecord()).start();
+        	endRecord();
         }
     }
 
 	private void endRecord() {
 		isRecording.set(STOPPED);
         if (length == null) { // Initial Recording, cut tape for other loopers
-        	if (this == looper.getLoopA())
-        		recording.trim();
-
+        	//if (this == looper.getLoopA()) recording.trim(); // fudge factor
+        	
             length = recording.size();
             looper.setRecordedLength(System.currentTimeMillis() - _start);
-        	new ArrayList<>(listeners).forEach(
+
+            new ArrayList<>(listeners).forEach(
             		listener -> {listener.update(Notification.Property.STATUS, Status.TERMINATED);});
             new Thread(() -> { // set blank tape on other loopers
         		for (Loop loop : looper.getLoops()) {
 	        			if (loop != this && !loop.hasRecording()) { 
-	            			loop.setRecording(new Recording(getRecording().size()));
+	            			loop.setRecording(new Recording(length));
 			    			loop.getIsPlaying().set(AudioMode.STARTING);
 		    			}
 	        			if (loop.isArmed()) { // start overdub
 	        				loop.setArmed(false);
-	        				new Thread( () -> loop.record(true)).start(); 
+	        				new Thread( () -> {
+	        					loop.record(true);
+	        					loop.setType(Type.ONE_SHOT);
+	        				}).start(); 
 	        			}
 		    	}
         	}).start();
@@ -225,13 +228,12 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
         else {
         	RTLogger.log(this, name + " overdubbed."); 
         }
-        isPlaying.compareAndSet(NEW, STOPPED);
+        //isPlaying.compareAndSet(NEW, STOPPED);
         isPlaying.compareAndSet(ARMED, STARTING);
         dirty = true;
         MainFrame.update(this);
 	}
 	
-    
 	public void duplicate() {
 		Recording source = getRecording();
 		Recording dupe =  new Recording(source, 2, source.isListening());
@@ -258,20 +260,6 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
 
     @Override public void removeListener(TimeListener l) {
         listeners.remove(l);
-    }
-
-    @Override
-    public void update(Notification.Property prop, Object value) {
-//        if (Notification.Property.STATUS == prop && Status.TERMINATED == value) {
-//        	if (primary.getRecording() != null) {
-//        		setRecording(new Recording(primary.getRecording().size(), true));
-//        		RTLogger.log(this, name + " sync'd recording. buffers: " + getRecording().size());
-//        	}
-//       		play(true);
-//            record(true);
-//            primary.removeListener(this);
-//            primary = null;
-//        }
     }
 
     ////////////////////////////////////
@@ -434,6 +422,11 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
         int updated = tapeCounter.get() + 1;
         if (updated == recording.size()) {
             if (type == Type.ONE_SHOT) {
+            	if (recording()) {
+            		record(false);
+            		setType(Type.FREE);
+            	}
+            	else
                 isPlaying.set(STOPPING);
             }
             updated = 0;

@@ -1,14 +1,11 @@
 package net.judah.util;
 
-import static java.awt.event.KeyEvent.VK_ESCAPE;
 import static net.judah.JudahZone.*;
 import static net.judah.util.Constants.NL;
 
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -24,7 +21,6 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.Looper;
-import net.judah.MainFrame;
 import net.judah.api.Midi;
 import net.judah.api.ProcessAudio.Type;
 import net.judah.effects.api.Preset;
@@ -71,7 +67,7 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
     private Console() {
 
         textarea.setEditable(false);
-		textarea.setForeground(Color.GREEN/* new Color(1, 77, 13) *//* dark green */);
+		textarea.setForeground(Color.BLUE.darker()/* new Color(1, 77, 13) *//* dark green */);
         
         scroller = new JScrollPane(textarea);
         scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
@@ -79,11 +75,11 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
         
         input.addActionListener(this);
         input.setBackground(Pastels.GREEN);
-        input.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == VK_ESCAPE)
-                    MainFrame.get().sheetMusic();}});
+//        input.addKeyListener(new KeyAdapter() {
+//            @Override
+//            public void keyPressed(KeyEvent e) {
+//                if (e.getKeyCode() == VK_ESCAPE)
+//                    MainFrame.get().sheetMusic();}});
 
         participants.add(this);
         participants.add(FluidSynth.getInstance().getConsole());
@@ -132,16 +128,19 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
         addText("" + NL);
     }
 
+    @Deprecated // RTLogger
     public static void warn(Throwable t) {
         addText("WARN " + t.getMessage());
         log.warn(t.getMessage(), t);
     }
 
+    @Deprecated // RTLogger
     public static void warn(String s, Throwable t) {
         addText("WARN " + s);
         if (t != null) log.warn(s, t);
     }
 
+    @Deprecated
     public static void info(String s) {
         if (level == Level.DEBUG || level == Level.INFO || level == Level.TRACE)
             addText(s);
@@ -242,9 +241,9 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
 //            MixerPane.getInstance().update();
 //            Console.info("...updated");
 //        }
-        else if (text.equalsIgnoreCase("sheetMusic")) {
-            MainFrame.get().sheetMusic();
-        }
+//        else if (text.equalsIgnoreCase("sheetMusic")) {
+//            MainFrame.get().sheetMusic();
+//        }
         else if (text.equals("preset")) {
             for(Preset p : getPresets())
                 addText(p.toString());

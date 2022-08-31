@@ -9,8 +9,7 @@ public interface Size {
     int WIDTH_CONTROLS = 320;
     int WIDTH_SONG = WIDTH_FRAME - WIDTH_CONTROLS; // about 950
     int HEIGHT_MIXER = 180;
-    //int HEIGHT_TABS = HEIGHT_FRAME - HEIGHT_MIXER - 35;
-    Dimension TABS = new Dimension(WIDTH_FRAME - WIDTH_CONTROLS - 30, HEIGHT_FRAME - HEIGHT_MIXER + 21);
+    Dimension TABS = new Dimension(WIDTH_SONG - 48, HEIGHT_FRAME - HEIGHT_MIXER + 12);
 
     int STD_HEIGHT = 24;
     

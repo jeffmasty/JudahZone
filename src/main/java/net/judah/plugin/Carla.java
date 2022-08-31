@@ -24,7 +24,6 @@ import net.judah.JudahZone;
 import net.judah.api.Service;
 import net.judah.effects.api.Reverb;
 import net.judah.mixer.LineIn;
-import net.judah.util.Console;
 import net.judah.util.RTLogger;
 
 // locked into the ubuntu20 version of Carla, do not prefer the current KStudio version
@@ -243,7 +242,7 @@ public class Carla implements Service {
 
 			jack.connect(client, harmonizer.getOutports()[LEFT_CHANNEL], aux2.getLeftConnection());
 			jack.connect(client, harmonizer.getOutports()[RIGHT_CHANNEL], aux2.getRightConnection());
-			Console.info("Bass beast mode engaged.");
+			RTLogger.log(this, "Bass beast mode engaged.");
 		}
 		else {
 			try {
@@ -252,7 +251,7 @@ public class Carla implements Service {
 
 			jack.disconnect(client, harmonizer.getOutports()[LEFT_CHANNEL], aux2.getLeftConnection());
 			jack.disconnect(client, harmonizer.getOutports()[RIGHT_CHANNEL], aux2.getRightConnection());
-			Console.info("Octaver off");
+			RTLogger.log(this, "Octaver off");
 			} catch (Throwable t) {log.debug("disconnect: " + t.getMessage());}
 		}
 	}

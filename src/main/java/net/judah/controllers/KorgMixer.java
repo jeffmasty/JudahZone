@@ -1,7 +1,6 @@
 package net.judah.controllers;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import lombok.Getter;
 import net.judah.ControlPanel;
@@ -17,6 +16,7 @@ import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.tracker.Track;
 import net.judah.tracker.Tracker;
+import net.judah.tracker.Transpose;
 import net.judah.util.Constants;
 
 /** Korg nanoKONTROL2 midi controller custom codes */ 	
@@ -29,18 +29,11 @@ public class KorgMixer implements Controller {
 	private final int soff = 32;
 	private final int moff = 48;
 	private final int roff = 64;
-	@Getter private final ArrayList<MapEntry> list= new ArrayList<MapEntry>(); 
-	@Getter private final ArrayList<MapEntry> faders = new ArrayList<MapEntry>();
-	@Getter private final ArrayList<MapEntry> knobs = new ArrayList<MapEntry>();
-	@Getter private final ArrayList<MapEntry> mutes = new ArrayList<MapEntry>();
-	@Getter private final ArrayList<MapEntry> solos = new ArrayList<MapEntry>();
-	@Getter private final ArrayList<MapEntry> tracks = new ArrayList<MapEntry>();
-	@Getter private final ArrayList<MapEntry> others = new ArrayList<MapEntry>();
 	private final ArrayList<Channel> channels = new ArrayList<Channel>();
 
 	private static final MapEntry PREV = new MapEntry(new String("PREV"), TYPE.MOMENTARY, 58);
  	private static final MapEntry NEXT = new MapEntry(new String("NEXT"), TYPE.MOMENTARY, 59);
-	private static final MapEntry LOOP = new MapEntry(new String("LOOP"), TYPE.TOGGLE, 46);;
+ 	private static final MapEntry LOOP = new MapEntry(new String("LOOP"), TYPE.TOGGLE, 46);;
 	private static final MapEntry SET = new MapEntry(new String("SET"), TYPE.MOMENTARY, 60);
 	private static final MapEntry PREV2 = new MapEntry("PREV2", TYPE.MOMENTARY, 61);
 	private static final MapEntry NEXT2 = new MapEntry("NEXT2", TYPE.MOMENTARY, 62);
@@ -54,26 +47,6 @@ public class KorgMixer implements Controller {
 	private long lastPress;
 	private int lastTrack;
 	
-	public KorgMixer() {
-		for (int x = 0; x < 8; x++) {
-			faders.add(new MapEntry(new String("Fade" + x), TYPE.KNOB, x));
-			knobs.add(new MapEntry(new String("RvbWet" + x), TYPE.KNOB, x + knoboff));
-			solos.add(new MapEntry(new String("Goto" + x), TYPE.MOMENTARY, x + soff));
-			mutes.add(new MapEntry(new String("Mute" + x), TYPE.TOGGLE, x + moff));
-			tracks.add(new MapEntry(new String("Revb" + x), TYPE.TOGGLE, x + roff));
-		}
-		others.addAll(Arrays.asList(new MapEntry[] {
-			PREV, NEXT, LOOP, SET, PREV2, NEXT2, RWND, FWRD, STOP, PLAY, RECORD
-		}));
-		
-		list.addAll(faders);
-		list.addAll(knobs);
-		list.addAll(solos);
-		list.addAll(mutes);
-		list.addAll(tracks);
-		list.addAll(others);
-	}
-
 	@Override
 	public boolean midiProcessed(Midi midi) {
 		int data1 = midi.getData1();
@@ -102,7 +75,7 @@ public class KorgMixer implements Controller {
 			new Thread( () -> {
 				int ch = data1 - soff;
 				if (doubleClick(ch))
-					MainFrame.setFocus(JudahClock.getInstance().getTracks()[ch]);
+					MainFrame.setFocus(JudahClock.getTracks()[ch]);
 				else 
 					MainFrame.setFocus(channels.get(data1 - soff));
 			}).start();
@@ -121,23 +94,26 @@ public class KorgMixer implements Controller {
 		}
 		if (data1 >= roff && data1 < roff + 8) { // play/stop sequencer tracks
 			int trackNum = data1 - roff;
-			Track track = JudahClock.getInstance().getTracks()[trackNum];
+			Track track = JudahClock.getTracks()[trackNum];
 			track.setActive(data2 > 0);
 //			if (doubleClick(trackNum)) 
 //				MainFrame.setFocus(track);
 			return true;
 		}
-		if (data1 == SET.getVal() && data2 != 0) {
-			// TODO
+		if (data1 == SET.getVal() && data2 != 0) { // load selected Song into sequencer/looper
+			JudahZone.loadSong();
 			return true;
+		}
+		if (data1 == LOOP.getVal()) {
+			Tracker.getCurrent().toggleRecord();
 		}
 		
 		if (data1 == PREV.getVal() && data2 != 0) {
-			JudahMidi.getClock().getTracker().changeTrack(true);
+			JudahClock.getTracker().changeTrack(true);
 			return true;
 		}
 		if (data1 == NEXT.getVal() && data2 != 0) {
-			JudahMidi.getClock().getTracker().changeTrack(false);
+			JudahClock.getTracker().changeTrack(false);
 			return true;
 		}
 		if (data1 == PREV2.getVal() && data2 != 0) { // change pattern
@@ -166,9 +142,11 @@ public class KorgMixer implements Controller {
 			MainFrame.changeTab(true);
 			return true;
 		}
-		if (data1 == STOP.getVal() && data2 != 0) { // TODO
-			//BeatsView.getSequencer().setMute(!BeatsView.getSequencer().isMute());
-			//new Thread(() -> {BeatsView.getInstance().getButtons().update();}).start();
+		if (data1 == STOP.getVal() && data2 != 0) { // Transpose Track on/off
+			if (Tracker.getCurrent() == null) 
+				return true;
+			Tracker.getCurrent().setLatch(!Tracker.getCurrent().isLatch());
+			Transpose.checkLatch();
 			return true;
 		}
 		if (data1 == PLAY.getVal()) {
@@ -218,6 +196,26 @@ public class KorgMixer implements Controller {
 	
 	
 }
+/*
+//	@Getter private final ArrayList<MapEntry> list= new ArrayList<MapEntry>(); 
+//	@Getter private final ArrayList<MapEntry> faders = new ArrayList<MapEntry>();
+//	@Getter private final ArrayList<MapEntry> knobs = new ArrayList<MapEntry>();
+//	@Getter private final ArrayList<MapEntry> mutes = new ArrayList<MapEntry>();
+//	@Getter private final ArrayList<MapEntry> solos = new ArrayList<MapEntry>();
+//	@Getter private final ArrayList<MapEntry> tracks = new ArrayList<MapEntry>();
+//	@Getter private final ArrayList<MapEntry> others = new ArrayList<MapEntry>();
+	for (int x = 0; x < 8; x++) {
+		faders.add(new MapEntry(new String("Fade" + x), TYPE.KNOB, x));
+		knobs.add(new MapEntry(new String("RvbWet" + x), TYPE.KNOB, x + knoboff));
+		solos.add(new MapEntry(new String("Goto" + x), TYPE.MOMENTARY, x + soff));
+		mutes.add(new MapEntry(new String("Mute" + x), TYPE.TOGGLE, x + moff));
+		tracks.add(new MapEntry(new String("Revb" + x), TYPE.TOGGLE, x + roff));
+	}
+	others.addAll(Arrays.asList(new MapEntry[] {
+		PREV, NEXT, LOOP, SET, PREV2, NEXT2, RWND, FWRD, STOP, PLAY, RECORD
+	}));
+	list.addAll(faders);list.addAll(knobs);...
+ */
 /** 
 
         nanoKONTROL2 MIDI Implementation             Revision 1.00 (2010.12.14)

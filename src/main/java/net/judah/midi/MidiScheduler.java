@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import net.judah.api.Midi;
-import net.judah.api.MidiQueue;
 import net.judah.effects.Fader;
 import net.judah.effects.LFO;
 import net.judah.sequencer.MidiEvent;
@@ -20,10 +19,10 @@ import net.judah.util.RTLogger;
 public class MidiScheduler extends MidiTrack implements Runnable {
 
 	@Getter private long current = -1;
-	private final MidiQueue queue;
+	private final JudahMidi queue;
 	private final BlockingQueue<Long> offering;
 
-	public MidiScheduler(MidiQueue queue) {
+	public MidiScheduler(JudahMidi queue) {
 		this.queue = queue;
 		offering = new LinkedBlockingQueue<>(2);
 	}
@@ -53,7 +52,7 @@ public class MidiScheduler extends MidiTrack implements Runnable {
 					msg = Constants.transpose(event.getMsg(),
 							track.getTranspose(), track.getGain());
 					if (track.getOutput() == null)
-						queue.queue(msg);
+						JudahMidi.queue(msg, queue.getKeyboardSynth());
 					else {
 						track.getOutput().queue(msg);
 					}
@@ -69,7 +68,7 @@ public class MidiScheduler extends MidiTrack implements Runnable {
 			long time = reference + e.getOffset();
 			assert time > 0 : "reference: " + reference + " offset: " + e.getOffset();
 			if (time >= current && time < current + 4)
-				queue.queue(e.getMsg());
+				JudahMidi.queue(e.getMsg(), queue.getKeyboardSynth());
 			else if (time > current) {
 				add(new ScheduledEvent(time, e.getMsg(), track));
 			}

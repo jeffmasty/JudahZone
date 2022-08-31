@@ -42,6 +42,13 @@ public class Constants {
     public static final File defaultFolder = new File(ROOT, "Songs/");
     public static final File defaultSetlist = new File(defaultFolder, "list1.songs");
     public static final File defaultDrumFile = new File(ROOT, "patterns/Drum1");
+	private static final String MASTER = "Master";
+	private static final String DRUMS = "Drumtrack";
+	private static final String LOOPA = "Loop A";
+	private static final String LOOPB = "Loop B";
+	private static final String[] DEFAULT_OUT = new String[] {MASTER, DRUMS, LOOPA, LOOPB};
+	public static final File SHEETMUSIC = new File(System.getProperty("user.home"), "sheets");
+
 
     public static class Param {
 		public static final String ACTIVE = "active";
@@ -62,6 +69,8 @@ public class Constants {
 		public static final String MAX = "max";
 		public static final String STEPS = "steps";
 		public static final String IMAGE = "image";
+		public static final String FLUID = "fluid";
+
 
 		public static boolean parseActive(HashMap<String, Object> props) {
 			return (Boolean.parseBoolean(props.get(ACTIVE).toString()));
@@ -272,11 +281,6 @@ public class Constants {
 		} catch (MidiUnavailableException e) { e.printStackTrace(); }
 	}
 
-	private static final String MASTER = "Master";
-	private static final String DRUMS = "Drumtrack";
-	private static final String LOOPA = "Loop A";
-	private static final String LOOPB = "Loop B";
-	private static final String[] DEFAULT_OUT = new String[] {MASTER, DRUMS, LOOPA, LOOPB};
 
 	public static JMenu createMixerMenu(String lbl) {
 	    JMenu result = new JMenu(lbl);
@@ -318,7 +322,7 @@ public class Constants {
     public static void writeToFile(File file, String content) {
         new Thread(() -> {
             try { Files.write(Paths.get(file.toURI()), content.getBytes());
-            } catch(IOException e) {Console.warn(e);}
+            } catch(IOException e) {RTLogger.warn("Constants.writeToFile", e);}
         }).start();
     }
     
@@ -368,4 +372,8 @@ public class Constants {
 		return (int) (data2 / (100 / (float)size));
 	}
 
+	public static boolean isNumeric(String str) {
+        return str != null && str.matches("[-+]?\\d*\\.?\\d+");
+    }
+	
 }

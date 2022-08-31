@@ -15,6 +15,7 @@ import org.jaudiolibs.jnajack.JackMidi;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
+import net.judah.sequencer.MidiQueue;
 import net.judah.util.RTLogger;
 
 /** Create a Jack midi port and process queue'd messages<br>

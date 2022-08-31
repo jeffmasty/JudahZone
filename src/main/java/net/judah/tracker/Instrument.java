@@ -31,14 +31,10 @@ public class Instrument extends JComboBox<String> {
 	
 	private final ActionListener listener = new ActionListener() {
 		
-		
-		
-		
 		@Override public void actionPerformed(ActionEvent evt) {
 			int idx = lookup(getSelectedItem() + "", track.isDrums());
 			JudahMidi.getInstance().progChange(idx, track.getMidiOut(), track.getCh());
 			track.setInstrument(getSelectedItem() + "");
-
 		}
 	};
 	
@@ -92,13 +88,12 @@ public class Instrument extends JComboBox<String> {
     	else 
     		for (String s : GMNames.GM_NAMES)
     			addItem(s);
-        Integer idx = lookup(track);
-
-        if (idx == null || idx < 0)
-        	idx = 0;
-        setSelectedIndex(idx);
+    	
         if (track.getInstrument() != null)
         	setInstrument(track.getInstrument());
+        else 
+        	setSelectedIndex(0);
+        
         addActionListener(listener);
 
 	}

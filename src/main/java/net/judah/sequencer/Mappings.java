@@ -6,7 +6,7 @@ import java.util.LinkedHashSet;
 
 import net.judah.api.Command;
 import net.judah.api.Midi;
-import net.judah.song.Link;
+import net.judah.sequencer.editor.Link;
 import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.JudahException;

@@ -12,7 +12,6 @@ import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import org.jaudiolibs.jnajack.JackPort;
 
 import net.judah.midi.JudahMidi;
-import net.judah.midi.Panic;
 import net.judah.midi.ReRoute;
 
 public class MidiOut extends JComboBox<JackPort>  {
@@ -52,20 +51,9 @@ public class MidiOut extends JComboBox<JackPort>  {
 		addItem(midi.getCalfOut());
 		addItem(midi.getCircuitOut());
 		setSelectedItem(track.getMidiOut());
-		addActionListener(e -> exec(track));
+		addActionListener(e -> track.setMidiOut((JackPort)getSelectedItem()));
 	}
 
-	private void exec(Track track) {
-		if (!track.getMidiOut().equals(getSelectedItem())) {
-        	JackPort old = track.getMidiOut();
-        	track.setMidiOut((JackPort)getSelectedItem());
-        	if (old != null)
-        		new Panic(old).start();
-             // TODO Beats View MainFrame.get().getTracker().getView(track).redoInstruments();
-		}
-
-	}
-	
 	public ArrayList<JackPort> getAvailable() {
 		ArrayList<JackPort> result = new ArrayList<JackPort>();
 		for (int i = 0; i < getItemCount(); i++)

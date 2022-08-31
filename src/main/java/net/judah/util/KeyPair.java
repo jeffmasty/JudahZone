@@ -1,7 +1,7 @@
 package net.judah.util;
 
 import lombok.Data;
-import net.judah.song.Edits.Copyable;
+import net.judah.sequencer.editor.Edits.Copyable;
 
 @Data
 public class KeyPair implements Copyable {

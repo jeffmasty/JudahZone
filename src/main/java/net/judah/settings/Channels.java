@@ -26,8 +26,8 @@ public class Channels extends ArrayList<LineIn> {
 	public static final String CRAVE = "BASS";
 	
 	private LineIn guitar, mic, fluid;
-	private LineIn uno, circuit, calf; 
-	private LineIn crave; //aux1
+	private LineIn crave, circuit, calf; 
+	// private LineIn uno; //aux1
 
 	private void miniSetup() {
 		guitar = new LineIn(GUITAR, "system:capture_1", "guitar");
@@ -43,9 +43,10 @@ public class Channels extends ArrayList<LineIn> {
 		calf = new LineIn(CALF, new String[] {null, null}, new String[] {"calfL", "calfR"});
 		calf.setIcon(Icons.load("Drums.png"));
 
-		uno = new LineIn(UNO, 
-				"system:capture_3", "uno");
-		addAll(Arrays.asList(new LineIn[] { guitar, mic, fluid, calf, uno}));
+//		uno = new LineIn(UNO, 
+//				"system:capture_3", "uno");
+//		
+		addAll(Arrays.asList(new LineIn[] { guitar, mic, fluid, calf, crave}));
 		
 	}
 	
@@ -68,9 +69,9 @@ public class Channels extends ArrayList<LineIn> {
 		calf = new LineIn(CALF, new String[] {null, null}, new String[] {"calfL", "calfR"});
 		// calf.setIcon(Icons.load("Drums.png"));
 
-		uno = new LineIn(UNO, 
-				new String[] {"system:capture_7", "system:capture_8"},
-				new String[] {"UnoL", "UnoR"});
+//		uno = new LineIn(UNO, 
+//				new String[] {"system:capture_7", "system:capture_8"},
+//				new String[] {"UnoL", "UnoR"});
 
 		crave = new LineIn(CRAVE, "system:capture_3", "crave_in");
 		
@@ -78,7 +79,7 @@ public class Channels extends ArrayList<LineIn> {
 				new String[] {"system:capture_5", "system:capture_6"},
 				new String[] {"CircuitL", "CircuitR"});
 		
-		addAll(Arrays.asList(new LineIn[] { guitar, mic, fluid, calf, crave, uno, circuit}));
+		addAll(Arrays.asList(new LineIn[] { guitar, mic, fluid, calf, crave, circuit}));
 
 	}
 
@@ -90,11 +91,13 @@ public class Channels extends ArrayList<LineIn> {
 	}
 
 	public void initVolume() {
-		if (mic != null) mic.getGain().setVol(10);
-		fluid.getGain().setVol(33);
+		if (mic != null) mic.getGain().setVol(30);
+		fluid.getGain().setVol(30);
 		calf.getGain().setVol(40);
 		crave.getGain().setVol(40);
-		uno.getGain().setVol(40);
+		//uno.getGain().setVol(40);
+		guitar.getGain().setVol(60);
+		
 	}
 
 	/** By default, don't record drum track, microphone, sequencer */

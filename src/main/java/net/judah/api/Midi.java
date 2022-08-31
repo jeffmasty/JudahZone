@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.util.Console;
+import net.judah.tracker.GMDrum;
 import net.judah.util.RTLogger;
 
 /** Utilities added to javax ShortMessage, with an optional source Midi port */
@@ -36,8 +36,6 @@ public class Midi extends ShortMessage {
 
 	@Getter @Setter protected String port;
 
-	
-	
 	public Midi(byte[] bytes) {
 		super(bytes);
 	}
@@ -86,9 +84,12 @@ public class Midi extends ShortMessage {
         StringBuilder b = new StringBuilder();
         b.append(getCommand()).append("/");
         b.append(getChannel()).append("/");
-        b.append(getData1()).append("/");
-        b.append(getData2());
-        if (port != null) b.append("(").append(port).append(")");
+        if (getChannel() == 9)
+        	b.append(GMDrum.lookup(getData1()).name());
+        else 
+        	b.append(getData1());
+        b.append("/").append(getData2());
+        //if (port != null) b.append("(").append(port).append(")");
         return b.toString();
 	}
 
@@ -198,8 +199,8 @@ public class Midi extends ShortMessage {
                 result = new Midi(command, channel);
             if (source != null)
                 result.setPort(source);
-        } catch (Throwable t) {
-            Console.warn(t);
+        } catch (Throwable e) {
+        	RTLogger.warn("Midi.deserialize", e);
         }
         return result;
 	}

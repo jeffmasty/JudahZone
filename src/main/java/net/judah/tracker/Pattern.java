@@ -23,6 +23,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.judah.api.Key;
 import net.judah.api.Midi;
+import net.judah.midi.JudahMidi;
 import net.judah.midi.NoteOff;
 import net.judah.midi.NoteOn;
 import net.judah.util.Constants;
@@ -105,9 +106,9 @@ public class Pattern extends HashMap<Integer, Notes> implements TableModel, Tabl
 		if (split.length < 2) // oops, probably an empty pattern
 			return;
 		int step = Integer.parseInt(split[0]);
-		
-		Midi midi = new Midi(num(split[1]), num(split[2]), num(split[3]), num(split[4]));
-		
+		int data1 = Constants.isNumeric(split[3]) ? 
+				num(split[3]) : GMDrum.valueOf(split[3]).getData1();
+		Midi midi = new Midi(num(split[1]), num(split[2]), data1, num(split[4]));
 		Notes n = get(step);
 		if (n == null) 
 			put(step, new Notes(midi));
@@ -164,7 +165,17 @@ public class Pattern extends HashMap<Integer, Notes> implements TableModel, Tabl
 		} catch (InvalidMidiDataException e) {
 			RTLogger.warn(this, e);
 		}
-		
+	}
+	
+	private void noteOff(int row, int col) {
+		try {
+    		Midi noteOff = new NoteOff(track.getCh(), toMidi(row));
+    		setValueAt(noteOff, row, col);
+    		update(row);
+    	} catch (InvalidMidiDataException e) {
+    		RTLogger.warn(this, e);
+    	}
+
 	}
 	
 	private void gate(int row, int col, int gate) {
@@ -185,24 +196,27 @@ public class Pattern extends HashMap<Integer, Notes> implements TableModel, Tabl
 		if (row == 0) return;
 		int data1 = toMidi(row);
 		int step = col - 1;
-		Notes note = get(step);
-		if (midi == null) RTLogger.log(this, "ouch " + step + "/" + data1);
-		if (note == null) {
-			put(step, new Notes((Midi)midi));
-		} else {
-			if (note.find(data1) == null) {
-				note.add((Midi)midi);
-			} else {
-				note.remove(note.find(data1));
-				if (note.isEmpty())
-					remove(step);
-			}
-		}
+//		Notes note = get(step);
+		if (midi == null) 
+			RTLogger.log(this, "ouch " + step + "/" + data1);
+		else
+			place(step, (Midi)midi);
+//		if (note == null) {
+//			put(step, new Notes((Midi)midi));
+//		} else {
+//			if (note.find(data1) == null) {
+//				note.add((Midi)midi);
+//			} else {
+//				note.remove(note.find(data1));
+//				if (note.isEmpty())
+//					remove(step);
+//			}
+//		}
 	}
 
 	
 	@Override public int getColumnCount() {
-		return 1/*note name*/ + 1 /* measures */ * track.getSteps();
+		return track.getSteps();
 	}
 
 	@Override public Class<?> getColumnClass(int columnIndex) {
@@ -299,14 +313,6 @@ public class Pattern extends HashMap<Integer, Notes> implements TableModel, Tabl
 	/** start operations */
 	@Override public void mousePressed(MouseEvent evt) {
 		mouseDown = evt.getPoint();
-//		int col = table.columnAtPoint(mouseDown);
-//		int row = table.rowAtPoint(mouseDown);
-//		
-//		if (Boolean.FALSE.equals(getValueAt(row, col))) {
-//			_created = true;
-//			noteOn(row, col);
-//			update(row);
-//		}
 	}
 
 	/** single click */
@@ -314,7 +320,10 @@ public class Pattern extends HashMap<Integer, Notes> implements TableModel, Tabl
 		_clicked = true;
 		int col = table.columnAtPoint(mouseDown);
 		int row = table.rowAtPoint(mouseDown);
-		click(row, col, ((PianoTrack)track).getGate());
+		if (evt.getButton() == MouseEvent.BUTTON1)
+			click(row, col, ((PianoTrack)track).getGate());
+		else if (evt.getButton() == MouseEvent.BUTTON3)
+			noteOff(row, col);
     }
 
 	/** drag - n - drop */
@@ -329,7 +338,6 @@ public class Pattern extends HashMap<Integer, Notes> implements TableModel, Tabl
 			return;
 		}
 
-RTLogger.log(this, "released" + print(evt) + on());
 		int row = table.rowAtPoint(mouseDown);
 
 		int init = table.columnAtPoint(mouseDown);
@@ -340,12 +348,40 @@ RTLogger.log(this, "released" + print(evt) + on());
 			click(row, init, ((PianoTrack)track).getGate());
 	}
 
-	private String print(MouseEvent evt) {
-    	return " " + table.columnAtPoint(evt.getPoint()) + "," + table.rowAtPoint(evt.getPoint());
-    }
-    private String on() {
-    	return mouseDown == null ? " off" : " on";
+    @Override public String toString() {
+    	return name;
     }
 
-
+    public void place(int step, Midi midi) {
+    	
+    	RTLogger.log(this, "place on step " + step + (Midi.isNoteOn(midi) ? " on " : Midi.isNote(midi) ? " off" : "?"));
+    	
+		Notes note = get(step);
+		if (note == null) {
+			put(step, new Notes(midi));
+		} else {
+			if (note.find(midi.getData1()) == null) {
+				note.add(midi);
+			} else {
+				note.remove(note.find(midi.getData1()));
+				if (note.isEmpty())
+					remove(step);
+			}
+		}
+    }
+    
+	public void record(Midi midi, double lastPulse, double interval) {
+		int step = track.getStep();
+		if (lastPulse + interval * 0.5f > System.currentTimeMillis())
+			step++;
+		if (step >= track.getSteps())
+			step = 0;
+		place(step, Midi.copy(midi));
+		if (track.isSynth())
+			update();
+		else 
+			track.getEdit().update();
+		JudahMidi.queue(midi, track.getMidiOut());
+	}
+    
 }

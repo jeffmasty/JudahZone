@@ -2,10 +2,6 @@ package net.judah.controllers;
 
 import static net.judah.JudahZone.getSynth;
 
-import java.util.ArrayList;
-
-import javax.sound.midi.ShortMessage;
-
 import org.jaudiolibs.jnajack.JackException;
 import org.jaudiolibs.jnajack.JackMidi;
 import org.jaudiolibs.jnajack.JackPort;
@@ -28,7 +24,8 @@ import net.judah.fluid.FluidSynth;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
-import net.judah.tracker.GMDrum;
+import net.judah.tracker.DrumTrack;
+import net.judah.tracker.Track;
 import net.judah.tracker.Transpose;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
@@ -60,7 +57,7 @@ public class MPK implements Controller, MPKTools {
 	@Override
 	public boolean midiProcessed(Midi midi) throws JackException {
 		if (Midi.isCC(midi)) {
-			if (midi.getData1() == 15 && mode== KnobMode.Clock) {
+			if (midi.getData1() == JudahClock.TEMPO_CC && mode== KnobMode.Clock) {
 				try { // Send Tempo adjust to external clock
 					JackMidi.eventWrite(sys.getTempo(), sys.ticker(), midi.getMessage(), midi.getLength());
 				} catch (Exception e) {
@@ -72,59 +69,33 @@ public class MPK implements Controller, MPKTools {
 		}
 		if (Midi.isProgChange(midi)) 
 			return doProgChange(midi.getData1(), midi.getData2());
-		if (midi.getChannel() == 9) 
-			return doDrumPad(midi);
+		if (midi.getChannel() == 9) {
+			int data1 = midi.getData1();
+			Track t = JudahClock.getTracker().getDrum1();
+			for (int i = 0; i < DRUMS_A.size() ; i++)
+				if (DRUMS_A.get(i) == data1) {
+					midi = Midi.create(midi.getCommand(), 9, ((DrumTrack)t).getKit().get(i).getData1(), midi.getData2());
+					if (JudahClock.getTracker().isRecord()) {
+						JudahClock.getTracker().record(midi);
+					}
+					else {
+						JackMidi.eventWrite(JudahClock.getTracker().getDrum1().getMidiOut(), 9, midi.getMessage(), midi.getLength());
+					}
+				}
+			return false;
+		}
+		if (JudahClock.getTracker().isRecord() && 
+				(midi.getCommand() == Midi.NOTE_ON || midi.getCommand() == Midi.NOTE_OFF)) {
+			JudahClock.getTracker().record(midi);
+			return false; // pass through?
+		}
 		if (Transpose.isActive() && midi.getCommand() == Midi.NOTE_ON) {
 			Transpose.setAmount(midi.getData1() - MIDDLE_C);
 			return true; // key press consumed
 		}
-		return false;
+		return false; 
 	}
 
-	private boolean doDrumPad(ShortMessage midi)  {
-		if (false == ( (midi.getCommand() == Midi.NOTE_ON || midi.getCommand() == Midi.NOTE_OFF) 
-				&& (DRUMS_A.contains(midi.getData1()) || DRUMS_B.contains(midi.getData1()))))
-			return false;
-		JackPort out = JudahClock.getInstance().getTracks()[0].getMidiOut();
-		int data1 = midi.getData1();
-		try {
-			if (data1 == DRUMS_A.get(0)) {
-				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.BassDrum.getData1(), midi.getData2());
-				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-			} else if (data1 == DRUMS_A.get(1)) {
-				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.AcousticSnare.getData1(), midi.getData2());
-				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-			} 
-			else if (data1 == DRUMS_A.get(2)) {
-				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.Claves.getData1(), midi.getData2());
-				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-			} 
-				
-			else if (data1 == DRUMS_A.get(3)) {
-				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.ChineseCymbal.getData1(), midi.getData2());
-				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-			} 
-			else if (data1 == DRUMS_A.get(4)) {
-				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.ClosedHiHat.getData1(), midi.getData2());
-				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-			} 
-			else if (data1 == DRUMS_A.get(5)) {
-				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.OpenHiHat.getData1(), midi.getData2());
-				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-			} 
-			else if (data1 == DRUMS_A.get(6)) {
-				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.Shaker.getData1(), midi.getData2());
-				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-			} 
-			else if (data1 == DRUMS_A.get(7)) {
-				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.LowMidTom.getData1(), midi.getData2());
-				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-			} 
-		} catch (Exception e) {
-			RTLogger.warn(this, e);
-		}
-		return true;
-	}
 
 	private boolean checkCC(int data1, int data2) throws JackException {
 		if (KNOBS.contains(data1)) 
@@ -141,22 +112,10 @@ public class MPK implements Controller, MPKTools {
 	private boolean cc_pad(int data1, int data2) throws JackException {
 		///////// ROW 1 /////////////////
 		if (data1 == PRIMARY_CC.get(0))  { // sync Crave
-			JackPort port = sys.getCraveOut();
-			ArrayList<JackPort> sync = sys.getSync();
-			if (sync.contains(port))
-				sync.remove(port);
-			else
-				sync.add(port);
-			MainFrame.update(JudahZone.getChannels().getCrave());
+			sys.synchronize(sys.getCraveOut());
 		}
-		else if (data1 == PRIMARY_CC.get(1)) { // sync Uno
-//			JackPort port = sys.getUnoOut();
-//			ArrayList<JackPort> sync = sys.getSync();
-//			if (sync.contains(port))
-//				sync.remove(port);
-//			else
-//				sync.add(port);
-//			MainFrame.update(JudahZone.getChannels().getUno());
+		else if (data1 == PRIMARY_CC.get(1)) { // sync Circuit Tracks
+			sys.synchronize(sys.getCircuitOut());
 		}
 		else if (data1 == PRIMARY_CC.get(2) && data2 > 0) // Clock or Tracks
 			if (MPK.getMode() == KnobMode.Clock)
@@ -296,7 +255,7 @@ public class MPK implements Controller, MPKTools {
 	private void trackKnobs(int data1, int data2) {
 		for (int i = 0; i < MPKTools.KNOBS.size(); i++) {
 			if (data1 == MPKTools.KNOBS.get(i))
-				JudahMidi.getClock().getTracker().knob(i, data2);
+				JudahClock.getTracker().knob(i, data2);
 		}
 	}
 	
@@ -379,3 +338,50 @@ public class MPK implements Controller, MPKTools {
 
 		
 }
+
+/*
+	private boolean doDrumPad(ShortMessage midi)  {
+		if (false == ( (midi.getCommand() == Midi.NOTE_ON || midi.getCommand() == Midi.NOTE_OFF) 
+				&& (DRUMS_A.contains(midi.getData1()) || DRUMS_B.contains(midi.getData1()))))
+			return false;
+		JackPort out = JudahClock.getTracks()[0].getMidiOut();
+		int data1 = midi.getData1();
+		try {
+			if (data1 == DRUMS_A.get(0)) {
+				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.BassDrum.getData1(), midi.getData2());
+				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
+			} else if (data1 == DRUMS_A.get(1)) {
+				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.AcousticSnare.getData1(), midi.getData2());
+				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
+			} 
+			else if (data1 == DRUMS_A.get(2)) {
+				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.Claves.getData1(), midi.getData2());
+				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
+			} 
+				
+			else if (data1 == DRUMS_A.get(3)) {
+				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.ChineseCymbal.getData1(), midi.getData2());
+				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
+			} 
+			else if (data1 == DRUMS_A.get(4)) {
+				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.ClosedHiHat.getData1(), midi.getData2());
+				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
+			} 
+			else if (data1 == DRUMS_A.get(5)) {
+				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.OpenHiHat.getData1(), midi.getData2());
+				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
+			} 
+			else if (data1 == DRUMS_A.get(6)) {
+				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.Shaker.getData1(), midi.getData2());
+				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
+			} 
+			else if (data1 == DRUMS_A.get(7)) {
+				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.LowMidTom.getData1(), midi.getData2());
+				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
+			} 
+		} catch (Exception e) {
+			RTLogger.warn(this, e);
+		}
+		return true;
+	}
+*/

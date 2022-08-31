@@ -22,8 +22,8 @@ import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.sequencer.Sequencer;
+import net.judah.sequencer.editor.Song;
 import net.judah.settings.Channels;
-import net.judah.song.Song;
 
 public class JudahMenu extends JPopupMenu implements KeyListener {
 
@@ -71,7 +71,7 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
         	if (Sequencer.getCurrent() != null)
         		MainFrame.get().closeTab(Sequencer.getCurrent().getPage());
         });
-        sheetMusic.addActionListener( e -> {MainFrame.get().sheetMusic();});
+        sheetMusic.addActionListener( e -> {MainFrame.get().sheetMusic(new File(Constants.SHEETMUSIC, "four.png"));});
 //        beatsMenu.addActionListener( e -> {MainFrame.get().beatBox();});
 //        loadMidi.addActionListener(e -> {MainFrame.get().getTracker().loadMidi());
         exit.addActionListener((event) -> System.exit(0));

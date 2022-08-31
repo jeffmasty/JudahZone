@@ -21,7 +21,6 @@ import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.BasicClient;
 import net.judah.api.Midi;
-import net.judah.api.MidiQueue;
 import net.judah.api.PortMessage;
 import net.judah.api.Service;
 import net.judah.controllers.*;
@@ -32,18 +31,17 @@ import net.judah.settings.Channels;
 import net.judah.settings.MidiSetup.IN;
 import net.judah.settings.MidiSetup.OUT;
 import net.judah.tracker.Track;
-import net.judah.util.Console;
 import net.judah.util.RTLogger;
 
 /** handle MIDI integration with Jack */
-public class JudahMidi extends BasicClient implements Service, MidiQueue {
+public class JudahMidi extends BasicClient implements Service {
 
     @Getter private static JudahMidi instance;
 	public static final String JACKCLIENT_NAME = "JudahMidi";
     @Getter private static final Router router = new Router();
     @Getter private static final ConcurrentLinkedQueue<PortMessage> queue = new ConcurrentLinkedQueue<>();
 
-	@Getter	private static /* final */ JudahClock clock;
+	@Getter	private static JudahClock clock;
     @Getter private MidiGui gui;
 	private long frame = 0;
     private String[] sources, destinations; // for GUI
@@ -109,19 +107,21 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
         }
         if (sz > OUT.CALF_OUT.ordinal()) {
         	calfOut = outPorts.get(OUT.CALF_OUT.ordinal());
-        	CircuitTracks.setOut2(calfOut);
+        	CircuitTracks.setOut1(calfOut);
         	paths.add(new Path(calfOut, ch.getCalf()));
         }
         if (sz > OUT.CRAVE_OUT.ordinal()) {
         	craveOut = outPorts.get(OUT.CRAVE_OUT.ordinal());
         	if (JudahZone.getChannels().getCrave() != null) 
         		JudahZone.getChannels().getCrave().setSync(craveOut);
-        	CircuitTracks.setOut1(craveOut);
+        	CircuitTracks.setOut2(craveOut);
         	paths.add(new Path(craveOut, ch.getCrave()));
         }
         if (sz > OUT.CIRCUIT_OUT.ordinal()) {
         	circuitOut = outPorts.get(OUT.CIRCUIT_OUT.ordinal());
         	paths.add(new Path(circuitOut, ch.getCircuit()));
+        	if (JudahZone.getChannels().getCircuit() != null)
+        		JudahZone.getChannels().getCircuit().setSync(circuitOut);
         }
         
         // connect midi controllers to software handlers
@@ -154,7 +154,8 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
         	switchboard.put(line6, new Line6FBV());
         }
 
-        if (switchboard.isEmpty()) Console.warn(new NullPointerException("JudahMidi: no controllers connected"));
+        if (switchboard.isEmpty()) 
+        	RTLogger.warn(this, new NullPointerException("JudahMidi: no controllers connected"));
         
         Thread timePolling = new Thread(scheduler);
         timePolling.setPriority(7);
@@ -233,17 +234,15 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
                     midiEvent.read(data);
                     midi = router.process(new Midi(data, port.getShortName()));
 
-                    if (Sequencer.getCurrent() == null) { // remove 
-                    	if (switchboard.get(port) != null) {
-                    		if (switchboard.get(port).midiProcessed(midi))
-                    			MainFrame.updateCurrent();
-                    		else 
-                    			write(midi, midiEvent.time());
-                    	}
-                    }
-                    // old ?
-                    else if (Sequencer.getCurrent().midiProcessed(midi, port)) 
-                    	MainFrame.updateTime(); 
+                	if (switchboard.get(port) != null) {
+                		if (switchboard.get(port).midiProcessed(midi))
+                			MainFrame.updateCurrent();
+                		else if (Sequencer.getCurrent() != null &&
+                				Sequencer.getCurrent().midiProcessed(midi, port))
+                			MainFrame.updateTime(); // 
+                		else 
+                			write(midi, ticker());
+                	}
                 }
             }
 
@@ -288,11 +287,6 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
     	queue.add(new PortMessage(midi, midiOut));
     }
     
-    @Override @Deprecated 
-    public void queue(ShortMessage message) {
-        queue.add(new PortMessage(message, null));
-    }
-
     @Override 
     public void properties(HashMap<String, Object> props) {
         scheduler.clear();
@@ -327,12 +321,24 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
         return instance.outPorts.get(0);
     }
 
+    public void synchronize(JackPort port) {
+    	if (sync.contains(port)) {
+			sync.remove(port);
+			synchronize(JudahClock.MIDI_RT_STOP);
+    	}
+		else
+			sync.add(port);
+    	MainFrame.update(port);
+    }
+    
 	public static void synchronize(byte[] midi) {
 		try {
 			for (JackPort p : instance.sync)
 				JackMidi.eventWrite(p, 0, midi, midi.length);
-			for (Track t : clock.getTracks())
+			for (Track t : JudahClock.getTracks())
 				t.setStep(0);
+RTLogger.log(JudahMidi.class.getSimpleName(), "Midi Sync");
+
 		} catch (JackException e) {
 			RTLogger.warn("MIDI_SYNC", e);
 		}
@@ -389,8 +395,6 @@ public class JudahMidi extends BasicClient implements Service, MidiQueue {
  */
 		
 	}
-
-
 	
 }
 

@@ -1,16 +1,13 @@
 TODO:
 
-verse-chorus control
-sheetMusic 2.0
-sync track knobs/combos
+Sheet music navigation
+Delay and LFO upgrade (triggered to Clock, LFO/Fader cleanUp())
+Ritardando
+probability
 fix 3/4 CurrentBeat of BeatBox, 3/4 layout
-loop sync/master clock to 3/4
-midi recorder/looper - beatbox records midi_in/quantize
 Loop copy/paste/length
 double tap erase - stop drums
-Delay and LFO upgrade (triggered to Clock, LFO/Fader cleanUp())
 export beatbox as midi file
-Ritardando
 Record session, save loops to disk and play samples from disk
 Sampler
 Noise Effect generates ocean, heartbeat, birds, crickets, walking, thunder, rain, 
@@ -24,16 +21,15 @@ Latency + bleeding edge
 Display loop/sample wave form 
 multi-delete, upgrade properties table (enum, int, boolean types)
 Phasor, Shepard
-fix songs.
 settings/default files
 Undo/Redo/Copy/Paste
 patch bay needed. see jack_lsp, jack_connect
 Plugins, ttl 
 walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
 MPK Sequencer
-patchbay
 Other knobs: calf, Jackrack, mixer
 make client-server architecture
+Sequencer can really swing.
 
 
 drum options:  DrMr, drumkv1-jack, hydrogen, fluid, drumsynth, black pearl
@@ -146,7 +142,10 @@ transposer, fix cutfilter & freeverb stereo, calf reverb
 solo lineIn to loop D 
 step sequencer chords, arppegiator
 Midi Mixer: style/arp/pattern/song/chords/channel    
-Sequencer can really swing.
+verse-chorus control
+record/quantize to step sequencer, 
+loop sync/master clock to 3/4, polyrythmic
+sheetMusic 2.0
 
 
 REF-----------------------------------------------------------------

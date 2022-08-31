@@ -5,8 +5,8 @@ import java.security.InvalidParameterException;
 
 import lombok.Getter;
 import net.judah.effects.api.Reverb;
-import net.judah.util.Console;
 import net.judah.util.Constants;
+import net.judah.util.RTLogger;
 
 
 /**
@@ -62,7 +62,7 @@ public class TalReverb extends Reverb {
         try {
             carla.setParameterValue(pluginIdx, PARAM_ROOMSIZE, size);
             roomSize = size;
-        } catch (Exception e) { Console.warn(e); }
+        } catch (Exception e) { RTLogger.warn(this, e); }
     }
 
     @Override
@@ -71,7 +71,7 @@ public class TalReverb extends Reverb {
         try {
             carla.setParameterValue(pluginIdx, PARAM_LOWPASS, damp * -1 + 1);
             this.damp = damp;
-        } catch (Exception e) { Console.warn(e); }
+        } catch (Exception e) { RTLogger.warn(this, e); }
     }
 
     @Override
@@ -79,7 +79,7 @@ public class TalReverb extends Reverb {
         try {
             carla.setParameterValue(pluginIdx, PARAM_WIDTH, width);
             this.width = width;
-        } catch (Exception e) { Console.warn(e); }
+        } catch (Exception e) { RTLogger.warn(this, e); }
 
     }
 
@@ -88,7 +88,7 @@ public class TalReverb extends Reverb {
         try {
             carla.setParameterValue(pluginIdx, PARAM_WET, wet);
             this.wet = wet;
-        } catch (Exception e) { Console.warn(e); }
+        } catch (Exception e) { RTLogger.warn(this, e); }
     }
 
     @Override

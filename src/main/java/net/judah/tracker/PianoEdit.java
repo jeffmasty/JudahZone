@@ -4,6 +4,7 @@ import static net.judah.util.Size.*;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 
 import javax.swing.JComboBox;
@@ -11,16 +12,21 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import net.judah.util.RTLogger;
+
 public class PianoEdit extends TrackEdit {
 
 	private static final int OCTAVES = 6;
+	private final PianoTrack pianoTrack;
 	private final Dimension PIANO_ROLL = new Dimension(WIDTH_SONG - WIDTH_BUTTONS - 30, TABS.height- 10);
 	private final JComboBox<Integer> gate = new JComboBox<>();
+	private final JComboBox<Integer> octave = new JComboBox<>();
 	JScrollPane scroller;
 	
 	
-	public PianoEdit(PianoTrack track) {
+	public PianoEdit(PianoTrack track, int viewOctave) {
 		super(track);
+		pianoTrack = track;
 		JPanel pnl = new JPanel(new GridLayout(1, 4));
 		JLabel gt = new JLabel("Gate", JLabel.CENTER);
 		pnl.add(gt);
@@ -30,10 +36,10 @@ public class PianoEdit extends TrackEdit {
 		gate.addActionListener(this);
 		pnl.add(gate);
 		JLabel oc = new JLabel("Octave", JLabel.CENTER);
-		for (int i = 1; i <= OCTAVES; i++)
+		for (int i = 0; i <= OCTAVES; i++)
+			octave.addItem(i);
 		pnl.add(oc);
-		pnl.add(new JComboBox<String>());
-		
+		pnl.add(octave);
 		buttons.add(pnl);
 		
         scroller = new JScrollPane();
@@ -41,7 +47,9 @@ public class PianoEdit extends TrackEdit {
         	scroller.setViewportView(track.getCurrent().getTable());
         scroller.setVisible(true);
         add(scroller);
-		
+
+        octave.addActionListener(this);
+		octave.setSelectedItem(viewOctave);
 	}
 
 	@Override
@@ -51,10 +59,14 @@ public class PianoEdit extends TrackEdit {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		if (disable) return;
 		if (super.handled(e))
 			return;
 		if (e.getSource() == gate)
-			((PianoTrack)track).setGate((int)gate.getSelectedItem());
+			pianoTrack.setGate((int)gate.getSelectedItem());
+		else if (e.getSource() == octave) {
+			adjustScroller();
+		}
 	}
 
 	@Override
@@ -64,11 +76,31 @@ public class PianoEdit extends TrackEdit {
 
 	@Override
 	public void setPattern(int idx) {
-		super.setPattern(idx);
-		Pattern p = track.getCurrent();
+		Pattern p = track.get(idx);
 		p.getTable().setPreferredScrollableViewportSize(PIANO_ROLL);
+		refresh(p);
+		super.setPattern(idx);
+	}
+
+	private void adjustScroller() {
+		int y = (1 + Math.abs((int)octave.getSelectedItem() - OCTAVES))
+				* (int)(scroller.getSize().height / (float)OCTAVES);
+		scroller.getViewport().setViewPosition(new Point(0, y));
+		scroller.invalidate();
+	}
+	
+	public void refresh(Pattern p) {
+		if (track.getDiv() != (int)div.getSelectedItem() || 
+				track.getSteps() != (int)steps.getSelectedItem())
+			track.getCurrent().getTable().setModel(track.getCurrent());
 		p.update();
-		scroller.setViewportView(p.getTable());
+		try {
+			if (scroller.getViewport().getView() != p.getTable())
+				scroller.setViewportView(p.getTable());
+		} catch (Throwable t) {
+			RTLogger.log(this, "viewport hiccup " + track.getName() + ":" + p);
+		}
+		adjustScroller();
 	}
 
 }

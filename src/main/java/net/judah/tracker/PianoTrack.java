@@ -10,9 +10,9 @@ public class PianoTrack extends Track {
 
 	@Setter @Getter private int gate = 2;
 	
-	public PianoTrack(JudahClock clock, String name, int ch, JackPort port) {
-		super(clock, name, ch, port);
-		edit = new PianoEdit(this);
+	public PianoTrack(JudahClock clock, String name, int octave, JackPort port) {
+		super(clock, name, 0, port);
+		edit = new PianoEdit(this, octave);
 	}
 	
 }

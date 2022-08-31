@@ -16,6 +16,7 @@ import net.judah.effects.api.PresetsDB;
 import net.judah.mixer.Channel;
 import net.judah.util.Console;
 import net.judah.util.Constants;
+import net.judah.util.RTLogger;
 
 public class PresetsGui extends JDesktopPane {
 
@@ -127,7 +128,7 @@ public class PresetsGui extends JDesktopPane {
             Constants.writeToFile(PresetsDB.FILE, getPresets().toString());
             list.setModel(presetModel());
             Console.info("Preset saved.");
-        } catch (Exception e) {Console.warn(e);}
+        } catch (Exception e) {RTLogger.warn(this, e);}
     }
 
     public DefaultListModel<String> presetModel() {
