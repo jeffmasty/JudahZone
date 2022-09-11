@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.ToString;
 import net.judah.api.AudioMode;
 import net.judah.looper.Loop;
-import net.judah.sequencer.Sequencer;
 import net.judah.util.Icons;
 
 @ToString
@@ -36,12 +35,7 @@ public class MixButton extends JLabel {
 		}
 		else if (icon == Icons.PLAY) {
 			if (channel instanceof MasterTrack) {
-				Sequencer seq = Sequencer.getCurrent();
-				if (seq == null) {
-					setSelected(false);
-					return;
-				}
-				setSelected(seq.isRunning());
+				setSelected(false);
 			}
 			else if (channel instanceof Loop) {
 				AudioMode mode = ((Loop)channel).isPlaying();

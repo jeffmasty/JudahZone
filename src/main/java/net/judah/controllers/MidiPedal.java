@@ -10,7 +10,7 @@ import net.judah.api.Midi;
 import net.judah.looper.Loop;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.SoloTrack;
-import net.judah.util.Console;
+import net.judah.util.RTLogger;
 
 public class MidiPedal implements Controller {
 	
@@ -38,7 +38,7 @@ public class MidiPedal implements Controller {
             new Thread() {@Override public void run() {try {
             		octaver = !octaver;
             		getCarla().octaver(octaver);
-                } catch (Throwable t) { Console.warn(t);}}}.start();
+                } catch (Throwable t) { RTLogger.warn(this, t);}}}.start();
             return true;
 
 //        	if (getDrummachine().isPlay())
@@ -62,7 +62,7 @@ public class MidiPedal implements Controller {
         }
         if (data1 == PEDAL.get(5)) { 
         	// toggle Verse/Chorus sections by muting different tracks
-        	for (Loop s : getLooper().getLoops()) {
+        	for (Loop s : getLooper()) {
         		if (s.hasRecording() && s instanceof SoloTrack == false)
         			s.setOnMute(!s.isOnMute());
         	}

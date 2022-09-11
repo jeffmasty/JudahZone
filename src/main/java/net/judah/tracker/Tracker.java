@@ -1,21 +1,18 @@
 package net.judah.tracker;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 
 import javax.swing.BoxLayout;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
-import net.judah.api.Command;
 import net.judah.api.Midi;
 import net.judah.api.Service;
-import net.judah.controllers.KnobMode;
-import net.judah.controllers.MPK;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Panic;
@@ -35,9 +32,10 @@ public class Tracker extends JPanel implements Service {
 	private final PianoTrack lead2;
 	private final PianoTrack chords;
 	
-	private final Track[] tracks;
-	private final ArrayList<TrackView> views = new ArrayList<>();
+	@Getter private static Track[] tracks;
+	@Getter private static final ArrayList<TrackView> views = new ArrayList<>();
 	@Getter private static Track current;
+	@Getter private static final JLabel label = new JLabel("Drum1", JLabel.CENTER);
 	
 	public Tracker(JudahClock clock, JudahMidi midi) {
 		this.clock = clock;
@@ -49,7 +47,7 @@ public class Tracker extends JPanel implements Service {
 		
 		bass = new PianoTrack(clock, "Bass", 1, midi.getCraveOut());
 		lead1 = new PianoTrack(clock, "Lead1", 5, midi.getFluidOut());
-		lead2 = new PianoTrack(clock, "Lead2", 3, midi.getCircuitOut());
+		lead2 = new PianoTrack(clock, "Lead2", 3, midi.getCalfOut());
 		chords = new PianoTrack(clock, "Chords", 3, midi.getFluidOut());
 		tracks = new Track[] {drum1, drum2, drum3, bass, lead1, lead2, chords};
 		for(Track track : tracks) {
@@ -59,16 +57,13 @@ public class Tracker extends JPanel implements Service {
 			add(view);
 		}
 		
-		current = tracks[0];
 		JudahZone.getServices().add(0, this);
+		setCurrent(tracks[0]);
 	}
-
 
 	public void update(Track t) {
 		t.getEdit().getPlayWidget().setBackground(t.isActive() ? Pastels.GREEN : Pastels.BUTTONS);
 		t.getEdit().getMpk().setBackground(t.isLatch() ? Pastels.PINK : Pastels.BUTTONS);
-		
-		
 		
 		for (TrackView view : views)
 			if (view.getTrack().equals(t))
@@ -84,7 +79,12 @@ public class Tracker extends JPanel implements Service {
 		}
 	}
 	
-	public void setCurrent(Track track) {
+	public static int length() {
+		return views.size();
+	}
+	
+
+	public static void setCurrent(Track track) {
 		if (current == track) return;
 		new Thread(() -> {
 			for (TrackView t : views)
@@ -100,12 +100,17 @@ public class Tracker extends JPanel implements Service {
 			for (TrackView t : views)
 				if (t.getTrack() == current)
 					t.setBorder(Constants.Gui.HIGHLIGHT);
-			MPK.setMode(KnobMode.Tracks);
-			// MainFrame.updateCurrent();
-			MainFrame.get().getBeatBox().changeTrack(track);
+			if (MainFrame.get() != null)
+				MainFrame.get().getBeatBox().changeTrack(track);
+			if (track != null)
+				label();
 		}).start();
 	}
 
+	public static void label() {
+		label.setText(current.getName() + "/" + current.getCurrent());
+	}
+	
 	public void changeTrack(boolean up) {
 		if (current == null) current = views.get(0).getTrack();
 		if (up == true) {
@@ -152,11 +157,6 @@ public class Tracker extends JPanel implements Service {
 	}
 
 	@Override
-	public List<Command> getCommands() {
-		return Collections.emptyList();
-	}
-
-	@Override
 	public void properties(HashMap<String, Object> props) {
 	}
 	
@@ -175,4 +175,11 @@ public class Tracker extends JPanel implements Service {
 			}
 	}
 	
+	public int indexOf(Track track) {
+		for (int i = 0; i < tracks.length; i++)
+			if (tracks[i] == track)
+				return i;
+		throw new InvalidParameterException("" + track);
+	}
+
 }

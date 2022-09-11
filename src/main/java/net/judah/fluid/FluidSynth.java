@@ -1,6 +1,5 @@
 package net.judah.fluid;
 
-import static net.judah.settings.Commands.SynthLbls.*;
 import static net.judah.util.Constants.NL;
 
 import java.io.File;
@@ -10,7 +9,6 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
@@ -19,7 +17,6 @@ import org.jaudiolibs.jnajack.Jack;
 import org.jaudiolibs.jnajack.JackException;
 
 import lombok.Getter;
-import net.judah.api.Command;
 import net.judah.api.Midi;
 import net.judah.api.Service;
 import net.judah.midi.JudahMidi;
@@ -38,8 +35,6 @@ public class FluidSynth implements Service {
 	public static final String RIGHT_PORT = "fluidsynth-midi:right"; // "fluidsynth:r_00";
 	public static final String MIDI_PORT = "fluidsynth-midi:midi_00"; // "fluidsynth:midi";
 	public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // "/usr/share/sounds/sf2/JJazzLab-SoundFont.sf2"
-	/** Drums midi channel */
-	private static final int DRUMS = 9;
 
 	private final String shellCommand;
 	private Process process;
@@ -53,9 +48,6 @@ public class FluidSynth implements Service {
 
 	@Getter private static Instruments instruments = new Instruments();
 	@Getter private Channels channels = new Channels();
-
-	private final Command progChange, instUp, instDown, drumBank, direct;
-	@Getter private final List<Command> commands;
 
 	private float gain = 0.25f; // max 5.0
 
@@ -96,63 +88,21 @@ public class FluidSynth implements Service {
 		gain(gain);
 		Constants.sleep(50);
 		if (startListeners)
-            sync();
+			try {
+				syncChannels();
+				syncInstruments();
+			} catch (Throwable t) {
+				RTLogger.warn(this, "sync failed. " + t.getMessage());
+			}
         sendCommand("chorus off");
         reverb = new FluidReverb(this);
         Constants.sleep(50);
         
-		HashMap<String, Class<?>> template = new HashMap<>();
-		template.put("channel", Integer.class);
-		template.put("preset", Integer.class);
-		progChange = new Command(PROGCHANGE.name, PROGCHANGE.desc, template) {
-			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				JudahMidi.getInstance().getGui().getFluid()
-					.setSelectedIndex(Integer.parseInt(props.get("preset").toString()));
-			}};
-
-		instUp = new Command(INSTUP.name, INSTUP.desc) {
-			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				instUp(0, true);
-			}};
-		instDown = new Command(INSTDOWN.name, INSTDOWN.desc) {
-			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				instUp(0, false);
-			}};
-			template = new HashMap<>();
-			template.put("up", Boolean.class);
-			template.put("preset", Integer.class);
-		drumBank = new Command(DRUMBANK.name, DRUMBANK.desc, template) {
-			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-
-				Integer preset = null;
-				try {
-					preset = Integer.parseInt("" + props.get("preset"));
-					sendCommand(FluidCommand.PROG_CHANGE, "9 " + preset);
-					return;
-				} catch (Throwable t) { }
-
-				try {
-					boolean up = Boolean.parseBoolean("" + props.get("up"));
-					instUp(DRUMS, up);
-				} catch (Throwable t) { }
-			}
-		};
-		template = new HashMap<>();
-		template.put("string", String.class);
-		direct = new Command(DIRECT.name, DIRECT.desc, template) {
-			@Override public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
-				String[] split = props.get("string").toString().split(";");
-				for (String cmd : split)
-					sendCommand(cmd);
-		}};
-
-		commands = Arrays.asList(new Command[] {progChange, instUp, instDown, drumBank, direct});
-		// doHelp();
 		RTLogger.log(this, "FluidSynth channels: " + channels.size() + " instruments: " + instruments.size());
 
 	}
 
-	private void syncChannels() throws InterruptedException, IOException, JudahException {
+	void syncChannels() throws InterruptedException, IOException, JudahException {
 		listener.sysOverride(FluidCommand.CHANNELS);
 		outStream.write( (FluidCommand.CHANNELS.code + NL).getBytes() );
 		outStream.flush();
@@ -169,7 +119,7 @@ public class FluidSynth implements Service {
 		}
 	}
 
-	private void syncInstruments() throws InterruptedException, IOException, JudahException {
+	void syncInstruments() throws InterruptedException, IOException, JudahException {
 		listener.sysOverride(FluidCommand.INST);
 		outStream.write((FluidCommand.INST.code + "1" + NL).getBytes());
 		outStream.flush();
@@ -182,16 +132,6 @@ public class FluidSynth implements Service {
 		instruments.clear();
 		for (FluidInstrument i : listener.instruments)
 			instruments.add(i);
-	}
-
-	public void sync() {
-		try {
-			syncChannels();
-			syncInstruments();
-		} catch (Throwable t) {
-			RTLogger.warn(this, "sync failed. " + t.getMessage());
-		}
-
 	}
 
 

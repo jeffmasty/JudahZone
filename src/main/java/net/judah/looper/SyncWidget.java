@@ -50,7 +50,6 @@ public class SyncWidget extends JLabel implements TimeListener {
 			}
 	}
 	
-//	@Override
 	public void update() {
 		if (loop.hasRecording()) return;
 		
@@ -59,11 +58,6 @@ public class SyncWidget extends JLabel implements TimeListener {
 			sb.append("<br>").append(JudahClock.getLength() * JudahClock.getInstance().getMeasure()).append("</html>");
 			setText(sb.toString());
 		}
-//		else if (clock.getSynchronized() != null) { // if onDeck
-//		int countdown = 
-//				JudahClock.getBeat() % clock.getMeasure() - clock.getMeaTsure();
-//			setText(countdown + " !");
-//		}
 		else if (loop == JudahZone.getLooper().getLoopA()) {
 				if (JudahClock.isLoopSync()) {
 					// display sync measures
@@ -71,7 +65,6 @@ public class SyncWidget extends JLabel implements TimeListener {
 						setText(JudahClock.getLength() + "");
 					else 
 						setText("-" + JudahClock.getLength() + "-");
-					// setBackground(Color.WHITE);
 				}
 				else {
 					setText("free ");

@@ -16,16 +16,16 @@ public class MidiSetup {
 		KEYBOARD("keyboard"), 
 		MIXER("mixer"),
 		PADS("pads"),
-		CIRCUIT_IN("circuitIn"),
 		LINE6_IN("line6In"),
 		;
-		// JAMSTIK_IN("jamstikIn"),
-		// AUX_IN("auxIn"); //audioInterface
 
 		// Old controllers
-		//	ARDUINO("arduino"),
-		//	CRAVE_IN("craveIn"),
-		//	PEDAL("pedal"),
+		// CIRCUIT_IN("circuitIn"),
+		// JAMSTIK_IN("jamstikIn"),
+		// AUX_IN("auxIn"); //audioInterface
+		// ARDUINO("arduino"),
+		// CRAVE_IN("craveIn"),
+		// PEDAL("pedal"),
 
 		@Getter public final String port;
 	}
@@ -37,7 +37,7 @@ public class MidiSetup {
 		SYNTH_OUT("Fluid"), 
 		CALF_OUT("Calf"),
 		CRAVE_OUT("Crave"),
-		CIRCUIT_OUT("Circuit")
+		// CIRCUIT_OUT("Circuit")
 		//UNO_OUT("Uno"),
 		;//AUX1_OUT("Aux");
 		

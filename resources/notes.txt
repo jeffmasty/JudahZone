@@ -1,15 +1,14 @@
 TODO:
 
-Sheet music navigation
+Translate button fix
 Delay and LFO upgrade (triggered to Clock, LFO/Fader cleanUp())
-Ritardando
+Ritardando, CurrentBeat swing
+checkboxes: save patch/tempo/cycle info
 probability
-fix 3/4 CurrentBeat of BeatBox, 3/4 layout
 Loop copy/paste/length
-double tap erase - stop drums
 export beatbox as midi file
 Record session, save loops to disk and play samples from disk
-Sampler
+double tap erase - stop drums
 Noise Effect generates ocean, heartbeat, birds, crickets, walking, thunder, rain, 
 	bicycle, phonograph, whips and chains  (sampleFile, frequency, wet, granularity)
 JudahSynth + ADSR knobs (I Feel Love bassline) code my own synth
@@ -24,7 +23,6 @@ Phasor, Shepard
 settings/default files
 Undo/Redo/Copy/Paste
 patch bay needed. see jack_lsp, jack_connect
-Plugins, ttl 
 walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
 MPK Sequencer
 Other knobs: calf, Jackrack, mixer
@@ -36,16 +34,12 @@ drum options:  DrMr, drumkv1-jack, hydrogen, fluid, drumsynth, black pearl
 Java Music API: https://github.com/psambit9791/jDSP
 Java Music API: https://github.com/chdh/dsp-collection-java
 
-transport https://github.com/SpotlightKid/jack-audio-tools/blob/master/transport/timebase_master.py
-
 https://explodingart.com/jmusic/index.html
 jsyn https://github.com/philburk/jsyn
 https://github.com/YuMuuu/SynthesizerRemastered/blob/master/src/main/java/Oscillator.java
 https://github.com/mmitch/apsynth
-
 https://github.com/orsjb/beads
 https://evanxmerz.com/soundsynthjava/Sound_Synth_Java.html#getting_started
-
 java analyse and sequence music https://github.com/arnaudh/elusive-sound
 Java music visualization: https://github.com/trungd/acoustic-signal-processing
 https://github.com/a-schild/jave2
@@ -146,11 +140,10 @@ verse-chorus control
 record/quantize to step sequencer, 
 loop sync/master clock to 3/4, polyrythmic
 sheetMusic 2.0
+cricket sounds, Sampler
 
 
 REF-----------------------------------------------------------------
-
-
 
 [Mixer][Out][In]  EFX
 1 2 3 4 5 6 7 8   1  2  3  4

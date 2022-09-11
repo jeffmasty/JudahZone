@@ -17,10 +17,10 @@ import net.judah.api.Midi;
 import net.judah.api.Notification.Property;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
-import net.judah.midi.GMNames;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Panic;
+import net.judah.midi.ProgChange;
 import net.judah.util.Constants;
 import net.judah.util.Pastels;
 import net.judah.util.RTLogger;
@@ -28,9 +28,9 @@ import net.judah.util.RTLogger;
 /** a step sequencer. 
  * Ch#,  file, midiOut/(AudioIn), pattern cycle  */
 @Getter 
-public abstract class Track extends ArrayList<Pattern> implements Runnable {
+public abstract class Track extends ArrayList<Pattern> {
 
-	public static enum Cue { Cue, Loop, Bar};
+	public static enum Cue { Cue, Loop, Bar, Trig};
 	public static final File DRUM_FOLDER = new File(Constants.ROOT, "patterns");
 	public static final File MELODIC_FOLDER = new File(Constants.ROOT, "sequences");
 	private static int counter;
@@ -41,22 +41,25 @@ public abstract class Track extends ArrayList<Pattern> implements Runnable {
 	protected File file;
 
 	protected final JudahClock clock;
+	protected final Cycle cycle = new Cycle(this);
 	protected final TrackView view;
 	protected TrackEdit edit;
 
 	protected boolean active;
-	protected boolean record;
+    @Setter protected int step = -1;
+    protected int substep = -1;
+    protected float gain = 0.8f;
+    protected boolean record;
 	protected Pattern current;
 	protected JackPort midiOut;
 	@Setter protected String instrument;
     protected Cue cue = Cue.Cue;
-    @Setter protected boolean onDeck;
-	protected final Cycle cycle = new Cycle(this);
-    @Setter protected int steps = JudahClock.getSteps();
-    @Setter protected int div = JudahClock.getSubdivision();
+	@Setter protected int steps;
+    @Setter protected int div;
     @Setter protected boolean latch;
-    @Setter protected int step = -1;
-	protected float gain = 0.8f;
+    @Setter protected boolean onDeck;
+    /** 1-to-ratio, 0 = 1:1 speed up of step sequencer */
+    @Setter protected int ratio;
 	
 	private TimeListener transportListener = new TimeListener() {
 		@Override public void update(Property prop, Object value) {
@@ -89,6 +92,8 @@ public abstract class Track extends ArrayList<Pattern> implements Runnable {
 		this.ch = ch;
 		this.name = name;
 		this.clock = clock;
+		steps = clock.getSteps();
+		div = clock.getSubdivision();
 		clock.addListener(transportListener);
 		this.midiOut = port;
 		num = counter++;
@@ -98,14 +103,189 @@ public abstract class Track extends ArrayList<Pattern> implements Runnable {
 	}
 	
 	@Override
-	public boolean equals(Object o) {
-		return super.equals(o) && name.equals(((Track)o).name);
+	public boolean equals(Object o) { return super.equals(o) && name.equals(((Track)o).name); }
+	
+	public File getFolder() { return isDrums() ? DRUM_FOLDER	: MELODIC_FOLDER; }
+	
+	public final boolean isDrums() { return ch == 9; }
+	
+	public final boolean isSynth() { return ch != 9; }
+
+	/** play midi notes */
+	public void step() {
+		if (ratio != 0) {
+			substep++;
+			if (substep >= ratio) {
+				substep = 0;
+			}
+			if (substep != 0)
+				return;
+		}
+
+		++step;
+		
+		if (step >= steps) {
+			step = 0;
+			if (active)
+				cycle.cycle();
+		}
+		if (edit.isVisible()) 
+			edit.step(step);
+		if (!active)
+			return;
+		
+		Notes now = current.get(step);
+		if (now == null)
+			return;
+		for (ShortMessage msg : now) {
+			if (isDrums()) {
+				msg = Midi.create(msg.getCommand(), msg.getChannel(), msg.getData1(),
+						((int)(msg.getData2() * ((DrumTrack)this).velocity(msg.getData1()) * gain))); 
+				JudahMidi.queue(msg, midiOut);
+			}
+			else {
+				msg = Midi.create(msg.getCommand(), msg.getChannel(), msg.getData1(),
+						((int)(msg.getData2() * gain))); 
+				if (latch) 
+					JudahMidi.queue(Transpose.apply(msg), midiOut);
+				else 
+					JudahMidi.queue(msg, midiOut);
+			}
+		}
 	}
 	
+	public void setActive(boolean active) {
+		if (active) {
+			substep = -1;
+			if (onDeck) {
+				step = -1;
+				this.active = true;
+				onDeck = false;
+			}
+			else switch (cue) {
+				case Bar:
+					onDeck = true;
+					clock.addListener(cueListener);
+					break;
+				case Cue:
+					step = clock.getStep() - 1;
+					onDeck = false;
+					this.active = true;
+					break;
+				case Loop:
+					onDeck = true;
+					JudahZone.getLooper().getLoopA().addListener(cueListener);
+					break;
+				default:
+					break;
+				}
+		}
+		else {
+			this.active = false;
+			this.onDeck = false;
+			if (isSynth())
+				new Panic(midiOut, ch).start(); 
+		}
+		MainFrame.update(this);
+	}
+
+
+	// ------ Pattern CRUD ------ //
+	public void deletePattern() {
+		remove(current);
+		if (size() == 0)
+			newPattern();
+		else {
+			edit.fillPatterns();
+			view.fillPatterns();
+			setCurrent(get(0));
+		}
+	}
 	
-	@Override
-	public void run() {
+	public void copyPattern() {
+		Pattern copy = new Pattern("" + (char)('A' + size()), current, this);
+		add(copy);
+		edit.fillPatterns();
+		view.fillPatterns();
+		setCurrent(copy);
+	}
+
+	public void newPattern() {
+		String name = "" + (char)('A' + size());
+		Pattern pat = new Pattern(name, this);
+		add(pat);
+    	edit.fillPatterns();
+    	view.fillPatterns();
+		setCurrent(pat);
+	}
+	
+	public void setPattern(String name) {
+		for (int i = 0; i < size(); i++)
+			if (name.equals(get(i).getName()))
+				setCurrent(get(i));
+	}
+	
+	public void setCurrent(Pattern p) {
+		if (current == p) return;
+		current = p;
+		int idx = indexOf(p);
+		if (this.contains(p) == false) {
+			throw new RuntimeException(name + " -- " + p.name + " file " + file);
+		}
 		
+		new Thread(() -> {
+			Tracker.label();
+			if (view.getPattern().getSelectedIndex() != idx) 
+				view.getPattern().setSelectedIndex(idx);
+			edit.setPattern(idx);
+		}).start();
+	}
+	
+	public void next(boolean forward) {
+		int result = indexOf(current) + (forward ? 1 : -1);
+		
+		if (result >= size())
+			result = 0;
+		if (result < 0) 
+			result = size() - 1;
+		
+        setCurrent(get(result));
+	}
+
+	public void selectFile(int data2) {
+		File[] folder = getFolder().listFiles();
+		int idx = Constants.ratio(data2, folder.length + 1);
+		if (idx == folder.length) { // "_clear" option at end of combo box
+			clearFile();
+		}
+		else {
+			File target = folder[idx - 1];
+			if (!target.equals(getFile()))
+				setFile(target);
+		}
+	}
+
+	
+	public final void setFile(File file) {
+		clear();
+		this.file = file;
+		if (file != null && file.isFile())
+			readFromDisk();
+        else
+        	newPattern();
+	}
+	
+	public void setFile(String name) {
+		setFile(new File(getFolder(), name));
+	}
+
+	public final void clearFile() {
+		setFile((File)null);
+	}
+
+	/** read and parse track patterns from disk (blocks thread) */
+	private void readFromDisk() {
+	
         Scanner scanner = null;
         try {
             Pattern onDeck = null;
@@ -123,15 +303,7 @@ public abstract class Track extends ArrayList<Pattern> implements Runnable {
                     midiOut = JudahMidi.getByName(out);
                     if (!split[1].equals("none")) {
                         instrument = split[1];
-                        if (isDrums())
-                        	JudahMidi.getInstance().progChange(Instrument.lookup(instrument, isDrums()), getMidiOut(), getCh());
-                        else {
-                        	for (int i = 0; i < GMNames.GM_NAMES.length; i++) {
-                        		if (GMNames.GM_NAMES[i].equals(instrument)) {
-                        			JudahMidi.getInstance().progChange(i, midiOut, ch);
-                        		}
-                        	}
-                        }
+                        ProgChange.progChange(instrument, midiOut, ch);
                     }
                     if (split.length >= 3) {
                     	steps = Integer.parseInt(split[2]);
@@ -184,167 +356,9 @@ public abstract class Track extends ArrayList<Pattern> implements Runnable {
         edit.fillPatterns();
         view.fillPatterns();
         setCurrent(get(0));
-
         RTLogger.log(this, name + " loaded " + file.getName() + " on " + midiOut.getShortName());
     }	
 
-	// ------ Pattern CRUD ------ //
-	public void deletePattern() {
-		remove(current);
-		if (size() == 0)
-			newPattern();
-		else {
-			edit.fillPatterns();
-			view.fillPatterns();
-			setCurrent(get(0));
-		}
-			
-	}
-	
-	public void copyPattern() {
-		Pattern copy = new Pattern("" + (char)('A' + size()), current, this);
-		add(copy);
-		edit.fillPatterns();
-		view.fillPatterns();
-		setCurrent(copy);
-	}
-
-	public void newPattern() {
-		String name = "" + (char)('A' + size());
-		Pattern pat = new Pattern(name, this);
-		add(pat);
-    	edit.fillPatterns();
-    	view.fillPatterns();
-		setCurrent(pat);
-	}
-	
-	public void setCurrent(Pattern p) {
-		if (current == p) return;
-		current = p;
-		int idx = indexOf(p);
-		if (this.contains(p) == false) {
-			throw new RuntimeException(name + " -- " + p.name + " file " + file);
-		}
-		
-		new Thread(() -> {
-			if (view.getPattern().getSelectedIndex() != idx) 
-				view.getPattern().setSelectedIndex(idx);
-			edit.setPattern(idx);
-		}).start();
-	}
-	
-	public void next(boolean forward) {
-		int result = indexOf(current) + (forward ? 1 : -1);
-		
-		if (result >= size())
-			result = 0;
-		if (result < 0) 
-			result = size() - 1;
-		
-        setCurrent(get(result));
-	}
-
-	public File getFolder() {
-		return isDrums() ? DRUM_FOLDER	: MELODIC_FOLDER;}
-	
-	public final boolean isDrums() {
-		return ch == 9;
-	}
-	public final boolean isSynth() {
-		return ch != 9;
-	}
-	
-	
-	
-	
-	public void setActive(boolean active) {
-		if (active) {
-			if (onDeck) {
-				step = -1;
-				this.active = true;
-				onDeck = false;
-			}
-			else switch (cue) {
-				case Bar:
-					onDeck = true;
-					JudahClock.getInstance().addListener(cueListener);
-					break;
-				case Cue:
-					step = JudahClock.getStep() - 1;
-					onDeck = false;
-					this.active = true;
-					break;
-				case Loop:
-					onDeck = true;
-					JudahZone.getLooper().getLoopA().addListener(cueListener);
-					break;
-				default:
-					break;
-				}
-		}
-		else {
-			this.active = false;
-			this.onDeck = false;
-			if (isSynth())
-				new Panic(midiOut, ch).start(); 
-		}
-		MainFrame.update(this);
-	}
-	
-	public void selectFile(int data2) {
-		File[] folder = getFolder().listFiles();
-		int idx = Constants.ratio(data2, folder.length + 1);
-		if (idx == 0) { // blank line in combo box
-			if (getFile() != null)
-				setFile(null);
-		}
-		else {
-			File target = folder[idx - 1];
-			if (!target.equals(getFile()))
-				setFile(target);
-		}
-	}
-
-	public void step() {
-		++step;
-		if (step >= steps) {
-			step = 0;
-			if (active)
-				cycle.cycle();
-		}
-		if (edit.isVisible()) 
-			edit.step(step);
-		if (!active)
-			return;
-		
-		Notes now = current.get(step);
-		if (now == null)
-			return;
-		for (ShortMessage msg : now) {
-			if (isDrums()) {
-				msg = Midi.create(msg.getCommand(), msg.getChannel(), msg.getData1(),
-						((int)(msg.getData2() * ((DrumTrack)this).velocity(msg.getData1()) * gain))); 
-				JudahMidi.queue(msg, midiOut);
-			}
-			else {
-				msg = Midi.create(msg.getCommand(), msg.getChannel(), msg.getData1(),
-						((int)(msg.getData2() * gain))); 
-				if (latch) 
-					JudahMidi.queue(Transpose.apply(msg), midiOut);
-				else 
-					JudahMidi.queue(msg, midiOut);
-			}
-		}
-	}
-	
-	public final void setFile(File file) {
-		clear();
-		this.file = file;
-        if (file != null && file.isFile())
-        	new Thread(this).start();
-        else
-        	newPattern();
-	}
 
     public void write(File f) {
         StringBuffer raw = new StringBuffer();
@@ -362,8 +376,11 @@ public abstract class Track extends ArrayList<Pattern> implements Runnable {
         }
         try {
             Constants.writeToFile(f, raw.toString());
-        } catch (Exception e) { RTLogger.warn(this, name + " " + f.getName() + " : " + e.getMessage()); }
-        for (Track t : JudahClock.getTracks()) {
+            RTLogger.log(this, "saved " + f.getName());
+        } catch (Exception e) { 
+        	RTLogger.warn(this, name + " " + f.getName() + " : " + e.getMessage()); 
+        }
+        for (Track t : Tracker.getTracks()) {
         	t.getView().getFilename().refresh();
         	t.getEdit().fillFile1();
         }
@@ -410,7 +427,12 @@ public abstract class Track extends ArrayList<Pattern> implements Runnable {
 		if (cue != view.getCue().getSelectedItem())
 			view.getCue().setSelectedItem(cue);
 	}
-    
+
+	@Override
+	public String toString() {
+		return name;
+	}
+	
 }
 
 

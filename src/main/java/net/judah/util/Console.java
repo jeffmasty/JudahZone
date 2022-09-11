@@ -1,52 +1,24 @@
 package net.judah.util;
 
-import static net.judah.JudahZone.*;
 import static net.judah.util.Constants.NL;
 
 import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 
-import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Level;
 
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
-import net.judah.JudahZone;
-import net.judah.Looper;
 import net.judah.api.Midi;
-import net.judah.api.ProcessAudio.Type;
-import net.judah.effects.api.Preset;
 import net.judah.fluid.FluidSynth;
-import net.judah.looper.Loop;
-import net.judah.looper.Recording;
-import net.judah.midi.JudahClock;
-import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiListener;
-import net.judah.midi.Route;
-import net.judah.sequencer.Sequencer;
 
 @Log4j
-public class Console implements ActionListener, ConsoleParticipant, MidiListener {
-
-    private static final String listenHelp = "midilisten (toggle midi output to console)";
-    private static final String saveHelp = "save loop_num filename (saves looper to disc)";
-    private static final String readHelp = "read loop_num filename (reads Sample audio from disk into looper)";
-    private static final String playHelp = "play filename or sample index (play a sample)";
-    private static final String stopHelp = "stop index (stop a sample)";
-    private static final String samples = "samples : list samples";
-    private static final String routerHelp = "router - prints current midi translations";
-    private static final String routeHelp = "route/unroute channel fromChannel# toChannel#";
-    private static final String activeHelp ="active - prints the current sequencer command from the top of the stack.";
-    // private static final String buddyHelp = "buddy intCmd intValue or buddy songNum";
-    private static final String presetHelp = "preset - print the current EffectsRack settings";
+public class Console implements MidiListener {
 
     private static Console instance;
     public static Console getInstance() {
@@ -54,14 +26,10 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
         return instance;
     }
     
-    private Looper looper = JudahZone.getLooper();
     @Getter @Setter private static Level level = Level.DEBUG;
     @Getter private final JScrollPane scroller;
     private final JTextArea textarea = new JTextArea(5, 30);
-    @Getter private final JTextField input = new JTextField(26);
 
-    private boolean midiListen = false;
-    private String history = null;
     @Getter private ArrayList<ConsoleParticipant> participants = new ArrayList<>();
 
     private Console() {
@@ -73,33 +41,12 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
         scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
         scroller.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         
-        input.addActionListener(this);
-        input.setBackground(Pastels.GREEN);
-//        input.addKeyListener(new KeyAdapter() {
-//            @Override
-//            public void keyPressed(KeyEvent e) {
-//                if (e.getKeyCode() == VK_ESCAPE)
-//                    MainFrame.get().sheetMusic();}});
-
-        participants.add(this);
+        //participants.add(this);
         participants.add(FluidSynth.getInstance().getConsole());
 
         instance = this;
     }
 
-    protected String parseInputBox(ActionEvent e) {
-        if (e.getSource() instanceof JTextField == false) return null;
-        JTextField widget = (JTextField)e.getSource();
-        String text = widget.getText();
-        widget.setText("");
-        if (text.isEmpty() && history != null) {
-            addText(history);
-            return history;
-        }
-        addText("> " + text);
-        history = text;
-        return text;
-    }
 
     /** output to console (not for realtime) */
     public static void addText(String in) {
@@ -151,266 +98,25 @@ public class Console implements ActionListener, ConsoleParticipant, MidiListener
             addText("debug " + s);
     }
 
-    @Override
-    public void actionPerformed(ActionEvent event) {
-        String text = parseInputBox(event);
-
-        if (text.isEmpty() && history != null) {
-            addText(history);
-            text = history;
-        }
-        else {
-            addText(text);
-            history = text;
-        }
-
-        String[] split = text.split(" ");
-
-        for (ConsoleParticipant p : participants) {
-            p.process(split);
-        }
-    }
-
-    @Override
-    public void process(String[] input) {
-        String text = input[0];
-        if (text.equalsIgnoreCase("help")) {
-            help();
-            return;
-        }
-        //  set_active	set_parameter_value set_volume
-        try {
-            if (text.equals("volume") && input.length == 3)
-                getCarla().setVolume(Integer.parseInt(input[1]), Float.parseFloat(input[2]));
-            else if (text.equals("active") && input.length == 3)
-                getCarla().setActive(Integer.parseInt(input[1]),
-                        Integer.parseInt(input[2]));
-            else if (text.equals("parameter") && input.length == 4)
-                getCarla().setParameterValue(Integer.parseInt(input[1]),
-                        Integer.parseInt(input[2]), Float.parseFloat(input[3]));
-        } catch (Exception e) {
-            Console.warn(e.getMessage(), e);
-        }
-
-//        if (text.equals("yo")) {
-//        	AudioMetaData mdataObj = new AudioMetaData();
-//        	String mp3 = "/home/judah/Music/AntonioCarlosJobim-VerveJazzMasters13/11 Insensatez.mp3";
-//        	int sr = Constants.sampleRate();
-//        	float[] samples = AudioData.readAudio(mp3, sr, 0f, mdataObj);
-//        	looper.get(0).setRecording(new Recording(samples));
-//        	looper.get(0).play(true);
-//        }
-        
-        if (text.equals("midilisten"))
-            midiListen();
-        else if (text.equals("save"))
-            save(input);
-        else if (text.equals("read"))
-            read(input);
-        else if (text.equals("play")) {
-            if (input.length == 1)
-                JudahClock.getInstance().begin();
-            else
-                play(input);
-        }
-        else if (text.equals("stop")) {
-            if (input.length == 1)
-                    JudahClock.getInstance().end();
-            else if (input.length == 2)
-                looper.stopAll();
-			//    else
-			//        stop(input);
-        }
-        else if (text.equals("samples"))
-            addText( Arrays.toString(looper.getLoops()));
-        else if (text.equals("router"))
-            for (Route r : JudahMidi.getRouter())
-                addText("" + r);
-
-        else if (text.equals("route"))
-            route(input);
-        else if (text.equals("unroute"))
-            unroute(input);
-        else if (text.equals("active"))
-            Console.info("" + Sequencer.getCurrent().getActive());
-//        else if (text.equals("buddy") && input.length == 2)
-//            getDrummachine().parseConfig(input[1]);
-//        else if (text.equals("drumset") && input.length == 2)
-//            getDrummachine().drumset(Integer.parseInt(input[1]));
-//        else if (text.equals("update")) {
-//            MixerPane.getInstance().update();
-//            Console.info("...updated");
-//        }
-//        else if (text.equalsIgnoreCase("sheetMusic")) {
-//            MainFrame.get().sheetMusic();
-//        }
-        else if (text.equals("preset")) {
-            for(Preset p : getPresets())
-                addText(p.toString());
-        } else if (text.equals("test")) {
-            test();
-        }
-
-    }
-
-    private void help() {
-
-        addText("volume carla_plugin_index value");
-        addText("active carla_plugin_index 1_or_0");
-        addText("parameter carla_plugin_index parameter_index value");
-        addText(saveHelp);
-        addText(readHelp);
-        addText(playHelp);
-        addText(stopHelp);
-        addText(samples);
-        addText(playHelp);
-        addText(routeHelp);
-        addText(routerHelp);
-        addText(listenHelp);
-        addText(activeHelp);
-        // addText(buddyHelp);
-        addText(presetHelp);
-        addText("fluid help");
-
-    }
-    private void midiListen() {
-        midiListen = !midiListen;
-        ArrayList<MidiListener> listeners = Sequencer.getCurrent().getListeners();
-        if (midiListen)
-            listeners.add(this);
-        else
-            listeners.remove(this);
-    }
-
-
-    private void play(String[] split) {
-        if (split.length != 2) {
-            addText("usage: " + playHelp);
-            return;
-        }
-        String file = split[1];
-        try {
-            try {
-                int idx = Integer.parseInt(file);
-                looper.get(idx).play(true);
-            } catch (Throwable t) {
-            	looper.getDrumTrack().setRecording(Recording.readAudio(file));
-            	looper.getDrumTrack().setType(Type.ONE_SHOT);
-                looper.getDrumTrack().play(true);
-            }
-        } catch (Throwable t) {
-            addText(t.getMessage());
-            log.error(t.getMessage(), t);
-        }
-    }
-
-//    private void stop(String[] split) {
-//        if (split.length != 2) {
-//            addText("usage: " + stopHelp);
-//            return;
-//        }
-//        int idx = Integer.parseInt(split[1]);
-//        looper.remove(idx);
-//        addText("Sample removed");
-//
+//    private void midiListen() {
+//        midiListen = !midiListen;
+//        ArrayList<MidiListener> listeners = Sequencer.getCurrent().getListeners();
+//        if (midiListen)
+//            listeners.add(this);
+//        else
+//            listeners.remove(this);
 //    }
-    private void read(String[] split) {
-        if (split.length != 3 || !NumberUtils.isDigits(split[1])) {
-            addText("Format: " + readHelp);
-            return;
-        }
-        int loopNum = Integer.parseInt(split[1]);
-        String filename = split[2];
-        int loopMax = looper.size();
-        if (loopNum < 0 || loopNum >= loopMax) {
-            addText("loop " + loopNum + " does not exist.");
-            return;
-        }
-        Loop loop = looper.get(loopNum);
 
-        try {
-            Recording recording = Recording.readAudio(filename);
-            loop.setRecording(recording);
-            float seconds = recording.size() / JudahMidi.getInstance().getSampleRate();
-            addText(seconds + " of " + filename + " read, stored in loop " + loopNum + ". ");
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            addText(e.getMessage());
-        }
-    }
-
-    private void save(String[] split) {
-        if (split.length != 3 || !NumberUtils.isDigits(split[1])) {
-            addText("Format: " + saveHelp);
-            return;
-        }
-        int loopNum = Integer.parseInt(split[1]);
-        String filename = split[2];
-        int loopMax = looper.size();
-        if (loopNum < 0 || loopNum >= loopMax) {
-            addText("loop " + loopNum + " does not exist.");
-            return;
-        }
-        Loop loop = looper.get(loopNum);
-        if (!loop.hasRecording()) {
-            addText("Nothing in Loop " + loopNum);
-            return;
-        }
-
-        Recording recording = loop.getRecording();
-        if (recording == null || recording.isEmpty()) {
-            addText("No recording in looper " + loopNum + ".");
-            return;
-        }
-        try {
-            recording.saveAudio(filename);
-            float seconds = recording.size() / JudahMidi.getInstance().getSampleRate();
-            addText(seconds + " of loop " + loopNum + " saved to " + filename);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            addText(e.getMessage());
-        }
-    }
-
-    private void route(String[] split) {
-        if (split.length == 4 && split[1].equals("channel")) {
-            try {
-                int from = Integer.parseInt(split[2]);
-                int to = Integer.parseInt(split[3]);
-                JudahMidi.getRouter().add(new Route(from, to));
-
-            } catch (NumberFormatException e) {
-                addText(routeHelp + " (" + Arrays.toString(split) + ")");
-            }
-        }
-    }
-
-    private void unroute(String[] split) {
-        if (split.length == 4 && split[1].equals("channel")) {
-            try {
-                int from = Integer.parseInt(split[2]);
-                int to = Integer.parseInt(split[3]);
-                JudahMidi.getRouter().remove(new Route(from, to));
-
-            } catch (NumberFormatException e) {
-                addText(routeHelp + " (" + Arrays.toString(split) + ")");
-            }
-        }
-    }
-
-    @Override
-    public void feed(Midi midi) {
-        addText("midilisten: " + midi);
-    }
 
     @Override
     public PassThrough getPassThroughMode() {
         return PassThrough.ALL;
     }
 
-    public static void test() {
-        getChannels().getGuitar().getChorus().setActive(!getChannels().getGuitar().getChorus().isActive());
-        Console.info("Chorus: " + getChannels().getGuitar().getChorus().isActive());
+
+    @Override
+    public void feed(Midi midi) {
+        addText("midilisten: " + midi);
     }
 
 }

@@ -17,7 +17,7 @@ public class DJJefe extends JPanel {
     public DJJefe() {
         setLayout(new GridLayout(1, channels.size()));
 
-    	for (Loop loop : JudahZone.getLooper().getLoops()) 
+    	for (Loop loop : JudahZone.getLooper()) 
         	channels.add(loop.getFader());
         for (Channel channel : JudahZone.getChannels()) 
         	channels.add(channel.getFader());

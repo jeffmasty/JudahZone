@@ -10,19 +10,17 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
-import net.judah.ControlPanel;
 import net.judah.JudahZone;
-import net.judah.Looper;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.controllers.KorgPads;
+import net.judah.effects.gui.ControlPanel;
 import net.judah.looper.Loop;
+import net.judah.looper.Looper;
 import net.judah.midi.JudahClock.Mode;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
-import net.judah.sequencer.Sequencer;
-import net.judah.sequencer.editor.Song;
 import net.judah.settings.Channels;
 
 public class JudahMenu extends JPopupMenu implements KeyListener {
@@ -36,11 +34,12 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
     JMenu fileMenu = new JMenu("Song");
     JMenuItem sheetMusic = new JMenuItem("Sheet Music");
     JMenuItem loadMidi = new JMenuItem("Open Midi");
-    JMenuItem load = new JMenuItem("Open...");
-    JMenuItem create = new JMenuItem("New...");
-    JMenuItem save = new JMenuItem("Save");
-    JMenuItem saveAs = new JMenuItem("Save As...");
-    JMenuItem close = new JMenuItem("Close Song");
+    JMenuItem presets = new JMenuItem("Presets");
+//    JMenuItem load = new JMenuItem("Open...");
+//    JMenuItem create = new JMenuItem("New...");
+//    JMenuItem save = new JMenuItem("Save");
+//    JMenuItem saveAs = new JMenuItem("Save As...");
+//    JMenuItem close = new JMenuItem("Close Song");
     JMenuItem exit = new JMenuItem("Exit");
 
 //    JMenuItem beatBox = new JMenuItem("BeatBox");
@@ -48,29 +47,31 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
 
     public JudahMenu() {
 
-        fileMenu.setMnemonic(KeyEvent.VK_F);
         exit.setMnemonic(KeyEvent.VK_E);
-        fileMenu.add(load);
-        fileMenu.add(create);
-        fileMenu.add(save);
-        fileMenu.add(saveAs);
-        fileMenu.add(close);
+        fileMenu.setMnemonic(KeyEvent.VK_F);
+//        fileMenu.add(load);
+//        fileMenu.add(create);
+//        fileMenu.add(save);
+//        fileMenu.add(saveAs);
+//        fileMenu.add(close);
 
-        add(fileMenu);
+//        add(fileMenu);
         add(sheetMusic);
-        // add(beatsMenu);
+//        add(beatsMenu);
         add(exit);
-
+        add(presets);
         addKeyListener(this);
 
-        load.addActionListener( e -> {load();});
-        create.addActionListener( e -> {create();});
-        save.addActionListener( e -> {save();});
-        save.addActionListener( e -> {saveAs();});
-        close.addActionListener( e -> {
-        	if (Sequencer.getCurrent() != null)
-        		MainFrame.get().closeTab(Sequencer.getCurrent().getPage());
-        });
+        presets.addActionListener( e -> MainFrame.get().addOrShow(MainFrame.get().getPresets(), "Presets"));
+
+//        load.addActionListener( e -> load());
+//        create.addActionListener( e -> create());
+//        save.addActionListener( e -> save());
+//        save.addActionListener( e -> saveAs());
+//        close.addActionListener( e -> {
+//        	if (Sequencer.getCurrent() != null)
+//        		MainFrame.get().closeTab(Sequencer.getCurrent().getPage());
+//        });
         sheetMusic.addActionListener( e -> {MainFrame.get().sheetMusic(new File(Constants.SHEETMUSIC, "four.png"));});
 //        beatsMenu.addActionListener( e -> {MainFrame.get().beatBox();});
 //        loadMidi.addActionListener(e -> {MainFrame.get().getTracker().loadMidi());
@@ -94,44 +95,6 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
         //  editMenu.add(delete);
         //  add(editMenu);
 
-    }
-
-    public void save() {
-        Sequencer s = Sequencer.getCurrent();
-        if (s == null) return;
-        s.getPage().save(s.getSongfile());
-    }
-
-    public void saveAs() {
-        File file = FileChooser.choose();
-        if (file == null) return;
-        Sequencer s = Sequencer.getCurrent();
-        if (s == null) return;
-        s.getPage().save(file);
-    }
-
-    public void load() {
-        File file = FileChooser.choose();
-        if (file == null) return;
-
-        try {
-            new Sequencer(file);
-        } catch (Exception e) {
-            RTLogger.warn(this, e.getMessage() + " - " + file.getAbsolutePath());
-        }
-
-    }
-
-    public void create() {
-        File file = FileChooser.choose();
-        if (file == null) return;
-        Song song = new Song();
-        try {
-            JsonUtil.saveString(JsonUtil.MAPPER.writeValueAsString(song), file);
-            new Sequencer(file);
-        } catch (Exception e) {
-            RTLogger.warn(this, e);
-        }
     }
 
     @Override public void keyTyped(KeyEvent e) {  }
@@ -165,7 +128,7 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
 
             case VK_SPACE: case VK_M: mute(); return;
             
-            case VK_ENTER: enterKey(); return;
+			case VK_ENTER: /* enterKey(); */return;
 
             case VK_R: 
             	if (focus instanceof Loop) {
@@ -214,17 +177,6 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
             return;
         }
 
-    }
-
-    private void enterKey() {
-        Console.info("enter key handled");
-        Channel ch = ControlPanel.getInstance().getChannel();
-        if (ch instanceof Loop)
-            ((Loop)ch).play(
-                    ((Loop)ch).isPlaying() != AudioMode.RUNNING);
-        else
-            ((LineIn)ch).setMuteRecord(
-                    !((LineIn)ch).isMuteRecord());
     }
 
     private void mute() {

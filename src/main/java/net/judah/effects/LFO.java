@@ -107,7 +107,7 @@ public class LFO implements Effect {
 			for (LineIn ch : JudahZone.getChannels())
 				if (ch.getLfo().isActive())
 					lfoPulse.add(ch);
-			for (Loop s : JudahZone.getLooper().getLoops())
+			for (Loop s : JudahZone.getLooper())
 				if (s.getLfo().isActive())
 					lfoPulse.add(s);
 			if (JudahZone.getMasterTrack().getLfo().isActive())

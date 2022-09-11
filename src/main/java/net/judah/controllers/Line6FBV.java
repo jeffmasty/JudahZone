@@ -1,9 +1,9 @@
 package net.judah.controllers;
 
-import net.judah.ControlPanel;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.Midi;
+import net.judah.effects.gui.ControlPanel;
 import net.judah.looper.Loop;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;

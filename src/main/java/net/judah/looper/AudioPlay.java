@@ -1,8 +1,6 @@
 package net.judah.looper;
 
-import static net.judah.settings.Commands.MixerLbls.AUDIOPLAY;
-import static net.judah.util.Constants.Param.ACTIVE;
-import static net.judah.util.Constants.Param.activeTemplate;
+import static net.judah.util.Constants.Param.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,18 +11,13 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 
 import lombok.extern.log4j.Log4j;
-import net.judah.api.Command;
 import net.judah.api.Loadable;
 import net.judah.util.JudahException;
 
 @Log4j
-public class AudioPlay extends Command implements Loadable {
+public class AudioPlay implements Loadable {
 	
 	Clip clip;
-	
-	public AudioPlay() {
-		super(AUDIOPLAY.name, AUDIOPLAY.desc, template());
-	}
 	
 	public static HashMap<String, Class<?>> template() {
 		HashMap<String, Class<?>> result = activeTemplate();
@@ -47,13 +40,9 @@ public class AudioPlay extends Command implements Loadable {
 		}
 	}
 	
-	@Override
-	public void load(HashMap<String, Object> props) throws IOException {
-		
+	public void load(File file) throws IOException {
 		try {
-			File file = new File("" + props.get("file"));
-			if (!file.isFile()) throw new IOException(file.getAbsolutePath());
-	        AudioInputStream stream = AudioSystem.getAudioInputStream(file);
+			AudioInputStream stream = AudioSystem.getAudioInputStream(file);
 	        clip = AudioSystem.getClip();
 	        clip.open(stream); 
 	        
@@ -61,6 +50,14 @@ public class AudioPlay extends Command implements Loadable {
 		} catch(Exception e) {
 			throw (e instanceof IOException) ? (IOException)e : new IOException(e);
 		}
+		
+	}
+	
+	@Override
+	public void load(HashMap<String, Object> props) throws IOException {
+		File file = new File("" + props.get("file"));
+		if (!file.isFile()) throw new IOException(file.getAbsolutePath());
+		load(file);
 	}
 
 	@Override
@@ -69,7 +66,6 @@ public class AudioPlay extends Command implements Loadable {
 			clip.close();
 	}
 
-	@Override
 	public void execute(HashMap<String, Object> props, int midiData2) throws Exception {
 		boolean active = false;
 		if (midiData2 < 0) 

@@ -4,6 +4,10 @@ import java.io.File;
 
 import net.judah.JudahZone;
 import net.judah.MainFrame;
+import net.judah.looper.Looper;
+import net.judah.midi.JudahClock;
+import net.judah.mixer.LineIn;
+import net.judah.settings.Channels;
 import net.judah.tracker.Cycle;
 import net.judah.tracker.Track;
 import net.judah.tracker.Tracker;
@@ -16,10 +20,15 @@ public class Sleepwalk extends SmashHit {
 	Track track;
 	
 	@Override
-	public void startup(Tracker t) {
+	public void startup(Tracker t, Looper loops, Channels ch) {
+		JudahClock.getInstance().setLength(4);
 		track = t.getBass();
 		track.setFile(new File(track.getFolder(), "Sleepwalk"));
 		track.getCycle().setCustom(this);
+		track.setActive(true);
+		LineIn guitar = JudahZone.getChannels().getGuitar();
+		guitar.getReverb().setActive(false);
+		guitar.getLatchEfx().latch(JudahZone.getLooper().getLoopA());
 		count = 0;
 		MainFrame.get().sheetMusic(new File(Constants.SHEETMUSIC, "Sleepwalk.png"));
 	}
@@ -66,7 +75,7 @@ public class Sleepwalk extends SmashHit {
 
 	@Override
 	public void teardown() {
-		track.setFile(null);
+		track.clearFile();
 		track.getCycle().setCustom(null);
 	}
 

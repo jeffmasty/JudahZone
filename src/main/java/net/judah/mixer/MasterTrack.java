@@ -8,6 +8,7 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import net.judah.effects.api.Reverb;
 import net.judah.util.AudioTools;
+import net.judah.util.Icons;
 
 /**The unified effects/volume track just before hitting the speakers/external effects.
  * A master track initializes in a muted state.*/
@@ -18,6 +19,7 @@ public class MasterTrack extends Channel {
 	public MasterTrack(JackPort left, JackPort right,
 	        JackPort effectsL, JackPort effectsR, Reverb reverb) {
 		super("MAIN", true);
+		setIcon(Icons.load("Speakers.png"));
 		this.speakersLeft = left;
 		this.speakersRight = right;
 		this.effectsL = effectsL;

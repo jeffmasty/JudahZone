@@ -68,6 +68,7 @@ import java.security.InvalidParameterException;
 import java.util.Arrays;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.judah.effects.api.Effect;
 import net.judah.util.Constants;
 
@@ -92,15 +93,17 @@ public class Delay implements Effect {
     public static final float DEFAULT_TIME = .15f;
     
     private final float sampleRate;
-    private final float nframes; // jack buffer size
-    private float delaytime = DEFAULT_TIME;
+    private final float nframes; 
+    /** in seconds */
+    private float delaytime = DEFAULT_TIME; 
     @Getter private float maxDelay = DEF_MAX_DELAY;
     @Getter private float feedback = 0.36f;
 
     @Getter private boolean active;
     private final VariableDelayOp left;
     private final VariableDelayOp right;
-
+    @Setter private boolean slapback;
+    
     public Delay() {
         this(Constants.sampleRate(), Constants.bufSize(), DEF_MAX_DELAY);
         reset();
@@ -160,10 +163,11 @@ public class Delay implements Effect {
         else throw new InvalidParameterException();
     }
 
-    public void setDelay(float time) {
-        this.delaytime = time;
+    public void setDelay(float seconds) {
+        this.delaytime = seconds;
     }
 
+    /** @return delay time in seconds */
     public float getDelay() {
         return this.delaytime;
     }
@@ -189,8 +193,8 @@ public class Delay implements Effect {
     }
 
 	public void processAdd(FloatBuffer in, FloatBuffer out, boolean isLeft) {
-		if (isLeft) left.process(in, out, false);
-		else right.process(in, out, false);
+		if (isLeft) left.process(in, out, slapback);
+		else if (!slapback) right.process(in, out, false);
     }
 
 	private class VariableDelayOp {

@@ -2,7 +2,7 @@
 
 A mixer/looper/live performance environment written in Java for the Jack sound system. (https://jackaudio.org/)
 
-6 mono or stereo input channels are currently handled, as well as 4 synchronized stereo recording loops. All are mixed into a master stereo output bus.  All channels have separately controlled internal gain, EQ, Hi/Lo Cut, Chorus, Overdrive, Delay, Reverb, an LFO, and stereo panning. These internal effects are supplanted by LV2 plugins hosted externally and controlled over OSC. There's also an internal Song and Pattern Step Sequencer/Recorder, Guitar Tuner, Midi Router, and sheet music viewer. 
+6 mono or stereo input channels are currently handled, as well as 4 synchronized stereo recording loops and 7 step sequencer tracks. All are mixed into a master stereo output bus.  All audio channels have separately controlled internal gain, EQ, Hi/Lo Cut, Chorus, Overdrive, Delay, Reverb, an LFO, and stereo panning. These internal effects are supplanted by LV2 plugins hosted externally and controlled over OSC. Loops can be sync'd to the drum machine and different song lengths, instruments can be solo'd to different loops. The internal drum amd synth sequencers and song editor are fairly robust.  A guitar tuner is supplied, as well as midi routing and a sheet music viewer. 
 
 Works great with an Akai MPK-Mini Midi Controller and/or a guitar/mic and midi foot switch controller.
 A few recordings made: https://www.youtube.com/user/judahmu/videos
@@ -21,10 +21,10 @@ FluidSynth (https://github.com/FluidSynth/fluidsynth) a synthesizer controlled o
 Using TarsosDSP (https://github.com/JorenSix/TarsosDSP) for a guitar tuner.
 
 ## Build
-Built with Maven and Lombok. 
+Built with Lombok and Maven. 
 
 ## Running
-You need to have Jack up and running.  This project uses the "a2jmidid -e" ALSA midi bindings along with Jack.  This project uses FluidSynth (with the fluid soundfount) and the Carla plugin host.  
+You need to have Jack up and running.  This project uses the "a2jmidid -e" ALSA midi bindings along with Jack.  This project uses FluidSynth (with the fluid soundfount), the Carla plugin host as well as DragonFly reverb and Calf Lv2 plugins.  
 
 This project is hardcoded to connect to the author's instrument ports.  Fiddle around with the Channels class to get your particular system up and running. 
 

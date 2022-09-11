@@ -3,12 +3,12 @@ package net.judah.mixer;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import net.judah.JudahZone;
-import net.judah.Looper;
 import net.judah.MainFrame;
 import net.judah.api.Notification;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.looper.Loop;
+import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.util.RTLogger;
 
@@ -43,16 +43,15 @@ public class SoloTrack extends Loop implements TimeListener {
     public void solo(boolean engage) {
     	armed = engage;
     	if (engage) {
-    		for (Loop x : looper.getLoops()) 
+    		for (Loop x : looper) 
     			x.addListener(this);
             soloTrack.setSolo(true);
-            play(true); // armed
             muteStash = soloTrack.isMuteRecord();
             soloTrack.setMuteRecord(false);
             RTLogger.log(this, "drumtrack sync'd. to " + soloTrack.getName());
         }
         else {
-        	for (Loop x : looper.getLoops())
+        	for (Loop x : looper)
         		x.removeListener(this);
             soloTrack.setSolo(false);
             soloTrack = JudahZone.getChannels().getCalf();

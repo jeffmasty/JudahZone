@@ -185,6 +185,8 @@ public class ChannelFader extends JPanel implements Pastels {
 		}
 		else if (channel.isOnMute())  // line in/master track 
 			bg = Color.BLACK;
+		else if (channel.getGain().getVol() < 5)
+			bg = Color.DARK_GRAY;
 		else if (in != null) {
 			JackPort port = in.getSync();
 			mute.setBackground(in.isMuteRecord() ? null : GREEN);

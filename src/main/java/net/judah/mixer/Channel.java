@@ -7,7 +7,6 @@ import javax.swing.ImageIcon;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.effects.*;
@@ -26,23 +25,20 @@ public abstract class Channel extends ArrayList<Effect> {
 	protected final String name;
 	protected ChannelFader fader;
 	protected EffectsRack effects;
+    protected final boolean isStereo;
 	
 	protected ImageIcon icon;
-
+	protected boolean onMute;
 	protected Preset preset = JudahZone.getPresets().getFirst();
 	protected boolean presetActive;
-
     protected Gain gain = new Gain();
     protected LFO lfo = new LFO();
     protected CutFilter cutFilter;
     protected EQ eq = new EQ();
-	//protected Compression compression = new Compression();
     protected Overdrive overdrive = new Overdrive();
     protected Chorus chorus = new Chorus();
 	protected Delay delay = new Delay();
     protected Reverb reverb;
-
-    @Getter protected final boolean isStereo;
     
     public Channel(String name, boolean isStereo) {
         this.name = name;
@@ -80,6 +76,10 @@ public abstract class Channel extends ArrayList<Effect> {
         }
     }
     
+    public void setPreset(String name) {
+    	setPreset(JudahZone.getPresets().byName(name));
+    }
+    
     public void setPreset(Preset p) {
     	if (p != preset)
     		RTLogger.log(this, name + "->" + p.getName() );
@@ -93,7 +93,12 @@ public abstract class Channel extends ArrayList<Effect> {
         add(reverb);
     }
 
-	@Getter protected boolean onMute;
+    public void setDelay(Delay d) {
+    	remove(delay);
+    	delay = d;
+    	add(delay);
+    }
+    
 	public void setOnMute(boolean mute) {
 		onMute = mute;
 		MainFrame.update(this);

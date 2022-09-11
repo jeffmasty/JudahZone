@@ -3,13 +3,13 @@ package net.judah.controllers;
 import java.util.ArrayList;
 
 import lombok.Getter;
-import net.judah.ControlPanel;
 import net.judah.JudahZone;
-import net.judah.Looper;
 import net.judah.MainFrame;
 import net.judah.api.Midi;
 import net.judah.controllers.MapEntry.TYPE;
 import net.judah.effects.api.Reverb;
+import net.judah.effects.gui.ControlPanel;
+import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
@@ -75,7 +75,7 @@ public class KorgMixer implements Controller {
 			new Thread( () -> {
 				int ch = data1 - soff;
 				if (doubleClick(ch))
-					MainFrame.setFocus(JudahClock.getTracks()[ch]);
+					MainFrame.setFocus(Tracker.getTracks()[ch]);
 				else 
 					MainFrame.setFocus(channels.get(data1 - soff));
 			}).start();
@@ -94,7 +94,11 @@ public class KorgMixer implements Controller {
 		}
 		if (data1 >= roff && data1 < roff + 8) { // play/stop sequencer tracks
 			int trackNum = data1 - roff;
-			Track track = JudahClock.getTracks()[trackNum];
+			if (trackNum == Tracker.getTracks().length) { // only 7 tracks, run the cricket sample
+				JudahClock.getInstance().crickets(data2 > 0);
+				return true;
+			}
+			Track track = Tracker.getTracks()[trackNum];
 			track.setActive(data2 > 0);
 //			if (doubleClick(trackNum)) 
 //				MainFrame.setFocus(track);

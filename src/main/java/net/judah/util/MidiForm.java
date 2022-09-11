@@ -2,7 +2,6 @@ package net.judah.util;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -14,7 +13,6 @@ import lombok.extern.log4j.Log4j;
 import net.judah.api.Midi;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiListener;
-import net.judah.sequencer.Sequencer;
 
 @Log4j
 /** Utility Swing class to select MIDI messages */
@@ -118,11 +116,11 @@ public class MidiForm extends JPanel implements MidiListener {
 	}
 
 	private void midiLearn() {
-		ArrayList<MidiListener> listeners = Sequencer.getCurrent().getListeners();
-		if (midiRecord.isSelected())
-			listeners.add(this);
-		else
-			listeners.remove(this);
+//		ArrayList<MidiListener> listeners = Sequencer.getCurrent().getListeners();
+//		if (midiRecord.isSelected())
+//			listeners.add(this);
+//		else
+//			listeners.remove(this);
 	}
 
 	private void midiPlay() {
@@ -146,7 +144,7 @@ public class MidiForm extends JPanel implements MidiListener {
 	}
 
 	private Midi getMidi() {
-		Sequencer.getCurrent().getListeners().remove(this);
+		//Sequencer.getCurrent().getListeners().remove(this);
 		int cmd = ((MidiCommands)command.getSelectedItem()).getVal();
 		int chan = (int)channel.getSelectedItem();
 		int dat1 = (int)data1.getSelectedItem();

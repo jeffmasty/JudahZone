@@ -19,12 +19,13 @@ import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
-import net.judah.controllers.CircuitTracks;
 import net.judah.controllers.Jamstik;
 import net.judah.controllers.KnobMode;
 import net.judah.looper.LoopWidget;
 import net.judah.songs.SmashHit;
 import net.judah.tracker.MidiOut;
+import net.judah.tracker.Track;
+import net.judah.tracker.Tracker;
 import net.judah.util.*;
 
 //	Menu beat        3: Calf
@@ -47,10 +48,11 @@ public class MidiGui extends JPanel implements TimeListener {
     @Getter private final ProgChange calf;
     @Getter private final ProgChange fluid;
     @Getter private final JComboBox<SmashHit> setlist = new CenteredCombo<>();
-    private final MidiOut circuit = new MidiOut();
-	private final MidiOut mpk = new MidiOut();
+	@Getter private final MidiOut mpk = new MidiOut();
 	private final JPanel mpkPanel = new JPanel();
 	private Jamstik jam;
+	@Getter private final JudahMenu popup = new JudahMenu();
+
     
 	private final Border NONE = BorderFactory.createLineBorder(Pastels.BUTTONS, 4);
 
@@ -62,8 +64,8 @@ public class MidiGui extends JPanel implements TimeListener {
     	setBorder(NONE);
     	setOpaque(true);
     	setLayout(new GridLayout(1, 3));
-		calf = new ProgChange(midi.getCalfOut());
-		fluid = new ProgChange(midi.getFluidOut());
+		calf = new ProgChange(midi.getCalfOut(), 0);
+		fluid = new ProgChange(midi.getFluidOut(), 0);
 		
 		doSetlist();
 		
@@ -77,7 +79,14 @@ public class MidiGui extends JPanel implements TimeListener {
 			setlist.addItem(song);
 		if (setlist.getItemCount() > 0)
 			setlist.setSelectedItem(setlist.getItemAt(0));
-		// no listener, load song happens on Mixer's [Set] button
+		// load song usually happens on Mixer's [Set] button
+		setlist.addMouseListener(new MouseAdapter() {
+			@Override public void mouseClicked(MouseEvent e) {
+				if (e.getButton() == MouseEvent.BUTTON3)
+					JudahZone.loadSong();
+			}
+		});
+		
 	}
 	
 	private void initialize() {
@@ -92,7 +101,6 @@ public class MidiGui extends JPanel implements TimeListener {
                 else
                     clock.begin(); }});
         
-        JudahMenu popup = new JudahMenu();
         menu.addActionListener(e -> 
             popup.show(menu, menu.getLocation().x, menu.getLocation().y));
 		
@@ -137,19 +145,10 @@ public class MidiGui extends JPanel implements TimeListener {
 			MainFrame.update(JudahZone.getLooper().getLoopA());
 		});
 		
-        // doCircuit
-		JackPort[] outs = new JackPort[] { 
-			midi.getCraveOut(), midi.getFluidOut(), midi.getCalfOut()
-			/* midi.getUnoOut(), */ 
-		};
-		for (JackPort port : outs) {
-			circuit.addItem(port);
+        // MPK routing
+		for (JackPort port : new JackPort[] {midi.getCraveOut(), midi.getFluidOut(), midi.getCalfOut()}) {
 			mpk.addItem(port);
 		}
-		circuit.addActionListener(e -> CircuitTracks.setOut2((JackPort)circuit.getSelectedItem()));
-		
-		
-		mpk.addItem(midi.getCircuitOut());
 		mpk.setSelectedItem(midi.getKeyboardSynth());
 		mpk.addActionListener( e -> midi.setKeyboardSynth((JackPort)mpk.getSelectedItem()));
 
@@ -179,11 +178,11 @@ public class MidiGui extends JPanel implements TimeListener {
         left3.add(tapButton);
         left3.add(tempoLbl);
         
+
         left4.add(setlist);
-        //left4.add(new JLabel("T2", SwingConstants.CENTER));
-        left4.add(circuit);
-        
-        
+        JButton load = new JButton("▶");
+        load.addActionListener(e->JudahZone.loadSong());
+        left4.add(load);
         JPanel p1 = new JPanel(), p2 = new JPanel();
         JPanel jamPanel = new JPanel();
         jam = new Jamstik(jamPanel, JudahZone.getServices());
@@ -233,7 +232,8 @@ public class MidiGui extends JPanel implements TimeListener {
  	    	setlist.setSelectedIndex(Constants.ratio(data2 - 1, setlist.getItemCount()));
  	    	return;
     	case 5: // circuit midi 2 out
-    		circuit.setSelectedIndex(Constants.ratio(data2 - 1, circuit.getItemCount()));
+    		Track[] tracks = Tracker.getTracks();
+    		Tracker.setCurrent((Track)Constants.ratio(data2 - 1, tracks));
     		return;
     	case 6: // jamstik out
     		jam.setSelectedIndex(Constants.ratio(data2 - 1, midi.getPaths().size()));
@@ -261,7 +261,7 @@ public class MidiGui extends JPanel implements TimeListener {
 					"Stop" : "Play");
 		}
 		if (prop == Property.STEP) {
-			int step = 100 * (int)value / JudahClock.getSteps();
+			int step = 100 * (int)value / clock.getSteps();
 			menu.setBackground(RainbowFader.chaseTheRainbow(step));
 		}
 

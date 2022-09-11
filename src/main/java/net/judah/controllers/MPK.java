@@ -1,6 +1,6 @@
 package net.judah.controllers;
 
-import static net.judah.JudahZone.getSynth;
+import javax.swing.JLabel;
 
 import org.jaudiolibs.jnajack.JackException;
 import org.jaudiolibs.jnajack.JackMidi;
@@ -8,7 +8,6 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.ControlPanel;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.Midi;
@@ -19,10 +18,11 @@ import net.judah.effects.Delay;
 import net.judah.effects.EQ;
 import net.judah.effects.api.Preset;
 import net.judah.effects.api.Reverb;
+import net.judah.effects.gui.ControlPanel;
 import net.judah.effects.gui.EffectsRack;
-import net.judah.fluid.FluidSynth;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
+import net.judah.midi.ProgChange;
 import net.judah.mixer.Channel;
 import net.judah.tracker.DrumTrack;
 import net.judah.tracker.Track;
@@ -34,6 +34,7 @@ import net.judah.util.RTLogger;
 public class MPK implements Controller, MPKTools {
 	
 	@Getter private static KnobMode mode = KnobMode.Clock;
+	@Getter private static JLabel label = new JLabel(mode.name(), JLabel.CENTER);
 	public static final int MIDDLE_C = 60;
 	public static final int thresholdLo = 1;
 	public static final int thresholdHi = 98;
@@ -52,6 +53,7 @@ public class MPK implements Controller, MPKTools {
 	public static void setMode(KnobMode knobs) {
 		mode = knobs;
 		MainFrame.setFocus(knobs);
+		label.setText(knobs.name());
 	}
 	
 	@Override
@@ -111,11 +113,11 @@ public class MPK implements Controller, MPKTools {
 
 	private boolean cc_pad(int data1, int data2) throws JackException {
 		///////// ROW 1 /////////////////
-		if (data1 == PRIMARY_CC.get(0))  { // sync Crave
-			sys.synchronize(sys.getCraveOut());
+		if (data1 == PRIMARY_CC.get(0))  { // TODO
+		
 		}
-		else if (data1 == PRIMARY_CC.get(1)) { // sync Circuit Tracks
-			sys.synchronize(sys.getCircuitOut());
+		else if (data1 == PRIMARY_CC.get(1)) { // sync Crave's internal sequencer
+			sys.synchronize(sys.getCraveOut());
 		}
 		else if (data1 == PRIMARY_CC.get(2) && data2 > 0) // Clock or Tracks
 			if (MPK.getMode() == KnobMode.Clock)
@@ -284,56 +286,59 @@ public class MPK implements Controller, MPKTools {
 	
 	
 	private boolean doProgChange(int data1, int data2) {
-            if (data1 == PRIMARY_PROG[3]) { // up instrument
-                new Thread() { @Override public void run() {
-                    getSynth().instUp(0, true);
-                }}.start();
-                return true;
-            }
-            if (data1 == PRIMARY_PROG[7]) { // down instrument
-                new Thread(()->{getSynth().instUp(0, false);}).start();
-                return true;
-            }
+
+			// ProgChange pads
+            //  upInst   upDrum   upSheet   upSong
+            // downInst downDrum downSheet downSong
 
             JackPort fluidOut = JudahMidi.getInstance().getFluidOut();
-            FluidSynth synth = FluidSynth.getInstance();
-            if (data1 == PRIMARY_PROG[0]) { // I want bass
-                JudahMidi.queue(synth.progChange(0, 32), fluidOut);
-                return true;
-            }
-            if (data1 == PRIMARY_PROG[1]) { // harp
-                JudahMidi.queue(synth.progChange(0, 46), fluidOut);
-                return true;
-            }
-            if (data1 == PRIMARY_PROG[2]) { // elec piano
-                JudahMidi.queue(synth.progChange(0, 4), fluidOut);
-                return true;
-            }
-            if (data1 == PRIMARY_PROG[4]) { // strings
-                JudahMidi.queue(synth.progChange(0, 44), fluidOut);
-                return true;
-            }
-            if (data1 == PRIMARY_PROG[5]) { // vibraphone
-                JudahMidi.queue(synth.progChange(0, 11), fluidOut);
-                return true;
-            }
-            if (data1 == PRIMARY_PROG[6]) { // rock organ
-                JudahMidi.queue(synth.progChange(0, 18), fluidOut);
-                return true;
-            }
-		
-            // B BANK
-            if (data1 == B_PROG[0]) { // sitar
-            	JudahMidi.queue(synth.progChange(0, 104), fluidOut);
-            	RTLogger.log(this, "B Bank!");
-            }
+            JackPort calfOut = JudahMidi.getInstance().getCalfOut();
             
-            if (data1 == B_PROG[4]) { // honky tonk piano
-            	JudahMidi.queue(synth.progChange(0, 3), fluidOut);
-            	RTLogger.log(this, "B Bank!");
-            }
+            if (data1 == PRIMARY_PROG[0]) // up fluid inst patch
+            	ProgChange.next(true, fluidOut, 0);
+            else if (data1 == PRIMARY_PROG[1]) { // up calf drum patch
+            	ProgChange.next(true, calfOut, 9);
+            } else if (data1 == PRIMARY_PROG[2]) { // up sheetMusic
+            	MainFrame.get().sheetMusic(true);
+            } else if (data1 == PRIMARY_PROG[3]) { // up song
+            	JudahZone.nextSong();
+            } 
             
-		return false;
+            else if (data1 == PRIMARY_PROG[4]) { // down fluid inst patch
+                ProgChange.next(false, fluidOut, 0);
+            } else if (data1 == PRIMARY_PROG[5]) { // down calf drum patch
+            	ProgChange.next(false, calfOut, 9);
+            } else if (data1 == PRIMARY_PROG[6]) { // down sheet music
+            	MainFrame.get().sheetMusic(false);
+            } else if (data1 == PRIMARY_PROG[7]) { // reset stage
+            	JudahMidi.getInstance().getGui().getSetlist().setSelectedItem(0);
+            	JudahZone.loadSong();
+            }
+
+            
+            // B BANK 
+            else if (data1 == B_PROG[0]) // I want bass
+            	ProgChange.progChange(32, fluidOut, 0);
+            else if (data1 == B_PROG[1]) { // sitar
+            	ProgChange.progChange(104, fluidOut, 0);
+            } else if (data1 == B_PROG[2]) { // harp
+            	ProgChange.progChange(46, fluidOut, 0);
+            } else if (data1 == B_PROG[3]) { // elec piano
+            	ProgChange.progChange(4, fluidOut, 0);
+            }
+
+            else if (data1 == B_PROG[4]) { // strings
+            	ProgChange.progChange(44, fluidOut, 0);
+            } else if (data1 == B_PROG[5]) { // vibraphone
+            	ProgChange.progChange(11, fluidOut, 0);
+            } else if (data1 == B_PROG[6]) // rock organ
+            	ProgChange.progChange(18, fluidOut, 0);
+            else if (data1 == B_PROG[7]) { // honky tonk piano
+            	ProgChange.progChange(3, fluidOut, 0);
+            } else 
+            	return false;
+            
+		return true;
 	}
 
 		

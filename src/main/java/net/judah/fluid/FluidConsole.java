@@ -1,10 +1,11 @@
 package net.judah.fluid;
 
-import static net.judah.util.Constants.*;
+import static net.judah.util.Constants.NL;
 
 import net.judah.midi.GMNames;
 import net.judah.util.Console;
 import net.judah.util.ConsoleParticipant;
+import net.judah.util.RTLogger;
 
 public class FluidConsole implements ConsoleParticipant {
 	public static final String PREFIX = "fluid";
@@ -26,8 +27,14 @@ public class FluidConsole implements ConsoleParticipant {
 			doHelp();
 			return;
 		}
-		if (text.equals("sync"))
-			fluid.sync();
+		if (text.equals("sync")) {
+			try {
+				fluid.syncChannels();
+				fluid.syncInstruments();
+			} catch (Throwable e) {
+				RTLogger.warn(this, e);
+			}
+		}
 
 		if (text.equals("channels")) {
 			Console.addText("channels: " + fluid.getChannels().size() + NL);

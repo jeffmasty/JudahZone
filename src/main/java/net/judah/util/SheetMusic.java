@@ -12,7 +12,6 @@ public class SheetMusic extends JLabel {
 
 	public SheetMusic(String resourceFilename) {
 		URL image = getClass().getResource("/sheets/" + resourceFilename);
-		Console.info("song image: " + image.toString());
 		setIcon(new ImageIcon(image));
 	}
 	

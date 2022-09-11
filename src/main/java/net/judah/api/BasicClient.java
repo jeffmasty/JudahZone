@@ -34,7 +34,7 @@ public abstract class BasicClient extends Thread implements JackProcessCallback,
     	setPriority(Thread.MAX_PRIORITY);
     	setName(name);
     	jack = Jack.getInstance();
-    }
+    }	
 
     /** NOTE: blocks while Midi jack client is initialized */
 	public JackClient getJackclient() {

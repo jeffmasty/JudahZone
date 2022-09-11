@@ -70,38 +70,6 @@
 	    <version>2.4-1</version>
 	</dependency>
 
-<!--  <dependency>
-    <groupId>net.beadsproject</groupId>
-    <artifactId>beads</artifactId>
-    <version>3.2</version>
-  </dependency> -->
-
-<!-- talk to an arduino over serial port <dependency>
-    <groupId>io.github.java-native</groupId>
-  <artifactId>jssc</artifactId>
-  <version>2.9.3</version>
-  </dependency> -->
-
-<!-- <dependency>
-  	<groupId>dev.atsushieno</groupId>
-  	<artifactId>ktmidi-jvm-desktop</artifactId>
-  	<version>0.3.16</version>
-  </dependency>
-  <dependency>
-  	<groupId>dev.atsushieno</groupId>
-  	<artifactId>alsakt</artifactId>
-  	<version>0.1.4.3</version>
-  </dependency>
-  <dependency>
-  	<groupId>dev.atsushieno</groupId>
-  	<artifactId>ktmidi-jvm</artifactId>
-  	<version>0.3.16</version>
-  </dependency>
-  <dependency>
-  	<groupId>dev.atsushieno</groupId>
-  	<artifactId>ktmidi</artifactId>
-  	<version>0.3.8</version>
-  </dependency> -->
 </dependencies>
   
 </project>

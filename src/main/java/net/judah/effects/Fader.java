@@ -43,7 +43,7 @@ public class Fader {
         });
 	}
 
-    public Fader(MasterTrack master, Target gain, int msec, int startVal, int endVal, Runnable cleanup) {
+    public Fader(Channel master, Target gain, int msec, int startVal, int endVal, Runnable cleanup) {
         this(master, gain, msec, startVal, endVal);
         this.cleanup = cleanup;
     }

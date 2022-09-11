@@ -3,15 +3,28 @@ package net.judah.songs;
 import java.io.File;
 
 import net.judah.JudahZone;
+import net.judah.looper.Looper;
 import net.judah.mixer.Channel;
+import net.judah.settings.Channels;
 import net.judah.tracker.Track;
 import net.judah.tracker.Tracker;
+import net.judah.util.RTLogger;
 
 public abstract class SmashHit {
 	
-	public void startup(Tracker t) { }
+	protected Tracker t;
+	protected Looper loops;
+	protected Channels ch;
 	
-	public void cycle(Track t) { }
+	public void startup(Tracker t, Looper loops, Channels ch) { 
+		this.t = t;
+		this.loops = loops;
+		this.ch = ch;
+	}
+	
+	public void cycle(Track t) { 
+		RTLogger.log(this, "Empty cycle() on " + t);
+	}
 	
 	public void teardown() { }
 

@@ -9,19 +9,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
-import javax.swing.DefaultListCellRenderer;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JPanel;
-import javax.swing.JToggleButton;
+import javax.swing.*;
 
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
-import net.judah.midi.JudahClock;
 import net.judah.midi.Panic;
+import net.judah.midi.ProgChange;
 import net.judah.settings.Channels;
 import net.judah.tracker.Track.Cue;
 import net.judah.util.Click;
@@ -41,7 +37,8 @@ public class TrackView extends JPanel {
 	private final Track track;
 
 	private final FileCombo filename; 
-	private final Instrument instruments;
+	private final ProgChange patch;
+	// private final Instrument instruments;
 	@Getter private final MidiOut midiOut;
 	private final Font font = Gui.FONT11;
 
@@ -82,28 +79,29 @@ public class TrackView extends JPanel {
 			if (track.getGain() != gain)
 				track.setGain(gain);
 		});
-		instruments = new Instrument(track);
+		patch = new ProgChange(track);
 		playWidget.addActionListener(playListener);
 		
         add(outLbl);
 		add(filename);
         add(midiOut);
-		add(instruments);
+        add(patch);
 		add(volume);
 		JPanel btns = new JPanel();
 		btns.add(playWidget);
 		JButton edit = new JButton("Edit");
 		edit.addActionListener(e -> {
-			JudahClock.getTracker().setCurrent(track);
-			MainFrame main = MainFrame.get();
-			main.getTabs().setSelectedComponent(main.getBeatBox());});
+			Tracker.setCurrent(track);
+			MainFrame.get().getBeatBox().changeTrack(track);			
+			MainFrame.get().addOrShow(MainFrame.get().getBeatBox(), "BeatBox");
+		});
 		btns.add(edit);
 
 		if (track.isSynth()) {
 			JToggleButton mpk = new JToggleButton("MPK");
 			mpk.addActionListener(e -> {
 				track.setLatch(!track.isLatch());
-				for (Track t : JudahClock.getTracks()) {
+				for (Track t : Tracker.getTracks()) {
 					if (t.isLatch()) {
 						Transpose.setActive(true);
 						return;
@@ -116,7 +114,6 @@ public class TrackView extends JPanel {
 		}
 		
 		add(btns);
-		
 		
 		setBorder(Constants.Gui.NONE);
 		fillPatterns();
@@ -136,7 +133,7 @@ public class TrackView extends JPanel {
 		
 		cycle.setFont(font);
 		filename.setFont(font); 
-		instruments.setFont(font);
+		patch.setFont(font);
 		midiOut.setFont(font);
 		pattern.setFont(font);
 		playWidget.setFont(font);
@@ -146,20 +143,20 @@ public class TrackView extends JPanel {
 		update();
 	}
 	
-	private void doPiano() {
-		custom2.addItem("ArpOff");
-		custom2.addItem("Arp1");
-		custom2.addItem("Arp2");
-		custom2.addItem("Arp3");
-		custom2.setSelectedItem("Off");
-		custom2.addActionListener(e -> {
-			// TODO
-		});
-		custom2.setRenderer(center);
-		custom2.setFont(font);
-custom2.setEnabled(false);
-		add(custom2);
-
+	private void doPiano() { // TODO port vol?
+//		custom2.addItem("ArpOff");
+//		custom2.addItem("Arp1");
+//		custom2.addItem("Arp2");
+//		custom2.addItem("Arp3");
+//		custom2.setSelectedItem("Off");
+//		custom2.addActionListener(e -> {
+//			// TODO
+//		});
+//		custom2.setRenderer(center);
+//		custom2.setFont(font);
+//custom2.setEnabled(false);
+//		add(custom2);
+		add(new JLabel(""));
 	}
 	
 	
@@ -222,9 +219,9 @@ custom2.setEnabled(false);
 				JackPort port = (JackPort)Constants.ratio(data2, midiOut.getAvailable());
 				track.setMidiOut(port);
 				return true;
-			case 2:   
-				
-				instruments.setSelectedIndex(1 + Constants.ratio(data2, getInstruments().getItemCount() - 2));
+			case 2:  
+				int preset = 1 + Constants.ratio(data2, patch.getItemCount() - 2);
+				ProgChange.progChange(preset, track.getMidiOut(), track.getCh());
 				return true;
 			case 3: 
 				track.setGain(data2 * 0.01f);

@@ -49,7 +49,6 @@ public class MidiOut extends JComboBox<JackPort>  {
 		}
 		addItem(midi.getFluidOut());
 		addItem(midi.getCalfOut());
-		addItem(midi.getCircuitOut());
 		setSelectedItem(track.getMidiOut());
 		addActionListener(e -> track.setMidiOut((JackPort)getSelectedItem()));
 	}

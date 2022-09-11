@@ -14,9 +14,6 @@ public interface ProcessAudio {
 	/** in Real-Time thread */
 	void process();
 
-	/** stop or play audio in process() thread, if any */
-	void play(boolean active);
-
 	AudioMode isPlaying();
 
 	Recording getRecording();

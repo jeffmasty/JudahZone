@@ -52,7 +52,7 @@ import net.judah.util.RTLogger;
 </pre>
  */
 @Log4j
-public class Carla implements Service {
+public class Carla extends ArrayList<Plugin> implements Service {
     // public static final String CARLA_SHELL_COMMAND = "/usr/local/bin/carla ";
     public static final String CARLA_SHELL_COMMAND = "carla";
 
@@ -61,13 +61,11 @@ public class Carla implements Service {
 
 	private final Jack jack;
 	private final String prefix;
-	@Getter private final CarlaCommands commands = new CarlaCommands(this);
-
 	@Getter private final File settings;
 	private Process process;
 	private OSCPortOut out;
 
-	@Getter private Plugins plugins = new Plugins();
+	//@Getter private Plugins plugins = new Plugins();
 	private Plugin fluid;
 	private Plugin harmonizer;
 	private Plugin echo;
@@ -101,7 +99,7 @@ public class Carla implements Service {
 		talReverb = new Plugin(TalReverb.NAME, 3, LineType.CARLA);
 		talReverb2 = new Plugin(TalReverb.NAME + "2", 4, LineType.CARLA);
 
-		plugins.addAll(Arrays.asList(new Plugin[] {
+		addAll(Arrays.asList(new Plugin[] {
 		        fluid, harmonizer, echo, talReverb, talReverb2}));
 
 	}

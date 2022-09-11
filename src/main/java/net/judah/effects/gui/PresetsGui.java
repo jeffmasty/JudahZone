@@ -8,13 +8,11 @@ import java.security.InvalidParameterException;
 
 import javax.swing.*;
 
-import net.judah.ControlPanel;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.effects.api.Preset;
 import net.judah.effects.api.PresetsDB;
 import net.judah.mixer.Channel;
-import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -127,7 +125,6 @@ public class PresetsGui extends JDesktopPane {
         try {
             Constants.writeToFile(PresetsDB.FILE, getPresets().toString());
             list.setModel(presetModel());
-            Console.info("Preset saved.");
         } catch (Exception e) {RTLogger.warn(this, e);}
     }
 

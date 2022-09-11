@@ -46,9 +46,6 @@ public class PresetsDB extends ArrayList<Preset> {
             RTLogger.warn(this, presetFile.getName() + " " + e.getMessage());
         }
 
-        Console.info("Presets loaded: " + size());
-        // for (Preset p : this) { Console.info(p.toString()); }
-
     }
 
     @Override
@@ -70,6 +67,13 @@ public class PresetsDB extends ArrayList<Preset> {
 		if (isEmpty()) 
 			return null;
 		return get(0);
+	}
+
+	public Preset byName(String string) {
+		for (Preset p : this)
+			if (p.getName().equals(string))
+				return p;
+		return null;
 	}
 
     

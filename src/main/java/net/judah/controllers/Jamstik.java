@@ -22,7 +22,6 @@ import org.jaudiolibs.jnajack.JackPortType;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
-import net.judah.api.Command;
 import net.judah.api.Service;
 import net.judah.effects.api.Gain;
 import net.judah.fluid.FluidSynth;
@@ -147,11 +146,6 @@ public class Jamstik extends JComboBox<Path> implements Service {
 		setMidiOut(paths.get(idx));
 	}
 
-
-	@Override
-	public List<Command> getCommands() {
-		return null;
-	}
 
 	@Override
 	public void close() {

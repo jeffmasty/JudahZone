@@ -17,8 +17,8 @@ import net.judah.util.Icons;
 public class Channels extends ArrayList<LineIn> {
 	public static final String GUITAR = "GTR"; 
 	public static final String MIC = "MIC";
-	public static final String CIRCUIT = "TRAX";
-	public static final String UNO = "UNO";
+	// public static final String CIRCUIT = "TRAX";
+	// public static final String UNO = "UNO";
 	
 	public static final String CALF= "DRUM";
 	public static final String SYNTH = "KEYS";
@@ -26,8 +26,8 @@ public class Channels extends ArrayList<LineIn> {
 	public static final String CRAVE = "BASS";
 	
 	private LineIn guitar, mic, fluid;
-	private LineIn crave, circuit, calf; 
-	// private LineIn uno; //aux1
+	private LineIn crave, calf; 
+	// private LineIn circuit, uno, aux1;
 
 	private void miniSetup() {
 		guitar = new LineIn(GUITAR, "system:capture_1", "guitar");
@@ -75,11 +75,11 @@ public class Channels extends ArrayList<LineIn> {
 
 		crave = new LineIn(CRAVE, "system:capture_3", "crave_in");
 		
-		circuit = new LineIn("TRAX", 
-				new String[] {"system:capture_5", "system:capture_6"},
-				new String[] {"CircuitL", "CircuitR"});
+//		circuit = new LineIn("TRAX", 
+//				new String[] {"system:capture_5", "system:capture_6"},
+//				new String[] {"CircuitL", "CircuitR"});
 		
-		addAll(Arrays.asList(new LineIn[] { guitar, mic, fluid, calf, crave, circuit}));
+		addAll(Arrays.asList(new LineIn[] { guitar, mic, fluid, calf, crave}));
 
 	}
 
@@ -104,7 +104,7 @@ public class Channels extends ArrayList<LineIn> {
     public void initMutes() {
 	    getCalf().setMuteRecord(true);
         if (mic != null) getMic().setMuteRecord(true);
-        if (circuit != null) getCircuit().setMuteRecord(true);
+        // if (circuit != null) getCircuit().setMuteRecord(true);
 	}
 
 

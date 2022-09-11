@@ -3,9 +3,7 @@ package net.judah.controllers;
 import java.util.ArrayList;
 
 import lombok.Getter;
-import net.judah.ControlPanel;
 import net.judah.JudahZone;
-import net.judah.Looper;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.api.Midi;
@@ -16,7 +14,9 @@ import net.judah.effects.Delay;
 import net.judah.effects.Fader;
 import net.judah.effects.LFO.Target;
 import net.judah.effects.Overdrive;
+import net.judah.effects.gui.ControlPanel;
 import net.judah.looper.Loop;
+import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahClock.Mode;
 import net.judah.midi.JudahMidi;
@@ -96,20 +96,13 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			return record(looper.getDrumTrack());
 
 		case 5: // TODO 
-			
 			return true; 
 		case 6: // Cycle verse/chorus 
-			Cycle.setVerse(true);
+			Cycle.setVerse(!Cycle.isVerse());
 			Cycle.setTrigger(true);
 			return true; 
-		case 7: // focus efx on Main or Circuit Trax channel 
-			ControlPanel controls = ControlPanel.getInstance();
-			if (controls.getCurrent() == null) 
-				MainFrame.setFocus(JudahZone.getMasterTrack());
-			else if (controls.getCurrent().getChannel() == JudahZone.getMasterTrack())
-				MainFrame.setFocus(JudahZone.getChannels().getCircuit());
-			else 
-				MainFrame.setFocus(JudahZone.getMasterTrack());
+		case 7: // focus efx on Main channel 
+			MainFrame.setFocus(JudahZone.getMasterTrack());
 			return true;
 		case 8: // TODO Tuner/PlayStop Loop/FadeOut Main
 			Channel ch = ControlPanel.getInstance().getChannel();
@@ -165,12 +158,8 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 				looper.getDrumTrack().toggle();
 			return true;
 			
-		case 13: // latch EFX
-			Channel line = ControlPanel.getInstance().getChannel();
-			if (line instanceof LineIn)
-				((LineIn)line).getLatchEfx().latch(looper.getLoops());
-			else 
-				line.setPresetActive(!line.isPresetActive());
+		case 13: // latch guitar EFX to loop A
+			JudahZone.getChannels().getGuitar().getLatchEfx().latch(looper.getLoopA());
 			return true;
 		case 14: // reset effects for current channel // TODO double click = reset all channels
 			ControlPanel.getInstance().getChannel().reset();

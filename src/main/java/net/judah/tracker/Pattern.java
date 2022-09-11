@@ -30,8 +30,7 @@ import net.judah.util.Constants;
 import net.judah.util.Pastels;
 import net.judah.util.RTLogger;
 
-// map of notes per step
-// @EqualsAndHashCode(callSuper = false)
+/** table model map of notes per step, mouselistener for synth tracks */
 public class Pattern extends HashMap<Integer, Notes> implements TableModel, TableCellRenderer, MouseListener {
 
 	public static final String PATTERN_TOKEN = "?@";
@@ -40,12 +39,9 @@ public class Pattern extends HashMap<Integer, Notes> implements TableModel, Tabl
 	@Getter @Setter String name = "A";
 	@Getter private final JTable table;
 	private TableModelListener listener;
-	
-	// mouse listener
 	private Point mouseDown;
 	boolean _released;
 	boolean _clicked;
-	
 	
 	public Pattern(String name, Track t) {
 		this.name = name;
@@ -62,7 +58,6 @@ public class Pattern extends HashMap<Integer, Notes> implements TableModel, Tabl
 	        table.setDefaultRenderer(String.class, this);
 	        table.setDefaultRenderer(Midi.class, this);
 		}
-		
 	}
 	
 	public Pattern(String name, Pattern copy, Track t) {
@@ -139,8 +134,6 @@ public class Pattern extends HashMap<Integer, Notes> implements TableModel, Tabl
 	private void click(int row, int col, int gate) {
 		Object o = getValueAt(row, col);
 
-		RTLogger.log(this, "CLICK " + row + " " + col + " " + gate + " : " + o);
-		
 		if (o == null) {
 			noteOn(row, col);
 			gate(row, col, gate);
@@ -148,11 +141,11 @@ public class Pattern extends HashMap<Integer, Notes> implements TableModel, Tabl
 		
 		else if (o instanceof Midi) {
 			Notes n = getNote(col - 1, toMidi(row));
-			RTLogger.log(this, "remove " + o + " of "  + n);
+			
 			n.remove(o);
 			if (n.isEmpty())
 				setValueAt(null, row, col);
-			// todo clear left -over noteOffs
+			// RTLogger.log(this, "remove " + o + " of "  + n); // TODO clear left -over noteOffs
 		} 
 		update(row);
 	}
@@ -182,7 +175,6 @@ public class Pattern extends HashMap<Integer, Notes> implements TableModel, Tabl
     	int end = col + gate;
     	if (end >= table.getColumnCount() -1) 
     		return;// TODO ghost noteOff
-    		// end = table.getColumnCount() -1;
     	try {
     		Midi noteOff = new NoteOff(track.getCh(), toMidi(row));
     		setValueAt(noteOff, row, end);
@@ -193,30 +185,15 @@ public class Pattern extends HashMap<Integer, Notes> implements TableModel, Tabl
 	
 	//-----------------  PianoTable Model ---------------
 	@Override public void setValueAt(Object midi, int row, int col) {
-		if (row == 0) return;
-		int data1 = toMidi(row);
+		if (row == 0) return; // note label
 		int step = col - 1;
-//		Notes note = get(step);
-		if (midi == null) 
-			RTLogger.log(this, "ouch " + step + "/" + data1);
-		else
+		if (step >= track.getSteps()) return;
+		if (midi != null) 
 			place(step, (Midi)midi);
-//		if (note == null) {
-//			put(step, new Notes((Midi)midi));
-//		} else {
-//			if (note.find(data1) == null) {
-//				note.add((Midi)midi);
-//			} else {
-//				note.remove(note.find(data1));
-//				if (note.isEmpty())
-//					remove(step);
-//			}
-//		}
 	}
-
 	
 	@Override public int getColumnCount() {
-		return track.getSteps();
+		return track.getSteps() + 1; // + note labels
 	}
 
 	@Override public Class<?> getColumnClass(int columnIndex) {
@@ -306,7 +283,6 @@ public class Pattern extends HashMap<Integer, Notes> implements TableModel, Tabl
 	    return result;
     }
 
-    
     @Override public void mouseEntered(MouseEvent e) { }
 	@Override public void mouseExited(MouseEvent e) { }
 
@@ -353,9 +329,8 @@ public class Pattern extends HashMap<Integer, Notes> implements TableModel, Tabl
     }
 
     public void place(int step, Midi midi) {
-    	
-    	RTLogger.log(this, "place on step " + step + (Midi.isNoteOn(midi) ? " on " : Midi.isNote(midi) ? " off" : "?"));
-    	
+    	// RTLogger.log(this, "place on step " + step + 
+    	//		(Midi.isNoteOn(midi) ? " on " : Midi.isNote(midi) ? " off" : "?"));
 		Notes note = get(step);
 		if (note == null) {
 			put(step, new Notes(midi));

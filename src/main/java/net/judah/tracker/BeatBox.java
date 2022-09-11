@@ -15,7 +15,6 @@ import javax.swing.SwingUtilities;
 
 import lombok.Getter;
 import net.judah.api.Midi;
-import net.judah.midi.JudahClock;
 import net.judah.midi.NoteOn;
 import net.judah.util.Pastels;
 import net.judah.util.RTLogger;
@@ -26,7 +25,9 @@ public class BeatBox extends JPanel implements MouseListener {
 	
     @Getter private final CurrentBeat current;
     @Getter private static int rowHeight;
-    private final int colWidth;
+    private final int pnlWidth;
+    private int colWidth;
+    private final ArrayList<BeatLabel> lbls;
     private final DrumTrack track;
     
     
@@ -36,14 +37,14 @@ public class BeatBox extends JPanel implements MouseListener {
         this.track = t;
         setMaximumSize(r.getSize());
 		setPreferredSize(r.getSize());
-
+		pnlWidth = r.width;
         setLayout(null);
-        colWidth = r.width  / JudahClock.getSteps();
+        colWidth();
         rowHeight = (int)Math.ceil((r.height - 30) / (GMDrum.Standard.length + 1f)) + 1;
 
         current = new CurrentBeat(t);
 
-        ArrayList<BeatLabel> lbls = current.createLabels();
+        lbls = current.createLabels();
         for (int i = 0; i < lbls.size(); i++) {
             BeatLabel lbl = lbls.get(i);
             lbl.setBounds(i * colWidth + 3, 1, 26, 26);
@@ -54,6 +55,7 @@ public class BeatBox extends JPanel implements MouseListener {
 
     @Override
     public void paint(Graphics g) {
+    	
         super.paint(g);
         Graphics2D g2d = (Graphics2D) g;
 
@@ -133,5 +135,27 @@ public class BeatBox extends JPanel implements MouseListener {
 	public void step(int step) {
 		if (step >= 0)
 			current.setActive(step);
+	}
+	
+	private void colWidth() {
+		colWidth = pnlWidth / track.getSteps();
+	}
+	
+	public void measure() {
+		for (BeatLabel l : lbls) {
+			remove(l);
+		}
+		lbls.clear();
+		colWidth();
+		lbls.addAll(current.createLabels());
+		for (int i = 0; i < lbls.size(); i++) {
+            BeatLabel lbl = lbls.get(i);
+            lbl.setBounds(i * colWidth + 3, 1, 26, 26);
+            lbl.setVisible(true);
+            add(lbl);
+        }
+		invalidate();
+//		doLayout();
+//		repaint();
 	}
 }

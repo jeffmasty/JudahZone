@@ -10,9 +10,6 @@ import java.util.ArrayList;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-import lombok.extern.log4j.Log4j;
-
-@Log4j
 public class JsonUtil {
 
 	public static final ObjectMapper MAPPER = new ObjectMapper();

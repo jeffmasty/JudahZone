@@ -26,7 +26,7 @@ public class FileCombo extends JComboBox<String> implements ActionListener {
 		super.actionPerformed(e);
 		String select = "" + getSelectedItem();
 		if (select.equals("_clear")) 
-			track.setFile(null);
+			track.clearFile();
 		else 
 			track.setFile(new File(track.getFolder(), select));
 	}

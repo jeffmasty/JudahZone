@@ -9,24 +9,26 @@ import javax.swing.JComboBox;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.songs.SmashHit;
+import net.judah.tracker.Track.Cue;
 import net.judah.util.CenteredCombo;
 
 /** universal verse/trigger, cycle patterns for each track, provide/update comboBox widgets */
 @Getter 
 public class Cycle implements ActionListener {
-	
-	@Setter @Getter private static boolean verse; // vs. chorus
-	@Setter @Getter private static boolean trigger;
-	@Setter @Getter private SmashHit custom;
 
+	@Setter @Getter private static boolean verse; // vs. chorus
+	@Getter private static boolean trigger;
+	
+	
 	private int selected; 
 	private int count;
 	@Setter private boolean odd = false;
+	@Setter private SmashHit custom;
 
 	private final HashSet<JComboBox<String>> combos = new HashSet<>();
 	
 	public void setSelected(int i) {
-		if (selected == i)
+		if (selected == i && custom == null)
 			return;
 		selected = i;
 		count = 0;
@@ -79,72 +81,25 @@ public class Cycle implements ActionListener {
 			case 3: // ABCD
 				track.next(true);
 				return;
-//			case 4: // 
-//				sleepwalk();
-//				return;
-//			case 5: // Air G
-//				airOnG();
-//				return;
 			default:
 				throw new IllegalArgumentException("Unexpected cycle type: " + selected);
 		}
 	}
 	
-//	private void airOnGSetup() {
-//		Looper looper = JudahZone.getLooper();
-//		final Loop a = looper.getLoopA();
-//		final Loop b = looper.getLoopB();
-//		final Loop c = looper.getLoopC();
-//		TimeListener muteListener = new TimeListener() {
-//			@Override public void update(Property prop, Object value) {
-//				if (prop == Property.LOOP) {
-//					c.record(true);
-//					a.removeListener(this);
-//					a.setOnMute(true);
-//					b.setOnMute(true);
-//		}}};
-//		TimeListener airListener = new TimeListener() {
-//			@Override public void update(Property prop, Object value) {
-//				if (prop == Property.LOOP) {
-//					track.setActive(true);
-//					a.removeListener(this);
-//					a.addListener(muteListener);
-//					c.duplicate(); 
-//					c.duplicate();
-//		}}};
-//		a.addListener(airListener);
-//		a.setOnMute(false);
-//		b.setArmed(true);
-//		b.setOnMute(false);
-//		track.getClock().setLength(12);
-//		track.setActive(false); // on listener
-//		JudahZone.getChannels().getFluid().setMuteRecord(true);
-//		LineIn mic = JudahZone.getChannels().getMic();
-//		mic.setMuteRecord(false);
-//		mic.getGain().setVol(50);
-//		LineIn gtr = JudahZone.getChannels().getGuitar();
-//		gtr.setMuteRecord(false);		
-//		gtr.setPreset(JudahZone.getPresets().get(Raw.Freeverb));
-//		gtr.getLatchEfx().latch(a);
-//		gtr.reset();
-//		MainFrame.update(b);
-//		MainFrame.updateTime();
-//		MainFrame.update(gtr);
-//		MainFrame.get().sheetMusic(new File("/home/judah/sheets/AirOnG.png"));
-//
-//	}
-//	
-//	private void airOnG() {
-//		if (track.isActive() == false) 
-//			return;
-//		track.next(true);
-//	}
-//
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		int change = ((JComboBox<?>)e.getSource()).getSelectedIndex();
 		if (selected != change)
 			setSelected(change);
+	}
+	
+	public static void setTrigger(boolean trig) {
+		Cycle.trigger = trig;
+		if (!trigger)
+			return;
+		for (Track t : Tracker.getTracks())
+			if (t.getCue() == Cue.Trig)
+				t.setCue(Cue.Bar);
 	}
 	
 }

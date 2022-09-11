@@ -8,7 +8,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
-import net.judah.ControlPanel;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.util.Constants;
