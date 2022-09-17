@@ -6,7 +6,7 @@ import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahMidi;
-import net.judah.settings.Channels;
+import net.judah.mixer.Channels;
 import net.judah.tracker.Track;
 import net.judah.tracker.Track.Cue;
 import net.judah.tracker.Tracker;
@@ -49,7 +49,6 @@ public class BlueInGreen extends SmashHit {
 		Transpose.setAmount(Bb.ordinal() - OCTAVE);
 		Transpose.setActive(true);
 		bass.setActive(true);
-		
 		
 		harp.setMidiOut(JudahMidi.getInstance().getFluidOut());
 		harp.setCurrent(harp.get(harp.size() - 2));

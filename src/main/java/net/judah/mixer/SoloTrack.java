@@ -17,9 +17,9 @@ public class SoloTrack extends Loop implements TimeListener {
 
     public static final String NAME = "D";
     private boolean muteStash = true;
-    private LineIn soloTrack;
+    private Instrument soloTrack;
 
-    public SoloTrack(LineIn soloTrack, Looper looper) {
+    public SoloTrack(Instrument soloTrack, Looper looper) {
         super(NAME, looper);
         this.soloTrack = soloTrack;
     }

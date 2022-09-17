@@ -42,13 +42,14 @@ public class Constants {
     public static final File defaultFolder = new File(ROOT, "Songs/");
     public static final File defaultSetlist = new File(defaultFolder, "list1.songs");
     public static final File defaultDrumFile = new File(ROOT, "patterns/Drum1");
-	private static final String MASTER = "Master";
+	public static final File SHEETMUSIC = new File(System.getProperty("user.home"), "sheets");
+	public static final File SAMPLES = new File(ROOT, "samples");
+
+	private static final String MAIN = "Mains";
 	private static final String DRUMS = "Drumtrack";
 	private static final String LOOPA = "Loop A";
 	private static final String LOOPB = "Loop B";
-	private static final String[] DEFAULT_OUT = new String[] {MASTER, DRUMS, LOOPA, LOOPB};
-	public static final File SHEETMUSIC = new File(System.getProperty("user.home"), "sheets");
-
+	private static final String[] DEFAULT_OUT = new String[] {MAIN, DRUMS, LOOPA, LOOPB};
 
     public static class Param {
 		public static final String ACTIVE = "active";
@@ -195,7 +196,6 @@ public class Constants {
         return JOptionPane.showInputDialog(infoMessage);
     }
 
-
 	@SuppressWarnings("rawtypes")
 	public static String prettyPrint(HashMap<String, Object> p) {
 		if (p == null) return " null properties";
@@ -204,8 +204,6 @@ public class Constants {
 			b.append(" ").append(entry.getKey()).append("=").append(entry.getValue());
 		return b.toString();
 	}
-
-
 
 	public static float toBPM(long delta, int beats) {
 		return 60000 / (delta / beats);
@@ -299,9 +297,10 @@ public class Constants {
                 channels.toArray(new String[channels.size()]));
 	    return result;
 	}
+
     public static Channel getChannel(String name) {
         switch(name) {
-            case MASTER: JudahZone.getMasterTrack();
+            case MAIN: JudahZone.getMains();
             case DRUMS: return JudahZone.getLooper().getDrumTrack();
             case LOOPA: return JudahZone.getLooper().getLoopA();
             case LOOPB: return JudahZone.getLooper().getLoopB();
@@ -311,7 +310,7 @@ public class Constants {
 
     public static Channel getChannel(int idx) {
         switch(idx) {
-            case 0: return JudahZone.getMasterTrack();
+            case 0: return JudahZone.getMains();
             case 1: return JudahZone.getLooper().getDrumTrack();
             case 2: return JudahZone.getLooper().getLoopA();
             case 3: return JudahZone.getLooper().getLoopB();

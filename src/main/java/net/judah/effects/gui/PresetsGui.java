@@ -1,4 +1,5 @@
 package net.judah.effects.gui;
+
 import static net.judah.JudahZone.getPresets;
 
 import java.awt.Color;
@@ -9,60 +10,55 @@ import java.security.InvalidParameterException;
 import javax.swing.*;
 
 import net.judah.JudahZone;
-import net.judah.MainFrame;
 import net.judah.effects.api.Preset;
 import net.judah.effects.api.PresetsDB;
 import net.judah.mixer.Channel;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
-public class PresetsGui extends JDesktopPane {
+public class PresetsGui extends JPanel {
 
-    final static Dimension BTN_SZ = new Dimension(80, 26);
-
+	final static Dimension BTN_SZ = new Dimension(80, 26);
+	
     private JList<String> list;
     JComboBox<String> target;
-    private final PresetsDB presets;
-
-    public PresetsGui(PresetsDB presets) {
-        this.presets = presets;
-        int offset = 6;
-        int buttonsWidth = 100;
-        int presetsWidth = MainFrame.WIDTH_CONTROLS - buttonsWidth - (int)(2.5 * offset) - 50;
-        int presetsHeigth = 333;
-        int buttonsX = presetsWidth + offset;
-
-        setLayout(null);
-
+    private final int offset = 5;
+    private final int buttonsWidth = 95;
+    private final int presetsHeight = 480;
+    private final int presetsWidth = 190;
+    private final int buttonsX = presetsWidth + offset;
+	
+	public PresetsGui() {
+		setLayout(null);
+        setPreferredSize(new Dimension(presetsWidth + buttonsWidth + 10, presetsHeight));
         list = new JList<>(presetModel());
         JScrollPane scrollPane = new JScrollPane(list);
-
         JPanel buttons = new JPanel();
-        buttons.setLayout(new BoxLayout(buttons, BoxLayout.Y_AXIS));
-        buttons.setBorder(BorderFactory.createLineBorder(Color.GRAY));
-
-        scrollPane.setBounds(offset, offset, presetsWidth, presetsHeigth);
-        buttons.setBounds(buttonsX, offset, buttonsWidth, presetsHeigth);
-
+        target = Constants.createMixerCombo();
+        target.addActionListener( e -> {applyTo();} );
+        target.setMaximumSize(new Dimension(buttonsX - 10, BTN_SZ.height));
+        presetsBtns(buttons);
+        scrollPane.setBounds(offset, offset + 35, presetsWidth, presetsHeight);
+        buttons.setBounds(buttonsX, offset + 35, buttonsWidth, presetsHeight);
         add(scrollPane);
         add(buttons);
+	}
+    private void presetsBtns(JPanel buttons) {
+    	buttons.setLayout(new BoxLayout(buttons, BoxLayout.Y_AXIS));
+        buttons.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 
-        JButton current = new Button(" Save ");
+        JButton save = new Button(" Save ");
         JButton create  = new Button("Create");
         JButton delete  = new Button("Delete");
         JButton copy    = new Button(" Copy ");
         JButton paste   = new Button(" Paste");
         JButton up      = new Button("  Up  ");
         JButton down    = new Button(" Down ");
-
-        target = Constants.createMixerCombo();
-        target.addActionListener( e -> {applyTo();} );
-        target.setMaximumSize(new Dimension(buttonsX - 10, BTN_SZ.height));
         create.addActionListener(e -> {create();});
-        current.addActionListener(e -> {current(list.getSelectedIndex());});
+        save.addActionListener(e -> {current(list.getSelectedIndex());});
 
-        buttons.add(Box.createRigidArea(new Dimension(1, 15)));
-        buttons.add(current);
+    	buttons.add(Box.createRigidArea(new Dimension(1, 15)));
+        buttons.add(save);
         buttons.add(create);
         buttons.add(delete);
         buttons.add(copy);
@@ -74,14 +70,16 @@ public class PresetsGui extends JDesktopPane {
         buttons.add(new JLabel("apply to:"));
         buttons.add(target);
         buttons.add(Box.createVerticalGlue());
-
         for (Component c : buttons.getComponents())
             if (c instanceof JComponent)
                 ((JComponent) c).setAlignmentX(Component.CENTER_ALIGNMENT);
-
+        JLabel title = new JLabel("Presets", JLabel.CENTER);
+        title.setBounds(30, offset, 200, 30);
+        add(title);
     }
 
-    private void applyTo() {
+	
+	private void applyTo() {
         if (list.getSelectedIndex() < 0) return;
         Channel ch = Constants.getChannel(target.getSelectedItem().toString());
         Preset p = JudahZone.getPresets().get(list.getSelectedIndex());
@@ -130,7 +128,7 @@ public class PresetsGui extends JDesktopPane {
 
     public DefaultListModel<String> presetModel() {
         DefaultListModel<String> model = new DefaultListModel<>();
-        for(Preset p : presets)
+        for(Preset p : JudahZone.getPresets())
             model.addElement(p.getName() + p.condenseEffects());
         return model;
     }

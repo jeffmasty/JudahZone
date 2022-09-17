@@ -4,8 +4,8 @@ import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
-import net.judah.mixer.LineIn;
-import net.judah.settings.Channels;
+import net.judah.mixer.Channels;
+import net.judah.mixer.Instrument;
 import net.judah.tracker.Cycle;
 import net.judah.tracker.Track;
 import net.judah.tracker.Tracker;
@@ -28,7 +28,7 @@ public class AllMyLovin extends SmashHit {
 		
 		t.getClock().writeTempo(93);
 		t.getClock().setLength(10);
-		LineIn gtr = ch.getGuitar();
+		Instrument gtr = ch.getGuitar();
 		gtr.setPreset(JudahZone.getPresets().byName("Freeverb"));
 		gtr.setPresetActive(false);
 		gtr.getLatchEfx().latch(loops.getLoopA());

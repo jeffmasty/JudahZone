@@ -6,18 +6,25 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class Gain implements Effect {
-	
 	public static final int VOLUME = 0;
 	public static final int PAN = 1;
+	@Getter final String name = "Gain";
 
-	@Getter @Setter private int vol = 50;
+	@Getter private int vol = 50;
 	@Getter @Setter private int pan = 50;
+	@Getter private float gain = vol * 0.01f;
 	
-	@Override
-	public String getName() {
-		return "Gain";
+	public void setVol(int volume) {
+		if (volume < 0) volume = 0;
+		if (volume > 100) volume = 100;
+		this.vol = volume;
+		this.gain = vol * 0.01f;
 	}
-
+	
+	public void setGain(float gain) {
+		setVol((int) (gain * 100));
+	}
+	
 	@Override
 	public boolean isActive() {
 		return pan != 0.5f;

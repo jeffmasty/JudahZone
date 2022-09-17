@@ -138,7 +138,7 @@ public class BeatBox extends JPanel implements MouseListener {
 	}
 	
 	private void colWidth() {
-		colWidth = pnlWidth / track.getSteps();
+		colWidth = pnlWidth / track.getSteps() - 2;
 	}
 	
 	public void measure() {

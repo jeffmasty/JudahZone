@@ -7,8 +7,8 @@ import net.judah.api.TimeListener;
 import net.judah.effects.Delay;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahMidi;
-import net.judah.mixer.LineIn;
-import net.judah.settings.Channels;
+import net.judah.mixer.Channels;
+import net.judah.mixer.Instrument;
 import net.judah.tracker.Cycle;
 import net.judah.tracker.Track;
 import net.judah.tracker.Tracker;
@@ -23,8 +23,8 @@ public class FeelLuv extends SmashHit {
 	Track kick;
 	Track clap;
 	Track chords;
-	LineIn fluid;
-	LineIn crave;
+	Instrument fluid;
+	Instrument crave;
 
 	private int count;
 	private boolean vamp;

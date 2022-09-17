@@ -1,7 +1,7 @@
 package net.judah.songs;
 
 import net.judah.looper.Looper;
-import net.judah.settings.Channels;
+import net.judah.mixer.Channels;
 import net.judah.tracker.Tracker;
 
 public class JudysBlues extends SmashHit {

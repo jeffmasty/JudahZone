@@ -2,7 +2,6 @@ package net.judah.midi;
 
 import static net.judah.api.Notification.Property.*;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -23,10 +22,9 @@ import net.judah.MainFrame;
 import net.judah.api.*;
 import net.judah.api.Notification.Property;
 import net.judah.looper.Loop;
-import net.judah.looper.Looper;
-import net.judah.looper.Sample;
 import net.judah.looper.SyncWidget;
 import net.judah.looper.SyncWidget.SelectType;
+import net.judah.looper.beats.StepSample;
 import net.judah.tracker.Track;
 import net.judah.tracker.Tracker;
 import net.judah.util.Constants;
@@ -47,8 +45,9 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
 	static final float TEMPO_LOW = 40f; // lv2 clock plugin
 	static final float TEMPO_HIGH = 172f;
 	
-	public static final Integer[] LENGTHS= {1, 1, 2, 2, 2, 3, 4, 4, 4, 4, 5, 6, 6, 7, 8, 8, 8, 8, 9, 10, 10, 11, 12, 12, 12, 13, 14, 15, 
-			16, 16, 16, 16, 17, 18, 19, 20, 20, 21, 22, 23, 24, 24, 25, 26, 27, 28, 29, 30, 31, 32, 32, 32, 33, 34, 35, 36, 36, 40, 48, 64};
+	public static final Integer[] LENGTHS= {1, 1, 2, 2, 2, 3, 4, 4, 4, 4, 5, 6, 6, 7, 8, 8, 8, 8, 9, 
+			10, 10, 11, 12, 12, 12, 13, 14, 15, 16, 16, 16, 16, 17, 18, 19, 20, 20, 21, 22, 23, 24, 
+			24, 25, 26, 27, 28, 29, 30, 31, 32, 32, 32, 33, 34, 35, 36, 36, 40, 42, 48, 64};
 	public static enum Mode { Internal, /**24 pulses per quarter note external midi clock*/ Midi24 };
 	
 	@Getter private static JudahClock instance;
@@ -66,7 +65,7 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
 	private int midiPulseCount;
 
     /** current beat */
-	@Getter @Setter private static int beat = -1;
+	@Getter private static int beat = -1;
     /** current step */
 	@Getter private int step = 0;
     /** current number of bars to record/computeTempo */
@@ -77,7 +76,7 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
     private int _measure = steps / subdivision;
     @Getter private final TimeSigGui gui;
 
-	/** Loop Synchronization */
+	/* Loop Synchronization */
 	@Setter @Getter private static boolean loopSync = true;
 	private static SelectType onDeck;
     private static final BlockingQueue<Notification> notifications = new LinkedBlockingQueue<>();
@@ -85,7 +84,7 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
     private final ArrayList<TimeListener> listeners = new ArrayList<>();
 
     @Getter private static Tracker tracker;
-    private Sample crickets = null;
+    private StepSample crickets = null;
     // @Getter private static ArrayList<Sample> samples = new ArrayList<>();
     // @Getter private BeatBuddy drummachine = new BeatBuddy();
     
@@ -259,24 +258,21 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
 				}
         	}
         }
-        // else RTLogger.log(this, "unknown clock midi signal " + new Midi(midi));
 
 	}
-	
 
 	@Override
     public void begin() {
 	    active = true;
 	    
-	    shout(TRANSPORT, JackTransportState.JackTransportStarting);
 	    lastPulse = lastBeat = System.currentTimeMillis();
 	    midiPulseCount = 0;
 	    step = 0;
 		beat = -1;
 		JudahMidi.synchronize(MIDI_RT_START);
-		RTLogger.log(JudahMidi.class.getSimpleName(), "PLAY MidiSync");
-
+		shout(TRANSPORT, JackTransportState.JackTransportStarting);
 		step();
+		RTLogger.log(JudahMidi.class.getSimpleName(), "PLAY MidiSync");
 	}
 
 	@Override
@@ -285,9 +281,8 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
 			// BeatBuddy.getQueue().offer(BeatBuddy.PAUSE_MIDI);
 	    active = false;
 	    JudahMidi.synchronize(MIDI_RT_STOP);
-	    RTLogger.log(JudahMidi.class.getSimpleName(), "STOP MidiSync");
-
 	    shout(TRANSPORT, JackTransportState.JackTransportStopped);
+	    RTLogger.log(JudahMidi.class.getSimpleName(), "STOP MidiSync");
 	}
 
 	public void reset() {
@@ -295,7 +290,6 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
 		step = 0;
         beat = -1;
 	    lastPulse = lastBeat = System.currentTimeMillis();
-	    //shout(BEAT, beat);
 	    RTLogger.log(this, "reset");
 	}
 	
@@ -309,7 +303,6 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
 	public void removeListener(TimeListener l) {
 		listeners.remove(l);
 	}
-
 
 	public void listen(final Loop target) {
 		if (source != null)
@@ -328,7 +321,6 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
 			source.removeListener(this);
 		}
 	}
-
 	
 	public void togglePlay() {
 		if (isActive()) 
@@ -369,8 +361,6 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
 		onDeck = syncType;
 		RTLogger.log(getInstance(), "Waiting... (" + syncType.name() + " " + length + " bars)");
 	}
-
-	
 	
 	public void setMode(Mode mode) {
 		this.mode = mode;
@@ -406,21 +396,19 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
 	}
 	
 	public void crickets(boolean on) {
-		Looper looper = JudahZone.getLooper();
 		if (on) {
 			if (crickets != null)
 				crickets(false);
 			new Thread(()->{
 				try {
-					crickets = new Sample("Crik", new File("/home/judah/cricket3.wav"), looper);
-					crickets.getGain().setVol(100);
-					looper.add(crickets);
+					crickets = new StepSample("Crickets");
+					 JudahZone.getSampler().add(crickets);
 				} catch (Exception e) {
 					RTLogger.warn(this, e);
 				}
 			}).start();
 		} else {
-			looper.remove(crickets);
+			JudahZone.getSampler().remove(crickets);
 			crickets = null;
 		}
 	}

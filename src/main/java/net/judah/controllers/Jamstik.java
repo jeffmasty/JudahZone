@@ -75,25 +75,25 @@ public class Jamstik extends JComboBox<Path> implements Service {
 			String jamstik = jack.getPorts(client, Constants.getDi(), 
 					JackPortType.MIDI, EnumSet.of(JackPortFlags.JackPortIsOutput))[0];				
 
-			String search = "Circuit Tracks";
+			String search = "Calf Fluidsynth";
 			if (path.getPort().equals(midi.getCraveOut()))
 				search = Constants.getDi();
 			else if (path.getPort().equals(midi.getFluidOut()))
 				search = FluidSynth.MIDI_PORT;
-			else if (path.getPort().equals(midi.getCalfOut()))
-				search = "Calf Fluidsynth";
+//			else if (path.getPort().equals(midi.getCalfOut()))
+//				search = "Calf Fluidsynth";
 //			else if (path.getPort().equals(midi.getUnoOut()))
 //				search = "UNO Synth";
-			
 			String port = jack.getPorts(client, search, 
 					JackPortType.MIDI, EnumSet.of(JackPortFlags.JackPortIsInput))[0];
+
 			Gain guitar = JudahZone.getChannels().getGuitar().getGain();
 			if (active) {
 				volStash = guitar.getVol();
 				guitar.setVol(0);
-				jack.connect(client, jamstik, port);
 				MainFrame.update(path.getChannel());
 				MainFrame.update(JudahZone.getChannels().getGuitar());
+				jack.connect(client, jamstik, port);
 			} else {
 				try {
 					jack.disconnect(client, jamstik, port);
@@ -107,9 +107,8 @@ public class Jamstik extends JComboBox<Path> implements Service {
 			if (frame != null)
 				frame.setBackground(active ? Pastels.GREEN : Pastels.BUTTONS);		
 		} catch (Throwable e) {
-			RTLogger.warn(Jamstik.class, e);
+			RTLogger.log(Jamstik.class.getSimpleName(), e.getMessage());
 		}
-		
 	}
 	
 	public static void toggle() {
@@ -145,7 +144,6 @@ public class Jamstik extends JComboBox<Path> implements Service {
 			idx = 0;
 		setMidiOut(paths.get(idx));
 	}
-
 
 	@Override
 	public void close() {

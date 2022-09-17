@@ -1,7 +1,5 @@
 package net.judah.midi;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -13,12 +11,12 @@ import net.judah.api.Midi;
 import net.judah.fluid.FluidInstrument;
 import net.judah.fluid.FluidSynth;
 import net.judah.tracker.Track;
-import net.judah.util.CenteredCombo;
 import net.judah.util.RTLogger;
+import net.judah.util.SettableCombo;
 
 /**Handles Prog Change midi for a synth port on a channel, 
  * synchronizes updates between combo box instances */
-public class ProgChange extends CenteredCombo<String> implements ActionListener {
+public class ProgChange extends SettableCombo<String> {
 	
 	private final Track t;
 	private final JackPort midiOut;
@@ -27,6 +25,7 @@ public class ProgChange extends CenteredCombo<String> implements ActionListener 
 	private static final HashSet<ProgChange> widgets = new HashSet<>();
 	
 	public ProgChange(Track track) {
+		super(() -> change(track));
 		midiOut = null;
 		ch = track.getCh();
 		t = track;
@@ -34,6 +33,7 @@ public class ProgChange extends CenteredCombo<String> implements ActionListener 
 	}
 	
 	public ProgChange(JackPort port, int channel) {
+		super(() -> change(port, channel));
 		t = null;
 		midiOut = port;
 		ch = channel;
@@ -52,16 +52,20 @@ public class ProgChange extends CenteredCombo<String> implements ActionListener 
 
 	}
 	
-	
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		super.actionPerformed(e);
-		int change = getSelectedIndex();
+	public static void change(JackPort midiOut, int ch) {
+		int change = ((ProgChange)SettableCombo.getFocus()).getSelectedIndex();
 		if (ch == 9)
 			change = FluidSynth.getInstruments().getDrumkits().get(change).index;
 		progChange(change, midiOut, ch);
+	}
+	
+	public static void change(Track t) {
+		int change = ((ProgChange)SettableCombo.getFocus()).getSelectedIndex();
+		if (t.isDrums())
+			change = FluidSynth.getInstruments().getDrumkits().get(change).index;
+		progChange(change, t.getMidiOut(), t.getCh());
 		if (t!=null)
-			t.setInstrument(getSelectedItem() + "");
+			t.setInstrument(change + "");
 	}
 	
 	public static void next(boolean fwd, JackPort port, int channel) {
@@ -102,7 +106,6 @@ public class ProgChange extends CenteredCombo<String> implements ActionListener 
 				}
 				else if (combo.t.getMidiOut() != out)
 					continue;
-				combo.removeActionListener(combo);
 				int change = preset;
 				if (ch == 9) {
 					ArrayList<FluidInstrument> drums = FluidSynth.getInstruments().getDrumkits();
@@ -111,8 +114,9 @@ public class ProgChange extends CenteredCombo<String> implements ActionListener 
 							change = i;
 				}
 				combo.setSelectedIndex(change); // reverse lookup on drums?
-				combo.addActionListener(combo);
-		}}).start();
+			}
+			highlight(null);
+		}).start();
 	}
 
 	public static void progChange(String instrument, JackPort out, int channel) {

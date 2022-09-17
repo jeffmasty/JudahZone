@@ -21,7 +21,7 @@ import net.judah.midi.JudahClock;
 import net.judah.midi.JudahClock.Mode;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
-import net.judah.mixer.LineIn;
+import net.judah.mixer.Instrument;
 import net.judah.tracker.Cycle;
 import net.judah.util.Constants;
 import net.judah.util.GuitarTuner;
@@ -95,19 +95,22 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 				return true;
 			return record(looper.getDrumTrack());
 
-		case 5: // TODO 
+		case 5: // reset to top of loops/clock
+			for(Loop l : looper) 
+				l.setTapeCounter(0);
+			JudahClock.getInstance().begin();
 			return true; 
 		case 6: // Cycle verse/chorus 
 			Cycle.setVerse(!Cycle.isVerse());
 			Cycle.setTrigger(true);
 			return true; 
 		case 7: // focus efx on Main channel 
-			MainFrame.setFocus(JudahZone.getMasterTrack());
+			MainFrame.setFocus(JudahZone.getMains());
 			return true;
-		case 8: // TODO Tuner/PlayStop Loop/FadeOut Main
+		case 8: // Tuner/PlayStop Loop/FadeOut Main
 			Channel ch = ControlPanel.getInstance().getChannel();
 			if (ch == null) return true; // ? 
-			if (ch instanceof LineIn && (ch == JudahZone.getChannels().getGuitar() ||
+			if (ch instanceof Instrument && (ch == JudahZone.getChannels().getGuitar() ||
 					ch == JudahZone.getChannels().getCrave())) {
 				ControlPanel.getInstance().getTuner().setChannel(
 						GuitarTuner.getChannel() == ch ? null : ch);
@@ -164,7 +167,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		case 14: // reset effects for current channel // TODO double click = reset all channels
 			ControlPanel.getInstance().getChannel().reset();
 			return true;
-		case 15: // focus efx on Uno or Crave synth channels
+		case 15: // focus efx on Crave synth channel
 			MainFrame.setFocus(JudahZone.getChannels().getCrave());
 			//	ControlPanel panel = ControlPanel.getInstance();
 			//	if (panel.getCurrent() == null) 

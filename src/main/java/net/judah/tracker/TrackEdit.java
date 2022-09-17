@@ -24,7 +24,7 @@ import net.judah.midi.JudahClock;
 import net.judah.midi.ProgChange;
 import net.judah.midi.TimeSigGui;
 import net.judah.mixer.Channel;
-import net.judah.settings.Channels;
+import net.judah.mixer.Channels;
 import net.judah.tracker.Track.Cue;
 import net.judah.util.*;
 

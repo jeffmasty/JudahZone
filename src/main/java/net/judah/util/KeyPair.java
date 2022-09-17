@@ -2,16 +2,10 @@ package net.judah.util;
 
 import lombok.Data;
 
-@Data
-public class KeyPair implements Copyable {
+@Data 
+public class KeyPair {
 
 	private final String key;
 	private final Object value;
-
-	@Override
-	public KeyPair clone() throws CloneNotSupportedException {
-		
-		return new KeyPair(key, value);
-	}
 	
 }

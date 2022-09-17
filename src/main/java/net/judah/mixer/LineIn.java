@@ -1,123 +1,32 @@
 package net.judah.mixer;
 
-import static net.judah.JudahZone.JUDAHZONE;
-import static net.judah.util.Constants.*;
-
-import java.nio.FloatBuffer;
-import java.util.ArrayList;
-
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.MainFrame;
-import net.judah.effects.Freeverb;
-import net.judah.plugin.Plugin;
-import net.judah.util.AudioTools;
-import net.judah.util.Constants;
 import net.judah.util.GuitarTuner;
 
-/**JudahZone mixer Channels come with built-in compression, reverb and gain */
-public class LineIn extends Channel {
-
-    @Getter @Setter protected JackPort leftPort;
-    @Getter @Setter protected JackPort rightPort;
-
-    @Getter protected boolean muteRecord;
-    @Getter @Setter protected boolean solo;
-
+@Getter
+public abstract class LineIn extends Channel {
+    protected boolean muteRecord;
+    @Setter protected boolean solo;
+    protected LatchEfx latchEfx = new LatchEfx(this);
     /** set to <code>null</code> for no processing */
-    @Getter @Setter protected GuitarTuner tuner;
+    @Setter protected GuitarTuner tuner;
+    @Setter protected JackPort sync;
     
-    @Getter protected final String leftSource;
-    @Getter protected final String leftConnection;
-    @Getter protected final String rightSource; // for stereo
-    @Getter protected final String rightConnection;
+    public LineIn(String name, boolean stereo) {
+    	super(name, stereo);
+    }
     
-    @Setter @Getter protected JackPort sync;
-    @Getter protected LatchEfx latchEfx = new LatchEfx(this);
+    public abstract void process();
     
-    @Getter protected final ArrayList<Plugin> plugins = new ArrayList<>();
-
-    /** Mono channel uses left signal */
-	public LineIn(String channelName, String sourcePort, String connectionPort) {
-		super(channelName, false);
-		this.leftSource = sourcePort;
-		this.leftConnection = JUDAHZONE + ":" + connectionPort;
-		rightSource = rightConnection = null;
-	}
-
-	/** Stereo channel */
-	public LineIn(String channelName, String[] sourcePorts, String[] connectionPorts) {
-		super(channelName, true);
-		this.leftSource = sourcePorts[LEFT_CHANNEL];
-		this.leftConnection = JUDAHZONE + ":" + connectionPorts[LEFT_CHANNEL];
-		this.rightSource = sourcePorts[RIGHT_CHANNEL];
-		this.rightConnection = JUDAHZONE + ":" + connectionPorts[RIGHT_CHANNEL];
-	}
-
-	public void setMuteRecord(boolean muteRecord) {
+    public void setMuteRecord(boolean muteRecord) {
 		this.muteRecord = muteRecord;
 		MainFrame.update(this);
 	}
 
-	@Override
-	public String toString() {
-		return name + ": " + leftConnection + " . " + rightConnection;
-	}
-	
-	public void process() {
-		FloatBuffer left = leftPort.getFloatBuffer();
-		FloatBuffer right = (isStereo) ? rightPort.getFloatBuffer() : null; 
-		
-		if (this == GuitarTuner.getChannel()) {
-			left.rewind();
-			MainFrame.update(AudioTools.copy(left));
-			left.rewind();
-		}
-		
-		float gain = getVolume() * 0.5f;
-		for (int z = 0; z < Constants.bufSize(); z++)
-			left.put(left.get(z) * gain);
-		if (isStereo)
-			for (int z = 0; z < Constants.bufSize(); z++)
-				right.put(right.get(z) * gain);
 
-		
-		if (eq.isActive()) {
-			eq.process(left, true);
-			if (isStereo)
-				eq.process(right, false);
-		}
-		if (chorus.isActive()) {
-			if (isStereo)
-				chorus.processStereo(left, right);
-			else
-				chorus.processMono(left);
-		}
-		if (overdrive.isActive()) {
-			overdrive.processAdd(left);
-			if (isStereo)
-				overdrive.processAdd(right);
-		}
-
-		if (delay.isActive()) {
-			delay.processAdd(left, left, true);
-			if (isStereo)
-				delay.processAdd(right, right, false);
-		}
-		if (reverb.isActive() && reverb.isInternal()) {
-			if (isStereo)
-				((Freeverb)reverb).process(left, right);
-			else         
-				reverb.process(left);
-		}
-		if (cutFilter.isActive()) {
-			if (isStereo())
-				cutFilter.process(left, right, 1);
-			else 
-				cutFilter.process(left);
-		}
-	}
-
+    
 }

@@ -40,7 +40,7 @@ public class SyncWidget extends JLabel implements TimeListener {
 	}
 
 	public void updateLoop() {
-		if (loop.isDirty())
+		if (loop.isActive())
 			// TODO update sensitive to length of loop
 			if (loop.hasRecording() && 100 * loop.getTapeCounter().intValue() / loop.getRecording().size() != local) {
 				// every 5%
@@ -93,7 +93,7 @@ public class SyncWidget extends JLabel implements TimeListener {
 		if (Notification.Property.BARS != prop) return;
 		
 		if (counter < 0) {
-			JudahClock.setBeat(0);
+			// JudahClock.getInstance().reset();
 			loop.record(true);
 			setText("Go !");
 		}

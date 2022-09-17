@@ -23,7 +23,7 @@ import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.api.Service;
 import net.judah.effects.api.Reverb;
-import net.judah.mixer.LineIn;
+import net.judah.mixer.Instrument;
 import net.judah.util.RTLogger;
 
 // locked into the ubuntu20 version of Carla, do not prefer the current KStudio version
@@ -91,16 +91,11 @@ public class Carla extends ArrayList<Plugin> implements Service {
 					"rkr Harmonizer (no midi):Audio Out R"},
 				null, false);
 
-		echo = new Plugin("echo", 2, LineType.CARLA,
-				new String[] {"Calf Vintage Delay:In L", "Calf Vintage Delay:In R"},
-				new String[] {"Calf Vintage Delay:Out L", "Calf Vintage Delay:Out R"},
-				null, false);
-
-		talReverb = new Plugin(TalReverb.NAME, 3, LineType.CARLA);
-		talReverb2 = new Plugin(TalReverb.NAME + "2", 4, LineType.CARLA);
+		talReverb = new Plugin(TalReverb.NAME, 2, LineType.CARLA);
+		talReverb2 = new Plugin(TalReverb.NAME + "2", 3, LineType.CARLA);
 
 		addAll(Arrays.asList(new Plugin[] {
-		        fluid, harmonizer, echo, talReverb, talReverb2}));
+		        fluid, harmonizer, echo, talReverb, talReverb2})); // clock plugin
 
 	}
 
@@ -217,8 +212,8 @@ public class Carla extends ArrayList<Plugin> implements Service {
 
 	public void octaver(boolean active) throws OSCSerializeException, IOException, JackException {
 		JackClient client = JudahZone.getInstance().getJackclient();
-		LineIn guitar = JudahZone.getChannels().getGuitar();
-		LineIn aux2 = JudahZone.getChannels().getFluid();
+		Instrument guitar = JudahZone.getChannels().getGuitar();
+		Instrument aux2 = JudahZone.getChannels().getFluid();
 
 		// setActive(bassEQ.getIndex(), active);
 		setActive(harmonizer.getIndex(), active);

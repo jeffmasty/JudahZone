@@ -17,11 +17,12 @@ import net.judah.controllers.KorgPads;
 import net.judah.effects.gui.ControlPanel;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
+import net.judah.looper.sampler.SamplerGui;
 import net.judah.midi.JudahClock.Mode;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
-import net.judah.mixer.LineIn;
-import net.judah.settings.Channels;
+import net.judah.mixer.Channels;
+import net.judah.mixer.Instrument;
 
 public class JudahMenu extends JPopupMenu implements KeyListener {
 
@@ -34,7 +35,7 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
     JMenu fileMenu = new JMenu("Song");
     JMenuItem sheetMusic = new JMenuItem("Sheet Music");
     JMenuItem loadMidi = new JMenuItem("Open Midi");
-    JMenuItem presets = new JMenuItem("Presets");
+    JMenuItem presets = new JMenuItem("Samples");
 //    JMenuItem load = new JMenuItem("Open...");
 //    JMenuItem create = new JMenuItem("New...");
 //    JMenuItem save = new JMenuItem("Save");
@@ -62,7 +63,8 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
         add(presets);
         addKeyListener(this);
 
-        presets.addActionListener( e -> MainFrame.get().addOrShow(MainFrame.get().getPresets(), "Presets"));
+        presets.addActionListener( e -> MainFrame.get().addOrShow(
+        		SamplerGui.getInstance(), "Samples"));
 
 //        load.addActionListener( e -> load());
 //        create.addActionListener( e -> create());
@@ -108,8 +110,8 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
 
         switch(code) {
 
-            case VK_ESCAPE: JudahZone.getMasterTrack().setOnMute(
-                    !JudahZone.getMasterTrack().isOnMute());return;
+            case VK_ESCAPE: JudahZone.getMains().setOnMute(
+                    !JudahZone.getMains().isOnMute());return;
             case VK_F1: MainFrame.setFocus(looper.get(0)); return;
             case VK_F2: MainFrame.setFocus(looper.get(1)); return;
             case VK_F3: MainFrame.setFocus(looper.get(2)); return;
@@ -137,8 +139,8 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
             			KorgPads.trigger(JudahZone.getLooper().getLoopA());
             		else 
             			loop.record(loop.isRecording() != AudioMode.RUNNING);
-            	} else if (focus instanceof LineIn) {
-            		LineIn line = (LineIn)focus;
+            	} else if (focus instanceof Instrument) {
+            		Instrument line = (Instrument)focus;
             		line.setMuteRecord(!line.isMuteRecord());
             	}
             	return;
@@ -197,7 +199,7 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
     	Looper looper = JudahZone.getLooper();
         Channels channels = JudahZone.getChannels();
         Channel bus = ControlPanel.getInstance().getChannel();
-        if (bus instanceof LineIn) {
+        if (bus instanceof Instrument) {
             int i = channels.indexOf(bus);
             if (toRight) {
                 if (i == channels.size() -1) {

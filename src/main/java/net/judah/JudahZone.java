@@ -1,11 +1,11 @@
 package net.judah;
 
 import static net.judah.util.AudioTools.*;
-import static net.judah.util.Constants.*;
 import static org.jaudiolibs.jnajack.JackPortFlags.*;
 import static org.jaudiolibs.jnajack.JackPortType.AUDIO;
 
 import java.io.IOException;
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -29,18 +29,24 @@ import net.judah.effects.gui.ControlPanel;
 import net.judah.fluid.FluidSynth;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
+import net.judah.looper.beats.JudahBeats;
+import net.judah.looper.sampler.Sampler;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Path;
+import net.judah.mixer.Channels;
+import net.judah.mixer.Instrument;
 import net.judah.mixer.LineIn;
-import net.judah.mixer.MasterTrack;
+import net.judah.mixer.Mains;
 import net.judah.plugin.Carla;
-import net.judah.settings.Channels;
 import net.judah.songs.SmashHit;
+import net.judah.synth.JudahSynth;
+import net.judah.tracker.Track;
 import net.judah.util.Constants;
 import net.judah.util.JudahException;
 import net.judah.util.RTLogger;
 import net.judah.util.Services;
+import net.judah.util.SettableCombo;
 
 /* my jack sound system settings:
 /usr/bin/jackd -R -P 99 -T -v -ndefault -p 512 -r -T -d alsa -n 2 -r 48000 -p 512 -D -Chw:K6 -Phw:K6 &
@@ -55,22 +61,24 @@ public class JudahZone extends BasicClient {
     @Getter private static boolean initialized;
 
     @Getter private static final ArrayList<JackPort> inPorts = new ArrayList<>();
-    @Getter private static final ArrayList<JackPort> outPorts = new ArrayList<>();
     @Getter private JackPort outL, outR;
     /** external reverb, for instance */
     @Getter private static JackPort reverbL1, reverbL2, reverbR1, reverbR2;
 
     @Getter private static final Services services = new Services();
-    @Getter private static MasterTrack masterTrack;
-    @Getter private static final Looper looper = new Looper(outPorts);
+    @Getter private static Mains mains;
+    @Getter private static Looper looper;
+    @Getter private static Sampler sampler;
     @Getter private static final PresetsDB presets = new PresetsDB();
     @Getter private static final Channels channels = new Channels();
-    @Getter private static JudahMidi midi;
+    private static JudahMidi midi;
     @Getter private static Carla carla;
-    @Getter private static FluidSynth synth;
+    private static FluidSynth fluid;
     @Getter private static SetList setlist = new SetList();
     @Getter private static SmashHit current;
-    
+    @Getter private static JudahSynth synth;
+    @Getter private static JudahBeats beats;
+
     
     public static void main(String[] args) {
         try {
@@ -84,12 +92,12 @@ public class JudahZone extends BasicClient {
     private JudahZone() throws JackException, JudahException, IOException, InvalidMidiDataException, OSCSerializeException {
         super(JUDAHZONE);
         instance = this;
-        Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         MainFrame.startNimbus();
+        Runtime.getRuntime().addShutdownHook(new ShutdownHook());
 
-        synth = new FluidSynth(Constants.sampleRate());
+        fluid = new FluidSynth(Constants.sampleRate());
         midi = new JudahMidi("JudahMidi");
-        services.addAll(Arrays.asList(new Service[] {synth, midi})); // Jamstik added later
+        services.addAll(Arrays.asList(new Service[] {fluid, midi})); // Jamstik added later
 
         start();
     }
@@ -98,7 +106,7 @@ public class JudahZone extends BasicClient {
     protected void initialize() throws JackException {
     	
         JackPort port;
-        for (LineIn ch : channels) {
+        for (Instrument ch : channels.getInstruments()) {
             port = jackclient.registerPort(ch.getLeftConnection().replace(JUDAHZONE + ":", ""),
                     AUDIO, JackPortIsInput);
             ch.setLeftPort(port);
@@ -110,47 +118,46 @@ public class JudahZone extends BasicClient {
             }
         }
 
-        for (String name : new String[] { "left", "right" /* ,"auxL", "auxR" */})
-            outPorts.add(jackclient.registerPort(name, AUDIO, JackPortIsOutput));
-        outL = outPorts.get(LEFT_CHANNEL);
-        outR = outPorts.get(RIGHT_CHANNEL);
         reverbR1 = jackclient.registerPort("reverbR1", AUDIO, JackPortIsOutput);
         reverbR2 = jackclient.registerPort("reverbR2", AUDIO, JackPortIsOutput);
         reverbL1 = jackclient.registerPort("reverbL1", AUDIO, JackPortIsOutput);
         reverbL2 = jackclient.registerPort("reverbL2", AUDIO, JackPortIsOutput);
+        
+        outL = jackclient.registerPort("right", AUDIO, JackPortIsOutput);
+        outR = jackclient.registerPort("left", AUDIO, JackPortIsOutput);
+        looper = new Looper(outL, outR);
+        synth = new JudahSynth(outL, outR);
+        sampler = new Sampler(looper);
+        beats = new JudahBeats();
+        channels.add(synth);
+        // channels.add(beats);
 
-        String debug = "channels: ";
-        for (LineIn ch : channels)
-            debug += ch.getName() + " ";
-        log.debug(debug);
+        mains = new Mains(outL, outR);
 
         try { // Initialize the Carla lv2 plugin host (now that our ports are created)
-            carla = new Carla(true);
-            Thread.sleep(200);
+            carla = new Carla(false);
             services.add(carla);
-            looper.init(carla);
-            
-            masterTrack = new MasterTrack(outL, outR, getReverbL2(), getReverbR2(), null);
+            Constants.timer(220, () -> looper.init(carla) );
         } catch (Exception e) { throw new JackException(e); }
     }
 
     @Override
     protected void makeConnections() throws JackException {
-        if (masterTrack == null) {
+
+        if (mains == null) {
             RTLogger.log(this, "Initialization failed.");
             return;
         }
         
         // inputs
-        for (LineIn ch : channels) {
-        	RTLogger.log(this, ch.toString());
+        for (Instrument ch : channels.getInstruments()) {
             if (ch.getLeftSource() != null && ch.getLeftConnection() != null)
                 jack.connect(jackclient, ch.getLeftSource(), ch.getLeftConnection());
             if (ch.getRightSource() != null && ch.getRightConnection() != null)
                 jack.connect(jackclient, ch.getRightSource(), ch.getRightConnection());
         }
         // Synth input has custom Reverb
-        channels.getFluid().setReverb(synth.getReverb());
+        channels.getFluid().setReverb(fluid.getReverb());
                 
         // outputs
         jack.connect(jackclient, outL.getName(), "system:playback_1");
@@ -163,8 +170,9 @@ public class JudahZone extends BasicClient {
     }
     
     public void initializeGui() {
-    	Constants.sleep(700); // allow external plug-in host to startup
-        new MainFrame(JUDAHZONE);
+    	
+    	Constants.sleep(600); // allow external synth & plug-in host to startup
+    	new MainFrame(JUDAHZONE);
         ControlPanel.getInstance().setFocus(channels.getGuitar());
         Jamstik.setMidiOut(new Path(midi.getFluidOut(), channels.getFluid()));
         initialized = true;
@@ -179,45 +187,53 @@ public class JudahZone extends BasicClient {
     	MainFrame.updateTime();
         Fader.execute(Fader.fadeIn());
         looper.getDrumTrack().toggle();
-    	Loop c = looper.getLoopC();
+        looper.getLoopA().getReverb().setActive(true);
+        looper.getLoopB().getReverb().setActive(true);
+        Loop c = looper.getLoopC();
     	c.record(true);
-        LineIn guitar = channels.getGuitar();
+        Instrument guitar = channels.getGuitar();
         guitar.getReverb().setActive(true);
         guitar.getDelay().setActive(true);
         guitar.getChorus().setActive(true);
         guitar.getLfo().setActive(true);
         guitar.getEq().setActive(true);
         guitar.getCutFilter().setActive(true);
-        masterTrack.setOnMute(false);
-        looper.getLoopA().getReverb().setActive(true);
-        looper.getLoopB().getReverb().setActive(true);
-        Constants.timer(777, () ->{
+        mains.setOnMute(false);
+        int timer = 777;
+        Constants.timer(timer, () ->{
         	c.record(false);
+        	Jamstik.toggle();
+        	guitar.getLfo().setActive(false);
         	guitar.getReverb().setActive(false);
 	        guitar.getDelay().setActive(false);
 	        guitar.getChorus().setActive(false);
-	        guitar.getLfo().setActive(false);
-	        guitar.getGain().setPan(50);
 	        guitar.getEq().setActive(false);
 	        guitar.getCutFilter().setActive(false);
-        	MainFrame.setFocus(guitar);
+	        guitar.getGain().setPan(50);
+	        MainFrame.setFocus(guitar);
         	MainFrame.update(guitar);
-        	Constants.timer(300, () -> {
-        		masterTrack.setOnMute(true);
+        });
+        Constants.timer(timer * 2, () -> {
+        		mains.setOnMute(true);
+        		if (Jamstik.isActive())
+        			Jamstik.toggle();
         		looper.reset();
         		looper.getLoopA().getReverb().setActive(false);
         		looper.getLoopB().getReverb().setActive(false);
         		System.gc();
-        		Constants.timer(30, () -> masterTrack.setOnMute(false));
-        		
-        		JudahClock.getTracker().getDrum2().setFile("HiHats");
-        	});
+        		Constants.timer(30, () -> mains.setOnMute(false));
         });
+
+		Track hihats = JudahClock.getTracker().getDrum2();
+		hihats.setFile("HiHats");
+		hihats.setPattern("closed");
+		SettableCombo.highlight(null);
+		
     }
     
     private class ShutdownHook extends Thread {
         @Override public void run() {
-            masterTrack.setOnMute(true);
+            mains.setOnMute(true);
             for (Service s : services)
                 s.close();
         }
@@ -251,15 +267,17 @@ public class JudahZone extends BasicClient {
     @Override
     public boolean process(JackClient client, int nframes) {
 
+    	FloatBuffer left = outL.getFloatBuffer();
+    	FloatBuffer right = outR.getFloatBuffer();
         // channels and looper will be additive
-        processSilence(outL.getFloatBuffer());
-        processSilence(outR.getFloatBuffer());
-        processSilence(reverbL1.getFloatBuffer());
-        processSilence(reverbR1.getFloatBuffer());
-        processSilence(reverbL2.getFloatBuffer());
-        processSilence(reverbR2.getFloatBuffer());
+        silence(left);
+        silence(right);
+        silence(reverbL1.getFloatBuffer());
+        silence(reverbR1.getFloatBuffer());
+        silence(reverbL2.getFloatBuffer());
+        silence(reverbR2.getFloatBuffer());
 
-        if (masterTrack.isOnMute()) return true;
+        if (mains.isOnMute() || !initialized) return true;
 
         // mix the live streams
         for (LineIn ch : channels) {
@@ -269,20 +287,22 @@ public class JudahZone extends BasicClient {
             // line-in stereo pan left channel (0.5 pan = 1.0 gain)
             float gainL = (1 - ch.getPan()) * 2;
             float gainR = ch.getPan() * 2;
-            processAdd(ch.getLeftPort().getFloatBuffer(), gainL, outL.getFloatBuffer());
+            mix(ch.getLeftPort().getFloatBuffer(), gainL, left);
 
             // pan and mono/stereo
             if (ch.isStereo())
-                processAdd(ch.getRightPort().getFloatBuffer(), gainR, outR.getFloatBuffer());
+                mix(ch.getRightPort().getFloatBuffer(), gainR, right);
             else
-                processAdd(ch.getLeftPort().getFloatBuffer(), gainR, outR.getFloatBuffer());
+                mix(ch.getLeftPort().getFloatBuffer(), gainR, right);
         }
-
-        // get looper in on process()
+        
+        // get loops and samples in on process()
         looper.process();
+        sampler.process();
+        
 
         // final mix bus effects:
-        masterTrack.process();
+        mains.process();
 
         return true;
     }

@@ -28,11 +28,7 @@ import net.judah.tracker.Track;
 import net.judah.tracker.Tracker;
 import net.judah.util.*;
 
-//	Menu beat        3: Calf
-//  1: sync 2: tempo 4: Fluid
-//	5: trk1  6: trk2 7: Jamstik
-//	Loop A feedback	 8: MPK	
-//                   
+/** loop length, tempo, mpk out, presets, setlist */
 public class MidiGui extends JPanel implements TimeListener {
 
 	private final JudahMidi midi;
@@ -47,13 +43,11 @@ public class MidiGui extends JPanel implements TimeListener {
     
     @Getter private final ProgChange calf;
     @Getter private final ProgChange fluid;
-    @Getter private final JComboBox<SmashHit> setlist = new CenteredCombo<>();
-	@Getter private final MidiOut mpk = new MidiOut();
+    @Getter private final SettableCombo<SmashHit> setlist = new SettableCombo<>(()->JudahZone.loadSong());
+	@Getter private final JComboBox<JackPort> mpk = new JComboBox<>();
 	private final JPanel mpkPanel = new JPanel();
 	private Jamstik jam;
 	@Getter private final JudahMenu popup = new JudahMenu();
-
-    
 	private final Border NONE = BorderFactory.createLineBorder(Pastels.BUTTONS, 4);
 
 	public MidiGui(JudahMidi midi, JudahClock clock) {
@@ -67,26 +61,19 @@ public class MidiGui extends JPanel implements TimeListener {
 		calf = new ProgChange(midi.getCalfOut(), 0);
 		fluid = new ProgChange(midi.getFluidOut(), 0);
 		
-		doSetlist();
-		
 		new Thread(()-> 
 			initialize()).start();
 		
     }
 	
-	private void doSetlist() {
+	private void doSetlist(JPanel pnl) {
 		for (SmashHit song : JudahZone.getSetlist())
 			setlist.addItem(song);
-		if (setlist.getItemCount() > 0)
-			setlist.setSelectedItem(setlist.getItemAt(0));
-		// load song usually happens on Mixer's [Set] button
-		setlist.addMouseListener(new MouseAdapter() {
-			@Override public void mouseClicked(MouseEvent e) {
-				if (e.getButton() == MouseEvent.BUTTON3)
-					JudahZone.loadSong();
-			}
-		});
-		
+		pnl.add(setlist);
+        JButton load = new JButton("▶");
+        load.addActionListener(e->JudahZone.loadSong());
+        pnl.add(load);
+
 	}
 	
 	private void initialize() {
@@ -149,6 +136,7 @@ public class MidiGui extends JPanel implements TimeListener {
 		for (JackPort port : new JackPort[] {midi.getCraveOut(), midi.getFluidOut(), midi.getCalfOut()}) {
 			mpk.addItem(port);
 		}
+		mpk.setRenderer(MidiOut.STYLE);
 		mpk.setSelectedItem(midi.getKeyboardSynth());
 		mpk.addActionListener( e -> midi.setKeyboardSynth((JackPort)mpk.getSelectedItem()));
 
@@ -178,11 +166,8 @@ public class MidiGui extends JPanel implements TimeListener {
         left3.add(tapButton);
         left3.add(tempoLbl);
         
-
-        left4.add(setlist);
-        JButton load = new JButton("▶");
-        load.addActionListener(e->JudahZone.loadSong());
-        left4.add(load);
+        doSetlist(left4);
+        
         JPanel p1 = new JPanel(), p2 = new JPanel();
         JPanel jamPanel = new JPanel();
         jam = new Jamstik(jamPanel, JudahZone.getServices());
@@ -199,13 +184,10 @@ public class MidiGui extends JPanel implements TimeListener {
         jamPanel.add(new JLabel("Jam", SwingConstants.CENTER));
         jamPanel.add(max(jam));
         
-        
-        
         mpkPanel.add(new JLabel("MPK", SwingConstants.CENTER));
         mpkPanel.add(max(mpk));
         
         right.add(p1); right.add(p2); right.add(jamPanel); right.add(mpkPanel);
-	
 	
 	}
 
@@ -213,7 +195,7 @@ public class MidiGui extends JPanel implements TimeListener {
 	
 	/**@param idx knob 0 to 7
      * @param data2  user input */
-    public void clockKnob(int idx, int data2) {
+    public void clockKnobs(int idx, int data2) {
     	
     	switch(idx) {
     	case 0: // sync loop length 

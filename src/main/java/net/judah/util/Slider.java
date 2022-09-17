@@ -1,10 +1,6 @@
 package net.judah.util;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.RenderingHints;
+import java.awt.*;
 
 import javax.swing.JComponent;
 import javax.swing.JSlider;
@@ -58,6 +54,7 @@ public class Slider extends JSlider {
         putClientProperty("Nimbus.Overrides.InheritDefaults",false);
         if (l != null)
         	addChangeListener(l);
+        setPreferredSize(new Dimension(100, 38));
     }
 
 }

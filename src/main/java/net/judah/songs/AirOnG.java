@@ -11,8 +11,8 @@ import net.judah.effects.LFO.Target;
 import net.judah.effects.api.PresetsDB.Raw;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
-import net.judah.mixer.LineIn;
-import net.judah.settings.Channels;
+import net.judah.mixer.Channels;
+import net.judah.mixer.Instrument;
 import net.judah.tracker.Track;
 import net.judah.tracker.Tracker;
 import net.judah.util.Constants;
@@ -25,6 +25,7 @@ public class AirOnG extends SmashHit {
 		track = t.getChords();
 		track.setFile(new File(track.getFolder(), "AirOnG"));
 		track.getClock().setLength(12);
+		track.getClock().writeTempo(90);
 		track.setActive(false); // on listener
 		// track.getCycle().setCustom(this);  // ABCD..
 
@@ -65,10 +66,10 @@ public class AirOnG extends SmashHit {
 		b.setArmed(true);
 		b.setOnMute(false);
 		JudahZone.getChannels().getFluid().setMuteRecord(true);
-		LineIn mic = JudahZone.getChannels().getMic();
+		Instrument mic = JudahZone.getChannels().getMic();
 		mic.setMuteRecord(false);
 		mic.getGain().setVol(50);
-		LineIn gtr = JudahZone.getChannels().getGuitar();
+		Instrument gtr = JudahZone.getChannels().getGuitar();
 		gtr.setMuteRecord(false);		
 		gtr.setPreset(JudahZone.getPresets().get(Raw.Freeverb));
 		gtr.getLatchEfx().latch(a);

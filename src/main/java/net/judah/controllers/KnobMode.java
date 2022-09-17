@@ -1,5 +1,5 @@
 package net.judah.controllers;
 
 public enum KnobMode {
-	Effects1, Effects2, Clock, Tracks;	
+	FX1, FX2, Clock, Track;	
 }

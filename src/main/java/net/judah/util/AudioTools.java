@@ -7,17 +7,20 @@ public class AudioTools  {
 	private static int z;
 	private static float[] workArea = new float[Constants.bufSize()];
 
-	public static void processSilence(FloatBuffer a) {
+	public static void silence(FloatBuffer a) {
 		a.rewind();
 		while(a.hasRemaining())
 			a.put(0f);
 		a.rewind();
 	}
 	public static void processSilence(float[][] buf) {
-		for (float[] ch : buf) {
-			for (int i = 0; i < ch.length; i++)
-				ch[i] = 0f;
-		}
+		for (float[] ch : buf) 
+			silence(ch);
+	}
+
+	public static void silence(float[] mono) {
+		for (int i = 0; i < mono.length; i++)
+			mono[i] = 0f;
 	}
 
 	/** MIX
@@ -39,7 +42,7 @@ public class AudioTools  {
 	}
 
 	/** MIX in and out with gain applied to the input*/
-	public static void processAdd(FloatBuffer in, FloatBuffer out) {
+	public static void mix(FloatBuffer in, FloatBuffer out) {
 		in.rewind();
 		out.rewind();
 		for (int z = 0; z < out.capacity(); z++)
@@ -47,9 +50,9 @@ public class AudioTools  {
 	}
 
 	/** MIX in and out with gain applied to the input*/
-	public static void processAdd(FloatBuffer in, float gain, FloatBuffer out) {
+	public static void mix(FloatBuffer in, float gain, FloatBuffer out) {
 		if (1f == gain) {
-			processAdd(in, out);
+			mix(in, out);
 			return;
 		}
 		in.rewind();
@@ -71,12 +74,21 @@ public class AudioTools  {
 			out[i] += in.get();
 	}
 
-	public static void processMix(float[] in, FloatBuffer out) {
+	public static void mix(float[] in, FloatBuffer out) {
 		out.get(workArea);
 		out.rewind();
 		for (z = 0; z < Constants.bufSize(); z++)
 			out.put(workArea[z] + in[z]);
 	}
+	
+	public static void mix(float[] in, FloatBuffer out, float inGain) {
+		out.get(workArea);
+		out.rewind();
+		for (z = 0; z < Constants.bufSize(); z++)
+			out.put(workArea[z] + in[z] * inGain);
+	}
+	
+	
 	public static void processGain(FloatBuffer buffer, float gain) {
 		buffer.rewind();
 		for (z = 0; z < Constants.bufSize(); z++)

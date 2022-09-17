@@ -8,11 +8,15 @@ import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import org.jaudiolibs.jnajack.JackTransportState;
+
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.Midi;
+import net.judah.api.Notification.Property;
 import net.judah.api.Service;
+import net.judah.api.TimeListener;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Panic;
@@ -20,7 +24,7 @@ import net.judah.util.Constants;
 import net.judah.util.Pastels;
 
 @Getter
-public class Tracker extends JPanel implements Service {
+public class Tracker extends JPanel implements Service, TimeListener {
 
 	private final JudahClock clock;
 	private final DrumTrack drum1;
@@ -39,6 +43,7 @@ public class Tracker extends JPanel implements Service {
 	
 	public Tracker(JudahClock clock, JudahMidi midi) {
 		this.clock = clock;
+		clock.addListener(this);
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 	
 		drum1 = new DrumTrack(clock, "Drum1", midi.getCalfOut());
@@ -180,6 +185,14 @@ public class Tracker extends JPanel implements Service {
 			if (tracks[i] == track)
 				return i;
 		throw new InvalidParameterException("" + track);
+	}
+
+	@Override
+	public void update(Property prop, Object value) {
+		if (value == JackTransportState.JackTransportStarting)
+			for (Track t : tracks) {
+				t.setStep(-1);
+			}
 	}
 
 }

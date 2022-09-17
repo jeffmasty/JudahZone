@@ -1,5 +1,7 @@
 package net.judah;
 
+import static net.judah.controllers.KnobMode.*;
+
 import java.awt.*;
 import java.io.File;
 import java.util.concurrent.BlockingQueue;
@@ -12,33 +14,35 @@ import lombok.RequiredArgsConstructor;
 import net.judah.controllers.KnobMode;
 import net.judah.controllers.MPK;
 import net.judah.effects.gui.ControlPanel;
-import net.judah.effects.gui.PresetsGui;
 import net.judah.looper.LoopWidget;
 import net.judah.looper.SyncWidget;
+import net.judah.looper.sampler.Sample;
+import net.judah.looper.sampler.SamplerGui;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiGui;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
+import net.judah.synth.JudahSynth;
 import net.judah.tracker.GridTab;
 import net.judah.tracker.Track;
 import net.judah.tracker.Tracker;
 import net.judah.util.*;
 
 /** over-all layout and a background updates thread */
-public class MainFrame extends JFrame implements Size, Runnable {
+public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 
     private static final BlockingQueue<Object> updates = new LinkedBlockingQueue<>();
     private static final Object effectsToken = "EFX";
     private static final Dimension clocksz = new Dimension(WIDTH_CLOCK, HEIGHT_MIXER);
-    private static final Dimension mix = new Dimension(WIDTH_FRAME - WIDTH_CLOCK - 9, HEIGHT_MIXER);
+    private static final Dimension mix = new Dimension(WIDTH_FRAME - WIDTH_CLOCK - 5, HEIGHT_MIXER);
 	private static MainFrame instance;
 
     private final JTabbedPane tabs = new JTabbedPane();
     private final DJJefe mixer = new DJJefe();
     @Getter private final ControlPanel controls = new ControlPanel();
     @Getter private final GridTab beatBox = new GridTab(); 
-    @Getter private final PresetsGui presets = new PresetsGui(JudahZone.getPresets());
+    
     private final MidiGui midiGui = JudahMidi.getInstance().getGui();
     private final Tracker tracker = JudahClock.getTracker();
     private SheetMusicPnl sheetMusic;
@@ -57,6 +61,10 @@ public class MainFrame extends JFrame implements Size, Runnable {
         	setLocationRelativeTo(dummy);
         	dummy.dispose();
         }
+        try { setIconImage(Toolkit.getDefaultToolkit().getImage(
+        		new File(Constants.ROOT, "icon.png").toURI().toURL()));
+        } catch (Throwable t) {
+        	RTLogger.log(this, t.getMessage()); }
         
         midiGui.setMaximumSize(clocksz);
         midiGui.setPreferredSize(clocksz);
@@ -73,11 +81,7 @@ public class MainFrame extends JFrame implements Size, Runnable {
         tabs.setMaximumSize(TABS);
         tabs.setPreferredSize(TABS);
         tabs.add("Tracks", tracker);
-
-        try { setIconImage(Toolkit.getDefaultToolkit().getImage(
-        		new File(Constants.ROOT, "icon.png").toURI().toURL()));
-        } catch (Throwable t) {
-        	RTLogger.log(this, t.getMessage()); }
+        Constants.timer(300, () ->tabs.add(SamplerGui.getInstance().getName(), SamplerGui.getInstance()));
 
         JPanel console = new JPanel();
         console.setLayout(new BoxLayout(console, BoxLayout.Y_AXIS));
@@ -103,14 +107,14 @@ public class MainFrame extends JFrame implements Size, Runnable {
         setVisible(true);
 
         Thread updates = new Thread(this);
-        updates.setPriority(3);
+        updates.setPriority(2);
         updates.start();
         
     }
 
     public void sheetMusic(boolean fwd) {
     	if (sheetMusic == null || sheetMusic.getFile() == null) {
-    		MainFrame.get().sheetMusic(new File(Constants.SHEETMUSIC, "four.png"));
+    		sheetMusic("Four.png");
     		return;
     	}
     	File[] files = Constants.SHEETMUSIC.listFiles();
@@ -202,20 +206,26 @@ public class MainFrame extends JFrame implements Size, Runnable {
     private static class Focus extends Thread {
     	private final Object o;
     	@Override public void run() {
-	    	if (o instanceof Channel) {
+    		if (o instanceof Sample || o instanceof JudahSynth)
+				instance.controls.setFocus((Channel)o);
+			else if (o instanceof Channel) {
 	    		instance.controls.setFocus((Channel)o);
 	    		instance.mixer.highlight((Channel)o);
 	    	}
 	    	else if (o instanceof Track) {
 	    		instance.mixer.highlight(null);
-	    		MPK.setMode(KnobMode.Tracks);
+	    		MPK.setMode(KnobMode.Track);
 	    		Tracker.setCurrent((Track)o);
 	    	}
 	    	else if (o instanceof KnobMode) {
 	    		KnobMode knobs = (KnobMode)o;
+	    		MPK.getLabel().setText(" " + knobs.name());
+	    		MPK.getLabel().setBackground(knobs == FX1 ? BLUE : 
+					knobs == FX2 ? BLUE.darker() :
+					knobs == Clock ? YELLOW : GREEN);
 	    		JudahMidi.getInstance().getGui().mode(knobs);
 	    		ControlPanel.getInstance().getTuner().setChannel(null);
-	    		if (knobs == KnobMode.Effects1 || knobs == KnobMode.Effects2) {
+	    		if (knobs == KnobMode.FX1 || knobs == KnobMode.FX2) {
 	    			instance.controls.setBorder(Constants.Gui.HIGHLIGHT);
 	    			Tracker.setCurrent(null);
 	    			instance.mixer.highlight(instance.controls.getCurrent().getChannel());
@@ -223,7 +233,7 @@ public class MainFrame extends JFrame implements Size, Runnable {
 	    		else {
 	    			instance.controls.setBorder(Constants.Gui.NONE);
 	    			instance.mixer.highlight(null);
-	    			if (knobs == KnobMode.Tracks)
+	    			if (knobs == KnobMode.Track)
 	    				instance.tracker.update(Tracker.getCurrent());
 	    			else
 	    				Tracker.setCurrent(null);
@@ -274,7 +284,6 @@ public class MainFrame extends JFrame implements Size, Runnable {
 				instance.mixer.updateAll();
 				instance.controls.getCurrent().update();
 			}
-			
 		}
 	}
 

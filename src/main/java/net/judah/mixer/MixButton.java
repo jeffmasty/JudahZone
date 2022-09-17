@@ -26,7 +26,7 @@ public class MixButton extends JLabel {
 		if (icon == Icons.MUTE) 
 			setSelected(!channel.isOnMute());
 		else if (icon == Icons.MUTE_RECORD)
-			setSelected( (! ((LineIn)channel).isMuteRecord()));
+			setSelected( (! ((Instrument)channel).isMuteRecord()));
 		else if (icon == Icons.MICROPHONE && channel instanceof Loop) {
 			AudioMode mode = ((Loop)channel).isRecording();
 			if (AudioMode.STOPPED == mode || AudioMode.NEW == mode || AudioMode.ARMED == mode || AudioMode.STOPPING == mode)
@@ -34,7 +34,7 @@ public class MixButton extends JLabel {
 			else setSelected(true);
 		}
 		else if (icon == Icons.PLAY) {
-			if (channel instanceof MasterTrack) {
+			if (channel instanceof Mains) {
 				setSelected(false);
 			}
 			else if (channel instanceof Loop) {

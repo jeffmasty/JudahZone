@@ -75,19 +75,16 @@ public class Console implements MidiListener {
         addText("" + NL);
     }
 
-    @Deprecated // RTLogger
     public static void warn(Throwable t) {
         addText("WARN " + t.getMessage());
         log.warn(t.getMessage(), t);
     }
 
-    @Deprecated // RTLogger
     public static void warn(String s, Throwable t) {
         addText("WARN " + s);
         if (t != null) log.warn(s, t);
     }
 
-    @Deprecated
     public static void info(String s) {
         if (level == Level.DEBUG || level == Level.INFO || level == Level.TRACE)
             addText(s);

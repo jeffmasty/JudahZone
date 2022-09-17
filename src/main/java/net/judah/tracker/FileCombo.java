@@ -6,34 +6,38 @@ import java.io.File;
 import java.util.Arrays;
 
 import javax.swing.DefaultListCellRenderer;
-import javax.swing.JComboBox;
 
-public class FileCombo extends JComboBox<String> implements ActionListener {
+import net.judah.util.SettableCombo;
+
+public class FileCombo extends SettableCombo<String> {
 
 	private final Track track;
+	ActionListener listen = new ActionListener() {
+		@Override public void actionPerformed(ActionEvent e) {
+			highlight(FileCombo.this);
+	}};
+	
 	
 	public FileCombo(Track track) {
+		super(() -> setFile(track));
 		this.track = track;
 				DefaultListCellRenderer center = new DefaultListCellRenderer(); 
 		center.setHorizontalAlignment(DefaultListCellRenderer.CENTER); 
 		setRenderer(center);
 		refresh();
-		
 	}
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		super.actionPerformed(e);
-		String select = "" + getSelectedItem();
+	private static void setFile(Track t) {
+		String select = "" + t.getView().getFilename().getSelectedItem();
 		if (select.equals("_clear")) 
-			track.clearFile();
+			t.clearFile();
 		else 
-			track.setFile(new File(track.getFolder(), select));
+			t.setFile(new File(t.getFolder(), select));
 	}
 	
 	public void refresh() {
 		String selected = (track.getFile() == null) ? "_clear" : track.getFile().getName();
-		removeActionListener(this);
+		removeActionListener(listen);
 		removeAllItems();
 		String[] sort = track.getFolder().list();
 		Arrays.sort(sort);
@@ -41,7 +45,7 @@ public class FileCombo extends JComboBox<String> implements ActionListener {
 			addItem(name);
 		addItem("_clear");
 		setSelectedItem(selected);
-		addActionListener(this);
+		addActionListener(listen);
 	}
 
 }

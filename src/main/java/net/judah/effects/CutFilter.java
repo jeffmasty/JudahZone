@@ -55,8 +55,6 @@ import net.judah.util.RTLogger;
  */
 public class CutFilter implements Effect {
 
-	private final CutFilter stereo;
-	
     public enum Settings {
         Type, Frequency, Resonance
     }
@@ -104,8 +102,8 @@ public class CutFilter implements Effect {
 
     /** left channel */
     private final IIRFilter filter = new IIRFilter();
-//    /** right channel */
-//    private final IIRFilter eq2 = new IIRFilter();
+    /** right channel */
+    private final CutFilter stereo;
 
     @Getter private Type filterType = Type.pArTy;
     @Setter @Getter private boolean active;
@@ -209,7 +207,8 @@ public class CutFilter implements Effect {
 
     /** process replace mono */
     public void process(FloatBuffer mono) {
-    	assert active;
+    	if (!active)
+    		return;
     	mono.rewind();
         switch (filterType) {
         case LP6:
@@ -234,6 +233,7 @@ public class CutFilter implements Effect {
 
     /** process replace stereo */
     public void process(FloatBuffer left, FloatBuffer right, float gain) {
+    	if (!active) return;
     	left.rewind();
     	right.rewind();
         switch (filterType) {

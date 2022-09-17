@@ -54,8 +54,8 @@ public abstract class Track extends ArrayList<Pattern> {
 	protected JackPort midiOut;
 	@Setter protected String instrument;
     protected Cue cue = Cue.Cue;
-	@Setter protected int steps;
-    @Setter protected int div;
+	protected int steps;
+    protected int div;
     @Setter protected boolean latch;
     @Setter protected boolean onDeck;
     /** 1-to-ratio, 0 = 1:1 speed up of step sequencer */
@@ -252,20 +252,6 @@ public abstract class Track extends ArrayList<Pattern> {
         setCurrent(get(result));
 	}
 
-	public void selectFile(int data2) {
-		File[] folder = getFolder().listFiles();
-		int idx = Constants.ratio(data2, folder.length + 1);
-		if (idx == folder.length) { // "_clear" option at end of combo box
-			clearFile();
-		}
-		else {
-			File target = folder[idx - 1];
-			if (!target.equals(getFile()))
-				setFile(target);
-		}
-	}
-
-	
 	public final void setFile(File file) {
 		clear();
 		this.file = file;
@@ -306,16 +292,13 @@ public abstract class Track extends ArrayList<Pattern> {
                         ProgChange.progChange(instrument, midiOut, ch);
                     }
                     if (split.length >= 3) {
-                    	steps = Integer.parseInt(split[2]);
+                    	setSteps(Integer.parseInt(split[2]));
                     	if (JudahClock.getTracker().getDrum1() == this) {
                     		clock.setSteps(steps); // drum1 sets clock time signature
                     	}
                     }
                     if (split.length >= 4) {
-                    	div = Integer.parseInt(split[3]);
-                    	if (JudahClock.getTracker().getDrum1() == this) {
-                    		clock.setSubdivision(div); // drum1 sets clock time signature
-                    	}
+                    	setDiv(Integer.parseInt(split[3]));
                     }
                     if (split.length >= 5) 
                     	cycle.setSelected(Integer.parseInt(split[4]));
@@ -360,7 +343,8 @@ public abstract class Track extends ArrayList<Pattern> {
     }	
 
 
-    public void write(File f) {
+
+	public void write(File f) {
         StringBuffer raw = new StringBuffer();
         raw.append(getMidiOut().getShortName()).append("/");
         raw.append(getInstrument() == null ? "none" : getInstrument());
@@ -432,6 +416,23 @@ public abstract class Track extends ArrayList<Pattern> {
 	public String toString() {
 		return name;
 	}
+
+	public void setDiv(int subdivision) {
+		if (div == subdivision) 
+			return;
+		this.div = subdivision;
+		if (num == 0)
+			clock.setSubdivision(div);
+	}
+	
+    public void setSteps(int change) {
+    	if (steps == change)
+    		return;
+    	this.steps = change;
+    	if (num == 0)
+    		clock.setSteps(steps);
+    }
+
 	
 }
 

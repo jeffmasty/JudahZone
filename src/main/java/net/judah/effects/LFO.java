@@ -11,9 +11,8 @@ import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.effects.api.Effect;
 import net.judah.effects.api.Reverb;
-import net.judah.looper.Loop;
+import net.judah.looper.Looper;
 import net.judah.mixer.Channel;
-import net.judah.mixer.LineIn;
 import net.judah.util.RTLogger;
 
 /** A calculated sin wave LFO.  Default amplitude returns queries between 0 and 85 */
@@ -104,14 +103,17 @@ public class LFO implements Effect {
 	public static void pulse() {
 		synchronized (lfoPulse) {
 			lfoPulse.clear();
-			for (LineIn ch : JudahZone.getChannels())
+			for (Channel ch : JudahZone.getChannels())
 				if (ch.getLfo().isActive())
 					lfoPulse.add(ch);
-			for (Loop s : JudahZone.getLooper())
-				if (s.getLfo().isActive())
-					lfoPulse.add(s);
-			if (JudahZone.getMasterTrack().getLfo().isActive())
-			    lfoPulse.add(JudahZone.getMasterTrack());
+			if (JudahZone.getMains() == null)
+				return;
+			Looper looper = JudahZone.getLooper();
+				for (int i = 0; i < looper.size(); i++)
+					if (looper.get(i).getLfo().isActive())
+						lfoPulse.add(looper.get(i));
+			if (JudahZone.getMains().getLfo().isActive())
+			    lfoPulse.add(JudahZone.getMains());
 			if (lfoPulse.isEmpty()) return;
 		}
 		new Thread(() -> {

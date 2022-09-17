@@ -7,9 +7,14 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.ArrayList;
 
-import javax.swing.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 
 import org.jaudiolibs.jnajack.JackPort;
 
@@ -18,7 +23,7 @@ import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.midi.Panic;
 import net.judah.midi.ProgChange;
-import net.judah.settings.Channels;
+import net.judah.mixer.Channels;
 import net.judah.tracker.Track.Cue;
 import net.judah.util.Click;
 import net.judah.util.Constants;
@@ -31,25 +36,22 @@ import net.judah.util.Slider;
 @Getter
 public class TrackView extends JPanel {
 
-	
 	public static final Dimension SLIDESZ = new Dimension(58, STD_HEIGHT);
+	private static final Font font = Gui.FONT11;
 	
 	private final Track track;
-
 	private final FileCombo filename; 
 	private final ProgChange patch;
-	// private final Instrument instruments;
 	@Getter private final MidiOut midiOut;
-	private final Font font = Gui.FONT11;
-
 	private final JComboBox<String> pattern = new JComboBox<>();
+	private ActionListener patternListener;
 	private final JComboBox<Cue> cue = new JComboBox<>();
 	private final JComboBox<String> custom2 = new JComboBox<>();
 	private final DefaultListCellRenderer center = new DefaultListCellRenderer(); 
-	private ActionListener patternListener;
-	
+	private final Slider volume = new Slider(null);
+	private final JComboBox<String> cycle;
 	private JButton playWidget = new JButton(" Play"); // ▶/■ 
-	private ActionListener playListener = new ActionListener() {
+	private final ActionListener playListener = new ActionListener() {
 		@Override public void actionPerformed(ActionEvent e) {
 			if (track.isActive() || track.isOnDeck())
 				track.setActive(false);
@@ -57,12 +59,9 @@ public class TrackView extends JPanel {
 				track.setActive(true);
 		}
 	};
-	private final Slider volume = new Slider(null);
-	private final JComboBox<String> cycle;
 	
 	public TrackView(Track input) {
 		
-
 		this.track = input;
 		setFont(font);
 		center.setHorizontalAlignment(DefaultListCellRenderer.CENTER); 
@@ -121,15 +120,13 @@ public class TrackView extends JPanel {
 		cycle = track.getCycle().createComboBox();
 		add(cycle);
 		doCue();
-		add(cue);
 			
 		if (track.isDrums())
-			Constants.timer(300, new Runnable() {
-				@Override public void run() {
-					add(((DrumTrack)track).getCustomVol());
-			}});
+			Constants.timer(300, () -> 
+				add(((DrumTrack)track).getCustomVol()));
 		else 
-			doPiano();
+			Constants.timer(300, () ->  
+				add(((PianoTrack)track).getPortVol()));
 		
 		cycle.setFont(font);
 		filename.setFont(font); 
@@ -143,23 +140,6 @@ public class TrackView extends JPanel {
 		update();
 	}
 	
-	private void doPiano() { // TODO port vol?
-//		custom2.addItem("ArpOff");
-//		custom2.addItem("Arp1");
-//		custom2.addItem("Arp2");
-//		custom2.addItem("Arp3");
-//		custom2.setSelectedItem("Off");
-//		custom2.addActionListener(e -> {
-//			// TODO
-//		});
-//		custom2.setRenderer(center);
-//		custom2.setFont(font);
-//custom2.setEnabled(false);
-//		add(custom2);
-		add(new JLabel(""));
-	}
-	
-	
 	private void doCue() {
 		cue.setRenderer(center);
 		cue.setFont(font);
@@ -170,6 +150,7 @@ public class TrackView extends JPanel {
 			Cue change = (Cue)cue.getSelectedItem();
 			if (track.getCue() != change)
 				track.setCue(change);});
+		add(cue);
 	}
 	
 	public void fillPatterns() {
@@ -207,21 +188,20 @@ public class TrackView extends JPanel {
 		}
 		if (cycle.getSelectedIndex() != track.getCycle().getSelected())
 			cycle.setSelectedIndex(track.getCycle().getSelected());
-		
 	}
 
 	public boolean process(int knob, int data2) {
 		switch (knob) {
-			case 0: // file
-				track.selectFile(data2);
+			case 0: // file (settable)
+				File[] folder = track.getFolder().listFiles();
+				int idx = Constants.ratio(data2, folder.length + 1);
+				filename.setSelectedIndex(idx);
 				return true;
 			case 1: // midiOut
-				JackPort port = (JackPort)Constants.ratio(data2, midiOut.getAvailable());
-				track.setMidiOut(port);
+				midiOut.setSelectedItem(Constants.ratio(data2, midiOut.getAvailable()));
 				return true;
 			case 2:  
-				int preset = 1 + Constants.ratio(data2, patch.getItemCount() - 2);
-				ProgChange.progChange(preset, track.getMidiOut(), track.getCh());
+				patch.setSelectedIndex(1 + Constants.ratio(data2, patch.getItemCount() - 2));
 				return true;
 			case 3: 
 				track.setGain(data2 * 0.01f);

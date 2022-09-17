@@ -3,8 +3,6 @@ package net.judah.tracker;
 import java.awt.Component;
 import java.util.ArrayList;
 
-import javax.swing.DefaultListCellRenderer;
-import javax.swing.JComboBox;
 import javax.swing.JList;
 import javax.swing.SwingConstants;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
@@ -13,46 +11,53 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import net.judah.midi.JudahMidi;
 import net.judah.midi.ReRoute;
+import net.judah.util.SettableCombo;
 
-public class MidiOut extends JComboBox<JackPort>  {
+public class MidiOut extends SettableCombo<JackPort>  {
 
-	public MidiOut() {
-		BasicComboBoxRenderer style = new BasicComboBoxRenderer() {
+	public static final BasicComboBoxRenderer STYLE = new BasicComboBoxRenderer() {
         	@Override public Component getListCellRendererComponent(
         			@SuppressWarnings("rawtypes") JList list, Object value,
         			int index, boolean isSelected, boolean cellHasFocus) {
         		super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         		JackPort item = (JackPort) value;
-        		setHorizontalAlignment(DefaultListCellRenderer.CENTER); 
         		setText(item == null ? "?" : item.getShortName());
+        		setHorizontalAlignment(SwingConstants.CENTER);
         		return this;
         }};
-        style.setHorizontalAlignment(SwingConstants.CENTER);
-        setRenderer(style);
-	}
+
 	
 	public MidiOut(JackPort[] items, ReRoute in) {
-		this();
+		super(()->change(in));
+		setRenderer(STYLE);
 		for (JackPort port : items) {
 			addItem(port);
 		}
-		addActionListener(e -> in.patch((JackPort)getSelectedItem()));
 	}
 	
 	public MidiOut(final Track track) {
-		this();
-		
+		super(()->change(track));
+		setRenderer(STYLE);
 		JudahMidi midi = JudahMidi.getInstance();
-
 		if (!track.isDrums()) {
 			addItem(midi.getCraveOut());
 		}
 		addItem(midi.getFluidOut());
 		addItem(midi.getCalfOut());
 		setSelectedItem(track.getMidiOut());
-		addActionListener(e -> track.setMidiOut((JackPort)getSelectedItem()));
 	}
 
+	
+	public static void change(Track t) {
+		JackPort port = (JackPort)((MidiOut)SettableCombo.getFocus()).getSelectedItem();
+		t.setMidiOut(port);
+	}
+	
+	public static void change(ReRoute in) {
+		JackPort port = (JackPort)((MidiOut)SettableCombo.getFocus()).getSelectedItem();
+		in.patch(port);
+	}
+	
 	public ArrayList<JackPort> getAvailable() {
 		ArrayList<JackPort> result = new ArrayList<JackPort>();
 		for (int i = 0; i < getItemCount(); i++)

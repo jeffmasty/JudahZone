@@ -2,7 +2,7 @@
 
 A mixer/looper/live performance environment written in Java for the Jack sound system. (https://jackaudio.org/)
 
-6 mono or stereo input channels are currently handled, as well as 4 synchronized stereo recording loops and 7 step sequencer tracks. All are mixed into a master stereo output bus.  All audio channels have separately controlled internal gain, EQ, Hi/Lo Cut, Chorus, Overdrive, Delay, Reverb, an LFO, and stereo panning. These internal effects are supplanted by LV2 plugins hosted externally and controlled over OSC. Loops can be sync'd to the drum machine and different song lengths, instruments can be solo'd to different loops. The internal drum amd synth sequencers and song editor are fairly robust.  A guitar tuner is supplied, as well as midi routing and a sheet music viewer. 
+6 mono or stereo input channels are currently handled, as well as 4 synchronized stereo recording loops, 3 full drum tracks, and 4 sequenced synthesizer tracks. All are mixed into a master stereo output bus.  All audio channels have separately controlled internal gain, EQ, Hi/Lo Cut, Chorus, Overdrive, Delay, Reverb, an LFO, and stereo panning. These internal effects are supplanted by LV2 plugins hosted externally and controlled over OSC. Loops can be sync'd to the drum machine and different song lengths and structures. A guitar tuner is supplied, as well as a sample player, sheet music viewer and midi routing. The internal synth engine has 18 oscillators supporting 6 voices of polyphony with the standard filter, envelope and wave shapes.
 
 Works great with an Akai MPK-Mini Midi Controller and/or a guitar/mic and midi foot switch controller.
 A few recordings made: https://www.youtube.com/user/judahmu/videos

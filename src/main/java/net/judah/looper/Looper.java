@@ -1,7 +1,6 @@
 package net.judah.looper;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import org.jaudiolibs.jnajack.JackPort;
 
@@ -12,23 +11,24 @@ import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.looper.SyncWidget.SelectType;
+import net.judah.looper.sampler.Sample;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
 import net.judah.mixer.SoloTrack;
 import net.judah.plugin.Carla;
 import net.judah.util.Icons;
 
-@RequiredArgsConstructor
+@RequiredArgsConstructor @Getter
 public class Looper extends ArrayList<Loop> {
 
-	public static final int LOOPERS = 4;
-    private final List<JackPort> outports;
-    @Getter @Setter private long recordedLength;
-
-    @Getter private Loop loopA;
-    @Getter private Loop loopB;
-    @Getter private Loop loopC;
-    @Getter private SoloTrack drumTrack;
+	public static final int LOOPERS = 4; // anything above LOOPERS are samples and one-shots
+	private final JackPort left;
+	private final JackPort right;
+	@Setter private long recordedLength;
+    private Loop loopA;
+    private Loop loopB;
+    private Loop loopC;
+    private SoloTrack drumTrack;
     
     /** pause/unpause specific loops, clock-aware */
     @RequiredArgsConstructor @Getter
@@ -38,19 +38,14 @@ public class Looper extends ArrayList<Loop> {
     /** pause/unpause specific loops */
     private Pause suspended = null; 
     
-    @Override
-	public boolean add(Loop loop) {
-        loop.setOutputPorts(outports);
-        return super.add(loop);
-    }
-
     /** does not delete loops, clears their recordings */
-    @Override 
+	@Override
 	public void clear() {
-        for (Loop s : this) {
+    	for (int i = 0; i < LOOPERS; i++) { // don't erase the sampler
+    		Loop s = get(i);
         	s.record(false);
             s.clear();
-            s.dirty = false;
+            s.setActive(false);
         }
         if (JudahClock.isLoopSync()) {
         	JudahClock.setOnDeck(SelectType.SYNC);
@@ -78,12 +73,10 @@ public class Looper extends ArrayList<Loop> {
 
     }
 
-    /** in Real-Time thread */
-    public void process() {
-        // do any recording or playing
-        for (Loop loop : this) {
-            loop.process();
-        }
+    /** play and/or record loops and samples in Real-Time thread */
+	public void process() {
+    	for (Loop l : this)
+    		l.process();
     }
 
     public int indexOf(Channel loop) {
@@ -129,7 +122,7 @@ public class Looper extends ArrayList<Loop> {
 
 	public void verseChorus() {
 		for (Loop loop : this) {
-			if (loop != drumTrack)
+			if (loop != drumTrack && loop instanceof Sample == false)
 				loop.setOnMute(!loop.isOnMute());
 		}
 	}

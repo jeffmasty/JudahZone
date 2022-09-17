@@ -7,13 +7,13 @@ import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.effects.LFO.Target;
 import net.judah.effects.api.Gain;
+import net.judah.looper.sampler.Sample;
 import net.judah.mixer.Channel;
-import net.judah.mixer.MasterTrack;
 
 @RequiredArgsConstructor
 public class Fader {
 
-	public static final int DEFAULT_FADE = 4000;
+	public static final int DEFAULT_FADE = 3000;
 	
 	final Channel channel;
 	final LFO.Target target;
@@ -22,25 +22,39 @@ public class Fader {
 	long startTime;
 	Runnable cleanup;
 
-	/** 3 second fade-in on master bus */
-	public static Fader fadeIn() {
-		return new Fader(JudahZone.getMasterTrack(), Target.Gain, DEFAULT_FADE, 0, 51, new Runnable() {
+	public Fader setCleanup(Runnable r) {
+		this.cleanup = r;
+		return this;
+	}
+	
+	public static Fader fadeIn(Channel ch) {
+		return new Fader(ch, Target.Gain, DEFAULT_FADE, 0, ch instanceof Sample ? 95 : 51, new Runnable() {
 		    @Override public void run() {
-		        JudahZone.getMasterTrack().getFader().updateVolume();
-		    }
-		});
+		        ch.getFader().updateVolume();
+		    }});
+	}
+	
+	/** 4 second fade-in on master bus */
+	public static Fader fadeIn() {
+		return fadeIn(JudahZone.getMains());
 	}
 
-	/** Fade out Master track over 4 seconds */
-	public static Fader fadeOut() {
-	    final MasterTrack master = JudahZone.getMasterTrack();
-	    return new Fader(master, Target.Gain, DEFAULT_FADE, master.getVolume(), 0, new Runnable() {
-            @Override
-            public void run() {
-//                master.setOnMute(true);
-//                master.getGain().setVol(50);
+	
+	public static Fader fadeOut(Channel ch) {
+	    Fader result =  new Fader(ch, Target.Gain, DEFAULT_FADE, ch.getVolume(), 0, new Runnable() {
+            @Override public void run() {
+            	ch.getFader().updateVolume();
             }
         });
+	    if (ch instanceof Sample)
+			result.cleanup = () ->{
+				((Sample)ch).setActive(false);
+				((Sample)ch).getPad().update();};
+		return result;
+	}
+	/** Fade out Master track over 4 seconds */
+	public static Fader fadeOut() {
+		return fadeOut(JudahZone.getMains());
 	}
 
     public Fader(Channel master, Target gain, int msec, int startVal, int endVal, Runnable cleanup) {

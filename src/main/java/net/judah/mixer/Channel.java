@@ -1,12 +1,16 @@
 package net.judah.mixer;
 
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.swing.ImageIcon;
 
-import lombok.Data;
+import org.jaudiolibs.jnajack.JackPort;
+
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.effects.*;
@@ -16,20 +20,23 @@ import net.judah.effects.api.Preset;
 import net.judah.effects.api.Reverb;
 import net.judah.effects.api.Setting;
 import net.judah.effects.gui.EffectsRack;
+import net.judah.util.AudioTools;
+import net.judah.util.Constants;
+import net.judah.util.GuitarTuner;
 import net.judah.util.RTLogger;
 
 /** A mixer bus for either Input or Output audio */
-@Data @EqualsAndHashCode(callSuper = false)
+@Getter @EqualsAndHashCode(callSuper = false)
 public abstract class Channel extends ArrayList<Effect> {
 
 	protected final String name;
 	protected ChannelFader fader;
-	protected EffectsRack effects;
+	protected EffectsRack gui;
     protected final boolean isStereo;
 	
-	protected ImageIcon icon;
+	@Setter protected ImageIcon icon;
 	protected boolean onMute;
-	protected Preset preset = JudahZone.getPresets().getFirst();
+	protected Preset preset;
 	protected boolean presetActive;
     protected Gain gain = new Gain();
     protected LFO lfo = new LFO();
@@ -39,6 +46,10 @@ public abstract class Channel extends ArrayList<Effect> {
     protected Chorus chorus = new Chorus();
 	protected Delay delay = new Delay();
     protected Reverb reverb;
+    @Setter protected JackPort leftPort;
+    @Setter protected JackPort rightPort;
+
+    protected FloatBuffer toJackLeft, toJackRight;
     
     public Channel(String name, boolean isStereo) {
         this.name = name;
@@ -62,6 +73,8 @@ public abstract class Channel extends ArrayList<Effect> {
 
     private void applyPreset() {
     	reset();
+    	if (preset == null)
+    		preset = JudahZone.getPresets().getFirst();
         setting:
         for (Setting s : preset) {
             for (Effect e : this) {
@@ -125,7 +138,7 @@ public abstract class Channel extends ArrayList<Effect> {
 		getLfo().setActive(false);
 		getOverdrive().setActive(false);
 		getGain().setPan(50);
-		if (this instanceof LineIn == false)
+		if (this instanceof Instrument == false)
 			getGain().setVol(50);
 	}
 
@@ -143,4 +156,83 @@ public abstract class Channel extends ArrayList<Effect> {
 			fader = new ChannelFader(this);
 		return fader;
 	}
+	
+	public EffectsRack getGui() {
+		if (gui == null)
+			gui = new EffectsRack(this);
+		return gui;
+	}
+	
+	public void processFx(FloatBuffer mono) {
+		mono.rewind();
+		if (this == GuitarTuner.getChannel()){
+			MainFrame.update(AudioTools.copy(mono));
+			mono.rewind();
+		}
+		float gain = getVolume() * 0.5f;
+		for (int z = 0; z < Constants.bufSize(); z++)
+			mono.put(mono.get(z) * gain);
+
+		if (eq.isActive()) {
+			eq.process(mono, true);
+		}
+		if (chorus.isActive()) {
+			chorus.processMono(mono);
+		}
+		if (overdrive.isActive()) {
+			overdrive.processAdd(mono);
+		}
+
+		if (delay.isActive()) {
+			delay.processAdd(mono, mono, true);
+		}
+		if (reverb.isActive() && reverb.isInternal()) {
+			reverb.process(mono);
+		}
+		if (cutFilter.isActive()) {
+			cutFilter.process(mono);
+		}
+
+	}
+	
+	public void processFx(FloatBuffer left, FloatBuffer right) {
+		left.rewind();
+		right.rewind();
+		
+		if (this == GuitarTuner.getChannel()) {
+			MainFrame.update(AudioTools.copy(left));
+			left.rewind();
+		}
+		
+		float gain = getVolume() * 0.5f;
+		for (int z = 0; z < Constants.bufSize(); z++) {
+			left.put(left.get(z) * gain);
+			right.put(right.get(z) * gain);
+		}
+
+		if (eq.isActive()) {
+			eq.process(left, true);
+			eq.process(right, false);
+		}
+		if (chorus.isActive()) {
+			chorus.processStereo(left, right);
+		}
+		if (overdrive.isActive()) {
+			overdrive.processAdd(left);
+			overdrive.processAdd(right);
+		}
+
+		if (delay.isActive()) {
+			delay.processAdd(left, left, true);
+			delay.processAdd(right, right, false);
+		}
+		if (reverb.isActive() && reverb.isInternal()) {
+			((Freeverb)reverb).process(left, right);
+		}
+		if (cutFilter.isActive()) {
+			cutFilter.process(left, right, 1);
+		}
+
+	}
+	
 }

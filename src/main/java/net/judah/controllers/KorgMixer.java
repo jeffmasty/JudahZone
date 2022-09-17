@@ -10,14 +10,16 @@ import net.judah.controllers.MapEntry.TYPE;
 import net.judah.effects.api.Reverb;
 import net.judah.effects.gui.ControlPanel;
 import net.judah.looper.Looper;
+import net.judah.looper.sampler.SamplerGui;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
-import net.judah.mixer.LineIn;
+import net.judah.mixer.Instrument;
 import net.judah.tracker.Track;
 import net.judah.tracker.Tracker;
 import net.judah.tracker.Transpose;
 import net.judah.util.Constants;
+import net.judah.util.SettableCombo;
 
 /** Korg nanoKONTROL2 midi controller custom codes */ 	
 public class KorgMixer implements Controller {
@@ -69,13 +71,15 @@ public class KorgMixer implements Controller {
 			return true;
 		}
 		if (data1 >= soff && data1 < soff + 8) { // SELECT CHANNEL or TRACK EFFECTS
-			// if (data1 < soff + 4)  // output channels, check latch
-			// 	JudahClock.waiting((Recorder)channels.get(data1 - soff)); 
 			if (data2 == 0) return true;
 			new Thread( () -> {
 				int ch = data1 - soff;
-				if (doubleClick(ch))
-					MainFrame.setFocus(Tracker.getTracks()[ch]);
+				if (doubleClick(ch)) {
+					if (ch == 7)
+						MainFrame.get().addOrShow(SamplerGui.getInstance(), SamplerGui.getInstance().getName());
+					else 
+						MainFrame.setFocus(Tracker.getTracks()[ch]);
+				}
 				else 
 					MainFrame.setFocus(channels.get(data1 - soff));
 			}).start();
@@ -87,25 +91,24 @@ public class KorgMixer implements Controller {
 			return true;
 		}
 		if (data1 >= moff + 4 && data1 < moff + 8) { // MUTE RECORD INPUT
-			LineIn ch = ((LineIn)channels.get(data1 - moff));
+			Instrument ch = ((Instrument)channels.get(data1 - moff));
 			ch.setMuteRecord(data2 > 0);
 			MainFrame.update(ch);
 			return true;
 		}
 		if (data1 >= roff && data1 < roff + 8) { // play/stop sequencer tracks
 			int trackNum = data1 - roff;
-			if (trackNum == Tracker.getTracks().length) { // only 7 tracks, run the cricket sample
+			if (trackNum == Tracker.getTracks().length) { 
+				// track8 = run the cricket sample (only 7 step tracks)
 				JudahClock.getInstance().crickets(data2 > 0);
 				return true;
 			}
 			Track track = Tracker.getTracks()[trackNum];
 			track.setActive(data2 > 0);
-//			if (doubleClick(trackNum)) 
-//				MainFrame.setFocus(track);
 			return true;
 		}
 		if (data1 == SET.getVal() && data2 != 0) { // load selected Song into sequencer/looper
-			JudahZone.loadSong();
+			SettableCombo.set();
 			return true;
 		}
 		if (data1 == LOOP.getVal()) {
@@ -159,8 +162,8 @@ public class KorgMixer implements Controller {
 		}
 		if (data1 == RECORD.getVal()) { // Toggle Mute
 			Channel current = ControlPanel.getInstance().getCurrent().getChannel();
-			if (current instanceof LineIn) {
-				LineIn in = (LineIn)current;
+			if (current instanceof Instrument) {
+				Instrument in = (Instrument)current;
 				in.setMuteRecord(!in.isMuteRecord());
 			}
 			else 

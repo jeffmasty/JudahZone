@@ -21,7 +21,7 @@ public class DJJefe extends JPanel {
         	channels.add(loop.getFader());
         for (Channel channel : JudahZone.getChannels()) 
         	channels.add(channel.getFader());
-        channels.add(JudahZone.getMasterTrack().getFader());
+        channels.add(JudahZone.getMains().getFader());
         
         for (ChannelFader fader : channels) 
         	add(fader);

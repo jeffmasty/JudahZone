@@ -263,160 +263,6 @@
   </Data>
  </Plugin>
 
- <!-- Calf Vintage Delay -->
- <Plugin>
-  <Info>
-   <Type>LV2</Type>
-   <Name>Calf Vintage Delay</Name>
-   <URI>http://calf.sourceforge.net/plugins/VintageDelay</URI>
-  </Info>
-
-  <Data>
-   <Active>No</Active>
-   <ControlChannel>1</ControlChannel>
-   <Options>0x3f1</Options>
-
-   <Parameter>
-    <Index>0</Index>
-    <Name>Active</Name>
-    <Symbol>on</Symbol>
-    <Value>1</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>1</Index>
-    <Name>Input Gain</Name>
-    <Symbol>level_in</Symbol>
-    <Value>1</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>2</Index>
-    <Name>Output Gain</Name>
-    <Symbol>level_out</Symbol>
-    <Value>0.98178905248642</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>11</Index>
-    <Name>Subdivide</Name>
-    <Symbol>subdiv</Symbol>
-    <Value>4</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>12</Index>
-    <Name>Time L</Name>
-    <Symbol>time_l</Symbol>
-    <Value>3</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>13</Index>
-    <Name>Time R</Name>
-    <Symbol>time_r</Symbol>
-    <Value>5</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>14</Index>
-    <Name>Feedback</Name>
-    <Symbol>feedback</Symbol>
-    <Value>0.499700009822845</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>15</Index>
-    <Name>Wet</Name>
-    <Symbol>amount</Symbol>
-    <Value>0.25</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>16</Index>
-    <Name>Mix mode</Name>
-    <Symbol>mix_mode</Symbol>
-    <Value>1</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>17</Index>
-    <Name>Medium</Name>
-    <Symbol>medium</Symbol>
-    <Value>1</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>18</Index>
-    <Name>Dry</Name>
-    <Symbol>dry</Symbol>
-    <Value>1</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>19</Index>
-    <Name>Stereo Width</Name>
-    <Symbol>width</Symbol>
-    <Value>1</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>20</Index>
-    <Name>Fragmentation</Name>
-    <Symbol>fragmentation</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>21</Index>
-    <Name>Pattern Beats</Name>
-    <Symbol>pbeats</Symbol>
-    <Value>4</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>22</Index>
-    <Name>Pattern Fragmentation</Name>
-    <Symbol>pfrag</Symbol>
-    <Value>4</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>23</Index>
-    <Name>Timing</Name>
-    <Symbol>timing</Symbol>
-    <Value>0</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>24</Index>
-    <Name>BPM</Name>
-    <Symbol>bpm</Symbol>
-    <Value>120</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>25</Index>
-    <Name>ms</Name>
-    <Symbol>ms</Symbol>
-    <Value>500</Value>
-   </Parameter>
-
-   <Parameter>
-    <Index>26</Index>
-    <Name>Frequency</Name>
-    <Symbol>hz</Symbol>
-    <Value>2</Value>
-   </Parameter>
-
-   <CustomData>
-    <Type>http://kxstudio.sf.net/ns/carla/property</Type>
-    <Key>CarlaSkinIsCompacted</Key>
-    <Value>false</Value>
-   </CustomData>
-  </Data>
- </Plugin>
-
  <!-- Tal-Reverb-III -->
  <Plugin>
   <Info>
@@ -612,7 +458,7 @@
     <Index>6</Index>
     <Name>low shelf gain</Name>
     <Symbol>low_shelf_gain</Symbol>
-    <Value>0.892000019550323</Value>
+    <Value>0.891700029373169</Value>
    </Parameter>
 
    <Parameter>
@@ -658,7 +504,7 @@
 &lt;tal curprogram=&quot;0&quot; version=&quot;1&quot;&gt;
   &lt;programs&gt;
     &lt;program programname=&quot;Stereo Plate&quot; dry=&quot;0.5&quot; wet=&quot;0&quot; roomsize=&quot;0.4120000302791595459&quot;
-             predelay=&quot;0&quot; lowshelfgain=&quot;0.89200001955032348633&quot; highshelfgain=&quot;0.32800000905990600586&quot;
+             predelay=&quot;0&quot; lowshelfgain=&quot;0.89170002937316894531&quot; highshelfgain=&quot;0.32800000905990600586&quot;
              stereowidth=&quot;1&quot; realstereomode=&quot;1&quot; power=&quot;1&quot;/&gt;
     &lt;program programname=&quot;Short Stereo Plate&quot; dry=&quot;0.5&quot; wet=&quot;0.32100000977516174316&quot;
              roomsize=&quot;0.23600001633167266846&quot; predelay=&quot;0&quot; lowshelfgain=&quot;1&quot;
@@ -769,32 +615,12 @@
    <Target>JudahZone:mic</Target>
   </Connection>
   <Connection>
-   <Source>system:capture_5</Source>
-   <Target>JudahZone:CircuitL</Target>
-  </Connection>
-  <Connection>
-   <Source>system:capture_6</Source>
-   <Target>JudahZone:CircuitR</Target>
-  </Connection>
-  <Connection>
-   <Source>system:capture_7</Source>
-   <Target>JudahZone:UnoL</Target>
-  </Connection>
-  <Connection>
-   <Source>system:capture_8</Source>
-   <Target>JudahZone:UnoR</Target>
-  </Connection>
-  <Connection>
    <Source>PulseAudio JACK Sink:front-left</Source>
    <Target>system:playback_1</Target>
   </Connection>
   <Connection>
    <Source>PulseAudio JACK Sink:front-right</Source>
    <Target>system:playback_2</Target>
-  </Connection>
-  <Connection>
-   <Source>a2j:UMC1820 [24] (capture): UMC1820 MIDI 1</Source>
-   <Target>fluidsynth-midi:midi_00</Target>
   </Connection>
   <Connection>
    <Source>a2j:FBV Shortboard Mk II [28] (capture): FBV Shortboard Mk II MIDI 1</Source>
@@ -809,12 +635,12 @@
    <Target>JudahMidi:mixer</Target>
   </Connection>
   <Connection>
-   <Source>fluidsynth-midi:left</Source>
-   <Target>JudahZone:fluidL</Target>
+   <Source>a2j:MPKmini2 [40] (capture): MPKmini2 MIDI 1</Source>
+   <Target>JudahMidi:keyboard</Target>
   </Connection>
   <Connection>
-   <Source>a2j:MPKmini2 [44] (capture): MPKmini2 MIDI 1</Source>
-   <Target>JudahMidi:keyboard</Target>
+   <Source>fluidsynth-midi:left</Source>
+   <Target>JudahZone:fluidL</Target>
   </Connection>
   <Connection>
    <Source>fluidsynth-midi:right</Source>
@@ -830,11 +656,7 @@
   </Connection>
   <Connection>
    <Source>JudahMidi:Clock</Source>
-   <Target>a2j:Circuit Tracks [40] (playback): Circuit Tracks MIDI</Target>
-  </Connection>
-  <Connection>
-   <Source>JudahMidi:Clock</Source>
-   <Target>a2j:MPKmini2 [44] (playback): MPKmini2 MIDI 1</Target>
+   <Target>a2j:MPKmini2 [40] (playback): MPKmini2 MIDI 1</Target>
   </Connection>
   <Connection>
    <Source>JudahMidi:Fluid</Source>
@@ -847,10 +669,6 @@
   <Connection>
    <Source>JudahMidi:Crave</Source>
    <Target>a2j:UMC1820 [24] (playback): UMC1820 MIDI 1</Target>
-  </Connection>
-  <Connection>
-   <Source>JudahMidi:Circuit</Source>
-   <Target>a2j:Circuit Tracks [40] (playback): Circuit Tracks MIDI</Target>
   </Connection>
   <Connection>
    <Source>JudahZone:left</Source>
@@ -903,10 +721,6 @@
   <Connection>
    <Source>MidiClock:events-out</Source>
    <Target>JudahMidi:pulse</Target>
-  </Connection>
-  <Connection>
-   <Source>a2j:Circuit Tracks [40] (capture): Circuit Tracks MIDI</Source>
-   <Target>JudahMidi:circuitIn</Target>
   </Connection>
  </ExternalPatchbay>
 </CARLA-PROJECT>

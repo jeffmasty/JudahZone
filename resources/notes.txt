@@ -1,24 +1,36 @@
 TODO:
 
-Translate button fix
+portWrapper for midiOut to JudahSynth/JudahBeats
+color code channels: green/Fluid blue/Calf orange/Crave yellow/Synth purple/Beats
+Transpose f/b in TimeSigGui/bugz
+fix lfo on synth/samples
+JudahBeatz 
+Scope and Meters
+Midi velocity in JudahSynth
+noise wave shape, wave duty 
+8-track player
+separate setlist resources from code
+
+AVAILABLE: korg pad 5, MPK CC 1
+
 Delay and LFO upgrade (triggered to Clock, LFO/Fader cleanUp())
-Ritardando, CurrentBeat swing
-checkboxes: save patch/tempo/cycle info
-probability
+CurrentBeat, swing
+edit checkboxes: save patch/tempo/cycle info
+probability, Ritardando
 Loop copy/paste/length
 export beatbox as midi file
 Record session, save loops to disk and play samples from disk
 double tap erase - stop drums
 Noise Effect generates ocean, heartbeat, birds, crickets, walking, thunder, rain, 
 	bicycle, phonograph, whips and chains  (sampleFile, frequency, wet, granularity)
-JudahSynth + ADSR knobs (I Feel Love bassline) code my own synth
+Arppegiator
 Vocoder 
 record record record youtubes
 README credits
 clipping/xruns filter see https://github.com/psambit9791/jDSP Peak/Spike
 Latency + bleeding edge
 Display loop/sample wave form 
-multi-delete, upgrade properties table (enum, int, boolean types)
+Drag-n-drop, step sequencer editor upgrades
 Phasor, Shepard
 settings/default files
 Undo/Redo/Copy/Paste
@@ -35,7 +47,8 @@ Java Music API: https://github.com/psambit9791/jDSP
 Java Music API: https://github.com/chdh/dsp-collection-java
 
 https://explodingart.com/jmusic/index.html
-jsyn https://github.com/philburk/jsyn
+https://github.com/jbatistareis/bricks
+https://github.com/philburk/jsyn
 https://github.com/YuMuuu/SynthesizerRemastered/blob/master/src/main/java/Oscillator.java
 https://github.com/mmitch/apsynth
 https://github.com/orsjb/beads
@@ -82,23 +95,15 @@ Done:
 arpeggiator, overdub midi
 Midi looper/recorder, Quantization
 router table -> display pad/knob name  and   midi drum name
-new GUI layout, fix props table
 Recompile Carla (done, modified modules/rtaudio.cpp)
 mixer/Channel concept, mixer gain
 MidiMapper, midi router
 Setlist and Song  (default song)
-setup and teardown notes
-command mappings, triggers
-unify consoles
-handle relative and trigger type,  
-octaver, phaser knob
 redo carla/plugins/octaver
-    on foot switch: activate/deactive plugins, route/unroute ports
 LFO assign gain(organ volume), EQ, reverb 
-sample highlight + compression + reverb
 keyboard handler for channels/samples
 pArTy EQ
-Master MixerBus, Input/output/gain lvl, pedal knobs
+Main MixerBus, Input/output/gain lvl, pedal knobs
 UI: upgrade knobs 
 button icons: https://www.elharrakfonts.com/2019/04/font-bottons-music-pro.html
 display sheet music 
@@ -109,7 +114,7 @@ stereo pan
 make drumtrack a full-fledged 3rd loop
 "Apply to" and Presets menu options, chorus
 guitar tuner: MPM algo on github.com/JorenSix/TarsosDSP/blob/master/src/examples/be/tarsos/dsp/example/PitchDetectorExample.java
-TODO, loops on reverb not getting master effects/gain
+loops on reverb not getting master effects/gain
 BeatBox pulse on JackFrame
 scales, melodic step sequencer, 
 Calf Fluid Synth reverb
@@ -140,8 +145,9 @@ verse-chorus control
 record/quantize to step sequencer, 
 loop sync/master clock to 3/4, polyrythmic
 sheetMusic 2.0
-cricket sounds, Sampler
-
+Sampler (bicycle, creek, rain sounds), cricket sound on 2 and 4
+Settable interface (files, instruments, setlist)
+JudahSynth + ADSR knobs, code my own polyphonic ADSR synthesizer 
 
 REF-----------------------------------------------------------------
 

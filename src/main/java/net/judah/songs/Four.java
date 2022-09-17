@@ -5,7 +5,7 @@ import net.judah.api.Notification.Property;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.looper.Looper;
-import net.judah.settings.Channels;
+import net.judah.mixer.Channels;
 import net.judah.tracker.Tracker;
 
 public class Four extends SmashHit {

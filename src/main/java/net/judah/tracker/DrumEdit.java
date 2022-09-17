@@ -38,7 +38,6 @@ public class DrumEdit extends TrackEdit implements ActionListener, Pastels {
 		grid = new BeatBox(track, GRID_BOUNDS);
 		add(grid);
 		fillKit();
-
 	}
 
 	@Override

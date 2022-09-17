@@ -29,6 +29,8 @@ cc reserved
 public interface MPKTools {
 
 	public static final String NAME = "MPKmini2"; // capture
+	public static final int thresholdLo = 1;
+	public static final int thresholdHi = 98;
 
 	//public static final int JOYSTICK_DOWN_CC = 0; // 0 to 127
 	// public static final int JOYSTICK_CC = 100; // 64 to 127 (to be safe)
@@ -114,6 +116,9 @@ public interface MPKTools {
 	public static final List<Integer> PRIMARY_CC = Arrays.asList(
 	        new Integer[]{31, 32, 33, 34, 35, 36, 37, 38});
 
+	public static final List<Integer> SAMPLES_CC = Arrays.asList(
+			new Integer[] {90, 96, 99, 100, 97, 98, 101, 102});
+	
 	public static int [][][] PROG_CHANGES = {
 			{ 									   // green
 				{ 1,  2,  3,  4,  5,  6,  7,  8}, // lvl1

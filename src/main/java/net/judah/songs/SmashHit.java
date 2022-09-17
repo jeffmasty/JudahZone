@@ -5,7 +5,7 @@ import java.io.File;
 import net.judah.JudahZone;
 import net.judah.looper.Looper;
 import net.judah.mixer.Channel;
-import net.judah.settings.Channels;
+import net.judah.mixer.Channels;
 import net.judah.tracker.Track;
 import net.judah.tracker.Tracker;
 import net.judah.util.RTLogger;

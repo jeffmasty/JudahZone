@@ -1,5 +1,5 @@
 package net.judah.midi;
-import static net.judah.settings.MidiSetup.DRUMS_CHANNEL;
+import static net.judah.midi.MidiSetup.DRUMS_CHANNEL;
 import static org.jaudiolibs.jnajack.JackPortFlags.*;
 import static org.jaudiolibs.jnajack.JackPortType.MIDI;
 
@@ -25,12 +25,13 @@ import net.judah.api.PortMessage;
 import net.judah.api.Service;
 import net.judah.controllers.*;
 import net.judah.midi.JudahClock.Mode;
+import net.judah.midi.MidiSetup.IN;
+import net.judah.midi.MidiSetup.OUT;
 import net.judah.mixer.Channel;
-import net.judah.settings.Channels;
-import net.judah.settings.MidiSetup.IN;
-import net.judah.settings.MidiSetup.OUT;
+import net.judah.mixer.Channels;
 import net.judah.tracker.Track;
 import net.judah.tracker.Tracker;
+import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 /** handle MIDI integration with Jack */
@@ -170,13 +171,11 @@ public class JudahMidi extends BasicClient implements Service {
             RTLogger.log(this, "connecting korg mixer: " + port + " to " + mixer.getName());
             jack.connect(jackclient, port, mixer.getName());
         }
-
-        JudahZone.getInstance().initializeGui();
+        Constants.timer(1000, () ->JudahZone.getInstance().initializeGui());
     }
     
     @Override
     public boolean process(JackClient client, int nframes) {
-        if (JudahZone.getMasterTrack() == null || JudahZone.getMasterTrack().isOnMute()) return true;
         try {
 
             scheduler.offer(frame++);

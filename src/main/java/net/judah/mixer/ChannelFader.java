@@ -39,7 +39,7 @@ public class ChannelFader extends JPanel implements Pastels {
 
 	@Getter private final Channel channel;
 	private final Loop loop;
-	private final LineIn in;
+	private final Instrument in;
 	JudahMidi midi = JudahMidi.getInstance();
 
 	@Getter private final JToggleButton mute = new JToggleButton("mute");
@@ -55,7 +55,7 @@ public class ChannelFader extends JPanel implements Pastels {
 	public ChannelFader(Channel channel) {
 		this.channel = channel;
 		loop = (channel instanceof Loop) ? (Loop)channel : null;
-		in = (channel instanceof LineIn) ? (LineIn)channel : null;
+		in = (channel instanceof Instrument) ? (Instrument)channel : null;
 		setBorder(BorderFactory.createDashedBorder(Color.DARK_GRAY));
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(BUTTONS);
@@ -148,7 +148,7 @@ public class ChannelFader extends JPanel implements Pastels {
 		}
 		if (channel.isOnMute())
 			volume.setBackground(PURPLE);
-		else if (channel instanceof LineIn && ((LineIn)channel).isMuteRecord())
+		else if (channel instanceof Instrument && ((Instrument)channel).isMuteRecord())
 			volume.setBackground(BLUE);
 		else {
 			volume.setBackground(null);
@@ -166,11 +166,9 @@ public class ChannelFader extends JPanel implements Pastels {
 				bg = RED;
 			else if (JudahClock.getInstance().getSynchronized() == loop.getSync())
 				bg = YELLOW;
-//			else if (loop.isOnMute() && !loop.isDirty())
-//				bg = PURPLE;
 			else if (loop.hasRecording() && loop.isPlaying() == AudioMode.STOPPED)
 				bg = Color.DARK_GRAY;
-			else if (loop.isPlaying() == AudioMode.RUNNING && loop.isDirty())
+			else if (loop.isPlaying() == AudioMode.RUNNING && loop.isActive())
 				bg = GREEN;
 			else if (loop.isArmed()) 
 				bg = PINK;

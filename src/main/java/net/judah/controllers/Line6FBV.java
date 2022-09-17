@@ -6,7 +6,7 @@ import net.judah.api.Midi;
 import net.judah.effects.gui.ControlPanel;
 import net.judah.looper.Loop;
 import net.judah.mixer.Channel;
-import net.judah.mixer.LineIn;
+import net.judah.mixer.Instrument;
 import net.judah.mixer.SoloTrack;
 
 public class Line6FBV implements Controller {
@@ -30,7 +30,7 @@ public class Line6FBV implements Controller {
 
 		if (!Midi.isCC(midi)) return false;
 		
-		LineIn guitar = JudahZone.getChannels().getGuitar();
+		Instrument guitar = JudahZone.getChannels().getGuitar();
 		Loop loop;
 		final int data2 = midi.getData2();
 		switch (midi.getData1()) {
@@ -106,6 +106,8 @@ public class Line6FBV implements Controller {
 			int percent = (int)(data2 / 1.27f);
 			if (Math.abs(pedalMemory - percent) < 2)
 				return true; // ignore minor fluctuations of vol pedal
+			if (ControlPanel.getInstance() == null)
+				return true;
 			Channel ch = ControlPanel.getInstance().getCurrent().getChannel();
 			if (Math.abs(ch.getGain().getVol() - percent) > 2){
 				ch.getGain().setVol(percent);

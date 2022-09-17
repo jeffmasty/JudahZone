@@ -8,11 +8,11 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
+import net.judah.looper.sampler.Sample;
 import net.judah.mixer.Channel;
-import net.judah.mixer.LineIn;
+import net.judah.mixer.Instrument;
 import net.judah.util.Constants;
 import net.judah.util.GuitarTuner;
-import net.judah.util.Pastels;
 
 public class ChannelTitle extends JPanel {
 
@@ -27,7 +27,7 @@ public class ChannelTitle extends JPanel {
 		JPanel main = new JPanel();
 		
 		this.channel = channel;
-		name = new JLabel(channel.getName(), JLabel.CENTER);
+		name = new JLabel(channel instanceof Sample ? "Sample " + channel.getName() : channel.getName(), JLabel.CENTER);
 		name.setFont(Constants.Gui.BOLD13);
 		if (channel.getIcon() != null)
 			main.add(new JLabel(channel.getIcon(), JLabel.CENTER));
@@ -42,7 +42,7 @@ public class ChannelTitle extends JPanel {
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		add(main);
 		
-		tunerBtn = (channel instanceof LineIn) ?
+		tunerBtn = (channel instanceof Instrument) ?
 			 new JToggleButton("tuner") : null;
 		if (tunerBtn != null) {
 			tunerBtn.setSelected(false);
@@ -63,15 +63,13 @@ public class ChannelTitle extends JPanel {
         }
     }
 
-	
-	
 	private class Mute extends JCheckBox {
 		boolean inUpdate = false;
 		Mute() {
             addItemListener(e -> {
             	if (inUpdate) return;
-                if (channel instanceof LineIn)
-                	((LineIn)channel).setMuteRecord(isSelected());
+                if (channel instanceof Instrument)
+                	((Instrument)channel).setMuteRecord(isSelected());
                 else
                 	channel.setOnMute(isSelected());
                 update();
@@ -81,18 +79,9 @@ public class ChannelTitle extends JPanel {
 
 		void update() {
 			
-			boolean muted = channel instanceof LineIn ? 
-					((LineIn)channel).isMuteRecord() :
+			boolean muted = channel instanceof Instrument ? 
+					((Instrument)channel).isMuteRecord() :
 						channel.isOnMute();
-			
-			if (muted) {
-                ChannelTitle.this.setBackground(Color.ORANGE);
-                setOpaque(true);
-            }
-            else {
-				ChannelTitle.this.setBackground(Pastels.EGGSHELL);
-				setOpaque(false);
-            }
 			setSelected(muted);
 		}
 		

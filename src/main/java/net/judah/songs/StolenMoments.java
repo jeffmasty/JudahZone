@@ -4,7 +4,7 @@ package net.judah.songs;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.looper.Looper;
-import net.judah.settings.Channels;
+import net.judah.mixer.Channels;
 import net.judah.tracker.Cycle;
 import net.judah.tracker.Pattern;
 import net.judah.tracker.Track;
