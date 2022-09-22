@@ -10,8 +10,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import lombok.Getter;
-import net.judah.midi.JudahMidi;
 import net.judah.util.AudioTools;
+import net.judah.util.Constants;
 
 public class Recording extends Vector<float[][]> {
 
@@ -64,10 +64,10 @@ public class Recording extends Vector<float[][]> {
 	/** create empty recording of size */
 	public Recording(int size, boolean startListeners) {
 		this(startListeners);
-		int bufferSize = JudahMidi.getInstance().getBufferSize();
+		int bufferSize = Constants.bufSize();
 		for (int j = 0; j < size; j++) {
 			float[][] data = new float[2][bufferSize];
-			AudioTools.processSilence(data);
+			//AudioTools.silence(data);
 			add(data);
 		}
 		
@@ -75,7 +75,7 @@ public class Recording extends Vector<float[][]> {
 
 	public Recording(Recording recording, int duplications, boolean startListeners) {
 		this(startListeners);
-		int bufferSize = JudahMidi.getInstance().getBufferSize();
+		int bufferSize = Constants.bufSize();
 		int size = recording.size() * duplications;
 		int x = 0;
 		for (int j = 0; j < size; j++) {

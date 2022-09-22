@@ -5,11 +5,11 @@ import javax.swing.JPanel;
 
 public class GridTab extends JPanel {
 
-	
-	public GridTab() {
+	public GridTab(JudahBeatz t) {
+		setName("BeatBox");
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
-		if (Tracker.getCurrent() != null && Tracker.getCurrent().getEdit() != null)
-			add(Tracker.getCurrent().getEdit());
+		if (t.getCurrent() != null && t.getCurrent().getEdit() != null)
+			add(t.getCurrent().getEdit());
 	}
 	
 	public void changeTrack(Track t) {

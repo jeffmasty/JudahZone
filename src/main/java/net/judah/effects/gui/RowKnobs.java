@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 import lombok.Getter;
 import net.judah.controllers.KnobMode;
-import net.judah.controllers.MPK;
+import net.judah.controllers.MPKmini;
 import net.judah.effects.Chorus;
 import net.judah.effects.CutFilter;
 import net.judah.effects.Delay;
@@ -71,8 +71,8 @@ public class RowKnobs extends Row {
 				((JudahKnob)c).update();
 		
 		boolean on = (row == 0 || row == 1) ? 
-				KnobMode.FX1 == MPK.getMode() : 
-				KnobMode.FX2 == MPK.getMode(); 
+				KnobMode.FX1 == MPKmini.getMode() : 
+				KnobMode.FX2 == MPKmini.getMode(); 
 		for (Component c : controls) 
 			if (c instanceof JudahKnob)
 				((JudahKnob)c).setOnMode(on);

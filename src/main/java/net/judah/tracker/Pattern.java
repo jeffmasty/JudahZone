@@ -356,7 +356,7 @@ public class Pattern extends HashMap<Integer, Notes> implements TableModel, Tabl
 			update();
 		else 
 			track.getEdit().update();
-		JudahMidi.queue(midi, track.getMidiOut());
+		track.getMidiOut().send(midi, JudahMidi.ticker());
 	}
     
 }

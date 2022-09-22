@@ -11,7 +11,6 @@ import java.util.HashSet;
 import javax.swing.*;
 import javax.swing.border.Border;
 
-import org.jaudiolibs.jnajack.JackPort;
 import org.jaudiolibs.jnajack.JackTransportState;
 
 import lombok.Getter;
@@ -23,16 +22,15 @@ import net.judah.controllers.Jamstik;
 import net.judah.controllers.KnobMode;
 import net.judah.looper.LoopWidget;
 import net.judah.songs.SmashHit;
-import net.judah.tracker.MidiOut;
 import net.judah.tracker.Track;
-import net.judah.tracker.Tracker;
 import net.judah.util.*;
 
-/** loop length, tempo, mpk out, presets, setlist */
+/** clock tempo, loop length, setlist, midi cables */
 public class MidiGui extends JPanel implements TimeListener {
 
 	private final JudahMidi midi;
 	private final JudahClock clock;
+	private final Jamstik jamstik;
 	
 	private final JButton menu = new JButton("Zone");
 	private final JToggleButton start = new JToggleButton("Play");
@@ -40,30 +38,31 @@ public class MidiGui extends JPanel implements TimeListener {
     private final JLabel beat = new JLabel("0", JLabel.CENTER);
    	private final JLabel tempoLbl = new JLabel("?", JLabel.CENTER);
     private final JComboBox<Integer> sync = new JComboBox<>();
-    
     @Getter private final ProgChange calf;
     @Getter private final ProgChange fluid;
     @Getter private final SettableCombo<SmashHit> setlist = new SettableCombo<>(()->JudahZone.loadSong());
-	@Getter private final JComboBox<JackPort> mpk = new JComboBox<>();
+	@Getter private final CenteredCombo<MidiPort> mpk;
+    
 	private final JPanel mpkPanel = new JPanel();
-	private Jamstik jam;
 	@Getter private final JudahMenu popup = new JudahMenu();
 	private final Border NONE = BorderFactory.createLineBorder(Pastels.BUTTONS, 4);
 
-	public MidiGui(JudahMidi midi, JudahClock clock) {
+	public MidiGui(JudahMidi midi, JudahClock clock, Jamstik jamstik) {
     	this.midi = midi;
 		this.clock = clock;
     	clock.addListener(this);
+    	this.jamstik = jamstik;
+    	jamstik.setFrame(this);
     	
     	setBorder(NONE);
     	setOpaque(true);
     	setLayout(new GridLayout(1, 3));
 		calf = new ProgChange(midi.getCalfOut(), 0);
 		fluid = new ProgChange(midi.getFluidOut(), 0);
+		mpk = new CenteredCombo<>();
 		
 		new Thread(()-> 
 			initialize()).start();
-		
     }
 	
 	private void doSetlist(JPanel pnl) {
@@ -73,11 +72,14 @@ public class MidiGui extends JPanel implements TimeListener {
         JButton load = new JButton("▶");
         load.addActionListener(e->JudahZone.loadSong());
         pnl.add(load);
-
 	}
 	
 	private void initialize() {
-		
+		mpk.setRenderer(MidiCable.STYLE);
+		MidiCable.fillItems(false, mpk);
+		mpk.setSelectedItem(midi.getKeyboardSynth());
+		mpk.addActionListener(e-> midi.setKeyboardSynth((MidiPort)mpk.getSelectedItem() ));
+
         start.setSelected(clock.isActive());
         start.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
@@ -132,14 +134,6 @@ public class MidiGui extends JPanel implements TimeListener {
 			MainFrame.update(JudahZone.getLooper().getLoopA());
 		});
 		
-        // MPK routing
-		for (JackPort port : new JackPort[] {midi.getCraveOut(), midi.getFluidOut(), midi.getCalfOut()}) {
-			mpk.addItem(port);
-		}
-		mpk.setRenderer(MidiOut.STYLE);
-		mpk.setSelectedItem(midi.getKeyboardSynth());
-		mpk.addActionListener( e -> midi.setKeyboardSynth((JackPort)mpk.getSelectedItem()));
-
 		JPanel left1 = new JPanel();
 		JPanel left2 = new JPanel();
 		JPanel left3 = new JPanel();
@@ -170,7 +164,6 @@ public class MidiGui extends JPanel implements TimeListener {
         
         JPanel p1 = new JPanel(), p2 = new JPanel();
         JPanel jamPanel = new JPanel();
-        jam = new Jamstik(jamPanel, JudahZone.getServices());
 
         p1.setBackground(Pastels.BUTTONS);
         p2.setBackground(Pastels.BUTTONS);
@@ -182,7 +175,7 @@ public class MidiGui extends JPanel implements TimeListener {
         p2.add(new JLabel("Fluid", SwingConstants.CENTER));
         p2.add(max(fluid));
         jamPanel.add(new JLabel("Jam", SwingConstants.CENTER));
-        jamPanel.add(max(jam));
+        jamPanel.add(max(jamstik));
         
         mpkPanel.add(new JLabel("MPK", SwingConstants.CENTER));
         mpkPanel.add(max(mpk));
@@ -213,12 +206,12 @@ public class MidiGui extends JPanel implements TimeListener {
  	    case 4: // Load song
  	    	setlist.setSelectedIndex(Constants.ratio(data2 - 1, setlist.getItemCount()));
  	    	return;
-    	case 5: // circuit midi 2 out
-    		Track[] tracks = Tracker.getTracks();
-    		Tracker.setCurrent((Track)Constants.ratio(data2 - 1, tracks));
+    	case 5: // change sequencer track focus
+    		Track[] tracks = JudahZone.getTracker().getTracks();
+    		JudahZone.getTracker().setCurrent((Track)Constants.ratio(data2 - 1, tracks));
     		return;
     	case 6: // jamstik out
-    		jam.setSelectedIndex(Constants.ratio(data2 - 1, midi.getPaths().size()));
+    		JudahZone.getJamstik().setSelectedIndex(Constants.ratio(data2 - 1, midi.getPaths().size()));
     		return;
     	case 7: // mpk keys out
     		mpk.setSelectedIndex(Constants.ratio(data2 - 1, mpk.getItemCount()));

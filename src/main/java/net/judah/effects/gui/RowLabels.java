@@ -14,7 +14,7 @@ import javax.swing.border.Border;
 import lombok.Getter;
 import net.judah.MainFrame;
 import net.judah.controllers.KnobMode;
-import net.judah.controllers.MPK;
+import net.judah.controllers.MPKmini;
 import net.judah.effects.EffectColor;
 import net.judah.effects.api.Effect;
 import net.judah.mixer.Channel;
@@ -40,7 +40,7 @@ public class RowLabels extends Row {
 	@Override
 	public void update() {
 		
-		Font font = MPK.getMode().equals(mode) ? Gui.BOLD : Gui.FONT11;
+		Font font = MPKmini.getMode().equals(mode) ? Gui.BOLD : Gui.FONT11;
 		if (font.equals(model)) 
 			font = null;
 		else 

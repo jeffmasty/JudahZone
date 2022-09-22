@@ -54,7 +54,7 @@ public class EQ implements Effect {
 		Q, BW, S
 	};
 
-	class Channel {
+	class Chann {
 		BiquadFilter[] filters = new BiquadFilter[EqBand.values().length];
 	}
 
@@ -147,8 +147,8 @@ public class EQ implements Effect {
 		};
 	}
 
-	private final Channel leftCh = new Channel();
-	private final Channel rightCh = new Channel();
+	private final Chann leftCh = new Chann();
+	private final Chann rightCh = new Chann();
 	@Getter @Setter private boolean active;
 
 	/** create 3 peak EQs: 120hz, 666hz and 3100hz, each spanning more than an octave */

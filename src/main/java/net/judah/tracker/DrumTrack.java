@@ -3,36 +3,32 @@ package net.judah.tracker;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 
-import org.jaudiolibs.jnajack.JackPort;
-
 import lombok.Getter;
+import lombok.Setter;
+import net.judah.drumz.DrumType;
 import net.judah.midi.JudahClock;
+import net.judah.midi.MidiPort;
 import net.judah.util.Constants;
-import net.judah.util.Slider;
 
 public class DrumTrack extends Track {
 
+	@Getter private final int[] gm = new int[DrumType.values().length];
+	@Setter @Getter private String beatKit;
+
+	
 	public static final String HEADER = "Contract";
-	
-
 	public static final float DEF_VOL = 0.9f;
-	@Getter private final Slider customVol = new Slider(null);
 
+	@Getter private final ArrayList<GMDrum> kit = new ArrayList<>();
+	@Getter private final ArrayList<Float> volume = new ArrayList<>();
 	
-	@Getter public final ArrayList<GMDrum> kit = new ArrayList<>();
-	@Getter public final ArrayList<Float> volume = new ArrayList<>();
-	
-	public DrumTrack(JudahClock clock, String name, JackPort port) {
-		super(clock, name, 9, port);
+	public DrumTrack(JudahClock clock, String name, MidiPort port, JudahBeatz t) {
+		super(clock, name, 9, port, t);
 		for (GMDrum d : GMDrum.Standard) {
 			kit.add(d);
 			volume.add(DEF_VOL);
 		}
 		edit = new DrumEdit(this);
-
-		customVol.setPreferredSize(TrackView.SLIDESZ);
-		customVol.addChangeListener(e -> 
-			volume.set(volume.size()-1, ((Slider)e.getSource()).getValue() * .01f));
 
 	}
 
@@ -42,7 +38,7 @@ public class DrumTrack extends Track {
 				return volume.get(i);
 		return 0f;
 	}
-
+//TODO mutes
 	public String kitToFile() {
 		StringBuffer sb = new StringBuffer(HEADER).append(Constants.NL);
 		for (int i = 0; i < kit.size(); i++)

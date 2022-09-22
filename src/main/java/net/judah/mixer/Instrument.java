@@ -1,7 +1,8 @@
 package net.judah.mixer;
 
-import static net.judah.JudahZone.JUDAHZONE;
-import static net.judah.util.Constants.*;
+import javax.swing.ImageIcon;
+
+import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 
@@ -10,33 +11,31 @@ import lombok.Getter;
 public class Instrument extends LineIn {
 
     protected final String leftSource;
-    protected final String leftConnection;
     protected final String rightSource; // for stereo
-    protected final String rightConnection;
 
-    /** Mono channel uses left signal */
-	public Instrument(String channelName, String sourcePort, String connectionPort) {
-		super(channelName, false);
+    /** Mono channel */
+	public Instrument(String name, String sourcePort, JackPort left, ImageIcon icon) {
+		super(name, false);
+		setIcon(icon);
+		this.leftPort = left;
 		this.leftSource = sourcePort;
-		this.leftConnection = JUDAHZONE + ":" + connectionPort;
-		rightSource = rightConnection = null;
+		this.rightSource = null;
 	}
 
 	/** Stereo channel */
-	public Instrument(String channelName, String[] sourcePorts, String[] connectionPorts) {
-		super(channelName, true);
-		this.leftSource = sourcePorts[LEFT_CHANNEL];
-		this.leftConnection = JUDAHZONE + ":" + connectionPorts[LEFT_CHANNEL];
-		this.rightSource = sourcePorts[RIGHT_CHANNEL];
-		this.rightConnection = JUDAHZONE + ":" + connectionPorts[RIGHT_CHANNEL];
+	public Instrument(String name, String leftSource, String rightSource, JackPort left, JackPort right, ImageIcon icon) {
+		super(name, true);
+		this.icon = icon;
+		this.leftPort = left;
+		this.rightPort = right;
+		this.leftSource = leftSource;
+		this.rightSource = rightSource;
 	}
 
-	@Override
-	public String toString() {
-		return name + ": " + leftConnection + " . " + rightConnection;
+	@Override public String toString() {
+		return name;
 	}
 
-	@Override
 	public void process() {
 		if (isStereo) 
 			processFx(leftPort.getFloatBuffer(), rightPort.getFloatBuffer());

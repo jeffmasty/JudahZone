@@ -7,7 +7,6 @@ import static net.judah.util.Constants.*;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import lombok.Getter;
@@ -15,62 +14,54 @@ import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.*;
+import net.judah.carla.Carla;
+import net.judah.drumz.JudahDrumz;
 import net.judah.effects.Freeverb;
-import net.judah.looper.sampler.Sample;
-import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
+import net.judah.mixer.Channels;
 import net.judah.mixer.LineIn;
-import net.judah.plugin.Carla;
-import net.judah.util.AudioTools;
+import net.judah.synth.JudahSynth;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
-public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordAudio {
+public class Loop extends AudioTrack implements TimeNotifier, RecordAudio {
 
-    protected final int bufferSize = JudahMidi.getInstance().getBufferSize();
-    protected final Looper looper;
-
-    @Getter protected Recording recording = new Recording(0, true);
-    // @Getter protected final List<JackPort> outputPorts = new ArrayList<>();
-    @Setter @Getter protected Type type = Type.FREE;
-    @Setter @Getter protected boolean armed;
-    @Setter @Getter protected boolean active;
-    @Getter protected final AtomicInteger tapeCounter = new AtomicInteger();
-    @Getter protected final AtomicReference<AudioMode> isRecording = new AtomicReference<>(AudioMode.NEW);
+	protected static final float INSTRUMENT_FACTOR = 1.5f;
+	protected static final float NO_GAIN = 1f;
+	protected final Looper looper;
+	@Setter @Getter protected boolean armed;
     @Getter protected final SyncWidget sync = new SyncWidget(this);
+    protected int syncCounter;
     @Getter private int loopCount;
-    @Getter protected Integer length;
-    protected final ArrayList<TimeListener> listeners = new ArrayList<>();
-    /** synchronize loop to Time.. */
+    protected final Channels channels;
+    protected final Memory memory;
+    protected final JudahSynth[] synths;
+    protected final JudahDrumz[] beats;
     @Getter protected Loop primary;
+    protected long _start;
+    protected final ArrayList<TimeListener> listeners = new ArrayList<>();
+    @Getter protected final AtomicReference<AudioMode> isRecording = new AtomicReference<>(AudioMode.NEW);
     
-    // for process() and recording
-    private float[][] recordedBuffer;
-    private final float[] workL = new float[bufferSize];
-    private final float[] workR = new float[bufferSize];
+    protected final float[] workL = new float[bufferSize];
+    protected final float[] workR = new float[bufferSize];
+    protected final FloatBuffer bufL = FloatBuffer.wrap(workL);
+    protected final FloatBuffer bufR = FloatBuffer.wrap(workR);
     
-    private final FloatBuffer bufL = FloatBuffer.wrap(workL);
-    private final FloatBuffer bufR = FloatBuffer.wrap(workR);
-    private final Memory memory;
-    private long _start;
-    
-    public Loop(String name, Looper parent) {
-    	super(name, true);
+    public Loop(String name, Looper parent, Channels instruments, JudahSynth[] synths, JudahDrumz[] beats) {
+    	super(name);
     	looper = parent;
+    	this.channels = instruments;
+    	this.synths = synths;
+    	this.beats = beats;
     	memory = new Memory(Constants.STEREO, bufferSize);
     	leftPort = parent.getLeft();
     	rightPort = parent.getRight();
-    	preset = JudahZone.getPresets().getFirst();
     }
     
     @Override public AudioMode isRecording() {
         return isRecording.get();
     }
     
-    public boolean hasRecording() {
-        return recording != null && length != null && length > 0;
-    }
-
     @Override public void clear() {
     	isRecording.compareAndSet(RUNNING, STOPPING);
         tapeCounter.set(0);
@@ -88,18 +79,12 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
         listeners.clear();
     }
 
-    public void setRecording(Recording sample) {
-    	if (recording != null)
-            recording.close();
-        recording = sample;
-        length = recording.size();
-        isRecording.set(STOPPED);
-        if (this instanceof Sample == false) {
-        	recording.startListeners();
-        	MainFrame.update(this);
-        }
+    @Override
+	public void setRecording(Recording music) {
+    	isRecording.set(STOPPED);
+    	super.setRecording(music);
     }
-
+    
     public void delete() {
     	if (recording == null) return;
     	new Thread(() -> {
@@ -128,14 +113,6 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
 	    	}).start(); 
     }
     
-    @Override public String toString() {
-        return "Loop " + name;
-    }
-
-    public void setTapeCounter(int current) {
-        tapeCounter.set(current);
-    }
-    
 	@Override
     public void record(final boolean active) {
 
@@ -162,7 +139,7 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
         if (length == null) { // Initial Recording, cut tape for other loopers
         	if (this == looper.getLoopA()) recording.trim(); // fudge factor
         	
-            length = recording.size();
+        	final int loopLength = length = recording.size();
             looper.setRecordedLength(System.currentTimeMillis() - _start);
 
             new ArrayList<>(listeners).forEach(
@@ -171,7 +148,7 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
             	boolean firstArmed = false; // allows for loops to be chained up 1 after the other
             	for (Loop loop : looper) {
 	        			if (loop != this && !loop.hasRecording()) { 
-	            			loop.setRecording(new Recording(length));
+	            			loop.setRecording(new Recording(loopLength));
 		    			}
 	        			if (loop.isArmed() && !firstArmed) { // start overdub
 	        				firstArmed = true;
@@ -221,6 +198,7 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
         listeners.remove(l);
     }
 
+    
     ////////////////////////////////////
     //     Process Realtime Audio     //
     ////////////////////////////////////
@@ -228,139 +206,124 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
 	public void process() {
     	
     	int counter = tapeCounter.get();
-    	if (hasRecording())
+    	if (hasRecording()) {
     		readRecordedBuffer();
+    		if (active && !onMute) {
+    			playFrame(bufL, bufR);
+    		}
+    	}
     	
-    	if (this == looper.getLoopA() && ++counter > 7) { 
+    	if (this == looper.getLoopA() && ++syncCounter > 7) { 
         	MainFrame.update(LoopWidget.getInstance());
-        	counter = 0;
+        	syncCounter = 0;
         }
-
-    	if (active) 
-    		playFrame(); 
-    	
+   	
     	if (!recording()) 
     		return;
         
         // recording section 
         float[][] newBuffer = memory.getArray();
         boolean firstTime = true;
-        FloatBuffer fromJack;
-        for (LineIn channel : JudahZone.getChannels()) {
-            if (channel.isOnMute() || channel.isMuteRecord())
-                continue;
+        for (LineIn channel : channels) {
+            if (channel.isOnMute() || channel.isMuteRecord())continue;
             if (channel.isSolo() && type != Type.SOLO) continue;
             if (!channel.isSolo() && type == Type.SOLO) continue;
-            
-            fromJack = channel.getLeftPort().getFloatBuffer();
-            if (firstTime) {
-                FloatBuffer.wrap(newBuffer[LEFT_CHANNEL]).put(fromJack); // processEcho
-                if (channel.isStereo())
-                    FloatBuffer.wrap(newBuffer[RIGHT_CHANNEL]).put(
-                            channel.getRightPort().getFloatBuffer());
-                else {
-                    fromJack.rewind();
-                    FloatBuffer.wrap(newBuffer[RIGHT_CHANNEL]).put(fromJack);
-                }
-                firstTime = false;
-            }
-            else {
-                processAdd(fromJack, newBuffer[LEFT_CHANNEL]);
-                processAdd( channel.isStereo() ?
-                        channel.getRightPort().getFloatBuffer() :
-                            fromJack, newBuffer[RIGHT_CHANNEL]);
-            }
+            firstTime = recordInstrument(channel.getLeftPort().getFloatBuffer(), 
+            		channel.isStereo() ? channel.getRightPort().getFloatBuffer() : null, 
+            		firstTime, newBuffer);
         }
-
+        for (JudahSynth synth : synths) 
+        	firstTime = recordInternal(synth, firstTime, newBuffer);
+        for (JudahDrumz drums : beats)
+        	firstTime = recordInternal(drums, firstTime, newBuffer);
+        
         if (hasRecording()) {
-            if (recordedBuffer == null) {
-                readRecordedBuffer();
-            }
-            // if (overwrite) recording.set(counter, newBuffer); else
+//            if (recordedBuffer == null) {
+//                readRecordedBuffer();
+//            }
             recording.dub(newBuffer, recordedBuffer, counter);
         }
         else
             recording.add(newBuffer);
     }
-
-    protected void playFrame() {
-        if (onMute || hasRecording() == false) return; // we're on mute, nothing to play.
-        // gain & pan stereo
-        float leftVol = (gain.getVol() * 0.025f) * (1 - getPan());
-        float rightVol = (gain.getVol() * 0.025f) * getPan();
-
-        AudioTools.processGain(recordedBuffer[LEFT_CHANNEL], workL, leftVol);
-        AudioTools.processGain(recordedBuffer[RIGHT_CHANNEL], workR, rightVol);
-
-        if (eq.isActive()) {
-            eq.process(workL, true);
-            eq.process(workR, false);
-        }
-
-        if (chorus.isActive())
-            chorus.processStereo(bufL, bufR);
-        
-        if (overdrive.isActive()) {
-            overdrive.processAdd(bufL);
-            overdrive.processAdd(bufR);
-        }
-        
-        if (reverb.isActive() && !reverb.isInternal() 
-        		&& getMains().getOverdrive().isActive()) {
-        	// if sending to external reverb, add Master Track overdrive if active
-        	getMains().getOverdrive().processAdd(bufL);
-        	getMains().getOverdrive().processAdd(bufR);
-        }
-        
-        if (delay.isActive()) {
-            delay.processAdd(bufL, bufL, true);
-            delay.processAdd(bufR, bufR, false);
-        }
-        cutFilter.process(bufL, bufR, 1);
-
-        // blend possible reverb on last play processing
-        toJackLeft = leftPort.getFloatBuffer();
-        toJackRight = rightPort.getFloatBuffer();
+    
+    private boolean recordInstrument(FloatBuffer channelLeft, FloatBuffer channelRight, boolean firstTime, float[][] newBuffer) {
+    		boolean stereo = channelRight != null;
+        	if (firstTime) {
+        		replace(INSTRUMENT_FACTOR, channelLeft, newBuffer[LEFT_CHANNEL]); // copy
+        		replace(INSTRUMENT_FACTOR, stereo ? channelRight : channelLeft, newBuffer[RIGHT_CHANNEL]);
+                firstTime = false;
+            }
+            else {
+                processAddGain(INSTRUMENT_FACTOR, channelLeft, newBuffer[LEFT_CHANNEL]);
+                processAddGain(INSTRUMENT_FACTOR, stereo ? channelRight :channelLeft, newBuffer[RIGHT_CHANNEL]);
+            }
+        	return firstTime;
+    }
+    
+    private boolean recordInternal(Engine voice, boolean firstTime, float[][] newBuffer) {
+    	if (!voice.hasWork() || voice.isMuteRecord()) 
+    		return firstTime;
+    	FloatBuffer channelLeft = voice.getBuffer()[LEFT_CHANNEL];
+    	FloatBuffer channelRight = voice.getBuffer()[RIGHT_CHANNEL];
+        boolean stereo = voice.getBuffer()[RIGHT_CHANNEL] != null;    
+    	if (firstTime) {
+        		replace(NO_GAIN, channelLeft, newBuffer[LEFT_CHANNEL]); // copy
+        		replace(NO_GAIN, stereo ? channelRight : channelLeft, newBuffer[RIGHT_CHANNEL]);
+                firstTime = false;
+            }
+            else {
+                processAdd(channelLeft, newBuffer[LEFT_CHANNEL]);
+                processAdd( stereo ? channelRight : channelLeft, newBuffer[RIGHT_CHANNEL]);
+            }
+    	
+    	return firstTime;
+    }
+   
+    // mix reverb (final fx) with output. A loop goes to Carla1 reverb, B to Carla2
+    @Override
+	protected void doReverb(FloatBuffer inL, FloatBuffer inR) {  // TODO map ports in Carla 
+    	FloatBuffer outL, outR;
+    	if (!reverb.isActive() || reverb.isInternal()) {
+    		outL = JudahZone.getOutL().getFloatBuffer();
+    		outR = JudahZone.getOutR().getFloatBuffer();
+    	} else if (reverb == Carla.getInstance().getReverb()) {
+    		outL = JudahZone.getReverbL1().getFloatBuffer();
+    		outR = JudahZone.getReverbR1().getFloatBuffer();
+    	} else {
+    		outL = JudahZone.getReverbL2().getFloatBuffer();
+    		outR = JudahZone.getReverbR2().getFloatBuffer();
+    	}
+        outL.rewind();
+        outR.rewind();
         if (reverb.isActive()) {
-	        if (reverb == Carla.getInstance().getReverb()) {
-	        	toJackLeft = JudahZone.getReverbL1().getFloatBuffer();
-	        	toJackRight = JudahZone.getReverbR1().getFloatBuffer();
-	        } else if (reverb == Carla.getInstance().getReverb2()) {
-	        	toJackLeft = JudahZone.getReverbL2().getFloatBuffer();
-	        	toJackRight = JudahZone.getReverbR2().getFloatBuffer();
-	        }
-	        toJackLeft.rewind();
-	        toJackRight.rewind();
 	        if (reverb.isInternal()) {
-	        	((Freeverb)reverb).process(bufL, bufR);
-	        	mix(workL, toJackLeft);
-	            mix(workR, toJackRight);
+	        	((Freeverb)reverb).process(inL, inR);
+	        	mix(workL, outL);
+	            mix(workR, outR);
 	        }
 	        else {
-	            mix(bufL, getMains().getGainL(), toJackLeft); // grab master track gain
-	            mix(bufR, getMains().getGainR(), toJackRight); // on the way out to reverb
+	            mix(inL, getMains().getGainL(), outL); // grab master track gain
+	            mix(inR, getMains().getGainR(), outR); // on the way out to reverb
 	        }
         }
         else {
-        	toJackLeft.rewind();
-        	toJackRight.rewind();
-        	mix(workL, toJackLeft);
-            mix(workR, toJackRight);
+        	mix(workL, outL);
+            mix(workR, outR);
         }
-        
     }
-   
+    
     private final boolean recording() {
         if (isRecording.compareAndSet(STARTING, RUNNING)) {
-        	if (isEmpty())
+        	if (recording.isEmpty())
         		_start = System.currentTimeMillis();
             MainFrame.update(this);
         }
         return isRecording.get() == RUNNING;
     }
 
-
-    protected void readRecordedBuffer() {
+    @Override
+	public void readRecordedBuffer() {
 
         recordedBuffer = recording.get(tapeCounter.get());
         
@@ -384,11 +347,5 @@ public class Loop extends Channel implements ProcessAudio, TimeNotifier, RecordA
         if (active && this == looper.getLoopA()) 
         	MainFrame.update(getSync());
     }
-
-	@Override
-	public AudioMode isPlaying() {
-		return active? AudioMode.RUNNING : AudioMode.ARMED;
-	}
-
     
 }

@@ -11,7 +11,6 @@ import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.effects.api.Effect;
 import net.judah.effects.api.Reverb;
-import net.judah.looper.Looper;
 import net.judah.mixer.Channel;
 import net.judah.util.RTLogger;
 
@@ -101,19 +100,12 @@ public class LFO implements Effect {
 
 	/** called every MidiScheduler.LFO_PULSE jack frames in RT thread */
 	public static void pulse() {
+		if (!JudahZone.isInitialized()) return;
 		synchronized (lfoPulse) {
 			lfoPulse.clear();
-			for (Channel ch : JudahZone.getChannels())
+			for (Channel ch : JudahZone.getMixer().getChannels())
 				if (ch.getLfo().isActive())
 					lfoPulse.add(ch);
-			if (JudahZone.getMains() == null)
-				return;
-			Looper looper = JudahZone.getLooper();
-				for (int i = 0; i < looper.size(); i++)
-					if (looper.get(i).getLfo().isActive())
-						lfoPulse.add(looper.get(i));
-			if (JudahZone.getMains().getLfo().isActive())
-			    lfoPulse.add(JudahZone.getMains());
 			if (lfoPulse.isEmpty()) return;
 		}
 		new Thread(() -> {
@@ -193,7 +185,8 @@ public class LFO implements Effect {
 			}
 			System.out.println("done. min: " + min + " max: " + max + " frequency: " + lfo.getFrequency());
 		}
-		public static void main(String[] args) {
+		
+		public static void main2(String[] args) {
 			new LFOTest(1200).start(); // 3 second LFO
 		}
 	}

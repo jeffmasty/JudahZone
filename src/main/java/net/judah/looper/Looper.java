@@ -1,5 +1,7 @@
 package net.judah.looper;
 
+import static net.judah.JudahZone.*;
+
 import java.util.ArrayList;
 
 import org.jaudiolibs.jnajack.JackPort;
@@ -7,15 +9,16 @@ import org.jaudiolibs.jnajack.JackPort;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
+import net.judah.carla.TalReverb;
+import net.judah.drumz.JudahDrumz;
 import net.judah.looper.SyncWidget.SelectType;
-import net.judah.looper.sampler.Sample;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
+import net.judah.mixer.Channels;
 import net.judah.mixer.SoloTrack;
-import net.judah.plugin.Carla;
+import net.judah.synth.JudahSynth;
 import net.judah.util.Icons;
 
 @RequiredArgsConstructor @Getter
@@ -24,12 +27,26 @@ public class Looper extends ArrayList<Loop> {
 	public static final int LOOPERS = 4; // anything above LOOPERS are samples and one-shots
 	private final JackPort left;
 	private final JackPort right;
+    private final Loop loopA;
+    private final Loop loopB;
+    private final Loop loopC;
+    private final SoloTrack drumTrack;
 	@Setter private long recordedLength;
-    private Loop loopA;
-    private Loop loopB;
-    private Loop loopC;
-    private SoloTrack drumTrack;
     
+	public Looper(JackPort l, JackPort r, Channels ch, JudahSynth[] synths, JudahDrumz[] beats) {
+        left = l;
+        right = r;
+		loopA = new Loop("A", this, ch, synths, beats);
+        loopC = new Loop("C", this, ch, synths, beats);
+        loopB = new Loop("B", this, ch, synths, beats);
+        drumTrack = new SoloTrack(getInstruments().getCalf(), this, ch, synths, beats);
+        drumTrack.setIcon(Icons.load("Drums.png"));
+        add(loopA);
+        add(loopB);
+        add(loopC);
+        add(drumTrack);
+	}
+	
     /** pause/unpause specific loops, clock-aware */
     @RequiredArgsConstructor @Getter
     private class Pause extends ArrayList<Loop> {
@@ -52,25 +69,6 @@ public class Looper extends ArrayList<Loop> {
         	MainFrame.update(loopA);
         }
         recordedLength = 0;
-    }
-
-    public void init(Carla carla) {
-
-        loopA = new Loop("A", this);
-        loopA.setReverb(carla.getReverb());
-        add(loopA);
-        
-        loopB = new Loop("B", this);
-        loopB.setReverb(carla.getReverb2());
-        add(loopB);
-
-        loopC = new Loop("C", this);
-        add(loopC);
-
-        drumTrack = new SoloTrack(JudahZone.getChannels().getCalf(), this);
-        drumTrack.setIcon(Icons.load("Drums.png"));
-        add(drumTrack);
-
     }
 
     /** play and/or record loops and samples in Real-Time thread */
@@ -98,11 +96,11 @@ public class Looper extends ArrayList<Loop> {
 	/** pause/unpause any running loops, stop/restart clock if it is running */
 	public void pause(boolean pauseClock) {
 		if (suspended == null) {
-			boolean clock = JudahClock.getInstance().isActive();
+			boolean clock = getClock().isActive();
 			
 			suspended = new Pause(pauseClock? false : clock);
 			if (clock && pauseClock) 
-				JudahClock.getInstance().end();
+				getClock().end();
 			for (Loop s : this) 
 				if (s.isPlaying() == AudioMode.RUNNING) {
 					s.setTapeCounter(0);
@@ -113,18 +111,23 @@ public class Looper extends ArrayList<Loop> {
 			for (Loop s : suspended) 
 				s.setOnMute(true);
 			if (suspended.isActiveClock()) 
-				JudahClock.getInstance().begin();
-			else if (pauseClock == false && JudahClock.getInstance().isActive())
-				JudahClock.getInstance().begin(); // re-sync
+				getClock().begin();
+			else if (pauseClock == false && getClock().isActive())
+				getClock().begin(); // re-sync
 			suspended = null;
 		}
 	}
 
 	public void verseChorus() {
 		for (Loop loop : this) {
-			if (loop != drumTrack && loop instanceof Sample == false)
+			if (loop != drumTrack)
 				loop.setOnMute(!loop.isOnMute());
 		}
+	}
+
+	public void setReverb(TalReverb rev1, TalReverb rev2) {
+		loopA.setReverb(rev1);
+        loopB.setReverb(rev2);
 	}
 
 }

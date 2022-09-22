@@ -1,10 +1,10 @@
 # JudahZone
 
-A mixer/looper/live performance environment written in Java for the Jack sound system. (https://jackaudio.org/)
+An open source GrooveBox (mixer/looper/sequencer) written in Java for the Jack sound system. (https://jackaudio.org/)
 
-6 mono or stereo input channels are currently handled, as well as 4 synchronized stereo recording loops, 3 full drum tracks, and 4 sequenced synthesizer tracks. All are mixed into a master stereo output bus.  All audio channels have separately controlled internal gain, EQ, Hi/Lo Cut, Chorus, Overdrive, Delay, Reverb, an LFO, and stereo panning. These internal effects are supplanted by LV2 plugins hosted externally and controlled over OSC. Loops can be sync'd to the drum machine and different song lengths and structures. A guitar tuner is supplied, as well as a sample player, sheet music viewer and midi routing. The internal synth engine has 18 oscillators supporting 6 voices of polyphony with the standard filter, envelope and wave shapes.
+8 mono or stereo input channels are currently handled, as well as 4 synchronized stereo recording loops. A pair of polyphonic velocity-sensitive subtractive synth engines are supplied, each with 8 voices, 3 oscillators and the regular gamut of wave shapes, envelop settings, filters and presets. All audio channels have separately controlled internal gain, EQ, Hi/Lo Cut, Chorus, Overdrive, Delay, Reverb, an LFO, and stereo panning. These effects are supplanted by external LV2 plugins controlled over OSC. Loops can be sync'd to each other and to the the clock for different song lengths and structures. There is an 8-track step and pattern sequencer, 4 tracks for drums and 4 piano rolls for synths. The sample player holds 4 loops, 4 one-shots and 16 drum samples. There is also a guitar tuner, sheet music viewer, external midi routing and midi clock support.  
 
-Works great with an Akai MPK-Mini Midi Controller and/or a guitar/mic and midi foot switch controller.
+Works great with an Akai MPK-Mini Midi controller and/or a guitar/mic and Midi foot switch controller, mixer and/or pads.
 A few recordings made: https://www.youtube.com/user/judahmu/videos
 
 ## Technologies
@@ -20,13 +20,16 @@ FluidSynth (https://github.com/FluidSynth/fluidsynth) a synthesizer controlled o
 
 Using TarsosDSP (https://github.com/JorenSix/TarsosDSP) for a guitar tuner.
 
+Synth Engine created by combining (https://github.com/michelesr/jack-oscillator) with (https://github.com/johncch/MusicSynthesizer).
+
 ## Build
-Built with Lombok and Maven. 
+Built with Lombok (https://projectlombok.org/) and Maven. 
 
 ## Running
-You need to have Jack up and running.  This project uses the "a2jmidid -e" ALSA midi bindings along with Jack.  This project uses FluidSynth (with the fluid soundfount), the Carla plugin host as well as DragonFly reverb and Calf Lv2 plugins.  
+The Jack sound system needs to be up and running.  
+This project uses the "a2jmidid -e" ALSA midi bindings along with Jack.  This project uses FluidSynth (https://www.fluidsynth.org/) (with the fluid soundfount), the Carla plugin host (https://github.com/falkTX/Carla), DragonFly Reverbs (https://michaelwillis.github.io/dragonfly-reverb/) and Calf Lv2 plugins (https://calf-studio-gear.org/).  
 
-This project is hardcoded to connect to the author's instrument ports.  Fiddle around with the Channels class to get your particular system up and running. 
+This project is hardcoded to connect to the author's instrument ports. Fiddle around with the Channels class to get your particular system up and running. 
 
 ##   
 

@@ -1,73 +1,106 @@
 package net.judah.synth;
 
+import static net.judah.synth.JudahSynth.POLYPHONY;
+
+import javax.sound.midi.ShortMessage;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.api.Midi;
 
 @RequiredArgsConstructor
 public class Polyphony {
-	public static int MAX = 6;
 	
-	@Getter private final Midi[] notes = new Midi[MAX];
+	@Getter private final ShortMessage[] notes = new ShortMessage[POLYPHONY];
 	private final Voice[] voices;
 	
-	public void noteOn(Midi m) {
+	public boolean noteOn(ShortMessage m) {
 		int data1 = m.getData1();
-		for (int i = 0; i < MAX; i++) {
+		for (int i = 0; i < POLYPHONY; i++) {
 			if (notes[i] != null && notes[i].getData1() == data1) {
+				if (notes[i].getCommand() == ShortMessage.NOTE_OFF) {
+					// re-press during release
+					voices[i].reset(JudahSynth.midiToHz(m.getData1()));
+				}
 				notes[i] = Midi.copy(m);
-				return;
+				return true;
 			}
 		}
-		for (int i = 0; i < MAX; i++) 
+		for (int i = 0; i < POLYPHONY; i++) 
 			if (notes[i] == null) {
 				notes[i] = Midi.copy(m);
 				voices[i].reset(JudahSynth.midiToHz(m.getData1()));
-				break;
+				return true;
 		}
+		return false;
 	}
 	
-	public void noteOff(Midi m) {
-		for (int i = 0; i < MAX; i++)
+	public void noteOff(ShortMessage m) {
+		for (int i = 0; i < POLYPHONY; i++)
 			if (notes[i] != null && notes[i].getData1() == m.getData1()) {
-				notes[i] = null;
+				// start release on envelope,  when release completes note switched to null and Voice ready for polyphony
+				notes[i] = Midi.create(m.getCommand(), m.getChannel(), m.getData1(), notes[i].getData2());
 				return;
 			}
 	}
 	
 	public int count() {
 		int result = 0;
-		for (Midi m: notes)
+		for (ShortMessage m: notes)
 			if (m != null)
 				result++;
 		return result;
 	}
 
 	public int indexOf(int data1) {
-		for (int i = 0; i < MAX; i++)
+		for (int i = 0; i < POLYPHONY; i++)
 			if (notes[i] != null && notes[i].getData1() == data1)
 				return i;
 		return -1;
 	}
 	
-	public Midi highest() {
+	public ShortMessage highest() {
 		int dat = -1;
-		Midi result = null;
-		for (Midi m : notes) {
-			if (m != null && m.getData1() > dat)
+		ShortMessage result = null;
+		for (ShortMessage m : notes) {
+			if (m != null && m.getData1() > dat) {
+				dat = m.getData1();
 				result = m;
+			}
 		}
 		return result;
 	}
 	
-	public Midi lowest() {
+	public ShortMessage lowest() {
 		int dat = 128;
-		Midi result = null;
-		for (Midi m : notes) {
-			if (m != null && m.getData1() < dat)
+		ShortMessage result = null;
+		for (ShortMessage m : notes) {
+			if (m != null && m.getData1() < dat) {
+				dat = m.getData1();
 				result = m;
+			}
 		}
 		return result;
+	}
+
+	public boolean isEmpty() {
+		for (ShortMessage m : notes)
+			if (m != null) return false;
+		return true;
+	}
+
+	public void panic() {
+		for (int i = 0; i < POLYPHONY; i++) {
+			ShortMessage m = notes[i];
+			if (m != null && Midi.isNoteOn(m)) { // flip NoteOn to NoteOff for graceful release
+				notes[i] = Midi.create(ShortMessage.NOTE_OFF, m.getChannel(), m.getData1(), m.getData2());
+			}
+		}
+	}
+
+	public void flush() {
+		for (int i = 0; i < POLYPHONY; i++)
+			notes[i] = null;
 	}
 	
 }

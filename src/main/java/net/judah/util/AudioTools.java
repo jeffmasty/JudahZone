@@ -13,7 +13,7 @@ public class AudioTools  {
 			a.put(0f);
 		a.rewind();
 	}
-	public static void processSilence(float[][] buf) {
+	public static void silence(float[][] buf) {
 		for (float[] ch : buf) 
 			silence(ch);
 	}
@@ -74,7 +74,15 @@ public class AudioTools  {
 			out[i] += in.get();
 	}
 
+	/** MIX */
+	public static void processAddGain(float factor, FloatBuffer in, float[] out) {
+		in.rewind();
+		for (int i = 0; i < out.length; i++)
+			out[i] += in.get() * factor;
+	}
+
 	public static void mix(float[] in, FloatBuffer out) {
+		out.rewind();
 		out.get(workArea);
 		out.rewind();
 		for (z = 0; z < Constants.bufSize(); z++)
@@ -106,10 +114,14 @@ public class AudioTools  {
 	public static float[] copy(FloatBuffer input) {
 		input.rewind();
 		float[] result = new float[input.capacity()];
-		for (int i = 0 ; i < result.length; i++) 
-			result[i] = input.get();
+		replace(1f, input, result);
 		return result;
 	}
-
+	
+	public static void replace(float gain, FloatBuffer in, float[] out) {
+		in.rewind();
+		for (int i = 0 ; i < out.length; i++) 
+			out[i] = in.get() * gain;
+	}
 }
 

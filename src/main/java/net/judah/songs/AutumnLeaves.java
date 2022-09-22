@@ -9,7 +9,7 @@ import net.judah.mixer.Channels;
 import net.judah.tracker.Cycle;
 import net.judah.tracker.Track;
 import net.judah.tracker.Track.Cue;
-import net.judah.tracker.Tracker;
+import net.judah.tracker.JudahBeatz;
 import net.judah.util.Constants;
 
 public class AutumnLeaves extends SmashHit {
@@ -28,8 +28,8 @@ public class AutumnLeaves extends SmashHit {
 	}};
 
 	@Override
-	public void startup(Tracker t, Looper loops, Channels ch) {
-		super.startup(t, loops, ch);
+	public void startup(JudahBeatz t, Looper loops, Channels ch, MainFrame frame) {
+		super.startup(t, loops, ch, frame);
 		/*  
 		 | Am7   | D7    |   Gmaj7 | Cmaj7   | F#-7b5  | B7     | E-     |      |   
 (x2)	 | Am7   | D7    |   Gmaj7 | Cmaj7   | F#-7b5  | B7     | E-     |      |   
@@ -47,7 +47,7 @@ public class AutumnLeaves extends SmashHit {
 		setupBass();
 		t.getClock().writeTempo(93);
 		t.getClock().setLength(8);
-		MainFrame.get().sheetMusic("AutumnLeaves.png");
+		frame.sheetMusic("AutumnLeaves.png");
 		
 		loops.getLoopA().addListener(duplicate);
 		loops.getLoopB().setArmed(true); 

@@ -201,7 +201,7 @@ public class CutFilter implements Effect {
         if (filterType == Type.pArTy) {
         	oldParty = frequency <= PARTY_FREQUENCY ? Type.LP12 : Type.HP12;
         }
-        RTLogger.log(this, "filter type: " + filterType);
+        // RTLogger.log(this, "filter type: " + filterType);
     }
 
 

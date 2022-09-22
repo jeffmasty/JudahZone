@@ -5,8 +5,8 @@ import java.awt.Dimension;
 
 import javax.swing.*;
 
-import net.judah.controllers.MPK;
-import net.judah.tracker.Tracker;
+import net.judah.controllers.MPKmini;
+import net.judah.tracker.JudahBeatz;
 
 public class TimeSigGui extends JPanel {
 
@@ -16,7 +16,7 @@ public class TimeSigGui extends JPanel {
     private final JComboBox<Integer> div = new JComboBox<>();
     private final JudahClock clock;
     
-	TimeSigGui(JudahClock clock, JudahMidi midi) {
+    public TimeSigGui(JudahClock clock, JudahMidi midi, JudahBeatz t) {
 		setBorder(BorderFactory.createLineBorder(Color.black));
 		this.clock = clock;
 		for (int i : TimeSigGui.DIVS)
@@ -30,12 +30,12 @@ public class TimeSigGui extends JPanel {
 		steps.setMaximumSize(sz);
 		div.setMaximumSize(sz);
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
-		MPK.getLabel().setOpaque(true);
-		MPK.getLabel().setBorder(BorderFactory.createRaisedSoftBevelBorder());
+		MPKmini.getLabel().setOpaque(true);
+		MPKmini.getLabel().setBorder(BorderFactory.createRaisedSoftBevelBorder());
 		
-		add(MPK.getLabel());
+		add(MPKmini.getLabel());
 		add(Box.createHorizontalGlue());
-		add(Tracker.getLabel());
+		add(t.getLabel());
 		add(Box.createHorizontalGlue());
 		add(steps);
 		add(new JLabel("stp/dv", JLabel.CENTER));

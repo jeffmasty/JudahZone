@@ -19,12 +19,19 @@ public class RTLogger {
         debugQueue.offer(new Log(o instanceof String 
         		? o.toString() : o.getClass().getSimpleName(), msg, false));
     }
-
+    public static void log(Class<?> c, String msg) {
+    	log(c.getSimpleName(), msg);
+    }
+    
     public static void warn(Object o, String msg) {
         debugQueue.offer(new Log(o instanceof String 
         		? o.toString() : o.getClass().getSimpleName(), msg, true));
     }
 
+    public static void warn(Class<?> c, String msg) {
+    	warn(c.getSimpleName(), msg);
+    }
+    
     public static void warn(Object o, Throwable e) {
         warn(o, e.getLocalizedMessage());
         e.printStackTrace();
@@ -49,6 +56,7 @@ public class RTLogger {
 	
 			}
 		} catch (Exception e) {
+			System.err.println(e);
 		}
 	}
 

@@ -1,5 +1,7 @@
 package net.judah.synth;
 
+import java.nio.FloatBuffer;
+
 import lombok.Getter;
 import net.judah.util.Constants;
 /** inspired by: https://github.com/johncch/MusicSynthesizer/blob/master/src/com/fifthrevision/sound/Osc.java 
@@ -22,9 +24,10 @@ public class Dco {
 	}
 	
 	/* See https://github.com/johncch/MusicSynthesizer/blob/master/src/com/fifthrevision/sound/Osc.java  #render() */
-	public void process(float amp, float[] wave, float[] mono) {
+	public void process(float amp, float[] wave, FloatBuffer output) {
 		float scaled, fraction;
 		int index;
+		float[] mono = output.array();
 		for(int i = 0; i < BUF_SIZE; i++) {
 			scaled = phase * Shape.LENGTH;
 			fraction = scaled-(int)scaled;

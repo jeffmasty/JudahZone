@@ -8,6 +8,7 @@ import javax.swing.JComboBox;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.JudahZone;
 import net.judah.songs.SmashHit;
 import net.judah.tracker.Track.Cue;
 import net.judah.util.CenteredCombo;
@@ -97,7 +98,7 @@ public class Cycle implements ActionListener {
 		Cycle.trigger = trig;
 		if (!trigger)
 			return;
-		for (Track t : Tracker.getTracks())
+		for (Track t : JudahZone.getTracker().getTracks())
 			if (t.getCue() == Cue.Trig)
 				t.setCue(Cue.Bar);
 	}

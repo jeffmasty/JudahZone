@@ -205,12 +205,13 @@ public class Midi extends ShortMessage {
         return result;
 	}
 
-    public static Midi copy(Midi copy) {
+    public static Midi copy(ShortMessage copy) {
         if (copy == null) return null;
         byte[] clone = new byte[copy.getMessage().length];
         System.arraycopy(copy.getMessage(), 0, clone, 0, clone.length);
         Midi result = new Midi(clone);
-        result.setPort(copy.getPort());
+        if (copy instanceof Midi)
+        	result.setPort(((Midi)copy).getPort());
         return result;
     }
 
@@ -252,6 +253,5 @@ public class Midi extends ShortMessage {
 	public Key key() {
 		return Key.values()[getData1() % 12];
 	}
-
     
 }

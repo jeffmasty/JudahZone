@@ -38,9 +38,8 @@ public class SheetMusicPnl extends JPanel {
             labelImage.setPreferredSize(smaller);
             add(labelImage, constraints);
             setSize(smaller);
-            doLayout();
-            
             setName(musicImage.getName());
+            doLayout();
         }
         
         public void setImage(File musicImage) throws IOException {

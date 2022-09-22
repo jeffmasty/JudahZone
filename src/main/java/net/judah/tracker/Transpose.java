@@ -5,7 +5,7 @@ import javax.sound.midi.ShortMessage;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.midi.JudahMidi;
+import net.judah.JudahZone;
 import net.judah.util.RTLogger;
 
 public class Transpose {
@@ -15,7 +15,7 @@ public class Transpose {
 	
 	public static void setActive(boolean active) {
 		Transpose.active = active;
-		JudahMidi.getInstance().getGui().transpose(active);
+		JudahZone.getMidiGui().transpose(active);
 	}
 	
 	public static void toggle() {
@@ -31,14 +31,4 @@ public class Transpose {
 		return null;
 	}
 
-	public static void checkLatch() {
-		for (Track t : Tracker.getTracks()) {
-			if (t.isLatch()) {
-				Transpose.setActive(true);
-				RTLogger.log("Transpose", "MPK -> " + t.getName());
-				return;
-			}
-		}
-		Transpose.setActive(false);
-	}
 }

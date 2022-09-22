@@ -1,4 +1,5 @@
 package net.judah.songs;
+import static net.judah.JudahZone.*;
 
 import net.judah.MainFrame;
 import net.judah.api.Notification.Property;
@@ -6,12 +7,11 @@ import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.effects.Delay;
 import net.judah.looper.Looper;
-import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channels;
 import net.judah.mixer.Instrument;
 import net.judah.tracker.Cycle;
 import net.judah.tracker.Track;
-import net.judah.tracker.Tracker;
+import net.judah.tracker.JudahBeatz;
 import net.judah.util.Constants;
 
 public class FeelLuv extends SmashHit {
@@ -42,16 +42,15 @@ public class FeelLuv extends SmashHit {
 	};
 	
 	@Override
-	public void startup(Tracker t, Looper loops, Channels ch) {
-		super.startup(t, loops, ch);
-		MainFrame.get().sheetMusic("FeelLuv.png");
+	public void startup(JudahBeatz t, Looper loops, Channels ch, MainFrame frame) {
+		super.startup(t, loops, ch, frame);
+		frame.sheetMusic("FeelLuv.png");
 		t.getClock().writeTempo(BPM);
 		t.getClock().end();
 		t.getClock().setLength(TOTAL_LEN);
 		loops.getLoopA().addListener(init);
 		loops.getLoopB().setArmed(true);
-		
-		JudahMidi.getInstance().getGui().getMpk().setSelectedItem(JudahMidi.getInstance().getCraveOut());
+		getMidiGui().getMpk().setSelectedItem(getSynthPorts().get(getMidi().getCraveOut())); // TODO
 		MainFrame.updateTime();
 		
 		bass = t.getBass();

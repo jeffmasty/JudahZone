@@ -1,9 +1,9 @@
 package net.judah.controllers;
 
 import java.awt.Component;
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.DefaultListCellRenderer;
@@ -20,9 +20,9 @@ import org.jaudiolibs.jnajack.JackPortFlags;
 import org.jaudiolibs.jnajack.JackPortType;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
-import net.judah.api.Service;
 import net.judah.effects.api.Gain;
 import net.judah.fluid.FluidSynth;
 import net.judah.midi.JudahMidi;
@@ -33,17 +33,15 @@ import net.judah.util.Pastels;
 import net.judah.util.RTLogger;
 
 /** Controller substitute, reroute guitar midi to synths */
-public class Jamstik extends JComboBox<Path> implements Service {
+public class Jamstik extends JComboBox<Path> implements Closeable {
 	
-	// private static Jamstik instance;
 	@Getter private static boolean active = false;
 	@Getter private static Path path;
-	private static int volStash = 50;
-	private static JPanel frame;
+	private int volStash = 50;
+	@Setter private JPanel frame;
 	
-	public Jamstik(JPanel parent, ArrayList<Service> services) {
+	public Jamstik(ArrayList<Closeable> services, ArrayList<Path> paths) {
 		services.add(0, this);
-		Jamstik.frame= parent;
 		
 		BasicComboBoxRenderer style = new BasicComboBoxRenderer() {
         	@Override public Component getListCellRendererComponent(
@@ -58,18 +56,20 @@ public class Jamstik extends JComboBox<Path> implements Service {
         style.setHorizontalAlignment(SwingConstants.CENTER);
         setRenderer(style);
         setOpaque(true);
-        for (Path p : JudahMidi.getInstance().getPaths())
+        for (Path p : paths)
         	addItem(p);
+        setMidiOut(paths.get(0));
+
         addActionListener(e -> setMidiOut((Path)getSelectedItem()));
 	}
 	
-	private static void run() {
+	private void run() {
 		if (path == null) 
 			return;
 		// String search = "UNO Synth Pro MIDI 1";
 		try {
 			Jack jack = Jack.getInstance();
-			JudahMidi midi = JudahMidi.getInstance();
+			JudahMidi midi = JudahZone.getMidi();
 			JackClient client = midi.getJackclient();
 			
 			String jamstik = jack.getPorts(client, Constants.getDi(), 
@@ -80,19 +80,19 @@ public class Jamstik extends JComboBox<Path> implements Service {
 				search = Constants.getDi();
 			else if (path.getPort().equals(midi.getFluidOut()))
 				search = FluidSynth.MIDI_PORT;
-//			else if (path.getPort().equals(midi.getCalfOut()))
-//				search = "Calf Fluidsynth";
-//			else if (path.getPort().equals(midi.getUnoOut()))
-//				search = "UNO Synth";
+			
+			
+			
+			
 			String port = jack.getPorts(client, search, 
 					JackPortType.MIDI, EnumSet.of(JackPortFlags.JackPortIsInput))[0];
 
-			Gain guitar = JudahZone.getChannels().getGuitar().getGain();
+			Gain guitar = JudahZone.getInstruments().getGuitar().getGain();
 			if (active) {
 				volStash = guitar.getVol();
 				guitar.setVol(0);
 				MainFrame.update(path.getChannel());
-				MainFrame.update(JudahZone.getChannels().getGuitar());
+				MainFrame.update(guitar);
 				jack.connect(client, jamstik, port);
 			} else {
 				try {
@@ -102,7 +102,7 @@ public class Jamstik extends JComboBox<Path> implements Service {
 				}
 				new Panic(path.getPort()).start();
 				guitar.setVol(volStash);
-				MainFrame.update(JudahZone.getChannels().getGuitar()); // setFocus?
+				MainFrame.update(guitar); // setFocus?
 			}
 			if (frame != null)
 				frame.setBackground(active ? Pastels.GREEN : Pastels.BUTTONS);		
@@ -111,14 +111,14 @@ public class Jamstik extends JComboBox<Path> implements Service {
 		}
 	}
 	
-	public static void toggle() {
+	public void toggle() {
 		active = !active;
 		new Thread(()-> run()).start();
 		if (frame != null) 
 			frame.setBackground(active ? Pastels.GREEN : Pastels.BUTTONS);
 	}
 	
-	public static void setMidiOut(Path path) {
+	public void setMidiOut(Path path) {
 		if (Jamstik.path == path)
 			return;
 		if (active) {
@@ -136,8 +136,8 @@ public class Jamstik extends JComboBox<Path> implements Service {
 		}
 	}
 
-	public static void nextMidiOut() {
-		JudahMidi midi = JudahMidi.getInstance();
+	public void nextMidiOut() {
+		JudahMidi midi = JudahZone.getMidi();
 		List<Path> paths = midi.getPaths();
 		int idx = paths.indexOf(path) + 1;
 		if (idx == paths.size()) 
@@ -151,10 +151,6 @@ public class Jamstik extends JComboBox<Path> implements Service {
 			return;
 		active = false;
 		run();
-	}
-
-	@Override
-	public void properties(HashMap<String, Object> props) {
 	}
 
 }

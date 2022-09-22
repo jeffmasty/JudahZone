@@ -10,6 +10,7 @@ import java.security.InvalidParameterException;
 import javax.swing.*;
 
 import net.judah.JudahZone;
+import net.judah.controllers.KorgMixer;
 import net.judah.effects.api.Preset;
 import net.judah.effects.api.PresetsDB;
 import net.judah.mixer.Channel;
@@ -27,10 +28,13 @@ public class PresetsGui extends JPanel {
     private final int presetsHeight = 480;
     private final int presetsWidth = 190;
     private final int buttonsX = presetsWidth + offset;
-	
-	public PresetsGui() {
+	private final PresetsDB presets;
+    
+	public PresetsGui(PresetsDB presets) {
 		setLayout(null);
-        setPreferredSize(new Dimension(presetsWidth + buttonsWidth + 10, presetsHeight));
+		this.presets = presets;
+		Dimension size = new Dimension(presetsWidth + buttonsWidth + 10, presetsHeight);
+        setPreferredSize(size);
         list = new JList<>(presetModel());
         JScrollPane scrollPane = new JScrollPane(list);
         JPanel buttons = new JPanel();
@@ -42,6 +46,9 @@ public class PresetsGui extends JPanel {
         buttons.setBounds(buttonsX, offset + 35, buttonsWidth, presetsHeight);
         add(scrollPane);
         add(buttons);
+        Dimension dialog = new Dimension(size.width + 10, size.height + 20);
+        KorgMixer.modalSet(this, dialog);
+        
 	}
     private void presetsBtns(JPanel buttons) {
     	buttons.setLayout(new BoxLayout(buttons, BoxLayout.Y_AXIS));
@@ -81,8 +88,8 @@ public class PresetsGui extends JPanel {
 	
 	private void applyTo() {
         if (list.getSelectedIndex() < 0) return;
-        Channel ch = Constants.getChannel(target.getSelectedItem().toString());
-        Preset p = JudahZone.getPresets().get(list.getSelectedIndex());
+        Channel ch = JudahZone.getMixer().getChannel("" + target.getSelectedItem());
+        Preset p = presets.get(list.getSelectedIndex());
         ch.setPreset(p);
         ch.setPresetActive(true);
     }
@@ -103,7 +110,7 @@ public class PresetsGui extends JPanel {
     public void create() {
         String name = Constants.inputBox("Preset Name:");
         if (name == null || name.isEmpty()) return;
-        JudahZone.getPresets().add(ControlPanel.getInstance().getChannel().toPreset(name));
+        JudahZone.getPresets().add(JudahZone.getFxPanel().getChannel().toPreset(name));
         save();
     }
 
@@ -112,7 +119,7 @@ public class PresetsGui extends JPanel {
             throw new InvalidParameterException("" + idx);
 
 
-        Channel channel = ControlPanel.getInstance().getChannel();
+        Channel channel = JudahZone.getFxPanel().getChannel();
         Preset old = getPresets().get(idx);
         Preset replace = channel.toPreset(old.getName());
         getPresets().set(idx, replace);

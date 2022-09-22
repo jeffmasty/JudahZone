@@ -3,23 +3,26 @@ package net.judah.songs;
 import java.io.File;
 
 import net.judah.JudahZone;
+import net.judah.MainFrame;
 import net.judah.looper.Looper;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Channels;
 import net.judah.tracker.Track;
-import net.judah.tracker.Tracker;
+import net.judah.tracker.JudahBeatz;
 import net.judah.util.RTLogger;
 
 public abstract class SmashHit {
 	
-	protected Tracker t;
+	protected JudahBeatz t;
 	protected Looper loops;
 	protected Channels ch;
+	protected MainFrame frame;
 	
-	public void startup(Tracker t, Looper loops, Channels ch) { 
+	public void startup(JudahBeatz t, Looper loops, Channels ch, MainFrame frame) { 
 		this.t = t;
 		this.loops = loops;
 		this.ch = ch;
+		this.frame = frame;
 	}
 	
 	public void cycle(Track t) { 
@@ -40,7 +43,7 @@ public abstract class SmashHit {
 	}
 
 	protected void resetChannels() {
-		for (Channel ch : JudahZone.getChannels())
+		for (Channel ch : JudahZone.getMixer().getChannels())
 			ch.reset();
 	}
 }

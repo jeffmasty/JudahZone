@@ -22,7 +22,7 @@ import net.judah.util.RTLogger;
 public class BeatBox extends JPanel implements MouseListener {
 
 	private final int RADIUS = 23;
-	
+	// TODO 1/8th note highlight if div > 5
     @Getter private final CurrentBeat current;
     @Getter private static int rowHeight;
     private final int pnlWidth;

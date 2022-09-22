@@ -2,13 +2,13 @@ package net.judah.fluid;
 
 import static net.judah.util.Constants.NL;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
@@ -17,19 +17,17 @@ import org.jaudiolibs.jnajack.Jack;
 import org.jaudiolibs.jnajack.JackException;
 
 import lombok.Getter;
+import net.judah.JudahZone;
 import net.judah.api.Midi;
-import net.judah.api.Service;
-import net.judah.midi.JudahMidi;
 import net.judah.midi.ProgMsg;
 import net.judah.util.Constants;
+import net.judah.util.FluidConsole;
 import net.judah.util.JudahException;
 import net.judah.util.RTLogger;
 
 
 /** runs fluid command line and connects to FluidSynth stdin and stdout ports */
-public class FluidSynth implements Service {
-
-	@Getter private static FluidSynth instance;
+public class FluidSynth implements Closeable {
 
 	public static final String LEFT_PORT = "fluidsynth-midi:left"; // "fluidsynth:l_00";
 	public static final String RIGHT_PORT = "fluidsynth-midi:right"; // "fluidsynth:r_00";
@@ -61,7 +59,6 @@ public class FluidSynth implements Service {
 
 	@SuppressWarnings("deprecation")
 	public FluidSynth (int sampleRate, File soundFont, boolean startListeners) throws JackException, JudahException, IOException {
-		instance = this;
 		shellCommand = "fluidsynth" +
 				" --midi-driver=jack --audio-driver=jack" +
 				" -o synth.ladspa.active=0  --sample-rate " + sampleRate + " " +
@@ -102,7 +99,7 @@ public class FluidSynth implements Service {
 
 	}
 
-	void syncChannels() throws InterruptedException, IOException, JudahException {
+	public void syncChannels() throws InterruptedException, IOException, JudahException {
 		listener.sysOverride(FluidCommand.CHANNELS);
 		outStream.write( (FluidCommand.CHANNELS.code + NL).getBytes() );
 		outStream.flush();
@@ -119,7 +116,7 @@ public class FluidSynth implements Service {
 		}
 	}
 
-	void syncInstruments() throws InterruptedException, IOException, JudahException {
+	public void syncInstruments() throws InterruptedException, IOException, JudahException {
 		listener.sysOverride(FluidCommand.INST);
 		outStream.write((FluidCommand.INST.code + "1" + NL).getBytes());
 		outStream.flush();
@@ -190,18 +187,14 @@ public class FluidSynth implements Service {
 		int current = channels.getCurrentPreset(channel);
 		int bank = channels.getBank(channel);
 		int preset = instruments.getNextPreset(bank, current, up);
-		JudahMidi.getInstance().getGui().getFluid()
+		JudahZone.getMidiGui().getFluid()
 				.setSelectedIndex(preset);
 	}
 
 	@SuppressWarnings("unused")
 	private int progChangeSync(int channel, int preset) {
 		try {
-//			String progChange = FluidCommand.PROG_CHANGE.code + channel + " " + preset;
-//			
-//			sendCommand(progChange);
-			
-			JudahMidi.getInstance().getGui().getFluid()
+			JudahZone.getMidiGui().getFluid()
 					.setSelectedIndex(preset);
 			
 			syncChannels();
@@ -241,12 +234,8 @@ public class FluidSynth implements Service {
 		}
 	}
 
-	void mute() {
+	public void mute() {
 		sendCommand(FluidCommand.GAIN, FluidCommand.GAIN.min);
-	}
-
-	void maxGain() {
-		sendCommand(FluidCommand.GAIN, FluidCommand.GAIN.max);
 	}
 
 	public void gain(float value) {
@@ -370,17 +359,15 @@ public class FluidSynth implements Service {
 
 	}
 
-	@Override
-	public void properties(HashMap<String, Object> props) {
-		if (props.containsKey("fluid")) {
-			String[] split = props.get("fluid").toString().split(";");
-			for (String cmd : split)
-				sendCommand(cmd);
-		}
-	}
-
 }
 
+//@Override
+//public void properties(HashMap<String, Object> props) {
+//	if (props.containsKey("fluid")) {
+//		String[] split = props.get("fluid").toString().split(";");
+//		for (String cmd : split)
+//			sendCommand(cmd);}}
+//
 //  public void connect(JackClient jackclient, JackPort port) throws JackException {
 //      log.warn("Trying to connect " + port.getName() +" to " + MIDI_PORT);
 //      Jack.getInstance().connect(jackclient, port.getName(), MIDI_PORT);

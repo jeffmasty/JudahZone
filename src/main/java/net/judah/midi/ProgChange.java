@@ -63,7 +63,7 @@ public class ProgChange extends SettableCombo<String> {
 		int change = ((ProgChange)SettableCombo.getFocus()).getSelectedIndex();
 		if (t.isDrums())
 			change = FluidSynth.getInstruments().getDrumkits().get(change).index;
-		progChange(change, t.getMidiOut(), t.getCh());
+//		progChange(change, t.getMidiOut(), t.getCh());
 		if (t!=null)
 			t.setInstrument(change + "");
 	}
@@ -104,8 +104,8 @@ public class ProgChange extends SettableCombo<String> {
 					if (out != combo.midiOut )
 						continue;
 				}
-				else if (combo.t.getMidiOut() != out)
-					continue;
+//				else if (combo.t.getMidiOut() != out)
+//					continue;
 				int change = preset;
 				if (ch == 9) {
 					ArrayList<FluidInstrument> drums = FluidSynth.getInstruments().getDrumkits();

@@ -18,13 +18,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import net.judah.JudahZone;
-import net.judah.MainFrame;
-import net.judah.midi.JudahClock;
+import net.judah.midi.MidiCable;
 import net.judah.midi.ProgChange;
 import net.judah.midi.TimeSigGui;
-import net.judah.mixer.Channel;
-import net.judah.mixer.Channels;
 import net.judah.tracker.Track.Cue;
 import net.judah.util.*;
 
@@ -34,19 +30,17 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
 	private static final Dimension SLIDER = new Dimension(75, STD_HEIGHT);
 	
 	protected final Track track;
-    protected final JudahClock clock = JudahClock.getInstance(); 
 	
 	@Getter protected final JComboBox<String> pattern = new CenteredCombo<>();
 	@Getter protected final JComboBox<Integer> trackNum = new CenteredCombo<>();
     protected final JPanel buttons = new JPanel();
     protected final JComboBox<String> file = new CenteredCombo<>();
     protected final FileCombo filename; 
-    @Getter protected final MidiOut midiOut;
+    @Getter protected final MidiCable midiOut;
     protected final JComboBox<String> cycle;
     @Getter protected final JComboBox<Cue> cue = new CenteredCombo<>();
     @Getter protected final JComboBox<String> ratio = new CenteredCombo<>();
     
-    @Getter protected final Slider portVol = new Slider(null);
     @Getter protected final Slider trackVol = new Slider(null);
     @Getter protected final JButton playWidget = new JButton("Play"); // ▶/■ 
     @Getter protected final JButton record = new JButton("Rec");
@@ -61,7 +55,7 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
     protected TrackEdit(Track t) {
     	this.track = t;
     	filename = new FileCombo(t);
-    	midiOut = new MidiOut(t);
+    	midiOut = new MidiCable(t);
     	patch = new ProgChange(track);
     	cycle = t.getCycle().createComboBox();
     	buttons.setLayout(new GridLayout(0, 1));
@@ -109,9 +103,10 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
 		new Thread(() -> {
 			Constants.sleep(10);
 			trackNum.removeAllItems();
-			for (int i = 0; i < Tracker.getTracks().length; i++)
+			for (int i = 0; i < track.getTracker().getTracks().length; i++)
 				trackNum.addItem(i + 1);
-			trackNum.setSelectedIndex(track.getNum());
+			if (track.getNum() < trackNum.getItemCount() - 1)
+				trackNum.setSelectedIndex(track.getNum());
 			trackNum.addActionListener(this);
 
 		}).start();
@@ -177,7 +172,7 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
         // probablity and trackVol
         buttons.add(trackVol());
         // port  and portVol
-        buttons.add(portVol());
+        buttons.add(port());
         // instrument
         buttons.add(instrument());
         // div and steps
@@ -193,7 +188,7 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
         if (track.isSynth()) {
 			mpk.addActionListener(e -> {
 				track.setLatch(!track.isLatch());
-				Transpose.checkLatch();
+				track.getTracker().checkLatch();
 			});
         }		
         JPanel pnl = new JPanel(new GridLayout(1, 3));
@@ -250,19 +245,10 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
         return pnl;
 	}
 	
-	private JPanel portVol() {
-		portVol.setPreferredSize(SLIDER);
-		portVol.addChangeListener(e -> {
-			Channel ch = JudahZone.getChannels().byName(Channels.volumeTarget(track.getMidiOut()));
-			int vol = ((Slider)e.getSource()).getValue();
-			if (ch.getGain().getVol() != vol) {
-				ch.getGain().setVol(vol);
-				MainFrame.update(ch);
-			}
-		});
+	private JPanel port() {
 		JPanel pnl = new JPanel();
+		pnl.add(new JLabel("MidiOut"));
 		pnl.add(midiOut);
-		pnl.add(portVol);
 		return pnl;
 	}
 	
@@ -300,13 +286,13 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
         chBack.addActionListener(e -> {
             int channel = trackNum.getSelectedIndex() - 1;
             if (channel < 0) channel = trackNum.getItemCount() - 1;
-            Tracker.setCurrent(Tracker.getTracks()[channel]);});
+            track.getTracker().setCurrent(track.getTracker().getTracks()[channel]);});
 
         Click chNext = new Click(">");
         chNext.addActionListener(e -> {
             int channel = trackNum.getSelectedIndex() + 1;
             if (channel == trackNum.getItemCount()) channel = 0;
-            Tracker.setCurrent(Tracker.getTracks()[channel]);
+            track.getTracker().setCurrent(track.getTracker().getTracks()[channel]);
         });
         Click patternBack = new Click("<");
         patternBack.addActionListener(e -> {track.next(false);});
@@ -341,7 +327,7 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
 	private void trackAction() {
 		int idx = trackNum.getSelectedIndex(); 
 		if (track.getNum() != idx)
-			Tracker.setCurrent(Tracker.getTracks()[idx]);
+			track.getTracker().setCurrent(track.getTracker().getTracks()[idx]);
 		trackNum.removeActionListener(this);
 		trackNum.setSelectedIndex(track.getNum());
 		trackNum.addActionListener(this);

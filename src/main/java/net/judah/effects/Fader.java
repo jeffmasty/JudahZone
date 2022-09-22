@@ -7,8 +7,8 @@ import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.effects.LFO.Target;
 import net.judah.effects.api.Gain;
-import net.judah.looper.sampler.Sample;
 import net.judah.mixer.Channel;
+import net.judah.samples.Sample;
 
 @RequiredArgsConstructor
 public class Fader {
@@ -49,7 +49,7 @@ public class Fader {
 	    if (ch instanceof Sample)
 			result.cleanup = () ->{
 				((Sample)ch).setActive(false);
-				((Sample)ch).getPad().update();};
+				((Sample)ch).getGui().update();};
 		return result;
 	}
 	/** Fade out Master track over 4 seconds */

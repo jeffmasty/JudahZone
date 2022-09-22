@@ -8,15 +8,15 @@ import net.judah.mixer.Channels;
 import net.judah.tracker.Cycle;
 import net.judah.tracker.Pattern;
 import net.judah.tracker.Track;
-import net.judah.tracker.Tracker;
+import net.judah.tracker.JudahBeatz;
 import net.judah.util.RTLogger;
 
 public class StolenMoments extends SmashHit {
 
 	@Override
-	public void startup(Tracker t, Looper loops, Channels ch) {
-		super.startup(t, loops, ch);
-		MainFrame.get().sheetMusic("StolenMoments.jpg");
+	public void startup(JudahBeatz t, Looper loops, Channels ch, MainFrame frame) {
+		super.startup(t, loops, ch, frame);
+		frame.sheetMusic("StolenMoments.jpg");
 		t.getDrum1().setFile("StolenMoments");
 		t.getDrum1().setActive(true);
 		t.getDrum1().getCycle().setCustom(this);

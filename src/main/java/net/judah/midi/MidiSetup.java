@@ -17,6 +17,7 @@ public class MidiSetup {
 		MIXER("mixer"),
 		PADS("pads"),
 		LINE6_IN("line6In"),
+		JUDAH_SYNTH("JudahSynth");
 		;
 
 		// Old controllers

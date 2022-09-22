@@ -39,8 +39,8 @@ public class ChannelFader extends JPanel implements Pastels {
 
 	@Getter private final Channel channel;
 	private final Loop loop;
-	private final Instrument in;
-	JudahMidi midi = JudahMidi.getInstance();
+	private final LineIn in;
+	private final JudahMidi midi = JudahZone.getMidi();
 
 	@Getter private final JToggleButton mute = new JToggleButton("mute");
 	@Getter private final JToggleButton fx = new JToggleButton("fx");
@@ -55,7 +55,7 @@ public class ChannelFader extends JPanel implements Pastels {
 	public ChannelFader(Channel channel) {
 		this.channel = channel;
 		loop = (channel instanceof Loop) ? (Loop)channel : null;
-		in = (channel instanceof Instrument) ? (Instrument)channel : null;
+		in = (channel instanceof LineIn) ? (LineIn)channel : null;
 		setBorder(BorderFactory.createDashedBorder(Color.DARK_GRAY));
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(BUTTONS);
@@ -89,9 +89,9 @@ public class ChannelFader extends JPanel implements Pastels {
 
 		if (in != null) {
 			mute.setText("rec");
-			mute.setSelected(!in.isOnMute());
+			mute.setSelected(!in.isMuteRecord());
 			
-			if (JudahMidi.getInstance().getPath(in) == null) 
+			if (midi.getPath(in) == null) 
 				sync.setEnabled(false);
 		}
 		
@@ -130,10 +130,9 @@ public class ChannelFader extends JPanel implements Pastels {
 				sync.setSelected(loop.isArmed());
 		}
 		else if (in != null) {
-			JudahMidi sys = JudahMidi.getInstance();
-			sys.getPath(in);
-			if (sys.getPath(in) != null) {
-				boolean active = sys.getSync().contains(sys.getPath(in).getPort());
+			midi.getPath(in);
+			if (midi.getPath(in) != null) {
+				boolean active = midi.getSync().contains(midi.getPath(in).getPort());
 				if (active != sync.isSelected())
 					sync.setSelected(active);
 			}
@@ -148,7 +147,7 @@ public class ChannelFader extends JPanel implements Pastels {
 		}
 		if (channel.isOnMute())
 			volume.setBackground(PURPLE);
-		else if (channel instanceof Instrument && ((Instrument)channel).isMuteRecord())
+		else if (in != null && in.isMuteRecord())
 			volume.setBackground(BLUE);
 		else {
 			volume.setBackground(null);
@@ -164,7 +163,7 @@ public class ChannelFader extends JPanel implements Pastels {
 			bg = BLUE;
 			if (loop.isRecording() == AudioMode.RUNNING) 
 				bg = RED;
-			else if (JudahClock.getInstance().getSynchronized() == loop.getSync())
+			else if (JudahZone.getClock().getSynchronized() == loop.getSync())
 				bg = YELLOW;
 			else if (loop.hasRecording() && loop.isPlaying() == AudioMode.STOPPED)
 				bg = Color.DARK_GRAY;
@@ -190,7 +189,7 @@ public class ChannelFader extends JPanel implements Pastels {
 			mute.setBackground(in.isMuteRecord() ? null : GREEN);
 			if (in.isSolo())
 				bg = YELLOW;
-			else if (port != null && JudahMidi.getInstance().getSync().contains(port))
+			else if (port != null && midi.getSync().contains(JudahZone.getSynthPorts().get(port)))
 				bg = PINK;
 		}
 		else bg = Color.WHITE; // i.e. MAINS
@@ -230,7 +229,7 @@ public class ChannelFader extends JPanel implements Pastels {
 		else if (loop != null) {
 			// sync channel
 			if (loop == JudahZone.getLooper().getDrumTrack()) 
-				JudahClock.getInstance().listen(JudahZone.getLooper().getLoopA());
+				JudahZone.getClock().listen(JudahZone.getLooper().getLoopA());
 			else { 
 				loop.setArmed(sync.isSelected());
 				background();

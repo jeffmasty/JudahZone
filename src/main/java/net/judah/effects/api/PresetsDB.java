@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-import net.judah.util.Console;
 import net.judah.util.RTLogger;
 
 public class PresetsDB extends ArrayList<Preset> {
@@ -21,7 +20,7 @@ public class PresetsDB extends ArrayList<Preset> {
 
     public PresetsDB(File presetFile) {
         if (presetFile == null || !presetFile.isFile()) {
-            Console.info("no preset file " + presetFile);
+            System.err.println("no preset file " + presetFile);
             return;
         }
         ArrayList<String> current = new ArrayList<>();
@@ -30,7 +29,6 @@ public class PresetsDB extends ArrayList<Preset> {
             Scanner scanner = new Scanner(presetFile);
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
-                // Console.info(line);
                 if (line.startsWith("[") && line.endsWith("]")) {
                     if (!current.isEmpty()) add(new Preset(name, current));
                     current.clear();

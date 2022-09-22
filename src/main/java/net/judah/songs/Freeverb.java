@@ -2,10 +2,11 @@ package net.judah.songs;
 
 import java.io.File;
 
+import net.judah.MainFrame;
 import net.judah.looper.Looper;
 import net.judah.mixer.Channels;
 import net.judah.tracker.Track;
-import net.judah.tracker.Tracker;
+import net.judah.tracker.JudahBeatz;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -13,10 +14,10 @@ import net.judah.util.RTLogger;
 public class Freeverb extends SmashHit {
 
 	@Override
-	public void startup(Tracker tracks, Looper loops, Channels ch) {
-		super.startup(tracks, loops, ch);
+	public void startup(JudahBeatz tracks, Looper loops, Channels ch, MainFrame frame) {
+		super.startup(tracks, loops, ch, frame);
 		int delay = 333;
-		for (Track t : Tracker.getTracks())
+		for (Track t : tracks.getTracks())
 			if (t.isSynth()) // keep drums running
 				t.setActive(false);
 		

@@ -1,35 +1,31 @@
 TODO:
 
-portWrapper for midiOut to JudahSynth/JudahBeats
-color code channels: green/Fluid blue/Calf orange/Crave yellow/Synth purple/Beats
-Transpose f/b in TimeSigGui/bugz
-fix lfo on synth/samples
-JudahBeatz 
-Scope and Meters
-Midi velocity in JudahSynth
-noise wave shape, wave duty 
-8-track player
+JudahBeatz, kits, atk/rel, choke hihat, currentBeat
+Mixer view on synths
+Transpose + Tracker gui in TimeSigGui
+LFO Panel upgrade, LFO on samples 
+pads to new channels, available pads: korg pad 5, MPK CC 1
+bugz: pan borked, trackView progChange/custom2, Jamstik, next track btn
+
 separate setlist resources from code
-
-AVAILABLE: korg pad 5, MPK CC 1
-
+Scope and Meters
+JudahSynth: detune, harmonics, more shapes, LFO, mono-synth option
+improve mixer faders a bit
 Delay and LFO upgrade (triggered to Clock, LFO/Fader cleanUp())
-CurrentBeat, swing
 edit checkboxes: save patch/tempo/cycle info
 probability, Ritardando
-Loop copy/paste/length
+Loop copy/paste/length/save
 export beatbox as midi file
-Record session, save loops to disk and play samples from disk
+Record session
 double tap erase - stop drums
-Noise Effect generates ocean, heartbeat, birds, crickets, walking, thunder, rain, 
-	bicycle, phonograph, whips and chains  (sampleFile, frequency, wet, granularity)
+Sampler Fx (granularity, frequency, wet)
+DrumSynth
 Arppegiator
 Vocoder 
 record record record youtubes
 README credits
 clipping/xruns filter see https://github.com/psambit9791/jDSP Peak/Spike
 Latency + bleeding edge
-Display loop/sample wave form 
 Drag-n-drop, step sequencer editor upgrades
 Phasor, Shepard
 settings/default files
@@ -37,15 +33,12 @@ Undo/Redo/Copy/Paste
 patch bay needed. see jack_lsp, jack_connect
 walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
 MPK Sequencer
-Other knobs: calf, Jackrack, mixer
 make client-server architecture
 Sequencer can really swing.
+support JavaSound/non-Jack, make accessible to others
 
-
-drum options:  DrMr, drumkv1-jack, hydrogen, fluid, drumsynth, black pearl
 Java Music API: https://github.com/psambit9791/jDSP
 Java Music API: https://github.com/chdh/dsp-collection-java
-
 https://explodingart.com/jmusic/index.html
 https://github.com/jbatistareis/bricks
 https://github.com/philburk/jsyn
@@ -59,6 +52,7 @@ https://github.com/a-schild/jave2
 https://github.com/ryukau/LV2Plugins
 Jack's alsa driver/client tries to use SND_PCM_FMT_S32_LE, signed 32-bit PCM little endian, 
 which is the format used by all current 24 bit audio cards except for some USB interfaces
+drum options:  DrMr, drumkv1-jack, hydrogen, fluid, drumsynth, black pearl
 
 sequencer:
 https://github.com/truj/midica/tree/master/src/org/midica/midi
@@ -147,7 +141,11 @@ loop sync/master clock to 3/4, polyrythmic
 sheetMusic 2.0
 Sampler (bicycle, creek, rain sounds), cricket sound on 2 and 4
 Settable interface (files, instruments, setlist)
-JudahSynth + ADSR knobs, code my own polyphonic ADSR synthesizer 
+JudahSynth + ADSR knobs, code my own polyphonic velocity-sensitive synthesizer, presets 
+portWrapper for midiOut to JudahSynth/JudahBeats, redo djJefe
+8-track player
+fix lfo on synth/samples
+
 
 REF-----------------------------------------------------------------
 
@@ -164,14 +162,30 @@ recordA	   recordB  recordDrum recordC sequencer	sheet	SynthKnobs    *tapTempo
 reload/AAB latchB   latchDrum  latchC  guitarEfx	MicEfx  SynthEfx  	  on/off clock*
 
 effects knobs
-	wet    room dry  dist.  
+	wet    room dry  vol  
 	chorus c2   c3   pArTy  
 	
-	bass   mid    treb   d.time
-	vol    pan    t/hold d.fback 
+	d.time d.fback pan   dist.
+	bass   mid     treb  preset
 
 midi knobs
-	sync tempo calf    fluid
-	trx1 trx2  jamstik mpk
+	sync tempo  calf    fluid
+	song track# jamstik mpk
+
+
+Channel
+   LineIn
+       Instrument - guitar, mic, crave, fluid
+       JudahSynth
+       JudahBeats
+   AudioTrack
+       Loop - a, b, c
+          SoloIn - d
+       Sample    
+          StepSample
+          DrumSample to JudahBeats
+
+
+gtr, mic, beats, s1, s2, f1, f2, crave, main
 
   

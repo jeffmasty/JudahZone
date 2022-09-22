@@ -6,66 +6,30 @@ import java.util.Arrays;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
-import net.judah.fluid.FluidSynth;
 import net.judah.midi.JudahMidi;
-import net.judah.util.Constants;
-import net.judah.util.Icons;
 
-@Getter
-public class Channels extends ArrayList<LineIn> {
+@Getter @RequiredArgsConstructor
+public class Channels extends ArrayList<Instrument> {
 	public static final String GUITAR = "GTR"; 
 	public static final String MIC = "MIC";
+	public static final String CALF= "Calf";
+	public static final String FLUID = "Fluid";
+	public static final String CRAVE = "Crave";
 	
-	public static final String CALF= "DRUM";
-	public static final String SYNTH = "KEYS";
-	public static final String AUX = "AUX";
-	public static final String CRAVE = "BASS";
-	
-	private Instrument guitar, mic, fluid;
-	private Instrument crave, calf; 
-	
-	private void miniSetup() {
-		guitar = new Instrument(GUITAR, "system:capture_1", "guitar");
-		guitar.setIcon(Icons.load("Guitar.png"));
-		mic = new Instrument(MIC, "system:capture_2", "mic");
-		mic.setIcon(Icons.load("Microphone.png"));
+	private final Instrument guitar, mic, crave;
+	private final GMSynth fluid, calf;
 
-		fluid = new Instrument(SYNTH,
-				new String[] {FluidSynth.LEFT_PORT, FluidSynth.RIGHT_PORT},
-				new String[] {"fluidL", "fluidR"});
-		fluid.setIcon(Icons.load("Synth.png"));
-
-		calf = new Instrument(CALF, new String[] {null, null}, new String[] {"calfL", "calfR"});
-		calf.setIcon(Icons.load("Drums.png"));
-
-		addAll(Arrays.asList(new Instrument[] { guitar, mic, fluid, calf, crave}));
+	public static Channel byName(String name, ArrayList<Channel> channels) {
+		for (Channel c : channels)
+			if (c.getName().equals(name))
+				return c;
+		throw new NullPointerException(name + " " + Arrays.toString(channels.toArray()));
 	}
 	
-	public Channels() {
-		if (Constants.getDi().contains("Komplete")) {
-			miniSetup(); 
-			return;
-		}
-		
-		guitar = new Instrument(GUITAR, "system:capture_1", "guitar");
-		guitar.setIcon(Icons.load("Guitar.png"));
-
-		mic = new Instrument(MIC, "system:capture_4", "mic");
-		mic.setIcon(Icons.load("Microphone.png"));
-
-		fluid = new Instrument(SYNTH,
-				new String[] {FluidSynth.LEFT_PORT, FluidSynth.RIGHT_PORT},
-				new String[] {"fluidL", "fluidR"});
-
-		calf = new Instrument(CALF, new String[] {null, null}, new String[] {"calfL", "calfR"});
-		crave = new Instrument(CRAVE, "system:capture_3", "crave_in");
-		
-		addAll(Arrays.asList(new Instrument[] { guitar, mic, fluid, calf, crave}));
-	}
-
-	public Channel byName(String name) {
-		for (Channel c : this)
+	public Instrument byName(String name) {
+		for (Instrument c : this)
 			if (c.getName().equals(name))
 				return c;
 		return null;
@@ -76,16 +40,19 @@ public class Channels extends ArrayList<LineIn> {
 		fluid.getGain().setVol(30);
 		calf.getGain().setVol(40);
 		crave.getGain().setVol(40);
-		//uno.getGain().setVol(40);
 		guitar.getGain().setVol(60);
-		
+		JudahZone.getSynth().getGain().setVol(40);
+		JudahZone.getSynth2().getGain().setVol(40);
+		JudahZone.getBeats().getGain().setVol(50);
+
 	}
 
 	/** By default, don't record drum track, microphone, sequencer */
     public void initMutes() {
 	    getCalf().setMuteRecord(true);
         if (mic != null) getMic().setMuteRecord(true);
-        // if (circuit != null) getCircuit().setMuteRecord(true);
+        JudahZone.getBeats().setMuteRecord(true);
+        JudahZone.getSynth2().setMuteRecord(true);
 	}
 
     public ArrayList<Instrument> getInstruments() {
@@ -96,34 +63,19 @@ public class Channels extends ArrayList<LineIn> {
     	return result;
     }
 
-    
-    // deprecated
-    public static String volumeTarget(JackPort midiOut) {
-        JudahMidi midi = JudahMidi.getInstance();
-        Channels channels = JudahZone.getChannels();
-        if (midiOut == midi.getCraveOut())
-            return channels.getCrave().getName();
+    public void setVolume(int vol, JackPort midiOut) {
+        JudahMidi midi = JudahZone.getMidi();
         if (midiOut == midi.getCalfOut())
-            return channels.getCalf().getName();
+            getCalf().getGain().setVol(vol);
         else if (midiOut == midi.getFluidOut())
-            return channels.getFluid().getName();
-        return "?";
+            getFluid().getGain().setVol(vol);
     }
-    public static void setVolume(int vol, JackPort midiOut) {
-        JudahMidi midi = JudahMidi.getInstance();
-        Channels channels = JudahZone.getChannels();
+    public int getVolume(JackPort midiOut) {
+        JudahMidi midi = JudahZone.getMidi();
         if (midiOut == midi.getCalfOut())
-            channels.getCalf().getGain().setVol(vol);
+            return getCalf().getVolume();
         else if (midiOut == midi.getFluidOut())
-            channels.getFluid().getGain().setVol(vol);
-    }
-    public static int getVolume(JackPort midiOut) {
-        JudahMidi midi = JudahMidi.getInstance();
-        Channels channels = JudahZone.getChannels();
-        if (midiOut == midi.getCalfOut())
-            return channels.getCalf().getVolume();
-        else if (midiOut == midi.getFluidOut())
-            return channels.getFluid().getVolume();
+            return getFluid().getVolume();
         return 0;
     }
 

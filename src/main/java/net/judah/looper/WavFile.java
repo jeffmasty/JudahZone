@@ -19,6 +19,10 @@ import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 public class WavFile extends Recording {
+	private static final int frameSize = Constants.bufSize();
+	private static final int LEFT = Constants.LEFT_CHANNEL;
+	private static final int RIGHT = Constants.RIGHT_CHANNEL;
+	private static final int STEREO = Constants.STEREO;
 	
 	private enum IOState {READING, WRITING, CLOSED};
 	private static final int BUFFER_SIZE = 4096;
@@ -27,8 +31,6 @@ public class WavFile extends Recording {
 	private static final int DATA_CHUNK_ID = 0x61746164;
 	private static final int RIFF_CHUNK_ID = 0x46464952;
 	private static final int RIFF_TYPE_ID = 0x45564157;
-	private static final int STEREO = 2;
-	private static final int frameSize = Constants.bufSize();
 
 
 	private File file;						// File that will be read from or written to
@@ -43,6 +45,7 @@ public class WavFile extends Recording {
 
 	// Wav Header
 	@Getter private int numChannels;				// 2 bytes unsigned, 0x0001 (1) to 0xFFFF (65,535)
+	@Getter private boolean stereo;
 	@Getter private long sampleRate;				// 4 bytes unsigned, 0x00000001 (1) to 0xFFFFFFFF (4,294,967,295)
 													// Although a java int is 4 bytes, it is signed, so need to use a long
 	@Getter private int blockAlign;					// 2 bytes unsigned, 0x0001 (1) to 0xFFFF (65,535)
@@ -60,9 +63,10 @@ public class WavFile extends Recording {
 	
 	public static WavFile load(File file) throws Exception {
 		WavFile result = openWavFile(file);
-		if (result.getSampleRate() != Constants.sampleRate())
+		if (result.getSampleRate() != Constants.sampleRate()) // not gonna resample in the Zone.
 			throw new Exception(file.getName() + ": Invalid sample rate: " + result.getSampleRate());
 
+		boolean stereo = result.stereo = result.getNumChannels() == 2;
 		// Create a buffer of jack frame size
 		double[] buffer = new double[frameSize * STEREO];
 
@@ -72,12 +76,17 @@ public class WavFile extends Recording {
             framesRead = result.readFrames(buffer, frameSize);
 
             float[][] frame = new float[2][frameSize]; 
-            
-            // cycle through frames and put them in loop Recording format
-            for (int i = 0 ; i < framesRead * STEREO; i += 2) {
-            	frame[0][i/2] = (float)buffer[i];
-            	frame[1][i/2] = (float)buffer[i + 1];
-            }
+            if (stereo)
+	            // cycle through frames and put them in loop Recording format
+	            for (int i = 0 ; i < framesRead * STEREO; i += 2) {
+	            	frame[LEFT][i/2] = (float)buffer[i];
+	            	frame[RIGHT][i/2] = (float)buffer[i + 1];
+	            }
+            else 
+	            for (int i = 0 ; i < framesRead; i++) {
+	            	frame[LEFT][i] = (float)buffer[i];
+	            	frame[RIGHT][i] = (float)buffer[i];
+	            }
             result.add(frame);
 		} while (framesRead != 0);
 		return result;

@@ -13,8 +13,8 @@ import org.apache.log4j.Level;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
+import net.judah.JudahZone;
 import net.judah.api.Midi;
-import net.judah.fluid.FluidSynth;
 import net.judah.midi.MidiListener;
 
 @Log4j
@@ -42,14 +42,14 @@ public class Console implements MidiListener {
         scroller.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         
         //participants.add(this);
-        participants.add(FluidSynth.getInstance().getConsole());
+        participants.add(JudahZone.getFluid().getConsole());
 
         instance = this;
     }
 
 
     /** output to console (not for realtime) */
-    public static void addText(String in) {
+    static void addText(String in) {
         log.debug(in);
         String s = in == null ? null : new String(in);
         if (instance == null || instance.textarea == null) {
@@ -75,17 +75,17 @@ public class Console implements MidiListener {
         addText("" + NL);
     }
 
-    public static void warn(Throwable t) {
+    static void warn(Throwable t) {
         addText("WARN " + t.getMessage());
         log.warn(t.getMessage(), t);
     }
 
-    public static void warn(String s, Throwable t) {
+    static void warn(String s, Throwable t) {
         addText("WARN " + s);
         if (t != null) log.warn(s, t);
     }
 
-    public static void info(String s) {
+    static void info(String s) {
         if (level == Level.DEBUG || level == Level.INFO || level == Level.TRACE)
             addText(s);
     }

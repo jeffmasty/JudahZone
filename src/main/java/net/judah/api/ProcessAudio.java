@@ -13,6 +13,10 @@ public interface ProcessAudio {
 	AudioMode isPlaying();
 
 	Recording getRecording();
+	
+	void setTapeCounter(int i);
+	
+	void readRecordedBuffer();
 
 //	/** destination for audio output */
 //	void setOutputPorts(List<JackPort> output);

@@ -17,7 +17,11 @@ import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Sequence;
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -28,7 +32,8 @@ import net.judah.api.Midi;
 import net.judah.mixer.Channel;
 
 public class Constants {
-	
+	private static ClassLoader loader = Constants.class.getClassLoader();
+
 	// TODO generalize
 	private static int _SAMPLERATE = 48000;
 	private static int _BUFSIZE = 512;//TODO:(256)
@@ -37,78 +42,44 @@ public class Constants {
 	/** Digital interface name */
 	@Getter static String di = "UMC1820 MIDI 1"; //return "Komplete ";
 	
-	// TODO
+	// TODO user.dir settings file/gui
+	private static final File _home = new File(System.getProperty("user.home"), "zone");
     public static final File ROOT = new File("/home/judah/git/JudahZone/resources/");
     public static final File defaultFolder = new File(ROOT, "Songs/");
     public static final File defaultSetlist = new File(defaultFolder, "list1.songs");
     public static final File defaultDrumFile = new File(ROOT, "patterns/Drum1");
-	public static final File SHEETMUSIC = new File(System.getProperty("user.home"), "sheets");
-	public static final File SAMPLES = new File(ROOT, "samples");
+	public static final File SAMPLES = new File(_home, "samples");
+	public static final File BEATS = new File(_home, "drums");
+	public static final File KITS = new File(_home, "kits");
+	public static final File SHEETMUSIC = new File(_home, "sheets");
+	public static final File SYNTH = new File(_home, "synth");
 
-	private static final String MAIN = "Mains";
-	private static final String DRUMS = "Drumtrack";
-	private static final String LOOPA = "Loop A";
-	private static final String LOOPB = "Loop B";
-	private static final String[] DEFAULT_OUT = new String[] {MAIN, DRUMS, LOOPA, LOOPB};
-
-    public static class Param {
-		public static final String ACTIVE = "active";
-		/** channel to send trick track midi out on */
-		public static final String CHANNEL = "channel";
-		public static final String BPM = "bpm";
-		public static final String TEMP = BPM;
-		public static final String MEASURE = "bpb";
-		public static final String BPB = MEASURE;
-		public static final String FILE = "file";
-		public static final String NAME = "name";
-		public static final String INDEX = "index";
-		public static final String VALUE = "value";
-		public static final String TYPE = "type";
-		public static final String GAIN = "volume";
-		public static final String LOOP = "loop";
-		public static final String SEQUENCE = "sequence";
-		public static final String MAX = "max";
-		public static final String STEPS = "steps";
-		public static final String IMAGE = "image";
-		public static final String FLUID = "fluid";
-
-
-		public static boolean parseActive(HashMap<String, Object> props) {
-			return (Boolean.parseBoolean(props.get(ACTIVE).toString()));
-		}
-
-		public static String parseString(String key, HashMap<String, Object> props) {
-			return props.get(key).toString();
-		}
-
-		public static HashMap<String, Class<?>> singleTemplate(String name, Class<?> clazz) {
-			HashMap<String, Class<?>> params = new HashMap<>();
-			params.put(name, clazz);
-			return params;
-		}
-
-		public static HashMap<String, Class<?>> activeTemplate() {
-			return singleTemplate(ACTIVE, Boolean.class);
-		}
-
+	public static final Midi DUMBDRUM = create(1, 0);
+	public static final Midi BASSDRUM = create(36, 100);
+	static Midi create(int dat1, int velocity) {
+		Midi result = null;
+		try { result = new Midi(Midi.NOTE_ON, 9, dat1, velocity);
+		} catch (InvalidMidiDataException e) {e.printStackTrace();}
+		return result;
 	}
-
+	
     public static final Dimension MAX = new Dimension(122, 30);
     public static JComponent max(JComponent c) {
 		c.setMaximumSize(MAX);
 		c.setPreferredSize(MAX);
 		return c;
     }
-    
+
+    public static final int LEFT_CHANNEL = 0;
+	public static final int RIGHT_CHANNEL = 1;
+	public static final int STEREO = 2;
+	public static final int MONO = 1;
+
 	public static final String NL = System.getProperty("line.separator", "\r\n");
 	public static final String CUTE_NOTE = "♫ ";
 	public static final String FILE_SEPERATOR = System.getProperty("file.separator");
 	public static final String TAB = "    ";
-
-	public static final int LEFT_CHANNEL = 0;
-	public static final int RIGHT_CHANNEL = 1;
-	public static final int STEREO = 2;
-	public static final int MONO = 1;
+	public static String FX = "Fx";
 
 	/** milliseconds between checking the update queue */
 	public static final int GUI_REFRESH = 5;
@@ -116,8 +87,8 @@ public class Constants {
 
     public static interface Gui {
     	
-    	Border HIGHLIGHT = BorderFactory.createLineBorder(Pastels.GREEN, 4);
-    	Border NONE = BorderFactory.createLineBorder(Pastels.EGGSHELL, 4);
+    	Border HIGHLIGHT = BorderFactory.createLineBorder(Pastels.GREEN, 2);
+    	Border NONE = BorderFactory.createLineBorder(Pastels.EGGSHELL, 2);
 
     	int STD_HEIGHT = 18;
     	
@@ -138,6 +109,19 @@ public class Constants {
 
     }
 
+    public static JPanel wrap(Component... items) {
+		JPanel result = new JPanel();
+		for (Component p : items)
+			result.add(p);
+		return result;
+	}
+	
+	public static void swap(JPanel pnl, Component... items) {
+		pnl.removeAll();
+		for (Component c : items) 
+			pnl.add(c);
+	}
+
     public static void attachKeyListener(Container p, KeyListener l) {
         for(Component c : p.getComponents()) {
             c.addKeyListener(l);
@@ -145,17 +129,7 @@ public class Constants {
                 attachKeyListener((Container)c, l);
         }
     }
-
     
-    public static final Midi DUMBDRUM = create(1, 0);
-	public static final Midi BASSDRUM = create(36, 100);
-	static Midi create(int dat1, int velocity) {
-		Midi result = null;
-		try { result = new Midi(Midi.NOTE_ON, 9, dat1, velocity);
-		} catch (InvalidMidiDataException e) {e.printStackTrace();}
-		return result;
-	}
-	
 	/**Normalize midi track[0] 
 	 * @return the length in resolved bars of a full sequence 
 	 * (some midi files do not define ticks to the end of the bar) */
@@ -188,6 +162,10 @@ public class Constants {
 	public static long millisPerBeat(float beatsPerMinute) {
 		return Math.round(60000/ beatsPerMinute); //  millis per minute / beats per minute
 	}
+	
+	public static float toBPM(long delta, int beats) {
+		return 60000 / (delta / beats);
+	}
 
     public static void infoBox(String infoMessage, String titleBar) {
         JOptionPane.showMessageDialog(null, infoMessage, titleBar, JOptionPane.INFORMATION_MESSAGE);
@@ -203,10 +181,6 @@ public class Constants {
 		for (Entry entry:  p.entrySet())
 			b.append(" ").append(entry.getKey()).append("=").append(entry.getValue());
 		return b.toString();
-	}
-
-	public static float toBPM(long delta, int beats) {
-		return 60000 / (delta / beats);
 	}
 
 	public static HashMap<String, Class<?>> template(String key, Class<?> clazz) {
@@ -242,7 +216,6 @@ public class Constants {
 	        } catch(Throwable t) {
 	            System.err.println(t.getMessage());
 	        }
-
 	    }).start();
 	}
 
@@ -254,7 +227,6 @@ public class Constants {
 	    }
 	}
 
-	private static ClassLoader loader = Constants.class.getClassLoader();
 	public static File resource(String filename) {
 	    try {
 	        return new File(loader.getResource(filename).getFile());
@@ -279,44 +251,20 @@ public class Constants {
 		} catch (MidiUnavailableException e) { e.printStackTrace(); }
 	}
 
-
-	public static JMenu createMixerMenu(String lbl) {
-	    JMenu result = new JMenu(lbl);
-	    for (String out : DEFAULT_OUT)
-	        result.add(new JMenuItem(out));
-	    for (Channel ch : JudahZone.getChannels())
-	        result.add(new JMenuItem(ch.getName()));
-        return result;
-	}
+	private static final String MAIN = "Mains";
+	private static final String DRUMS = "Drumtrack";
+	private static final String LOOPA = "Loop A";
+	private static final String LOOPB = "Loop B";
+	private static final String[] DEFAULT_OUT = new String[] {MAIN, DRUMS, LOOPA, LOOPB};
 
 	public static JComboBox<String> createMixerCombo() {
 	    ArrayList<String> channels = new ArrayList<>(Arrays.asList(DEFAULT_OUT));
-        for (Channel c : JudahZone.getChannels())
+        for (Channel c : JudahZone.getInstruments())
             channels.add(c.getName());
         JComboBox<String> result = new JComboBox<>(
                 channels.toArray(new String[channels.size()]));
 	    return result;
 	}
-
-    public static Channel getChannel(String name) {
-        switch(name) {
-            case MAIN: JudahZone.getMains();
-            case DRUMS: return JudahZone.getLooper().getDrumTrack();
-            case LOOPA: return JudahZone.getLooper().getLoopA();
-            case LOOPB: return JudahZone.getLooper().getLoopB();
-        }
-        return JudahZone.getChannels().byName(name);
-    }
-
-    public static Channel getChannel(int idx) {
-        switch(idx) {
-            case 0: return JudahZone.getMains();
-            case 1: return JudahZone.getLooper().getDrumTrack();
-            case 2: return JudahZone.getLooper().getLoopA();
-            case 3: return JudahZone.getLooper().getLoopB();
-        }
-        return JudahZone.getChannels().get(idx - 4);
-    }
 
     public static void writeToFile(File file, String content) {
         new Thread(() -> {
@@ -324,7 +272,6 @@ public class Constants {
             } catch(IOException e) {RTLogger.warn("Constants.writeToFile", e);}
         }).start();
     }
-    
     
     /** see https://stackoverflow.com/a/846249 */ 	
 	public static float logarithmic(int percent, float min, float max) {

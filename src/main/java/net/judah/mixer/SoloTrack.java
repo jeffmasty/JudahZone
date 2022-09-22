@@ -7,9 +7,10 @@ import net.judah.MainFrame;
 import net.judah.api.Notification;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
+import net.judah.drumz.JudahDrumz;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
-import net.judah.midi.JudahClock;
+import net.judah.synth.JudahSynth;
 import net.judah.util.RTLogger;
 
 @Data @EqualsAndHashCode(callSuper = true) 
@@ -17,10 +18,10 @@ public class SoloTrack extends Loop implements TimeListener {
 
     public static final String NAME = "D";
     private boolean muteStash = true;
-    private Instrument soloTrack;
+    private LineIn soloTrack;
 
-    public SoloTrack(Instrument soloTrack, Looper looper) {
-        super(NAME, looper);
+    public SoloTrack(LineIn soloTrack, Looper looper, Channels instruments, JudahSynth[] synth, JudahDrumz[] beats) {
+        super(NAME, looper, instruments, synth, beats);
         this.soloTrack = soloTrack;
     }
 
@@ -32,10 +33,14 @@ public class SoloTrack extends Loop implements TimeListener {
             else if (Status.TERMINATED == value) {
                 record(false);
             	setType(Type.DRUMTRACK);
-                if (JudahZone.getChannels().getCalf().equals(soloTrack))
-                	JudahClock.getInstance().end();
+                if (JudahZone.getInstruments().getCalf().equals(soloTrack))
+                	JudahZone.getClock().end();
+                if (JudahZone.getBeats().equals(soloTrack))
+                	JudahZone.getClock().end();
                 solo(false);
-	        	getRecording().trim();
+                if (hasRecording())
+                	getRecording().trim();
+	        	
             }
         }
     }
@@ -54,7 +59,7 @@ public class SoloTrack extends Loop implements TimeListener {
         	for (Loop x : looper)
         		x.removeListener(this);
             soloTrack.setSolo(false);
-            soloTrack = JudahZone.getChannels().getCalf();
+            soloTrack = JudahZone.getInstruments().getCalf();
             soloTrack.setMuteRecord(muteStash);
             RTLogger.log(this, "drumtrack disengaged.");
         }

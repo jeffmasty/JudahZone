@@ -8,9 +8,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
-import net.judah.looper.sampler.Sample;
+import net.judah.JudahZone;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Instrument;
+import net.judah.samples.Sample;
 import net.judah.util.Constants;
 import net.judah.util.GuitarTuner;
 
@@ -47,7 +48,7 @@ public class ChannelTitle extends JPanel {
 		if (tunerBtn != null) {
 			tunerBtn.setSelected(false);
 			tunerBtn.addChangeListener(e -> {
-				ControlPanel.getInstance().getTuner()
+				JudahZone.getFxPanel().getTuner()
 						.setChannel(tunerBtn.isSelected() ? channel : null);
 			});
 			main.add(tunerBtn);

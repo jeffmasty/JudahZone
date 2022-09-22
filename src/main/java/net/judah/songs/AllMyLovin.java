@@ -8,7 +8,7 @@ import net.judah.mixer.Channels;
 import net.judah.mixer.Instrument;
 import net.judah.tracker.Cycle;
 import net.judah.tracker.Track;
-import net.judah.tracker.Tracker;
+import net.judah.tracker.JudahBeatz;
 
 public class AllMyLovin extends SmashHit {
 
@@ -16,15 +16,15 @@ public class AllMyLovin extends SmashHit {
 	private Loop a;
 	
 	@Override
-	public void startup(Tracker t, Looper loops, Channels ch) {
-		super.startup(t, loops, ch);
+	public void startup(JudahBeatz t, Looper loops, Channels ch, MainFrame frame) {
+		super.startup(t, loops, ch, frame);
 		a = loops.getLoopA();
 		drum = t.getDrum1();
 		drum.setFile("AllMyLovin");
 		drum.setActive(false);
 		t.getDrum2().setActive(false);
 		t.getDrum3().setActive(false);
-		MainFrame.get().sheetMusic("AllMyLovin.png");
+		frame.sheetMusic("AllMyLovin.png");
 		
 		t.getClock().writeTempo(93);
 		t.getClock().setLength(10);

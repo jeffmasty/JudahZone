@@ -14,14 +14,15 @@ import net.judah.looper.Looper;
 import net.judah.mixer.Channels;
 import net.judah.mixer.Instrument;
 import net.judah.tracker.Track;
-import net.judah.tracker.Tracker;
+import net.judah.tracker.JudahBeatz;
 import net.judah.util.Constants;
 
 public class AirOnG extends SmashHit {
 
 	Track track;
 	
-	@Override public void startup(Tracker t, Looper looper, Channels ch) {
+	@Override public void startup(JudahBeatz t, Looper looper, Channels ch, MainFrame frame) {
+		super.startup(t, looper, ch, frame);
 		track = t.getChords();
 		track.setFile(new File(track.getFolder(), "AirOnG"));
 		track.getClock().setLength(12);
@@ -65,11 +66,11 @@ public class AirOnG extends SmashHit {
 		a.setOnMute(false);
 		b.setArmed(true);
 		b.setOnMute(false);
-		JudahZone.getChannels().getFluid().setMuteRecord(true);
-		Instrument mic = JudahZone.getChannels().getMic();
+		JudahZone.getInstruments().getFluid().setMuteRecord(true);
+		Instrument mic = JudahZone.getInstruments().getMic();
 		mic.setMuteRecord(false);
 		mic.getGain().setVol(50);
-		Instrument gtr = JudahZone.getChannels().getGuitar();
+		Instrument gtr = JudahZone.getInstruments().getGuitar();
 		gtr.setMuteRecord(false);		
 		gtr.setPreset(JudahZone.getPresets().get(Raw.Freeverb));
 		gtr.getLatchEfx().latch(a);
@@ -77,7 +78,7 @@ public class AirOnG extends SmashHit {
 		MainFrame.update(b);
 		MainFrame.updateTime();
 		MainFrame.update(gtr);
-		MainFrame.get().sheetMusic(new File("/home/judah/sheets/AirOnG.png"));
+		frame.sheetMusic(new File("/home/judah/sheets/AirOnG.png"));
 	}
 	
 

@@ -252,12 +252,6 @@ public class GMNames {
 33	Jazz Drum Kit
 41	Brush Kit
 
-
-	// bassdrum closedhat openhat snare,
-	// rimshot shaker midtom clap
-	// bass snare hat-open hat-closed crash ride hi-tom low-tom
-	// shaker 1 & 2, conga 1 & 2 clap rimshot extra1 extra2  
-
 Note #	Note Name	Drum Sound   // 27 lowest
 35	B2	Acoustic Bass Drum
 36	C3	Bass Drum 1

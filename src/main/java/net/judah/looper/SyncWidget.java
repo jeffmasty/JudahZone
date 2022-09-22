@@ -25,7 +25,6 @@ public class SyncWidget extends JLabel implements TimeListener {
 	private final Loop loop;
 	int local;
 	static Dimension sz = new Dimension(25, 35);
-	JudahClock clock;
 	private int counter = -1;
 
 	SyncWidget(Loop channel) {
@@ -52,10 +51,10 @@ public class SyncWidget extends JLabel implements TimeListener {
 	
 	public void update() {
 		if (loop.hasRecording()) return;
-		
+		JudahClock clock = JudahZone.getClock();
 		if (loop.isRecording() == AudioMode.RUNNING) {
 			StringBuffer sb = new StringBuffer("<html>").append(JudahClock.getBeat());
-			sb.append("<br>").append(JudahClock.getLength() * JudahClock.getInstance().getMeasure()).append("</html>");
+			sb.append("<br>").append(JudahClock.getLength() * clock.getMeasure()).append("</html>");
 			setText(sb.toString());
 		}
 		else if (loop == JudahZone.getLooper().getLoopA()) {
@@ -76,6 +75,7 @@ public class SyncWidget extends JLabel implements TimeListener {
 	}
 
 	@Override public void update(Notification.Property prop, Object value) {
+		final JudahClock clock = JudahZone.getClock();
 		if (Notification.Property.BEAT == prop) {
 			if (counter < 0) { // not started, display beats until start
 				loop.getFader().background();
@@ -111,8 +111,7 @@ public class SyncWidget extends JLabel implements TimeListener {
 	public void syncUp() {
 		setBars(JudahClock.getLength());
 		counter = -1;
-		clock = JudahClock.getInstance();
-		clock.addListener(this);
+		JudahZone.getClock().addListener(this);
 		loop.getFader().background();
 	}
 
