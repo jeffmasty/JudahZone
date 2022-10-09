@@ -8,10 +8,10 @@ import javax.swing.JComboBox;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.JudahZone;
 import net.judah.songs.SmashHit;
 import net.judah.tracker.Track.Cue;
 import net.judah.util.CenteredCombo;
+import net.judah.util.RTLogger;
 
 /** universal verse/trigger, cycle patterns for each track, provide/update comboBox widgets */
 @Getter 
@@ -95,10 +95,12 @@ public class Cycle implements ActionListener {
 	}
 	
 	public static void setTrigger(boolean trig) {
+		if (trig && !Cycle.trigger)
+			RTLogger.log(Cycle.class, "all systems go..");
 		Cycle.trigger = trig;
 		if (!trigger)
 			return;
-		for (Track t : JudahZone.getTracker().getTracks())
+		for (Track t : Tracker.getAll())
 			if (t.getCue() == Cue.Trig)
 				t.setCue(Cue.Bar);
 	}

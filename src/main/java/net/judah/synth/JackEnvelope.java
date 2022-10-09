@@ -1,5 +1,7 @@
 package net.judah.synth;
 
+import static net.judah.util.Constants.reverseVelocity;
+
 import javax.sound.midi.ShortMessage;
 
 import lombok.Getter;
@@ -57,7 +59,7 @@ public class JackEnvelope {
 		}
 		if (result <= 0)
 			return silence(notes, voice, idx);
-		return result * dampen * (voice.getData2() * 0.007874f); // data2/127 velocity
+		return result * dampen * reverseVelocity(voice.getData2());  
 	}
 
 	private float silence(Polyphony notes, ShortMessage voice, int idx) {

@@ -4,6 +4,7 @@ import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
 import lombok.RequiredArgsConstructor;
+import net.judah.api.MidiReceiver;
 import net.judah.util.RTLogger;
 
 @RequiredArgsConstructor
@@ -26,7 +27,9 @@ public class Panic extends Thread {
 		}
 	}
 
-	
+	public Panic(MidiReceiver r, int channel) {
+		this(r.getMidiPort(), channel);
+	}
 	
 	public Panic(MidiPort port, int channel) {
 		this.port = port;

@@ -21,12 +21,14 @@ import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.*;
 import net.judah.api.Notification.Property;
+import net.judah.drumz.DrumMachine;
 import net.judah.drumz.StepSample;
 import net.judah.looper.Loop;
 import net.judah.looper.SyncWidget;
 import net.judah.looper.SyncWidget.SelectType;
-import net.judah.tracker.Track;
 import net.judah.tracker.JudahBeatz;
+import net.judah.tracker.JudahNotez;
+import net.judah.tracker.Track;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -61,7 +63,9 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
     @Getter private double interval = Constants.millisPerBeat(tempo) / MIDI_24;
     private long lastBeat = lastPulse;
 	private int midiPulseCount;
-	@Setter private JudahBeatz tracker;
+	
+	@Getter private JudahBeatz beats;
+	@Getter private JudahNotez notes;
 
     /** current beat */
 	@Getter private static int beat = -1;
@@ -79,11 +83,12 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
 	private TimeNotifier source;
     private final ArrayList<TimeListener> listeners = new ArrayList<>();
     private StepSample crickets = null;
-    // @Getter private BeatBuddy drummachine = new BeatBuddy();
     
-	public JudahClock(JudahMidi midiSystem) {
+	public JudahClock(JudahMidi midiSystem, DrumMachine drums) {
 		midi = midiSystem;
 		clockOut = midi.getClockOut();
+		beats = new JudahBeatz(this, drums);
+		notes = new JudahNotez(this);
 	    setPriority(8);
 	    start();
 	}
@@ -184,11 +189,14 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
 
 		shout(STEP, step);
 
+		
 		new Thread( () -> {
 			if (crickets != null)
 				crickets.step(step);
-			for (Track track : tracker.getTracks())
-				track.step();
+			for (Track t : beats)
+				t.step();
+			for (Track t : notes)
+				t.step();
 		}).run();
 
         step++;
@@ -376,7 +384,7 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
 
 	private void setMeasure() {
 		_measure = steps/subdivision;
-		MainFrame.update(JudahZone.getTimeSig());
+		MainFrame.update(this);
 	}
 	
 	public static String toString(JackPosition position) {

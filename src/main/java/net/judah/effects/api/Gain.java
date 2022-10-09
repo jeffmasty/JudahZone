@@ -11,8 +11,8 @@ public class Gain implements Effect {
 	@Getter final String name = "Gain";
 
 	@Getter private int vol = 50;
-	@Getter @Setter private int pan = 50;
 	@Getter private float gain = vol * 0.01f;
+	@Getter @Setter private int pan = 50;
 	
 	public void setVol(int volume) {
 		if (volume < 0) volume = 0;

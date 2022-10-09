@@ -1,30 +1,21 @@
 package net.judah.songs;
-import static net.judah.JudahZone.*;
+
+import static net.judah.JudahZone.getMidiGui;
 
 import net.judah.MainFrame;
 import net.judah.api.Notification.Property;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.effects.Delay;
-import net.judah.looper.Looper;
-import net.judah.mixer.Channels;
-import net.judah.mixer.Instrument;
 import net.judah.tracker.Cycle;
 import net.judah.tracker.Track;
-import net.judah.tracker.JudahBeatz;
 import net.judah.util.Constants;
+
 
 public class FeelLuv extends SmashHit {
 
 	private final int TOTAL_LEN = 40;
 	private final int BPM = 120;
-	Track bass;
-	Track hats;
-	Track kick;
-	Track clap;
-	Track chords;
-	Instrument fluid;
-	Instrument crave;
 
 	private int count;
 	private boolean vamp;
@@ -36,37 +27,29 @@ public class FeelLuv extends SmashHit {
 			
 			vamp = false;
 			hats.setActive(true);
-			loops.getLoopA().removeListener(this);
+			looper.getLoopA().removeListener(this);
 			
 		}
 	};
 	
 	@Override
-	public void startup(JudahBeatz t, Looper loops, Channels ch, MainFrame frame) {
-		super.startup(t, loops, ch, frame);
+	public void startup() {
+		super.startup();
 		frame.sheetMusic("FeelLuv.png");
-		t.getClock().writeTempo(BPM);
-		t.getClock().end();
-		t.getClock().setLength(TOTAL_LEN);
-		loops.getLoopA().addListener(init);
-		loops.getLoopB().setArmed(true);
-		getMidiGui().getMpk().setSelectedItem(getSynthPorts().get(getMidi().getCraveOut())); // TODO
+		clock.writeTempo(BPM);
+		clock.end();
+		clock.setLength(TOTAL_LEN);
+		looper.getLoopA().addListener(init);
+		looper.getLoopB().setArmed(true);
+		getMidiGui().getMpk().setSelectedItem(crave.getMidiPort()); // TODO
 		MainFrame.updateTime();
 		
-		bass = t.getBass();
-		hats = t.getDrum2();
-		kick = t.getDrum1();
-		clap = t.getDrum3();
-		chords = t.getChords();
-		fluid = ch.getFluid();
-		crave = ch.getCrave();
-		
-		kick.setActive(false);
-		clap.setActive(false);
+		drum1.setActive(false);
+		fills.setActive(false);
 		hats.setActive(false);
 		
-		kick.setFile("FeelKick");
-		clap.setFile("FeelClap");
+		drum1.setFile("FeelKick");
+		fills.setFile("FeelClap");
 		bass.setFile("FeelLove");
 		bass.getCycle().setCustom(this);
 		
@@ -89,12 +72,12 @@ public class FeelLuv extends SmashHit {
 		count = 0;
 		vamp = true;
 		
-		ch.getMic().setMuteRecord(false);
+		mic.setMuteRecord(false);
 		MainFrame.update(crave);
 		MainFrame.update(fluid);
-		kick.setActive(true);
+		drum1.setActive(true);
 		bass.setActive(true);
-		t.getClock().begin();
+		clock.begin();
 		
 	}
 

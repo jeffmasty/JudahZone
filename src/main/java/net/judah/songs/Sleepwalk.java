@@ -1,37 +1,32 @@
 package net.judah.songs;
 
-import static net.judah.JudahZone.*;
+import static net.judah.JudahZone.getLooper;
 
-import java.io.File;
-
-import net.judah.MainFrame;
-import net.judah.looper.Looper;
-import net.judah.mixer.Channels;
-import net.judah.mixer.Instrument;
 import net.judah.tracker.Cycle;
 import net.judah.tracker.Track;
-import net.judah.tracker.JudahBeatz;
-import net.judah.util.Constants;
+import net.judah.tracker.Track.Cue;
 import net.judah.util.RTLogger;
 
 public class Sleepwalk extends SmashHit {
 	int count;
 	boolean odd;
-	Track track;
 	
 	@Override
-	public void startup(JudahBeatz t, Looper loops, Channels ch, MainFrame frame) {
-		super.startup(t, loops, ch, frame);
-		getClock().setLength(4);
-		track = t.getBass();
-		track.setFile(new File(track.getFolder(), "Sleepwalk"));
-		track.getCycle().setCustom(this);
-		track.setActive(true);
-		Instrument guitar = getInstruments().getGuitar();
+	public void startup() {
+		clock.setLength(4);
+		clock.writeTempo(93);
+		crave.setMuteRecord(true);
+
+		bass.setFile("Sleepwalk");
+		bass.getCycle().setCustom(this);
+		bass.setActive(true);
+		lead2.setActive(false);
+		lead2.setFile("SleepArp");
+		lead2.setCue(Cue.Bar);
+		synth2.getPresets().load("Drops1");
 		guitar.getReverb().setActive(false);
 		guitar.getLatchEfx().latch(getLooper().getLoopA());
-		count = 0;
-		getFrame().sheetMusic(new File(Constants.SHEETMUSIC, "Sleepwalk.png"));
+		frame.sheetMusic("Sleepwalk.png");
 	}
 
 	@Override
@@ -40,7 +35,7 @@ public class Sleepwalk extends SmashHit {
 				if (Cycle.isTrigger()) {
 					Cycle.setTrigger(false);
 					if (count == 4) {
-						track.setCurrent(track.get(0));
+						bass.setCurrent(bass.get(0));
 						Cycle.setVerse(false);
 						count = 0;
 						odd = false;
@@ -51,14 +46,14 @@ public class Sleepwalk extends SmashHit {
 					if (count == 0) {
 						RTLogger.log(this, "Sleepwalk verse");
 						getLooper().getLoopA().setOnMute(true);
-						track.setCurrent(track.get(2));
+						bass.setCurrent(bass.get(2));
 					}
 					else if (count == 1)
-						track.setCurrent(track.get(3));
+						bass.setCurrent(bass.get(3));
 					else if (count == 2)
-						track.setCurrent(track.get(2));
+						bass.setCurrent(bass.get(2));
 					else if (count == 3)
-						track.setCurrent(track.get(4));
+						bass.setCurrent(bass.get(4));
 					
 				}
 				else {
@@ -68,7 +63,7 @@ public class Sleepwalk extends SmashHit {
 				return;
 			}
 			else {
-				track.next(!odd);
+				bass.next(!odd);
 				odd = !odd;
 			}					
 		
@@ -76,8 +71,8 @@ public class Sleepwalk extends SmashHit {
 
 	@Override
 	public void teardown() {
-		track.clearFile();
-		track.getCycle().setCustom(null);
+		bass.clearFile();
+		bass.getCycle().setCustom(null);
 	}
 
 }

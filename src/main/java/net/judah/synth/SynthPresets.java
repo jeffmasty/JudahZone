@@ -4,6 +4,7 @@ import static net.judah.synth.JudahSynth.*;
 
 import java.io.File;
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 import lombok.Getter;
@@ -17,7 +18,7 @@ import net.judah.util.RTLogger;
 	[dco-1]shape/gain
 	[dco-2]shape/gain
 */
-public class SynthPresets { 
+public class SynthPresets extends ArrayList<String> { 
 	
 	private static final String SPLIT = "/";
 	private static final String OPEN = "[";
@@ -29,6 +30,17 @@ public class SynthPresets {
 	
 	public SynthPresets(JudahSynth synth) {
 		this.synth = synth;
+		for (String s : Constants.SYNTH.list()) 
+			add(s);
+	}
+	
+	public int getProg() {
+		if (loaded == null) return 0;
+		String search = loaded.getName();
+		for (int i = 0; i < size(); i++)
+			if (get(i).equals(search))
+				return i;
+		return 0;
 	}
 	
 	public void save(File f) {
@@ -51,13 +63,17 @@ public class SynthPresets {
         try {
             Constants.writeToFile(f, buf.toString());
             loaded = f;
-            synth.getView().getPresets().initPresets();
+            SynthView.update(synth);
         } catch (Exception e) {RTLogger.warn(SynthPresets.class, e);}
+	}
+	
+	public boolean load(String name) {
+		return load(new File(Constants.SYNTH, name));
 	}
 	
 	public boolean load(File f) {
         if (f == null || !f.isFile()) {
-            System.err.println("no synth presets file " + f);
+            RTLogger.log(this, "missing file " + f);
             return false;
         }
         Scanner scanner = null;
@@ -89,16 +105,13 @@ public class SynthPresets {
                 	throw new InvalidParameterException("type: " + type); 
             }
             loaded = f;
-            synth.getView().getPresets().select();
-            
+            SynthView.update(synth);
         } catch (Throwable e) {
             RTLogger.warn(this, f.getName() + " line:" + lineNum + " - " + e.getMessage());
             return false;
         } finally {
         	if (scanner != null) scanner.close();
-        	
-        	synth.getView().update();
-        	
+        	SynthView.update(synth);
         }
         return true;
 	

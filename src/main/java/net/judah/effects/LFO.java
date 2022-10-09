@@ -1,13 +1,10 @@
 package net.judah.effects;
 
 import java.security.InvalidParameterException;
-import java.util.ArrayList;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import net.judah.JudahZone;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import net.judah.MainFrame;
 import net.judah.effects.api.Effect;
 import net.judah.effects.api.Reverb;
@@ -15,7 +12,7 @@ import net.judah.mixer.Channel;
 import net.judah.util.RTLogger;
 
 /** A calculated sin wave LFO.  Default amplitude returns queries between 0 and 85 */
-@Data @NoArgsConstructor @AllArgsConstructor
+@RequiredArgsConstructor @Getter @Setter
 public class LFO implements Effect {
 
     public enum Settings {
@@ -26,27 +23,25 @@ public class LFO implements Effect {
 		CutEQ, Gain, Reverb, Delay, Pan
 	};
 
+	private final Channel ch;
 	private boolean active;
 	private Target target = Target.Pan;
-	public void setTarget(Target target) {
-		if (this.target != target) {
-			this.target = target;
-			RTLogger.log(this, target.name());
-		}
-	}
 
 	/** in kilohertz (msec per cycle). default: oscillates over a 1.2 seconds. */
 	@Getter private double frequency = 1200;
-
 	/** align the wave on the jack frame buffer by millisecond (not implemented)*/
 	private long shift;
-
 	/** set maximum output level of queries. default: 90. */
 	private int max = 90;
 	/** set minimum level of queries. default 10. */
 	private int min = 10;
 
-    private static final ArrayList<Channel> lfoPulse = new ArrayList<>();
+    public void setTarget(Target target) {
+		if (this.target != target) {
+			this.target = target;
+			RTLogger.log(this, target.name());
+		}
+	}
 
 	public void setMax(int val) {
 	    if (val < min) return;
@@ -98,22 +93,6 @@ public class LFO implements Effect {
         else throw new InvalidParameterException();
     }
 
-	/** called every MidiScheduler.LFO_PULSE jack frames in RT thread */
-	public static void pulse() {
-		if (!JudahZone.isInitialized()) return;
-		synchronized (lfoPulse) {
-			lfoPulse.clear();
-			for (Channel ch : JudahZone.getMixer().getChannels())
-				if (ch.getLfo().isActive())
-					lfoPulse.add(ch);
-			if (lfoPulse.isEmpty()) return;
-		}
-		new Thread(() -> {
-			for (Channel ch : new ArrayList<>(lfoPulse))
-				if (ch != null) ch.getLfo().pulse(ch);
-		}).start();
-	}
-
 	/** query the oscillator at a specific time, System.currentTimeMillis(), for example. */
 	public double query(long millis) {
 		// divide current millis + offset by frequency and apply sin wave, multiply by amplitude
@@ -129,14 +108,15 @@ public class LFO implements Effect {
 	}
 
 	/** execute the LFO on the channel's target */
-	public void pulse(Channel ch) {
+	public void pulse() {
+		if (!active) return;
 		int val = (int)query();
 		switch(target) {
 			case Gain: ch.getGain().setVol(val); break;
 			case CutEQ: ch.getCutFilter().setFrequency(
 					CutFilter.knobToFrequency((int)ch.getLfo().query())); break;
 			case Reverb: ch.getReverb().set(Reverb.Settings.Wet.ordinal(), val); break;
-			case Delay: ch.getDelay().setFeedback(val / 100f); break;
+			case Delay: ch.getDelay().setFeedback(val * 0.01f); break;
 			case Pan: ch.getGain().setPan(val); break;
 		}
 		MainFrame.update(ch);
@@ -152,7 +132,7 @@ public class LFO implements Effect {
 	//}
 
 	public static class LFOTest extends Thread {
-		final LFO lfo = new LFO();
+		final LFO lfo = new LFO(new Channel("test", false));
 
 		long sleep = 80;
 		final long spells = 50;

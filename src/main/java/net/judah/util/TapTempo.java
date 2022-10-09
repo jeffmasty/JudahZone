@@ -22,7 +22,7 @@ public class TapTempo extends JLabel {
     }
 
     public TapTempo(String lbl) {
-        super(lbl, JLabel.RIGHT);
+        super(lbl, JLabel.CENTER);
         setFont(Gui.FONT11);
         setBorder(BorderFactory.createDashedBorder(SystemColor.inactiveCaption));
     }

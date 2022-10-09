@@ -250,6 +250,8 @@ public class Knob extends JComponent{
 		setMaxPos(320);
 		setMinVal(0);
 		setMaxVal(100);
+		if (listener == null)
+			return;
 		addMouseMotionListener(new MouseMotionAdapter() {
 			 @Override public void mouseDragged(MouseEvent e) {
 				 listener.knobChanged(getHandle(0).getVal());

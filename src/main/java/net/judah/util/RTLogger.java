@@ -13,7 +13,7 @@ public class RTLogger {
         final boolean warn;
     }
 
-    private static final BlockingQueue<Log> debugQueue = new LinkedBlockingQueue<>(); // logging for Realtime threads
+    private static final BlockingQueue<Log> debugQueue = new LinkedBlockingQueue<>(2048); // logging for Realtime threads
 
     public static void log(Object o, String msg) {
         debugQueue.offer(new Log(o instanceof String 

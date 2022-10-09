@@ -36,12 +36,12 @@ public class MidiSetup {
 		TEMPO("Tempo"),
 		CLOCK_OUT("Clock"),
 		SYNTH_OUT("Fluid"), 
-		CALF_OUT("Calf"),
 		CRAVE_OUT("Crave"),
-		// CIRCUIT_OUT("Circuit")
+		//CALF_OUT("Calf"),
+		//CIRCUIT_OUT("Circuit")
 		//UNO_OUT("Uno"),
-		;//AUX1_OUT("Aux");
-		
+		//AUX1_OUT("Aux");
+		;
 		@Getter public final String port;
 		
 	}

@@ -37,3 +37,7 @@ Overdrive(0)
 EQ(70/38/38)
 Delay(48/8)
 Reverb(50/95/8)
+[TimeAfterTime]
+Chorus(33/24/27)
+[TimeAfterGtr]
+Chorus(40/40/74)

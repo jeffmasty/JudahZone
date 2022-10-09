@@ -24,13 +24,14 @@ public abstract class Pad extends JPanel {
 	public Pad(DrumType type) {
 		this.type = type;
 		setBorder(BorderFactory.createSoftBevelBorder(BevelBorder.RAISED, borderColor, borderColor.darker()));
-		// setLayout(new GridLayout(2, 1));
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		JLabel nombre = new JLabel(type.name());
 		nombre.setFont(Constants.Gui.BOLD);
 		top.add(nombre);
+		top.setOpaque(true);
 		add(top);
 		add(bottom);
+		setOpaque(true);
 	}
 	
 	public abstract void update();

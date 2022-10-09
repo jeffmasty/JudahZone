@@ -10,6 +10,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.util.Arrays;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -18,8 +19,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import net.judah.midi.MidiCable;
-import net.judah.midi.ProgChange;
+import net.judah.JudahZone;
 import net.judah.midi.TimeSigGui;
 import net.judah.tracker.Track.Cue;
 import net.judah.util.*;
@@ -35,8 +35,15 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
 	@Getter protected final JComboBox<Integer> trackNum = new CenteredCombo<>();
     protected final JPanel buttons = new JPanel();
     protected final JComboBox<String> file = new CenteredCombo<>();
-    protected final FileCombo filename; 
-    @Getter protected final MidiCable midiOut;
+    protected ActionListener fileListener = new ActionListener() {
+		@Override public void actionPerformed(ActionEvent e) {
+			String select = "" + file.getSelectedItem();
+			if (select.equals("_clear")) 
+				track.clearFile();
+			else 
+				track.setFile(select);
+		}
+	};
     protected final JComboBox<String> cycle;
     @Getter protected final JComboBox<Cue> cue = new CenteredCombo<>();
     @Getter protected final JComboBox<String> ratio = new CenteredCombo<>();
@@ -46,26 +53,28 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
     @Getter protected final JButton record = new JButton("Rec");
     @Getter protected final JButton mpk = new JButton("MPK");
 
-    protected final ProgChange patch;
     protected boolean disable;
     
     protected final JComboBox<Integer> steps = new JComboBox<>();
     protected final JComboBox<Integer> div = new JComboBox<>();
 
     protected TrackEdit(Track t) {
+    	setOpaque(true);
     	this.track = t;
-    	filename = new FileCombo(t);
-    	midiOut = new MidiCable(t);
-    	patch = new ProgChange(track);
     	cycle = t.getCycle().createComboBox();
     	buttons.setLayout(new GridLayout(0, 1));
     	setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
     	genericButtons();
+    	refreshFile();
     }
     
     public abstract void step(int step);
     
-    public abstract void update();
+    public void update() {
+    	playWidget.setBackground(track.isActive() ? Pastels.GREEN : track.isOnDeck() ? Pastels.YELLOW : Pastels.EGGSHELL);
+    	record.setBackground(track.isRecord() ? Pastels.RED : Pastels.BUTTONS);
+    	repaint();
+    }
     
     public void setPattern(int idx) {
     	if (idx >= pattern.getItemCount()) fillPatterns();
@@ -79,8 +88,17 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
     }
 
     
-	public final void fillFile1() {
-		filename.refresh();
+	public final void refreshFile() {
+		String selected = (track.getFile() == null) ? "_clear" : track.getFile().getName();
+		file.removeActionListener(fileListener);
+		file.removeAllItems();
+		String[] sort = track.getFolder().list();
+		Arrays.sort(sort);
+		for (String name : sort) 
+			file.addItem(name);
+		file.addItem("_clear");
+		file.setSelectedItem(selected);
+		file.addActionListener(fileListener);
 	}
 	
 	public final void fillPatterns() {
@@ -94,16 +112,16 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
 		pattern.addActionListener(this);
 		if (!track.isDrums())
 			track.getCurrent().update();
-		filename.refresh();
+		refreshFile();
 		disable = false;
 	}
 	
-	public final void fillTracks() {
+	public final void fillTracks(int count) {
 		trackNum.removeActionListener(this);
 		new Thread(() -> {
 			Constants.sleep(10);
 			trackNum.removeAllItems();
-			for (int i = 0; i < track.getTracker().getTracks().length; i++)
+			for (int i = 0; i < count; i++)
 				trackNum.addItem(i + 1);
 			if (track.getNum() < trackNum.getItemCount() - 1)
 				trackNum.setSelectedIndex(track.getNum());
@@ -128,7 +146,7 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
         		if (name == null || name.isEmpty()) return;
         		track.getCurrent().setName(name);
         		fillPatterns();
-        		track.getView().fillPatterns();
+        		JudahZone.getTracker().get(track).fillPatterns();
         	}
 		});
 		
@@ -148,7 +166,7 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
 
         // File open/save/new
         pnl = new JPanel();
-        pnl.add(filename);
+        pnl.add(file);
         JButton saveBtn = new JButton("Save");
         saveBtn.addActionListener( e -> {
         	if (track.getFile() == null)
@@ -158,7 +176,7 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
             File f = FileChooser.choose();
             if (f != null) {
                 track.write(f);
-                fillFile1();
+                refreshFile();
             }
         });
         pnl.add(saveBtn);
@@ -172,9 +190,9 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
         // probablity and trackVol
         buttons.add(trackVol());
         // port  and portVol
-        buttons.add(port());
+        // buttons.add(port());
         // instrument
-        buttons.add(instrument());
+
         // div and steps
         buttons.add(stepsDiv());
         // gate/octave in PianoEdit
@@ -184,14 +202,16 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
 
 	private JPanel playRecMpk() {
 		playWidget.addActionListener((e) -> track.setActive(!track.isActive()));
+		playWidget.setOpaque(true);
         record.addActionListener(e ->track.toggleRecord());
         if (track.isSynth()) {
 			mpk.addActionListener(e -> {
 				track.setLatch(!track.isLatch());
-				track.getTracker().checkLatch();
+				((JudahNotez)track.getTracker()).checkLatch();
 			});
         }		
         JPanel pnl = new JPanel(new GridLayout(1, 3));
+        pnl.setOpaque(true);
         pnl.add(playWidget);
         pnl.add(record);
         pnl.add(mpk);
@@ -245,20 +265,6 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
         return pnl;
 	}
 	
-	private JPanel port() {
-		JPanel pnl = new JPanel();
-		pnl.add(new JLabel("MidiOut"));
-		pnl.add(midiOut);
-		return pnl;
-	}
-	
-	private JPanel instrument() {
-		JPanel pnl = new JPanel();
-		pnl.add(new JLabel("Patch", JLabel.CENTER));
-        pnl.add(patch);
-		return pnl;
-	}
-	
 	private JPanel stepsDiv() {
 		JLabel stp = new JLabel("Steps", JLabel.CENTER);
 		for (int i = 2; i <= 32; i++)
@@ -286,13 +292,13 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
         chBack.addActionListener(e -> {
             int channel = trackNum.getSelectedIndex() - 1;
             if (channel < 0) channel = trackNum.getItemCount() - 1;
-            track.getTracker().setCurrent(track.getTracker().getTracks()[channel]);});
+            JudahZone.getTracker().setCurrent(channel);});
 
         Click chNext = new Click(">");
         chNext.addActionListener(e -> {
             int channel = trackNum.getSelectedIndex() + 1;
             if (channel == trackNum.getItemCount()) channel = 0;
-            track.getTracker().setCurrent(track.getTracker().getTracks()[channel]);
+            JudahZone.getTracker().setCurrent(channel);
         });
         Click patternBack = new Click("<");
         patternBack.addActionListener(e -> {track.next(false);});
@@ -327,7 +333,7 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
 	private void trackAction() {
 		int idx = trackNum.getSelectedIndex(); 
 		if (track.getNum() != idx)
-			track.getTracker().setCurrent(track.getTracker().getTracks()[idx]);
+			JudahZone.getTracker().setCurrent(idx);
 		trackNum.removeActionListener(this);
 		trackNum.setSelectedIndex(track.getNum());
 		trackNum.addActionListener(this);
@@ -372,3 +378,14 @@ public abstract class TrackEdit extends JPanel implements ActionListener {
 	}
 	
 }
+
+//private JPanel port2() {
+//	JPanel pnl = new JPanel();
+//	pnl.add(new JLabel("MidiOut"));
+//	// pnl.add(midiOut);
+//	JButton panic = new JButton("!");
+//	panic.addActionListener(e->new Panic(track.getMidiOut().getMidiPort(), track.getCh()).start());
+//	pnl.add(panic);
+//	return pnl;
+//}
+	

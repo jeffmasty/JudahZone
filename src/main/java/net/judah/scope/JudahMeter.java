@@ -1,4 +1,4 @@
-package net.judah.synth;
+package net.judah.scope;
 
 /**TODO
  * x = hz

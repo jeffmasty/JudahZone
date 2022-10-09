@@ -2,17 +2,35 @@ package net.judah.drumz;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 
 import lombok.Getter;
+import net.judah.looper.Recording;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
+
 public class DrumDB {
+
+	/** drum sample cache */
+	private static HashMap<File, Recording> db = new HashMap<>();
+	
+	public static Recording get(File file) throws Exception {
+		if (db.containsKey(file) == false) {
+			Recording result = Recording.load(file);
+			db.put(file, result);
+		}
+		return db.get(file);
+	}
+	
 	private static final int LENGTH = DrumType.values().length;
 
 	@Getter private static final ArrayList<ArrayList<File>> samples = new ArrayList<>();
 	@Getter private static final ArrayList<String> kits = new ArrayList<>();
 	static {
+		try {
 		for (int i = 0; i < DrumType.values().length; i++) 
 			samples.add(new ArrayList<File>());
 		int count = 0;
@@ -20,23 +38,38 @@ public class DrumDB {
 			if (folder.isDirectory() == false) 
 				continue;
 			int oldDB = count;
-			for (File drum : folder.listFiles()) {
-				String type  = drum.getName().split("[.]")[0];
+			for (String drum : folder.list()) {
+				String type  = drum.split("[.]")[0];
 				try {
 					DrumType t = DrumType.valueOf(type);
 					if (t != null) {
-						samples.get(t.ordinal()).add(drum);
+						samples.get(t.ordinal()).add(new File(folder, drum));
 						count++;
 					}
 				} catch (Throwable t) {
-					RTLogger.log("Drum DB", t.getMessage() + " - " + drum.getAbsolutePath());
+					RTLogger.log("Drum DB", t.getMessage() + ": " + drum + " in " + folder.getAbsolutePath());
 				}
-				if (count - LENGTH == oldDB)
-					kits.add(folder.getName());
-					
 			}
+			if (count - LENGTH == oldDB)
+				kits.add(folder.getName());
+			else {
+				RTLogger.log(DrumDB.class, "SKipping " + folder.getName());
+			}
+
 		}
-		RTLogger.log(DrumDB.class, count + " samples in DB. " + kits.size() + " Kits");
+		Collections.sort(kits);
+		RTLogger.log(DrumDB.class, count + " samples in DB. " + Arrays.toString(kits.toArray()));
+		} catch (Throwable t) {
+			RTLogger.warn(DrumDB.class, t);
+		}
+	}
+	public static int indexOf(DrumPreset kit) {
+		if (kit == null)
+			return 0;
+		for (int i = 0; i < kits.size(); i++)
+			if (kits.get(i).equals(kit.getFolder().getName()))
+				return i;
+		return 0;
 	}
 
 	

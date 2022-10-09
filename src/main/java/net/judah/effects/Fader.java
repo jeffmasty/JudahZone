@@ -30,7 +30,7 @@ public class Fader {
 	public static Fader fadeIn(Channel ch) {
 		return new Fader(ch, Target.Gain, DEFAULT_FADE, 0, ch instanceof Sample ? 95 : 51, new Runnable() {
 		    @Override public void run() {
-		        ch.getFader().updateVolume();
+		    	JudahZone.getMixer().getFader(ch).updateVolume();
 		    }});
 	}
 	
@@ -43,13 +43,13 @@ public class Fader {
 	public static Fader fadeOut(Channel ch) {
 	    Fader result =  new Fader(ch, Target.Gain, DEFAULT_FADE, ch.getVolume(), 0, new Runnable() {
             @Override public void run() {
-            	ch.getFader().updateVolume();
+		    	JudahZone.getMixer().getFader(ch).updateVolume();
             }
         });
 	    if (ch instanceof Sample)
 			result.cleanup = () ->{
 				((Sample)ch).setActive(false);
-				((Sample)ch).getGui().update();};
+				((Sample)ch).getPad().update();};
 		return result;
 	}
 	/** Fade out Master track over 4 seconds */

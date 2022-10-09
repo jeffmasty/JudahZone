@@ -17,24 +17,19 @@ import javax.swing.border.Border;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
-import net.judah.controllers.KorgMixer;
-import net.judah.drumz.DrumType;
-import net.judah.drumz.DrumzView;
+import net.judah.controllers.KnobMode;
+import net.judah.drumz.DrumKit;
 import net.judah.drumz.GMKitView;
-import net.judah.drumz.JudahDrumz;
-import net.judah.midi.MidiCable;
+import net.judah.drumz.KitView;
 import net.judah.midi.MidiPort;
-import net.judah.midi.Panic;
 import net.judah.midi.ProgChange;
 import net.judah.mixer.Channel;
-import net.judah.mixer.Channels;
+import net.judah.mixer.Instruments;
+import net.judah.synth.JudahSynth;
+import net.judah.synth.SynthView;
 import net.judah.tracker.Track.Cue;
-import net.judah.util.Click;
-import net.judah.util.Constants;
+import net.judah.util.*;
 import net.judah.util.Constants.Gui;
-import net.judah.util.Pastels;
-import net.judah.util.Size;
-import net.judah.util.Slider;
 
 @Getter
 public class TrackView extends JPanel {
@@ -47,16 +42,18 @@ public class TrackView extends JPanel {
 			createSoftBevelBorder(BevelBorder.RAISED, Pastels.GREEN, Pastels.GREEN.darker());
 	
 	private final Track track;
+	private final Tracker tracker;
 	private final FileCombo filename; 
-	private final ProgChange patch;
-	@Getter private final MidiCable midiOut;
+	private final ProgChange progChange;
+	private final JComboBox<String> receiver;
 	private final JComboBox<String> pattern = new JComboBox<>();
 	private ActionListener patternListener;
 	private final JComboBox<Cue> cue = new JComboBox<>();
 	private final DefaultListCellRenderer center = new DefaultListCellRenderer(); 
 	private final Slider volume = new Slider(null);
 	private final JComboBox<String> cycle;
-	@Getter JToggleButton transpose; // PianoTrack 
+	@Getter private JButton transpose; // PianoTrack 
+	private JButton rec = new JButton("Rec");
 	private final JButton playWidget;
 	private final ActionListener playListener = new ActionListener() {
 		@Override public void actionPerformed(ActionEvent e) {
@@ -64,38 +61,47 @@ public class TrackView extends JPanel {
 				track.setActive(false);
 			else 
 				track.setActive(true);
-	}};
+		}};
 	
-	public TrackView(Track t) {
+	public TrackView(Track t, Tracker parent) {
 		this.track = t;
+		this.tracker = parent;
 		setFont(font);
 		center.setHorizontalAlignment(DefaultListCellRenderer.CENTER); 
 		filename = new FileCombo(track);
-		midiOut = new MidiCable(track);
         Click outLbl = new Click(track.getName());
         outLbl.addActionListener( e -> {
-            MidiPort out = (MidiPort)midiOut.getSelectedItem();
-            Channel focus = Channels.byName(out.toString(), JudahZone.getMixer().getChannels());
+            MidiPort out = track.getMidiOut().getMidiPort();
+            Channel focus = Instruments.byName(out.toString(), JudahZone.getMixer().getChannels());
             MainFrame.setFocus(focus);});
         outLbl.setBorder(UIManager.getBorder("TitledBorder.border"));
 		volume.setPreferredSize(SLIDESZ);
 		volume.addChangeListener(e -> {
-			float gain = ((Slider)e.getSource()).getValue() * .01f;
+			float gain = volume.getValue() * .01f;
 			if (track.getGain() != gain)
 				track.setGain(gain);
 		});
-		patch = new ProgChange(track);
+	
+		receiver = t.isDrums() ? new JComboBox<String>() : JudahZone.getNotes().createMidiCable(this);
+		progChange = new ProgChange(track.getMidiOut(), track.getCh());
 
 		playWidget = new JButton(track.getName()); // ▶/■ 
 		playWidget.addActionListener(playListener);
 		playWidget.setFont(Constants.Gui.BOLD);
+		playWidget.setOpaque(true);
+		playWidget.setPreferredSize(new Dimension(150, 25));
 
 		JButton edit = new JButton("Edit");
 		edit.addActionListener(e -> {
 			MainFrame main = JudahZone.getFrame();
-			track.getTracker().setCurrent(track);
+			JudahZone.getTracker().setCurrent(track);
 			JudahZone.getBeatBox().changeTrack(track);			
 			main.addOrShow(JudahZone.getBeatBox(), JudahZone.getBeatBox().getName());
+		});
+		rec.setOpaque(true);
+		rec.addActionListener(e->{
+		track.setRecord(!track.isRecord());
+		update();
 		});
 		
 		fillPatterns();
@@ -104,22 +110,23 @@ public class TrackView extends JPanel {
 			
 		cycle.setFont(font);
 		filename.setFont(font); 
-		patch.setFont(font);
-		midiOut.setFont(font);
+		progChange.setFont(font);
 		pattern.setFont(font);
+		receiver.setFont(font);
 		edit.setFont(font);
 		outLbl.setFont(Constants.Gui.BOLD13);
 		
-		
-		playWidget.setPreferredSize(new Dimension(150, 30));
-		
 		JPanel buttons = new JPanel();
-		buttons.add(new JButton("Fx"));
+		buttons.setLayout(new BoxLayout(buttons, BoxLayout.LINE_AXIS));
+		buttons.add(new FxButton((Channel)track.getMidiOut()));
 		buttons.add(edit);
-		buttons.add(new JButton("Rec"));
+		buttons.add(rec);
 
-		JPanel top = new JPanel(new GridLayout(1, 3));
-		top.add(Constants.wrap(playWidget));
+		JPanel top = new JPanel();
+		top.setLayout(new BoxLayout(top, BoxLayout.LINE_AXIS));
+		top.add(Box.createHorizontalGlue());
+		top.add(playWidget);
+		top.add(Box.createHorizontalGlue());
 		top.add(buttons);
 		
 		final JPanel knobs = new JPanel(new GridLayout(2, 4));
@@ -128,34 +135,29 @@ public class TrackView extends JPanel {
 		knobs.add(cycle);
 		knobs.add(volume);
 		knobs.add(cue);
-		knobs.add(midiOut);
-		knobs.add(patch);
+		knobs.add(receiver); // TODO
+		knobs.add(progChange);
 		
 		if (track.isSynth())  {
-			doTranspose(buttons);
-			Slider portVol = new Slider(e -> {
-				Channel ch = Channels.byName(midiOut.toString(), JudahZone.getMixer().getChannels());
-				int vol = ((Slider)e.getSource()).getValue();
-				if (ch.getGain().getVol() != vol) {
-					ch.getGain().setVol(vol);
-					MainFrame.update(ch);
-				}});
-			knobs.add(portVol);
+			doSynth(buttons);
 		}
+		
 		else {
 			JButton viewKit = new JButton("Kit");
 			final Dimension size = new Dimension((int)(Size.WIDTH_SONG / 3f * 2f), Size.HEIGHT_FRAME / 3);
 			viewKit.addActionListener(e-> {
-				JPanel view = track.getMidiOut().isExternal() ?
+				JPanel view = track.getMidiOut().getMidiPort().isExternal() ?
 						new GMKitView(track) :
-						new DrumzView((JudahDrumz)track.getMidiOut().getReceiver());
-				KorgMixer.modalSet(view, size);});
+						new KitView((DrumKit)track.getMidiOut(), null);
+				new ModalDialog(view, size, KnobMode.Kit);
+			
+			});
 			buttons.add(viewKit);
-			ArrayList<Float> volume = ((DrumTrack)track).getVolume();
-			Slider customVol = new Slider(e -> 
-				volume.set(DrumType.Clap.ordinal(), ((Slider)e.getSource()).getValue() * .01f));
-			knobs.add(customVol);
-		}
+//			ArrayList<Float> volume = ((DrumTrack)track).getVolume();
+//			customVol = new Slider(e -> 
+//				volume.set(DrumType.Clap.ordinal(), ((Slider)e.getSource()).getValue() * .01f));
+			knobs.add(new JLabel(" ")); // TODO
+			}
 		
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		add(top);
@@ -164,20 +166,35 @@ public class TrackView extends JPanel {
 		update();
 	}
 	
-	private void doTranspose(JPanel btns) {
-		transpose = new JToggleButton("MPK");
+	private void doSynth(JPanel btns) {
+		
+		transpose = new JButton("MPK");
 		transpose.addActionListener(e -> {
 			track.setLatch(!track.isLatch());
-			for (Track t : track.getTracker().getTracks()) {
+			for (Track t : Tracker.getAll()) {
 				if (t.isLatch()) {
 					Transpose.setActive(true);
+					update();
 					return;
 				}
 			}
 			Transpose.setActive(false);
+			update();
 		});
 		transpose.setFont(font);
+		
 		btns.add(transpose);
+
+		if (track.getMidiOut() instanceof JudahSynth) {
+			JButton synthView = new JButton(Icons.load("SynthView.png"));
+			synthView.addActionListener(e-> {
+				SynthView view = new SynthView((JudahSynth)track.getMidiOut());
+				new ModalDialog(view, new Dimension(500, 300), KnobMode.Synth);
+			});
+			btns.add(synthView);
+		}
+
+
 	}
 	
 	private void doCue() {
@@ -214,19 +231,16 @@ public class TrackView extends JPanel {
 	}
 
 	public void update() {
-		playWidget.setBackground(track.isActive() ? Pastels.GREEN : track.isOnDeck() ? Pastels.YELLOW : Pastels.EGGSHELL);
-		volume.setValue((int) (track.getGain() * 100f));
+		playWidget.setBackground(track.isActive() ? Pastels.GREEN : track.isOnDeck() ? Pastels.YELLOW : null);
 		
-		if (midiOut.getSelectedItem() != track.getMidiOut()) {
-			MidiPort old = (MidiPort) midiOut.getSelectedItem();
-			// there is a change
-			midiOut.setSelectedItem(track.getMidiOut());
-			if (old != null)
-				new Panic(old).start();
-		}
+		volume.setValue((int) (track.getGain() * 100f));
 		if (cycle.getSelectedIndex() != track.getCycle().getSelected())
 			cycle.setSelectedIndex(track.getCycle().getSelected());
-		updateBorder(track.getTracker().getCurrent());
+		updateBorder(tracker.getCurrent());
+		if (transpose != null)
+			transpose.setBackground(((PianoTrack)track).isLatch() ? Pastels.PINK : null);
+		rec.setBackground(track.isRecord() ? Pastels.RED : null);
+		repaint();
 	}
 
 	public boolean knob(int knob, int data2) {
@@ -247,11 +261,12 @@ public class TrackView extends JPanel {
 				return true;
 			case 4: 
 				cue.setSelectedIndex(Constants.ratio(data2 -1, cue.getItemCount()));
-			case 5: // midiOut
-				midiOut.setSelectedItem(Constants.ratio(data2, midiOut.getItemCount()));
+			case 5: // TODO
+
+				
 				return true;
 			case 6: 
-				patch.setSelectedIndex(1 + Constants.ratio(data2, patch.getItemCount() - 2));
+				progChange.setSelectedIndex(1 + Constants.ratio(data2, progChange.getItemCount() - 2));
 				return true;
 			case 7: // vol2?
 				if (track.isDrums()) {

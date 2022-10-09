@@ -22,7 +22,7 @@ public class GMPad extends Pad {
 			@Override public void mousePressed(java.awt.event.MouseEvent evt) {
 				try {JudahMidi.queue(
 						new Midi(Midi.NOTE_ON, 9, type.getDat().getData1(), 100), 
-						parent.getCurrent().getMidiOut());
+						parent.getCurrent().getMidiPort().getPort());
 
 				} catch (InvalidMidiDataException e) {
 					RTLogger.warn(this, e);

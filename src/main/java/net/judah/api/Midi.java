@@ -110,7 +110,6 @@ public class Midi extends ShortMessage {
 		}
 		Midi other = (Midi) obj;
 
-
 		boolean result = this.getChannel() == other.getChannel() &&
 				this.getCommand() == other.getCommand() &&
 				this.getData1() == other.getData1() &&
@@ -148,15 +147,6 @@ public class Midi extends ShortMessage {
 		return stat == Midi.NOTE_OFF || stat == NOTE_ON;
 	}
 	public boolean isNote() { return isNote(this); }
-
-	public static HashMap<String, Class<?>> midiTemplate() {
-		HashMap<String, Class<?>> result = new HashMap<>();
-		result.put(PARAM_COMMAND, Integer.class);
-		result.put(PARAM_CHANNEL, Integer.class);
-		result.put(PARAM_DATA1, Integer.class);
-		result.put(PARAM_DATA2, Integer.class);
-		return result;
-	}
 
 	public static Midi fromProps(HashMap<String, Object> props) throws InvalidMidiDataException {
 		try {

@@ -24,6 +24,8 @@ public class ChannelTitle extends JPanel {
 	private final Channel channel;
 	private final JLabel name;
 	
+	
+	// TODO crave sync checkbox
 	public ChannelTitle(Channel channel) {
 		JPanel main = new JPanel();
 		
@@ -40,6 +42,8 @@ public class ChannelTitle extends JPanel {
 		mute = new Mute();
 		main.add(mute); 
 		
+		// TODO if (channel instanceof Loop) main.addMouseListener(new WavTools((Loop)channel));
+		
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		add(main);
 		
@@ -48,7 +52,7 @@ public class ChannelTitle extends JPanel {
 		if (tunerBtn != null) {
 			tunerBtn.setSelected(false);
 			tunerBtn.addChangeListener(e -> {
-				JudahZone.getFxPanel().getTuner()
+				JudahZone.getFxRack().getTuner()
 						.setChannel(tunerBtn.isSelected() ? channel : null);
 			});
 			main.add(tunerBtn);

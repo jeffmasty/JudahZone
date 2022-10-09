@@ -12,7 +12,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import net.judah.JudahZone;
 import net.judah.controllers.KnobMode;
 import net.judah.controllers.MPKTools;
 import net.judah.effects.Chorus;
@@ -20,7 +19,6 @@ import net.judah.effects.CutFilter;
 import net.judah.effects.CutFilter.Type;
 import net.judah.effects.Delay;
 import net.judah.effects.EQ;
-import net.judah.effects.api.Preset;
 import net.judah.effects.api.Reverb;
 import net.judah.mixer.Channel;
 import net.judah.util.Constants;
@@ -37,7 +35,6 @@ public class EffectsRack extends JPanel implements GUI, MPKTools {
     private final ArrayList<RowKnobs> knobs = new ArrayList<>();
     private final JPanel rows;
     private final ChannelTitle title;
-    private final PresetCombo presets;
 
     private final LFOGui lfo;
 
@@ -46,7 +43,6 @@ public class EffectsRack extends JPanel implements GUI, MPKTools {
         this.channel = channel;
         setBorder(BorderFactory.createLineBorder(Pastels.MY_GRAY));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        presets = new PresetCombo(channel, JudahZone.getPresets());
         
         title = new ChannelTitle(channel);
         add(title);
@@ -80,13 +76,14 @@ public class EffectsRack extends JPanel implements GUI, MPKTools {
 	    		new KeyPair("    ", channel.getEq()),
         		new KeyPair("EQ", channel.getEq()),
 	    		new KeyPair("     ", channel.getEq()),
-        		new KeyPair("FX", channel.getPreset())
+        		new KeyPair("HiCut", channel.getHiCut())
         }));
         
         knobs.add(new RowKnobs(channel, KnobMode.FX1, 0));
         knobs.add(new RowKnobs(channel, KnobMode.FX1, 1));
         knobs.add(new RowKnobs(channel, KnobMode.FX2, 2));
-        knobs.add(new RowKnobs(channel, KnobMode.FX2, presets));
+        knobs.add(new RowKnobs(channel, KnobMode.FX2, 3));
+        // knobs.add(new RowKnobs(channel, KnobMode.FX2, presets));
 
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.HORIZONTAL;
@@ -114,8 +111,6 @@ public class EffectsRack extends JPanel implements GUI, MPKTools {
         	lbl.update();
         for (RowKnobs knob : knobs)
         	knob.update();
-        if (channel.getPreset() != null)
-        	presets.setSelectedItem(channel.getPreset());
         repaint();
     }
 
@@ -186,8 +181,10 @@ public class EffectsRack extends JPanel implements GUI, MPKTools {
 			channel.getEq().setActive(data2 > thresholdLo);
         }
         else if (data1 == KNOBS.get(7)) {
-        	Preset preset = (Preset)Constants.ratio(data2, JudahZone.getPresets());
-        	channel.setPreset(preset);
+        	CutFilter hello = channel.getHiCut();
+        	hello.setActive(data2 < thresholdHi);
+        	if (!hello.isActive()) return;
+        	hello.setFrequency(CutFilter.knobToFrequency(data2));
         }
 	}
 

@@ -2,12 +2,9 @@ package net.judah.mixer;
 
 import java.nio.FloatBuffer;
 
-import org.jaudiolibs.jnajack.JackPort;
-
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.MainFrame;
-import net.judah.effects.Freeverb;
 import net.judah.util.AudioTools;
 import net.judah.util.Constants;
 import net.judah.util.GuitarTuner;
@@ -19,7 +16,6 @@ public abstract class LineIn extends Channel {
     protected LatchEfx latchEfx = new LatchEfx(this);
     /** set to <code>null</code> for no processing */
     @Setter protected GuitarTuner tuner;
-    @Setter protected JackPort sync;
     
     public LineIn(String name, boolean stereo) {
     	super(name, stereo);
@@ -40,6 +36,8 @@ public abstract class LineIn extends Channel {
 		for (int z = 0; z < Constants.bufSize(); z++)
 			mono.put(mono.get(z) * gain);
 
+		hiCut.process(mono);
+		cutFilter.process(mono);
 		if (eq.isActive()) {
 			eq.process(mono, true);
 		}
@@ -49,15 +47,11 @@ public abstract class LineIn extends Channel {
 		if (overdrive.isActive()) {
 			overdrive.processAdd(mono);
 		}
-
 		if (delay.isActive()) {
 			delay.processAdd(mono, mono, true);
 		}
 		if (reverb.isActive() && reverb.isInternal()) {
 			reverb.process(mono);
-		}
-		if (cutFilter.isActive()) {
-			cutFilter.process(mono);
 		}
 
 	}
@@ -71,12 +65,14 @@ public abstract class LineIn extends Channel {
 			left.rewind();
 		}
 		
-		float gain = getVolume() * 0.5f;
+		float gain = this.gain.getGain();
 		for (int z = 0; z < Constants.bufSize(); z++) {
 			left.put(left.get(z) * gain);
 			right.put(right.get(z) * gain);
 		}
-
+		
+		hiCut.process(left, right, 1f);
+		cutFilter.process(left, right, 1f);
 		if (eq.isActive()) {
 			eq.process(left, true);
 			eq.process(right, false);
@@ -93,11 +89,8 @@ public abstract class LineIn extends Channel {
 			delay.processAdd(left, left, true);
 			delay.processAdd(right, right, false);
 		}
-		if (reverb.isActive() && reverb.isInternal()) {
-			((Freeverb)reverb).process(left, right);
-		}
-		if (cutFilter.isActive()) {
-			cutFilter.process(left, right, 1);
+		if (reverb.isActive()) {
+			reverb.process(left, right);
 		}
 
 	}

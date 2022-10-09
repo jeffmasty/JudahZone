@@ -1,14 +1,16 @@
 package net.judah.synth;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Data
+@Data @NoArgsConstructor @AllArgsConstructor
 public class Adsr {
 	
-	/** milliseconds   */ int 	attackTime = 1;
-	/** milliseconds   */ int 	decayTime = 2;
-	/** 0 <= gain <= 1 */ float sustainGain = 0.8f;
-	/** milliseconds   */ int 	releaseTime = 2;
-	/** 0 <= gain <= 1 */ float attackGain = 1; 
+	/** milliseconds   */ public int    attackTime = 1;
+	/** milliseconds   */ public int    decayTime = 2;
+	/** 0 <= gain <= 1 */ public float  sustainGain = 0.8f;
+	/** milliseconds   */ public int    releaseTime = 2;
+	/** 0 <= gain <= 1 */ public float  attackGain = 1; 
 	
 }

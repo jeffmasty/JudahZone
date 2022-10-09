@@ -1,7 +1,9 @@
 package net.judah.midi;
 
+import static net.judah.JudahZone.*;
 import static net.judah.util.Constants.max;
 
+import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
@@ -10,6 +12,7 @@ import java.util.HashSet;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 import org.jaudiolibs.jnajack.JackTransportState;
 
@@ -22,7 +25,6 @@ import net.judah.controllers.Jamstik;
 import net.judah.controllers.KnobMode;
 import net.judah.looper.LoopWidget;
 import net.judah.songs.SmashHit;
-import net.judah.tracker.Track;
 import net.judah.util.*;
 
 /** clock tempo, loop length, setlist, midi cables */
@@ -38,11 +40,10 @@ public class MidiGui extends JPanel implements TimeListener {
     private final JLabel beat = new JLabel("0", JLabel.CENTER);
    	private final JLabel tempoLbl = new JLabel("?", JLabel.CENTER);
     private final JComboBox<Integer> sync = new JComboBox<>();
-    @Getter private final ProgChange calf;
-    @Getter private final ProgChange fluid;
-    @Getter private final SettableCombo<SmashHit> setlist = new SettableCombo<>(()->JudahZone.loadSong());
-	@Getter private final CenteredCombo<MidiPort> mpk;
-    
+    @Getter private final ProgChange engine;
+    @Getter private final ProgChange fluidProg;
+    @Getter private final SettableCombo<Class<? extends SmashHit>> setlistCombo = new SettableCombo<>(()->loadSong());
+	@Getter private final CenteredCombo<MidiPort> mpk = new CenteredCombo<>();
 	private final JPanel mpkPanel = new JPanel();
 	@Getter private final JudahMenu popup = new JudahMenu();
 	private final Border NONE = BorderFactory.createLineBorder(Pastels.BUTTONS, 4);
@@ -57,26 +58,36 @@ public class MidiGui extends JPanel implements TimeListener {
     	setBorder(NONE);
     	setOpaque(true);
     	setLayout(new GridLayout(1, 3));
-		calf = new ProgChange(midi.getCalfOut(), 0);
-		fluid = new ProgChange(midi.getFluidOut(), 0);
-		mpk = new CenteredCombo<>();
-		
+    	engine = new ProgChange(getSynth1(), 0);
+		fluidProg = new ProgChange(getFluid(), 0);
+		for (MidiPort p : JudahZone.getSynthPorts()) 
+			mpk.addItem(p);
 		new Thread(()-> 
 			initialize()).start();
     }
 	
 	private void doSetlist(JPanel pnl) {
-		for (SmashHit song : JudahZone.getSetlist())
-			setlist.addItem(song);
-		pnl.add(setlist);
+		setlistCombo.setRenderer(new BasicComboBoxRenderer() {
+        	@Override public Component getListCellRendererComponent(
+        			@SuppressWarnings("rawtypes") JList list, Object value,
+        			int index, boolean isSelected, boolean cellHasFocus) {
+        		setHorizontalAlignment(SwingConstants.CENTER);
+        		@SuppressWarnings("unchecked")
+				Class<? extends SmashHit> item = (Class<? extends SmashHit>) value;
+        		setText(item == null ? "?" : item.getSimpleName());
+        		return this;
+    }});
+		
+		for (Class<? extends SmashHit> c : getSetlist())
+			setlistCombo.addItem(c);
+		pnl.add(setlistCombo);
         JButton load = new JButton("▶");
-        load.addActionListener(e->JudahZone.loadSong());
+        load.addActionListener(e->loadSong());
         pnl.add(load);
 	}
 	
 	private void initialize() {
-		mpk.setRenderer(MidiCable.STYLE);
-		MidiCable.fillItems(false, mpk);
+		mpk.setRenderer(STYLE);
 		mpk.setSelectedItem(midi.getKeyboardSynth());
 		mpk.addActionListener(e-> midi.setKeyboardSynth((MidiPort)mpk.getSelectedItem() ));
 
@@ -131,7 +142,7 @@ public class MidiGui extends JPanel implements TimeListener {
 		sync.setSelectedItem(JudahClock.getLength());
 		sync.addActionListener(e -> {
 			clock.setLength((int)sync.getSelectedItem());
-			MainFrame.update(JudahZone.getLooper().getLoopA());
+			MainFrame.update(getLooper().getLoopA());
 		});
 		
 		JPanel left1 = new JPanel();
@@ -170,10 +181,10 @@ public class MidiGui extends JPanel implements TimeListener {
         jamPanel.setBackground(Pastels.BUTTONS);
         mpkPanel.setBackground(Pastels.BUTTONS);
         
-        p1.add(new JLabel("Calf", SwingConstants.CENTER));
-        p1.add(max(calf));
+        p1.add(new JLabel("Synth1", SwingConstants.CENTER));
+        p1.add(max(engine));
         p2.add(new JLabel("Fluid", SwingConstants.CENTER));
-        p2.add(max(fluid));
+        p2.add(max(fluidProg));
         jamPanel.add(new JLabel("Jam", SwingConstants.CENTER));
         jamPanel.add(max(jamstik));
         
@@ -198,20 +209,19 @@ public class MidiGui extends JPanel implements TimeListener {
 				clock.setLength((int) Constants.ratio(data2, JudahClock.LENGTHS));
 			return;
     	case 2: // calf inst
-    		calf.setSelectedIndex(data2);
+    		engine.setSelectedIndex(data2);
     		return;
     	case 3: // fluid inst
-    		fluid.setSelectedIndex(data2);
+    		fluidProg.setSelectedIndex(data2);
     		return;
  	    case 4: // Load song
- 	    	setlist.setSelectedIndex(Constants.ratio(data2 - 1, setlist.getItemCount()));
+ 	    	setlistCombo.setSelectedIndex(Constants.ratio(data2 - 1, setlistCombo.getItemCount()));
  	    	return;
     	case 5: // change sequencer track focus
-    		Track[] tracks = JudahZone.getTracker().getTracks();
-    		JudahZone.getTracker().setCurrent((Track)Constants.ratio(data2 - 1, tracks));
+    		getTracker().setCurrent(Constants.ratio(data2 - 1, getTracker().getViews().size()));
     		return;
     	case 6: // jamstik out
-    		JudahZone.getJamstik().setSelectedIndex(Constants.ratio(data2 - 1, midi.getPaths().size()));
+    		getJamstik().setSelectedIndex(Constants.ratio(data2 - 1, midi.getPaths().size()));
     		return;
     	case 7: // mpk keys out
     		mpk.setSelectedIndex(Constants.ratio(data2 - 1, mpk.getItemCount()));
@@ -239,7 +249,6 @@ public class MidiGui extends JPanel implements TimeListener {
 			int step = 100 * (int)value / clock.getSteps();
 			menu.setBackground(RainbowFader.chaseTheRainbow(step));
 		}
-
 	}
 
 	public void length(int bars) {
@@ -258,4 +267,15 @@ public class MidiGui extends JPanel implements TimeListener {
 		mpkPanel.setBackground(active ? Pastels.PINK: Pastels.BUTTONS);
 	}
 
+	static final BasicComboBoxRenderer STYLE = new BasicComboBoxRenderer() {
+        	@Override public Component getListCellRendererComponent(
+        			@SuppressWarnings("rawtypes") JList list, Object value,
+        			int index, boolean isSelected, boolean cellHasFocus) {
+        		setHorizontalAlignment(SwingConstants.CENTER);
+        		MidiPort item = (MidiPort) value;
+        		setText(item == null ? "?" : item.toString());
+        		return this;
+    }};
+
+	
 }

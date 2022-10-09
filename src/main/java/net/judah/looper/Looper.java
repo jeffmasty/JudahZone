@@ -1,6 +1,6 @@
 package net.judah.looper;
 
-import static net.judah.JudahZone.*;
+import static net.judah.JudahZone.getClock;
 
 import java.util.ArrayList;
 
@@ -11,20 +11,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
-import net.judah.carla.TalReverb;
-import net.judah.drumz.JudahDrumz;
 import net.judah.looper.SyncWidget.SelectType;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
-import net.judah.mixer.Channels;
+import net.judah.mixer.LineIn;
 import net.judah.mixer.SoloTrack;
-import net.judah.synth.JudahSynth;
-import net.judah.util.Icons;
+import net.judah.mixer.Zone;
 
 @RequiredArgsConstructor @Getter
 public class Looper extends ArrayList<Loop> {
 
-	public static final int LOOPERS = 4; // anything above LOOPERS are samples and one-shots
+	public static final int LOOPERS = 4; // anything above LOOPERS are one-shots
 	private final JackPort left;
 	private final JackPort right;
     private final Loop loopA;
@@ -33,14 +30,13 @@ public class Looper extends ArrayList<Loop> {
     private final SoloTrack drumTrack;
 	@Setter private long recordedLength;
     
-	public Looper(JackPort l, JackPort r, Channels ch, JudahSynth[] synths, JudahDrumz[] beats) {
+	public Looper(JackPort l, JackPort r, Zone sources, LineIn soloTrack) {
         left = l;
         right = r;
-		loopA = new Loop("A", this, ch, synths, beats);
-        loopC = new Loop("C", this, ch, synths, beats);
-        loopB = new Loop("B", this, ch, synths, beats);
-        drumTrack = new SoloTrack(getInstruments().getCalf(), this, ch, synths, beats);
-        drumTrack.setIcon(Icons.load("Drums.png"));
+		loopA = new Loop("A", this, sources);
+        loopC = new Loop("C", this, sources);
+        loopB = new Loop("B", this, sources);
+        drumTrack = new SoloTrack(soloTrack, this, sources, "Drums.png");
         add(loopA);
         add(loopB);
         add(loopC);
@@ -54,6 +50,15 @@ public class Looper extends ArrayList<Loop> {
     }
     /** pause/unpause specific loops */
     private Pause suspended = null; 
+    
+
+    public Loop byName(String search) {
+    	for (Loop l : this) 
+				if (l.getName().equals(search))
+					return l;
+    	return null;
+    }
+
     
     /** does not delete loops, clears their recordings */
 	@Override
@@ -123,11 +128,6 @@ public class Looper extends ArrayList<Loop> {
 			if (loop != drumTrack)
 				loop.setOnMute(!loop.isOnMute());
 		}
-	}
-
-	public void setReverb(TalReverb rev1, TalReverb rev2) {
-		loopA.setReverb(rev1);
-        loopB.setReverb(rev2);
 	}
 
 }

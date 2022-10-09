@@ -14,8 +14,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
-import org.jaudiolibs.jnajack.JackPort;
-
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
@@ -103,7 +101,7 @@ public class ChannelFader extends JPanel implements Pastels {
 		banner.add(loop != null ? loop.getSync() : title);
 		banner.add(sidecar);
 		
-		title.addMouseListener(new MouseAdapter() {
+		addMouseListener(new MouseAdapter() {
 			// TODO right/double click menu
 			@Override public void mouseClicked(MouseEvent e) {
 				MainFrame.setFocus(channel);}});
@@ -185,11 +183,11 @@ public class ChannelFader extends JPanel implements Pastels {
 		else if (channel.getGain().getVol() < 5)
 			bg = Color.DARK_GRAY;
 		else if (in != null) {
-			JackPort port = in.getSync();
 			mute.setBackground(in.isMuteRecord() ? null : GREEN);
 			if (in.isSolo())
 				bg = YELLOW;
-			else if (port != null && midi.getSync().contains(JudahZone.getSynthPorts().get(port)))
+			else if (channel instanceof MidiInstrument && 
+					midi.getSync().contains(((MidiInstrument)channel).getMidiPort()))
 				bg = PINK;
 		}
 		else bg = Color.WHITE; // i.e. MAINS

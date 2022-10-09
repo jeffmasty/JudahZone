@@ -13,6 +13,8 @@ public class Transpose {
 	@Getter private static boolean active;
 	@Setter @Getter private static int amount;
 	
+	
+	
 	public static void setActive(boolean active) {
 		Transpose.active = active;
 		JudahZone.getMidiGui().transpose(active);

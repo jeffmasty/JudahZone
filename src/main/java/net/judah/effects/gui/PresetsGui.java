@@ -10,11 +10,12 @@ import java.security.InvalidParameterException;
 import javax.swing.*;
 
 import net.judah.JudahZone;
-import net.judah.controllers.KorgMixer;
+import net.judah.controllers.MPKmini;
 import net.judah.effects.api.Preset;
 import net.judah.effects.api.PresetsDB;
 import net.judah.mixer.Channel;
 import net.judah.util.Constants;
+import net.judah.util.ModalDialog;
 import net.judah.util.RTLogger;
 
 public class PresetsGui extends JPanel {
@@ -47,7 +48,7 @@ public class PresetsGui extends JPanel {
         add(scrollPane);
         add(buttons);
         Dimension dialog = new Dimension(size.width + 10, size.height + 20);
-        KorgMixer.modalSet(this, dialog);
+        new ModalDialog(this, dialog, MPKmini.getMode());
         
 	}
     private void presetsBtns(JPanel buttons) {
@@ -88,7 +89,12 @@ public class PresetsGui extends JPanel {
 	
 	private void applyTo() {
         if (list.getSelectedIndex() < 0) return;
-        Channel ch = JudahZone.getMixer().getChannel("" + target.getSelectedItem());
+        String search = "" + target.getSelectedItem();
+        Channel ch = JudahZone.getNoizeMakers().byName(search);
+        if (ch == null)
+        	ch = JudahZone.getLooper().byName(search);
+        if (ch == null)
+        	throw new NullPointerException(search);
         Preset p = presets.get(list.getSelectedIndex());
         ch.setPreset(p);
         ch.setPresetActive(true);
@@ -110,7 +116,7 @@ public class PresetsGui extends JPanel {
     public void create() {
         String name = Constants.inputBox("Preset Name:");
         if (name == null || name.isEmpty()) return;
-        JudahZone.getPresets().add(JudahZone.getFxPanel().getChannel().toPreset(name));
+        JudahZone.getPresets().add(JudahZone.getFxRack().getChannel().toPreset(name));
         save();
     }
 
@@ -119,7 +125,7 @@ public class PresetsGui extends JPanel {
             throw new InvalidParameterException("" + idx);
 
 
-        Channel channel = JudahZone.getFxPanel().getChannel();
+        Channel channel = JudahZone.getFxRack().getChannel();
         Preset old = getPresets().get(idx);
         Preset replace = channel.toPreset(old.getName());
         getPresets().set(idx, replace);

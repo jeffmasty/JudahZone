@@ -1,5 +1,8 @@
 package net.judah.controllers;
 
+import static net.judah.JudahZone.*;
+
+import java.awt.Component;
 import java.util.ArrayList;
 
 import lombok.Getter;
@@ -8,6 +11,7 @@ import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.api.Midi;
 import net.judah.controllers.MapEntry.TYPE;
+import net.judah.drumz.KitzView;
 import net.judah.effects.Chorus;
 import net.judah.effects.CutFilter;
 import net.judah.effects.Delay;
@@ -20,10 +24,11 @@ import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahClock.Mode;
 import net.judah.mixer.Channel;
-import net.judah.mixer.Instrument;
+import net.judah.synth.SynthEngines;
+import net.judah.synth.SynthView;
 import net.judah.tracker.Cycle;
+import net.judah.tracker.Tracker;
 import net.judah.util.Constants;
-import net.judah.util.GuitarTuner;
 
 /** CC 1 - 16 on channel 13 */
 public class KorgPads extends ArrayList<Runnable> implements Controller {
@@ -32,7 +37,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 	@Getter private final ArrayList<MapEntry> list = new ArrayList<MapEntry>(); 
 	
 	private long lastPress;
-	private Loop lastLoop;
+	private Object tapTarget;
 	
 	private final int JOYSTICK_ON = 75;
 	private final int JOYSTICK_X = 73;
@@ -46,20 +51,20 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 	}
 	
 	/** on double tap */
-	private boolean doErase(Loop ch) {
-		if (lastLoop == ch && System.currentTimeMillis() - lastPress < Constants.DOUBLE_CLICK) {
+	private boolean doubleTap(Object o) {
+		if (tapTarget == o && System.currentTimeMillis() - lastPress < Constants.DOUBLE_CLICK) {
 			lastPress = 0;
-			
-			ch.erase();
+			if (o == getLooper())
+				((Looper)o).reset(); // !
+			else if (o instanceof Loop)
+				((Loop)o).erase();
 			return true;
 		}
 		lastPress = System.currentTimeMillis();
-		lastLoop = ch;
+		tapTarget = o;
 		return false;
 	}
 
-	// TODO tap tempo
-	// TODO song pattern select
 	@Override public boolean midiProcessed(Midi midi) {
 		int data1 = midi.getData1();
 		int data2 = midi.getData2();
@@ -69,122 +74,99 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 				joystick(false);
 			return true;
 		}
-		Looper looper = JudahZone.getLooper();
-		FxPanel fxrack = JudahZone.getFxPanel();
+		Looper looper = getLooper();
+		FxPanel fxrack = getFxRack();
 		
 		switch (data1) {
-		// top row pads
+		// Loops top row
 		case 1: // toggle record loop A
-			if (doErase(looper.getLoopA())) 
+			if (doubleTap(looper.getLoopA())) 
 				return true;
 			trigger(looper.getLoopA());
 			return true;
 		case 2: // toggle record loop B
-			if (doErase(looper.getLoopB())) 
+			if (doubleTap(looper.getLoopB())) 
 				return true;
 			return record(looper.getLoopB());
 		case 3: // toggle record loop C
-			if (doErase(looper.getLoopC())) 
+			if (doubleTap(looper.getLoopC())) 
 				return true;
 			return record(looper.getLoopC());
-
 		case 4: // toggle record drums loop
-			if (doErase(looper.getDrumTrack())) 
+			if (doubleTap(looper.getDrumTrack())) 
 				return true;
 			return record(looper.getDrumTrack());
-
-		case 5: // reset to top of loops/clock
-			for(Loop l : looper) 
-				l.setTapeCounter(0);
-			JudahZone.getClock().begin();
+		
+		case 5: // Reset Fx or Reset Looper!
+			if (doubleTap(looper))
+				return true;
+			fxrack.getChannel().reset();
 			return true; 
-		case 6: // Cycle verse/chorus 
-			Cycle.setVerse(!Cycle.isVerse());
-			Cycle.setTrigger(true);
-			return true; 
-		case 7: // focus efx on Main channel 
-			MainFrame.setFocus(JudahZone.getMains());
+		case 6: // latch guitar EFX to loop A
+			getGuitar().getLatchEfx().latch(looper.getLoopA());
 			return true;
-		case 8: // Tuner/PlayStop Loop/FadeOut Main
-			Channel ch = fxrack.getChannel();
-			if (ch == null) return true; // ? 
-			if (ch instanceof Instrument && (ch == JudahZone.getInstruments().getGuitar() ||
-					ch == JudahZone.getInstruments().getCrave())) {
-				fxrack.getTuner().setChannel(
-						GuitarTuner.getChannel() == ch ? null : ch);
-			} else {
-				if (ch.isOnMute() || ch.getGain().getVol() < 5) {
-					ch.setOnMute(false);
-					Fader.execute(new Fader(ch, Target.Gain, Fader.DEFAULT_FADE, 0, 51));
-				}
-				else 
-					Fader.execute(new Fader(ch, Target.Gain, Fader.DEFAULT_FADE, ch.getVolume(), 0));
-			}
+		case 7: // focus on DrumMachine or Synths
+			Component selected = getFrame().getTab();
+			if (selected == KitzView.getInstance())
+				getFrame().addOrShow(SynthEngines.getInstance(), SynthEngines.NAME);
+			else 
+				getFrame().addOrShow(KitzView.getInstance(), KitzView.NAME);
 			return true;
+		case 8: // context button 1
+			return context1();
 			
-		// bottom row pads
-		case 9: 
+		// Loops bottom row
+		case 9:  
 			Loop a = looper.getLoopA();
-			if (a.hasRecording())  
+			if (a.hasRecording()) // delete!!
 				looper.reset();
-			else {
+			else { // re-latch Recording to loop
 				a.setArmed(!a.isArmed());
 				MainFrame.update(a);
 			}
             return true;
-		
 		case 10:  // latch B
 			Loop b = looper.getLoopB();
 			if (false == b.hasRecording()) {
 				b.setArmed(!b.isArmed());
 				MainFrame.update(b);
 			}
-			else {// flip A and B loop mutes
+			else // flip A and B loop mutes
 				looper.verseChorus();
-			}
 			return true;
 		case 11:  // latch C
 			Loop c = looper.getLoopC();
-			if (c.hasRecording())
-				c.duplicate(); // TODO set Tempo as per clock.length in bars and free loop C
+			if (c.hasRecording()) // duplicate
+				c.duplicate(); 
 			else { 
 				c.setArmed(!c.isArmed());
 				MainFrame.update(c);
 			}
 			return true;
-		case 12: // latch Drums
+		case 12: // re-latch record to next loop
 			if (looper.getRecordedLength() > 0)
-				JudahZone.getClock().listen(looper.getLoopA());
-			else 
+				getClock().listen(looper.getLoopA());
+			else // latch Drums
 				looper.getDrumTrack().toggle();
 			return true;
 			
-		case 13: // latch guitar EFX to loop A
-			JudahZone.getInstruments().getGuitar().getLatchEfx().latch(looper.getLoopA());
-			return true;
-		case 14: // reset effects for current channel // TODO double click = reset all channels
-			fxrack.getChannel().reset();
-			return true;
-		case 15: // focus efx on Crave synth channel
-			MainFrame.setFocus(JudahZone.getInstruments().getCrave());
-			//	ControlPanel panel = ControlPanel.getInstance();
-			//	if (panel.getCurrent() == null) 
-			//		MainFrame.setFocus(JudahZone.getChannels().getCrave());
-			//	else if (panel.getCurrent().getChannel() == JudahZone.getChannels().getCrave())
-			//		MainFrame.setFocus(JudahZone.getChannels().getUno());
-			//	else 
-			//		MainFrame.setFocus(JudahZone.getChannels().getCrave());
-			return true;
 			
-		case 16: // internal/external clock, sync clock to loop
-			JudahClock clock = JudahZone.getClock();
-			if (looper.getLoopA().hasRecording()) { 
-				clock.setMode(Mode.Internal);
-				clock.setTempo(Constants.computeTempo(looper.getRecordedLength() - 1, JudahClock.getLength() * clock.getMeasure()));
-			}
-			else 
-				clock.toggleMode();
+		case 13: // Cycle verse/chorus 
+			Cycle.setVerse(true);
+			Cycle.setTrigger(true);
 			return true; 
+		case 14: // Toggle mutes
+			looper.verseChorus();
+			return true;
+		case 15: // focus on Tracker or Sheet music
+			Component window = getFrame().getTab();
+			if (window == getTracker())
+				getFrame().addOrShow(getFrame().getSheetMusic(), "Music");
+			else 
+				getFrame().addOrShow(getTracker(), Tracker.NAME);
+			return true;
+		case 16: 
+			return context2();
 			
 			
 		case JOYSTICK_ON: 
@@ -235,13 +217,41 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		return false;
 	}
 
+	private boolean context1( ) {
+		switch (MPKmini.getMode()) {
+		case Synth:
+			SynthView.setFreqMode(!SynthView.isFreqMode());
+			break;
+		case FX1: 
+		case FX2: 
+			Channel ch = getFxRack().getChannel();
+			if (ch == null) return true; // ? 
+			if (ch.isOnMute() || ch.getGain().getVol() < 5) {
+				ch.setOnMute(false);
+				Fader.execute(new Fader(ch, Target.Gain, Fader.DEFAULT_FADE, 0, 51));
+			}
+			else 
+				Fader.execute(new Fader(ch, Target.Gain, Fader.DEFAULT_FADE, ch.getVolume(), 0));
+			break;
+		}
+		return true;
+	}
+	private boolean context2() {
+		switch (MPKmini.getMode()) {
+		case Synth:
+			SynthEngines.flip();
+			break;
+		}
+		return true;
+	}
+	
 	private void joystick(boolean active) {
 		if (active) {
-			JudahZone.getFxPanel().getChannel().reset();
+			getFxRack().getChannel().reset();
 			// TODO stash preset
 		}
 		else {
-			JudahZone.getFxPanel().getChannel().reset();
+			getFxRack().getChannel().reset();
 			// TODO restore preset
 		}
 	}
@@ -270,6 +280,20 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 	
 
 }
+
+			
+//			for(Loop l : looper) 
+//				l.setTapeCounter(0);
+//			JudahZone.getClock().begin();
+			
+//			JudahClock clock = JudahZone.getClock();
+//			if (looper.getLoopA().hasRecording()) { 
+//				clock.setMode(Mode.Internal);
+//				clock.setTempo(Constants.computeTempo(looper.getRecordedLength() - 1, JudahClock.getLength() * clock.getMeasure()));
+//			}
+//			else 
+//				clock.toggleMode();
+
 
 /*
 

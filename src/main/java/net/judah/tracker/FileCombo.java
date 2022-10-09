@@ -7,6 +7,7 @@ import java.util.Arrays;
 
 import javax.swing.DefaultListCellRenderer;
 
+import net.judah.JudahZone;
 import net.judah.util.SettableCombo;
 
 public class FileCombo extends SettableCombo<String> {
@@ -28,7 +29,7 @@ public class FileCombo extends SettableCombo<String> {
 	}
 
 	private static void setFile(Track t) {
-		String select = "" + t.getView().getFilename().getSelectedItem();
+		String select = "" + JudahZone.getTracker().get(t).getFilename().getSelectedItem();
 		if (select.equals("_clear")) 
 			t.clearFile();
 		else 

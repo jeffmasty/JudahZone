@@ -11,24 +11,27 @@ import java.util.ArrayList;
 import javax.swing.*;
 
 import lombok.Getter;
-import net.judah.JudahZone;
-import net.judah.MainFrame;
+import lombok.Setter;
 import net.judah.effects.CutFilter;
 import net.judah.util.Constants;
 import net.judah.util.FileChooser;
-import net.judah.util.Pastels;
+import net.judah.util.FxButton;
 import net.judah.util.Slider;
 
 public class SynthView extends JPanel {
 	private static final Dimension SLIDER = new Dimension(75, STD_HEIGHT);
 	private static final Dimension COMBO = new Dimension(60, STD_HEIGHT);
-	private final JudahSynth synth;
+
+	@Getter private static ArrayList<SynthView> views = new ArrayList<>() {
+		public boolean add(SynthView e) {
+			SynthEngines.setCurrent(e);
+			return super.add(e);};};
+	@Setter @Getter private static boolean freqMode = true; //. vs resonance mode
 	
+	@Getter private final JudahSynth synth;
 	@Getter private final PresetsCombo presets;
-	private final JToggleButton active = new JToggleButton("On");
 	private final JButton save = new JButton("Save");
-	private final JButton fx = new JButton("Fx");
-	private final Slider volume = new Slider(null);
+	private final Slider amp = new Slider(null);
 	private final AdsrView adsr;
 	private final Slider lpFreq = new Slider(null);
 	private final Slider lpReso = new Slider(0, 20, null);
@@ -38,7 +41,8 @@ public class SynthView extends JPanel {
 	private final ArrayList<Slider> gains = new ArrayList<>();
 	private final ArrayList<JComboBox<Shape>> shapes = new ArrayList<>();
 
-	SynthView(JudahSynth zynth) {
+	public SynthView(JudahSynth zynth) {
+		views.add(this);
 		this.synth = zynth;
 		this.presets = new PresetsCombo(synth.getPresets());
 		this.adsr = new AdsrView(synth.getAdsr());
@@ -56,37 +60,30 @@ public class SynthView extends JPanel {
 			slider.setMaximumSize(SLIDER);
 			gains.add(slider);
 		}
-		for (Slider slider : new Slider[] { volume, lpFreq, lpReso, hpFreq, hpReso}) {
+		for (Slider slider : new Slider[] { lpFreq, lpReso, hpFreq, hpReso}) {
 			slider.setPreferredSize(SLIDER);
 			slider.setMaximumSize(SLIDER);
 		}
 
-		JPanel top = new JPanel();
-		top.add(topCorner());
-		top.add(adsr);
-
 		JPanel filter = new JPanel();
 		filter.setLayout(new BoxLayout(filter, BoxLayout.PAGE_AXIS));
 		filter.setBorder(BorderFactory.createTitledBorder(JudahSynth.FILTER));
-
 		filter.add(duo(new JLabel("High-Cut"), lpFreq));
 		filter.add(duo(new JLabel("Resonance"), lpReso));
 		filter.add(duo(new JLabel("Low-Cut"), hpFreq));
 		filter.add(duo(new JLabel("Resonance"), hpReso));
-		
+
 		JPanel dco = new JPanel();
 		dco.setLayout(new BoxLayout(dco, BoxLayout.PAGE_AXIS));
 		for (int i = 0; i < synth.getDcoGain().length; i++) 
 			dco.add(Constants.wrap(new JLabel("Dco-" + i + " Mix"), gains.get(i), shapes.get(i)));
 		dco.setBorder(BorderFactory.createTitledBorder("Oscillators"));
-		
-		JPanel bottom = new JPanel();
-		bottom.add(filter);
-		bottom.add(dco);
 
-		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-		add(top);
-		add(bottom);
+		setLayout(new GridLayout(2, 2));
+		add(topCorner());
+		add(adsr);
+		add(filter);
+		add(dco);
 		
 		update();
 		listeners();
@@ -102,11 +99,8 @@ public class SynthView extends JPanel {
 	
 	private JPanel topCorner() {
 		JPanel btns = new JPanel();
-		btns.add(active);
-		fx.addActionListener(e -> MainFrame.setFocus(synth));
-		btns.add(fx);
-		btns.add(volume);
-
+		btns.add(amp);
+		btns.add(new FxButton(synth));
 		JPanel presetPnl = new JPanel();
 		
 		presetPnl.add(presets);
@@ -117,17 +111,12 @@ public class SynthView extends JPanel {
 		corner.setLayout(new BoxLayout(corner, BoxLayout.PAGE_AXIS));
 		corner.add(btns);
 		corner.add(presetPnl);
-		corner.setBorder(BorderFactory.createTitledBorder("Synth " + synth.getName()));
+		corner.setBorder(BorderFactory.createTitledBorder(synth.getName()));
 		return corner;
 	}
 	
 	private void listeners() {
-		volume.addChangeListener(e->synth.getGain().setVol(volume.getValue()));
-		active.setOpaque(true);
-		active.addActionListener(e->{
-			synth.setActive(active.isSelected());
-			update();
-		});
+		amp.addChangeListener(e->synth.setAmplification(amp.getValue() * 0.01f));
 		for (int i = 0; i < gains.size(); i++) {
 			final int idx = i;
 			gains.get(i).addChangeListener(e->synth.setGain(idx, gains.get(idx).getValue() * 0.01f));
@@ -142,15 +131,12 @@ public class SynthView extends JPanel {
 		lpReso.addChangeListener(e ->  synth.getHiCut().setResonance(lpReso.getValue()));
 		hpFreq.addChangeListener(e -> synth.getLoCut().setFrequency(
 				CutFilter.knobToFrequency(hpFreq.getValue())));
-		hpReso.addChangeListener(e ->  JudahZone.getSynth().getLoCut().setResonance(hpReso.getValue()));
-
+		hpReso.addChangeListener(e ->  synth.getLoCut().setResonance(hpReso.getValue()));
 	}
 	
 	public void update() {
-		active.setText(synth.isActive() ? "On" : "Off");
-		active.setBackground(synth.isActive() ? Pastels.GREEN : Pastels.EGGSHELL);
-		if (volume.getValue() != synth.getGain().getVol())
-			volume.setValue(synth.getGain().getVol());
+		if (amp.getValue() != synth.getAmplification() * 100)
+			amp.setValue((int)(synth.getAmplification() * 100));
 		if (lpReso.getValue() != synth.getHiCut().getResonance())
 			lpReso.setValue((int)(synth.getHiCut().getResonance()));
 		if (hpReso.getValue() != synth.getLoCut().getResonance())
@@ -189,4 +175,65 @@ public class SynthView extends JPanel {
 		}
 	}
 	
+	public void synthKnobs(int idx, int data2) {
+		
+		// preset, volume, hi-cut hz, lo-cut res, adsr
+		switch (idx) {
+			case 0: new Thread(() -> presets.setSelectedIndex(
+						Constants.ratio(data2, presets.getItemCount() - 1))).start();
+				break;
+			case 1:
+				amp.setValue(data2);
+				break;
+			case 2: 
+				if (freqMode)
+					lpFreq.setValue(data2);
+				else 
+					lpReso.setValue(data2);
+				break;
+			case 3: 
+				if (freqMode)
+					hpFreq.setValue(data2);
+				else
+					hpReso.setValue(data2);
+
+				break;
+			case 4:
+				adsr.getA().setValue(data2);
+				break;
+			case 5:
+				adsr.getD().setValue(data2);
+				break;
+			case 6:
+				adsr.getS().setValue(data2);
+				break;
+			case 7:
+				adsr.getR().setValue(data2);
+				break;
+		}
+	}
+
+	public static void update(JudahSynth target) {
+		for (SynthView v : views)
+			if (v.synth == target)
+				v.update();
+	}
+	
 }
+
+		//	active = new JButton("On");
+		//	active.setOpaque(true);
+		//	if (primary) 
+		//		active.setEnabled(false);
+		//	if (!primary) {
+		//		 active.setFont(Constants.Gui.BOLD);
+		//		 active.addActionListener(e->{
+		//			 synth.setActive(!synth.isActive());
+		//			 active.setText(synth.isActive() ? "On" : "Off");
+		//			 active.setBackground(synth.isActive() ? Pastels.GREEN : Pastels.EGGSHELL);
+		//		 });
+		//	}
+		//	btns.add(active);
+		// update():
+		// active.setText(synth.isActive() ? "On" : "Off");
+		// active.setBackground(synth.isActive() ? Pastels.GREEN : Pastels.PURPLE);

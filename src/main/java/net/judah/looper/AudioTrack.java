@@ -11,19 +11,20 @@ import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.api.ProcessAudio;
 import net.judah.mixer.Channel;
-import net.judah.samples.Sample;
 import net.judah.util.AudioTools;
 import net.judah.util.Constants;
-
+@Getter
 public abstract class AudioTrack extends Channel implements ProcessAudio {
 
 	protected final int bufferSize = Constants.bufSize();
 
-	@Setter @Getter protected Type type = Type.FREE;
-    @Getter protected Recording recording = new Recording(0, true);
-    @Getter protected Integer length;
-    @Setter @Getter protected boolean active;
-    @Getter protected final AtomicInteger tapeCounter = new AtomicInteger();
+	@Setter protected Type type = Type.FREE;
+    protected Recording recording = new Recording(0, true);
+    protected Integer length;
+    protected float env = 1f;
+    @Setter protected float velocity = 1f;
+    @Setter protected boolean active;
+    protected final AtomicInteger tapeCounter = new AtomicInteger();
 
     protected float[][] recordedBuffer;
 
@@ -40,7 +41,7 @@ public abstract class AudioTrack extends Channel implements ProcessAudio {
             recording.close();
         recording = sample;
         length = recording.size();
-        if (this instanceof Sample == false) {
+        if (this instanceof Loop) {
         	recording.startListeners();
         	MainFrame.update(this);
         }
@@ -51,16 +52,17 @@ public abstract class AudioTrack extends Channel implements ProcessAudio {
 		return active? AudioMode.RUNNING : AudioMode.ARMED;
 	}
 
-    protected void playFrame(FloatBuffer inL, FloatBuffer inR) {
-    	float[] workL = inL.array();
-    	float[] workR = inL.array();
+    protected void playFrame(FloatBuffer[] in, FloatBuffer left, FloatBuffer right) {
+    	float[] workL = in[LEFT_CHANNEL].array();
+    	float[] workR = in[RIGHT_CHANNEL].array();
     	
         // gain & pan stereo
-        float leftVol = (gain.getVol() * 0.025f) * (1 - getPan());
-        float rightVol = (gain.getVol() * 0.025f) * getPan();
+    	float baseVol = env * velocity * gain.getGain();
+        AudioTools.processGain(recordedBuffer[LEFT_CHANNEL], workL, baseVol * (1f - getPan()));
+        AudioTools.processGain(recordedBuffer[RIGHT_CHANNEL], workR, baseVol * getPan());
 
-        AudioTools.processGain(recordedBuffer[LEFT_CHANNEL], workL, leftVol);
-        AudioTools.processGain(recordedBuffer[RIGHT_CHANNEL], workR, rightVol);
+        cutFilter.process(in[LEFT_CHANNEL], in[RIGHT_CHANNEL], 1f);   
+        hiCut.process(in[LEFT_CHANNEL], in[RIGHT_CHANNEL], 1f);
 
         if (eq.isActive()) {
             eq.process(workL, true);
@@ -68,23 +70,24 @@ public abstract class AudioTrack extends Channel implements ProcessAudio {
         }
 
         if (chorus.isActive())
-            chorus.processStereo(inL, inR);
+            chorus.processStereo(in[LEFT_CHANNEL], in[RIGHT_CHANNEL]);
         
         if (overdrive.isActive()) {
-            overdrive.processAdd(inL);
-            overdrive.processAdd(inR);
+            overdrive.processAdd(in[LEFT_CHANNEL]);
+            overdrive.processAdd(in[LEFT_CHANNEL]);
         }
         
         if (delay.isActive()) {
-            delay.processAdd(inL, inL, true);
-            delay.processAdd(inR, inR, false);
+            delay.processAdd(in[LEFT_CHANNEL], in[LEFT_CHANNEL], true);
+            delay.processAdd(in[RIGHT_CHANNEL], in[RIGHT_CHANNEL], false);
         }
-        cutFilter.process(inL, inR, 1);
         
-        doReverb(inL, inR); // subclass for Carla Reverb, or Input to Looper
+		if (reverb.isActive()) 
+			reverb.process(in[LEFT_CHANNEL], in[RIGHT_CHANNEL]);
+		
+		AudioTools.mix(in[0], left);
+		AudioTools.mix(in[1], right);
     }
-
-    protected abstract void doReverb(FloatBuffer inL, FloatBuffer inR);
     
     @Override // Loop has more sophisticated version
 	public void readRecordedBuffer() { 
@@ -93,6 +96,7 @@ public abstract class AudioTrack extends Channel implements ProcessAudio {
         if (updated == recording.size()) {
             if (type == Type.ONE_SHOT) {
             	active = false;
+            	MainFrame.update(this);
             }
             updated = 0;
         }
@@ -108,7 +112,4 @@ public abstract class AudioTrack extends Channel implements ProcessAudio {
         tapeCounter.set(current);
     }
 
-    @Override
-	public abstract void process();
-   
 }

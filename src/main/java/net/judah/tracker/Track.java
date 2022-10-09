@@ -13,16 +13,14 @@ import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.Midi;
+import net.judah.api.MidiReceiver;
 import net.judah.api.Notification.Property;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
-import net.judah.midi.MidiCable;
-import net.judah.midi.MidiPort;
 import net.judah.midi.Panic;
 import net.judah.util.Constants;
-import net.judah.util.Pastels;
 import net.judah.util.RTLogger;
 
 /** a step sequencer. 
@@ -35,24 +33,23 @@ public abstract class Track extends ArrayList<Pattern> {
 	public static final File MELODIC_FOLDER = new File(Constants.ROOT, "sequences");
 	private static int counter;
 
-	protected final JudahBeatz tracker;
+	protected final Trax tracker;
 	protected final String name;
 	protected final int num;
-	protected final int ch;
+	@Setter protected int ch;
 	protected File file;
 
 	protected final JudahClock clock;
 	protected final Cycle cycle = new Cycle(this);
-	protected TrackView view;
 	protected TrackEdit edit;
 
 	protected boolean active;
     @Setter protected int step = -1;
     protected int substep = -1;
     protected float gain = 0.8f;
-    protected boolean record;
+    @Setter protected boolean record;
 	protected Pattern current;
-	protected MidiPort midiOut;
+	protected MidiReceiver midiOut;
 	@Setter protected String instrument;
     protected Cue cue = Cue.Cue;
 	protected int steps;
@@ -68,7 +65,7 @@ public abstract class Track extends ArrayList<Pattern> {
 			step = -1;
 		else if (prop == Property.TRANSPORT && value == JackTransportState.JackTransportStopped)
 			if (active)
-				new Panic(midiOut, ch).start();
+				new Panic(midiOut.getMidiPort(), ch).start();
 		}
 	};
 	
@@ -89,28 +86,21 @@ public abstract class Track extends ArrayList<Pattern> {
 		}
 	};
 
-	public Track(JudahClock clock, String name, int ch, final MidiPort port, JudahBeatz tracker) {
+	public Track(String name, Trax tracker, MidiReceiver out, int ch) {
 		num = counter++;
 		
-		if (port == null)
-			throw new NullPointerException("" + counter);
 		this.ch = ch;
 		this.name = name;
-		this.clock = clock;
 		this.tracker = tracker;
+		this.clock = tracker.getClock();
 		steps = clock.getSteps();
 		div = clock.getSubdivision();
 		clock.addListener(transportListener);
-		this.midiOut = port;
+		this.midiOut = out;
 		add(new Pattern("A", this));
 		current = get(0);
 	}
 	
-	public TrackView getView() {
-		if (view == null)
-			view = new TrackView(this);
-		return view;
-	}
 	@Override
 	public boolean equals(Object o) { return super.equals(o) && name.equals(((Track)o).name); }
 	
@@ -148,19 +138,14 @@ public abstract class Track extends ArrayList<Pattern> {
 			return;
 		for (ShortMessage msg : now) {
 			int ticker = JudahMidi.ticker();
-			if (isDrums()) {
-				msg = Midi.create(msg.getCommand(), msg.getChannel(), msg.getData1(),
-						((int)(msg.getData2() * ((DrumTrack)this).velocity(msg.getData1()) * gain))); 
-				midiOut.send(msg, ticker);
-			}
-			else {
-				msg = Midi.create(msg.getCommand(), msg.getChannel(), msg.getData1(),
+			msg = Midi.create(msg.getCommand(), ch, msg.getData1(),
 						((int)(msg.getData2() * gain))); 
-				if (latch) 
+			if (isDrums()) 
+				midiOut.send(msg, ticker);
+			else if (latch) 
 					midiOut.send(Transpose.apply(msg), ticker);
-				else 
-					midiOut.send(msg, ticker);
-			}
+			else 
+				midiOut.send(msg, ticker);
 		}
 	}
 	
@@ -194,7 +179,7 @@ public abstract class Track extends ArrayList<Pattern> {
 			this.active = false;
 			this.onDeck = false;
 			if (isSynth())
-				new Panic(midiOut, ch).start(); 
+				new Panic(midiOut.getMidiPort(), ch).start(); 
 		}
 		MainFrame.update(this);
 	}
@@ -207,7 +192,7 @@ public abstract class Track extends ArrayList<Pattern> {
 			newPattern();
 		else {
 			edit.fillPatterns();
-			getView().fillPatterns();
+			JudahZone.getTracker().get(this).fillPatterns();
 			setCurrent(get(0));
 		}
 	}
@@ -216,7 +201,7 @@ public abstract class Track extends ArrayList<Pattern> {
 		Pattern copy = new Pattern("" + (char)('A' + size()), current, this);
 		add(copy);
 		edit.fillPatterns();
-		getView().fillPatterns();
+		JudahZone.getTracker().get(this).fillPatterns();
 		setCurrent(copy);
 	}
 
@@ -225,7 +210,7 @@ public abstract class Track extends ArrayList<Pattern> {
 		Pattern pat = new Pattern(name, this);
 		add(pat);
     	edit.fillPatterns();
-    	getView().fillPatterns();
+    	JudahZone.getTracker().get(this).fillPatterns();
 		setCurrent(pat);
 	}
 	
@@ -244,10 +229,12 @@ public abstract class Track extends ArrayList<Pattern> {
 		}
 		
 		new Thread(() -> {
-			tracker.label();
-			if (getView().getPattern().getSelectedIndex() != idx) 
-				view.getPattern().setSelectedIndex(idx);
-			edit.setPattern(idx);
+			JudahZone.getTracker().feedback();
+			if (JudahZone.getTracker().get(this) != null)
+			if (JudahZone.getTracker().get(this).getPattern().getSelectedIndex() != idx) { 
+				JudahZone.getTracker().get(this).getPattern().setSelectedIndex(idx);
+				edit.setPattern(idx);
+			}
 		}).start();
 	}
 	
@@ -295,18 +282,13 @@ public abstract class Track extends ArrayList<Pattern> {
                 
                 if (first) {
                     String[] split = line.split("[/]");
-                    String out = split[0];
-                    if (isDrums())
-                    	midiOut = JudahZone.getDrumPorts().get(out);
-                    else 
-                    	midiOut = JudahZone.getSynthPorts().get(out);
                     if (!split[1].equals("none")) {
                         instrument = split[1];
                         midiOut.progChange(instrument, ch);
                     }
                     if (split.length >= 3) {
                     	setSteps(Integer.parseInt(split[2]));
-                    	if (JudahZone.getTracker().getDrum1() == this) {
+                    	if (JudahZone.getBeats().getDrum1() == this) {
                     		clock.setSteps(steps); // drum1 sets clock time signature
                     	}
                     }
@@ -319,12 +301,11 @@ public abstract class Track extends ArrayList<Pattern> {
                     	clock.writeTempo(Integer.parseInt(split[5]));
                     first = false;
                 }
-                // Contract
-                else if (line.contains(DrumTrack.HEADER)) {
+                // ignore Contract
+                else if (line.contains("Contract")) { // legacy
                 	if (contract == null) 
                 		contract = new ArrayList<>();
                 	else {
-                		((DrumTrack)this).kitFromFile(contract);
                 		contract = null;
                 	}
                 }
@@ -350,10 +331,10 @@ public abstract class Track extends ArrayList<Pattern> {
         if (isEmpty()) 
         	add(new Pattern("A", this));
         edit.fillPatterns();
-        if (view != null)
-        	view.fillPatterns();
+        if (JudahZone.getTracker() != null && JudahZone.getTracker().get(this) != null)
+        	JudahZone.getTracker().get(this).fillPatterns();
         setCurrent(get(0));
-        RTLogger.log(this, name + " loaded " + file.getName() + " on " + midiOut);
+        RTLogger.log(this, "loaded " + file.getName() + " on " + midiOut);
     }	
 
 	public void write(File f) {
@@ -365,8 +346,6 @@ public abstract class Track extends ArrayList<Pattern> {
         raw.append("/").append(cycle.getSelected());
         raw.append(Constants.NL);
         
-        if (isDrums())
-        	raw.append(((DrumTrack)this).kitToFile());
         for (Pattern pattern : this) {
             raw.append(pattern.forSave(isDrums()));
         }
@@ -382,22 +361,19 @@ public abstract class Track extends ArrayList<Pattern> {
 	public void toggleRecord() {
 		record = !record;
 		JudahZone.getMidiGui().record(JudahZone.getTracker().isRecord());
-		edit.getRecord().setBackground(record ? Pastels.RED : Pastels.BUTTONS);
+		MainFrame.update(this);
 	}
 
-	public void setMidiOut(MidiPort port) {
+	public void setMidiOut(MidiReceiver port) {
 		if (midiOut == port) return;
-		MidiPort old = midiOut;
+		MidiReceiver old = midiOut;
 		midiOut = port;
 		if (old != null) 
-			new Panic(old).start();
-		MidiCable out = edit.getMidiOut();
-		if (out.getSelectedItem() != midiOut) 
-			out.setSelectedItem(midiOut);
-		out = view.getMidiOut();
-		if (out.getSelectedItem() != midiOut)
-			out.setSelectedItem(midiOut);
-		
+			new Panic(old, ch).start();
+		// 		MidiCable out = edit.getMidiOut();
+		// if (out.getSelectedItem() != midiOut) 
+		//	out.setSelectedItem(midiOut);
+		// gui, update GM button
 	}
 
 	public void setGain(float vol) {
@@ -405,10 +381,11 @@ public abstract class Track extends ArrayList<Pattern> {
 			return;
 		gain = vol;
 		int intVol = (int)(gain * 100);
-		if (edit != null && edit.getTrackVol().getValue() != intVol)
-			edit.getTrackVol().setValue(intVol);
-		if (view != null && view.getVolume().getValue() != intVol)
-			view.getVolume().setValue(intVol);
+		//if (edit != null && edit.getTrackVol().getValue() != intVol)
+			//edit.getTrackVol().setValue(intVol);
+		if (JudahZone.getTracker() != null && JudahZone.getTracker().get(this) != null &&
+				JudahZone.getTracker().get(this).getVolume().getValue() != intVol)
+			JudahZone.getTracker().get(this).getVolume().setValue(intVol);
 	}
 	
 	public void setCue(Cue cue) {
@@ -417,8 +394,8 @@ public abstract class Track extends ArrayList<Pattern> {
 		this.cue = cue;
 		if (cue != edit.getCue().getSelectedItem())
 			edit.getCue().setSelectedItem(cue);
-		if (cue != getView().getCue().getSelectedItem())
-			view.getCue().setSelectedItem(cue);
+		if (JudahZone.getTracker() != null && cue != JudahZone.getTracker().get(this).getCue().getSelectedItem())
+			JudahZone.getTracker().get(this).getCue().setSelectedItem(cue);
 	}
 
 	@Override

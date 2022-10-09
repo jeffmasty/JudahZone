@@ -85,7 +85,7 @@ public class RowLabels extends Row {
 				@Override public void mouseClicked(MouseEvent e) {
 					if (fx != null)
 					fx.setActive(!fx.isActive());
-					MainFrame.updateCurrent();
+					MainFrame.update(channel);
 					//RowLabels.this.update();
 				}
 			});

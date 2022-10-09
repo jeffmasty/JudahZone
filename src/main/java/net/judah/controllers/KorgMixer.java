@@ -2,29 +2,25 @@ package net.judah.controllers;
 
 import static net.judah.JudahZone.*;
 
-import java.awt.Dimension;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
-
-import javax.swing.JDialog;
-import javax.swing.JPanel;
 
 import net.judah.MainFrame;
 import net.judah.api.Midi;
 import net.judah.controllers.MapEntry.TYPE;
 import net.judah.effects.api.Reverb;
 import net.judah.mixer.Channel;
-import net.judah.mixer.Instrument;
 import net.judah.mixer.LineIn;
-import net.judah.tracker.Track;
-import net.judah.tracker.JudahBeatz;
+import net.judah.tracker.Tracker;
 import net.judah.util.Constants;
+import net.judah.util.ModalDialog;
 import net.judah.util.SettableCombo;
 
 /** Korg nanoKONTROL2 midi controller custom codes */ 	
 public class KorgMixer implements Controller {
 
+	private static final int MAINS = 1;
 	public static final String NAME = "nanoKONTROL2";
-	private static JDialog modal;
 
 	private final int knoboff = 16;
 	private final int soff = 32;
@@ -51,15 +47,15 @@ public class KorgMixer implements Controller {
 		int data1 = midi.getData1();
 		int data2 = (int)Math.floor(midi.getData2() / 1.27f);
 		ArrayList<Channel> channels = getMixer().getChannels();
-		JudahBeatz tracker = getTracker();
+		Tracker tracker = getTracker();
 		
 		if (data1 >= 0 && data1 < 8) {
-			channels.get(data1).getGain().setVol(data2);
-			MainFrame.update(channels.get(data1));
+			channels.get(MAINS + data1).getGain().setVol(data2);
+			MainFrame.update(channels.get(MAINS + data1));
 			return true;
 		}
 		if (data1 >= knoboff && data1 < knoboff + 8) {
-			Channel ch = channels.get(data1 - knoboff);
+			Channel ch = channels.get(MAINS + data1 - knoboff);
 			Reverb reverb = ch.getReverb();
 			reverb.setWet(data2 * 0.01f);
 			reverb.setActive(data2 > 3);
@@ -68,58 +64,47 @@ public class KorgMixer implements Controller {
 		}
 		if (data1 >= soff && data1 < soff + 8) { // SELECT CHANNEL or TRACK EFFECTS
 			if (data2 == 0) return true;
-			new Thread( () -> {
-				int ch = data1 - soff;
-				if (doubleClick(ch)) 
-						MainFrame.setFocus(tracker.getTracks()[ch]);
-				else 
-					MainFrame.setFocus(channels.get(data1 - soff));
-			}).start();
+			int ch = data1 - soff;
+			if (doubleClick(ch)) {
+				MainFrame.setFocus(tracker.get(ch));
+				MainFrame.setFocus(getBeatBox());
+			}
+			else 
+				MainFrame.setFocus(channels.get(MAINS + data1 - soff));
 			return true;
 		}
 		if (data1 >= moff && data1 < moff + 4) { // MUTE OUTPUT
-			Channel ch = channels.get(data1 - moff);
+			Channel ch = channels.get(MAINS + data1 - moff);
 			ch.setOnMute(data2 > 0);
 			return true;
 		}
 		if (data1 >= moff + 4 && data1 < moff + 8) { // MUTE RECORD INPUT
-			Instrument ch = ((Instrument)channels.get(data1 - moff));
+			LineIn ch = ((LineIn)channels.get(MAINS + data1 - moff));
 			ch.setMuteRecord(data2 > 0);
 			MainFrame.update(ch);
 			return true;
 		}
 		if (data1 >= roff && data1 < roff + 8) { // play/stop sequencer tracks
 			int trackNum = data1 - roff;
-			if (trackNum == tracker.getTracks().length) { 
-				// track8 = run the cricket sample (only 7 step tracks)
-				getClock().crickets(data2 > 0);
-				return true;
-			}
-			Track track = tracker.getTracks()[trackNum];
-			track.setActive(data2 > 0);
+			tracker.get(trackNum).setActive(data2 > 0);
 			return true;
 		}
 		if (data1 == SET.getVal() && data2 != 0) { // Run SettableCombo or hide modal dialog
-			if (modal == null || !modal.isVisible()) {
-				modal = null;
+			if (ModalDialog.getInstance() != null) {
+				ModalDialog.getInstance().dispatchEvent(new WindowEvent(
+                    ModalDialog.getInstance(), WindowEvent.WINDOW_CLOSING));
+			}
+			else 
 				SettableCombo.set();
-			}
-			else {
-				modal.setVisible(false);
-				modal = null;
-			}
 			return true;
-		}
-		if (data1 == LOOP.getVal()) {
-			tracker.getCurrent().toggleRecord();
 		}
 		
 		if (data1 == PREV.getVal() && data2 != 0) {
-			getTracker().changeTrack(true);
+			tracker.changeTrack(true);
 			return true;
 		}
 		if (data1 == NEXT.getVal() && data2 != 0) {
-			getTracker().changeTrack(false);
+			tracker.changeTrack(false);
 			return true;
 		}
 		if (data1 == PREV2.getVal() && data2 != 0) { // change pattern
@@ -148,19 +133,20 @@ public class KorgMixer implements Controller {
 			MainFrame.changeTab(true);
 			return true;
 		}
-		if (data1 == STOP.getVal() && data2 != 0) { // Transpose Track on/off
-			if (tracker.getCurrent() == null) 
-				return true;
-			tracker.getCurrent().setLatch(!tracker.getCurrent().isLatch());
-			tracker.checkLatch();
-			return true;
-		}
+//		if (data1 == STOP.getVal() && data2 != 0) { // Transpose Track on/off
+//			if (tracker.getCurrent() == null) 
+//				return true;
+//// not drums			
+//			tracker.getCurrent().setLatch(!tracker.getCurrent().isLatch());
+//			Tracker.checkLatch();
+//			return true;
+//		}
 		if (data1 == PLAY.getVal()) {
 			if (data2 == 0) getClock().end();
 			else getClock().begin();
 		}
 		if (data1 == RECORD.getVal()) { // Toggle Mute
-			Channel current = getFxPanel().getCurrent().getChannel();
+			Channel current = getFxRack().getCurrent().getChannel();
 			if (current instanceof LineIn) {
 				LineIn in = (LineIn)current;
 				in.setMuteRecord(!in.isMuteRecord());
@@ -183,16 +169,6 @@ public class KorgMixer implements Controller {
 		return false;
 	}
 
-	public static void modalSet(JPanel view, Dimension size) {
-		modal = new JDialog();
-		modal.add(view);
-        modal.setModal(true);
-        modal.setSize(size);
-        modal.setLocation(200, 0);
-        modal.setVisible(true);
-	}
-
-	
 	
 	
 }

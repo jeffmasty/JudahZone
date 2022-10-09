@@ -1,14 +1,14 @@
 package net.judah.songs;
 
+import static net.judah.JudahZone.*;
 import static net.judah.api.Key.*;
 
-import net.judah.JudahZone;
-import net.judah.MainFrame;
-import net.judah.looper.Looper;
-import net.judah.mixer.Channels;
+import net.judah.api.Notification.Property;
+import net.judah.api.Status;
+import net.judah.api.TimeListener;
+import net.judah.controllers.Jamstik;
 import net.judah.tracker.Track;
 import net.judah.tracker.Track.Cue;
-import net.judah.tracker.JudahBeatz;
 import net.judah.tracker.Transpose;
 import net.judah.util.RTLogger;
 
@@ -16,30 +16,36 @@ public class BlueInGreen extends SmashHit {
 
 	final int OCTAVE = 12;
 	int count;
-	
+	Jamstik jamstik = getJamstik();
+
 	@Override
-	public void startup(JudahBeatz t, Looper loops, Channels ch, MainFrame frame) {
-		super.startup(t, loops, ch, frame);
+	public void startup() {
+		super.startup();
 		frame.sheetMusic("BlueInGreen.png");
-		t.getClock().setLength(10);
+		clock.setLength(10);
 		
-		t.getDrum1().setFile("Bossa1");
-		t.getDrum2().setFile("HiHats");
-		t.getDrum3().setFile("AllMyLovin");
+		drum1.setFile("Bossa1");
+		hats.setFile("HiHats");
+		fills.setFile("AllMyLovin");
 		
-		Track harp = t.getLead1();
+		Track harp = chords;
 		harp.setFile("BlueInGreen");
 		
-		loops.getLoopB().setArmed(true);
-		ch.getGuitar().setPreset(JudahZone.getPresets().byName("Freeverb"));
-		ch.getGuitar().setPresetActive(true);
-		ch.getGuitar().getLatchEfx().latch(loops.getLoopA());
+		looper.getLoopA().addListener(new TimeListener() {
+			@Override public void update(Property prop, Object value) {
+				if (Status.TERMINATED == value)
+					jamstik.setActive(true);
+			}
+		});
+		looper.getLoopB().setArmed(true);
+		getGuitar().setPreset(getPresets().byName("Freeverb"));
+		getGuitar().setPresetActive(true);
+		getGuitar().getLatchEfx().latch(looper.getLoopA());
 		
-		Track bass = t.getBass();
 		bass.setFile("str8eight");
 
-		ch.getFluid().setMuteRecord(true);
-		ch.getCrave().setMuteRecord(true);
+		getFluid().setMuteRecord(true);
+		getCrave().setMuteRecord(true);
 
 		bass.setActive(false);
 		bass.getCycle().setCustom(this);
@@ -49,17 +55,19 @@ public class BlueInGreen extends SmashHit {
 		Transpose.setActive(true);
 		bass.setActive(true);
 		
-		harp.setMidiOut(JudahZone.getSynthPorts().get(JudahZone.getMidi().getFluidOut()));
 		harp.setCurrent(harp.get(harp.size() - 2));
 		harp.setCue(Cue.Bar);
 		harp.setActive(true);
-		t.getDrum2().setCurrent(t.getDrum2().get(4)); 
-		t.getDrum1().setActive(true);
-		t.getDrum2().setActive(true);
-		t.getDrum3().setActive(true);
-
+		hats.setCurrent(hats.get(4)); 
+		drum1.setActive(true);
+		// drum2.setActive(true);
+		hats.setActive(true);
+		fills.setActive(true);
+		getMidi().setKeyboardSynth(synth1.getMidiPort());
+		synth1.getPresets().load("FeelGoodInc");
+		
 		count = -1;
-		RTLogger.log(this, "2 bar intro");
+		RTLogger.log(this, "2 bar intro, JAMSTIK ON!!");
 	}
 
 	// set bass root transpose note
@@ -85,9 +93,10 @@ public class BlueInGreen extends SmashHit {
 	public void teardown() {
 		Transpose.setActive(false);
 		Transpose.setAmount(0);
-		t.getBass().setLatch(false);
-		t.getBass().getCycle().setCustom(null);
-		t.getLead1().setActive(false);
+		bass.setLatch(false);
+		bass.getCycle().setCustom(null);
+		lead1.setActive(false);
+		jamstik.setActive(false);
 	}
 	
 }

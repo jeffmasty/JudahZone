@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.jaudiolibs.jnajack.JackException;
@@ -20,10 +19,7 @@ import net.judah.JudahZone;
 import net.judah.looper.Looper;
 import net.judah.util.RTLogger;
 
-// locked into the ubuntu20 version of Carla, do not prefer the current KStudio version
-
 /**
- *
  * Use UDP Port
  *
 <pre>
@@ -58,38 +54,33 @@ public class Carla extends ArrayList<Plugin> implements Closeable {
 	private Process process;
 	private OSCPortOut out;
 
-	private Plugin fluid;
-	private Plugin harmonizer;
-	private Plugin talReverb;
-	private Plugin talReverb2;
-	@Getter TalReverb reverb;
-	private TalReverb reverb2;
-	// Plugin midiClock("MidiClock", 5, LineType.OTHER) completely controlled over midi
+	//private Plugin harmonizer;
+	//private Plugin talReverb;
+	//private Plugin talReverb2;
+	// @Getter TalReverb reverb;
+	// private TalReverb reverb2;
 
 	/** Default JudahZone load, initializes {@link #plugins} hard-coded from the settings file
 	 * @throws JackException */
 	public Carla(boolean showGui, Looper looper) throws IOException, JackException {
 		this(new File(System.getProperty("user.dir"), "carla/JudahZone.carxp"), showGui);
 
-		fluid = new Plugin("Calf Fluid", 0, LineType.SYNTH, null,
-				new String[] {"Calf Fluidsynth:Out L", "Calf Fluidsynth:Out R"},
-						"Calf Fluidsynth:events-in", false);
-		harmonizer = new Plugin("harmonizer", 1, LineType.CARLA,
-				new String[] {"rkr Harmonizer (no midi):Audio In L",
-					"rkr Harmonizer (no midi):Audio In R"},
-				new String[] {"rkr Harmonizer (no midi):Audio Out L",
-					"rkr Harmonizer (no midi):Audio Out R"},
-				null, false);
+		//talReverb = new Plugin(TalReverb.NAME, 0, LineType.CARLA);
+		//talReverb2 = new Plugin(TalReverb.NAME + "2", 1, LineType.CARLA);
 
-		talReverb = new Plugin(TalReverb.NAME, 2, LineType.CARLA);
-		talReverb2 = new Plugin(TalReverb.NAME + "2", 3, LineType.CARLA);
+		//harmonizer = new Plugin("harmonizer", 2, LineType.CARLA,
+		//		new String[] {"rkr Harmonizer (no midi):Audio In L",
+		//			"rkr Harmonizer (no midi):Audio In R"},
+		//		new String[] {"rkr Harmonizer (no midi):Audio Out L",
+		//			"rkr Harmonizer (no midi):Audio Out R"},
+		//		null, false);
 
-		addAll(Arrays.asList(new Plugin[] {
-		        fluid, harmonizer, talReverb, talReverb2})); 
+		//addAll(Arrays.asList(new Plugin[] {
+		//        talReverb, talReverb2, harmonizer})); 
 		JudahZone.getServices().add(0, this);
-		reverb = new TalReverb(this, talReverb, 600);
-		reverb2 = new TalReverb(this, talReverb2, 950);
-		looper.setReverb(reverb, reverb2);
+		// reverb = new TalReverb(this, talReverb, 550);
+		// reverb2 = new TalReverb(this, talReverb2, 900);
+		//looper.setReverb(reverb, reverb2);
 	}
 
 	// default ports
@@ -155,8 +146,7 @@ public class Carla extends ArrayList<Plugin> implements Closeable {
 		List<Object> param = new ArrayList<>();
 		param.add(paramIdx);
 		param.add(value);
-	    // Console.info("OSC: " + plugins.get(pluginIdx).getName()
-	    //        + " -> " + Arrays.toString(param.toArray()));
+	    // Console.info("OSC: " + plugins.get(pluginIdx).getName() + " -> " + Arrays.toString(param.toArray()));
 		send(address, param);
 	}
 
@@ -186,8 +176,12 @@ public class Carla extends ArrayList<Plugin> implements Closeable {
 
 }
 
-//	@SuppressWarnings("unused")
-	// private final Jack jack; getInstance()
+// Plugin midiClock("MidiClock", 4, LineType.OTHER) completely controlled over midi
+//	fluid = new Plugin("Calf Fluid", 0, LineType.SYNTH, null,
+//			new String[] {"Calf Fluidsynth:Out L", "Calf Fluidsynth:Out R"},
+//					"Calf Fluidsynth:events-in", false);
+
+// private final Jack jack; getInstance()
 //	private void toAux2(Plugin plugin, LineIn ch, boolean active) throws JackException {
 //		JackClient client = JudahZone.getInstance().getJackclient();
 //		LineIn aux2 = JudahZone.getChannels().getCrave();

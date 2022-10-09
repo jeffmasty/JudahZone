@@ -5,9 +5,11 @@ import static net.judah.JudahZone.*;
 import net.judah.MainFrame;
 import net.judah.api.Midi;
 import net.judah.looper.Loop;
+import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Instrument;
 import net.judah.mixer.SoloTrack;
+import net.judah.tracker.Cycle;
 
 public class Line6FBV implements Controller {
 
@@ -19,18 +21,20 @@ public class Line6FBV implements Controller {
 		
 		if (Midi.isProgChange(midi)) { // "DOWN" button
 			if (midi.getData1() == 0) { 
-				getLooper().verseChorus();
+				getLooper().verseChorus(); // toggle mutes
 				return true;
 			}
 			if (midi.getData1() == 1) { // "UP" button
-				getJamstik().nextMidiOut(); 
+				Cycle.setTrigger(true);
+				Cycle.setVerse(true);
+				// getJamstik().nextMidiOut(); 
 				return true;
 			}
 		}
 
 		if (!Midi.isCC(midi)) return false;
 		
-		Instrument guitar = getInstruments().getGuitar();
+		Instrument guitar = getGuitar();
 		Loop loop;
 		final int data2 = midi.getData2();
 		switch (midi.getData1()) {
@@ -74,11 +78,16 @@ public class Line6FBV implements Controller {
 			else // or Toggle Drum Track recording
 				drums.toggle();
 			return true;
-		case 5: // Func(1) turn on/off Jamstik midi 
-			getJamstik().toggle();
+		case 5: // Func(1) start/stop drum machine
+			JudahClock clock = getClock();
+			if (clock.isActive())
+				clock.end();
+			else
+				clock.begin();
 			return true;
-		case 6: // Func(2) // Preset on/off  or mute record in Synth mode
-			guitar.setPresetActive(data2 > 0);
+		case 6: // Func(2) turn on/off Jamstik midi 
+			getJamstik().toggle();
+			// guitar.setPresetActive(data2 > 0);
 			return true;
 		case 7: // TAP()   toggle record vs. mute controls
 			mutes = data2 > 0;
@@ -106,9 +115,9 @@ public class Line6FBV implements Controller {
 			int percent = (int)(data2 / 1.27f);
 			if (Math.abs(pedalMemory - percent) < 2)
 				return true; // ignore minor fluctuations of vol pedal
-			if (getFxPanel() == null)
+			if (getFxRack() == null)
 				return true;
-			Channel ch = getFxPanel().getCurrent().getChannel();
+			Channel ch = getFxRack().getCurrent().getChannel();
 			if (Math.abs(ch.getGain().getVol() - percent) > 2){
 				ch.getGain().setVol(percent);
 				pedalMemory = percent;

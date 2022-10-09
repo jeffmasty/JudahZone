@@ -15,6 +15,7 @@ import javax.swing.SwingUtilities;
 
 import lombok.Getter;
 import net.judah.api.Midi;
+import net.judah.drumz.DrumType;
 import net.judah.midi.NoteOn;
 import net.judah.util.Pastels;
 import net.judah.util.RTLogger;
@@ -27,12 +28,14 @@ public class BeatBox extends JPanel implements MouseListener {
     @Getter private static int rowHeight;
     private final int pnlWidth;
     private int colWidth;
-    private final ArrayList<BeatLabel> lbls;
+    private ArrayList<BeatLabel> lbls;
     private final DrumTrack track;
-    
+    private final int length = DrumType.values().length;
     
     public BeatBox(DrumTrack t, Rectangle r) {
+    	
     	setOpaque(true);
+
     	setBackground(Pastels.MY_GRAY);
         this.track = t;
         setMaximumSize(r.getSize());
@@ -40,16 +43,12 @@ public class BeatBox extends JPanel implements MouseListener {
 		pnlWidth = r.width;
         setLayout(null);
         colWidth();
-        rowHeight = (int)Math.ceil((r.height - 30) / (GMDrum.Standard.length + 1f)) + 1;
+        rowHeight = (int)Math.ceil((r.height - 30) / (length + 1f));
 
         current = new CurrentBeat(t);
 
         lbls = current.createLabels();
-        for (int i = 0; i < lbls.size(); i++) {
-            BeatLabel lbl = lbls.get(i);
-            lbl.setBounds(i * colWidth + 3, 1, 26, 26);
-            add(lbl);
-        }
+        addLbls();
         addMouseListener(this);
     }
 
@@ -60,16 +59,16 @@ public class BeatBox extends JPanel implements MouseListener {
         Graphics2D g2d = (Graphics2D) g;
 
         Pattern pat = track.getCurrent();
-        ArrayList<GMDrum> kit = track.getKit();
         Color color;
+        int data1;
         for (int x = 0; x < track.getSteps(); x++) {
             color = x % track.getDiv() == 0 ? Pastels.BLUE :Color.WHITE;
-            for (int y = 0; y < kit.size(); y++) {
-            	
-            	if (pat.getNote(x, kit.get(y).getData1()) == null)
+            for (int y = 0; y < length; y++) {
+            	data1 = DrumType.values()[y].getDat().getData1();
+            	if (pat.getNote(x, data1) == null)
                     g2d.setPaint(color);
                 else {
-                	g2d.setPaint(Pastels.forType(pat.getNote(x, kit.get(y).getData1())));
+                	g2d.setPaint(Pastels.forType(pat.getNote(x, data1)));
                 }
                 g2d.fillOval(x * colWidth + 3, y * rowHeight + rowHeight + 5, RADIUS, RADIUS);
             }
@@ -85,15 +84,10 @@ public class BeatBox extends JPanel implements MouseListener {
         Point xy = translate(evt.getPoint());
         if (xy.y < 0) { // label row clicked
         		return;
-        		// if (xy.x >= 0 && xy.x< JudahClock.getSteps()) 
-				//   if (SwingUtilities.isRightMouseButton(evt))
-				//     for (Track t : JudahClock.getInstance().getTracks())
-				// t.step(xy.x); // user wants to hear this step
-				// else track.step(xy.x);
         }
         else {
         	try { // see also Pattern.setValueAt(,,)
-	        	int data1 = track.getKit().get(xy.y).getData1();
+	        	int data1 = DrumType.values()[xy.y].getDat().getData1();
 		        Notes note = track.getCurrent().get(xy.x);
 		        if (note == null) {
 		        	track.getCurrent().put(xy.x, new Notes(new NoteOn(track.getCh(), data1)));
@@ -142,20 +136,20 @@ public class BeatBox extends JPanel implements MouseListener {
 	}
 	
 	public void measure() {
-		for (BeatLabel l : lbls) {
-			remove(l);
-		}
-		lbls.clear();
-		colWidth();
-		lbls.addAll(current.createLabels());
-		for (int i = 0; i < lbls.size(); i++) {
+		if (lbls != null)
+			for (BeatLabel l : lbls) {
+				remove(l);
+			}
+		lbls = current.createLabels();
+		addLbls();
+		invalidate();
+	}
+	
+	private void addLbls() {
+        for (int i = 0; i < lbls.size(); i++) {
             BeatLabel lbl = lbls.get(i);
             lbl.setBounds(i * colWidth + 3, 1, 26, 26);
-            lbl.setVisible(true);
             add(lbl);
         }
-		invalidate();
-//		doLayout();
-//		repaint();
 	}
 }

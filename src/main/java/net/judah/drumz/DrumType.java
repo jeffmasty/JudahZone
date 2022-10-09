@@ -9,7 +9,7 @@ public enum DrumType {
 	
 	Kick(GMDrum.BassDrum), 
 	Snare(GMDrum.AcousticSnare), 
-	Rim(GMDrum.SideStick), 
+	Stick(GMDrum.SideStick), 
 	Bongo(GMDrum.LowBongo), // or Shaker/RimShot
 	CHat(GMDrum.ClosedHiHat), 
 	OHat(GMDrum.OpenHiHat), 

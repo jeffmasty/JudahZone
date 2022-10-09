@@ -47,14 +47,5 @@ public class MidiPort {
 			return receiver.getName();
 		return "NULL!";
 	}
-
-	public void progChange(String preset, int ch) {
-		if (isExternal()) {
-			ProgChange.progChange(preset, port, ch);
-		}
-		else {
-			receiver.progChange(preset);
-		}
-	}
 	
 }

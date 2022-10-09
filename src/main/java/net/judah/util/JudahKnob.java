@@ -28,7 +28,7 @@ public class JudahKnob extends JPanel {
 		
 		knob = new RainbowKnob(value -> {
 				fx.set(idx, value);
-				MainFrame.updateCurrent();
+				MainFrame.update(ch);
 			});
 		add(knob);
 

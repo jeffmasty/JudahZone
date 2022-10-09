@@ -9,6 +9,7 @@ import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.judah.JudahZone;
 
 public class SettableCombo<T> extends CenteredCombo<T> {
@@ -16,12 +17,11 @@ public class SettableCombo<T> extends CenteredCombo<T> {
 	private static final Border red = BorderFactory.createSoftBevelBorder(
 			BevelBorder.RAISED, Color.RED, Color.RED.darker());
 	@Getter private static SettableCombo<?> focus;
+	
+	@Setter private Runnable action; 
 	private Border old;
-
-	private final Runnable action;
-
-	public SettableCombo(Runnable action) {
-		this.action = action;
+	
+	public SettableCombo() {
 		old = getBorder();
 		addMouseListener(new MouseAdapter() { // right click = set
 			@Override public void mouseClicked(MouseEvent e) {
@@ -29,10 +29,22 @@ public class SettableCombo<T> extends CenteredCombo<T> {
 					set();
 			}});
 		addActionListener(e ->SettableCombo.highlight(this));
-
+	}
+	
+	public SettableCombo(Runnable action) {
+		this();
+		this.action = action;
 	}
 	
 	public static void highlight(SettableCombo<?> change) {
+		if (JudahZone.isOverride()) {
+			if (focus != null) {
+				focus.setBorder(focus.old);
+				focus = null;
+			}
+			return;
+		}
+
 		if (focus != null) {
 			focus.setBorder(focus.old);
 		}
@@ -53,10 +65,7 @@ public class SettableCombo<T> extends CenteredCombo<T> {
 				JudahZone.loadSong();
 				highlight(null);
 			}).start();
-			
 		}
 	}
-	
-	
 	
 }

@@ -24,8 +24,8 @@ public class Voice {
 			osc.setHz(hz);
 	}
 
-	public void process(Polyphony notes, Adsr adsr, FloatBuffer output) {
-		float amplify = env.calcEnv(notes, idx, adsr);
+	public void process(Polyphony notes, Adsr adsr, FloatBuffer output, float gain) {
+		float amplify = gain * env.calcEnv(notes, idx, adsr);
 		for (int i = 0; i < OSCILLATORS; i++)
 			oscillators[i].process(amplify * synth.computeGain(i), synth.getShape(i).getWave(), output);
 	}

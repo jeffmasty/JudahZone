@@ -6,8 +6,12 @@ import java.util.concurrent.LinkedBlockingQueue;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import net.judah.JudahZone;
+import net.judah.drumz.DrumKit;
+import net.judah.drumz.DrumSample;
 import net.judah.effects.Fader;
-import net.judah.effects.LFO;
+import net.judah.mixer.Channel;
+import net.judah.samples.Sample;
 import net.judah.util.RTLogger;
 
 /** Checks up on any running LFOs and queues midi notes when the appropriate audio frame comes to pass*/
@@ -15,11 +19,9 @@ import net.judah.util.RTLogger;
 public class MidiScheduler implements Runnable {
 
 	@Getter private long current = -1;
-	private final JudahMidi queue;
 	private final BlockingQueue<Long> offering;
-
-	public MidiScheduler(JudahMidi queue) {
-		this.queue = queue;
+	
+	public MidiScheduler() {
 		offering = new LinkedBlockingQueue<>(2);
 	}
 
@@ -28,7 +30,7 @@ public class MidiScheduler implements Runnable {
 		try {
 			while (true) {
 				current = offering.take();
-				LFO.pulse(); // query any running LFOs
+				pulseLFOs(); // query any running LFOs
 				Fader.pulse();
 			}
 		} catch (Throwable t) {
@@ -40,4 +42,15 @@ public class MidiScheduler implements Runnable {
 		offering.offer(currentTransportFrame);
 	}
 
+	void pulseLFOs() {
+		for (Channel ch : JudahZone.getMixer().getChannels()) 
+			ch.getLfo().pulse();
+		for (Sample s : JudahZone.getSampler())
+			s.getLfo().pulse();
+		for (DrumKit k : JudahZone.getDrumMachine().getChannels())
+			for (DrumSample s : k.getSamples())
+				s.getLfo().pulse();
+	}
+
+	
 }

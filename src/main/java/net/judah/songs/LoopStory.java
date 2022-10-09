@@ -4,16 +4,12 @@ import static net.judah.JudahZone.*;
 
 import java.io.File;
 
-import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.Notification.Property;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
-import net.judah.looper.Looper;
 import net.judah.midi.ProgChange;
-import net.judah.mixer.Channels;
 import net.judah.tracker.Track;
-import net.judah.tracker.JudahBeatz;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -26,46 +22,46 @@ public class LoopStory extends SmashHit {
 		@Override public void update(Property prop, Object value) {
 			if (value != Status.OVERDUBBED)
 				return;
-			loops.getLoopC().duplicate();
-			ch.getGuitar().setPreset(getPresets().byName("Freedist"));
-			loops.getLoopB().removeListener(this);
-			ch.getGuitar().setPresetActive(true);
+			looper.getLoopC().duplicate();
+			guitar.setPreset(getPresets().byName("Freedist"));
+			looper.getLoopB().removeListener(this);
+			guitar.setPresetActive(true);
 		}
 	};
 	TimeListener strings = new TimeListener() {
 		@Override public void update(Property prop, Object value) {
 			if (value != Status.OVERDUBBED) // overdubbed  
 				return;
-			ProgChange.progChange(44, JudahZone.getMidi().getFluidOut(), 0);
-			loops.getDrumTrack().removeListener(this);
+			ProgChange.progChange(44, fluid, 0);
+			looper.getDrumTrack().removeListener(this);
 			RTLogger.log(this, "OCT!strings, bridge, fade");
 		}
 	};
 	
 	@Override
-	public void startup(JudahBeatz t, Looper loops, Channels ch, MainFrame frame) {
-		super.startup(t, loops, ch, frame);
+	public void startup() {
+		super.startup();
 		frame.sheetMusic(new File(Constants.SHEETMUSIC, "LoveStory.png"));
 		count = 0;
-		ProgChange.progChange("Acoustic Bass", JudahZone.getMidi().getFluidOut(), 0);
-		t.getDrum1().setFile("tinyDrums");
-		t.getDrum2().setActive(false);
-		t.getDrum3().setActive(false);
+		ProgChange.progChange("Acoustic Bass", fluid, 0); // TODO
+		drum1.setFile("tinyDrums");
+		drum2.setActive(false);
+		fills.setActive(false);
 		getClock().setLength(8);
-		ch.getGuitar().setPreset(getPresets().byName("Freelay"));
-		ch.getGuitar().setPresetActive(true);
-		ch.getGuitar().getLatchEfx().latch(loops.getLoopA());
+		guitar.setPreset(getPresets().byName("Freelay"));
+		guitar.setPresetActive(true);
+		guitar.getLatchEfx().latch(looper.getLoopA());
 		
-		t.getDrum1().getCycle().setCustom(this);
-		t.getDrum1().setActive(true);
-		loops.getLoopB().setArmed(true);
-		loops.getDrumTrack().addListener(strings);
-		loops.getLoopB().addListener(gtrEfx);
-		MainFrame.update(loops.getLoopB());
-		loops.getLoopC().setOnMute(true);
-		MainFrame.update(loops.getLoopC());
-		if (!t.getClock().isActive())
-			t.getClock().begin();
+		drum1.getCycle().setCustom(this);
+		drum1.setActive(true);
+		looper.getLoopB().setArmed(true);
+		looper.getDrumTrack().addListener(strings);
+		looper.getLoopB().addListener(gtrEfx);
+		MainFrame.update(looper.getLoopB());
+		looper.getLoopC().setOnMute(true);
+		MainFrame.update(looper.getLoopC());
+		if (!clock.isActive())
+			clock.begin();
 		RTLogger.log(this, "lead,chords, OCT!bass, C-RECverse");
 	}
 
@@ -81,9 +77,9 @@ public class LoopStory extends SmashHit {
 	
 	@Override
 	public void teardown() {
-		t.getDrum1().getCycle().setCustom(null);
-		loops.getLoopB().removeListener(gtrEfx);
-		loops.getDrumTrack().removeListener(strings);
+		drum1.getCycle().setCustom(null);
+		looper.getLoopB().removeListener(gtrEfx);
+		looper.getDrumTrack().removeListener(strings);
 	}
 	
 }

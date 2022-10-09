@@ -78,7 +78,7 @@ public class SyncWidget extends JLabel implements TimeListener {
 		final JudahClock clock = JudahZone.getClock();
 		if (Notification.Property.BEAT == prop) {
 			if (counter < 0) { // not started, display beats until start
-				loop.getFader().background();
+				JudahZone.getMixer().getFader(loop).background();
 				int countdown = JudahClock.getBeat() % clock.getMeasure() - clock.getMeasure();
 				setText(countdown + "");
 			}
@@ -93,7 +93,6 @@ public class SyncWidget extends JLabel implements TimeListener {
 		if (Notification.Property.BARS != prop) return;
 		
 		if (counter < 0) {
-			// JudahClock.getInstance().reset();
 			loop.record(true);
 			setText("Go !");
 		}
@@ -112,7 +111,7 @@ public class SyncWidget extends JLabel implements TimeListener {
 		setBars(JudahClock.getLength());
 		counter = -1;
 		JudahZone.getClock().addListener(this);
-		loop.getFader().background();
+		JudahZone.getMixer().getFader(loop).background();
 	}
 
 }

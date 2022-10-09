@@ -1,7 +1,5 @@
 package net.judah.mixer;
 
-import static net.judah.JudahZone.*;
-
 import java.awt.GridLayout;
 import java.util.ArrayList;
 
@@ -9,6 +7,7 @@ import javax.swing.JPanel;
 
 import lombok.Getter;
 import net.judah.looper.Loop;
+import net.judah.looper.Looper;
 import net.judah.util.Constants;
 
 /** Graphical representation of the Mixer*/
@@ -17,35 +16,40 @@ public class DJJefe extends JPanel {
 	@Getter private final ArrayList<Channel> channels = new ArrayList<>();
 	private final ArrayList<ChannelFader> faders = new ArrayList<ChannelFader>();
 	
-    public DJJefe() {
-
-    	for (Loop loop : getLooper())
-    		channels.add(loop);
-    	
-    	for (Loop loop : getLooper()) 
-        	faders.add(loop.getFader());
-    	
-    	Channels instruments = getInstruments();
-    	channels.add(instruments.getGuitar());
-    	channels.add(instruments.getMic());
-        channels.add(getSynth());
-        channels.add(getBeats());
-        channels.add(instruments.getCalf());
-        channels.add(instruments.getFluid());
-        channels.add(getSynth2());
-        channels.add(getBeats2());
-        channels.add(instruments.getCrave());
-        channels.add(getMains());
-
-        for (Channel ch : channels) {
-        	ChannelFader fader = ch.getFader();
-        	faders.add(fader);
-        	add(fader);
-        }
-        setLayout(new GridLayout(1, faders.size()));
+    public DJJefe(Channel mains, Looper loops, Zone sources) {
+        addChannel(mains);
+        for (Loop loop : loops)
+        	addChannel(loop);
+        for (LineIn instrument : sources)
+        	addChannel(instrument);
+        setLayout(new GridLayout(1, channels.size()));
         doLayout();
     }
 
+    public void addChannel(Channel ch) {
+    	for (Channel already : channels)
+    		if (already == ch)
+    			return;
+    	
+	    channels.add(ch);
+	    addFader(ch);
+    }
+	    
+    public void removeChannel(Channel ch) {
+	    if (!channels.contains(ch)) 
+		    return;
+	    ChannelFader fade = getFader(ch);
+	    remove(fade);
+	    faders.remove(fade);
+	    channels.remove(ch);
+    }
+ 	    
+    private void addFader(Channel ch) {
+	    ChannelFader fader = new ChannelFader(ch);
+	    faders.add(fader);
+	    add(fader);
+    }
+    
 	public void update(Channel channel) {
 		for (ChannelFader ch : faders) 
 			if (ch.getChannel().equals(channel)) 
@@ -62,25 +66,14 @@ public class DJJefe extends JPanel {
 			ch.setBorder(ch.getChannel() == o ? Constants.Gui.HIGHLIGHT : Constants.Gui.NO_BORDERS);
 	}
 
-	public Channel getChannel(String name) {
-		for (Channel ch : channels)
-			if (name.equals(ch.getName()))
-				return ch;
+	public ChannelFader getFader(Channel ch) {
+		for (ChannelFader fade : faders)
+			if (fade.getChannel() == ch)
+				return fade;
 		return null;
 	}
-
-	public ArrayList<GMSynth> getGMs() {
-		ArrayList<GMSynth> result = new ArrayList<GMSynth>();
-		for (Channel ch : channels) {
-			if (ch instanceof GMSynth)
-				result.add((GMSynth)ch);
-		}
-		return result;
-	}
- 	
+	
 }
-
-
 
 
 /*  public static Channel getChannel(int idx) {

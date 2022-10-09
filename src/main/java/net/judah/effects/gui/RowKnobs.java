@@ -44,6 +44,12 @@ public class RowKnobs extends Row {
 			controls.add(new JudahKnob(ch, ch.getGain(), Gain.PAN, ""));
 			controls.add(new JudahKnob(ch, ch.getOverdrive(), 0, "Gain"));
 			break;
+		case 3: 
+			controls.add(new JudahKnob(ch, ch.getEq(), EQ.EqBand.Bass.ordinal(), EQ.EqBand.Bass.name()));
+			controls.add(new JudahKnob(ch, ch.getEq(), EQ.EqBand.Mid.ordinal(), EQ.EqBand.Mid.name()));
+			controls.add(new JudahKnob(ch, ch.getEq(), EQ.EqBand.High.ordinal(), EQ.EqBand.High.name()));
+			controls.add(new JudahKnob(ch, ch.getHiCut(), CutFilter.Settings.Frequency.ordinal(), "Hz."));
+			break;
 		default:
 			RTLogger.warn(this, new JudahException(idx + " what? " + ch));
 		}
@@ -51,31 +57,27 @@ public class RowKnobs extends Row {
 		
 	}
 
-	// Bottom Row, Preset drop down row
-	public RowKnobs(Channel ch, KnobMode effects2, PresetCombo presets) {
-			super(ch, KnobMode.FX2);
-			row = 3;
-			controls.add(new JudahKnob(ch, ch.getEq(), EQ.EqBand.Bass.ordinal(), EQ.EqBand.Bass.name()));
-			controls.add(new JudahKnob(ch, ch.getEq(), EQ.EqBand.Mid.ordinal(), EQ.EqBand.Mid.name()));
-			controls.add(new JudahKnob(ch, ch.getEq(), EQ.EqBand.High.ordinal(), EQ.EqBand.High.name()));
-			controls.add(presets);
-			update();
-	}
+//	// Bottom Row, Preset drop down row
+//	public RowKnobs(Channel ch, KnobMode effects2, PresetCombo presets) {
+//			super(ch, KnobMode.FX2);
+//			row = 3;
+//			controls.add(new JudahKnob(ch, ch.getEq(), EQ.EqBand.Bass.ordinal(), EQ.EqBand.Bass.name()));
+//			controls.add(new JudahKnob(ch, ch.getEq(), EQ.EqBand.Mid.ordinal(), EQ.EqBand.Mid.name()));
+//			controls.add(new JudahKnob(ch, ch.getEq(), EQ.EqBand.High.ordinal(), EQ.EqBand.High.name()));
+//			controls.add(new JudahKnob(ch, ch.getHiCut(), CutFilter.Settings.Frequency.ordinal(), "HiCut"));
+//			update();
+//	}
 
 	@Override
 	public void update() {
 		for (Component c : controls) 
-			if (c instanceof PresetCombo)
-				((PresetCombo)c).update();
-			else 
-				((JudahKnob)c).update();
+			((JudahKnob)c).update();
 		
 		boolean on = (row == 0 || row == 1) ? 
 				KnobMode.FX1 == MPKmini.getMode() : 
 				KnobMode.FX2 == MPKmini.getMode(); 
 		for (Component c : controls) 
-			if (c instanceof JudahKnob)
-				((JudahKnob)c).setOnMode(on);
+			((JudahKnob)c).setOnMode(on);
 	}
 
 }

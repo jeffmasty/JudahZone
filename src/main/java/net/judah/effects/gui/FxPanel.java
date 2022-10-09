@@ -1,11 +1,12 @@
 package net.judah.effects.gui;
 
+import java.util.HashSet;
+
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.MainFrame;
 import net.judah.controllers.KnobMode;
 import net.judah.controllers.MPKmini;
 import net.judah.mixer.Channel;
@@ -17,6 +18,7 @@ import net.judah.util.Pastels;
 public class FxPanel extends JPanel {
 
     @Getter private EffectsRack current;
+    @Getter private HashSet<EffectsRack> cache = new HashSet<>();
     @Getter private final GuitarTuner tuner = new GuitarTuner();
     private JPanel placeholder = new JPanel();
     
@@ -24,14 +26,16 @@ public class FxPanel extends JPanel {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(Constants.Gui.NONE);
         setBackground(Pastels.EGGSHELL);
-        current = JudahZone.getMains().getGui();
+        //current = JudahZone.getMains().getGui();
 
         placeholder.addKeyListener(JudahMenu.getInstance());
         placeholder.setFocusTraversalKeysEnabled(false);
-        placeholder.add(current);
+        // placeholder.add(current);
         add(placeholder);
         add(tuner);
         doLayout();
+        
+        setFocus(JudahZone.getMains());
     }
 
     public void setFocus(Channel ch) {
@@ -39,14 +43,22 @@ public class FxPanel extends JPanel {
     	if (ch.equals(getChannel())) {
     		return;
     	}
-    	current = ch.getGui();
-    	new Thread(()->{
-	        placeholder.removeAll();
-	        placeholder.add(current);
-	        placeholder.requestFocus();
-	        validate();
-	        MainFrame.updateCurrent();
-    	}).start();
+    	
+    	current = null;
+    	for (EffectsRack fx : cache)
+    		if (fx.getChannel() == ch) {
+    			current = fx;
+    			break;
+    		}
+    	if (current == null) {
+    		current = new EffectsRack(ch);
+    		cache.add(current);
+    	}
+        placeholder.removeAll();
+        placeholder.add(current);
+        placeholder.requestFocus();
+        validate();
+        current.update();
     }
 
     public Channel getChannel() {

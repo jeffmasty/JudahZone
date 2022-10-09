@@ -2,6 +2,7 @@ package net.judah.mixer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.ImageIcon;
 
@@ -18,44 +19,47 @@ import net.judah.effects.api.Gain;
 import net.judah.effects.api.Preset;
 import net.judah.effects.api.Reverb;
 import net.judah.effects.api.Setting;
-import net.judah.effects.gui.EffectsRack;
 import net.judah.util.RTLogger;
 
 /** A mixer bus for either Input or Output audio */
 @Getter @EqualsAndHashCode(callSuper = false)
-public abstract class Channel {
+public class Channel {
 
 	protected final String name;
-	protected ChannelFader fader;
-	protected EffectsRack gui;
     protected final boolean isStereo;
 	
 	@Setter protected ImageIcon icon;
 	protected boolean onMute;
 	protected Preset preset;
 	protected boolean presetActive;
-    protected Gain gain = new Gain();
-    protected LFO lfo = new LFO();
-    protected CutFilter cutFilter;
-    protected EQ eq = new EQ();
-    protected Overdrive overdrive = new Overdrive();
-    protected Chorus chorus = new Chorus();
+    protected final Gain gain = new Gain();
+    protected final LFO lfo = new LFO(this);
+    protected final CutFilter cutFilter;
+    protected final CutFilter hiCut;
+    protected final EQ eq = new EQ();
+    protected final Overdrive overdrive = new Overdrive();
+    protected final Chorus chorus = new Chorus();
 	protected Delay delay = new Delay();
     protected Reverb reverb;
     @Setter protected JackPort leftPort;
     @Setter protected JackPort rightPort;
-    protected final ArrayList<Effect> effects = new ArrayList<>();
+    protected final List<Effect> effects;
     
     public Channel(String name, boolean isStereo) {
         this.name = name;
         this.isStereo = isStereo;
         cutFilter = new CutFilter(isStereo);
+        hiCut = new CutFilter(isStereo);
+        hiCut.setFilterType(CutFilter.Type.LP24);
+		hiCut.setResonance(1);
+		hiCut.setFrequency(16000);
+
         reverb = new Freeverb(isStereo);
-        effects.addAll(Arrays.asList(new Effect[] {
-                getLfo(), getCutFilter(), getEq(),
-                getChorus(), getOverdrive(),
-                getDelay(), getReverb()}));
         preset = JudahZone.getPresets().getFirst();
+        effects = Arrays.asList(new Effect[] {
+                getLfo(), getHiCut(), getCutFilter(), getEq(),
+                getChorus(), getOverdrive(),
+                getDelay(), getReverb()});
     }
 
     public void setPresetActive(boolean active) {
@@ -84,6 +88,11 @@ public abstract class Channel {
         }
     }
     
+    public void setPreset(String name, boolean active) {
+    	setPreset(JudahZone.getPresets().byName(name));
+    	setPresetActive(active);
+    }
+    
     public void setPreset(String name) {
     	setPreset(JudahZone.getPresets().byName(name));
     }
@@ -95,12 +104,6 @@ public abstract class Channel {
         applyPreset();
     }
     
-    public void setReverb(Reverb r) {
-        effects.remove(reverb);
-        reverb = r;
-        effects.add(reverb);
-    }
-
     public void setDelay(Delay d) {
     	effects.remove(delay);
     	delay = d;
@@ -132,6 +135,7 @@ public abstract class Channel {
 		getDelay().setActive(false);
 		getLfo().setActive(false);
 		getOverdrive().setActive(false);
+		getHiCut().setActive(false);
 		getGain().setPan(50);
 		if (this instanceof Instrument == false)
 			getGain().setVol(50);
@@ -146,16 +150,16 @@ public abstract class Channel {
 		return gain.getVol();
 	}
 	
-	public ChannelFader getFader() {
-		if (fader == null) 
-			fader = new ChannelFader(this);
-		return fader;
+	@Override
+	public String toString() {
+		return name;
 	}
 	
-	public EffectsRack getGui() {
-		if (gui == null)
-			gui = new EffectsRack(this);
-		return gui;
-	}
-
 }
+
+//    public void setReverb(Reverb r) {
+//        effects.remove(reverb);
+//        reverb = r;
+//        effects.add(reverb);
+//    }
+

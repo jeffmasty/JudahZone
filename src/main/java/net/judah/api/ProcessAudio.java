@@ -7,9 +7,6 @@ public interface ProcessAudio {
 
 	public enum Type {ONE_SHOT, FREE, SOLO, DRUMTRACK, SEQUENCED}
 
-	/** in Real-Time thread */
-	void process();
-
 	AudioMode isPlaying();
 
 	Recording getRecording();
@@ -17,9 +14,6 @@ public interface ProcessAudio {
 	void setTapeCounter(int i);
 	
 	void readRecordedBuffer();
-
-//	/** destination for audio output */
-//	void setOutputPorts(List<JackPort> output);
 
 	void clear();
 }

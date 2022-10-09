@@ -9,7 +9,6 @@ import java.io.File;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 
 import net.judah.MainFrame;
@@ -21,10 +20,10 @@ import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock.Mode;
 import net.judah.mixer.Channel;
-import net.judah.mixer.Channels;
 import net.judah.mixer.Instrument;
+import net.judah.mixer.Instruments;
 import net.judah.synth.SynthEngines;
-import net.judah.tracker.JudahBeatz;
+import net.judah.tracker.Tracker;
 
 public class JudahMenu extends JPopupMenu implements KeyListener {
 
@@ -56,13 +55,9 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
         sheetMusic.addActionListener( e -> getFrame().sheetMusic(new File(Constants.SHEETMUSIC, "Four.png")));
         synths.addActionListener(e-> getFrame().addOrShow(SynthEngines.getInstance(), SynthEngines.NAME));
         beatBox.addActionListener( e -> getFrame().addOrShow(getBeatBox(), getBeatBox().getName()));
+        kits.addActionListener(e ->getFrame().addOrShow(KitzView.getInstance(), KitzView.NAME));
         tracker.addActionListener(e-> {
-        	JudahBeatz t = getTracker();
-        	getFrame().addOrShow(t, t.getClass().getSimpleName());
-        });
-        kits.addActionListener(e ->{
-        	JPanel kits = new KitzView();
-        	getFrame().addOrShow(kits, kits.getName());
+        	getFrame().addOrShow(getTracker(), Tracker.NAME);
         });
         
         exit.addActionListener((event) -> System.exit(0));
@@ -80,9 +75,9 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
 
     @Override public void keyPressed(KeyEvent e) {
         int code = e.getKeyCode();
-        Channel focus = getFxPanel().getChannel();
+        Channel focus = getFxRack().getChannel();
         Looper looper = getLooper();
-        Channels instruments = getInstruments();
+        Instruments instruments = getInstruments();
 
         switch(code) {
 
@@ -94,8 +89,8 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
             case VK_F4: MainFrame.setFocus(looper.get(3)); return;
             case VK_F5: MainFrame.setFocus(instruments.get(0)); return;
             case VK_F6: MainFrame.setFocus(instruments.get(1)); return;
-            case VK_F7: MainFrame.setFocus(getSynth()); return;
-            case VK_F8: MainFrame.setFocus(getBeats()); return;
+            case VK_F7: MainFrame.setFocus(getSynth1()); return;
+            case VK_F8: return;
             case VK_F9: MainFrame.setFocus(getSynth2()); return;
             case VK_F10: MainFrame.setFocus(instruments.get(3)); return;
             case VK_F11: MainFrame.setFocus(instruments.get(4)); return;
@@ -142,12 +137,12 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
     }
 
     private void mute() {
-        getFxPanel().getChannel().setOnMute(!getFxPanel().getChannel().isOnMute());
+        getFxRack().getChannel().setOnMute(!getFxRack().getChannel().isOnMute());
         // MixerPane.getInstance().getEffects().update();
     }
 
     private void volume(boolean up) {
-        Channel bus = getFxPanel().getChannel();
+        Channel bus = getFxRack().getChannel();
         int vol = bus.getVolume();
         vol += up? 5 : -5;
         if (vol > 100) vol = 100;
@@ -157,8 +152,8 @@ public class JudahMenu extends JPopupMenu implements KeyListener {
 
     private void nextChannel(boolean toRight) {
     	Looper looper = getLooper();
-        Channels channels = getInstruments();
-        Channel bus = getFxPanel().getChannel();
+        Instruments channels = getInstruments();
+        Channel bus = getFxRack().getChannel();
         if (bus instanceof Instrument) {
             int i = channels.indexOf(bus);
             if (toRight) {

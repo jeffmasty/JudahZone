@@ -1,26 +1,21 @@
 TODO:
 
-JudahBeatz, kits, atk/rel, choke hihat, currentBeat
-Mixer view on synths
-Transpose + Tracker gui in TimeSigGui
-LFO Panel upgrade, LFO on samples 
-pads to new channels, available pads: korg pad 5, MPK CC 1
-bugz: pan borked, trackView progChange/custom2, Jamstik, next track btn
-
+remap controllers
+save/load Track midiout + channel
+Loop copy/paste/length/save,  Record session
+Arppegiator (Racman sequence), Chord sheet
+Selecta Mixer view on synths
 separate setlist resources from code
 Scope and Meters
 JudahSynth: detune, harmonics, more shapes, LFO, mono-synth option
-improve mixer faders a bit
+mixer fader upgrades
 Delay and LFO upgrade (triggered to Clock, LFO/Fader cleanUp())
 edit checkboxes: save patch/tempo/cycle info
 probability, Ritardando
-Loop copy/paste/length/save
 export beatbox as midi file
-Record session
 double tap erase - stop drums
-Sampler Fx (granularity, frequency, wet)
+Sampler Fx (granularity, pitched frequency, wet)
 DrumSynth
-Arppegiator
 Vocoder 
 record record record youtubes
 README credits
@@ -37,6 +32,7 @@ make client-server architecture
 Sequencer can really swing.
 support JavaSound/non-Jack, make accessible to others
 
+JJazzLab-X API local git
 Java Music API: https://github.com/psambit9791/jDSP
 Java Music API: https://github.com/chdh/dsp-collection-java
 https://explodingart.com/jmusic/index.html
@@ -86,7 +82,6 @@ https://github.com/PedalController/Lv2Library/blob/master/src/br/com/srmourasilv
 <!--    </dependency> -->
 
 Done:
-arpeggiator, overdub midi
 Midi looper/recorder, Quantization
 router table -> display pad/knob name  and   midi drum name
 Recompile Carla (done, modified modules/rtaudio.cpp)
@@ -143,8 +138,8 @@ Sampler (bicycle, creek, rain sounds), cricket sound on 2 and 4
 Settable interface (files, instruments, setlist)
 JudahSynth + ADSR knobs, code my own polyphonic velocity-sensitive synthesizer, presets 
 portWrapper for midiOut to JudahSynth/JudahBeats, redo djJefe
-8-track player
-fix lfo on synth/samples
+8-track player, atk/rel drum sample envelope
+LFO on synth/samples
 
 
 REF-----------------------------------------------------------------

@@ -1,15 +1,11 @@
 package net.judah.songs;
 
-import net.judah.MainFrame;
 import net.judah.api.Notification.Property;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
-import net.judah.looper.Looper;
-import net.judah.mixer.Channels;
 import net.judah.tracker.Cycle;
 import net.judah.tracker.Track;
 import net.judah.tracker.Track.Cue;
-import net.judah.tracker.JudahBeatz;
 import net.judah.util.Constants;
 
 public class AutumnLeaves extends SmashHit {
@@ -17,19 +13,18 @@ public class AutumnLeaves extends SmashHit {
 	boolean vampDone;
 	int count;
 	
-	Track bass;
-	Track drums;
 	final TimeListener duplicate = new TimeListener() {
 		@Override public void update(Property prop, Object value) {
 			if (value == Status.TERMINATED) {
-				loops.getLoopA().removeListener(this);
-				Constants.timer(50, () ->loops.getLoopC().duplicate()); // make (B)ridge 2x as long as loop A
+				looper.getLoopA().removeListener(this);
+				Constants.timer(50, () ->looper.getLoopC().duplicate()); // make (B)ridge 2x as long as loop A
 			}
 	}};
 
+
 	@Override
-	public void startup(JudahBeatz t, Looper loops, Channels ch, MainFrame frame) {
-		super.startup(t, loops, ch, frame);
+	public void startup() {
+		super.startup();
 		/*  
 		 | Am7   | D7    |   Gmaj7 | Cmaj7   | F#-7b5  | B7     | E-     |      |   
 (x2)	 | Am7   | D7    |   Gmaj7 | Cmaj7   | F#-7b5  | B7     | E-     |      |   
@@ -39,22 +34,19 @@ public class AutumnLeaves extends SmashHit {
 		 
 		 */
 
-		drums = t.getDrum1();
-		bass = t.getBass();
-		
-		t.getClock().end();
+		clock.end();
 		setupDrums();
 		setupBass();
-		t.getClock().writeTempo(93);
-		t.getClock().setLength(8);
+		clock.writeTempo(93);
+		clock.setLength(8);
 		frame.sheetMusic("AutumnLeaves.png");
 		
-		loops.getLoopA().addListener(duplicate);
-		loops.getLoopB().setArmed(true); 
-		loops.getLoopC().setOnMute(true);
+		looper.getLoopA().addListener(duplicate);
+		looper.getLoopB().setArmed(true); 
+		looper.getLoopC().setOnMute(true);
 		
-		drums.setActive(true);
-		t.getClock().begin();
+		drum1.setActive(true);
+		clock.begin();
 		Cycle.setTrigger(false);
 		Cycle.setVerse(false);
 		count = 0;
@@ -70,7 +62,7 @@ public class AutumnLeaves extends SmashHit {
 	}
 	
 	private void setupDrums() {
-		drums.setFile("Bossa1");
+		drum1.setFile("Bossa1");
 	}
 	@Override
 	public void cycle(Track t) {
@@ -98,7 +90,7 @@ public class AutumnLeaves extends SmashHit {
 	@Override
 	public void teardown() {
 		bass.getCycle().setCustom(null);
-		loops.getLoopA().removeListener(duplicate);
+		looper.getLoopA().removeListener(duplicate);
 	}
 	
 }

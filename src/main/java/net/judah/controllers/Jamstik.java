@@ -35,7 +35,7 @@ import net.judah.util.RTLogger;
 /** Controller substitute, reroute guitar midi to synths */
 public class Jamstik extends JComboBox<Path> implements Closeable {
 	
-	@Getter private static boolean active = false;
+	@Getter private boolean active = false;
 	@Getter private static Path path;
 	private int volStash = 50;
 	@Setter private JPanel frame;
@@ -66,7 +66,6 @@ public class Jamstik extends JComboBox<Path> implements Closeable {
 	private void run() {
 		if (path == null) 
 			return;
-		// String search = "UNO Synth Pro MIDI 1";
 		try {
 			Jack jack = Jack.getInstance();
 			JudahMidi midi = JudahZone.getMidi();
@@ -75,24 +74,21 @@ public class Jamstik extends JComboBox<Path> implements Closeable {
 			String jamstik = jack.getPorts(client, Constants.getDi(), 
 					JackPortType.MIDI, EnumSet.of(JackPortFlags.JackPortIsOutput))[0];				
 
-			String search = "Calf Fluidsynth";
-			if (path.getPort().equals(midi.getCraveOut()))
+			String search = "JudahSynth";
+			if (midi.getCraveOut() == path.getPort().getPort())
 				search = Constants.getDi();
-			else if (path.getPort().equals(midi.getFluidOut()))
+			else if (midi.getFluidOut() == path.getPort().getPort())
 				search = FluidSynth.MIDI_PORT;
-			
-			
 			
 			
 			String port = jack.getPorts(client, search, 
 					JackPortType.MIDI, EnumSet.of(JackPortFlags.JackPortIsInput))[0];
 
-			Gain guitar = JudahZone.getInstruments().getGuitar().getGain();
+			Gain guitar = JudahZone.getGuitar().getGain();
 			if (active) {
 				volStash = guitar.getVol();
 				guitar.setVol(0);
 				MainFrame.update(path.getChannel());
-				MainFrame.update(guitar);
 				jack.connect(client, jamstik, port);
 			} else {
 				try {
@@ -102,20 +98,23 @@ public class Jamstik extends JComboBox<Path> implements Closeable {
 				}
 				new Panic(path.getPort()).start();
 				guitar.setVol(volStash);
-				MainFrame.update(guitar); // setFocus?
 			}
 			if (frame != null)
 				frame.setBackground(active ? Pastels.GREEN : Pastels.BUTTONS);		
+			MainFrame.update(guitar); 
 		} catch (Throwable e) {
 			RTLogger.log(Jamstik.class.getSimpleName(), e.getMessage());
 		}
 	}
 	
+	public void setActive(boolean active) {
+		this.active = active;
+		new Thread(()-> run()).start();
+	}
+	
 	public void toggle() {
 		active = !active;
 		new Thread(()-> run()).start();
-		if (frame != null) 
-			frame.setBackground(active ? Pastels.GREEN : Pastels.BUTTONS);
 	}
 	
 	public void setMidiOut(Path path) {

@@ -13,6 +13,10 @@ public class AudioTools  {
 			a.put(0f);
 		a.rewind();
 	}
+	public static void silence(FloatBuffer[] bufs) {
+		for (FloatBuffer buf : bufs)
+			silence(buf);
+	}
 	public static void silence(float[][] buf) {
 		for (float[] ch : buf) 
 			silence(ch);
@@ -40,6 +44,11 @@ public class AudioTools  {
 		}
 		return channels;
 	}
+	
+	public static void mix(FloatBuffer[] in, FloatBuffer[] out, int pan) {
+	
+	}
+
 
 	/** MIX in and out with gain applied to the input*/
 	public static void mix(FloatBuffer in, FloatBuffer out) {

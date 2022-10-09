@@ -37,9 +37,11 @@ public class AdsrView extends JPanel {
 		bottom.add(new JLabel("S:R"));
 		bottom.add(r);
 		setBorder(BorderFactory.createTitledBorder(JudahSynth.ENVELOPE));
-		setLayout(new GridLayout(2, 1));
-		add(top);
-		add(bottom);
+		
+		JPanel wrap = new JPanel(new GridLayout(2, 1));
+		wrap.add(top);
+		wrap.add(bottom);
+		add(wrap);
 		update();
 		a.addChangeListener(e->adsr.setAttackTime(a.getValue()));
 		d.addChangeListener(e->adsr.setDecayTime(d.getValue()));

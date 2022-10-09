@@ -12,6 +12,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import lombok.Getter;
+import net.judah.midi.ProgChange;
 import net.judah.util.RTLogger;
 
 public class PianoEdit extends TrackEdit {
@@ -23,11 +25,19 @@ public class PianoEdit extends TrackEdit {
 	private final JComboBox<Integer> octave = new JComboBox<>();
 	JScrollPane scroller;
 	
+	@Getter private final ProgChange patch;
 	
 	public PianoEdit(PianoTrack track, int viewOctave) {
 		super(track);
 		pianoTrack = track;
-		JPanel pnl = new JPanel(new GridLayout(1, 4));
+
+		JPanel pnl = new JPanel();
+		pnl.add(new JLabel("Patch", JLabel.CENTER));
+		patch = new ProgChange(track.getMidiOut(), track.getCh());
+		pnl.add(patch);
+		buttons.add(pnl);
+		
+		pnl = new JPanel(new GridLayout(1, 4));
 		JLabel gt = new JLabel("Gate", JLabel.CENTER);
 		pnl.add(gt);
 		for (int i = 1; i < track.getSteps(); i++)
@@ -40,6 +50,7 @@ public class PianoEdit extends TrackEdit {
 			octave.addItem(i);
 		pnl.add(oc);
 		pnl.add(octave);
+		
 		buttons.add(pnl);
 		
         scroller = new JScrollPane();
@@ -72,6 +83,7 @@ public class PianoEdit extends TrackEdit {
 	@Override
 	public void update() {
 		track.getCurrent().update();
+		super.update();
 	}
 
 	@Override

@@ -53,7 +53,8 @@ public class Constants {
 	public static final File KITS = new File(_home, "kits");
 	public static final File SHEETMUSIC = new File(_home, "sheets");
 	public static final File SYNTH = new File(_home, "synth");
-
+	public static final String ICONS = "/home/judah/git/JudahZone/resources/icons/";
+	
 	public static final Midi DUMBDRUM = create(1, 0);
 	public static final Midi BASSDRUM = create(36, 100);
 	static Midi create(int dat1, int velocity) {
@@ -75,6 +76,15 @@ public class Constants {
 	public static final int STEREO = 2;
 	public static final int MONO = 1;
 
+	public static final String GUITAR = "Guitar"; 
+	public static final String MIC = "Mic";
+	public static final String CRAVE = "Crave";
+	public static final String CRAVE_PORT = "system:capture_3";
+	public static final String MAIN = "Mains";
+	public  static final String DRUMS = "Drumtrack";
+	public static final String LOOPA = "Loop A";
+	public static final String LOOPB = "Loop B";
+		
 	public static final String NL = System.getProperty("line.separator", "\r\n");
 	public static final String CUTE_NOTE = "♫ ";
 	public static final String FILE_SEPERATOR = System.getProperty("file.separator");
@@ -251,10 +261,6 @@ public class Constants {
 		} catch (MidiUnavailableException e) { e.printStackTrace(); }
 	}
 
-	private static final String MAIN = "Mains";
-	private static final String DRUMS = "Drumtrack";
-	private static final String LOOPA = "Loop A";
-	private static final String LOOPB = "Loop B";
 	private static final String[] DEFAULT_OUT = new String[] {MAIN, DRUMS, LOOPA, LOOPB};
 
 	public static JComboBox<String> createMixerCombo() {
@@ -321,5 +327,41 @@ public class Constants {
 	public static boolean isNumeric(String str) {
         return str != null && str.matches("[-+]?\\d*\\.?\\d+");
     }
+	
+	/**@param data2 0 to 127
+	 * @return data2 / 127 */
+	public static float reverseVelocity(int data2) {
+		return data2 * 0.007874f;
+	}
+
+	/**@param supplied buffer
+	 * @param pos
+	 * @param numBytes
+	 * @return little endiean data to long from pos in the supplied buffer */
+	public static long getLE(byte[] buffer, int pos, int numBytes) {
+		numBytes --;
+		pos += numBytes;
+
+		long val = buffer[pos] & 0xFF;
+		for (int b=0 ; b<numBytes ; b++) 
+			val = (val << 8) + (buffer[--pos] & 0xFF);
+
+		return val;
+	}
+
+	/**put val as little endian at pos in supplied buffer
+	 * @param val
+	 * @param buffer
+	 * @param pos
+	 * @param numBytes */
+	public static void putLE(long val, byte[] buffer, int pos, int numBytes) {
+		for (int b=0 ; b<numBytes ; b++) {
+			buffer[pos] = (byte) (val & 0xFF);
+			val >>= 8;
+			pos ++;
+		}
+	}
+
+
 	
 }

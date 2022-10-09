@@ -2,7 +2,6 @@ package net.judah.fluid;
 
 import static net.judah.util.Constants.NL;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -13,22 +12,24 @@ import java.util.Arrays;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
-import org.jaudiolibs.jnajack.Jack;
 import org.jaudiolibs.jnajack.JackException;
 
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.api.Midi;
+import net.judah.api.MidiPatch;
+import net.judah.midi.JudahMidi;
+import net.judah.midi.MidiPort;
 import net.judah.midi.ProgMsg;
+import net.judah.mixer.MidiInstrument;
 import net.judah.util.Constants;
 import net.judah.util.FluidConsole;
 import net.judah.util.JudahException;
 import net.judah.util.RTLogger;
 
-
 /** runs fluid command line and connects to FluidSynth stdin and stdout ports */
-public class FluidSynth implements Closeable {
-
+public class FluidSynth extends MidiInstrument {
+	public static final String NAME = "Fluid";
 	public static final String LEFT_PORT = "fluidsynth-midi:left"; // "fluidsynth:l_00";
 	public static final String RIGHT_PORT = "fluidsynth-midi:right"; // "fluidsynth:r_00";
 	public static final String MIDI_PORT = "fluidsynth-midi:midi_00"; // "fluidsynth:midi";
@@ -42,23 +43,23 @@ public class FluidSynth implements Closeable {
 	private OutputStream outStream;
 
 	@Getter private final FluidConsole console;
-	@Getter private final FluidReverb reverb;
 
-	@Getter private static Instruments instruments = new Instruments();
-	@Getter private Channels channels = new Channels();
+	@Getter static Instruments instruments = new Instruments();
+	@Getter private String[] patches;
+	@Getter private final Channels channels = new Channels();
 
-	private float gain = 0.25f; // max 5.0
+	private float gain = 2.8f; // max 5.0
 
-	public FluidSynth (int sampleRate, boolean startListeners) throws JackException, JudahException, IOException {
-		this(sampleRate, SOUND_FONT, startListeners);
+	public FluidSynth (int sampleRate, boolean startListeners, MidiPort port) throws JackException, JudahException, IOException {
+		this(sampleRate, SOUND_FONT, startListeners, port);
 	}
 
-	public FluidSynth (int sampleRate) throws JackException, JudahException, IOException {
-		this(sampleRate, SOUND_FONT, true);
+	public FluidSynth (int sampleRate, MidiPort port) throws JackException, JudahException, IOException {
+		this(sampleRate, SOUND_FONT, true, port);
 	}
 
-	@SuppressWarnings("deprecation")
-	public FluidSynth (int sampleRate, File soundFont, boolean startListeners) throws JackException, JudahException, IOException {
+	public FluidSynth (int sampleRate, File soundFont, boolean startListeners, MidiPort port) throws JackException, JudahException, IOException {
+		super(NAME, LEFT_PORT, RIGHT_PORT, port, "Fluid.png");
 		shellCommand = "fluidsynth" +
 				" --midi-driver=jack --audio-driver=jack" +
 				" -o synth.ladspa.active=0  --sample-rate " + sampleRate + " " +
@@ -71,19 +72,22 @@ public class FluidSynth implements Closeable {
 			RTLogger.warn(this, e);
 		}
 
+		int delay = 60;
+		Constants.sleep(delay);
+		
 		// read FluidSynth output
 		listener = new FluidListener(process.getInputStream(), false);
 		new FluidListener(process.getErrorStream(), true).start();
 		if (startListeners)
 			listener.start();
+		Constants.sleep(delay);
 		outStream = process.getOutputStream();
 
-		Jack jack = Jack.getInstance();
-		while (jack.getPorts(LEFT_PORT, null, null).length == 0) {
-			Constants.sleep(50);
-		}
-		gain(gain);
-		Constants.sleep(50);
+        sendCommand("chorus off");
+		Constants.sleep(delay);
+        gain(gain);
+		Constants.sleep(delay * 2);
+
 		if (startListeners)
 			try {
 				syncChannels();
@@ -91,12 +95,10 @@ public class FluidSynth implements Closeable {
 			} catch (Throwable t) {
 				RTLogger.warn(this, "sync failed. " + t.getMessage());
 			}
-        sendCommand("chorus off");
-        reverb = new FluidReverb(this);
-        Constants.sleep(50);
+		
+        RTLogger.log(this, "FluidSynth channels: " + channels.size() + " instruments: " + instruments.size());
         
-		RTLogger.log(this, "FluidSynth channels: " + channels.size() + " instruments: " + instruments.size());
-
+        reverb = new FluidReverb(this); // use external reverb
 	}
 
 	public void syncChannels() throws InterruptedException, IOException, JudahException {
@@ -124,11 +126,16 @@ public class FluidSynth implements Closeable {
 		while (listener.sysOverride != null && count++ < 20) {
 			Thread.sleep(30);
 		}
-		if (listener.instruments.isEmpty())
+		if (listener.instruments.isEmpty()) 
 			throw new JudahException("Fluid Error reading instruments");
+
 		instruments.clear();
-		for (FluidInstrument i : listener.instruments)
-			instruments.add(i);
+		patches = new String[listener.instruments.size()];
+		for (int i = 0; i < listener.instruments.size(); i++) {
+			instruments.add(listener.instruments.get(i));
+			patches[i ]= instruments.get(i).name;
+		}
+		
 	}
 
 
@@ -154,7 +161,7 @@ public class FluidSynth implements Closeable {
         Status byte : 1100 CCCC
         Data byte 1 : 0XXX XXXX
     where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number from 0 to 127. */
-	public Midi progChange(final int channel, int preset) {
+	public Midi progChange2(final int channel, int preset) {
 		final int before = channels.getCurrentPreset(channel);
 		try {
 			if (++preset == 129)
@@ -187,20 +194,20 @@ public class FluidSynth implements Closeable {
 		int current = channels.getCurrentPreset(channel);
 		int bank = channels.getBank(channel);
 		int preset = instruments.getNextPreset(bank, current, up);
-		JudahZone.getMidiGui().getFluid()
+		JudahZone.getMidiGui().getFluidProg()
 				.setSelectedIndex(preset);
 	}
 
 	@SuppressWarnings("unused")
 	private int progChangeSync(int channel, int preset) {
 		try {
-			JudahZone.getMidiGui().getFluid()
+			JudahZone.getMidiGui().getFluidProg()
 					.setSelectedIndex(preset);
 			
 			syncChannels();
 			int result = channels.getCurrentPreset(channel);
 			int bank = channels.getBank(channel);
-			for (FluidInstrument f : instruments)
+			for (MidiPatch f : instruments)
 				if (f.group == bank && f.index == preset)
 					RTLogger.log(this, f.toString());
 			return result;
@@ -283,46 +290,30 @@ public class FluidSynth implements Closeable {
 		}
 	}
 
-	public static class Channels extends ArrayList<FluidChannel> {
-		/** @return preset instrument index for the channel */
-		public int getCurrentPreset(int channel) {
-			for (FluidChannel c : this)
-				if (c.channel == channel)
-					return c.preset;
-			return -1;
-		}
-		public int getBank(int channel) {
-			for (FluidChannel c : this)
-				if (c.channel == channel)
-					return c.bank;
-			return -1;
-		}
-	}
-
-	public static class Instruments extends ArrayList<FluidInstrument> {
-	    ArrayList<FluidInstrument> drums;
-	    ArrayList<FluidInstrument> instruments;
+	public static class Instruments extends ArrayList<MidiPatch> {
+	    ArrayList<MidiPatch> drums;
+	    ArrayList<MidiPatch> instruments;
 
 	    public int lookupKit(String name) {
-	    	for (FluidInstrument i : getDrumkits())
+	    	for (MidiPatch i : getDrumkits())
 	    		if (i.name.equals(name))
 	    			return i.index;
 	    	throw new InvalidParameterException(name);
 	    }
 	    
 	    /**@return bank 128 */
-	    public ArrayList<FluidInstrument> getDrumkits() {
+	    public ArrayList<MidiPatch> getDrumkits() {
 	        if (drums != null) return drums;
 	        drums = new ArrayList<>();
-	        for (FluidInstrument i : this)
+	        for (MidiPatch i : this)
 	            if (i.group == 128) drums.add(i);
 	        return drums;
 	    }
 	    /**@return bank 1*/
-	    public ArrayList<FluidInstrument> getInstruments() {
+	    public ArrayList<MidiPatch> getInstruments() {
 	        if (instruments != null) return instruments;
 	        instruments = new ArrayList<>();
-	        for (FluidInstrument i : this)
+	        for (MidiPatch i : this)
 	            if (i.group == 0) instruments.add(i);
 	        return instruments;
 	    }
@@ -332,8 +323,8 @@ public class FluidSynth implements Closeable {
 			int index = -1;
 			int count = -1;
 			// extract bank
-			ArrayList<FluidInstrument> roll = new ArrayList<>();
-			for (FluidInstrument i : this)
+			ArrayList<MidiPatch> roll = new ArrayList<>();
+			for (MidiPatch i : this)
 				if (i.group == bank) {
 					count++;
 					roll.add(i);
@@ -356,21 +347,30 @@ public class FluidSynth implements Closeable {
 				return roll.get(index).index;
 			}
 		}
-
 	}
 
-}
+	@Override
+	public int getProg(int ch) {
+		return channels.getCurrentPreset(ch);
+	}
 
-//@Override
-//public void properties(HashMap<String, Object> props) {
-//	if (props.containsKey("fluid")) {
-//		String[] split = props.get("fluid").toString().split(";");
-//		for (String cmd : split)
-//			sendCommand(cmd);}}
-//
-//  public void connect(JackClient jackclient, JackPort port) throws JackException {
-//      log.warn("Trying to connect " + port.getName() +" to " + MIDI_PORT);
-//      Jack.getInstance().connect(jackclient, port.getName(), MIDI_PORT);
-//  }
-// sendCommand( on ? "reverb on" : "reverb off");
-// sendCommand( on ? "chorus on" : "chorus off");
+	@Override public void progChange(String preset) {
+		progChange(preset, 0);
+	}
+
+	@Override public void progChange(String preset, int ch) {
+		for (int i = 0; i < patches.length; i++)
+			if (patches[i].equals(preset)) {
+				int idx = instruments.getInstruments().get(i).index;
+				try {
+					Midi midi = new Midi(ShortMessage.PROGRAM_CHANGE, ch, idx);
+					JudahMidi.queue(midi, midiPort.getPort());
+					syncChannels();
+				} catch (Exception e) {
+					RTLogger.warn(this, e);
+				}
+			}
+	}
+	
+	
+}

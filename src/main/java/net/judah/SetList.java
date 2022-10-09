@@ -4,27 +4,27 @@ import java.util.ArrayList;
 
 import net.judah.songs.*;
 
-public class SetList extends ArrayList<SmashHit> {
-	
+public class SetList extends ArrayList<Class<? extends SmashHit>> {
 	
 	public SetList() {
-		add(new Freeverb());
-		add(new Sleepwalk());
-		add(new LoopStory());
-		add(new AllBlues());
-		add(new QuandoQuando());
-		add(new AutumnLeaves());
-		add(new Mood4Luv());
-		add(new AirOnG());
-		add(new StolenMoments());
-		add(new AllMyLovin());
-		add(new JudysBlues());
-		add(new Estate());
-		add(new More());
-		add(new Perfidia());
-		add(new BlueInGreen());
-		add(new FeelLuv());
-		add(new Four());
-	
+		add(OpenMicNite.class);
+		add(Sleepwalk.class);
+		add(LoopStory.class);
+		add(AllBlues.class);
+		add(QuandoQuando.class);
+		add(AutumnLeaves.class);
+		add(Mood4Luv.class);
+		add(AirOnG.class);
+		add(StolenMoments.class);
+		add(AllMyLovin.class);
+		add(JudysBlues.class);
+		add(Estate.class);
+		add(More.class);
+		add(Perfidia.class);
+		add(BlueInGreen.class);
+		add(FeelLuv.class);
+		add(Four.class);
+		add(TinyDancer.class);
+		add(TimeAfterTime.class);
 	}
 }

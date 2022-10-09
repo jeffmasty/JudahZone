@@ -3,55 +3,55 @@ import java.io.File;
 import java.nio.FloatBuffer;
 
 import javax.sound.midi.MidiMessage;
-import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
 
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.MainFrame;
 import net.judah.api.Engine;
 import net.judah.api.Midi;
+import net.judah.api.MidiReceiver;
 import net.judah.effects.CutFilter;
+import net.judah.midi.MidiPort;
 import net.judah.mixer.LineIn;
 import net.judah.util.AudioTools;
 import net.judah.util.Constants;
 import net.judah.util.Icons;
+import net.judah.util.RTLogger;
 
 @Getter // Wishlist: detune/note bend/portamento/glide, LFOs, Shapes: PWM,Noise, mono-synth
-public class JudahSynth extends LineIn implements Receiver, Engine {
+public class JudahSynth extends LineIn implements MidiReceiver, Engine {
 	
 	public static final float TUNING = 440;
-	public static final int POLYPHONY = 8;
+	public static final int POLYPHONY = 16;
 	public static final int DCO_COUNT = 3;
 	public static final String ENVELOPE = "Envelope";
 	public static final String FILTER = "Filter";
 	public static final String DCO = "Dco";
 	private static final boolean MONO = false;
 	
+	
     private final FloatBuffer mono = FloatBuffer.allocate(Constants.bufSize());
 	private final FloatBuffer[] buffer = new FloatBuffer[] {mono, null}; // synth is not stereo (yet)
-
-	protected boolean active;
-	/** grab midi controller input */
-	@Setter private boolean MPK; 
+	private final int channel = 0;
+	
+	protected boolean active = true;
     private final Adsr adsr = new Adsr();
     private final Voice[] voices = new Voice[POLYPHONY];
     private final Polyphony notes = new Polyphony(voices);
     private final float[] dcoGain = new float[DCO_COUNT];
     private final Shape[] shapes = new Shape[] {Shape.SIN, Shape.TRI, Shape.SAW};
 	private final CutFilter loCut = new CutFilter(MONO);
-	private final CutFilter hiCut = new CutFilter(MONO);
 	private SynthPresets presets;
-	private SynthView view;
-    private final int chooChoo;
+    @Setter @Getter private MidiPort midiPort;
+    @Setter private float amplification = 0.5f;
     
 	public JudahSynth(int chooChoo, JackPort left, JackPort right, String iconName) {
-		super("Zone " + chooChoo, false);
+		super("Synth" + chooChoo, false);
 		leftPort = left;
 		rightPort = right;
-		this.chooChoo = chooChoo; // engine count
+		midiPort = new MidiPort(this);
 		setIcon(Icons.load(iconName));		
 		
 		for (int i = 0; i < dcoGain.length; i++)
@@ -70,15 +70,9 @@ public class JudahSynth extends LineIn implements Receiver, Engine {
 		loCut.setResonance(2);
 		loCut.setActive(true);
 
-		this.presets = new SynthPresets(this);
-		setActive(true);
+		presets = new SynthPresets(this);
 	}
 
-	public void setActive(boolean on) {
-		active = on;
-		if (!active)
-			notes.flush();
-	}
 
 	public SynthPresets getPresets() {
 		if (presets == null)
@@ -104,12 +98,6 @@ public class JudahSynth extends LineIn implements Receiver, Engine {
 		shapes[dco] = change;
 	}
 
-	public SynthView getView() {
-		if (view == null)
-			view = new SynthView(this);
-		return view;
-	}
-	
 	/** Receiver interface, this method serves as panic() */
 	@Override 
 	public void close() {
@@ -125,37 +113,10 @@ public class JudahSynth extends LineIn implements Receiver, Engine {
 			else {
 				notes.noteOff(m);
 			}
-	}
-
-	public void synthKnobs(int idx, int data2) {
-		// preset, volume, hi-cut hz, lo-cut res, adsr
-		switch (idx) {
-		case 0: new Thread(() -> getView().getPresets().setSelectedIndex(
-					Constants.ratio(data2, getView().getPresets().getItemCount() - 1))).start();
-			break;
-		case 1:
-			gain.setVol(data2);
-			break;
-		case 2:
-			hiCut.setFrequency(CutFilter.knobToFrequency(data2));
-			break;
-		case 3:
-			loCut.setResonance(data2 * 0.25f);
-			break;
-		case 4:
-			adsr.setAttackTime(data2 * 2);
-			break;
-		case 5:
-			adsr.setDecayTime(data2);
-			break;
-		case 6:
-			adsr.setSustainGain(data2 * 0.01f);
-			break;
-		case 7:
-			adsr.setReleaseTime(data2 * 10);
-			break;
+		else if (Midi.isProgChange(m)) {
+			RTLogger.log(this, "TODO ProgChange " + new Midi(m.getMessage()).toString());
 		}
-		MainFrame.update(this);
+		// pitch bend/resonance/cc
 	}
 
 	@Override
@@ -166,6 +127,11 @@ public class JudahSynth extends LineIn implements Receiver, Engine {
 	@Override
 	public void progChange(String preset) {
 		getPresets().load(new File(Constants.SYNTH, preset));
+	}
+	
+	@Override
+	public void progChange(String preset, int bank) {
+		progChange(preset); // banks/channels not implemented
 	}
 
 	/////////////////////////////////
@@ -178,12 +144,37 @@ public class JudahSynth extends LineIn implements Receiver, Engine {
         AudioTools.silence(mono);
 
         for (Voice voice : voices) {
-        	voice.process(notes, adsr, mono);
+        	voice.process(notes, adsr, mono, amplification);
         }
-        hiCut.process(mono);
         loCut.process(mono);
         processFx(mono);
 	}
 
+	@Override
+	public String[] getPatches() {
+		return presets.toArray(new String[presets.size()]);
+	}
+
+
+	@Override
+	public int getProg(int ch) {
+		return presets.getProg();
+	}
 
 }
+
+//	public void setActive(boolean on) {  add/remove synth from channels list
+//		active = on;
+//		new Thread(()->{
+//			if (active) {
+//				JudahZone.getMixer().addChannel(JudahSynth.this);
+//				JudahZone.getSynthPorts().add(midiPort);
+//				// JudahZone.getTracker().updateMidiPorts();
+//			}
+//			else {
+//				notes.flush();
+//				JudahZone.getMixer().removeChannel(JudahSynth.this);
+//				JudahZone.getSynthPorts().remove(midiPort);
+//				// JudahZone.getTracker().updateMidiPorts();
+//		}}).start();}
+

@@ -3,41 +3,51 @@ package net.judah.tracker;
 import static net.judah.util.Size.*;
 
 import java.awt.Dimension;
-import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 
-import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JComboBox;
+import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import net.judah.api.Midi;
+import net.judah.drumz.DrumSample;
+import net.judah.drumz.DrumType;
+import net.judah.drumz.KitView;
 import net.judah.util.Constants;
-import net.judah.util.Knob;
 import net.judah.util.Pastels;
 
 
 public class DrumEdit extends TrackEdit implements ActionListener, Pastels {
 
-    private static final Dimension KIT_BOUNDS = new Dimension(WIDTH_KIT, TABS.height);
+	private static final int mutesHeight = (int)(TABS.height / 3f * 2);
+    private static final Dimension KIT_BOUNDS = new Dimension(WIDTH_KIT, mutesHeight);
     private static final Rectangle GRID_BOUNDS = new Rectangle(
-    		WIDTH_BUTTONS, 0, 680, TABS.height - 30);
+    		WIDTH_BUTTONS, 0, 750, mutesHeight - 5);
     protected static final Dimension NAMESZ = new Dimension(107, STD_HEIGHT);
 
-	private JPanel contract;
 	@Getter private final BeatBox grid;
+	@Getter private final KitView kit;
 	private final DrumTrack d;
 	
 	public DrumEdit(final DrumTrack track) {
 		super(track);
 		this.d = track;
 		grid = new BeatBox(track, GRID_BOUNDS);
-		add(grid);
-		fillKit();
+		JPanel shell = new JPanel();
+		shell.setLayout(new BoxLayout(shell, BoxLayout.PAGE_AXIS));
+		
+		JPanel steps = new JPanel();
+		steps.setLayout(new BoxLayout(steps, BoxLayout.LINE_AXIS));
+		steps.add(grid);
+		steps.add(fillKit());
+		shell.add(steps);
+		kit = new KitView(track.getKit(), null);
+		shell.add(kit);
+		add(shell);
 	}
 
 	@Override
@@ -46,63 +56,34 @@ public class DrumEdit extends TrackEdit implements ActionListener, Pastels {
 	}
 	
 	
-	public void fillKit() {
-		if (contract != null) remove(contract);
-		contract = new JPanel();
-		contract.setMaximumSize(KIT_BOUNDS.getSize());
-		contract.setLayout(new BoxLayout(contract, BoxLayout.PAGE_AXIS));
-		contract.removeAll();
-		contract.add(Box.createVerticalStrut(44));
-		ArrayList<GMDrum> drumkit = d.getKit();
-		for(int i = 0; i < drumkit.size() ; i++) {
-			// instrument drop down
-			contract.add(contractLine(d.getKit().get(i), i));
+	public JPanel fillKit() {
+		JPanel kit = new JPanel();
+		kit.setMaximumSize(KIT_BOUNDS.getSize());
+		kit.setLayout(new GridLayout(0, 1));
+		JPanel kitTitle = new JPanel();
+		kitTitle.setLayout(new GridLayout(2, 1));
+		JLabel trak = new JLabel(track.getName(), JLabel.CENTER);
+		JLabel mute  = new JLabel("mutes", JLabel.CENTER);
+		trak.setFont(Constants.Gui.FONT11); mute.setFont(trak.getFont());
+		kitTitle.add(trak);
+		kitTitle.add(mute);
+		kit.add(kitTitle);
+		kit.setOpaque(true);
+		
+		for (int i = 0; i < DrumType.values().length; i++) {
+			final JButton btn = new JButton(DrumType.values()[i].name());
+			final DrumSample s = d.getKit().getSamples()[i];
+			btn.addActionListener(e -> {
+				s.setOnMute(!s.isOnMute());
+				btn.setBackground(s.isOnMute() ? Pastels.PURPLE : null);
+				kit.repaint();
+			});
+			btn.setOpaque(true);
+			kit.add(btn);
 		}
-		add(contract);
-		repaint();
+		return kit;
 	}
 
-	private JPanel contractLine(GMDrum drum, int idx) {
-		final Knob volume = new Knob(val -> {
-			d.getVolume().set(idx, val * 0.01f);
-		});
-		volume.setValue((int) (d.getVolume().get(idx) * 100));
-
-		final JComboBox<GMDrum> drumCombo = new JComboBox<>();
-		for (GMDrum entry : GMDrum.values()) 
-			drumCombo.addItem(entry);
-		drumCombo.setFont(Constants.Gui.FONT11);
-		drumCombo.setPreferredSize(NAMESZ);
-            
-		drumCombo.setSelectedItem(drum);
-		drumCombo.addActionListener(e -> {
-			GMDrum change = (GMDrum)drumCombo.getSelectedItem();
-			translate(idx, change.getData1());
-			d.getKit().set(idx, change);
-			fillKit();
-		});
-
-		JPanel pnl = new JPanel(new FlowLayout(FlowLayout.CENTER, 1, 0));
-		pnl.add(drumCombo);
-		pnl.add(volume);
-		return pnl;
-	}
-	
-	private void translate(int idx, int data1) {
-		Notes n;
-		int source = d.getKit().get(idx).getData1();
-		for (Pattern p : track)
-			for (int step = 0; step < track.getSteps(); step++) {
-				n = p.getNote(step, source);
-				if (n == null)
-					continue;
-				Midi hit = n.find(source);
-				n.remove(hit);
-				n.add(Midi.create(hit.getCommand(), track.getCh(), data1, hit.getData2()));
-			}
-			
-	}
-	
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (super.handled(e))
@@ -118,7 +99,7 @@ public class DrumEdit extends TrackEdit implements ActionListener, Pastels {
 	
 	@Override
 	public void update() {
-		grid.repaint();
+		super.update();
 	}
 
 }

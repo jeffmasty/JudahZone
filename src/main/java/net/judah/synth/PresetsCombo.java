@@ -28,7 +28,7 @@ public class PresetsCombo extends JComboBox<String> {
 		String selected = presets.getLoaded() == null ? null : presets.getLoaded().getName();
 		removeActionListener(handler);
 		removeAllItems();
-		for (String s : Constants.SYNTH.list()) {
+		for (String s : presets) {
 			addItem(s);
 			if (s.equals(selected))
 				setSelectedItem(s);

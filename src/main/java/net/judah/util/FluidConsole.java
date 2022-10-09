@@ -2,8 +2,8 @@ package net.judah.util;
 
 import static net.judah.util.Constants.NL;
 
+import net.judah.api.MidiPatch;
 import net.judah.fluid.FluidChannel;
-import net.judah.fluid.FluidInstrument;
 import net.judah.fluid.FluidSynth;
 import net.judah.midi.GMNames;
 
@@ -44,7 +44,7 @@ public class FluidConsole implements ConsoleParticipant {
 		}
 		if (text.equals("inst") || text.equals("instruments")) {
 			Console.addText("instruments: " + FluidSynth.getInstruments().size() + NL);
-			for (FluidInstrument instrument : FluidSynth.getInstruments()) {
+			for (MidiPatch instrument : FluidSynth.getInstruments()) {
 				Console.addText(instrument.toString() + NL);
 			}
 		}

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import org.jaudiolibs.jnajack.JackPort;
 
+import net.judah.MainFrame;
 import net.judah.api.ProcessAudio.Type;
 import net.judah.effects.Fader;
 import net.judah.util.RTLogger;
@@ -54,6 +55,7 @@ public class Sampler extends ArrayList<Sample> {
 				Fader.execute(Fader.fadeOut(s));
 			}
 		}
+		MainFrame.update(s);
 	}
 
 }

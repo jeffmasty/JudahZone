@@ -33,6 +33,7 @@ public abstract class Reverb implements Effect {
     /** if true, process() must be implemented */
     public abstract boolean isInternal();
     public void process(FloatBuffer buf) {}
+    public void process(FloatBuffer left, FloatBuffer right) {}
 
     // NO-OPs, overwrite in subclass
     @Override

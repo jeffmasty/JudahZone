@@ -7,10 +7,10 @@ import net.judah.MainFrame;
 import net.judah.api.Notification;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
-import net.judah.drumz.JudahDrumz;
+import net.judah.drumz.DrumKit;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
-import net.judah.synth.JudahSynth;
+import net.judah.util.Icons;
 import net.judah.util.RTLogger;
 
 @Data @EqualsAndHashCode(callSuper = true) 
@@ -20,8 +20,9 @@ public class SoloTrack extends Loop implements TimeListener {
     private boolean muteStash = true;
     private LineIn soloTrack;
 
-    public SoloTrack(LineIn soloTrack, Looper looper, Channels instruments, JudahSynth[] synth, JudahDrumz[] beats) {
-        super(NAME, looper, instruments, synth, beats);
+    public SoloTrack(LineIn soloTrack, Looper looper, Zone sources, String icon) {
+        super(NAME, looper, sources);
+        setIcon(Icons.load(icon));
         this.soloTrack = soloTrack;
     }
 
@@ -33,9 +34,7 @@ public class SoloTrack extends Loop implements TimeListener {
             else if (Status.TERMINATED == value) {
                 record(false);
             	setType(Type.DRUMTRACK);
-                if (JudahZone.getInstruments().getCalf().equals(soloTrack))
-                	JudahZone.getClock().end();
-                if (JudahZone.getBeats().equals(soloTrack))
+                if (soloTrack instanceof DrumKit)
                 	JudahZone.getClock().end();
                 solo(false);
                 if (hasRecording())
@@ -45,7 +44,7 @@ public class SoloTrack extends Loop implements TimeListener {
         }
     }
 
-    public void solo(boolean engage) {
+    public void solo(boolean engage) { // TODO other channels besides drumz
     	armed = engage;
     	if (engage) {
     		for (Loop x : looper) 
@@ -59,7 +58,7 @@ public class SoloTrack extends Loop implements TimeListener {
         	for (Loop x : looper)
         		x.removeListener(this);
             soloTrack.setSolo(false);
-            soloTrack = JudahZone.getInstruments().getCalf();
+            soloTrack = JudahZone.getDrumMachine();
             soloTrack.setMuteRecord(muteStash);
             RTLogger.log(this, "drumtrack disengaged.");
         }

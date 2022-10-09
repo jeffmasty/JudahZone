@@ -90,7 +90,7 @@ public class Delay implements Effect {
     // in seconds
     public static final float DEF_MAX_DELAY = 4f; 
     public static final float DEF_MIN_DELAY = 0.02f;
-    public static final float DEFAULT_TIME = .15f;
+    public static final float DEFAULT_TIME = .25f;
     
     private final float sampleRate;
     private final float nframes; 

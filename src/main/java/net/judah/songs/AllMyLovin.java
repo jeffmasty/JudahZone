@@ -1,38 +1,30 @@
 package net.judah.songs;
 
 import net.judah.JudahZone;
-import net.judah.MainFrame;
 import net.judah.looper.Loop;
-import net.judah.looper.Looper;
-import net.judah.mixer.Channels;
-import net.judah.mixer.Instrument;
 import net.judah.tracker.Cycle;
 import net.judah.tracker.Track;
-import net.judah.tracker.JudahBeatz;
 
 public class AllMyLovin extends SmashHit {
 
-	private Track drum;
 	private Loop a;
 	
 	@Override
-	public void startup(JudahBeatz t, Looper loops, Channels ch, MainFrame frame) {
-		super.startup(t, loops, ch, frame);
-		a = loops.getLoopA();
-		drum = t.getDrum1();
-		drum.setFile("AllMyLovin");
-		drum.setActive(false);
-		t.getDrum2().setActive(false);
-		t.getDrum3().setActive(false);
+	public void startup() {
+		super.startup();
+		a = looper.getLoopA();
+		drum1.setFile("AllMyLovin");
+		drum1.setActive(false);
+		drum2.setActive(false);
+		fills.setActive(false);
 		frame.sheetMusic("AllMyLovin.png");
 		
-		t.getClock().writeTempo(93);
-		t.getClock().setLength(10);
-		Instrument gtr = ch.getGuitar();
-		gtr.setPreset(JudahZone.getPresets().byName("Freeverb"));
-		gtr.setPresetActive(false);
-		gtr.getLatchEfx().latch(loops.getLoopA());
-		drum.getCycle().setCustom(this);
+		clock.writeTempo(93);
+		clock.setLength(10);
+		guitar.setPreset(JudahZone.getPresets().byName("Freeverb"));
+		guitar.setPresetActive(false);
+		guitar.getLatchEfx().latch(looper.getLoopA());
+		drum1.getCycle().setCustom(this);
 		
 		// marimba thing
 		
@@ -58,6 +50,6 @@ public class AllMyLovin extends SmashHit {
 	
 	@Override
 	public void teardown() {
-		drum.getCycle().setCustom(null);
+		drum1.getCycle().setCustom(null);
 	}
 }

@@ -2,18 +2,20 @@ package net.judah.looper;
 
 import java.awt.Dimension;
 
+import javax.swing.JSlider;
+
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.util.RainbowFader;
+import net.judah.util.Slider;
 
-public class LoopWidget extends RainbowFader {
+public class LoopWidget extends Slider {
 	
 	@Getter private static LoopWidget instance;
 	
 	public LoopWidget() {
-		super(e ->{});
+		super(null);
 		instance = this;
-		setOrientation(RainbowFader.HORIZONTAL);
+		setOrientation(JSlider.HORIZONTAL);
         setPreferredSize(new Dimension(180, 30));
         setEnabled(false);
 	}

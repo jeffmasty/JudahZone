@@ -10,24 +10,19 @@ import net.judah.effects.Fader;
 import net.judah.effects.LFO.Target;
 import net.judah.effects.api.PresetsDB.Raw;
 import net.judah.looper.Loop;
-import net.judah.looper.Looper;
-import net.judah.mixer.Channels;
-import net.judah.mixer.Instrument;
-import net.judah.tracker.Track;
-import net.judah.tracker.JudahBeatz;
 import net.judah.util.Constants;
 
 public class AirOnG extends SmashHit {
 
-	Track track;
 	
-	@Override public void startup(JudahBeatz t, Looper looper, Channels ch, MainFrame frame) {
-		super.startup(t, looper, ch, frame);
-		track = t.getChords();
-		track.setFile(new File(track.getFolder(), "AirOnG"));
-		track.getClock().setLength(12);
-		track.getClock().writeTempo(90);
-		track.setActive(false); // on listener
+
+	@Override
+	public void startup() {
+		super.startup();
+		chords.setFile("AirOnG");
+		chords.getClock().setLength(12);
+		chords.getClock().writeTempo(90);
+		chords.setActive(false); // on listener
 		// track.getCycle().setCustom(this);  // ABCD..
 
 		final Loop a = looper.getLoopA();
@@ -58,7 +53,7 @@ public class AirOnG extends SmashHit {
 		TimeListener airListener = new TimeListener() {
 			@Override public void update(Property prop, Object value) {
 				if (prop == Property.LOOP) {
-					track.setActive(true);
+					chords.setActive(true);
 					a.removeListener(this);
 					a.addListener(muteListener);
 		}}};
@@ -66,18 +61,16 @@ public class AirOnG extends SmashHit {
 		a.setOnMute(false);
 		b.setArmed(true);
 		b.setOnMute(false);
-		JudahZone.getInstruments().getFluid().setMuteRecord(true);
-		Instrument mic = JudahZone.getInstruments().getMic();
+		fluid.setMuteRecord(true);
 		mic.setMuteRecord(false);
 		mic.getGain().setVol(50);
-		Instrument gtr = JudahZone.getInstruments().getGuitar();
-		gtr.setMuteRecord(false);		
-		gtr.setPreset(JudahZone.getPresets().get(Raw.Freeverb));
-		gtr.getLatchEfx().latch(a);
-		gtr.reset();
+		guitar.setMuteRecord(false);		
+		guitar.setPreset(JudahZone.getPresets().get(Raw.Freeverb));
+		guitar.getLatchEfx().latch(a);
+		guitar.reset();
 		MainFrame.update(b);
 		MainFrame.updateTime();
-		MainFrame.update(gtr);
+		MainFrame.update(guitar);
 		frame.sheetMusic(new File("/home/judah/sheets/AirOnG.png"));
 	}
 	
