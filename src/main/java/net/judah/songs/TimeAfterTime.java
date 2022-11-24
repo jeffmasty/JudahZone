@@ -12,7 +12,7 @@ public class TimeAfterTime extends SmashHit {
 	public void startup() {
 		clock.reset();
 		clock.writeTempo(118);
-		synth1.getPresets().load("TimeAfterTime");
+		synth1.getSynthPresets().load("TimeAfterTime");
 		synth1.setPreset("TimeAfterTime", true);
 		guitar.setPreset("TimeAfterGtr", true);
 		drumMachine.getDrum1().setKit("TimeAfter");

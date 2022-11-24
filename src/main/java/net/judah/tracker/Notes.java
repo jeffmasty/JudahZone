@@ -12,15 +12,11 @@ public class Notes extends ArrayList<Midi> {
 			add(msg);
 	}
 	
-	
 	public Notes(Notes notes) {
 		for (Midi m : notes) {
 			add(new Midi(m.getMessage()));
 		}
-			
-		// TODO Auto-generated constructor stub
 	}
-
 
 	@Override
 	public void add(int index, Midi element) {

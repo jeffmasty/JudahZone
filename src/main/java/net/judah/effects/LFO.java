@@ -15,18 +15,25 @@ import net.judah.util.RTLogger;
 @RequiredArgsConstructor @Getter @Setter
 public class LFO implements Effect {
 
+	public static final int LFO_MIN = 90;
+    public static final int LFO_MAX = 1990;
+
+	
     public enum Settings {
         Target, Min, Max, MSec
     }
 
-	public enum Target{
-		CutEQ, Gain, Reverb, Delay, Pan
+	public static enum Target {
+		OFF, CutEQ, Gain, Reverb, Delay, Pan
 	};
 
 	private final Channel ch;
 	private boolean active;
-	private Target target = Target.Pan;
-
+	private Target target = Target.OFF;
+	private int recover = -1;
+	private boolean wasActive;
+	
+	
 	/** in kilohertz (msec per cycle). default: oscillates over a 1.2 seconds. */
 	@Getter private double frequency = 1200;
 	/** align the wave on the jack frame buffer by millisecond (not implemented)*/
@@ -37,10 +44,65 @@ public class LFO implements Effect {
 	private int min = 10;
 
     public void setTarget(Target target) {
-		if (this.target != target) {
-			this.target = target;
-			RTLogger.log(this, target.name());
-		}
+    	if (this.target == target)
+    		return;
+
+		if (recover >= 0)
+			switch (this.target) {
+			case CutEQ:
+				ch.getCutFilter().setFrequency(CutFilter.knobToFrequency(recover));
+				ch.getCutFilter().setActive(wasActive);
+				break;
+			case Delay:
+				ch.getDelay().set(Delay.Settings.DelayTime.ordinal(), recover);
+				ch.getDelay().setActive(wasActive);
+				break;
+			case Reverb:
+				ch.getReverb().set(Reverb.Settings.Wet.ordinal(), recover);
+				ch.getReverb().setActive(wasActive);
+				break;
+			case Gain:
+				ch.getGain().setVol(recover);
+				break;
+			case Pan:
+				ch.getGain().setPan(recover);
+				break;
+			case OFF:
+				break;
+			}
+
+		this.target = target;
+		this.active = target != Target.OFF;
+
+		if (active) {
+			switch (this.target) {
+			case CutEQ:
+				recover = CutFilter.frequencyToKnob(ch.getCutFilter().getFrequency());
+				wasActive = ch.getCutFilter().isActive();
+				ch.getCutFilter().setActive(true);
+				break;
+			case Delay:
+				recover = ch.getDelay().get(Delay.Settings.DelayTime.ordinal());
+				wasActive = ch.getDelay().isActive();
+				ch.getDelay().setActive(true);
+				break;
+			case Reverb:
+				recover = ch.getReverb().get(Reverb.Settings.Wet.ordinal());
+				wasActive = ch.getReverb().isActive();
+				ch.getReverb().setActive(true);
+				break;
+			case Gain:
+				recover = ch.getGain().getVol();
+				break;
+			case Pan:
+				recover = ch.getGain().getPan();
+				break;
+			case OFF:
+				break;
+			}
+		}		
+		RTLogger.log(this, target.name());
+		
 	}
 
 	public void setMax(int val) {
@@ -69,7 +131,7 @@ public class LFO implements Effect {
             return getMax();
         if (idx == Settings.MSec.ordinal()) {
         	// map 90 to 1990 to 0 to 100
-        	int result = ((int)(getFrequency() / 19f)) - 90;
+        	int result = ((int)( (getFrequency() - 90) / 19f));
         	if (result < 0) result = 0;
         	else if (result > 100) result = 100;
             return result;
@@ -118,10 +180,12 @@ public class LFO implements Effect {
 			case Reverb: ch.getReverb().set(Reverb.Settings.Wet.ordinal(), val); break;
 			case Delay: ch.getDelay().setFeedback(val * 0.01f); break;
 			case Pan: ch.getGain().setPan(val); break;
+			case OFF: return;
 		}
 		MainFrame.update(ch);
 	}
 
+	
 	// TODO saw wave
 	//private final static float TWOPI = (float) (2 * Math.PI);
 	//public double querySaw() {
@@ -131,6 +195,8 @@ public class LFO implements Effect {
 	//    return (2.0f * t) - 1.0f;
 	//}
 
+	
+	
 	public static class LFOTest extends Thread {
 		final LFO lfo = new LFO(new Channel("test", false));
 
@@ -171,4 +237,6 @@ public class LFO implements Effect {
 		}
 	}
 
+	
+	
 }

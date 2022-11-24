@@ -6,14 +6,20 @@ import javax.sound.midi.ShortMessage;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
+import net.judah.api.Notification.Property;
+import net.judah.api.TimeListener;
+import net.judah.midi.JudahClock;
 import net.judah.util.RTLogger;
 
-public class Transpose {
+public class Transpose implements TimeListener {
 
 	@Getter private static boolean active;
-	@Setter @Getter private static int amount;
+	@Setter @Getter private int amount;
+	@Setter @Getter private static Integer onDeck;
 	
-	
+	public Transpose(JudahClock clock) {
+		clock.addListener(this);
+	}
 	
 	public static void setActive(boolean active) {
 		Transpose.active = active;
@@ -21,16 +27,26 @@ public class Transpose {
 	}
 	
 	public static void toggle() {
-		active = !active;
+		setActive(!active);
 	}
-	
-	public static ShortMessage apply(ShortMessage midi)  {
+
+	public ShortMessage apply(ShortMessage midi)  {
 		try {
 			return new ShortMessage(midi.getCommand(), midi.getChannel(), midi.getData1() + amount, midi.getData2());
 		} catch (InvalidMidiDataException e) {
 			RTLogger.warn(Transpose.class, e);
 		}
 		return null;
+	}
+
+	@Override
+	public void update(Property prop, Object value) {
+		if (prop == Property.BARS) {
+			if (onDeck != null) { // shuffle to next transposition at bar downbeat
+				amount = onDeck;
+				onDeck = null;
+			}
+		}
 	}
 
 }

@@ -23,7 +23,7 @@ public class LatchEfx implements TimeListener {
 			a.removeListener(this);
 		}
 		listenOn.clear();
-		RTLogger.log(this, channel.getName() + " Efx cleared");
+		RTLogger.log(this, channel.getName() + " FX cleared");
 	}
 	
 	public void latch(Loop... x) {
@@ -32,7 +32,7 @@ public class LatchEfx implements TimeListener {
 			listenOn.add(a);
 			a.addListener(this);
 		}
-		RTLogger.log(this, channel.getName() + " Efx waiting on looper");
+		RTLogger.log(this, channel.getName() + " " + channel.getPreset().getName() + " waiting on looper");
 	}
 	
 	@Override

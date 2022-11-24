@@ -143,7 +143,11 @@ public class Delay implements Effect {
     public int get(int idx) {
         if (idx == Settings.DelayTime.ordinal()) {
         	// pre-logarithmic: return Math.round(100 * getDelay() / getMaxDelay());
-        	return Constants.reverseLog(getDelay(), DEF_MIN_DELAY, getMaxDelay());
+        	float ratio = delaytime / maxDelay;
+        	for (int i = 0; i < Constants.getReverseLog().length; i++)
+        		if (ratio < Constants.getReverseLog()[i])
+        			return i;
+        	return 0;
         }
         	
             
@@ -155,8 +159,10 @@ public class Delay implements Effect {
     @Override
     public void set(int idx, int value) {
         if (idx == Settings.DelayTime.ordinal()) {
-        	// pre-logarithmic: setDelay(value * getMaxDelay() / 100f);
-        	setDelay(Constants.logarithmic(value, DEF_MIN_DELAY, maxDelay));
+        	value -= 2;
+        	if (value < 0)
+        		value = 0;
+        	setDelay(Constants.getReverseLog()[value] * maxDelay);
         }
         else if (idx == Settings.Feedback.ordinal())
             setFeedback(value / 100f);
@@ -164,7 +170,8 @@ public class Delay implements Effect {
     }
 
     public void setDelay(float seconds) {
-        this.delaytime = seconds;
+    	if (seconds > DEF_MIN_DELAY)
+    		this.delaytime = seconds;
     }
 
     /** @return delay time in seconds */

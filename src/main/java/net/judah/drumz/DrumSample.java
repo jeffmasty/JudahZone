@@ -12,7 +12,7 @@ import net.judah.util.AudioTools;
 import net.judah.util.Constants;
 
 @Getter
-public class DrumSample extends AudioTrack implements AtkDel {
+public class DrumSample extends AudioTrack implements AtkDec {
 
 	private final DrumEnvelope envelope;
 	private final DrumType drumType;

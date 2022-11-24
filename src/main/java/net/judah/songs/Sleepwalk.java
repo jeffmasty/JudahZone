@@ -23,7 +23,7 @@ public class Sleepwalk extends SmashHit {
 		lead2.setActive(false);
 		lead2.setFile("SleepArp");
 		lead2.setCue(Cue.Bar);
-		synth2.getPresets().load("Drops1");
+		synth2.getSynthPresets().load("Drops1");
 		guitar.getReverb().setActive(false);
 		guitar.getLatchEfx().latch(getLooper().getLoopA());
 		frame.sheetMusic("Sleepwalk.png");

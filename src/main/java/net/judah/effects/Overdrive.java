@@ -49,11 +49,20 @@ public final class Overdrive implements Effect {
     }
 
     @Override public int get(int idx) {
-    	return Math.round(drive * 100);
+    	for (int i = 0; i < Constants.getReverseLog().length; i++)
+    		if (drive < Constants.getReverseLog()[i])
+    			return i;
+    	return 0;
     }
 
     @Override public void set(int idx, int value) {
-    	setDrive(Constants.logarithmic(value, 0, 1));
+    	value--;
+    	if (value <= 0)
+    		setDrive(0);
+    	if (value >= 99)
+    		setDrive(1);
+    	else 
+    		setDrive(Constants.logarithmic(value, 0, 1));
     }
 
     public void setDrive(float drive) {
@@ -68,6 +77,6 @@ public final class Overdrive implements Effect {
 			buf.put( makupGain * (float) (Math.atan(buf.get(i) * preMul) * postMul));
     }
 
-
+    
 }
 

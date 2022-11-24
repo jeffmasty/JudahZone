@@ -1,6 +1,6 @@
 package net.judah.drumz;
 
-import static net.judah.util.Constants.*;
+import static net.judah.util.Constants.reverseVelocity;
 
 import java.io.File;
 import java.nio.FloatBuffer;
@@ -13,6 +13,8 @@ import lombok.Setter;
 import net.judah.MainFrame;
 import net.judah.api.Engine;
 import net.judah.api.Midi;
+import net.judah.controllers.KnobMode;
+import net.judah.controllers.Knobs;
 import net.judah.midi.MidiPort;
 import net.judah.mixer.LineIn;
 import net.judah.util.AudioTools;
@@ -21,7 +23,7 @@ import net.judah.util.Icons;
 import net.judah.util.RTLogger;
 
 @Getter
-public class DrumKit extends LineIn implements Engine {
+public class DrumKit extends LineIn implements Engine, Knobs {
 	public static final int TRACKS = 8;
 
 	/** true if OHat shuts off when CHat plays */
@@ -29,18 +31,20 @@ public class DrumKit extends LineIn implements Engine {
 	@Setter private MidiPort midiPort; // final
 	private final DrumSample[] samples = new DrumSample[TRACKS];
 	private DrumPreset kit;
+	@Getter private final KnobMode knobMode;
 	
 	protected final FloatBuffer[] buffer = new FloatBuffer[] 
-			{FloatBuffer.allocate(bufSize()), FloatBuffer.allocate(bufSize())};
+			{FloatBuffer.allocate(bufSize), FloatBuffer.allocate(bufSize)};
 
 	private final int channel = 9;
 	
-	public DrumKit(String name) {
-		this(name, "Drums.png");
+	public DrumKit(KnobMode mode) {
+		this(mode, "Drums.png");
 	}
 
-	public DrumKit(String name, String iconName) {
-		super(name, true);
+	public DrumKit(KnobMode mode, String iconName) {
+		super(mode.name(), true);
+		knobMode = mode;
 		setIcon(Icons.load(iconName));
 		midiPort = new MidiPort(this);
 		for (int i = 0; i < TRACKS; i++)
@@ -138,7 +142,7 @@ public class DrumKit extends LineIn implements Engine {
 			AudioTools.mix(drum.getBuffer()[0], buffer[0]);
 			AudioTools.mix(drum.getBuffer()[1], buffer[1]);
 		}
-		processFx(buffer[0], buffer[1]);
+		processFx(buffer[0], buffer[1], gain.getGain());
 	}
 
 	@Override

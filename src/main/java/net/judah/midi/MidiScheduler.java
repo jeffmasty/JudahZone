@@ -47,7 +47,7 @@ public class MidiScheduler implements Runnable {
 			ch.getLfo().pulse();
 		for (Sample s : JudahZone.getSampler())
 			s.getLfo().pulse();
-		for (DrumKit k : JudahZone.getDrumMachine().getChannels())
+		for (DrumKit k : JudahZone.getDrumMachine().getDrumkits())
 			for (DrumSample s : k.getSamples())
 				s.getLfo().pulse();
 	}

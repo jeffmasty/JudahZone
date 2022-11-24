@@ -2,10 +2,10 @@ package net.judah.drumz;
 
 public class DrumEnvelope {
 
-	private final AtkDel ad;
+	private final AtkDec ad;
 	private int attack, decay;
 	
-	public DrumEnvelope(AtkDel ad) {
+	public DrumEnvelope(AtkDec ad) {
 		this.ad = ad;
 	}
 	

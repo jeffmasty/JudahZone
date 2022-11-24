@@ -1,7 +1,5 @@
 package net.judah.synth;
 
-import static net.judah.synth.JudahSynth.*;
-
 import java.io.File;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
@@ -20,10 +18,14 @@ import net.judah.util.RTLogger;
 */
 public class SynthPresets extends ArrayList<String> { 
 	
+	public static final String ENVELOPE = "Envelope";
+	public static final String FILTER = "Filter";
+	public static final String DCO = "Dco";
+
 	private static final String SPLIT = "/";
 	private static final String OPEN = "[";
 	private static final String CLOSE = "]";
-	private static final String IDX = "-";
+	private static final String DASH = "-";
 	
 	private final JudahSynth synth;
 	@Getter private File loaded;
@@ -55,8 +57,9 @@ public class SynthPresets extends ArrayList<String> {
 		buf.append(lo.getFrequency()).append(SPLIT).append(lo.getResonance()).append(Constants.NL);
 		int length = synth.getShapes().length -1;
 		for (int i = 0; i <= length; i++) {
-			buf.append(OPEN).append(DCO).append(IDX).append(i).append(CLOSE);
+			buf.append(OPEN).append(DCO).append(DASH).append(i).append(CLOSE);
 			buf.append(synth.getShapes()[i].name()).append(SPLIT).append(synth.getDcoGain()[i]);
+			buf.append(SPLIT).append(synth.getDetune()[i]);
 			if (i < length)
 				buf.append(Constants.NL);
 		}
@@ -97,10 +100,10 @@ public class SynthPresets extends ArrayList<String> {
                 	adsr(dat.split(SPLIT), synth.getAdsr());
                 }
                 else if (type.equals(FILTER)) {
-                	filter(dat.split(SPLIT), synth);
+                	filter(dat.split(SPLIT));
                 }
                 else if (type.startsWith(DCO)) {
-                	dco(type, dat.split(SPLIT), synth.getDcoGain(), synth.getShapes());
+                	dco(type, dat.split(SPLIT));
                 } else 
                 	throw new InvalidParameterException("type: " + type); 
             }
@@ -117,25 +120,25 @@ public class SynthPresets extends ArrayList<String> {
 	
 	}
 	
-	private static void adsr(String[] dat, Adsr synth) {
-		synth.setAttackTime(Integer.parseInt(dat[0]));
-		synth.setDecayTime(Integer.parseInt(dat[1]));
-		synth.setSustainGain(Float.parseFloat(dat[2]));
-		synth.setReleaseTime(Integer.parseInt(dat[3]));
+	private void adsr(String[] dat, Adsr adsr) {
+		adsr.setAttackTime(Integer.parseInt(dat[0]));
+		adsr.setDecayTime(Integer.parseInt(dat[1]));
+		adsr.setSustainGain(Float.parseFloat(dat[2]));
+		adsr.setReleaseTime(Integer.parseInt(dat[3]));
 	}
-	private static void filter(String[] dat, JudahSynth synth) {
-		CutFilter hi = synth.getHiCut();
-		CutFilter lo = synth.getLoCut();
+	private void filter(String[] dat) {
 		synth.getGain().setGain(Float.parseFloat(dat[0]));
-		hi.setFrequency(Float.parseFloat(dat[1]));
-		hi.setResonance(Float.parseFloat(dat[2]));
-		lo.setFrequency(Float.parseFloat(dat[3]));
-		lo.setResonance(Float.parseFloat(dat[4]));
+		synth.getHiCut().setFrequency(Float.parseFloat(dat[1]));
+		synth.getHiCut().setResonance(Float.parseFloat(dat[2]));
+		synth.getLoCut().setFrequency(Float.parseFloat(dat[3]));
+		synth.getLoCut().setResonance(Float.parseFloat(dat[4]));
 	}
-	private static void dco(String name, String[] dat, float[] dcoGain, Shape[] shapes) {
-		int idx = Integer.parseInt(name.split(IDX)[1]);
-		shapes[idx] = Shape.valueOf(dat[0]);
-		dcoGain[idx] = Float.parseFloat(dat[1]);
+	private void dco(String name, String[] dat) {
+		int idx = Integer.parseInt(name.split(DASH)[1]);
+		synth.getShapes()[idx] = Shape.valueOf(dat[0]);
+		synth.getDcoGain()[idx] = Float.parseFloat(dat[1]);
+		synth.getDetune()[idx] = dat.length > 2 ?
+			synth.getDetune()[idx] = Float.parseFloat(dat[2]) : 1f;
 	}
 
 

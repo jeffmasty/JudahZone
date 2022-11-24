@@ -20,6 +20,8 @@ import net.judah.api.TimeListener;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Panic;
+import net.judah.midi.Path;
+import net.judah.tracker.edit.TrackEdit;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -33,7 +35,7 @@ public abstract class Track extends ArrayList<Pattern> {
 	public static final File MELODIC_FOLDER = new File(Constants.ROOT, "sequences");
 	private static int counter;
 
-	protected final Trax tracker;
+	protected final Sequencers tracker;
 	protected final String name;
 	protected final int num;
 	@Setter protected int ch;
@@ -51,10 +53,9 @@ public abstract class Track extends ArrayList<Pattern> {
 	protected Pattern current;
 	protected MidiReceiver midiOut;
 	@Setter protected String instrument;
-    protected Cue cue = Cue.Cue;
+    protected Cue cue = Cue.Bar;
 	protected int steps;
     protected int div;
-    @Setter protected boolean latch;
     @Setter protected boolean onDeck;
     /** 1-to-ratio, 0 = 1:1 speed up of step sequencer */
     @Setter protected int ratio;
@@ -86,7 +87,7 @@ public abstract class Track extends ArrayList<Pattern> {
 		}
 	};
 
-	public Track(String name, Trax tracker, MidiReceiver out, int ch) {
+	public Track(String name, Sequencers tracker, MidiReceiver out, int ch) {
 		num = counter++;
 		
 		this.ch = ch;
@@ -142,10 +143,8 @@ public abstract class Track extends ArrayList<Pattern> {
 						((int)(msg.getData2() * gain))); 
 			if (isDrums()) 
 				midiOut.send(msg, ticker);
-			else if (latch) 
-					midiOut.send(Transpose.apply(msg), ticker);
 			else 
-				midiOut.send(msg, ticker);
+				((PianoTrack)this).process(msg, ticker);
 		}
 	}
 	
@@ -178,6 +177,7 @@ public abstract class Track extends ArrayList<Pattern> {
 		else {
 			this.active = false;
 			this.onDeck = false;
+			this.step = -1;
 			if (isSynth())
 				new Panic(midiOut.getMidiPort(), ch).start(); 
 		}
@@ -223,18 +223,13 @@ public abstract class Track extends ArrayList<Pattern> {
 	public void setCurrent(Pattern p) {
 		if (current == p) return;
 		current = p;
-		int idx = indexOf(p);
-		if (this.contains(p) == false) {
-			throw new RuntimeException(name + " -- " + p.name + " file " + file);
-		}
 		
 		new Thread(() -> {
+			if (contains(p) == false) 
+				throw new RuntimeException(name + " -- " + p.name + " file " + file);
 			JudahZone.getTracker().feedback();
-			if (JudahZone.getTracker().get(this) != null)
-			if (JudahZone.getTracker().get(this).getPattern().getSelectedIndex() != idx) { 
-				JudahZone.getTracker().get(this).getPattern().setSelectedIndex(idx);
-				edit.setPattern(idx);
-			}
+			JudahZone.getTracker().get(this).getPatternBox().update(); // view
+			edit.setPattern(indexOf(current));
 		}).start();
 	}
 	
@@ -284,7 +279,6 @@ public abstract class Track extends ArrayList<Pattern> {
                     String[] split = line.split("[/]");
                     if (!split[1].equals("none")) {
                         instrument = split[1];
-                        midiOut.progChange(instrument, ch);
                     }
                     if (split.length >= 3) {
                     	setSteps(Integer.parseInt(split[2]));
@@ -299,6 +293,18 @@ public abstract class Track extends ArrayList<Pattern> {
                     	cycle.setSelected(Integer.parseInt(split[4]));
                     if (split.length >= 6)
                     	clock.writeTempo(Integer.parseInt(split[5]));
+                    if (split.length >= 7) {
+                    	String[] port = split[6].split(":");
+                    	Path p = JudahZone.getMidi().getPath(JudahZone.getSynthPorts().get(port[0]));
+                    	p.getPort().getReceiver();
+                    }
+                    
+                    
+                    
+                    if (instrument != null)
+                    	midiOut.progChange(instrument, ch);
+
+                    	
                     first = false;
                 }
                 // ignore Contract
@@ -344,6 +350,8 @@ public abstract class Track extends ArrayList<Pattern> {
         raw.append("/").append(steps);
         raw.append("/").append(div);
         raw.append("/").append(cycle.getSelected());
+        if (this instanceof PianoTrack)
+        	raw.append("/").append(midiOut).append(":").append(ch);
         raw.append(Constants.NL);
         
         for (Pattern pattern : this) {
@@ -370,10 +378,6 @@ public abstract class Track extends ArrayList<Pattern> {
 		midiOut = port;
 		if (old != null) 
 			new Panic(old, ch).start();
-		// 		MidiCable out = edit.getMidiOut();
-		// if (out.getSelectedItem() != midiOut) 
-		//	out.setSelectedItem(midiOut);
-		// gui, update GM button
 	}
 
 	public void setGain(float vol) {
@@ -381,8 +385,6 @@ public abstract class Track extends ArrayList<Pattern> {
 			return;
 		gain = vol;
 		int intVol = (int)(gain * 100);
-		//if (edit != null && edit.getTrackVol().getValue() != intVol)
-			//edit.getTrackVol().setValue(intVol);
 		if (JudahZone.getTracker() != null && JudahZone.getTracker().get(this) != null &&
 				JudahZone.getTracker().get(this).getVolume().getValue() != intVol)
 			JudahZone.getTracker().get(this).getVolume().setValue(intVol);

@@ -6,6 +6,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
 
 import javax.swing.*;
 
@@ -39,7 +40,7 @@ public class PresetsGui extends JPanel {
         list = new JList<>(presetModel());
         JScrollPane scrollPane = new JScrollPane(list);
         JPanel buttons = new JPanel();
-        target = Constants.createMixerCombo();
+        target = createMixerCombo();
         target.addActionListener( e -> {applyTo();} );
         target.setMaximumSize(new Dimension(buttonsX - 10, BTN_SZ.height));
         presetsBtns(buttons);
@@ -49,9 +50,16 @@ public class PresetsGui extends JPanel {
         add(buttons);
         Dimension dialog = new Dimension(size.width + 10, size.height + 20);
         new ModalDialog(this, dialog, MPKmini.getMode());
-        
 	}
-    private void presetsBtns(JPanel buttons) {
+
+	private JComboBox<String> createMixerCombo() {
+	    ArrayList<String> channels = new ArrayList<>();
+        for (Channel c : JudahZone.getMixer().getChannels())
+            channels.add(c.getName());
+        return new JComboBox<>(channels.toArray(new String[channels.size()]));
+	}
+	
+	private void presetsBtns(JPanel buttons) {
     	buttons.setLayout(new BoxLayout(buttons, BoxLayout.Y_AXIS));
         buttons.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 

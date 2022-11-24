@@ -17,6 +17,7 @@ public class BlueInGreen extends SmashHit {
 	final int OCTAVE = 12;
 	int count;
 	Jamstik jamstik = getJamstik();
+	Transpose transpose = getNotes().getTranspose();
 
 	@Override
 	public void startup() {
@@ -51,7 +52,7 @@ public class BlueInGreen extends SmashHit {
 		bass.getCycle().setCustom(this);
 		bass.setCue(Cue.Loop);
 		bass.setLatch(true);
-		Transpose.setAmount(Bb.ordinal() - OCTAVE);
+		transpose.setAmount(Bb.ordinal() - OCTAVE);
 		Transpose.setActive(true);
 		bass.setActive(true);
 		
@@ -64,7 +65,7 @@ public class BlueInGreen extends SmashHit {
 		hats.setActive(true);
 		fills.setActive(true);
 		getMidi().setKeyboardSynth(synth1.getMidiPort());
-		synth1.getPresets().load("FeelGoodInc");
+		synth1.getSynthPresets().load("FeelGoodInc");
 		
 		count = -1;
 		RTLogger.log(this, "2 bar intro, JAMSTIK ON!!");
@@ -74,16 +75,16 @@ public class BlueInGreen extends SmashHit {
 	@Override public void cycle(Track t) {
 		count++;
 		switch (count) {
-		case 0: Transpose.setAmount(Bb.ordinal() - 2 * OCTAVE); break; // Bbmaj7 
-		case 1: Transpose.setAmount(A.ordinal() - 2 * OCTAVE); break; // A7b9
-		case 2: Transpose.setAmount(D.ordinal() - OCTAVE); break; // D-7, Db7#11 
-		case 3: Transpose.setAmount(C.ordinal() - OCTAVE); break; // C-7, F7b9 
-		case 4: Transpose.setAmount(Bb.ordinal() - 2 * OCTAVE); break; // Bbmaj7
-		case 5: Transpose.setAmount(A.ordinal() - 2 * OCTAVE); break; // A7b9
-		case 6: Transpose.setAmount(D.ordinal() - OCTAVE); break; // D-7
-		case 7: Transpose.setAmount(E.ordinal() - OCTAVE); break; // E7alt
-		case 8: Transpose.setAmount(A.ordinal() - OCTAVE); break; // A-7
-		case 9: Transpose.setAmount(D.ordinal() - OCTAVE); break; // D-6
+		case 0: transpose.setAmount(Bb.ordinal() - 2 * OCTAVE); break; // Bbmaj7 
+		case 1: transpose.setAmount(A.ordinal() - 2 * OCTAVE); break; // A7b9
+		case 2: transpose.setAmount(D.ordinal() - OCTAVE); break; // D-7, Db7#11 
+		case 3: transpose.setAmount(C.ordinal() - OCTAVE); break; // C-7, F7b9 
+		case 4: transpose.setAmount(Bb.ordinal() - 2 * OCTAVE); break; // Bbmaj7
+		case 5: transpose.setAmount(A.ordinal() - 2 * OCTAVE); break; // A7b9
+		case 6: transpose.setAmount(D.ordinal() - OCTAVE); break; // D-7
+		case 7: transpose.setAmount(E.ordinal() - OCTAVE); break; // E7alt
+		case 8: transpose.setAmount(A.ordinal() - OCTAVE); break; // A-7
+		case 9: transpose.setAmount(D.ordinal() - OCTAVE); break; // D-6
 		default:
 			count = -1;
 		}
@@ -92,11 +93,12 @@ public class BlueInGreen extends SmashHit {
 	@Override
 	public void teardown() {
 		Transpose.setActive(false);
-		Transpose.setAmount(0);
+		transpose.setAmount(0);
 		bass.setLatch(false);
 		bass.getCycle().setCustom(null);
 		lead1.setActive(false);
 		jamstik.setActive(false);
+		looper.getLoopB().setArmed(false);
 	}
 	
 }

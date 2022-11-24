@@ -19,12 +19,15 @@ import net.judah.effects.api.Gain;
 import net.judah.effects.api.Preset;
 import net.judah.effects.api.Reverb;
 import net.judah.effects.api.Setting;
+import net.judah.effects.gui.PresetsHandler;
+import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 /** A mixer bus for either Input or Output audio */
 @Getter @EqualsAndHashCode(callSuper = false)
 public class Channel {
 
+	protected final int bufSize = Constants.bufSize();
 	protected final String name;
     protected final boolean isStereo;
 	
@@ -32,6 +35,9 @@ public class Channel {
 	protected boolean onMute;
 	protected Preset preset;
 	protected boolean presetActive;
+	protected PresetsHandler presets;
+	
+	
     protected final Gain gain = new Gain();
     protected final LFO lfo = new LFO(this);
     protected final CutFilter cutFilter;
@@ -41,6 +47,7 @@ public class Channel {
     protected final Chorus chorus = new Chorus();
 	protected Delay delay = new Delay();
     protected Reverb reverb;
+    protected Compressor compression = new Compressor();
     @Setter protected JackPort leftPort;
     @Setter protected JackPort rightPort;
     protected final List<Effect> effects;
@@ -55,11 +62,12 @@ public class Channel {
 		hiCut.setFrequency(16000);
 
         reverb = new Freeverb(isStereo);
-        preset = JudahZone.getPresets().getFirst();
         effects = Arrays.asList(new Effect[] {
                 getLfo(), getHiCut(), getCutFilter(), getEq(),
                 getChorus(), getOverdrive(),
-                getDelay(), getReverb()});
+                getDelay(), getReverb(), getCompression()});
+        preset = JudahZone.getPresets().getFirst();
+        presets = new PresetsHandler(this);
     }
 
     public void setPresetActive(boolean active) {
@@ -127,18 +135,22 @@ public class Channel {
         return preset;
     }
 
+    public void toggleFx() {
+		for (Effect fx : effects)
+			if (fx.isActive() && fx != hiCut) {
+				reset();
+				return;
+			}
+		applyPreset();
+	}
+
 	public void reset() {
-		getEq().setActive(false); 
-		getReverb().setActive(false);
-		getChorus().setActive(false);
-		getCutFilter().setActive(false);
-		getDelay().setActive(false);
-		getLfo().setActive(false);
-		getOverdrive().setActive(false);
-		getHiCut().setActive(false);
-		getGain().setPan(50);
+		for (Effect fx : effects)
+			if (fx != hiCut)
+				fx.setActive(false);
+		gain.setPan(50);
 		if (this instanceof Instrument == false)
-			getGain().setVol(50);
+			gain.setVol(50);
 	}
 
 	public float getPan() { 
@@ -154,12 +166,7 @@ public class Channel {
 	public String toString() {
 		return name;
 	}
+
 	
 }
-
-//    public void setReverb(Reverb r) {
-//        effects.remove(reverb);
-//        reverb = r;
-//        effects.add(reverb);
-//    }
 

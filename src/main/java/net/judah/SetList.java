@@ -26,5 +26,6 @@ public class SetList extends ArrayList<Class<? extends SmashHit>> {
 		add(Four.class);
 		add(TinyDancer.class);
 		add(TimeAfterTime.class);
+		add(DayB4UCame.class);
 	}
 }

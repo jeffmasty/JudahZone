@@ -8,6 +8,8 @@ import net.judah.midi.MidiPort;
 
 public interface MidiReceiver extends Receiver, Closeable {
 
+	String getName();
+	
 	String[] getPatches();
 	
 	MidiPort getMidiPort();

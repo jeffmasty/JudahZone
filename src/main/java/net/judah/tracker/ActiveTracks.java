@@ -10,13 +10,13 @@ import net.judah.util.Pastels;
 
 public class ActiveTracks extends JPanel {
 
-	private final JudahBeatz beats;
-	private final JudahNotez notes;
+	private final DrumTracks beats;
+	private final SynthTracks notes;
 	private final int width;
 	private final int height;
 	private final Dimension block;
 	
-	public ActiveTracks(JudahBeatz beatz, JudahNotez notez, Dimension d) {
+	public ActiveTracks(DrumTracks beatz, SynthTracks notez, Dimension d) {
 		beats = beatz;
 		notes = notez;
 		this.width = d.width;
@@ -38,7 +38,7 @@ public class ActiveTracks extends JPanel {
 		}
 		// bottom row
 		for (int i = 0; i < notes.size(); i++) {
-			g2d.setPaint(notes.get(i).isActive() ? Pastels.GREEN : Pastels.EGGSHELL);
+			g2d.setPaint(notes.get(i).isActive() ? Pastels.GREEN.darker() : Pastels.EGGSHELL);
 			g2d.fillRect(i * block.width, block.height, block.width, block.height);
 		}
 		

@@ -3,12 +3,10 @@ package net.judah.controllers;
 import static net.judah.JudahZone.*;
 
 import java.awt.event.WindowEvent;
-import java.util.ArrayList;
 
 import net.judah.MainFrame;
 import net.judah.api.Midi;
 import net.judah.controllers.MapEntry.TYPE;
-import net.judah.effects.api.Reverb;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.tracker.Tracker;
@@ -19,7 +17,6 @@ import net.judah.util.SettableCombo;
 /** Korg nanoKONTROL2 midi controller custom codes */ 	
 public class KorgMixer implements Controller {
 
-	private static final int MAINS = 1;
 	public static final String NAME = "nanoKONTROL2";
 
 	private final int knoboff = 16;
@@ -46,43 +43,37 @@ public class KorgMixer implements Controller {
 	public boolean midiProcessed(Midi midi) {
 		int data1 = midi.getData1();
 		int data2 = (int)Math.floor(midi.getData2() / 1.27f);
-		ArrayList<Channel> channels = getMixer().getChannels();
 		Tracker tracker = getTracker();
 		
 		if (data1 >= 0 && data1 < 8) {
-			channels.get(MAINS + data1).getGain().setVol(data2);
-			MainFrame.update(channels.get(MAINS + data1));
+			final int vol = data1;
+			new Thread(() ->getTracker().get(vol).setGain(data2 * 0.01f)).start();
 			return true;
 		}
 		if (data1 >= knoboff && data1 < knoboff + 8) {
-			Channel ch = channels.get(MAINS + data1 - knoboff);
-			Reverb reverb = ch.getReverb();
-			reverb.setWet(data2 * 0.01f);
-			reverb.setActive(data2 > 3);
+			data1 -= knoboff;
+			Channel ch = target(data1);
+			ch.getGain().setVol(data2);
 			MainFrame.update(ch);
 			return true;
 		}
-		if (data1 >= soff && data1 < soff + 8) { // SELECT CHANNEL or TRACK EFFECTS
-			if (data2 == 0) return true;
-			int ch = data1 - soff;
-			if (doubleClick(ch)) {
-				MainFrame.setFocus(tracker.get(ch));
-				MainFrame.setFocus(getBeatBox());
-			}
+		if (data1 >= soff && data1 < soff + 8) { // EDIT TRACK 
+			int track = data1 - soff;
+			getTracker().setCurrent(track);
+			MPKmini.setMode(KnobMode.Track);
+			MainFrame.setFocus(getBeatBox());
+			return true;
+		}
+		if (data1 >= moff && data1 < moff + 8) { // MUTE RECORD INPUT
+			Channel ch = target(data1 - moff);
+			if (ch instanceof LineIn)
+				((LineIn)ch).setMuteRecord(data2 > 0);
 			else 
-				MainFrame.setFocus(channels.get(MAINS + data1 - soff));
+				ch.setOnMute(data2 > 0);
 			return true;
 		}
-		if (data1 >= moff && data1 < moff + 4) { // MUTE OUTPUT
-			Channel ch = channels.get(MAINS + data1 - moff);
-			ch.setOnMute(data2 > 0);
-			return true;
-		}
-		if (data1 >= moff + 4 && data1 < moff + 8) { // MUTE RECORD INPUT
-			LineIn ch = ((LineIn)channels.get(MAINS + data1 - moff));
-			ch.setMuteRecord(data2 > 0);
-			MainFrame.update(ch);
-			return true;
+		if (data1 >= moff + 4 && data1 < moff + 8) { // MUTE LOOPS 
+			getLooper().get(data1 - (moff + 4)).setOnMute(data2 > 0);
 		}
 		if (data1 >= roff && data1 < roff + 8) { // play/stop sequencer tracks
 			int trackNum = data1 - roff;
@@ -158,7 +149,20 @@ public class KorgMixer implements Controller {
 		return false;
 	}
 
-		/** on double tap */
+	private Channel target(int idx) {
+		if (idx < 4)
+			return getLooper().get(idx);
+		if (idx == 5)
+			return getMic();
+		if (idx == 6)
+			return getDrumMachine();
+		if (idx == 7)
+			return getMidi().getPath(getMidi().getKeyboardSynth()).getChannel();
+		return getGuitar();
+	}
+	
+	/** on double tap */
+	@SuppressWarnings("unused")
 	private boolean doubleClick(int track) {
 		if (lastTrack == track && System.currentTimeMillis() - lastPress < Constants.DOUBLE_CLICK) {
 			lastPress = 0;

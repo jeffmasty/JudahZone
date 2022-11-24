@@ -37,8 +37,8 @@ public class SoloTrack extends Loop implements TimeListener {
                 if (soloTrack instanceof DrumKit)
                 	JudahZone.getClock().end();
                 solo(false);
-                if (hasRecording())
-                	getRecording().trim();
+//                if (hasRecording())
+//                	getRecording().trim();
 	        	
             }
         }

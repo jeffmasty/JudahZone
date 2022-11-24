@@ -1,18 +1,12 @@
 package net.judah.util;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
-import java.io.File;
 
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -76,7 +70,7 @@ public class RainbowKnob extends JComponent{
 	
 	//~~~~~~~~ Background Image Vars ~~~~~~~~//
 	/** Icon used for the knob background */
-	protected final ImageIcon knobIcon = new ImageIcon(new File(Constants.ROOT, "knob.png").getAbsolutePath());
+	protected final ImageIcon knobIcon = Icons.load("knob.png");
 	protected final int width = knobIcon.getIconWidth();
 	protected final int height = knobIcon.getIconHeight();
 

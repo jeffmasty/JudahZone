@@ -48,7 +48,7 @@ public class FluidSynth extends MidiInstrument {
 	@Getter private String[] patches;
 	@Getter private final Channels channels = new Channels();
 
-	private float gain = 2.8f; // max 5.0
+	private float gain = 3f; // max 5.0
 
 	public FluidSynth (int sampleRate, boolean startListeners, MidiPort port) throws JackException, JudahException, IOException {
 		this(sampleRate, SOUND_FONT, startListeners, port);
@@ -72,8 +72,8 @@ public class FluidSynth extends MidiInstrument {
 			RTLogger.warn(this, e);
 		}
 
-		int delay = 60;
-		Constants.sleep(delay);
+		int delay = 111;
+		Constants.sleep(delay * 2);
 		
 		// read FluidSynth output
 		listener = new FluidListener(process.getInputStream(), false);
@@ -86,7 +86,7 @@ public class FluidSynth extends MidiInstrument {
         sendCommand("chorus off");
 		Constants.sleep(delay);
         gain(gain);
-		Constants.sleep(delay * 2);
+		Constants.sleep(delay);
 
 		if (startListeners)
 			try {

@@ -46,7 +46,7 @@ public class Instrument extends LineIn {
 
 	public void process() {
 		if (isStereo) 
-			processFx(leftPort.getFloatBuffer(), rightPort.getFloatBuffer());
+			processFx(leftPort.getFloatBuffer(), rightPort.getFloatBuffer(), gain.getGain());
 		else 
 			processFx(leftPort.getFloatBuffer());
 	}

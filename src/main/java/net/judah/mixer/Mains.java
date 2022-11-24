@@ -33,19 +33,26 @@ public class Mains extends Channel {
 	    left = speakersLeft.getFloatBuffer();
 	    right = speakersRight.getFloatBuffer();
 
-        hiCut.process(left, right, 1);
-        cutFilter.process(left, right, 1);
-	    if (eq.isActive()) {
-            eq.process(left, true);
-            eq.process(right, false);
-        }
+        hiCut.process(left, right);
+        cutFilter.process(left, right);
         if (chorus.isActive())
             chorus.processStereo(left, right);
 
+        
+        if (compression.isActive()) {
+        	compression.process(left);
+        	compression.process(right);
+        }
+        
         if (overdrive.isActive()) {
             overdrive.processAdd(left);
             overdrive.processAdd(right);
         }
+	    if (eq.isActive()) {
+            eq.process(left, true);
+            eq.process(right, false);
+        }
+
         if (delay.isActive()) {
             delay.processAdd(left, left, true);
             delay.processAdd(right, right, false);

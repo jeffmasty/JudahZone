@@ -1,36 +1,38 @@
 TODO:
 
-remap controllers
-save/load Track midiout + channel
+kit knobMode decay, pan
+sequencing crave transpose initial record, sleepwalk restart loop off sync
+ERRNOBUF  mic flute phase // fixed?
+mixbus multi-select, mix fader upgrades
 Loop copy/paste/length/save,  Record session
-Arppegiator (Racman sequence), Chord sheet
-Selecta Mixer view on synths
-separate setlist resources from code
+Arppegiator (Racman sequence), Chord sheets
+ChordPro parser: https://github.com/SongProOrg/songpro-java  https://github.com/saipanman95/chordpro-parser
 Scope and Meters
-JudahSynth: detune, harmonics, more shapes, LFO, mono-synth option
-mixer fader upgrades
+IR Reverb
+setup and settings, separate setlist from code 	 		
+Synth: LFO, glide, PWM, mono-synth
 Delay and LFO upgrade (triggered to Clock, LFO/Fader cleanUp())
 edit checkboxes: save patch/tempo/cycle info
 probability, Ritardando
-export beatbox as midi file
-double tap erase - stop drums
+export beatbox as midi file, quantization
 Sampler Fx (granularity, pitched frequency, wet)
-DrumSynth
-Vocoder 
+DrumSynth, Vocoder 
 record record record youtubes
 README credits
 clipping/xruns filter see https://github.com/psambit9791/jDSP Peak/Spike
 Latency + bleeding edge
 Drag-n-drop, step sequencer editor upgrades
 Phasor, Shepard
-settings/default files
 Undo/Redo/Copy/Paste
-patch bay needed. see jack_lsp, jack_connect
 walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
 MPK Sequencer
 make client-server architecture
 Sequencer can really swing.
-support JavaSound/non-Jack, make accessible to others
+support JavaSound/non-Jack, make accessible 
+
+Hacking the Arturia Beatstep:
+https://www.untergeek.de/2014/11/taming-arturias-beatstep-sysex-codes-for-programming-via-ipad/
+https://github.com/konsumer/beatstep
 
 JJazzLab-X API local git
 Java Music API: https://github.com/psambit9791/jDSP
@@ -65,21 +67,17 @@ Drum machine w/ Hydrogen drums https://github.com/nicklan/drmr/wiki
 plugins https://github.com/ssj71/infamousPlugins
 https://github.com/VCVRack  modular synth
 distortion plugins: https://github.com/olegkapitonov/Kapitonov-Plugins-Pack
+Simple converter ttl to JSON
+https://github.com/PedalController/Lv2Library/blob/master/src/br/com/srmourasilva/lv2library/Lv2Mapper.java
 
 javafx
 eclipse plugin: https://www.eclipse.org/efxclipse/install.html#for-the-lazy
 export PATH_TO_FX=path/to/javafx-sdk-13/lib
 javac --module-path $PATH_TO_FX --add-modules javafx.controls HelloFX.java
-
-Simple converter ttl to JSON
-https://github.com/PedalController/Lv2Library/blob/master/src/br/com/srmourasilva/lv2library/Lv2Mapper.java
-
 <!--     Swing gui widgets https://harmoniccode.blogspot.com/search/label/swing -->
-<!--    <dependency> -->
 <!--      <groupId>eu.hansolo</groupId> -->
 <!--      <artifactId>SteelSeries</artifactId> -->
 <!--      <version>3.9.30</version> -->
-<!--    </dependency> -->
 
 Done:
 Midi looper/recorder, Quantization
@@ -136,13 +134,13 @@ loop sync/master clock to 3/4, polyrythmic
 sheetMusic 2.0
 Sampler (bicycle, creek, rain sounds), cricket sound on 2 and 4
 Settable interface (files, instruments, setlist)
-JudahSynth + ADSR knobs, code my own polyphonic velocity-sensitive synthesizer, presets 
+JudahSynth + ADSR knobs, code my own polyphonic velocity-sensitive synthesizer, presets, detune
 portWrapper for midiOut to JudahSynth/JudahBeats, redo djJefe
 8-track player, atk/rel drum sample envelope
-LFO on synth/samples
+LFO on samples, LFO cleanup, Compressor
 
 
-REF-----------------------------------------------------------------
+REFERENCE------------------------------------------------------------
 
 [Mixer][Out][In]  EFX
 1 2 3 4 5 6 7 8   1  2  3  4
@@ -150,37 +148,48 @@ REF-----------------------------------------------------------------
 | | | | | | | |   9  10 11 12
 | | | | | | | |   13 14 15 16
 
-track:  Ch#,  fileType: step/midi, file, midiOut/(AudioIn)      mono/poly/drum/step/midi  isMidi   isMono  isDrum
-  extra:   transpose(midi/kybd), split, arp(file)(inKey/abs), chords,  reverse,random
-***pads
-recordA	   recordB  recordDrum recordC sequencer	sheet	SynthKnobs    *tapTempo							
-reload/AAB latchB   latchDrum  latchC  guitarEfx	MicEfx  SynthEfx  	  on/off clock*
 
-effects knobs
-	wet    room dry  vol  
-	chorus c2   c3   pArTy  
+*nanoPAD2
+recordA	   recordB  recordC recordDrum sheetMusic   Gtr.Efx.sync  x	               x
+reload/AAB latchB   latchC  latchSolo  Verse/Chorus MuteA/B    	  clockStop/syncx  Crickets/++
+
+
+KNOBS:
+FX 
+	Rev.Wet    Rev.Room  Del.F/B   Del.Time   Eq.Bass  Eq.Mid  Eq.High  Vol  
+	Cho.Rate   Cho.Deep  Cho.F/B   Overdrive  Eq.Type  Eq.Party Eq.Cut  Pan/Comp.gain 
 	
-	d.time d.fback pan   dist.
-	bass   mid     treb  preset
+LFO 
+	type   min     max       time
+	Preset C.Knee  C.Thresh  C.Gain
 
-midi knobs
-	sync tempo  calf    fluid
-	song track# jamstik mpk
 
+CLOCK 
+	sync shaker synth1  fluid
+	song track# jamOut  mpkOut
+
+TRACK 
+(Trk#) File [Patterns---]  Vol
+	   Cue  Cycle  midiOut Preset 
+
+SYNTH 
+	Preset Vol HiCut LoCut
+	A      D   S 	 R
+
+
+Class Hierarchy
 
 Channel
    LineIn
        Instrument - guitar, mic, crave, fluid
        JudahSynth
-       JudahBeats
+       DrumMachine
    AudioTrack
-       Loop - a, b, c
-          SoloIn - d
+       Loop - A/B/C
+          SoloIn - D
        Sample    
           StepSample
-          DrumSample to JudahBeats
+          DrumSamples to DrumMachine
 
-
-gtr, mic, beats, s1, s2, f1, f2, crave, main
 
   

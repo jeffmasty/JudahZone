@@ -17,12 +17,12 @@ public class DJJefe extends JPanel {
 	private final ArrayList<ChannelFader> faders = new ArrayList<ChannelFader>();
 	
     public DJJefe(Channel mains, Looper loops, Zone sources) {
-        addChannel(mains);
         for (Loop loop : loops)
         	addChannel(loop);
-        for (LineIn instrument : sources)
+    	for (LineIn instrument : sources)
         	addChannel(instrument);
-        setLayout(new GridLayout(1, channels.size()));
+        addChannel(mains);
+    	setLayout(new GridLayout(1, channels.size()));
         doLayout();
     }
 
@@ -72,14 +72,4 @@ public class DJJefe extends JPanel {
 				return fade;
 		return null;
 	}
-	
 }
-
-
-/*  public static Channel getChannel(int idx) {
-        switch(idx) {
-            case 0: return JudahZone.getMains();
-            case 1: return JudahZone.getLooper().getDrumTrack();
-            case 2: return JudahZone.getLooper().getLoopA();
-            case 3: return JudahZone.getLooper().getLoopB();
-        } return JudahZone.getInstruments().get(idx - 4);}*/

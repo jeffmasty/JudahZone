@@ -1,5 +1,13 @@
 package net.judah.controllers;
 
 public enum KnobMode {
-	FX1, FX2, Clock, Track, Synth, Kit;	
+	Clock, 
+	Track, 
+	Synth1,
+	Synth2,
+	Drums1,
+	Drums2,
+	Hats,
+	Fills,
+	LFO;	
 }

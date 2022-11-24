@@ -17,8 +17,8 @@ public class Sample extends AudioTrack {
 	@Getter protected File file;
 	private SamplePad samplePad;
 	
-	private final float[] workL = new float[bufferSize];
-    private final float[] workR = new float[bufferSize];
+	private final float[] workL = new float[bufSize];
+    private final float[] workR = new float[bufSize];
 	private FloatBuffer[] buffer = new FloatBuffer[] {FloatBuffer.wrap(workL), FloatBuffer.wrap(workR)};
     
 	/** load preset by name (without .wav) */
@@ -29,8 +29,8 @@ public class Sample extends AudioTrack {
 	public Sample(JackPort left, JackPort right, String name, File f, Type type) throws Exception {
 		this(name, type, left, right);
 		this.file = f;
-		setRecording(Recording.load(file));
-		gain.setVol(95);
+		setRecording(new Recording(file));
+		env = 2f; // boost
 	}
 
 	@Override public void clear() {

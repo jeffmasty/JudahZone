@@ -11,6 +11,4 @@ public interface Engine extends MidiReceiver {
 	
 	boolean isMuteRecord();
 	
-	String getName();
-	
 }

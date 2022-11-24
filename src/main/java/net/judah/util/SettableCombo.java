@@ -16,10 +16,11 @@ public class SettableCombo<T> extends CenteredCombo<T> {
 
 	private static final Border red = BorderFactory.createSoftBevelBorder(
 			BevelBorder.RAISED, Color.RED, Color.RED.darker());
+	private final Border old;
+
 	@Getter private static SettableCombo<?> focus;
-	
 	@Setter private Runnable action; 
-	private Border old;
+	@Setter @Getter private static boolean override; 
 	
 	public SettableCombo() {
 		old = getBorder();
@@ -37,7 +38,7 @@ public class SettableCombo<T> extends CenteredCombo<T> {
 	}
 	
 	public static void highlight(SettableCombo<?> change) {
-		if (JudahZone.isOverride()) {
+		if (override) {
 			if (focus != null) {
 				focus.setBorder(focus.old);
 				focus = null;

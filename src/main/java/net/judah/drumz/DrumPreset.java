@@ -17,7 +17,7 @@ public class DrumPreset {
 		for (File file : folder.listFiles()) {
 			for (DrumType d : DrumType.values())
 			if (file.getName().startsWith(d.name())) {
-				samples[d.ordinal()] = Recording.load(file);
+				samples[d.ordinal()] = new Recording(file);
 			}
 		}
 		this.folder = folder;

@@ -30,6 +30,13 @@ import net.judah.util.*;
 /** clock tempo, loop length, setlist, midi cables */
 public class MidiGui extends JPanel implements TimeListener {
 
+	public static final Integer[] LENGTHS = {1, 1, 2, 2, 2, 3, 4, 4, 4, 4, 5, 6, 6, 7, 8, 8, 8, 8, 9, 
+			10, 10, 11, 12, 12, 12, 13, 14, 15, 16, 16, 16, 16, 17, 18, 19, 20, 20, 21, 22, 23, 24, 
+			24, 25, 26, 27, 28, 29, 30, 31, 32, 32, 32, 33, 34, 35, 36, 36, 40, 42, 44, 48, 64};
+	@Getter public static final String[] timeSignatures = new String[] { // TODO
+			"4/4", "Swing", "6/8", "Waltz", "Polka", "5/4"
+	};
+	
 	private final JudahMidi midi;
 	private final JudahClock clock;
 	private final Jamstik jamstik;
@@ -43,7 +50,7 @@ public class MidiGui extends JPanel implements TimeListener {
     @Getter private final ProgChange engine;
     @Getter private final ProgChange fluidProg;
     @Getter private final SettableCombo<Class<? extends SmashHit>> setlistCombo = new SettableCombo<>(()->loadSong());
-	@Getter private final CenteredCombo<MidiPort> mpk = new CenteredCombo<>();
+	@Getter private final JComboBox<MidiPort> mpk = new JComboBox<>();
 	private final JPanel mpkPanel = new JPanel();
 	@Getter private final JudahMenu popup = new JudahMenu();
 	private final Border NONE = BorderFactory.createLineBorder(Pastels.BUTTONS, 4);
@@ -133,7 +140,7 @@ public class MidiGui extends JPanel implements TimeListener {
         tempoLbl.setFont(Constants.Gui.BOLD);
 
         HashSet<Integer> noDups = new HashSet<>();
-		for (Integer i : JudahClock.LENGTHS) 
+		for (Integer i : LENGTHS) 
 			if (noDups.contains(i)) continue;
 			else {
 				sync.addItem(i);
@@ -206,12 +213,12 @@ public class MidiGui extends JPanel implements TimeListener {
 			if (data2 == 0) 
 				clock.setLength(1);
 			else 
-				clock.setLength((int) Constants.ratio(data2, JudahClock.LENGTHS));
+				clock.setLength((int) Constants.ratio(data2, LENGTHS));
 			return;
-    	case 2: // calf inst
-    		engine.setSelectedIndex(data2);
+    	case 2: // JudahSynth inst
+    		engine.setSelectedIndex(Constants.ratio(data2, engine.getItemCount()));
     		return;
-    	case 3: // fluid inst
+    	case 3: // Fluid inst
     		fluidProg.setSelectedIndex(data2);
     		return;
  	    case 4: // Load song
@@ -220,13 +227,14 @@ public class MidiGui extends JPanel implements TimeListener {
     	case 5: // change sequencer track focus
     		getTracker().setCurrent(Constants.ratio(data2 - 1, getTracker().getViews().size()));
     		return;
-    	case 6: // jamstik out
+    	case 6: // Jamstik out
     		getJamstik().setSelectedIndex(Constants.ratio(data2 - 1, midi.getPaths().size()));
     		return;
-    	case 7: // mpk keys out
+    	case 7: // MPK keys out
     		mpk.setSelectedIndex(Constants.ratio(data2 - 1, mpk.getItemCount()));
     		return;
     	case 1: 
+    		JudahZone.getClock().writeTempo(data2 + 50);
     		// Tempo handled at MPK
     		return;
     	}   

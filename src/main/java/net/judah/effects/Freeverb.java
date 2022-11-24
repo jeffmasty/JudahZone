@@ -88,7 +88,7 @@ public final class Freeverb extends Reverb {
     private static final float offsetroom = 0.7f;
 
     private static final float initialroom = 0.4f;
-    private static final float initialdamp = 0.95f;
+    private static final float initialdamp = 1f;
     private static final float initialwet = 1 / scalewet;
     private static final float initialdry = 0.5f;//1;
     private static final float initialwidth = 1.0f;
@@ -104,11 +104,9 @@ public final class Freeverb extends Reverb {
     // Comb filters
     private int numcombs;
     private Comb[] combL;
-    //private Comb[] combR;
     // Allpass filters
     private int numallpasses;
     private Allpass[] allpassL;
-    //private Allpass[] allpassR;
     //scratch buffers
     private float[] inScratch = null;
     private float[] outScratchL = null;
@@ -266,7 +264,8 @@ public final class Freeverb extends Reverb {
         return width;
     }
 
-    public void process(FloatBuffer left, FloatBuffer right) {
+    @Override
+	public void process(FloatBuffer left, FloatBuffer right) {
     	process(left);
     	stereoReverb.process(right);
     }

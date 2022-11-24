@@ -15,9 +15,9 @@ import net.judah.midi.Panic;
 /** base function for an external mono-synth */
 public class MidiInstrument extends Instrument implements MidiReceiver {
 
-	@Getter protected final MidiPort midiPort;
+	@Setter @Getter protected MidiPort midiPort;
+	@Setter @Getter private int channel = 0;
 	@Getter private String[] patches = new String[] {"none"};
-	@Getter @Setter private int channel = 0;
 	// boolean doesProgChange
 	// boolean isMono
 	
@@ -25,6 +25,7 @@ public class MidiInstrument extends Instrument implements MidiReceiver {
 		super(channelName, sourceLeft, sourceRight, icon);
 		this.midiPort = midi;
 		JudahZone.getServices().add(this);
+		this.getName();
 	}
 
 	/** mono-synth */

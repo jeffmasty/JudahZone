@@ -19,7 +19,7 @@ public class AdsrView extends JPanel {
 	@Getter private final Slider a = new Slider(0, 200, null);
 	@Getter private final Slider d = new Slider(null);
 	@Getter private final Slider s = new Slider(null);
-	@Getter private final Slider r = new Slider(0, 1000, null);
+	@Getter private final Slider r = new Slider(0, 500, null);
 	
 	public AdsrView(Adsr input) {
 		this.adsr = input;
@@ -36,7 +36,7 @@ public class AdsrView extends JPanel {
 		bottom.add(s);
 		bottom.add(new JLabel("S:R"));
 		bottom.add(r);
-		setBorder(BorderFactory.createTitledBorder(JudahSynth.ENVELOPE));
+		setBorder(BorderFactory.createTitledBorder(SynthPresets.ENVELOPE));
 		
 		JPanel wrap = new JPanel(new GridLayout(2, 1));
 		wrap.add(top);

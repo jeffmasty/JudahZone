@@ -29,9 +29,10 @@ public class SamplerView extends JPanel {
 	
 	public void update(Sample samp) {
 		for (Sample s : sampler)
-			if (s == samp) 
+			if (s == samp) {
 				s.getPad().update();
-		repaint();
+				repaint();
+			}
 	}
 	
 }

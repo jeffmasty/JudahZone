@@ -12,23 +12,31 @@ import javax.swing.*;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.controllers.KnobMode;
+import net.judah.controllers.Knobs;
 import net.judah.effects.CutFilter;
+import net.judah.util.CenteredCombo;
 import net.judah.util.Constants;
 import net.judah.util.FileChooser;
 import net.judah.util.FxButton;
 import net.judah.util.Slider;
 
-public class SynthView extends JPanel {
-	private static final Dimension SLIDER = new Dimension(75, STD_HEIGHT);
-	private static final Dimension COMBO = new Dimension(60, STD_HEIGHT);
+public class SynthView extends JPanel implements Knobs {
 
+	private static final Dimension SLIDER = new Dimension(60, STD_HEIGHT);
+	private static final Dimension COMBO = new Dimension(55, STD_HEIGHT);
+	public static final String[] DETUNE_OPTIONS = new String[] {
+			"OCT", "5th", "+3", "+2", "+1", "+/-0", "-5th", "SUB"};
+	public static final float[] DETUNE_AMOUNT = new float[] {
+			2f, 1.5f, 1.015f, 1.01f, 1.005f, 1f, 0.75f ,0.5f};
+	public static final int DETUNE_NONE = 5;
+
+	@Getter private final JudahSynth synth;
 	@Getter private static ArrayList<SynthView> views = new ArrayList<>() {
 		public boolean add(SynthView e) {
 			SynthEngines.setCurrent(e);
 			return super.add(e);};};
 	@Setter @Getter private static boolean freqMode = true; //. vs resonance mode
-	
-	@Getter private final JudahSynth synth;
 	@Getter private final PresetsCombo presets;
 	private final JButton save = new JButton("Save");
 	private final Slider amp = new Slider(null);
@@ -37,23 +45,38 @@ public class SynthView extends JPanel {
 	private final Slider lpReso = new Slider(0, 20, null);
 	private final Slider hpFreq = new Slider(0, 50, null);
 	private final Slider hpReso = new Slider(0, 20, null);
-	
 	private final ArrayList<Slider> gains = new ArrayList<>();
 	private final ArrayList<JComboBox<Shape>> shapes = new ArrayList<>();
-
+	private final ArrayList<JComboBox<String>> detune = new ArrayList<>();
+	private final JComboBox<Integer> mod = new JComboBox<>();
+	
 	public SynthView(JudahSynth zynth) {
 		views.add(this);
 		this.synth = zynth;
-		this.presets = new PresetsCombo(synth.getPresets());
+		this.presets = new PresetsCombo(synth.getSynthPresets());
 		this.adsr = new AdsrView(synth.getAdsr());
 		for (int i = 0; i < synth.getShapes().length; i++) {
-			JComboBox<Shape> combo = new JComboBox<>();
+			JComboBox<Shape> combo = new CenteredCombo<>();
 			for(Shape val : Shape.values())
 				combo.addItem(val);
 			combo.setMaximumSize(COMBO);
 			shapes.add(combo);
 		}
 
+		for (int i = 0; i < synth.getDetune().length; i++) {
+			JComboBox<String> tune = new CenteredCombo<>();
+			for (String s : DETUNE_OPTIONS)
+				tune.addItem(s);
+			tune.setSelectedIndex(DETUNE_NONE);
+			tune.setToolTipText("Detuning");
+			detune.add(tune);
+		}
+
+		mod.setToolTipText("Pitchbend Semitones");
+		for (int i = 1; i <= 12; i++)
+			mod.addItem(i);
+		mod.addActionListener(e->synth.setModSemitones((Integer)mod.getSelectedItem()));
+		
 		for (int i = 0; i < synth.getDcoGain().length; i++) {
 			Slider slider = new Slider(null);
 			slider.setPreferredSize(SLIDER);
@@ -67,7 +90,7 @@ public class SynthView extends JPanel {
 
 		JPanel filter = new JPanel();
 		filter.setLayout(new BoxLayout(filter, BoxLayout.PAGE_AXIS));
-		filter.setBorder(BorderFactory.createTitledBorder(JudahSynth.FILTER));
+		filter.setBorder(BorderFactory.createTitledBorder(SynthPresets.FILTER));
 		filter.add(duo(new JLabel("High-Cut"), lpFreq));
 		filter.add(duo(new JLabel("Resonance"), lpReso));
 		filter.add(duo(new JLabel("Low-Cut"), hpFreq));
@@ -76,7 +99,7 @@ public class SynthView extends JPanel {
 		JPanel dco = new JPanel();
 		dco.setLayout(new BoxLayout(dco, BoxLayout.PAGE_AXIS));
 		for (int i = 0; i < synth.getDcoGain().length; i++) 
-			dco.add(Constants.wrap(new JLabel("Dco-" + i + " Mix"), gains.get(i), shapes.get(i)));
+			dco.add(Constants.wrap(gains.get(i), shapes.get(i), detune.get(i)));
 		dco.setBorder(BorderFactory.createTitledBorder("Oscillators"));
 
 		setLayout(new GridLayout(2, 2));
@@ -89,6 +112,11 @@ public class SynthView extends JPanel {
 		listeners();
 	}
 	
+	@Override
+	public KnobMode getKnobMode() {
+		return synth.getKnobMode();
+	}
+
 	private JPanel duo(Component left, Component right) {
 		JPanel result = new JPanel();
 		result.setLayout(new GridLayout(1, 2));
@@ -101,6 +129,7 @@ public class SynthView extends JPanel {
 		JPanel btns = new JPanel();
 		btns.add(amp);
 		btns.add(new FxButton(synth));
+		btns.add(mod);
 		JPanel presetPnl = new JPanel();
 		
 		presetPnl.add(presets);
@@ -124,6 +153,10 @@ public class SynthView extends JPanel {
 		for (int i = 0; i < shapes.size(); i++) {
 			final int idx = i;
 			shapes.get(i).addActionListener(e->synth.setShape(idx, (Shape)shapes.get(idx).getSelectedItem()));
+		}
+		for (int i = 0; i < detune.size(); i++) {
+			final int idx = i;
+			detune.get(i).addActionListener(e->synth.getDetune()[idx] = DETUNE_AMOUNT[detune.get(idx).getSelectedIndex()]);
 		}
 		
 		lpFreq.addChangeListener(e -> synth.getHiCut().setFrequency(
@@ -150,9 +183,23 @@ public class SynthView extends JPanel {
 		for (int i = 0; i < shapes.size(); i++)
 			checkShape(shapes.get(i), i);
 		adsr.update();
+		conformDetune();
+		
 		repaint();
 	}
 
+	private void conformDetune() {
+		for (int i = 0; i < detune.size(); i++) {
+			String target = DETUNE_OPTIONS[DETUNE_NONE];
+			for (int x = 0; x < DETUNE_AMOUNT.length; x++)
+				if (synth.getDetune()[i] == DETUNE_AMOUNT[x]) {
+					target = DETUNE_OPTIONS[x];
+					break;
+				}
+			detune.get(i).setSelectedItem(target);
+		}
+	}
+	
 	private void checkShape(JComboBox<Shape> shape, int i) {
 		if (shape.getSelectedItem() != synth.getShape(i))
 			shape.setSelectedItem(synth.getShape(i));
@@ -164,7 +211,7 @@ public class SynthView extends JPanel {
 	}
 
 	private void save() {
-		SynthPresets disk = synth.getPresets();
+		SynthPresets disk = synth.getSynthPresets();
 		if (disk.getLoaded() != null)
 			FileChooser.setCurrentFile(disk.getLoaded());
 		else 
@@ -199,7 +246,7 @@ public class SynthView extends JPanel {
 
 				break;
 			case 4:
-				adsr.getA().setValue(data2);
+				adsr.getA().setValue(data2 * 2);
 				break;
 			case 5:
 				adsr.getD().setValue(data2);
@@ -208,15 +255,18 @@ public class SynthView extends JPanel {
 				adsr.getS().setValue(data2);
 				break;
 			case 7:
-				adsr.getR().setValue(data2);
+				adsr.getR().setValue(data2 * 5);
 				break;
 		}
 	}
 
 	public static void update(JudahSynth target) {
 		for (SynthView v : views)
-			if (v.synth == target)
+			if (v.synth == target) {
+				v.getPresets().initPresets();
 				v.update();
+			}
+		
 	}
 	
 }

@@ -8,9 +8,11 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import net.judah.MainFrame;
 import net.judah.api.AudioMode;
+import net.judah.api.Notification.Property;
+import net.judah.api.ProcessAudio.Type;
+import net.judah.api.TimeListener;
 import net.judah.looper.SyncWidget.SelectType;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
@@ -19,7 +21,7 @@ import net.judah.mixer.SoloTrack;
 import net.judah.mixer.Zone;
 
 @RequiredArgsConstructor @Getter
-public class Looper extends ArrayList<Loop> {
+public class Looper extends ArrayList<Loop> implements TimeListener {
 
 	public static final int LOOPERS = 4; // anything above LOOPERS are one-shots
 	private final JackPort left;
@@ -28,7 +30,8 @@ public class Looper extends ArrayList<Loop> {
     private final Loop loopB;
     private final Loop loopC;
     private final SoloTrack drumTrack;
-	@Setter private long recordedLength;
+    private long recordedLength;
+    private Loop primary;
     
 	public Looper(JackPort l, JackPort r, Zone sources, LineIn soloTrack) {
         left = l;
@@ -51,7 +54,11 @@ public class Looper extends ArrayList<Loop> {
     /** pause/unpause specific loops */
     private Pause suspended = null; 
     
-
+    public void setRecordedLength(long length, Loop primary) {
+    	this.primary = primary;
+    	recordedLength = length;
+    }
+    
     public Loop byName(String search) {
     	for (Loop l : this) 
 				if (l.getName().equals(search))
@@ -127,6 +134,22 @@ public class Looper extends ArrayList<Loop> {
 		for (Loop loop : this) {
 			if (loop != drumTrack)
 				loop.setOnMute(!loop.isOnMute());
+		}
+	}
+
+
+	@Override
+	public void update(Property prop, Object value) {
+		if (prop == Property.BARS) {
+			for (Loop loop : this) {
+
+				if (!loop.isActive() || loop.getType() == Type.FREE) continue;
+				int tape = loop.getTapeCounter().get();
+				// if near loop border, hard sync to start
+				if (tape != 0 && (loop.getRecording().size() - tape < 5 || tape < 4)) {
+					loop.setTapeCounter(loop.getRecording().size() - 1);
+				}
+			}
 		}
 	}
 

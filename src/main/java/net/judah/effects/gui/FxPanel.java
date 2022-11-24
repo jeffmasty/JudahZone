@@ -7,8 +7,6 @@ import javax.swing.JPanel;
 
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.controllers.KnobMode;
-import net.judah.controllers.MPKmini;
 import net.judah.mixer.Channel;
 import net.judah.util.Constants;
 import net.judah.util.GuitarTuner;
@@ -26,11 +24,9 @@ public class FxPanel extends JPanel {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(Constants.Gui.NONE);
         setBackground(Pastels.EGGSHELL);
-        //current = JudahZone.getMains().getGui();
 
         placeholder.addKeyListener(JudahMenu.getInstance());
         placeholder.setFocusTraversalKeysEnabled(false);
-        // placeholder.add(current);
         add(placeholder);
         add(tuner);
         doLayout();
@@ -39,7 +35,6 @@ public class FxPanel extends JPanel {
     }
 
     public void setFocus(Channel ch) {
-    	MPKmini.setMode(KnobMode.FX1);
     	if (ch.equals(getChannel())) {
     		return;
     	}

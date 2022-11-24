@@ -20,7 +20,6 @@ public class Four extends SmashHit {
 		super.startup();
 		// TODO drums tracks and tempo
 		
-		
 		frame.sheetMusic("Four.png");
 		clock.setLength(8); // in double time
 		looper.getLoopB().setArmed(true);

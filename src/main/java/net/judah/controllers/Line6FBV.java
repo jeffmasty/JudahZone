@@ -12,7 +12,7 @@ import net.judah.mixer.SoloTrack;
 import net.judah.tracker.Cycle;
 
 public class Line6FBV implements Controller {
-
+	public static final String NAME = "FBV Shortboard Mk";
 	private int pedalMemory = 50;
 	private boolean mutes;
 
@@ -54,10 +54,8 @@ public class Line6FBV implements Controller {
 			else {
 				if (loop.hasRecording())
 					KorgPads.record(getLooper().getLoopB());
-				else { // or Sync B
+				else  // or Sync B
 					loop.setArmed(!loop.isArmed());
-					MainFrame.update(loop);
-				}
 			}
 			return true;
 		case 3: // record C (free)

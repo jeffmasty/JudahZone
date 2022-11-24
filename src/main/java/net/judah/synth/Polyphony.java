@@ -7,20 +7,25 @@ import javax.sound.midi.ShortMessage;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.api.Midi;
+import net.judah.util.Constants;
 
 @RequiredArgsConstructor
 public class Polyphony {
 	
 	@Getter private final ShortMessage[] notes = new ShortMessage[POLYPHONY];
 	private final Voice[] voices;
+	private boolean monophonic;
 	
 	public boolean noteOn(ShortMessage m) {
 		int data1 = m.getData1();
+		if (monophonic)
+			return monoOn(m);
+		
 		for (int i = 0; i < POLYPHONY; i++) {
 			if (notes[i] != null && notes[i].getData1() == data1) {
 				if (notes[i].getCommand() == ShortMessage.NOTE_OFF) {
 					// re-press during release
-					voices[i].reset(JudahSynth.midiToHz(m.getData1()));
+					voices[i].reset(Constants.midiToHz(m.getData1()));
 				}
 				notes[i] = Midi.copy(m);
 				return true;
@@ -29,13 +34,24 @@ public class Polyphony {
 		for (int i = 0; i < POLYPHONY; i++) 
 			if (notes[i] == null) {
 				notes[i] = Midi.copy(m);
-				voices[i].reset(JudahSynth.midiToHz(m.getData1()));
+				voices[i].reset(Constants.midiToHz(m.getData1()));
 				return true;
 		}
 		return false;
 	}
 	
+	boolean monoOn(ShortMessage m) {
+		return false;
+	}
+	
+	void monoOff(ShortMessage m) {
+		;
+	}
+	
 	public void noteOff(ShortMessage m) {
+		if (monophonic)
+			monoOff(m);
+		
 		for (int i = 0; i < POLYPHONY; i++)
 			if (notes[i] != null && notes[i].getData1() == m.getData1()) {
 				// start release on envelope,  when release completes note switched to null and Voice ready for polyphony

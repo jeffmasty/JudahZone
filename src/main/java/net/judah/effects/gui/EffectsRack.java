@@ -8,36 +8,34 @@ import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import net.judah.controllers.KnobMode;
+import net.judah.MainFrame;
 import net.judah.controllers.MPKTools;
 import net.judah.effects.Chorus;
 import net.judah.effects.CutFilter;
-import net.judah.effects.CutFilter.Type;
 import net.judah.effects.Delay;
 import net.judah.effects.EQ;
+import net.judah.effects.Overdrive;
 import net.judah.effects.api.Reverb;
 import net.judah.mixer.Channel;
-import net.judah.util.Constants;
 import net.judah.util.KeyPair;
 import net.judah.util.Pastels;
 
 public class EffectsRack extends JPanel implements GUI, MPKTools {
-    // TODO lfo recover
     public static final String TAB_NAME = "Effects";
     public static final int COLUMNS = 4;
     
     @Getter private final Channel channel;
     private final ArrayList<RowLabels> labels = new ArrayList<>();
-    private final ArrayList<RowKnobs> knobs = new ArrayList<>();
+    private final ArrayList<Row> knobs = new ArrayList<>();
     private final JPanel rows;
     private final ChannelTitle title;
 
-    private final LFOGui lfo;
-
+    @Getter private final LfoKnobs lfo;
+    @Getter private final CompressorKnobs compressor;
+    
     public EffectsRack(Channel channel) {
 
         this.channel = channel;
@@ -47,44 +45,56 @@ public class EffectsRack extends JPanel implements GUI, MPKTools {
         title = new ChannelTitle(channel);
         add(title);
         
-        GridBagLayout layout = new GridBagLayout();
-        rows = new JPanel(layout);
-        
-        labels.add(new RowLabels(channel, KnobMode.FX1, new KeyPair[]{
-        		new KeyPair("    ", channel.getReverb()),
+        lfo = new LfoKnobs(channel);
+        compressor = new CompressorKnobs(channel);
+
+		// wet  room   d.time  d.fb
+		// cho1 cho2   cho3    O/D
+        labels.add(new RowLabels(channel, new KeyPair[]{
         		new KeyPair("Reverb", channel.getReverb()),
         		new KeyPair("    ", channel.getReverb()),
-        		new KeyPair("Vol.", channel.getGain())
-        }));
+        		new KeyPair("Delay", channel.getDelay()),
+        		new KeyPair("     ", channel.getDelay())}));
 
-        labels.add(new RowLabels(channel, KnobMode.FX1, new KeyPair[]{
-	    		new KeyPair("    ", channel.getChorus()),
+        labels.add(new RowLabels(channel, new KeyPair[]{
 	    		new KeyPair("Chorus", channel.getChorus()),
+        		new KeyPair("    ", channel.getChorus()),
 	    		new KeyPair("    ", channel.getChorus()),
-	    		new KeyPair("pArTy", channel.getCutFilter())
-        }));
+	    		new KeyPair("Dist.", channel.getOverdrive())}));
 
-        labels.add(new RowLabels(channel, KnobMode.FX2, new KeyPair[]{
-	    		new KeyPair("    ", channel.getDelay()),
-	    		new KeyPair("Delay", channel.getDelay()),
-	    		new KeyPair("Pan", channel.getGain()),
-	    		new KeyPair("Dist.", channel.getOverdrive())
-
-        }));
-        
-        labels.add(new RowLabels(channel, KnobMode.FX2, new KeyPair[]{
-	    		new KeyPair("    ", channel.getEq()),
+		// EQ L/M/H  Vol
+		// Preset pArTy hiCut pan 
+        labels.add(new RowLabels(channel, new KeyPair[]{
         		new KeyPair("EQ", channel.getEq()),
+        		new KeyPair("     ", channel.getEq()),
 	    		new KeyPair("     ", channel.getEq()),
-        		new KeyPair("HiCut", channel.getHiCut())
-        }));
-        
-        knobs.add(new RowKnobs(channel, KnobMode.FX1, 0));
-        knobs.add(new RowKnobs(channel, KnobMode.FX1, 1));
-        knobs.add(new RowKnobs(channel, KnobMode.FX2, 2));
-        knobs.add(new RowKnobs(channel, KnobMode.FX2, 3));
-        // knobs.add(new RowKnobs(channel, KnobMode.FX2, presets));
+        		new KeyPair("VOL.", channel.getGain())}));
 
+        labels.add(new RowLabels(channel, new KeyPair[]{
+	    		new KeyPair("Preset", null),
+	    		new KeyPair("pArTy", channel.getCutFilter()),
+	    		new KeyPair("HiCut", channel.getHiCut()),
+	    		new KeyPair("Pan", channel.getGain())}));
+
+        KeyPair blankLfo = new KeyPair("", channel.getLfo());
+        labels.add(new RowLabels(channel, new KeyPair[] {
+        		new KeyPair("LFO", channel.getLfo()), 
+        		blankLfo, blankLfo, blankLfo}));
+
+        KeyPair blankComp = new KeyPair("", channel.getCompression());
+        labels.add(new RowLabels(channel, new KeyPair[]{
+        		new KeyPair("Compressor", channel.getCompression()),
+        		blankComp, blankComp, blankComp}));
+        
+        knobs.add(new RowKnobs(channel, 0));
+        knobs.add(new RowKnobs(channel, 1));
+        knobs.add(new RowKnobs(channel, 2));
+        knobs.add(new RowKnobs(channel, 3));
+        knobs.add(lfo);
+        knobs.add(compressor);
+        
+        GridBagLayout layout = new GridBagLayout();
+        rows = new JPanel(layout);
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.HORIZONTAL;
         c.insets = new Insets(1, 1, 1, 1);
@@ -99,9 +109,6 @@ public class EffectsRack extends JPanel implements GUI, MPKTools {
     			rows.add(widget);
         	}
         add(rows);
-        add(new JLabel(" ")); // filler
-        lfo = new LFOGui(channel);
-        add(lfo);
         
     }
 
@@ -109,84 +116,106 @@ public class EffectsRack extends JPanel implements GUI, MPKTools {
         title.update();
         for (RowLabels lbl : labels) 
         	lbl.update();
-        for (RowKnobs knob : knobs)
+        for (Row knob : knobs)
         	knob.update();
         repaint();
     }
 
-    public void effects1(int data1, int data2) {
-		if (data1 == KNOBS.get(0)) { 
-			channel.getReverb().set(Reverb.Settings.Wet.ordinal(), data2);
-			channel.getReverb().setActive(data2 > 0);
-		}
-        else if (data1 == KNOBS.get(1)) {
-			channel.getReverb().set(Reverb.Settings.Room.ordinal(), data2); 
-			channel.getReverb().setActive(data2 > thresholdLo);
-		}
-        else if (data1 == KNOBS.get(2)) {
-        	channel.getReverb().set(Reverb.Settings.Damp.ordinal(), data2);
-        }
-        else if (data1 == KNOBS.get(3)) {
-        	channel.getGain().setVol(data2);
-        }
-        
-        else if (data1 == KNOBS.get(4)) {
-        	channel.getChorus().set(Chorus.Settings.Rate.ordinal(), data2);
-        	channel.getChorus().setActive(data2 < thresholdHi);
-        }
-        else if (data1 == KNOBS.get(5)) {
-        	channel.getChorus().set(Chorus.Settings.Depth.ordinal(), data2);
-        	channel.getChorus().setActive(data2 > thresholdLo);
-        }
-        else if (data1 == KNOBS.get(6)) {
-        	channel.getChorus().set(Chorus.Settings.Feedback.ordinal(), data2);
-        	channel.getChorus().setActive(data2 > thresholdLo);
-        }
-        else if (data1 == KNOBS.get(7)) {
-        	channel.getCutFilter().setActive(data2 < thresholdHi);
-        	if (!channel.getCutFilter().isActive()) return;
-        	CutFilter party = channel.getCutFilter();
-        	party.setFilterType(Type.pArTy);
-        	party.setFrequency(CutFilter.knobToFrequency(data2));
-        }
-	}
+    int offset = 3;
 
-	public void effects2(int data1, int data2) {
-		if (data1 == KNOBS.get(0)) {
-        	channel.getDelay().set(Delay.Settings.DelayTime.ordinal(), data2);
-        	channel.getDelay().setActive(data2 < thresholdHi);
-        }
-        else if (data1 == KNOBS.get(1)) {
-        	channel.getDelay().set(Delay.Settings.Feedback.ordinal(), data2);
-        	channel.getDelay().setActive(data2 > 0);
-        }
-        else if (data1 == KNOBS.get(2)) {
-        	channel.getGain().setPan(data2);
-        }
-        else if (data1 == KNOBS.get(3)) {
-        	channel.getOverdrive().setDrive(Constants.logarithmic(data2, 0, 1));
-            channel.getOverdrive().setActive(data2 > 0);
-        }
-
-        else if (data1 == KNOBS.get(4)) { 
-			channel.getEq().eqGain(EQ.EqBand.Bass, data2);
-			channel.getEq().setActive(data2 > thresholdLo);
-		}
-        else if (data1 == KNOBS.get(5)) {
-			channel.getEq().eqGain(EQ.EqBand.Mid, data2);
-			channel.getEq().setActive(data2 > thresholdLo);
-		}
-        else if (data1 == KNOBS.get(6)) {
-			channel.getEq().eqGain(EQ.EqBand.High, data2);
-			channel.getEq().setActive(data2 > thresholdLo);
-        }
-        else if (data1 == KNOBS.get(7)) {
+    private int offset(int val, boolean up) {
+    	val += up ? offset : -offset;
+    	if (val > 100) val = 100;
+    	if (val < 0) val = 0;
+    	return val;
+    }
+    
+    public void knob(int idx, boolean up) {
+    	switch(idx) {
+    	case 0:
+    		int reverb = (int)(channel.getReverb().getWet() * 100f);
+    		reverb = offset(reverb, up);
+    		channel.getReverb().set(Reverb.Settings.Wet.ordinal(), reverb);
+			channel.getReverb().setActive(reverb > 0);
+			break;
+    	case 1: 
+    		int room = (int)(channel.getReverb().getRoomSize() * 100f);
+    		room = offset(room, up);
+    		channel.getReverb().set(Reverb.Settings.Room.ordinal(), room);
+			channel.getReverb().setActive(room > thresholdLo);
+			break;
+		case 2:
+        	int feedback = offset(channel.getDelay().get(Delay.Settings.Feedback.ordinal()), up);
+        	channel.getDelay().set(Delay.Settings.Feedback.ordinal(), feedback);
+        	channel.getDelay().setActive(feedback > 0);
+			break;
+        case 3:
+        	int time = offset(channel.getDelay().get(Delay.Settings.DelayTime.ordinal()), up);
+        	channel.getDelay().set(Delay.Settings.DelayTime.ordinal(), time);
+        	break;
+        case 4:
+        	eq(EQ.EqBand.Bass, up);
+			break;
+        case 5:
+        	eq(EQ.EqBand.Mid, up);
+        	break;
+        case 6:    	
+        	eq(EQ.EqBand.High, up);
+        	break;
+        case 7:
+        	channel.getGain().setVol(offset(channel.getGain().getVol(), up));
+            break;
+        case 8:
+        	int rate = offset(channel.getChorus().get(Chorus.Settings.Rate.ordinal()), up);
+        	channel.getChorus().set(Chorus.Settings.Rate.ordinal(), rate);
+        	channel.getChorus().setActive(rate < thresholdHi);
+			break;
+        case 9:
+        	int depth = offset(channel.getChorus().get(Chorus.Settings.Depth.ordinal()), up);
+        	channel.getChorus().set(Chorus.Settings.Depth.ordinal(), depth);
+        	channel.getChorus().setActive(depth > thresholdLo);
+			break;
+        case 10:
+        	int fb = offset(channel.getChorus().get(Chorus.Settings.Feedback.ordinal()), up);
+        	channel.getChorus().set(Chorus.Settings.Feedback.ordinal(), fb);
+        	channel.getChorus().setActive(fb > thresholdLo);
+			break;
+        case 11:
+        	Overdrive dist = channel.getOverdrive();
+        	int od = offset(dist.get(0), up);
+        	dist.set(0, od);
+            dist.setActive(od > 0);
+            break;
+        case 12:			
+        	channel.getPresets().increment(up);
+        	break;
+        case 13:
+        	CutFilter filter = channel.getCutFilter();
+        	int freak = CutFilter.frequencyToKnob(filter.getFrequency());
+        	freak = offset(freak, up);
+        	filter.setActive(freak < thresholdHi);
+        	if (!filter.isActive()) return;
+        	filter.setFilterType(CutFilter.Type.pArTy);
+        	filter.setFrequency(CutFilter.knobToFrequency(freak));
+			break;
+        case 14:
         	CutFilter hello = channel.getHiCut();
-        	hello.setActive(data2 < thresholdHi);
+        	int hz = offset(CutFilter.frequencyToKnob(hello.getFrequency()), up);
+        	hello.setActive(hz < thresholdHi);
         	if (!hello.isActive()) return;
-        	hello.setFrequency(CutFilter.knobToFrequency(data2));
-        }
-	}
-
+        	hello.setFrequency(CutFilter.knobToFrequency(hz));
+        	break;
+        case 15:  
+        	channel.getGain().setPan(offset(channel.getGain().getPan(), up));
+        	break;
+    	}
+    	MainFrame.update(channel);
+    }
+    
+    private void eq(EQ.EqBand band, boolean up) {
+    	int db = offset(channel.getEq().get(band.ordinal()), up);
+    	channel.getEq().eqGain(band, db);
+    	channel.getEq().setActive(db > thresholdLo);
+    }
+    
 }
-

@@ -81,7 +81,7 @@ public class CutFilter implements Effect {
 
     /** y = 1/30 * x ^ 2.81 + bassFloor */
 	public static float knobToFrequency(int val) {
-		return (float)(0.033333 * Math.pow(val, 2.81)) + 120f;
+		return (float)(0.033333 * Math.pow(val, 2.81)) + 55f;
 	}
 	
 	static float[] reverse = new float[100];
@@ -212,51 +212,51 @@ public class CutFilter implements Effect {
     	mono.rewind();
         switch (filterType) {
         case LP6:
-    		filter.filter1Replace(mono, 1);
+    		filter.filter1Replace(mono);
             break;
         case LP12:
         case HP12:
         case NP12:
         case BP12:
-        	filter.filter2Replace(mono, 1);
+        	filter.filter2Replace(mono, 1f);
             break;
         case LP24:
         case HP24:
-        	filter.filter4Replace(mono, 1);
+        	filter.filter4Replace(mono);
             break;
         case pArTy:
         	checkParty();
-        	filter.filter2Replace(mono, 2.5f);
+        	filter.filter2Replace(mono, 2f);
         	break;
         }
     }
 
     /** process replace stereo */
-    public void process(FloatBuffer left, FloatBuffer right, float gain) {
+    public void process(FloatBuffer left, FloatBuffer right) {
     	if (!active) return;
     	left.rewind();
     	right.rewind();
         switch (filterType) {
         case LP6:
-    		filter.filter1Replace(left, gain);
-    		stereo.process(right);
+    		filter.filter1Replace(left);
+    		stereo.filter.filter1Replace(right);
             break;
         case LP12:
         case HP12:
         case NP12:
         case BP12:
-        	filter.filter2Replace(left, gain);
-        	stereo.filter.filter2Replace(right, gain);
+        	filter.filter2Replace(left, 1f);
+        	stereo.filter.filter2Replace(right, 1f);
             break;
         case LP24:
         case HP24:
-        	filter.filter4Replace(left, gain);
-        	stereo.filter.filter4Replace(right, gain);
+        	filter.filter4Replace(left);
+        	stereo.filter.filter4Replace(right);
             break;
         case pArTy:
         	checkParty();
-        	filter.filter2Replace(left, gain * 2.5f);
-        	stereo.filter.filter2Replace(right, gain * 2.5f);
+        	filter.filter2Replace(left, 2f);
+        	stereo.filter.filter2Replace(right, 2f);
         }
 
     }
@@ -325,7 +325,7 @@ public class CutFilter implements Effect {
 	        b1 = 0; b2 = 0;
 	    }
 
-		protected void filter4Replace(FloatBuffer data, float vol) {
+		protected void filter4Replace(FloatBuffer data) {
 
 			if (dirty) {
 	            filter2calc();
@@ -376,7 +376,7 @@ public class CutFilter implements Effect {
 	                    _b2 += b2_delta;
 	                    _gain += gain_delta;
 	                    _wet += wet_delta;
-	                    double x = data.get(i) * vol;
+	                    double x = data.get(i);
 	                    double y = (_a0 * x + _a1 * _x1 + _a2 * _x2 - _b1 * _y1 - _b2 * _y2);
 	                    double xx = (y * _gain) * _wet + (x) * (1 - _wet);
 	                    _x2 = _x1;
@@ -392,7 +392,7 @@ public class CutFilter implements Effect {
 	                }
 	            } else if (a0_delta == 0 && a1_delta == 0 && a2_delta == 0 && b1_delta == 0 && b2_delta == 0) {
 	                for (int i = 0; i < bufferSize; i++) {
-	                    double x = data.get(i) * vol;
+	                    double x = data.get(i);
 	                    double y = (_a0 * x + _a1 * _x1 + _a2 * _x2 - _b1 * _y1 - _b2 * _y2);
 	                    double xx = (y * _gain) * _wet + (x) * (1 - _wet);
 	                    _x2 = _x1;
@@ -414,7 +414,7 @@ public class CutFilter implements Effect {
 	                    _b1 += b1_delta;
 	                    _b2 += b2_delta;
 	                    _gain += gain_delta;
-	                    double x = data.get(i) * vol;
+	                    double x = data.get(i);
 	                    double y = (_a0 * x + _a1 * _x1 + _a2 * _x2 - _b1 * _y1 - _b2 * _y2);
 	                    double xx = (y * _gain) * _wet + (x) * (1 - _wet);
 	                    _x2 = _x1;
@@ -1095,7 +1095,7 @@ public class CutFilter implements Effect {
 	    }
 
 
-	    protected void filter1Replace(FloatBuffer data, float vol) {
+	    protected void filter1Replace(FloatBuffer data) {
 
 	        if (dirty) {
 	            filter1calc();
@@ -1123,58 +1123,30 @@ public class CutFilter implements Effect {
 	            double _y1 = this.y1;
 
 	            if (wet_delta != 0) {
-	            	if (vol == 1f)
-		                for (int i = 0; i < bufferSize; i++) {
-		                    _a0 += a0_delta;
-		                    _q += q_delta;
-		                    _gain += gain_delta;
-		                    _wet += wet_delta;
-		                    _y1 = (1 - _q * _a0) * _y1 - (_a0) * _y2 + (_a0) * data.get(i);
-		                    _y2 = (1 - _q * _a0) * _y2 + (_a0) * _y1;
-		                    data.put( (float) (_y2 * _gain * _wet + data.get(i) * (1 - _wet)) );
-		                }
-	            	else
-		                for (int i = 0; i < bufferSize; i++) {
-		                    _a0 += a0_delta;
-		                    _q += q_delta;
-		                    _gain += gain_delta;
-		                    _wet += wet_delta;
-		                    _y1 = (1 - _q * _a0) * _y1 - (_a0) * _y2 + (_a0) * (data.get(i) * vol);
-		                    _y2 = (1 - _q * _a0) * _y2 + (_a0) * _y1;
-		                    data.put( (float) (_y2 * _gain * _wet + (data.get(i) * vol) * (1 - _wet)) );
-		                }
+	                for (int i = 0; i < bufferSize; i++) {
+	                    _a0 += a0_delta;
+	                    _q += q_delta;
+	                    _gain += gain_delta;
+	                    _wet += wet_delta;
+	                    _y1 = (1 - _q * _a0) * _y1 - (_a0) * _y2 + (_a0) * data.get(i);
+	                    _y2 = (1 - _q * _a0) * _y2 + (_a0) * _y1;
+	                    data.put( (float) (_y2 * _gain * _wet + data.get(i) * (1 - _wet)) );
+	                }
 	            } else if (a0_delta == 0 && q_delta == 0) {
-	            	if (vol == 1f)
-		                for (int i = 0; i < bufferSize; i++) {
-		                    _y1 = (1 - _q * _a0) * _y1 - (_a0) * _y2 + (_a0) * data.get(i);
-		                    _y2 = (1 - _q * _a0) * _y2 + (_a0) * _y1;
-		                    data.put( (float) (_y2 * _gain) );
-		                }
-	            	else
-		                for (int i = 0; i < bufferSize; i++) {
-		                    _y1 = (1 - _q * _a0) * _y1 - (_a0) * _y2 + (_a0) * (data.get(i) * vol);
-		                    _y2 = (1 - _q * _a0) * _y2 + (_a0) * _y1;
-		                    data.put( (float) (_y2 * _gain) );
-		                }
+	                for (int i = 0; i < bufferSize; i++) {
+	                    _y1 = (1 - _q * _a0) * _y1 - (_a0) * _y2 + (_a0) * data.get(i);
+	                    _y2 = (1 - _q * _a0) * _y2 + (_a0) * _y1;
+	                    data.put( (float) (_y2 * _gain) );
+	                }
 	            } else {
-	            	if (vol == 1f)
-		                for (int i = 0; i < bufferSize; i++) {
-		                    _a0 += a0_delta;
-		                    _q += q_delta;
-		                    _gain += gain_delta;
-		                    _y1 = (1 - _q * _a0) * _y1 - (_a0) * _y2 + (_a0) * data.get(i);
-		                    _y2 = (1 - _q * _a0) * _y2 + (_a0) * _y1;
-		                    data.put( (float) (_y2 * _gain) );
-		                }
-	            	else
-		                for (int i = 0; i < bufferSize; i++) {
-		                    _a0 += a0_delta;
-		                    _q += q_delta;
-		                    _gain += gain_delta;
-		                    _y1 = (1 - _q * _a0) * _y1 - (_a0) * _y2 + (_a0) * (data.get(i) * vol);
-		                    _y2 = (1 - _q * _a0) * _y2 + (_a0) * _y1;
-		                    data.put( (float) (_y2 * _gain) );
-		                }
+	                for (int i = 0; i < bufferSize; i++) {
+	                    _a0 += a0_delta;
+	                    _q += q_delta;
+	                    _gain += gain_delta;
+	                    _y1 = (1 - _q * _a0) * _y1 - (_a0) * _y2 + (_a0) * data.get(i);
+	                    _y2 = (1 - _q * _a0) * _y2 + (_a0) * _y1;
+	                    data.put( (float) (_y2 * _gain) );
+	                }
 	            }
 
 	            if (Math.abs(_y2) < 1.0E-8) {

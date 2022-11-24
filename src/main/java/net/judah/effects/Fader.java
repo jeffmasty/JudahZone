@@ -1,5 +1,7 @@
 package net.judah.effects;
 
+import static net.judah.JudahZone.getMixer;
+
 import java.util.ArrayList;
 
 import lombok.RequiredArgsConstructor;
@@ -8,6 +10,7 @@ import net.judah.MainFrame;
 import net.judah.effects.LFO.Target;
 import net.judah.effects.api.Gain;
 import net.judah.mixer.Channel;
+import net.judah.mixer.DJJefe;
 import net.judah.samples.Sample;
 
 @RequiredArgsConstructor
@@ -16,6 +19,7 @@ public class Fader {
 	public static final int DEFAULT_FADE = 3000;
 	
 	final Channel channel;
+	final DJJefe mixer = JudahZone.getMixer();
 	final LFO.Target target;
 	final long msec;
 	final double startVal, endVal;
@@ -30,7 +34,8 @@ public class Fader {
 	public static Fader fadeIn(Channel ch) {
 		return new Fader(ch, Target.Gain, DEFAULT_FADE, 0, ch instanceof Sample ? 95 : 51, new Runnable() {
 		    @Override public void run() {
-		    	JudahZone.getMixer().getFader(ch).updateVolume();
+		    	if (getMixer().getFader(ch) != null)
+		    		getMixer().getFader(ch).updateVolume();
 		    }});
 	}
 	
@@ -43,7 +48,8 @@ public class Fader {
 	public static Fader fadeOut(Channel ch) {
 	    Fader result =  new Fader(ch, Target.Gain, DEFAULT_FADE, ch.getVolume(), 0, new Runnable() {
             @Override public void run() {
-		    	JudahZone.getMixer().getFader(ch).updateVolume();
+            	if (getMixer().getFader(ch) != null)
+            		getMixer().getFader(ch).updateVolume();
             }
         });
 	    if (ch instanceof Sample)
@@ -84,6 +90,7 @@ public class Fader {
 			case Reverb: channel.getReverb().setRoomSize((float) val * 0.01f); break;
 			case Delay: channel.getDelay().setFeedback((float) val * 0.01f); break;
 			case Pan: channel.getGain().set(Gain.PAN, (int)val); break;
+			case OFF:
 		}
 		MainFrame.update(channel);
 	}
@@ -107,7 +114,6 @@ public class Fader {
 			else
 			    f.run(current);
 		}
-
 	}
 
 }

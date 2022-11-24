@@ -12,11 +12,8 @@ import net.judah.api.AudioMode;
 import net.judah.api.ProcessAudio;
 import net.judah.mixer.Channel;
 import net.judah.util.AudioTools;
-import net.judah.util.Constants;
 @Getter
 public abstract class AudioTrack extends Channel implements ProcessAudio {
-
-	protected final int bufferSize = Constants.bufSize();
 
 	@Setter protected Type type = Type.FREE;
     protected Recording recording = new Recording(0, true);
@@ -33,7 +30,7 @@ public abstract class AudioTrack extends Channel implements ProcessAudio {
 	}
 
 	public boolean hasRecording() {
-        return recording != null && length != null && length > 0;
+        return recording != null && length != null && length > 1;
     }
 
     public void setRecording(Recording sample) {
@@ -61,27 +58,31 @@ public abstract class AudioTrack extends Channel implements ProcessAudio {
         AudioTools.processGain(recordedBuffer[LEFT_CHANNEL], workL, baseVol * (1f - getPan()));
         AudioTools.processGain(recordedBuffer[RIGHT_CHANNEL], workR, baseVol * getPan());
 
-        cutFilter.process(in[LEFT_CHANNEL], in[RIGHT_CHANNEL], 1f);   
-        hiCut.process(in[LEFT_CHANNEL], in[RIGHT_CHANNEL], 1f);
+        cutFilter.process(in[LEFT_CHANNEL], in[RIGHT_CHANNEL]);   
+        hiCut.process(in[LEFT_CHANNEL], in[RIGHT_CHANNEL]);
+
+        if (chorus.isActive())
+            chorus.processStereo(in[LEFT_CHANNEL], in[RIGHT_CHANNEL]);
+
+        if (compression.isActive()) {
+        	compression.process(in[LEFT_CHANNEL]);
+        	compression.process(in[RIGHT_CHANNEL]);
+        }
+        
+        if (overdrive.isActive()) {
+            overdrive.processAdd(in[LEFT_CHANNEL]);
+            overdrive.processAdd(in[LEFT_CHANNEL]);
+        }
 
         if (eq.isActive()) {
             eq.process(workL, true);
             eq.process(workR, false);
         }
 
-        if (chorus.isActive())
-            chorus.processStereo(in[LEFT_CHANNEL], in[RIGHT_CHANNEL]);
-        
-        if (overdrive.isActive()) {
-            overdrive.processAdd(in[LEFT_CHANNEL]);
-            overdrive.processAdd(in[LEFT_CHANNEL]);
-        }
-        
         if (delay.isActive()) {
             delay.processAdd(in[LEFT_CHANNEL], in[LEFT_CHANNEL], true);
             delay.processAdd(in[RIGHT_CHANNEL], in[RIGHT_CHANNEL], false);
         }
-        
 		if (reverb.isActive()) 
 			reverb.process(in[LEFT_CHANNEL], in[RIGHT_CHANNEL]);
 		
@@ -91,14 +92,14 @@ public abstract class AudioTrack extends Channel implements ProcessAudio {
     
     @Override // Loop has more sophisticated version
 	public void readRecordedBuffer() { 
-        recordedBuffer = recording.get(tapeCounter.get());
-        int updated = tapeCounter.get() + 1;
-        if (updated == recording.size()) {
-            if (type == Type.ONE_SHOT) {
+    	int updated = tapeCounter.get();
+        recordedBuffer = recording.get(updated);
+        if (++updated == recording.size()) {
+            updated = 0;
+        	if (type == Type.ONE_SHOT) {
             	active = false;
             	MainFrame.update(this);
             }
-            updated = 0;
         }
         tapeCounter.set(updated);
     }

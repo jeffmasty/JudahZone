@@ -20,7 +20,6 @@ public class Cycle implements ActionListener {
 	@Setter @Getter private static boolean verse; // vs. chorus
 	@Getter private static boolean trigger;
 	
-	
 	private int selected; 
 	private int count;
 	@Setter private boolean odd = false;

@@ -21,7 +21,7 @@ public class EffectColor implements Pastels {
 			return Color.LIGHT_GRAY;
 		if (Delay.class.equals(class1)) 
 			return ORANGE;
-		if (Compression.class.equals(class1))
+		if (Compressor.class.equals(class1))
 			return PURPLE;
 		if (LFO.class.equals(class1))
 			return BLUE;

@@ -6,8 +6,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -18,7 +16,6 @@ import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Sequence;
 import javax.swing.BorderFactory;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -27,9 +24,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
 import lombok.Getter;
-import net.judah.JudahZone;
 import net.judah.api.Midi;
-import net.judah.mixer.Channel;
 
 public class Constants {
 	private static ClassLoader loader = Constants.class.getClassLoader();
@@ -39,6 +34,7 @@ public class Constants {
 	private static int _BUFSIZE = 512;//TODO:(256)
 	public static int sampleRate() { return _SAMPLERATE; }
 	public static int bufSize() { return _BUFSIZE; }
+	public static final float TUNING = 440;
 	/** Digital interface name */
 	@Getter static String di = "UMC1820 MIDI 1"; //return "Komplete ";
 	
@@ -53,7 +49,7 @@ public class Constants {
 	public static final File KITS = new File(_home, "kits");
 	public static final File SHEETMUSIC = new File(_home, "sheets");
 	public static final File SYNTH = new File(_home, "synth");
-	public static final String ICONS = "/home/judah/git/JudahZone/resources/icons/";
+	public static final File ICONS = new File(ROOT, "icons");//"/home/judah/git/JudahZone/resources/icons/";
 	
 	public static final Midi DUMBDRUM = create(1, 0);
 	public static final Midi BASSDRUM = create(36, 100);
@@ -82,8 +78,6 @@ public class Constants {
 	public static final String CRAVE_PORT = "system:capture_3";
 	public static final String MAIN = "Mains";
 	public  static final String DRUMS = "Drumtrack";
-	public static final String LOOPA = "Loop A";
-	public static final String LOOPB = "Loop B";
 		
 	public static final String NL = System.getProperty("line.separator", "\r\n");
 	public static final String CUTE_NOTE = "♫ ";
@@ -92,7 +86,7 @@ public class Constants {
 	public static String FX = "Fx";
 
 	/** milliseconds between checking the update queue */
-	public static final int GUI_REFRESH = 5;
+	public static final int GUI_REFRESH = 12;
 	public static final long DOUBLE_CLICK = 400;
 
     public static interface Gui {
@@ -199,6 +193,10 @@ public class Constants {
 		return result;
 	}
 
+	public static float midiToHz(int data1) {
+        return (float)(Math.pow(2, (data1 - 57d) / 12d)) * TUNING;
+    }
+
 	public static Midi transpose(Midi in, int steps) throws InvalidMidiDataException {
 		if (steps == 0) return in;
 		return new Midi(in.getCommand(), in.getChannel(), in.getData1() + steps, in.getData2());
@@ -261,17 +259,6 @@ public class Constants {
 		} catch (MidiUnavailableException e) { e.printStackTrace(); }
 	}
 
-	private static final String[] DEFAULT_OUT = new String[] {MAIN, DRUMS, LOOPA, LOOPB};
-
-	public static JComboBox<String> createMixerCombo() {
-	    ArrayList<String> channels = new ArrayList<>(Arrays.asList(DEFAULT_OUT));
-        for (Channel c : JudahZone.getInstruments())
-            channels.add(c.getName());
-        JComboBox<String> result = new JComboBox<>(
-                channels.toArray(new String[channels.size()]));
-	    return result;
-	}
-
     public static void writeToFile(File file, String content) {
         new Thread(() -> {
             try { Files.write(Paths.get(file.toURI()), content.getBytes());
@@ -279,41 +266,6 @@ public class Constants {
         }).start();
     }
     
-    /** see https://stackoverflow.com/a/846249 */ 	
-	public static float logarithmic(int percent, float min, float max) {
-		
-		// percent will be between 0 and 100
-		final int minp = 1;
-		final int maxp = 100;
-		assert percent <= max && percent >= min;
-		
-		// The result should be between min and max
-		if (min <= 0) min = 0.001f;
-		double minv = Math.log(min);
-		double maxv = Math.log(max);
-	
-		// calculate adjustment factor
-		double scale = (maxv-minv) / (maxp-minp);
-		return (float)Math.exp(minv + scale * (percent - minp));
-	}
-	
-	/** untested */
-	public static int reverseLog(float val, float min, float max) {
-		// input should be between min and max
-		assert val >= min && val <= max;
-
-		// result will be between 0 and 100
-		var minp = 0;
-		var maxp = 100;
-		
-		var minv = Math.log(min);
-		var maxv = Math.log(max);
-		// calculate adjustment factor
-		var scale = (maxv-minv) / (maxp-minp);
-		
-		return Math.round((float)((Math.log(val)-minv) / scale + minp));
-	}
-	
 	public static Object ratio(int data2, List<?> input) {
         return input.get((int) ((data2 - 1) / (100 / (float)input.size())));
 	}
@@ -362,6 +314,48 @@ public class Constants {
 		}
 	}
 
-
+    /** see https://stackoverflow.com/a/846249 */ 	
+	public static float logarithmic(int percent, float min, float max) {
+		
+		// percent will be between 0 and 100
+		final int minp = 1;
+		final int maxp = 100;
+		assert percent <= max && percent >= min;
+		
+		// The result should be between min and max
+		if (min <= 0) min = 0.001f;
+		double minv = Math.log(min);
+		double maxv = Math.log(max);
+	
+		// calculate adjustment factor
+		double scale = (maxv-minv) / (maxp-minp);
+		return (float)Math.exp(minv + scale * (percent - minp));
+	}
+	
+//	/** untested */
+//	public static double reverseLog(float val, float min, float max) {
+//		// input should be between min and max
+//		assert val >= min && val <= max;
+//
+//		// result will be between 0 and 100
+////		float minp = 0;
+//		float maxp = 100;
+//		
+//		double minv = Math.log(min);
+//		double maxv = Math.log(max);
+//		// calculate adjustment factor
+//		double scale = (maxv-minv) / maxp;
+//		
+//		// return /*Math.round(*/(Math.log(val)-minv) / scale;
+//	
+//		return Math.pow(max, val);
+//	}
+	
+	@Getter static float[] reverseLog = new float[100];
+	static {
+		for (int i = 0; i < reverseLog.length; i++)
+			reverseLog[i] = logarithmic(i, 0, 1);
+	}
+	
 	
 }

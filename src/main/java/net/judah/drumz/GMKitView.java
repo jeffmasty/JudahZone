@@ -72,7 +72,7 @@ public class GMKitView extends JPanel {
 		first.setLayout(new GridLayout(1, 4, 2, 2));
     	second.setLayout(new GridLayout(1, 4, 2, 2));
 
-    	current = (MidiInstrument)JudahZone.getMidi().getPath(track.getMidiOut().getMidiPort().getPort()).getChannel();
+    	current = (MidiInstrument)JudahZone.getMidi().getPath(track.getMidiOut().getMidiPort()).getChannel();
     	
     	for(int i = 0; i < 4; i++)
     		first.add(new GMPad(DrumType.values()[i], this));

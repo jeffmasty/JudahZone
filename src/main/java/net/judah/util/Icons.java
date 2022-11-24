@@ -1,5 +1,6 @@
 package net.judah.util;
 
+import java.io.File;
 import java.util.HashMap;
 
 import javax.swing.ImageIcon;
@@ -11,8 +12,11 @@ public class Icons {
 	
     public static ImageIcon load(String name) {
     	if (map.get(name) == null) {
-    		String path = Constants.ICONS + name;
-    		map.put(name, new ImageIcon(path));
+    		try {
+    			map.put(name, new ImageIcon(new File(Constants.ICONS, name).toURI().toURL()));
+    		} catch (Exception e) {
+    			RTLogger.warn("Icons " + name, e);
+    		}
     	}
         return map.get(name);
     }

@@ -15,7 +15,7 @@ public class Voice {
 		this.idx = idx;
 		this.synth = synth;
 		for (int i = 0; i < OSCILLATORS; i++)
-			oscillators[i] = new Dco();
+			oscillators[i] = new Dco(i, synth);
 	}
 	
 	public void reset(float hz) {
@@ -28,6 +28,11 @@ public class Voice {
 		float amplify = gain * env.calcEnv(notes, idx, adsr);
 		for (int i = 0; i < OSCILLATORS; i++)
 			oscillators[i].process(amplify * synth.computeGain(i), synth.getShape(i).getWave(), output);
+	}
+
+	public void bend(float factor) {
+		for (Dco osc : oscillators)
+			osc.setBend(factor);
 	}
 
 	

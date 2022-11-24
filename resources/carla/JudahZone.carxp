@@ -207,12 +207,24 @@
    <Target>JudahMidi:keyboard</Target>
   </Connection>
   <Connection>
-   <Source>JudahZone:right</Source>
+   <Source>PulseAudio JACK Sink:front-left</Source>
+   <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>PulseAudio JACK Sink:front-right</Source>
    <Target>system:playback_2</Target>
+  </Connection>
+  <Connection>
+   <Source>a2j:Arturia BeatStep [44] (capture): Arturia BeatStep MIDI 1</Source>
+   <Target>JudahMidi:beatstep</Target>
   </Connection>
   <Connection>
    <Source>JudahZone:left</Source>
    <Target>system:playback_1</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahZone:right</Source>
+   <Target>system:playback_2</Target>
   </Connection>
   <Connection>
    <Source>JudahMidi:Tempo</Source>
@@ -225,6 +237,10 @@
   <Connection>
    <Source>JudahMidi:Clock</Source>
    <Target>a2j:MPKmini2 [40] (playback): MPKmini2 MIDI 1</Target>
+  </Connection>
+  <Connection>
+   <Source>JudahMidi:Clock</Source>
+   <Target>a2j:Arturia BeatStep [44] (playback): Arturia BeatStep MIDI 1</Target>
   </Connection>
   <Connection>
    <Source>JudahMidi:Fluid</Source>

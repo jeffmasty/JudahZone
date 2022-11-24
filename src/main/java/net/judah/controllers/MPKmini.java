@@ -1,32 +1,30 @@
 package net.judah.controllers;
 
 import static net.judah.JudahZone.*;
-import static net.judah.controllers.KnobMode.*;
+import static net.judah.controllers.KnobMode.Clock;
+
+import java.awt.Component;
 
 import javax.swing.JLabel;
 
 import org.jaudiolibs.jnajack.JackException;
-import org.jaudiolibs.jnajack.JackMidi;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.JudahZone;
 import net.judah.MainFrame;
 import net.judah.api.Midi;
 import net.judah.api.MidiReceiver;
 import net.judah.drumz.DrumType;
-import net.judah.drumz.KitView;
+import net.judah.drumz.KitzView;
 import net.judah.effects.Delay;
-import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.ProgChange;
-import net.judah.mixer.Channel;
 import net.judah.samples.Sample;
 import net.judah.synth.SynthEngines;
+import net.judah.tracker.Track;
 import net.judah.tracker.Tracker;
 import net.judah.tracker.Transpose;
 import net.judah.util.Pastels;
-import net.judah.util.RTLogger;
 
 /** Akai MPKmini, not the new one */
 @RequiredArgsConstructor
@@ -39,6 +37,7 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 	private static final int JOYSTICK_R = 0;
 
 	private final JudahMidi sys;
+	
 	private final Midi NO_MODULATION = Midi.create(Midi.CONTROL_CHANGE, 0, 1, 0);
 	private final byte[] SUSTAIN_ON = Midi.create(Midi.CONTROL_CHANGE, 0, 64, 127).getMessage();
 	@SuppressWarnings("unused")
@@ -48,34 +47,30 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 	
 	public static void setMode(KnobMode knobs) {
 		mode = knobs;
-		MainFrame.setFocus(knobs);
-		// MainFrame.update(JudahZone.getTimeSig());
+		MainFrame.setFocus(mode);
 	}
 	
 	@Override
 	public boolean midiProcessed(Midi midi) throws JackException {
-		Tracker tracker = getTracker();
+
 		if (Midi.isCC(midi)) {
-			if (midi.getData1() == JudahClock.TEMPO_CC && mode== Clock) {
-				try { // Send Tempo adjust to external clock
-					JackMidi.eventWrite(sys.getTempo(), JudahMidi.ticker(), midi.getMessage(), midi.getLength());
-				} catch (Exception e) {
-					RTLogger.warn(this, e);
-				}
-				return true;
-			} else
-				return checkCC(midi.getData1(), midi.getData2());
+			return checkCC(midi.getData1(), midi.getData2());
 		}
 		if (Midi.isProgChange(midi)) 
 			return doProgChange(midi.getData1(), midi.getData2());
 		
+		if (getTracker().isRecord() && Midi.isNote(midi)) {
+			getNotes().record(midi);
+			return false; // pass through?
+		}
+
 		if (midi.getChannel() == 9) {
 			int data1 = midi.getData1();
 			
 			for (int i = 0; i < DRUMS_A.size() ; i++)
 				if (DRUMS_A.get(i) == data1) {
 					int translate = getDrumMachine().getDrum1().getSamples()[i].getGmDrum().getData1();
-					if (tracker.isRecord()) {
+					if (getTracker().isRecord()) {
 						getBeats().record(midi);
 					}
 					else 
@@ -88,69 +83,41 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 				if (DRUMS_B.get(i) == data1) {
 					midi = Midi.create(midi.getCommand(), 9, 
 							DrumType.values()[i].getDat().getData1(), midi.getData2());
-					if (tracker.isRecord()) {
+					if (getTracker().isRecord()) {
 						getBeats().record(midi);
 					}
 					else {
 						getBeats().getDrum2().getMidiOut().send(midi, JudahMidi.ticker());
 					}
 				}
-			return false;
+			return true;
 		}
-		if (tracker.isRecord() && 
-				(midi.getCommand() == Midi.NOTE_ON || midi.getCommand() == Midi.NOTE_OFF)) {
-			getNotes().record(midi);
-			return false; // pass through?
-		}
-		
+
 		if (Transpose.isActive() && midi.getCommand() == Midi.NOTE_ON) {
-			Transpose.setAmount(midi.getData1() - MIDDLE_C);
+			Transpose.setOnDeck(midi.getData1() - MIDDLE_C);
 			return true; // key press consumed
 		}
 		return false; 
 	}
 
 	private boolean checkCC(int data1, int data2) throws JackException {
-		if (KNOBS.contains(data1)) 
-			return doKnob(data1, data2);
+		if (KNOBS.contains(data1)) {
+			MainFrame.update(new KnobData(data1 - KNOBS.get(0), data2));
+			return true;
+		} 
 		if (data1 == JOYSTICK_L)
 			return joystickL(data2);
 		if (data1 == JOYSTICK_R)
 			return joystickR(data2);
 		if (PRIMARY_CC.contains(data1)) 
 			return cc_pad(data1, data2);
-		else if (SAMPLES_CC.contains(data1)) {
+		if (SAMPLES_CC.contains(data1)) {
 			Sample s = getSampler().get(SAMPLES_CC.indexOf(data1));
 			getSampler().play(s, data2 > 0);
 			return true;
 		}
 		return false;
 	}
-
-	private boolean doKnob(int data1, int data2) {
-		switch(mode) {
-			case FX1:
-				getFxRack().getCurrent().effects1(data1, data2);
-				return true;
-			case FX2:
-				getFxRack().getCurrent().effects2(data1, data2);
-				return true;
-			case Clock:
-				getMidiGui().clockKnobs(data1 - KNOBS.get(0), data2);
-				return true;
-			case Track:
-				getTracker().knob(data1 - KNOBS.get(0), data2);
-				return true;
-			case Synth: 
-				SynthEngines.getCurrent().synthKnobs(data1 - KNOBS.get(0), data2);
-				return true;
-			case Kit:
-				KitView.getCurrent().knob(data1 - KNOBS.get(0), data2);
-				return true;
-		}
-		return false;
-	}
-	
 
 	private boolean cc_pad(int data1, int data2) throws JackException {
 		///////// ROW 1 /////////////////
@@ -160,17 +127,40 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 		else if (data1 == PRIMARY_CC.get(1)) { // sync Crave's internal sequencer
 			sys.synchronize(getCrave());
 		}
-		else if (data1 == PRIMARY_CC.get(2) && data2 > 0) // Clock or Tracks
+		else if (data1 == PRIMARY_CC.get(2) && data2 > 0) // focus MidiGui or LFO
 			if (MPKmini.getMode() == Clock)
-				MPKmini.setMode(KnobMode.Track);
+				{MPKmini.setMode(KnobMode.LFO);}
 			else 
 				MPKmini.setMode(Clock); 
-		else if (data1 == PRIMARY_CC.get(3) && data2 > 0) // EFX . . . []  
-			if (MPKmini.getMode() == FX1)
-				MPKmini.setMode(FX2);
+		else if (data1 == PRIMARY_CC.get(3) && data2 > 0) {// focus TRACKS
+			Component window = getFrame().getTab();
+			Tracker tracker = getTracker();
+			if (window == tracker) {
+				Track current = getTracker().getCurrent();
+				int idx = getBeats().indexOf(current);
+				boolean drums = true;
+				if (idx >= 0) {
+					idx++;
+					if (idx == getBeats().size()) {
+						drums = false;
+						idx = 0;
+					}
+				}
+				else {
+					drums = false;
+					idx = getNotes().indexOf(current) + 1;
+					if (idx == getNotes().size()) {
+						drums = true;
+						idx = 0;
+					}
+				}
+				tracker.setCurrent(drums ? getBeats().get(idx) : getNotes().get(idx));
+				MPKmini.setMode(KnobMode.Track);
+			}
 			else 
-				MPKmini.setMode(FX1);
-		
+				getFrame().addOrShow(getTracker(), Tracker.NAME);
+		}
+			
 		///////// ROW 2 /////////////////
 		else if (data1 == PRIMARY_CC.get(4)) { 
 			Transpose.toggle();
@@ -180,19 +170,22 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 			//			return true;
 		}
 		else if (data1 == PRIMARY_CC.get(5)) { 
+			// TODO
 			// record toggle
 		}
-		else if (data1 == PRIMARY_CC.get(6) && data2 > 0) { // focus fluid/synth2
-			Channel current = JudahZone.getFxRack().getChannel(); 
-			if (current == JudahZone.getFluid())
-				MainFrame.setFocus(JudahZone.getSynth2());
-			else MainFrame.setFocus(JudahZone.getFluid());
+		else if (data1 == PRIMARY_CC.get(6) && data2 > 0) { // focus Synth1 or Synth2
+			Component selected = getFrame().getTab();
+			if (selected == SynthEngines.getInstance()) 
+				SynthEngines.flip();
+			else 
+				getFrame().addOrShow(SynthEngines.getInstance(), SynthEngines.NAME);
 		}
-		else if (data1 == PRIMARY_CC.get(7) && data2 > 0) { // focus mains/crave
-			Channel current = JudahZone.getFxRack().getChannel(); 
-			if (current == JudahZone.getMains())
-				MainFrame.setFocus(JudahZone.getCrave());
-			else MainFrame.setFocus(JudahZone.getMains());
+		else if (data1 == PRIMARY_CC.get(7) && data2 > 0) { // focus Drum Kits
+			Component selected = getFrame().getTab();
+			if (selected == KitzView.getInstance()) 
+				KitzView.getInstance().incrementKit();
+			else
+				getFrame().addOrShow(KitzView.getInstance(), KitzView.NAME);
 		} 
 		else 
 			return false;
@@ -200,7 +193,7 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 	}
 
 	private boolean joystickL(int data2) throws JackException {
-		Delay d = getFxRack().getChannel().getDelay();
+		Delay d = sys.getPaths().get(getSynthPorts().indexOf(sys.getKeyboardSynth())).getChannel().getDelay();
 		d.setActive(data2 > 4);
 		if (data2 <= 4) 
 			return true;
@@ -220,7 +213,6 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 			sys.getKeyboardSynth().send(NO_MODULATION, JudahMidi.ticker());
 		return true;
 	}
-	
 	
 	private boolean doProgChange(int data1, int data2) {
 

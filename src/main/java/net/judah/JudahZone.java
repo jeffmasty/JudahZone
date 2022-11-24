@@ -22,7 +22,6 @@ import com.illposed.osc.OSCSerializeException;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j;
 import net.judah.api.BasicClient;
-import net.judah.carla.Carla;
 import net.judah.controllers.Jamstik;
 import net.judah.drumz.DrumKit;
 import net.judah.drumz.DrumMachine;
@@ -35,23 +34,26 @@ import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiGui;
-import net.judah.midi.Path;
 import net.judah.midi.Ports;
 import net.judah.mixer.*;
 import net.judah.samples.Sampler;
 import net.judah.songs.SmashHit;
 import net.judah.synth.JudahSynth;
-import net.judah.tracker.GridTab;
-import net.judah.tracker.JudahBeatz;
-import net.judah.tracker.JudahNotez;
+import net.judah.tracker.DrumTracks;
+import net.judah.tracker.SynthTracks;
 import net.judah.tracker.Track;
 import net.judah.tracker.Tracker;
+import net.judah.tracker.edit.GridTab;
 import net.judah.util.Constants;
 import net.judah.util.JudahException;
 import net.judah.util.RTLogger;
 import net.judah.util.SettableCombo;
 
-/* my jack sound system settings: jackd -P99 -dalsa -dhw:UMC1820 -r48000 -p512 -n2*/
+/* my jack sound system settings: 
+ * jackd -P99 -dalsa -dhw:UMC1820 -r48000 -p512 -n2
+ * a2jmidid -e 
+ * 
+ */
 @Log4j
 public class JudahZone extends BasicClient {
     public static final String JUDAHZONE = JudahZone.class.getSimpleName();
@@ -74,14 +76,13 @@ public class JudahZone extends BasicClient {
     @Getter private static JudahSynth synth2;
     @Getter private static DrumMachine drumMachine;
     @Getter private static Tracker tracker;
-    @Getter private static JudahBeatz beats;
-    @Getter private static JudahNotez notes;
+    @Getter private static DrumTracks beats;
+    @Getter private static SynthTracks notes;
     @Getter private static DJJefe mixer;
     @Getter private static Looper looper;
     @Getter private static GridTab beatBox; 
     @Getter private static Sampler sampler;
     @Getter private static Jamstik jamstik;
-    @Getter private static Carla carla;
     @Getter private static SetList setlist;
     @Getter private static SmashHit current;
     @Getter private static MainFrame frame;
@@ -93,7 +94,6 @@ public class JudahZone extends BasicClient {
     @Getter private static final Ports synthPorts = new Ports();
     @Getter private static final Ports drumPorts = new Ports();
     @Getter private static final Zone noizeMakers = new Zone();
-    @Getter private static boolean override; // for SettableCombo
 
     public static void main(String[] args) {
         try {
@@ -120,7 +120,7 @@ public class JudahZone extends BasicClient {
         outL = jackclient.registerPort("left", AUDIO, JackPortIsOutput);
         outR = jackclient.registerPort("right", AUDIO, JackPortIsOutput);
 
-        drumMachine = new DrumMachine("Drum Machine", outL, outR, "DrumMachine.png");
+        drumMachine = new DrumMachine("Drums", outL, outR, "DrumMachine.png");
     	midi = new JudahMidi("JudahMidi", this, drumMachine);
     	
     	JackPort left, right;
@@ -158,17 +158,14 @@ public class JudahZone extends BasicClient {
         noizeMakers.add(synth2);
         noizeMakers.add(fluid);
         noizeMakers.add(crave);
-        noizeMakers.add(piano);
+        //noizeMakers.add(piano);
+        
         noizeMakers.initVolume();
         noizeMakers.initMutes();
         
         looper = new Looper(outL, outR, noizeMakers, drumMachine);
         sampler = new Sampler(outL, outR);
         mains = new Mains(outL, outR);
-
-        try { // Initialize the Carla lv2 plugin host now that our ports are created
-            carla = new Carla(Carla.NO_GUI, looper);
-        } catch (Exception e) { throw new JackException(e); }
     }
 
     @Override
@@ -189,29 +186,22 @@ public class JudahZone extends BasicClient {
         // main output
         jack.connect(jackclient, outL.getName(), "system:playback_1");
         jack.connect(jackclient, outR.getName(), "system:playback_2");
-
+        
     }
     
     /**Start Gui. Called by JudahMidi when initialization complete, audio and midi setup complete */
-    public void finalizeMidi() { 
+    public void finalizeMidi(JudahClock midiClock) { 
     	while (mains == null) // sync with Audio initialization
     		Constants.sleep(30);
-    	clock = midi.getClock();
+    	clock = midiClock;
     	beats = clock.getBeats();
     	notes = clock.getNotes();
-    	synthPorts.add(synth1.getMidiPort());
-    	synthPorts.add(synth2.getMidiPort());
-    	synthPorts.add(fluid.getMidiPort());
-    	synthPorts.add(crave.getMidiPort());
-    	midi.setKeyboardSynth(synthPorts.get(synth1));
-    	ArrayList<Path> paths = midi.getPaths();
-    	paths.add(new Path(synthPorts.get(synth1), synth1));
-    	paths.add(new Path(synthPorts.get(synth2), synth2));
-    	paths.add(new Path(synthPorts.get(midi.getFluidOut()), fluid));
-    	paths.add(new Path(synthPorts.get(midi.getCraveOut()), crave));
+    	clock.setSampler(sampler);
+    	clock.addListener(looper);
     	
-    	for (DrumKit drums : drumMachine.getChannels())
-    		drumPorts.add(drums.getMidiPort());
+    	drumPorts.add(fluid.getMidiPort());
+    	for (DrumKit kit : drumMachine.getDrumkits())
+    		drumPorts.add(kit.getMidiPort());
 
     	String[] patches = fluid.getPatches();
     	fluid.progChange(patches[44], 0); // strings
@@ -222,10 +212,10 @@ public class JudahZone extends BasicClient {
     	tracker = new Tracker(beats, notes);
     	setlist = new SetList();
     	fxRack = new FxPanel();
-    	jamstik = new Jamstik(services, midi.getPaths());
+    	jamstik = new Jamstik(services, synthPorts);
     	midiGui = new MidiGui(midi, clock, jamstik);
     	mixer = new DJJefe(mains, looper, noizeMakers);
-    	beatBox = new GridTab();
+    	beatBox = new GridTab(tracker);
     	frame = new MainFrame(JUDAHZONE, fxRack, midiGui, mixer, beatBox, tracker);
     	mains.setOnMute(false);
     	MainFrame.update(frame);
@@ -239,16 +229,16 @@ public class JudahZone extends BasicClient {
     }
 
     private void loadDrumMachine() {
-        synth1.getPresets().load("FeelGoodInc");
-        synth2.getPresets().load("TimeAfterTime");
+        synth1.getSynthPresets().load("FeelGoodInc");
+        synth2.getSynthPresets().load("TimeAfterTime");
         
         
         drumMachine.getDrum1().setKit("BBuddy");
-        drumMachine.getDrum2().setKit("Perks");
+        drumMachine.getDrum2().setKit("VCO");
         drumMachine.getFills().setKit("Pearl");
         drumMachine.getHats().setKit("808");
         beats.getDrum1().setFile("Bossa1");
-        beats.getDrum2().setFile("Swing1");
+        beats.getDrum2().setFile("SkipBeats");
         beats.getFills().setFile("tinyDrums");
 		Track hihats = beats.getHats();
         hihats.setFile("HiHats");
@@ -274,6 +264,7 @@ public class JudahZone extends BasicClient {
         guitar.getCutFilter().setActive(true);
         fluid.getLfo().setActive(true);
         mains.setOnMute(false);
+        
         int timer = 777;
         Constants.timer(timer, () ->{
         	c.record(false);
@@ -289,7 +280,7 @@ public class JudahZone extends BasicClient {
         });
         Constants.timer(timer * 2, () -> {
         		mains.setOnMute(true);
-        		if (jamstik.isActive())
+        		if (Jamstik.isActive())
         			jamstik.toggle();
         		looper.reset();
         		mic.getReverb().setActive(false);
@@ -329,7 +320,7 @@ public class JudahZone extends BasicClient {
     	new Thread(()->{
     		@SuppressWarnings("unchecked")
 			Class<? extends SmashHit> target = ((Class<? extends SmashHit>)midiGui.getSetlistCombo().getSelectedItem());
-    		override = true;
+    		SettableCombo.setOverride(true);
     		try {
 		    	SmashHit song = target.getDeclaredConstructor().newInstance();
 		    	if (current != null) {
@@ -343,7 +334,7 @@ public class JudahZone extends BasicClient {
     		} catch (Exception e) {
     			RTLogger.warn(JudahZone.class, e);
     		} finally {
-    			override = false;
+    			SettableCombo.setOverride(false);
     		}
     	}).start();
     }
@@ -411,12 +402,14 @@ public class JudahZone extends BasicClient {
         }
     }
     
-    public void recoverMidi() { // TODO
+    public void recoverMidi() { 
         new Thread(() -> {
         	if (midi != null) midi.close();
-            Constants.sleep(100);
+            Constants.sleep(60);
             try {
-                midi = new JudahMidi("JudahMidi", this, drumMachine);
+            	initialized = false; // TODO
+                midi = new JudahMidi("JudahMidi", this, drumMachine, clock);
+                
             } catch (Exception e) {
                 RTLogger.warn(this, e);
             }

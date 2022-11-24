@@ -113,12 +113,13 @@ public class AudioTools  {
 
 	}
 	
-	public static void copy(float[][] in, float[][] out) {
+	public static float[][] copy(float[][] in, float[][] out) {
 		for (int i = 0; i < in.length; i++) {
 			for (int j = 0; j < out[i].length; j++) {
 				out[i][j] = in[i][j];
 			}
 		}
+		return out;
 	}
 	public static float[] copy(FloatBuffer input) {
 		input.rewind();

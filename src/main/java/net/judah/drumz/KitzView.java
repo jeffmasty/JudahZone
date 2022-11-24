@@ -18,13 +18,17 @@ import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 
 import lombok.Getter;
+import net.judah.JudahZone;
+import net.judah.controllers.KnobMode;
+import net.judah.controllers.Knobs;
+import net.judah.controllers.MPKmini;
 import net.judah.drumz.KitView.Modes;
-import net.judah.tracker.JudahBeatz;
+import net.judah.tracker.DrumTracks;
 import net.judah.util.Constants;
 import net.judah.util.Pastels;
 
 @Getter
-public class KitzView extends JPanel {
+public class KitzView extends JPanel implements Knobs {
 	public static final String NAME = "Kits";
 	private static final Border border = BorderFactory.createSoftBevelBorder(BevelBorder.LOWERED);
 	private static final Font font = Constants.Gui.BOLD;
@@ -34,6 +38,8 @@ public class KitzView extends JPanel {
 	private final JPanel modesPnl;
 	private final HashMap<KitView, KitButton> views = new HashMap<>();
 	private final JPanel banner; 
+	private final KnobMode knobMode = KnobMode.Drums1;
+	
 	public static KitzView getInstance() {
 		if (instance == null)
 			new KitzView();
@@ -78,7 +84,7 @@ public class KitzView extends JPanel {
 	private KitzView() {
 		instance = this;
 		DrumMachine drumz = getDrumMachine();
-		JudahBeatz beats = getBeats();
+		DrumTracks beats = getBeats();
 		KitView drum1 = new KitView(drumz.getDrum1(), beats.getDrum1());
 		KitView drum2 = new KitView(drumz.getDrum2(), beats.getDrum2());
 		KitView hats = new KitView(drumz.getHats(), beats.getHats());
@@ -90,8 +96,8 @@ public class KitzView extends JPanel {
 		KitButton btnfill = new KitButton(fills);
 		
 		views.put(drum1, btn1);
-		views.put(drum2, btn2);
 		views.put(hats, btnhat);
+		views.put(drum2, btn2);
 		views.put(fills, btnfill);
 		KitView.setCurrent(hats);
 
@@ -105,7 +111,7 @@ public class KitzView extends JPanel {
 			modes.add(new ModeButton(mode, modesPnl));
 		
 		JPanel kitz = new JPanel(new GridLayout(1, views.size(), 2, 1));
-		kitz.add(btn1); kitz.add(btn2); kitz.add(btnhat); kitz.add(btnfill);
+		kitz.add(btn1); kitz.add(btnhat); kitz.add(btn2); kitz.add(btnfill);
 		
 		banner.add(new JLabel(" Kit Knobs: "));
 		banner.add(kitz);
@@ -115,8 +121,8 @@ public class KitzView extends JPanel {
 		
 		JPanel overview = new JPanel();
 		overview.setLayout(new GridLayout(2, 2, 10, 10));
-		overview.add(drum1); overview.add(drum2);
-		overview.add(hats);  overview.add(fills);
+		overview.add(drum1); overview.add(hats);  
+		overview.add(drum2); overview.add(fills);
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 
 		add(Constants.wrap(overview));
@@ -144,7 +150,6 @@ public class KitzView extends JPanel {
 			views.get(key).setBackground(highlight ? Pastels.BLUE : null);
 		}
 	}
-
 	
 	public void update(DrumSample s) {
 		for (KitView v : views.keySet())
@@ -157,6 +162,25 @@ public class KitzView extends JPanel {
 		for (KitView v : views.keySet())
 			if (v.getDrumz() == kit)
 				v.update();
+	}
+
+	public void incrementKit() {
+		DrumMachine drums = JudahZone.getDrumMachine();
+		DrumKit kit = KitView.getCurrent().getDrumz();
+		if (kit == drums.getDrum1())
+			kit = drums.getHats();
+		else if (kit == drums.getHats())
+			kit = drums.getDrum2();
+		else if (kit == drums.getDrum2())
+			kit = drums.getFills();
+		else if (kit == drums.getFills())
+			kit = drums.getDrum1();
+		for (KitView v : views.keySet())
+			if (v.getDrumz() == kit) {
+				KitView.setCurrent(v);
+				return;
+			}
+		MPKmini.setMode(kit.getKnobMode());
 	}
 	
 }

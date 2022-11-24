@@ -165,10 +165,10 @@ public class ChannelFader extends JPanel implements Pastels {
 				bg = YELLOW;
 			else if (loop.hasRecording() && loop.isPlaying() == AudioMode.STOPPED)
 				bg = Color.DARK_GRAY;
-			else if (loop.isPlaying() == AudioMode.RUNNING && loop.isActive())
-				bg = GREEN;
 			else if (loop.isArmed()) 
 				bg = PINK;
+			else if (loop.isPlaying() == AudioMode.RUNNING && loop.isActive())
+				bg = GREEN;
 			else {
 				Loop a = JudahZone.getLooper().getLoopA();
 				if (a == channel && !JudahClock.isLoopSync())
@@ -190,7 +190,7 @@ public class ChannelFader extends JPanel implements Pastels {
 					midi.getSync().contains(((MidiInstrument)channel).getMidiPort()))
 				bg = PINK;
 		}
-		else bg = Color.WHITE; // i.e. MAINS
+		else bg = MY_GRAY; // i.e. MAINS
 		
 		if (false == banner.getBackground().equals(bg)) {
 			banner.setBackground(bg);
@@ -230,7 +230,6 @@ public class ChannelFader extends JPanel implements Pastels {
 				JudahZone.getClock().listen(JudahZone.getLooper().getLoopA());
 			else { 
 				loop.setArmed(sync.isSelected());
-				background();
 			}
 		}
 	}

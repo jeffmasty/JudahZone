@@ -14,19 +14,29 @@ import javax.swing.JPanel;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.MainFrame;
+import net.judah.controllers.KnobMode;
+import net.judah.controllers.Knobs;
 import net.judah.midi.Panic;
+import net.judah.tracker.view.TrackView;
 import net.judah.util.Constants;
 
-public class Tracker extends JPanel implements Closeable {
+@Getter
+public class Tracker extends JPanel implements Closeable, Knobs {
 
 	public static final String NAME = "Tracker";
 	
-	@Getter private Track current;
-	@Getter private final JLabel feedback = new JLabel("Drum1", JLabel.CENTER);
-	@Getter private final ArrayList<TrackView> views = new ArrayList<>();
-	@Getter private final int length;
+	private Track current;
+	private final JLabel feedback = new JLabel("Drum1", JLabel.CENTER);
+	private final ArrayList<TrackView> views = new ArrayList<>();
+	private final int length;
+	private final KnobMode knobMode = KnobMode.Track;
+	private final SynthTracks notes;
+	private final DrumTracks drums;
 	
-	public Tracker(JudahBeatz drumTracks, JudahNotez pianoTracks) {
+	public Tracker(DrumTracks drumTracks, SynthTracks pianoTracks) {
+		JudahZone.getServices().add(this);
+		this.notes = pianoTracks;
+		this.drums = drumTracks;
 		length = drumTracks.size() + pianoTracks.size();
 		// setLayout(new GridLayout(4, 2, 6, 6));
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
@@ -38,8 +48,8 @@ public class Tracker extends JPanel implements Closeable {
 			createTrackDuo(pianoTracks.get(i), 
 					pianoTracks.size() > i+1 ? pianoTracks.get(i+1) : null);
 		add(Box.createVerticalGlue());
-		setCurrent(drumTracks.get(3));
-		JudahZone.getServices().add(this);
+		
+		setCurrent(drumTracks.getHats());
 	}
 
 	public TrackView getView(Track t) {
@@ -60,8 +70,7 @@ public class Tracker extends JPanel implements Closeable {
 		for (TrackView v : views)
 			if (v.getTrack() == current)
 				v.knob(knob, data2);
-	}
-	
+	}	
 	@Override
 	public void close() {
 		for (TrackView view : views) {
@@ -76,14 +85,12 @@ public class Tracker extends JPanel implements Closeable {
 		JPanel duo = new JPanel();
 		duo.setOpaque(true);
 		duo.setLayout(new GridLayout(1, 2));
-		one.getEdit().fillTracks(length);	
 		TrackView view = new TrackView(one, this);
 		views.add(view);
 		duo.add(view);
 		if (two == null) 
 			duo.add(new JLabel(" "));
 		else {
-			two.getEdit().fillTracks(length);	
 			view = new TrackView(two, this);
 			views.add(view);
 			duo.add(view);
@@ -167,9 +174,19 @@ public class Tracker extends JPanel implements Closeable {
 		return views.get(idx).getTrack();
 	}
 
-	public void setCurrent(int channel) {
-		setCurrent(views.get(channel).getTrack());
+	public void setCurrent(int track) {
+		setCurrent(views.get(track).getTrack());
 	}
+	
+	public void next(boolean up) {
+		int cur = views.indexOf(get(current)) + (up ? 1 : -1);
+		if (cur > views.size() -1)
+			cur = 0;
+		if (cur == -1)
+			cur = views.size() -1;
+		setCurrent(cur);
+	}
+	
 
 	public TrackView get(Track track) {
 		for (TrackView t : views)
@@ -187,4 +204,29 @@ public class Tracker extends JPanel implements Closeable {
 		return _all;
 	}
 
+	public void addRow(PianoTrack t, PianoTrack t2) {
+		notes.add(t);
+		notes.add(t2);
+		createTrackDuo(t, t2);
+	}
+	
+	public void removeRow(PianoTrack t, PianoTrack t2) {
+		for (TrackView v : new ArrayList<TrackView>(views))
+			if (v.getTrack() == t || v.getTrack() == t2) {
+				remove(v);
+				views.remove(v);
+			}
+		notes.remove(t2);
+		notes.remove(t);
+	}
+
+	public int count() {
+		return notes.size() + drums.size();
+	}
+
+	
+	
+	
+	
+	
 }

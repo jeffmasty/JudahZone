@@ -45,7 +45,7 @@ public class PresetsDB extends ArrayList<Preset> {
         }
 
     }
-
+    
     @Override
     public String toString() {
         StringBuffer result = new StringBuffer();
@@ -65,6 +65,13 @@ public class PresetsDB extends ArrayList<Preset> {
 		if (isEmpty()) 
 			return null;
 		return get(0);
+	}
+	
+	public ArrayList<String> getList() {
+		ArrayList<String> result = new ArrayList<>();
+		for (Preset p : this)
+			result.add(p.getName());
+		return result;
 	}
 
 	public Preset byName(String string) {

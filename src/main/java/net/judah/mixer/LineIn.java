@@ -50,13 +50,16 @@ public abstract class LineIn extends Channel {
 		if (delay.isActive()) {
 			delay.processAdd(mono, mono, true);
 		}
+		if (compression.isActive())
+			compression.process(mono);
 		if (reverb.isActive() && reverb.isInternal()) {
 			reverb.process(mono);
 		}
 
+		
 	}
 	
-	public void processFx(FloatBuffer left, FloatBuffer right) {
+	public void processFx(FloatBuffer left, FloatBuffer right, float amplification) {
 		left.rewind();
 		right.rewind();
 		
@@ -65,24 +68,29 @@ public abstract class LineIn extends Channel {
 			left.rewind();
 		}
 		
-		float gain = this.gain.getGain();
 		for (int z = 0; z < Constants.bufSize(); z++) {
-			left.put(left.get(z) * gain);
-			right.put(right.get(z) * gain);
+			left.put(left.get(z) * amplification);
+			right.put(right.get(z) * amplification);
 		}
 		
-		hiCut.process(left, right, 1f);
-		cutFilter.process(left, right, 1f);
-		if (eq.isActive()) {
-			eq.process(left, true);
-			eq.process(right, false);
-		}
+		hiCut.process(left, right);
+		cutFilter.process(left, right);
+		
 		if (chorus.isActive()) {
 			chorus.processStereo(left, right);
 		}
+		if (compression.isActive()) {
+			compression.process(left);
+			compression.process(right);
+		}
+
 		if (overdrive.isActive()) {
 			overdrive.processAdd(left);
 			overdrive.processAdd(right);
+		}
+		if (eq.isActive()) {
+			eq.process(left, true);
+			eq.process(right, false);
 		}
 
 		if (delay.isActive()) {

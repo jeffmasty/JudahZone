@@ -18,25 +18,25 @@ import net.judah.mixer.LineIn;
 import net.judah.mixer.MidiInstrument;
 import net.judah.synth.JudahSynth;
 import net.judah.tracker.DrumTrack;
-import net.judah.tracker.JudahBeatz;
-import net.judah.tracker.JudahNotez;
+import net.judah.tracker.DrumTracks;
 import net.judah.tracker.PianoTrack;
+import net.judah.tracker.SynthTracks;
 import net.judah.tracker.Track;
 import net.judah.util.RTLogger;
 
 public abstract class SmashHit implements TimeListener {
 	
 	protected final JudahClock clock = getClock();
-	protected final JudahBeatz beats = getBeats();
+	protected final DrumTracks beats = getBeats();
 	protected final DrumTrack drum1 = beats.getDrum1();
 	protected final DrumTrack drum2 = beats.getDrum2();
 	protected final DrumTrack hats = beats.getHats();
 	protected final DrumTrack fills = beats.getFills();
-	protected final JudahNotez notes = getNotes();
+	protected final SynthTracks notes = getNotes();
 	protected final PianoTrack lead1 = notes.getLead1();
 	protected final PianoTrack lead2 = notes.getLead2();
 	protected final PianoTrack bass = notes.getBass();
-	protected final PianoTrack chords = notes.getChords();
+	protected final PianoTrack chords = notes.getGm1();
 	protected final Looper looper = getLooper();
 	protected final LineIn guitar = getGuitar();
 	protected final LineIn mic = getMic();

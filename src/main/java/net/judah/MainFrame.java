@@ -13,12 +13,16 @@ import javax.swing.event.ChangeListener;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.judah.controllers.KnobData;
 import net.judah.controllers.KnobMode;
+import net.judah.controllers.Knobs;
 import net.judah.controllers.MPKmini;
 import net.judah.drumz.DrumSample;
 import net.judah.drumz.KitView;
 import net.judah.drumz.KitzView;
+import net.judah.effects.LFO;
 import net.judah.effects.gui.FxPanel;
+import net.judah.effects.gui.Row;
 import net.judah.looper.LoopWidget;
 import net.judah.looper.SyncWidget;
 import net.judah.midi.JudahClock;
@@ -30,6 +34,8 @@ import net.judah.samples.Sample;
 import net.judah.synth.JudahSynth;
 import net.judah.synth.SynthEngines;
 import net.judah.tracker.*;
+import net.judah.tracker.edit.DrumEdit;
+import net.judah.tracker.edit.GridTab;
 import net.judah.util.*;
 
 /** over-all layout and a background updates thread */
@@ -87,7 +93,6 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
         mixer.setPreferredSize(mix);
         top.add(mixer);
 
-        tabs.setTabPlacement(JTabbedPane.BOTTOM); 
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         tabs.setMaximumSize(TABS);
         tabs.setPreferredSize(TABS);
@@ -108,11 +113,11 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 			public void stateChanged(ChangeEvent e) {
         		Component selected = tabs.getSelectedComponent();
         		if (selected == SynthEngines.getInstance())
-        			MPKmini.setMode(KnobMode.Synth);
+        			MPKmini.setMode(SynthEngines.getCurrent().getKnobMode());
         		else if (selected == tracker )
         			MPKmini.setMode(KnobMode.Track);
         		else if (selected == kitz) { // || selected == beatbox
-        			MPKmini.setMode(KnobMode.Kit);
+        			MPKmini.setMode(kitz.getKnobMode());
         		}
         }});
         
@@ -126,12 +131,13 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
         JPanel left = new JPanel();
         left.setLayout(new BoxLayout(left, BoxLayout.PAGE_AXIS));
         
-
+        left.add(timeSig);
+        left.add(Box.createVerticalStrut(5));
         left.add(controls);
         left.add(Box.createVerticalGlue());
         left.add(console);
+        left.add(Box.createVerticalStrut(10));
         
-        left.add(timeSig);
         JPanel bottom = new JPanel();
         bottom.add(left);
         bottom.add(tabs);
@@ -198,6 +204,8 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
     }
     
     public void addOrShow(Component tab, String title) {
+    	if (tab instanceof Knobs)
+    		MPKmini.setMode(((Knobs)tab).getKnobMode());
     	new Thread(() ->{
 			for (int i = 0; i < tabs.getTabCount(); i++) {
 				if (tabs.getComponentAt(i).equals(tab)) {
@@ -271,32 +279,20 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 	    	else if (o instanceof KnobMode) {
 	    		KnobMode knobs = (KnobMode)o;
 	    		MPKmini.getLabel().setText(" " + knobs.name());
-	    		MPKmini.getLabel().setBackground(knobs == FX1 ? BLUE : 
-					knobs == FX2 ? BLUE.darker() :
-					knobs == Clock ? YELLOW : GREEN);
+	    		MPKmini.getLabel().setBackground(
+					knobs == Clock ? YELLOW : knobs == Track ? BLUE : knobs == LFO ? PINK : 
+						knobs == Synth1 || knobs == Synth2 ? GREEN : RED/* Kits */);
 	    		instance.midiGui.mode(knobs);
 	    		instance.controls.getTuner().setChannel(null);
-	    		if (knobs == KnobMode.FX1 || knobs == KnobMode.FX2) {
-	    			instance.controls.setBorder(Constants.Gui.HIGHLIGHT);
-	    			instance.tracker.setCurrent(null);
-	    			if (instance.controls.getCurrent() != null)
-	    				instance.mixer.highlight(instance.controls.getCurrent().getChannel());
-	    		}
-	    		else {
-	    			instance.controls.setBorder(Constants.Gui.NONE);
-	    			instance.mixer.highlight(null);
-	    			if (knobs == KnobMode.Track)
-	    				instance.tracker.update(instance.tracker.getCurrent());
-	    			else
-	    				instance.tracker.setCurrent(null);
-	    		}
+    			if (knobs == KnobMode.Track)
+    				instance.tracker.update(instance.tracker.getCurrent());
 	    		instance.invalidate();
 	    	}
     	}
     }
     
-	@Override
-	public void run() {
+    /** Gui feed updates off Real-Time thread */
+	@Override public void run() {
 		Object o = null;
 		while (true) {
 			
@@ -305,20 +301,11 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 				Constants.sleep(Constants.GUI_REFRESH);
 				continue;
 			}
-			
+			if (updates.contains(o))
+				continue;
 			if (o instanceof Sample) // will also hit channel update
 				SynthEngines.getInstance().getSamples().update((Sample)o);
-			
-			if (o instanceof TimeSigGui || o instanceof JudahClock) 
-				timeSig.update();
-			else if (o instanceof JudahSynth) {
-				JudahSynth synth = JudahZone.getSynth1();
-//TODO				synth.getView().update();
-				mixer.update(synth);
-				if (controls.getChannel() == synth)
-					controls.getCurrent().update();
-			}
-			else if (o instanceof DrumSample) { // turn DrumPad green while playing
+			if (o instanceof DrumSample) { // turn DrumPad green while playing
 				if (kitz.isShowing()) {
 					kitz.update(((DrumSample)o));
 				}
@@ -332,6 +319,9 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 				if (controls.getChannel() == o)
 					controls.getCurrent().update(); 
 			}
+			
+			if (o instanceof TimeSigGui || o instanceof JudahClock) 
+				timeSig.update();
 			else if (o instanceof Channel) {
 				if (updates.contains(o))
 					continue;
@@ -353,15 +343,55 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 			else if (o instanceof LoopWidget) {
 				((LoopWidget)o).update();
 			}
+			else if (o instanceof JudahSynth) {
+				mixer.update((JudahSynth)o);
+				if (controls.getChannel() == o)
+					controls.getCurrent().update();
+			}
+			else if (o instanceof KnobData) {
+				doKnob(((KnobData)o).idx, ((KnobData)o).data2);
+			}
+			else if (o instanceof LFO) {
+				if (controls.getCurrent().getLfo().getLfo() == o)
+					controls.getCurrent().getLfo().update();
+			}
+			else if (o instanceof Row)
+				((Row)o).update();
 			else  {
 				mixer.updateAll();
 				if (controls.getCurrent() != null)
 					controls.getCurrent().update();
 			}
-			
 		}
 	}
 
+	private boolean doKnob(int idx, int data2) {
+		switch(MPKmini.getMode()) {
+			case Clock:
+				midiGui.clockKnobs(idx, data2);
+				return true;
+			case Track:
+				tracker.knob(idx, data2);
+				return true;
+			case Synth1:
+			case Synth2:
+				SynthEngines.getCurrent().synthKnobs(idx, data2);
+				return true;
+			case Drums1:
+			case Drums2:
+			case Hats:
+			case Fills:
+				KitView.getCurrent().knob(idx, data2);
+				return true;
+			case LFO:
+				controls.getCurrent().getLfo().knob(idx, data2);
+				controls.getCurrent().getCompressor().knob(idx, data2);
+				return true;
+		}
+		return false;
+	}
+
+	
 	public static void startNimbus() {
 		try {
 			UIManager.setLookAndFeel ("javax.swing.plaf.nimbus.NimbusLookAndFeel");
@@ -370,9 +400,8 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
             UIManager.put("control", Pastels.EGGSHELL); 
             UIManager.put("nimbusBlueGrey", Pastels.MY_GRAY);
             UIManager.getLookAndFeel().getDefaults().put("Button.contentMargins", new Insets(6, 8, 6, 8));
-            
+
             Thread.sleep(111); // let numbus start up
-			
 		} catch (Exception e) { RTLogger.log(MainFrame.class, e.getMessage()); }
 
 	}

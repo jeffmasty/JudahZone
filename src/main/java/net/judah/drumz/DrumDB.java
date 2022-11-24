@@ -19,7 +19,7 @@ public class DrumDB {
 	
 	public static Recording get(File file) throws Exception {
 		if (db.containsKey(file) == false) {
-			Recording result = Recording.load(file);
+			Recording result = new Recording(file);
 			db.put(file, result);
 		}
 		return db.get(file);
