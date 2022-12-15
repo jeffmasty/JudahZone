@@ -7,8 +7,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.drumz.DrumKit;
-import net.judah.drumz.DrumSample;
+import net.judah.drumkit.DrumKit;
+import net.judah.drumkit.DrumSample;
 import net.judah.effects.Fader;
 import net.judah.mixer.Channel;
 import net.judah.samples.Sample;
@@ -47,7 +47,7 @@ public class MidiScheduler implements Runnable {
 			ch.getLfo().pulse();
 		for (Sample s : JudahZone.getSampler())
 			s.getLfo().pulse();
-		for (DrumKit k : JudahZone.getDrumMachine().getDrumkits())
+		for (DrumKit k : JudahZone.getDrumMachine().getKits())
 			for (DrumSample s : k.getSamples())
 				s.getLfo().pulse();
 	}

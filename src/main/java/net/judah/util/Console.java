@@ -14,7 +14,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
-import net.judah.api.Midi;
+import net.judah.midi.Midi;
 import net.judah.midi.MidiListener;
 
 @Log4j
@@ -28,8 +28,7 @@ public class Console implements MidiListener {
     
     @Getter @Setter private static Level level = Level.DEBUG;
     @Getter private final JScrollPane scroller;
-    private final JTextArea textarea = new JTextArea(5, 30);
-
+    private final JTextArea textarea = new JTextArea(4, 28);
     @Getter private ArrayList<ConsoleParticipant> participants = new ArrayList<>();
 
     private Console() {
@@ -49,7 +48,7 @@ public class Console implements MidiListener {
 
 
     /** output to console (not for realtime) */
-    static void addText(String in) {
+    public static void addText(String in) {
         log.debug(in);
         String s = in == null ? null : new String(in);
         if (instance == null || instance.textarea == null) {

@@ -7,7 +7,7 @@ import java.util.List;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
-import net.judah.api.Midi;
+import net.judah.midi.Midi;
 import net.judah.util.RTLogger;
 
 /* TODO upJoystick, downJoystick

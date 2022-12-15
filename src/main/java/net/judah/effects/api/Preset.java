@@ -8,6 +8,11 @@ import net.judah.util.Constants;
 
 public class Preset extends ArrayList<Setting> {
 
+	public static final String SPLIT = "/";
+	public static final String OPEN = "[";
+	public static final String CLOSE = "]";
+	public static final String DASH = "-";
+
     @Getter private final String name;
     
     public Preset(String name, List<String> raw) {
@@ -31,10 +36,6 @@ public class Preset extends ArrayList<Setting> {
     @Override
     public String toString() {
     	return name;
-    	//        StringBuilder sb = new StringBuilder("[").append(name).append("]").append(Constants.NL);
-//        for (Setting s : this)
-//            sb.append(s).append(Constants.NL);
-//        return sb.toString();
     }
 
     /**@return comma separated list of used effects enclosed in parentheses*/
@@ -49,7 +50,7 @@ public class Preset extends ArrayList<Setting> {
     }
 
 	public Object toFile() {
-        StringBuilder sb = new StringBuilder("[").append(name).append("]").append(Constants.NL);
+        StringBuilder sb = new StringBuilder(OPEN).append(name).append(CLOSE).append(Constants.NL);
         for (Setting s : this)
             sb.append(s).append(Constants.NL);
         return sb.toString();

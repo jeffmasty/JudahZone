@@ -45,7 +45,7 @@ public class RTLogger {
 					
 	            dat = debugQueue.poll();
 	            if (dat == null) {
-	            	Thread.sleep(Constants.GUI_REFRESH);
+	            	Thread.sleep(2 * Constants.GUI_REFRESH);
 	            	continue;
 	            }
 	

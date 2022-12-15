@@ -1,9 +1,6 @@
 package net.judah.effects.gui;
 
-import java.awt.Component;
-import java.util.ArrayList;
-
-import lombok.Getter;
+import net.judah.api.JudahException;
 import net.judah.effects.Chorus;
 import net.judah.effects.CutFilter;
 import net.judah.effects.Delay;
@@ -11,14 +8,11 @@ import net.judah.effects.EQ;
 import net.judah.effects.api.Gain;
 import net.judah.effects.api.Reverb;
 import net.judah.mixer.Channel;
-import net.judah.util.JudahException;
-import net.judah.util.JudahKnob;
 import net.judah.util.RTLogger;
+import net.judah.widgets.JudahKnob;
 
 public class RowKnobs extends Row {
 
-	@Getter private final ArrayList<Component> controls = new ArrayList<>();
-	
 	public RowKnobs(final Channel ch, int idx) {
 		super(ch);
 		switch (idx) {

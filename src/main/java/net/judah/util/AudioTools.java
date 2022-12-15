@@ -90,6 +90,17 @@ public class AudioTools  {
 			out[i] += in.get() * factor;
 	}
 
+	public static float abs2(FloatBuffer buf) {
+		float result = Float.MIN_VALUE;
+		buf.rewind();
+		for(int i = 0; i < Constants.bufSize(); i++) {
+			float f = Math.abs(buf.get());
+			if (f > result)
+				result = f;
+		}
+		return result;
+	}
+	
 	public static void mix(float[] in, FloatBuffer out) {
 		out.rewind();
 		out.get(workArea);
@@ -108,9 +119,9 @@ public class AudioTools  {
 	
 	public static void processGain(FloatBuffer buffer, float gain) {
 		buffer.rewind();
-		for (z = 0; z < Constants.bufSize(); z++)
+		for (z = 0; z < Constants.bufSize(); z++) {
 			buffer.put(buffer.get(z) * gain);
-
+		}
 	}
 	
 	public static float[][] copy(float[][] in, float[][] out) {

@@ -10,30 +10,24 @@ import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
 import org.jaudiolibs.jnajack.JackException;
-import org.jaudiolibs.jnajack.JackMidi;
-import org.jaudiolibs.jnajack.JackPort;
 import org.jaudiolibs.jnajack.JackPosition;
 import org.jaudiolibs.jnajack.JackTransportState;
 
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
-import net.judah.MainFrame;
 import net.judah.api.Notification;
 import net.judah.api.Notification.Property;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeNotifier;
 import net.judah.api.TimeProvider;
-import net.judah.drumz.DrumMachine;
+import net.judah.drumkit.DrumMachine;
+import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
-import net.judah.looper.SyncWidget;
-import net.judah.looper.SyncWidget.SelectType;
 import net.judah.samples.Sampler;
-import net.judah.tracker.DrumTracks;
-import net.judah.tracker.SynthTracks;
-import net.judah.tracker.Track;
+import net.judah.seq.Seq;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -45,46 +39,44 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
 	public static final byte[] MIDI_RT_STOP     = new byte[] {(byte)ShortMessage.STOP};
 	static final int CLOCK_SZ = 1;
 	private static final float MAX_TEMPO = 300f; 
-	public static final float MIDI_24 = 24;
+	public static final int MIDI_24 = 24;
 	
 	public static enum Mode { Internal, /**24 pulses per quarter note external midi clock*/ Midi24 };
 	
-    @Setter private JackPort clockOut;
     @Getter private Mode mode = Mode.Midi24;
     @Getter private boolean active;
     @Getter private float tempo = 89f;
     /** jack frames since transport start or frames between pulses */
     @Getter private long lastPulse = System.currentTimeMillis();
-    @Getter private double interval = Constants.millisPerBeat(tempo) / MIDI_24;
     private long lastBeat = lastPulse;
 	private int midiPulseCount;
-	
-	@Getter private DrumTracks beats;
-	@Getter private SynthTracks notes;
-	@Setter private Sampler sampler;
+	@Getter float interval = Constants.millisPerBeat(tempo) / (float)MIDI_24;
 
-    /** current beat */
-	@Getter private static int beat = -1;
+	@Getter private final Seq seq;
+//	@Getter private DrumTracks beats;
+//	@Getter private SynthTracks notes;
+	@Setter private Sampler sampler;
+    @Getter private final ArrayList<TimeListener> listeners = new ArrayList<>();
+    private final BlockingQueue<Notification> notifications = new LinkedBlockingQueue<>();
+	private final MidiClock midiClock;
+    private TimeNotifier source;
+	
+    /** current number of bars to record/computeTempo */
+	@Getter private int length = 4; 
     /** current step */
 	@Getter private int step = 0;
-    /** current number of bars to record/computeTempo */
-	@Getter private static int length = 4; 
+    /** current beat */
+	@Getter private int beat;
+	@Getter private int bar;
     @Getter private int steps = 16;
     @Getter private int subdivision = 4;
-    private int _measure = steps / subdivision;
-
-	@Getter private static boolean loopSync = true;
-	private static SelectType onDeck;
-    private static final BlockingQueue<Notification> notifications = new LinkedBlockingQueue<>();
-    private final ArrayList<TimeListener> listeners = new ArrayList<>();
-    private TimeNotifier source;
-    
-    private final MidiClock midiClock;
+    @Getter private int measure = steps / subdivision;
     
     /** sync to external Midi24 pulse */
-	public JudahClock(DrumMachine drums) {
-		beats = new DrumTracks(this, drums);
-		notes = new SynthTracks(this);
+	public JudahClock(DrumMachine drums) throws Exception {
+//		beats = new DrumTracks(this, drums);
+//		notes = new SynthTracks(this);
+		seq = new Seq(this, drums);
 		
 		MidiClock stub = null;
 		try {
@@ -112,42 +104,121 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
 		}
 	}
 
-	private void shout(Property prop, Object value) {
+	/** in real-time */
+	private void announce(Property prop, Object value) {
+		for (Object o : listeners.toArray())
+			((TimeListener)o).update(prop, value);
+	}
+	
+	/** send to background thread */
+	private void letItBeKnown(Property prop, Object value) {
 		notifications.offer(new Notification(prop, value));
 	}
 	
-	/** Run internal Clock in real-time */
-	public void process() throws JackException {
-        if (mode != Mode.Internal) return;
-        
-        long current = System.currentTimeMillis();
-        if (current - lastBeat >= Math.floor(midiPulseCount * interval)) {
-		
-        	lastPulse = current;
-        	midiPulseCount++;
-    		if (midiPulseCount > MIDI_24) {
-    			midiPulseCount = 1;
-    			lastBeat = current;
-    		}
-
-        	if (clockOut != null) 
-    			//send midi24 clock tick 
-				JackMidi.eventWrite(clockOut, JudahMidi.ticker(), MIDI_RT_CLOCK, CLOCK_SZ);
-
-    		// supports 2,3,4,6,8 subdivision
-			if (0 == midiPulseCount % (MIDI_24 / _measure)) {
-				step();
-				interval = Constants.millisPerBeat(tempo) / MIDI_24;
+	private void midi24() {
+		midiPulseCount++;
+		if (midiPulseCount >= MIDI_24)
+			midiPulseCount = 0;
+		if (midiPulseCount == 0) { // new Beat
+			computeTempo();
+			if (active) {
+				beat++;
+				if (beat >= measure) { // new Bar
+					bar++; beat = 0;
+					announce(Property.BARS, bar);
+				}
+				announce(Property.BEAT, beat);
 			}
-    	}
-    	
+		}
+		if (0 == midiPulseCount % (MIDI_24 / measure)) 
+			step();
+		if (active)
+			seq.process(beat + midiPulseCount / (float)MIDI_24);
+	}
+	
+	private void step() {
+		step++;
+		if (step >= steps)
+			step = 0;
+		letItBeKnown(STEP, step);
+		if (!active) 
+			return;
+		
+		new Thread( () -> {
+			if (sampler.getStepSample() != null)
+				sampler.getStepSample().step(step);
+//			for (Track t : beats)
+//				t.step(step);
+//			for (Track t : notes)
+//				t.step(step);
+		}).run();
+    }
+
+	
+	/** receive clock message from external source in real-time */
+	public void processTime(byte[] bytes) throws JackException {
+		if (mode != Mode.Midi24) return;
+		int stat = 0;
+        if (bytes.length == CLOCK_SZ)
+            stat = bytes[0] & 0xFF;
+        else if (bytes.length == 2) {
+            stat = bytes[1] & 0xFF;
+            stat = (stat << 8) | (bytes[0] & 0xFF);
+        }
+        else return;
+        
+        if (ShortMessage.TIMING_CLOCK == stat) {
+        	midi24(); // process external time
+        }
+        else if (ShortMessage.START == stat) {
+            begin();
+        }
+        else if (ShortMessage.STOP == stat) {
+            end();
+        }
+        else if (ShortMessage.CONTINUE == stat) {
+            RTLogger.log(this, "MIDI24 CONTINUE");
+            letItBeKnown(TRANSPORT, JackTransportState.JackTransportRolling); 
+            JudahZone.getLooper().getLoopA().getSync().syncUp();
+            JudahZone.getMidi().synchronize(bytes);
+            RTLogger.log(JudahMidi.class.getSimpleName(), "CONT MidiSync");
+        }
 	}
 
-	/** convert bpm to data1 and write to tempo control port */
-	public void writeTempo(int bpm) {
-		midiClock.writeTempo(bpm);
-		// LV2 plugin method: 40bpm = data1 0, 106bpm = data1 50, 172bpm = data1 100  
-		// JudahMidi.queue(Midi.create(Midi.CONTROL_CHANGE, 0, TEMPO_CC, (int)((bpm - 40) * 0.7575f)), JudahZone.getMidi().getTempo());
+	@Override
+    public void begin() {
+	    
+	    lastPulse = lastBeat = System.currentTimeMillis();
+	    midiPulseCount = 0;
+	    step = 0;
+		beat = 0;
+		bar = 0;
+//		for (Track t : JudahZone.getBeats())
+//			t.setStep(-1);
+//		for (Track t : JudahZone.getNotes())
+//			t.setStep(-1);
+		JudahZone.getMidi().synchronize(MIDI_RT_START);
+		letItBeKnown(TRANSPORT, JackTransportState.JackTransportStarting);
+	    active = true;
+		//		step();
+		RTLogger.log(JudahMidi.class.getSimpleName(), "PLAY MidiSync");
+
+	}
+
+	@Override
+    public void end() {
+	    active = false;
+	    JudahZone.getMidi().synchronize(MIDI_RT_STOP);
+	    letItBeKnown(TRANSPORT, JackTransportState.JackTransportStopped);
+	    RTLogger.log(JudahMidi.class.getSimpleName(), "STOP MidiSync");
+	}
+
+	public void reset() {
+		end();
+		step = 0;
+        beat = -1;
+	    lastPulse = lastBeat = System.currentTimeMillis();
+	    RTLogger.log(this, "reset");
 	}
 	
 	/** see also writeTempo() */
@@ -168,130 +239,17 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
 				RTLogger.warn(this, e);
 			}
 		}
-		shout(TEMPO, tempo);
+		letItBeKnown(TEMPO, tempo);
 		RTLogger.log(this, "tempo " + tempo);
 		return true;
 	}
-	
-	private void step() {
-		
-		if (!active) {
-	        step++;
-	        if (step >= steps) {
-	            step = 0;
-	        }
-			shout(STEP, step);
-			return;
-		}
 
-
-		if (step % getSubdivision() == 0) {
-			beat++;
-    		if (beat % getMeasure() == 0) 
-    			shout(BARS, Math.round(beat / getMeasure()));
-			shout(BEAT, beat);
-        }
-
-		shout(STEP, step);
-		
-		new Thread( () -> {
-			if (sampler.getStepSample() != null)
-				sampler.getStepSample().step(step);
-			for (Track t : beats)
-				t.step();
-			for (Track t : notes)
-				t.step();
-		}).run();
-
-        step++;
-        if (step == steps)
-            step = 0;	 	
-    }
-
-	
-	/** receive clock message from external source in real-time */
-	public void processTime(byte[] bytes) throws JackException {
-		if (mode != Mode.Midi24) return;
-		int stat = 0;
-        if (bytes.length == CLOCK_SZ)
-            stat = bytes[0] & 0xFF;
-        else if (bytes.length == 2) {
-            stat = bytes[1] & 0xFF;
-            stat = (stat << 8) | (bytes[0] & 0xFF);
-        }
-        else return;
-        
-        if (ShortMessage.START == stat) {
-            begin();
-        }
-        else if (ShortMessage.STOP == stat) {
-            end();
-        }
-        else if (ShortMessage.CONTINUE == stat) {
-            RTLogger.log(this, "MIDI24 CONTINUE");
-            shout(TRANSPORT, JackTransportState.JackTransportRolling); 
-            waiting(JudahZone.getLooper().getLoopA());
-            JudahZone.getMidi().synchronize(bytes);
-            RTLogger.log(JudahMidi.class.getSimpleName(), "CONT MidiSync");
-        }
-        
-        // process external time
-        else if (ShortMessage.TIMING_CLOCK == stat) {
-    		if (clockOut != null) //fwd midi24 clock tick 
-    			JackMidi.eventWrite(clockOut, JudahMidi.ticker(), MIDI_RT_CLOCK, CLOCK_SZ);
-    
-    		midiPulseCount++;
-			// supports 2,3,4,6,8 subdivision
-    		if (0 == midiPulseCount % (MIDI_24 / (steps / subdivision))) {
-				step();
-				if (step == 0) {
-					long now = System.currentTimeMillis();
-					int tempo2 = Math.round(subdivision * Constants.bpmPerBeat(now - lastPulse));
-					if (tempo != tempo2) {
-						tempo = tempo2;
-						shout(Property.TEMPO, tempo);
-					}
-					lastPulse = now;
-				}
-			}
-        }
-
-	}
-
-	@Override
-    public void begin() {
-	    active = true;
-	    
-	    lastPulse = lastBeat = System.currentTimeMillis();
-	    midiPulseCount = 0;
-	    step = 0;
-		beat = -1;
-		for (Track t : JudahZone.getBeats())
-			t.setStep(-1);
-		for (Track t : JudahZone.getNotes())
-			t.setStep(-1);
-		JudahZone.getMidi().synchronize(MIDI_RT_START);
-		shout(TRANSPORT, JackTransportState.JackTransportStarting);
-		step();
-		RTLogger.log(JudahMidi.class.getSimpleName(), "PLAY MidiSync");
-	}
-
-	@Override
-    public void end() {
-	    active = false;
-	    JudahZone.getMidi().synchronize(MIDI_RT_STOP);
-	    shout(TRANSPORT, JackTransportState.JackTransportStopped);
-	    RTLogger.log(JudahMidi.class.getSimpleName(), "STOP MidiSync");
-	}
-
-	public void reset() {
-		end();
-		step = 0;
-        beat = -1;
-	    lastPulse = lastBeat = System.currentTimeMillis();
-	    RTLogger.log(this, "reset");
+	/** convert bpm to data1 and write to tempo control port */
+	public void writeTempo(int bpm) {
+		midiClock.writeTempo(bpm);
 	}
 	
+
 	@Override
 	public void addListener(TimeListener l) {
 		if (!listeners.contains(l))
@@ -303,13 +261,6 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
 		listeners.remove(l);
 	}
 
-	public void listen(final Loop target) {
-		if (source != null)
-			source.removeListener(this);
-		source = target;
-		source.addListener(this);
-	}
-		
 	@Override public void update(Property prop, Object value) {
 		if (prop.equals(LOOP)) { 
 			if (!isActive()) 
@@ -331,36 +282,35 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
 		if (length == bars) 
 			return;
 		length = bars;
-		JudahZone.getMidiGui().length(bars);
-		MainFrame.update(JudahZone.getLooper().getLoopA());
+		MainFrame.update(this);
 	}
 	
-	public SyncWidget getSynchronized() {
-		for (TimeListener l : listeners)
-			if (l instanceof SyncWidget)
-				return (SyncWidget)l;
-		return null;
+	public boolean isLooperSync() {
+		return source != null;
 	}
 	
-	public static boolean waiting(Loop loop) {
-		if (onDeck == null) return false;
-		switch(onDeck) {
-			case ERASE: 
-				loop.erase();
-				break;
-			case SYNC:
-				loop.getSync().syncUp();
-				break;
+	public void syncToLoop() {
+		if (source != null) {
+			source.removeListener(this);
+			return;
 		}
-		onDeck = null;
-		return true;
-	}
-
-	public static void setOnDeck(SelectType syncType) {
-		onDeck = syncType;
-		RTLogger.log(JudahClock.class, "Waiting... (" + syncType.name() + " " + length + " bars)");
+		Looper looper = JudahZone.getLooper();
+		if (looper.getRecordedLength() > 0) {
+			float tempo = Constants.computeTempo(looper.getRecordedLength(), length * getMeasure());
+			writeTempo(Math.round(tempo));
+			source = looper.getPrimary();
+			source.addListener(this);
+			RTLogger.log(this, "Tempo Sync: " + tempo);
+		}
 	}
 	
+	public void listen(final Loop target) {
+		if (source != null)
+			source.removeListener(this);
+		source = target;
+		source.addListener(this);
+	}
+		
 	public void setMode(Mode mode) {
 		this.mode = mode;
 		RTLogger.log(this, "Clock: " + mode);
@@ -370,10 +320,6 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
 		setMode(mode == Mode.Internal ? Mode.Midi24 : Mode.Internal);
 	}
 	
-	@Override
-	public int getMeasure() {
-		return _measure;
-	}
 	public void setSubdivision(int sub) {
 		subdivision = sub;
 		setMeasure();
@@ -384,27 +330,67 @@ public class JudahClock extends Thread implements TimeProvider, TimeListener {
 	}
 
 	private void setMeasure() {
-		_measure = steps/subdivision;
+		int old = measure;
+		measure = steps/subdivision;
+//		for (Track t : beats)
+//			if (!t.isInternal()) {
+//				t.setSteps(steps);
+//				t.setDiv(subdivision);
+//			}
+//		for (Track t : notes)
+//			if (!t.isInternal()) {
+//				t.setSteps(steps);
+//				t.setDiv(subdivision);
+//			}
+		if (old == measure)
+			return;
 		MainFrame.update(this);
+		letItBeKnown(Property.MEASURE, measure);
 	}
 	
 	public static String toString(JackPosition position) {
 		return position.getBeat() + "/" + position.getBar() + " " + position.getTick() + "/" + position.getTicksPerBeat();
 	}
 
-	public void setLoopSync(boolean active) {
-		Looper looper = JudahZone.getLooper();
-		if (!active && source != null)
-				source.removeListener(this);
-		else if (active && looper.getRecordedLength() > 0) {
-			float tempo = Constants.computeTempo(looper.getRecordedLength(), length * getMeasure());
-			writeTempo(Math.round(tempo));
-			listen(looper.getPrimary());
-			RTLogger.log(this, "Tempo Sync: " + tempo);
+	private void computeTempo() {
+		long now = System.currentTimeMillis();
+		float tempo2 = Constants.bpmPerBeat(now - lastPulse);
+		if ((int)tempo2 != (int)tempo) {
+			tempo = tempo2;
+			letItBeKnown(Property.TEMPO, tempo);
 		}
-		loopSync = active;
+		lastPulse = now;
+	}
+
+	/** Run internal Clock in real-time */
+	public void process() throws JackException {
+        if (mode != Mode.Internal) return;
+        long current = System.currentTimeMillis();
+        if (current - lastBeat >= Math.floor(midiPulseCount * interval)) {
+		
+        	lastPulse = current;
+        	midiPulseCount++;
+    		if (midiPulseCount > MIDI_24) {
+    			midiPulseCount = 1;
+    			lastBeat = current;
+    		}
+
+    		// supports 2,3,4,6,8 subdivision
+			if (0 == midiPulseCount % (MIDI_24 / measure)) {
+				step();
+				interval = Constants.millisPerBeat(tempo) / MIDI_24;
+			}
+    	}
 	}
 
 }
+
+	// @Setter private JackPort clockOut;
+	// midi24():if (clockOut != null) fwd midi24 clock tick (currently nobody listening on port) 
+	// 		JackMidi.eventWrite(clockOut, JudahMidi.ticker(), MIDI_RT_CLOCK, CLOCK_SZ);
+	// internal(): if (clockOut != null)  send midi24 clock tick 
+	// JackMidi.eventWrite(clockOut, JudahMidi.ticker(), MIDI_RT_CLOCK, CLOCK_SZ);
+// Write Tempo LV2 plugin method: 40bpm = data1 0, 106bpm = data1 50, 172bpm = data1 100  
+// JudahMidi.queue(Midi.create(Midi.CONTROL_CHANGE, 0, TEMPO_CC, (int)((bpm - 40) * 0.7575f)), JudahZone.getMidi().getTempo());
 
 

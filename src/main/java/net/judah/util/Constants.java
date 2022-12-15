@@ -1,7 +1,6 @@
 package net.judah.util;
 
 import java.awt.*;
-import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,10 +10,8 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
-import javax.sound.midi.Sequence;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
@@ -24,32 +21,20 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
 import lombok.Getter;
-import net.judah.api.Midi;
+import net.judah.gui.Pastels;
+import net.judah.midi.Midi;
 
 public class Constants {
 	private static ClassLoader loader = Constants.class.getClassLoader();
 
 	// TODO generalize
 	private static int _SAMPLERATE = 48000;
-	private static int _BUFSIZE = 512;//TODO:(256)
+	private static int _BUFSIZE = 512;//TODO 256
 	public static int sampleRate() { return _SAMPLERATE; }
 	public static int bufSize() { return _BUFSIZE; }
 	public static final float TUNING = 440;
-	/** Digital interface name */
+	/** Digital Interface name */
 	@Getter static String di = "UMC1820 MIDI 1"; //return "Komplete ";
-	
-	// TODO user.dir settings file/gui
-	private static final File _home = new File(System.getProperty("user.home"), "zone");
-    public static final File ROOT = new File("/home/judah/git/JudahZone/resources/");
-    public static final File defaultFolder = new File(ROOT, "Songs/");
-    public static final File defaultSetlist = new File(defaultFolder, "list1.songs");
-    public static final File defaultDrumFile = new File(ROOT, "patterns/Drum1");
-	public static final File SAMPLES = new File(_home, "samples");
-	public static final File BEATS = new File(_home, "drums");
-	public static final File KITS = new File(_home, "kits");
-	public static final File SHEETMUSIC = new File(_home, "sheets");
-	public static final File SYNTH = new File(_home, "synth");
-	public static final File ICONS = new File(ROOT, "icons");//"/home/judah/git/JudahZone/resources/icons/";
 	
 	public static final Midi DUMBDRUM = create(1, 0);
 	public static final Midi BASSDRUM = create(36, 100);
@@ -59,11 +44,10 @@ public class Constants {
 		} catch (InvalidMidiDataException e) {e.printStackTrace();}
 		return result;
 	}
-	
-    public static final Dimension MAX = new Dimension(122, 30);
-    public static JComponent max(JComponent c) {
-		c.setMaximumSize(MAX);
-		c.setPreferredSize(MAX);
+
+    public static JComponent resize(JComponent c, Dimension d) {
+		c.setMaximumSize(d);
+		c.setPreferredSize(d);
 		return c;
     }
 
@@ -72,32 +56,35 @@ public class Constants {
 	public static final int STEREO = 2;
 	public static final int MONO = 1;
 
-	public static final String GUITAR = "Guitar"; 
+	public static final String GUITAR = "Gtr"; 
 	public static final String MIC = "Mic";
-	public static final String CRAVE = "Crave";
+	public static final String CRAVE = "Bass";
 	public static final String CRAVE_PORT = "system:capture_3";
-	public static final String MAIN = "Mains";
-	public  static final String DRUMS = "Drumtrack";
+	public static final String FLUID = "Fluid";
+	public static final String MAIN = "Main";
 		
 	public static final String NL = System.getProperty("line.separator", "\r\n");
 	public static final String CUTE_NOTE = "♫ ";
 	public static final String FILE_SEPERATOR = System.getProperty("file.separator");
 	public static final String TAB = "    ";
-	public static String FX = "Fx";
+	public static final String FX = "Fx";
+	public static final String NONE = "none";
+	public static final String DOT_MIDI = ".mid";
 
 	/** milliseconds between checking the update queue */
-	public static final int GUI_REFRESH = 12;
+	public static final int GUI_REFRESH = 9;
 	public static final long DOUBLE_CLICK = 400;
 
     public static interface Gui {
-    	
-    	Border HIGHLIGHT = BorderFactory.createLineBorder(Pastels.GREEN, 2);
-    	Border NONE = BorderFactory.createLineBorder(Pastels.EGGSHELL, 2);
 
     	int STD_HEIGHT = 18;
-    	
     	Insets BTN_MARGIN = new Insets(1,1,1,1);
     	Insets ZERO_MARGIN = new Insets(0,0,0,0);
+    	
+    	Border HIGHLIGHT = BorderFactory.createLineBorder(Color.BLACK, 1);
+    	Border NONE = BorderFactory.createLineBorder(Pastels.MY_GRAY, 1);
+    	Border NO_BORDERS = new EmptyBorder(BTN_MARGIN);
+
     	Font BOLD = new Font("Arial", Font.BOLD, 11);
     	Font BOLD13 = new Font("Arial", Font.BOLD, 13);
     	Font FONT13 = new Font("Arial", Font.PLAIN, 13);
@@ -105,13 +92,16 @@ public class Constants {
     	Font FONT11 = new Font("Arial", Font.PLAIN, 11);
     	Font FONT10 = new Font("Arial", Font.PLAIN, 10);
     	Border GRAY1 = new LineBorder(Color.GRAY, 1);
-    	Dimension SLIDER_SZ = new Dimension(86, 40);
     	Font FONT9 = new Font("Arial", Font.PLAIN, 9);
-
-    	Border NO_BORDERS = new EmptyBorder(BTN_MARGIN);
-    	Border FOCUS_BORDER = new LineBorder(Color.BLACK, 2, true);
-
     }
+    
+    public static JPanel duo(Component left, Component right) {
+		JPanel result = new JPanel();
+		result.setLayout(new GridLayout(1, 2));
+		result.add(left);
+		result.add(right);
+		return result;
+	}
 
     public static JPanel wrap(Component... items) {
 		JPanel result = new JPanel();
@@ -120,32 +110,6 @@ public class Constants {
 		return result;
 	}
 	
-	public static void swap(JPanel pnl, Component... items) {
-		pnl.removeAll();
-		for (Component c : items) 
-			pnl.add(c);
-	}
-
-    public static void attachKeyListener(Container p, KeyListener l) {
-        for(Component c : p.getComponents()) {
-            c.addKeyListener(l);
-            if (c instanceof Container)
-                attachKeyListener((Container)c, l);
-        }
-    }
-    
-	/**Normalize midi track[0] 
-	 * @return the length in resolved bars of a full sequence 
-	 * (some midi files do not define ticks to the end of the bar) */
-	public static int requeueBeats(Sequence sequence) {
-		int result = (int) Math.ceil( (sequence.getTickLength() - 1) / (float)sequence.getResolution());
-		// long old = sequence.getTickLength();
-		long normalized = sequence.getResolution() * result;
-		sequence.getTracks()[0].add(new MidiEvent(DUMBDRUM, normalized));
-		// RTLogger.log(sequence, "From " + old + " to " + normalized + " @ " + sequence.getResolution());
-		return result;
-	}
-
     public static int gain2midi(float gain) {
     	return Math.round(gain * 127);
     }
@@ -177,7 +141,7 @@ public class Constants {
     public static String inputBox(String infoMessage) {
         return JOptionPane.showInputDialog(infoMessage);
     }
-
+    
 	@SuppressWarnings("rawtypes")
 	public static String prettyPrint(HashMap<String, Object> p) {
 		if (p == null) return " null properties";
@@ -331,25 +295,6 @@ public class Constants {
 		double scale = (maxv-minv) / (maxp-minp);
 		return (float)Math.exp(minv + scale * (percent - minp));
 	}
-	
-//	/** untested */
-//	public static double reverseLog(float val, float min, float max) {
-//		// input should be between min and max
-//		assert val >= min && val <= max;
-//
-//		// result will be between 0 and 100
-////		float minp = 0;
-//		float maxp = 100;
-//		
-//		double minv = Math.log(min);
-//		double maxv = Math.log(max);
-//		// calculate adjustment factor
-//		double scale = (maxv-minv) / maxp;
-//		
-//		// return /*Math.round(*/(Math.log(val)-minv) / scale;
-//	
-//		return Math.pow(max, val);
-//	}
 	
 	@Getter static float[] reverseLog = new float[100];
 	static {

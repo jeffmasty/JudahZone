@@ -1,37 +1,26 @@
 package net.judah.controllers;
 
 import static net.judah.JudahZone.*;
-import static net.judah.controllers.KnobMode.Clock;
-
-import java.awt.Component;
-
-import javax.swing.JLabel;
 
 import org.jaudiolibs.jnajack.JackException;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.MainFrame;
-import net.judah.api.Midi;
+import net.judah.JudahZone;
 import net.judah.api.MidiReceiver;
-import net.judah.drumz.DrumType;
-import net.judah.drumz.KitzView;
+import net.judah.drumkit.DrumType;
 import net.judah.effects.Delay;
+import net.judah.gui.MainFrame;
+import net.judah.gui.Pastels;
 import net.judah.midi.JudahMidi;
+import net.judah.midi.Midi;
 import net.judah.midi.ProgChange;
+import net.judah.midi.Transpose;
 import net.judah.samples.Sample;
-import net.judah.synth.SynthEngines;
-import net.judah.tracker.Track;
-import net.judah.tracker.Tracker;
-import net.judah.tracker.Transpose;
-import net.judah.util.Pastels;
 
 /** Akai MPKmini, not the new one */
 @RequiredArgsConstructor
 public class MPKmini implements Controller, MPKTools, Pastels {
 	
-	@Getter private static KnobMode mode = Clock;
-	@Getter private static JLabel label = new JLabel(mode.name(), JLabel.LEFT);
 	public static final int MIDDLE_C = 60;
 	private static final int JOYSTICK_L = 127;
 	private static final int JOYSTICK_R = 0;
@@ -45,11 +34,6 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 	@SuppressWarnings("unused")
 	private final int SUSTAIN_LENGTH = SUSTAIN_ON.length;
 	
-	public static void setMode(KnobMode knobs) {
-		mode = knobs;
-		MainFrame.setFocus(mode);
-	}
-	
 	@Override
 	public boolean midiProcessed(Midi midi) throws JackException {
 
@@ -59,10 +43,10 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 		if (Midi.isProgChange(midi)) 
 			return doProgChange(midi.getData1(), midi.getData2());
 		
-		if (getTracker().isRecord() && Midi.isNote(midi)) {
-			getNotes().record(midi);
-			return false; // pass through?
-		}
+//		if (getTracker().isRecord() && Midi.isNote(midi)) {
+//			getNotes().record(midi);
+//			return false; // pass through?
+//		}
 
 		if (midi.getChannel() == 9) {
 			int data1 = midi.getData1();
@@ -70,10 +54,9 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 			for (int i = 0; i < DRUMS_A.size() ; i++)
 				if (DRUMS_A.get(i) == data1) {
 					int translate = getDrumMachine().getDrum1().getSamples()[i].getGmDrum().getData1();
-					if (getTracker().isRecord()) {
-						getBeats().record(midi);
-					}
-					else 
+//					if (getTracker().isRecord()) 
+//						getBeats().record(midi);
+//					else 
 						getDrumMachine().getDrum1().send(
 							Midi.create(midi.getCommand(), 9, translate, midi.getData2()), -1);
 					return true;
@@ -82,13 +65,11 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 			for (int i = 0; i < DRUMS_B.size() ; i++)
 				if (DRUMS_B.get(i) == data1) {
 					midi = Midi.create(midi.getCommand(), 9, 
-							DrumType.values()[i].getDat().getData1(), midi.getData2());
-					if (getTracker().isRecord()) {
-						getBeats().record(midi);
-					}
-					else {
-						getBeats().getDrum2().getMidiOut().send(midi, JudahMidi.ticker());
-					}
+							DrumType.values()[i].getData1(), midi.getData2());
+//					if (getSeq().isRecord()) 
+//						getBeats().record(midi);
+//					else 
+						getDrumMachine().getDrum2().send(midi, JudahMidi.ticker());
 				}
 			return true;
 		}
@@ -128,37 +109,15 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 			sys.synchronize(getCrave());
 		}
 		else if (data1 == PRIMARY_CC.get(2) && data2 > 0) // focus MidiGui or LFO
-			if (MPKmini.getMode() == Clock)
-				{MPKmini.setMode(KnobMode.LFO);}
+			if (MainFrame.getKnobMode() == KnobMode.Midi)
+				{MainFrame.setFocus(KnobMode.LFO);}
 			else 
-				MPKmini.setMode(Clock); 
+				MainFrame.setFocus(KnobMode.Midi); 
 		else if (data1 == PRIMARY_CC.get(3) && data2 > 0) {// focus TRACKS
-			Component window = getFrame().getTab();
-			Tracker tracker = getTracker();
-			if (window == tracker) {
-				Track current = getTracker().getCurrent();
-				int idx = getBeats().indexOf(current);
-				boolean drums = true;
-				if (idx >= 0) {
-					idx++;
-					if (idx == getBeats().size()) {
-						drums = false;
-						idx = 0;
-					}
-				}
-				else {
-					drums = false;
-					idx = getNotes().indexOf(current) + 1;
-					if (idx == getNotes().size()) {
-						drums = true;
-						idx = 0;
-					}
-				}
-				tracker.setCurrent(drums ? getBeats().get(idx) : getNotes().get(idx));
-				MPKmini.setMode(KnobMode.Track);
-			}
+			if (MainFrame.getKnobMode() == KnobMode.Track)
+				getSeq().getTracks().next(true);
 			else 
-				getFrame().addOrShow(getTracker(), Tracker.NAME);
+				MainFrame.setFocus(KnobMode.Track);
 		}
 			
 		///////// ROW 2 /////////////////
@@ -173,19 +132,21 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 			// TODO
 			// record toggle
 		}
-		else if (data1 == PRIMARY_CC.get(6) && data2 > 0) { // focus Synth1 or Synth2
-			Component selected = getFrame().getTab();
-			if (selected == SynthEngines.getInstance()) 
-				SynthEngines.flip();
+		else if (data1 == PRIMARY_CC.get(6) && data2 > 0) { // focus Synth1 or Synth2 or Sampler
+			if (MainFrame.getKnobMode() == KnobMode.Synth) {
+				if (JudahZone.getFrame().getKnobs() == JudahZone.getSynth1().getSynthKnobs()) 
+					MainFrame.setFocus(JudahZone.getSynth2().getSynthKnobs());
+				else 
+					MainFrame.setFocus(KnobMode.Samples);
+				}
 			else 
-				getFrame().addOrShow(SynthEngines.getInstance(), SynthEngines.NAME);
+				MainFrame.setFocus(KnobMode.Synth);
 		}
 		else if (data1 == PRIMARY_CC.get(7) && data2 > 0) { // focus Drum Kits
-			Component selected = getFrame().getTab();
-			if (selected == KitzView.getInstance()) 
-				KitzView.getInstance().incrementKit();
+			if (MainFrame.getKnobMode() == KnobMode.Kits)
+				MainFrame.setFocus(JudahZone.getDrumMachine().increment().getKitMode());
 			else
-				getFrame().addOrShow(KitzView.getInstance(), KitzView.NAME);
+				MainFrame.setFocus(KnobMode.Kits);
 		} 
 		else 
 			return false;

@@ -12,14 +12,16 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
-import net.judah.MainFrame;
 import net.judah.effects.*;
 import net.judah.effects.api.Effect;
 import net.judah.effects.api.Gain;
 import net.judah.effects.api.Preset;
 import net.judah.effects.api.Reverb;
 import net.judah.effects.api.Setting;
+import net.judah.effects.gui.EffectsRack;
 import net.judah.effects.gui.PresetsHandler;
+import net.judah.gui.MainFrame;
+import net.judah.gui.knobs.LFOKnobs;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -37,7 +39,6 @@ public class Channel {
 	protected boolean presetActive;
 	protected PresetsHandler presets;
 	
-	
     protected final Gain gain = new Gain();
     protected final LFO lfo = new LFO(this);
     protected final CutFilter cutFilter;
@@ -51,6 +52,8 @@ public class Channel {
     @Setter protected JackPort leftPort;
     @Setter protected JackPort rightPort;
     protected final List<Effect> effects;
+    protected EffectsRack gui;
+    protected LFOKnobs lfoKnobs;
     
     public Channel(String name, boolean isStereo) {
         this.name = name;
@@ -75,7 +78,6 @@ public class Channel {
     		return;
     	presetActive = active;
         applyPreset();
-        MainFrame.update(this);
     }
 
     private void applyPreset() {
@@ -94,6 +96,7 @@ public class Channel {
             }
             RTLogger.warn(this, "Preset Error. not found: " + s.getEffectName());
         }
+        MainFrame.update(this);
     }
     
     public void setPreset(String name, boolean active) {
@@ -153,7 +156,7 @@ public class Channel {
 			gain.setVol(50);
 	}
 
-	public float getPan() { 
+	public final float getPan() { 
 		return gain.getPan() * 0.01f;
 	}
 
@@ -167,6 +170,16 @@ public class Channel {
 		return name;
 	}
 
+	public EffectsRack getGui() {
+		if (gui == null)
+			gui = new EffectsRack(this);
+		return gui;
+	}
 	
+	public LFOKnobs getLfoKnobs() {
+		if (lfoKnobs == null)
+			lfoKnobs = new LFOKnobs(this);
+		return lfoKnobs;
+	}
 }
 

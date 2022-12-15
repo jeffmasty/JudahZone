@@ -1,6 +1,7 @@
 package net.judah.synth;
-import java.io.File;
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
@@ -9,16 +10,19 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.JudahZone;
 import net.judah.api.Engine;
-import net.judah.api.Midi;
 import net.judah.api.MidiReceiver;
 import net.judah.controllers.KnobMode;
 import net.judah.controllers.Knobs;
 import net.judah.effects.CutFilter;
+import net.judah.gui.MainFrame;
+import net.judah.gui.knobs.KnobPanel;
+import net.judah.gui.knobs.SynthKnobs;
+import net.judah.midi.Midi;
 import net.judah.midi.MidiPort;
 import net.judah.mixer.LineIn;
 import net.judah.util.AudioTools;
-import net.judah.util.Constants;
 import net.judah.util.Icons;
 import net.judah.util.RTLogger;
 
@@ -32,7 +36,7 @@ public class JudahSynth extends LineIn implements MidiReceiver, Engine, Knobs {
     private final FloatBuffer mono = FloatBuffer.allocate(bufSize);
 	private final FloatBuffer[] buffer = new FloatBuffer[] {mono, null}; // synth is not stereo (yet)
 	private final int channel = 0;
-	private final KnobMode knobMode;
+	private final KnobMode knobMode = KnobMode.Synth;
 
 	protected boolean active = true;
     private final Adsr adsr = new Adsr();
@@ -45,14 +49,16 @@ public class JudahSynth extends LineIn implements MidiReceiver, Engine, Knobs {
 	private final ModWheel modWheel;
 	
 	private SynthPresets synthPresets;
-    @Setter @Getter private MidiPort midiPort;
+	private final List<Integer> actives = new ArrayList<>();
+	@Setter @Getter private MidiPort midiPort;
     @Setter private float amplification = 0.5f;
     /** modwheel pitchbend semitones */
-    @Setter private int modSemitones = 1; 
+    @Setter private int modSemitones = 1;
     
-	public JudahSynth(int idx, JackPort left, JackPort right, String iconName) {
-		super("Synth" + idx, false);
-		knobMode = (idx == 1) ? KnobMode.Synth1 : KnobMode.Synth2;
+    private SynthKnobs synthKnobs;
+    
+	public JudahSynth(String name, JackPort left, JackPort right, String iconName) {
+		super(name, false);
 		leftPort = left;
 		rightPort = right;
 		midiPort = new MidiPort(this);
@@ -103,10 +109,12 @@ public class JudahSynth extends LineIn implements MidiReceiver, Engine, Knobs {
 	public void send(MidiMessage midi, long timeStamp) {
 		ShortMessage m = (ShortMessage)midi;
 		if (Midi.isNote(m)) 
-			if (Midi.isNoteOn(m)) 
-				notes.noteOn(m);
-			else {
-				notes.noteOff(m);
+			if (Midi.isNoteOn(m)) { 
+				if (notes.noteOn(m))
+					MainFrame.update(this);
+			}
+			else if (notes.noteOff(m)) {
+				MainFrame.update(this);
 			}
 		else if (Midi.isProgChange(m)) {
 			RTLogger.log(this, "TODO ProgChange " + new Midi(m.getMessage()).toString());
@@ -130,7 +138,7 @@ public class JudahSynth extends LineIn implements MidiReceiver, Engine, Knobs {
 
 	@Override
 	public void progChange(String preset) {
-		getSynthPresets().load(new File(Constants.SYNTH, preset));
+		getSynthPresets().load(preset);
 	}
 	
 	@Override
@@ -140,7 +148,8 @@ public class JudahSynth extends LineIn implements MidiReceiver, Engine, Knobs {
 
 	@Override
 	public String[] getPatches() {
-		return synthPresets.toArray(new String[synthPresets.size()]);
+		List<String> result = JudahZone.getSynthPresets().keys();
+		return result.toArray(new String[result.size()]);
 	}
 
 
@@ -181,6 +190,21 @@ public class JudahSynth extends LineIn implements MidiReceiver, Engine, Knobs {
 		return detune[dco] * hz;
 	}
 
+	@Override
+	public List<Integer> getActives() {
+		actives.clear();
+		for (ShortMessage m : notes.getNotes()) 
+			if (m != null && Midi.isNoteOn(m)) 
+				actives.add(m.getData1());
+		return actives;
+	}
+
+	public KnobPanel getSynthKnobs() {
+		if (synthKnobs == null)
+			synthKnobs = new SynthKnobs(this);
+		return synthKnobs;
+	}
+	
 }
 
 //	public void setActive(boolean on) {  add/remove synth from channels list

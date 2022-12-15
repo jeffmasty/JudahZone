@@ -6,8 +6,8 @@ import javax.swing.JComboBox;
 
 import net.judah.effects.api.Effect;
 import net.judah.effects.api.Preset;
+import net.judah.gui.Pastels;
 import net.judah.mixer.Channel;
-import net.judah.util.Pastels;
 
 public class PresetCombo extends JComboBox<Preset> implements Effect {
 

@@ -4,10 +4,10 @@ import java.nio.FloatBuffer;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.MainFrame;
+import net.judah.gui.MainFrame;
 import net.judah.util.AudioTools;
 import net.judah.util.Constants;
-import net.judah.util.GuitarTuner;
+import net.judah.widgets.GuitarTuner;
 
 @Getter
 public abstract class LineIn extends Channel {
@@ -55,8 +55,6 @@ public abstract class LineIn extends Channel {
 		if (reverb.isActive() && reverb.isInternal()) {
 			reverb.process(mono);
 		}
-
-		
 	}
 	
 	public void processFx(FloatBuffer left, FloatBuffer right, float amplification) {
@@ -100,7 +98,6 @@ public abstract class LineIn extends Channel {
 		if (reverb.isActive()) {
 			reverb.process(left, right);
 		}
-
 	}
 
     

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
 import net.judah.api.Engine;
-import net.judah.drumz.DrumKit;
+import net.judah.drumkit.DrumKit;
 import net.judah.synth.JudahSynth;
 
 @RequiredArgsConstructor
@@ -72,7 +72,6 @@ public class Zone extends ArrayList<LineIn> {
         JudahZone.getSynth2().setMuteRecord(true);
 	}
 	public void initVolume() {
-		JudahZone.getPiano().getGain().setVol(30);
 		JudahZone.getMic().getGain().setVol(30);
 		JudahZone.getFluid().getGain().setVol(50);
 		JudahZone.getGuitar().getGain().setVol(50);

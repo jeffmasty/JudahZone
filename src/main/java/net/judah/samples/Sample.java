@@ -6,10 +6,11 @@ import java.nio.FloatBuffer;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
-import net.judah.MainFrame;
+import net.judah.gui.MainFrame;
+import net.judah.gui.knobs.SamplePad;
 import net.judah.looper.AudioTrack;
 import net.judah.looper.Recording;
-import net.judah.util.Constants;
+import net.judah.util.Folders;
 
 /** currently, plays ((crickets)) on 2 and 4 */
 public class Sample extends AudioTrack {
@@ -23,7 +24,7 @@ public class Sample extends AudioTrack {
     
 	/** load preset by name (without .wav) */
 	public Sample(JackPort left, JackPort right, String wavName, Type type) throws Exception {
-		this(left, right, wavName, new File(Constants.SAMPLES, wavName + ".wav"), type);
+		this(left, right, wavName, new File(Folders.getSamples(), wavName + ".wav"), type);
 	}
 	
 	public Sample(JackPort left, JackPort right, String name, File f, Type type) throws Exception {

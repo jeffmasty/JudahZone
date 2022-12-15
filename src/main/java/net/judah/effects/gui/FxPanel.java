@@ -1,64 +1,54 @@
 package net.judah.effects.gui;
 
-import java.util.HashSet;
+import java.awt.GridLayout;
 
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
+import javax.swing.border.LineBorder;
 
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.gui.Pastels;
 import net.judah.mixer.Channel;
-import net.judah.util.Constants;
-import net.judah.util.GuitarTuner;
-import net.judah.util.JudahMenu;
-import net.judah.util.Pastels;
 
 public class FxPanel extends JPanel {
 
-    @Getter private EffectsRack current;
-    @Getter private HashSet<EffectsRack> cache = new HashSet<>();
-    @Getter private final GuitarTuner tuner = new GuitarTuner();
-    private JPanel placeholder = new JPanel();
+    @Getter private final MultiSelect selected = new MultiSelect();
+    private JPanel placeholder = new JPanel(new GridLayout(1, 1, 0, 0));
     
     public FxPanel() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        setBorder(Constants.Gui.NONE);
-        setBackground(Pastels.EGGSHELL);
-
-        placeholder.addKeyListener(JudahMenu.getInstance());
-        placeholder.setFocusTraversalKeysEnabled(false);
+        placeholder.setBorder(new LineBorder(Pastels.MY_GRAY, 3));
         add(placeholder);
-        add(tuner);
         doLayout();
-        
-        setFocus(JudahZone.getMains());
+        Channel main = JudahZone.getMains();
+        main.getGui();
+        JudahZone.getGuitar().getGui();
+        setFocus(main);
     }
 
+    public void addFocus(Channel ch) {
+    	selected.add(ch);
+    	getChannel().getGui().getTitle().name(selected); 
+    }
+    
     public void setFocus(Channel ch) {
-    	if (ch.equals(getChannel())) {
+    	if (getChannel() == ch && selected.size() == 1) {
     		return;
     	}
-    	
-    	current = null;
-    	for (EffectsRack fx : cache)
-    		if (fx.getChannel() == ch) {
-    			current = fx;
-    			break;
-    		}
-    	if (current == null) {
-    		current = new EffectsRack(ch);
-    		cache.add(current);
-    	}
+    	selected.clear();
+    	selected.add(ch);
+    	ch.getGui().getTitle().name(selected);
         placeholder.removeAll();
-        placeholder.add(current);
-        placeholder.requestFocus();
+        placeholder.add(ch.getGui());
+        ch.getGui().update();
         validate();
-        current.update();
     }
-
+    
     public Channel getChannel() {
-        if (current == null) return null;
-        return current.getChannel();
+    	if (selected.isEmpty())
+    		return null;
+        return selected.get(0);
     }
 
 

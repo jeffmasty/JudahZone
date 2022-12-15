@@ -4,10 +4,12 @@ import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+
 import net.judah.api.MidiReceiver;
-import net.judah.tracker.Track;
 import net.judah.util.RTLogger;
-import net.judah.util.SettableCombo;
+import net.judah.widgets.SettableCombo;
 
 /**Handles Prog Change midi for a synth port on a channel, 
  * synchronizes updates between combo box instances */
@@ -23,26 +25,14 @@ public class ProgChange extends SettableCombo<String> {
 	
 	ActionListener listener = e -> lookup.put(out, "" + getSelectedItem());
 			
-	public ProgChange(Track t) {
-		ch = t.getCh();
-		out = t.getMidiOut();
-		reset(out.getProg(ch));
-		addActionListener(listener);
-		setAction(()->progChange(lookup.get(out), out, ch));
-	}
 	public ProgChange(MidiReceiver r, int channel) {
 		ch = channel;
 		out = r;
-		reset(0);
+		reset(r.getProg(channel));
 		setAction(()->progChange(lookup.get(out), out, ch));
+		((JLabel)getRenderer()).setHorizontalAlignment(SwingConstants.LEFT);
 	}
 
-//	public ProgChange(MidiReceiver r) {
-//		setOut(r, r.getChannel());
-//		setAction(()->change(out));
-//		widgets.add(this);
-//	}
-	
 	public static void change(MidiReceiver r, int ch) {
 		r.progChange(lookup.get(r), ch);
 	}
@@ -84,12 +74,6 @@ public class ProgChange extends SettableCombo<String> {
 		}
 	}
 
-	public void reset(Track t) {
-		out = t.getMidiOut();
-		ch = t.getCh();
-		reset(out.getProg(ch));
-	}
-	
 	public void reset(int selected) {
 		removeActionListener(listener);
 		removeAllItems();

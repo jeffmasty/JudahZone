@@ -3,8 +3,6 @@ package net.judah.midi;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
-import net.judah.api.Midi;
-
 /** Program Change MIDI message */
 public class ProgMsg extends Midi {
 

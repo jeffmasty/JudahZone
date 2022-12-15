@@ -4,26 +4,26 @@ import static net.judah.JudahZone.*;
 
 import java.awt.event.WindowEvent;
 
-import net.judah.MainFrame;
-import net.judah.api.Midi;
 import net.judah.controllers.MapEntry.TYPE;
+import net.judah.gui.MainFrame;
+import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
-import net.judah.tracker.Tracker;
+import net.judah.seq.Seq;
 import net.judah.util.Constants;
-import net.judah.util.ModalDialog;
-import net.judah.util.SettableCombo;
+import net.judah.widgets.ModalDialog;
+import net.judah.widgets.SettableCombo;
 
 /** Korg nanoKONTROL2 midi controller custom codes */ 	
 public class KorgMixer implements Controller {
 
 	public static final String NAME = "nanoKONTROL2";
 
-	private final int knoboff = 16;
 	private final int soff = 32;
 	private final int moff = 48;
 	private final int roff = 64;
-
+	private final int knoboff = 16;
+	
 	private static final MapEntry PREV = new MapEntry(new String("PREV"), TYPE.MOMENTARY, 58);
  	private static final MapEntry NEXT = new MapEntry(new String("NEXT"), TYPE.MOMENTARY, 59);
  	private static final MapEntry LOOP = new MapEntry(new String("LOOP"), TYPE.TOGGLE, 46);
@@ -43,25 +43,22 @@ public class KorgMixer implements Controller {
 	public boolean midiProcessed(Midi midi) {
 		int data1 = midi.getData1();
 		int data2 = (int)Math.floor(midi.getData2() / 1.27f);
-		Tracker tracker = getTracker();
+		Seq seq = getSeq();
 		
-		if (data1 >= 0 && data1 < 8) {
-			final int vol = data1;
-			new Thread(() ->getTracker().get(vol).setGain(data2 * 0.01f)).start();
-			return true;
-		}
-		if (data1 >= knoboff && data1 < knoboff + 8) {
-			data1 -= knoboff;
+		if (data1 >= 0 && data1 < 8) { // Main Faders
 			Channel ch = target(data1);
 			ch.getGain().setVol(data2);
 			MainFrame.update(ch);
 			return true;
 		}
+		if (data1 >= knoboff && data1 < knoboff + 8) {
+			seq.get(data1 - knoboff).setGain(data2 * 0.01f);
+			return true;
+		}
 		if (data1 >= soff && data1 < soff + 8) { // EDIT TRACK 
 			int track = data1 - soff;
-			getTracker().setCurrent(track);
-			MPKmini.setMode(KnobMode.Track);
-			MainFrame.setFocus(getBeatBox());
+			seq.setCurrent(seq.get(track));
+			MainFrame.setFocus(KnobMode.Track);
 			return true;
 		}
 		if (data1 >= moff && data1 < moff + 8) { // MUTE RECORD INPUT
@@ -77,7 +74,7 @@ public class KorgMixer implements Controller {
 		}
 		if (data1 >= roff && data1 < roff + 8) { // play/stop sequencer tracks
 			int trackNum = data1 - roff;
-			tracker.get(trackNum).setActive(data2 > 0);
+			seq.get(trackNum).setActive(data2 > 0);
 			return true;
 		}
 		if (data1 == SET.getVal() && data2 != 0) { // Run SettableCombo or hide modal dialog
@@ -91,31 +88,22 @@ public class KorgMixer implements Controller {
 		}
 		
 		if (data1 == PREV.getVal() && data2 != 0) {
-			tracker.changeTrack(true);
+			seq.getTracks().next(false);
 			return true;
 		}
 		if (data1 == NEXT.getVal() && data2 != 0) {
-			tracker.changeTrack(false);
+			seq.getTracks().next(true);
 			return true;
 		}
 		if (data1 == PREV2.getVal() && data2 != 0) { // change pattern
-			tracker.getCurrent().next(false);
+			seq.getCurrent().setCurrent(seq.getCurrent().getState().getNext());
 			return true;
 		}
 		if (data1 == NEXT2.getVal() && data2 != 0) { // change pattern
-			tracker.getCurrent().next(true);
+			seq.getCurrent().setCurrent(seq.getCurrent().getState().getPrevious());
 			return true;
 		}
 
-		if (data1 == PREV2.getVal() && data2 != 0) {
-			new Thread(() -> tracker.getCurrent().next(false)).start();
-			return true;
-		}
-		if (data1 == NEXT2.getVal() && data2 != 0) {
-			new Thread(() -> tracker.getCurrent().next(true)).start();
-			return true;
-		}
-		
 		if (data1 == RWND.getVal() && data2 != 0) { // prev Tab
 			MainFrame.changeTab(false);
 			return true;
@@ -125,25 +113,19 @@ public class KorgMixer implements Controller {
 			return true;
 		}
 //		if (data1 == STOP.getVal() && data2 != 0) { // Transpose Track on/off
-//			if (tracker.getCurrent() == null) 
+//			if (seq.getCurrent() == null) 
 //				return true;
 //// not drums			
-//			tracker.getCurrent().setLatch(!tracker.getCurrent().isLatch());
-//			Tracker.checkLatch();
+//			seq.getCurrent().setLatch(!seq.getCurrent().isLatch());
+//			seq.checkLatch();
 //			return true;
 //		}
 		if (data1 == PLAY.getVal()) {
 			if (data2 == 0) getClock().end();
 			else getClock().begin();
 		}
-		if (data1 == RECORD.getVal()) { // Toggle Mute
-			Channel current = getFxRack().getCurrent().getChannel();
-			if (current instanceof LineIn) {
-				LineIn in = (LineIn)current;
-				in.setMuteRecord(!in.isMuteRecord());
-			}
-			else 
-				current.setOnMute(!current.isOnMute());
+		if (data1 == RECORD.getVal()) { 
+			// TODO sequence Track 
 		}
 		
 		return false;

@@ -6,9 +6,9 @@ import java.util.ArrayList;
 
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
-import net.judah.MainFrame;
 import net.judah.effects.LFO.Target;
 import net.judah.effects.api.Gain;
+import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
 import net.judah.samples.Sample;
@@ -32,7 +32,7 @@ public class Fader {
 	}
 	
 	public static Fader fadeIn(Channel ch) {
-		return new Fader(ch, Target.Gain, DEFAULT_FADE, 0, ch instanceof Sample ? 95 : 51, new Runnable() {
+		return new Fader(ch, Target.Gain, DEFAULT_FADE, 0, 51, new Runnable() {
 		    @Override public void run() {
 		    	if (getMixer().getFader(ch) != null)
 		    		getMixer().getFader(ch).updateVolume();

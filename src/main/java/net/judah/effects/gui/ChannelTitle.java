@@ -6,20 +6,18 @@ import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JToggleButton;
 
-import net.judah.JudahZone;
+import net.judah.looper.Loop;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Instrument;
 import net.judah.samples.Sample;
 import net.judah.util.Constants;
-import net.judah.util.GuitarTuner;
 
 public class ChannelTitle extends JPanel {
 
 	private final Mute mute;
 	private final PresetCheckBox presetActive = new PresetCheckBox();
-	private final JToggleButton tunerBtn;
+//	private final JToggleButton tunerBtn;
 	
 	private final Channel channel;
 	private final JLabel name;
@@ -30,10 +28,8 @@ public class ChannelTitle extends JPanel {
 		JPanel main = new JPanel();
 		
 		this.channel = channel;
-		name = new JLabel(channel instanceof Sample ? "Sample " + channel.getName() : channel.getName(), JLabel.CENTER);
+		name = new JLabel(standard(), JLabel.CENTER);
 		name.setFont(Constants.Gui.BOLD13);
-		if (channel.getIcon() != null)
-			main.add(new JLabel(channel.getIcon(), JLabel.CENTER));
 		main.add(name);
 		
 		main.add(new JLabel(" fx:"));
@@ -47,18 +43,39 @@ public class ChannelTitle extends JPanel {
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		add(main);
 		
-		tunerBtn = (channel instanceof Instrument) ?
-			 new JToggleButton("tuner") : null;
-		if (tunerBtn != null) {
-			tunerBtn.setSelected(false);
-			tunerBtn.addChangeListener(e -> {
-				JudahZone.getFxRack().getTuner()
-						.setChannel(tunerBtn.isSelected() ? channel : null);
-			});
-			main.add(tunerBtn);
-		}
+//		tunerBtn = (channel instanceof Instrument) ?
+//			 new JToggleButton("tuner") : null;
+//		if (tunerBtn != null) {
+//			tunerBtn.setSelected(false);
+//			tunerBtn.addChangeListener(e -> {
+//				JudahZone.getFxRack().getTuner()
+//						.setChannel(tunerBtn.isSelected() ? channel : null);
+//			});
+//			main.add(tunerBtn);
+//		}
 	}
 
+	private String standard() {
+		return channel instanceof Sample ? "Sample " + channel.getName() : channel instanceof Loop ? "" : channel.getName();
+	}
+	
+	public void name(MultiSelect selected) {
+		if (selected.size() == 1) {
+			if (channel.getIcon() != null) 
+				name.setIcon(channel.getIcon());
+			name.setText(standard());
+			return;
+		}
+		name.setIcon(null);
+		StringBuffer buf = null;
+		for (Channel c : selected) {
+			if (buf == null) 
+				buf = new StringBuffer(c.getName());
+			else buf.append(" ").append(c.getName());
+		}
+		name.setText(buf.toString());
+	}
+	
 	private class PresetCheckBox extends JCheckBox {
         PresetCheckBox() {
             addItemListener(e -> {
@@ -103,8 +120,6 @@ public class ChannelTitle extends JPanel {
 		mute.ignore();
 		mute.update();
 		mute.listen();
-		if (tunerBtn != null)
-			tunerBtn.setSelected(GuitarTuner.getChannel() == channel);
 	}
 
 	

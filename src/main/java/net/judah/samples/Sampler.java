@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
-import net.judah.MainFrame;
 import net.judah.api.ProcessAudio.Type;
-import net.judah.drumz.StepSample;
+import net.judah.drumkit.StepSample;
 import net.judah.effects.Fader;
+import net.judah.gui.MainFrame;
 import net.judah.util.RTLogger;
 
 @Getter
@@ -16,7 +16,7 @@ public class Sampler extends ArrayList<Sample> {
 
 	public static final String[] NAMES = new String[] {
 			"Creek", "Rain", "Birds", "Bicycle", // loops
-			"FeelGoodInc", "Prrrrrr", "DropDaBass", "DJOutlaw"}; // one-shots
+			"FeelGood", "Prrrrrr", "DropBass", "DJOutlaw"}; // one-shots
 	// Fountain Creek: Fields Park, Manitou Springs, CO
 	// Rain in Cuba: https://freesound.org/people/kyles/sounds/362077/
 	// Birds: https://freesound.org/people/hargissssound/sounds/345851/
@@ -25,8 +25,12 @@ public class Sampler extends ArrayList<Sample> {
 	// DropDaBass: https://freesound.org/people/qubodup/sounds/218891/
 	// DJOutlaw: https://freesound.org/people/tim.kahn/sounds/94748/
 
+	@Getter private int selected;
+	
 	private final ArrayList<StepSample> stepSamples = new ArrayList<>();
 	private StepSample stepSample;
+	/** unified amplification for all samples */
+	@Getter float velocity = 1f;
 	
 	public Sampler(JackPort left, JackPort right) {
 		for (int i = 0; i < NAMES.length; i++) {
@@ -41,6 +45,7 @@ public class Sampler extends ArrayList<Sample> {
 			stepSamples.add(new StepSample("Shaker", 0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15));
 			stepSamples.add(new StepSample("Claves", 4, 10, 14));
 			stepSamples.add(new StepSample("Snares", 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15));
+			stepSamples.add(new StepSample("4x4", 0, 4, 8, 12));
 			stepSample = stepSamples.get(0);
 		} catch (Exception e) {
 			RTLogger.warn(this, e);
@@ -86,7 +91,7 @@ public class Sampler extends ArrayList<Sample> {
 			s.setOn(false);
 	}
 	
-	public void stepSample(int idx) {
+	public void setSelected(int idx) {
 		if (idx < 0 || idx >= stepSamples.size())
 			return;
 		
@@ -97,7 +102,16 @@ public class Sampler extends ArrayList<Sample> {
 		}
 		stepSample = stepSamples.get(idx);
 		stepSample.setOn(wasOn);
-		RTLogger.log(this, stepSample.getName());
+		selected = idx;
+		MainFrame.update(this);
+	}
+	
+	public void setStepping(boolean active) {
+		if (active)
+			stepSamples.get(selected).setOn(active);
+		else
+			stepperOff();
+		MainFrame.update(this);
 	}
 	
 	public void nextStepSample() {
@@ -106,21 +120,16 @@ public class Sampler extends ArrayList<Sample> {
 		int current = stepSamples.indexOf(stepSample) + 1;
 		if (current >= stepSamples.size())
 			current = 0;
-		stepSample(current);
+		setSelected(current);
+		MainFrame.update(this);
+	}
+
+	/** applies to all samples and stepSamples */
+	public void setVelocity(float f) {
+		this.velocity = f;
+		stepSamples.forEach(s->s.setVelocity(velocity));
+		this.forEach(s->s.setVelocity(velocity));
+		MainFrame.update(this);
 	}
 }
-
 	
-//	private JComboBox<String> stepper;
-//	public JComboBox<String> getStepper() {
-//		if (stepper == null) {
-//			stepper = new CenteredCombo<>();
-//			for (StepSample s : stepSamples)
-//				stepper.addItem(s.getName());
-//			stepper.setSelectedIndex(0);
-//			stepper.addActionListener(e-> {
-//				if (isStepping() == false) return;
-//				stepSample(stepper.getSelectedIndex());});
-//		}
-//		return stepper;
-//	}

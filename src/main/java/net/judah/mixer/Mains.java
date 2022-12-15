@@ -60,8 +60,8 @@ public class Mains extends Channel {
 		if (reverb.isActive()) {
 			reverb.process(left, right);
 		}
-	    AudioTools.processGain(speakersLeft.getFloatBuffer(), getGainL());
-	    AudioTools.processGain(speakersRight.getFloatBuffer(), getGainR());
+	    AudioTools.processGain(left, getGainL());
+	    AudioTools.processGain(right, getGainR());
 	}
 
 	public float getGainL() {

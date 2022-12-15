@@ -1,18 +1,28 @@
 TODO:
 
-kit knobMode decay, pan
-sequencing crave transpose initial record, sleepwalk restart loop off sync
-ERRNOBUF  mic flute phase // fixed?
-mixbus multi-select, mix fader upgrades
+ctrl = multiselect notes
+drag-n-drop = transpose
+record midi to Track/Looper!
+cc/prog view on High C#
+
+Sample packs
+verse/trigger gui feedback
+kit channels HiCut = pan? decay
+synth bend broken
+SettableCombo (mouse, bugs) 
+ratchet()
+
+Executor Threads
+mic flute phase // fixed?
+DBIndicator
 Loop copy/paste/length/save,  Record session
 Arppegiator (Racman sequence), Chord sheets
 ChordPro parser: https://github.com/SongProOrg/songpro-java  https://github.com/saipanman95/chordpro-parser
 Scope and Meters
+ERRNOBUF - no ticks, no start seq
 IR Reverb
-setup and settings, separate setlist from code 	 		
 Synth: LFO, glide, PWM, mono-synth
-Delay and LFO upgrade (triggered to Clock, LFO/Fader cleanUp())
-edit checkboxes: save patch/tempo/cycle info
+Delay and LFO upgrade (Clock & tapTempo)
 probability, Ritardando
 export beatbox as midi file, quantization
 Sampler Fx (granularity, pitched frequency, wet)
@@ -28,7 +38,7 @@ walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.co
 MPK Sequencer
 make client-server architecture
 Sequencer can really swing.
-support JavaSound/non-Jack, make accessible 
+support JavaSound/non-Jack, make accessible setup and settings
 
 Hacking the Arturia Beatstep:
 https://www.untergeek.de/2014/11/taming-arturias-beatstep-sysex-codes-for-programming-via-ipad/
@@ -138,6 +148,9 @@ JudahSynth + ADSR knobs, code my own polyphonic velocity-sensitive synthesizer, 
 portWrapper for midiOut to JudahSynth/JudahBeats, redo djJefe
 8-track player, atk/rel drum sample envelope
 LFO on samples, LFO cleanup, Compressor
+mixbus multi-select
+falling water midi editor
+separate setlist and code
 
 
 REFERENCE------------------------------------------------------------
@@ -192,4 +205,25 @@ Channel
           DrumSamples to DrumMachine
 
 
+
+Sequencer
+	sorted by tick
+	Midi channel = track#/midiOut
+
+
+For view:
+get(track)
+get(track, bar#)
+
+Sequencer.add(track, midiSequence)
+
+  
+  Track 
+  		list of Bars
+  		
+  		
+  		
+  		
+  
+  
   

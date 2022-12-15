@@ -47,7 +47,6 @@ public class Compressor implements Effect {
 	static final float LOG_2  = 0.693147f;
 	static final float MIN_GAIN  = 0.00001f; // -100dB help prevents evaluation of denormal numbers
     @Setter @Getter private boolean active;
-    @Getter private int preset;
 
     // private int hold = (int) (samplerate*0.0125);  //12.5ms;
     private double cSAMPLE_RATE;
@@ -85,16 +84,31 @@ public class Compressor implements Effect {
     private float makeuplin;
     private float outlevel;
 
-    /** initializes Preset[1] at 48000 sampleRate */
     public Compressor() {
-    	setSampleRate(Constants.sampleRate());
-    	setThreshold(-25);
-    	setRatio(8);
-		setBoost(-17);
-		setKnee(20);
-    	setAttack(30);
-		setRelease(220);
+    	reset();
     }
+
+	public void reset() {
+	    boost = 1.0f;
+	    boost_old = 1.0f;
+	    peak = 0.0f;
+	    setSampleRate(Constants.sampleRate());
+    	setThreshold(-20);
+    	setRatio(7);
+		setBoost(-12);
+		setKnee(20);
+		setRelease(90);
+		set(Settings.Attack.ordinal(), get(Settings.Release.ordinal()));
+	}
+
+    public static float dB2rap(double dB) {
+		return (float)((Math.exp((dB)*LOG_10/20.0f)));
+	}
+
+	public static float rap2dB(float rap) {
+		return (float)((20*log(rap)/LOG_10));
+	}
+
     public void setSampleRate(int sampleRate) {
     	cSAMPLE_RATE = 1.0/sampleRate;
     }
@@ -107,21 +121,6 @@ public class Compressor implements Effect {
     @Override public String getName() {
         return Compressor.class.getSimpleName();
     }
-
-	public float dB2rap(double dB) {
-		return (float)((Math.exp((dB)*LOG_10/20.0f)));
-	}
-
-	public float rap2dB(float rap) {
-		return (float)((20*log(rap)/LOG_10));
-	}
-
-	public void reset() {
-	    boost = 1.0f;
-	    boost_old = 1.0f;
-	    peak = 0.0f;
-	    compute();
-	}
 
     /** @return attack in milliseconds */
     public int getAttack() {
@@ -183,6 +182,8 @@ public class Compressor implements Effect {
         	return getAttack() + 10;
         if (idx == Settings.Release.ordinal())
         	return (int)( (getRelease() - 20) * 0.5f);
+        if (idx == Settings.Boost.ordinal())
+        	return ((toutput + 20) * 3);
         throw new InvalidParameterException();
     }
 
@@ -193,7 +194,8 @@ public class Compressor implements Effect {
 		else if (idx == Settings.Ratio.ordinal()) 
 			setRatio((int)((value * 0.1f) + 2));
 		else if (idx == Settings.Boost.ordinal()) 
-			setBoost(value); // non-conform 1 to 100
+			setBoost((int)(value * 0.3333f - 20));
+			// setBoost(value); // non-conform 1 to 100
 		else if (idx == Settings.Attack.ordinal()) 
 			setAttack(value + 10);
 		else if (idx == Settings.Release.ordinal()) 

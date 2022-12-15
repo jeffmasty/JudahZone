@@ -4,18 +4,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 public class PresetsDB extends ArrayList<Preset> {
 
-    public enum Raw {
-        StdCrunch, Chorus2, DrumsVerb, Tremelo, Freeverb
-    }
-
-	public static final File FILE = new File(System.getProperty("user.dir"), "presets.zone");
-
     public PresetsDB() {
-        this(FILE);
+        this(Folders.getPresetsFile());
     }
 
     public PresetsDB(File presetFile) {
@@ -52,13 +47,6 @@ public class PresetsDB extends ArrayList<Preset> {
         for (Preset p : this)
             result.append(p.toFile());
         return result.toString();
-    }
-
-    public Preset get(Raw raw) {
-        for (Preset p : this)
-            if (p.getName().equals(raw.name()))
-                return p;
-        return null;
     }
 
 	public Preset getFirst() {

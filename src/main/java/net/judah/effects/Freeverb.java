@@ -77,7 +77,7 @@ import lombok.Setter;
 import net.judah.effects.api.Reverb;
 import net.judah.util.Constants;
 
-/** initialize your own sample and buffer rate.  Don't try this reverb with software synths, it doesn't sound good */
+/** the classic Freeverb algorithm, stereo handled as a separate internal Effect unit */
 public final class Freeverb extends Reverb {
 
     private static final float fixedgain = 0.015f * 2;

@@ -1,5 +1,7 @@
 package net.judah.mixer;
 
+import java.util.ArrayList;
+
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
@@ -9,15 +11,18 @@ import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.api.MidiReceiver;
+import net.judah.midi.Midi;
 import net.judah.midi.MidiPort;
 import net.judah.midi.Panic;
 
 /** base function for an external mono-synth */
+@Getter
 public class MidiInstrument extends Instrument implements MidiReceiver {
 
-	@Setter @Getter protected MidiPort midiPort;
-	@Setter @Getter private int channel = 0;
-	@Getter private String[] patches = new String[] {"none"};
+	protected final ArrayList<Integer> actives = new ArrayList<>();
+	protected String[] patches = new String[] {"none"};
+	@Setter protected MidiPort midiPort;
+	@Setter protected int channel = 0;
 	// boolean doesProgChange
 	// boolean isMono
 	
@@ -36,8 +41,14 @@ public class MidiInstrument extends Instrument implements MidiReceiver {
 	}
 
 	@Override
-	public void send(MidiMessage message, long timeStamp) {
-		midiPort.send((ShortMessage)message, (int)timeStamp);
+	public final void send(MidiMessage message, long timeStamp) {
+		ShortMessage msg = (ShortMessage)message;
+		if (Midi.isNoteOn(msg))
+			actives.add(msg.getData1());
+		else if (Midi.isNote(msg))
+			actives.remove((Integer)msg.getData1());
+		
+		midiPort.send(msg, (int)timeStamp);
 	}
 
 	@Override

@@ -3,15 +3,17 @@ package net.judah.effects.gui;
 import java.awt.Component;
 import java.util.ArrayList;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.mixer.Channel;
-import net.judah.util.JudahKnob;
+import net.judah.widgets.JudahKnob;
 
 @RequiredArgsConstructor
-public abstract class Row {
+public class Row {
 
-	protected static final int KNOBS = 4;
 	protected final Channel channel;
+	
+	@Getter protected final ArrayList<Component> controls = new ArrayList<>();
 	
 	public final void update() {
     	for (Component c : getControls()) 
@@ -20,7 +22,5 @@ public abstract class Row {
 			else if (c instanceof FxCombo)
 				((FxCombo)c).update();
 	}
-	
-	public abstract ArrayList<Component> getControls();
 
 }

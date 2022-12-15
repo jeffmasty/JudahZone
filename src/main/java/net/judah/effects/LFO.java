@@ -5,9 +5,9 @@ import java.security.InvalidParameterException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import net.judah.MainFrame;
 import net.judah.effects.api.Effect;
 import net.judah.effects.api.Reverb;
+import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 import net.judah.util.RTLogger;
 

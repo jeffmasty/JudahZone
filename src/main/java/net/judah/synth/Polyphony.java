@@ -6,7 +6,7 @@ import javax.sound.midi.ShortMessage;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.api.Midi;
+import net.judah.midi.Midi;
 import net.judah.util.Constants;
 
 @RequiredArgsConstructor
@@ -48,16 +48,17 @@ public class Polyphony {
 		;
 	}
 	
-	public void noteOff(ShortMessage m) {
-		if (monophonic)
-			monoOff(m);
+	public boolean noteOff(ShortMessage m) {
+		//if (monophonic)
+		//	return monoOff(m);
 		
 		for (int i = 0; i < POLYPHONY; i++)
 			if (notes[i] != null && notes[i].getData1() == m.getData1()) {
 				// start release on envelope,  when release completes note switched to null and Voice ready for polyphony
 				notes[i] = Midi.create(m.getCommand(), m.getChannel(), m.getData1(), notes[i].getData2());
-				return;
+				return true;
 			}
+		return false;
 	}
 	
 	public int count() {

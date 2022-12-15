@@ -28,8 +28,8 @@ import net.judah.util.Constants;
 public final class Overdrive implements Effect {
 
     @Getter @Setter boolean active;
-    @Getter private float drive = 0.0175f;
-    private final float makupGain = 1.75f;
+    @Getter private float drive = 0.06f;
+    private final float makupGain = 1.5f;
     private int nframes;
     
     public Overdrive() {

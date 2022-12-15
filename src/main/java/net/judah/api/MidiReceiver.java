@@ -1,6 +1,7 @@
 package net.judah.api;
 
 import java.io.Closeable;
+import java.util.List;
 
 import javax.sound.midi.Receiver;
 
@@ -8,6 +9,8 @@ import net.judah.midi.MidiPort;
 
 public interface MidiReceiver extends Receiver, Closeable {
 
+	List<Integer> getActives();
+	
 	String getName();
 	
 	String[] getPatches();

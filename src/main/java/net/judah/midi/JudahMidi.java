@@ -20,21 +20,18 @@ import org.jaudiolibs.jnajack.JackPortFlags;
 
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.MainFrame;
 import net.judah.api.BasicClient;
-import net.judah.api.Midi;
 import net.judah.api.MidiReceiver;
 import net.judah.api.PortMessage;
 import net.judah.controllers.*;
-import net.judah.drumz.DrumMachine;
+import net.judah.drumkit.DrumMachine;
 import net.judah.fluid.FluidSynth;
+import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock.Mode;
 import net.judah.midi.MidiSetup.IN;
 import net.judah.midi.MidiSetup.OUT;
 import net.judah.mixer.Channel;
 import net.judah.mixer.MidiInstrument;
-import net.judah.tracker.Track;
-import net.judah.tracker.Tracker;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -115,7 +112,7 @@ public class JudahMidi extends BasicClient implements Closeable {
         	}
         	else
         		try {
-	        		fluidSynth = new FluidSynth(JudahZone.getSrate(), fluidPort);
+	        		fluidSynth = new FluidSynth(Constants.sampleRate(), fluidPort);
 	        	} catch (JackException e) {
 	        		throw e;
 		    	} catch (Exception e) {
@@ -236,7 +233,11 @@ public class JudahMidi extends BasicClient implements Closeable {
         
         
         if (clock == null) {
-        	clock = new JudahClock(drums); 
+        	try {
+        		clock = new JudahClock(drums); 
+        	} catch (Exception e) {
+        		throw new JackException(e);
+        	}
         	while (JudahZone.getMains() == null)
         		Constants.sleep(10);
         	mapMidi(JudahZone.getSynthPorts());
@@ -288,7 +289,7 @@ public class JudahMidi extends BasicClient implements Closeable {
                     if (JackMidi.getEventCount(port) != eventCount) {
                         RTLogger.warn(this, "eventCount found " +
                                 JackMidi.getEventCount(port) + " expected " + eventCount);
-                        continue;
+                        break;
                     }
                     JackMidi.eventGet(midiEvent, port, index);
                     if (port == midiclock) {
@@ -392,8 +393,8 @@ public class JudahMidi extends BasicClient implements Closeable {
 	public void synchronize(byte[] midi) {
 		for (MidiPort p : sync)
 			p.send(new Midi(midi), JudahMidi.ticker());
-		for (Track t : Tracker.getAll())
-			t.setStep(0);
+//		for (Track t : Tracker.getAll())
+//			t.setStep(0);
 	}
 
 	public Path getPath(MidiPort port) {

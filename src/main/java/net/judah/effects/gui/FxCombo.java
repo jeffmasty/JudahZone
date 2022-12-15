@@ -6,8 +6,6 @@ import java.awt.event.MouseEvent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import net.judah.util.Pastels;
-
 /** FilterType, LFOType, Presets */
 public class FxCombo extends JPanel {
 
@@ -28,8 +26,8 @@ public class FxCombo extends JPanel {
 		this.callback = callback;
 		update();
 		addMouseListener(mouser);
-		setOpaque(true);
-		setBackground(Pastels.BUTTONS);
+//		setOpaque(true);
+//		setBackground(Pastels.BUTTONS);
 		add(text);
 	}
 	

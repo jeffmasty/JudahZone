@@ -4,7 +4,7 @@ import java.awt.Color;
 
 import net.judah.effects.api.Effect;
 import net.judah.effects.api.Reverb;
-import net.judah.util.Pastels;
+import net.judah.gui.Pastels;
 
 public class EffectColor implements Pastels {
 
@@ -25,7 +25,7 @@ public class EffectColor implements Pastels {
 			return PURPLE;
 		if (LFO.class.equals(class1))
 			return BLUE;
-		return MY_GRAY;
+		return EGGSHELL;
 	}
 	
 }

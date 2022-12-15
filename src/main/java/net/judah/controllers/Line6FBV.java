@@ -2,14 +2,14 @@ package net.judah.controllers;
 
 import static net.judah.JudahZone.*;
 
-import net.judah.MainFrame;
-import net.judah.api.Midi;
+import net.judah.JudahZone;
+import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
+import net.judah.looper.SoloTrack;
 import net.judah.midi.JudahClock;
+import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Instrument;
-import net.judah.mixer.SoloTrack;
-import net.judah.tracker.Cycle;
 
 public class Line6FBV implements Controller {
 	public static final String NAME = "FBV Shortboard Mk";
@@ -25,8 +25,7 @@ public class Line6FBV implements Controller {
 				return true;
 			}
 			if (midi.getData1() == 1) { // "UP" button
-				Cycle.setTrigger(true);
-				Cycle.setVerse(true);
+				JudahZone.setTrigger(!JudahZone.isTrigger());
 				// getJamstik().nextMidiOut(); 
 				return true;
 			}
@@ -44,7 +43,7 @@ public class Line6FBV implements Controller {
 			if (mutes) 
 				loop.setOnMute(!loop.isOnMute());
 			else 
-				KorgPads.trigger(loop);
+				loop.trigger();
 			return true;
 		case 2: // overdub B
 			if (data2 == 0) return true;
@@ -52,10 +51,7 @@ public class Line6FBV implements Controller {
 			if (mutes) 
 				loop.setOnMute(!loop.isOnMute());
 			else {
-				if (loop.hasRecording())
-					KorgPads.record(getLooper().getLoopB());
-				else  // or Sync B
-					loop.setArmed(!loop.isArmed());
+				loop.trigger();
 			}
 			return true;
 		case 3: // record C (free)
@@ -64,17 +60,15 @@ public class Line6FBV implements Controller {
 			if (mutes) 
 				loop.setOnMute(!loop.isOnMute());
 			else // can be free-style loop
-				KorgPads.record(getLooper().getLoopC());
+				loop.trigger();
 			return true;
 		case 4: // overdub D
 			if (midi.getData2() == 0) return true;
-			SoloTrack drums = getLooper().getDrumTrack();
+			SoloTrack solo = getLooper().getSoloTrack();
 			if (mutes) 
-				drums.setOnMute(!drums.isOnMute());
-			else if (getLooper().getLoopB().hasRecording()) // TODO
-				KorgPads.record(drums);
-			else // or Toggle Drum Track recording
-				drums.toggle();
+				solo.setOnMute(!solo.isOnMute());
+			else
+				solo.trigger();
 			return true;
 		case 5: // Func(1) start/stop drum machine
 			JudahClock clock = getClock();
@@ -115,7 +109,7 @@ public class Line6FBV implements Controller {
 				return true; // ignore minor fluctuations of vol pedal
 			if (getFxRack() == null)
 				return true;
-			Channel ch = getFxRack().getCurrent().getChannel();
+			Channel ch = getFxRack().getChannel();
 			if (Math.abs(ch.getGain().getVol() - percent) > 2){
 				ch.getGain().setVol(percent);
 				pedalMemory = percent;

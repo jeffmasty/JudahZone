@@ -9,36 +9,43 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.judah.JudahZone;
-import net.judah.MainFrame;
 import net.judah.api.*;
-import net.judah.drumz.DrumKit;
-import net.judah.drumz.DrumMachine;
+import net.judah.drumkit.DrumKit;
+import net.judah.drumkit.DrumMachine;
+import net.judah.gui.MainFrame;
+import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Instrument;
 import net.judah.mixer.LineIn;
 import net.judah.mixer.Zone;
 import net.judah.synth.JudahSynth;
 import net.judah.util.Constants;
+import net.judah.util.Icons;
 import net.judah.util.RTLogger;
+import net.judah.widgets.LoopWidget;
+import net.judah.widgets.SyncWidget;
 
 public class Loop extends AudioTrack implements TimeNotifier, RecordAudio {
 
-	protected static final float INSTRUMENT_FACTOR = 2f;
-	protected static final float SYNTH_FACTOR = 2.5f;
-	protected static final float NO_GAIN = 1f;
+	protected static final float LINE_BOOST = 2f;
+	protected static final float SYNTH_BOOST = 2.5f;
+	protected static final float DRUM_BOOST = 4.5f;
 	
 	protected final Looper looper;
-	@Getter protected boolean armed;
+	@Getter protected final JudahClock clock;
+    protected final Zone sources;
+    protected final Memory memory;
+
     @Getter protected Loop primary;
     @Getter private int loopCount;
     protected SyncWidget sync;
+    @Setter protected LoopWidget feedback;
     protected int syncCounter;
-    protected final Memory memory;
-    protected Zone sources;
-    protected long _start;
     protected final ArrayList<TimeListener> listeners = new ArrayList<>();
     @Getter protected final AtomicReference<AudioMode> isRecording = new AtomicReference<>(AudioMode.NEW);
+    protected long _start;
     
     protected final float[] workL = new float[bufSize];
     protected final float[] workR = new float[bufSize];
@@ -46,13 +53,16 @@ public class Loop extends AudioTrack implements TimeNotifier, RecordAudio {
     protected final FloatBuffer bufR = FloatBuffer.wrap(workR);
     protected final FloatBuffer[] buffer = new FloatBuffer[] {bufL, bufR};
     
-    public Loop(String name, Looper parent, Zone sources) {
-    	super(name);
-    	looper = parent;
+    public Loop(String name, Looper loops, Zone sources, String icon, Type type, JudahClock clock) {
+    	super(name, type);
+    	this.looper = loops;
     	this.sources = sources;
+    	this.clock = clock;
     	memory = new Memory(Constants.STEREO, bufSize);
-    	leftPort = parent.getLeft();
-    	rightPort = parent.getRight();
+    	leftPort = looper.getLeft();
+    	rightPort = looper.getRight();
+    	if (icon != null)
+    		setIcon(Icons.load(icon));
     }
     
     @Override public AudioMode isRecording() {
@@ -71,16 +81,11 @@ public class Loop extends AudioTrack implements TimeNotifier, RecordAudio {
         recording = null;
         active = false;
         MainFrame.update(this);
-        if (this == looper.getLoopA())
-        	MainFrame.update(LoopWidget.getInstance());
+        if (feedback != null)
+        	MainFrame.update(feedback);
         listeners.clear();
     }
 
-    public void setArmed(boolean sync) {
-    	armed = sync;
-    	MainFrame.update(this);
-    }
-    
     @Override
 	public void setRecording(Recording music) {
     	isRecording.set(STOPPED);
@@ -127,8 +132,6 @@ public class Loop extends AudioTrack implements TimeNotifier, RecordAudio {
             		listener -> {listener.update(Notification.Property.STATUS, Status.ACTIVE);});
 		} else if (active) {
             isRecording.set(STARTING);
-            if (armed) 
-            	setType(Type.ONE_SHOT);
             this.active = true;  // overdub
         } else if (mode == RUNNING && !active) {
         	endRecord();
@@ -138,21 +141,23 @@ public class Loop extends AudioTrack implements TimeNotifier, RecordAudio {
 	private void endRecord() {
 		isRecording.set(STOPPED);
 		active = true;
-
-		if (length == null) { // Initial Recording 
-            new Thread(() -> { // cut tape for other loopers
-            	looper.setRecordedLength(System.currentTimeMillis() - _start, this);
-            	length = recording.size();
+		if (sync != null)
+			sync.syncDown();
+		if (length == null && recording != null) { // Initial Recording 
+			length = recording.size();
+			final int time = length;
+			new Thread(() -> { // cut tape for other loopers
+				looper.setRecordedLength(System.currentTimeMillis() - _start, this);
             	for (Loop loop : looper) 
         			if (loop != this && !loop.hasRecording()) 
-            			loop.setRecording(new Recording(length));
+            			loop.setRecording(new Recording(time));
+            	
             	new ArrayList<>(listeners).forEach(
             		listener -> {listener.update(Notification.Property.STATUS, Status.TERMINATED);});
             	RTLogger.log(this, name + " cut tape " + looper.getRecordedLength() / 1000f + " seconds");
             }).start();
 		}
         else {
-        	armed = false;
         	new ArrayList<>(listeners).forEach(
             		listener -> {listener.update(Notification.Property.STATUS, Status.OVERDUBBED);});
         }
@@ -163,14 +168,11 @@ public class Loop extends AudioTrack implements TimeNotifier, RecordAudio {
 	/** in Real-Time */
 	@Override public void readRecordedBuffer() {
     	int updated = tapeCounter.get();
-    	if (updated < recording.size())
-    		recordedBuffer = recording.get(tapeCounter.get());
     	
         updated++;
-        if (updated == recording.size()) 
+        if (updated >= recording.size()) 
             updated = 0;
         tapeCounter.set(updated);
-
         if (updated == 1) {
         	if (!listeners.isEmpty())
         		new Thread() { @Override public void run() {
@@ -179,26 +181,14 @@ public class Loop extends AudioTrack implements TimeNotifier, RecordAudio {
         		}}.start();
         }
 	    if (updated == 2 && this == looper.getPrimary()) 
-	    	checkArmed();
+	    	looper.checkOnDeck();
+	    // peek ahead/latency
+	    updated++;
+	    if (updated >= recording.size())
+	    	updated = 0;
+	    recordedBuffer = recording.get(updated);
         
     }
-
-	private void checkArmed() {
-    	boolean triggered = false;
-		for (Loop loop : looper) {
-			if (loop.isArmed() == false)
-				continue;
-			if (loop.getIsRecording().get() != RUNNING && !triggered) {
-				loop.setType(Type.ONE_SHOT);
-				triggered = true;
-				new Thread(()->loop.record(true)).start(); // cutting fresh tape in background
-			} 
-			else if (loop.getIsRecording().get() == RUNNING) {
-				loop.setType(Type.FREE);
-				loop.record(false);
-			}
-		}
-	}
 
 	public void duplicate() {
 		new Thread(()-> {
@@ -236,6 +226,36 @@ public class Loop extends AudioTrack implements TimeNotifier, RecordAudio {
     	return sync;
     }
 
+    public void trigger() {
+		if (isRecording() == AudioMode.RUNNING) {
+			if (this == looper.getLoopB() && !hasRecording() && sync != null) {
+				sync.bSync(Integer.MIN_VALUE);
+			}
+			else {
+				record(false);
+				if (sync != null)
+					sync.syncDown();
+			}
+		}
+		else if (!hasRecording()) {
+			// if sync remove sync else sync
+			if (clock.getListeners().contains(sync))
+				getSync().syncDown();
+			else {
+				if (this == looper.getLoopB()) 
+					getSync().bSync(-1);
+				else {
+					getSync().syncUp();
+					if (this == looper.getSoloTrack())
+						looper.getLoopA().getSync().syncUp();
+					else if (looper.getSoloTrack().isSolo())
+						looper.getSoloTrack().getSync().syncUp();
+				}
+			}
+		}
+		else 
+			record(isRecording() != AudioMode.RUNNING);
+	}
     
     ////////////////////////////////////
     //     Process Realtime Audio     //
@@ -250,8 +270,9 @@ public class Loop extends AudioTrack implements TimeNotifier, RecordAudio {
     		}
     	}
     	
-    	if (this == looper.getLoopA() && ++syncCounter > 7) { 
-        	MainFrame.update(LoopWidget.getInstance());
+    	if (++syncCounter > 7) { 
+        	if (feedback != null)
+        		MainFrame.update(feedback);
         	syncCounter = 0;
         }
    	
@@ -268,29 +289,32 @@ public class Loop extends AudioTrack implements TimeNotifier, RecordAudio {
             	newBuffer = recordInstrument(in.getLeftPort().getFloatBuffer(), 
 	            		in.isStereo() ? in.getRightPort().getFloatBuffer() : null, newBuffer);
             else if (in instanceof JudahSynth)
-            	newBuffer = recordInternal((JudahSynth)in, newBuffer, SYNTH_FACTOR);
+            	newBuffer = recordInternal((JudahSynth)in, newBuffer, SYNTH_BOOST);
             else if (in instanceof DrumMachine)
-            	for (DrumKit kit : ((DrumMachine)in).getDrumkits())
-            		newBuffer = recordInternal(kit, newBuffer, NO_GAIN);
+            	for (DrumKit kit : ((DrumMachine)in).getKits())
+            		newBuffer = recordInternal(kit, newBuffer, DRUM_BOOST);
         }
         
         if (hasRecording()) {
             recording.dub(newBuffer, recordedBuffer, counter);
         }
-        else
+        else {
             recording.add(newBuffer);
+            if (sync != null && syncCounter == 0)
+        		MainFrame.update(sync);
+        }
     }
     
     private float[][] recordInstrument(FloatBuffer channelLeft, FloatBuffer channelRight, float[][] newBuffer) {
 		boolean stereo = channelRight != null;
     	if (newBuffer == null) {
     		newBuffer = memory.getArray();
-    		replace(INSTRUMENT_FACTOR, channelLeft, newBuffer[LEFT_CHANNEL]); // copy
-    		replace(INSTRUMENT_FACTOR, stereo ? channelRight : channelLeft, newBuffer[RIGHT_CHANNEL]);
+    		replace(LINE_BOOST, channelLeft, newBuffer[LEFT_CHANNEL]); // copy
+    		replace(LINE_BOOST, stereo ? channelRight : channelLeft, newBuffer[RIGHT_CHANNEL]);
         }
         else {
-            processAddGain(INSTRUMENT_FACTOR, channelLeft, newBuffer[LEFT_CHANNEL]);
-            processAddGain(INSTRUMENT_FACTOR, stereo ? channelRight :channelLeft, newBuffer[RIGHT_CHANNEL]);
+            processAddGain(LINE_BOOST, channelLeft, newBuffer[LEFT_CHANNEL]);
+            processAddGain(LINE_BOOST, stereo ? channelRight :channelLeft, newBuffer[RIGHT_CHANNEL]);
         }
     	return newBuffer;
     }
@@ -323,16 +347,6 @@ public class Loop extends AudioTrack implements TimeNotifier, RecordAudio {
     }
     
 }
-
-
-
-//        	if (type == Type.ONE_SHOT && recording()) { //sync/armed record
-//        		record(false);
-//        		RTLogger.log(this, "de-triggered");
-//        		setType(Type.FREE);
-//            }
-//        }
-//        else 
 
 //   mix external reverb (final fx) with output. A loop goes to Carla1 reverb, B to Carla2
 //    @Override

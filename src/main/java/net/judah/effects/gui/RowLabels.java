@@ -1,24 +1,20 @@
 package net.judah.effects.gui;
 
-import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.security.InvalidParameterException;
-import java.util.ArrayList;
 
 import javax.swing.JLabel;
 
-import lombok.Getter;
-import net.judah.MainFrame;
 import net.judah.effects.api.Effect;
+import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 import net.judah.util.KeyPair;
 
 public class RowLabels extends Row {
-	
-	@Getter private final ArrayList<Component> controls = new ArrayList<>();
-	
-	public RowLabels(Channel ch, KeyPair[] source) {
+	public static final int KNOBS = 4;
+
+	public RowLabels(Channel ch, KeyPair... source) {
 		super(ch);
 		if (source.length != KNOBS) 
 			throw new InvalidParameterException("source knobs " + source.length);

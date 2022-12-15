@@ -16,23 +16,35 @@ public class DJJefe extends JPanel {
 	@Getter private final ArrayList<Channel> channels = new ArrayList<>();
 	private final ArrayList<ChannelFader> faders = new ArrayList<ChannelFader>();
 	
-    public DJJefe(Channel mains, Looper loops, Zone sources) {
-        for (Loop loop : loops)
-        	addChannel(loop);
-    	for (LineIn instrument : sources)
-        	addChannel(instrument);
-        addChannel(mains);
+    public DJJefe(Channel mains, Looper looper, Zone sources) {
+        
+    	for (Loop loop : looper) {
+    		channels.add(loop);
+    		ChannelFader fader = new LoopFader(loop, looper);
+    		faders.add(fader);
+    		add(fader);
+    	}
+        for (LineIn instrument : sources) {
+        	channels.add(instrument);
+    		ChannelFader fader = new LineInFader(instrument, looper.getSoloTrack());
+    		faders.add(fader);
+    		add(fader);
+        }
+        channels.add(mains);
+        ChannelFader fader = new MainsFader(mains);
+        faders.add(fader);
+        add(fader);
+        
     	setLayout(new GridLayout(1, channels.size()));
         doLayout();
     }
 
+    
     public void addChannel(Channel ch) {
     	for (Channel already : channels)
     		if (already == ch)
     			return;
-    	
 	    channels.add(ch);
-	    addFader(ch);
     }
 	    
     public void removeChannel(Channel ch) {
@@ -44,12 +56,6 @@ public class DJJefe extends JPanel {
 	    channels.remove(ch);
     }
  	    
-    private void addFader(Channel ch) {
-	    ChannelFader fader = new ChannelFader(ch);
-	    faders.add(fader);
-	    add(fader);
-    }
-    
 	public void update(Channel channel) {
 		for (ChannelFader ch : faders) 
 			if (ch.getChannel().equals(channel)) 
@@ -61,6 +67,12 @@ public class DJJefe extends JPanel {
 			ch.update();
 	}
 
+	public void highlight(ArrayList<Channel> s) {
+		for (ChannelFader ch : faders) {
+			ch.setBorder(s.contains(ch.getChannel()) ? Constants.Gui.HIGHLIGHT : Constants.Gui.NO_BORDERS);
+		}
+	}
+	
 	public void highlight(Channel o) {
 		for (ChannelFader ch : faders) 
 			ch.setBorder(ch.getChannel() == o ? Constants.Gui.HIGHLIGHT : Constants.Gui.NO_BORDERS);

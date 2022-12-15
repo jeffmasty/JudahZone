@@ -13,7 +13,7 @@ public class Icons {
     public static ImageIcon load(String name) {
     	if (map.get(name) == null) {
     		try {
-    			map.put(name, new ImageIcon(new File(Constants.ICONS, name).toURI().toURL()));
+    			map.put(name, new ImageIcon(new File(Folders.ICONS, name).toURI().toURL()));
     		} catch (Exception e) {
     			RTLogger.warn("Icons " + name, e);
     		}

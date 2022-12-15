@@ -6,12 +6,10 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.ArrayList;
 
-import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import net.judah.MainFrame;
 import net.judah.controllers.MPKTools;
 import net.judah.effects.Chorus;
 import net.judah.effects.CutFilter;
@@ -19,11 +17,12 @@ import net.judah.effects.Delay;
 import net.judah.effects.EQ;
 import net.judah.effects.Overdrive;
 import net.judah.effects.api.Reverb;
+import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 import net.judah.util.KeyPair;
-import net.judah.util.Pastels;
 
-public class EffectsRack extends JPanel implements GUI, MPKTools {
+public class EffectsRack extends JPanel implements MPKTools {
+	
     public static final String TAB_NAME = "Effects";
     public static final int COLUMNS = 4;
     
@@ -31,44 +30,33 @@ public class EffectsRack extends JPanel implements GUI, MPKTools {
     private final ArrayList<RowLabels> labels = new ArrayList<>();
     private final ArrayList<Row> knobs = new ArrayList<>();
     private final JPanel rows;
-    private final ChannelTitle title;
-
-    @Getter private final LfoKnobs lfo;
-    @Getter private final CompressorKnobs compressor;
+    @Getter private final ChannelTitle title;
     
     public EffectsRack(Channel channel) {
 
         this.channel = channel;
-        setBorder(BorderFactory.createLineBorder(Pastels.MY_GRAY));
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        
         title = new ChannelTitle(channel);
-        add(title);
-        
-        lfo = new LfoKnobs(channel);
-        compressor = new CompressorKnobs(channel);
-
 		// wet  room   d.time  d.fb
 		// cho1 cho2   cho3    O/D
         labels.add(new RowLabels(channel, new KeyPair[]{
-        		new KeyPair("Reverb", channel.getReverb()),
         		new KeyPair("    ", channel.getReverb()),
+        		new KeyPair("Reverb", channel.getReverb()),
         		new KeyPair("Delay", channel.getDelay()),
-        		new KeyPair("     ", channel.getDelay())}));
+        		new KeyPair("    ", channel.getDelay())}));
 
         labels.add(new RowLabels(channel, new KeyPair[]{
-	    		new KeyPair("Chorus", channel.getChorus()),
-        		new KeyPair("    ", channel.getChorus()),
+	    		new KeyPair("    ", channel.getChorus()),
+        		new KeyPair("Chorus", channel.getChorus()),
 	    		new KeyPair("    ", channel.getChorus()),
 	    		new KeyPair("Dist.", channel.getOverdrive())}));
 
 		// EQ L/M/H  Vol
 		// Preset pArTy hiCut pan 
         labels.add(new RowLabels(channel, new KeyPair[]{
-        		new KeyPair("EQ", channel.getEq()),
         		new KeyPair("     ", channel.getEq()),
+        		new KeyPair("EQ     ", channel.getEq()),
 	    		new KeyPair("     ", channel.getEq()),
-        		new KeyPair("VOL.", channel.getGain())}));
+        		new KeyPair("Volume", channel.getGain())}));
 
         labels.add(new RowLabels(channel, new KeyPair[]{
 	    		new KeyPair("Preset", null),
@@ -76,26 +64,15 @@ public class EffectsRack extends JPanel implements GUI, MPKTools {
 	    		new KeyPair("HiCut", channel.getHiCut()),
 	    		new KeyPair("Pan", channel.getGain())}));
 
-        KeyPair blankLfo = new KeyPair("", channel.getLfo());
-        labels.add(new RowLabels(channel, new KeyPair[] {
-        		new KeyPair("LFO", channel.getLfo()), 
-        		blankLfo, blankLfo, blankLfo}));
-
-        KeyPair blankComp = new KeyPair("", channel.getCompression());
-        labels.add(new RowLabels(channel, new KeyPair[]{
-        		new KeyPair("Compressor", channel.getCompression()),
-        		blankComp, blankComp, blankComp}));
-        
         knobs.add(new RowKnobs(channel, 0));
         knobs.add(new RowKnobs(channel, 1));
         knobs.add(new RowKnobs(channel, 2));
         knobs.add(new RowKnobs(channel, 3));
-        knobs.add(lfo);
-        knobs.add(compressor);
         
         GridBagLayout layout = new GridBagLayout();
         rows = new JPanel(layout);
         GridBagConstraints c = new GridBagConstraints();
+        c.ipadx = 0;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.insets = new Insets(1, 1, 1, 1);
         for (int y = 0; y < knobs.size() * 2; y++) 
@@ -108,10 +85,14 @@ public class EffectsRack extends JPanel implements GUI, MPKTools {
     			layout.setConstraints(widget, c);
     			rows.add(widget);
         	}
+
+        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+        add(title);
         add(rows);
         
     }
 
+    
     public void update() {
         title.update();
         for (RowLabels lbl : labels) 
@@ -217,5 +198,5 @@ public class EffectsRack extends JPanel implements GUI, MPKTools {
     	channel.getEq().eqGain(band, db);
     	channel.getEq().setActive(db > thresholdLo);
     }
-    
+
 }

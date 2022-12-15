@@ -7,15 +7,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.MainFrame;
 import net.judah.api.AudioMode;
 import net.judah.api.ProcessAudio;
+import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 import net.judah.util.AudioTools;
 @Getter
 public abstract class AudioTrack extends Channel implements ProcessAudio {
 
-	@Setter protected Type type = Type.FREE;
+	@Setter protected Type type = Type.ONE_SHOT;
     protected Recording recording = new Recording(0, true);
     protected Integer length;
     protected float env = 1f;
@@ -25,8 +25,13 @@ public abstract class AudioTrack extends Channel implements ProcessAudio {
 
     protected float[][] recordedBuffer;
 
-	public AudioTrack(String name) {
+    public AudioTrack(String name) {
+    	this(name, Type.ONE_SHOT);
+    }
+    
+	public AudioTrack(String name, Type type) {
     	super(name, true);
+    	setType(type);
 	}
 
 	public boolean hasRecording() {
@@ -49,10 +54,10 @@ public abstract class AudioTrack extends Channel implements ProcessAudio {
 		return active? AudioMode.RUNNING : AudioMode.ARMED;
 	}
 
-    protected void playFrame(FloatBuffer[] in, FloatBuffer left, FloatBuffer right) {
+    protected void playFrame(FloatBuffer[] in, FloatBuffer outLeft, FloatBuffer outRight) {
     	float[] workL = in[LEFT_CHANNEL].array();
     	float[] workR = in[RIGHT_CHANNEL].array();
-    	
+    	if (recordedBuffer == null) return;
         // gain & pan stereo
     	float baseVol = env * velocity * gain.getGain();
         AudioTools.processGain(recordedBuffer[LEFT_CHANNEL], workL, baseVol * (1f - getPan()));
@@ -71,7 +76,7 @@ public abstract class AudioTrack extends Channel implements ProcessAudio {
         
         if (overdrive.isActive()) {
             overdrive.processAdd(in[LEFT_CHANNEL]);
-            overdrive.processAdd(in[LEFT_CHANNEL]);
+            overdrive.processAdd(in[RIGHT_CHANNEL]);
         }
 
         if (eq.isActive()) {
@@ -86,8 +91,8 @@ public abstract class AudioTrack extends Channel implements ProcessAudio {
 		if (reverb.isActive()) 
 			reverb.process(in[LEFT_CHANNEL], in[RIGHT_CHANNEL]);
 		
-		AudioTools.mix(in[0], left);
-		AudioTools.mix(in[1], right);
+		AudioTools.mix(in[LEFT_CHANNEL], outLeft);
+		AudioTools.mix(in[RIGHT_CHANNEL], outRight);
     }
     
     @Override // Loop has more sophisticated version

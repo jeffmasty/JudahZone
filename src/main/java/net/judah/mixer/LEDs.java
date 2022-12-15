@@ -9,12 +9,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import net.judah.effects.Chorus;
-import net.judah.effects.CutFilter;
-import net.judah.effects.Delay;
-import net.judah.effects.EffectColor;
-import net.judah.effects.LFO;
-import net.judah.effects.Overdrive;
+import net.judah.effects.*;
 import net.judah.effects.api.Effect;
 import net.judah.effects.api.Reverb;
 
@@ -23,15 +18,16 @@ import net.judah.effects.api.Reverb;
  * @author judah */
 public class LEDs extends JPanel {
 
-	private final int UNITS = 6;
+	private final int UNITS = 7;
 	private final Channel channel;
 	
-	public static final int REVERB = 5;
-	public static final int DELAY = 4;
-	public static final int OVERDRIVE = 3;
-	public static final int CHORUS = 2;
+	public static final int COMPRESSION = 0;
 	public static final int LFO = 1;
-	public static final int CUTFILTER = 0;
+	public static final int CUTFILTER = 2;
+	public static final int CHORUS = 3;
+	public static final int OVERDRIVE = 4;
+	public static final int DELAY = 5;
+	public static final int REVERB = 6;
 	
 	@Getter boolean[] model = new boolean[UNITS];
 	
@@ -70,6 +66,8 @@ public class LEDs extends JPanel {
 			return LFO.class;
 		if (i == CUTFILTER)
 			return CutFilter.class;
+		if (i == COMPRESSION)
+			return Compressor.class;
 		throw new InvalidParameterException("class idx: " + i);
 	}
 
@@ -97,6 +95,10 @@ public class LEDs extends JPanel {
 		}
 		if (channel.getCutFilter().isActive() != model[CUTFILTER]) {
 			model[CUTFILTER] = channel.getCutFilter().isActive();
+			repaint = true;
+		}
+		if (channel.getCompression().isActive() != model[COMPRESSION]) {
+			model[COMPRESSION] = channel.getCompression().isActive();
 			repaint = true;
 		}
 		if (repaint)

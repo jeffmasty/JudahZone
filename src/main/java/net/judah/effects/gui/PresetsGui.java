@@ -11,13 +11,14 @@ import java.util.ArrayList;
 import javax.swing.*;
 
 import net.judah.JudahZone;
-import net.judah.controllers.MPKmini;
 import net.judah.effects.api.Preset;
 import net.judah.effects.api.PresetsDB;
+import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 import net.judah.util.Constants;
-import net.judah.util.ModalDialog;
+import net.judah.util.Folders;
 import net.judah.util.RTLogger;
+import net.judah.widgets.ModalDialog;
 
 public class PresetsGui extends JPanel {
 
@@ -49,7 +50,7 @@ public class PresetsGui extends JPanel {
         add(scrollPane);
         add(buttons);
         Dimension dialog = new Dimension(size.width + 10, size.height + 20);
-        new ModalDialog(this, dialog, MPKmini.getMode());
+        new ModalDialog(this, dialog, MainFrame.getKnobMode());
 	}
 
 	private JComboBox<String> createMixerCombo() {
@@ -142,7 +143,7 @@ public class PresetsGui extends JPanel {
 
     public void save() {
         try {
-            Constants.writeToFile(PresetsDB.FILE, getPresets().toString());
+            Constants.writeToFile(Folders.getPresetsFile(), getPresets().toString());
             list.setModel(presetModel());
         } catch (Exception e) {RTLogger.warn(this, e);}
     }

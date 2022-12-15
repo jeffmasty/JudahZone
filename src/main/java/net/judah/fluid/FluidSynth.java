@@ -15,21 +15,18 @@ import javax.sound.midi.ShortMessage;
 import org.jaudiolibs.jnajack.JackException;
 
 import lombok.Getter;
-import net.judah.JudahZone;
-import net.judah.api.Midi;
+import net.judah.api.JudahException;
 import net.judah.api.MidiPatch;
 import net.judah.midi.JudahMidi;
+import net.judah.midi.Midi;
 import net.judah.midi.MidiPort;
 import net.judah.midi.ProgMsg;
 import net.judah.mixer.MidiInstrument;
 import net.judah.util.Constants;
-import net.judah.util.FluidConsole;
-import net.judah.util.JudahException;
 import net.judah.util.RTLogger;
 
 /** runs fluid command line and connects to FluidSynth stdin and stdout ports */
 public class FluidSynth extends MidiInstrument {
-	public static final String NAME = "Fluid";
 	public static final String LEFT_PORT = "fluidsynth-midi:left"; // "fluidsynth:l_00";
 	public static final String RIGHT_PORT = "fluidsynth-midi:right"; // "fluidsynth:r_00";
 	public static final String MIDI_PORT = "fluidsynth-midi:midi_00"; // "fluidsynth:midi";
@@ -46,7 +43,7 @@ public class FluidSynth extends MidiInstrument {
 
 	@Getter static Instruments instruments = new Instruments();
 	@Getter private String[] patches;
-	@Getter private final Channels channels = new Channels();
+	@Getter private final FluidChannels channels = new FluidChannels();
 
 	private float gain = 3f; // max 5.0
 
@@ -59,7 +56,7 @@ public class FluidSynth extends MidiInstrument {
 	}
 
 	public FluidSynth (int sampleRate, File soundFont, boolean startListeners, MidiPort port) throws JackException, JudahException, IOException {
-		super(NAME, LEFT_PORT, RIGHT_PORT, port, "Fluid.png");
+		super(Constants.FLUID, LEFT_PORT, RIGHT_PORT, port, "Fluid.png");
 		shellCommand = "fluidsynth" +
 				" --midi-driver=jack --audio-driver=jack" +
 				" -o synth.ladspa.active=0  --sample-rate " + sampleRate + " " +
@@ -92,6 +89,11 @@ public class FluidSynth extends MidiInstrument {
 			try {
 				syncChannels();
 				syncInstruments();
+				progChange(patches[44], 0); // strings
+				progChange(patches[0], 1); // piano
+				progChange(patches[32], 2); // bass
+				progChange(patches[46], 3); // harp
+				syncChannels();
 			} catch (Throwable t) {
 				RTLogger.warn(this, "sync failed. " + t.getMessage());
 			}
@@ -133,7 +135,7 @@ public class FluidSynth extends MidiInstrument {
 		patches = new String[listener.instruments.size()];
 		for (int i = 0; i < listener.instruments.size(); i++) {
 			instruments.add(listener.instruments.get(i));
-			patches[i ]= instruments.get(i).name;
+			patches[i] = instruments.get(i).name;
 		}
 		
 	}
@@ -190,19 +192,19 @@ public class FluidSynth extends MidiInstrument {
 		}
 	}
 
-	public void instUp(int channel, boolean up) {
-		int current = channels.getCurrentPreset(channel);
-		int bank = channels.getBank(channel);
-		int preset = instruments.getNextPreset(bank, current, up);
-		JudahZone.getMidiGui().getFluidProg()
-				.setSelectedIndex(preset);
-	}
+//	public void instUp(int channel, boolean up) {
+//		int current = channels.getCurrentPreset(channel);
+//		int bank = channels.getBank(channel);
+//		int preset = instruments.getNextPreset(bank, current, up);
+//		JudahZone.getMidiGui().getFluidProg()
+//				.setSelectedIndex(preset);
+//	}
 
 	@SuppressWarnings("unused")
 	private int progChangeSync(int channel, int preset) {
 		try {
-			JudahZone.getMidiGui().getFluidProg()
-					.setSelectedIndex(preset);
+//			JudahZone.getMidiGui().getFluidProg()
+//					.setSelectedIndex(preset);
 			
 			syncChannels();
 			int result = channels.getCurrentPreset(channel);

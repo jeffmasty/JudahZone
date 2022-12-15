@@ -2,33 +2,31 @@ package net.judah.synth;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 
 import javax.swing.JComboBox;
 
-import net.judah.util.Constants;
+import net.judah.JudahZone;
 
 public class PresetsCombo extends JComboBox<String> {
-	private final SynthPresets presets;
 
 	private final ActionListener handler;
-
-	public PresetsCombo(SynthPresets pre) {
-		presets = pre;
+	private final SynthPresets presets;
+	
+	public PresetsCombo(SynthPresets presets) {
+		this.presets = presets;
 		handler = new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) {
-				File file = new File(Constants.SYNTH, "" + getSelectedItem());
-				presets.load(file);}
-			};
+				presets.load("" + getSelectedItem());
+			}};
 		initPresets();
 	}
 	
 	/**@param file the selected file or null */
 	public void initPresets() {
-		String selected = presets.getLoaded() == null ? null : presets.getLoaded().getName();
+		String selected = presets.getCurrent();
 		removeActionListener(handler);
 		removeAllItems();
-		for (String s : presets) {
+		for (String s : JudahZone.getSynthPresets().keys()) {
 			addItem(s);
 			if (s.equals(selected))
 				setSelectedItem(s);
@@ -38,8 +36,10 @@ public class PresetsCombo extends JComboBox<String> {
 	
 	public void select() {
 		removeActionListener(handler);
-		if (presets.getLoaded() != null)
-			setSelectedItem(presets.getLoaded().getName());
+		if (presets.getCurrent() != null)
+			setSelectedItem(presets.getCurrent());
 		addActionListener(handler);
 	}
+	
+	
 }
