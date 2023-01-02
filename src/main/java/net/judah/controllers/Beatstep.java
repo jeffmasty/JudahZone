@@ -20,7 +20,6 @@ import net.judah.mixer.LineIn;
 public class Beatstep implements Controller {
 	
 	public static final String NAME = "Arturia BeatStep"; // ALSA prefix
-	public static final float TO_100 = 0.7874f; // 127 = 100
 
 	private static final int TEMPO_KNOB = 7; // CC
 	private static final int[] KNOBS = new int[] {

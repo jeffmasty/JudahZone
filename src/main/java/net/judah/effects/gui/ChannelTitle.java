@@ -7,11 +7,11 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import net.judah.gui.Gui;
 import net.judah.looper.Loop;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Instrument;
 import net.judah.samples.Sample;
-import net.judah.util.Constants;
 
 public class ChannelTitle extends JPanel {
 
@@ -29,7 +29,7 @@ public class ChannelTitle extends JPanel {
 		
 		this.channel = channel;
 		name = new JLabel(standard(), JLabel.CENTER);
-		name.setFont(Constants.Gui.BOLD13);
+		name.setFont(Gui.BOLD13);
 		main.add(name);
 		
 		main.add(new JLabel(" fx:"));

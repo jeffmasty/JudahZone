@@ -13,10 +13,6 @@ import net.judah.midi.Midi;
 @Getter @AllArgsConstructor
 public class Bar extends ArrayList<MidiEvent> {
 
-//	@Setter private String name;
-	
-//	private int idx;
-	
 	public Bar(Bar bar) {
 		for (MidiEvent e : bar)
 			add(new MidiEvent(new Midi(e.getMessage().getMessage()), e.getTick()));
@@ -63,10 +59,5 @@ public class Bar extends ArrayList<MidiEvent> {
 	public String toString() {
 		return "ERROR";
 	}
-	
-	
-//	public List<ShortMessage> seek(long timecode) {
-//		return null;
-//	}
 
 }

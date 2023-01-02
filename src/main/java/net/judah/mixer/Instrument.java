@@ -3,19 +3,18 @@ package net.judah.mixer;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
-import net.judah.util.Icons;
+import net.judah.gui.Icons;
 
-/**JudahZone mixer Channels come with built-in compression, reverb and gain */
 @Getter
 public class Instrument extends LineIn {
 
-    protected final String leftSource;
-    protected final String rightSource; // for stereo
+    protected String leftSource;
+    protected String rightSource; // for stereo
 
     /** Mono channel */
 	public Instrument(String name, String sourcePort, JackPort left, String icon) {
 		super(name, false);
-		this.icon = Icons.load(icon);
+		this.icon = Icons.get(icon);
 		this.leftPort = left;
 		this.leftSource = sourcePort;
 		this.rightSource = null;
@@ -26,22 +25,20 @@ public class Instrument extends LineIn {
 	}
 	
 	public Instrument(String name, String leftSource, String rightSource, String icon) {
-		this(name, leftSource, rightSource, null, null, icon);
-	}
-	
-	/** Stereo channel */
-	public Instrument(String name, String leftSource, String rightSource, JackPort left, JackPort right, String icon) {
 		super(name, true);
 		if (icon != null)
-			this.icon = Icons.load(icon);
-		this.leftPort = left;
-		this.rightPort = right;
+			this.icon = Icons.get(icon);
 		this.leftSource = leftSource;
 		this.rightSource = rightSource;
 	}
-
-	@Override public String toString() {
-		return name;
+	
+	/** Stereo channel */
+	public Instrument(String name, JackPort left, JackPort right, String icon) {
+		super(name, true);
+		if (icon != null)
+			this.icon = Icons.get(icon);
+		this.leftPort = left;
+		this.rightPort = right;
 	}
 
 	public void process() {

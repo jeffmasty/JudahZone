@@ -2,6 +2,7 @@ package net.judah.mixer;
 
 import java.util.ArrayList;
 
+import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
@@ -19,29 +20,28 @@ public class LatchEfx implements TimeListener {
 	}
 
 	public void clear() {
-		for (Loop a : listenOn.toArray(new Loop[listenOn.size()])) {
-			a.removeListener(this);
-		}
+		JudahZone.getLooper().removeListener(this);
+//		for (Loop a : listenOn.toArray(new Loop[listenOn.size()])) {
+//			a.removeListener(this);
+//		}
 		listenOn.clear();
 		RTLogger.log(this, channel.getName() + " FX cleared");
 	}
 	
 	public void latch(Loop... x) {
 		clear();
-		for (Loop a : x) {
-			listenOn.add(a);
-			a.addListener(this);
-		}
+		JudahZone.getLooper().addListener(this);
+		
 		RTLogger.log(this, channel.getName() + " " + channel.getPreset().getName() + " waiting on looper");
 	}
 	
 	@Override
 	public void update(Property prop, Object value) {
-		if (Property.STATUS == prop && Status.TERMINATED == value) {
+		if (prop == Property.LOOP && value == Status.NEW) {
 			channel.setPresetActive(!channel.isPresetActive());
 			clear();
 		}
-		else if (Property.LOOP == prop) {
+		else if (prop == Property.LOOP) {
 			channel.setPresetActive(!channel.isPresetActive());
 			clear();
 		}

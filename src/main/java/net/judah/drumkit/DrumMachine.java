@@ -6,9 +6,9 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.gui.Icons;
 import net.judah.mixer.LineIn;
 import net.judah.util.AudioTools;
-import net.judah.util.Icons;
 
 @Getter 
 public class DrumMachine extends LineIn {
@@ -23,7 +23,7 @@ public class DrumMachine extends LineIn {
 	
 	public DrumMachine(String name, JackPort outL, JackPort outR, String icon) {
 		super(name, true);
-		setIcon(Icons.load(icon));
+		setIcon(Icons.get(icon));
 		setLeftPort(outL);
 		setRightPort(outR);
 		

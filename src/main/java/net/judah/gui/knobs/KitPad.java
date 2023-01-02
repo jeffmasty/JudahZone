@@ -53,7 +53,7 @@ public class KitPad extends Pad implements KnobListener {
 
 	@Override
 	public void update() {
-		top.setBackground(getSample().isActive() ? Pastels.MY_GRAY : Pastels.EGGSHELL);
+		top.setBackground(getSample().isActive() ? Pastels.DRUM_PAD : Pastels.EGGSHELL);
 	}
 
 	@Override

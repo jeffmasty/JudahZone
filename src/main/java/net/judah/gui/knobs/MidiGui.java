@@ -4,21 +4,27 @@ import static net.judah.JudahZone.*;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.io.File;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.api.SmashHit;
+import net.judah.api.MidiReceiver;
 import net.judah.controllers.Jamstik;
 import net.judah.controllers.KnobMode;
 import net.judah.fluid.FluidSynth;
+import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
-import net.judah.midi.*;
+import net.judah.midi.JudahClock;
+import net.judah.midi.JudahMidi;
+import net.judah.midi.ProgChange;
+import net.judah.midi.Signature;
 import net.judah.samples.Sampler;
 import net.judah.synth.JudahSynth;
 import net.judah.util.Constants;
+import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 import net.judah.widgets.Knob;
 import net.judah.widgets.LengthWidget;
@@ -41,8 +47,9 @@ public class MidiGui extends KnobPanel {
 
     @Getter private final ProgChange one;
     @Getter private final ProgChange two;
-    @Getter private final SettableCombo<Class<? extends SmashHit>> setlistCombo = new SettableCombo<>(()->loadSong());
-	@Getter private final JComboBox<MidiPort> mpk = new JComboBox<>();
+    @Getter private final SettableCombo<File> setlistCombo = new SettableCombo<>();
+    @Getter private final SettableCombo<File> songsCombo = new SettableCombo<>();
+	@Getter private final JComboBox<MidiReceiver> mpk = new JComboBox<>();
 	private final JPanel mpkPanel = new JPanel();
 	private final JPanel titleBar = new JPanel();
 	private final ProgChange[] channels = new ProgChange[FLUIDS];
@@ -64,11 +71,10 @@ public class MidiGui extends KnobPanel {
     	setOpaque(true);
     	one = new ProgChange(a, 0);
 		two = new ProgChange(b, 0);
-		for (MidiPort p : JudahZone.getSynthPorts()) 
-			mpk.addItem(p);
+		JudahZone.getSynths().forEach( (rec)->mpk.addItem(rec));
 		mpk.setRenderer(STYLE);
 		mpk.setSelectedItem(midi.getKeyboardSynth());
-		mpk.addActionListener(e-> midi.setKeyboardSynth((MidiPort)mpk.getSelectedItem() ));
+		mpk.addActionListener(e-> midi.setKeyboardSynth((MidiReceiver)mpk.getSelectedItem() ));
 
 		sampler.getStepSamples().forEach(s->stepper.addItem(s.getName()));
 		stepper.setSelectedIndex(sampler.getSelected());
@@ -114,7 +120,7 @@ public class MidiGui extends KnobPanel {
         
         add(top);
 		add(labels);
-        add(Constants.wrap(bottom));
+        add(Gui.wrap(bottom));
     }
 	
 	private JPanel internals() { // Synth1, Synth2, Jamstik, MPK
@@ -122,19 +128,19 @@ public class MidiGui extends KnobPanel {
 		result.setLayout(new GridLayout(4, 1));
 		JPanel row = new JPanel();
 		row.add(new JLabel(getSynth1().getName()));
-		row.add(Constants.resize(one, COMBO_SIZE));
+		row.add(Gui.resize(one, COMBO_SIZE));
 		result.add(row);
 		row = new JPanel();
 		row.add(new JLabel(getSynth2().getName()));
-		row.add(Constants.resize(two, COMBO_SIZE));
+		row.add(Gui.resize(two, COMBO_SIZE));
 		result.add(row);
 		
 		row = new JPanel();
 		row.add(new JLabel("Jam"));
-		row.add(Constants.resize(jamstik, COMBO_SIZE));
+		row.add(Gui.resize(jamstik, COMBO_SIZE));
 		result.add(row);
 		mpkPanel.add(new JLabel("MPK"));
-        mpkPanel.add(Constants.resize(mpk, COMBO_SIZE));
+        mpkPanel.add(Gui.resize(mpk, COMBO_SIZE));
 		result.add(mpkPanel);
 
 		return result;
@@ -162,23 +168,23 @@ public class MidiGui extends KnobPanel {
 	}
 
 	private void doSetlist(JPanel pnl) {
-		setlistCombo.setRenderer(new BasicComboBoxRenderer() {
+		songsCombo.setRenderer(new BasicComboBoxRenderer() {
         	@Override public Component getListCellRendererComponent(
         			@SuppressWarnings("rawtypes") JList list, Object value,
         			int index, boolean isSelected, boolean cellHasFocus) {
         		setHorizontalAlignment(SwingConstants.CENTER);
-        		@SuppressWarnings("unchecked")
-				Class<? extends SmashHit> item = (Class<? extends SmashHit>) value;
-        		setText(item == null ? "?" : item.getSimpleName());
+				File item = (File) value;
+        		setText(item == null ? "?" : item.getName());
         		return this;
-    }});
+        	}});
 		
-		for (Class<? extends SmashHit> c : getSetlist())
-			setlistCombo.addItem(c);
-		pnl.add(setlistCombo);
-        JButton load = new JButton("Load");
-        load.addActionListener(e->loadSong());
-        pnl.add(load);
+		for (File f : Folders.getSetlist().listFiles())
+			songsCombo.addItem(f);
+		songsCombo.setAction(()->loadSong((File)songsCombo.getSelectedItem()));
+		pnl.add(songsCombo);
+//        JButton load = new JButton("Load");
+//        load.addActionListener(e->loadSong(getSong()));
+//        pnl.add(load);
 	}
 	
 	
@@ -194,7 +200,7 @@ public class MidiGui extends KnobPanel {
 				clock.setLength((int) Constants.ratio(data2, LengthWidget.LENGTHS));
 			break;
     	case 1: // Select song
- 	    	setlistCombo.setSelectedIndex(Constants.ratio(data2 - 1, setlistCombo.getItemCount()));
+ 	    	songsCombo.setSelectedIndex(Constants.ratio(data2 - 1, songsCombo.getItemCount()));
     		break;
     	case 2: // Select StepSample
     		sampler.setSelected(Constants.ratio(data2, sampler.getStepSamples().size()));
@@ -216,7 +222,7 @@ public class MidiGui extends KnobPanel {
     		break;
     	case 6: // Jamstik out
     		if (zoneBtn.isSelected()) 
-    			jamstik.setSelectedIndex(Constants.ratio(data2 - 1, midi.getPaths().size()));
+    			jamstik.setSelectedIndex(Constants.ratio(data2 - 1, getSynths().size()));
  	    	else 
  	    		channels[idx - 4].setSelectedIndex(data2);
     		break;
@@ -256,7 +262,7 @@ public class MidiGui extends KnobPanel {
         			@SuppressWarnings("rawtypes") JList list, Object value,
         			int index, boolean isSelected, boolean cellHasFocus) {
         		setHorizontalAlignment(SwingConstants.CENTER);
-        		MidiPort item = (MidiPort) value;
+        		MidiReceiver item = (MidiReceiver) value;
         		setText(item == null ? "?" : item.toString());
         		return this;
     }};

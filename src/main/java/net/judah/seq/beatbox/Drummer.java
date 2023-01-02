@@ -2,67 +2,86 @@ package net.judah.seq.beatbox;
 
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-import net.judah.seq.MidiTrack;
-import net.judah.seq.MidiView;
+import javax.sound.midi.MidiEvent;
 
-public class Drummer extends MouseAdapter {
+import net.judah.drumkit.DrumType;
+import net.judah.gui.MainFrame;
+import net.judah.midi.Midi;
+import net.judah.seq.MidiPair;
+import net.judah.seq.Musician;
+import net.judah.seq.Prototype;
 
-	private final MidiView view;
-	private final MidiTrack track;
+public class Drummer extends Musician {
+
 	private final BeatBox grid;
 	private final int rowHeight, colWidth;
 	
-	public Drummer(MidiView view, BeatBox grid, Rectangle size) {
-		this.view = view;
-		this.track = view.getTrack();
+	public Drummer(Rectangle size, BeatsSection view, BeatBox grid, BeatsTab tab, BeatSteps steps) {
+		super(view, tab);
 		this.grid = grid;
-
-		// TODO 
-		this.rowHeight = size.height;
-		this.colWidth = size.width;
+		this.rowHeight = size.height / DrumType.values().length;
+		this.colWidth = size.width / (int)steps.getTotal();
 	}
-	
-	private Point translate(Point p) {
-        if (p.y < rowHeight + 2) return new Point(p.x / colWidth, -1);
-        return new Point(p.x / colWidth,  (p.y - rowHeight) / rowHeight);
-    }
+
+	@Override
+	public long toTick(Point p) {
+        int measure;
+        int x = p.x / colWidth;
+        if (track.isEven()) 
+        	measure = x < clock.getSteps() ? track.getCurrent() : track.getNext();
+        else 
+        	measure = x < clock.getSteps() ? track.getPrevious() : track.getCurrent();
+        int step = x % clock.getSteps();
+        return measure * track.getBarTicks() + step * (track.getResolution() / clock.getSubdivision());
+	}
+
+	@Override
+	public int toData1(Point p) {
+		return DrumType.values()[p.y / rowHeight].getData1();
+	}
 
     @Override public void mouseClicked(MouseEvent evt) {
-        Point xy = translate(evt.getPoint());
-        if (xy.y < 0) { // label row clicked
-        		return;
+    	((BeatsTab)tab).setCurrent(view);
+
+    	Prototype click = translate(evt.getPoint());
+        MidiEvent existing = track.get(NOTE_ON, click.data1, click.tick);
+        // TODO right mouse button menu?
+        if (existing == null) {
+        	MidiEvent create = new MidiEvent(Midi.create(NOTE_ON, track.getCh(), click.data1, 
+        			Math.round(track.getMidiOut().getAmplification() * 127)), click.tick);
+        	track.getT().add(create);
+        	selected.clear();
+        	selected.add(new MidiPair(create, null));
         }
-//        else {
-//        	try { // see also Pattern.setValueAt(,,)
-//	        	int data1 = DrumType.values()[xy.y].getDat().getData1();
-//		        Notes note = track.getCurrent().get(xy.x);
-//		        if (note == null) {
-//		        	track.getCurrent().put(xy.x, new Notes(new NoteOn(track.getCh(), data1)));
-//		        } else {
-//		        	if (note.find(data1) == null) {
-//		        		note.add(new NoteOn(track.getCh(), data1));
-//		        	} else if (SwingUtilities.isRightMouseButton(evt)) {
-//		        		Midi m = note.find(data1);
-//		        		Midi replace = velocity(m);
-//		        		note.remove(m);
-//		        		note.add(replace);
-//		        	}
-//		        	else {	
-//		        		note.remove(note.find(data1));
-//		        		if (note.isEmpty())
-//		        			track.getCurrent().remove(xy.x);
-//		        	}
-//		        }
-//		        grid.repaint();
-//        	} catch (InvalidMidiDataException e) {
-//        		RTLogger.warn(this, e);
-//        	}
-//        }
+        else {
+        	MidiPair pair = new MidiPair(existing, null);
+        	if (evt.isControlDown()) {
+        		if (selected.isBeatSelected(pair)) {
+        			selected.remove(pair);
+        		}
+        		else {
+        			selected.add(pair);
+        		}
+        	}
+        	else {
+        		selected.clear();
+        		selected.add(pair);
+        	}
+        		
+        }
+        grid.repaint();
+        MainFrame.qwerty();
     }
+    
+//    private Midi velocity(Midi m) {
+//    	int i = 2 + (int)(m.getData2() / 32f);
+//    	if (i > 4) i = 1;
+//    	RTLogger.log(this, "velocity " + i);
+//    	return Midi.create(m.getCommand(), m.getChannel(), m.getData1(), i * 32 - 1);
+//    }
 
 
-	
+    
 }

@@ -1,4 +1,4 @@
-package net.judah.gui.player;
+package net.judah.gui.knobs;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -11,10 +11,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import net.judah.gui.Size;
-import net.judah.seq.Bar;
 import net.judah.seq.MidiTrack;
 
-public class BarRoom extends JPanel {
+public class PatternLauncher extends JPanel {
 	private static final int SIZE = Size.STD_HEIGHT;
 	private static final int UNITS = 8;
 	
@@ -32,7 +31,7 @@ public class BarRoom extends JPanel {
 	private final JPanel holder = new JPanel();
 	private int position;
 	
-	public BarRoom(MidiTrack track) {
+	public PatternLauncher(MidiTrack track) {
 		setLayout(new FlowLayout(FlowLayout.LEFT, 1, 0));
 		this.track = track;
 		
@@ -58,11 +57,11 @@ public class BarRoom extends JPanel {
 	
 	public void update() {
 		for (int i = 0; i < holder.getComponentCount(); i++) {
-			if (holder.getComponent(i) instanceof BarStool)
-				((BarStool)holder.getComponent(i)).update();
+			if (holder.getComponent(i) instanceof TrackPattern)
+				((TrackPattern)holder.getComponent(i)).update();
 		}
-		left.setVisible(track.size() > 6);
-		right.setVisible(track.size() > 6);
+		left.setVisible(track.bars() > 6);
+		right.setVisible(track.bars() > 6);
 //		if (track.size() > UNITS) {
 //			left.setVisible(true);
 //			right.setVisible(true);
@@ -81,8 +80,8 @@ public class BarRoom extends JPanel {
 
 	public void fill() {
 		holder.removeAll();
-		for (Bar b : track) 
-			holder.add(new BarStool(track, b));
+		for (int i = 0; i < track.bars(); i++) 
+			holder.add(new TrackPattern(track, i));
 		update();
 		invalidate();
 	}

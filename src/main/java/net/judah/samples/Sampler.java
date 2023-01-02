@@ -79,6 +79,11 @@ public class Sampler extends ArrayList<Sample> {
 		MainFrame.update(s);
 	}
 
+	public void step(int step) {
+		if (stepSample == null) return;
+		stepSample.step(step);
+	}
+	
 	public boolean isStepping() {
 		for (StepSample s : stepSamples)
 			if (s.isOn())

@@ -90,7 +90,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			return true;
 
 		case 5: // Show Sheet Music
-			getFrame().addOrShow(getFrame().getSheetMusic(), "Music");
+			getFrame().sheetMusic(true);
 			return true; 
 		case 6: // latch guitar EFX to loop A
 			getGuitar().getLatchEfx().latch(looper.getLoopA());
@@ -140,7 +140,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			return true;
 			
 		case 13: // Cycle verse/chorus 
-			setTrigger(!isTrigger());
+			getSongs().trigger();
 			return true; 
 		case 14: // Toggle mutes
 			looper.verseChorus();

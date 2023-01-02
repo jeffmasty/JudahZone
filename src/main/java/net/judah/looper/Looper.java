@@ -1,5 +1,7 @@
 package net.judah.looper;
 
+import static net.judah.api.Notification.Property.LOOP;
+
 import java.util.ArrayList;
 
 import org.jaudiolibs.jnajack.JackPort;
@@ -8,7 +10,9 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.api.Notification.Property;
 import net.judah.api.ProcessAudio.Type;
+import net.judah.api.Status;
 import net.judah.api.TimeListener;
+import net.judah.api.TimeNotifier;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
@@ -16,7 +20,7 @@ import net.judah.mixer.LineIn;
 import net.judah.mixer.Zone;
 
 @RequiredArgsConstructor @Getter
-public class Looper extends ArrayList<Loop> implements TimeListener {
+public class Looper extends ArrayList<Loop> implements TimeListener, TimeNotifier {
 
 	public static final int LOOPERS = 4; 
 	private final JackPort left;
@@ -29,6 +33,8 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
     private Loop primary;
     
     @Getter private final ArrayList<Loop> onDeck = new ArrayList<>(); 
+    protected final ArrayList<TimeListener> listeners = new ArrayList<>();
+
     
 	public Looper(JackPort l, JackPort r, Zone sources, LineIn solo, JudahClock clock) {
         left = l;
@@ -41,6 +47,7 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
         add(loopB);
         add(loopC);
         add(soloTrack);
+        clock.addListener(this);
 	}
 	
 	/** play and/or record loops and samples in Real-Time thread */
@@ -52,6 +59,8 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
     public void setRecordedLength(long length, Loop primary) {
     	this.primary = primary;
     	recordedLength = length;
+    	new ArrayList<>(listeners).forEach(
+    			listener -> {listener.update(LOOP, Status.NEW);});
     }
     
     public Loop byName(String search) {
@@ -70,6 +79,20 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
 			}).start();
 	}
 
+    // ---- Sync Section ----------------
+    @Override public void addListener(TimeListener l) {
+        if (!listeners.contains(l)) {
+            listeners.add(l);
+            if (l instanceof Channel) {
+            	MainFrame.update(l);
+            }
+        }
+    }
+
+    @Override public void removeListener(TimeListener l) {
+        listeners.remove(l);
+    }
+
     /** deletes loops */
 	@Override
 	public void clear() {
@@ -80,6 +103,8 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
             s.clear();
             s.setActive(false);
         }
+		new ArrayList<TimeListener>(listeners).forEach(listener -> 
+        		listener.update(LOOP, Status.TERMINATED));
 		MainFrame.update(loopA);
     }
 

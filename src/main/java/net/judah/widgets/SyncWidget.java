@@ -10,13 +10,16 @@ import net.judah.JudahZone;
 import net.judah.api.AudioMode;
 import net.judah.api.Notification;
 import net.judah.api.TimeListener;
+import net.judah.gui.Gui;
 import net.judah.looper.Loop;
 import net.judah.midi.JudahClock;
-import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 public class SyncWidget extends JLabel implements TimeListener {
 
+	public static final int BSYNC_UP = Integer.MAX_VALUE;
+	public static final int BSYNC_DOWN = 1000000;
+	
 	@Setter @Getter int bars;
 	private final Loop loop;
 	int local;
@@ -29,23 +32,12 @@ public class SyncWidget extends JLabel implements TimeListener {
 		this.loop = channel;
 		this.clock = clock;
 		setIcon(null);
-		setFont(Constants.Gui.BOLD13);
+		setFont(Gui.BOLD13);
 		setPreferredSize(sz);
 		setMinimumSize(sz);
 
 	}
 
-//	public void updateLoop() {
-//		if (loop.isActive())
-//			// update sensitive to length of loop
-//			if (loop.hasRecording() && 100 * loop.getTapeCounter().intValue() / loop.getRecording().size() != local) {
-//				// every 5%
-//				local = 20 * loop.getTapeCounter().intValue() / loop.getRecording().size() ;
-//				setBackground(local == 0 ? Color.WHITE : RainbowFader.chaseTheRainbow(local * 5));
-//				setText(local * 5 + "");
-//			}
-//	}
-	
 	public void update() {
 		if (loop.hasRecording()) {
 			setText(loop.getName());
@@ -85,8 +77,9 @@ public class SyncWidget extends JLabel implements TimeListener {
 		}
 		
 		if (Notification.Property.BARS != prop) return;
-		if (bars == Integer.MAX_VALUE && counter == Integer.MIN_VALUE) {
+		if (bars == BSYNC_DOWN) {
 			endRecord(); // bSync
+			clock.setLength(counter + 1);
 			RTLogger.log(this, "Recording ended");
 			return;
 		}
@@ -120,9 +113,10 @@ public class SyncWidget extends JLabel implements TimeListener {
 		JudahZone.getMixer().getFader(loop).update();
 	}
 
-	public void bSync(int counter) {
-		bars = Integer.MAX_VALUE;
-		this.counter = counter;
+	public void bSync(int token) {
+		bars = token;
+		if (token == BSYNC_UP)
+			counter = -1;
 		clock.addListener(this);
 		JudahZone.getMixer().getFader(loop).update();
 	}
@@ -130,5 +124,16 @@ public class SyncWidget extends JLabel implements TimeListener {
 	public void syncUp() {
 		syncUp(-1);
 	}
+//	public void updateLoop() {
+//		if (loop.isActive())
+//			// update sensitive to length of loop
+//			if (loop.hasRecording() && 100 * loop.getTapeCounter().intValue() / loop.getRecording().size() != local) {
+//				// every 5%
+//				local = 20 * loop.getTapeCounter().intValue() / loop.getRecording().size() ;
+//				setBackground(local == 0 ? Color.WHITE : RainbowFader.chaseTheRainbow(local * 5));
+//				setText(local * 5 + "");
+//			}
+//	}
+	
 
 }

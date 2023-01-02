@@ -55,10 +55,11 @@ public class KorgMixer implements Controller {
 			seq.get(data1 - knoboff).setGain(data2 * 0.01f);
 			return true;
 		}
-		if (data1 >= soff && data1 < soff + 8) { // EDIT TRACK 
-			int track = data1 - soff;
-			seq.setCurrent(seq.get(track));
-			MainFrame.setFocus(KnobMode.Track);
+		if (data1 >= soff && data1 < soff + 8) { // LAUNCH SCENE
+			int idx = data1 - soff; 
+			if (getCurrent().getScenes().size() > idx) {
+				getSongs().getSongView().setOnDeck(getCurrent().getScenes().get(idx));
+			}
 			return true;
 		}
 		if (data1 >= moff && data1 < moff + 8) { // MUTE RECORD INPUT
@@ -96,11 +97,11 @@ public class KorgMixer implements Controller {
 			return true;
 		}
 		if (data1 == PREV2.getVal() && data2 != 0) { // change pattern
-			seq.getCurrent().setCurrent(seq.getCurrent().getState().getNext());
+			seq.getCurrent().setCurrent(seq.getCurrent().getScheduler().getNext());
 			return true;
 		}
 		if (data1 == NEXT2.getVal() && data2 != 0) { // change pattern
-			seq.getCurrent().setCurrent(seq.getCurrent().getState().getPrevious());
+			seq.getCurrent().setCurrent(seq.getCurrent().getScheduler().getPrevious());
 			return true;
 		}
 
@@ -138,8 +139,9 @@ public class KorgMixer implements Controller {
 			return getMic();
 		if (idx == 6)
 			return getDrumMachine();
-		if (idx == 7)
-			return getMidi().getPath(getMidi().getKeyboardSynth()).getChannel();
+		if (idx == 7) {
+			return (Channel)getMidi().getKeyboardSynth();
+		}
 		return getGuitar();
 	}
 	

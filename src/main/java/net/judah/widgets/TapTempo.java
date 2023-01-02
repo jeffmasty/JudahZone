@@ -8,7 +8,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
-import net.judah.util.Constants.Gui;
+import net.judah.gui.Gui;
 
 /**A JLabel that establishes a tap tempo on mouse clicks */
 public class TapTempo extends JLabel {

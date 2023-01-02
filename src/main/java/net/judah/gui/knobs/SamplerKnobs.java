@@ -9,10 +9,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
+import net.judah.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.samples.Sample;
 import net.judah.samples.Sampler;
-import net.judah.util.Constants;
 import net.judah.widgets.Slider;
 
 public class SamplerKnobs extends KnobPanel {
@@ -36,7 +36,7 @@ public class SamplerKnobs extends KnobPanel {
 		add(new JLabel(""));
 		add(oneShots);
 		vol = new Slider(0, 100, e -> sampler.setVelocity(((Slider)e.getSource()).getValue() * 0.02f), "Sampler Volume");
-		Constants.resize(vol, Size.SMALLER_COMBO);
+		Gui.resize(vol, Size.SMALLER_COMBO);
 		titleBar.add(vol);
 		titleBar.add(new JLabel("Pack"));
 		titleBar.add(new JComboBox<String>(new String[] {"Zone", "Jazz", "HipHop"}));

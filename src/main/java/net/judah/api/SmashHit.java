@@ -9,13 +9,11 @@ import net.judah.fluid.FluidSynth;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
+import net.judah.midi.MidiInstrument;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
-import net.judah.mixer.MidiInstrument;
 import net.judah.seq.MidiTrack;
 import net.judah.seq.Seq;
-import net.judah.seq.Situation;
-import net.judah.seq.Snippet;
 import net.judah.seq.TrackList;
 import net.judah.synth.JudahSynth;
 import net.judah.util.RTLogger;
@@ -71,10 +69,6 @@ public abstract class SmashHit implements TimeListener {
 
 	public void cycle(MidiTrack t) { 
 		RTLogger.log(this, "Empty cycle() on " + t);
-	}
-	
-	public void populate(Snippet s, MidiTrack t, Situation state) {
-		
 	}
 	
 	@Override

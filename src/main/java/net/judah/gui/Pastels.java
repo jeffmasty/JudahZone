@@ -15,6 +15,7 @@ public interface Pastels {
     Color EGGSHELL = new Color(252,252,246);
 	Color BUTTONS = new Color(238, 238, 230);
 	Color MY_GRAY = new Color(220, 220, 210);
+	Color DRUM_PAD = MY_GRAY;
 
 }
 

@@ -1,6 +1,10 @@
 package net.judah.gui;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Insets;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
@@ -15,7 +19,6 @@ import net.judah.JudahZone;
 import net.judah.api.MidiReceiver;
 import net.judah.controllers.KnobData;
 import net.judah.controllers.KnobMode;
-import net.judah.controllers.Knobs;
 import net.judah.controllers.Qwerty;
 import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumSample;
@@ -33,52 +36,55 @@ import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
 import net.judah.samples.Sample;
 import net.judah.samples.Sampler;
-import net.judah.seq.EditTab;
+import net.judah.seq.MidiTab;
 import net.judah.seq.MidiTrack;
 import net.judah.seq.Seq;
 import net.judah.seq.TrackList;
+import net.judah.seq.beatbox.BeatsTab;
+import net.judah.seq.piano.PianoTab;
+import net.judah.song.Scene;
+import net.judah.song.SongTab;
+import net.judah.song.SongTrack;
 import net.judah.synth.JudahSynth;
-import net.judah.util.Console;
-import net.judah.util.Constants;
-import net.judah.util.Folders;
-import net.judah.util.Icons;
-import net.judah.util.RTLogger;
+import net.judah.util.*;
 import net.judah.widgets.LoopWidget;
 import net.judah.widgets.SyncWidget;
 
-/** over-all layout and a background updates thread */
+/** over-all layout and background updates thread */
 public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 
     private static final BlockingQueue<Object> updates = new LinkedBlockingQueue<>();
 	private static MainFrame instance;
 
 	@Getter private static KnobMode knobMode = KnobMode.Midi;
-    private final JComboBox<KnobMode> mode = new JComboBox<>(KnobMode.values());
-	@Getter private final JTabbedPane tabs = new JTabbedPane();
-    private final FxPanel effects;
-    private final DJJefe mixer;
-    private final EditTab beatBox;
-    private final EditTab synthBox;
-    
-    private final Seq seq;
+    @Getter private KnobPanel knobs;
+	@Getter private final SongTab songs;
+    @Getter private final Qwerty tabs;
+
+	private final Seq seq;
     private final Looper looper;
     private final MiniSeq miniSeq;
     private final MiniLooper loops;
-    @Getter private SheetMusicPnl sheetMusic;
+	private final JComboBox<KnobMode> mode = new JComboBox<>(KnobMode.values());
+    private final FxPanel effects;
+    private final DJJefe mixer;
+    private final BeatsTab beatBox;
+    private final MidiTab synthBox;
     private final JPanel left = new JPanel(); // clock, midi panel, fx controls
     private final JPanel knobHolder = new JPanel();
-    @Getter private KnobPanel knobs;
+    private SheetMusicPnl sheetMusic;
     
-    public MainFrame(String name, FxPanel controls, DJJefe djJefe, Seq sequencer, Looper looper) {
+    public MainFrame(String name, FxPanel controls, DJJefe djJefe, Seq sequencer, Looper looper, SongTab songs) {
     	super(name);
         instance = this;
         this.effects = controls;
         this.mixer = djJefe;
         this.looper = looper;
         this.seq = sequencer;
+        this.songs = songs;
 
-        synthBox = new EditTab(seq.getSynthTracks());
-    	beatBox = new EditTab(seq.getDrumTracks());
+        synthBox = new PianoTab(seq.getSynthTracks());
+    	beatBox = new BeatsTab(seq.getDrumTracks());
 
     	setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setForeground(Color.DARK_GRAY);
@@ -91,27 +97,34 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
         	setLocationRelativeTo(dummy);
         	dummy.dispose();
         }
-        try { setIconImage(Icons.load("icon.png").getImage());
+        try { setIconImage(Icons.get("icon.png").getImage());
         } catch (Throwable t) { RTLogger.warn(this, t); }
         
         mixer.setMaximumSize(MIXER_SIZE);
         mixer.setPreferredSize(MIXER_SIZE);
         mixer.setMinimumSize(MIXER_SIZE);
-        tabs.setMaximumSize(TAB_SIZE);
-        tabs.setPreferredSize(TAB_SIZE);
-        tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-        tabs.add(Seq.NAME, seq);
-        tabs.add(beatBox.getTracks().getCurrent().getName(), beatBox);
-        tabs.add(synthBox.getTracks().getCurrent().getName(), synthBox);
         try {
         	sheetMusic = new SheetMusicPnl(new File(Folders.getSheetMusic(), "Four.png"), TAB_SIZE);
-		    tabs.addTab(Constants.CUTE_NOTE + sheetMusic.getName(), Constants.wrap(sheetMusic));
-        } catch (Exception e) {
-        	e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
+
+        tabs = new Qwerty(songs, beatBox, synthBox, sheetMusic);
+        beatBox.init();
         
+        mode.setFont(Gui.BOLD13);
+        mode.addActionListener(e->{
+			if (knobMode != mode.getSelectedItem())
+				setFocus(mode.getSelectedItem());
+		});
+        Gui.resize(mode, Size.COMBO_SIZE);
+        
+        miniSeq = new MiniSeq(seq.getTracks(), JudahZone.getClock());
+        loops = new MiniLooper(looper, JudahZone.getClock());
+        JPanel headquarters = new JPanel();
+        headquarters.setLayout(new BoxLayout(headquarters, BoxLayout.LINE_AXIS));
+        headquarters.add(miniSeq);
+        headquarters.add(loops);
         JScrollPane output = Console.getInstance().getScroller();
-        Dimension d = new Dimension(WIDTH_KNOBS - 4, 60);
+        Dimension d = new Dimension(WIDTH_KNOBS, 60);
         output.setPreferredSize(d);
         output.setMaximumSize(d);
         knobHolder.setBorder(new LineBorder(Pastels.MY_GRAY, 1));
@@ -119,22 +132,9 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
         knobHolder.setMaximumSize(KNOB_PANEL);
         knobHolder.setMinimumSize(KNOB_PANEL);
         knobHolder.setLayout(new BoxLayout(knobHolder, BoxLayout.PAGE_AXIS));
-        mode.setFont(Constants.Gui.BOLD13);
-        mode.addActionListener(e->{
-			if (knobMode != mode.getSelectedItem())
-				setFocus(mode.getSelectedItem());
-		});
-        Constants.resize(mode, Size.COMBO_SIZE);
-        
-        miniSeq = new MiniSeq(seq.getTracks(), seq.getClock());
-        loops = new MiniLooper(looper, seq.getClock());
-        JPanel headquarters = new JPanel();
-        headquarters.setLayout(new BoxLayout(headquarters, BoxLayout.LINE_AXIS));
-        headquarters.add(miniSeq);
-        headquarters.add(loops);
-        
+
         left.setLayout(new BoxLayout(left, BoxLayout.PAGE_AXIS));
-        left.add(Constants.wrap(new JudahMenu(Size.WIDTH_KNOBS, looper)));
+        left.add(Gui.wrap(new JudahMenu(Size.WIDTH_KNOBS, looper)));
         left.add(headquarters);
         left.add(knobHolder);
         left.add(effects);
@@ -142,8 +142,8 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
         
         JPanel right = new JPanel(); // mixer & main view
         right.setLayout(new BoxLayout(right, BoxLayout.PAGE_AXIS));
-        right.add(mixer);
         right.add(tabs);
+        right.add(mixer);
         right.add(Box.createVerticalGlue());
         
         JPanel content = (JPanel)getContentPane();
@@ -157,9 +157,8 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
         Thread updates = new Thread(this);
         updates.setPriority(2);
         updates.start();
-        
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventPostProcessor(new Qwerty(seq));
         setFocus(KnobMode.Midi);
+        tabs.requestFocusInWindow();
     }
 
     public void sheetMusic(boolean fwd) {
@@ -195,116 +194,81 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 		    	else {
 		    		sheetMusic.setImage(file);
 		    		tabs.setSelectedComponent(sheetMusic);
-		    		for (int i = 0; i < tabs.getTabCount(); i++) {
-		    			if (tabs.getComponentAt(i) == sheetMusic)
-		    				tabs.setTitleAt(i, Constants.CUTE_NOTE + sheetMusic.getName());
-		    		}
+		    		tabs.title(sheetMusic);
 		    	}
 	    	} catch (Throwable e) {
-	    		RTLogger.warn(this, file.getAbsolutePath() + " " + e.getMessage());
+	    		RTLogger.warn(this, e);
 	    	}
     	}).run();
     }
 
-    public Component getTab() {
-    	return instance.tabs.getSelectedComponent();
-    }
-    
-    public void addOrShow(Component tab, String title) {
-    	if (tab instanceof Knobs)
-    		setFocus(((Knobs)tab).getKnobMode());
-    	new Thread(() ->{
-			for (int i = 0; i < tabs.getTabCount(); i++) {
-				if (tabs.getComponentAt(i).equals(tab)) {
-					tabs.setSelectedComponent(tab);
-					return;
-				}
-			}
-			tabs.add(title, tab);
-			tabs.setSelectedComponent(tab);
-		}).start();
-	}
-	
-    public void closeTab(Component tab) {
-        tabs.remove(tab);
-        if (tab instanceof SheetMusic)
-        	sheetMusic = null;
-    }
-
 	public static void changeTab(boolean fwd) {
-		new Thread(() -> instance.tab(fwd)).start();
-	}
-
-	private void tab(boolean fwd) {
-		int idx = tabs.getSelectedIndex() + (fwd ? 1 : -1);
-		if (idx >= tabs.getTabCount())
-			idx = 0;
-		if (idx < 0)
-			idx = tabs.getTabCount() - 1;
-		tabs.setSelectedIndex(idx);
+		new Thread(() -> instance.tabs.tab(fwd)).start();
 	}
 
     public static void setFocus(Object o) {
-    	new Focus(o).start();
+    	instance.new Focus(o).run();
     }
     
     @RequiredArgsConstructor
-    private static class Focus extends Thread {
+    private class Focus extends Thread {
     	private final Object o;
     	@Override public void run() {
     		if (o instanceof KnobMode) {
-    			instance.knobMode((KnobMode)o);
+    			knobMode((KnobMode)o);
     		}
     		else if (o instanceof KnobPanel) {
-    			instance.knobPanel((KnobPanel)o);
+    			knobPanel((KnobPanel)o);
     		}
     		else if (o instanceof DrumKit) {
-    			instance.knobPanel( ((DrumKit)o).getKnobs());
+    			knobPanel( ((DrumKit)o).getKnobs());
     		}
     		
     		if (o instanceof Channel) {
-	    		instance.effects.setFocus((Channel)o);
-	    		instance.mixer.highlight((Channel)o);
+	    		effects.setFocus((Channel)o);
+	    		mixer.highlight((Channel)o);
 	    		update(o);
 	    	}
     		else if (o instanceof MultiSelect) {
     			ArrayList<Channel> multiselect = (MultiSelect)o;
     			Channel next = multiselect.get(multiselect.size()-1);
-    			instance.mixer.highlight(multiselect);
-    			instance.effects.addFocus(next);
+    			mixer.highlight(multiselect);
+    			effects.addFocus(next);
     		}
-	    	else if (o instanceof MidiTrack) {
-//	    		instance.seq.setCurrent((MidiTrack)o);
-	    	}
-	    	else if (o instanceof TrackList) {
+    		else if (o instanceof Scene) {
+    			songs.getSongView().setCurrent((Scene)o);
+    		} else if (o instanceof MidiTrack) {
+    			MidiTrack t = (MidiTrack)o;
+    			if (t.isDrums())
+    				beatBox.changeTrack();
+    		}
+	    	else if (o instanceof TrackList) { 
 	    		TrackList t = (TrackList)o;
-	    		if (o == instance.seq.getDrumTracks()) {
-	    			instance.beatBox.changeTrack(t.getCurrent().getView());
-	    		}
-	    		else if (o == instance.seq.getSynthTracks()) {
-	    			instance.synthBox.changeTrack(t.getCurrent().getView());
-	    		}
-	    		else if (o == instance.seq.getTracks()) {
-	    			instance.miniSeq.update();
+	    		if (o == seq.getTracks()) {
+	    			miniSeq.update();
 	    			if (knobMode == KnobMode.Track)
-	    				instance.knobPanel(instance.seq.getKnobs(t.getCurrent()));
+	    				knobPanel(seq.getKnobs(t.getCurrent()));
+	    		}
+	    		else if (o == seq.getSynthTracks()) {
+	    			synthBox.changeTrack();
+	    			tabs.title(synthBox);
+	    		} else if (o == beatBox.getTop() || o == beatBox.getBottom()) {
+	    			beatBox.changeTrack();
 	    		}
 	    	}
 	    	else if (o instanceof KnobMode) {
-	    		instance.knobMode((KnobMode)o);
+	    		knobMode((KnobMode)o);
 	    	}
+    		
     	}
     }
-    
+
+    // every MIDI controller change?
     public static void updateCurrent() {
 		if (instance.effects.getChannel() != null)
 			updates.offer(instance.effects.getChannel());
 	}
 
-    public static void updateTime() {
-    	updates.offer(JudahZone.getClock());
-    }
-    
     public static void update(Object o) {
     	updates.offer(o);
     }
@@ -333,17 +297,13 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 			if (o instanceof DrumSample) { // turn DrumPad green while playing
 				if (knobs instanceof KitKnobs)
 					((KitKnobs)knobs).update((DrumSample)o);
-				// TODO
-//				else if (beatbox.isShowing() && tracker.getCurrent() instanceof DrumTrack) {
-//					DrumTrack track = (DrumTrack)tracker.getCurrent();
-//					for (DrumSample s : track.getKit().getSamples()) {
-//						if (s == o)
-//							((DrumEdit)track.getEdit()).getKit().update(s);
-//					}
-//				}
+				if (tabs.getSelectedComponent() == beatBox) {
+					beatBox.update((DrumSample)o);
+				}
 				if (effects.getChannel() == o)
 					effects.getChannel().getGui().update(); 
 			}
+			
 			else if (o instanceof JudahClock) {
 				if (knobMode == KnobMode.Midi) 
 					knobs.update();
@@ -354,23 +314,41 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 
 			if (o instanceof MidiReceiver) {
 				if (o == seq.getSynthTracks().getCurrent().getMidiOut())
-					seq.getSynthTracks().getCurrent().getView().getInstrumentPanel().repaint();
-						
-				else if (o == seq.getDrumTracks().getCurrent().getMidiOut())
-					seq.getDrumTracks().getCurrent().getView().getInstrumentPanel().repaint();
-					
-				else if (knobMode == KnobMode.Kits && o == ((KitKnobs)knobs).getKit())
+					synthBox.getCurrent().getInstrumentPanel().repaint();
+				else if (o == beatBox.getTop().getCurrent().getMidiOut())
+					beatBox.midiUpdate(true);
+				else if (o == beatBox.getBottom().getCurrent().getMidiOut())
+					beatBox.midiUpdate(false);
+				if (knobMode == KnobMode.Kits && o == ((KitKnobs)knobs).getKit())
 					knobs.update();
 			}
 			else if (o instanceof MidiTrack) {
-				instance.miniSeq.update();
+				miniSeq.update();
+				MidiTrack t = (MidiTrack)o;
 				if (knobMode == KnobMode.Track)
 					knobs.update();
-				if (((MidiTrack) o).viewVisible())
-					((MidiTrack) o).getView().update();
+				if (synthBox.getCurrent().getTrack() == t)
+					synthBox.getCurrent().update();
+				else beatBox.update(t);
+				songs.update(t);
 			}
-			else if (o == seq)
-				seq.update();
+			else if (o instanceof SongTrack)
+				((SongTrack)o).update();
+			else if (o instanceof File) {
+				File dir = (File)o;
+				if (beatBox.getCurrent().getTrack().getFolder().equals(dir))
+					beatBox.getCurrent().getMenu().getFiles().fill();
+				else if (synthBox.getCurrent().getTrack().getFolder().equals(dir))
+					synthBox.getCurrent().getMenu().getFiles().fill();
+				for (SongTrack t : songs.getMidi()) 
+					if (t.getTrack().getFolder().equals(dir))
+						t.getFiles().fill();
+			}
+			else if (o instanceof Scene) {
+				songs.getSongView().getLauncher().fill();
+			}
+			else if (o == seq || o == songs)
+				songs.update();
 			if (o instanceof Channel) {
 				Channel ch = (Channel)o;
 				mixer.update(ch);
@@ -445,7 +423,7 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
     	JPanel title = new JPanel();
     	title.setLayout(new BoxLayout(title, BoxLayout.LINE_AXIS));
     	title.add(Box.createHorizontalStrut(4));
-    	title.add(Constants.wrap(mode));
+    	title.add(Gui.wrap(mode));
     	title.add(view.installing());
     	knobHolder.add(title);
     	knobHolder.add(knobs);
@@ -470,11 +448,15 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
             UIManager.put("nimbusBase", Pastels.EGGSHELL);
             UIManager.put("control", Pastels.EGGSHELL); 
             UIManager.put("nimbusBlueGrey", Pastels.MY_GRAY);
-            UIManager.getLookAndFeel().getDefaults().put("Button.contentMargins", new Insets(6, 8, 6, 8));
-
+            UIManager.getLookAndFeel().getDefaults().put("Button.contentMargins", new Insets(6, 6, 6, 6));
+            UIManager.getLookAndFeel().getDefaults().put("JToggleButton.contentMargins", new Insets(1, 1, 1, 1));
             Thread.sleep(111); // let numbus start up
 		} catch (Exception e) { RTLogger.log(MainFrame.class, e.getMessage()); }
 
+	}
+
+	public static void qwerty() {
+		instance.tabs.requestFocusInWindow();
 	}
     
 }

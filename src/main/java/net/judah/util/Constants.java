@@ -1,6 +1,5 @@
 package net.judah.util;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -10,18 +9,8 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiSystem;
-import javax.sound.midi.MidiUnavailableException;
-import javax.swing.BorderFactory;
-import javax.swing.JComponent;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 
 import lombok.Getter;
-import net.judah.gui.Pastels;
 import net.judah.midi.Midi;
 
 public class Constants {
@@ -35,22 +24,8 @@ public class Constants {
 	public static final float TUNING = 440;
 	/** Digital Interface name */
 	@Getter static String di = "UMC1820 MIDI 1"; //return "Komplete ";
+	public static final float TO_100 = 0.7874f; // 127 = 100
 	
-	public static final Midi DUMBDRUM = create(1, 0);
-	public static final Midi BASSDRUM = create(36, 100);
-	static Midi create(int dat1, int velocity) {
-		Midi result = null;
-		try { result = new Midi(Midi.NOTE_ON, 9, dat1, velocity);
-		} catch (InvalidMidiDataException e) {e.printStackTrace();}
-		return result;
-	}
-
-    public static JComponent resize(JComponent c, Dimension d) {
-		c.setMaximumSize(d);
-		c.setPreferredSize(d);
-		return c;
-    }
-
     public static final int LEFT_CHANNEL = 0;
 	public static final int RIGHT_CHANNEL = 1;
 	public static final int STEREO = 2;
@@ -75,41 +50,6 @@ public class Constants {
 	public static final int GUI_REFRESH = 9;
 	public static final long DOUBLE_CLICK = 400;
 
-    public static interface Gui {
-
-    	int STD_HEIGHT = 18;
-    	Insets BTN_MARGIN = new Insets(1,1,1,1);
-    	Insets ZERO_MARGIN = new Insets(0,0,0,0);
-    	
-    	Border HIGHLIGHT = BorderFactory.createLineBorder(Color.BLACK, 1);
-    	Border NONE = BorderFactory.createLineBorder(Pastels.MY_GRAY, 1);
-    	Border NO_BORDERS = new EmptyBorder(BTN_MARGIN);
-
-    	Font BOLD = new Font("Arial", Font.BOLD, 11);
-    	Font BOLD13 = new Font("Arial", Font.BOLD, 13);
-    	Font FONT13 = new Font("Arial", Font.PLAIN, 13);
-    	Font FONT12 = new Font("Arial", Font.PLAIN, 12);
-    	Font FONT11 = new Font("Arial", Font.PLAIN, 11);
-    	Font FONT10 = new Font("Arial", Font.PLAIN, 10);
-    	Border GRAY1 = new LineBorder(Color.GRAY, 1);
-    	Font FONT9 = new Font("Arial", Font.PLAIN, 9);
-    }
-    
-    public static JPanel duo(Component left, Component right) {
-		JPanel result = new JPanel();
-		result.setLayout(new GridLayout(1, 2));
-		result.add(left);
-		result.add(right);
-		return result;
-	}
-
-    public static JPanel wrap(Component... items) {
-		JPanel result = new JPanel();
-		for (Component p : items)
-			result.add(p);
-		return result;
-	}
-	
     public static int gain2midi(float gain) {
     	return Math.round(gain * 127);
     }
@@ -135,14 +75,7 @@ public class Constants {
 		return 60000 / (delta / beats);
 	}
 
-    public static void infoBox(String infoMessage, String titleBar) {
-        JOptionPane.showMessageDialog(null, infoMessage, titleBar, JOptionPane.INFORMATION_MESSAGE);
-    }
-    public static String inputBox(String infoMessage) {
-        return JOptionPane.showInputDialog(infoMessage);
-    }
-    
-	@SuppressWarnings("rawtypes")
+    @SuppressWarnings("rawtypes")
 	public static String prettyPrint(HashMap<String, Object> p) {
 		if (p == null) return " null properties";
 		StringBuffer b = new StringBuffer();
@@ -206,21 +139,6 @@ public class Constants {
 	        Console.warn(t);
 	        return null;
 	    }
-	}
-
-
-	public static void main2(String[] args) {
-		System.out.println(toBPM(1000, 1) + " bpm");
-		System.out.println(toBPM(3000, 3) + " bpm");
-		System.out.println(toBPM(1000, 2) + " bpm");
-		//for (Info info :  MidiSystem.getMidiDeviceInfo()) {
-		//	System.out.println(info.getName() + " - " + info.getDescription() + " / " + info.getVendor()); }
-		try {
-			System.out.println(MidiSystem.getSequencer().getClass().getCanonicalName());
-			//System.out.println("Synthesizer instruments: " + synth.getDeviceInfo().getName() +
-			//		" - " + synth.getDeviceInfo().getDescription());
-			//System.out.println(Arrays.toString(synth.getDefaultSoundbank().getResources()));
-		} catch (MidiUnavailableException e) { e.printStackTrace(); }
 	}
 
     public static void writeToFile(File file, String content) {

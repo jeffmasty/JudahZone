@@ -1,4 +1,4 @@
-package net.judah.gui.player;
+package net.judah.gui.knobs;
 
 import java.awt.Dimension;
 
@@ -7,27 +7,26 @@ import javax.swing.JButton;
 import lombok.Getter;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
-import net.judah.seq.Bar;
 import net.judah.seq.MidiTrack;
 
-public class BarStool extends JButton {
+public class TrackPattern extends JButton {
 	private static Dimension d = new Dimension(Size.STD_HEIGHT, Size.STD_HEIGHT);
 
-	@Getter private final Bar bar;
+	@Getter private final int bar;
 	private final MidiTrack track;
 	
-	public BarStool(MidiTrack t, Bar b) {
-		super("" + t.indexOf(b));
-		this.bar = b;
+	public TrackPattern(MidiTrack t, int i) {
+		super("" + i);
+		this.bar = i;
 		this.track = t;
 		setMaximumSize(d);
 		setPreferredSize(d);
 		setOpaque(true);
-		addActionListener(e->track.setCurrent(track.indexOf(b)));
+		addActionListener(e->track.setCurrent(bar));
 	}
 	
 	public void update() {
-		setBackground(track.getState().current == track.indexOf(bar)? Pastels.GREEN : null);
+		setBackground(track.getCurrent() == bar ? Pastels.GREEN : null);
 	}
 	
 }

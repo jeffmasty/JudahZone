@@ -72,7 +72,7 @@ public abstract class AudioClient extends BasicClient {
 
 	/** pass-through client */
 	public static class Dummy extends AudioClient {
-		public Dummy(ClientConfig config) throws JackException {
+		public Dummy(ClientConfig config) throws Exception {
 			super(config); start(); }
 		@Override protected void makeConnections() throws JackException { }
 	}
@@ -88,9 +88,9 @@ public abstract class AudioClient extends BasicClient {
 	protected List<FloatBuffer> outputs;
 
 	/** roll your own config, ports and name */
-	protected AudioClient(String name) throws JackException { super(name); }
+	protected AudioClient(String name) throws Exception { super(name); }
 
-	public AudioClient(ClientConfig config) throws JackException {
+	public AudioClient(ClientConfig config) throws Exception {
 		super(config.getName());
 		this.config = config;
 		inputPorts = new JackPort[config.getAudioInputNames().length];

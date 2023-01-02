@@ -22,12 +22,12 @@ import net.judah.effects.LFO;
 import net.judah.effects.LFO.Target;
 import net.judah.effects.gui.Row;
 import net.judah.effects.gui.RowLabels;
+import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
 import net.judah.mixer.Channel;
 import net.judah.samples.Sample;
 import net.judah.util.Constants;
-import net.judah.util.Constants.Gui;
 import net.judah.util.KeyPair;
 import net.judah.widgets.FxButton;
 import net.judah.widgets.GuitarTuner;
@@ -122,7 +122,7 @@ public class LFOKnobs extends KnobPanel {
     
     @Override
     public Component installing() {
-    	return Constants.wrap(all, new FxButton(channel));
+    	return Gui.wrap(all, new FxButton(channel));
     }
 
 	@Override

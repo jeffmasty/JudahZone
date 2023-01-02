@@ -15,6 +15,7 @@ import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.ProgChange;
 import net.judah.midi.Transpose;
+import net.judah.mixer.Channel;
 import net.judah.samples.Sample;
 
 /** Akai MPKmini, not the new one */
@@ -154,7 +155,7 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 	}
 
 	private boolean joystickL(int data2) throws JackException {
-		Delay d = sys.getPaths().get(getSynthPorts().indexOf(sys.getKeyboardSynth())).getChannel().getDelay();
+		Delay d = ((Channel)sys.getKeyboardSynth()).getDelay();
 		d.setActive(data2 > 4);
 		if (data2 <= 4) 
 			return true;
@@ -202,7 +203,7 @@ public class MPKmini implements Controller, MPKTools, Pastels {
             	getFrame().sheetMusic(false);
             } else if (data1 == PRIMARY_PROG[7]) { // reset stage
             	getMidiGui().getSetlistCombo().setSelectedItem(0);
-            	loadSong();
+            	loadSong(getCurrent().getFile());
             }
 
             

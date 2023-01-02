@@ -15,9 +15,9 @@ import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
 import lombok.Getter;
+import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
-import net.judah.util.Constants;
 import net.judah.widgets.RainbowFader;
 
 /**Mixer view
@@ -66,7 +66,7 @@ public abstract class ChannelFader extends JPanel implements Pastels {
 		volume.setOpaque(true);
 		banner.setLayout(new BoxLayout(banner, BoxLayout.LINE_AXIS));
 		banner.setOpaque(true);
-		title.setFont(Constants.Gui.BOLD13);
+		title.setFont(Gui.BOLD13);
 		banner.add(title);
 		banner.add(sidecar);
 		sidecar.setOpaque(false);
@@ -87,7 +87,7 @@ public abstract class ChannelFader extends JPanel implements Pastels {
 	protected abstract Color thisUpdate(); 
 	
 	protected Component font(Component c) {
-		c.setFont(Constants.Gui.FONT9);
+		c.setFont(Gui.FONT9);
 		return c;
 	}
 

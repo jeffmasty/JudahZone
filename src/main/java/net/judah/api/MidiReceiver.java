@@ -22,4 +22,9 @@ public interface MidiReceiver extends Receiver, Closeable {
 	void progChange(String preset, int channel);
 	
 	int getProg(int ch);
+	
+	void setAmplification(float gain);
+	
+	float getAmplification();
+	
 }

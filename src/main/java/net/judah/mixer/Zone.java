@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
 import net.judah.api.Engine;
 import net.judah.drumkit.DrumKit;
+import net.judah.midi.MidiInstrument;
 import net.judah.synth.JudahSynth;
 
 @RequiredArgsConstructor

@@ -1,79 +1,175 @@
 package net.judah.gui.knobs;
 
-import static javax.swing.SwingConstants.CENTER;
-
 import java.awt.Component;
 import java.awt.GridLayout;
-import java.util.List;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
 
-import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import net.judah.gui.player.BarRoom;
+import net.judah.gui.MainFrame;
 import net.judah.seq.Cue;
 import net.judah.seq.Cycle;
 import net.judah.seq.MidiTrack;
+import net.judah.seq.Seq;
 import net.judah.util.Constants;
-import net.judah.widgets.Slider;
 
-@Getter 
+@Getter // TODO MouseWheel listener -> change pattern 
 public class TrackKnobs extends KnobPanel {
-	
+
 	private final MidiTrack track;
-	private final /*FileCombo*/ JComboBox<String> file = new JComboBox<>(new String[] {"Sleepwalk", "AirOnG"});
-	private final JComboBox<MidiTrack> tracks; 
-	private final JPanel upper, lower;
+	private final Seq seq;
+//	private final JButton play = new JButton("Play");
+//	private final JButton record = new JButton("Rec");
+//	private final JButton mpk = new JButton("MPK");
+//	private final JComboBox<Cue> cue = new JComboBox<Cue>(Cue.values());
+//	private final JComboBox<Cycle> cycle = new JComboBox<Cycle>(Cycle.values());
+//	private final ProgChange progChange;
+//	private final /*FileCombo*/ JComboBox<String> file = new JComboBox<>(new String[] {"Sleepwalk", "AirOnG"});
+//	private final Knob velocity = new Knob();
+//	private final JComboBox<Integer> current = new JComboBox<>();
+//	private final JLabel previous = new JLabel("(TD)", CENTER);
+//	private final JLabel next = new JLabel("0 | 1", CENTER);
+	private final JPanel titleBar = new JPanel(new GridLayout());
 	
+//	private JPanel settings = new JPanel(new GridLayout(0, 3));
+	
+//	private JPanel bars = new JPanel(new GridLayout(0, 3));
+	private final TrackSchedule schedule;
+	private final TrackSettings settings;
 	@Override
-	public boolean doKnob(int idx, int value) {
-		// TODO
-		return false;
+	public Component installing() {
+		return titleBar;
+	}
+		
+	//  namePlay preset |  Cycle [ABCD]    [CUE]
+	//	file     vol    | (prev) [Cur]   next|after
+	public TrackKnobs(MidiTrack t, Seq seq) {
+		super(t.getName());
+		this.track = t;
+		this.seq = seq;
+//		progChange = new ProgChange(track.getMidiOut(), track.getCh());
+//		progChange.setPreferredSize(Size.COMBO_SIZE);
+//		progChange.setMaximumSize(Size.COMBO_SIZE);
+//		
+//		play.addActionListener(e->{
+//			track.setActive(track.isActive() || track.isOnDeck() ? false : true);});
+//
+//		for (int i = 0; i < track.size(); i++)
+//			current.addItem(i);
+
+//		settings.setOpaque(true);
+//		settings.setBackground(BUTTONS);
+//		JLabel name = new JLabel(track.getName(), CENTER);
+//		name.setFont(Constants.Gui.BOLD13);
+//		settings.add(name);
+//		settings.add(cycle);
+//		settings.add(cue);
+//
+//		bars.setOpaque(true);
+//		bars.setBackground(BUTTONS);
+//		bars.add(previous);
+//		bars.add(current);
+//		bars.add(next);
+
+//		JPanel top = new JPanel();
+//		top.setLayout(new BoxLayout(top, BoxLayout.PAGE_AXIS));
+//		top.add(settings);
+//		top.add(bars);
+		
+//		JPanel bottom = new JPanel();
+//		bottom.setLayout(new BoxLayout(bottom, BoxLayout.PAGE_AXIS));
+//		bottom.add(Constants.wrap(file, progChange));
+//		JPanel btns = new JPanel(new GridLayout(0, 4));
+//		btns.add(play); btns.add(record); btns.add(mpk); btns.add(velocity);
+//		bottom.add(btns); // Constants.wrap(play, record, mpk, velocity));
+//		setBorder(Constants.Gui.NONE);
+		
+		
+//		add(top);
+//		add(bottom);
+
+		
+		JComboBox<MidiTrack> tracks = new JComboBox<>(seq.getTracks().toArray(new MidiTrack[seq.numTracks()]));
+		ActionListener tracker = new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) {
+				seq.getTracks().setCurrent((MidiTrack)tracks.getSelectedItem());
+				tracks.removeActionListener(this);
+				tracks.setSelectedItem(track);
+				tracks.addActionListener(this);
+			}
+		};
+		tracks.setSelectedItem(track);
+		tracks.addActionListener(tracker);
+		titleBar.add(tracks);
+
+		setLayout(new GridLayout(0, 1));
+		settings = new TrackSettings(track);
+		schedule = new TrackSchedule(track);
+		add(settings);
+		add(schedule);
+		add(new PatternLauncher(track));
 	}
 
 	@Override
 	public void update() {
-		// TODO
-	}
-	
-	public TrackKnobs(MidiTrack t, List<MidiTrack> seq) {
-		super(t.getName());
-		this.track = t;
-		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-		upper = new JPanel(/* new GridLayout(1, 3, 5, 1) */);
-		upper.add(file);
-		upper.add(new BarRoom(track));
-		upper.add(new Slider(null));
-		add(upper);
+		settings.update();
+		schedule.update();
+//		settings.setBackground(seq.getCurrent() == track ? MY_GRAY : BUTTONS);
+//		bars.setBackground(settings.getBackground());
 		
-		lower = new JPanel(new GridLayout(1, 4, 1, 1));
-		lower.add(new JComboBox<Cue>(Cue.values()));
-		lower.add(new JComboBox<Cycle>(Cycle.values()));
-		lower.add(new JComboBox<>(new String[] {"Synth1", "Synth2"}));
-		lower.add(new JComboBox<>(new String[] {"FeelGood", "Drops1", "Drops2"}));
-		JPanel middle = new JPanel(new GridLayout(1, 4, 1, 1));
-		middle.add(new JLabel("Cue", CENTER));
-		middle.add(new JLabel("Cycle", CENTER));
-		middle.add(new JLabel("MidiOut", CENTER));
-		middle.add(new JLabel("Preset", CENTER));
-
-		add(upper);
-		add(middle);
-		add(lower);
-
-		tracks = new JComboBox<>();
-		for (MidiTrack track : seq)
-			tracks.addItem(track);
-		tracks.setSelectedItem(track);
-		
+//		// previous next current
+//		play.setBackground(track.isActive() ? GREEN : null);
+//		record.setBackground(track.isRecord() ? RED : null);
+		// mpk
+// 		setBorder(seq.getCurrent() == track ? Constants.Gui.HIGHLIGHT : Constants.Gui.NON);
 	}
 
 	@Override
-	public Component installing() {
-		return Constants.wrap(tracks);
+	public boolean doKnob(int knob, int data2) {
+		switch (knob) {
+			case 0: // tracknum
+				int num = Constants.ratio(data2, seq.numTracks() - 1);
+				seq.getTracks().setCurrent(seq.get(num));
+				return true;
+			case 1: // file (settable)
+				File[] folder = track.getFolder().listFiles();
+				int idx = Constants.ratio(data2, folder.length + 1);
+				settings.getFile().setSelectedIndex(idx);
+				return true;
+			case 2: // pattern
+//TODO				track.setCurrent(Constants.ratio(data2 -1, track));
+				return true;
+			case 3: 
+				track.setGain(data2 * 0.01f);
+				return true;
+			case 4: 
+				schedule.getCue().setSelectedIndex(Constants.ratio(data2 -1, Cue.values().length));
+				return true;
+			case 5: 
+				schedule.getCycle().setSelectedIndex(Constants.ratio(data2 - 1, Cycle.values().length));
+				return true;
+			case 6: // midiOut
+				
+				return true;
+			case 7: 
+				schedule.getProgChange().setSelectedIndex(Constants.ratio(data2, track.getMidiOut().getPatches().length - 1));
+				return true;
+		}
+		return false;		
+	}
+
+	@Override
+	public void pad1() {
+		MainFrame.setFocus(track);
+	}
+
+	@Override
+	public void pad2() {
+		
 	}
 	
-
 }

@@ -1,43 +1,34 @@
 TODO:
 
-ctrl = multiselect notes
-drag-n-drop = transpose
-record midi to Track/Looper!
-cc/prog view on High C#
-
-Sample packs
-verse/trigger gui feedback
-kit channels HiCut = pan? decay
-synth bend broken
+drag-n-drop = midi editor transpose
+timesig, fill patterns, loop sync/verse/chorus feedback, 
+cc/prog on Sequencer
+record to MidiTrack + Midi Looper
+drumkit bug: HiCut = pan? decay? sample volume
 SettableCombo (mouse, bugs) 
+Sample packs
 ratchet()
-
 Executor Threads
-mic flute phase // fixed?
-DBIndicator
+DBIndicator, Scope and Meters
 Loop copy/paste/length/save,  Record session
 Arppegiator (Racman sequence), Chord sheets
 ChordPro parser: https://github.com/SongProOrg/songpro-java  https://github.com/saipanman95/chordpro-parser
-Scope and Meters
+walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
 ERRNOBUF - no ticks, no start seq
 IR Reverb
 Synth: LFO, glide, PWM, mono-synth
 Delay and LFO upgrade (Clock & tapTempo)
 probability, Ritardando
-export beatbox as midi file, quantization
 Sampler Fx (granularity, pitched frequency, wet)
 DrumSynth, Vocoder 
 record record record youtubes
 README credits
 clipping/xruns filter see https://github.com/psambit9791/jDSP Peak/Spike
 Latency + bleeding edge
-Drag-n-drop, step sequencer editor upgrades
 Phasor, Shepard
 Undo/Redo/Copy/Paste
-walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
-MPK Sequencer
-make client-server architecture
 Sequencer can really swing.
+make client-server architecture
 support JavaSound/non-Jack, make accessible setup and settings
 
 Hacking the Arturia Beatstep:
@@ -90,8 +81,6 @@ javac --module-path $PATH_TO_FX --add-modules javafx.controls HelloFX.java
 <!--      <version>3.9.30</version> -->
 
 Done:
-Midi looper/recorder, Quantization
-router table -> display pad/knob name  and   midi drum name
 Recompile Carla (done, modified modules/rtaudio.cpp)
 mixer/Channel concept, mixer gain
 MidiMapper, midi router
@@ -139,7 +128,6 @@ solo lineIn to loop D
 step sequencer chords, arppegiator
 Midi Mixer: style/arp/pattern/song/chords/channel    
 verse-chorus control
-record/quantize to step sequencer, 
 loop sync/master clock to 3/4, polyrythmic
 sheetMusic 2.0
 Sampler (bicycle, creek, rain sounds), cricket sound on 2 and 4
@@ -149,23 +137,23 @@ portWrapper for midiOut to JudahSynth/JudahBeats, redo djJefe
 8-track player, atk/rel drum sample envelope
 LFO on samples, LFO cleanup, Compressor
 mixbus multi-select
-falling water midi editor
 separate setlist and code
+export beatbox as midi file, quantization
+midi-fluent falling water Song editor
 
 
 REFERENCE------------------------------------------------------------
-
-[Mixer][Out][In]  EFX
-1 2 3 4 5 6 7 8   1  2  3  4
-| | | | | | | |   5  6  7  8
-| | | | | | | |   9  10 11 12
-| | | | | | | |   13 14 15 16
+[Mixer]                [FX]
+[Loops] [Ins]  [Main]  
+1 2 3 4 5 6 7 8..      1  2  3  4
+| | | | | | | |        5  6  7  8
+| | | | | | | |        9  10 11 12
+| | | | | | | |        13 14 15 16
 
 
 *nanoPAD2
 recordA	   recordB  recordC recordDrum sheetMusic   Gtr.Efx.sync  x	               x
 reload/AAB latchB   latchC  latchSolo  Verse/Chorus MuteA/B    	  clockStop/syncx  Crickets/++
-
 
 KNOBS:
 FX 
@@ -175,7 +163,6 @@ FX
 LFO 
 	type   min     max       time
 	Preset C.Knee  C.Thresh  C.Gain
-
 
 CLOCK 
 	sync shaker synth1  fluid
@@ -189,9 +176,7 @@ SYNTH
 	Preset Vol HiCut LoCut
 	A      D   S 	 R
 
-
 Class Hierarchy
-
 Channel
    LineIn
        Instrument - guitar, mic, crave, fluid
@@ -203,27 +188,6 @@ Channel
        Sample    
           StepSample
           DrumSamples to DrumMachine
-
-
-
-Sequencer
-	sorted by tick
-	Midi channel = track#/midiOut
-
-
-For view:
-get(track)
-get(track, bar#)
-
-Sequencer.add(track, midiSequence)
-
-  
-  Track 
-  		list of Bars
-  		
-  		
-  		
-  		
   
   
   

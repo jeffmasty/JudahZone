@@ -42,7 +42,7 @@ public class LineInFader extends ChannelFader {
 	
 	@Override
 	protected Color thisUpdate() {
-		Color bg = EGGSHELL;
+		Color bg = MY_GRAY;
 		
 		if (channel.isOnMute())  // line in/master track 
 			bg = Color.BLACK;

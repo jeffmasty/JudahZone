@@ -15,28 +15,28 @@ import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.api.MidiReceiver;
 import net.judah.gui.Pastels;
-import net.judah.midi.MidiPort;
 import net.judah.midi.Panic;
 import net.judah.mixer.LineIn;
 
 /** Controller substitute, reroute guitar midi to synths */
-public class Jamstik extends JComboBox<MidiPort>{
+public class Jamstik extends JComboBox<MidiReceiver>{
 	
 	@Getter private static boolean active = false;
-	@Getter private static MidiPort out;
+	@Getter private static MidiReceiver out;
 	@Setter private JPanel frame;
-	private final ArrayList<MidiPort> ports;
+	private final ArrayList<MidiReceiver> ports;
 	private int volStash = 50;
 	
-	public Jamstik(ArrayList<Closeable> services, ArrayList<MidiPort> ports) {
+	public Jamstik(ArrayList<Closeable> services, ArrayList<MidiReceiver> ports) {
 		this.ports = ports;
 		BasicComboBoxRenderer style = new BasicComboBoxRenderer() {
         	@Override public Component getListCellRendererComponent(
         			@SuppressWarnings("rawtypes") JList list, Object value,
         			int index, boolean isSelected, boolean cellHasFocus) {
         		super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        		MidiPort item = (MidiPort) value;
+        		MidiReceiver item = (MidiReceiver) value;
         		setHorizontalAlignment(DefaultListCellRenderer.CENTER); 
         		setText(item == null ? "?" : item.toString());
         		return this;
@@ -44,12 +44,11 @@ public class Jamstik extends JComboBox<MidiPort>{
         style.setHorizontalAlignment(SwingConstants.CENTER);
         setRenderer(style);
         setOpaque(true);
-        for (MidiPort p : ports)
-        	addItem(p);
-        out = ports.get(0);
+        ports.forEach((rec)->addItem(rec));
+        out = getItemAt(0);
         setSelectedItem(out);
 
-        addActionListener(e -> setMidiOut((MidiPort)getSelectedItem()));
+        addActionListener(e -> setMidiOut((MidiReceiver)getSelectedItem()));
 	}
 	
 	public void setActive(boolean active) {
@@ -75,11 +74,11 @@ public class Jamstik extends JComboBox<MidiPort>{
 		setActive(!active);
 	}
 	
-	public void setMidiOut(MidiPort port) {
+	public void setMidiOut(MidiReceiver port) {
 		if (out == port)
 			return;
 		if (active) {
-			new Panic(out).start();
+			new Panic(out.getMidiPort()).start();
 		}
 		out = port;
 	}

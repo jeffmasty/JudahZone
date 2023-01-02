@@ -29,7 +29,7 @@ public abstract class BasicClient extends Thread implements JackProcessCallback,
 	 * 
 	 * @param name
 	 * @throws JackException */
-    public BasicClient(String name) throws JackException {
+    public BasicClient(String name) throws Exception {
     	clientName = name;
     	setPriority(Thread.MAX_PRIORITY);
     	setName(name);
@@ -89,7 +89,7 @@ public abstract class BasicClient extends Thread implements JackProcessCallback,
     }
 
 	/** Jack Client created but not started. Register ports. */
-	protected abstract void initialize() throws JackException;
+	protected abstract void initialize() throws Exception;
 	/** Jack Client has been started */
 	protected abstract void makeConnections() throws JackException;
 

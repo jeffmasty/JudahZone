@@ -5,7 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -17,8 +18,8 @@ public class JsonUtil {
 		MAPPER.enable(SerializationFeature.INDENT_OUTPUT);
 	}
 
-	public static void saveSetList(ArrayList<String> list, File file) throws IOException {
-		saveString(MAPPER.writeValueAsString(list), file);
+	public static void writeJson(Object o, File file) throws IOException {
+		saveString(MAPPER.writeValueAsString(o), file);
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -26,20 +27,6 @@ public class JsonUtil {
         InputStream fis = new FileInputStream(file);
 		return MAPPER.readValue(fis, clazz);
 	}
-	
-	public static ArrayList<String> loadSetlist(File file) throws IOException {
-        InputStream fis = new FileInputStream(file);
-        @SuppressWarnings("unchecked")
-		ArrayList<String> result = MAPPER.readValue(fis, ArrayList.class);
-        fis.close();
-        return result;
-	}
-	
-//	public static String setlist2Json(Songlist list) throws IOException {
-//		String json = MAPPER.writeValueAsString(list.getSongs());
-//		log.info(json);
-//		return json;
-//	}
 	
 	public static void saveString(String json, File toFile) throws IOException {
 		if (!toFile.isFile()) 
@@ -49,4 +36,11 @@ public class JsonUtil {
         fos.close();
 	}
 	
+	public static void threadedSave(String json, File file) {
+        new Thread(() -> {
+            try { Files.write(Paths.get(file.toURI()), json.getBytes());
+            } catch(IOException e) {RTLogger.warn("Constants.writeToFile", e);}
+        }).start();
+    }
+
 }

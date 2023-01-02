@@ -9,7 +9,6 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 
-import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 
 import lombok.Getter;
@@ -18,13 +17,13 @@ import net.judah.gui.Pastels;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
-import net.judah.seq.Bar;
-import net.judah.seq.MidiSize;
+import net.judah.seq.MidiPair;
 import net.judah.seq.MidiTrack;
 import net.judah.seq.MidiView;
 import net.judah.seq.Steps;
+import net.judah.seq.beatbox.BeatsSize;
 
-public class PianoSteps extends Steps implements MidiSize, MouseMotionListener, MouseListener {
+public class PianoSteps extends Steps implements BeatsSize, MouseMotionListener, MouseListener {
 
 	static final int OFFSET = STEP_WIDTH / 2 - 5;
 	private final JudahClock clock;
@@ -34,8 +33,8 @@ public class PianoSteps extends Steps implements MidiSize, MouseMotionListener, 
 	private int highlight = -1;
 
 	@Getter @Setter private int start = 0;
-	@Getter private int total;
-	@Getter private int unit;
+	@Getter private float total;
+	@Getter private float unit;
 	private final ArrayList<Integer> playing = new ArrayList<>();
 	
 	public PianoSteps(Rectangle r, MidiTrack track, MidiView view) {
@@ -65,11 +64,11 @@ public class PianoSteps extends Steps implements MidiSize, MouseMotionListener, 
 		
 		int y;
 		for (int i = 0; i < 2 * steps; i++) {
-			y = i * unit;
+			y = (int)(i * unit);
 
 			if (highlight == i) {
 				g.setColor(isBeat(i) ? Pastels.YELLOW.darker() : Pastels.YELLOW);
-				g.fillRect(1, y + 2, width - 2, unit - 3);
+				g.fillRect(1, y + 1, width - 2, (int) unit - 3);
 				g.setColor(Color.BLACK);
 			}
 			
@@ -78,16 +77,16 @@ public class PianoSteps extends Steps implements MidiSize, MouseMotionListener, 
 				if (beat > 4) beat -= 4;
 				if (i != highlight) {
 					g.setColor(Pastels.FADED);
-					g.fillRect(0, y, width, unit);
+					g.fillRect(0, y, width, (int)unit);
 				}
 				g.setColor(Color.BLACK);
-				g.drawString("" + beat, OFFSET, y + unit - 3);
+				g.drawString("" + beat, OFFSET, y + (int)unit - 3);
 			}
 			else if (count % steps % div == 2) {
-				g.drawString("+", OFFSET, y + unit - 3);
+				g.drawString("+", OFFSET, y + (int)unit - 3);
 			}
 			
-			g.drawLine(0, y + unit, width, y + unit);
+			g.drawLine(0, y + (int)unit, width, y + (int)unit);
 
 			if (++count == steps)
 				count = 0;
@@ -104,6 +103,7 @@ public class PianoSteps extends Steps implements MidiSize, MouseMotionListener, 
 		return (row + start) % clock.getSteps() == 0;
 	}
 
+	@Override
 	public void highlight(Point p) {
 		int replace = p == null ? -1 : (int) ( p.y / (float)height * clock.getSteps() * 2);
 		if (replace == highlight)
@@ -114,7 +114,7 @@ public class PianoSteps extends Steps implements MidiSize, MouseMotionListener, 
 
 	private void send(int cmd, int data1) {
 		track.getMidiOut().send(Midi.create(cmd, track.getCh(), 
-				data1, view.getVelocity().getValue()), JudahMidi.ticker());
+				data1, 127), JudahMidi.ticker());
 	}
 	
 	/** play notes for given step */
@@ -125,34 +125,29 @@ public class PianoSteps extends Steps implements MidiSize, MouseMotionListener, 
 	}
 	
 	public static int toStep(int y, int total) {
-		return (int) (total * (y / (float)BOUNDS_GRID.height));
+		return (int) (total * (y / (float)GRID_HEIGHT));
 	}
 
 	private void notesForPoint(Point point) {
 		playing.clear();
-		int step = toStep(point.y, total);
+		int step = toStep(point.y, (int)total);
 		if (step < 0 || step > total)
 			return;
 		float steps = clock.getSteps() * 2;
-		long start = (long) (2 * track.getTicks() * step / steps);
+		long twoBar = track.getBarTicks() * 2;
+		
+		long start = (long) (twoBar * step / steps);
 		step++;
-		long end = (long) (2 * track.getTicks() * step / steps);
-		Bar target = null;
-		if (start < track.getTicks()) 
-			target = view.getSnippet().one;
-		else {
-			target = view.getSnippet().two;
-			start -= track.getTicks();
-			end -= track.getTicks();
-		}
-		for (MidiEvent e : target) {
-			if (e.getTick() <= start)
-				if (((ShortMessage)e.getMessage()).getCommand() == NOTE_ON) {
-					if (e.getTick() < end)
-						playing.add(((ShortMessage)e.getMessage()).getData1());
+		long end = (long) (twoBar * step / steps);
+		for (MidiPair p : view.getScroll()) {
+			if (p.getOn().getTick() <= start)
+				if (((ShortMessage)p.getOn().getMessage()).getCommand() == NOTE_ON) {
+					if (p.getOn().getTick() < end)
+						playing.add(((ShortMessage)p.getOn().getMessage()).getData1());
 				}
-				else if (((ShortMessage)e.getMessage()).getCommand() == NOTE_OFF)
-					playing.remove((Integer)((ShortMessage)e.getMessage()).getData1());
+// TODO
+//				else if (((ShortMessage)p.getOff())
+//					playing.remove((Integer)((ShortMessage)e.getMessage()).getData1());
 		}
 	}
 

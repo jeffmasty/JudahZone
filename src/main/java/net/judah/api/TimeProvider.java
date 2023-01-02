@@ -4,7 +4,7 @@ public interface TimeProvider extends TimeNotifier {
 
 	float getTempo();
 	/**@return true if the operation is supported and successful */
-	boolean setTempo(float tempo);
+	void writeTempo(int tempo);
 
 	/** beats per bar */
 	int getMeasure();

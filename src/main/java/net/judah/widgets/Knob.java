@@ -18,7 +18,7 @@ import javax.swing.JComponent;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.util.Icons;
+import net.judah.gui.Icons;
 
 /**<a href="https://github.com/mploof/JKnobFancy">From Michael Ploof on Github</a><br/><br/>
 * JFancyKnob.java -
@@ -249,8 +249,8 @@ public class Knob extends JComponent{
 	}
 	
 	public Knob() {
-		ImageIcon knobIcon = Icons.load("knob.png");
-		ImageIcon knobHandle = Icons.load("knobhandle.png");
+		ImageIcon knobIcon = Icons.get("knob.png");
+		ImageIcon knobHandle = Icons.get("knobhandle.png");
 		init(200, new Point2D.Double(0.5, 0.5), 0.5, knobIcon, 30, knobHandle);
 		setCwDirection(true);
 		setMinPos(220);

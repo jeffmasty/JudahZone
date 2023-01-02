@@ -14,6 +14,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
+import net.judah.util.Constants;
 
 public class SheetMusicPnl extends JPanel {
         Image image;
@@ -37,22 +38,23 @@ public class SheetMusicPnl extends JPanel {
             constraints.gridy = 1;
             constraints.gridx = 0;
             constraints.gridwidth = 3;
-            Dimension smaller = new Dimension(sz.width - 10, sz.height  - 10);
+            Dimension smaller = new Dimension(sz.width - 10, sz.height  - 20);
             
             labelImage.setPreferredSize(smaller);
             labelImage.setMaximumSize(smaller);
-            add(labelImage, constraints);
+            add(Gui.wrap(labelImage), constraints);
             setLocation(0,0);
             setSize(smaller);
             setMaximumSize(smaller);
-            setName(musicImage.getName());
+            setName(Constants.CUTE_NOTE + musicImage.getName());
             doLayout();
         }
         
         public void setImage(File musicImage) throws IOException {
             image = ImageIO.read(musicImage);
+            file = musicImage;
             labelImage.setIcon(new ImageIcon(image));
-            setName(musicImage.getName());
+            setName(Constants.CUTE_NOTE + musicImage.getName());
         }
         
     }

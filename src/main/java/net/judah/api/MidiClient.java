@@ -29,18 +29,18 @@ public class MidiClient extends BasicClient /* implements MidiQueue */{
 
     protected final ConcurrentLinkedQueue<ShortMessage> queue = new ConcurrentLinkedQueue<ShortMessage>();
     
-	public MidiClient(String name, String[] inPorts, String[] outPorts) throws JackException {
+	public MidiClient(String name, String[] inPorts, String[] outPorts) throws Exception {
 		super(name);
 		inputs = inPorts;
 		outputs = outPorts;
 		start();
 	}
 	
-	public MidiClient(String[] inPorts, String[] outPorts) throws JackException {
+	public MidiClient(String[] inPorts, String[] outPorts) throws Exception {
 		this(MidiClient.class.getSimpleName(), inPorts, outPorts);
     }
 
-	public MidiClient(String clientName, String[] in, String[] out, String synthMidiPort) throws JackException {
+	public MidiClient(String clientName, String[] in, String[] out, String synthMidiPort) throws Exception {
 		this(clientName, in, out);
 		synthMidiConnect = synthMidiPort;
 	}

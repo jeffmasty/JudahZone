@@ -11,6 +11,8 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import net.judah.JudahZone;
 import net.judah.api.AudioMode;
@@ -20,7 +22,6 @@ import net.judah.api.TimeListener;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
-import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 import net.judah.widgets.LengthWidget;
 import net.judah.widgets.LoopWidget;
@@ -38,19 +39,26 @@ public class MiniLooper extends JPanel implements TimeListener {
     private final JLabel loopLbl = new JLabel("0.0s");
    	private final JLabel tempoLbl = new JLabel("?", JLabel.CENTER);
 	private final TapTempo tapButton = new TapTempo("Tempo", msec -> {
-            JudahZone.getClock().setTempo(60000 / msec);});	
+            JudahZone.getClock().writeTempo(Math.round(60000 / msec));});	
 	private Loop recording;
-	Slider tempoKnob = new Slider(60, 160, null);
+	private final Slider tempoKnob;
+	private final ChangeListener tempoEar = new ChangeListener() {
+			@Override public void stateChanged(ChangeEvent e) {
+        	int tempo = tempoKnob.getValue();
+        	if (clock.getTempo() < tempo - 1 || clock.getTempo() > tempo + 1)
+        		clock.writeTempo(tempo);
+			}
+		};
 	
 	public MiniLooper(Looper loops, JudahClock clock) {
 		this.clock = clock;
 		this.looper = loops;
-		looper.getLoopA().addListener(this);
+		looper.addListener(this);
 		clock.addListener(this);
 		loopWidget = new LoopWidget(looper.getLoopA());
 		tempoLbl.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
-                String input = Constants.inputBox("Tempo:");
+                String input = Gui.inputBox("Tempo:");
                 if (input == null || input.isEmpty()) return;
                 try { 
                 	clock.writeTempo((int)Float.parseFloat(input));
@@ -58,25 +66,23 @@ public class MiniLooper extends JPanel implements TimeListener {
                 	RTLogger.log(this, t.getMessage() + " -> " + input); 
                 }
             }});
-        tempoLbl.setFont(Constants.Gui.BOLD);
-        Constants.resize(tempoKnob, SLIDER);
-        Constants.resize(loopWidget, SLIDER);
-        tempoKnob.setValue((int)clock.getTempo());
-
-        tempoKnob.addChangeListener(value -> {
-        	int tempo = tempoKnob.getValue();
-        	if (clock.getTempo() < tempo - 0.5f || clock.getTempo() > tempo + 0.5f)
-        		clock.writeTempo(tempo);});
+        tempoLbl.setFont(Gui.BOLD);
+        tempoKnob = new Slider(55, 155, null);
+        
         JButton delete = new JButton("Del");
         delete.addActionListener(e->looper.reset());
         record.addActionListener(e->record());
         sync = new LengthWidget(clock);
+
+        Gui.resize(tempoKnob, SLIDER);
+        Gui.resize(loopWidget, SLIDER);
         setBorder(new LineBorder(Pastels.MY_GRAY, 1));
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-        add(Constants.wrap(record, sync, new JLabel("Bars"), delete));
-        add(Constants.wrap(tapButton, tempoLbl, tempoKnob));
-        add(Constants.wrap(new JLabel("Loop"), loopLbl, loopWidget));
-
+        add(Gui.wrap(record, sync, new JLabel("Bars"), delete));
+        add(Gui.wrap(tapButton, tempoLbl, tempoKnob));
+        add(Gui.wrap(new JLabel("Loop"), loopLbl, loopWidget));
+        tempoKnob.addChangeListener(tempoEar);
+        
 	}
 
 	public void record() {
@@ -88,7 +94,6 @@ public class MiniLooper extends JPanel implements TimeListener {
 				recording = looper.getLoopC();
 				recording.record(true);
 			}
-			recording.addListener(this);
 		}
 		else {
 			recording.record(false);
@@ -107,15 +112,19 @@ public class MiniLooper extends JPanel implements TimeListener {
 	public void update(Property prop, Object value) {
 		if (prop == TEMPO) {
 			tempoLbl.setText("" + value.toString().substring(0, 3));
+			tempoKnob.removeChangeListener(tempoEar);
 			tempoKnob.setValue(Math.round((float)value));
+			tempoKnob.addChangeListener(tempoEar);
 		}
-		else if (prop == LOOP || (prop == STATUS && value == Status.TERMINATED)) {
-			String time = Float.toString(JudahZone.getLooper().getRecordedLength() / 1000f);
-			if (time.length() > 2)
-				time.substring(0, 2);
-			loopLbl.setText(time + "s");
+		else if (prop == LOOP) {
+			if (value == Status.NEW) {
+				String time = Float.toString(JudahZone.getLooper().getRecordedLength() / 1000f);
+				if (time.length() > 2)
+					time.substring(0, 2);
+				loopLbl.setText(time + "s");
+			}
 			record.setBackground(recording == null ? null : recording.isRecording() == AudioMode.ARMED ? Pastels.PINK : 
-				recording.isRecording() == AudioMode.RUNNING ? Pastels.RED : null);
+					recording.isRecording() == AudioMode.RUNNING ? Pastels.RED : null);
 		}
 	}
 	

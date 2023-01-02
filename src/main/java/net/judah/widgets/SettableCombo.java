@@ -10,7 +10,6 @@ import javax.swing.border.Border;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.JudahZone;
 
 public class SettableCombo<T> extends CenteredCombo<T> {
 
@@ -56,17 +55,17 @@ public class SettableCombo<T> extends CenteredCombo<T> {
 	}
 	
 	public static void set() {
-		if (focus != null)
+		if (focus != null && focus.action != null)
 			new Thread(() ->{
 				focus.action.run();
 				highlight(null);
 			}).start();
-		else {
-			new Thread(()->{
-				JudahZone.loadSong();
-				highlight(null);
-			}).start();
-		}
+//		else {
+//			new Thread(()->{
+//				JudahZone.loadSong();
+//				highlight(null);
+//			}).start();
+//		}
 	}
 	
 	public void override(int i) {

@@ -1,7 +1,6 @@
 package net.judah.seq.piano;
 
 import static java.awt.event.KeyEvent.*;
-import static net.judah.seq.MidiView.toData1;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -19,26 +18,26 @@ import lombok.Getter;
 import net.judah.gui.Pastels;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
-import net.judah.seq.MidiSize;
+import net.judah.seq.MidiTab;
 import net.judah.seq.MidiTrack;
-import net.judah.util.RTLogger;
+import net.judah.seq.beatbox.BeatsSize;
 
-public class Piano extends JPanel implements MidiSize, MouseListener, MouseWheelListener, MouseMotionListener {
+public class Piano extends JPanel implements BeatsSize, MouseListener, MouseWheelListener, MouseMotionListener {
 
+	private final MidiTab tab;
 	private final MidiTrack track;
-	//@Getter private final Pianist pianist; 
 	private final int width, height;
 	private int highlight = -1;
 	private int pressed;
 	@Getter private int octave = 4;
 
 	
-	public Piano(Rectangle r, MidiTrack track) {
-		this.track = track;
+	public Piano(Rectangle r, MidiTrack t, MidiTab tab) {
+		this.tab = tab;
+		this.track = t;
 		width = r.width;
 		height = r.height;
 		setBounds(r);
-		//pianist = new Pianist(track, this);
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		addMouseWheelListener(this);
@@ -110,18 +109,18 @@ public class Piano extends JPanel implements MidiSize, MouseListener, MouseWheel
 	
 	@Override public void mousePressed(MouseEvent e) {
 		off();
-		pressed = toData1(e.getPoint());
+		pressed = tab.getCurrent().getGrid().getMusician().toData1(e.getPoint());
 		on();
 	}
 	
 	@Override
 	public void mouseMoved(MouseEvent e) {
-		highlight = e.getX() / MidiSize.KEY_WIDTH;  
+		highlight = e.getX() / BeatsSize.KEY_WIDTH;  
 		repaint();
 	}
 	
 	@Override public void mouseDragged(MouseEvent e) {
-		int next = toData1(e.getPoint());
+		int next = tab.getCurrent().getGrid().getMusician().toData1(e.getPoint());
 		if (next == pressed) return;
 		mouseMoved(e);
 		off();
@@ -197,14 +196,14 @@ public class Piano extends JPanel implements MidiSize, MouseListener, MouseWheel
 
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent wheel) {
-		boolean up = wheel.getPreciseWheelRotation() < 0;
-		int velocity = track.getView().getVelocity().getValue() + (up ? 5 : -1); // ??5
-		if (velocity < 0)
-			velocity = 0;
-		if (velocity > 100)
-			velocity = 99;
-		track.getView().getVelocity().setValue(velocity);
-		RTLogger.log(this, "Track velocity: " + velocity);
+//		boolean up = wheel.getPreciseWheelRotation() < 0;
+//		int velocity = track.getVelocity() * 100 + (up ? 5 : -1); // ??5
+//		if (velocity < 0)
+//			velocity = 0;
+//		if (velocity > 127)
+//			velocity = 127;
+//		track.setVelocity(velocity); // velocity converted to float
+//		RTLogger.log(this, "Track velocity: " + velocity);
 	}
 
 	@Override

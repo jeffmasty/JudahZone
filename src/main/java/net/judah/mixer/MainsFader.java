@@ -21,7 +21,7 @@ public class MainsFader extends ChannelFader {
 			return Color.BLACK;
 		if (channel.getGain().getVol() < 5)
 			return Color.DARK_GRAY;
-		return MY_GRAY; // Mains channel 
+		return BLUE; // Mains channel 
 	}
 	
 }

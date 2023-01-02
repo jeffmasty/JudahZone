@@ -5,14 +5,13 @@ import java.awt.Color;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import net.judah.effects.Compressor;
 import net.judah.effects.EffectColor;
 import net.judah.effects.LFO;
 import net.judah.effects.api.Effect;
+import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.mixer.Channel;
-import net.judah.util.Constants.Gui;
 
 /** a knob and label, paints itself on update when effect is active */
 public class JudahKnob extends JPanel {
@@ -30,7 +29,7 @@ public class JudahKnob extends JPanel {
 				fx.set(idx, value);
 				MainFrame.update(ch);
 			});
-		knob.setKnobColor(fx instanceof Compressor ? Pastels.BLUE : fx instanceof LFO ? Pastels.PURPLE : Color.WHITE);
+		knob.setKnobColor(fx instanceof LFO ? Pastels.PURPLE : Pastels.BLUE);
 		add(knob);
 
 		label = new JLabel(lbl, JLabel.LEFT);

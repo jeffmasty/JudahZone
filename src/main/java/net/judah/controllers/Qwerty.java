@@ -3,39 +3,134 @@ package net.judah.controllers;
 import static java.awt.event.KeyEvent.*;
 import static net.judah.JudahZone.*;
 
-import java.awt.KeyEventPostProcessor;
+import java.awt.Component;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
-import lombok.RequiredArgsConstructor;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+
 import net.judah.api.AudioMode;
 import net.judah.gui.MainFrame;
+import net.judah.gui.Size;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Instrument;
 import net.judah.mixer.Instruments;
-import net.judah.seq.Seq;
+import net.judah.seq.MidiTab;
+import net.judah.song.Song;
+import net.judah.song.SongTab;
 import net.judah.util.RTLogger;
+import net.judah.widgets.ModalDialog;
 
-@RequiredArgsConstructor
-public class Qwerty implements KeyEventPostProcessor {
+public class Qwerty extends JTabbedPane implements KeyListener, Size {
 
 	private static final int ASCII_ONE = 49;
-	private final Seq seq;
+
+	public Qwerty(JPanel... tabs) {
+		setMaximumSize(TAB_SIZE);
+        setPreferredSize(TAB_SIZE);
+        setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+        setFocusable(true);
+        setFocusTraversalKeysEnabled(false);
+        addKeyListener(this);	
+		for (JPanel tab : tabs)
+			if (tab != null)
+				addTab(tab.getName(), tab);
+	}
+		@Override
+	public void keyTyped(KeyEvent e) {
+		if (getSelectedComponent() instanceof MidiTab) {
+			((MidiTab)getSelectedComponent()).getMusician().keyTyped(e);
+		} // else mixer?
+		
+	}
 
 	@Override
-	public boolean postProcessKeyEvent(KeyEvent e) {
-		// TODO knob mode
-		if (e.getID() == KeyEvent.KEY_PRESSED) {
-//			seq.keyPressed(e);
-			return true;
-		}
-		
-		if (e.getID() != KeyEvent.KEY_RELEASED) {
+	public void keyPressed(KeyEvent e) {
+//		if (getSelectedComponent() instanceof MidiTab) {
+//			((MidiTab)getSelectedComponent()).getMusician().keyPressed(e);
+//		} // else mixer?
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+//		if (getSelectedComponent() instanceof MidiTab) {
+//			((MidiTab)getSelectedComponent()).getMusician().keyReleased(e);
+//		} // else mixer?
+	}
+
+	public void updateSongTitle(Song current) {
+		if (current == null || current.getFile() == null)
+			return;
+		for (int i = 0; i < getTabCount(); i++)
+			if (getTabComponentAt(i) instanceof SongTab)
+				setTitleAt(i, current.getFile().getName());
+	}
+
+	public void title(JPanel tab) {
+		for (int i = 0; i < getTabCount(); i++) {
+			if (getComponentAt(i) == tab)
+				setTitleAt(i, tab.getName());
+			}
+
+	}
+	
+	public void tab(boolean fwd) {
+		int idx = getSelectedIndex() + (fwd ? 1 : -1);
+		if (idx >= getTabCount())
+			idx = 0;
+		if (idx < 0)
+			idx = getTabCount() - 1;
+		setSelectedIndex(idx);
+	}
+
+	@Override
+	public void setSelectedIndex(int index) {
+		super.setSelectedIndex(index);
+		requestFocusInWindow();
+	}
+
+	public void closeTab(Component tab) {
+        remove(tab);
+    }
+
+	public void addOrShow(Component tab, String title) {
+    	if (tab instanceof Knobs)
+    		MainFrame.setFocus(((Knobs)tab).getKnobMode());
+    	new Thread(() ->{
+			for (int i = 0; i < getTabCount(); i++) {
+				if (getComponentAt(i).equals(tab)) {
+					setSelectedComponent(tab);
+					return;
+				}
+			}
+			add(title, tab);
+			setSelectedComponent(tab);
+		}).start();
+	}
+
+	
+	@SuppressWarnings("unused")
+	private boolean keyEvent(KeyEvent e) {
+		if (ModalDialog.getInstance() != null)
 			return false;
-		}
 		
-//		if (seq.keyReleased(e) == true)
+//		// TODO knob mode
+//		if (e.getID() == KeyEvent.KEY_PRESSED) {
+//			if (main.getTab() instanceof MidiTab)
+//				((MidiTab)main.getTab()).keyPressed(e);
+//			return true;
+//		}
+//		
+//		else if (e.getID() != KeyEvent.KEY_RELEASED) {
+//			return false;
+//		}
+//		
+//		if (main.getTab() instanceof MidiTab)
+//			((MidiTab)main.getTab()).keyReleased(e);
+//		if (e.isConsumed())
 //			return true;
 		
 		int code = e.getKeyCode();
@@ -150,6 +245,7 @@ public class Qwerty implements KeyEventPostProcessor {
         MainFrame.setFocus(looper.get(i - 1));
         return true;
     }
+
 
 
 }

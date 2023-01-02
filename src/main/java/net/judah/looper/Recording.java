@@ -289,7 +289,7 @@ public class Recording extends Vector<float[][]> {
 
 	/** get off the process thread */
 	public void dub(float[][] newBuffer, float[][] oldBuffer, int location) {
-		if (newBuffer == null) return;
+		if (newBuffer == null || oldQueue == null) return;
 		newQueue.add(newBuffer);
 		oldQueue.add(oldBuffer);
 		locationQueue.add(location);

@@ -13,6 +13,7 @@ import javax.swing.*;
 import net.judah.JudahZone;
 import net.judah.effects.api.Preset;
 import net.judah.effects.api.PresetsDB;
+import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 import net.judah.util.Constants;
@@ -123,7 +124,7 @@ public class PresetsGui extends JPanel {
     }
 
     public void create() {
-        String name = Constants.inputBox("Preset Name:");
+        String name = Gui.inputBox("Preset Name:");
         if (name == null || name.isEmpty()) return;
         JudahZone.getPresets().add(JudahZone.getFxRack().getChannel().toPreset(name));
         save();

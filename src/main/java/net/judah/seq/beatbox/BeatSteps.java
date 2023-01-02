@@ -13,28 +13,26 @@ import net.judah.seq.Steps;
 public class BeatSteps extends Steps {
 
 	private final MidiTrack track;
-	private final Rectangle r;
     private ArrayList<BeatLabel> all = new ArrayList<>();
     private BeatLabel previous;
-    @Getter private int unit;
-    @Getter private int total;
+    private final int width;
+    @Getter private float unit;
+    @Getter private float total;
 
     
     public BeatSteps(Rectangle r, MidiTrack track) {
     	this.track = track;
-    	this.r = r;
-    	unit = r.width / (2 * track.getClock().getSteps());
+    	this.width = r.width;
     	setLayout(null);
     	setBounds(r);
     	createLabels();
     	addLbls();
-    	
     }
     
     public ArrayList<BeatLabel> createLabels() {
         all.clear();
         total =  2 * track.getClock().getSteps();
-        int stepsPerBeat = total / track.getClock().getMeasure();
+        int stepsPerBeat = track.getClock().getSteps() / track.getClock().getMeasure();
         int beat = 1;
         for (int x = 0; x < total; x++) {
             if (x % stepsPerBeat == 0) {
@@ -63,14 +61,17 @@ public class BeatSteps extends Steps {
 	}
 
 	private void addLbls() {
+		unit = width / (2 * track.getClock().getSteps());
         for (int i = 0; i < all.size(); i++) {
             BeatLabel lbl = all.get(i);
-            lbl.setBounds(i * unit + 3, 1, 26, 26);
+            lbl.setBounds((int)(i * unit) + 3 + BeatBox.X_OFF, 1, 26, 26);
             add(lbl);
         }
 	}
 
-	public void measure() { // TODO new time signature
+	public void measure() { // TODO test time signature
+		createLabels();
+		addLbls();
 		invalidate();
 	}
 

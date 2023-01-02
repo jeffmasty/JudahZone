@@ -8,14 +8,14 @@ import javax.swing.Painter;
 import javax.swing.UIDefaults;
 import javax.swing.event.ChangeListener;
 
-import net.judah.util.Icons;
+import net.judah.gui.Icons;
 
 /**Source: ThemeDemo https://jasperpotts.com/blog/2008/08/skinning-a-slider-with-nimbus/
  * @author Created by Jasper Potts (May 7, 2008) */
 
 public class Slider extends JSlider {
 
-    static Image fader = Icons.load("slider.png").getImage();
+    static Image fader = Icons.get("slider.png").getImage();
     static UIDefaults sliderDefaults = new UIDefaults();
 
     static {

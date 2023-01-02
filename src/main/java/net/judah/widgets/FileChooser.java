@@ -1,15 +1,24 @@
 package net.judah.widgets;
 
+import java.awt.Component;
 import java.io.File;
 
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
 import javax.swing.filechooser.FileFilter;
 
 public class FileChooser {
 	
 	static File currentDir = new File(System.getProperty("user.dir"));
 	
-	
+	public static ListCellRenderer<File> RENDERER = new ListCellRenderer<>() {
+		@Override public Component getListCellRendererComponent(JList list, File value, int index, boolean isSelected,
+				boolean cellHasFocus) {
+			return new JLabel(value == null ? "??" : value.getName());
+		}
+	};
 	
 	public static void setCurrentDir(File folder) {
 		currentDir = folder;

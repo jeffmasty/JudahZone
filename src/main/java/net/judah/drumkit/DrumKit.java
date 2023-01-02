@@ -15,6 +15,7 @@ import lombok.Setter;
 import net.judah.api.Engine;
 import net.judah.controllers.KnobMode;
 import net.judah.controllers.Knobs;
+import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KitKnobs;
 import net.judah.gui.knobs.KnobPanel;
@@ -23,7 +24,6 @@ import net.judah.midi.MidiPort;
 import net.judah.mixer.LineIn;
 import net.judah.util.AudioTools;
 import net.judah.util.Folders;
-import net.judah.util.Icons;
 import net.judah.util.RTLogger;
 
 @Getter
@@ -39,6 +39,7 @@ public class DrumKit extends LineIn implements Engine, Knobs {
 	private final KnobMode knobMode = KnobMode.Kits;
 	private final List<Integer> actives = new ArrayList<>();
 	private KitKnobs knobs;
+ 	@Setter private float amplification = 0.9f;
 	
 	protected final FloatBuffer[] buffer = new FloatBuffer[] 
 			{FloatBuffer.allocate(bufSize), FloatBuffer.allocate(bufSize)};
@@ -52,7 +53,7 @@ public class DrumKit extends LineIn implements Engine, Knobs {
 	public DrumKit(KitMode mode, String iconName) {
 		super(mode.name(), true);
 		kitMode = mode;
-		setIcon(Icons.load(iconName));
+		setIcon(Icons.get(iconName));
 		midiPort = new MidiPort(this);
 		for (int i = 0; i < SAMPLES; i++)
 			samples[i] = new DrumSample(DrumType.values()[i]);
@@ -73,8 +74,6 @@ public class DrumKit extends LineIn implements Engine, Knobs {
 					for (int i = 0; i < samples.length; i++)
 						if (kit.get(i) != null)
 							samples[i].setRecording(kit.get(i));
-//					KitzView.getInstance().update(this);
-					
 				} catch (Exception e) {
 					RTLogger.warn(this, e);
 				}
@@ -104,6 +103,7 @@ public class DrumKit extends LineIn implements Engine, Knobs {
 
 	@Override
 	public void send(MidiMessage message, long timeStamp) {
+		if (message instanceof ShortMessage == false) return;
 		ShortMessage midi = (ShortMessage)message;
 		if (false == Midi.isNoteOn(midi))
 			return;
@@ -111,7 +111,7 @@ public class DrumKit extends LineIn implements Engine, Knobs {
 		
 		for (DrumSample drum : samples) {
 			if (drum.getGmDrum().getData1() == data1)
-				play(drum, true, midi.getData2());
+				play(drum, true, Math.round(midi.getData2() * amplification));
 		}
 	}
 
@@ -155,11 +155,6 @@ public class DrumKit extends LineIn implements Engine, Knobs {
 	@Override
 	public String[] getPatches() {
 		return DrumDB.getKits().toArray(new String[DrumDB.getKits().size()]);
-	}
-
-	@Override
-	public String toString() {
-		return name;
 	}
 
 	@Override

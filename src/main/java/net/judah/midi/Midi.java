@@ -99,18 +99,12 @@ public class Midi extends ShortMessage {
 
 	@Override
 	public boolean equals(Object obj) {
-
-		if ( obj instanceof Midi == false) {
-			return false;
-		}
+		if (false == obj instanceof Midi) return false;
 		Midi other = (Midi) obj;
-
-		boolean result = this.getChannel() == other.getChannel() &&
+		return this.getChannel() == other.getChannel() &&
 				this.getCommand() == other.getCommand() &&
 				this.getData1() == other.getData1() &&
 				this.getData2() == other.getData2();
-
-		return result;
 	}
 
 	/** equal, ignoring data2 */
@@ -138,6 +132,10 @@ public class Midi extends ShortMessage {
 
 	public static boolean isNoteOn(ShortMessage msg) {
 		return msg != null && msg.getStatus() - msg.getChannel() == NOTE_ON;
+	}
+	
+	public static boolean isNoteOff(ShortMessage msg) {
+		return msg != null && msg.getStatus() - msg.getChannel() == NOTE_OFF;
 	}
 	
 	public static boolean isNote(ShortMessage msg) {

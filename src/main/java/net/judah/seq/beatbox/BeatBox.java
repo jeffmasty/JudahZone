@@ -1,42 +1,42 @@
 package net.judah.seq.beatbox;
 
-import static net.judah.seq.MidiTools.velocityColor;
+import static net.judah.seq.MidiTools.*;
 
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
+import java.util.ArrayList;
 
-import javax.swing.JPanel;
+import javax.sound.midi.ShortMessage;
 
 import net.judah.drumkit.DrumType;
 import net.judah.gui.Pastels;
 import net.judah.midi.JudahClock;
-import net.judah.midi.Midi;
-import net.judah.seq.MidiTrack;
-import net.judah.seq.MidiView;
-import net.judah.seq.Note;
-import net.judah.seq.Snippet;
-import net.judah.seq.Steps;
-import net.judah.util.RTLogger;
+import net.judah.seq.*;
 
-public class BeatBox extends JPanel {
+public class BeatBox extends MusicGrid {
+	public static final int X_OFF = 5;
 	private final int RADIUS = 24;
     private final int PADS = DrumType.values().length;
 	
 	private final MidiTrack track;
+	private final Measure scroll;
 	private final JudahClock clock;
-    private final Steps steps;
-    private final Snippet notes;
-    private final Drummer drummer;
+    private final BeatSteps steps;
     private final int rowHeight;
+
     private int unit;
+    private Drummer drummer;
+
+    final ArrayList<MidiPair> selected;
     
-    public BeatBox(Rectangle r, MidiView view, Steps steps) {
+    public BeatBox(final Rectangle r, BeatsSection view, BeatSteps steps, MidiTab tab) {
     	setBounds(r);
-        this.track = view.getTrack();
+    	this.track = view.getTrack();
+        this.scroll = view.getScroll();
         this.clock = track.getClock();
-        this.steps = view.getSteps();
-        this.notes = view.getSnippet();
+        this.steps = steps;
+        selected = new Measure(track);
 
         setMaximumSize(r.getSize());
 		setPreferredSize(r.getSize());
@@ -45,45 +45,70 @@ public class BeatBox extends JPanel {
     	setOpaque(true);
     	setBackground(Pastels.MY_GRAY);
         setLayout(null);
-        drummer = new Drummer(view, this, r);
-        addMouseListener(drummer);
-        addMouseMotionListener(drummer);
-        addMouseMotionListener(drummer);
     }
 
     @Override
     public void paint(Graphics g) {
         super.paint(g);
-        unit = steps.getUnit();
-        for (int x = 0; x < 2 * clock.getSteps(); x++) {
-            g.setColor(x % clock.getSubdivision() == 0 ? Pastels.BLUE :Color.WHITE);
+        unit = (int)steps.getUnit();
+        float barTicks = track.getBarTicks();
+        int stepz = clock.getSteps();
+        for (int x = 0; x < 2 * stepz ; x++) {
             for (int y = 0; y < PADS; y++) {
-            	oval(g, x, y);
+            	oval(g, x, y, x % clock.getSubdivision() == 0 ? Pastels.BLUE :Color.WHITE);
+            	if (x % stepz == 0) 
+            		mini(g, x, y);
             }
         }
-		track.publishView(notes);
-
-		Note note = notes.poll();
-		while (note != null) {
-			int y = DrumType.index(note.data1);
-			int x = (int) (note.onFactor * steps.getTotal());			
+        
+        scroll.populate();
+        
+        //RTLogger.log(this, "Painting " + scroll.size());
+        ShortMessage on;
+        int x, y;
+        for (MidiPair p : scroll) {
+        	if (p.getOn().getMessage() instanceof ShortMessage == false)
+        		continue;
+        	on = (ShortMessage)p.getOn().getMessage();
+			y = DrumType.index(on.getData1());
+			x = (int) (p.getOn().getTick() / barTicks * stepz);
 			if (y >=0 && x >= 0) {
-				g.setColor(velocityColor(note.getData2()));
-				oval(g, x, y); 
+				if (drummer.getSelected().isBeatSelected(p))
+					highlight(g, x, y, on.getData2());
+				else
+					oval(g, x, y, on.getData2()); 
 			}
-			note = notes.poll();
-		}
+        }
     }
     
-    private void oval(Graphics g, int x, int y) {
-    	g.fillOval(x * unit, y * rowHeight + 15, RADIUS, RADIUS);
+    private void oval(Graphics g, int x, int y, Color c) {
+    	g.setColor(c);
+    	g.fillOval(x * unit + X_OFF, y * rowHeight + 2, RADIUS, RADIUS);
+    }
+
+    private void mini(Graphics g, int x, int y) {
+    	g.setColor(Color.WHITE);
+    	g.fillOval(x * unit + X_OFF + RADIUS / 3, y * rowHeight + 2 + RADIUS / 3, RADIUS / 3, RADIUS / 3);
     }
     
-    private Midi velocity(Midi m) {
-    	int i = 2 + (int)(m.getData2() / 32f);
-    	if (i > 4) i = 1;
-    	RTLogger.log(this, "velocity " + i);
-    	return Midi.create(m.getCommand(), m.getChannel(), m.getData1(), i * 32 - 1);
+    private void oval(Graphics g, int x, int y, int data2) {
+    	oval(g, x, y, velocityColor(data2));
     }
-	
+    
+    private void highlight(Graphics g, int x, int y, int data2) {
+    	oval(g, x, y, highlightColor(data2));
+    }
+
+	public void setHandler(Drummer drummer) {
+		this.drummer = drummer;
+		addMouseListener(drummer);
+        addMouseMotionListener(drummer);
+        addMouseMotionListener(drummer);
+	}
+
+	@Override
+	public Musician getMusician() {
+		return drummer;
+	}
+
 }

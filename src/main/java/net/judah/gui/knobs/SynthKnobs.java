@@ -1,7 +1,6 @@
 package net.judah.gui.knobs;
 
 import static net.judah.gui.Size.STD_HEIGHT;
-import static net.judah.util.Constants.duo;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -15,6 +14,7 @@ import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.controllers.KnobMode;
 import net.judah.effects.CutFilter;
+import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.synth.Adsr;
@@ -100,20 +100,20 @@ public class SynthKnobs extends KnobPanel {
 		add(row);
 		
 		JPanel knobs = new JPanel(new GridLayout(2, 4, 4, 4));
-		knobs.add(duo(a, new JLabel(" A")));
-		knobs.add(duo(d, new JLabel(" D")));
-		knobs.add(duo(s, new JLabel(" S")));
-		knobs.add(duo(r, new JLabel(" R")));
-		knobs.add(duo(lpFreq, new JLabel("HiCut")));
-		knobs.add(duo(lpReso, new JLabel("Res")));
-		knobs.add(duo(hpFreq, new JLabel("LoCut")));
-		knobs.add(duo(hpReso, new JLabel("Res")));
-		add(Constants.wrap(knobs));
+		knobs.add(Gui.duo(a, new JLabel(" A")));
+		knobs.add(Gui.duo(d, new JLabel(" D")));
+		knobs.add(Gui.duo(s, new JLabel(" S")));
+		knobs.add(Gui.duo(r, new JLabel(" R")));
+		knobs.add(Gui.duo(lpFreq, new JLabel("HiCut")));
+		knobs.add(Gui.duo(lpReso, new JLabel("Res")));
+		knobs.add(Gui.duo(hpFreq, new JLabel("LoCut")));
+		knobs.add(Gui.duo(hpReso, new JLabel("Res")));
+		add(Gui.wrap(knobs));
 
 		JPanel dco = new JPanel();
 		dco.setLayout(new BoxLayout(dco, BoxLayout.PAGE_AXIS));
 		for (int i = 0; i < synth.getDcoGain().length; i++) 
-			dco.add(Constants.wrap(new JLabel("DCO " + i), gains.get(i), shapes.get(i), detune.get(i)));
+			dco.add(Gui.wrap(new JLabel("DCO " + i), gains.get(i), shapes.get(i), detune.get(i)));
 		add(dco);
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		update();

@@ -13,8 +13,8 @@ import javax.swing.JComponent;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.gui.Icons;
 import net.judah.gui.Pastels;
-import net.judah.util.Icons;
 
 /**<a href="https://github.com/mploof/JKnobFancy">From Michael Ploof on Github</a><br/><br/>
 * JFancyKnob.java -
@@ -72,7 +72,7 @@ public class RainbowKnob extends JComponent{
 	
 	//~~~~~~~~ Background Image Vars ~~~~~~~~//
 	/** Icon used for the knob background */
-	protected final ImageIcon knobIcon = Icons.load("knob.png");
+	protected final ImageIcon knobIcon = Icons.get("knob.png");
 	protected final int width = knobIcon.getIconWidth();
 	protected final int height = knobIcon.getIconHeight();
 

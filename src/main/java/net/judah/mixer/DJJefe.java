@@ -6,9 +6,9 @@ import java.util.ArrayList;
 import javax.swing.JPanel;
 
 import lombok.Getter;
+import net.judah.gui.Gui;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
-import net.judah.util.Constants;
 
 /** Graphical representation of the Mixer*/
 public class DJJefe extends JPanel {
@@ -69,13 +69,13 @@ public class DJJefe extends JPanel {
 
 	public void highlight(ArrayList<Channel> s) {
 		for (ChannelFader ch : faders) {
-			ch.setBorder(s.contains(ch.getChannel()) ? Constants.Gui.HIGHLIGHT : Constants.Gui.NO_BORDERS);
+			ch.setBorder(s.contains(ch.getChannel()) ? Gui.HIGHLIGHT : Gui.NO_BORDERS);
 		}
 	}
 	
 	public void highlight(Channel o) {
 		for (ChannelFader ch : faders) 
-			ch.setBorder(ch.getChannel() == o ? Constants.Gui.HIGHLIGHT : Constants.Gui.NO_BORDERS);
+			ch.setBorder(ch.getChannel() == o ? Gui.HIGHLIGHT : Gui.NO_BORDERS);
 	}
 
 	public ChannelFader getFader(Channel ch) {

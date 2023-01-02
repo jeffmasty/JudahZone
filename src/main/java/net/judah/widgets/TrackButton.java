@@ -11,25 +11,25 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.gui.Pastels;
 import net.judah.seq.MidiTrack;
-import net.judah.seq.Situation;
+import net.judah.seq.Scheduler;
 
 public class TrackButton extends JLabel {
 	
 	@Getter private final MidiTrack track;
-	private final Situation state;
+	private final Scheduler state;
 	private int now = -1;
     private int next = -1;
 	
 	public TrackButton(MidiTrack t) {
 		setHorizontalAlignment(SwingConstants.CENTER);
 		this.track = t;
-		state = track.getState();
+		state = track.getScheduler();
 		setBorder(null);
 		setOpaque(true);
 		addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) {
 				if (e.getButton() == 3) 
-					JudahZone.getSeq().setCurrent(track);
+					JudahZone.getSeq().getTracks().setCurrent(track);
 				else 
 					track.setActive(!track.isActive());
 			}});
@@ -38,10 +38,10 @@ public class TrackButton extends JLabel {
 	
 	public void update() {
 		setBackground(track.isActive() ? Pastels.GREEN : null);
-		if (state.current == now && state.next == next) 
+		if (track.getCurrent() == now && state.getNext() == next) 
 			return;
-		now = state.current; 
-		next = state.next;
+		now = track.getCurrent(); 
+		next = state.getNext();
 		setText(now + "|" + next);
 	}
 	

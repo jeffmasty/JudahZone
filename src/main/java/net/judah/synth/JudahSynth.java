@@ -12,10 +12,10 @@ import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.api.Engine;
-import net.judah.api.MidiReceiver;
 import net.judah.controllers.KnobMode;
 import net.judah.controllers.Knobs;
 import net.judah.effects.CutFilter;
+import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.knobs.SynthKnobs;
@@ -23,11 +23,10 @@ import net.judah.midi.Midi;
 import net.judah.midi.MidiPort;
 import net.judah.mixer.LineIn;
 import net.judah.util.AudioTools;
-import net.judah.util.Icons;
 import net.judah.util.RTLogger;
 
 @Getter // Wishlist: portamento/glide, LFOs, PWM, mono-synth
-public class JudahSynth extends LineIn implements MidiReceiver, Engine, Knobs {
+public class JudahSynth extends LineIn implements Engine, Knobs {
 	
 	public static final int POLYPHONY = 16;
 	public static final int DCO_COUNT = 3;
@@ -51,10 +50,9 @@ public class JudahSynth extends LineIn implements MidiReceiver, Engine, Knobs {
 	private SynthPresets synthPresets;
 	private final List<Integer> actives = new ArrayList<>();
 	@Setter @Getter private MidiPort midiPort;
-    @Setter private float amplification = 0.5f;
+    @Setter private float amplification = 0.8f;
     /** modwheel pitchbend semitones */
     @Setter private int modSemitones = 1;
-    
     private SynthKnobs synthKnobs;
     
 	public JudahSynth(String name, JackPort left, JackPort right, String iconName) {
@@ -62,7 +60,7 @@ public class JudahSynth extends LineIn implements MidiReceiver, Engine, Knobs {
 		leftPort = left;
 		rightPort = right;
 		midiPort = new MidiPort(this);
-		setIcon(Icons.load(iconName));		
+		setIcon(Icons.get(iconName));		
 		
 		for (int i = 0; i < dcoGain.length; i++)
 			dcoGain[i] = 0.50f;
@@ -108,7 +106,7 @@ public class JudahSynth extends LineIn implements MidiReceiver, Engine, Knobs {
 	@Override
 	public void send(MidiMessage midi, long timeStamp) {
 		ShortMessage m = (ShortMessage)midi;
-		if (Midi.isNote(m)) 
+		if (Midi.isNote(m)) {
 			if (Midi.isNoteOn(m)) { 
 				if (notes.noteOn(m))
 					MainFrame.update(this);
@@ -116,6 +114,7 @@ public class JudahSynth extends LineIn implements MidiReceiver, Engine, Knobs {
 			else if (notes.noteOff(m)) {
 				MainFrame.update(this);
 			}
+		}
 		else if (Midi.isProgChange(m)) {
 			RTLogger.log(this, "TODO ProgChange " + new Midi(m.getMessage()).toString());
 		}

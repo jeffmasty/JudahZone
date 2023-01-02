@@ -1,181 +1,212 @@
 package net.judah.seq;
 
-import java.util.ArrayDeque;
-
-import javax.sound.midi.MidiEvent;
-
 import lombok.Getter;
-import lombok.Setter;
-import net.judah.api.SmashHit;
+import net.judah.api.MidiReceiver;
 import net.judah.gui.MainFrame;
-import net.judah.midi.JudahMidi;
+import net.judah.midi.Panic;
+import net.judah.song.Sched;
 
+@Getter 
 public class Scheduler {
 	
+	// current/serialize state
+	private Sched state = new Sched();
+	
+	
+	
+	private int current;
+	Cue cue = Cue.Bar; // @JsonIgnore?
 	private final MidiTrack track;
-	private final Situation state;
-	private final ArrayDeque<MidiEvent> realtime = new ArrayDeque<>();
-	@Getter private Cycle cycle = Cycle.AB;
-	@Setter private SmashHit custom;
-	@Getter private int count;
-	@Getter private float head;
+	int previous;
+	int next;
+	int afterNext;
+	private int count;
 	
 	public Scheduler(MidiTrack track) {
 		this.track = track;
-		this.state = track.getState();
 		init();
 	}
 	
 	void init() {
-		state.current = 0;
+		current = 0;
 		count = 0;
 		compute();
-		hotSwap(0);
 	}
 
-	public void setCycle(Cycle x) {
-		this.cycle = x;
+	public void setCount(int count) {
+		this.count = count;
 		compute();
-		hotSwap(head);
+		MainFrame.update(track);
+	}
+	
+	public Cycle getCycle() {
+		return state.cycle;
+	}
+	
+	public void setCycle(Cycle x) {
+		state.setCycle(x);
+		compute();
+		track.flush(1f);
 		MainFrame.update(track);
 	}
 	
 	public void compute() {
-		switch(cycle) {
+		switch(state.cycle) {
 		case A:
-			state.next = state.afterNext = state.current;
+			next = afterNext = current;
 			break;
 		case AB: 
 			if (count % 2 == 1) { 
-				state.next = track.before(state.current);
-				state.afterNext = state.current;
+				next = before(current);
+				afterNext = current;
 			}
 			else {
-				state.next = track.after((state.current));
-				state.afterNext = state.current;
+				next = after((current));
+				afterNext = current;
 			}
 			break;
 		case A3B:
 			if (count % 4 == 0 || count % 4 == 1)
-				state.next = state.afterNext = state.current;
+				next = afterNext = current;
 			else if (count % 4 == 2) {
-				state.next = track.after(state.current);
-				state.afterNext = state.current;
+				next = after(current);
+				afterNext = current;
 			}
 			else if (count % 4 == 3) 
-				state.next = state.afterNext = track.before(state.current);
+				next = afterNext = before(current);
 			break;
 		case ABCD:
 		case ALL:
-			state.next = track.after(state.current);
-			state.afterNext = track.after(state.next);
+			next = after(current);
+			afterNext = after(next);
 		case SONG:
 			break;
 		}
+		track.oldTime = current * track.getBarTicks() - 1;
 	}
 	
 	void cycle() {
 		if (track.isActive())
-			playTo(1f);
-		
-		state.previous = state.current;
-			count++;
+			track.flush(1f);
+			
+		previous = current;
+		count++;
 
-		switch(cycle) {
+		switch(state.cycle) {
 		case A:
-			state.next = state.afterNext = state.current;
+			next = afterNext = current;
 			break;
 		case AB:
 			boolean odd = count % 2 != 0;
 			if (odd) {
-				state.current = track.after(state.current);
-				state.next = track.before(state.current);
-				state.afterNext = track.after(state.next);
+				current = after(current);
+				next = before(current);
+				afterNext = after(next);
 			}
 			else {
-				state.current = track.before(state.current);
-				state.next = track.after(state.current);
-				state.afterNext = track.before(state.next);
+				current = before(current);
+				next = after(current);
+				afterNext = before(next);
 			}
 			break;
 		case ABCD:
 			boolean back = count % 4 == 0;
 			if (back) {
-				state.current = state.current - 4;
-				if (state.current < 0)
-					state.current = 0;
-				state.next = track.after(state.current);
-				state.afterNext = track.after(state.next);
+				current = current - 4;
+				if (current < 0)
+					current = 0;
+				next = after(current);
+				afterNext = after(next);
 				break;
 			}
 			boolean front = count % 4 <= 1;
 			if (!front) {
-				state.current = track.after(state.current);
-				state.next = state.current - 4;
-				if (state.next < 0)
-					state.next = 0;
-				state.afterNext = track.after(state.next);
+				current = after(current);
+				next = current - 4;
+				if (next < 0)
+					next = 0;
+				afterNext = after(next);
 				break;
 			}
 			// else, fall through to ALL:
 		case ALL:
-			state.current = track.after(state.current);
-			state.next = track.after(state.next);
-			state.afterNext = track.after(state.next);
+			current = after(current);
+			next = after(next);
+			afterNext = after(next);
 			break;
 		case A3B:
 			int remain = count % 4;
 			if (remain == 0) 
-				state.current = state.next = state.afterNext = track.before(state.current);
+				current = next = afterNext = before(current);
 			else if (remain == 1) {
-				state.next = state.current;
-				state.afterNext = track.after(state.current);
+				next = current;
+				afterNext = after(current);
 			}
 			
 			else if (remain == 2) {
-				state.next = track.after(state.current);
-				state.afterNext = state.current;
+				next = after(current);
+				afterNext = current;
 			}
 			else if (remain == 3) {
-				state.next = state.afterNext = state.current;
-				state.current = track.after(state.current);
+				next = afterNext = current;
+				current = after(current);
 			}
 			break;
 		case SONG:
 			break;
 		}
-		head = 0f;
+		track.head = 0f;
+		track.oldTime = current * track.getBarTicks() - 1;
+
 		MainFrame.update(track);
-		hotSwap();
+		
 	}
 
-	public void hotSwap() {
-		hotSwap(head);
+	private int after(int idx) {
+		int result = idx + 1;
+		if (result >= track.bars())
+			return 0;
+		return result;
 	}
-	public void hotSwap(float head) {
-		MidiEvent e = realtime.poll();
-		while (e != null) {
-			if (e.getMessage().getStatus() == MidiTrack.NOTE_OFF)
-				track.getMidiOut().send(e.getMessage(), JudahMidi.ticker());
-			e = realtime.poll();
-		}
-		this.head = head;
-		long start = (long) (track.getTicks() * head);
-		Bar b = track.get(state.current);
-		for (MidiEvent evt : b) {
-			if (evt.getTick() < start) continue;
-			realtime.add(evt);
-		}
+	private int before(int idx) {
+		int result = idx - 1;
+		if (result < 0)
+			return track.bars() - 1;
+		return result;
 	}
 
-	protected void playTo(float beat) {
-		head = beat;
-		long timecode = (long)(beat * track.getResolution());
-		MidiEvent peek = realtime.peek();
-		while (peek != null && peek.getTick() <= timecode) {
-			track.getMidiOut().send(realtime.poll().getMessage(), JudahMidi.ticker());
-			peek = realtime.peek();
-		}
+	public void setCurrent(int change) {
+    	previous = current;
+    	current = change;
+    	MainFrame.update(track);
+    	compute();
 	}
 
+	public boolean isActive() {
+		return state.active;
+	}
+
+	public void setActive(boolean active) {
+		state.active = active;
+		if (!active)
+			new Panic(track.getMidiOut(), track.getCh()).start();
+		MainFrame.update(track);
+
+	}
+
+	public Sched getState() {
+		state.setAmp(track.getMidiOut().getAmplification());
+		MidiReceiver midi = track.getMidiOut();
+		state.setPreset(midi.getPatches()[midi.getProg(track.getCh())]);
+		// state.setLaunch(current);
+		return state;
+	}
+	
+	public void setState(Sched sched) {
+		int old = current; 
+		state = sched;
+		if (state.launch != old)
+		setCurrent(state.launch);
+	}
+	
 }

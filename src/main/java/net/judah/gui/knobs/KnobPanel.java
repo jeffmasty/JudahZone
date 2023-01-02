@@ -5,7 +5,7 @@ import java.awt.Component;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import net.judah.util.Constants;
+import net.judah.gui.Gui;
 
 
 public abstract class KnobPanel extends JPanel {
@@ -21,7 +21,7 @@ public abstract class KnobPanel extends JPanel {
 	/**Called when the KnobPanel is going to be displayed. 
 	 * @return an optional and separate set of title bar component(s) */
 	public Component installing() {
-		return Constants.wrap(new JLabel(getName()));
+		return Gui.wrap(new JLabel(getName()));
 	}
 
 	public void pad1() {

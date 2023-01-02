@@ -3,6 +3,7 @@ package net.judah.gui;
 import static net.judah.JudahZone.*;
 
 import java.awt.Dimension;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 
@@ -12,87 +13,76 @@ import javax.swing.JMenuItem;
 
 import net.judah.controllers.KnobMode;
 import net.judah.effects.gui.PresetsGui;
-import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
-import net.judah.mixer.LineIn;
-import net.judah.util.Constants;
+import net.judah.song.Song;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
+import net.judah.widgets.FileChooser;
 
 public class JudahMenu extends JMenuBar {
-
-	JMenu song = new JMenu("Song");
-	JMenuItem next = new JMenuItem("Next");
-	JMenuItem reload = new JMenuItem("Reload");
-    JMenu loops = new JMenu("Looper");
-    JMenuItem reset = new JMenuItem("Reset");
-    JMenu erase = new JMenu("Erase");
-    JMenu duplicate = new JMenu("Duplicate");
-    JMenuItem length = new JMenuItem("Sync Length...");
-    JMenuItem syncDrums = new JMenuItem("Sync Clock");
-    JMenuItem drumtrack = new JMenuItem ("Solo on/off");
-    JMenu solotrack = new JMenu("Solo Track");
-    JMenu control = new JMenu("Controls");
-    JMenu views = new JMenu("Views");
-    JMenuItem presets = new JMenuItem("Presets");
-    JMenuItem sheetMusic = new JMenuItem("Sheet Music");
-    JMenuItem exit = new JMenuItem("Exit");
-    
+	
+	public static class Actionable extends JMenuItem {
+		public Actionable(String lbl, ActionListener l) {
+			super(lbl);
+			addActionListener(l);
+		}
+		public Actionable(String lbl, ActionListener l, int mnemonic) {
+			this(lbl, l);
+			setMnemonic(mnemonic);
+		}
+	}
+	
 	public JudahMenu(int width, Looper looper) {
+		JMenu song = new JMenu("Song");
+		JMenu setlist = new JMenu("Setlist");
+	    JMenu loops = new JMenu("Looper");
+	    JMenu erase = new JMenu("Erase");
+	    JMenu duplicate = new JMenu("Duplicate");
+	    JMenu control = new JMenu("Controls");
+	    JMenu views = new JMenu("Views");
+
 		Dimension d = new Dimension(width - 8, Size.STD_HEIGHT);
 		setPreferredSize(d);
 		setSize(d);
 		setMinimumSize(d);
 		
-    	// TODO save midi bundle for song
-    	next.addActionListener(e->nextSong());
-    	reload.addActionListener(e->loadSong());
-    	exit.addActionListener(e-> System.exit(0));
-        exit.setMnemonic(KeyEvent.VK_E);
-    	song.add(next);
-    	song.add(reload);
-    	song.add(exit);
+        for (File f : Folders.getSetlists()) 
+			setlist.add(new Actionable(f.getName(), e -> Folders.setSetlist(f)));
+        	
+		song.add(new Actionable("Next", e->nextSong()));
+        song.add(new Actionable("Save", e->save()));
+        song.add(new Actionable("Save As..", e->{
+        		File f = FileChooser.choose(Folders.getSetlist());
+        		if (f == null) return;
+        		save(f);
+        	}));
+    	song.add(new Actionable("Reload", e->loadSong(getCurrent().getFile())));
+        song.add(new Actionable("Load..", e -> loadSong(FileChooser.choose(Folders.getSetlist()))));
+    	song.add(new Actionable("New", e -> setCurrent(new Song())));
+        song.add(setlist);
+    	song.add(new Actionable("Exit", e->System.exit(0), KeyEvent.VK_E));
     	
-    	
-    	length.addActionListener(e->setLength());
-    	syncDrums.addActionListener(e->getClock().syncToLoop());
-    	reset.addActionListener(e->getLooper().clear());
-    	for (Loop loop : looper) {
-    		JMenuItem delete = new JMenuItem(loop.getName());
-    		delete.addActionListener(e->loop.delete());
-    		erase.add(delete);
-    		JMenuItem dup = new JMenuItem(loop.getName());
-    		dup.addActionListener(e->loop.duplicate());
-    		duplicate.add(dup);
-    	}
+    	erase.add(new Actionable("all", e->getLooper().clear()));
+    	looper.forEach(loop->erase.add(new Actionable(loop.getName(), e->loop.delete())));
+    	looper.forEach(loop->duplicate.add(new Actionable(loop.getName(), e->loop.duplicate())));
     	SoloTrack solo = getLooper().getSoloTrack();
-    	drumtrack.addActionListener(e->solo.toggle());
-    	for (LineIn ch : getNoizeMakers()) {
-    		JMenuItem assign = new JMenuItem(ch.getName());
-    		assign.addActionListener(e->solo.setSoloTrack(ch));
-    		solotrack.add(assign);
-    	}
-    	
-    	loops.add(length);
-    	loops.add(syncDrums);
-    	loops.add(reset);
+    	JMenu solotrack = new JMenu("Solo Track");
+    	getNoizeMakers().forEach(ch->solotrack.add(new Actionable(ch.getName(), e->solo.setSoloTrack(ch))));
+
+    	JMenu sync = new JMenu("Sync");
+    	sync.add(new Actionable("loopLength", e->setLength()));
+    	sync.add(new Actionable("clock2Loop", e->getClock().syncToLoop()));
+    	loops.add(sync);
     	loops.add(erase);
     	loops.add(duplicate);
-    	loops.add(drumtrack);
+    	loops.add(new Actionable("Solo 0/1", e->solo.toggle()));
     	loops.add(solotrack);
-    	
-    	
-        for (KnobMode mode : KnobMode.values()) {
-        	JMenuItem knobs = new JMenuItem(mode.toString());
-        	knobs.addActionListener(e->MainFrame.setFocus(mode));
-        	control.add(knobs);
-        }
-        
-    	presets.addActionListener( e -> new PresetsGui(getPresets()));
-        sheetMusic.addActionListener(e->getFrame().sheetMusic(new File(Folders.getSheetMusic(), "Four.png")));
-        views.add(presets);
-        views.add(sheetMusic);
+
+        for (KnobMode mode : KnobMode.values()) 
+        	control.add(new Actionable(mode.toString(), e->MainFrame.setFocus(mode)));
+        views.add(new Actionable("Presets", e -> new PresetsGui(getPresets())));
+        views.add(new Actionable("Sheets", e->getFrame().sheetMusic(new File(Folders.getSheetMusic(), "Four.png"))));
 
         add(song);
         add(loops);
@@ -101,7 +91,7 @@ public class JudahMenu extends JMenuBar {
     }
 
 	private void setLength() {
-		String s = Constants.inputBox("Loop Bars:");
+		String s = Gui.inputBox("Loop Bars:");
 		try {
 			getClock().setLength(Integer.parseInt(s));
 		} catch (Throwable t) {

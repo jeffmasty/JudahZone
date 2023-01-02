@@ -1,16 +1,20 @@
-package net.judah.util;
+package net.judah.gui;
 
 import java.io.File;
 import java.util.HashMap;
 
 import javax.swing.ImageIcon;
 
+import net.judah.util.Folders;
+import net.judah.util.RTLogger;
+
 /* https://www.elharrakfonts.com/2019/04/font-bottons-music-pro.html */
 public class Icons {
 
 	private static final HashMap<String, ImageIcon> map = new HashMap<>();
 	
-    public static ImageIcon load(String name) {
+	/** load or retrieve from cache */
+    public static ImageIcon get(String name) {
     	if (map.get(name) == null) {
     		try {
     			map.put(name, new ImageIcon(new File(Folders.ICONS, name).toURI().toURL()));
