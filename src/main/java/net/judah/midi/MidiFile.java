@@ -1,5 +1,7 @@
 package net.judah.midi;
 
+import static net.judah.api.Key.*;
+
 import java.io.File;
 import java.util.HashMap;
 
@@ -9,8 +11,8 @@ import javax.sound.midi.*;
 public class MidiFile {
     public static final int NOTE_ON = 0x90;
     public static final int NOTE_OFF = 0x80;
-    public static final String[] NOTE_NAMES = {"C", "C#", "D", "Db", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"};
-
+    public static final String[] NOTE_NAMES = {C.name(), Db.alt(), D.name(), Eb.name(), 
+    		E.name(), F.name(), Gb.alt(), G.name(), Ab.name(), A.name(), Bb.name(), B.name()};
     
     public static void main(String[] args) throws Exception {
     	HashMap<Integer, Integer> count = new HashMap<>();

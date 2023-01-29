@@ -9,12 +9,12 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumSample;
-import net.judah.effects.Fader;
+import net.judah.drumkit.Sample;
+import net.judah.fx.Fader;
 import net.judah.mixer.Channel;
-import net.judah.samples.Sample;
 import net.judah.util.RTLogger;
 
-/** Checks up on any running LFOs and queues midi notes when the appropriate audio frame comes to pass*/
+/** Checks any running LFOs and queues midi notes when the appropriate audio frame comes to pass*/
 @Data @EqualsAndHashCode(callSuper=false)
 public class MidiScheduler implements Runnable {
 

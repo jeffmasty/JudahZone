@@ -7,20 +7,26 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 
-import net.judah.controllers.KnobMode;
-import net.judah.effects.gui.PresetsGui;
+import lombok.Getter;
+import net.judah.gui.fx.PresetsGui;
+import net.judah.gui.knobs.KnobMode;
+import net.judah.gui.settable.SetCombo;
+import net.judah.gui.widgets.FileChooser;
 import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
 import net.judah.song.Song;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
-import net.judah.widgets.FileChooser;
 
 public class JudahMenu extends JMenuBar {
+	
+	/** If true, focus on sheet music tab when songs load */ 
+	@Getter private final JCheckBoxMenuItem sheets = new JCheckBoxMenuItem();
 	
 	public static class Actionable extends JMenuItem {
 		public Actionable(String lbl, ActionListener l) {
@@ -57,35 +63,45 @@ public class JudahMenu extends JMenuBar {
         		if (f == null) return;
         		save(f);
         	}));
-    	song.add(new Actionable("Reload", e->loadSong(getCurrent().getFile())));
+    	song.add(new Actionable("Reload", e->reload()));
         song.add(new Actionable("Load..", e -> loadSong(FileChooser.choose(Folders.getSetlist()))));
     	song.add(new Actionable("New", e -> setCurrent(new Song())));
         song.add(setlist);
-    	song.add(new Actionable("Exit", e->System.exit(0), KeyEvent.VK_E));
     	
-    	erase.add(new Actionable("all", e->getLooper().clear()));
+    	erase.add(new Actionable("All", e->getLooper().clear()));
     	looper.forEach(loop->erase.add(new Actionable(loop.getName(), e->loop.delete())));
     	looper.forEach(loop->duplicate.add(new Actionable(loop.getName(), e->loop.duplicate())));
     	SoloTrack solo = getLooper().getSoloTrack();
     	JMenu solotrack = new JMenu("Solo Track");
-    	getNoizeMakers().forEach(ch->solotrack.add(new Actionable(ch.getName(), e->solo.setSoloTrack(ch))));
+    	getInstruments().forEach(ch->solotrack.add(new Actionable(ch.getName(), e->solo.setSoloTrack(ch))));
 
     	JMenu sync = new JMenu("Sync");
-    	sync.add(new Actionable("loopLength", e->setLength()));
-    	sync.add(new Actionable("clock2Loop", e->getClock().syncToLoop()));
+    	sync.add(new Actionable("Loop Bars", e->setLength()));
+    	sync.add(new Actionable("Clock", e->getClock().syncToLoop()));
     	loops.add(sync);
     	loops.add(erase);
     	loops.add(duplicate);
-    	loops.add(new Actionable("Solo 0/1", e->solo.toggle()));
+    	loops.add(new Actionable("Solo on/off", e->solo.toggle()));
     	loops.add(solotrack);
+    	loops.add(new Actionable("Exit", e->System.exit(0), KeyEvent.VK_E));
 
-        for (KnobMode mode : KnobMode.values()) 
+        sheets.setSelected(false);
+        sheets.setToolTipText("Focus on Song SheetMusic");
+        sheets.setText("Sheets");
+    	for (KnobMode mode : KnobMode.values()) 
         	control.add(new Actionable(mode.toString(), e->MainFrame.setFocus(mode)));
-        views.add(new Actionable("Presets", e -> new PresetsGui(getPresets())));
-        views.add(new Actionable("Sheets", e->getFrame().sheetMusic(new File(Folders.getSheetMusic(), "Four.png"))));
+    	control.add(new Actionable("Set", e->SetCombo.set()));
 
-        add(song);
+        views.add(new Actionable("Presets", e -> new PresetsGui(getPresets())));
+        views.add(sheets);
+
+        views.add(new Actionable("SheetMusic..", e->{
+        	getFrame().sheetMusic(FileChooser.choose(Folders.getSheetMusic()));
+        	getFrame().getTabs().setSelectedComponent(getFrame().getSheetMusic());
+        }));
+        
         add(loops);
+        add(song);
         add(control);
         add(views);
     }
@@ -100,15 +116,3 @@ public class JudahMenu extends JMenuBar {
 	}
     
 }
-//    JMenuItem beatBox = new JMenuItem("BeatBox");
-//    JMenuItem synths = new JMenuItem("Synths");
-//    JMenuItem tracker = new JMenuItem("Tracker");
-//    JMenuItem kits = new JMenuItem("Kits");
-//        synths.addActionListener(e->getFrame().addOrShow(SynthEngines.getInstance(), SynthEngines.NAME));
-//        kits.addActionListener(e->getFrame().addOrShow(KitzView.getInstance(), KitzView.NAME));
-//        tracker.addActionListener(e->getFrame().addOrShow(getTracker(), Tracker.NAME));
-//        views.add(synths);
-//        views.add(kits);
-//        views.add(tracker);
-//        views.add(beatBox);
-

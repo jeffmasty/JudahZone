@@ -18,17 +18,12 @@ public abstract class MidiView extends JPanel implements TimeListener, MidiConst
 	protected MidiMenu menu;
 	protected MusicGrid grid;
 	protected JPanel instrumentPanel;
-	
-	protected final Measure scroll;
 	protected final Notes selected = new Notes();
-	@Setter protected long timeframe; // 2 bars
 	@Setter protected boolean live;
 	
 	public MidiView(MidiTrack t) {
 		this.track = t;
 		this.clock = track.getClock();
-		scroll = new Measure(track);
-		timeframe = clock.getMeasure() * track.getResolution() * 2;
 		setLayout(null);
 	}
 	
@@ -47,7 +42,7 @@ public abstract class MidiView extends JPanel implements TimeListener, MidiConst
 			getGrid().repaint();
 		}
 		else if (prop == Property.MEASURE) {
-			setTimeframe(2 * track.getResolution() * (int)value); // untested
+//			setTimeframe(2 * track.getResolution() * (int)value); // TODO
 		}
 	}
 	

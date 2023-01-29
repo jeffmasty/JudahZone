@@ -2,47 +2,48 @@ package net.judah.looper;
 
 import static net.judah.api.Notification.Property.LOOP;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import net.judah.api.Notification.Property;
 import net.judah.api.ProcessAudio.Type;
 import net.judah.api.Status;
 import net.judah.api.TimeListener;
-import net.judah.api.TimeNotifier;
 import net.judah.gui.MainFrame;
+import net.judah.gui.widgets.LoopWidget;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.mixer.Zone;
+import net.judah.util.Constants;
 
-@RequiredArgsConstructor @Getter
-public class Looper extends ArrayList<Loop> implements TimeListener, TimeNotifier {
+@RequiredArgsConstructor 
+public class Looper extends ArrayList<Loop> implements TimeListener {
+	public static final int LOOPERS = 4;
 
-	public static final int LOOPERS = 4; 
-	private final JackPort left;
-	private final JackPort right;
-    private final Loop loopA;
-    private final Loop loopB;
-    private final Loop loopC;
-    private final SoloTrack soloTrack;
-    private long recordedLength;
-    private Loop primary;
-    
-    @Getter private final ArrayList<Loop> onDeck = new ArrayList<>(); 
-    protected final ArrayList<TimeListener> listeners = new ArrayList<>();
+	@Getter private final JudahClock clock;
+    @Getter private final Loop loopA;
+    @Getter private final Loop loopB;
+    @Getter private final Loop loopC;
+    @Getter private final SoloTrack soloTrack;
+    @Getter private long recordedLength;
+    @Getter private Loop primary;
+    @Getter private final ArrayDeque<Loop> onDeck = new ArrayDeque<>();
 
-    
+    private int syncCounter;
+    @Setter protected LoopWidget feedback;
+
 	public Looper(JackPort l, JackPort r, Zone sources, LineIn solo, JudahClock clock) {
-        left = l;
-        right = r;
-		loopA = new Loop("A", this, sources, "LoopA.png", Type.SYNC, clock);
-        loopB = new Loop("B", this, sources, "LoopB.png", Type.SYNC, clock);
-        loopC = new Loop("C", this, sources, "LoopC.png", Type.FREE, clock);
-        soloTrack = new SoloTrack(solo, this, sources, "LoopD.png", clock);
+		this.clock = clock;
+		loopA = new Loop("A", this, sources, "LoopA.png", Type.SYNC, clock, l, r);
+        loopB = new Loop("B", this, sources, "LoopB.png", Type.BSYNC, clock, l, r);
+        loopC = new Loop("C", this, sources, "LoopC.png", Type.FREE, clock, l, r);
+        soloTrack = new SoloTrack(solo, this, sources, "LoopD.png", clock, l, r);
         add(loopA);
         add(loopB);
         add(loopC);
@@ -54,13 +55,17 @@ public class Looper extends ArrayList<Loop> implements TimeListener, TimeNotifie
 	public void process() {
     	for (Loop l : this)
     		l.process();
+    	if (feedback != null && ++syncCounter > 8) { 
+    		MainFrame.update(feedback);
+        	syncCounter = 0;
+        }
+
     }
 
-    public void setRecordedLength(long length, Loop primary) {
+    void setRecordedLength(long length, Loop primary) {
     	this.primary = primary;
     	recordedLength = length;
-    	new ArrayList<>(listeners).forEach(
-    			listener -> {listener.update(LOOP, Status.NEW);});
+    	clock.letItBeKnown(LOOP, Status.NEW);
     }
     
     public Loop byName(String search) {
@@ -70,42 +75,25 @@ public class Looper extends ArrayList<Loop> implements TimeListener, TimeNotifie
     	return null;
     }
 
-    public void reset() {
-			new Thread(() -> {
-				try { // to get a process() in
-					Thread.sleep(23);
-				} catch (Exception e) {} 
-				clear();
-			}).start();
+    public void reset() { // get a process() in
+    	Constants.timer(23, ()->clear());
 	}
-
-    // ---- Sync Section ----------------
-    @Override public void addListener(TimeListener l) {
-        if (!listeners.contains(l)) {
-            listeners.add(l);
-            if (l instanceof Channel) {
-            	MainFrame.update(l);
-            }
-        }
-    }
-
-    @Override public void removeListener(TimeListener l) {
-        listeners.remove(l);
-    }
 
     /** deletes loops */
 	@Override
 	public void clear() {
         recordedLength = 0;
+        primary = null;
 		for (int i = 0; i < LOOPERS; i++) { // don't erase the sampler
     		Loop s = get(i);
         	s.record(false);
             s.clear();
             s.setActive(false);
         }
-		new ArrayList<TimeListener>(listeners).forEach(listener -> 
-        		listener.update(LOOP, Status.TERMINATED));
-		MainFrame.update(loopA);
+        if (feedback != null)
+        	MainFrame.update(feedback);
+        loopC.setType(Type.FREE);
+        // flush onDeck?
     }
 
     public int indexOf(Channel loop) {
@@ -116,6 +104,12 @@ public class Looper extends ArrayList<Loop> implements TimeListener, TimeNotifie
     }
 
     
+    public void flush() {
+    	for (int i = onDeck.size() - 1; i >= 0; i--) {
+    		MainFrame.update(onDeck.removeLast());
+    	}
+    }
+    
 	public void onDeck(Loop loop) {
 		if (onDeck.contains(loop) == false)
 			onDeck.add(loop);
@@ -124,14 +118,6 @@ public class Looper extends ArrayList<Loop> implements TimeListener, TimeNotifie
 		MainFrame.update(loop);
 	}
 
-	public void checkOnDeck() {
-		if (onDeck.isEmpty())
-			return;
-		Loop start = onDeck.remove(0);
-		start.record(true);
-		start.getSync().syncUp(0);
-	}
-    
 	public void verseChorus() {
 		for (Loop loop : this) {
 			if (loop.getType() != Type.DRUMTRACK)
@@ -149,19 +135,26 @@ public class Looper extends ArrayList<Loop> implements TimeListener, TimeNotifie
 
 	@Override
 	public void update(Property prop, Object value) {
-		if (prop == Property.BARS) {
+		if (primary == null)
+			return;
+		if (prop == Property.BARS && (int)value == clock.getLength()) {
 			for (Loop loop : this) {
-
 				if (!loop.isActive() || loop.getType() == Type.FREE) continue;
-				int tape = loop.getTapeCounter().get();
-				// if near loop border, hard sync to start
-				if (tape != 0 && (loop.getRecording().size() - tape < 5 || tape < 4)) {
-					loop.setTapeCounter(loop.getRecording().size() - 1);
-				}
+				// loop boundary, hard sync to start
+				loop.setTapeCounter(loop.getRecording().size() - 1);
 			}
 		}
 	}
 
+	void topUp(int count) {
+		
+		if (false == onDeck.isEmpty() && recordedLength > 0) { 
+			Loop start = onDeck.poll();
+			clock.syncUp(start, 0);
+			start.record(true);
+		}
+		clock.letItBeKnown(LOOP, count);
+	}
 	
 }
 

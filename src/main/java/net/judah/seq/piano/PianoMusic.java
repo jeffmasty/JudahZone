@@ -8,30 +8,26 @@ import java.awt.Rectangle;
 
 import javax.sound.midi.ShortMessage;
 
-import lombok.Getter;
 import net.judah.gui.Pastels;
-import net.judah.midi.JudahClock;
-import net.judah.seq.*;
+import net.judah.seq.MidiPair;
+import net.judah.seq.MidiTab;
+import net.judah.seq.MidiView;
+import net.judah.seq.MusicGrid;
+import net.judah.seq.Musician;
 import net.judah.seq.beatbox.BeatsSize;
 
+/** display midi music in piano grid */
 public class PianoMusic extends MusicGrid implements BeatsSize {
 
-	private final MidiTrack track;
-	private final PianoSteps steps;
-	private final JudahClock clock;
 	private final Piano piano;
-
+	private final PianoSteps steps;
+	private final Pianist pianist;
 	private final int width, height;
-	@Getter private final Pianist pianist;
-	@Getter private final Measure scroll;
 	
 	public PianoMusic(Rectangle r, MidiView view, PianoSteps currentBeat, Piano roll, MidiTab tab) {
-		setBounds(r);
+		super(view.getTrack(), r);
 		width = r.width;
 		height = r.height;
-		this.track = view.getTrack();
-		this.clock = track.getClock();
-		this.scroll = view.getScroll();
 		this.steps = currentBeat;
 		this.piano = roll;
 		pianist = new Pianist(piano, this, view , tab);
@@ -39,7 +35,6 @@ public class PianoMusic extends MusicGrid implements BeatsSize {
 		addMouseMotionListener(pianist);
 		addMouseWheelListener(pianist);
 	}
-	
 	
 	@Override
 	public void paint(Graphics g) {
@@ -81,7 +76,9 @@ public class PianoMusic extends MusicGrid implements BeatsSize {
 			if (p.getOn().getMessage() instanceof ShortMessage == false) continue;
 			ShortMessage s = (ShortMessage)p.getOn().getMessage();
 			x = KEY_WIDTH * Piano.data1ToGrid(s.getData1());
-			y = (int) (p.getOn().getTick() * ratio);
+			
+			
+			y = (int) ((p.getOn().getTick() - track.getLeft()) * ratio);
 			
 			yheight = (int) ((p.getOff().getTick() - p.getOn().getTick()) * ratio);
 			if (pianist.getSelected().isNoteSelected(p.getOn().getTick(), s.getData1()))
@@ -93,7 +90,6 @@ public class PianoMusic extends MusicGrid implements BeatsSize {
 		g.setColor(Pastels.FADED);
 		g.drawRect(0, 0, width-1, height - 1); // border
 	}
-
 
 	@Override
 	public Musician getMusician() {

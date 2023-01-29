@@ -40,7 +40,7 @@ public class BeatsTab extends MidiTab {
 	}
 
 	
-	BeatsSection getView(MidiTrack t, boolean upper) {
+	public BeatsSection getView(MidiTrack t, boolean upper) {
 		for (BeatsSection v : upper ? topViews : bottomViews)
 				if (v.getTrack() == t)
 					return v;

@@ -20,9 +20,9 @@ import javax.swing.SwingUtilities;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.judah.gui.widgets.FileChooser;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
-import net.judah.widgets.FileChooser;
 
 @RequiredArgsConstructor
 public class WavTools extends MouseAdapter {

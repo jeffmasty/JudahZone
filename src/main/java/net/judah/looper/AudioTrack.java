@@ -15,12 +15,12 @@ import net.judah.util.AudioTools;
 @Getter
 public abstract class AudioTrack extends Channel implements ProcessAudio {
 
+    @Setter protected boolean active;
 	@Setter protected Type type = Type.ONE_SHOT;
-    protected Recording recording = new Recording(0, true);
+//	@Setter protected float velocity = 1f;
+	protected Recording recording = new Recording(0, true);
     protected Integer length;
     protected float env = 1f;
-    @Setter protected float velocity = 1f;
-    @Setter protected boolean active;
     protected final AtomicInteger tapeCounter = new AtomicInteger();
 
     protected float[][] recordedBuffer;
@@ -31,7 +31,7 @@ public abstract class AudioTrack extends Channel implements ProcessAudio {
     
 	public AudioTrack(String name, Type type) {
     	super(name, true);
-    	setType(type);
+    	this.type = type;
 	}
 
 	public boolean hasRecording() {
@@ -43,10 +43,6 @@ public abstract class AudioTrack extends Channel implements ProcessAudio {
             recording.close();
         recording = sample;
         length = recording.size();
-        if (this instanceof Loop) {
-        	recording.startListeners();
-        	MainFrame.update(this);
-        }
     }
 
     @Override
@@ -57,9 +53,8 @@ public abstract class AudioTrack extends Channel implements ProcessAudio {
     protected void playFrame(FloatBuffer[] in, FloatBuffer outLeft, FloatBuffer outRight) {
     	float[] workL = in[LEFT_CHANNEL].array();
     	float[] workR = in[RIGHT_CHANNEL].array();
-    	if (recordedBuffer == null) return;
         // gain & pan stereo
-    	float baseVol = env * velocity * gain.getGain();
+    	float baseVol = env * gain.getGain();
         AudioTools.processGain(recordedBuffer[LEFT_CHANNEL], workL, baseVol * (1f - getPan()));
         AudioTools.processGain(recordedBuffer[RIGHT_CHANNEL], workR, baseVol * getPan());
 

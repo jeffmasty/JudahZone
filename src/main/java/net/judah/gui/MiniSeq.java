@@ -1,52 +1,41 @@
 package net.judah.gui;
 
-import static net.judah.api.Notification.Property.*;
-
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JPanel;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
-import org.jaudiolibs.jnajack.JackTransportState;
-
-import net.judah.api.Notification.Property;
-import net.judah.api.TimeListener;
+import net.judah.JudahZone;
+import net.judah.gui.settable.SetCombo;
+import net.judah.gui.widgets.Btn;
+import net.judah.gui.widgets.TrackButton;
 import net.judah.midi.JudahClock;
 import net.judah.seq.MidiTrack;
 import net.judah.seq.TrackList;
-import net.judah.widgets.RainbowFader;
-import net.judah.widgets.TrackButton;
+import net.judah.song.Song;
+import net.judah.song.SongView;
 
-public class MiniSeq extends JPanel implements TimeListener {
+public class MiniSeq extends JPanel {
 	private final Dimension TRX = new Dimension(Size.WIDTH_KNOBS / 2 - 15, 85);
 	private final Border highlight = BorderFactory.createRaisedSoftBevelBorder();
 
 	private final TrackList tracks;
 	private final JudahClock clock;
-	private final JToggleButton start = new JToggleButton("Play");
-	private final JLabel current = new JLabel(".", SwingConstants.CENTER);
+	private final Btn track = new Btn("", e->JudahZone.getSeq().getTracks().next(true));
+	private final Btn song = new Btn("OpenMic", e->JudahZone.getSongs().trigger());
 	private final ArrayList<TrackButton> btns = new ArrayList<>();
 	
 	public MiniSeq(TrackList tracks, JudahClock clock) {
 		this.tracks = tracks;
 		this.clock = clock;
-		clock.addListener(this);
-		start.setSelected(clock.isActive());
-        start.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) {
-            	if (e.getButton() == MouseEvent.BUTTON3) 
-        			clock.reset(); // debug
-            	else if (clock.isActive()) 
-                    clock.end();
-                else
-                    clock.begin(); }});
-                JPanel actives = new JPanel(); 
+		
+		JPanel actives = new JPanel(); 
         actives.setBorder(new LineBorder(Pastels.MY_GRAY, 1));
         Dimension plusOne = new Dimension(TRX.width + 1, TRX.height + 1);
         actives.setPreferredSize(plusOne);
@@ -68,35 +57,48 @@ public class MiniSeq extends JPanel implements TimeListener {
         btns.get(8).setFont(btns.get(8).getFont().deriveFont(Font.ITALIC));
         btns.get(9).setFont(btns.get(9).getFont().deriveFont(Font.ITALIC));
         
-        JPanel seqTitle = new JPanel(new GridLayout(0, 2));
-        seqTitle.add(start);
-        seqTitle.add(current);
+        JPanel seqTitle = new JPanel();
+        seqTitle.add(song);
+        seqTitle.add(track);
 
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
         add(seqTitle);
         add(actives);
+        update();
 
 	}
 
+	public void update(MidiTrack t) {
+		for (TrackButton b : btns)
+			if (b.getTrack() == t) 
+				b.update();
+	}
+	
+	public void songText() {
+		StringBuffer sb = new StringBuffer();
+		Song s = JudahZone.getCurrent();
+		if (s == null) 
+			sb.append("OpenMic");
+		else 
+			sb.append("Scene:").append(s.getScenes().indexOf(JudahZone.getSongs().getCurrent()));
+		
+		
+		if (SongView.getOnDeck() != null) 
+				sb.append("|" + s.getScenes().indexOf(SongView.getOnDeck()));
+
+		if (SetCombo.getSet() != null)
+			sb.append("Set:").append(SetCombo.getSet().getClass().getSimpleName());
+		song.setText(sb.toString());
+		song.setBackground(SongView.getOnDeck() != null ? Pastels.YELLOW : null);
+	}
+	
 	public void update() {
 		MidiTrack t = tracks.getCurrent();
-		current.setText(t.getName() + "/" + t.getCurrent());
-		current.setBackground(clock.isLooperSync() ? Pastels.YELLOW : null);
+		track.setText(t.getName());
+		track.setBackground(clock.isLooperSync() ? Pastels.YELLOW : null);
 		btns.forEach(b->b.update());
 		btns.forEach(b -> b.setBorder(t == b.getTrack() ? highlight : null));
+		songText();
 	}
-
-	@Override
-	public void update(Property prop, Object value) {
-		if (prop == STEP) {
-			int step = 100 * (int)value / clock.getSteps();
-			start.setBackground(RainbowFader.chaseTheRainbow(step));
-		}
-		else if (prop == TRANSPORT) {
-			start.setText(value == JackTransportState.JackTransportStarting ? 
-					"Stop" : "Play");
-		}
-	}
-
 	
 }

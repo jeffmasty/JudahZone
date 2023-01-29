@@ -38,10 +38,12 @@ public class MidiPort {
 	public void send(ShortMessage midi, int ticker) {
 		if (port == null)
 			receiver.send(midi, ticker);
-		else 
-			try {
+		else  
+			try { // realtime
 				JackMidi.eventWrite(port, ticker, midi.getMessage(), midi.getLength());
-			} catch (JackException e) { RTLogger.warn(this, e); }
+			} catch (JackException e) {
+				RTLogger.warn(this, e);
+			}
 	}
 
 	@Override

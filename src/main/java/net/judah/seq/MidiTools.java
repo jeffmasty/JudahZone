@@ -14,15 +14,14 @@ public class MidiTools {
 	public static final int NOTE_ON = 0x90;
     public static final int NOTE_OFF = 0x80;
     public static final String[] NOTE_NAMES = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-//    public static final int NAME = 73;
 	public static final int RATCHET = 11;
 
-    private static final Bar work = new Bar();
+    private static final Pattern work = new Pattern();
 
-	public static void paste(Bar source, int measure) {
-	}
-	public static void copy(long start, long end, long newPosition, Track t) {
-	}
+//	public static void paste(Bar source, int measure) {
+//	}
+//	public static void copy(long start, long end, long newPosition, Track t) {
+//	}
 
 	public static boolean match(MidiMessage a, MidiMessage b) {
 		if (a == null && b == null) return true;
@@ -60,7 +59,7 @@ public class MidiTools {
 	}
 	
 	public static int measureCount(long ticks, long measureTicks) {
-		return (int)Math.ceil(ticks / measureTicks);
+		return (int)Math.ceil(ticks / measureTicks) + 1;
 	}
 	
 	public static int measureCount(long ticks, int resolution, int beats) {
@@ -128,10 +127,11 @@ public class MidiTools {
 	
 	/** insert a clipboard midi event into the current two-bar window */
 	public static void interpolate(MidiEvent e, MidiTrack track) {
-		int bar = track.getCurrent();
-		if (e.getTick() >= track.barTicks)
-			bar = track.getNext();
-		long tick = e.getTick() + bar * track.barTicks;
+		long base = e.getTick() >= track.getBarTicks() ? track.getRight() : track.getLeft();
+//		int bar = track.getCurrent();
+//		if (e.getTick() >= track.getBarTicks())
+//			bar = track.getNext();
+		long tick = e.getTick() + base;// * track.getBarTicks();
 		track.getT().add(new MidiEvent(e.getMessage(), tick));
 	}
 	
@@ -159,9 +159,9 @@ public class MidiTools {
 	public static long quantize(long tick, Gate type, int resolution) {
 		switch(type) {
 		case SIXTEENTH: return tick - tick % (resolution / 4);
-		case EIGHTH: return tick - (tick % resolution / 2);
-		case QUARTER: return tick - (tick % resolution);
-		case HALF: return tick - (tick % (2 * resolution));
+		case EIGHTH: return tick - tick % (resolution / 2);
+		case QUARTER: return tick - tick % resolution;
+		case HALF: return tick - tick % (2 * resolution);
 		case WHOLE: return 0;
 		case MICRO: return tick - tick % (resolution / 8);
 		case RATCHET: return tick - tick % RATCHET; // approx MIDI_24

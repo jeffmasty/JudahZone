@@ -12,21 +12,21 @@ import net.judah.seq.MidiTrack;
 public class TrackPattern extends JButton {
 	private static Dimension d = new Dimension(Size.STD_HEIGHT, Size.STD_HEIGHT);
 
-	@Getter private final int bar;
+	@Getter private final int frame;
 	private final MidiTrack track;
 	
 	public TrackPattern(MidiTrack t, int i) {
-		super("" + i);
-		this.bar = i;
+		super("" + (i + 1));
+		this.frame = i;
 		this.track = t;
 		setMaximumSize(d);
 		setPreferredSize(d);
 		setOpaque(true);
-		addActionListener(e->track.setCurrent(bar));
+		addActionListener(e->track.setFrame(frame));
 	}
 	
 	public void update() {
-		setBackground(track.getCurrent() == bar ? Pastels.GREEN : null);
+		setBackground(track.getFrame() == frame ? Pastels.GREEN : null);
 	}
 	
 }

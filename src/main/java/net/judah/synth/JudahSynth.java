@@ -12,13 +12,14 @@ import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.api.Engine;
-import net.judah.controllers.KnobMode;
-import net.judah.controllers.Knobs;
-import net.judah.effects.CutFilter;
+import net.judah.fx.CutFilter;
 import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
+import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
+import net.judah.gui.knobs.Knobs;
 import net.judah.gui.knobs.SynthKnobs;
+import net.judah.gui.settable.Program;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiPort;
 import net.judah.mixer.LineIn;
@@ -50,7 +51,6 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
 	private SynthPresets synthPresets;
 	private final List<Integer> actives = new ArrayList<>();
 	@Setter @Getter private MidiPort midiPort;
-    @Setter private float amplification = 0.8f;
     /** modwheel pitchbend semitones */
     @Setter private int modSemitones = 1;
     private SynthKnobs synthKnobs;
@@ -138,6 +138,7 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
 	@Override
 	public void progChange(String preset) {
 		getSynthPresets().load(preset);
+		MainFrame.update(Program.first(this, 0)); 
 	}
 	
 	@Override
@@ -153,8 +154,10 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
 
 
 	@Override
-	public int getProg(int ch) {
-		return synthPresets.getProg();
+	public String getProg(int ch) {
+		if (synthPresets.getCurrent() == null)
+			return "none";
+		return synthPresets.getCurrent();
 	}
 
 	/**Pitch Bend message  https://sites.uci.edu/camp2014/2014/04/30/managing-midi-pitchbend-messages/ <pre>
@@ -179,7 +182,7 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
         AudioTools.silence(mono);
 
         for (Voice voice : voices) {
-        	voice.process(notes, adsr, mono, amplification);
+        	voice.process(notes, adsr, mono);
         }
         loCut.process(mono);
         processFx(mono);

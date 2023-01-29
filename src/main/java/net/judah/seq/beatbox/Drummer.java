@@ -27,14 +27,15 @@ public class Drummer extends Musician {
 
 	@Override
 	public long toTick(Point p) {
-        int measure;
         int x = p.x / colWidth;
-        if (track.isEven()) 
-        	measure = x < clock.getSteps() ? track.getCurrent() : track.getNext();
-        else 
-        	measure = x < clock.getSteps() ? track.getPrevious() : track.getCurrent();
+        long base = x < clock.getSteps() ? track.getLeft() : track.getRight();
+//        if (track.isEven()) 
+//        	base = 
+//        	measure = x < clock.getSteps() ? track.getCurrent() : track.getNext();
+//        else 
+//        	measure = x < clock.getSteps() ? track.getPrevious() : track.getCurrent();
         int step = x % clock.getSteps();
-        return measure * track.getBarTicks() + step * (track.getResolution() / clock.getSubdivision());
+        return base + step * (track.getResolution() / clock.getSubdivision());
 	}
 
 	@Override
@@ -50,7 +51,7 @@ public class Drummer extends Musician {
         // TODO right mouse button menu?
         if (existing == null) {
         	MidiEvent create = new MidiEvent(Midi.create(NOTE_ON, track.getCh(), click.data1, 
-        			Math.round(track.getMidiOut().getAmplification() * 127)), click.tick);
+        			Math.round(track.getAmplification() * 1.27f)), click.tick);
         	track.getT().add(create);
         	selected.clear();
         	selected.add(new MidiPair(create, null));

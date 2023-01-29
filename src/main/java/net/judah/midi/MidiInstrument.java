@@ -20,8 +20,6 @@ public class MidiInstrument extends Instrument implements MidiReceiver {
 	protected final ArrayList<Integer> actives = new ArrayList<>();
 	protected String[] patches = new String[] {"none"};
 	@Setter protected MidiPort midiPort;
-	@Setter protected int channel;
-	@Setter protected float amplification = 0.9f;
 	
 	// boolean doesProgChange
 	// boolean isMono
@@ -45,7 +43,6 @@ public class MidiInstrument extends Instrument implements MidiReceiver {
 		ShortMessage msg = (ShortMessage)message;
 		if (Midi.isNoteOn(msg)) {
 			actives.add(msg.getData1());
-			msg = Midi.create(msg.getCommand(), msg.getChannel(), msg.getData1(), Math.round(msg.getData2() * amplification));
 		}
 		else if (Midi.isNote(msg))
 			actives.remove((Integer)msg.getData1());
@@ -58,14 +55,15 @@ public class MidiInstrument extends Instrument implements MidiReceiver {
 		new Panic(midiPort, 0 /*monosynth*/).start();
 	}
 
+	/** no-op, subclass override */
 	@Override public void progChange(String preset, int ch) {	}
-	@Override public void progChange(String preset) {
-		// no-op, subclass override
-	}
+	/** no-op, subclass override */
+	@Override public void progChange(String preset) { }
 
 	@Override
-	public int getProg(int ch) {
-		return 0;
+	public String getProg(int ch) {
+		return "none";
 	}
+
 
 }

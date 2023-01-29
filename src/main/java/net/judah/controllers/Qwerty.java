@@ -13,16 +13,17 @@ import javax.swing.JTabbedPane;
 import net.judah.api.AudioMode;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
+import net.judah.gui.knobs.Knobs;
+import net.judah.gui.widgets.ModalDialog;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Instrument;
-import net.judah.mixer.Instruments;
+import net.judah.mixer.Zone;
 import net.judah.seq.MidiTab;
 import net.judah.song.Song;
 import net.judah.song.SongTab;
 import net.judah.util.RTLogger;
-import net.judah.widgets.ModalDialog;
 
 public class Qwerty extends JTabbedPane implements KeyListener, Size {
 
@@ -209,7 +210,7 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
 
     private boolean nextChannel(boolean toRight) {
     	Looper looper = getLooper();
-        Instruments channels = getInstruments();
+        Zone channels = getInstruments();
         Channel bus = getFxRack().getChannel();
         if (bus instanceof Instrument) {
             int i = channels.indexOf(bus);

@@ -1,6 +1,6 @@
 package net.judah.fluid;
 
-public class FluidChannel {
+class FluidChannel {
 	public final int channel;
 	public final int soundfont;
 	public final int bank;

@@ -16,6 +16,8 @@ public interface Pastels {
 	Color BUTTONS = new Color(238, 238, 230);
 	Color MY_GRAY = new Color(220, 220, 210);
 	Color DRUM_PAD = MY_GRAY;
-
+	Color CLOCKSYNC = YELLOW;
+	Color ONDECK = PINK;
+	
 }
 

@@ -16,9 +16,9 @@ public class Panic extends Thread {
 	@Override
 	public void run() {
 		try {
-			if (channel == 0)
+			if (port.getPort() != null)
 				for (int i = 0; i < 128; i++) 
-					port.send(new ShortMessage(ShortMessage.NOTE_OFF, i, 0), JudahMidi.ticker());
+					JudahMidi.queue(new ShortMessage(ShortMessage.NOTE_OFF, channel, i, 0), port.getPort());
 			else 
 				for (int i = 0; i < 128; i++) 
 					port.send(new ShortMessage(ShortMessage.NOTE_OFF, channel, i, 0), JudahMidi.ticker());

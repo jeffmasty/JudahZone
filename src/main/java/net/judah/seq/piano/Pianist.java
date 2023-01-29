@@ -17,44 +17,26 @@ import net.judah.util.RTLogger;
 
 public class Pianist extends Musician implements PianoSize  {
 	
+	private final PianoMusic grid;
 	private final Piano piano;
 	private final Track t;
 
 	public Pianist(Piano piano, PianoMusic grid, MidiView view, MidiTab tab) {
 		super(view, tab);
 		this.piano = piano;
+		this.grid = grid;
 		t = track.getT();
 	}
 	
-	@Override
+	@Override // absolute based tick
 	public long toTick(Point p) {
-		return (long) (ratioY(p.y, GRID_HEIGHT) * view.getTimeframe());
+		return (long) (ratioY(p.y, GRID_HEIGHT) * track.getWindow() + 
+				track.getLeft());
 	}
 
 	@Override
 	public int toData1(Point p) {
 		return p.x / KEY_WIDTH + NOTE_OFFSET;
-	}
-
-	/**@return Z to COMMA keys are white keys, and black keys, up to 12, no match = -1*/
-	public static int chromaticKeyboard(final int keycode) {
-		switch(keycode) {
-			case VK_Z: return 0; // low C
-			case VK_S: return 1; 
-			case VK_X: return 2;
-			case VK_D: return 3;
-			case VK_C: return 4;
-			case VK_V: return 5; // F
-			case VK_G : return 6;
-			case VK_B : return 7; // G
-			case VK_H: return 8; 
-			case VK_N: return 9;
-			case VK_J: return 10;
-			case VK_M: return 11;
-			case VK_COMMA: return 12;// high C
-			
-			default: return -1;
-		}
 	}
 
 	@Override
@@ -73,28 +55,22 @@ public class Pianist extends Musician implements PianoSize  {
 		
 	@Override
 	public void mousePressed(MouseEvent mouse) {
-		boolean controlled = mouse.isControlDown();
-		Point p = mouse.getPoint();
-		try {
-			int data1 = toData1(p);
-			MidiPair select = lookup(toTick(p), NOTE_ON, data1);
-			if (select != null ) {
-				if (controlled) {
-					if (selected.contains(select))
-						selected.remove(select);
-					else selected.add(select);
-				}
-				else {
-					selected.clear();
-					selected.add(select);
-				}
-			} else {
-				long tick = MidiTools.quantize(toTick(p), 
-						(Gate)view.getMenu().getGate().getSelectedItem(), track.getResolution());
-				on = new Prototype(data1, tick);
-			}
-		} catch (Exception err) {
-			RTLogger.warn(this, err);
+		Prototype dat = translate(mouse.getPoint());
+		MidiPair existing = lookup(dat.tick, NOTE_ON, dat.data1);
+		if (existing == null) {
+			long tick = MidiTools.quantize(dat.tick, 
+					(Gate)view.getMenu().getGate().getSelectedItem(), track.getResolution());
+			on = new Prototype(dat.data1, tick);
+		}
+		else if (mouse.isControlDown()) {
+			if (selected.contains(existing))
+				selected.remove(existing);
+			else 
+				selected.add(existing);
+		}
+		else {
+			selected.clear();
+			selected.add(existing);
 		}
 		view.getGrid().repaint();
 	}
@@ -108,22 +84,23 @@ public class Pianist extends Musician implements PianoSize  {
 		}
 		try {
 			long tick = toTick(mouse.getPoint());
-			MidiEvent off = create(tick, NOTE_OFF, on.getData1(), 1/*Math.round(track.getMidiOut().getAmplification() * 127)*/);
+			MidiEvent off = create(tick, NOTE_OFF, on.getData1(), 1);
 			if (on.getTick() > off.getTick()) {
 				long temp = on.getTick();
 				on.setTick(off.getTick());
 				off.setTick(temp);
 				RTLogger.log(this, "swapping " + off.getTick() + " to " + on.getTick());				
 			}
-			off.setTick(MidiTools.quantizePlus(
-					tick, (Gate)view.getMenu().getGate().getSelectedItem(), track.getResolution()));
-			MidiEvent start = create(on.getTick(), NOTE_ON, on.getData1(), (int) (track.getMidiOut().getAmplification() * 127));
+			off.setTick(MidiTools.quantizePlus(tick, 
+					(Gate)view.getMenu().getGate().getSelectedItem(), track.getResolution()));
+			MidiEvent start = create(on.getTick(), 
+					NOTE_ON, on.getData1(), (int) (track.getAmplification() * 1.27f));
 			t.add(start);
 			t.add(off);
-			selected.clear();
-			selected.add(new MidiPair(start, off));
+			selected.clear(); // add zero-based selection
+			selected.add(new MidiPair(start, off)); 
 			on = null;
-			view.getGrid().repaint();
+			grid.repaint();
 			drag = false;
 		} catch (Exception e) {
 			RTLogger.warn(this, e);
@@ -136,7 +113,7 @@ public class Pianist extends Musician implements PianoSize  {
 		return new MidiEvent(midi, tick);
 	}
 
-	private MidiPair lookup(long tick, int cmd, int data1) throws InvalidMidiDataException {
+	private MidiPair lookup(long tick, int cmd, int data1) {
 		MidiEvent found = null;
 		for (int i = 0; i < t.size(); i++) {
 
@@ -149,10 +126,9 @@ public class Pianist extends Musician implements PianoSize  {
 					if (Midi.isNoteOn(m) && m.getData1() == data1)
 						found = e;
 				}
-				else if (on != null) {
+				else if (found != null) {
 					if (Midi.isNoteOff(m) && m.getData1() == data1)
-						found = null;
-				}
+						found = null;		}
 			}
 			else { // e.getTick() > tick
 				if (found == null) // opportunity passed
@@ -167,5 +143,24 @@ public class Pianist extends Musician implements PianoSize  {
 		return null;
 	}
 
+	/**@return Z to COMMA keys are white keys, and black keys, up to 12, no match = -1*/
+	public static int chromaticKeyboard(final int keycode) {
+		switch(keycode) {
+			case VK_Z: return 0; // low C
+			case VK_S: return 1; 
+			case VK_X: return 2;
+			case VK_D: return 3;
+			case VK_C: return 4;
+			case VK_V: return 5; // F
+			case VK_G : return 6;
+			case VK_B : return 7; // G
+			case VK_H: return 8; 
+			case VK_N: return 9;
+			case VK_J: return 10;
+			case VK_M: return 11;
+			case VK_COMMA: return 12;// high C
+			default: return -1;
+		}
+	}
 
 }

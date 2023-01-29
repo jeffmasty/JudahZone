@@ -9,7 +9,7 @@ import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 
 import net.judah.gui.Pastels;
-import net.judah.widgets.CenteredCombo;
+import net.judah.gui.widgets.CenteredCombo;
 
 public abstract class Pad extends JPanel {
 	protected static final Color borderColor = Pastels.PURPLE;

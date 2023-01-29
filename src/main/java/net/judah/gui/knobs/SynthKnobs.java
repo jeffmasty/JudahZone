@@ -12,21 +12,21 @@ import javax.swing.*;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
-import net.judah.controllers.KnobMode;
-import net.judah.effects.CutFilter;
+import net.judah.fx.CutFilter;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
+import net.judah.gui.settable.Program;
+import net.judah.gui.widgets.CenteredCombo;
+import net.judah.gui.widgets.Knob;
+import net.judah.gui.widgets.Slider;
 import net.judah.synth.Adsr;
 import net.judah.synth.JudahSynth;
-import net.judah.synth.PresetsCombo;
 import net.judah.synth.Shape;
 import net.judah.util.Constants;
-import net.judah.widgets.CenteredCombo;
-import net.judah.widgets.Knob;
-import net.judah.widgets.Slider;
 
 public class SynthKnobs extends KnobPanel {
+	private static final int OCTAVE = 12;
 
 	@Getter private final KnobMode knobMode = KnobMode.Synth;
 	private static final Dimension COMBO = new Dimension(55, STD_HEIGHT);
@@ -38,9 +38,8 @@ public class SynthKnobs extends KnobPanel {
 
 	@Getter private final JudahSynth synth;
 	@Setter @Getter private static boolean freqMode = true; //. vs resonance mode
-	@Getter private final PresetsCombo presets;
+	@Getter private final Program presets;
 	private final JButton save = new JButton("Save");
-	private final Slider amp = new Slider(0, 1, null, "Velocity Amplification");
 	private static final Color C = Pastels.PURPLE;
 	private final Knob lpFreq = new Knob(C);
 	private final Knob lpReso = new Knob(C);//0, 20 
@@ -64,7 +63,7 @@ public class SynthKnobs extends KnobPanel {
 		
 		super(zynth.getName());
 		this.synth = zynth;
-		this.presets = new PresetsCombo(synth.getSynthPresets());
+		this.presets = new Program(synth, 0);
 		this.adsr = synth.getAdsr(); 
 		
 		for (int i = 0; i < synth.getShapes().length; i++) {
@@ -84,20 +83,21 @@ public class SynthKnobs extends KnobPanel {
 			detune.add(tune);
 		}
 		mod.setToolTipText("Pitchbend Semitones");
-		for (int i = 1; i <= 12; i++)
+		for (int i = 1; i <= OCTAVE; i++)
 			mod.addItem(i);
-		mod.addActionListener(e->synth.setModSemitones((Integer)mod.getSelectedItem()));
-		
+		mod.addActionListener(e->{
+			if (synth.getModSemitones() != (int)mod.getSelectedItem())
+				synth.setModSemitones((Integer)mod.getSelectedItem());});
 		for (int i = 0; i < synth.getDcoGain().length; i++) {
 			Slider slider = new Slider(null);
 			gains.add(slider);
 		}
 		JPanel row = new JPanel();
 		row.add(presets);
-		row.add(new JLabel("Vol"));
-		row.add(amp);
+		row.add(save);
  		row.add(mod);
-		add(row);
+		row.add(new JLabel("Bend"));
+ 		add(row);
 		
 		JPanel knobs = new JPanel(new GridLayout(2, 4, 4, 4));
 		knobs.add(Gui.duo(a, new JLabel(" A")));
@@ -125,7 +125,6 @@ public class SynthKnobs extends KnobPanel {
 		synthTwo.addActionListener(e->MainFrame.setFocus(JudahZone.getSynth2().getSynthKnobs()));
 		titleBar.add(synthOne);
 		titleBar.add(synthTwo);
-		titleBar.add(save);
 	}
 
 	@Override
@@ -136,7 +135,6 @@ public class SynthKnobs extends KnobPanel {
 	
 	private void listeners() {
 		save.addActionListener(e->save());
-		amp.addChangeListener(e->synth.setAmplification(amp.getValue() * 0.01f));
 		for (int i = 0; i < gains.size(); i++) {
 			final int idx = i;
 			gains.get(i).addChangeListener(e->synth.setGain(idx, gains.get(idx).getValue() * 0.01f));
@@ -161,13 +159,12 @@ public class SynthKnobs extends KnobPanel {
 		hpFreq.addListener(data2 -> synth.getLoCut().setFrequency(
 				CutFilter.knobToFrequency(data2)));
 		hpReso.addListener(data2 ->  synth.getLoCut().setResonance(data2));
-		
+		if (synth.getModSemitones() != (int)mod.getSelectedItem())
+				mod.setSelectedItem(synth.getModSemitones());
 	}
 	
 	@Override
 	public void update() {
-		if (amp.getValue() != synth.getAmplification() * 100)
-			amp.setValue((int)(synth.getAmplification() * 100));
 		if (lpReso.getValue() != synth.getHiCut().getResonance())
 			lpReso.setValue((int)(synth.getHiCut().getResonance()));
 		if (hpReso.getValue() != synth.getLoCut().getResonance())
@@ -192,7 +189,6 @@ public class SynthKnobs extends KnobPanel {
 			r.setValue(adsr.getReleaseTime());
 
 		conformDetune();
-		presets.select();
 		
 		lpFreq.setEnabled(freqMode);
 		lpReso.setEnabled(freqMode);
@@ -252,7 +248,7 @@ public class SynthKnobs extends KnobPanel {
 						Constants.ratio(data2, presets.getItemCount() - 1))).start();
 				break;
 			case 5:
-				amp.setValue(data2);
+				synth.setModSemitones(Constants.ratio(data2, OCTAVE));
 				break;
 			case 6: 
 				if (freqMode)

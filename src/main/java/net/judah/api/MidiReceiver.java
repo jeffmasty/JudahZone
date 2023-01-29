@@ -9,22 +9,21 @@ import net.judah.midi.MidiPort;
 
 public interface MidiReceiver extends Receiver, Closeable {
 
-	List<Integer> getActives();
+	List<Integer> getActives(); // ?
 	
 	String getName();
 	
-	String[] getPatches();
-	
 	MidiPort getMidiPort();
+	
+	String[] getPatches();
 	
 	void progChange(String preset);
 	
 	void progChange(String preset, int channel);
 	
-	int getProg(int ch);
+	String getProg(int ch);
 	
-	void setAmplification(float gain);
+	boolean isMuteRecord();
 	
-	float getAmplification();
-	
+
 }

@@ -1,6 +1,6 @@
 package net.judah.synth;
 
-import static net.judah.effects.api.Preset.DASH;
+import static net.judah.synth.SynthDB.DASH;
 
 import lombok.Getter;
 import net.judah.JudahZone;
@@ -11,7 +11,7 @@ public class SynthPresets {
 	private String current;
 	private final JudahSynth synth;
 	private final Adsr adsr;
-	
+
 	public SynthPresets(JudahSynth synth) {
 		this.synth = synth;
 		this.adsr = synth.getAdsr();

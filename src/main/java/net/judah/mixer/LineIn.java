@@ -5,14 +5,13 @@ import java.nio.FloatBuffer;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.gui.MainFrame;
+import net.judah.gui.widgets.GuitarTuner;
 import net.judah.util.AudioTools;
 import net.judah.util.Constants;
-import net.judah.widgets.GuitarTuner;
 
 @Getter
 public abstract class LineIn extends Channel {
     protected boolean muteRecord;
-    @Setter protected boolean solo;
     protected LatchEfx latchEfx = new LatchEfx(this);
     /** set to <code>null</code> for no processing */
     @Setter protected GuitarTuner tuner;

@@ -13,8 +13,8 @@ public interface MidiConstants {
 	int NOTE_OFFSET = 24;
 	int VELOCITY = 99;
 	int RESOLUTION = 256;
+	public static final String[] NOTES = {"C", "C#", "D", "Db", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"};
 	List<Integer> BLACK_KEYS = List.of(1, 3, 6, 8, 10);
-	public static final String[] NOTE_NAMES = {"C", "C#", "D", "Db", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"};
 
 	int KEY_WIDTH = 14;
 	int KEY_HEIGHT = 24;
@@ -24,5 +24,6 @@ public interface MidiConstants {
 	int WIDTH_BEATBOX = Size.TAB_SIZE.width - 2 * STEP_WIDTH - 15;
 	Rectangle BOUNDS_MENU = new Rectangle(0, 0, Size.TAB_SIZE.width, MENU_HEIGHT);
 
+	int MAX_FRAMES = 32; // 64 measures
 	
 }

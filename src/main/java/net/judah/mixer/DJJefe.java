@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import javax.swing.JPanel;
 
 import lombok.Getter;
+import net.judah.drumkit.DrumKit;
+import net.judah.drumkit.DrumMachine;
+import net.judah.drumkit.Sampler;
 import net.judah.gui.Gui;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
@@ -13,11 +16,20 @@ import net.judah.looper.Looper;
 /** Graphical representation of the Mixer*/
 public class DJJefe extends JPanel {
 
+	@Getter private final ArrayList<Channel> all = new ArrayList<>();
+	/** has GUI representation */
 	@Getter private final ArrayList<Channel> channels = new ArrayList<>();
 	private final ArrayList<ChannelFader> faders = new ArrayList<ChannelFader>();
-	
-    public DJJefe(Channel mains, Looper looper, Zone sources) {
+
+    public DJJefe(Channel mains, Looper looper, Zone sources, DrumMachine drumMachine, Sampler sampler) {
         
+    	all.addAll(looper);
+		all.addAll(sources);
+		for (DrumKit k : drumMachine.getKits())
+			all.add(k);
+		all.addAll(sampler);
+		all.addAll(sampler.getStepSamples());
+    	
     	for (Loop loop : looper) {
     		channels.add(loop);
     		ChannelFader fader = new LoopFader(loop, looper);
@@ -84,4 +96,12 @@ public class DJJefe extends JPanel {
 				return fade;
 		return null;
 	}
+	
+	public Channel byName(String channel) {
+		for (Channel ch : all)
+			if (ch.getName().equals(channel))
+				return ch;
+		return null;
+	}
+
 }

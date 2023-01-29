@@ -1,20 +1,21 @@
 package net.judah.gui.knobs;
 
-import static javax.swing.SwingConstants.CENTER;
 import static net.judah.gui.Pastels.*;
 
 import java.awt.GridLayout;
 
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import net.judah.gui.Gui;
+import net.judah.gui.settable.Folder;
+import net.judah.gui.widgets.FxButton;
+import net.judah.gui.widgets.Knob;
+import net.judah.mixer.Channel;
 import net.judah.seq.MidiTrack;
-import net.judah.widgets.Knob;
 
 @Getter
 public class TrackSettings extends JPanel {
@@ -24,23 +25,26 @@ public class TrackSettings extends JPanel {
 	private final JButton record = new JButton("Rec");
 	private final JButton mpk = new JButton("MPK");
 	private final Knob velocity = new Knob();
-	private final /*FileCombo*/ JComboBox<String> file = new JComboBox<>(new String[] {"Sleepwalk", "AirOnG"});
+	private final Folder file;
 	
 	public TrackSettings(MidiTrack t) {
 		track = t;
+		file = new Folder(track);
 		play.addActionListener(e->{
 			track.setActive(track.isActive() || track.isOnDeck() ? false : true);});
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+		JPanel top = new JPanel();
+		top.setLayout(new BoxLayout(top, BoxLayout.LINE_AXIS));
+		top.add(new JLabel("  File: "));
+		top.add(file); 
+		top.add(new FxButton((Channel)track.getMidiOut()));
+		top.add(velocity);
+		add(top);
 		
-		JLabel name = new JLabel(track.getName(), CENTER);
-		name.setFont(Gui.BOLD13);
-		add(Gui.wrap(name, file));
-
-		
-		
-		JPanel btns = new JPanel(new GridLayout(0, 4));
-		btns.add(play); btns.add(record); btns.add(mpk); btns.add(velocity);
+		JPanel btns = new JPanel(new GridLayout(0, 3));
+		btns.add(play); btns.add(record); btns.add(mpk); 
 		add(btns); 
+		add(Box.createVerticalGlue());
 
 	}
 

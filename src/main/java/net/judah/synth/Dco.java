@@ -23,7 +23,7 @@ public class Dco {
 	public void setHz(float hz) {
 		freq = hz;
 		if (freq > 0) {
-			cyclesPerSample = synth.detune(idx, freq) * bend /SAMPLE_RATE;
+			cyclesPerSample = synth.detune(idx, freq) * bend / SAMPLE_RATE;
 		}
 	}
 	

@@ -11,36 +11,28 @@ import javax.sound.midi.ShortMessage;
 
 import net.judah.drumkit.DrumType;
 import net.judah.gui.Pastels;
-import net.judah.midi.JudahClock;
-import net.judah.seq.*;
+import net.judah.seq.Measure;
+import net.judah.seq.MidiPair;
+import net.judah.seq.MidiTab;
+import net.judah.seq.MusicGrid;
+import net.judah.seq.Musician;
 
 public class BeatBox extends MusicGrid {
 	public static final int X_OFF = 5;
 	private final int RADIUS = 24;
     private final int PADS = DrumType.values().length;
 	
-	private final MidiTrack track;
-	private final Measure scroll;
-	private final JudahClock clock;
-    private final BeatSteps steps;
-    private final int rowHeight;
-
-    private int unit;
+	private final BeatSteps steps;
     private Drummer drummer;
+	private final int rowHeight;
+    private int unit;
 
     final ArrayList<MidiPair> selected;
     
     public BeatBox(final Rectangle r, BeatsSection view, BeatSteps steps, MidiTab tab) {
-    	setBounds(r);
-    	this.track = view.getTrack();
-        this.scroll = view.getScroll();
-        this.clock = track.getClock();
+    	super(view.getTrack(), r);
         this.steps = steps;
         selected = new Measure(track);
-
-        setMaximumSize(r.getSize());
-		setPreferredSize(r.getSize());
-		
 		rowHeight = (int)Math.ceil((r.height) / PADS);
     	setOpaque(true);
     	setBackground(Pastels.MY_GRAY);

@@ -10,11 +10,14 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
 import lombok.Getter;
+import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
-import net.judah.seq.Cue;
-import net.judah.seq.Cycle;
+import net.judah.gui.Size;
+import net.judah.seq.CYCLE;
+import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiTrack;
 import net.judah.seq.Seq;
+import net.judah.song.Trigger;
 import net.judah.util.Constants;
 
 @Getter // TODO MouseWheel listener -> change pattern 
@@ -22,22 +25,8 @@ public class TrackKnobs extends KnobPanel {
 
 	private final MidiTrack track;
 	private final Seq seq;
-//	private final JButton play = new JButton("Play");
-//	private final JButton record = new JButton("Rec");
-//	private final JButton mpk = new JButton("MPK");
-//	private final JComboBox<Cue> cue = new JComboBox<Cue>(Cue.values());
-//	private final JComboBox<Cycle> cycle = new JComboBox<Cycle>(Cycle.values());
-//	private final ProgChange progChange;
-//	private final /*FileCombo*/ JComboBox<String> file = new JComboBox<>(new String[] {"Sleepwalk", "AirOnG"});
-//	private final Knob velocity = new Knob();
-//	private final JComboBox<Integer> current = new JComboBox<>();
-//	private final JLabel previous = new JLabel("(TD)", CENTER);
-//	private final JLabel next = new JLabel("0 | 1", CENTER);
-	private final JPanel titleBar = new JPanel(new GridLayout());
+	private final JPanel titleBar = new JPanel();
 	
-//	private JPanel settings = new JPanel(new GridLayout(0, 3));
-	
-//	private JPanel bars = new JPanel(new GridLayout(0, 3));
 	private final TrackSchedule schedule;
 	private final TrackSettings settings;
 	@Override
@@ -51,48 +40,6 @@ public class TrackKnobs extends KnobPanel {
 		super(t.getName());
 		this.track = t;
 		this.seq = seq;
-//		progChange = new ProgChange(track.getMidiOut(), track.getCh());
-//		progChange.setPreferredSize(Size.COMBO_SIZE);
-//		progChange.setMaximumSize(Size.COMBO_SIZE);
-//		
-//		play.addActionListener(e->{
-//			track.setActive(track.isActive() || track.isOnDeck() ? false : true);});
-//
-//		for (int i = 0; i < track.size(); i++)
-//			current.addItem(i);
-
-//		settings.setOpaque(true);
-//		settings.setBackground(BUTTONS);
-//		JLabel name = new JLabel(track.getName(), CENTER);
-//		name.setFont(Constants.Gui.BOLD13);
-//		settings.add(name);
-//		settings.add(cycle);
-//		settings.add(cue);
-//
-//		bars.setOpaque(true);
-//		bars.setBackground(BUTTONS);
-//		bars.add(previous);
-//		bars.add(current);
-//		bars.add(next);
-
-//		JPanel top = new JPanel();
-//		top.setLayout(new BoxLayout(top, BoxLayout.PAGE_AXIS));
-//		top.add(settings);
-//		top.add(bars);
-		
-//		JPanel bottom = new JPanel();
-//		bottom.setLayout(new BoxLayout(bottom, BoxLayout.PAGE_AXIS));
-//		bottom.add(Constants.wrap(file, progChange));
-//		JPanel btns = new JPanel(new GridLayout(0, 4));
-//		btns.add(play); btns.add(record); btns.add(mpk); btns.add(velocity);
-//		bottom.add(btns); // Constants.wrap(play, record, mpk, velocity));
-//		setBorder(Constants.Gui.NONE);
-		
-		
-//		add(top);
-//		add(bottom);
-
-		
 		JComboBox<MidiTrack> tracks = new JComboBox<>(seq.getTracks().toArray(new MidiTrack[seq.numTracks()]));
 		ActionListener tracker = new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) {
@@ -104,6 +51,8 @@ public class TrackKnobs extends KnobPanel {
 		};
 		tracks.setSelectedItem(track);
 		tracks.addActionListener(tracker);
+		tracks.setFont(Gui.BOLD);
+		Gui.resize(tracks, Size.COMBO_SIZE);
 		titleBar.add(tracks);
 
 		setLayout(new GridLayout(0, 1));
@@ -118,14 +67,6 @@ public class TrackKnobs extends KnobPanel {
 	public void update() {
 		settings.update();
 		schedule.update();
-//		settings.setBackground(seq.getCurrent() == track ? MY_GRAY : BUTTONS);
-//		bars.setBackground(settings.getBackground());
-		
-//		// previous next current
-//		play.setBackground(track.isActive() ? GREEN : null);
-//		record.setBackground(track.isRecord() ? RED : null);
-		// mpk
-// 		setBorder(seq.getCurrent() == track ? Constants.Gui.HIGHLIGHT : Constants.Gui.NON);
 	}
 
 	@Override
@@ -137,26 +78,26 @@ public class TrackKnobs extends KnobPanel {
 				return true;
 			case 1: // file (settable)
 				File[] folder = track.getFolder().listFiles();
-				int idx = Constants.ratio(data2, folder.length + 1);
-				settings.getFile().setSelectedIndex(idx);
+				File x = (File)Constants.ratio(data2, folder);
+				settings.getFile().midiShow(x);
 				return true;
 			case 2: // pattern
-//TODO				track.setCurrent(Constants.ratio(data2 -1, track));
+				track.setFrame(Constants.ratio(data2, MidiConstants.MAX_FRAMES));
 				return true;
 			case 3: 
-				track.setGain(data2 * 0.01f);
+				track.setAmplification((data2));
 				return true;
 			case 4: 
-				schedule.getCue().setSelectedIndex(Constants.ratio(data2 -1, Cue.values().length));
+				schedule.getCue().setSelectedIndex(Constants.ratio(data2 -1, Trigger.values().length));
 				return true;
 			case 5: 
-				schedule.getCycle().setSelectedIndex(Constants.ratio(data2 - 1, Cycle.values().length));
+				schedule.getCycle().setSelectedIndex(Constants.ratio(data2 - 1, CYCLE.values().length));
 				return true;
 			case 6: // midiOut
 				
 				return true;
 			case 7: 
-				schedule.getProgChange().setSelectedIndex(Constants.ratio(data2, track.getMidiOut().getPatches().length - 1));
+				schedule.getProgChange().midiShow(Constants.ratio(data2 - 1, track.getMidiOut().getPatches()).toString());
 				return true;
 		}
 		return false;		

@@ -15,7 +15,6 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 import net.judah.midi.Midi;
-import net.judah.midi.MidiListener;
 
 @Log4j
 public class Console implements MidiListener {

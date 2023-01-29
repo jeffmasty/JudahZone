@@ -1,7 +1,5 @@
 package net.judah.synth;
 
-import static net.judah.effects.api.Preset.*;
-
 import java.io.File;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
@@ -11,7 +9,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import lombok.Getter;
-import net.judah.effects.CutFilter;
+import net.judah.fx.CutFilter;
 import net.judah.gui.MainFrame;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
@@ -26,10 +24,15 @@ import net.judah.util.RTLogger;
 */
 public class SynthDB extends HashMap<String, String> { 
 	
+	public static final String SPLIT = "/";
+	public static final String OPEN = "[";
+	public static final String CLOSE = "]";
+	public static final String DASH = "-";
+
 	public static final String ENVELOPE = "Envelope";
 	public static final String FILTER = "Filter";
 	public static final String DCO = "Dco";
-
+	
 	@Getter private File loaded;
 	private File file;
 	
@@ -101,7 +104,14 @@ public class SynthDB extends HashMap<String, String> {
 	
 	public void save(JudahSynth synth, String name) {
 		put(name, create(synth));
-		saveFile();
+		StringBuffer buf = new StringBuffer();
+		for (String key : keys()) {
+			buf.append(DASH).append(key).append(DASH).append(Constants.NL);
+			buf.append(get(key));
+		}
+        try {
+            Constants.writeToFile(file, buf.toString());
+        } catch (Exception e) {RTLogger.warn(SynthDB.class, e);}
 		MainFrame.update(synth);
 	}
 	
@@ -128,24 +138,11 @@ public class SynthDB extends HashMap<String, String> {
 		return buf.toString();
 	}
 	
-	void saveFile() {
-		StringBuffer buf = new StringBuffer();
-		for (String key : keys()) {
-			buf.append(DASH).append(key).append(DASH).append(Constants.NL);
-			buf.append(get(key));
-		}
-        try {
-            Constants.writeToFile(file, buf.toString());
-        } catch (Exception e) {RTLogger.warn(SynthDB.class, e);}
-
-	}
 
 	public void apply(String name, SynthPresets handler) {
 		String preset = get(name);
-		if (preset == null) {
-			RTLogger.warn(this, "No Synth Preset " + name);
+		if (preset == null) 
 			return;
-		}
 		for (String line : preset.split(Constants.NL)) {
 			if (!line.startsWith(OPEN))
             	throw new InvalidParameterException("format: " + OPEN);
@@ -168,7 +165,6 @@ public class SynthDB extends HashMap<String, String> {
             } else 
             	throw new InvalidParameterException("type: " + type); 
         }
-		handler.update();
 	}
 	
 

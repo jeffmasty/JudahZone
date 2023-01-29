@@ -28,7 +28,7 @@ public class SheetMusicPnl extends JPanel {
 
             setLayout(new GridBagLayout());
             GridBagConstraints constraints = new GridBagConstraints();
-            constraints.insets = new Insets(3, 3, 3, 3);
+            constraints.insets = new Insets(1, 1, 1, 1);
             constraints.fill = GridBagConstraints.NONE;
             constraints.anchor = GridBagConstraints.NORTHWEST;
             constraints.fill = GridBagConstraints.BOTH;
@@ -39,13 +39,11 @@ public class SheetMusicPnl extends JPanel {
             constraints.gridx = 0;
             constraints.gridwidth = 3;
             Dimension smaller = new Dimension(sz.width - 10, sz.height  - 20);
-            
-            labelImage.setPreferredSize(smaller);
-            labelImage.setMaximumSize(smaller);
-            add(Gui.wrap(labelImage), constraints);
+            Gui.resize(labelImage, smaller);
+            add(labelImage, constraints);
             setLocation(0,0);
-            setSize(smaller);
-            setMaximumSize(smaller);
+            setPreferredSize(sz);
+            setMaximumSize(sz);
             setName(Constants.CUTE_NOTE + musicImage.getName());
             doLayout();
         }

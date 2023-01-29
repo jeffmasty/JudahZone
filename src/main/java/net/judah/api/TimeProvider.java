@@ -9,9 +9,6 @@ public interface TimeProvider extends TimeNotifier {
 	/** beats per bar */
 	int getMeasure();
 
-	/**@return in milliseconds, -1 if transport not started */
-	long getLastPulse();
-
 	void begin();
 	void end();
 

@@ -31,6 +31,6 @@ public class Folders {
     
     @Setter @Getter private static File setlist = getSetlists()[0];
 
-    
+    @Getter static final File Log4j = new File(ROOT, "log4j.xml");
 
 }

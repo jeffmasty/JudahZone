@@ -1,7 +1,7 @@
 package net.judah.synth;
 
 import lombok.RequiredArgsConstructor;
-import net.judah.effects.CutFilter;
+import net.judah.fx.CutFilter;
 
 /** crank up Resonance on CutFilters */
 @RequiredArgsConstructor

@@ -20,6 +20,9 @@ public class DrumSample extends AudioTrack implements AtkDec {
 	@Setter private int attackTime = 1;
 	@Setter private int decayTime = 1000;
 	
+	@Setter protected float velocity = 1f;
+
+	
 	protected final FloatBuffer[] buffer = new FloatBuffer[] 
 			{FloatBuffer.allocate(Constants.bufSize()), FloatBuffer.allocate(Constants.bufSize())};
 	
@@ -42,7 +45,7 @@ public class DrumSample extends AudioTrack implements AtkDec {
 		if (hasRecording()) {
 			readRecordedBuffer();
     		if (!onMute) {
-    			env = envelope.calcEnv();
+    			env = velocity * envelope.calcEnv();
     			playFrame(buffer, output[0], output[1]);
     		}
     	} 	

@@ -19,15 +19,22 @@ public class PianoTab extends MidiTab {
 	}
 	
 	@Override
+	public void update(MidiTrack t) {
+		for (MidiView v : viewList)
+			if (v.getTrack() == t)
+				v.update();
+	}
+	
+	@Override
 	public void changeTrack() {
-		current = get(tracks.getCurrent());
+		current = getView(tracks.getCurrent());
 		removeAll();
 		add(current);
 		setName(current.getTrack().getName());
 		repaint();
 	}
 
-	MidiView get(MidiTrack t) {
+	public MidiView getView(MidiTrack t) {
 		for (MidiView v : viewList)
 			if (v.getTrack() == t)
 				return v;

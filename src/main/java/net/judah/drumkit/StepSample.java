@@ -3,7 +3,6 @@ package net.judah.drumkit;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
-import net.judah.samples.Sample;
 
 public class StepSample extends Sample {
 
@@ -13,6 +12,7 @@ public class StepSample extends Sample {
 	public StepSample(String wavName, int... steps) throws Exception {
 		super(JudahZone.getOutL(), JudahZone.getOutR(), wavName, Type.ONE_SHOT);
 		this.steps = steps;
+		env = 2f;
 	}
 	
 	public void step(int step) {

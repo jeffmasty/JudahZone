@@ -5,23 +5,33 @@ import java.awt.Color;
 import javax.swing.JToggleButton;
 
 import lombok.Getter;
+import lombok.Setter;
+import net.judah.JudahZone;
 import net.judah.api.AudioMode;
+import net.judah.api.Notification;
+import net.judah.api.TimeListener;
+import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
+import net.judah.util.RTLogger;
 
-public class LoopFader extends ChannelFader {
+public class LoopFader extends ChannelFader implements TimeListener {
+	public static final int BSYNC_UP = Integer.MAX_VALUE;
+	public static final int BSYNC_DOWN = 1000000;
 
-	private final Loop loop;
 	private final Looper looper;
 	private final JudahClock clock;
+	@Getter private final Loop loop;
 	@Getter protected final JToggleButton rec = new JToggleButton("rec");
+	@Setter @Getter int bars;
+	private int counter = -1;
 	
-	public LoopFader(Loop loop, Looper looper) {
-		super(loop);
-		this.loop = loop;
+	public LoopFader(Loop l, Looper looper) {
+		super(l);
+		this.loop = l;
 		this.looper = looper;
-		this.clock = loop.getClock();
+		this.clock = looper.getClock();
 		if (loop == looper.getLoopC())
 			rec.setText("free");
 		rec.addActionListener(e -> loop.trigger());
@@ -45,10 +55,9 @@ public class LoopFader extends ChannelFader {
 		else 
 			sync.setBackground(null);
 		
-//		loop.getSync().update();
 		if (loop.isRecording() == AudioMode.RUNNING)
 			rec.setSelected(true);
-		else if (clock.getListeners().contains(loop.getSync()))
+		else if (clock.isSync(loop))
 			rec.setSelected(true);
 		else rec.setSelected(false);
 
@@ -59,25 +68,23 @@ public class LoopFader extends ChannelFader {
 		else 
 			sync.setSelected(looper.getOnDeck().contains(loop));
 		
-		if (loop == looper.getLoopA()) {
-			if (clock.getLength() < 10)
-				title.setText("-" + clock.getLength() + "-");
-			else 
-				title.setText("" + clock.getLength());
-		}
-		else 
-			title.setText(" " + channel.getName() + " ");		
+		if (loop.isRecording() != AudioMode.RUNNING) 
+			staticTitle();
+		
 		mute.setBackground(loop.isOnMute() ? PURPLE : null);
 		
 		Color bg = BLUE;
-		if (loop.isRecording() == AudioMode.RUNNING) 
+		if (loop.isRecording() == AudioMode.RUNNING) {
 			bg = RED;
-		else if (loop.getClock().getListeners().contains(loop.getSync()))
-			bg = YELLOW;
+			if (bars == BSYNC_DOWN)
+				bg = CLOCKSYNC;
+		}
+		else if (clock.isSync(loop))
+			bg = CLOCKSYNC;
 		else if (loop.hasRecording() && loop.isPlaying() == AudioMode.STOPPED)
 			bg = Color.DARK_GRAY;
 		else if (looper.getOnDeck().contains(loop)) 
-			bg = PINK;
+			bg = ONDECK;
 		else if (channel.isOnMute())  // line in/master track 
 			bg = Color.BLACK;
 		else if (channel.getGain().getVol() < 5)
@@ -88,4 +95,65 @@ public class LoopFader extends ChannelFader {
 		return bg;
 	}
 
+	private void staticTitle() {
+		if (loop == looper.getLoopA()) {
+			if (clock.getLength() < 10)
+				title.setText("-" + clock.getLength() + "-");
+			else 
+				title.setText("" + clock.getLength());
+		}
+		else 
+			title.setText(" " + channel.getName() + " ");		
+
+	}
+
+	@Override public void update(Notification.Property prop, Object value) {
+		if (Notification.Property.BEAT == prop) {
+			if (counter < 0) { // not started, display beats until start
+				JudahZone.getMixer().getFader(loop).update();
+				int countdown = clock.getBeat() % clock.getMeasure() - clock.getMeasure();
+				title.setText(countdown + "");
+			}
+			else if (loop.isRecording() == AudioMode.RUNNING) { 
+				// recording, display bars.beats until finish
+				int measure = clock.getMeasure();
+				StringBuffer sb = new StringBuffer("<html>");
+				sb.append(1 + clock.getBeat() % measure).append("/").append(measure);
+				if (bars < 100)
+					sb.append("<br/>").append("-").append(bars - counter);
+				else 
+					sb.append("<br/>").append((counter + 1));
+				
+				title.setText(sb.append("</html>").toString());
+			}
+			return;
+		}
+		
+		if (Notification.Property.BARS != prop) return;
+		if (bars == BSYNC_DOWN) {
+			loop.record(false); // bSync
+			clock.setLength(counter + 1);
+			clock.setBar(0);
+			RTLogger.log(this, "BSync ended");
+			return;
+		}
+			
+		if (counter < 0) {
+			loop.record(true);
+			title.setText("Go ! ");
+		}
+		counter ++;
+		if (counter == bars) {
+			loop.record(false);
+			clock.listen(loop);
+		}
+	}
+	
+	public void setup(int length, int init) {
+		bars = length;
+		counter = init;
+		MainFrame.update(this);
+	}
+
+	
 }

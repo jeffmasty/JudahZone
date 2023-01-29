@@ -56,7 +56,6 @@ public abstract class Musician implements MouseListener, MouseWheelListener, Mou
 
 	@Override public void mouseReleased(MouseEvent e) {	
 		
-		
 		if (drag) { // paste selection at new point
 			Prototype trans = translate(e.getPoint());
 			if (on == null) return; // error;

@@ -4,26 +4,23 @@ import static net.judah.JudahZone.*;
 
 import java.util.ArrayList;
 
-import lombok.Getter;
-import net.judah.controllers.MapEntry.TYPE;
-import net.judah.effects.Chorus;
-import net.judah.effects.CutFilter;
-import net.judah.effects.Delay;
-import net.judah.effects.Overdrive;
-import net.judah.effects.gui.FxPanel;
+import net.judah.drumkit.Sampler;
+import net.judah.fx.Chorus;
+import net.judah.fx.CutFilter;
+import net.judah.fx.Delay;
+import net.judah.fx.Overdrive;
+import net.judah.gui.fx.FxPanel;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
-import net.judah.samples.Sampler;
 import net.judah.util.Constants;
 
 /** CC 1 - 16 on channel 13 */
 public class KorgPads extends ArrayList<Runnable> implements Controller {
 
 	public static final String NAME = "nanoPAD2";
-	@Getter private final ArrayList<MapEntry> list = new ArrayList<MapEntry>(); 
 	
 	private long lastPress;
 	private Object tapTarget;
@@ -35,36 +32,8 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 	private final int RIGHT = 74;
 	
 	public KorgPads(KorgMixer mixer) {
-		for (int x = 1; x < 17; x++)
-			list.add(new MapEntry(new String("" + x), TYPE.MOMENTARY, x));
 	}
 	
-	/** on double tap */
-	private boolean doubleTap(Object o) {
-		if (tapTarget == o && System.currentTimeMillis() - lastPress < Constants.DOUBLE_CLICK) {
-			lastPress = 0;
-			if (o == getLooper())
-				((Looper)o).reset(); // !
-			else if (o instanceof Loop)
-				((Loop)o).erase();
-			else if (o == getSeq()) {
-				getLooper().verseChorus(); // toggle loop mutes
-			}
-			else if (o instanceof String) {
-				for (Loop loop : getLooper()) {
-					if (loop.getName().equals("" + o) && loop.hasRecording()) {
-						loop.duplicate();
-					}
-						
-				}
-			}
-			return true;
-		}
-		lastPress = System.currentTimeMillis();
-		tapTarget = o;
-		return false;
-	}
-
 	@Override public boolean midiProcessed(Midi midi) {
 		int data1 = midi.getData1();
 		int data2 = midi.getData2();
@@ -79,21 +48,19 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		
 		switch (data1) {
 		// Loops top row
-		case 1: // toggle record loops
+		case 1: // toggle loop records
 		case 2:
 		case 3:
 		case 4:
-			Loop loop = looper.get(data1 - 1);
-			if (doubleTap(loop))
+			if (doubleTap(data1 - 1))
 				return true;
-			loop.trigger();
+			looper.get(data1 - 1).trigger();
 			return true;
-
-		case 5: // Show Sheet Music
+		case 5: // Show Sheet Music // TODO
 			getFrame().sheetMusic(true);
 			return true; 
-		case 6: // latch guitar EFX to loop A
-			getGuitar().getLatchEfx().latch(looper.getLoopA());
+		case 6: // latch guitar EFX to looper
+			getGuitar().getLatchEfx().latch();
 			return true;
 		case 7: 
 			getFrame().getKnobs().pad1();
@@ -103,40 +70,13 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			return true;
 			
 		// Loops bottom row
-		case 9:  
-			Loop a = looper.getLoopA();
-			if (doubleTap(looper)) {// RESET
-				looper.onDeck(a); // de-select
-				return true;
-			}
-			looper.onDeck(a);
-            return true;
-		case 10:  // latch B
-			Loop b = looper.getLoopB();
-			if (doubleTap(getSeq())) {// verse/chorus
-				looper.onDeck(b);
-				return true;
-			}
-			looper.onDeck(b);
-			return true;
-		case 11:  // latch C
-			Loop c = looper.getLoopC();
-			if (doubleTap(c.getName())) {// duplicate
-				looper.onDeck(c);
-				return true;
-			}
-			looper.onDeck(c);
-			return true;
-		case 12: 
-			SoloTrack d = looper.getSoloTrack();
-			if (looper.getRecordedLength() == 0) {
-				d.toggle();
-			}
-			else if (doubleTap(d.getName())) {
-				return true;
-			}
-			else 
-				d.toggle();
+		case 9:  // latch loop
+		case 10:  
+		case 11:
+		case 12:
+			Loop onDeck = looper.get(data1 - 9);
+			/*if*/ doubleTap(onDeck); // double loop length
+			looper.onDeck(onDeck);
 			return true;
 			
 		case 13: // Cycle verse/chorus 
@@ -206,20 +146,35 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		return false;
 	}
 
-//	private boolean context1( ) {
-//		switch (MainFrame.getKnobMode()) {
-//// CLOCK/KIT? : start Clock/drums on next loop
-////			if (looper.getRecordedLength() > 0)
-////				getClock().listen(looper.getLoopA());	
-//		case Midi: 
-//			getMidiGui().getZoneBtn().setSelected(!getMidiGui().getZoneBtn().isSelected());
-//		case Synth:
-//			SynthKnobs.setFreqMode(!SynthKnobs.isFreqMode());
-//			break;
-//		}
-//		return true;
-//	}
-	
+	/** on double tap */
+	private boolean doubleTap(Object o) {
+		if (tapTarget == o && System.currentTimeMillis() - lastPress < Constants.DOUBLE_CLICK) {
+			lastPress = 0;
+			if (o == getLooper())
+				((Looper)o).reset(); 
+			else if (o instanceof Integer)
+				getLooper().get((int)o).erase();
+			else if (o instanceof Loop) {
+				Loop loop = (Loop)o;
+				Looper loops = getLooper(); 
+				if (loop == loops.getLoopA()) 
+					loops.reset();
+				else if (loop.hasRecording()) 
+					loop.duplicate();
+				else if (loop == loops.getLoopB()) 
+					loops.verseChorus();
+				else if (loop == loops.getLoopC()) 
+					loops.verseChorus();
+				else if (loop == loops.getSoloTrack()) 
+					((SoloTrack)loop).toggle();
+			}
+			return true;
+		}
+		lastPress = System.currentTimeMillis();
+		tapTarget = o;
+		return false;
+	}
+
 	private void joystick(boolean active) {
 		if (active) {
 			getFxRack().getChannel().reset();
@@ -233,7 +188,19 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 	
 }
 
-
+//	private boolean context1( ) {
+//		switch (MainFrame.getKnobMode()) {
+//// CLOCK/KIT? : start Clock/drums on next loop
+////			if (looper.getRecordedLength() > 0)
+////				getClock().listen(looper.getLoopA());	
+//		case Midi: 
+//			getMidiGui().getZoneBtn().setSelected(!getMidiGui().getZoneBtn().isSelected());
+//		case Synth:
+//			SynthKnobs.setFreqMode(!SynthKnobs.isFreqMode());
+//			break;
+//		}
+//		return true;
+//	}
 /*
 
         nanoPAD2   MIDI Implementation               Revision 1.01 (2011.10.19)

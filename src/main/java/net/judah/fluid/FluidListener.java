@@ -5,14 +5,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
-import net.judah.api.MidiPatch;
 import net.judah.util.RTLogger;
 
 class FluidListener extends Thread {
 	final static String PREFIX = ">";
 	final static String JACK = "Jack:";
 	final static String PREFIX_JACK = "> Jack: ";
-    final ArrayList<MidiPatch> instruments = new ArrayList<MidiPatch>();
+    final ArrayList<FluidPatch> instruments = new ArrayList<FluidPatch>();
     final ArrayList<FluidChannel> channels = new ArrayList<FluidChannel>();
 
 	final InputStream is;
@@ -51,7 +50,7 @@ class FluidListener extends Thread {
 
             		if (sysOverride == FluidCommand.INST)  {
             			try {
-            				MidiPatch instrument = parseInstrument(line);
+            				FluidPatch instrument = parseInstrument(line);
             				instruments.add(instrument);
             			} catch (Throwable t) {
             				RTLogger.warn(this, "error reading instrument line " + line + " " + t.getMessage());
@@ -81,13 +80,13 @@ class FluidListener extends Thread {
 		000-126 Applause
 		000-127 Gun Shot
 		008-004 Detuned EP 1 </pre>*/
-    private MidiPatch parseInstrument(String fluidString) {
+    private FluidPatch parseInstrument(String fluidString) {
 			String[] split = fluidString.split(" ");
 			String[] numbers = split[0].split("-");
 			int group = Integer.parseInt(numbers[0]);
 			int index = Integer.parseInt(numbers[1]);
 			String name = fluidString.replace(split[0], "").trim();
-		return new MidiPatch(group, index, name);
+		return new FluidPatch(group, index, name);
 	}
 
 	void sysOverride(FluidCommand cmd) {

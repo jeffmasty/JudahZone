@@ -1,36 +1,32 @@
 TODO:
 
-drag-n-drop = midi editor transpose
-timesig, fill patterns, loop sync/verse/chorus feedback, 
-cc/prog on Sequencer
-record to MidiTrack + Midi Looper
-drumkit bug: HiCut = pan? decay? sample volume
-SettableCombo (mouse, bugs) 
-Sample packs
-ratchet()
-Executor Threads
-DBIndicator, Scope and Meters
+PitchBend bug, Waltz gracefully
+DrumTracks absolute (select highlight bug)
+Midi Editor transpose/translate/drag-n-drop/steps
+Undo/Redo/Copy/Paste, cc/prog in Midi tracks
+record to MidiTrack + Midi Looper, TrackSchedule.update()
 Loop copy/paste/length/save,  Record session
+drumkit bug: HiCut/pan/atk/decay/vol
+DBIndicator, Scope, Meters, Crave clock sync 
+ERRNOBUF - no ticks, no start seq
+Sample packs, ratchet(), Executor Threads
 Arppegiator (Racman sequence), Chord sheets
 ChordPro parser: https://github.com/SongProOrg/songpro-java  https://github.com/saipanman95/chordpro-parser
 walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
-ERRNOBUF - no ticks, no start seq
-IR Reverb
 Synth: LFO, glide, PWM, mono-synth
-Delay and LFO upgrade (Clock & tapTempo)
+IR Reverb, Delay and LFO sync to Clock & TapTempo
 probability, Ritardando
 Sampler Fx (granularity, pitched frequency, wet)
 DrumSynth, Vocoder 
 record record record youtubes
 README credits
-clipping/xruns filter see https://github.com/psambit9791/jDSP Peak/Spike
-Latency + bleeding edge
 Phasor, Shepard
-Undo/Redo/Copy/Paste
 Sequencer can really swing.
 make client-server architecture
 support JavaSound/non-Jack, make accessible setup and settings
 
+Latency + bleeding edge
+clipping/xruns filter see https://github.com/psambit9791/jDSP Peak/Spike
 Hacking the Arturia Beatstep:
 https://www.untergeek.de/2014/11/taming-arturias-beatstep-sysex-codes-for-programming-via-ipad/
 https://github.com/konsumer/beatstep
@@ -160,9 +156,9 @@ FX
 	Rev.Wet    Rev.Room  Del.F/B   Del.Time   Eq.Bass  Eq.Mid  Eq.High  Vol  
 	Cho.Rate   Cho.Deep  Cho.F/B   Overdrive  Eq.Type  Eq.Party Eq.Cut  Pan/Comp.gain 
 	
-LFO 
+LFO/Compressor 
 	type   min     max       time
-	Preset C.Knee  C.Thresh  C.Gain
+	Ratio  Thresh  Boost     Atk/Rel
 
 CLOCK 
 	sync shaker synth1  fluid

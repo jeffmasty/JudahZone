@@ -8,10 +8,10 @@ import org.jaudiolibs.jnajack.JackException;
 
 import net.judah.JudahZone;
 import net.judah.drumkit.DrumMachine;
-import net.judah.effects.Fader;
-import net.judah.effects.LFO.Target;
-import net.judah.effects.gui.MultiSelect;
+import net.judah.fx.Fader;
+import net.judah.fx.LFO.Target;
 import net.judah.gui.MainFrame;
+import net.judah.gui.fx.MultiSelect;
 import net.judah.looper.Loop;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
@@ -68,7 +68,7 @@ public class Beatstep implements Controller {
 			else if (data1 == FX) { 
 				if (!Midi.isNoteOn(midi)) return true;
 				for (Channel current : getFxRack().getSelected()) 
-					current.toggleFx();
+					current.setPresetActive(!current.isPresetActive());
 			}
 			else if (data1 == FADER) { 
 				if (!Midi.isNoteOn(midi)) return true;
@@ -142,7 +142,7 @@ public class Beatstep implements Controller {
 			if (data1 == MAINS)
 				return getMains();
 			else if (data1 >= GUITAR)
-				return getNoizeMakers().get(data1 - GUITAR);
+				return getInstruments().get(data1 - GUITAR);
 			else 
 				return getLooper().get(data1 - LOOPA);
 		}

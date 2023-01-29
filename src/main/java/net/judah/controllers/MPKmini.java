@@ -8,15 +8,16 @@ import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
 import net.judah.api.MidiReceiver;
 import net.judah.drumkit.DrumType;
-import net.judah.effects.Delay;
+import net.judah.drumkit.Sample;
+import net.judah.fx.Delay;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
+import net.judah.gui.knobs.KnobMode;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
-import net.judah.midi.ProgChange;
 import net.judah.midi.Transpose;
 import net.judah.mixer.Channel;
-import net.judah.samples.Sample;
+import net.judah.util.Constants;
 
 /** Akai MPKmini, not the new one */
 @RequiredArgsConstructor
@@ -28,7 +29,7 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 
 	private final JudahMidi sys;
 	
-	private final Midi NO_MODULATION = Midi.create(Midi.CONTROL_CHANGE, 0, 1, 0);
+	//private final Midi NO_MOD = Midi.create(Midi.CONTROL_CHANGE, 0, 1, 0);
 	private final byte[] SUSTAIN_ON = Midi.create(Midi.CONTROL_CHANGE, 0, 64, 127).getMessage();
 	@SuppressWarnings("unused")
 	private final byte[] SUSTAIN_OFF= Midi.create(Midi.CONTROL_CHANGE, 0, 64, 0).getMessage();
@@ -45,9 +46,7 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 			return doProgChange(midi.getData1(), midi.getData2());
 		
 //		if (getTracker().isRecord() && Midi.isNote(midi)) {
-//			getNotes().record(midi);
-//			return false; // pass through?
-//		}
+//			getNotes().record(midi); return false; // pass through?}
 
 		if (midi.getChannel() == 9) {
 			int data1 = midi.getData1();
@@ -155,24 +154,20 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 	}
 
 	private boolean joystickL(int data2) throws JackException {
-		Delay d = ((Channel)sys.getKeyboardSynth()).getDelay();
+		Delay d = ((Channel)sys.getKeyboardSynth().getMidiOut()).getDelay();
 		d.setActive(data2 > 4);
 		if (data2 <= 4) 
 			return true;
 		if (d.getDelay() < Delay.DEFAULT_TIME) 
 			d.setDelay(Delay.DEFAULT_TIME);
-		// data2 / 127 = 0 to max delay
-		d.setFeedback(data2 * 0.00787f);
+		d.setFeedback(Constants.midiToFloat(data2));
 		return true;
 	}
 	
 	private boolean joystickR(int data2) throws JackException {
-		if (data2 > 4) {
-			Midi modWheel = Midi.create(Midi.CONTROL_CHANGE, 0, 1, data2);
-			sys.getKeyboardSynth().send(modWheel, JudahMidi.ticker());
-		}
-		else
-			sys.getKeyboardSynth().send(NO_MODULATION, JudahMidi.ticker());
+		int ch = sys.getKeyboardSynth().getCh();
+		sys.getKeyboardSynth().getMidiOut().send( Midi.create(Midi.CONTROL_CHANGE, ch, 1, 
+				data2 > 4 ? data2 : 0), JudahMidi.ticker());  
 		return true;
 	}
 	
@@ -184,48 +179,48 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 
 			MidiReceiver fluid = getFluid();
             
-            if (data1 == PRIMARY_PROG[0]) // up fluid inst patch
-            	ProgChange.next(true, fluid, 9);
-            else if (data1 == PRIMARY_PROG[1]) { // up gm drum patch
-            	ProgChange.next(true, fluid, 9);
+            if (data1 == PRIMARY_PROG[0]) {// up fluid inst patch
+//            	ProgChange.next(true, fluid, 9);
+//            else if (data1 == PRIMARY_PROG[1]) { // up gm drum patch
+//            	ProgChange.next(true, fluid, 9);
             } 
             else if (data1 == PRIMARY_PROG[2]) { // up sheetMusic
-            	getFrame().sheetMusic(true);
-            } else if (data1 == PRIMARY_PROG[3]) { // up song
-            	nextSong();
+//            	getFrame().sheetMusic(true);
+//            } else if (data1 == PRIMARY_PROG[3]) { // up song
+//            	nextSong();
             } 
-            
             else if (data1 == PRIMARY_PROG[4]) { // down fluid inst patch
-                ProgChange.next(false, fluid, 0);
-            } else if (data1 == PRIMARY_PROG[5]) { // down gm drum patch
-            	ProgChange.next(false, fluid, 0);
-            } else if (data1 == PRIMARY_PROG[6]) { // down sheet music
+//                ProgChange.next(false, fluid, 0);
+//            } else if (data1 == PRIMARY_PROG[5]) { // down gm drum patch
+//            	ProgChange.next(false, fluid, 0);
+            } else 
+            if (data1 == PRIMARY_PROG[6]) { // down sheet music
             	getFrame().sheetMusic(false);
             } else if (data1 == PRIMARY_PROG[7]) { // reset stage
-            	getMidiGui().getSetlistCombo().setSelectedItem(0);
+            	getMidiGui().getSongsCombo().setSelectedItem(0);
             	loadSong(getCurrent().getFile());
             }
 
             
             // B BANK 
             else if (data1 == B_PROG[0]) // I want bass
-            	ProgChange.progChange(32, fluid, 0);
-            else if (data1 == B_PROG[1]) { // sitar
-            	ProgChange.progChange(104, fluid, 0);
-            } else if (data1 == B_PROG[2]) { // harp
-            	ProgChange.progChange(46, fluid, 0);
-            } else if (data1 == B_PROG[3]) { // elec piano
-            	ProgChange.progChange(4, fluid, 0);
+            	fluid.progChange("Acoustic Bass");
+            else if (data1 == B_PROG[1]) { 
+            	fluid.progChange("Sitar");
+            } else if (data1 == B_PROG[2]) { 
+            	fluid.progChange("Harp");
+            } else if (data1 == B_PROG[3]) { 
+            	fluid.progChange("Rhodes EP");
             }
 
             else if (data1 == B_PROG[4]) { // strings
-            	ProgChange.progChange(44, fluid, 0);
-            } else if (data1 == B_PROG[5]) { // vibraphone
-            	ProgChange.progChange(11, fluid, 0);
-            } else if (data1 == B_PROG[6]) // rock organ
-            	ProgChange.progChange(18, fluid, 0);
-            else if (data1 == B_PROG[7]) { // honky tonk piano
-            	ProgChange.progChange(3, fluid, 0);
+            	fluid.progChange("Tremolo");
+            } else if (data1 == B_PROG[5]) { 
+            	fluid.progChange("Vibraphone");
+            } else if (data1 == B_PROG[6]) 
+            	fluid.progChange("Rock Organ");
+            else if (data1 == B_PROG[7]) { 
+            	fluid.progChange("Honky Tonk");
             } else 
             	return false;
             

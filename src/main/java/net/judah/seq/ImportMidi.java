@@ -13,15 +13,13 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import net.judah.gui.Gui;
+import net.judah.gui.widgets.FileChooser;
+import net.judah.gui.widgets.ModalDialog;
 import net.judah.util.RTLogger;
-import net.judah.widgets.FileChooser;
-import net.judah.widgets.ModalDialog;
 
 public class ImportMidi extends JPanel {
 
 	private final MidiTrack track;
-	
-	
 	
 	public ImportMidi(MidiTrack p, File f, int tracknum) {
 		this.track = p;
@@ -41,9 +39,8 @@ public class ImportMidi extends JPanel {
 	
 	public ImportMidi(MidiTrack p) {
 		this.track = p;
-		ModalDialog d = null;
 		// select and parse file
-		File f = FileChooser.choose();
+		File f = FileChooser.choose(track.getFolder());
 		if (f == null) return;
 		try {
 			processSequence(f, -1);

@@ -18,46 +18,60 @@ import org.jaudiolibs.jnajack.JackPort;
 import org.jaudiolibs.jnajack.JackPortFlags;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
 import net.judah.api.BasicClient;
 import net.judah.api.MidiReceiver;
-import net.judah.api.PortMessage;
 import net.judah.controllers.*;
 import net.judah.gui.MainFrame;
-import net.judah.midi.JudahClock.Mode;
-import net.judah.midi.MidiSetup.IN;
-import net.judah.midi.MidiSetup.OUT;
+import net.judah.seq.MidiTrack;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
-/** handle MIDI integration with Jack */
+/** Setup MIDI ports and handle MIDI integration with Jack */
 @Getter 
 public class JudahMidi extends BasicClient implements Closeable {
-
 	public static final String JACKCLIENT_NAME = "JudahMidi";
 
-	@Getter private final JudahClock clock;
-    @Getter private ArrayList<JackPort> inPorts = new ArrayList<>();  
-    @Getter private JackPort midiclock;
-    @Getter private JackPort keyboard;
-    @Getter private JackPort pedal;
-    @Getter private JackPort pads;
-    @Getter private JackPort mixer;
-    @Getter private JackPort line6;
-    @Getter private JackPort beatstep;
-    @Getter private JackPort jamstik;
-    @Getter private final ArrayList<JackPort> outPorts = new ArrayList<>(); 
-    @Getter private JackPort fluidOut;
-    @Getter private JackPort craveOut;
-    @Getter private JackPort tempo;
+	@RequiredArgsConstructor
+	public static enum IN { // in Midi ports
+		MIDICLOCK("midiclock"),
+		KEYBOARD("keyboard"), 
+		MIXER("mixer"),
+		PADS("pads"),
+		LINE6_IN("line6In"),
+		BEATSTEP("beatstep"),
+		JAMSTIK("jamstik");
+		@Getter public final String port;
+	}
 
-    @Getter private MidiReceiver keyboardSynth;
-    @Getter private final ArrayList<MidiPort> sync = new ArrayList<>();
-    @Getter private final MidiScheduler scheduler = new MidiScheduler();
+	@RequiredArgsConstructor
+	public enum OUT { // out ports
+		TEMPO("Tempo"),
+		SYNTH_OUT("Fluid"), 
+		CRAVE_OUT("Crave");
+		@Getter public final String port;
+	}
+	
+	private final JudahClock clock;
+    @Getter private MidiTrack keyboardSynth;
+	private ArrayList<JackPort> inPorts = new ArrayList<>();  
+    private JackPort midiclock;
+    private JackPort keyboard;
+    private JackPort pedal;
+    private JackPort pads;
+    private JackPort mixer;
+    private JackPort line6;
+    private JackPort beatstep;
+    private JackPort jamstik;
+    private final ArrayList<JackPort> outPorts = new ArrayList<>(); 
+    private JackPort fluidOut;
+    private JackPort craveOut;
+    private JackPort tempo;
+    private final ArrayList<MidiPort> sync = new ArrayList<>();
+    private final MidiScheduler scheduler = new MidiScheduler();
     private final HashMap<JackPort, Controller> switchboard = new HashMap<>();
-    @Getter private static final ConcurrentLinkedQueue<PortMessage> queue = new ConcurrentLinkedQueue<>();
-
-    
+    private static final ConcurrentLinkedQueue<PortMessage> queue = new ConcurrentLinkedQueue<>();
     private static int ticker;
     private long counter;
     private final byte[] DATA1 = new byte[1], DATA2 = new byte[2], DATA3 = new byte[3]; // for process()
@@ -75,7 +89,6 @@ public class JudahMidi extends BasicClient implements Closeable {
     	switchboard.clear();
     	outPorts.clear();
     	inPorts.clear();
-    	// init getters for out ports
         for (OUT port : OUT.values())
             outPorts.add(jackclient.registerPort(port.port, MIDI, JackPortIsOutput));
         
@@ -83,7 +96,6 @@ public class JudahMidi extends BasicClient implements Closeable {
         if (sz > OUT.TEMPO.ordinal()) {
         	tempo = outPorts.get(OUT.TEMPO.ordinal());
         }
-        // if (sz > OUT.CLOCK_OUT.ordinal()) clockOut = outPorts.get(OUT.CLOCK_OUT.ordinal());
         if (sz > OUT.SYNTH_OUT.ordinal()) {
         	fluidOut = outPorts.get(OUT.SYNTH_OUT.ordinal());
         }
@@ -130,7 +142,6 @@ public class JudahMidi extends BasicClient implements Closeable {
         timePolling.setPriority(7);
         timePolling.setName(scheduler.getClass().getSimpleName());
         timePolling.start();
-        
     }
 
     @Override
@@ -209,9 +220,7 @@ public class JudahMidi extends BasicClient implements Closeable {
             ticker = 0;
             for (JackPort port : outPorts)
                 JackMidi.clearBuffer(port);
-            
-            if (clock.getMode() == Mode.Internal)
-            	clock.process();
+            // if (clock.getMode() == Mode.Internal) clock.process();
             
         	// check for incoming midi
         	int eventCount;
@@ -244,14 +253,16 @@ public class JudahMidi extends BasicClient implements Closeable {
                     		Jamstik.getOut().send(midi, index);
                     }
                     else if (switchboard.get(port).midiProcessed(midi))
-            			MainFrame.updateCurrent(); // TODO
-            		else if (midi.getChannel() == 9) 
+            			MainFrame.updateCurrent(); // TODO overkill?
+            		else if (midi.getChannel() == 9) // not used
             			JackMidi.eventWrite(fluidOut, ticker(), data, midiEvent.size());
-            		else 
-            			keyboardSynth.send(midi, ticker());
+            		else if (Midi.isNote(midi))
+            			keyboardSynth.getMidiOut().send(Midi.format(midi, keyboardSynth.getCh(), 1), ticker());
                 }
             }
         	// check sequencers for output
+        	if (queue.isEmpty())
+        		return true;
             PortMessage route = queue.poll();
             while(route != null) {
             	JackMidi.eventWrite(route.getPort(), 
@@ -259,11 +270,9 @@ public class JudahMidi extends BasicClient implements Closeable {
             	route = queue.poll();
             }
         } catch (Throwable e) {
-
             RTLogger.warn(this, e);
-
             if ("ENOBUF".equals(e.getMessage())) {
-// TODO                zone.recoverMidi();
+            	// TODO zone.recoverMidi();
                 return true;
             }
         }
@@ -294,27 +303,15 @@ public class JudahMidi extends BasicClient implements Closeable {
 			p.send(new Midi(midi), JudahMidi.ticker());
 	}
 
-//	public Path getPath(MidiPort port) {
-//		for (Path p : paths)
-//			if (port.equals(p.getPort()))
-//				return p;
-//		return null;
-//	}
-//
-//	public Path getPath(Channel ch) {
-//		for (Path p : paths)
-//			if (p.getChannel().equals(ch))
-//				return p;
-//		return null;
-//	}
-
-	public void setKeyboardSynth(MidiReceiver port) {
+	public void setKeyboardSynth(MidiTrack port) {
 		if (keyboardSynth == port)
 			return;
-		MidiReceiver old = keyboardSynth;
+		MidiTrack old = keyboardSynth;
 		keyboardSynth = port;
 		if (old != null)
-    		new Panic(old.getMidiPort()).start();
+    		new Panic(old.getMidiOut(), old.getCh()).start();
+		if (JudahZone.getMidiGui() != null)
+			MainFrame.update(JudahZone.getMidiGui());
 	}
 	
 }
@@ -354,9 +351,6 @@ public class JudahMidi extends BasicClient implements Closeable {
 //        for (String port : jack.getPorts(jackclient, "CRAVE MIDI 1", MIDI, EnumSet.of(JackPortIsInput))) {
 //        	RTLogger.log(this, "connecting CRAVE: " + craveOut.getName() + " to " + port);
 //            jack.connect(jackclient, craveOut.getName(), port);
-//    if (sz > IN.CRAVE_IN.ordinal()) {
-//    	craveIn = inPorts.get(IN.CRAVE_IN.ordinal());
-//    	switchboard.put(craveIn, new Crave());}
 //    if (sz > IN.PEDAL.ordinal()) {
 //    	pedal = inPorts.get(IN.PEDAL.ordinal());
 //    	switchboard.put(pedal, new MidiPedal());}
@@ -374,15 +368,5 @@ public class JudahMidi extends BasicClient implements Closeable {
 //    } catch (NumberFormatException e) {
 //        log.error(e.getMessage() + " " + Constants.prettyPrint(props));
 //    }}
-//    public JackPort getByName(String name) {
-//        for (JackPort p : outPorts)
-//            if (p.getShortName().equals(name))
-//                return p;
-//        for (JackPort p : inPorts)
-//            if (p.getShortName().equals(name))
-//                return p;
-//        RTLogger.warn(this, name + " midi port not found, using default out");
-//        return outPorts.get(0);
-//    }
 
 

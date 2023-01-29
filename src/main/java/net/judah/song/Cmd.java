@@ -14,7 +14,7 @@ import net.judah.song.Param.Type;
 public enum Cmd {
 
 	Start(CLOCK), Tempo(CLOCK), Length(CLOCK), // clock
-	TimeSig(CLOCK), TimeCode(CLOCK), // Absolute/Relative scene cues
+	MPK(CLOCK), TimeSig(CLOCK), TimeCode(CLOCK), // Absolute/Relative scene cues
 	Record(LOOP), RecEnd(LOOP), Sync(LOOP), Dup(LOOP), Delete(LOOP), Solo(LOOP), SoloCh(LOOP), // looper
 	FX(CH), Latch(CH), FadeOut(CH), FadeIn(CH), Mute(CH), Unmute(CH), OffTape(CH), OnTape(CH) // fx/channel 
 	;  

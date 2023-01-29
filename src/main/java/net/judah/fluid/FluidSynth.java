@@ -5,9 +5,6 @@ import static net.judah.util.Constants.NL;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.security.InvalidParameterException;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
@@ -15,13 +12,13 @@ import javax.sound.midi.ShortMessage;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
-import net.judah.api.JudahException;
-import net.judah.api.MidiPatch;
+import net.judah.JudahZone;
+import net.judah.gui.MainFrame;
+import net.judah.gui.settable.Program;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiInstrument;
 import net.judah.midi.MidiPort;
-import net.judah.midi.ProgMsg;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -31,20 +28,18 @@ public class FluidSynth extends MidiInstrument {
 	public static final String RIGHT_PORT = "fluidsynth-midi:right"; // "fluidsynth:r_00";
 	public static final String MIDI_PORT = "fluidsynth-midi:midi_00"; // "fluidsynth:midi";
 	public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // "/usr/share/sounds/sf2/JJazzLab-SoundFont.sf2"
-
+	public static final int CHANNELS = 4;
+	
 	private final String shellCommand;
 	private Process process;
-
+	@Getter private String[] patches;
+	private String[] changes = new String[CHANNELS];
+	
+	@Getter private final FluidChannels channels = new FluidChannels();
 	private FluidListener listener;
 	/** talks to FluidSynth on it's stdin */
 	private OutputStream outStream;
-
 	@Getter private final FluidConsole console;
-
-	@Getter static Instruments instruments = new Instruments();
-	@Getter private String[] patches;
-	@Getter private final FluidChannels channels = new FluidChannels();
-
 	private float gain = 3f; // max 5.0
 
 	public FluidSynth(int sampleRate, JackPort left, JackPort right, JackPort midi, boolean startListeners) {
@@ -80,36 +75,38 @@ public class FluidSynth extends MidiInstrument {
 
 		if (startListeners)
 			try {
-				syncChannels();
 				syncInstruments();
 				syncChannels();
 			} catch (Throwable t) {
 				RTLogger.warn(this, "sync failed. " + t.getMessage());
 			}
-		
-        RTLogger.log(this, "FluidSynth channels: " + channels.size() + " instruments: " + instruments.size());
-        
         reverb = new FluidReverb(this); // use external reverb
 	}
 
-	public void syncChannels() throws InterruptedException, IOException, JudahException {
-		listener.sysOverride(FluidCommand.CHANNELS);
-		outStream.write( (FluidCommand.CHANNELS.code + NL).getBytes() );
-		outStream.flush();
-		int count = 0;
-		while (listener.sysOverride != null && count++ < 15) {
-			Thread.sleep(30);
-		}
-		if (listener.channels.isEmpty())
-			throw new JudahException("Error reading channels");
-		else {
-			channels.clear();
-			for (FluidChannel c : listener.channels)
-				channels.add(c);
-		}
+	public void syncChannels() {
+		try {
+			listener.sysOverride(FluidCommand.CHANNELS);
+			outStream.write( (FluidCommand.CHANNELS.code + NL).getBytes() );
+			outStream.flush();
+			int count = 0;
+			while (listener.sysOverride != null && count++ < 15) {
+				Thread.sleep(30);
+			}
+			if (listener.channels.isEmpty())
+				throw new Exception("Error reading channels");
+			else {
+				channels.clear();
+				for (FluidChannel c : listener.channels)
+					channels.add(c);
+			}
+			for (int i = 0; i < changes.length; i++)
+				if (channels.size() > i)
+					changes[i] = channels.get(i).name;
+			
+		} catch (Exception e) { RTLogger.warn(this, e);  }
 	}
 
-	public void syncInstruments() throws InterruptedException, IOException, JudahException {
+	public void syncInstruments() throws Exception {
 		listener.sysOverride(FluidCommand.INST);
 		outStream.write((FluidCommand.INST.code + "1" + NL).getBytes());
 		outStream.flush();
@@ -118,17 +115,17 @@ public class FluidSynth extends MidiInstrument {
 			Thread.sleep(30);
 		}
 		if (listener.instruments.isEmpty()) 
-			throw new JudahException("Fluid Error reading instruments");
+			throw new Exception("Fluid Error reading instruments");
 
-		instruments.clear();
-		patches = new String[listener.instruments.size()];
-		for (int i = 0; i < listener.instruments.size(); i++) {
-			instruments.add(listener.instruments.get(i));
-			patches[i] = instruments.get(i).name;
+		int size = listener.instruments.size();
+		if (size > 99) // knob has 100 instruments
+			size = 99;
+		patches = new String[size];
+		for (int i = 0; i < size; i++) {
+			patches[i] = listener.instruments.get(i).name;
 		}
 		
 	}
-
 
 	public Midi bankUp() {
 		try {
@@ -148,59 +145,9 @@ public class FluidSynth extends MidiInstrument {
 		return null;
 	}
 
-	/**The MIDI message used to specify the instrument has one STATUS byte and one DATA byte :
-        Status byte : 1100 CCCC
-        Data byte 1 : 0XXX XXXX
-    where CCCC is the MIDI channel (0 to 15) and XXXXXXX is the instrument number from 0 to 127. */
-	public Midi progChange2(final int channel, int preset) {
-		final int before = channels.getCurrentPreset(channel);
-		try {
-			if (++preset == 129)
-				preset = 1;
-
-			final Midi msg = new ProgMsg(channel, preset);
-
-			new Thread() {
-				@Override public void run() {
-					try {
-						Thread.sleep(22);
-						syncChannels();
-						Thread.sleep(40);
-						int after = channels.getCurrentPreset(channel);
-						RTLogger.log(this, "PROG CHNG " + instruments.get(after) + " (from " + instruments.get(before) + ")");
-					} catch (Throwable e) { 			
-						RTLogger.warn(this, e);
-					}
-				};
-			}.start();
-
-			return msg;
-		} catch (Throwable t) {
-			RTLogger.warn(this, t);
-			return null;
-		}
-	}
-
-
-	@SuppressWarnings("unused")
-	private int progChangeSync(int channel, int preset) {
-		try {
-			syncChannels();
-			int result = channels.getCurrentPreset(channel);
-			int bank = channels.getBank(channel);
-			for (MidiPatch f : instruments)
-				if (f.group == bank && f.index == preset)
-					RTLogger.log(this, f.toString());
-			return result;
-		} catch (Throwable t) {
-			RTLogger.warn(this, t);
-			return -1;
-		}
-	}
-
-	public void sendCommand(FluidCommand cmd) throws JudahException {
+	public void sendCommand(FluidCommand cmd) throws Exception {
 		if (cmd.type != ValueType.NONE) {
-			throw new JudahException(cmd + " Command requires a value");
+			throw new Exception(cmd + " Command requires a value");
 		}
 		sendCommand(cmd.code);
 	}
@@ -266,73 +213,14 @@ public class FluidSynth extends MidiInstrument {
 	public void close() {
 		try {
 			sendCommand(FluidCommand.QUIT);
-		} catch (JudahException e) { 
+		} catch (Exception e) { 
 			RTLogger.warn(this, e);
 		}
 	}
 
-	public static class Instruments extends ArrayList<MidiPatch> {
-	    ArrayList<MidiPatch> drums;
-	    ArrayList<MidiPatch> instruments;
-
-	    public int lookupKit(String name) {
-	    	for (MidiPatch i : getDrumkits())
-	    		if (i.name.equals(name))
-	    			return i.index;
-	    	throw new InvalidParameterException(name);
-	    }
-	    
-	    /**@return bank 128 */
-	    public ArrayList<MidiPatch> getDrumkits() {
-	        if (drums != null) return drums;
-	        drums = new ArrayList<>();
-	        for (MidiPatch i : this)
-	            if (i.group == 128) drums.add(i);
-	        return drums;
-	    }
-	    /**@return bank 1*/
-	    public ArrayList<MidiPatch> getInstruments() {
-	        if (instruments != null) return instruments;
-	        instruments = new ArrayList<>();
-	        for (MidiPatch i : this)
-	            if (i.group == 0) instruments.add(i);
-	        return instruments;
-	    }
-
-
-		public int getNextPreset(int bank, int current, boolean up) {
-			int index = -1;
-			int count = -1;
-			// extract bank
-			ArrayList<MidiPatch> roll = new ArrayList<>();
-			for (MidiPatch i : this)
-				if (i.group == bank) {
-					count++;
-					roll.add(i);
-					if (i.index == current) {
-						index = count;
-					}
-				}
-			if (index == -1)
-				throw new IndexOutOfBoundsException("preset " + current + " for bank " + bank + ": " + Arrays.toString(roll.toArray()));
-			if (up) {
-				index++;
-				if (index == roll.size())
-					index = 0;
-				return roll.get(index).index;
-			}
-			else {
-				index--;
-				if (index < 0)
-					index = roll.size() -1;
-				return roll.get(index).index;
-			}
-		}
-	}
-
 	@Override
-	public int getProg(int ch) {
-		return channels.getCurrentPreset(ch);
+	public String getProg(int ch) {
+		return changes[ch];
 	}
 
 	@Override public void progChange(String preset) {
@@ -342,18 +230,12 @@ public class FluidSynth extends MidiInstrument {
 	@Override public void progChange(String preset, int ch) {
 		for (int i = 0; i < patches.length; i++)
 			if (patches[i].equals(preset)) {
-				int idx = instruments.getInstruments().get(i).index;
-				if (idx > 127)
-					return;
-				try {
-					Midi midi = new Midi(ShortMessage.PROGRAM_CHANGE, ch, idx);
-					JudahMidi.queue(midi, midiPort.getPort());
-					syncChannels();
-				} catch (Exception e) {
-					RTLogger.warn(this, e);
-				}
+				JudahMidi.queue(Midi.create(ShortMessage.PROGRAM_CHANGE, ch, i, 0), midiPort.getPort());
+				if (ch < changes.length) 
+					changes[ch] = preset;
+				if (JudahZone.isInitialized())
+					MainFrame.update(Program.first(this, ch)); 
 			}
 	}
-	
 	
 }

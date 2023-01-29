@@ -4,8 +4,6 @@ import java.util.List;
 
 import javax.swing.table.DefaultTableModel;
 
-import net.judah.api.JudahException;
-
 public class ParamModel extends DefaultTableModel {
 	static final int COL_CMD = 0;
 	static final int COL_VAL = 1;
@@ -27,7 +25,7 @@ public class ParamModel extends DefaultTableModel {
 		return super.getColumnClass(idx);
 	}
 
-	public Param getRow(int i) throws JudahException {
+	public Param getRow(int i) {
 		return model.get(i);
 	}
 	

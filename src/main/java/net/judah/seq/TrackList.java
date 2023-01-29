@@ -29,6 +29,7 @@ public class TrackList extends ArrayList<MidiTrack> {
 	}
 	
 	public void next(boolean up) {
+		
 		int next = indexOf(current) + (up ? 1 : -1);
 		if (next >= size())
 			next = 0;

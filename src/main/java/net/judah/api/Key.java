@@ -1,9 +1,11 @@
 package net.judah.api;
 
+import javax.sound.midi.ShortMessage;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor @Getter
+@RequiredArgsConstructor 
 public enum Key {
 
     C  (0, 0, null),
@@ -19,13 +21,18 @@ public enum Key {
     Bb (0, 2, "A#"),
     B  (0, 5, null);
 
-    private final int sharps;
-    private final int flats;
+    @Getter private final int sharps;
+    @Getter private final int flats;
     private final String alt;
 
     public static boolean isPlain(int data1) {
     	return Key.values()[data1 % 12].alt == null;
     }
     
+    public Key key(ShortMessage m) {
+		return Key.values()[m.getData1() % 12];
+	}
+
+    public String alt() { return alt; }
     
 }

@@ -12,29 +12,33 @@ import net.judah.JudahZone;
 @Data @AllArgsConstructor @NoArgsConstructor
 public class Scene {
 	
+	UUID id = UUID.randomUUID();
 	Trigger type = Trigger.BAR;
 	String notes;
-	ParamList params = new ParamList();
+	ParamList commands = new ParamList();
 	List<Sched> tracks = new ArrayList<>();
-	UUID id = UUID.randomUUID();
 	
-	public Scene(Trigger type, int size) { // INIT
-		this.type = type;
+	public Scene(int size) { // INIT
 		for (int i = 0; i < size; i++)
 			tracks.add(new Sched());
+	}
+
+	public Scene(int size, Trigger t) {
+		this(size);
+		type = t;
 	}
 
 	public Scene(List<Sched> state) {
 		tracks.addAll(state);
 	}
-	
+
 	@Override
 	public Scene clone() {
 		Scene result = new Scene();
-		result.setNotes(notes);
-		result.setType(type);
-		result.setParams(new ParamList(params));
+		result.setCommands(new ParamList(commands));
 		result.setTracks(new ArrayList<>(tracks));
+		result.notes = notes;
+		result.type = type;
 		return result;
 	}
 

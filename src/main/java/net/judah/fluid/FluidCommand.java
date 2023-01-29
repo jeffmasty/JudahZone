@@ -10,7 +10,7 @@ enum ValueType {
 }
 
 @AllArgsConstructor
-public enum FluidCommand {
+enum FluidCommand {
 
 		CHANNELS	("channels -verbose", ValueType.NONE),
 		GAIN		("gain ", ValueType.FLOAT, 0f, 5f),

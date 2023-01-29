@@ -8,12 +8,14 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
 
+import lombok.Getter;
+import net.judah.JudahZone;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 
 public class LaunchPad extends JPanel implements Pastels {
 
-	private final Scene scene;
+	@Getter private final Scene scene;
 	private final SongTab tab;
 	private final JLabel lbl = new JLabel();
 	private final JLabel notes = new JLabel();
@@ -40,18 +42,23 @@ public class LaunchPad extends JPanel implements Pastels {
 	}
 	
 	public void update() {
-		lbl.setText(scene.toString() + " " + scene.getType());
-		
+		lbl.setText(scene.getType().name());
 		StringBuffer sb = new StringBuffer("<html>");
-		for (Param p : scene.getParams())
+		for (Param p : scene.getCommands())
 			sb.append(p.getCmd()).append("-").append(p.getVal()).append("<br/>");
 		params.setText(sb.append("</html>").toString());
 		notes.setText(scene.getNotes());
 		if (tab.getCurrent() == scene)
 			setBackground(GREEN);
-		else if (tab.getSongView() != null && tab.getSongView().getOnDeck() == scene) 
+		else if (SongView.getOnDeck() == scene) {
 			setBackground(scene.getType().getColor());
-		else setBackground(null);
+			if (scene.getType() == Trigger.REL) {
+				int countdown = (int)scene.getCommands().getTimeCode() - JudahZone.getSongs().getSongView().getCount();
+				lbl.setText(countdown + "!");
+			}
+		}
+		
+		else setBackground(Pastels.BUTTONS);
 	}
 	
 }

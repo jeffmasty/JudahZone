@@ -9,7 +9,7 @@ public interface Size {
     int WIDTH_KNOBS = 346;
     int WIDTH_TAB = WIDTH_FRAME - WIDTH_KNOBS - 12; 
     int HEIGHT_FRAME = 734;
-    int HEIGHT_KNOBS = 270;
+    int HEIGHT_KNOBS = 260;
     int HEIGHT_MIXER = 152;
     int HEIGHT_TAB = HEIGHT_FRAME - HEIGHT_MIXER;
 
@@ -18,7 +18,8 @@ public interface Size {
     Dimension MIXER_SIZE = new Dimension(WIDTH_FRAME - WIDTH_KNOBS, HEIGHT_MIXER);
     
     Dimension COMBO_SIZE = new Dimension(100, 28);
-	Dimension SMALLER_COMBO = new Dimension(70, 28);
-    Dimension MICRO = new Dimension(45, 23);
-    
+    Dimension MEDIUM_COMBO = new Dimension(85, Size.STD_HEIGHT);
+    Dimension SMALLER_COMBO = new Dimension(70, 28);
+    Dimension MICRO = new Dimension(50, 23);
+
 }

@@ -4,7 +4,7 @@ import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 
 import lombok.Getter;
-import net.judah.effects.api.Reverb;
+import net.judah.fx.Reverb;
 import net.judah.util.Constants;
 
 public class FluidReverb extends Reverb {

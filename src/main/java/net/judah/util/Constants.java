@@ -164,8 +164,8 @@ public class Constants {
 	
 	/**@param data2 0 to 127
 	 * @return data2 / 127 */
-	public static float reverseVelocity(int data2) {
-		return data2 * 0.007874f;
+	public static float midiToFloat(int data2) {
+		return data2 * 0.00787f;
 	}
 
 	/**@param supplied buffer

@@ -7,6 +7,7 @@ import org.jaudiolibs.jnajack.JackPort;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.gui.Icons;
+import net.judah.gui.knobs.KitKnobs;
 import net.judah.mixer.LineIn;
 import net.judah.util.AudioTools;
 
@@ -15,6 +16,7 @@ public class DrumMachine extends LineIn {
 
 	private final DrumKit drum1, drum2, hats, fills;
 	@Getter private final DrumKit[] kits;
+	@Getter private final KitKnobs knobs = new KitKnobs();
 	/** current midi controller input and view */
 	@Setter @Getter private int current;
 	@Setter private boolean armed; // TODO
@@ -32,7 +34,7 @@ public class DrumMachine extends LineIn {
 		hats = new DrumKit(KitMode.Hats);
 		fills = new DrumKit(KitMode.Fills);
 		kits = new DrumKit[] {drum1, drum2, hats, fills};
-		
+		knobs.setKit(drum1);
 	}
 
 	public void process() {

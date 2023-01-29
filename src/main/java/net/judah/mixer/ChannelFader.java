@@ -18,7 +18,7 @@ import lombok.Getter;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
-import net.judah.widgets.RainbowFader;
+import net.judah.gui.widgets.RainbowFader;
 
 /**Mixer view
  * <pre>

@@ -3,15 +3,12 @@ package net.judah.mixer;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.security.InvalidParameterException;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import net.judah.effects.*;
-import net.judah.effects.api.Effect;
-import net.judah.effects.api.Reverb;
+import net.judah.fx.*;
 
 
 /**effect indicator lights: red reverb, orange delay, yellow distortion, green chorus, blue LFO
@@ -21,14 +18,18 @@ public class LEDs extends JPanel {
 	private final int UNITS = 7;
 	private final Channel channel;
 	
-	public static final int COMPRESSION = 0;
-	public static final int LFO = 1;
-	public static final int CUTFILTER = 2;
-	public static final int CHORUS = 3;
-	public static final int OVERDRIVE = 4;
-	public static final int DELAY = 5;
-	public static final int REVERB = 6;
-	
+	public static final int REVERB = 0;
+	public static final int DELAY = 1;
+	public static final int CHORUS = 2;
+	public static final int OVERDRIVE = 3;
+	public static final int CUTFILTER = 4;
+	public static final int COMPRESSION = 5;
+	public static final int LFO = 6;
+	@SuppressWarnings("unchecked")
+	private Class<Effect>[] lookup = new Class[] {Reverb.class, Delay.class, Chorus.class, 
+		Overdrive.class, CutFilter.class, Compressor.class, LFO.class};
+				
+
 	@Getter boolean[] model = new boolean[UNITS];
 	
 	public LEDs(Channel channel) { 
@@ -47,30 +48,12 @@ public class LEDs extends JPanel {
 		
 		for (int i = 0; i < UNITS; i++) {
 			if (!model[i]) continue;
-			g.setColor(EffectColor.get(lookup(i)));
+			g.setColor(EffectColor.get(lookup[i]));
 			int x = (int)(i * unit);
 			g.fillRect(x, 1, (int)Math.ceil(unit), d.height - 2);
 		}
 	}
-
-	private Class<? extends Effect> lookup(int i) {
-		if (i == REVERB)
-			return Reverb.class;
-		if (i == DELAY)
-			return Delay.class;
-		if (i == OVERDRIVE)
-			return Overdrive.class;
-		if (i == CHORUS)
-			return Chorus.class;
-		if (i == LFO)
-			return LFO.class;
-		if (i == CUTFILTER)
-			return CutFilter.class;
-		if (i == COMPRESSION)
-			return Compressor.class;
-		throw new InvalidParameterException("class idx: " + i);
-	}
-
+	
 	public void sync() {
 		boolean repaint = false;
 		if (channel.getReverb().isActive() != model[REVERB]) {

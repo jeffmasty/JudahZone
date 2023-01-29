@@ -8,25 +8,18 @@ import javax.swing.ImageIcon;
 
 import org.jaudiolibs.jnajack.JackPort;
 
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
-import net.judah.effects.*;
-import net.judah.effects.api.Effect;
-import net.judah.effects.api.Gain;
-import net.judah.effects.api.Preset;
-import net.judah.effects.api.Reverb;
-import net.judah.effects.api.Setting;
-import net.judah.effects.gui.EffectsRack;
-import net.judah.effects.gui.PresetsHandler;
+import net.judah.fx.*;
 import net.judah.gui.MainFrame;
+import net.judah.gui.fx.EffectsRack;
 import net.judah.gui.knobs.LFOKnobs;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 /** A mixer bus for either Input or Output audio */
-@Getter @EqualsAndHashCode(callSuper = false)
+@Getter 
 public class Channel {
 
 	protected final int bufSize = Constants.bufSize();
@@ -37,7 +30,7 @@ public class Channel {
 	protected boolean onMute;
 	protected Preset preset;
 	protected boolean presetActive;
-	protected PresetsHandler presets;
+//	protected PresetsHandler presets;
 	
     protected final Gain gain = new Gain();
     protected final LFO lfo = new LFO(this);
@@ -70,12 +63,20 @@ public class Channel {
                 getChorus(), getOverdrive(),
                 getDelay(), getReverb(), getCompression()});
         preset = JudahZone.getPresets().getFirst();
-        presets = new PresetsHandler(this);
     }
 
+    @Override public boolean equals(Object obj) {
+    	if (obj == null || obj instanceof Channel == false)
+    		return false;
+    	return gain.equals( ((Channel)obj).getGain());
+    }
+    
+    @Override public int hashCode() {
+    	return gain.hashCode();
+    }
+    
+    
     public void setPresetActive(boolean active) {
-    	if (active == presetActive) 
-    		return;
     	presetActive = active;
         applyPreset();
     }
@@ -90,7 +91,7 @@ public class Channel {
                 if (e.getName().equals(s.getEffectName())) {
                     for (int i = 0; i < s.size(); i++)
                         e.set(i, s.get(i));
-                    e.setActive(isPresetActive());
+                    e.setActive(presetActive);
                     continue setting;
                 }
             }
@@ -138,15 +139,6 @@ public class Channel {
         return preset;
     }
 
-    public void toggleFx() {
-		for (Effect fx : effects)
-			if (fx.isActive() && fx != hiCut) {
-				reset();
-				return;
-			}
-		applyPreset();
-	}
-
 	public void reset() {
 		for (Effect fx : effects)
 			if (fx != hiCut)
@@ -154,6 +146,7 @@ public class Channel {
 		gain.setPan(50);
 		if (this instanceof Instrument == false)
 			gain.setVol(50);
+		MainFrame.update(this);
 	}
 
 	public final float getPan() { 

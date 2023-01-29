@@ -2,8 +2,6 @@ package net.judah.mixer;
 
 import java.awt.Color;
 
-import net.judah.JudahZone;
-import net.judah.gui.MainFrame;
 import net.judah.looper.SoloTrack;
 
 public class LineInFader extends ChannelFader {
@@ -49,13 +47,12 @@ public class LineInFader extends ChannelFader {
 		else if (channel.getGain().getVol() < 5)
 			bg = Color.DARK_GRAY;
 		
-		if (in.isSolo() && soloTrack.isSolo())
+		if (soloTrack.isSolo() && soloTrack.getSoloTrack() == in)
 			sync.setBackground(YELLOW);
 		else 
 			sync.setBackground(null);
 
 		sync.setSelected(in == soloTrack.getSoloTrack());
-		sync.setBackground(in.isSolo() && soloTrack.isSolo()? YELLOW : null);
 		mute.setSelected(!in.isMuteRecord());
 		mute.setBackground(mute.isSelected() ? GREEN : BLUE);
 		return bg;
@@ -64,7 +61,6 @@ public class LineInFader extends ChannelFader {
 	private void solo() {
 		if (sync.isSelected()) {
 			soloTrack.setSoloTrack(in);
-			MainFrame.update(JudahZone.getMixer());
 		}
 	}
 	

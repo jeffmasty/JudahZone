@@ -27,7 +27,6 @@ public class PianoView extends MidiView implements PianoSize {
 		add(steps);
 		add(grid);
 		add(instrumentPanel);
-
 	}
 	
 	@Override
@@ -60,22 +59,5 @@ public class PianoView extends MidiView implements PianoSize {
 		float units = tick / unit;
 		return (long)units * unit;
 	}
-	
-//	public static Source source(Point p) {
-//		if (p.y < BOUNDS_PIANIST.y)
-//			return Source.Menu;
-//		if (p.x < BOUNDS_STEPS.width)
-//			if (p.y > BOUNDS_PIANIST.y)
-//				return Source.Steps;
-//			else 
-//				return Source.RecPlay;
-//		if (p.y < BOUNDS_PIANIST.y)
-//			return Source.Menu;
-//		if (p.y >= BOUNDS_GRID.y)
-//			return Source.Grid;
-//		return Source.Pianist;
-//	}
-
-
 	
 }

@@ -1,6 +1,5 @@
 package net.judah.song;
 
-import static javax.swing.SwingConstants.CENTER;
 import static net.judah.gui.Pastels.GREEN;
 
 import java.awt.event.ActionEvent;
@@ -11,108 +10,119 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.UIManager;
 
 import lombok.Getter;
-import net.judah.api.MidiReceiver;
+import net.judah.JudahZone;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
-import net.judah.seq.Cycle;
+import net.judah.gui.settable.Cycle;
+import net.judah.gui.settable.Folder;
+import net.judah.gui.settable.Program;
+import net.judah.gui.widgets.Arrow;
+import net.judah.gui.widgets.Btn;
+import net.judah.gui.widgets.TrackVol;
+import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiTrack;
 import net.judah.seq.Seq;
-import net.judah.widgets.Btn;
-import net.judah.widgets.Knob;
-import net.judah.widgets.TrackFolder;
 
 @Getter // TODO MouseWheel listener -> change pattern? 
 public class SongTrack extends JPanel implements Size {
-
+	
 	private final MidiTrack track;
 	private final Seq seq;
 	private Sched state = new Sched();
-	
 	private final JButton play;
-	private final Knob velocity = new Knob();
-	private final JComboBox<Cycle> cycle = new JComboBox<Cycle>(Cycle.values());
+	private final TrackVol vol;
+	private final Cycle cycle;
 	private final JComboBox<Integer> launch = new JComboBox<>();
-	private final JLabel preview = new JLabel("0 | 1", CENTER);
-	private final JComboBox<String> progChange;
-	private final TrackFolder files;
+	private final Program progChange;
+	private final Folder files;
+	private final Btn clear;
+	private final JLabel total = new JLabel();
 	private final ActionListener fileListener = new ActionListener() {
 			@Override public void actionPerformed(ActionEvent evt) {
 				track.load(new File(track.getFolder(), files.getSelectedItem().toString()));}};
-
+	private final JButton edit = new JButton(UIManager.getIcon("FileChooser.detailsViewIcon"));
+				
 	//  namePlay file cycle bar preview preset amp
 	public SongTrack(MidiTrack t, Seq seq) {
 		this.track = t;
 		this.seq = seq;
-		play = new Btn("▶️ " + t.getName(), e->track.setActive(!track.isActive()));
+		play = new Btn("▶️ " + t.getName(), e-> {
+			if (track.isActive() || track.isOnDeck()) 
+				track.setActive(false);
+			else track.setActive(true);});
 		play.setOpaque(true);
+		edit.addActionListener(e->JudahZone.getFrame().edit(track));
+		progChange = new Program(track.getMidiOut(), track.getCh()); // no midi controller connection, but participates in updates
+		files = new Folder(track);
+		cycle = new Cycle(track);
+		vol = new TrackVol(track);
+		clear = new Btn("x", e->track.clear());
 		Gui.resize(play, SMALLER_COMBO);
-		progChange = new JComboBox<String>(track.getMidiOut().getPatches());
-		files = new TrackFolder(track);
-		
 		Gui.resize(progChange, COMBO_SIZE);
 		Gui.resize(files, COMBO_SIZE);
 		
 		// bars
-		for (int i = 0; i < track.bars(); i++)
+		for (int i = 0; i <= MidiConstants.MAX_FRAMES; i++)
 			launch.addItem(i);
 		launch.setSelectedIndex(0);
 		
 		setOpaque(true);
-		setBorder(Gui.NONE);
+		setBorder(Gui.SUBTLE);
 		add(play);
 		add(files);		
-		add(cycle);		
-		add(launch);		
-		add(preview);		
+		add(clear);
 		add(progChange);		
-		add(velocity);	
+		add(cycle);		
+		
+		add(new Arrow(Arrow.WEST, e->next(false)));
+		add(launch);		
+		add(total);		
+		add(new Arrow(Arrow.EAST, e->next(true)));
+		add(edit);
+		add(vol);	
 		
 		update();
 		
-		velocity.addListener(val->track.getMidiOut().setAmplification(val * 0.01f));
-		progChange.addActionListener(e->{
-			MidiReceiver r = track.getMidiOut();
-			if (r.getProg(track.getCh()) != progChange.getSelectedIndex())
-				r.progChange("" + progChange.getSelectedItem(), track.getCh());
-		});
 		launch.addActionListener(e->{
-			state.setLaunch((int)launch.getSelectedItem());
-			track.setCurrent(state.getLaunch());
+			if (state.getLaunch() == (int)launch.getSelectedItem())
+				return;
+			launch((int)launch.getSelectedItem());
 		});
-
+	}
+	
+	private void launch(int i) {
+		state.setLaunch(i);
+		track.setFrame(i);
+		MainFrame.update(this);
+	}
+	
+	private void next(boolean fwd) {
+		int next = launch.getSelectedIndex() + (fwd ? 1 : -1);
+		if (next < 0)
+			next = 0;
+		if (next >= launch.getItemCount())
+			next = 0;
+		launch(next);
 	}
 	
 	public void update() {
 		play.setBackground(track.isActive() ? GREEN : null);
-		setBorder(seq.getCurrent() == track ? Gui.HIGHLIGHT : Gui.NONE);
-		if (cycle.getSelectedItem() != state.getCycle())
-			cycle.setSelectedItem(state.getCycle());
 		if (false == launch.getSelectedItem().equals(state.getLaunch()))
 			launch.setSelectedItem(state.getLaunch());
-		if (velocity.getValue() != track.getMidiOut().getAmplification() * 100)
-			velocity.setValue((int) (track.getMidiOut().getAmplification() * 100));
-		if (progChange.getSelectedIndex() != track.getMidiOut().getProg(track.getCh()))
-				progChange.setSelectedIndex(track.getMidiOut().getProg(track.getCh()));
+		if (vol.getValue() != track.getAmplification())
+			vol.setValue((track.getAmplification()));
 		files.update();
-		preview();
-		String[] patches = track.getMidiOut().getPatches();
-		if (patches.length > 1) 
-			if (!patches[track.getMidiOut().getProg(track.getCh())].equals(state.preset))
-				track.getMidiOut().progChange(state.preset);
+		total.setText("" + track.frames());
 	}
 	
 	public void setState(Sched s) {
 		state = s;
-		track.getScheduler().setState(state);
-		track.getMidiOut().setAmplification(state.amp);
+		track.setState(state);
 		MainFrame.update(this);
-	}
-	
-	public void preview() {
-		preview.setText(track.getCurrent() + "|" + track.getNext() + "(" + track.bars() + ")");
 	}
 	
 }

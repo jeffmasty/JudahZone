@@ -18,7 +18,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
-import net.judah.api.Key;
 import net.judah.drumkit.GMDrum;
 import net.judah.util.RTLogger;
 
@@ -216,8 +215,11 @@ public class Midi extends ShortMessage {
     public int octave() {
 		return getData1() / 12 - 2;
 	}
-	public Key key() {
-		return Key.values()[getData1() % 12];
+
+	public static ShortMessage format(ShortMessage midi, int ch, float gain) {
+		if (midi.getChannel() == ch && gain == 1)
+			return midi;
+		return create(midi.getCommand(), ch, midi.getData1(), (int) (midi.getData2() * gain));
 	}
-    
+
 }

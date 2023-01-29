@@ -2,13 +2,12 @@ package net.judah.fluid;
 
 import static net.judah.util.Constants.NL;
 
-import net.judah.api.MidiPatch;
 import net.judah.midi.GMNames;
 import net.judah.util.Console;
 import net.judah.util.ConsoleParticipant;
 import net.judah.util.RTLogger;
 
-public class FluidConsole implements ConsoleParticipant {
+class FluidConsole implements ConsoleParticipant {
 	public static final String PREFIX = "fluid";
 	private final FluidSynth fluid;
 
@@ -43,15 +42,15 @@ public class FluidConsole implements ConsoleParticipant {
 				Console.addText(channel.toString() + NL);
 			}
 		}
-		if (text.equals("inst") || text.equals("instruments")) {
-			Console.addText("instruments: " + FluidSynth.getInstruments().size() + NL);
-			for (MidiPatch instrument : FluidSynth.getInstruments()) {
-				Console.addText(instrument.toString() + NL);
-			}
-		}
-		if (text.equals("current")) {
-			Console.addText("current: " + FluidSynth.getInstruments().get(fluid.getChannels().getCurrentPreset(0)));
-		}
+//		if (text.equals("inst") || text.equals("instruments")) {
+//			Console.addText("instruments: " + FluidSynth.getInstruments().size() + NL);
+//			for (MidiPatch instrument : FluidSynth.getInstruments()) {
+//				Console.addText(instrument.toString() + NL);
+//			}
+//		}
+//		if (text.equals("current")) {
+//			Console.addText("current: " + FluidSynth.getInstruments().get(fluid.getChannels().getCurrentPreset(0)));
+//		}
 		if (text.equals("mute")) {
 			fluid.mute();
 		}

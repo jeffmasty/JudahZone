@@ -9,6 +9,5 @@ public interface Engine extends MidiReceiver {
 	
 	boolean hasWork();
 	
-	boolean isMuteRecord();
 	
 }

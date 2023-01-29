@@ -2,23 +2,21 @@ package net.judah.song;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import net.judah.seq.Cycle;
+import net.judah.seq.CYCLE;
 
 @Data @NoArgsConstructor
 public class Sched {
 	
-	// serializeable state
+	// serialize state
 	public boolean active;
-	public Cycle cycle = Cycle.AB;
+	public CYCLE cycle = CYCLE.AB;
 	public int launch; 
-	public String preset;
-	public float amp = 0.8f;
+	public int amp = 85;
 	
 	public Sched(Sched clone) {
 		launch = clone.launch;
 		active = clone.active;
 		cycle = clone.cycle;
-		preset = clone.preset;
 		amp = clone.amp;
 	}
 	

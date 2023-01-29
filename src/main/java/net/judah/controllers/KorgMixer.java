@@ -3,30 +3,45 @@ package net.judah.controllers;
 import static net.judah.JudahZone.*;
 
 import java.awt.event.WindowEvent;
+import java.util.List;
 
-import net.judah.controllers.MapEntry.TYPE;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import net.judah.gui.MainFrame;
+import net.judah.gui.settable.SetCombo;
+import net.judah.gui.widgets.ModalDialog;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
+import net.judah.seq.MidiTab;
+import net.judah.seq.MidiTrack;
 import net.judah.seq.Seq;
+import net.judah.song.Scene;
 import net.judah.util.Constants;
-import net.judah.widgets.ModalDialog;
-import net.judah.widgets.SettableCombo;
 
 /** Korg nanoKONTROL2 midi controller custom codes */ 	
 public class KorgMixer implements Controller {
-
 	public static final String NAME = "nanoKONTROL2";
 
-	private final int soff = 32;
-	private final int moff = 48;
-	private final int roff = 64;
-	private final int knoboff = 16;
+	public static enum TYPE {
+		MOMENTARY, TOGGLE, KNOB, NOTE_ON, NOTE_OFF, PROGCHAN, OTHER
+	}
+
+	@RequiredArgsConstructor
+	static class MapEntry {
+		@Getter private final String name;
+		@Getter private final TYPE type;
+		@Getter private final int val;
+	}
+
+	private static final int soff = 32;
+	private static final int moff = 48;
+	private static final int roff = 64;
+	private static final int knoboff = 16;
 	
 	private static final MapEntry PREV = new MapEntry(new String("PREV"), TYPE.MOMENTARY, 58);
  	private static final MapEntry NEXT = new MapEntry(new String("NEXT"), TYPE.MOMENTARY, 59);
- 	private static final MapEntry LOOP = new MapEntry(new String("LOOP"), TYPE.TOGGLE, 46);
+ 	private static final MapEntry CYCLE = new MapEntry(new String("LOOP"), TYPE.TOGGLE, 46);
 	private static final MapEntry SET = new MapEntry(new String("SET"), TYPE.MOMENTARY, 60);
 	private static final MapEntry PREV2 = new MapEntry("PREV2", TYPE.MOMENTARY, 61);
 	private static final MapEntry NEXT2 = new MapEntry("NEXT2", TYPE.MOMENTARY, 62);
@@ -49,87 +64,91 @@ public class KorgMixer implements Controller {
 			Channel ch = target(data1);
 			ch.getGain().setVol(data2);
 			MainFrame.update(ch);
-			return true;
 		}
-		if (data1 >= knoboff && data1 < knoboff + 8) {
-			seq.get(data1 - knoboff).setGain(data2 * 0.01f);
-			return true;
+		
+		// knobs = drumkit or synths gain
+		else if (data1 >= knoboff && data1 < knoboff + 4) {
+			getDrumMachine().getKits()[data1 - knoboff].getGain().setVol(data2);
 		}
-		if (data1 >= soff && data1 < soff + 8) { // LAUNCH SCENE
-			int idx = data1 - soff; 
-			if (getCurrent().getScenes().size() > idx) {
-				getSongs().getSongView().setOnDeck(getCurrent().getScenes().get(idx));
+		else if (data1 >= knoboff + 4 && data1 < knoboff + 8) {
+			data1 = data1 - (knoboff + 4);
+			Channel synth;
+			switch (data1) {
+				case 1: synth = getSynth2(); break;
+				case 2: synth = getCrave(); break;
+				case 3: synth = getFluid(); break;
+				default: synth = getSynth1();
 			}
-			return true;
+			synth.getGain().setVol(data2);
+			MainFrame.update(synth);
 		}
-		if (data1 >= moff && data1 < moff + 8) { // MUTE RECORD INPUT
+		
+		else if (data2 > 0 && data1 >= soff && data1 < soff + 8) { // play/stop sequencer tracks
+			MidiTrack t = seq.get(data1 - soff);
+			t.setActive(!t.isActive());
+		}
+		else if (data2 > 0 && data1 >= moff && data1 < moff + 8) { // MUTE RECORD INPUT
 			Channel ch = target(data1 - moff);
 			if (ch instanceof LineIn)
-				((LineIn)ch).setMuteRecord(data2 > 0);
+				((LineIn)ch).setMuteRecord(!((LineIn)ch).isMuteRecord());
 			else 
-				ch.setOnMute(data2 > 0);
-			return true;
+				ch.setOnMute(!ch.isOnMute());
 		}
-		if (data1 >= moff + 4 && data1 < moff + 8) { // MUTE LOOPS 
-			getLooper().get(data1 - (moff + 4)).setOnMute(data2 > 0);
+//		if (data1 >= moff + 4 && data1 < moff + 8) { // MUTE LOOPS 
+//			getLooper().get(data1 - (moff + 4)).setOnMute(data2 > 0);
+//		}
+		else if (data2 > 0 && data1 >= roff && data1 < roff + 8) { // LAUNCH SCENE
+			int idx = data1 - roff; 
+			List<Scene> scenes = getCurrent().getScenes();
+			if (scenes.size() > idx) 
+				getSongs().getSongView().setOnDeck(scenes.get(idx));
 		}
-		if (data1 >= roff && data1 < roff + 8) { // play/stop sequencer tracks
-			int trackNum = data1 - roff;
-			seq.get(trackNum).setActive(data2 > 0);
-			return true;
-		}
-		if (data1 == SET.getVal() && data2 != 0) { // Run SettableCombo or hide modal dialog
+			
+		else if (data1 == SET.getVal() && data2 != 0) { // Run SettableCombo or hide modal dialog
 			if (ModalDialog.getInstance() != null) {
 				ModalDialog.getInstance().dispatchEvent(new WindowEvent(
                     ModalDialog.getInstance(), WindowEvent.WINDOW_CLOSING));
 			}
-			else 
-				SettableCombo.set();
-			return true;
+			else if (SetCombo.getSet() != null)
+				SetCombo.set();
+			else if (getFrame().getTabs().getSelectedComponent() instanceof MidiTab) {
+				((MidiTab)getFrame().getTabs().getSelectedComponent()).getMusician().delete();
+			}
 		}
-		
-		if (data1 == PREV.getVal() && data2 != 0) {
+		else if (data1 == CYCLE.getVal()) {
+			getLooper().verseChorus();
+		}
+		else if (data1 == PREV.getVal() && data2 != 0) 
 			seq.getTracks().next(false);
-			return true;
-		}
-		if (data1 == NEXT.getVal() && data2 != 0) {
+		else if (data1 == NEXT.getVal() && data2 != 0) 
 			seq.getTracks().next(true);
-			return true;
-		}
-		if (data1 == PREV2.getVal() && data2 != 0) { // change pattern
-			seq.getCurrent().setCurrent(seq.getCurrent().getScheduler().getNext());
-			return true;
-		}
-		if (data1 == NEXT2.getVal() && data2 != 0) { // change pattern
-			seq.getCurrent().setCurrent(seq.getCurrent().getScheduler().getPrevious());
-			return true;
-		}
-
-		if (data1 == RWND.getVal() && data2 != 0) { // prev Tab
-			MainFrame.changeTab(false);
-			return true;
-		}
-		if (data1 == FWRD.getVal() && data2 != 0) { // next Tab
-			MainFrame.changeTab(true);
-			return true;
-		}
-//		if (data1 == STOP.getVal() && data2 != 0) { // Transpose Track on/off
-//			if (seq.getCurrent() == null) 
-//				return true;
-//// not drums			
-//			seq.getCurrent().setLatch(!seq.getCurrent().isLatch());
-//			seq.checkLatch();
-//			return true;
-//		}
-		if (data1 == PLAY.getVal()) {
-			if (data2 == 0) getClock().end();
-			else getClock().begin();
-		}
-		if (data1 == RECORD.getVal()) { 
-			// TODO sequence Track 
-		}
 		
-		return false;
+		else if (data1 == PREV2.getVal() && data2 != 0) { // change pattern
+			seq.getCurrent().setFrame(seq.getCurrent().getFrame() - 1);
+		}
+		else if (data1 == NEXT2.getVal() && data2 != 0) { // change pattern
+			seq.getCurrent().setFrame(seq.getCurrent().getFrame() + 1);
+		}
+		else if (data1 == RWND.getVal() && data2 != 0) { // prev Tab
+			MainFrame.changeTab(false);
+		}
+		else if (data1 == FWRD.getVal() && data2 != 0) { // next Tab
+			MainFrame.changeTab(true);
+		}
+		if (data1 == STOP.getVal() && data2 != 0 && seq.getCurrent() != null) { // Track Active/Inactive
+			seq.getCurrent().setActive(!seq.getCurrent().isActive());
+		}
+		else if (data1 == PLAY.getVal() && data2 > 0) {
+			if (getClock().isActive())
+				getClock().end();
+			else 
+				getClock().begin();
+		}
+//		else if (data1 == RECORD.getVal()) { 
+//			// TODO sequence Track 
+//		}
+		
+		return true;
 	}
 
 	private Channel target(int idx) {
@@ -140,7 +159,7 @@ public class KorgMixer implements Controller {
 		if (idx == 6)
 			return getDrumMachine();
 		if (idx == 7) {
-			return (Channel)getMidi().getKeyboardSynth();
+			return getMains();
 		}
 		return getGuitar();
 	}

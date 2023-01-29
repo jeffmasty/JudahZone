@@ -9,15 +9,12 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 
-import javax.sound.midi.ShortMessage;
-
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.gui.Pastels;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
-import net.judah.seq.MidiPair;
 import net.judah.seq.MidiTrack;
 import net.judah.seq.MidiView;
 import net.judah.seq.Steps;
@@ -128,27 +125,28 @@ public class PianoSteps extends Steps implements BeatsSize, MouseMotionListener,
 		return (int) (total * (y / (float)GRID_HEIGHT));
 	}
 
+	// TODO redo
 	private void notesForPoint(Point point) {
 		playing.clear();
 		int step = toStep(point.y, (int)total);
 		if (step < 0 || step > total)
 			return;
 		float steps = clock.getSteps() * 2;
-		long twoBar = track.getBarTicks() * 2;
+		long twoBar = track.getWindow();
 		
 		long start = (long) (twoBar * step / steps);
 		step++;
 		long end = (long) (twoBar * step / steps);
-		for (MidiPair p : view.getScroll()) {
-			if (p.getOn().getTick() <= start)
-				if (((ShortMessage)p.getOn().getMessage()).getCommand() == NOTE_ON) {
-					if (p.getOn().getTick() < end)
-						playing.add(((ShortMessage)p.getOn().getMessage()).getData1());
-				}
+//		for (MidiPair p : view.getScroll()) {
+//			if (p.getOn().getTick() <= start)
+//				if (((ShortMessage)p.getOn().getMessage()).getCommand() == NOTE_ON) {
+//					if (p.getOn().getTick() < end)
+//						playing.add(((ShortMessage)p.getOn().getMessage()).getData1());
+//				}
 // TODO
 //				else if (((ShortMessage)p.getOff())
 //					playing.remove((Integer)((ShortMessage)e.getMessage()).getData1());
-		}
+//		}
 	}
 
 	/** play notes for new given step */

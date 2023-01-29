@@ -18,7 +18,7 @@ public interface Gui {
 	
 	Border RED = BorderFactory.createLineBorder(Color.RED, 1);
 	Border HIGHLIGHT = BorderFactory.createLineBorder(Color.BLACK, 1);
-	Border NONE = BorderFactory.createLineBorder(Pastels.MY_GRAY, 1);
+	Border SUBTLE = BorderFactory.createLineBorder(Pastels.MY_GRAY, 1);
 	Border NO_BORDERS = new EmptyBorder(BTN_MARGIN);
 
 	Font BOLD10 = new Font("Arial", Font.BOLD, 10);

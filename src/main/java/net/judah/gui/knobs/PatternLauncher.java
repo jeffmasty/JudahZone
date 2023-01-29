@@ -29,7 +29,6 @@ public class PatternLauncher extends JPanel {
 	private final Button left, right;
 	private final MidiTrack track;
 	private final JPanel holder = new JPanel();
-	private int position;
 	
 	public PatternLauncher(MidiTrack track) {
 		setLayout(new FlowLayout(FlowLayout.LEFT, 1, 0));
@@ -80,8 +79,10 @@ public class PatternLauncher extends JPanel {
 
 	public void fill() {
 		holder.removeAll();
-		for (int i = 0; i < track.bars(); i++) 
+		int frames = track.frames();
+		for (int i = 0; i < frames; i++) 
 			holder.add(new TrackPattern(track, i));
+		
 		update();
 		invalidate();
 	}
