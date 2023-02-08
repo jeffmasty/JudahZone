@@ -56,7 +56,7 @@ public class ImportMidi extends JPanel {
 		if (tracknum < 0 || tracknum >= tracks.length)
 			trackDialog(sequence);
 		else {
-			track.importTrack(sequence.getTracks()[tracknum], sequence.getResolution());
+			track.importTrack(sequence.getTracks()[tracknum], sequence.getResolution(), null);
 		}
 	}
 
@@ -81,7 +81,7 @@ public class ImportMidi extends JPanel {
 		JButton cancel = new JButton("Cancel");
 		
 		ok.addActionListener(e-> { // import track into bars
-			track.importTrack(sequence.getTracks()[select.getSelectedIndex()], sequence.getResolution());
+			track.importTrack(sequence.getTracks()[select.getSelectedIndex()], sequence.getResolution(), null);
 			ModalDialog.getInstance().dispose();
 		});		
 		cancel.addActionListener(e->ModalDialog.getInstance().dispose());

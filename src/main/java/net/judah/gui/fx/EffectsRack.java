@@ -56,8 +56,8 @@ public class EffectsRack extends JPanel implements MPKTools {
 
         labels.add(new RowLabels(channel, new KeyPair[]{
 	    		new KeyPair("Preset", null),
-	    		new KeyPair("pArTy", channel.getCutFilter()),
-	    		new KeyPair("HiCut", channel.getHiCut()),
+	    		new KeyPair("pArTy", channel.getParty()),
+	    		new KeyPair("HiCut", channel.getFilter()),
 	    		new KeyPair("Pan", channel.getGain())}));
 
         knobs.add(new RowKnobs(channel, 0));
@@ -140,7 +140,7 @@ public class EffectsRack extends JPanel implements MPKTools {
         	eq(EQ.EqBand.High, up);
         	break;
         case 7:
-        	channel.getGain().setVol(offset(channel.getGain().getVol(), up));
+        	channel.getGain().set(Gain.VOLUME, offset(channel.getVolume(), up));
             break;
         case 8:
         	int rate = offset(channel.getChorus().get(Chorus.Settings.Rate.ordinal()), up);
@@ -167,7 +167,7 @@ public class EffectsRack extends JPanel implements MPKTools {
         	((Fx)knobs.get(3).getControls().get(0)).increment(up); // not elegant
         	break;
         case 13:
-        	CutFilter filter = channel.getCutFilter();
+        	CutFilter filter = channel.getParty();
         	int freak = CutFilter.frequencyToKnob(filter.getFrequency());
         	freak = offset(freak, up);
         	filter.setActive(freak < thresholdHi);
@@ -176,14 +176,14 @@ public class EffectsRack extends JPanel implements MPKTools {
         	filter.setFrequency(CutFilter.knobToFrequency(freak));
 			break;
         case 14:
-        	CutFilter hello = channel.getHiCut();
+        	CutFilter hello = channel.getFilter();
         	int hz = offset(CutFilter.frequencyToKnob(hello.getFrequency()), up);
         	hello.setActive(hz < thresholdHi);
         	if (!hello.isActive()) return;
         	hello.setFrequency(CutFilter.knobToFrequency(hz));
         	break;
         case 15:  
-        	channel.getGain().setPan(offset(channel.getGain().getPan(), up));
+        	channel.getGain().set(Gain.PAN, offset(channel.getPan(), up));
         	break;
     	}
     	MainFrame.update(channel);

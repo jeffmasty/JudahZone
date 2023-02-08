@@ -76,11 +76,11 @@ public class CutFilter implements Effect {
         ;
         private final String description;
     };
-    private static final int PARTY_FREQUENCY = 100;
+    private static final int PARTY_FREQUENCY = 1200;
 
     /** y = 1/30 * x ^ 2.81 + bassFloor */
 	public static float knobToFrequency(int val) {
-		return (float)(0.033333 * Math.pow(val, 2.81)) + 55f;
+		return (float)(0.033333 * Math.pow((val + 1), 2.81)) + 50f;
 	}
 	
 	static float[] reverse = new float[100];
@@ -110,6 +110,12 @@ public class CutFilter implements Effect {
     private double resonancedB = 9.;
     private Type oldParty;
 
+    public CutFilter(boolean isStereo, Type type, float freq) {
+    	this(isStereo);
+    	setFilterType(type);
+    	setFrequency(freq);
+    }
+    
 	public CutFilter(boolean isStereo) {
     	this(Constants.sampleRate(), Constants.bufSize(), isStereo);
 	}

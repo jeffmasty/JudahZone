@@ -9,6 +9,5 @@ public class FxData {
 
 	String channel;
 	String preset;
-	boolean active;
 	
 }

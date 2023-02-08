@@ -19,7 +19,7 @@ public interface Size {
     
     Dimension COMBO_SIZE = new Dimension(100, 28);
     Dimension MEDIUM_COMBO = new Dimension(85, Size.STD_HEIGHT);
-    Dimension SMALLER_COMBO = new Dimension(70, 28);
+    Dimension SMALLER_COMBO = new Dimension(67, 28);
     Dimension MICRO = new Dimension(50, 23);
 
 }

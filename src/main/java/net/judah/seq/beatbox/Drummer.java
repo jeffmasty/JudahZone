@@ -51,7 +51,7 @@ public class Drummer extends Musician {
         // TODO right mouse button menu?
         if (existing == null) {
         	MidiEvent create = new MidiEvent(Midi.create(NOTE_ON, track.getCh(), click.data1, 
-        			Math.round(track.getAmplification() * 1.27f)), click.tick);
+        			(int) (track.getAmp() * 127f)), click.tick);
         	track.getT().add(create);
         	selected.clear();
         	selected.add(new MidiPair(create, null));

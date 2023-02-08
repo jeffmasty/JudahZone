@@ -11,7 +11,7 @@ import net.judah.mixer.LineIn;
 import net.judah.mixer.Zone;
 
 @Getter @EqualsAndHashCode(callSuper = true) 
-public class SoloTrack extends Loop /* implements TimeListener */{
+public class SoloTrack extends Loop {
 
     public static final String NAME = "D";
     private boolean muteStash = true;

@@ -12,6 +12,7 @@ import net.judah.JudahZone;
 import net.judah.fx.PresetsDB;
 import net.judah.gui.widgets.FileChooser;
 import net.judah.mixer.Channel;
+import net.judah.mixer.DJJefe;
 import net.judah.seq.Seq;
 import net.judah.util.Folders;
 import net.judah.util.JsonUtil;
@@ -28,36 +29,31 @@ public class Song {
 	private List<FxData> fx = new ArrayList<>();
 	
 	public Song() {
-		scenes.add(new Scene(Seq.TRACKS, Trigger.REL)); // init w/ 10 midi tracks 
+		scenes.add(new Scene(JudahZone.getSeq())); // init w/ 10 midi tracks 
 	}
 	
-    public void saveSong() {
+    public void saveSong(DJJefe mixer, Seq seq, Scene scene) {
     	if (file == null)
     		file = FileChooser.choose(Folders.getSetlist());
     	if (file == null) return;
-    	fx();
-    	tracks();
+    	tracks.clear();
+    	seq.forEach(track-> {
+   			tracks.add(new TrackInfo(track.getName(), 
+   					track.getFile() == null ? "" : track.getFile().getAbsolutePath(), 
+   							track.getMidiOut().getProg(track.getCh())));});
+		fx.clear();
+		scene.getFx().clear();
+		for (Channel ch : mixer.getChannels()) {
+			if (false == ch.getPreset().getName().equals(PresetsDB.DEFAULT)) 
+				fx.add(new FxData(ch.getName(), ch.getPreset().getName()));
+			if (ch.isPresetActive()) 
+				scene.getFx().add(ch.getName());
+		}
     	try {
 			JsonUtil.writeJson(this, file);
 			RTLogger.log(this, "Saved " + file.getName());
 		} catch (Exception e) { RTLogger.warn(JudahZone.class, e); }
     }
-
-    	private void tracks() {
-    	tracks.clear();
-    	JudahZone.getSeq().forEach(track-> {
-   			tracks.add(new TrackInfo(track.getName(), 
-   					track.getFile() == null ? "" : track.getFile().getAbsolutePath(), 
-   							track.getMidiOut().getProg(track.getCh())));});
- 	}
-	
-	private void fx() {
-		fx.clear();
-		for (Channel ch : JudahZone.getMixer().getAll())
-			if (false == ch.getPreset().getName().equals(PresetsDB.DEFAULT)) {
-				fx.add(new FxData(ch.getName(), ch.getPreset().getName(), ch.isPresetActive()));
-			}
-	}
 
 	@Override
 	public String toString() {

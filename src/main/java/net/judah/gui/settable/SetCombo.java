@@ -46,8 +46,8 @@ public abstract class SetCombo<T> extends  JComboBox<T> {
 			removeActionListener(listener);
 			setSelectedItem(val);
 			addActionListener(listener);
-			setBorder(old);
 		}
+		setBorder(old);
 	}
 	
 	public void midiShow(T val) {

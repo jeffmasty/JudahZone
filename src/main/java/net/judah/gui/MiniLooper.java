@@ -29,8 +29,6 @@ import net.judah.util.RTLogger;
 public class MiniLooper extends JPanel implements TimeListener {
 	
 	private final JudahClock clock;
-	private final StartBtn start;
-
 	private final Looper looper;
 	private final LoopWidget loopWidget;
     private final JButton record;
@@ -73,9 +71,8 @@ public class MiniLooper extends JPanel implements TimeListener {
         Gui.resize(tempoKnob, Size.MEDIUM_COMBO);
         setBorder(new LineBorder(Pastels.MY_GRAY, 1));
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-        start = new StartBtn(clock);
   
-        add(Gui.wrap(start, record, delete));
+        add(Gui.wrap(new StartBtn(clock), record, delete));
         add(loopWidget);
         add(Gui.wrap(tapButton, tempoLbl, tempoKnob));
         tempoKnob.addChangeListener(tempoEar);

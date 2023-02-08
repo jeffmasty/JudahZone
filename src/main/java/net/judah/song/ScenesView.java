@@ -54,8 +54,10 @@ public class ScenesView extends JPanel {
 		for (int i = 0; i < getComponentCount(); i++) {
 			if (getComponent(i) instanceof LaunchPad) {
 				LaunchPad pad = (LaunchPad)getComponent(i);
-				if (pad.getScene() == s)
+				if (pad.getScene() == s) {
 					pad.update();
+					pad.repaint();
+				}
 			}
 		}
 	}
@@ -66,6 +68,7 @@ public class ScenesView extends JPanel {
 			if (getComponent(i) instanceof LaunchPad)
 				((LaunchPad)getComponent(i)).update();
 		}
+		repaint();
 	}
 	
 }

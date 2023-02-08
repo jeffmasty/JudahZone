@@ -25,8 +25,7 @@ import net.judah.drumkit.Sampler;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
-import net.judah.mixer.LoopFader;
-import net.judah.seq.MidiTrack;
+import net.judah.mixer.LoopMix;
 import net.judah.seq.Seq;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
@@ -45,7 +44,8 @@ public class JudahClock extends Thread implements TimeProvider {
     @Getter private final ArrayList<TimeListener> listeners = new ArrayList<>();
     private final BlockingQueue<Notification> notifications = new LinkedBlockingQueue<>();
 	private final MidiClock midiClock;
-    private Loop source;
+    //private Loop source;
+    private boolean onDeck;
 
     @Getter private boolean active;
     @Getter private float tempo = 89f;
@@ -78,13 +78,6 @@ public class JudahClock extends Thread implements TimeProvider {
 		try {
 			while (true) {
 				Notification n = notifications.take();
-				if (n.prop.equals(LOOP) && source != null) { 
-					if (!isActive()) 
-						begin();
-					else if (Status.NEW == n.value) 
-						bar = 0;
-					source = null;
-				}
 				new ArrayList<TimeListener>(listeners).forEach(
 						listener -> {if (listener != null) listener.update(n.prop, n.value);});
 			}
@@ -103,9 +96,9 @@ public class JudahClock extends Thread implements TimeProvider {
 				beat++;
 				if (beat >= measure) { // new Bar
 					bar++; beat = 0;
-					announce(Property.BARS, bar);
 					if (bar >= length)
 						bar = 0;
+					announce(Property.BARS, bar);
 				}
 				announce(Property.BEAT, beat);
 			}
@@ -118,12 +111,12 @@ public class JudahClock extends Thread implements TimeProvider {
 		}
 		if (!active)
 			return;
-		float percent = beat + midiPulseCount / (float)MIDI_24;
-		for (MidiTrack track : seq.getTracks())
-			if (track.isActive()) 
-				track.playTo(percent);
+		float percent = beat + midiPulseCount / (float)MIDI_24; //  + (isEven() ? 0 : 1);
+		seq.getTracks().forEach(track->track.playTo(percent));
 	}
 	
+	public boolean isEven() { return bar % 2 == 0; }
+
 	
 	/** receive clock message from external source in real-time */
 	public void processTime(byte[] bytes) throws JackException {
@@ -163,45 +156,45 @@ public class JudahClock extends Thread implements TimeProvider {
 	}
 
 	public void syncUp(Loop loop, int init) {
-		LoopFader sync = (LoopFader)JudahZone.getMixer().getFader(loop);
+		LoopMix sync = (LoopMix)JudahZone.getMixer().getFader(loop);
 		if (listeners.contains(sync)) {
 			syncDown(loop);
 			MainFrame.update(loop);
 			return;
 		}
-		int bars = loop.getType() == Type.BSYNC && !loop.hasRecording() ? LoopFader.BSYNC_UP : length;
+		int bars = loop.getType() == Type.BSYNC && !loop.hasRecording() ? LoopMix.BSYNC_UP : length;
 		sync.setup(bars, init);
 		addListener(sync);
 	}
 
 	public void syncFlush() {
 		for (TimeListener listener : new ArrayList<TimeListener>(listeners)) 
-			if (listener instanceof LoopFader)	{
-				LoopFader sync = (LoopFader)listener;
+			if (listener instanceof LoopMix)	{
+				LoopMix sync = (LoopMix)listener;
 				listeners.remove(listener);
 				MainFrame.update(sync.getLoop());
 			}
 	}
 
 	public void tail(Loop loop) {
-		LoopFader sync = (LoopFader)JudahZone.getMixer().getFader(loop);
-		sync.setBars(LoopFader.BSYNC_DOWN);
+		LoopMix sync = (LoopMix)JudahZone.getMixer().getFader(loop);
+		sync.setBars(LoopMix.BSYNC_DOWN);
 		MainFrame.update(sync);
 	}
 	
 	public void syncDown(Loop loop) {
-		removeListener((LoopFader)JudahZone.getMixer().getFader(loop));
+		removeListener((LoopMix)JudahZone.getMixer().getFader(loop));
 	}
 
 	public boolean isSync(Loop loop) {
 		for (int i = 0; i < listeners.size(); i++) 
-			if (listeners.get(i) instanceof LoopFader && ((LoopFader)listeners.get(i)).getLoop() == loop)
+			if (listeners.get(i) instanceof LoopMix && ((LoopMix)listeners.get(i)).getLoop() == loop)
 				return true;
 		return false;
 	}
 
 	public boolean isLooperSync() {
-		return source != null;
+		return onDeck;
 	}
 
 	public void syncToLoop() {
@@ -209,24 +202,21 @@ public class JudahClock extends Thread implements TimeProvider {
 		if (looper.getRecordedLength() > 0) {
 			float tempo = Constants.computeTempo(looper.getRecordedLength(), length * getMeasure());
 			writeTempo(Math.round(tempo));
-			source = looper.getPrimary();
+			onDeck = true;
 			RTLogger.log(this, "Tempo Sync: " + tempo);
 		}
 	}
 
 	@Override
     public void begin() {
-	    
-	    lastPulse = System.currentTimeMillis();
-	    midiPulseCount = 0;
+	    midiPulseCount = -1;
 	    step = 0;
-		beat = 0;
+		beat = -1;
 		bar = 0;
+		active = true;
+		announce(TRANSPORT, JackTransportState.JackTransportStarting);
 		JudahZone.getMidi().synchronize(MIDI_START);
-		letItBeKnown(TRANSPORT, JackTransportState.JackTransportStarting);
-	    active = true;
 		RTLogger.log(JudahMidi.class.getSimpleName(), "PLAY MidiSync");
-
 	}
 
 	@Override
@@ -241,7 +231,6 @@ public class JudahClock extends Thread implements TimeProvider {
 		end();
 		step = 0;
         beat = -1;
-	    lastPulse = System.currentTimeMillis();
 	    RTLogger.log(this, "reset");
 	}
 	
@@ -265,8 +254,8 @@ public class JudahClock extends Thread implements TimeProvider {
 	}
 	
 	
-	public void listen(final Loop target) {
-		source = target;
+	public void listen() {
+		onDeck = true;
 	}
 		
 	public void setTimeSig(Signature time) {
@@ -299,6 +288,20 @@ public class JudahClock extends Thread implements TimeProvider {
 		}
 	}
 
+	public void loop(Object value) {
+		if (Status.NEW == value) 
+			bar = 0;
+		announce(Property.LOOP, value);
+		if (onDeck && !active) 
+			begin();
+		onDeck = false;
+	}
+
+	public void cycle() {
+		bar++;
+	}
+
+	
 	/** in real-time */
 	private void announce(Property prop, Object value) {
 		for (Object o : listeners.toArray())
@@ -306,9 +309,10 @@ public class JudahClock extends Thread implements TimeProvider {
 	}
 	
 	/** send to background thread */
-	public void letItBeKnown(Property prop, Object value) {
+	private void letItBeKnown(Property prop, Object value) {
 		notifications.offer(new Notification(prop, value));
 	}
+
 
 	
 }

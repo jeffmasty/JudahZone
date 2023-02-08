@@ -1,5 +1,6 @@
 package net.judah.mixer;
 
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -21,21 +22,21 @@ import net.judah.util.RTLogger;
 /** A mixer bus for either Input or Output audio */
 @Getter 
 public class Channel {
-
 	protected final int bufSize = Constants.bufSize();
+    protected final FloatBuffer left = FloatBuffer.allocate(bufSize);
+    protected final FloatBuffer right = FloatBuffer.allocate(bufSize);
+
 	protected final String name;
     protected final boolean isStereo;
-	
 	@Setter protected ImageIcon icon;
 	protected boolean onMute;
 	protected Preset preset;
 	protected boolean presetActive;
-//	protected PresetsHandler presets;
 	
     protected final Gain gain = new Gain();
     protected final LFO lfo = new LFO(this);
-    protected final CutFilter cutFilter;
-    protected final CutFilter hiCut;
+    protected final CutFilter party;
+    protected final CutFilter filter;
     protected final EQ eq = new EQ();
     protected final Overdrive overdrive = new Overdrive();
     protected final Chorus chorus = new Chorus();
@@ -45,24 +46,22 @@ public class Channel {
     @Setter protected JackPort leftPort;
     @Setter protected JackPort rightPort;
     protected final List<Effect> effects;
-    protected EffectsRack gui;
-    protected LFOKnobs lfoKnobs;
+    protected final EffectsRack gui;
+    protected final LFOKnobs lfoKnobs;
     
     public Channel(String name, boolean isStereo) {
         this.name = name;
         this.isStereo = isStereo;
-        cutFilter = new CutFilter(isStereo);
-        hiCut = new CutFilter(isStereo);
-        hiCut.setFilterType(CutFilter.Type.LP24);
-		hiCut.setResonance(1);
-		hiCut.setFrequency(16000);
-
+        party = new CutFilter(isStereo);
+        filter = new CutFilter(isStereo, CutFilter.Type.LP24, 16000); // hicut
         reverb = new Freeverb(isStereo);
         effects = Arrays.asList(new Effect[] {
-                getLfo(), getHiCut(), getCutFilter(), getEq(),
+                getLfo(), getFilter(), getParty(), getEq(),
                 getChorus(), getOverdrive(),
                 getDelay(), getReverb(), getCompression()});
         preset = JudahZone.getPresets().getFirst();
+        gui = new EffectsRack(this);
+        lfoKnobs = new LFOKnobs(this);
     }
 
     @Override public boolean equals(Object obj) {
@@ -141,38 +140,25 @@ public class Channel {
 
 	public void reset() {
 		for (Effect fx : effects)
-			if (fx != hiCut)
+			if (fx != filter)
 				fx.setActive(false);
-		gain.setPan(50);
+		gain.set(Gain.PAN, 50);
 		if (this instanceof Instrument == false)
-			gain.setVol(50);
+			gain.set(Gain.VOLUME, 50);
 		MainFrame.update(this);
-	}
-
-	public final float getPan() { 
-		return gain.getPan() * 0.01f;
 	}
 
 	/**@return 0 to 100*/
 	public int getVolume() {
-		return gain.getVol();
+		return gain.get(Gain.VOLUME);
 	}
 	
-	@Override
-	public String toString() {
-		return name;
+	/**@return 0 to 100*/
+	public int getPan() {
+		return gain.get(Gain.PAN);
 	}
+	
+	@Override public String toString() { return name; }
 
-	public EffectsRack getGui() {
-		if (gui == null)
-			gui = new EffectsRack(this);
-		return gui;
-	}
-	
-	public LFOKnobs getLfoKnobs() {
-		if (lfoKnobs == null)
-			lfoKnobs = new LFOKnobs(this);
-		return lfoKnobs;
-	}
 }
 

@@ -2,7 +2,6 @@ package net.judah.seq;
 
 import java.awt.Color;
 import java.awt.Rectangle;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
@@ -14,17 +13,13 @@ import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
-import net.judah.gui.settable.Bar;
-import net.judah.gui.settable.Cycle;
-import net.judah.gui.settable.Folder;
-import net.judah.gui.settable.Program;
+import net.judah.gui.settable.*;
 import net.judah.gui.widgets.Arrow;
 import net.judah.gui.widgets.FxButton;
 import net.judah.gui.widgets.TrackVol;
 import net.judah.mixer.Channel;
 import net.judah.seq.beatbox.BeatsSize;
 import net.judah.seq.beatbox.BeatsTab;
-import net.judah.song.Trigger;
 
 public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 
@@ -33,12 +28,13 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 	private final TrackList tracks;
 	private final MidiTab tab;
 	private final JMenuBar menu = new JMenuBar();
-	@Getter private final Folder files;
+	@Getter private final JComboBox<Gate> gate = new JComboBox<>(Gate.values());
+	private final Folder files;
 	private final Cycle cycle;
+	private final Launch launch;
 	private final Bar frames;
 	private final Program progChange;
 	private final TrackVol vol;
-	@Getter private final JComboBox<Gate> gate = new JComboBox<>(Gate.values());
 	private final JButton playWidget = new JButton(" ▶️ ");
 	private final JButton recWidget = new JButton(" ◉ ");
 	private final JButton liveWidget = new JButton(" 🔁 ");
@@ -52,43 +48,56 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 		this.tab = tab;
 		
 		addMouseListener(this);
-		progChange = new Program(track.getMidiOut(), track.getCh());
-		frames = new Bar(track);
-		cycle = new Cycle(track);
-
-		vol = new TrackVol(track);
-		files = new Folder(track);
-		metroWidget.addActionListener(e->track.cycle());
-		
-		Gui.resize(progChange, Size.COMBO_SIZE);
-		Gui.resize(files, Size.COMBO_SIZE);
-		Gui.resize(frames, Size.MICRO);
-		Gui.resize(cycle, Size.SMALLER_COMBO);
-		Gui.resize(gate, Size.SMALLER_COMBO);
-
 		setBounds(bounds);
 		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		setBorder(BorderFactory.createDashedBorder(Color.BLUE));
 
+		progChange = new Program(track.getMidiOut(), track.getCh());
+		frames = new Bar(track);
+		cycle = new Cycle(track);
+		launch = new Launch(track);
+		vol = new TrackVol(track);
+		files = new Folder(track);
+		metroWidget.addActionListener(e->track.cycle());
+		Cue cue = new Cue(track);
+		playWidget.addActionListener(e->track.trigger());
+		playWidget.setOpaque(true);
+		
+		recWidget.addActionListener(e->track.setRecording(!track.isRecording()));
+		recWidget.setOpaque(true);
+
+		liveWidget.addActionListener(e-> {
+			track.setLive(!track.isLive());
+			MainFrame.update(track);
+		});
+		liveWidget.setOpaque(true);
+
+		Gui.resize(cue, Size.SMALLER_COMBO);
+		Gui.resize(files, Size.COMBO_SIZE);
+		Gui.resize(cycle, Size.SMALLER_COMBO);
+		Gui.resize(gate, Size.SMALLER_COMBO);
+		Gui.resize(frames, Size.MICRO);
+		Gui.resize(launch, Size.MICRO);
+		Gui.resize(progChange, Size.COMBO_SIZE);
+
+		add(playWidget);
+		add(cue);
 		buildMenu();
-		btns();
 		add(menu);
 		add(files);
-		add(progChange);
-
-		
-		add(new JLabel("Cycle "));
+		add(new JLabel(" Cycle "));
 		add(cycle);
-
 		add(Box.createHorizontalGlue());
-		add(new JLabel("Frame "));
+		add(metroWidget);
+		add(new JLabel(" Init "));
+		add(launch);
+		add(new JLabel("of "));
+		add(total);
+		add(new JLabel(" "));
 		add(new Arrow(Arrow.WEST, e->track.setFrame(track.getFrame() - 1)));
 		add(frames);
-		add(total);
 		add(new Arrow(Arrow.EAST, e->track.setFrame(track.getFrame() + 1)));
-		add(metroWidget);
 		add(Box.createHorizontalGlue());
-
 		if (track.isSynth()) {
 			add(new JLabel("Gate"));
 			add(gate);
@@ -97,19 +106,20 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 		add(new FxButton((Channel)track.getMidiOut()));
 		add(vol);
 		add(new JLabel(" Vol "));
+		add(recWidget);
+		add(liveWidget);
+		add(progChange);
+
 		update();
 	}
 	
 	public void update() {
-		playWidget.setBackground(track.isActive() ? Pastels.GREEN : null);
-		recWidget.setBackground(track.isRecord() ? Pastels.RED : null);
-		liveWidget.setBackground(view.isLive() ? Pastels.BLUE : null);
+		playWidget.setBackground(track.isActive() ? Pastels.GREEN : track.isOnDeck() ? track.getCue().getColor() : null);
+		recWidget.setBackground(track.isRecording() ? Pastels.RED : null);
+		liveWidget.setBackground(track.isLive() ? Pastels.BLUE : null);
 		metroWidget.setIcon(track.isEven() ? Icons.get("left.png") : Icons.get("right.png"));
 		if (track.isDrums())
 			setBorder(tab.getCurrent() == view ? Gui.RED : Gui.SUBTLE);
-		if (track.getAmplification() != vol.getValue())
-			vol.setValue(track.getAmplification());
-		files.update();
 		total.setText("" + track.frames());
 	}
 
@@ -117,7 +127,6 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 		menu.add(traxMenu());
 		menu.add(fileMenu());
 		menu.add(barMenu());
-		menu.add(noteMenu());
 	}
 	
 	private JMenu traxMenu() {
@@ -133,54 +142,48 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 		return result;
 	}
 	private JMenu fileMenu() {
-		JMenu result = new JMenu("Track");
+		JMenu result = new JMenu("File");
 		JMenuItem create = new JMenuItem("New");
 		create.addActionListener(e->track.clear());
-		JMenuItem open = new JMenuItem("Open");
+		JMenuItem open = new JMenuItem("Open MIDI");
 		open.addActionListener(e->track.load());
-		JMenuItem save = new JMenuItem("Save");
+		JMenuItem save = new JMenuItem("Save MIDI");
 		save.addActionListener(e->track.save());
-		JMenuItem saveAs = new JMenuItem("Save...");
+		JMenuItem saveAs = new JMenuItem("Save As...");
 		saveAs.addActionListener(e ->track.saveAs());
-		JMenuItem importMidi = new JMenuItem("Import");
+		JMenuItem importMidi = new JMenuItem("Import MIDI");
 		importMidi.addActionListener(e-> new ImportMidi(track));
-		result.add(create);
-		result.add(open);
 		result.add(save);
 		result.add(saveAs);
+		result.add(create);
+		result.add(open);
 		result.add(importMidi);
-		result.add(cueMenu());
 		// result.add(new JMenuItem("Record")); // TODO
 		// result.add(new JMenuItem("MPK")); // TODO
 		return result;
 	}
 	private JMenu barMenu() { // try the wings!
-		JMenu result = new JMenu("Frame");
-		JMenuItem newBar = new JMenuItem("New");
+		JMenu result = new JMenu("Edit");
+		JMenuItem newBar = new JMenuItem("New Frame");
 		newBar.addActionListener(e->track.setFrame(track.frames() + 1));
-		JMenuItem copy = new JMenuItem("Copy");
+		JMenuItem copy = new JMenuItem("Copy Frame");
 		copy.addActionListener(e->track.copyFrame(track.getFrame()));
-		JMenuItem delete = new JMenuItem("Delete");
+		JMenuItem delete = new JMenuItem("Delete Frame");
 		delete.addActionListener(e->track.deleteFrame(track.getFrame()));
 		result.add(newBar);
 		result.add(copy);
 		result.add(delete);
-		return result;
-	}
 
-	private JMenu noteMenu() { 
-		JMenu result = new JMenu("Note");
-
-		JMenuItem copy = new JMenuItem("Copy");
-		copy.addActionListener(e->{
+		JMenuItem copyNote = new JMenuItem("Copy Notes");
+		copyNote.addActionListener(e->{
 			view.getGrid().getMusician().copy();
 		});
 		
-		JMenuItem paste = new JMenuItem("Paste");
-		paste.addActionListener(e->{
+		JMenuItem pasteNote = new JMenuItem("Paste Notes");
+		pasteNote.addActionListener(e->{
 			view.getGrid().getMusician().paste();
 		});
-		JMenuItem delete = new JMenuItem("Delete");
+		JMenuItem deleteNote = new JMenuItem("Delete Notes");
 		delete.addActionListener(e->{
 			view.getGrid().getMusician().delete();
 		});
@@ -195,51 +198,12 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 			
 		});
 
-		result.add(copy);
-		result.add(paste);
-		result.add(delete);
-		result.add(cc);
-		result.add(progChange);
+		result.add(copyNote);
+		result.add(pasteNote);
+		result.add(deleteNote);
+//		result.add(cc);
+//		result.add(progChange);
 		return result;
-	}
-
-	private JMenu cueMenu() {
-		JMenu cycle = new JMenu("Cue");
-		ButtonGroup group = new ButtonGroup();
-		int selected = track.getCue().ordinal();
-		for (int i = 0; i < Trigger.values().length; i++) {
-			JRadioButtonMenuItem item = new JRadioButtonMenuItem(Trigger.values()[i].name(), i == selected);
-			group.add(item);
-			cycle.add(item);
-			final int num = i;
-			item.addActionListener(e->track.setCue(Trigger.values()[num]));
-		}
-		return cycle;
-	}
-
-	private void btns() {
-		playWidget.addMouseListener(new MouseAdapter() { 
-			@Override public void mouseClicked(MouseEvent e) {
-			if (track.isActive() || track.isOnDeck()) 
-				track.setActive(false);
-			else track.setActive(true);}});
-		playWidget.setOpaque(true);
-		add(playWidget);
-		
-		recWidget.addMouseListener(new MouseAdapter() { 
-			@Override public void mouseClicked(MouseEvent e) {
-			track.setRecord(!track.isRecord());
-		}});
-		recWidget.setOpaque(true);
-		add(recWidget);
-
-		liveWidget.addActionListener(e-> {
-			view.setLive(!view.isLive());
-			MainFrame.update(track);
-		});
-		liveWidget.setOpaque(true);
-		add(liveWidget);
-		
 	}
 
 	@Override
@@ -252,6 +216,5 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 	@Override public void mouseReleased(MouseEvent e) { }
 	@Override public void mouseEntered(MouseEvent e) { }
 	@Override public void mouseExited(MouseEvent e) { }
-	
 	
 }

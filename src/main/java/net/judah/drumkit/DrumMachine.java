@@ -1,7 +1,5 @@
 package net.judah.drumkit;
 
-import java.nio.FloatBuffer;
-
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
@@ -13,15 +11,12 @@ import net.judah.util.AudioTools;
 
 @Getter 
 public class DrumMachine extends LineIn {
-
+	
 	private final DrumKit drum1, drum2, hats, fills;
 	@Getter private final DrumKit[] kits;
 	@Getter private final KitKnobs knobs = new KitKnobs();
 	/** current midi controller input and view */
 	@Setter @Getter private int current;
-	@Setter private boolean armed; // TODO
-	protected final FloatBuffer[] buffer = new FloatBuffer[] 
-			{FloatBuffer.allocate(bufSize), FloatBuffer.allocate(bufSize)};
 	
 	public DrumMachine(String name, JackPort outL, JackPort outR, String icon) {
 		super(name, true);
@@ -35,17 +30,22 @@ public class DrumMachine extends LineIn {
 		fills = new DrumKit(KitMode.Fills);
 		kits = new DrumKit[] {drum1, drum2, hats, fills};
 		knobs.setKit(drum1);
+		setPreset("Drumz");
+		setPresetActive(true);
 	}
 
+	// process+mix each drumkit, process this channel's fx, place on mains
 	public void process() {
-		AudioTools.silence(buffer);
+		AudioTools.silence(left);
+		AudioTools.silence(right);
 		for (DrumKit kit : kits) {
-			kit.process(buffer);
-			AudioTools.mix(kit.getBuffer()[0], buffer[0]);
-			AudioTools.mix(kit.getBuffer()[1], buffer[1]);
+			kit.process();
+			AudioTools.mix(kit.getLeft(), left);
+			AudioTools.mix(kit.getRight(), right);
 		}
-
-		processFx(buffer[0], buffer[1], 3.5f * gain.getGain());
+		processStereoFx(gain.getGain());
+		AudioTools.mix(left, leftPort.getFloatBuffer()); 
+        AudioTools.mix(right, rightPort.getFloatBuffer());  
 	}
 	
 	public DrumKit increment() {

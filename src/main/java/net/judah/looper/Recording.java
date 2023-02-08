@@ -23,6 +23,8 @@ import net.judah.util.Constants;
 	http://www.sonicspot.com/guide/wavefiles.html
 	http://www.blitter.com/~russtopia/MIDI/~jglatt/tech/wave.htm </pre>*/
 public class Recording extends Vector<float[][]> {
+	public static final float BOOST = 5f;
+	
 	@Getter private long creationTime = System.currentTimeMillis();
 	@Getter private File file; // can be null				
 	private BlockingQueue<float[][]> newQueue;
@@ -38,7 +40,7 @@ public class Recording extends Vector<float[][]> {
 	// ------------WavFile --------------------------
 	private byte[] buffer = new byte[4096]; // local buffer for disk IO
 	@Getter private static final int validBits = 16;		// 2 bytes unsigned, 0x0002 (2) to 0xFFFF (65,535)
-	private static final int frameSize = Constants.bufSize();
+	private static final int bufSize = Constants.bufSize();
 	private static final int LEFT = Constants.LEFT_CHANNEL;
 	private static final int RIGHT = Constants.RIGHT_CHANNEL;
 	private static final int STEREO = Constants.STEREO;
@@ -242,24 +244,24 @@ public class Recording extends Vector<float[][]> {
 
 		stereo = getNumChannels() == 2;
 		// Create a buffer of jack frame size
-		double[] buffer = new double[frameSize * STEREO];
+		double[] buffer = new double[bufSize * STEREO];
 
 		int framesRead;
 		do {
             // Read frames into buffer
-            framesRead = readFrames(buffer, 0, frameSize);
+            framesRead = readFrames(buffer, 0, bufSize);
 
-            float[][] frame = new float[2][frameSize]; 
+            float[][] frame = new float[2][bufSize]; 
             if (stereo)
 	            // cycle through frames and put them in loop Recording format
 	            for (int i = 0 ; i < framesRead * STEREO; i += 2) {
-	            	frame[LEFT][i/2] = (float)buffer[i];
-	            	frame[RIGHT][i/2] = (float)buffer[i + 1];
+	            	frame[LEFT][i/2] = BOOST * (float)buffer[i];
+	            	frame[RIGHT][i/2] = BOOST * (float)buffer[i + 1];
 	            }
             else 
 	            for (int i = 0 ; i < framesRead; i++) {
-	            	frame[LEFT][i] = (float)buffer[i];
-	            	frame[RIGHT][i] = (float)buffer[i];
+	            	frame[LEFT][i] = BOOST * (float)buffer[i];
+	            	frame[RIGHT][i] = BOOST * (float)buffer[i];
 	            }
             add(frame);
 		} while (framesRead != 0);

@@ -7,6 +7,7 @@ import java.util.List;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.gui.settable.SetCombo;
 import net.judah.gui.widgets.ModalDialog;
@@ -14,7 +15,6 @@ import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.seq.MidiTab;
-import net.judah.seq.MidiTrack;
 import net.judah.seq.Seq;
 import net.judah.song.Scene;
 import net.judah.util.Constants;
@@ -62,13 +62,13 @@ public class KorgMixer implements Controller {
 		
 		if (data1 >= 0 && data1 < 8) { // Main Faders
 			Channel ch = target(data1);
-			ch.getGain().setVol(data2);
+			ch.getGain().set(Gain.VOLUME, data2);
 			MainFrame.update(ch);
 		}
 		
 		// knobs = drumkit or synths gain
 		else if (data1 >= knoboff && data1 < knoboff + 4) {
-			getDrumMachine().getKits()[data1 - knoboff].getGain().setVol(data2);
+			getDrumMachine().getKits()[data1 - knoboff].getGain().set(Gain.VOLUME, data2);
 		}
 		else if (data1 >= knoboff + 4 && data1 < knoboff + 8) {
 			data1 = data1 - (knoboff + 4);
@@ -79,13 +79,12 @@ public class KorgMixer implements Controller {
 				case 3: synth = getFluid(); break;
 				default: synth = getSynth1();
 			}
-			synth.getGain().setVol(data2);
+			synth.getGain().set(Gain.VOLUME, data2);
 			MainFrame.update(synth);
 		}
 		
 		else if (data2 > 0 && data1 >= soff && data1 < soff + 8) { // play/stop sequencer tracks
-			MidiTrack t = seq.get(data1 - soff);
-			t.setActive(!t.isActive());
+			seq.get(data1 - soff).trigger();
 		}
 		else if (data2 > 0 && data1 >= moff && data1 < moff + 8) { // MUTE RECORD INPUT
 			Channel ch = target(data1 - moff);
@@ -101,7 +100,7 @@ public class KorgMixer implements Controller {
 			int idx = data1 - roff; 
 			List<Scene> scenes = getCurrent().getScenes();
 			if (scenes.size() > idx) 
-				getSongs().getSongView().setOnDeck(scenes.get(idx));
+				getSongs().setOnDeck(scenes.get(idx));
 		}
 			
 		else if (data1 == SET.getVal() && data2 != 0) { // Run SettableCombo or hide modal dialog

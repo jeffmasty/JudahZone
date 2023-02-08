@@ -69,7 +69,7 @@ public class JudahMenu extends JMenuBar {
         song.add(setlist);
     	
     	erase.add(new Actionable("All", e->getLooper().clear()));
-    	looper.forEach(loop->erase.add(new Actionable(loop.getName(), e->loop.delete())));
+    	looper.forEach(loop->erase.add(new Actionable(loop.getName(), e->loop.erase())));
     	looper.forEach(loop->duplicate.add(new Actionable(loop.getName(), e->loop.duplicate())));
     	SoloTrack solo = getLooper().getSoloTrack();
     	JMenu solotrack = new JMenu("Solo Track");

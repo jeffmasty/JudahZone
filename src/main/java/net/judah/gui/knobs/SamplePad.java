@@ -14,17 +14,18 @@ import javax.swing.border.BevelBorder;
 import net.judah.JudahZone;
 import net.judah.api.ProcessAudio.Type;
 import net.judah.drumkit.Sample;
+import net.judah.fx.Gain;
 import net.judah.gui.Pastels;
 import net.judah.gui.widgets.FxButton;
 import net.judah.gui.widgets.Knob;
 
 public class SamplePad extends JPanel {
-	private final Sample sample;
+	public final Sample sample;
 	private final JPanel btns; 
 	private final JLabel name;
 	private final Knob vol = new Knob(Pastels.ORANGE);
 	
-	public SamplePad(Sample s) {
+	public SamplePad(Sample s, JPanel parent) {
 		this.sample = s;
 		Color color = s.getType() == Type.ONE_SHOT ? Pastels.MY_GRAY : Pastels.BLUE;
 		addMouseListener(new MouseAdapter() {
@@ -39,12 +40,13 @@ public class SamplePad extends JPanel {
 		name = new JLabel(s.getName(), JLabel.CENTER);
 		name.setOpaque(true);
 		update();
-		vol.addListener(e->sample.getGain().setVol(vol.getValue()));
+		vol.addListener(e->sample.getGain().set(Gain.VOLUME, vol.getValue()));
 
 		add(name);
 		btns.add(vol);
 		btns.add(new FxButton(s));
 		add(btns);
+		parent.add(this);
 	}
 
 	public void update() {

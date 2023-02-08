@@ -33,9 +33,8 @@ public class SynthPresets {
 		adsr.setReleaseTime(Integer.parseInt(dat[3]));
 	}
 	public void filter(String[] dat) {
-		synth.getGain().setGain(Float.parseFloat(dat[0]));
-		synth.getHiCut().setFrequency(Float.parseFloat(dat[1]));
-		synth.getHiCut().setResonance(Float.parseFloat(dat[2]));
+		synth.getFilter().setFrequency(Float.parseFloat(dat[1]));
+		synth.getFilter().setResonance(Float.parseFloat(dat[2]));
 		synth.getLoCut().setFrequency(Float.parseFloat(dat[3]));
 		synth.getLoCut().setResonance(Float.parseFloat(dat[4]));
 	}

@@ -3,7 +3,6 @@ package net.judah.drumkit;
 import static net.judah.util.Constants.midiToFloat;
 
 import java.io.File;
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,9 +37,6 @@ public class DrumKit extends LineIn implements Engine, Knobs {
 	private final KnobMode knobMode = KnobMode.Kits;
 	private final List<Integer> actives = new ArrayList<>();
 	
-	protected final FloatBuffer[] buffer = new FloatBuffer[] 
-			{FloatBuffer.allocate(bufSize), FloatBuffer.allocate(bufSize)};
-
 	private final int channel = 9;
 	
 	public DrumKit(KitMode mode) {
@@ -109,7 +105,7 @@ public class DrumKit extends LineIn implements Engine, Knobs {
 		
 		for (DrumSample drum : samples) {
 			if (drum.getGmDrum().getData1() == data1)
-				play(drum, true, Math.round(midi.getData2()));
+				play(drum, true, midi.getData2());
 		}
 	}
 
@@ -140,14 +136,14 @@ public class DrumKit extends LineIn implements Engine, Knobs {
 		}
 	}
 
-	public void process(FloatBuffer[] output) {
-		AudioTools.silence(buffer);
-		for (DrumSample drum: samples) {
-			drum.process(buffer);
-			AudioTools.mix(drum.getBuffer()[0], buffer[0]);
-			AudioTools.mix(drum.getBuffer()[1], buffer[1]);
-		}
-		processFx(buffer[0], buffer[1], gain.getGain());
+	@Override
+	public void process() {
+		AudioTools.silence(left);
+		AudioTools.silence(right);
+		for (DrumSample drum: samples)  
+			drum.process(left, right);
+		
+		processStereoFx(gain.getGain());
 	}
 
 	@Override

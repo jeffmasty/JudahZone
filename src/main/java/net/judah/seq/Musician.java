@@ -79,7 +79,7 @@ public abstract class Musician implements MouseListener, MouseWheelListener, Mou
             }
 		selected.clear();
 		view.getGrid().repaint();
-		RTLogger.log(this, track.getName() + " DELETE! before: " + before + " after: " + track.getT().size()); 
+		// RTLogger.log(this, track.getName() + " DELETE! before: " + before + " after: " + track.getT().size()); 
 	}
 
 

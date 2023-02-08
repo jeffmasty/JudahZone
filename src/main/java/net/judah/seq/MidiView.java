@@ -3,7 +3,6 @@ package net.judah.seq;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import lombok.Setter;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
 import net.judah.midi.JudahClock;
@@ -19,7 +18,6 @@ public abstract class MidiView extends JPanel implements TimeListener, MidiConst
 	protected MusicGrid grid;
 	protected JPanel instrumentPanel;
 	protected final Notes selected = new Notes();
-	@Setter protected boolean live;
 	
 	public MidiView(MidiTrack t) {
 		this.track = t;
@@ -36,13 +34,14 @@ public abstract class MidiView extends JPanel implements TimeListener, MidiConst
 
 	@Override
 	public void update(Property prop, Object value) {
-		if (prop == Property.STEP && track.isActive() && isVisible() && isLive()) {
+		if (prop == Property.STEP && track.isActive() && isVisible() && track.isLive()) {
 			getSteps().setStart((int)value);
 			getSteps().repaint();
 			getGrid().repaint();
 		}
 		else if (prop == Property.MEASURE) {
-//			setTimeframe(2 * track.getResolution() * (int)value); // TODO
+			getSteps().timeSig();
+			getGrid().timeSig();
 		}
 	}
 	

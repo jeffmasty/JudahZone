@@ -15,6 +15,7 @@ public interface MidiConstants {
 	int RESOLUTION = 256;
 	public static final String[] NOTES = {"C", "C#", "D", "Db", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"};
 	List<Integer> BLACK_KEYS = List.of(1, 3, 6, 8, 10);
+	public static final int RATCHET = 11;
 
 	int KEY_WIDTH = 14;
 	int KEY_HEIGHT = 24;

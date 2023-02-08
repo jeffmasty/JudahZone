@@ -1,16 +1,21 @@
 package net.judah.seq;
 
 import java.awt.Dimension;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import lombok.Getter;
 import net.judah.api.MidiReceiver;
+import net.judah.drumkit.KitMode;
 import net.judah.gui.Size;
 import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.knobs.TrackKnobs;
+import net.judah.song.Scene;
 import net.judah.song.Sched;
+import net.judah.song.TrackInfo;
+import net.judah.util.RTLogger;
 
 @Getter 
 public class Seq implements Iterable<MidiTrack>, MidiConstants {
@@ -67,11 +72,11 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants {
 		return tracks.size();
 	}
 
-	public List<Sched> state() {
-		ArrayList<Sched> result = new ArrayList<>();
+	public void populate(Scene scene) {
+		List<Sched> tracks = scene.getTracks();
+		tracks.clear();
 		for (MidiTrack t : this)
-			result.add(new Sched(t.getState()));
-		return result;
+			tracks.add(new Sched(t.isDrums()));
 	}
 
 	public MidiTrack byName(String track) {
@@ -81,4 +86,37 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants {
 		return null;
 	}
 
+	public void loadDrumMachine() {
+        MidiTrack drum1 = byName(KitMode.Drum1.name());
+        drum1.load(new File(drum1.getFolder(), "Rock1"));
+        drum1.getMidiOut().progChange("Pearl");
+        MidiTrack drum2 = byName(KitMode.Drum2.name());
+        drum2.load(new File(drum2.getFolder(), "Rap1"));
+        drum2.getMidiOut().progChange("808");
+        MidiTrack hats = byName(KitMode.Hats.name());
+        hats.load(new File(hats.getFolder(), "Hats1"));
+        hats.getMidiOut().progChange("Hats");
+        MidiTrack fills = byName(KitMode.Fills.name());
+        fills.load(new File(fills.getFolder(), "Fills1"));
+        fills.setCue(CUE.Hot);
+        fills.getMidiOut().progChange("VCO");
+	}
+
+	public void loadTracks(List<TrackInfo> trax) {
+		for (TrackInfo info : trax) {
+    		MidiTrack t = byName(info.getTrack());
+    		if (t == null) {
+    			RTLogger.warn(this, "Missing " + info.getTrack());
+    			continue;
+    		}
+    		
+    		if (false == t.getMidiOut().getProg(t.getCh()).equals(info.getProgram())) 
+    			t.getMidiOut().progChange(info.getProgram(), t.getCh());
+    		if (info.getFile() != null && !info.getFile().isEmpty()) {
+    			t.load(new File(info.getFile()));
+    		}
+    	} 
+
+	}
+	
 }

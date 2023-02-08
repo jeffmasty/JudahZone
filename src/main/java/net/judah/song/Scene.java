@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import net.judah.JudahZone;
+import net.judah.seq.MidiTrack;
+import net.judah.seq.Seq;
 
 @Data @AllArgsConstructor @NoArgsConstructor
 public class Scene {
@@ -17,17 +19,13 @@ public class Scene {
 	String notes;
 	ParamList commands = new ParamList();
 	List<Sched> tracks = new ArrayList<>();
+	List<String> fx = new ArrayList<>();
+	 
+	public Scene(Seq seq) {
+		for (MidiTrack t : seq)
+			tracks.add(new Sched(t.isDrums()));
+	}
 	
-	public Scene(int size) { // INIT
-		for (int i = 0; i < size; i++)
-			tracks.add(new Sched());
-	}
-
-	public Scene(int size, Trigger t) {
-		this(size);
-		type = t;
-	}
-
 	public Scene(List<Sched> state) {
 		tracks.addAll(state);
 	}

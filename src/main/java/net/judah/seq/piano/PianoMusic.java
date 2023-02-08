@@ -96,5 +96,12 @@ public class PianoMusic extends MusicGrid implements BeatsSize {
 		return pianist;
 	}
 
+	@Override
+	public void timeSig() {
+		// piano gets live data from clock
+		steps.repaint();
+		repaint();
+	}
+
 	
 }

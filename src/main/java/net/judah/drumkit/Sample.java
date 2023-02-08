@@ -1,14 +1,12 @@
 package net.judah.drumkit;
 
 import java.io.File;
-import java.nio.FloatBuffer;
 
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.gui.MainFrame;
-import net.judah.gui.knobs.SamplePad;
 import net.judah.looper.AudioTrack;
 import net.judah.looper.Recording;
 import net.judah.util.Folders;
@@ -16,16 +14,10 @@ import net.judah.util.Folders;
 /** currently, plays ((crickets)) on 2 and 4 */
 public class Sample extends AudioTrack {
 	
-	private static final float BOOST = 4f;
-
+	private static final float BOOST = 0.2f;
 	@Getter protected File file;
-	private SamplePad samplePad;
-	@Getter @Setter protected float mix = 1f;
+	@Getter @Setter protected float mix = 0.5f;
 	
-	private final float[] workL = new float[bufSize];
-    private final float[] workR = new float[bufSize];
-	private FloatBuffer[] buffer = new FloatBuffer[] {FloatBuffer.wrap(workL), FloatBuffer.wrap(workR)};
-    
 	/** load preset by name (without .wav) */
 	public Sample(JackPort left, JackPort right, String wavName, Type type) throws Exception {
 		this(left, right, wavName, new File(Folders.getSamples(), wavName + ".wav"), type);
@@ -35,7 +27,15 @@ public class Sample extends AudioTrack {
 		this(name, type, left, right);
 		this.file = f;
 		setRecording(new Recording(file));
-		env = 4f; // boost
+		env = BOOST; // boost
+	}
+
+	/** blank sample */
+	public Sample(String name, Type type, JackPort left, JackPort right) {
+		super(name);
+		leftPort = left;
+		rightPort = right;
+		this.type = type;
 	}
 
 	@Override public void clear() {
@@ -45,27 +45,14 @@ public class Sample extends AudioTrack {
         recording = null;
         active = false;
         MainFrame.update(this);
+        file = null;
     }
-	
-	/** blank sample */
-	public Sample(String name, Type type, JackPort left, JackPort right) {
-		super(name);
-		leftPort = left;
-		rightPort = right;
-		this.type = type;
-	}
-
 	
 	public void process() {
 		if (!active || !hasRecording()) return;
 		readRecordedBuffer();
 		env = BOOST * mix;
-		playFrame(buffer, leftPort.getFloatBuffer(), rightPort.getFloatBuffer()); 
+		playFrame(leftPort.getFloatBuffer(), rightPort.getFloatBuffer()); 
     }
 	
-	public SamplePad getPad() {
-		if (samplePad == null)
-			samplePad = new SamplePad(this);
-		return samplePad;
-	}
 }

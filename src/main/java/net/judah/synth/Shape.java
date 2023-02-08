@@ -14,7 +14,7 @@ public enum Shape { // TODO Amp/Duty/PULSE_MOD
 	SAW,
 	RND;
 	
-	public static final float DUTY_FACTOR = 0.85f; // SQR and RND
+	public static final float DUTY_FACTOR = 0.9f; // SQR and RND
 	public final static int BITS = 16;
 	public final static int LENGTH = 1 << (BITS - 1);
 	public final static int MASK = LENGTH - 1;

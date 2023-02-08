@@ -4,12 +4,12 @@ import java.awt.Color;
 
 import net.judah.looper.SoloTrack;
 
-public class LineInFader extends ChannelFader {
+public class LineMix extends MixWidget {
 
 	private final LineIn in;
 	private final SoloTrack soloTrack;
 	
-	public LineInFader(LineIn channel, SoloTrack solo) {
+	public LineMix(LineIn channel, SoloTrack solo) {
 		super(channel);
 		this.in = channel;
 		this.soloTrack = solo;
@@ -44,7 +44,7 @@ public class LineInFader extends ChannelFader {
 		
 		if (channel.isOnMute())  // line in/master track 
 			bg = Color.BLACK;
-		else if (channel.getGain().getVol() < 5)
+		else if (muted())
 			bg = Color.DARK_GRAY;
 		
 		if (soloTrack.isSolo() && soloTrack.getSoloTrack() == in)

@@ -14,17 +14,17 @@ import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
 import net.judah.fx.CutFilter;
 import net.judah.fx.Gain;
-import net.judah.fx.Reverb;
 import net.judah.gui.Pastels;
-import net.judah.gui.knobs.KitKnobs.Modes;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.FxButton;
 import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.Knob.KnobListener;
 
 public class KitPad extends JPanel implements KnobListener {
-		protected static final Color borderColor = Pastels.PURPLE;
-
+	private static final Color borderColor = Pastels.PURPLE;
+	private static final float ATK_SCALE = 0.2f;
+		
+		
 	private final DrumType type;
 	private final KitKnobs view;
 	private final Knob knob;
@@ -34,6 +34,8 @@ public class KitPad extends JPanel implements KnobListener {
 	
 	public KitPad(KitKnobs view, DrumType t) {
 		this.type = t;
+		this.view = view;
+
 		setBorder(new LineBorder(borderColor, 1));
 		setLayout(new GridLayout(0, 1, 0, 0));
 		JLabel nombre = new JLabel(type.name());
@@ -44,7 +46,6 @@ public class KitPad extends JPanel implements KnobListener {
 		add(bottom);
 		setOpaque(true);
 		
-		this.view = view;
 		knob = new Knob(this);
 		knob.setKnobColor(Pastels.RED);
 		if (type == DrumType.OHat) {
@@ -75,61 +76,64 @@ public class KitPad extends JPanel implements KnobListener {
 		int current = knob.getValue();
 		switch(view.getMode()) {
 			case Volume: 
-				if (sample.getGain().getVol() != current)
-					knob.setValue(sample.getGain().getVol()); 
+				if (sample.getVolume() != current)
+					knob.setValue(sample.getVolume()); 
 				break;
 			case Attack: 
-				if (sample.getAttackTime() * 0.2f != current)
-					knob.setValue((int) (sample.getAttackTime() * 0.2f));
+				if (sample.getAttackTime() != current * ATK_SCALE)
+					knob.setValue((int) (sample.getAttackTime() / ATK_SCALE));
 				break;
 			case Decay: 
 				if (sample.getDecayTime() != current)
 					knob.setValue(sample.getDecayTime()); 
 				break;
-			case HiCut: 
-				if (sample.getHiCut().get(CutFilter.Settings.Frequency.ordinal()) != current)
-					knob.setValue(sample.getCutFilter().get(CutFilter.Settings.Frequency.ordinal()));
+			case pArTy: 
+				if (sample.getParty().get(CutFilter.Settings.Frequency.ordinal()) != current)
+					knob.setValue(sample.getParty().get(CutFilter.Settings.Frequency.ordinal()));
 				break;
-			case Reverb: 
-				if (sample.getReverb().get(Reverb.Settings.Wet.ordinal()) != current)
-					knob.setValue(sample.getReverb().get(Reverb.Settings.Wet.ordinal()));
+			case Dist: 
+				if (sample.getOverdrive().get(0) != current)
+					knob.setValue(sample.getOverdrive().get(0));
 				break;
 			case Pan: 
-				if (sample.getGain().get(Gain.PAN) != current)
-					knob.setValue(sample.getGain().getPan());
+				if (sample.getPan() != current)
+					knob.setValue(sample.getPan());
 				break;
 		}
 	}
 
 	@Override
-	public void knobChanged(int val) {
+	public void knobChanged(int value) {
 		DrumSample sample = findSample();
-		Modes mode = view.getMode();
-		if (mode == Modes.Attack) {
-			if (sample.getAttackTime() * 5 != val)
-				sample.setAttackTime((int)(val * 0.2f)); 
-		}
-		else if (mode == Modes.Decay) {
-			if (sample.getDecayTime() != val)
-				sample.setDecayTime((val)); 
-		}
-		else if (mode == Modes.HiCut) {
-			if (sample.getHiCut().get(CutFilter.Settings.Frequency.ordinal()) != val)
-				sample.getHiCut().set(CutFilter.Settings.Frequency.ordinal(), val);
-				sample.getHiCut().setActive(val < 99);
-		}
-		else if (mode == Modes.Reverb) {
-			if (sample.getReverb().get(Reverb.Settings.Wet.ordinal()) != val)
-				sample.getReverb().set(Reverb.Settings.Wet.ordinal(), val);
-			sample.getReverb().setActive(val > 2); 
-		}
-		else if (mode == Modes.Volume) {
-			if (sample.getGain().getVol() != val)
-				sample.getGain().setVol(val); 
-		}
-		else if (mode == Modes.Pan) {
-			if (sample.getGain().get(Gain.PAN) != val)
-				sample.getGain().setPan(val);
+		switch(view.getMode()) {
+			case Volume: 
+				if (sample.getVolume() != value)
+					sample.getGain().set(Gain.VOLUME, value);
+				break;
+			case Attack: 
+				if (sample.getAttackTime() != (int)(value * ATK_SCALE))
+					sample.setAttackTime((int)(value * ATK_SCALE)); 
+				break;
+			case Decay: 
+				if (sample.getDecayTime() != value)
+					sample.setDecayTime(value);
+				break;
+			case pArTy: 
+				if (sample.getParty().get(CutFilter.Settings.Frequency.ordinal()) != value) {
+					sample.getParty().set(CutFilter.Settings.Frequency.ordinal(), value);
+					sample.getParty().setActive(value < 97);
+				}
+				break;
+			case Dist: 
+				if (sample.getOverdrive().get(0) != value) {
+					sample.getOverdrive().set(0, value);
+					sample.getOverdrive().setActive(value > 3);
+				}
+				break;
+			case Pan: 
+				if (sample.getPan() != value)
+					sample.getGain().set(Gain.PAN, value);
+				break;
 		}
 	}
 	

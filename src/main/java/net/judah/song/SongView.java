@@ -7,20 +7,17 @@ import java.awt.event.KeyEvent;
 import javax.swing.*;
 
 import lombok.Getter;
-import net.judah.api.Notification.Property;
-import net.judah.api.TimeListener;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.Btn;
+import net.judah.util.Constants;
 
-public class SongView extends JPanel implements TimeListener {
+public class SongView extends JPanel {
 	
 	private final Song song;
 	private final SongTab tab;
 
-	@Getter private static Scene onDeck;
 	@Getter private final ScenesView launcher;
-	@Getter private int count;
 	private final JComboBox<Trigger> sceneType = new JComboBox<>(Trigger.values());
 
 	private final JPanel sceneMenu = new JPanel();
@@ -73,57 +70,19 @@ public class SongView extends JPanel implements TimeListener {
 				tab.getCurrent().setNotes(notes.getText());}});
 		paramMenu.add(notes);
 	}
-
-	
 	
 	private void triggerType() {
 		tab.getCurrent().setType((Trigger)sceneType.getSelectedItem());
 		MainFrame.update(tab);
 	}
 
-	private void peek(Scene current) {
-		int next = 1 + song.getScenes().indexOf(current); 
-		if (song.getScenes().size() <= next /* && getClock().isActive() */) {
-			setOnDeck(null);
-			return;
-		}
-		Scene peek = song.getScenes().get(next);
-		if (peek.getType() == Trigger.REL) {
-			count = 0;
-			setOnDeck(peek);
-		}
-		else if (peek.getType() == Trigger.ABS) 
-			setOnDeck(peek);
-		else setOnDeck(null);;
-	}
-	
-	public void setOnDeck(Scene scene) {
-		
-		if (scene == null) 
-			onDeck = null;
-		else if (scene.getType() == Trigger.HOT)
-			tab.launchScene(scene);
-		else if (scene.getType() == Trigger.JUMP) {
-			int idx = (int)scene.getCommands().getTimeCode();
-			if (song.getScenes().size() > idx) 
-				setOnDeck(song.getScenes().get(idx));
-		}
-		else if (onDeck == scene)  // force
-			tab.launchScene(scene);
-		else 
-			onDeck = scene;
-		
-		MainFrame.update(this);
-		
-	}
 	
 	public void setCurrent(Scene s) {
-		new Thread(() -> 
-			params.setModel(new ParamModel(s.getCommands()))).start();
+		Constants.execute(() -> 
+			params.setModel(new ParamModel(s.getCommands())));
 		notes.setText(s.getNotes());
 		if (sceneType.getSelectedItem() != s.getType())
 			sceneType.setSelectedItem(s.getType());
-		peek(s);
 	}
 
 	public void update() {
@@ -143,32 +102,6 @@ public class SongView extends JPanel implements TimeListener {
 		if (selected < tab.getCurrent().getCommands().size())
 			tab.getCurrent().getCommands().remove(selected);
 		params.setModel(new ParamModel(tab.getCurrent().getCommands()));
-	}
-
-	@Override
-	public void update(Property prop, Object value) {
-		if (onDeck == null) 
-			return;
-		
-		if (prop == Property.BARS && onDeck.type == Trigger.BAR)	
-			go();
-		else if (prop == Property.LOOP && onDeck.type == Trigger.LOOP) 
-			go();
-		else if (onDeck.type == Trigger.ABS && prop == Property.BEAT) {
-			if ((int)value >= onDeck.getCommands().getTimeCode())
-				go();
-		}
-		else if (onDeck.type == Trigger.REL && prop == Property.BEAT) {
-			if (++count >= onDeck.getCommands().getTimeCode()) 
-				go();
-			else 
-				MainFrame.update(onDeck);
-		}
-	}
-
-	private void go() { 
-		if (onDeck != null)  
-			tab.launchScene(onDeck);
 	}
 
 

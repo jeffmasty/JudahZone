@@ -16,7 +16,6 @@ import net.judah.fx.CutFilter;
 import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
-import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.knobs.Knobs;
 import net.judah.gui.knobs.SynthKnobs;
 import net.judah.gui.settable.Program;
@@ -26,18 +25,17 @@ import net.judah.mixer.LineIn;
 import net.judah.util.AudioTools;
 import net.judah.util.RTLogger;
 
-@Getter // Wishlist: portamento/glide, LFOs, PWM, mono-synth
+@Getter // Wishlist: portamento/glide, LFOs, PWM, mono-synth, true stereo
 public class JudahSynth extends LineIn implements Engine, Knobs {
-	
+	public static final String[] NAMES = {"S.One", "S.Two"};
 	public static final int POLYPHONY = 16;
 	public static final int DCO_COUNT = 3;
 	public static final int ZERO_BEND = 8192;
 	
-    private final FloatBuffer mono = FloatBuffer.allocate(bufSize);
-	private final FloatBuffer[] buffer = new FloatBuffer[] {mono, null}; // synth is not stereo (yet)
+    private final FloatBuffer work = FloatBuffer.allocate(bufSize); // mono-synth algorithm
+	
 	private final int channel = 0;
 	private final KnobMode knobMode = KnobMode.Synth;
-
 	protected boolean active = true;
     private final Adsr adsr = new Adsr();
     private final Voice[] voices = new Voice[POLYPHONY];
@@ -53,7 +51,7 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
 	@Setter @Getter private MidiPort midiPort;
     /** modwheel pitchbend semitones */
     @Setter private int modSemitones = 1;
-    private SynthKnobs synthKnobs;
+    private final SynthKnobs synthKnobs;
     
 	public JudahSynth(String name, JackPort left, JackPort right, String iconName) {
 		super(name, false);
@@ -69,10 +67,10 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
 		for (int i = 0; i < detune.length; i++)
 			detune[i] = 1f;
 
-		hiCut.setFilterType(CutFilter.Type.LP24);
-		hiCut.setFrequency(6000);
-		hiCut.setResonance(3);
-		hiCut.setActive(true);
+		filter.setFilterType(CutFilter.Type.LP24);
+		filter.setFrequency(6000);
+		filter.setResonance(3);
+		filter.setActive(true);
 		
 		loCut.setFilterType(CutFilter.Type.HP24);
 		loCut.setFrequency(60);
@@ -80,7 +78,9 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
 		loCut.setActive(true);
 
 		synthPresets = new SynthPresets(this);
-		modWheel = new ModWheel(loCut, hiCut);
+		modWheel = new ModWheel(loCut, filter);
+		synthKnobs = new SynthKnobs(this);
+
 	}
 
 	public float computeGain(int dco) { 
@@ -175,17 +175,22 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
 	/////////////////////////////////
 	//     PROCESS AUDIO           //
 	/////////////////////////////////
+	@Override
 	public void process() {
 		
 		if (!hasWork()) 
 			return;
-        AudioTools.silence(mono);
+        AudioTools.silence(work);
 
         for (Voice voice : voices) {
-        	voice.process(notes, adsr, mono);
+        	voice.process(notes, adsr, work);
         }
-        loCut.process(mono);
-        processFx(mono);
+        loCut.process(work);
+        processFx(work, 1f);
+        toStereo(work);
+        AudioTools.mix(left, leftPort.getFloatBuffer());
+        AudioTools.mix(right, rightPort.getFloatBuffer());
+
 	}
 
 	public float detune(int dco, float hz) {
@@ -201,12 +206,6 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
 		return actives;
 	}
 
-	public KnobPanel getSynthKnobs() {
-		if (synthKnobs == null)
-			synthKnobs = new SynthKnobs(this);
-		return synthKnobs;
-	}
-	
 }
 
 //	public void setActive(boolean on) {  add/remove synth from channels list

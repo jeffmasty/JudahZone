@@ -3,6 +3,7 @@ package net.judah.controllers;
 import static net.judah.JudahZone.*;
 
 import net.judah.JudahZone;
+import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
 import net.judah.looper.SoloTrack;
@@ -110,8 +111,8 @@ public class Line6FBV implements Controller {
 			if (getFxRack() == null)
 				return true;
 			Channel ch = getFxRack().getChannel();
-			if (Math.abs(ch.getGain().getVol() - percent) > 2){
-				ch.getGain().setVol(percent);
+			if (Math.abs(ch.getVolume() - percent) > 3){
+				ch.getGain().set(Gain.VOLUME, percent);
 				pedalMemory = percent;
 				MainFrame.update(ch);
 			}

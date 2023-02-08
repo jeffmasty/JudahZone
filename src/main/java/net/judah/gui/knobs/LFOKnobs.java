@@ -8,7 +8,6 @@ import java.util.ArrayList;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
@@ -17,7 +16,6 @@ import net.judah.JudahZone;
 import net.judah.fx.Compressor;
 import net.judah.fx.LFO;
 import net.judah.gui.Gui;
-import net.judah.gui.MainFrame;
 import net.judah.gui.fx.Row;
 import net.judah.gui.fx.RowLabels;
 import net.judah.gui.settable.Lfo;
@@ -38,7 +36,6 @@ public class LFOKnobs extends KnobPanel {
     private final JPanel compressor = new JPanel(new GridLayout(2, 4));
     @Getter private final GuitarTuner tuner = new GuitarTuner();
     private final JToggleButton tunerBtn = new JToggleButton("Tuner");
-    private final JComboBox<Channel> all;
     private final ArrayList<RowLabels> labels = new ArrayList<>();
     private final Row row;
 
@@ -96,16 +93,11 @@ public class LFOKnobs extends KnobPanel {
     	doLayout();
     	update();
     	
-    	ArrayList<Channel> chz = JudahZone.getMixer().getAll();
-    	all = new JComboBox<>(chz.toArray(new Channel[chz.size()]));
-    	all.setFont(Gui.BOLD13);
-    	all.setSelectedItem(channel);
-    	all.addActionListener(e->MainFrame.setFocus(((Channel)all.getSelectedItem()).getLfoKnobs()));
     }
     
     @Override
     public Component installing() {
-    	return Gui.wrap(all, new FxButton(channel));
+    	return Gui.wrap(JudahZone.getMixer().getCombo(channel), new FxButton(channel));
     }
 
 	@Override

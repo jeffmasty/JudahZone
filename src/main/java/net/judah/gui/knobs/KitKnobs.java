@@ -21,7 +21,7 @@ import net.judah.gui.widgets.CenteredCombo;
 public class KitKnobs extends KnobPanel {
 	
 	public static enum Modes {
-		Pan, Volume, Attack, Decay, Reverb, HiCut
+		Pan, Volume, Attack, Decay, Dist, pArTy;
 	}
 	
 	@Getter private DrumKit kit;
@@ -52,10 +52,8 @@ public class KitKnobs extends KnobPanel {
     	preset.addActionListener(e->kit.setKit("" + preset.getSelectedItem()));
     	kits.addActionListener(e->setKit(JudahZone.getDrumMachine().getKits()[kits.getSelectedIndex()]));
     	modes.setSelectedItem(Modes.Pan);
-    	
-    	modes.addActionListener(e->{
-    		update();
-    	});
+    	modes.addActionListener(e-> update() );
+
     	titleBar.add(kits);
     	titleBar.add(modes);
     	titleBar.add(preset);

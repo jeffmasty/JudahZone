@@ -1,6 +1,8 @@
 package net.judah.drumkit;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 import org.jaudiolibs.jnajack.JackPort;
 
@@ -12,26 +14,28 @@ import net.judah.util.RTLogger;
 
 @Getter
 public class Sampler extends ArrayList<Sample> {
-
-	public static final String[] NAMES = new String[] {
-			"Creek", "Rain", "Birds", "Bicycle", // loops
-			"FeelGood", "Prrrrrr", "DropBass", "DJOutlaw"}; // one-shots
+	
 	// Fountain Creek: Fields Park, Manitou Springs, CO
 	// Rain in Cuba: https://freesound.org/people/kyles/sounds/362077/
 	// Birds: https://freesound.org/people/hargissssound/sounds/345851/
 	// Bicycle https://freesound.org/people/bojan_t95/sounds/507013/
-	// Prrrrrr: https://freesound.org/people/Duisterwho/sounds/644104/
-	// DropDaBass: https://freesound.org/people/qubodup/sounds/218891/
-	// DJOutlaw: https://freesound.org/people/tim.kahn/sounds/94748/
-
-	@Getter private int selected;
+	public static final String[] LOOPS = {"Creek", "Rain", "Birds", "Bicycle"};
 	
+	// FeelGood: Gorilaz sample
+	// Prrrrrr: https://freesound.org/people/Duisterwho/sounds/644104/
+	// DropBass: https://freesound.org/people/qubodup/sounds/218891/
+	// DJOutlaw: https://freesound.org/people/tim.kahn/sounds/94748/
+	public static final String[] ONESHOTS = {"FeelGood", "Prrrrrr", "DropBass", "DJOutlaw"}; 
+	
+	public static final String[] NAMES = Stream.concat(
+			Arrays.stream(LOOPS), Arrays.stream(ONESHOTS)).toArray(String[]::new);
+	public static final int SIZE = NAMES.length;
+
+	/** unified amplification for all samples */
+	@Getter float mix = 0.6f;
+	@Getter private int selected;
 	private final ArrayList<StepSample> stepSamples = new ArrayList<>();
 	private StepSample stepSample;
-	/** unified amplification for all samples */
-	@Getter float mix = 1f;
-	
-	
 	
 	public Sampler(JackPort left, JackPort right) {
 		for (int i = 0; i < NAMES.length; i++) {

@@ -3,7 +3,6 @@ package net.judah.seq.piano;
 import java.awt.Point;
 
 import lombok.Getter;
-import net.judah.seq.Gate;
 import net.judah.seq.MidiMenu;
 import net.judah.seq.MidiTab;
 import net.judah.seq.MidiTrack;
@@ -31,11 +30,10 @@ public class PianoView extends MidiView implements PianoSize {
 	
 	@Override
 	public void update() {
-		invalidate();
-		steps.repaint();
 		menu.update();
-		menu.repaint();
 		grid.repaint();
+		if (track.isLive())
+			steps.repaint();
 	}
 
 	
@@ -52,12 +50,6 @@ public class PianoView extends MidiView implements PianoSize {
 	
 	public static float ratioY(long tick, long measure) {
 		return tick / (float)measure;
-	}
-
-	public static long quantize(long tick, int resolution, Gate gate) { // TODO only does 1/16th quantization for now
-		long unit = (long) (0.25f * resolution);
-		float units = tick / unit;
-		return (long)units * unit;
 	}
 	
 }

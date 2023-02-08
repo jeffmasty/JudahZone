@@ -15,9 +15,12 @@ public class Arrow extends BasicArrowButton {
 		super(dir, Pastels.EGGSHELL, Pastels.MY_GRAY, Color.DARK_GRAY, Color.LIGHT_GRAY);
 		if (action != null)
 			addActionListener(action);
+		
 	}
 	
 	@Override public Dimension getPreferredSize() { return SIZE; }
 	@Override public Dimension getMaximumSize() { return SIZE; }
+	@Override public Dimension getMinimumSize() { return SIZE; }
+
 }
 			

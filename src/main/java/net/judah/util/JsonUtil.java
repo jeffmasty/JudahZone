@@ -37,10 +37,10 @@ public class JsonUtil {
 	}
 	
 	public static void threadedSave(String json, File file) {
-        new Thread(() -> {
+		Constants.execute(() -> {
             try { Files.write(Paths.get(file.toURI()), json.getBytes());
             } catch(IOException e) {RTLogger.warn("Constants.writeToFile", e);}
-        }).start();
+        });
     }
 
 }

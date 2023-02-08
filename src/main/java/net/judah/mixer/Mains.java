@@ -10,7 +10,8 @@ import net.judah.util.AudioTools;
 /**The unified effects/volume track just before hitting the speakers/external effects.
  * A master track initializes in a muted state.*/
 public class Mains extends Channel {
-
+	private final float BOOST = 12f;
+	
 	final JackPort speakersLeft, speakersRight, effectsL, effectsR;
 
 	public Mains(JackPort left, JackPort right) {
@@ -29,12 +30,14 @@ public class Mains extends Channel {
 	}
 
 	public void process() {
-		FloatBuffer left, right;
-	    left = speakersLeft.getFloatBuffer();
-	    right = speakersRight.getFloatBuffer();
+		FloatBuffer left = speakersLeft.getFloatBuffer();
+	    FloatBuffer right = speakersRight.getFloatBuffer();
 
-        hiCut.process(left, right);
-        cutFilter.process(left, right);
+	    AudioTools.gain(left, (1 - gain.getStereo()) * (gain.getGain() * BOOST));
+	    AudioTools.gain(right, gain.getStereo() * (gain.getGain() * BOOST));
+
+        filter.process(left, right);
+        party.process(left, right);
         if (chorus.isActive())
             chorus.processStereo(left, right);
 
@@ -60,17 +63,8 @@ public class Mains extends Channel {
 		if (reverb.isActive()) {
 			reverb.process(left, right);
 		}
-	    AudioTools.processGain(left, getGainL());
-	    AudioTools.processGain(right, getGainR());
 	}
 
-	public float getGainL() {
-	    return gain.getVol() * 0.01f * 0.5f * (1 - getPan());
-	}
-
-	public float getGainR() {
-	    return gain.getVol() * 0.01f * 0.5f * getPan();
-	}
 }
 
 //	if (reverb.isInternal()) 

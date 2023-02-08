@@ -40,9 +40,8 @@ public class PianoSteps extends Steps implements BeatsSize, MouseMotionListener,
 		this.clock = track.getClock();
 		this.width = r.width;
 		this.height = r.height;
-		total = 2 * clock.getSteps();
-		unit = height / total;
 		setBounds(r);
+		timeSig();
 		addMouseMotionListener(this);
 		addMouseListener(this);
 	}
@@ -179,5 +178,11 @@ public class PianoSteps extends Steps implements BeatsSize, MouseMotionListener,
 	}
 	@Override public void mouseClicked(MouseEvent e) { }
 	@Override public void mouseEntered(MouseEvent e) { }
+
+	@Override
+	public void timeSig() {
+		total = 2 * clock.getSteps();
+		unit = height / total;
+	}
 	
 }

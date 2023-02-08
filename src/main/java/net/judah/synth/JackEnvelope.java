@@ -15,7 +15,7 @@ import lombok.Setter;
 public class JackEnvelope {
 	
 	/** 0 to 1 will decrease over-all volume, above 1 would amplify */
-	@Getter @Setter private float dampen = 0.25f; // wave shapes generated non-duty
+	@Getter @Setter private float dampen = 1f; // wave shapes generated non-duty
 	private int attack, decay, release;
 	private float result; // class-level for peaceful transition from sustain to release
 	

@@ -40,7 +40,7 @@ public class FluidSynth extends MidiInstrument {
 	/** talks to FluidSynth on it's stdin */
 	private OutputStream outStream;
 	@Getter private final FluidConsole console;
-	private float gain = 3f; // max 5.0
+	private float gain = 1f; // max 5.0
 
 	public FluidSynth(int sampleRate, JackPort left, JackPort right, JackPort midi, boolean startListeners) {
 		super(Constants.FLUID, LEFT_PORT, RIGHT_PORT, left, right, "Fluid.png");

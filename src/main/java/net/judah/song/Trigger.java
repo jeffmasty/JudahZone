@@ -10,14 +10,14 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum Trigger {
 	
-	BAR(YELLOW),
-	LOOP(PINK),
+	BAR(ORANGE),
+	LOOP(YELLOW),
 	HOT(PINK), 
 	ABS(RED), 
-	REL(ORANGE),
-	JUMP(PURPLE);
+	REL(BLUE)
+	;
+//	JUMP(PURPLE);
 	
 	@Getter private final Color color;
-	@Getter private static final Color active = GREEN;
 	
 }

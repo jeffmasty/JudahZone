@@ -133,17 +133,6 @@ public class EQ implements Effect {
 				yn1 = yn;
 			}
 		}
-		void processBuffer(float[] buff) {
-			for (int i=0; i<nframes; i++) {
-				float xn = buff[i]; // copy
-				float yn = (b0*xn + b1*xn1 + b2*xn2 - a1*yn1 - a2*yn2) / a0;
-				buff[i] = yn; // yn, our target, back into the buffer
-				xn2 = xn1;
-				xn1 = xn;
-				yn2 = yn1;
-				yn1 = yn;
-			}
-		};
 	}
 
 	private final Chann leftCh = new Chann();
@@ -244,6 +233,7 @@ public class EQ implements Effect {
 	}
 
 	public void process(FloatBuffer data, boolean left) {
+		// TODO watch for Java's handling of denormals/flush-to-zero/etc...
 		if (left)
 			for (BiquadFilter filter : leftCh.filters)
 				filter.processBuffer(data);
@@ -252,16 +242,4 @@ public class EQ implements Effect {
 				filter.processBuffer(data);
 
 	}
-	public void process(float[] data, boolean left) {
-		// TODO watch for Java's handling of denormals/flush-to-zero/etc...
-
-		// start filtering:
-		if (left)
-			for (BiquadFilter filter : leftCh.filters)
-				filter.processBuffer(data);
-		else
-			for (BiquadFilter filter : rightCh.filters)
-				filter.processBuffer(data);
-	 }
-
 }

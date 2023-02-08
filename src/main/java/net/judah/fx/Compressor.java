@@ -39,7 +39,7 @@ import net.judah.util.Constants;
 public class Compressor implements Effect {
 
     public static enum Settings { 
-    	Threshold, Ratio, Boost, Attack, Release, Knee
+    	Threshold, Ratio, Boost, Attack, Release //Knee
     }
 
     static final float LOG_10 = 2.302585f;
@@ -183,7 +183,7 @@ public class Compressor implements Effect {
         	return (int)( (getRelease() - 20) * 0.5f);
         if (idx == Settings.Boost.ordinal())
         	return ((toutput + 20) * 3);
-        throw new InvalidParameterException();
+        throw new InvalidParameterException("idx: " + idx);
     }
 
 	@Override
@@ -199,8 +199,8 @@ public class Compressor implements Effect {
 			setAttack(value + 10);
 		else if (idx == Settings.Release.ordinal()) 
 			setRelease( (value + 20) * 2);
-		else if (idx == Settings.Knee.ordinal()) 
-			setKnee(value); // non-conform 1 to 100
+//		else if (idx == Settings.Knee.ordinal()) 
+//			setKnee(value); // non-conform 1 to 100
 		
 	}
 

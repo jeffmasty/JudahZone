@@ -36,7 +36,6 @@ public class BeatsSection extends MidiView implements BeatsSize {
 	@Override
 	public void update() {
 		menu.update();
-		menu.repaint();
 		grid.repaint();
 	}
 

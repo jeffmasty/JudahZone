@@ -11,6 +11,8 @@ public abstract class Steps extends JPanel {
 
 	public void highlight(Point p) {
 	}
+	
+	public abstract void timeSig();
 
 	
 }

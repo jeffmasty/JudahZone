@@ -8,13 +8,13 @@ import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
 import lombok.Getter;
+import net.judah.fx.Gain;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
@@ -28,7 +28,7 @@ import net.judah.gui.widgets.RainbowFader;
 		LEDs  {fx status}
 		Channel Icon </pre>
  * @author judah */
-public abstract class ChannelFader extends JPanel implements Pastels {
+public abstract class MixWidget extends JPanel implements Pastels {
 	
 	@Getter protected final Channel channel;
 	@Getter protected final JPanel banner = new JPanel();
@@ -52,15 +52,15 @@ public abstract class ChannelFader extends JPanel implements Pastels {
 	protected JPanel sidecar = new JPanel(new GridLayout(3, 1));
 	private final LEDs indicators;
 	
-	public ChannelFader(Channel channel) {
+	public MixWidget(Channel channel) {
 		this.channel = channel;
-		setBorder(BorderFactory.createDashedBorder(Color.DARK_GRAY));
+		//setBorder(BorderFactory.createDashedBorder(Color.DARK_GRAY));
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(BUTTONS);
 		
 		indicators = new LEDs(channel);
 		volume = new RainbowFader(vol -> {
-			channel.getGain().setVol(volume.getValue());
+			channel.getGain().set(Gain.VOLUME, volume.getValue());
 			MainFrame.update(channel);
 		});
 		volume.setOpaque(true);
@@ -91,6 +91,9 @@ public abstract class ChannelFader extends JPanel implements Pastels {
 		return c;
 	}
 
+	protected boolean muted() {
+		return channel.getGain().getGain() < 0.05f;
+	}
 	
 	public final void update() {
 		Color bg = thisUpdate();

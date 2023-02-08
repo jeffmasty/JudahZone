@@ -18,8 +18,8 @@ import net.judah.gui.widgets.TrackButton;
 import net.judah.midi.JudahClock;
 import net.judah.seq.MidiTrack;
 import net.judah.seq.TrackList;
-import net.judah.song.Song;
-import net.judah.song.SongView;
+import net.judah.song.Scene;
+import net.judah.song.SongTab;
 
 public class MiniSeq extends JPanel {
 	private final Dimension TRX = new Dimension(Size.WIDTH_KNOBS / 2 - 15, 85);
@@ -27,13 +27,15 @@ public class MiniSeq extends JPanel {
 
 	private final TrackList tracks;
 	private final JudahClock clock;
+	private final SongTab songs;
 	private final Btn track = new Btn("", e->JudahZone.getSeq().getTracks().next(true));
-	private final Btn song = new Btn("OpenMic", e->JudahZone.getSongs().trigger());
+	private final Btn scene = new Btn("OpenMic", e->JudahZone.getSongs().trigger());
 	private final ArrayList<TrackButton> btns = new ArrayList<>();
 	
-	public MiniSeq(TrackList tracks, JudahClock clock) {
+	public MiniSeq(TrackList tracks, JudahClock clock, SongTab songs) {
 		this.tracks = tracks;
 		this.clock = clock;
+		this.songs = songs;
 		
 		JPanel actives = new JPanel(); 
         actives.setBorder(new LineBorder(Pastels.MY_GRAY, 1));
@@ -58,7 +60,7 @@ public class MiniSeq extends JPanel {
         btns.get(9).setFont(btns.get(9).getFont().deriveFont(Font.ITALIC));
         
         JPanel seqTitle = new JPanel();
-        seqTitle.add(song);
+        seqTitle.add(scene);
         seqTitle.add(track);
 
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
@@ -74,22 +76,18 @@ public class MiniSeq extends JPanel {
 				b.update();
 	}
 	
-	public void songText() {
-		StringBuffer sb = new StringBuffer();
-		Song s = JudahZone.getCurrent();
-		if (s == null) 
-			sb.append("OpenMic");
-		else 
-			sb.append("Scene:").append(s.getScenes().indexOf(JudahZone.getSongs().getCurrent()));
-		
-		
-		if (SongView.getOnDeck() != null) 
-				sb.append("|" + s.getScenes().indexOf(SongView.getOnDeck()));
-
+	public void sceneText() {
+		if (songs.getCurrent() == null) 
+			return;
+		StringBuffer sb = new StringBuffer("Scene:");
+		sb.append(1 + songs.getSong().getScenes().indexOf(songs.getCurrent()));
+		Scene onDeck = songs.getOnDeck();
+		if (onDeck != null) 
+				sb.append("|").append(1 + songs.getSong().getScenes().indexOf(onDeck));
 		if (SetCombo.getSet() != null)
-			sb.append("Set:").append(SetCombo.getSet().getClass().getSimpleName());
-		song.setText(sb.toString());
-		song.setBackground(SongView.getOnDeck() != null ? Pastels.YELLOW : null);
+			sb.append("!");
+		scene.setText(sb.toString());
+		scene.setBackground(onDeck == null ? null : onDeck.getType().getColor());
 	}
 	
 	public void update() {
@@ -98,7 +96,8 @@ public class MiniSeq extends JPanel {
 		track.setBackground(clock.isLooperSync() ? Pastels.YELLOW : null);
 		btns.forEach(b->b.update());
 		btns.forEach(b -> b.setBorder(t == b.getTrack() ? highlight : null));
-		songText();
+		sceneText();
+		repaint();
 	}
 	
 }

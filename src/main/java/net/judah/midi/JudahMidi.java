@@ -192,21 +192,19 @@ public class JudahMidi extends BasicClient implements Closeable {
         }
         
         for (String port : jack.getPorts(jackclient, IN.MIDICLOCK.getPort(), MIDI, INS)) {
-        	if (port.contains("Judah")) 
-        		continue;
         	RTLogger.log(this, "connecting Tempo " + tempo.getName() + " to " + port);
         	jack.connect(jackclient, tempo.getName(), port);
         }
         
         String [] fluid = jack.getPorts(jackclient, "midi_00", MIDI, INS);
         while (fluid.length == 0) {
-        	Constants.sleep(20);
+        	Constants.sleep(100);
         	fluid = jack.getPorts(jackclient, "midi_00", MIDI, INS);
-        	for (String port : fluid) {
-        	RTLogger.log(this, "connecting Fluid " + fluidOut.getName() + " to " + port);
-        		jack.connect(jackclient, fluidOut.getName(), port); 
-        	}
         }
+    	for (String port : fluid) {
+        	RTLogger.log(this, "connecting Fluid " + fluidOut.getName() + " to " + port);
+        	jack.connect(jackclient, fluidOut.getName(), port); 
+    	}
     }
 
     
@@ -256,7 +254,7 @@ public class JudahMidi extends BasicClient implements Closeable {
             			MainFrame.updateCurrent(); // TODO overkill?
             		else if (midi.getChannel() == 9) // not used
             			JackMidi.eventWrite(fluidOut, ticker(), data, midiEvent.size());
-            		else if (Midi.isNote(midi))
+            		else if (Midi.isNote(midi) || Midi.isPitchBend(midi))
             			keyboardSynth.getMidiOut().send(Midi.format(midi, keyboardSynth.getCh(), 1), ticker());
                 }
             }
@@ -306,10 +304,7 @@ public class JudahMidi extends BasicClient implements Closeable {
 	public void setKeyboardSynth(MidiTrack port) {
 		if (keyboardSynth == port)
 			return;
-		MidiTrack old = keyboardSynth;
 		keyboardSynth = port;
-		if (old != null)
-    		new Panic(old.getMidiOut(), old.getCh()).start();
 		if (JudahZone.getMidiGui() != null)
 			MainFrame.update(JudahZone.getMidiGui());
 	}

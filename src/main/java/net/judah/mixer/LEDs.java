@@ -76,8 +76,8 @@ public class LEDs extends JPanel {
 			model[LFO] = channel.getLfo().isActive();
 			repaint = true;
 		}
-		if (channel.getCutFilter().isActive() != model[CUTFILTER]) {
-			model[CUTFILTER] = channel.getCutFilter().isActive();
+		if (channel.getParty().isActive() != model[CUTFILTER]) {
+			model[CUTFILTER] = channel.getParty().isActive();
 			repaint = true;
 		}
 		if (channel.getCompression().isActive() != model[COMPRESSION]) {

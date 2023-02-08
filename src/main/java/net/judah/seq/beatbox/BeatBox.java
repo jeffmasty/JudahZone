@@ -103,4 +103,10 @@ public class BeatBox extends MusicGrid {
 		return drummer;
 	}
 
+	@Override
+	public void timeSig() {
+		
+		
+	}
+
 }

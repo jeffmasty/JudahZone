@@ -54,7 +54,7 @@ public class Fader {
 	    if (ch instanceof Sample)
 			result.cleanup = () ->{
 				((Sample)ch).setActive(false);
-				((Sample)ch).getPad().update();};
+				MainFrame.update(ch);};
 		return result;
 	}
 	/** Fade out Master track over 4 seconds */
@@ -84,8 +84,8 @@ public class Fader {
 
 		// set target value on channel
 		switch (target) {
-			case Gain:  channel.getGain().setVol((int)val); break;
-			case CutEQ: channel.getCutFilter().setFrequency(CutFilter.knobToFrequency((int)val)); break;
+			case Gain:  channel.getGain().set(Gain.VOLUME, (int)val); break;
+			case CutEQ: channel.getParty().setFrequency(CutFilter.knobToFrequency((int)val)); break;
 			case Reverb: channel.getReverb().setRoomSize((float) val * 0.01f); break;
 			case Delay: channel.getDelay().setFeedback((float) val * 0.01f); break;
 			case Pan: channel.getGain().set(Gain.PAN, (int)val); break;

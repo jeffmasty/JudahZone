@@ -58,7 +58,7 @@ public class Pianist extends Musician implements PianoSize  {
 		Prototype dat = translate(mouse.getPoint());
 		MidiPair existing = lookup(dat.tick, NOTE_ON, dat.data1);
 		if (existing == null) {
-			long tick = MidiTools.quantize(dat.tick, 
+			long tick = quantize(dat.tick, 
 					(Gate)view.getMenu().getGate().getSelectedItem(), track.getResolution());
 			on = new Prototype(dat.data1, tick);
 		}
@@ -91,10 +91,10 @@ public class Pianist extends Musician implements PianoSize  {
 				off.setTick(temp);
 				RTLogger.log(this, "swapping " + off.getTick() + " to " + on.getTick());				
 			}
-			off.setTick(MidiTools.quantizePlus(tick, 
+			off.setTick(-1 + quantizePlus(tick, 
 					(Gate)view.getMenu().getGate().getSelectedItem(), track.getResolution()));
 			MidiEvent start = create(on.getTick(), 
-					NOTE_ON, on.getData1(), (int) (track.getAmplification() * 1.27f));
+					NOTE_ON, on.getData1(), (int) (track.getAmp() * 127f));
 			t.add(start);
 			t.add(off);
 			selected.clear(); // add zero-based selection
@@ -143,6 +143,35 @@ public class Pianist extends Musician implements PianoSize  {
 		return null;
 	}
 
+	public long quantizePlus(long tick, Gate type, int resolution) {
+		switch(type) {
+		case SIXTEENTH: return quantize(tick, type, resolution) + (resolution / 4);
+		case EIGHTH:	return quantize(tick, type, resolution) + (resolution / 2);
+		case QUARTER:	return quantize(tick, type, resolution) + (resolution);
+		case HALF:		return quantize(tick, type, resolution) + (2 * resolution);
+		case WHOLE: 	return quantize(tick, type, resolution) + (4 * resolution);
+		case MICRO:		return quantize(tick, type, resolution) + (resolution / 8);
+		case RATCHET:	return quantize(tick, type, resolution) + RATCHET;
+		default: return tick;
+		}
+	}
+
+	// TODO odd subdivision
+	public long quantize(long tick, Gate type, int resolution) {
+		switch(type) {
+		case SIXTEENTH: return tick - tick % (resolution / 4);
+		case EIGHTH: return tick - tick % (resolution / 2);
+		case QUARTER: return tick - tick % resolution;
+		case HALF: return tick - tick % (2 * resolution);
+		case WHOLE: return tick - tick % (4 * resolution);
+		case MICRO: return tick - tick % (resolution / 8);
+		case RATCHET: return tick - tick % MidiConstants.RATCHET; // approx MIDI_24
+		default: // NONE
+			return tick;
+		}
+	}
+
+	
 	/**@return Z to COMMA keys are white keys, and black keys, up to 12, no match = -1*/
 	public static int chromaticKeyboard(final int keycode) {
 		switch(keycode) {

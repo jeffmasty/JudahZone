@@ -14,10 +14,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
-import net.judah.midi.Midi;
 
 @Log4j
-public class Console implements MidiListener {
+public class Console /* implements MidiListener */{
 
     private static Console instance;
     public static Console getInstance() {
@@ -27,22 +26,20 @@ public class Console implements MidiListener {
     
     @Getter @Setter private static Level level = Level.DEBUG;
     @Getter private final JScrollPane scroller;
-    private final JTextArea textarea = new JTextArea(4, 28);
+    private final JTextArea textarea = new JTextArea(3, 28);
     @Getter private ArrayList<ConsoleParticipant> participants = new ArrayList<>();
 
     private Console() {
-
+        instance = this;
         textarea.setEditable(false);
 		textarea.setForeground(Color.BLUE.darker()/* new Color(1, 77, 13) *//* dark green */);
         
         scroller = new JScrollPane(textarea);
         scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
         scroller.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        
+
         //participants.add(this);
         participants.add(JudahZone.getFluid().getConsole());
-
-        instance = this;
     }
 
 
@@ -93,6 +90,20 @@ public class Console implements MidiListener {
             addText("debug " + s);
     }
 
+
+}
+
+//public interface MidiListener {
+//	enum PassThrough {ALL, NONE, NOTES, NOT_NOTES}
+//	void feed(Midi midi);
+//	PassThrough getPassThroughMode();
+//}
+//    @Override
+//    public PassThrough getPassThroughMode() {
+//        return PassThrough.ALL; }
+//    @Override
+//    public void feed(Midi midi) {
+//        addText("midilisten: " + midi); }
 //    private void midiListen() {
 //        midiListen = !midiListen;
 //        ArrayList<MidiListener> listeners = Sequencer.getCurrent().getListeners();
@@ -102,16 +113,3 @@ public class Console implements MidiListener {
 //            listeners.remove(this);
 //    }
 
-
-    @Override
-    public PassThrough getPassThroughMode() {
-        return PassThrough.ALL;
-    }
-
-
-    @Override
-    public void feed(Midi midi) {
-        addText("midilisten: " + midi);
-    }
-
-}

@@ -8,20 +8,8 @@ import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
-import net.judah.JudahZone;
-
 public class MidiTools {
-	public static final int NOTE_ON = 0x90;
-    public static final int NOTE_OFF = 0x80;
-    public static final String[] NOTE_NAMES = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-	public static final int RATCHET = 11;
-
     private static final Pattern work = new Pattern();
-
-//	public static void paste(Bar source, int measure) {
-//	}
-//	public static void copy(long start, long end, long newPosition, Track t) {
-//	}
 
 	public static boolean match(MidiMessage a, MidiMessage b) {
 		if (a == null && b == null) return true;
@@ -140,34 +128,6 @@ public class MidiTools {
 		long millis = (long) (timecode * 1000.0 + 0.5);
 		return String.format("%02d:%02d:%02d.%03d", millis / 60 / 60 / 1000, 
 				(millis / 60 / 1000) % 60, (millis / 1000) % 60, millis % 1000);
-	}
-	
-
-	public static long quantizePlus(long tick, Gate type, int resolution) {
-		switch(type) {
-		case SIXTEENTH: return quantize(tick, type, resolution) + (resolution / 4);
-		case EIGHTH:	return quantize(tick, type, resolution) + (resolution / 2);
-		case QUARTER:	return quantize(tick, type, resolution) + (resolution);
-		case HALF:		return quantize(tick, type, resolution) + (2 * resolution);
-		case WHOLE: 	return JudahZone.getClock().getMeasure() * resolution;
-		case MICRO:		return quantize(tick, type, resolution) + (resolution / 8);
-		case RATCHET:	return quantize(tick, type, resolution) + RATCHET;
-		default: return tick;
-		}
-	}
-
-	public static long quantize(long tick, Gate type, int resolution) {
-		switch(type) {
-		case SIXTEENTH: return tick - tick % (resolution / 4);
-		case EIGHTH: return tick - tick % (resolution / 2);
-		case QUARTER: return tick - tick % resolution;
-		case HALF: return tick - tick % (2 * resolution);
-		case WHOLE: return 0;
-		case MICRO: return tick - tick % (resolution / 8);
-		case RATCHET: return tick - tick % RATCHET; // approx MIDI_24
-		default: // NONE
-			return tick;
-		}
 	}
 	
 

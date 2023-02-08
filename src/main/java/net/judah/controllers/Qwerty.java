@@ -13,7 +13,6 @@ import javax.swing.JTabbedPane;
 import net.judah.api.AudioMode;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
-import net.judah.gui.knobs.Knobs;
 import net.judah.gui.widgets.ModalDialog;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
@@ -97,22 +96,6 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
         remove(tab);
     }
 
-	public void addOrShow(Component tab, String title) {
-    	if (tab instanceof Knobs)
-    		MainFrame.setFocus(((Knobs)tab).getKnobMode());
-    	new Thread(() ->{
-			for (int i = 0; i < getTabCount(); i++) {
-				if (getComponentAt(i).equals(tab)) {
-					setSelectedComponent(tab);
-					return;
-				}
-			}
-			add(title, tab);
-			setSelectedComponent(tab);
-		}).start();
-	}
-
-	
 	@SuppressWarnings("unused")
 	private boolean keyEvent(KeyEvent e) {
 		if (ModalDialog.getInstance() != null)
@@ -152,8 +135,8 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
             case VK_F9: MainFrame.setFocus(getSynth2()); return true;
             case VK_F10: MainFrame.setFocus(getCrave()); return true;
             case VK_F11: MainFrame.setFocus(getFluid()); return true;
-            case VK_UP: return volume(true, focus); 
-            case VK_DOWN: return volume(false, focus); 
+//            case VK_UP: return volume(true, focus); 
+//            case VK_DOWN: return volume(false, focus); 
             case VK_LEFT: return nextChannel(false); 
             case VK_RIGHT: return nextChannel(true); 
 
@@ -198,15 +181,15 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
         getFxRack().getChannel().setOnMute(!getFxRack().getChannel().isOnMute());
     }
 
-    private boolean volume(boolean up, Channel ch) {
-        int vol = ch.getVolume();
-        vol += up? 5 : -5;
-        if (vol > 100) vol = 100;
-        if (vol < 0) vol = 0;
-        ch.getGain().setVol(vol);
-        MainFrame.update(ch);
-        return true;
-    }
+//    private boolean volume(boolean up, Channel ch) {
+//        int vol = ch.getVolume();
+//        vol += up? 5 : -5;
+//        if (vol > 100) vol = 100;
+//        if (vol < 0) vol = 0;
+//        ch.getGain().setVol(vol);
+//        MainFrame.update(ch);
+//        return true;
+//    }
 
     private boolean nextChannel(boolean toRight) {
     	Looper looper = getLooper();

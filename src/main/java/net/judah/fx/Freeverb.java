@@ -407,12 +407,12 @@ public final class Freeverb extends Reverb {
 		if (stereoReverb != null)
 			stereoReverb.setActive(active);
 		if (active) return;
-		new Thread( () -> { // clear the echo
+		Constants.execute(() -> { // clear the echo
 			for (Allpass l : allpassL)
 				l.reset();
 			for (Comb l : combL)
 				l.reset();
-		}).start();
+		});
 	}
 
 

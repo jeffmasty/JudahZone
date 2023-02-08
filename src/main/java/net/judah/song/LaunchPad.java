@@ -1,7 +1,11 @@
 package net.judah.song;
 
+import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.font.TextAttribute;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
@@ -9,7 +13,6 @@ import javax.swing.JPanel;
 import javax.swing.UIManager;
 
 import lombok.Getter;
-import net.judah.JudahZone;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 
@@ -28,11 +31,14 @@ public class LaunchPad extends JPanel implements Pastels {
 		setBorder(UIManager.getBorder("TitledBorder.border"));
 		addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) {
-				tab.getSongView().setOnDeck(scene);
+				tab.setOnDeck(scene);
 			}});
 
 		params.setFont(Gui.FONT10);
-		notes.setFont(Gui.FONT10);
+		Font font = Gui.FONT10;
+		Map<TextAttribute, Object> attributes = new HashMap<>(font.getAttributes());
+		attributes.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+		notes.setFont(font.deriveFont(attributes));
 		
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		add(lbl);
@@ -50,10 +56,10 @@ public class LaunchPad extends JPanel implements Pastels {
 		notes.setText(scene.getNotes());
 		if (tab.getCurrent() == scene)
 			setBackground(GREEN);
-		else if (SongView.getOnDeck() == scene) {
+		else if (tab.getOnDeck() == scene) {
 			setBackground(scene.getType().getColor());
 			if (scene.getType() == Trigger.REL) {
-				int countdown = (int)scene.getCommands().getTimeCode() - JudahZone.getSongs().getSongView().getCount();
+				int countdown = (int)scene.getCommands().getTimeCode() - tab.getCount();
 				lbl.setText(countdown + "!");
 			}
 		}

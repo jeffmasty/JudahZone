@@ -16,7 +16,7 @@ import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.util.RTLogger;
 
-public class LoopFader extends ChannelFader implements TimeListener {
+public class LoopMix extends MixWidget implements TimeListener {
 	public static final int BSYNC_UP = Integer.MAX_VALUE;
 	public static final int BSYNC_DOWN = 1000000;
 
@@ -27,7 +27,7 @@ public class LoopFader extends ChannelFader implements TimeListener {
 	@Setter @Getter int bars;
 	private int counter = -1;
 	
-	public LoopFader(Loop l, Looper looper) {
+	public LoopMix(Loop l, Looper looper) {
 		super(l);
 		this.loop = l;
 		this.looper = looper;
@@ -87,7 +87,7 @@ public class LoopFader extends ChannelFader implements TimeListener {
 			bg = ONDECK;
 		else if (channel.isOnMute())  // line in/master track 
 			bg = Color.BLACK;
-		else if (channel.getGain().getVol() < 5)
+		else if (muted())
 			bg = Color.DARK_GRAY;
 		else if (loop.isPlaying() == AudioMode.RUNNING && loop.isActive())
 			bg = GREEN;
@@ -145,7 +145,7 @@ public class LoopFader extends ChannelFader implements TimeListener {
 		counter ++;
 		if (counter == bars) {
 			loop.record(false);
-			clock.listen(loop);
+//			clock.listen(loop);
 		}
 	}
 	

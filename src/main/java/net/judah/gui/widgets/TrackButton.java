@@ -26,14 +26,14 @@ public class TrackButton extends JLabel {
 				if (e.getButton() == 3) 
 					JudahZone.getSeq().getTracks().setCurrent(track);
 				else 
-					track.setActive(!track.isActive());
+					track.trigger();
 			}});
 		update();
 	}
 	
 	public void update() {
-		setBackground(track.isActive() ? Pastels.GREEN : null);
-		setText("" + track.getFrame());
+		setBackground(track.isActive() ? Pastels.GREEN : track.isOnDeck() ? track.getCue().getColor() : null);
+		setText("" + (1 + track.getFrame()));
 	}
 	
 	

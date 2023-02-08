@@ -16,6 +16,7 @@ import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.api.MidiReceiver;
+import net.judah.fx.Gain;
 import net.judah.gui.Pastels;
 import net.judah.midi.Panic;
 import net.judah.mixer.LineIn;
@@ -55,10 +56,10 @@ public class Jamstik extends JComboBox<MidiReceiver>{
 		Jamstik.active = active;
 		LineIn guitar = getGuitar();
 		if (active) {
-			volStash = guitar.getGain().getVol();
-			guitar.getGain().setVol(0);
+			volStash = guitar.getVolume();
+			guitar.getGain().setGain(0);
 		} else {
-			guitar.getGain().setVol(volStash);
+			guitar.getGain().set(Gain.VOLUME, volStash);
 		}
 		new Thread(()->{
 			if (frame != null)

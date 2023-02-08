@@ -121,8 +121,9 @@ public class SynthDB extends HashMap<String, String> {
 		Adsr env = synth.getAdsr();
 		buf.append(env.getAttackTime()).append(SPLIT).append(env.getDecayTime()).append(SPLIT);
 		buf.append(env.getSustainGain()).append(SPLIT).append(env.getReleaseTime()).append(Constants.NL);
-		buf.append(OPEN).append(FILTER).append(CLOSE).append(synth.getGain().getGain()).append(SPLIT);
-		CutFilter hi = synth.getHiCut();
+		buf.append(OPEN).append(FILTER).append(CLOSE);
+		buf.append(synth.getGain().getGain()).append(SPLIT); // NOT USED
+		CutFilter hi = synth.getFilter();
 		CutFilter lo = synth.getLoCut();
 		buf.append(hi.getFrequency()).append(SPLIT).append(hi.getResonance()).append(SPLIT);
 		buf.append(lo.getFrequency()).append(SPLIT).append(lo.getResonance()).append(Constants.NL);
@@ -132,8 +133,7 @@ public class SynthDB extends HashMap<String, String> {
 			buf.append(OPEN).append(DCO).append(DASH).append(i).append(CLOSE);
 			buf.append(synth.getShapes()[i].name()).append(SPLIT).append(synth.getDcoGain()[i]);
 			buf.append(SPLIT).append(synth.getDetune()[i]);
-			if (i < length)
-				buf.append(Constants.NL);
+			buf.append(Constants.NL);
 		}
 		return buf.toString();
 	}

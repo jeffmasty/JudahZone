@@ -39,13 +39,14 @@ public class RTLogger {
 
     /** Sleeps between checking the debugQueue for messages */
 	public static void monitor() {
+		final int refresh = 2 * Constants.GUI_REFRESH;
 		Log dat; 
 		try {
 			while (true) {
 					
 	            dat = debugQueue.poll();
 	            if (dat == null) {
-	            	Thread.sleep(2 * Constants.GUI_REFRESH);
+	            	Thread.sleep(refresh);
 	            	continue;
 	            }
 	

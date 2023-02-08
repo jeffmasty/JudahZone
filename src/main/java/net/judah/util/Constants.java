@@ -4,9 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.sound.midi.InvalidMidiDataException;
 
@@ -14,17 +14,16 @@ import lombok.Getter;
 import net.judah.midi.Midi;
 
 public class Constants {
-	private static ClassLoader loader = Constants.class.getClassLoader();
+	private static final ClassLoader loader = Constants.class.getClassLoader();
+	private static final ExecutorService threads = Executors.newFixedThreadPool(32);
 
 	// TODO generalize
-	private static int _SAMPLERATE = 48000;
-	private static int _BUFSIZE = 512;//TODO 256
-	public static int sampleRate() { return _SAMPLERATE; }
-	public static int bufSize() { return _BUFSIZE; }
+	public static int sampleRate() { return 48000; }
+	public static int bufSize() { return 512; } //TODO 256
 	public static final float TUNING = 440;
 	/** Digital Interface name */
 	@Getter static String di = "UMC1820 MIDI 1"; //return "Komplete ";
-	public static final float TO_100 = 0.7874f; // 127 = 100
+	public static final float TO_100 = 0.7874f; // 127 <--> 100
 	
     public static final int LEFT_CHANNEL = 0;
 	public static final int RIGHT_CHANNEL = 1;
@@ -42,22 +41,18 @@ public class Constants {
 	public static final String CUTE_NOTE = "♫ ";
 	public static final String FILE_SEPERATOR = System.getProperty("file.separator");
 	public static final String TAB = "    ";
-	public static final String FX = "Fx";
 	public static final String NONE = "none";
 	public static final String DOT_MIDI = ".mid";
 
 	/** milliseconds between checking the update queue */
-	public static final int GUI_REFRESH = 9;
+	public static final int GUI_REFRESH = 7;
 	public static final long DOUBLE_CLICK = 400;
 
-    public static int gain2midi(float gain) {
-    	return Math.round(gain * 127);
-    }
-    public static float midi2float(int data2) {
-    	float result = data2/127f;
-    	assert result <= 1f : data2 + " vs. " + (data2/127f);
-    	return result;
-    }
+    /**@param data2 0 to 127
+     * @return data2 / 127 */
+	public static float midiToFloat(int data2) {
+		return data2 * 0.00787f;
+	}
 
     public static float computeTempo(long millis, int beats) {
     	return bpmPerBeat(millis / (float)beats);
@@ -73,21 +68,6 @@ public class Constants {
 	
 	public static float toBPM(long delta, int beats) {
 		return 60000 / (delta / beats);
-	}
-
-    @SuppressWarnings("rawtypes")
-	public static String prettyPrint(HashMap<String, Object> p) {
-		if (p == null) return " null properties";
-		StringBuffer b = new StringBuffer();
-		for (Entry entry:  p.entrySet())
-			b.append(" ").append(entry.getKey()).append("=").append(entry.getValue());
-		return b.toString();
-	}
-
-	public static HashMap<String, Class<?>> template(String key, Class<?> clazz) {
-		HashMap<String, Class<?>> result = new HashMap<>();
-		result.put(key, clazz);
-		return result;
 	}
 
 	public static float midiToHz(int data1) {
@@ -113,25 +93,6 @@ public class Constants {
 		return new Midi(in.getCommand(), channel, in.getData1() + steps, in.getData2());
 	}
 
-	public static void timer(long msec, Runnable r) {
-	    new Thread( () -> {
-	        try {
-	            Thread.sleep(msec);
-	            r.run();
-	        } catch(Throwable t) {
-	            System.err.println(t.getMessage());
-	        }
-	    }).start();
-	}
-
-	public static void sleep(long millis) {
-	    try {
-	        Thread.sleep(millis);
-	    } catch(Throwable t) {
-	        System.err.println(t.getMessage());
-	    }
-	}
-
 	public static File resource(String filename) {
 	    try {
 	        return new File(loader.getResource(filename).getFile());
@@ -142,10 +103,10 @@ public class Constants {
 	}
 
     public static void writeToFile(File file, String content) {
-        new Thread(() -> {
+    	execute(() -> {
             try { Files.write(Paths.get(file.toURI()), content.getBytes());
             } catch(IOException e) {RTLogger.warn("Constants.writeToFile", e);}
-        }).start();
+        });
     }
     
 	public static Object ratio(int data2, List<?> input) {
@@ -156,16 +117,6 @@ public class Constants {
 	}
 	public static int ratio(long data2, long size) {
 		return (int) (data2 / (100 / (float)size));
-	}
-
-	public static boolean isNumeric(String str) {
-        return str != null && str.matches("[-+]?\\d*\\.?\\d+");
-    }
-	
-	/**@param data2 0 to 127
-	 * @return data2 / 127 */
-	public static float midiToFloat(int data2) {
-		return data2 * 0.00787f;
 	}
 
 	/**@param supplied buffer
@@ -218,6 +169,26 @@ public class Constants {
 	static {
 		for (int i = 0; i < reverseLog.length; i++)
 			reverseLog[i] = logarithmic(i, 0, 1);
+	}
+
+	public static void sleep(long millis) {
+	    try {
+	        Thread.sleep(millis);
+	    } catch(Throwable t) {System.err.println(t.getMessage());}
+	}
+	
+	public static void timer(long msec, final Runnable r) {
+	    threads.execute(()->{
+	    	new Thread(()->{
+	    		sleep(msec);
+	    		r.run();}
+	    	).start();
+	    });
+	    
+	}
+
+	public static void execute(Runnable r) {
+		threads.execute(r);
 	}
 	
 	

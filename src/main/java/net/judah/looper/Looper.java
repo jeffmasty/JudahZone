@@ -1,7 +1,5 @@
 package net.judah.looper;
 
-import static net.judah.api.Notification.Property.LOOP;
-
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 
@@ -10,6 +8,7 @@ import org.jaudiolibs.jnajack.JackPort;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.judah.api.AudioMode;
 import net.judah.api.Notification.Property;
 import net.judah.api.ProcessAudio.Type;
 import net.judah.api.Status;
@@ -21,13 +20,15 @@ import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.mixer.Zone;
 import net.judah.util.Constants;
+import net.judah.util.RTLogger;
 
 @RequiredArgsConstructor 
 public class Looper extends ArrayList<Loop> implements TimeListener {
 	public static final int LOOPERS = 4;
 
 	@Getter private final JudahClock clock;
-    @Getter private final Loop loopA;
+	@Getter private final Memory memory;
+	@Getter private final Loop loopA;
     @Getter private final Loop loopB;
     @Getter private final Loop loopC;
     @Getter private final SoloTrack soloTrack;
@@ -40,6 +41,7 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
 
 	public Looper(JackPort l, JackPort r, Zone sources, LineIn solo, JudahClock clock) {
 		this.clock = clock;
+		memory = new Memory(Constants.STEREO, Constants.bufSize());
 		loopA = new Loop("A", this, sources, "LoopA.png", Type.SYNC, clock, l, r);
         loopB = new Loop("B", this, sources, "LoopB.png", Type.BSYNC, clock, l, r);
         loopC = new Loop("C", this, sources, "LoopC.png", Type.FREE, clock, l, r);
@@ -62,10 +64,16 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
 
     }
 
-    void setRecordedLength(long length, Loop primary) {
+    void setRecordedLength(long start, Loop primary) {
     	this.primary = primary;
-    	recordedLength = length;
-    	clock.letItBeKnown(LOOP, Status.NEW);
+    	recordedLength = System.currentTimeMillis() - start;
+    	int frames = primary.getRecording().size();
+    	for (Loop l : this) {
+    		l.catchUp(frames);
+    		l.setLength(frames);
+    	}
+    	clock.loop(Status.NEW);
+    	RTLogger.log(this, primary + " recorded " + frames + " frames");
     }
     
     public Loop byName(String search) {
@@ -84,12 +92,8 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
 	public void clear() {
         recordedLength = 0;
         primary = null;
-		for (int i = 0; i < LOOPERS; i++) { // don't erase the sampler
-    		Loop s = get(i);
-        	s.record(false);
-            s.clear();
-            s.setActive(false);
-        }
+        for (Loop loop : this)
+        	loop.clear();
         if (feedback != null)
         	MainFrame.update(feedback);
         loopC.setType(Type.FREE);
@@ -137,27 +141,35 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
 	public void update(Property prop, Object value) {
 		if (primary == null)
 			return;
-		if (prop == Property.BARS && (int)value == clock.getLength()) {
+		if (prop == Property.BARS && value instanceof Integer && 0 == (int)value) {
 			for (Loop loop : this) {
-				if (!loop.isActive() || loop.getType() == Type.FREE) continue;
+				if (!loop.isActive() || loop.getType() == Type.FREE) 
+					continue;
 				// loop boundary, hard sync to start
 				loop.setTapeCounter(loop.getRecording().size() - 1);
 			}
 		}
 	}
 
-	void topUp(int count) {
-		
+	void loopCount(int count) {
 		if (false == onDeck.isEmpty() && recordedLength > 0) { 
 			Loop start = onDeck.poll();
 			clock.syncUp(start, 0);
 			start.record(true);
 		}
-		clock.letItBeKnown(LOOP, count);
+		clock.loop(count);
+	}
+
+	public void catchUp(Loop loop) {
+		for (Loop l : this) {
+			if (l == loop) continue;
+			if (l.isRecording() == AudioMode.RUNNING)
+				continue;
+			l.catchUp(loop.getRecording().size());
+		}
 	}
 	
 }
-
 
 //    /** pause/unpause specific loops */
 //    private Pause suspended = null; 

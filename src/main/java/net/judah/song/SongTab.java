@@ -3,7 +3,9 @@ package net.judah.song;
 import static net.judah.gui.Size.TAB_SIZE;
 
 import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -14,7 +16,9 @@ import javax.swing.JPanel;
 
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.api.Notification.Property;
 import net.judah.api.ProcessAudio.Type;
+import net.judah.api.TimeListener;
 import net.judah.fx.Fader;
 import net.judah.fx.LFO.Target;
 import net.judah.gui.MainFrame;
@@ -29,11 +33,12 @@ import net.judah.mixer.DJJefe;
 import net.judah.mixer.Zone;
 import net.judah.seq.MidiTrack;
 import net.judah.seq.Seq;
+import net.judah.seq.TrackList;
 import net.judah.util.RTLogger;
 
 /** left: SongView, right: midi tracks list*/
 @Getter
-public class SongTab extends JPanel {
+public class SongTab extends JPanel implements TimeListener {
 	
 	private final Looper looper;
 	private final DJJefe mixer;
@@ -41,49 +46,64 @@ public class SongTab extends JPanel {
 	private final Zone instruments;
 	private final Seq seq;
 	
-	private SongView songView;
-	private Scene current;
 	private Song song;
-	private final ArrayList<SongTrack> midi = new ArrayList<>();
+	private Scene current;
+	private Scene onDeck;
+	private int count;
+	private SongView songView;
+	private final ArrayList<SongTrack> tracks = new ArrayList<>();
 	private final JPanel holder = new JPanel();
-	
 
 	public SongTab(Seq  sequencer, Looper looper, DJJefe mixer, Zone lineIn) {
-		this.looper = looper;
-		this.clock = looper.getClock();
 		this.mixer = mixer;
 		this.instruments = lineIn;
 		this.seq = sequencer;
+		this.looper = looper;
+		this.clock = looper.getClock();
+		clock.addListener(this);
 		
 		setPreferredSize(TAB_SIZE);
-		Dimension listSz = new Dimension((int) (TAB_SIZE.width * 0.59f), TAB_SIZE.height - 130);
+		Dimension listSz = new Dimension((int) (TAB_SIZE.width * 0.59f), TAB_SIZE.height - 100);
 		Dimension songSz = new Dimension((int) (TAB_SIZE.width * 0.4f), TAB_SIZE.height);
 		holder.setMinimumSize(songSz);
-		final JPanel tracks = new JPanel();
-		tracks.setPreferredSize(listSz);
-		tracks.setMinimumSize(listSz);
-		tracks.setOpaque(true);
-		tracks.setLayout(new BoxLayout(tracks, BoxLayout.PAGE_AXIS));
-		seq.getTracks().forEach(track-> midi.add(new SongTrack(track, seq)));
+		final JPanel trackPnl = new JPanel();
+		trackPnl.setPreferredSize(listSz);
+		trackPnl.setMinimumSize(listSz);
+		trackPnl.setOpaque(true);
+		trackPnl.setLayout(new BoxLayout(trackPnl, BoxLayout.PAGE_AXIS));
+		
+		seq.getTracks().forEach(track-> tracks.add(new SongTrack(track)));
 		
 		JPanel title = new JPanel();
 		title.add(new JLabel("Song"));
 		title.add(new Songs()); 
 		title.add(new Btn("Save", e->JudahZone.save()));
-		tracks.add(title);
-		midi.forEach(track->tracks.add(track));
-		tracks.add(Box.createVerticalGlue());
-		holder.setMinimumSize(songSz);
+		title.add(new Btn("Reload", e->JudahZone.reload()));
+		trackPnl.add(title);
+		trackPnl.add(labels(listSz));
 
-		add(tracks);
+		tracks.forEach(track->trackPnl.add(track));
+		trackPnl.add(Box.createVerticalGlue());
+
+		holder.setMinimumSize(songSz);
+		
+		add(trackPnl);
 		add(holder);
 		setName(JudahZone.JUDAHZONE);
 		
 	}
 	
+	private JPanel labels(Dimension sz) {
+		ArrayList<String> lbls = new ArrayList<>(Arrays.asList(new String[]
+			{"Track", "    File", "", "    Preset", "", "Cycle", "Init", "Edit", " Current", "Vol"}));
+		JPanel result = new JPanel(new GridLayout(0, lbls.size()));
+		lbls.forEach(name->result.add(new JLabel(name, JLabel.CENTER)));
+		return result;
+	}
+	
 	public void update() {
 		songView.update();
-		midi.forEach(track->track.update());
+		tracks.forEach(track->track.update());
 	}
 
 	public void setSong(Song next) {
@@ -93,20 +113,8 @@ public class SongTab extends JPanel {
 		songView = new SongView(song, this);
 		holder.add(songView);
 		if (song.getScenes().isEmpty())
-			song.getScenes().add(new Scene(Seq.TRACKS));
+			song.getScenes().add(new Scene(seq));
 		launchScene(song.getScenes().get(0));
-	}
-
-	public void launchScene(Scene s) {
-		current = s;
-		// tracks state
-		for (int i = 0; i < current.getTracks().size(); i++)
-			getTrack(i).setState(current.getTracks().get(i));
-		// commands
-		for (Param p : current.getCommands())
-			execute(p);
-		
-		MainFrame.setFocus(current);
 	}
 
 	public void shift(boolean left) {
@@ -131,7 +139,7 @@ public class SongTab extends JPanel {
 		song.getScenes().add(add);
 		MainFrame.setFocus(songView.getLauncher());
 		MainFrame.setFocus(add);
-		songView.setOnDeck(null);
+		setOnDeck(null);
 	}
 	
 	public void copy() {
@@ -139,7 +147,9 @@ public class SongTab extends JPanel {
 	}
 
 	public void newScene() {
-		addScene(new Scene(JudahZone.getSeq().state()));
+		Scene fresh = new Scene();
+		JudahZone.getSeq().populate(fresh);
+		addScene(fresh);
 	}
 
 	public void delete() {
@@ -151,7 +161,7 @@ public class SongTab extends JPanel {
 	}
 	
 	public SongTrack getTrack(int idx) {
-		return midi.get(idx);
+		return tracks.get(idx);
 	}
 
 	private Channel getChannel(int idx) {
@@ -163,14 +173,23 @@ public class SongTab extends JPanel {
 	public void trigger() {
 		int next = 1 + song.getScenes().indexOf(current); 
 		if (next < song.getScenes().size()) 
-			songView.setOnDeck(song.getScenes().get(next));
+			setOnDeck(song.getScenes().get(next));
 		else 
 			looper.verseChorus();
 	}
 	
-	private void execute(Param p) {
+	/** @return true on valid Jump cmd */
+	private boolean execute(Param p) {
 		
 		switch (p.cmd) {
+			case Jump:
+				if (song.getScenes().size() > p.val) {
+					Scene next = song.getScenes().get(p.val);
+					launchScene(next);
+					peek(next);
+					return true;
+				}
+				
 			case Start:
 				if (p.val == 0) clock.end();
 				else  clock.begin();
@@ -185,7 +204,8 @@ public class SongTab extends JPanel {
 				clock.setLength(p.val);
 				break;
 			case TimeSig:
-				clock.setTimeSig(Signature.values()[p.val]);
+				if (Signature.values().length > p.val)
+					clock.setTimeSig(Signature.values()[p.val]);
 				break;
 			case TimeCode:
 				break;
@@ -214,7 +234,6 @@ public class SongTab extends JPanel {
 			case Sync:
 				looper.onDeck(getLooper().get(p.val));
 				break;
-
 			case FadeOut:
 				Channel ch = getChannel(p.val);
 				Fader.execute(new Fader(ch, Target.Gain, Fader.DEFAULT_FADE, ch.getVolume(), 0));
@@ -246,13 +265,104 @@ public class SongTab extends JPanel {
 			case MPK:
 				JudahZone.getMidi().setKeyboardSynth(seq.getSynthTracks().get(p.val));
 		}
+		return false;
+	}
+
+	private void go() { 
+		if (onDeck != null) {
+			Scene next = onDeck;
+			launchScene(next);
+			if (clock.isActive() && onDeck == null)
+				peek(next);
+		}
+		
+	}
+	
+	private void peek(Scene current) {
+		int next = 1 + song.getScenes().indexOf(current); 
+		if (next >= song.getScenes().size()) {
+			setOnDeck(null);
+			return;
+		}
+		Scene peek = song.getScenes().get(next);
+		if (peek.getType() == Trigger.REL) {
+			count = 0;
+			onDeck = peek;
+			MainFrame.update(onDeck);
+		}
+		else if (peek.getType() == Trigger.ABS) 
+			setOnDeck(peek);
+		else setOnDeck(null);
+	}
+
+	
+	public void setOnDeck(Scene scene) {
+		if (scene == null) 
+			onDeck = null;
+		else if (scene.getType() == Trigger.HOT)
+			launchScene(scene);
+		else if (onDeck == scene)  // force
+			launchScene(scene);
+		else {
+			onDeck = scene;
+			MainFrame.update(onDeck);
+		}
+		
+	}
+	
+	public void launchScene(Scene s) {
+		onDeck = null;
+		// commands
+		for (Param p : s.getCommands())
+			if (execute(p)) // true = Jump Cmd
+				return;
+		current = s;
+		// track state
+		TrackList tracks = seq.getTracks();
+		for (int i = 0; i < current.getTracks().size(); i++)
+			if (tracks.size() > i)
+				seq.getTracks().get(i).setState(current.getTracks().get(i));
+		List<String> fx = current.getFx();
+		for (Channel ch : mixer.getChannels()) {
+			if (fx.contains(ch.getName())) {
+				if (!ch.isPresetActive())
+					ch.setPresetActive(true);
+			}
+			else {
+				if (ch.isPresetActive())
+					ch.setPresetActive(false);
+			}
+		}
+		
+		MainFrame.setFocus(current);
+	}
+	
+	@Override public void update(Property prop, Object value) {
+		if (onDeck == null) 
+			return;
+		
+		if (prop == Property.BARS && onDeck.type == Trigger.BAR)	
+			go();
+		else if (prop == Property.LOOP && onDeck.type == Trigger.LOOP) 
+			go();
+		else if (onDeck.type == Trigger.ABS && prop == Property.BEAT) {
+			if ((int)value >= onDeck.getCommands().getTimeCode())
+				go();
+		}
+		else if (onDeck.type == Trigger.REL && prop == Property.BEAT) {
+			
+			if (++count >= onDeck.getCommands().getTimeCode()) 
+				go();
+			else 
+				MainFrame.update(onDeck);
+		}
 	}
 
 	public void update(MidiTrack t) {
-		for (SongTrack track : midi) {
+		for (SongTrack track : tracks) 
 			if (track.getTrack() == t)
 				track.update();
-		}
 	}
+
 
 }

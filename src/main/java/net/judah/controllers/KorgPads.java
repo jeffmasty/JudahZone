@@ -56,8 +56,8 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 				return true;
 			looper.get(data1 - 1).trigger();
 			return true;
-		case 5: // Show Sheet Music // TODO
-			getFrame().sheetMusic(true);
+		case 5: // Show Sheet Music 
+			new Thread(()->getFrame().sheetMusic(true)).start();
 			return true; 
 		case 6: // latch guitar EFX to looper
 			getGuitar().getLatchEfx().latch();
@@ -127,7 +127,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			}
 			return true;
 		case JOYSTICK_Y: 
-			CutFilter party = fxrack.getChannel().getCutFilter();
+			CutFilter party = fxrack.getChannel().getParty();
 			boolean down = data2 < LEFT - 10;
 			boolean up = data2 > RIGHT + 10;
 			if (up) {

@@ -32,8 +32,8 @@ public class RowKnobs extends Row {
 			break;
 		case 3: 
 			controls.add(new Fx(ch, JudahZone.getPresets().array()));
-			controls.add(new FxKnob(ch, ch.getCutFilter(), CutFilter.Settings.Frequency.ordinal(), "Hz."));
-			controls.add(new FxKnob(ch, ch.getHiCut(), CutFilter.Settings.Frequency.ordinal(), "Hz."));
+			controls.add(new FxKnob(ch, ch.getParty(), CutFilter.Settings.Frequency.ordinal(), "Hz."));
+			controls.add(new FxKnob(ch, ch.getFilter(), CutFilter.Settings.Frequency.ordinal(), "Hz."));
 			controls.add(new FxKnob(ch, ch.getGain(), Gain.PAN, ""));
 			break;
 		default:

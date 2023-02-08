@@ -4,6 +4,7 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import net.judah.gui.Icons;
+import net.judah.util.AudioTools;
 
 @Getter
 public class Instrument extends LineIn {
@@ -42,9 +43,14 @@ public class Instrument extends LineIn {
 	}
 
 	public void process() {
-		if (isStereo) 
-			processFx(leftPort.getFloatBuffer(), rightPort.getFloatBuffer(), gain.getGain());
-		else 
-			processFx(leftPort.getFloatBuffer());
+		if (isStereo) {
+			AudioTools.copy(leftPort.getFloatBuffer(), left);
+			AudioTools.copy(rightPort.getFloatBuffer(), right);
+			processStereoFx(gain.getGain());
+		}
+		else {
+			processFx(leftPort.getFloatBuffer(), 4);
+			toStereo(leftPort.getFloatBuffer());
+		}
 	}
 }

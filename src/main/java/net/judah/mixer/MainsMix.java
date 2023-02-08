@@ -2,9 +2,9 @@ package net.judah.mixer;
 
 import java.awt.Color;
 
-public class MainsFader extends ChannelFader {
+public class MainsMix extends MixWidget {
 
-	public MainsFader(Channel channel) {
+	public MainsMix(Channel channel) {
 		super(channel);
 		sidecar.add(font(mute));
 		sidecar.add(font(fx));
@@ -19,7 +19,7 @@ public class MainsFader extends ChannelFader {
 	protected Color thisUpdate() {
 		if (channel.isOnMute())  
 			return Color.BLACK;
-		if (channel.getGain().getVol() < 5)
+		if (muted())
 			return Color.DARK_GRAY;
 		return BLUE; // Mains channel 
 	}

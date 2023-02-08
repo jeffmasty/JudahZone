@@ -73,7 +73,7 @@ public class Beatstep implements Controller {
 			else if (data1 == FADER) { 
 				if (!Midi.isNoteOn(midi)) return true;
 				for (Channel ch : getFxRack().getSelected()) {
-					if (ch.isOnMute() || ch.getGain().getVol() < 5) {
+					if (ch.isOnMute() || ch.getGain().getGain() <= 0.05f) {
 						ch.setOnMute(false);
 						Fader.execute(new Fader(ch, Target.Gain, Fader.DEFAULT_FADE, 0, 51));
 					}

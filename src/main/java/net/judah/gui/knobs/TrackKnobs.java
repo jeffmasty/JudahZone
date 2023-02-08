@@ -13,11 +13,11 @@ import lombok.Getter;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
+import net.judah.seq.CUE;
 import net.judah.seq.CYCLE;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiTrack;
 import net.judah.seq.Seq;
-import net.judah.song.Trigger;
 import net.judah.util.Constants;
 
 @Getter // TODO MouseWheel listener -> change pattern 
@@ -85,13 +85,13 @@ public class TrackKnobs extends KnobPanel {
 				track.setFrame(Constants.ratio(data2, MidiConstants.MAX_FRAMES));
 				return true;
 			case 3: 
-				track.setAmplification((data2));
+				track.setAmp(Constants.midiToFloat(data2));
 				return true;
 			case 4: 
-				schedule.getCue().setSelectedIndex(Constants.ratio(data2 -1, Trigger.values().length));
+				track.setCue((CUE) Constants.ratio(data2 -1, CUE.values()));
 				return true;
 			case 5: 
-				schedule.getCycle().setSelectedIndex(Constants.ratio(data2 - 1, CYCLE.values().length));
+				track.setCycle((CYCLE) Constants.ratio(data2 - 1, CYCLE.values()));
 				return true;
 			case 6: // midiOut
 				

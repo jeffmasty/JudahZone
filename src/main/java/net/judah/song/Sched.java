@@ -8,16 +8,20 @@ import net.judah.seq.CYCLE;
 public class Sched {
 	
 	// serialize state
-	public boolean active;
-	public CYCLE cycle = CYCLE.AB;
-	public int launch; 
-	public int amp = 85;
+	public boolean active;               
+	public CYCLE cycle = CYCLE.ABCD;     
+	public int launch;                   
+	public float amp = 0.65f;            
 	
 	public Sched(Sched clone) {
 		launch = clone.launch;
 		active = clone.active;
 		cycle = clone.cycle;
 		amp = clone.amp;
+	}
+
+	public Sched(boolean isDrums) {
+		cycle = isDrums ? CYCLE.A3B : cycle;
 	}
 	
 }

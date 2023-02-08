@@ -49,8 +49,8 @@ public class LFO implements Effect {
 		if (recover >= 0)
 			switch (this.target) {
 			case CutEQ:
-				ch.getCutFilter().setFrequency(CutFilter.knobToFrequency(recover));
-				ch.getCutFilter().setActive(wasActive);
+				ch.getParty().setFrequency(CutFilter.knobToFrequency(recover));
+				ch.getParty().setActive(wasActive);
 				break;
 			case Delay:
 				ch.getDelay().set(Delay.Settings.DelayTime.ordinal(), recover);
@@ -61,10 +61,10 @@ public class LFO implements Effect {
 				ch.getReverb().setActive(wasActive);
 				break;
 			case Gain:
-				ch.getGain().setVol(recover);
+				ch.getGain().set(Gain.VOLUME, recover);
 				break;
 			case Pan:
-				ch.getGain().setPan(recover);
+				ch.getGain().set(Gain.PAN, recover);
 				break;
 			case OFF:
 				break;
@@ -76,9 +76,9 @@ public class LFO implements Effect {
 		if (active) {
 			switch (this.target) {
 			case CutEQ:
-				recover = CutFilter.frequencyToKnob(ch.getCutFilter().getFrequency());
-				wasActive = ch.getCutFilter().isActive();
-				ch.getCutFilter().setActive(true);
+				recover = CutFilter.frequencyToKnob(ch.getParty().getFrequency());
+				wasActive = ch.getParty().isActive();
+				ch.getParty().setActive(true);
 				break;
 			case Delay:
 				recover = ch.getDelay().get(Delay.Settings.DelayTime.ordinal());
@@ -91,10 +91,10 @@ public class LFO implements Effect {
 				ch.getReverb().setActive(true);
 				break;
 			case Gain:
-				recover = ch.getGain().getVol();
+				recover = ch.getVolume();
 				break;
 			case Pan:
-				recover = ch.getGain().getPan();
+				recover = ch.getPan();
 				break;
 			case OFF:
 				break;
@@ -170,12 +170,12 @@ public class LFO implements Effect {
 		if (!active) return;
 		int val = (int)query();
 		switch(target) {
-			case Gain: ch.getGain().setVol(val); break;
-			case CutEQ: ch.getCutFilter().setFrequency(
+			case Gain: ch.getGain().set(Gain.VOLUME, val); break;
+			case CutEQ: ch.getParty().setFrequency(
 					CutFilter.knobToFrequency((int)ch.getLfo().query())); break;
 			case Reverb: ch.getReverb().set(Reverb.Settings.Wet.ordinal(), val); break;
 			case Delay: ch.getDelay().setFeedback(val * 0.01f); break;
-			case Pan: ch.getGain().setPan(val); break;
+			case Pan: ch.getGain().set(Gain.PAN, val); break;
 			case OFF: return;
 		}
 		MainFrame.update(ch);

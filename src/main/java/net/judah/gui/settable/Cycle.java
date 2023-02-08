@@ -4,6 +4,7 @@ import java.util.HashSet;
 
 import net.judah.seq.CYCLE;
 import net.judah.seq.MidiTrack;
+import net.judah.util.Constants;
 
 public class Cycle extends SetCombo<CYCLE> {
 	
@@ -25,9 +26,11 @@ public class Cycle extends SetCombo<CYCLE> {
 	}
 	
 	public static void update(MidiTrack t) {
-		for (Cycle c : instances)
-			if (c.track == t && c.getSelectedItem() != t.getCycle())
-				c.override(t.getCycle());
+		Constants.execute(()->{
+			for (Cycle c : instances)
+				if (c.track == t && c.getSelectedItem() != t.getCycle())
+					c.override(t.getCycle());
+		});
 	}
 	
 }

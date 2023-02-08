@@ -23,5 +23,7 @@ public abstract class MusicGrid extends JPanel {
 	}
 	
 	public abstract Musician getMusician();
+	
+	public abstract void timeSig();
 
 }

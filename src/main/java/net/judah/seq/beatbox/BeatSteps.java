@@ -69,11 +69,12 @@ public class BeatSteps extends Steps {
         }
 	}
 
-	public void measure() { // TODO test time signature
+	public void timeSig() { // TODO test time signature
 		createLabels();
 		addLbls();
 		invalidate();
 	}
+	
 
 
 }
