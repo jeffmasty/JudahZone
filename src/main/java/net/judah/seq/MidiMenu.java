@@ -8,8 +8,10 @@ import java.awt.event.MouseListener;
 import javax.swing.*;
 
 import lombok.Getter;
+import net.judah.JudahZone;
 import net.judah.gui.Gui;
 import net.judah.gui.Icons;
+import net.judah.gui.JudahMenu.Actionable;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
@@ -63,7 +65,7 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 		playWidget.addActionListener(e->track.trigger());
 		playWidget.setOpaque(true);
 		
-		recWidget.addActionListener(e->track.setRecording(!track.isRecording()));
+		recWidget.addActionListener(e->record());
 		recWidget.setOpaque(true);
 
 		liveWidget.addActionListener(e-> {
@@ -98,11 +100,9 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 		add(frames);
 		add(new Arrow(Arrow.EAST, e->track.setFrame(track.getFrame() + 1)));
 		add(Box.createHorizontalGlue());
-		if (track.isSynth()) {
-			add(new JLabel("Gate"));
-			add(gate);
-			gate.setSelectedItem(Gate.SIXTEENTH);
-		}
+		add(new JLabel("Gate"));
+		add(gate);
+		gate.setSelectedItem(Gate.SIXTEENTH);
 		add(new FxButton((Channel)track.getMidiOut()));
 		add(vol);
 		add(new JLabel(" Vol "));
@@ -113,6 +113,12 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 		update();
 	}
 	
+	private void record() {
+		track.setRecording(!track.isRecording());
+		if (track.isRecording())
+			JudahZone.getMidi().setKeyboardSynth(track);
+	}
+
 	public void update() {
 		playWidget.setBackground(track.isActive() ? Pastels.GREEN : track.isOnDeck() ? track.getCue().getColor() : null);
 		recWidget.setBackground(track.isRecording() ? Pastels.RED : null);
@@ -143,66 +149,26 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 	}
 	private JMenu fileMenu() {
 		JMenu result = new JMenu("File");
-		JMenuItem create = new JMenuItem("New");
-		create.addActionListener(e->track.clear());
-		JMenuItem open = new JMenuItem("Open MIDI");
-		open.addActionListener(e->track.load());
-		JMenuItem save = new JMenuItem("Save MIDI");
-		save.addActionListener(e->track.save());
-		JMenuItem saveAs = new JMenuItem("Save As...");
-		saveAs.addActionListener(e ->track.saveAs());
-		JMenuItem importMidi = new JMenuItem("Import MIDI");
-		importMidi.addActionListener(e-> new ImportMidi(track));
-		result.add(save);
-		result.add(saveAs);
-		result.add(create);
-		result.add(open);
-		result.add(importMidi);
+		result.add(new Actionable("New", e->track.clear()));
+		result.add(new Actionable("Open MIDI", e->track.load()));
+		result.add(new Actionable("Save MIDI", e->track.save()));
+		result.add(new Actionable("Save As...", e ->track.saveAs()));
+		result.add(new Actionable("Import Midi", e->new ImportMidi(track)));
 		// result.add(new JMenuItem("Record")); // TODO
 		// result.add(new JMenuItem("MPK")); // TODO
 		return result;
 	}
 	private JMenu barMenu() { // try the wings!
 		JMenu result = new JMenu("Edit");
-		JMenuItem newBar = new JMenuItem("New Frame");
-		newBar.addActionListener(e->track.setFrame(track.frames() + 1));
-		JMenuItem copy = new JMenuItem("Copy Frame");
-		copy.addActionListener(e->track.copyFrame(track.getFrame()));
-		JMenuItem delete = new JMenuItem("Delete Frame");
-		delete.addActionListener(e->track.deleteFrame(track.getFrame()));
-		result.add(newBar);
-		result.add(copy);
-		result.add(delete);
-
-		JMenuItem copyNote = new JMenuItem("Copy Notes");
-		copyNote.addActionListener(e->{
-			view.getGrid().getMusician().copy();
-		});
+		result.add(new Actionable("New Frame", e->track.setFrame(track.frames() + 1)));
+		result.add(new Actionable("Copy Frame", e->track.copyFrame(track.getFrame())));
+		result.add(new Actionable("Delete Frame", e->track.deleteFrame(track.getFrame())));
 		
-		JMenuItem pasteNote = new JMenuItem("Paste Notes");
-		pasteNote.addActionListener(e->{
-			view.getGrid().getMusician().paste();
-		});
-		JMenuItem deleteNote = new JMenuItem("Delete Notes");
-		delete.addActionListener(e->{
-			view.getGrid().getMusician().delete();
-		});
-
-		JMenuItem cc = new JMenuItem("CC");
-		cc.addActionListener(e->{
-			
-		});
-
-		JMenuItem progChange = new JMenuItem("Prog");
-		progChange.addActionListener(e->{
-			
-		});
-
-		result.add(copyNote);
-		result.add(pasteNote);
-		result.add(deleteNote);
-//		result.add(cc);
-//		result.add(progChange);
+		result.add(new Actionable("Copy Notes", e-> view.getGrid().copy()));
+		result.add(new Actionable("Paste Notes", e->view.getGrid().paste()));
+		result.add(new Actionable("Delete Notes",e->view.getGrid().delete()));
+		// result.add(new Actionable("CC", e->{ }));
+		// result.add(new Actionable("Prog", e->{ }));
 		return result;
 	}
 

@@ -2,8 +2,6 @@ package net.judah.controllers;
 
 import static net.judah.JudahZone.*;
 
-import org.jaudiolibs.jnajack.JackException;
-
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
 import net.judah.api.MidiReceiver;
@@ -17,7 +15,9 @@ import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.Transpose;
 import net.judah.mixer.Channel;
+import net.judah.seq.Seq;
 import net.judah.util.Constants;
+import net.judah.util.RTLogger;
 
 /** Akai MPKmini, not the new one */
 @RequiredArgsConstructor
@@ -28,8 +28,8 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 	private static final int JOYSTICK_R = 0;
 
 	private final JudahMidi sys;
+	private final Seq seq;
 	
-	//private final Midi NO_MOD = Midi.create(Midi.CONTROL_CHANGE, 0, 1, 0);
 	private final byte[] SUSTAIN_ON = Midi.create(Midi.CONTROL_CHANGE, 0, 64, 127).getMessage();
 	@SuppressWarnings("unused")
 	private final byte[] SUSTAIN_OFF= Midi.create(Midi.CONTROL_CHANGE, 0, 64, 0).getMessage();
@@ -37,51 +37,41 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 	private final int SUSTAIN_LENGTH = SUSTAIN_ON.length;
 	
 	@Override
-	public boolean midiProcessed(Midi midi) throws JackException {
+	public boolean midiProcessed(Midi midi) {
 
 		if (Midi.isCC(midi)) {
 			return checkCC(midi.getData1(), midi.getData2());
 		}
 		if (Midi.isProgChange(midi)) 
 			return doProgChange(midi.getData1(), midi.getData2());
-		
-//		if (getTracker().isRecord() && Midi.isNote(midi)) {
-//			getNotes().record(midi); return false; // pass through?}
 
 		if (midi.getChannel() == 9) {
 			int data1 = midi.getData1();
-			
 			for (int i = 0; i < DRUMS_A.size() ; i++)
 				if (DRUMS_A.get(i) == data1) {
 					int translate = getDrumMachine().getDrum1().getSamples()[i].getGmDrum().getData1();
-//					if (getTracker().isRecord()) 
-//						getBeats().record(midi);
-//					else 
-						getDrumMachine().getDrum1().send(
-							Midi.create(midi.getCommand(), 9, translate, midi.getData2()), -1);
-					return true;
+					try {
+						midi.setMessage(midi.getCommand(), 9, translate, midi.getData2());
+					} catch (Exception e) { RTLogger.warn(this, e);}
 				}
 			
 			for (int i = 0; i < DRUMS_B.size() ; i++)
 				if (DRUMS_B.get(i) == data1) {
-					midi = Midi.create(midi.getCommand(), 9, 
-							DrumType.values()[i].getData1(), midi.getData2());
-//					if (getSeq().isRecord()) 
-//						getBeats().record(midi);
-//					else 
-						getDrumMachine().getDrum2().send(midi, JudahMidi.ticker());
+					try {
+						midi.setMessage(midi.getCommand(), 9, DrumType.values()[i].getData1(), midi.getData2());
+					} catch (Exception e) { RTLogger.warn(this, e);}
 				}
-			return true;
 		}
 
-		if (Transpose.isActive() && midi.getCommand() == Midi.NOTE_ON) {
-			Transpose.setOnDeck(midi.getData1() - MIDDLE_C);
-			return true; // key press consumed
-		}
-		return false; 
+		if (seq.record(midi) == false)
+			if (Transpose.isActive() && midi.getCommand() == Midi.NOTE_ON) {
+				Transpose.setOnDeck(midi.getData1() - MIDDLE_C);
+				return true; // key press consumed
+			}
+		return false;
 	}
 
-	private boolean checkCC(int data1, int data2) throws JackException {
+	private boolean checkCC(int data1, int data2) {
 		if (KNOBS.contains(data1)) {
 			MainFrame.update(new KnobData(data1 - KNOBS.get(0), data2));
 			return true;
@@ -100,7 +90,7 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 		return false;
 	}
 
-	private boolean cc_pad(int data1, int data2) throws JackException {
+	private boolean cc_pad(int data1, int data2) {
 		///////// ROW 1 /////////////////
 		if (data1 == PRIMARY_CC.get(0))  { // Jamstik
 			getJamstik().toggle();
@@ -153,7 +143,7 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 		return true;
 	}
 
-	private boolean joystickL(int data2) throws JackException {
+	private boolean joystickL(int data2) {
 		Delay d = ((Channel)sys.getKeyboardSynth().getMidiOut()).getDelay();
 		d.setActive(data2 > 4);
 		if (data2 <= 4) 
@@ -164,7 +154,7 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 		return true;
 	}
 	
-	private boolean joystickR(int data2) throws JackException {
+	private boolean joystickR(int data2) {
 		int ch = sys.getKeyboardSynth().getCh();
 		sys.getKeyboardSynth().getMidiOut().send( Midi.create(Midi.CONTROL_CHANGE, ch, 1, 
 				data2 > 4 ? data2 : 0), JudahMidi.ticker());  
@@ -201,7 +191,6 @@ public class MPKmini implements Controller, MPKTools, Pastels {
             	loadSong(getCurrent().getFile());
             }
 
-            
             // B BANK 
             else if (data1 == B_PROG[0]) // I want bass
             	fluid.progChange("Acoustic Bass");
@@ -226,53 +215,6 @@ public class MPKmini implements Controller, MPKTools, Pastels {
             
 		return true;
 	}
-
 		
 }
 
-/*
-	private boolean doDrumPad(ShortMessage midi)  {
-		if (false == ( (midi.getCommand() == Midi.NOTE_ON || midi.getCommand() == Midi.NOTE_OFF) 
-				&& (DRUMS_A.contains(midi.getData1()) || DRUMS_B.contains(midi.getData1()))))
-			return false;
-		JackPort out = JudahClock.getTracks()[0].getMidiOut();
-		int data1 = midi.getData1();
-		try {
-			if (data1 == DRUMS_A.get(0)) {
-				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.BassDrum.getData1(), midi.getData2());
-				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-			} else if (data1 == DRUMS_A.get(1)) {
-				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.AcousticSnare.getData1(), midi.getData2());
-				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-			} 
-			else if (data1 == DRUMS_A.get(2)) {
-				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.Claves.getData1(), midi.getData2());
-				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-			} 
-				
-			else if (data1 == DRUMS_A.get(3)) {
-				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.ChineseCymbal.getData1(), midi.getData2());
-				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-			} 
-			else if (data1 == DRUMS_A.get(4)) {
-				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.ClosedHiHat.getData1(), midi.getData2());
-				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-			} 
-			else if (data1 == DRUMS_A.get(5)) {
-				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.OpenHiHat.getData1(), midi.getData2());
-				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-			} 
-			else if (data1 == DRUMS_A.get(6)) {
-				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.Shaker.getData1(), midi.getData2());
-				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-			} 
-			else if (data1 == DRUMS_A.get(7)) {
-				midi.setMessage(midi.getCommand(), midi.getChannel(), GMDrum.LowMidTom.getData1(), midi.getData2());
-				JackMidi.eventWrite(out, 0, midi.getMessage(), midi.getLength());
-			} 
-		} catch (Exception e) {
-			RTLogger.warn(this, e);
-		}
-		return true;
-	}
-*/

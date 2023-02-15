@@ -88,7 +88,8 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
 
 	@Override
 	public void setSelectedIndex(int index) {
-		super.setSelectedIndex(index);
+		if (getSelectedIndex() != index)
+			super.setSelectedIndex(index);
 		requestFocusInWindow();
 	}
 

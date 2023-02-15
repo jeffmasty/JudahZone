@@ -20,6 +20,7 @@ import net.judah.fx.Gain;
 import net.judah.gui.Pastels;
 import net.judah.midi.Panic;
 import net.judah.mixer.LineIn;
+import net.judah.util.Constants;
 
 /** Controller substitute, reroute guitar midi to synths */
 public class Jamstik extends JComboBox<MidiReceiver>{
@@ -78,9 +79,8 @@ public class Jamstik extends JComboBox<MidiReceiver>{
 	public void setMidiOut(MidiReceiver port) {
 		if (out == port)
 			return;
-		if (active) {
-			new Panic(out.getMidiPort()).start();
-		}
+		if (active) 
+			Constants.execute(new Panic(out.getMidiPort()));
 		out = port;
 	}
 

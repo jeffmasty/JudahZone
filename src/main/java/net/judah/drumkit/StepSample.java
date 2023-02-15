@@ -9,8 +9,8 @@ public class StepSample extends Sample {
 	@Setter @Getter boolean on;
 	int[] steps;
 	
-	public StepSample(String wavName, int... steps) throws Exception {
-		super(JudahZone.getOutL(), JudahZone.getOutR(), wavName, Type.ONE_SHOT);
+	public StepSample(String wavName, Sampler sampler, int... steps) throws Exception {
+		super(JudahZone.getOutL(), JudahZone.getOutR(), wavName, Type.ONE_SHOT, sampler);
 		this.steps = steps;
 		env = 2f;
 	}
@@ -30,5 +30,14 @@ public class StepSample extends Sample {
 				return;
 			}
 	}
+	
+	@Override
+	public void process() {
+		if (!active || !hasRecording()) return;
+		readRecordedBuffer();
+		env = BOOST * sampler.stepMix;
+		playFrame(leftPort.getFloatBuffer(), rightPort.getFloatBuffer()); 
+    }
+
 
 }

@@ -16,17 +16,17 @@ public class TrackVol extends Knob {
 		this.track = t;
 		setValue((int) (track.getAmp() * 100));
 		addListener(val->{
-			if (track.getAmp() * 0.01f != val) {
+			if (track.getAmp() * 100 != val) {
 				track.setAmp(val * 0.01f);
 			}});
 		instances.add(this);
 	}
 	
-	public static void update(MidiTrack t) {
+	public static void update(MidiTrack track) {
 		Constants.execute(()->{
 			instances.forEach(vol->{
-				if (t == vol.track && vol.getValue() != t.getAmp() * 100)
-					vol.setValue((int) (t.getAmp() * 100));
+				if (track == vol.track && vol.getValue() != track.getAmp() * 100)
+					vol.setValue((int) (track.getAmp() * 100));
 			});
 		});
 	}

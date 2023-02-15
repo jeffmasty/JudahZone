@@ -4,8 +4,6 @@ import static net.judah.JudahZone.*;
 
 import javax.sound.midi.ShortMessage;
 
-import org.jaudiolibs.jnajack.JackException;
-
 import net.judah.JudahZone;
 import net.judah.drumkit.DrumMachine;
 import net.judah.fx.Fader;
@@ -39,7 +37,7 @@ public class Beatstep implements Controller {
 	private final MultiSelect channels = new MultiSelect();
 	
 	@Override
-	public boolean midiProcessed(Midi midi) throws JackException {
+	public boolean midiProcessed(Midi midi) {
 		
 		if (midi.getChannel() != 0) // ignore sequencer
 			return true;

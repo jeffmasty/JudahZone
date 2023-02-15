@@ -1,5 +1,6 @@
 package net.judah.seq.beatbox;
 
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 
@@ -69,10 +70,16 @@ public class BeatSteps extends Steps {
         }
 	}
 
+	@Override
 	public void timeSig() { // TODO test time signature
 		createLabels();
 		addLbls();
 		invalidate();
+	}
+
+	@Override
+	public void highlight(Point p) {
+		
 	}
 	
 

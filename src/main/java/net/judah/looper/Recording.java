@@ -10,8 +10,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import net.judah.util.AudioTools;
 import net.judah.util.Constants;
+import net.judah.util.RTLogger;
 
 /** Actual audio data of a Loop or Sample, with the ability to overdub off the RT thread and load from disk. <br/>
  * <br/><br/><pre>
@@ -22,6 +24,7 @@ import net.judah.util.Constants;
 	File format is based on the information from
 	http://www.sonicspot.com/guide/wavefiles.html
 	http://www.blitter.com/~russtopia/MIDI/~jglatt/tech/wave.htm </pre>*/
+@NoArgsConstructor
 public class Recording extends Vector<float[][]> {
 	public static final float BOOST = 5f;
 	
@@ -33,10 +36,24 @@ public class Recording extends Vector<float[][]> {
 	private class Runner extends Thread {
 		@Override public void run() {
 			try {
-			while (true) { // MIX
-				set(locationQueue.take(), AudioTools.overdub(newQueue.take(), oldQueue.take()));
-			}} catch (InterruptedException e) {  }}};
+				while (true) { // MIX
+					int idx = locationQueue.take();
+					if (idx < size()) 
+						set(idx, AudioTools.overdub(newQueue.take(), oldQueue.take()));
+					else {
+						RTLogger.warn(file == null ? this : file.getAbsolutePath(), "tape counter: " + idx + " of " + size());
+						if (size() > 0)
+							set(0, AudioTools.overdub(newQueue.take(), oldQueue.take()));
+						else 
+							newQueue.take(); oldQueue.take();
+					}
+				}
+			} catch (InterruptedException e) { 
+			} catch (Exception e) {
+				RTLogger.warn(this, e);
+			}}};
 	private Runner runner;
+	
 	// ------------WavFile --------------------------
 	private byte[] buffer = new byte[4096]; // local buffer for disk IO
 	@Getter private static final int validBits = 16;		// 2 bytes unsigned, 0x0002 (2) to 0xFFFF (65,535)
@@ -53,7 +70,7 @@ public class Recording extends Vector<float[][]> {
 	private static final int RIFF_CHUNK_ID = 0x46464952;
 	private static final int RIFF_TYPE_ID = 0x45564157;
 	
-	private IOState ioState;			// Specifies the IO State of the Wav File (used for snaity checking)
+	private IOState ioState;			// Specifies the IO State of the Wav File (used for sanity checking)
 	private int bytesPerSample;			// Number of bytes required to store a single sample
 	@Getter private long numFrames;		// Number of frames within the data section
 	//private FileOutputStream oStream;	// Output stream used for writting data
@@ -72,41 +89,17 @@ public class Recording extends Vector<float[][]> {
 	private int bytesRead;				// Bytes read after last read into local buffer
 	private long frameCounter;			// Current number of frames read or written
 
-	public Recording(int size) {
-		this(size, true);
-	}
-	
-	public Recording(boolean startListeners) {
-		if (startListeners) {
-			startListeners();
-		}
-	}
+//	/** create a listening recording of given size */
+//	public Recording(int size) {
+//		int bufferSize = Constants.bufSize();
+//		for (int j = 0; j < size; j++) {
+//			float[][] data = new float[2][bufferSize];
+//			add(data);
+//		}
+//		startListeners();
+//	}
 
-	/** deep copy the 2D float array */
-	Recording(Recording toCopy, boolean startListeners) {
-		this(startListeners);
-		float[][] copy;
-		for (float[][] buffer : toCopy) {
-		    copy = new float[buffer.length][];
-		    for (int i = 0; i < buffer.length; i++) {
-		        copy[i] = buffer[i].clone();
-		    }
-		    add(copy);
-		}
-	}
-
-	/** create empty recording of size */
-	public Recording(int size, boolean startListeners) {
-		this(startListeners);
-		int bufferSize = Constants.bufSize();
-		for (int j = 0; j < size; j++) {
-			float[][] data = new float[2][bufferSize];
-			add(data);
-		}
-	}
-
-	public Recording(Recording recording, int duplications, boolean startListeners) {
-		this(startListeners);
+	public Recording(Recording recording, int duplications) {
 		int bufferSize = Constants.bufSize();
 		int size = recording.size() * duplications;
 		int x = 0;
@@ -118,10 +111,10 @@ public class Recording extends Vector<float[][]> {
 			AudioTools.copy(recording.get(x), data);
 			add(data);
 		}
+		startListeners();
 	}
 
 	public Recording (File file) throws Exception {
-		this(0, false);
 		this.file = file;
 		iStream = new FileInputStream(file);
 
@@ -272,23 +265,6 @@ public class Recording extends Vector<float[][]> {
 		}
 	}
 
-	/** throw away first frame (and last?) */
-	public void trim() { // minor discrepancy vs. midi clock
-		remove(0);
-	}
-	
-	public boolean isListening() {
-		return newQueue != null;
-	}
-
-	public void startListeners() {
-		newQueue = new LinkedBlockingQueue<>();
-		oldQueue = new LinkedBlockingQueue<>();
-		locationQueue = new LinkedBlockingQueue<>();
-		runner = new Runner();
-		runner.start();
-	}
-
 	/** get off the process thread */
 	public void dub(float[][] newBuffer, float[][] oldBuffer, int location) {
 		if (newBuffer == null || oldQueue == null) return;
@@ -335,12 +311,38 @@ public class Recording extends Vector<float[][]> {
 		return numFramesToRead;
 	}
 
+	public boolean isListening() {
+		return newQueue != null;
+	}
+
+	public void startListeners() {
+		newQueue = new LinkedBlockingQueue<>();
+		oldQueue = new LinkedBlockingQueue<>();
+		locationQueue = new LinkedBlockingQueue<>();
+		runner = new Runner();
+		runner.start();
+	}
+
 	public void close() {
 		if (runner != null) {
 			runner.interrupt();
 			runner = null;
 		}
 	}
-	
 
 }
+
+
+//	/** deep copy the 2D float array */
+//	Recording(Recording toCopy, boolean startListeners) {
+//		this(startListeners);
+//		float[][] copy;
+//		for (float[][] buffer : toCopy) {
+//		    copy = new float[buffer.length][];
+//		    for (int i = 0; i < buffer.length; i++) {
+//		        copy[i] = buffer[i].clone();
+//		    }
+//		    add(copy);
+//		}
+//	}
+//

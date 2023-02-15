@@ -1,9 +1,12 @@
 package net.judah.seq.piano;
 
 import static java.awt.event.KeyEvent.*;
-import static net.judah.seq.MidiView.ratioY;
+import static net.judah.seq.MidiTools.*;
 
+import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -11,55 +14,116 @@ import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
+import net.judah.gui.Pastels;
 import net.judah.midi.Midi;
 import net.judah.seq.*;
+import net.judah.seq.beatbox.BeatsSize;
 import net.judah.util.RTLogger;
 
-public class Pianist extends Musician implements PianoSize  {
+/** display midi music in piano grid */
+public class PianoBox extends MusicBox implements BeatsSize {
+	public static final int VISIBLE_NOTES = 6 * 12 + 1;
+
 	
-	private final PianoMusic grid;
 	private final Piano piano;
+	private final PianoSteps steps;
+	private final int width, height;
 	private final Track t;
-
-	public Pianist(Piano piano, PianoMusic grid, MidiView view, MidiTab tab) {
-		super(view, tab);
-		this.piano = piano;
-		this.grid = grid;
-		t = track.getT();
+	private float unit;
+	
+	public PianoBox(Rectangle r, MidiView view, PianoSteps currentBeat, Piano roll, MidiTab tab) {
+		super(view, r, tab);
+		width = r.width;
+		height = r.height;
+		this.steps = currentBeat;
+		this.piano = roll;
+		t = view.getTrack().getT();
+		timeSig();
 	}
 	
-	@Override // absolute based tick
-	public long toTick(Point p) {
-		return (long) (ratioY(p.y, GRID_HEIGHT) * track.getWindow() + 
-				track.getLeft());
+	@Override public long toTick(Point p) {
+		return (long) (p.y / (float)GRID_HEIGHT * track.getWindow() + track.getLeft());
 	}
 
-	@Override
-	public int toData1(Point p) {
+	@Override public int toData1(Point p) {
 		return p.x / KEY_WIDTH + NOTE_OFFSET;
 	}
 
-	@Override
-	public void mouseExited(MouseEvent e) {
+	@Override public void paint(Graphics g) {
+		super.paint(g);
+		float ratio = height / (2f * track.getBarTicks());
+		
+		g.setColor(Pastels.FADED);
+		int x; // columns (notes)
+		for (int i = 0; i < VISIBLE_NOTES; i++) {
+			x = i * KEY_WIDTH;
+			if (piano.isLabelC(i)) {
+				g.setColor(Pastels.BLUE);
+				g.fillRect(x, 0, (int)unit, height);
+				g.setColor(Pastels.FADED);
+			}
+			g.drawLine(x, 0, x, height);
+		}
+
+		int y; // rows (steps)
+		for (int i = 0; i < 2 * clock.getSteps(); i++) {
+			y = (int) (i * unit);
+			if (steps.isBeat(i))
+				g.fillRect(0, y, width, (int) unit);
+			else 
+				g.drawLine(0, (int)(y + unit), width, (int)(y + unit));
+			if (steps.isBar(i)) {
+				g.setColor(Color.GRAY);
+				g.drawLine(0, y, width, y);
+				g.setColor(Pastels.FADED);
+			}			
+		}
+
+		scroll.populate();
+		int yheight;
+		for (MidiPair p : scroll) {
+			
+			if (p.getOn().getMessage() instanceof ShortMessage == false) continue;
+			ShortMessage s = (ShortMessage)p.getOn().getMessage();
+			x = KEY_WIDTH * Piano.data1ToGrid(s.getData1());
+			
+			
+			y = (int) ((p.getOn().getTick() - track.getLeft()) * ratio);
+			
+			yheight = (int) ((p.getOff().getTick() - p.getOn().getTick()) * ratio);
+			if (selected.isNoteSelected(p.getOn().getTick(), s.getData1()))
+				g.setColor(highlightColor(s.getData2()));
+			else 
+				g.setColor(velocityColor(s.getData2()));
+			g.fill3DRect(x, y, KEY_WIDTH, yheight, true);
+		}
+		g.setColor(Pastels.FADED);
+		g.drawRect(0, 0, width-1, height - 1); // border
+	}
+
+	@Override public void timeSig() {
+		unit = height / (2f * clock.getSteps());
+		if (steps != null) steps.repaint();
+		repaint();
+	}
+	
+	@Override public void mouseExited(MouseEvent e) {
 		piano.highlight(-1);
 		steps.highlight(null);
 	}
 
-	@Override
-	public void mouseMoved(MouseEvent mouse) {
+	@Override public void mouseMoved(MouseEvent mouse) {
 		Point p = mouse.getPoint();
 		piano.highlight(toData1(p));
 		steps.highlight(p);
 	}
 
 		
-	@Override
-	public void mousePressed(MouseEvent mouse) {
+	@Override public void mousePressed(MouseEvent mouse) {
 		Prototype dat = translate(mouse.getPoint());
 		MidiPair existing = lookup(dat.tick, NOTE_ON, dat.data1);
 		if (existing == null) {
-			long tick = quantize(dat.tick, 
-					(Gate)view.getMenu().getGate().getSelectedItem(), track.getResolution());
+			long tick = quantize(dat.tick, getGate(), track.getResolution());
 			on = new Prototype(dat.data1, tick);
 		}
 		else if (mouse.isControlDown()) {
@@ -91,8 +155,7 @@ public class Pianist extends Musician implements PianoSize  {
 				off.setTick(temp);
 				RTLogger.log(this, "swapping " + off.getTick() + " to " + on.getTick());				
 			}
-			off.setTick(-1 + quantizePlus(tick, 
-					(Gate)view.getMenu().getGate().getSelectedItem(), track.getResolution()));
+			off.setTick(-1 + quantizePlus(tick, getGate(), track.getResolution()));
 			MidiEvent start = create(on.getTick(), 
 					NOTE_ON, on.getData1(), (int) (track.getAmp() * 127f));
 			t.add(start);
@@ -100,7 +163,7 @@ public class Pianist extends Musician implements PianoSize  {
 			selected.clear(); // add zero-based selection
 			selected.add(new MidiPair(start, off)); 
 			on = null;
-			grid.repaint();
+			repaint();
 			drag = false;
 		} catch (Exception e) {
 			RTLogger.warn(this, e);
@@ -156,22 +219,6 @@ public class Pianist extends Musician implements PianoSize  {
 		}
 	}
 
-	// TODO odd subdivision
-	public long quantize(long tick, Gate type, int resolution) {
-		switch(type) {
-		case SIXTEENTH: return tick - tick % (resolution / 4);
-		case EIGHTH: return tick - tick % (resolution / 2);
-		case QUARTER: return tick - tick % resolution;
-		case HALF: return tick - tick % (2 * resolution);
-		case WHOLE: return tick - tick % (4 * resolution);
-		case MICRO: return tick - tick % (resolution / 8);
-		case RATCHET: return tick - tick % MidiConstants.RATCHET; // approx MIDI_24
-		default: // NONE
-			return tick;
-		}
-	}
-
-	
 	/**@return Z to COMMA keys are white keys, and black keys, up to 12, no match = -1*/
 	public static int chromaticKeyboard(final int keycode) {
 		switch(keycode) {
@@ -192,4 +239,5 @@ public class Pianist extends Musician implements PianoSize  {
 		}
 	}
 
+	
 }

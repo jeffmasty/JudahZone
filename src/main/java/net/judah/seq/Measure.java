@@ -53,13 +53,13 @@ public class Measure extends ArrayList<MidiPair> implements MidiConstants {
 	}
 	
 	
-	/** loads two bars from measure of track into the supplied result, zero-basing the ticks*/
+	/** loads two bars from measure of track into the supplied result*/
 	public void loadPiano() {
 		stash.clear();
 		long startTick = track.getLeft();
 
-		long end = startTick + track.getWindow();
-		for (int i = 0; i < t.size(); i++) { // first bar
+		long end = startTick + track.getWindow(); 
+		for (int i = 0; i < t.size(); i++) { 
 			MidiEvent e = t.get(i);
 			if (e.getTick() < startTick) continue;
 			if (e.getTick() >= end) break;

@@ -15,23 +15,24 @@ public abstract class MidiView extends JPanel implements TimeListener, MidiConst
 	protected final JudahClock clock;
 	protected final MidiTrack track;
 	protected MidiMenu menu;
-	protected MusicGrid grid;
+	protected MusicBox grid;
 	protected JPanel instrumentPanel;
-	protected final Notes selected = new Notes();
+	protected Steps steps;
 	
 	public MidiView(MidiTrack t) {
 		this.track = t;
 		this.clock = track.getClock();
+		clock.addListener(this);
 		setLayout(null);
 	}
 	
-	public abstract Steps getSteps();
-	public abstract void update();
-	
-	public static float ratioY(long tick, long measure) {
-		return tick / (float)measure;
+	public void update() {
+		menu.update();
+		grid.repaint();
+		if (track.isLive())
+			steps.repaint();
 	}
-
+	
 	@Override
 	public void update(Property prop, Object value) {
 		if (prop == Property.STEP && track.isActive() && isVisible() && track.isLive()) {

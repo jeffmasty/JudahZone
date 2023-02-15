@@ -12,6 +12,7 @@ import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.api.MidiReceiver;
 import net.judah.mixer.Instrument;
+import net.judah.util.Constants;
 
 /** base function for an external synth */
 @Getter
@@ -52,7 +53,7 @@ public class MidiInstrument extends Instrument implements MidiReceiver {
 
 	@Override
 	public void close() {
-		new Panic(midiPort, 0 /*monosynth*/).start();
+		Constants.execute(new Panic(midiPort, 0 /*monosynth*/));
 	}
 
 	/** no-op, subclass override */

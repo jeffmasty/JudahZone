@@ -68,10 +68,12 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
     	this.primary = primary;
     	recordedLength = System.currentTimeMillis() - start;
     	int frames = primary.getRecording().size();
-    	for (Loop l : this) {
-    		l.catchUp(frames);
-    		l.setLength(frames);
-    	}
+    	Constants.execute(()->{
+	    	for (Loop l : this) {
+	    		l.catchUp(frames);
+	    		l.setLength(frames);
+	    	}
+    	});
     	clock.loop(Status.NEW);
     	RTLogger.log(this, primary + " recorded " + frames + " frames");
     }

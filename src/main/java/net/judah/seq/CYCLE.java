@@ -9,6 +9,7 @@ public enum CYCLE {
 	AB("Loop 2 bars"), 
 	ABCD("Loop 4 bars"), 
 	A3B("Turnaround on bar 4"),
+	AtoF("12 bar blues"),
 	ALL("Loop all bars") 
 	// SONG("Custom control")
 	;

@@ -8,11 +8,8 @@ public abstract class Steps extends JPanel {
 	
 	public abstract void setStart(int num);
 	
-
-	public void highlight(Point p) {
-	}
-	
 	public abstract void timeSig();
 
+	public abstract void highlight(Point p);
 	
 }

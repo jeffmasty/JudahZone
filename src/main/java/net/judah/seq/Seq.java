@@ -12,7 +12,7 @@ import net.judah.drumkit.KitMode;
 import net.judah.gui.Size;
 import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.knobs.TrackKnobs;
-import net.judah.song.Scene;
+import net.judah.midi.Midi;
 import net.judah.song.Sched;
 import net.judah.song.TrackInfo;
 import net.judah.util.RTLogger;
@@ -31,6 +31,7 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants {
 
 	public Seq(TrackList drumTracks, TrackList synthTracks) {
 		this.drumTracks = drumTracks;
+		drumTracks.forEach(track->track.setCycle(CYCLE.AB));
 		this.synthTracks = synthTracks;
 		tracks.addAll(drumTracks);
 		tracks.addAll(synthTracks);
@@ -38,7 +39,6 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants {
 		for(MidiTrack track : this) 
 			knobs.add(new TrackKnobs(track, this));
 		
-		drumTracks.forEach(track->track.setCycle(CYCLE.AB));
 	}
 	
 	public MidiTrack getCurrent() {
@@ -72,11 +72,10 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants {
 		return tracks.size();
 	}
 
-	public void populate(Scene scene) {
-		List<Sched> tracks = scene.getTracks();
+	public void init(List<Sched> tracks) {
 		tracks.clear();
 		for (MidiTrack t : this)
-			tracks.add(new Sched(t.isDrums()));
+			tracks.add(new Sched(t.isDrums())); // ??
 	}
 
 	public MidiTrack byName(String track) {
@@ -110,13 +109,25 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants {
     			continue;
     		}
     		
-    		if (false == t.getMidiOut().getProg(t.getCh()).equals(info.getProgram())) 
+    		if (false == info.getProgram().equals(t.getMidiOut().getProg(t.getCh()))) 
     			t.getMidiOut().progChange(info.getProgram(), t.getCh());
     		if (info.getFile() != null && !info.getFile().isEmpty()) {
     			t.load(new File(info.getFile()));
     		}
     	} 
 
+	}
+
+	/**Perform recording activities 
+	 * @param midi user note press 
+	 * @return true if any track is recording */
+	public boolean record(Midi midi) {
+		for (MidiTrack t : tracks)
+			if (t.isRecording()) {
+				// TODO!
+				return true;
+			}
+		return false;
 	}
 	
 }

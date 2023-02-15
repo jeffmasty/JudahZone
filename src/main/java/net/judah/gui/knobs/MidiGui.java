@@ -33,7 +33,7 @@ import net.judah.util.RTLogger;
 
 /** clock tempo, loop length, setlist, midi cables */
 public class MidiGui extends KnobPanel {
-	public static final Dimension COMBO_SIZE = new Dimension(110, 28);
+	public static final Dimension COMBO_SIZE = new Dimension(114, 28);
 	
 	@Getter private final Songs songsCombo = new Songs();
 	private final JudahClock clock;
@@ -82,10 +82,13 @@ public class MidiGui extends KnobPanel {
 		sampler.getStepSamples().forEach(s->stepper.addItem(s.getName()));
 		stepper.setSelectedIndex(sampler.getSelected());
 		stepper.addActionListener(e->{
-			if (sampler.getSelected() != stepper.getSelectedIndex())
-				sampler.setSelected(stepper.getSelectedIndex());});
-		stepVol.setValue((int) (sampler.getMix() * 100));
-		stepVol.addListener(val->sampler.setMix(val * 0.01f));
+			if (sampler.getSelected() == stepper.getSelectedIndex())
+				return;
+			sampler.setSelected(stepper.getSelectedIndex());
+			stepVol.setValue((int) (sampler.getStepMix() * 100));
+			});
+		stepVol.setValue((int) (sampler.getStepMix() * 100));
+		stepVol.addListener(val->sampler.setStepMix(val * 0.01f));
 		stepPlay.addActionListener(e-> sampler.setStepping(!sampler.isStepping()));
 		stepPlay.setOpaque(true);
 		
@@ -154,9 +157,6 @@ public class MidiGui extends KnobPanel {
 	private JPanel fluids(FluidSynth fluid) {
 		JPanel result = new JPanel();
 		try {
-			fluid.progChange("Dulcimer", 1);
-			fluid.progChange("Celesta", 2);
-			fluid.syncChannels();
 			for (int i = 0; i < CHANNELS; i++) {
 				fluids[i] = new Program(fluid, i);
 				fluids[i].setPreferredSize(COMBO_SIZE);
@@ -195,7 +195,7 @@ public class MidiGui extends KnobPanel {
     		sampler.setSelected(Constants.ratio(data2, sampler.getStepSamples().size()));
     		break;
     	case 3: // Sampler volume
-    		sampler.setMix(data2 * 0.01f);
+    		sampler.setStepMix(data2 * 0.01f);
     		break;
  	    case 4:
  	    	if (zoneBtn.isSelected()) 
@@ -262,8 +262,8 @@ public class MidiGui extends KnobPanel {
 
 	@Override
 	public void update() {
-		if (stepVol.getValue() != (int) (sampler.getMix() * 100))
-			stepVol.setValue((int) (sampler.getMix() * 100));
+		if (stepVol.getValue() != (int) (sampler.getStepMix() * 100))
+			stepVol.setValue((int) (sampler.getStepMix() * 100));
 		sync.setSelectedItem(clock.getLength());
 		stepper.setSelectedIndex(sampler.getSelected());
 		stepPlay.setBackground(sampler.isStepping() ? Pastels.GREEN : null);

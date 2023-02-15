@@ -46,6 +46,7 @@ public class Loop extends AudioTrack {
     	rightPort = r;
     	if (icon != null)
     		setIcon(Icons.get(icon));
+    	recording.startListeners();
     }
     
     public AudioMode isRecording() {
@@ -74,12 +75,14 @@ public class Loop extends AudioTrack {
     
     /** keep length, erase music */
     public void erase() {
-    		record(false);
-    		Constants.execute(() -> {
+    	record(false);
+    	Constants.execute(() -> {
 	    		active = false;
+	    		if (looper.getPrimary() != null)
+	    			recording.setSize(looper.getPrimary().getLength());
     			for (int i = 0; i < recording.size(); i++)
 	    			recording.set(i, new float[Constants.STEREO][Constants.bufSize()]);
-	    		MainFrame.update(this);
+    			MainFrame.update(this);
 	    		RTLogger.log(this, "Erased: " + getName());
     		}); 
     }
@@ -97,16 +100,12 @@ public class Loop extends AudioTrack {
     }
 
 	private void endRecord() {
-		isRecording.set(STOPPING);
+		isRecording.set(STOPPED);
 		clock.syncDown(this);
-		Constants.execute(()->{
-			isRecording.set(STOPPED);
-			active = true;
-			if (length == null && looper.getPrimary() == null) { // initial recording 
-				looper.setRecordedLength(_start, this);
-			}
-			MainFrame.update(this);
-        });
+		active = true;
+		if (length == null && looper.getPrimary() == null) // initial recording 
+			looper.setRecordedLength(_start, this);
+		MainFrame.update(this);
 	}
 	
 	/** in Real-Time */	
@@ -137,7 +136,7 @@ public class Loop extends AudioTrack {
 	public void duplicate() {
 		Constants.execute(()-> {
 			Recording source = getRecording();
-			Recording dupe =  new Recording(source, 2, source.isListening());
+			Recording dupe =  new Recording(source, 2);
 			int offset = source.size();
 			float[][] sound;
 			for (int i = 0; i < offset; i++) {

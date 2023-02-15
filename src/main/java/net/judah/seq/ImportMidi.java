@@ -15,6 +15,7 @@ import javax.swing.JPanel;
 import net.judah.gui.Gui;
 import net.judah.gui.widgets.FileChooser;
 import net.judah.gui.widgets.ModalDialog;
+import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 public class ImportMidi extends JPanel {
@@ -40,7 +41,7 @@ public class ImportMidi extends JPanel {
 	public ImportMidi(MidiTrack p) {
 		this.track = p;
 		// select and parse file
-		File f = FileChooser.choose(track.getFolder());
+		File f = FileChooser.choose(Folders.getImport(track.isDrums()));
 		if (f == null) return;
 		try {
 			processSequence(f, -1);

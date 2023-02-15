@@ -147,9 +147,7 @@ public class SongTab extends JPanel implements TimeListener {
 	}
 
 	public void newScene() {
-		Scene fresh = new Scene();
-		JudahZone.getSeq().populate(fresh);
-		addScene(fresh);
+		addScene(new Scene(current.getTracks()));
 	}
 
 	public void delete() {
@@ -183,7 +181,7 @@ public class SongTab extends JPanel implements TimeListener {
 		
 		switch (p.cmd) {
 			case Jump:
-				if (song.getScenes().size() > p.val) {
+				if (song.getScenes().size() > p.val && clock.isActive()) {
 					Scene next = song.getScenes().get(p.val);
 					launchScene(next);
 					peek(next);
@@ -248,7 +246,10 @@ public class SongTab extends JPanel implements TimeListener {
 				instruments.get(p.val).getLatchEfx().latch();
 				break;
 			case Mute:
-				getChannel(p.val).setOnMute(true);
+				if (p.val == -1)
+					looper.verseChorus();
+				else
+					getChannel(p.val).setOnMute(true);
 				break;
 			case Unmute: 
 				getChannel(p.val).setOnMute(false);

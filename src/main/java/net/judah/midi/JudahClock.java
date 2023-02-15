@@ -259,13 +259,10 @@ public class JudahClock extends Thread implements TimeProvider {
 	}
 		
 	public void setTimeSig(Signature time) {
-		if (this.timeSig == time)
+		if (timeSig == time)
 			return;
-		this.timeSig = time;
-		int old = measure;
+		timeSig = time;
 		measure = timeSig.steps/timeSig.div;
-		if (old == measure)
-			return;
 		unit = MIDI_24 / timeSig.div;
 		MainFrame.update(this); // both update and announce?
 		letItBeKnown(Property.MEASURE, measure);

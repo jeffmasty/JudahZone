@@ -30,7 +30,6 @@ public class Piano extends JPanel implements BeatsSize, MouseListener, MouseWhee
 	private int highlight = -1;
 	private int pressed;
 	@Getter private int octave = 4;
-
 	
 	public Piano(Rectangle r, MidiTrack t, MidiTab tab) {
 		this.tab = tab;
@@ -41,11 +40,6 @@ public class Piano extends JPanel implements BeatsSize, MouseListener, MouseWhee
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		addMouseWheelListener(this);
-	}
-	
-	public int total() {
-		return 6 * 12 + 1;
-		//return width / KEY_WIDTH;
 	}
 	
 	/** label Octave C
@@ -61,7 +55,7 @@ public class Piano extends JPanel implements BeatsSize, MouseListener, MouseWhee
 		g.setColor(Color.GRAY);
 		g.drawRect(0, 0, width, height);
 		int x;
-		for (int i = 0; i < total(); i++) {
+		for (int i = 0; i < PianoBox.VISIBLE_NOTES; i++) {
 			x = i * KEY_WIDTH;
 			g.drawRect(x, 0, KEY_WIDTH, KEY_HEIGHT);
 			if (actives.contains(gridToData1(i))) 
@@ -109,7 +103,7 @@ public class Piano extends JPanel implements BeatsSize, MouseListener, MouseWhee
 	
 	@Override public void mousePressed(MouseEvent e) {
 		off();
-		pressed = tab.getCurrent().getGrid().getMusician().toData1(e.getPoint());
+		pressed = tab.getCurrent().getGrid().toData1(e.getPoint());
 		on();
 	}
 	
@@ -120,7 +114,7 @@ public class Piano extends JPanel implements BeatsSize, MouseListener, MouseWhee
 	}
 	
 	@Override public void mouseDragged(MouseEvent e) {
-		int next = tab.getCurrent().getGrid().getMusician().toData1(e.getPoint());
+		int next = tab.getCurrent().getGrid().toData1(e.getPoint());
 		if (next == pressed) return;
 		mouseMoved(e);
 		off();
@@ -196,7 +190,7 @@ public class Piano extends JPanel implements BeatsSize, MouseListener, MouseWhee
 
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent wheel) {
-//		boolean up = wheel.getPreciseWheelRotation() < 0;
+// 		boolean up = wheel.getPreciseWheelRotation() < 0;
 //		int velocity = track.getVelocity() * 100 + (up ? 5 : -1); // ??5
 //		if (velocity < 0)
 //			velocity = 0;

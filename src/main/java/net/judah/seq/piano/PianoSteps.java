@@ -16,7 +16,6 @@ import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.seq.MidiTrack;
-import net.judah.seq.MidiView;
 import net.judah.seq.Steps;
 import net.judah.seq.beatbox.BeatsSize;
 
@@ -25,7 +24,6 @@ public class PianoSteps extends Steps implements BeatsSize, MouseMotionListener,
 	static final int OFFSET = STEP_WIDTH / 2 - 5;
 	private final JudahClock clock;
 	private final MidiTrack track;
-	private final MidiView view;
 	private final int width, height;
 	private int highlight = -1;
 
@@ -34,9 +32,8 @@ public class PianoSteps extends Steps implements BeatsSize, MouseMotionListener,
 	@Getter private float unit;
 	private final ArrayList<Integer> playing = new ArrayList<>();
 	
-	public PianoSteps(Rectangle r, MidiTrack track, MidiView view) {
+	public PianoSteps(Rectangle r, MidiTrack track) {
 		this.track = track;
-		this.view = view;
 		this.clock = track.getClock();
 		this.width = r.width;
 		this.height = r.height;

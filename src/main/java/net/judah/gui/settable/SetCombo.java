@@ -28,16 +28,18 @@ public abstract class SetCombo<T> extends  JComboBox<T> {
 
 	public SetCombo(T[] options, T selected) {
 		this();
-		refill(options, selected);
+		if (options == null) 
+			return;
+		for (T item : options) 
+			addItem(item);
+		if (selected != null)
+			setSelectedItem(selected);
+		addActionListener(listener);
 	}
 
 	public void refill(T[] options, T selected) {
 		removeActionListener(listener);
 		removeAllItems();
-		for (T item : options) 
-			addItem(item);
-		if (selected != null)
-			setSelectedItem(selected);
 		addActionListener(listener);
 	}
 	

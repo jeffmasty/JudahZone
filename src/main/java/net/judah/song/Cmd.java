@@ -17,10 +17,13 @@ public enum Cmd {
 	TimeSig(CLOCK), TimeCode(CLOCK), Jump(CLOCK),// Absolute/Relative scene cues
 	Record(LOOP), RecEnd(LOOP), Sync(LOOP), Dup(LOOP), Delete(LOOP), Solo(LOOP), SoloCh(LOOP), // looper
 	// FXOFF
-	FX(CH), Latch(CH), FadeOut(CH), FadeIn(CH), Mute(CH), Unmute(CH), OffTape(CH), OnTape(CH) // fx/channel 
+	FX(CH), Latch(CH), FadeOut(CH), FadeIn(CH), Mute(CH), Unmute(CH), 
+	OffTape(CH), OnTape(CH) // fx/channel 
 	;  
 	
 	@Getter private final Type type;
+	
+	
 	
 	public static List<Cmd> get(Type type) {
 		ArrayList<Cmd> result = new ArrayList<Cmd>();

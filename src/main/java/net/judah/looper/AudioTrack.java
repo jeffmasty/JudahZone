@@ -16,7 +16,7 @@ import net.judah.util.AudioTools;
 @Getter
 public abstract class AudioTrack extends Channel implements ProcessAudio {
 
-	protected Recording recording = new Recording(0, true);
+	protected Recording recording = new Recording();
 	protected float[][] recordedBuffer;
 	@Setter protected boolean active;
 	@Setter protected Type type = Type.ONE_SHOT;
@@ -34,7 +34,7 @@ public abstract class AudioTrack extends Channel implements ProcessAudio {
 	}
 
 	public boolean hasRecording() {
-		return length != null && length > 1;
+		return length != null && length > 1 && recording != null;
 	}
 
 	public void setRecording(Recording sample) {

@@ -11,7 +11,9 @@ public class Folders {
 	// TODO not hardcoded
 	static final File ROOT = new File("/home/judah/git/JudahZone/resources/");
     public static final File ICONS = new File(ROOT, "icons");
-
+    public static final File DRUM_IMPORT = new File("/home/judah/tracks/beatbuddy/");
+    public static final File PIANO_IMPORT = new File("/home/judah/tracks/midi");
+    
 	// TODO user.dir settings gui / mkdir
 	static final File _home = new File(System.getProperty("user.home"), "Setlist");
 
@@ -28,6 +30,11 @@ public class Folders {
 			@Override public boolean accept(File pathname) {
 				return pathname.isDirectory();
 			}});}
+    
+    public static File getImport(boolean isDrums) {
+    	return isDrums ? DRUM_IMPORT : PIANO_IMPORT;
+    }
+    	
     
     @Setter @Getter private static File setlist = getSetlists()[0];
 

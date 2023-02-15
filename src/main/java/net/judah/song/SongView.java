@@ -16,13 +16,11 @@ public class SongView extends JPanel {
 	
 	private final Song song;
 	private final SongTab tab;
-
 	@Getter private final ScenesView launcher;
-	private final JComboBox<Trigger> sceneType = new JComboBox<>(Trigger.values());
-
-	private final JPanel sceneMenu = new JPanel();
-	private final JPanel paramMenu = new JPanel();
 	private final ParamView params;
+	private final JComboBox<Trigger> sceneType = new JComboBox<>(Trigger.values());
+	private final JPanel sceneBtns = new JPanel();
+	private final JPanel paramBtns = new JPanel();
 	private final JTextField notes = new JTextField(12);
 
 	public SongView(Song smashHit, SongTab tab) {
@@ -30,7 +28,6 @@ public class SongView extends JPanel {
 		this.tab = tab;
 		params = new ParamView(song.getScenes().get(0).getCommands());
 		launcher = new ScenesView(song, tab);
-
 		menus();
 
 		JScrollPane scroll = new JScrollPane(params);
@@ -43,39 +40,36 @@ public class SongView extends JPanel {
 		
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		add(launcher);
-		add(sceneMenu);
-		add(paramMenu);
+		add(sceneBtns);
+		add(paramBtns);
 		add(scroll);
 		add(new JLabel(" "));
-
 	}
 
 	private void menus() {
-
 		sceneType.addActionListener(e->triggerType());
-		sceneMenu.add(new JLabel("Type"));
-		sceneMenu.add(sceneType);
-		sceneMenu.add(new Btn("<--", e->tab.shift(true)));
-		sceneMenu.add(new Btn("Create", e->tab.newScene()));
-		sceneMenu.add(new Btn("Copy", e->tab.copy())); 
-		sceneMenu.add(new Btn("Del", e->tab.delete()));
-		sceneMenu.add(new Btn("-->", e->tab.shift(false)));
+		sceneBtns.add(new JLabel("Type"));
+		sceneBtns.add(sceneType);
+		sceneBtns.add(new Btn("<--", e->tab.shift(true)));
+		sceneBtns.add(new Btn("Create", e->tab.newScene()));
+		sceneBtns.add(new Btn("Copy", e->tab.copy())); 
+		sceneBtns.add(new Btn("Del", e->tab.delete()));
+		sceneBtns.add(new Btn("-->", e->tab.shift(false)));
 
-		paramMenu.add(new JLabel("Commands"));
-		paramMenu.add(new Btn("Add", e->addParam()));
-		paramMenu.add(new Btn("Del", e->removeParam()));
-		paramMenu.add(new JLabel(" notes:"));
+		paramBtns.add(new JLabel("Commands"));
+		paramBtns.add(new Btn("Add", e->addParam()));
+		paramBtns.add(new Btn("Del", e->removeParam()));
+		paramBtns.add(new JLabel(" notes:"));
 		notes.addKeyListener(new KeyAdapter() {
 			@Override public void keyPressed(KeyEvent e) {
 				tab.getCurrent().setNotes(notes.getText());}});
-		paramMenu.add(notes);
+		paramBtns.add(notes);
 	}
 	
 	private void triggerType() {
 		tab.getCurrent().setType((Trigger)sceneType.getSelectedItem());
 		MainFrame.update(tab);
 	}
-
 	
 	public void setCurrent(Scene s) {
 		Constants.execute(() -> 
@@ -91,7 +85,7 @@ public class SongView extends JPanel {
 
 	private void addParam() {
 		tab.getCurrent().getCommands().add(new Param());
-		params.setModel(new ParamModel(tab.getCurrent().getCommands()));
+		params.setModel(new ParamModel(tab.getCurrent().getCommands())); //overkill?
 	}
 
 	private void removeParam() {

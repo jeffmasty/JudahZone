@@ -49,7 +49,9 @@ public class SheetMusicPnl extends JPanel {
         }
         
         public void setImage(File musicImage) throws IOException {
-            image = ImageIO.read(musicImage);
+            if (musicImage == null || !musicImage.isFile())
+            	return;
+        	image = ImageIO.read(musicImage);
             file = musicImage;
             labelImage.setIcon(new ImageIcon(image));
             setName(Constants.CUTE_NOTE + musicImage.getName());

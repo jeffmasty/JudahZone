@@ -46,8 +46,8 @@ public class Channel {
     @Setter protected JackPort leftPort;
     @Setter protected JackPort rightPort;
     protected final List<Effect> effects;
-    protected final EffectsRack gui;
-    protected final LFOKnobs lfoKnobs;
+    protected EffectsRack gui;
+    protected LFOKnobs lfoKnobs;
     
     public Channel(String name, boolean isStereo) {
         this.name = name;
@@ -61,7 +61,7 @@ public class Channel {
                 getDelay(), getReverb(), getCompression()});
         preset = JudahZone.getPresets().getFirst();
         gui = new EffectsRack(this);
-        lfoKnobs = new LFOKnobs(this);
+       	lfoKnobs = new LFOKnobs(this);
     }
 
     @Override public boolean equals(Object obj) {

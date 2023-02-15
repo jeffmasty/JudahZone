@@ -91,7 +91,11 @@ public class JudahZone extends BasicClient {
     public JudahZone() throws Exception {
     	super(JUDAHZONE);
         MainFrame.startNimbus();
-        Runtime.getRuntime().addShutdownHook(new ShutdownHook());
+        Runtime.getRuntime().addShutdownHook(new Thread(()->{ 
+        	mains.setOnMute(true);
+        	for (Closeable s : services)
+        		try { s.close(); } catch (Exception e) {
+            System.err.println(e);}}));
         start();
         RTLogger.monitor();
     }
@@ -124,7 +128,7 @@ public class JudahZone extends BasicClient {
         synth2 = new JudahSynth(JudahSynth.NAMES[1], outL, outR, "Waveform.png");
         sampler = new Sampler(outL, outR);
         clock = new JudahClock(sampler);
-		midi = new JudahMidi("JudahMidi", clock);
+		midi = new JudahMidi(clock);
 
 		while (midi.getFluidOut() == null)
         	Constants.sleep(20); // wait while midi thread creates ports
@@ -161,7 +165,6 @@ public class JudahZone extends BasicClient {
     	midiGui = new MidiGui(midi, clock, jamstik, sampler, synth1, synth2, fluid, seq);
     	songs = new SongTab(seq, looper, mixer, instruments);
     	frame = new MainFrame(JUDAHZONE, fxRack, mixer, seq, looper, songs);
-    	Constants.timer(100, ()->seq.loadDrumMachine()); 
     	crave.send(new Midi(JudahClock.MIDI_STOP), 0);
     	clock.writeTempo(93);
     	initialized = true;
@@ -170,6 +173,7 @@ public class JudahZone extends BasicClient {
         ////////////////////////////////////////////////////////////
     	setCurrent(new Song());
     	MainFrame.setFocus(guitar);
+    	Constants.timer(10, ()->seq.loadDrumMachine()); 
     	Fader.execute(Fader.fadeIn());    	
     	mains.setOnMute(false);
     	//justInTimeCompiler();
@@ -212,9 +216,12 @@ public class JudahZone extends BasicClient {
 		synths.add(new MidiTrack(JudahZone.getFluid(), 3, clock));
 		Seq result = new Seq(drums, synths); 
 		clock.setSeq(result); 
-		Constants.timer(1000, () -> {
-        	synth1.progChange("FeelGood");
-        	synth2.progChange("Drops1");
+		synth1.progChange("FeelGood");
+		synth2.progChange("Drops1");
+
+		Constants.execute(() -> {
+        	while (fluid.getPatches() == null)
+        		Constants.sleep(500);
         	fluid.progChange("Rhodes EP", 1);
 	        fluid.progChange("Rock Organ", 2);
 	        fluid.progChange("Harp", 3);
@@ -264,22 +271,8 @@ public class JudahZone extends BasicClient {
         		fluid.getGain().set(Gain.PAN, 50);
         		System.gc();
         		Constants.timer(50, () -> mains.setOnMute(false));});
-        }
-    
-    
-    private class ShutdownHook extends Thread {
-        @Override public void run() {
-            mains.setOnMute(true);
-            try {
-            	for (Closeable s : services)
-            		s.close();
-            } catch (Exception e) {
-            	System.err.println(e);
-            }
-        }
     }
     
-
     public static void setCurrent(Song song) {
     	looper.flush();
     	clock.syncFlush();
@@ -306,14 +299,14 @@ public class JudahZone extends BasicClient {
     }
     
     public static void save() {
-    	if (current.getFile() == null)
+    	if (current.getFile() == null) {
     		current.setFile(FileChooser.choose(Folders.getSetlist()));
-    	if (current.getFile() == null)
-    		return;
-
+    		if (current.getFile() == null)
+    			Songs.refill();
+    			return;
+    	}
     	current.saveSong(mixer, seq, songs.getCurrent());
     	frame.getTabs().title(songs);
-    	Songs.refill();
     }
 
     /** reload from disk, re-set current scene */

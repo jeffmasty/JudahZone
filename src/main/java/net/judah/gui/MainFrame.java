@@ -449,7 +449,7 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
             UIManager.put("nimbusBase", Pastels.EGGSHELL);
             UIManager.put("control", Pastels.EGGSHELL); 
             UIManager.put("nimbusBlueGrey", Pastels.MY_GRAY);
-            UIManager.getLookAndFeel().getDefaults().put("Button.contentMargins", new Insets(6, 6, 6, 6));
+            UIManager.getLookAndFeel().getDefaults().put("Button.contentMargins", new Insets(5, 5, 5, 5));
             UIManager.getLookAndFeel().getDefaults().put("JToggleButton.contentMargins", new Insets(1, 1, 1, 1));
             Thread.sleep(111); // let numbus start up
 		} catch (Exception e) { RTLogger.log(MainFrame.class, e.getMessage()); }

@@ -32,15 +32,19 @@ public class Song {
 		scenes.add(new Scene(JudahZone.getSeq())); // init w/ 10 midi tracks 
 	}
 	
+	/** @param scene the current scene to save Efx.*/
     public void saveSong(DJJefe mixer, Seq seq, Scene scene) {
     	if (file == null)
     		file = FileChooser.choose(Folders.getSetlist());
     	if (file == null) return;
+    	
+    	// populate top level track name, file(null), and progChange for each MidiTrack 
     	tracks.clear();
-    	seq.forEach(track-> {
+		seq.forEach(track-> {
    			tracks.add(new TrackInfo(track.getName(), 
    					track.getFile() == null ? "" : track.getFile().getAbsolutePath(), 
    							track.getMidiOut().getProg(track.getCh())));});
+    	
 		fx.clear();
 		scene.getFx().clear();
 		for (Channel ch : mixer.getChannels()) {
@@ -49,6 +53,7 @@ public class Song {
 			if (ch.isPresetActive()) 
 				scene.getFx().add(ch.getName());
 		}
+		
     	try {
 			JsonUtil.writeJson(this, file);
 			RTLogger.log(this, "Saved " + file.getName());

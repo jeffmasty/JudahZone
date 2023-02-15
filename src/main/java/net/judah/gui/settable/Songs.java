@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import net.judah.JudahZone;
 import net.judah.gui.widgets.FileRender;
+import net.judah.util.Constants;
 import net.judah.util.Folders;
 
 public class Songs extends SetCombo<File> {
@@ -41,7 +42,9 @@ public class Songs extends SetCombo<File> {
 	}
 
 	public static void refill() {
-		instances.forEach(combo->combo.refill(Folders.getSetlist().listFiles(), JudahZone.getCurrent().getFile()));
+		Constants.execute(()->
+			instances.forEach(combo->
+				combo.refill(Folders.getSetlist().listFiles(), JudahZone.getCurrent().getFile())));
 	}
 
 }

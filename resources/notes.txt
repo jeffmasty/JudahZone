@@ -1,15 +1,16 @@
 TODO:
 
-DrumTracks absolute (select highlight bug), Waltz gracefully (4/4 source menu)
+bass no miditrack amp/vol
 Midi Editor transpose/translate/drag-n-drop/falling water
-Undo/Redo/Copy/Paste, cc/prog in Midi tracks
+DrumTrack (select highlight bug)
 record to MidiTrack + Midi Looper, TrackSchedule.update()
+counter = 0?
+Undo/Redo/Copy/Paste, cc/prog in Midi tracks
 Loop copy/paste/length/save,  Record session
-
 Synth track follow Chord sheets, Arpeggiator (Racman sequence)
 ChordPro parser: https://github.com/SongProOrg/songpro-java  https://github.com/saipanman95/chordpro-parser
 walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
-
+CommandHandler
 kit knobs scratchy
 DBIndicator, Scope, Meters, Crave clock sync 
 ERRNOBUF - no ticks, no start seq
@@ -78,7 +79,7 @@ javac --module-path $PATH_TO_FX --add-modules javafx.controls HelloFX.java
 <!--      <version>3.9.30</version> -->
 
 Done:
-Recompile Carla (done, modified modules/rtaudio.cpp)
+Recompile Carla (modified modules/rtaudio.cpp)
 mixer/Channel concept, mixer gain
 MidiMapper, midi router
 Setlist and Song  (default song)
@@ -137,6 +138,7 @@ mixbus multi-select
 separate setlist and code
 export beatbox as midi file, quantization
 midi-fluent live Song editor
+BeatBox absolute/resolution, Waltz gracefully 
 
 
 REFERENCE------------------------------------------------------------
@@ -194,4 +196,5 @@ SONG:
 [scenes:] type, notes,
 	    tracks: active, vol, cycle, launch
 	    commands: key, val
+	    fx: active channels
 [fx:]  channelName, presetName

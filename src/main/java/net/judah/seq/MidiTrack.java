@@ -1,5 +1,7 @@
 package net.judah.seq;
 
+import static net.judah.midi.JudahClock.MIDI_24;
+
 import java.io.File;
 
 import javax.sound.midi.MidiEvent;
@@ -34,36 +36,36 @@ import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 public class MidiTrack implements TimeListener, MidiConstants {
-	@Getter private final Track t;
-	private final Sequence s;
-    @Getter private final String name;
 	@Getter private final JudahClock clock;
+	/** Midi Notes collection serialized */
+	@Getter private final Track t; 
+	/** Sequence (for save) */
+	private final MidiFile s; 
+    @Getter private final String name;
 	@Getter private final MidiReceiver midiOut;
 	@Getter private final int ch;
 	@Getter private final File folder;
 	@Getter private File file;
-    @Getter private int resolution = 256;
     @Getter private long barTicks;
  	@Getter private boolean onDeck; 
 	@Getter private boolean recording; // TODO
  	@Getter private CUE cue = CUE.Bar; 
  	@Getter @Setter private boolean live;
-
- 	@Getter private Sched state;
-	private int current; // current measure/bar (not frame)
 	@Getter private long left; // left bar's computed start tick 
 	@Getter private long right; // right bar's computed start tick
+ 	private Sched state;
+	private int current; // current measure/bar (not frame)
 	private int count; // increment bar cycle
 	private long oldTime; // sequencer sweep
 	
-    /** 16-step Drum track */
+    /** ch = 0 or 9 (drumkit midiout) */
     public MidiTrack(MidiReceiver out, JudahClock clock) throws Exception {
-    	this(out.getName(), out, out instanceof DrumKit ? 9 : 0, out instanceof DrumKit ? 4 : RESOLUTION, clock);
+    	this(out.getName(), out, out instanceof DrumKit ? 9 : 0, MIDI_24, clock);
     }
     
     /** Synth track at standard Resolution */
     public MidiTrack(MidiReceiver out, int ch, JudahClock clock) throws Exception {
-    	this(out.getName() + ch, out, ch, RESOLUTION, clock);
+    	this(out.getName() + ch, out, ch, MIDI_24, clock);
     }
     
     public MidiTrack(String name, MidiReceiver out, int ch, int rez, JudahClock clock) throws Exception {
@@ -71,14 +73,14 @@ public class MidiTrack implements TimeListener, MidiConstants {
 		this.ch = ch;
 		this.midiOut = out;
 		this.clock = clock;
-		this.resolution = rez;
-		state = new Sched(isDrums());
-		barTicks = clock.getMeasure() * resolution;
-		s = new Sequence(Sequence.PPQ, resolution, 0);
+		s = new MidiFile(rez);
 		t = s.createTrack();
 		folder = new File(Folders.getMidi(), name);
 		if (folder.isDirectory() == false)
 			folder.mkdir(); // inelegant?
+		state = new Sched(isDrums());
+		barTicks = clock.getMeasure() * s.getResolution();
+
 		clock.addListener(this);
     }
     
@@ -87,6 +89,7 @@ public class MidiTrack implements TimeListener, MidiConstants {
     	return name.equals(((MidiTrack)o).getName()) && midiOut == ((MidiTrack)o).getMidiOut() && ch == ((MidiTrack)o).ch; 
     }
     @Override public int hashCode() { return name.hashCode();}
+    @Override public String toString() { return name; }
     public boolean isActive() { return state.active; }
     public CYCLE getCycle() { return state.cycle; }
     public int getLaunch() { return state.launch; }
@@ -94,7 +97,7 @@ public class MidiTrack implements TimeListener, MidiConstants {
     public final boolean isDrums() { return ch == 9; }
     public final boolean isSynth() { return ch != 9; }
 	public boolean isEven() { return count % 2 == 0; }
-    @Override public String toString() { return name; }
+    public int getResolution() { return s.getResolution(); }
     public long getWindow() { return 2 * barTicks; }
 	public int getFrame() { return current / 2; }
 	/**@return number of bars with notes recorded into them */
@@ -111,27 +114,25 @@ public class MidiTrack implements TimeListener, MidiConstants {
     public void setState(Sched sched) {
     	boolean previous = state.active;
     	CYCLE old = state.cycle;
-    	count = 0;
 		while (sched.amp > 1) // legacy convert int to float
 			sched.amp *= 0.01f;
-		setAmp(sched.amp);
 		state = sched;
-		if (old != state.cycle) {
-			count = 0;
+		setAmp(sched.amp);
+		if (old != state.cycle) 
 			Cycle.update(this);
-		}
-		if (previous != state.active) {
-			if (state.active) {
-				setFrame(state.launch);
-				if (clock.isActive() && isSynth())
-					playTo(0f);
-			}
-			else {
-				new Panic(midiOut, ch).start();
-			}
-		}
-		if (getFrame() != state.launch)
+
+		count = 0;
+		if (state.launch != getFrame()) {
 			setFrame(state.launch);
+			if (isSynth())
+				playTo(0f);
+		}
+		else 
+			compute();
+		
+		if (previous != state.active && isSynth() && !state.active) 
+			Constants.execute(new Panic(midiOut, ch));
+		
 		Launch.update(this);
     }
 	
@@ -147,10 +148,8 @@ public class MidiTrack implements TimeListener, MidiConstants {
 	public void setActive(boolean on) {
 		onDeck = false;
 		state.active = on;
-		if (on)
-			init();
-		else 
-			new Panic(midiOut, ch).start();
+		if (!on)
+			Constants.execute(new Panic(midiOut, ch));
 		MainFrame.update(this);
 	}
 	
@@ -176,10 +175,10 @@ public class MidiTrack implements TimeListener, MidiConstants {
 	}
     
 	private void setCurrent(int change) {
-		if (isSynth()) 
-			flush();
 		if (change < 0) 
 			change = 0;
+		if (current != change && isSynth())
+			flush();
 		current = change;
 		compute();
 		MainFrame.update(this);
@@ -190,12 +189,9 @@ public class MidiTrack implements TimeListener, MidiConstants {
     	if (!state.active && !live)
 			return;
 
-		long newTime = current * barTicks + (long)(percent * resolution);
-		if (percent == 0) {
-			oldTime = newTime;
-			if (isSynth()) 
-				oldTime--;
-		}
+		long newTime = current * barTicks + (long)(percent * s.getResolution());
+		if (percent == 0) 
+			oldTime = newTime--;
 		if (!state.active) {
 			oldTime = newTime + 1;
 			return;
@@ -235,7 +231,7 @@ public class MidiTrack implements TimeListener, MidiConstants {
 			}
 		}
 		else if (prop == Property.MEASURE) {
-			barTicks = resolution * clock.getMeasure(); // untested
+			barTicks = s.getResolution() * clock.getMeasure(); 
 		}
 		else if (onDeck && prop == Property.LOOP) {
 			setActive(true);
@@ -303,12 +299,13 @@ public class MidiTrack implements TimeListener, MidiConstants {
 	}
 
 	public void clear() {
-		new Panic(midiOut, ch).start();
+		Constants.execute(new Panic(midiOut, ch));
 		for (int i = t.size() -1; i >= 0; i--)
 			t.remove(t.get(i));
 		init();
+		s.setResolution(MIDI_24);
+		barTicks = clock.getMeasure() * s.getResolution();
 		setFile(null);
-		Folder.update(this);
 		MainFrame.update(this);
 	}
 	
@@ -330,7 +327,7 @@ public class MidiTrack implements TimeListener, MidiConstants {
 	
 	public void save(File f) {
 		try {
-			MidiSystem.write(s, MidiSystem.getMidiFileTypes(s)[0], f);
+			MidiSystem.write(s, MidiFile.TYPE_1, f); // MidiSystem.getMidiFileTypes(s)[0]
 			RTLogger.log(this, getName() + " saved " + f.getName());
 		} catch (Exception e) { RTLogger.warn(this, e); }
 	}
@@ -349,21 +346,26 @@ public class MidiTrack implements TimeListener, MidiConstants {
 		}
 		try {
 			Sequence midiFile = MidiSystem.getSequence(f);
-			if (midiFile.getTracks().length == 1) 
+			if (midiFile.getTracks().length == 1) {
 				importTrack(midiFile.getTracks()[0], midiFile.getResolution(), f); 
+				setFile(f);
+			}
 			else 
 				new ImportMidi(this, midiFile);
 		} catch (Exception e) { RTLogger.warn(this, e); }
 	}
 	
-	public void importTrack(Track incoming, int resolution, File f) {
-		this.resolution = resolution;
-		this.barTicks = clock.getMeasure() * resolution;
+	public void importTrack(Track incoming, int rez, File f) {
+		for (int i = t.size() -1; i >= 0; i--)
+			t.remove(t.get(i)); // clear
+		Constants.execute(new Panic(midiOut, ch));
+		
+		s.setResolution(rez);
+		this.barTicks = clock.getMeasure() * rez;
 		// notes
 		for (int i = 0; i < incoming.size(); i++) 
 			t.add(incoming.get(i));
 		count = 0;
-		setFile(f);
 		setCurrent(0);
 	}
 
@@ -434,15 +436,16 @@ public class MidiTrack implements TimeListener, MidiConstants {
 			}
 			break;
 		case ABCD:
-			switch (count % 4) {
+		case AtoF:
+			switch (count % 2) {
 				case 0: 
-				case 2: left = current * barTicks; 
+					left = current * barTicks; 
 					right = (current + 1) * barTicks; break;
 				case 1: 
-				case 3:
 					left = before(current) * barTicks;
 					right = current * barTicks; break;
 			}
+			break;
 		case ALL:
 			left = isEven() ? current * barTicks : before(current) * barTicks;
 			right = isEven() ? after(current) * barTicks : current * barTicks;
@@ -459,6 +462,12 @@ public class MidiTrack implements TimeListener, MidiConstants {
 			case AB:
 				change += count % 2 == 0 ? -1 : 1;
 				break;
+			case A3B:
+				switch (count % 4) {
+					case 0: change = before(current); break;
+					case 3: change++; break;
+				}
+				break;
 			case ABCD:
 				switch (count % 4) {
 					case 0: 
@@ -472,11 +481,8 @@ public class MidiTrack implements TimeListener, MidiConstants {
 						break;
 				} 
 				break;
-			case A3B:
-				switch (count % 4) {
-					case 0: change = before(current); break;
-					case 3: change++; break;
-				}
+			case AtoF: 
+				change = aToX(current, 6);
 				break;
 			case ALL:
 				change = after(current);
@@ -484,9 +490,14 @@ public class MidiTrack implements TimeListener, MidiConstants {
 			case A:
 				break;
 		}
-		
-		setCurrent(change);
-		
+		if (change != current)
+			setCurrent(change);
+	}
+	
+	private int aToX(int input, int x) {
+		if (input % x == 0) 
+			return state.launch;
+		return input + 1;
 	}
 	
 }

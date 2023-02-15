@@ -21,7 +21,7 @@ public class Sched {
 	}
 
 	public Sched(boolean isDrums) {
-		cycle = isDrums ? CYCLE.A3B : cycle;
+		cycle = isDrums ? CYCLE.AB : cycle;
 	}
 	
 }

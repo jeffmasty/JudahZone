@@ -12,10 +12,8 @@ import javax.sound.midi.ShortMessage;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
-import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
 import net.judah.gui.settable.Program;
-import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiInstrument;
 import net.judah.midi.MidiPort;
@@ -44,6 +42,7 @@ public class FluidSynth extends MidiInstrument {
 
 	public FluidSynth(int sampleRate, JackPort left, JackPort right, JackPort midi, boolean startListeners) {
 		super(Constants.FLUID, LEFT_PORT, RIGHT_PORT, left, right, "Fluid.png");
+		reverb = new FluidReverb(this); // use external reverb
 
 		shellCommand = "fluidsynth" +
 				" --midi-driver=jack --audio-driver=jack" +
@@ -57,30 +56,25 @@ public class FluidSynth extends MidiInstrument {
 			RTLogger.warn(this, e);
 		}
 		setMidiPort(new MidiPort(midi));
-		int delay = 111;
-		Constants.sleep(3 & delay);
-		
-		// read FluidSynth output
 		listener = new FluidListener(process.getInputStream(), false);
 		new FluidListener(process.getErrorStream(), true).start();
 		if (startListeners)
 			listener.start();
-		Constants.sleep(delay);
+		
+		int delay = 100;
+		Constants.sleep(2*delay);
 		outStream = process.getOutputStream();
-
         sendCommand("chorus off");
 		Constants.sleep(delay);
         gain(gain);
-		Constants.sleep(delay);
-
 		if (startListeners)
+			Constants.sleep(delay);
 			try {
 				syncInstruments();
 				syncChannels();
 			} catch (Throwable t) {
 				RTLogger.warn(this, "sync failed. " + t.getMessage());
 			}
-        reverb = new FluidReverb(this); // use external reverb
 	}
 
 	public void syncChannels() {
@@ -89,9 +83,10 @@ public class FluidSynth extends MidiInstrument {
 			outStream.write( (FluidCommand.CHANNELS.code + NL).getBytes() );
 			outStream.flush();
 			int count = 0;
-			while (listener.sysOverride != null && count++ < 15) {
-				Thread.sleep(30);
-			}
+			
+			while (listener.sysOverride != null && count++ < 100) 
+				Constants.sleep(20);
+			
 			if (listener.channels.isEmpty())
 				throw new Exception("Error reading channels");
 			else {
@@ -111,7 +106,7 @@ public class FluidSynth extends MidiInstrument {
 		outStream.write((FluidCommand.INST.code + "1" + NL).getBytes());
 		outStream.flush();
 		int count = 0;
-		while (listener.sysOverride != null && count++ < 20) {
+		while (listener.sysOverride != null && count++ < 30) {
 			Thread.sleep(30);
 		}
 		if (listener.instruments.isEmpty()) 
@@ -121,10 +116,8 @@ public class FluidSynth extends MidiInstrument {
 		if (size > 99) // knob has 100 instruments
 			size = 99;
 		patches = new String[size];
-		for (int i = 0; i < size; i++) {
+		for (int i = 0; i < size; i++) 
 			patches[i] = listener.instruments.get(i).name;
-		}
-		
 	}
 
 	public Midi bankUp() {
@@ -230,11 +223,13 @@ public class FluidSynth extends MidiInstrument {
 	@Override public void progChange(String preset, int ch) {
 		for (int i = 0; i < patches.length; i++)
 			if (patches[i].equals(preset)) {
-				JudahMidi.queue(Midi.create(ShortMessage.PROGRAM_CHANGE, ch, i, 0), midiPort.getPort());
+				final int val = i;
+				Constants.execute(() ->
+					sendCommand(FluidCommand.PROG_CHANGE, ch + " " + val));
+				// flooding: JudahMidi.queue(Midi.create(ShortMessage.PROGRAM_CHANGE, ch, i, 0), midiPort.getPort());
 				if (ch < changes.length) 
 					changes[ch] = preset;
-				if (JudahZone.isInitialized())
-					MainFrame.update(Program.first(this, ch)); 
+				MainFrame.update(Program.first(this, ch)); 
 			}
 	}
 	

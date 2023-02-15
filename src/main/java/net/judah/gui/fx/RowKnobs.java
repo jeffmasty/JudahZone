@@ -13,8 +13,8 @@ public class RowKnobs extends Row {
 		super(ch);
 		switch (idx) {
 		case 0 : 
-			controls.add(new FxKnob(ch, ch.getReverb(), Reverb.Settings.Wet.ordinal(), Reverb.Settings.Wet.name()));
-			controls.add(new FxKnob(ch, ch.getReverb(), Reverb.Settings.Room.ordinal(), Reverb.Settings.Room.name()));
+			controls.add(new FxKnob(ch, Reverb.Settings.Wet.ordinal(), Reverb.Settings.Wet.name()));
+			controls.add(new FxKnob(ch, Reverb.Settings.Room.ordinal(), Reverb.Settings.Room.name()));
 			controls.add(new FxKnob(ch, ch.getDelay(), Delay.Settings.Feedback.ordinal(), "F/B"));
 			controls.add(new FxKnob(ch, ch.getDelay(), Delay.Settings.DelayTime.ordinal(), "Time"));
 			break;

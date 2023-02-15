@@ -77,6 +77,10 @@ public class JudahMidi extends BasicClient implements Closeable {
     private final byte[] DATA1 = new byte[1], DATA2 = new byte[2], DATA3 = new byte[3]; // for process()
     private final Event midiEvent = new JackMidi.Event(); // for process()
 
+    public JudahMidi(JudahClock clock) throws Exception {
+    	this(JACKCLIENT_NAME, clock);
+    }
+    
     public JudahMidi(String name, JudahClock clock) throws Exception {
         super(name);
         this.clock = clock;
@@ -110,9 +114,12 @@ public class JudahMidi extends BasicClient implements Closeable {
         if (sz > IN.MIDICLOCK.ordinal()) {
         	midiclock = inPorts.get(IN.MIDICLOCK.ordinal());
         }
+        
+        while (JudahZone.getSeq() == null) // sync w/ audio Thread
+        	Constants.sleep(10);
         if (sz > IN.KEYBOARD.ordinal()) {
         	keyboard = inPorts.get(IN.KEYBOARD.ordinal());
-        	switchboard.put(keyboard, new MPKmini(this));
+        	switchboard.put(keyboard, new MPKmini(this, JudahZone.getSeq()));
         }
         if (sz > IN.MIXER.ordinal()) {
         	mixer = inPorts.get(IN.MIXER.ordinal());
@@ -213,7 +220,6 @@ public class JudahMidi extends BasicClient implements Closeable {
     	if (!JudahZone.isInitialized())
     		return true;
         try {
-
             scheduler.offer(counter++);
             ticker = 0;
             for (JackPort port : outPorts)
@@ -252,8 +258,8 @@ public class JudahMidi extends BasicClient implements Closeable {
                     }
                     else if (switchboard.get(port).midiProcessed(midi))
             			MainFrame.updateCurrent(); // TODO overkill?
-            		else if (midi.getChannel() == 9) // not used
-            			JackMidi.eventWrite(fluidOut, ticker(), data, midiEvent.size());
+            		else if (midi.getChannel() == 9) 
+            			JudahZone.getDrumMachine().getDrum1().send(midi, 0);
             		else if (Midi.isNote(midi) || Midi.isPitchBend(midi))
             			keyboardSynth.getMidiOut().send(Midi.format(midi, keyboardSynth.getCh(), 1), ticker());
                 }

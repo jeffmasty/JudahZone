@@ -5,7 +5,6 @@ import java.io.File;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
-import lombok.Setter;
 import net.judah.gui.MainFrame;
 import net.judah.looper.AudioTrack;
 import net.judah.looper.Recording;
@@ -14,27 +13,28 @@ import net.judah.util.Folders;
 /** currently, plays ((crickets)) on 2 and 4 */
 public class Sample extends AudioTrack {
 	
-	private static final float BOOST = 0.2f;
+	protected static final float BOOST = 0.2f;
+	protected final Sampler sampler;
 	@Getter protected File file;
-	@Getter @Setter protected float mix = 0.5f;
 	
 	/** load preset by name (without .wav) */
-	public Sample(JackPort left, JackPort right, String wavName, Type type) throws Exception {
-		this(left, right, wavName, new File(Folders.getSamples(), wavName + ".wav"), type);
+	public Sample(JackPort left, JackPort right, String wavName, Type type, Sampler sampler) throws Exception {
+		this(left, right, wavName, new File(Folders.getSamples(), wavName + ".wav"), type, sampler);
 	}
 	
-	public Sample(JackPort left, JackPort right, String name, File f, Type type) throws Exception {
-		this(name, type, left, right);
+	public Sample(JackPort left, JackPort right, String name, File f, Type type, Sampler sampler) throws Exception {
+		this(name, type, left, right, sampler);
 		this.file = f;
 		setRecording(new Recording(file));
 		env = BOOST; // boost
 	}
 
 	/** blank sample */
-	public Sample(String name, Type type, JackPort left, JackPort right) {
+	public Sample(String name, Type type, JackPort left, JackPort right, Sampler sampler) {
 		super(name);
 		leftPort = left;
 		rightPort = right;
+		this.sampler = sampler;
 		this.type = type;
 	}
 
@@ -51,7 +51,7 @@ public class Sample extends AudioTrack {
 	public void process() {
 		if (!active || !hasRecording()) return;
 		readRecordedBuffer();
-		env = BOOST * mix;
+		env = BOOST * sampler.mix;
 		playFrame(leftPort.getFloatBuffer(), rightPort.getFloatBuffer()); 
     }
 	

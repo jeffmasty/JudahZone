@@ -8,13 +8,23 @@ import net.judah.api.MidiReceiver;
 import net.judah.util.RTLogger;
 
 @RequiredArgsConstructor
-public class Panic extends Thread {
+public class Panic implements Runnable {
 
 	private final MidiPort port;
 	private int channel = 0;
 	
-	@Override
-	public void run() {
+
+	public Panic(MidiReceiver r, int channel) {
+		this(r.getMidiPort(), channel);
+	}
+	
+	public Panic(MidiPort port, int channel) {
+		this.port = port;
+		this.channel = channel;
+	}
+
+	
+	@Override public void run() {
 		try {
 			if (port.getPort() != null)
 				for (int i = 0; i < 128; i++) 
@@ -27,13 +37,4 @@ public class Panic extends Thread {
 		}
 	}
 
-	public Panic(MidiReceiver r, int channel) {
-		this(r.getMidiPort(), channel);
-	}
-	
-	public Panic(MidiPort port, int channel) {
-		this.port = port;
-		this.channel = channel;
-	}
-	
 }

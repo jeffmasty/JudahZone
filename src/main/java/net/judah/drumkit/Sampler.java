@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.judah.api.ProcessAudio.Type;
 import net.judah.fx.Fader;
 import net.judah.gui.MainFrame;
@@ -31,8 +32,11 @@ public class Sampler extends ArrayList<Sample> {
 			Arrays.stream(LOOPS), Arrays.stream(ONESHOTS)).toArray(String[]::new);
 	public static final int SIZE = NAMES.length;
 
-	/** unified amplification for all samples */
-	@Getter float mix = 0.6f;
+	/** gain factor for all samples */
+	@Setter @Getter float mix = 0.6f;
+	@Setter @Getter float stepMix = 0.6f;
+
+	/** selected step sample */
 	@Getter private int selected;
 	private final ArrayList<StepSample> stepSamples = new ArrayList<>();
 	private StepSample stepSample;
@@ -40,18 +44,18 @@ public class Sampler extends ArrayList<Sample> {
 	public Sampler(JackPort left, JackPort right) {
 		for (int i = 0; i < NAMES.length; i++) {
 			try {
-				add(new Sample(left, right, NAMES[i], i < 4 ? Type.FREE : Type.ONE_SHOT));
+				add(new Sample(left, right, NAMES[i], i < 4 ? Type.FREE : Type.ONE_SHOT, this));
 			} catch (Exception e) {
 				RTLogger.warn(this, e);
 			}
 		}
 		try {
-			stepSamples.add(new StepSample("Crickets", 4, 12));
-			stepSamples.add(new StepSample("Claves", 4, 10, 14));
-			stepSamples.add(new StepSample("Ride", 0, 4, 8, 12));
-			stepSamples.add(new StepSample("Shaker", 0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15));
-			stepSamples.add(new StepSample("Snares", 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15));
-			stepSamples.add(new StepSample("4x4", 0, 4, 8, 12));
+			stepSamples.add(new StepSample("Crickets", this, 4, 12));
+			stepSamples.add(new StepSample("Claves", this, 4, 10, 14));
+			stepSamples.add(new StepSample("Ride", this, 0, 4, 8, 12));
+			stepSamples.add(new StepSample("Shaker", this, 0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15));
+			stepSamples.add(new StepSample("Snares", this, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15));
+			stepSamples.add(new StepSample("4x4", this, 0, 4, 8, 12));
 			stepSample = stepSamples.get(0);
 		} catch (Exception e) {
 			RTLogger.warn(this, e);
@@ -134,12 +138,5 @@ public class Sampler extends ArrayList<Sample> {
 		MainFrame.update(this);
 	}
 
-	/** applies to all samples and stepSamples */
-	public void setMix(float f) {
-		this.mix = f;
-		stepSamples.forEach(s->s.setMix(mix));
-		this.forEach(s->s.setMix(mix));
-		MainFrame.update(this);
-	}
 }
 	

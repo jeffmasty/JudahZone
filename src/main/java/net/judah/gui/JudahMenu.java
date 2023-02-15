@@ -76,8 +76,8 @@ public class JudahMenu extends JMenuBar {
     	getInstruments().forEach(ch->solotrack.add(new Actionable(ch.getName(), e->solo.setSoloTrack(ch))));
 
     	JMenu sync = new JMenu("Sync");
-    	sync.add(new Actionable("Loop Bars", e->setLength()));
     	sync.add(new Actionable("Clock", e->getClock().syncToLoop()));
+    	sync.add(new Actionable("Loop Length", e->setLength()));
     	loops.add(sync);
     	loops.add(erase);
     	loops.add(duplicate);
@@ -107,11 +107,11 @@ public class JudahMenu extends JMenuBar {
     }
 
 	private void setLength() {
-		String s = Gui.inputBox("Loop Bars:");
+		String s = Gui.inputBox("Loop Bar Length:");
 		try {
 			getClock().setLength(Integer.parseInt(s));
 		} catch (Throwable t) {
-			RTLogger.log(this, "Length not set.");
+			RTLogger.log(this, "Length not changed.");
 		}
 	}
     

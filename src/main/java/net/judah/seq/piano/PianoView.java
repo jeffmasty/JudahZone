@@ -1,7 +1,5 @@
 package net.judah.seq.piano;
 
-import java.awt.Point;
-
 import lombok.Getter;
 import net.judah.seq.MidiMenu;
 import net.judah.seq.MidiTab;
@@ -11,45 +9,19 @@ import net.judah.seq.MidiView;
 @Getter 
 public class PianoView extends MidiView implements PianoSize {
 	
-	private final PianoSteps steps;
-	
 	public PianoView(MidiTrack t, MidiTab tab) {
 		super(t);
 		Piano piano = new Piano(BOUNDS_PIANIST, track, tab);
 		instrumentPanel = piano;
-		steps = new PianoSteps(PIANO_STEPS, track, this);
-		PianoMusic notes = new PianoMusic(PIANO_GRID, this, steps, piano, tab);
-		grid = notes;
+		
+		steps = new PianoSteps(PIANO_STEPS, track);
 		menu = new MidiMenu(BOUNDS_MENU, this, tab.getTracks(), tab);
+		grid = new PianoBox(PIANO_GRID, this, (PianoSteps)steps, piano, tab);
 		setLayout(null);
 		add(menu);
 		add(steps);
 		add(grid);
 		add(instrumentPanel);
-	}
-	
-	@Override
-	public void update() {
-		menu.update();
-		grid.repaint();
-		if (track.isLive())
-			steps.repaint();
-	}
-
-	
-	public static int toData1(Point p) {
-		return p.x / KEY_WIDTH + NOTE_OFFSET;
-	}
-	public static int toX(int data1) {
-		return (data1 - NOTE_OFFSET) * KEY_WIDTH;
-	}
-
-	public static int toY(long tick, long measure, int height) {
-		return (int) (ratioY(tick, measure) * height);
-	}
-	
-	public static float ratioY(long tick, long measure) {
-		return tick / (float)measure;
 	}
 	
 }

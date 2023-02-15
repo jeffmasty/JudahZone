@@ -24,7 +24,7 @@ public abstract class MidiTab extends JPanel {
 	public abstract void changeTrack();
 
 	public final Musician getMusician() {
-		return current.getGrid().getMusician();
+		return current.getGrid();
 	} 
 	
 	public abstract void update(MidiTrack t);

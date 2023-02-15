@@ -12,7 +12,6 @@ import net.judah.seq.TrackList;
 public class BeatsSection extends MidiView implements BeatsSize {
 	
 	@Getter private final DrumMutes mutes;
-	@Getter private final Drummer drummer;
 	@Getter private final BeatSteps steps;
 	
 	public BeatsSection(MidiTrack t, BeatsTab tab, TrackList tracks) {
@@ -21,10 +20,7 @@ public class BeatsSection extends MidiView implements BeatsSize {
 
 		mutes = new DrumMutes(BOUNDS_MUTES, track); 
 		menu = new MidiMenu(BOUNDS_MENU, this, tracks, tab);
-		BeatBox beats = new BeatBox(BEATBOX_GRID, this, steps, tab);
-		grid = beats;
-		drummer = new Drummer(BEATBOX_GRID, this, beats, tab, steps);
-		beats.setHandler(drummer);
+		grid = new BeatBox(BEATBOX_GRID, this, tab);
 		instrumentPanel = mutes;
 		
 		setLayout(null);
@@ -32,13 +28,6 @@ public class BeatsSection extends MidiView implements BeatsSize {
 		add(grid);
 		add(instrumentPanel);
 	}
-	
-	@Override
-	public void update() {
-		menu.update();
-		grid.repaint();
-	}
-
 	
 	public static int toData1(Point p) {
 		return p.x / KEY_WIDTH + NOTE_OFFSET;
