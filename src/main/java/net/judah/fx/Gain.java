@@ -4,13 +4,14 @@ import java.security.InvalidParameterException;
 
 import lombok.Getter;
 
+@Getter
 public class Gain implements Effect {
 	public static final int VOLUME = 0;
 	public static final int PAN = 1;
-	@Getter final String name = "Gain";
 
-	@Getter private float gain = 0.5f;
-	@Getter private float stereo = 0.5f;
+	private final String name = "Gain";
+	private float gain = 0.5f;
+	private float stereo = 0.5f;
 
 	@Override
 	public void set(int idx, int value) {

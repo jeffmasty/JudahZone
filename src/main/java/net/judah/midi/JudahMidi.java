@@ -35,7 +35,7 @@ public class JudahMidi extends BasicClient implements Closeable {
 
 	@RequiredArgsConstructor
 	public static enum IN { // in Midi ports
-		MIDICLOCK("midiclock"),
+		MIDICLOCK("a2j:midiclock"),
 		KEYBOARD("keyboard"), 
 		MIXER("mixer"),
 		PADS("pads"),
@@ -53,6 +53,7 @@ public class JudahMidi extends BasicClient implements Closeable {
 		@Getter public final String port;
 	}
 	
+	private static Process a2j; // jack to alsa midi bridge
 	private final JudahClock clock;
     @Getter private MidiTrack keyboardSynth;
 	private ArrayList<JackPort> inPorts = new ArrayList<>();  
@@ -85,16 +86,57 @@ public class JudahMidi extends BasicClient implements Closeable {
         super(name);
         this.clock = clock;
         JudahZone.getServices().add(this);
+        a2j();
         start();
     }
 
+    @Override public void close() {
+    	super.close();
+    	if (a2j != null) a2j.destroy();
+    }
+
+    private void a2j() {
+		String shellCommand = "a2jmidid -e";
+		try {
+			if (a2j != null) {
+				a2j.destroy();
+				Constants.sleep(50);
+			}
+			
+			a2j = Runtime.getRuntime().exec(shellCommand);
+			Constants.sleep(333);
+		} catch (Exception e) { System.err.println(e.getMessage()); }
+	}
+    
+    //when external a2jmidi bridge fails
+    public void recoverMidi() {
+    	boolean running = clock.isActive();
+    	JudahZone.setInitialized(false);
+    	clock.end();
+    	try {
+			for (JackPort port : outPorts) 
+				jackclient.unregisterPort(port);
+			for (JackPort port : inPorts) 
+				jackclient.unregisterPort(port);
+			a2j();
+			initialize();
+			makeConnections();
+			JudahZone.getFluid().setMidiPort(new MidiPort(fluidOut));
+    	} catch (JackException e) { RTLogger.warn(this, e.getMessage());}
+		JudahZone.setInitialized(true);
+		if (running)
+			clock.begin();
+    }
+    
 	@Override
     protected void initialize() throws JackException {
     	switchboard.clear();
-    	outPorts.clear();
     	inPorts.clear();
+    	outPorts.clear();
         for (OUT port : OUT.values())
             outPorts.add(jackclient.registerPort(port.port, MIDI, JackPortIsOutput));
+        for (IN port : IN.values())
+            inPorts.add(jackclient.registerPort(port.port, MIDI, JackPortIsInput));
         
         int sz = outPorts.size();
         if (sz > OUT.TEMPO.ordinal()) {
@@ -108,8 +150,6 @@ public class JudahMidi extends BasicClient implements Closeable {
         }
 
         // connect midi controllers to software handlers
-        for (IN port : IN.values())
-            inPorts.add(jackclient.registerPort(port.port, MIDI, JackPortIsInput));
         sz = inPorts.size();
         if (sz > IN.MIDICLOCK.ordinal()) {
         	midiclock = inPorts.get(IN.MIDICLOCK.ordinal());
@@ -142,8 +182,8 @@ public class JudahMidi extends BasicClient implements Closeable {
         	jamstik = inPorts.get(IN.JAMSTIK.ordinal());
         }
         
-        if (switchboard.isEmpty()) 
-        	RTLogger.warn(this, new NullPointerException("JudahMidi: no controllers connected"));
+        // if (switchboard.isEmpty()) 
+        	RTLogger.log(this, switchboard.size() + " controllers connected");
 
         Thread timePolling = new Thread(scheduler);
         timePolling.setPriority(7);
@@ -152,7 +192,7 @@ public class JudahMidi extends BasicClient implements Closeable {
     }
 
     @Override
-    protected void makeConnections() throws JackException {
+    public void makeConnections() throws JackException {
     	
     	final EnumSet<JackPortFlags> OUT = EnumSet.of(JackPortIsOutput);
     	final EnumSet<JackPortFlags> INS = EnumSet.of(JackPortIsInput);
@@ -257,9 +297,9 @@ public class JudahMidi extends BasicClient implements Closeable {
                     		Jamstik.getOut().send(midi, index);
                     }
                     else if (switchboard.get(port).midiProcessed(midi))
-            			MainFrame.updateCurrent(); // TODO overkill?
+                    	continue; 
             		else if (midi.getChannel() == 9) 
-            			JudahZone.getDrumMachine().getDrum1().send(midi, 0);
+            			JudahZone.getFluid().send(midi, ticker());
             		else if (Midi.isNote(midi) || Midi.isPitchBend(midi))
             			keyboardSynth.getMidiOut().send(Midi.format(midi, keyboardSynth.getCh(), 1), ticker());
                 }

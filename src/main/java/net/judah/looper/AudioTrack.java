@@ -90,8 +90,8 @@ public abstract class AudioTrack extends Channel implements ProcessAudio {
 		}
 
 		if (delay.isActive()) {
-			delay.processAdd(left, right, true);
-			delay.processAdd(left, right, false);
+			delay.process(left, right, true);
+			delay.process(left, right, false);
 		}
 		if (reverb.isActive())
 			reverb.process(left, right);

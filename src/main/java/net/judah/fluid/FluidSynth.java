@@ -30,7 +30,6 @@ public class FluidSynth extends MidiInstrument {
 	
 	private final String shellCommand;
 	private Process process;
-	@Getter private String[] patches;
 	private String[] changes = new String[CHANNELS];
 	
 	@Getter private final FluidChannels channels = new FluidChannels();
@@ -40,7 +39,7 @@ public class FluidSynth extends MidiInstrument {
 	@Getter private final FluidConsole console;
 	private float gain = 1f; // max 5.0
 
-	public FluidSynth(int sampleRate, JackPort left, JackPort right, JackPort midi, boolean startListeners) {
+	public FluidSynth(int sampleRate, JackPort left, JackPort right, JackPort midi) {
 		super(Constants.FLUID, LEFT_PORT, RIGHT_PORT, left, right, "Fluid.png");
 		reverb = new FluidReverb(this); // use external reverb
 
@@ -56,25 +55,22 @@ public class FluidSynth extends MidiInstrument {
 			RTLogger.warn(this, e);
 		}
 		setMidiPort(new MidiPort(midi));
-		listener = new FluidListener(process.getInputStream(), false);
 		new FluidListener(process.getErrorStream(), true).start();
-		if (startListeners)
-			listener.start();
+		listener = new FluidListener(process.getInputStream(), false);
+		listener.start();
 		
-		int delay = 100;
-		Constants.sleep(2*delay);
-		outStream = process.getOutputStream();
-        sendCommand("chorus off");
+		int delay = 200;
 		Constants.sleep(delay);
-        gain(gain);
-		if (startListeners)
-			Constants.sleep(delay);
-			try {
-				syncInstruments();
-				syncChannels();
-			} catch (Throwable t) {
-				RTLogger.warn(this, "sync failed. " + t.getMessage());
-			}
+		outStream = process.getOutputStream();
+		Constants.sleep(delay);
+		try {
+			syncInstruments();
+			syncChannels();
+		} catch (Throwable t) {
+			RTLogger.warn(this, "sync failed. " + t.getMessage());
+		}
+		sendCommand("chorus off");
+		gain(gain);
 	}
 
 	public void syncChannels() {
@@ -85,7 +81,7 @@ public class FluidSynth extends MidiInstrument {
 			int count = 0;
 			
 			while (listener.sysOverride != null && count++ < 100) 
-				Constants.sleep(20);
+				Constants.sleep(25);
 			
 			if (listener.channels.isEmpty())
 				throw new Exception("Error reading channels");
@@ -106,9 +102,9 @@ public class FluidSynth extends MidiInstrument {
 		outStream.write((FluidCommand.INST.code + "1" + NL).getBytes());
 		outStream.flush();
 		int count = 0;
-		while (listener.sysOverride != null && count++ < 30) {
+		while (listener.sysOverride != null && count++ < 35) 
 			Thread.sleep(30);
-		}
+		
 		if (listener.instruments.isEmpty()) 
 			throw new Exception("Fluid Error reading instruments");
 
@@ -118,6 +114,7 @@ public class FluidSynth extends MidiInstrument {
 		patches = new String[size];
 		for (int i = 0; i < size; i++) 
 			patches[i] = listener.instruments.get(i).name;
+		RTLogger.log(this, "Loaded " + size + " instruments");
 	}
 
 	public Midi bankUp() {

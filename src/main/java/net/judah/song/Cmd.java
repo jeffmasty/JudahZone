@@ -1,5 +1,6 @@
 package net.judah.song;
 
+import static net.judah.JudahZone.*;
 import static net.judah.song.Param.Type.*;
 
 import java.util.ArrayList;
@@ -23,8 +24,6 @@ public enum Cmd {
 	
 	@Getter private final Type type;
 	
-	
-	
 	public static List<Cmd> get(Type type) {
 		ArrayList<Cmd> result = new ArrayList<Cmd>();
 		for (Cmd cmd : values())
@@ -33,4 +32,37 @@ public enum Cmd {
 		return result;
 	}
 	
+	public static Cmdr getCmdr(Cmd cmd) {
+		switch (cmd) {
+
+		case MPK:		return getSeq().getSynthTracks();
+		case Length:	return getSeq();
+		case TimeCode:	return IntProvider.instance();
+		case TimeSig:	return SigProvider.instance;
+		case Start:		return BooleanProvider.instance;
+		case Tempo:		return getClock().getMidiClock(); 
+		case Jump:		return getSongs();
+
+		case OffTape:	return getInstruments();
+		case OnTape:	return getInstruments();
+		case SoloCh:	return getInstruments();
+		case Latch:		return getInstruments();
+
+		case Record:	return getLooper();
+		case RecEnd:	return getLooper();
+		case Sync:		return getLooper();
+		case Delete: 	return getLooper();
+		case Dup:	 	return getLooper();
+		case Solo:		return getLooper().getSoloTrack();
+
+		case Mute:		return getMixer();
+		case Unmute:	return getMixer();
+		case FadeIn:	return getMixer();
+		case FadeOut:	return getMixer();
+		case FX:		return getMixer();
+		
+		default: return null;
+		}
+	}
+
 }

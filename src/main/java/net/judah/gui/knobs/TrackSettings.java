@@ -51,7 +51,7 @@ public class TrackSettings extends JPanel {
 	public void update() {
 		// previous next current
 		play.setBackground(track.isActive() ? GREEN : null);
-		record.setBackground(track.isRecording() ? RED : null);
+		record.setBackground(track.getRecorder().isActive() ? RED : null);
 		// TODO mpk
 	}
 	

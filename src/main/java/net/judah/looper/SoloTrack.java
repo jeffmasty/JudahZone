@@ -9,9 +9,13 @@ import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.LineIn;
 import net.judah.mixer.Zone;
+import net.judah.song.BooleanProvider;
+import net.judah.song.Cmd;
+import net.judah.song.Cmdr;
+import net.judah.song.Param;
 
 @Getter @EqualsAndHashCode(callSuper = true) 
-public class SoloTrack extends Loop {
+public class SoloTrack extends Loop implements Cmdr {
 
     public static final String NAME = "D";
     private boolean muteStash = true;
@@ -51,5 +55,28 @@ public class SoloTrack extends Loop {
     	soloTrack = input;
     	MainFrame.update(JudahZone.getMixer());
     }
+
+	@Override
+	public String[] getKeys() {
+		return BooleanProvider.keys;
+	}
+
+	@Override
+	public String lookup(int value) {
+		return null;
+	}
+
+	@Override
+	public Boolean resolve(String key) {
+		if (BooleanProvider.TRUE.equals(key))
+			return true;
+		return false;
+	}
+
+	@Override
+	public void execute(Param p) {
+		if (p.cmd == Cmd.Solo) 
+			solo(resolve(p.val));
+	}
     
 }

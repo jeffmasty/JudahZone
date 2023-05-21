@@ -12,10 +12,10 @@ public interface MidiConstants {
     int NAME_STATUS = 73;
 	int NOTE_OFFSET = 24;
 	int VELOCITY = 99;
-//	int RESOLUTION = 24;
 	public static final String[] NOTES = {"C", "C#", "D", "Db", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"};
 	List<Integer> BLACK_KEYS = List.of(1, 3, 6, 8, 10);
 	public static final int RATCHET = 1;
+	public static final int MIDDLE_C = 60;
 
 	int KEY_WIDTH = 14;
 	int KEY_HEIGHT = 24;

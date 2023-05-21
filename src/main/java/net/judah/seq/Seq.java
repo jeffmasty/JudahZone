@@ -7,18 +7,18 @@ import java.util.Iterator;
 import java.util.List;
 
 import lombok.Getter;
+import net.judah.JudahZone;
 import net.judah.api.MidiReceiver;
 import net.judah.drumkit.KitMode;
 import net.judah.gui.Size;
 import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.knobs.TrackKnobs;
 import net.judah.midi.Midi;
-import net.judah.song.Sched;
-import net.judah.song.TrackInfo;
+import net.judah.song.*;
 import net.judah.util.RTLogger;
 
 @Getter 
-public class Seq implements Iterable<MidiTrack>, MidiConstants {
+public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
 	public static final int TRACKS = 10;
 	public static final String NAME = "Seq";
 	
@@ -118,16 +118,41 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants {
 
 	}
 
-	/**Perform recording activities 
+	/**Perform recording or translate activities on tracks
 	 * @param midi user note press 
 	 * @return true if any track is recording */
-	public boolean record(Midi midi) {
-		for (MidiTrack t : tracks)
-			if (t.isRecording()) {
-				// TODO!
+	public boolean rtCheck(Midi midi) {
+		for (MidiTrack track : tracks)
+			if (track.getRecorder().record(midi))
 				return true;
-			}
+			
+		for (MidiTrack track : tracks)
+			if (track.getTransposer().setAmount(midi))
+				return true;
+			
 		return false;
+	}
+
+	
+	@Override
+	public String[] getKeys() {
+		return IntProvider.instance(1, 64, 1).getKeys();
+	}
+
+	@Override
+	public String lookup(int value) {
+		return "" + value;
+	}
+
+	@Override
+	public Integer resolve(String key) {
+		return Integer.parseInt(key);
+	}
+
+	@Override
+	public void execute(Param p) {
+		if (p.cmd == Cmd.Length)
+				JudahZone.getClock().setLength(Integer.parseInt(p.val));
 	}
 	
 }

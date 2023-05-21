@@ -2,6 +2,7 @@ package net.judah.seq.beatbox;
 
 import java.awt.Component;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
 
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
@@ -13,11 +14,13 @@ import net.judah.drumkit.DrumType;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 import net.judah.seq.MidiTrack;
+import net.judah.seq.MidiView;
 
 public class DrumMutes extends JPanel {
 	static UIDefaults def = new UIDefaults();
 	
 	private final MidiTrack track;
+	private final MidiView view;
 	private final Rectangle r;
 	private final int rowHeight;
 	
@@ -28,14 +31,15 @@ public class DrumMutes extends JPanel {
 			super(type.name());
 			this.type = type;
 			setFont(Gui.FONT11);
-			addActionListener(e -> toggleMute(this));
+			addActionListener(evt -> toggleMute(this, evt));
 			setBounds(0, y * rowHeight, r.width, rowHeight);
 		}
 	}
 	
-	public DrumMutes(Rectangle r, MidiTrack t) {
+	public DrumMutes(Rectangle r, MidiView view) {
 		this.r = r;
-		this.track = t;
+		this.view = view;
+		this.track = view.getTrack();
 		setBounds(r);
 		setLayout(null);
 		rowHeight = (int)Math.ceil((r.height) / DrumType.values().length);
@@ -55,9 +59,15 @@ public class DrumMutes extends JPanel {
 		}
 	}
 	
-	public void toggleMute(Mute btn) {
-		DrumSample s = getSample(btn.type);
-		s.setOnMute(!s.isOnMute());
+	public void toggleMute(Mute btn, ActionEvent evt) {
+		if ((evt.getModifiers() & ActionEvent.CTRL_MASK) ==ActionEvent.CTRL_MASK) {
+			view.getGrid().selectArea(track.getLeft(), track.getRight() + track.getBarTicks(), btn.type.getData1(), btn.type.getData1());
+			btn.setSelected(!btn.isSelected());
+		}
+		else {
+			DrumSample s = getSample(btn.type);
+			s.setOnMute(!s.isOnMute());
+		}
 	}
 
 	public DrumSample getSample(DrumType t) {

@@ -193,12 +193,12 @@ public class Delay implements Effect {
             Arrays.fill(right.workArea, 0);
     }
 
-	public void processReplace(FloatBuffer in, FloatBuffer out, boolean isLeft) {
-        if (isLeft) left.process(in, out, true);
-        else right.process(in, out, true);
+	public void process(FloatBuffer in, FloatBuffer out, boolean isLeft) {
+        if (isLeft) left.process(in, out, false);
+        else right.process(in, out, false);
     }
 
-	public void processAdd(FloatBuffer in, FloatBuffer out, boolean isLeft) {
+	public void slapback(FloatBuffer in, FloatBuffer out, boolean isLeft) {
 		if (isLeft) left.process(in, out, slapback);
 		else if (!slapback) right.process(in, out, false);
     }

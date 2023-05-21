@@ -1,5 +1,8 @@
 package net.judah.looper;
 
+import static net.judah.api.AudioMode.*;
+
+import java.security.InvalidParameterException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 
@@ -19,11 +22,13 @@ import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.mixer.Zone;
+import net.judah.song.Cmdr;
+import net.judah.song.Param;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 @RequiredArgsConstructor 
-public class Looper extends ArrayList<Loop> implements TimeListener {
+public class Looper extends ArrayList<Loop> implements TimeListener, Cmdr {
 	public static final int LOOPERS = 4;
 
 	@Getter private final JudahClock clock;
@@ -35,7 +40,8 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
     @Getter private long recordedLength;
     @Getter private Loop primary;
     @Getter private final ArrayDeque<Loop> onDeck = new ArrayDeque<>();
-
+    @Getter private final String[] keys;
+    
     private int syncCounter;
     @Setter protected LoopWidget feedback;
 
@@ -50,6 +56,9 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
         add(loopB);
         add(loopC);
         add(soloTrack);
+        keys = new String[size()];
+        for (int i = 0; i < size(); i++)
+        	keys[i] = get(i).getName();
         clock.addListener(this);
 	}
 	
@@ -61,7 +70,6 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
     		MainFrame.update(feedback);
         	syncCounter = 0;
         }
-
     }
 
     void setRecordedLength(long start, Loop primary) {
@@ -78,16 +86,17 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
     	RTLogger.log(this, primary + " recorded " + frames + " frames");
     }
     
-    public Loop byName(String search) {
+    public Loop byName(String key) {
     	for (Loop l : this) 
-				if (l.getName().equals(search))
+				if (l.getName().equals(key))
 					return l;
-    	return null;
+    	return loopA; // fail
     }
 
-    public void reset() { // get a process() in
-    	Constants.timer(23, ()->clear());
-	}
+    public void reset() { 
+    	Constants.timer(23, ()->clear()); // get a process() in
+    	forEach(l->l.isRecording.compareAndSet(RUNNING, STOPPING));
+    }
 
     /** deletes loops */
 	@Override
@@ -169,6 +178,51 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
 				continue;
 			l.catchUp(loop.getRecording().size());
 		}
+	}
+
+	@Override
+	public String lookup(int value) {
+		if (value >= 0 && value < size())
+			return get(value).getName();
+		return loopA.getName();
+	}
+
+	@Override
+	public void execute(Param p) {
+		Loop loop = null;
+		for (Loop l : this) 
+			if (l.getName().equals(p.val))
+				loop = l;
+		if (loop == null)
+			return;
+		switch(p.getCmd()) {
+			case Delete:
+				loop.erase();
+				break;
+			case Dup:
+				loop.duplicate();
+				break;
+			case Record:
+				if (!clock.isActive())
+					break; // ignore in edit mode
+				loop.record(true);
+				if (loop.getType() != Type.FREE)
+					clock.syncUp(loop, 0);
+				MainFrame.update(loop);
+				break;
+			case RecEnd:
+				loop.record(false);
+				break;
+			case Sync:
+				onDeck(loop);
+				break;
+			default: throw new InvalidParameterException("" + p);
+		}
+	}
+
+	@Override
+	public Object resolve(String key) {
+		return null;
 	}
 	
 }

@@ -9,7 +9,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.sound.midi.ShortMessage;
 
 import org.jaudiolibs.jnajack.JackException;
-import org.jaudiolibs.jnajack.JackPosition;
 import org.jaudiolibs.jnajack.JackTransportState;
 
 import lombok.Getter;
@@ -43,8 +42,7 @@ public class JudahClock extends Thread implements TimeProvider {
 	private final Sampler sampler;
     @Getter private final ArrayList<TimeListener> listeners = new ArrayList<>();
     private final BlockingQueue<Notification> notifications = new LinkedBlockingQueue<>();
-	private final MidiClock midiClock;
-    //private Loop source;
+	@Getter private final MidiClock midiClock;
     private boolean onDeck;
 
     @Getter private boolean active;
@@ -116,7 +114,8 @@ public class JudahClock extends Thread implements TimeProvider {
 	}
 	
 	public boolean isEven() { return bar % 2 == 0; }
-
+	public int getSteps() { return timeSig.steps; }
+	public int getSubdivision() { return timeSig.div; }
 	
 	/** receive clock message from external source in real-time */
 	public void processTime(byte[] bytes) throws JackException {
@@ -253,11 +252,6 @@ public class JudahClock extends Thread implements TimeProvider {
 		MainFrame.update(this);
 	}
 	
-	
-	public void listen() {
-		onDeck = true;
-	}
-		
 	public void setTimeSig(Signature time) {
 		if (timeSig == time)
 			return;
@@ -268,13 +262,6 @@ public class JudahClock extends Thread implements TimeProvider {
 		letItBeKnown(Property.MEASURE, measure);
 	}
 	
-	public int getSteps() { return timeSig.steps; }
-	public int getSubdivision() { return timeSig.div; }
-	
-	public static String toString(JackPosition position) {
-		return position.getBeat() + "/" + position.getBar() + " " + position.getTick() + "/" + position.getTicksPerBeat();
-	}
-
 	private void computeTempo(float avg) {
 		long now = System.currentTimeMillis();
 		float tempo2 = Constants.bpmPerBeat(now - lastPulse);
@@ -297,7 +284,6 @@ public class JudahClock extends Thread implements TimeProvider {
 	public void cycle() {
 		bar++;
 	}
-
 	
 	/** in real-time */
 	private void announce(Property prop, Object value) {
@@ -309,7 +295,5 @@ public class JudahClock extends Thread implements TimeProvider {
 	private void letItBeKnown(Property prop, Object value) {
 		notifications.offer(new Notification(prop, value));
 	}
-
-
 	
 }

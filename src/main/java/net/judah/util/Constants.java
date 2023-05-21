@@ -8,10 +8,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.sound.midi.InvalidMidiDataException;
-
 import lombok.Getter;
-import net.judah.midi.Midi;
 
 public class Constants {
 	private static final ClassLoader loader = Constants.class.getClassLoader();
@@ -73,25 +70,6 @@ public class Constants {
 	public static float midiToHz(int data1) {
         return (float)(Math.pow(2, (data1 - 57d) / 12d)) * TUNING;
     }
-
-	public static Midi transpose(Midi in, int steps) throws InvalidMidiDataException {
-		if (steps == 0) return in;
-		return new Midi(in.getCommand(), in.getChannel(), in.getData1() + steps, in.getData2());
-	}
-
-	public static Midi transpose(Midi in, int steps, float gain) throws InvalidMidiDataException {
-		if (steps == 0 && gain >= 1f) return in;
-		return new Midi(in.getCommand(), in.getChannel(), in.getData1() + steps, (int)(in.getData2() * gain));
-	}
-
-	public static Midi gain(Midi in, float gain) throws InvalidMidiDataException {
-		if (gain == 1f) return in;
-		return new Midi(in.getCommand(), in.getChannel(), in.getData1(), (int)(in.getData2() * gain));
-	}
-
-	public static Midi transpose(Midi in, int steps, int channel) throws InvalidMidiDataException {
-		return new Midi(in.getCommand(), channel, in.getData1() + steps, in.getData2());
-	}
 
 	public static File resource(String filename) {
 	    try {

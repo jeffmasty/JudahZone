@@ -10,11 +10,15 @@ import com.illposed.osc.OSCMessage;
 import com.illposed.osc.transport.udp.OSCPortOut;
 
 import net.judah.JudahZone;
+import net.judah.song.Cmd;
+import net.judah.song.Cmdr;
+import net.judah.song.IntProvider;
+import net.judah.song.Param;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 /** communicates with https://github.com/widdly/midiclock over OSC */ 
-public class MidiClock implements Closeable {
+public class MidiClock implements Closeable, Cmdr {
 
 	public static final int port = 4040;
 	private OSCPortOut out;
@@ -73,6 +77,28 @@ public class MidiClock implements Closeable {
 		out = null;
 	}
 	
+	@Override
+	public String[] getKeys() {
+		return 	IntProvider.instance(40, 200, 2).getKeys();
+	}
+
+	@Override
+	public String lookup(int value) {
+		return "" + value;
+	}
+
+	@Override
+	public Integer resolve(String key) {
+		return Integer.parseInt(key);
+	}
+
+	@Override
+	public void execute(Param p) {
+		if (p.cmd == Cmd.Tempo) 
+			try {
+				writeTempo(Integer.parseInt(p.val)); 
+			} catch (NumberFormatException e) {RTLogger.warn(this, "tempo: " + p.val);}
+	}
 
 	
 }

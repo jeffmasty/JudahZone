@@ -13,7 +13,6 @@ import net.judah.gui.Pastels;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
-import net.judah.midi.Transpose;
 import net.judah.mixer.Channel;
 import net.judah.seq.Seq;
 import net.judah.util.Constants;
@@ -23,7 +22,6 @@ import net.judah.util.RTLogger;
 @RequiredArgsConstructor
 public class MPKmini implements Controller, MPKTools, Pastels {
 	
-	public static final int MIDDLE_C = 60;
 	private static final int JOYSTICK_L = 127;
 	private static final int JOYSTICK_R = 0;
 
@@ -62,19 +60,19 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 					} catch (Exception e) { RTLogger.warn(this, e);}
 				}
 		}
+		
+		
+		
+		if (seq.rtCheck(midi)) 
+			return true; // track will send
 
-		if (seq.record(midi) == false)
-			if (Transpose.isActive() && midi.getCommand() == Midi.NOTE_ON) {
-				Transpose.setOnDeck(midi.getData1() - MIDDLE_C);
-				return true; // key press consumed
-			}
 		return false;
 	}
 
 	private boolean checkCC(int data1, int data2) {
 		if (KNOBS.contains(data1)) {
 			MainFrame.update(new KnobData(data1 - KNOBS.get(0), data2));
-			return true;
+			return false;
 		} 
 		if (data1 == JOYSTICK_L)
 			return joystickL(data2);
@@ -112,15 +110,10 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 			
 		///////// ROW 2 /////////////////
 		else if (data1 == PRIMARY_CC.get(4)) { 
-			Transpose.toggle();
-			//// not drums			
-			//			tracker.getCurrent().setLatch(!tracker.getCurrent().isLatch());
-			//			Tracker.checkLatch();
-			//			return true;
+			sys.getKeyboardSynth().getTransposer().toggle();
 		}
-		else if (data1 == PRIMARY_CC.get(5)) { 
-			// TODO
-			// record toggle
+		else if (data1 == PRIMARY_CC.get(5)) {
+			sys.getKeyboardSynth().getRecorder().toggle();
 		}
 		else if (data1 == PRIMARY_CC.get(6) && data2 > 0) { // focus Synth1 or Synth2 or Sampler
 			if (MainFrame.getKnobMode() == KnobMode.Synth) {
@@ -133,17 +126,18 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 				MainFrame.setFocus(KnobMode.Synth);
 		}
 		else if (data1 == PRIMARY_CC.get(7) && data2 > 0) { // focus Drum Kits
-			if (MainFrame.getKnobMode() == KnobMode.Kits)
-				MainFrame.setFocus(JudahZone.getDrumMachine().increment().getKitMode());
-			else
+			if (MainFrame.getKnobMode() != KnobMode.Kits)
 				MainFrame.setFocus(KnobMode.Kits);
+			else
+				getDrumMachine().increment();
+
 		} 
 		else 
 			return false;
 		return true;
 	}
 
-	private boolean joystickL(int data2) {
+	private boolean joystickL(int data2) { // delay
 		Delay d = ((Channel)sys.getKeyboardSynth().getMidiOut()).getDelay();
 		d.setActive(data2 > 4);
 		if (data2 <= 4) 
@@ -151,13 +145,16 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 		if (d.getDelay() < Delay.DEFAULT_TIME) 
 			d.setDelay(Delay.DEFAULT_TIME);
 		d.setFeedback(Constants.midiToFloat(data2));
+		MainFrame.update(sys.getKeyboardSynth().getMidiOut());
 		return true;
 	}
 	
-	private boolean joystickR(int data2) {
+	private boolean joystickR(int data2) { // filter
+		MainFrame.update(sys.getKeyboardSynth().getMidiOut());
 		int ch = sys.getKeyboardSynth().getCh();
 		sys.getKeyboardSynth().getMidiOut().send( Midi.create(Midi.CONTROL_CHANGE, ch, 1, 
 				data2 > 4 ? data2 : 0), JudahMidi.ticker());  
+		
 		return true;
 	}
 	

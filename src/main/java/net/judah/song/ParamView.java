@@ -14,22 +14,18 @@ public class ParamView extends JTable /* implements Edits */{
 
 	public ParamView(List<Param> sequence) {
 		
-		setModel(new ParamModel(sequence));
+		ParamModel model = new ParamModel(sequence);
+		
+		setModel(model);
 		setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS); // ?
 		TableColumnModel cols = getColumnModel(); 
 		cols.getColumn(COL_CMD).setPreferredWidth(100);
 		cols.getColumn(COL_VAL).setPreferredWidth(100);
 		
 		setDefaultEditor(Cmd.class, new DefaultCellEditor(new JComboBox<Cmd>(Cmd.values())));
-		
-		
-		
-//		table.setDefaultEditor(Command.class, new DefaultCellEditor(
-//				new JComboBox<Command>(commander.getAvailableCommands())));
+		setDefaultEditor(String.class, new Options(this));
 //		table.setDefaultEditor(HashMap.class, new PropertiesEditor());
-
 //		PopupMenu menu = new PopupMenu(this);
-//		add(new EditsPane(table, menu));
 //		table.setComponentPopupMenu(menu);
 
 	}

@@ -12,13 +12,13 @@ public class StepSample extends Sample {
 	public StepSample(String wavName, Sampler sampler, int... steps) throws Exception {
 		super(JudahZone.getOutL(), JudahZone.getOutR(), wavName, Type.ONE_SHOT, sampler);
 		this.steps = steps;
-		env = 2f;
+		env = BOOST;
 	}
 	
 	public void step(int step) {
 		if (!on) return;
-		if (step < 2 || step > 13 || step == 8)
-			gain.setGain(0.95f); 
+		if (step < 2 || step > 14 || step == 8)
+			gain.setGain(0.85f); 
 		else { // variation
 			gain.setGain(0.5f + (step - 2 ) * (0.5f / 12f));
 		}

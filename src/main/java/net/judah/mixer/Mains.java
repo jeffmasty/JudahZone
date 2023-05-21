@@ -57,8 +57,8 @@ public class Mains extends Channel {
         }
 
         if (delay.isActive()) {
-            delay.processAdd(left, left, true);
-            delay.processAdd(right, right, false);
+            delay.process(left, left, true);
+            delay.process(right, right, false);
         }
 		if (reverb.isActive()) {
 			reverb.process(left, right);

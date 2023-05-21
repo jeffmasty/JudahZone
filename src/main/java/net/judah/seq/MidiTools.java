@@ -8,9 +8,11 @@ import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
+import net.judah.midi.Midi;
+
 public class MidiTools {
     private static final Pattern work = new Pattern();
-
+    
 	public static boolean match(MidiMessage a, MidiMessage b) {
 		if (a == null && b == null) return true;
 		if (a == null || b == null) return false;
@@ -22,6 +24,61 @@ public class MidiTools {
 				it.getData1() == other.getData1();
 		}
 		return a.equals(b);
+	}
+	
+		/**Piano lookup
+	 * @param tick
+	 * @param cmd
+	 * @param data1
+	 */
+	public static MidiPair lookup(long tick, int data1, Track t) {
+		MidiEvent found = null;
+		for (int i = 0; i < t.size(); i++) {
+			if (false == t.get(i).getMessage() instanceof ShortMessage) 
+				continue;
+			MidiEvent e = t.get(i);
+			ShortMessage m = (ShortMessage) e.getMessage();
+			
+			if (e.getTick() <= tick) {
+				if (found == null) {
+					if (Midi.isNoteOn(m) && m.getData1() == data1)
+						found = e;
+				}
+				else if (found != null) {
+					if (Midi.isNoteOff(m) && m.getData1() == data1)
+						found = null;		}
+			}
+			else { // e.getTick() > tick
+				if (found == null) // opportunity passed
+					return null;
+				if (Midi.isNoteOff(m) && m.getData1() == data1) {
+					return new MidiPair(found, e);
+				}
+			}
+		}
+		if (found != null) 
+			return new MidiPair(found, null);
+		return null;
+	}
+
+	public static MidiPair noteOff(MidiEvent on, Track t) {
+		final long fromTick = on.getTick();
+		final int data1 = ((ShortMessage)on.getMessage()).getData1();
+		for (int i = 0; i < t.size(); i++) {
+			if (false == t.get(i).getMessage() instanceof ShortMessage) 
+				continue;
+			MidiEvent e = t.get(i);
+			ShortMessage m = (ShortMessage) e.getMessage();
+			if (Midi.isNoteOff(m) && m.getData1() == data1) {
+			
+			if (e.getTick() <= fromTick) 
+				continue;
+			if (Midi.isNoteOff(m) && m.getData1() == data1) 
+				return new MidiPair(on, e);
+				
+			}
+		}
+		return new MidiPair(on, null); // drums/hanging chad
 	}
 	
 	public static boolean match(MidiPair it, MidiPair other) {
@@ -114,13 +171,10 @@ public class MidiTools {
 	}
 	
 	/** insert a clipboard midi event into the current two-bar window */
-	public static void interpolate(MidiEvent e, MidiTrack track) {
+	public static MidiEvent interpolate(MidiEvent e, MidiTrack track) {
 		long base = e.getTick() >= track.getBarTicks() ? track.getRight() : track.getLeft();
-//		int bar = track.getCurrent();
-//		if (e.getTick() >= track.getBarTicks())
-//			bar = track.getNext();
-		long tick = e.getTick() + base;// * track.getBarTicks();
-		track.getT().add(new MidiEvent(e.getMessage(), tick));
+		long tick = e.getTick() + base;
+		return new MidiEvent(e.getMessage(), tick);
 	}
 	
 	
@@ -129,7 +183,14 @@ public class MidiTools {
 		return String.format("%02d:%02d:%02d.%03d", millis / 60 / 60 / 1000, 
 				(millis / 60 / 1000) % 60, (millis / 1000) % 60, millis % 1000);
 	}
-	
+
+	public static MidiPair zeroBase(MidiPair p, long left) {
+		if (left == 0)
+			return p;
+		return new MidiPair(new MidiEvent(p.getOn().getMessage(), p.getOn().getTick() - left), 
+				p.getOff() == null ? null : new MidiEvent(p.getOff().getMessage(), p.getOff().getTick() - left));
+	}
+}
 
 //	public static Note translate(MidiEvent e, MidiTrack track) {
 //		float twoBar = 2 * track.getBarTicks();
@@ -245,8 +306,28 @@ public class MidiTools {
 //			ShortMessage on = (ShortMessage)e.getMessage();
 //			result.add(new Note(e.getTick(), 2 * barTicks, on.getData1(), on.getData2()));
 //		}
-	}
-	
+
+//	public static Midi transpose(Midi in, int steps) throws InvalidMidiDataException {
+//		if (steps == 0) return in;
+//		return new Midi(in.getCommand(), in.getChannel(), in.getData1() + steps, in.getData2());
+//	}
+//
+//	public static Midi transpose(Midi in, int steps, float gain) throws InvalidMidiDataException {
+//		if (steps == 0 && gain >= 1f) return in;
+//		return new Midi(in.getCommand(), in.getChannel(), in.getData1() + steps, (int)(in.getData2() * gain));
+//	}
+//
+//	public static Midi gain(Midi in, float gain) throws InvalidMidiDataException {
+//		if (gain == 1f) return in;
+//		return new Midi(in.getCommand(), in.getChannel(), in.getData1(), (int)(in.getData2() * gain));
+//	}
+//
+//	public static Midi transpose(Midi in, int steps, int channel) throws InvalidMidiDataException {
+//		return new Midi(in.getCommand(), channel, in.getData1() + steps, in.getData2());
+//	}
+
+
+
 //	private void snipNotes(Bar bar, long start, long end, long translate, Measure result, Accumulator stash) {
 //		float twoBar = 2 * barTicks;
 //		for (MidiEvent e : bar) {
@@ -420,4 +501,41 @@ public class MidiTools {
 //			t.add(new MidiEvent(new ShortMessage(NOTE_OFF, notes[i], 1), (notes[i-1] + 1) * res + offset));
 //		}
 //		RTLogger.log(MidiTools.class, "oompah size " + t.size());
+//	}
+//    // TODO odd/swing subdivision
+//	public static long quantize(long tick, Gate gate, int resolution) {
+//		if (getClock().getTimeSig().div == 3 && (gate == Gate.SIXTEENTH || gate == Gate.EIGHTH))
+//			return swing(tick, gate, resolution);
+//		
+//		switch(gate) {
+//		case SIXTEENTH: return tick - tick % (resolution / 4);
+//		case EIGHTH: return tick - tick % (resolution / 2);
+//		case QUARTER: return tick - tick % resolution;
+//		case HALF: return tick - tick % (2 * resolution);
+//		case WHOLE: return tick - tick % (4 * resolution);
+//		case MICRO: return resolution > 16 ? 
+//				tick - tick % (resolution / 8) : tick - tick % (resolution / getClock().getTimeSig().div);
+//		case RATCHET: // approx MIDI_24
+//		default: // NONE
+//			return tick;
+//		}
+//	}
+//
+//	protected static long swing(long tick, Gate gate, int resolution) {
+//		if (gate == Gate.SIXTEENTH) 
+//			return tick - tick % (resolution / 6);
+//		return tick - tick % (resolution / 3);
+//	}
+//
+//	public static long quantizePlus(long tick, Gate gate, int resolution, Signature timeSig) {
+//		switch(gate) {
+//		case SIXTEENTH: return quantize(tick, gate, resolution) + (resolution / 4);
+//		case EIGHTH:	return quantize(tick, gate, resolution) + (resolution / 2);
+//		case QUARTER:	return quantize(tick, gate, resolution) + (resolution);
+//		case HALF:		return quantize(tick, gate, resolution) + (2 * resolution);
+//		case WHOLE: 	return quantize(tick, gate, resolution) + (4 * resolution);
+//		case MICRO:		return quantize(tick, gate, resolution) + (resolution / 8);
+//		case RATCHET:	return quantize(tick, gate, resolution) + 1 /*RATCHET*/;
+//		default: return tick;
+//		}
 //	}

@@ -58,7 +58,7 @@ public abstract class LineIn extends Channel {
 			overdrive.processAdd(mono);
 		}
 		if (delay.isActive()) {
-			delay.processAdd(mono, mono, true);
+			delay.process(mono, mono, true);
 		}
 		if (compression.isActive())
 			compression.process(mono);
@@ -104,8 +104,8 @@ public abstract class LineIn extends Channel {
 		}
 
 		if (delay.isActive()) {
-			delay.processAdd(left, left, true);
-			delay.processAdd(right, right, false);
+			delay.process(left, left, true);
+			delay.process(right, right, false);
 		}
 		if (reverb.isActive()) {
 			reverb.process(left, right);

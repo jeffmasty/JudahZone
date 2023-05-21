@@ -68,7 +68,7 @@ public class KorgMixer implements Controller {
 		
 		// knobs = drumkit or synths gain
 		else if (data1 >= knoboff && data1 < knoboff + 4) {
-			getDrumMachine().getKits()[data1 - knoboff].getGain().set(Gain.VOLUME, data2);
+			getDrumMachine().getKits().get(data1 - knoboff).getGain().set(Gain.VOLUME, data2);
 		}
 		else if (data1 >= knoboff + 4 && data1 < knoboff + 8) {
 			data1 = data1 - (knoboff + 4);
@@ -143,9 +143,9 @@ public class KorgMixer implements Controller {
 			else 
 				getClock().begin();
 		}
-//		else if (data1 == RECORD.getVal()) { 
-//			// TODO sequence Track 
-//		}
+		else if (data1 == RECORD.getVal()) { 
+			seq.getCurrent().getRecorder().toggle(); 
+		}
 		
 		return true;
 	}

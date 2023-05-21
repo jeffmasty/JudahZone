@@ -16,7 +16,7 @@ public class DrumSample extends AudioTrack implements AtkDec {
 	private final GMDrum gmDrum;
 	protected File file;
 	@Setter private int attackTime = 1;
-	@Setter private int decayTime = 1000;
+	@Setter private int decayTime = Integer.MAX_VALUE;
 	@Setter protected float velocity = 1f;
 
 	public DrumSample(DrumType type) {

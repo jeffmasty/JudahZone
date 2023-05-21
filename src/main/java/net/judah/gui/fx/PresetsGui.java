@@ -7,6 +7,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
+import java.util.Comparator;
 
 import javax.swing.*;
 
@@ -29,8 +30,8 @@ public class PresetsGui extends JPanel {
     JComboBox<String> target;
     private final int offset = 5;
     private final int buttonsWidth = 95;
-    private final int presetsHeight = 480;
-    private final int presetsWidth = 190;
+    private final int presetsHeight = 500;
+    private final int presetsWidth = 265;
     private final int buttonsX = presetsWidth + offset;
 	private final PresetsDB presets;
     
@@ -151,7 +152,13 @@ public class PresetsGui extends JPanel {
 
     public DefaultListModel<String> presetModel() {
         DefaultListModel<String> model = new DefaultListModel<>();
-        for(Preset p : JudahZone.getPresets())
+        ArrayList<Preset> list = JudahZone.getPresets();
+        list.sort(new Comparator<Preset>() {
+			@Override public int compare(Preset o1, Preset o2) {
+				return o1.getName().compareTo(o2.getName());
+			}
+		});
+        for(Preset p : list)
             model.addElement(p.getName() + p.condenseEffects());
         return model;
     }

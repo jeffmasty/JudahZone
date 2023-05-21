@@ -5,11 +5,11 @@ import static net.judah.JudahZone.*;
 import javax.sound.midi.ShortMessage;
 
 import net.judah.JudahZone;
-import net.judah.drumkit.DrumMachine;
 import net.judah.fx.Fader;
 import net.judah.fx.LFO.Target;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.MultiSelect;
+import net.judah.gui.knobs.KnobMode;
 import net.judah.looper.Loop;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
@@ -48,12 +48,10 @@ public class Beatstep implements Controller {
 			// LOOPA, 37(loopB), 38(loopC),  LOOPD,     KITS,       RECORD,   FX,       FADER 
 			if (data1 == KITS) { 
 				if (!Midi.isNoteOn(midi)) return true;
-				DrumMachine drums = JudahZone.getDrumMachine();
-				Channel ch = drums.getKits()[drums.getCurrent()];
-				if (JudahZone.getFxRack().getChannel() == ch) {
-					ch = drums.increment();
-				}
-				MainFrame.setFocus(ch);
+				if (MainFrame.getKnobMode() != KnobMode.Kits)
+					MainFrame.setFocus(KnobMode.Kits);
+				else 
+					getDrumMachine().increment();
 			}
 			else if (data1 == RECORD) { 
 				if (!Midi.isNoteOn(midi)) return true;

@@ -13,13 +13,16 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 
 import lombok.Getter;
+import net.judah.JudahZone;
 import net.judah.gui.fx.PresetsGui;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.settable.SetCombo;
+import net.judah.gui.settable.Songs;
 import net.judah.gui.widgets.FileChooser;
 import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
 import net.judah.song.Song;
+import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
@@ -62,6 +65,10 @@ public class JudahMenu extends JMenuBar {
         		File f = FileChooser.choose(Folders.getSetlist());
         		if (f == null) return;
         		save(f);
+        		Constants.timer(200, () -> {
+        			Songs.refill();
+        			Songs.refresh();
+        		});;
         	}));
     	song.add(new Actionable("Reload", e->reload()));
         song.add(new Actionable("Load..", e -> loadSong(FileChooser.choose(Folders.getSetlist()))));
@@ -83,6 +90,7 @@ public class JudahMenu extends JMenuBar {
     	loops.add(duplicate);
     	loops.add(new Actionable("Solo on/off", e->solo.toggle()));
     	loops.add(solotrack);
+    	loops.add(new Actionable("A2J!", e->JudahZone.getMidi().recoverMidi()));
     	loops.add(new Actionable("Exit", e->System.exit(0), KeyEvent.VK_E));
 
         sheets.setSelected(false);
@@ -99,6 +107,8 @@ public class JudahMenu extends JMenuBar {
         	getFrame().sheetMusic(FileChooser.choose(Folders.getSheetMusic()));
         	getFrame().getTabs().setSelectedComponent(getFrame().getSheetMusic());
         }));
+        
+        // views.add(new Actionable("ChordPro", e->new ChordPro()));
         
         add(loops);
         add(song);

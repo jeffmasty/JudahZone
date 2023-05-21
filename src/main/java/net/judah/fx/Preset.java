@@ -8,8 +8,9 @@ import java.util.List;
 import lombok.Getter;
 import net.judah.util.Constants;
 
-public class Preset extends ArrayList<Setting> {
+public class Preset extends ArrayList<Setting> implements Comparable {
 
+	
     @Getter private final String name;
     
     public Preset(String name, List<String> raw) {
@@ -52,5 +53,11 @@ public class Preset extends ArrayList<Setting> {
             sb.append(s).append(Constants.NL);
         return sb.toString();
     }
+
+	@Override
+	public int compareTo(Object o) {
+		if (o instanceof Preset) return 0;
+		return name.compareTo(((Preset)o).getName());
+	}
 
 }

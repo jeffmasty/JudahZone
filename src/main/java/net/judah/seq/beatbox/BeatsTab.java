@@ -10,17 +10,13 @@ import net.judah.seq.MidiTrack;
 import net.judah.seq.MidiView;
 import net.judah.seq.TrackList;
 
-
 public class BeatsTab extends MidiTab {
-
 	public static final String NAME = "BeatBox";
 
 	@Getter private final TrackList top = new TrackList();
 	@Getter private final TrackList bottom = new TrackList();
-
 	private final ArrayList<BeatsSection> bottomViews = new ArrayList<>();
 	private final ArrayList<BeatsSection> topViews = new ArrayList<>();
-
 	
 	public BeatsTab(TrackList list) {
 		super(list);
@@ -39,7 +35,6 @@ public class BeatsTab extends MidiTab {
         bottom.setCurrent(bottom.get(2)); // hats
 	}
 
-	
 	public BeatsSection getView(MidiTrack t, boolean upper) {
 		for (BeatsSection v : upper ? topViews : bottomViews)
 				if (v.getTrack() == t)
@@ -64,7 +59,7 @@ public class BeatsTab extends MidiTab {
 
 	}
 
-	public void update(MidiTrack o) {
+	@Override public void update(MidiTrack o) {
 		for (MidiView v : topViews)
 			if (v.getTrack() == o)
 				v.update();
@@ -83,6 +78,5 @@ public class BeatsTab extends MidiTab {
 		getView(bottom.getCurrent(), false).getMenu().update();
 		requestFocusInWindow();
 	}
-
 	
 }

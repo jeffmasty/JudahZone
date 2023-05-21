@@ -18,7 +18,7 @@ public class BeatsSection extends MidiView implements BeatsSize {
 		super(t);
 		steps = new BeatSteps(BEAT_STEPS, track);
 
-		mutes = new DrumMutes(BOUNDS_MUTES, track); 
+		mutes = new DrumMutes(BOUNDS_MUTES, this); 
 		menu = new MidiMenu(BOUNDS_MENU, this, tracks, tab);
 		grid = new BeatBox(BEATBOX_GRID, this, tab);
 		instrumentPanel = mutes;

@@ -9,6 +9,7 @@ import net.judah.fx.Chorus;
 import net.judah.fx.CutFilter;
 import net.judah.fx.Delay;
 import net.judah.fx.Overdrive;
+import net.judah.gui.MainFrame;
 import net.judah.gui.fx.FxPanel;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
@@ -125,6 +126,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 				od.setActive(false);
 				chorus.setActive(false);
 			}
+			MainFrame.updateCurrent();
 			return true;
 		case JOYSTICK_Y: 
 			CutFilter party = fxrack.getChannel().getParty();
@@ -141,6 +143,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			else {
 				party.setActive(false);
 			}
+			MainFrame.updateCurrent();
 			return true;
 		}
 		return false;
@@ -184,6 +187,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			getFxRack().getChannel().reset();
 			// TODO restore preset
 		}
+		MainFrame.updateCurrent();
 	}
 	
 }

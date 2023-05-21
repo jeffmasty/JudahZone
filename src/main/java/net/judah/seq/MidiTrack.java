@@ -29,6 +29,7 @@ import net.judah.gui.widgets.TrackVol;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
+import net.judah.midi.MpkTranspose;
 import net.judah.midi.Panic;
 import net.judah.song.Sched;
 import net.judah.util.Constants;
@@ -36,11 +37,10 @@ import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 public class MidiTrack implements TimeListener, MidiConstants {
-	@Getter private final JudahClock clock;
-	/** Midi Notes collection serialized */
-	@Getter private final Track t; 
 	/** Sequence (for save) */
 	private final MidiFile s; 
+	@Getter private final JudahClock clock;
+	@Getter private final Track t; 
     @Getter private final String name;
 	@Getter private final MidiReceiver midiOut;
 	@Getter private final int ch;
@@ -48,15 +48,17 @@ public class MidiTrack implements TimeListener, MidiConstants {
 	@Getter private File file;
     @Getter private long barTicks;
  	@Getter private boolean onDeck; 
-	@Getter private boolean recording; // TODO
  	@Getter private CUE cue = CUE.Bar; 
- 	@Getter @Setter private boolean live;
 	@Getter private long left; // left bar's computed start tick 
 	@Getter private long right; // right bar's computed start tick
- 	private Sched state;
+	@Getter private final Recorder recorder;
+	@Getter private final MpkTranspose transposer;
+	@Getter @Setter Gate gate = Gate.SIXTEENTH;
+
+	private Sched state;
 	private int current; // current measure/bar (not frame)
 	private int count; // increment bar cycle
-	private long oldTime; // sequencer sweep
+	@Getter private long recent; // sequencer sweep
 	
     /** ch = 0 or 9 (drumkit midiout) */
     public MidiTrack(MidiReceiver out, JudahClock clock) throws Exception {
@@ -80,7 +82,9 @@ public class MidiTrack implements TimeListener, MidiConstants {
 			folder.mkdir(); // inelegant?
 		state = new Sched(isDrums());
 		barTicks = clock.getMeasure() * s.getResolution();
-
+		recorder = new Recorder(this);
+		transposer = new MpkTranspose(this);
+		
 		clock.addListener(this);
     }
     
@@ -88,7 +92,7 @@ public class MidiTrack implements TimeListener, MidiConstants {
     	if (false == o instanceof MidiTrack) return false;
     	return name.equals(((MidiTrack)o).getName()) && midiOut == ((MidiTrack)o).getMidiOut() && ch == ((MidiTrack)o).ch; 
     }
-    @Override public int hashCode() { return name.hashCode();}
+    @Override public int hashCode() { return name.hashCode() * ch;}
     @Override public String toString() { return name; }
     public boolean isActive() { return state.active; }
     public CYCLE getCycle() { return state.cycle; }
@@ -100,11 +104,12 @@ public class MidiTrack implements TimeListener, MidiConstants {
     public int getResolution() { return s.getResolution(); }
     public long getWindow() { return 2 * barTicks; }
 	public int getFrame() { return current / 2; }
+	public long getStepTicks() { return s.getResolution() / clock.getSubdivision(); }
 	/**@return number of bars with notes recorded into them */
 	public int bars() { return MidiTools.measureCount(t.ticks(), barTicks); }
 	/**@return number of frames with notes recorded into them */
 	public int frames() { return MidiTools.measureCount(t.ticks(), 2 * barTicks); }
-
+	
     void init() {
 		count = 0;
 		if (getFrame() != state.launch)
@@ -186,34 +191,34 @@ public class MidiTrack implements TimeListener, MidiConstants {
 	}
 
     public void playTo(float percent) {
-    	if (!state.active && !live)
+    	if (!state.active)
 			return;
 
 		long newTime = current * barTicks + (long)(percent * s.getResolution());
 		if (percent == 0) 
-			oldTime = newTime--;
+			recent = newTime--;
 		if (!state.active) {
-			oldTime = newTime + 1;
+			recent = newTime + 1;
 			return;
 		}
 
 		for (int i = 0; i < t.size(); i++) {
 			MidiEvent e = t.get(i);
-			if (e.getTick() < oldTime) continue;
+			if (e.getTick() < recent) continue;
 			if (e.getTick() > newTime) break;
 			if (e.getMessage() instanceof ShortMessage) 
-				getMidiOut().send(
-						Midi.format((ShortMessage)e.getMessage(), ch, state.amp), 
+				getMidiOut().send(transposer.apply(
+						Midi.format((ShortMessage)e.getMessage(), ch, state.amp)), 
 						JudahMidi.ticker());
 		}
-		oldTime = newTime + 1;
+		recent = newTime + 1;
 	}
 	
 	private void flush() {
 		long end = (current + 1) * barTicks;
 		for (int i = 0; i < t.size(); i++) {
 			MidiEvent e = t.get(i);
-			if (e.getTick() <= oldTime) continue;
+			if (e.getTick() <= recent) continue;
 			if (e.getTick() > end) break;
 			if (e.getMessage() instanceof ShortMessage && Midi.isNoteOff((ShortMessage)e.getMessage())) {
 				midiOut.send(Midi.format((ShortMessage)e.getMessage(), ch, 1), JudahMidi.ticker());
@@ -283,11 +288,6 @@ public class MidiTrack implements TimeListener, MidiConstants {
 		MainFrame.update(this);
 	}
 	
-    public final void setRecording(boolean rec) { // TODO
-		recording = rec;
-		MainFrame.update(this);
-	}
-    
 	public final void setCue(CUE cue) {
 		this.cue = cue;
 		Constants.execute(()->Cue.update(this));
@@ -384,6 +384,7 @@ public class MidiTrack implements TimeListener, MidiConstants {
 	}
 
 	public void trigger() {
+		setFrame(state.launch);
 		if (!clock.isActive()) 
 			setActive(!isActive());
 		else if (isActive()) {
@@ -499,5 +500,48 @@ public class MidiTrack implements TimeListener, MidiConstants {
 			return state.launch;
 		return input + 1;
 	}
-	
+
+	// TODO odd/swing subdivision
+	public long quantize(long tick) {
+		int resolution = s.getResolution();
+		if (clock.getTimeSig().div == 3 && (gate == Gate.SIXTEENTH || gate == Gate.EIGHTH))
+			return swing(tick, resolution);
+		
+		switch(gate) {
+		case SIXTEENTH: return tick - tick % (resolution / 4);
+		case EIGHTH: return tick - tick % (resolution / 2);
+		case QUARTER: return tick - tick % resolution;
+		case HALF: return tick - tick % (2 * resolution);
+		case WHOLE: return tick - tick % (4 * resolution);
+		case MICRO: return resolution > 16 ? 
+				tick - tick % (resolution / 8) : tick - tick % (resolution / clock.getTimeSig().div);
+		case RATCHET: // approx MIDI_24
+		default: // NONE
+			return tick;
+		}
+	}
+
+	protected long swing(long tick, int resolution) {
+		if (gate == Gate.SIXTEENTH) 
+			return tick - tick % (resolution / 6);
+		return tick - tick % (resolution / 3);
+		
+	}
+
+	public long quantizePlus(long tick) {
+		int resolution = s.getResolution();
+		switch(gate) {
+		case SIXTEENTH: return quantize(tick) + (resolution / 4);
+		case EIGHTH:	return quantize(tick) + (resolution / 2);
+		case QUARTER:	return quantize(tick) + (resolution);
+		case HALF:		return quantize(tick) + (2 * resolution);
+		case WHOLE: 	return quantize(tick) + (4 * resolution);
+		case MICRO:		return quantize(tick) + (resolution / 8);
+		case RATCHET:	return quantize(tick) + 1/*RATCHET*/;
+		default: return tick;
+		}
+	}
+
+
+
 }

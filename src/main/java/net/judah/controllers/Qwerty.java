@@ -7,8 +7,10 @@ import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.KeyStroke;
 
 import net.judah.api.AudioMode;
 import net.judah.gui.MainFrame;
@@ -29,17 +31,22 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
 	private static final int ASCII_ONE = 49;
 
 	public Qwerty(JPanel... tabs) {
+		
 		setMaximumSize(TAB_SIZE);
         setPreferredSize(TAB_SIZE);
         setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         setFocusable(true);
         setFocusTraversalKeysEnabled(false);
+        
+		getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("LEFT"), null);
+		getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("RIGHT"), null);
         addKeyListener(this);	
 		for (JPanel tab : tabs)
 			if (tab != null)
 				addTab(tab.getName(), tab);
 	}
-		@Override
+	
+	@Override
 	public void keyTyped(KeyEvent e) {
 		if (getSelectedComponent() instanceof MidiTab) {
 			((MidiTab)getSelectedComponent()).getMusician().keyTyped(e);

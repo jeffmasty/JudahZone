@@ -1,5 +1,6 @@
 package net.judah.song;
 
+import static net.judah.JudahZone.*;
 import static net.judah.gui.Size.TAB_SIZE;
 
 import java.awt.Dimension;
@@ -17,20 +18,11 @@ import javax.swing.JPanel;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
-import net.judah.api.ProcessAudio.Type;
 import net.judah.api.TimeListener;
-import net.judah.fx.Fader;
-import net.judah.fx.LFO.Target;
 import net.judah.gui.MainFrame;
 import net.judah.gui.settable.Songs;
 import net.judah.gui.widgets.Btn;
-import net.judah.looper.Loop;
-import net.judah.looper.Looper;
-import net.judah.midi.JudahClock;
-import net.judah.midi.Signature;
 import net.judah.mixer.Channel;
-import net.judah.mixer.DJJefe;
-import net.judah.mixer.Zone;
 import net.judah.seq.MidiTrack;
 import net.judah.seq.Seq;
 import net.judah.seq.TrackList;
@@ -38,30 +30,19 @@ import net.judah.util.RTLogger;
 
 /** left: SongView, right: midi tracks list*/
 @Getter
-public class SongTab extends JPanel implements TimeListener {
-	
-	private final Looper looper;
-	private final DJJefe mixer;
-	private final JudahClock clock;
-	private final Zone instruments;
-	private final Seq seq;
+public class SongTab extends JPanel implements TimeListener, Cmdr {
 	
 	private Song song;
 	private Scene current;
 	private Scene onDeck;
 	private int count;
+	private String[] keys;
 	private SongView songView;
 	private final ArrayList<SongTrack> tracks = new ArrayList<>();
 	private final JPanel holder = new JPanel();
 
-	public SongTab(Seq  sequencer, Looper looper, DJJefe mixer, Zone lineIn) {
-		this.mixer = mixer;
-		this.instruments = lineIn;
-		this.seq = sequencer;
-		this.looper = looper;
-		this.clock = looper.getClock();
-		clock.addListener(this);
-		
+	public SongTab() {
+		getClock().addListener(this);
 		setPreferredSize(TAB_SIZE);
 		Dimension listSz = new Dimension((int) (TAB_SIZE.width * 0.59f), TAB_SIZE.height - 100);
 		Dimension songSz = new Dimension((int) (TAB_SIZE.width * 0.4f), TAB_SIZE.height);
@@ -72,7 +53,7 @@ public class SongTab extends JPanel implements TimeListener {
 		trackPnl.setOpaque(true);
 		trackPnl.setLayout(new BoxLayout(trackPnl, BoxLayout.PAGE_AXIS));
 		
-		seq.getTracks().forEach(track-> tracks.add(new SongTrack(track)));
+		getSeq().getTracks().forEach(track-> tracks.add(new SongTrack(track)));
 		
 		JPanel title = new JPanel();
 		title.add(new JLabel("Song"));
@@ -110,11 +91,13 @@ public class SongTab extends JPanel implements TimeListener {
 		song = next;
 		setName(song.getFile() == null ? JudahZone.JUDAHZONE : song.getFile().getName());
 		holder.removeAll();
+
 		songView = new SongView(song, this);
 		holder.add(songView);
 		if (song.getScenes().isEmpty())
-			song.getScenes().add(new Scene(seq));
+			song.getScenes().add(new Scene(getSeq()));
 		launchScene(song.getScenes().get(0));
+		keys();
 	}
 
 	public void shift(boolean left) {
@@ -162,118 +145,35 @@ public class SongTab extends JPanel implements TimeListener {
 		return tracks.get(idx);
 	}
 
-	private Channel getChannel(int idx) {
-		if (idx < 0)
-			return JudahZone.getMains();
-		return mixer.getChannels().get(idx);
-	}
-	
 	public void trigger() {
 		int next = 1 + song.getScenes().indexOf(current); 
 		if (next < song.getScenes().size()) 
 			setOnDeck(song.getScenes().get(next));
 		else 
-			looper.verseChorus();
+			getLooper().verseChorus();
 	}
 	
 	/** @return true on valid Jump cmd */
-	private boolean execute(Param p) {
+	public boolean runParam(Param p) {
 		
-		switch (p.cmd) {
-			case Jump:
-				if (song.getScenes().size() > p.val && clock.isActive()) {
-					Scene next = song.getScenes().get(p.val);
-					launchScene(next);
-					peek(next);
-					return true;
-				}
-				
-			case Start:
-				if (p.val == 0) clock.end();
-				else  clock.begin();
-				break;
-			case Tempo:
-				if (p.val == -1)
-					clock.syncToLoop();
-				else 
-					clock.writeTempo(p.val); 
-				break;
-			case Length:
-				clock.setLength(p.val);
-				break;
-			case TimeSig:
-				if (Signature.values().length > p.val)
-					clock.setTimeSig(Signature.values()[p.val]);
-				break;
-			case TimeCode:
-				break;
-
-			case Delete:
-				looper.get(p.val).erase();
-				break;
-			case Dup:
-				looper.get(p.val).duplicate();
-				break;
-			case Record:
-				if (!clock.isActive())
-					break; // ignore in edit mode
-				Loop loop = looper.get(p.val);
-				loop.record(true);
-				if (loop.getType() != Type.FREE)
-					clock.syncUp(loop, 0);
-				MainFrame.update(loop);
-				break;
-			case RecEnd:
-				looper.get(p.val).record(false);
-				break;
-			case Solo:
-				looper.getSoloTrack().solo(p.val > 0);
-				break;
-			case Sync:
-				looper.onDeck(getLooper().get(p.val));
-				break;
-			case FadeOut:
-				Channel ch = getChannel(p.val);
-				Fader.execute(new Fader(ch, Target.Gain, Fader.DEFAULT_FADE, ch.getVolume(), 0));
-				break;
-			case FadeIn:
-				Fader.execute(new Fader(getChannel(p.val), Target.Gain, Fader.DEFAULT_FADE, 0, 51));
-				break;
-			case FX:
-				getChannel(p.val).setPresetActive(!getChannel(p.val).isPresetActive());
-				break;
-			case Latch:
-				instruments.get(p.val).getLatchEfx().latch();
-				break;
-			case Mute:
-				if (p.val == -1)
-					looper.verseChorus();
-				else
-					getChannel(p.val).setOnMute(true);
-				break;
-			case Unmute: 
-				getChannel(p.val).setOnMute(false);
-				break;
-			case OffTape:
-				instruments.get(p.val).setMuteRecord(true);
-				break;
-			case OnTape:
-				instruments.get(p.val).setMuteRecord(false);
-				break;
-			case SoloCh:
-				looper.getSoloTrack().setSoloTrack(instruments.get(p.val));
-				break;
-			case MPK:
-				JudahZone.getMidi().setKeyboardSynth(seq.getSynthTracks().get(p.val));
+		if (p.cmd == Cmd.Jump) {
+			int idx = Integer.parseInt(p.val);
+			if (song.getScenes().size() > idx && getClock().isActive()) {
+				Scene next = song.getScenes().get(idx);
+				launchScene(next);
+				peek(next);
+			}
+			return true;
 		}
+		Cmd.getCmdr(p.cmd).execute(p);
 		return false;
-	}
+	}			
 
 	private void go() { 
 		if (onDeck != null) {
 			Scene next = onDeck;
 			launchScene(next);
-			if (clock.isActive() && onDeck == null)
+			if (getClock().isActive() && onDeck == null)
 				peek(next);
 		}
 		
@@ -315,16 +215,17 @@ public class SongTab extends JPanel implements TimeListener {
 		onDeck = null;
 		// commands
 		for (Param p : s.getCommands())
-			if (execute(p)) // true = Jump Cmd
+			if (runParam(p)) // true = Jump Cmd
 				return;
 		current = s;
 		// track state
+		Seq seq = getSeq();
 		TrackList tracks = seq.getTracks();
 		for (int i = 0; i < current.getTracks().size(); i++)
 			if (tracks.size() > i)
 				seq.getTracks().get(i).setState(current.getTracks().get(i));
 		List<String> fx = current.getFx();
-		for (Channel ch : mixer.getChannels()) {
+		for (Channel ch : getMixer().getChannels()) {
 			if (fx.contains(ch.getName())) {
 				if (!ch.isPresetActive())
 					ch.setPresetActive(true);
@@ -363,6 +264,29 @@ public class SongTab extends JPanel implements TimeListener {
 		for (SongTrack track : tracks) 
 			if (track.getTrack() == t)
 				track.update();
+	}
+
+	private void keys() {
+		keys = new String[song.getScenes().size()];
+		for (int i = 0; i < keys.length; i++)
+			keys[i] = "" + i;
+	}
+	
+	@Override
+	public String lookup(int value) {
+		if (value >= 0 && value < song.getScenes().size())
+			return "" + value;
+		return "null"; // fail
+	}
+
+	@Override
+	public Object resolve(String key) {
+		return song.getScenes().get(Integer.parseInt(key));
+	}
+
+	@Override
+	public void execute(Param p) {
+		// no-op
 	}
 
 

@@ -13,7 +13,7 @@ public class Songs extends SetCombo<File> {
 	private static ArrayList<Songs> instances = new ArrayList<>();
 
 	public Songs() {
-		super(Folders.getSetlist().listFiles(), null);
+		super(Folders.sortSetlist(), null);
 		setRenderer(new FileRender());
 		instances.add(this);
 	}

@@ -217,15 +217,16 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
     }
 
     private void focus(Object o) {
-		if (o instanceof KnobMode) 
+		if (o instanceof DrumKit) { 
+			if (knobMode != KnobMode.Kits)
+				knobMode(KnobMode.Kits);
+			else 
+				knobPanel(JudahZone.getDrumMachine().getKnobs());
+		}
+		else if (o instanceof KnobMode) 
 			knobMode((KnobMode)o);
 		else if (o instanceof KnobPanel) 
 			knobPanel((KnobPanel)o);
-		else if (o instanceof DrumKit) {
-			KitKnobs knobs = JudahZone.getDrumMachine().getKnobs();
-			knobs.setKit((DrumKit)o);
-			knobPanel(knobs);
-		}
 		
 		if (o instanceof Channel) {
     		effects.setFocus((Channel)o);
@@ -409,8 +410,7 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 				break;
 		}
 		mode.setSelectedItem(knobMode);
-		if (focus != null)
-			knobPanel(focus);
+		knobPanel(focus);
     }
     
     private void knobPanel(KnobPanel view) {

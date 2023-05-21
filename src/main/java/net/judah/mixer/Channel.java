@@ -115,7 +115,7 @@ public class Channel {
         applyPreset();
     }
     
-    public void setDelay(Delay d) {
+    public void setDelay(Delay d) { // switch to slapback delay?
     	effects.remove(delay);
     	delay = d;
     	effects.add(delay);

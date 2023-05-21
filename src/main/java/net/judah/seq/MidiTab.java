@@ -13,6 +13,8 @@ public abstract class MidiTab extends JPanel {
 
 	protected final TrackList tracks;
 	protected MidiView current;
+	
+	/** ticks are zero-based */
 	protected final ArrayList<MidiPair> clipboard = new ArrayList<>();
 	
 	public MidiTab(TrackList list) {

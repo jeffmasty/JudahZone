@@ -2,7 +2,7 @@
 
 An open source GrooveBox (mixer/effects/looper/sequencer) written in Java for the Jack realtime sound system. (https://jackaudio.org/)
 
-8 mono or stereo input channels are currently handled, as well as 4 synchronized stereo recording loops. All audio channels have separately controlled internal Gain, EQ, Hi/Lo Cut, Chorus, Overdrive, Reverb, Delay, Compression, Stereo panning and an LFO. Loop recordings may be synchronized to each other or to the clock for different song lengths and structures. There is a 10-track MIDI sequencer consisting of 4 drum tracks and 6 piano roll editors. Synth tracks may be played through external gear or through the built-in subtractive synth engines (16 voices, 3 oscillators and the regular gamut of wave shapes, envelopes, resonant filters, detuning/harmonics and presets). The sample player holds 4 loops, 4 one-shots and 32 drum samples (4 drum kits with 8 samples per track). There is also a guitar tuner, sheet music viewer, external MIDI routing and clock support and a song editor.  The following MIDI controllers are integrated in the live system: Akai MPKmini, Korg NanoPad2 and Kontrol2, Line6 FBV Shortboard, Jamstik MIDI guitar, an old Arturia BeatStep, a Behringer Crave synth and their UMC1820 digital interface. A few recordings made: https://www.youtube.com/user/judahmu/videos  User generated material is stored in a separate project: https://github.com/jeffmasty/Setlist
+8 mono or stereo input channels are currently handled, as well as 4 synchronized stereo recording loops. All audio channels have separately controlled internal Gain, EQ, Hi/Lo Cut, Chorus, Overdrive, Reverb, Delay, Compression, Stereo panning and an LFO. Loop recordings may be synchronized to each other or to the clock for different song lengths and structures. A 10-track MIDI sequencer and feature-rich editor is provided consisting of 4 drum tracks and 6 piano rolls. Synth tracks may be played through external gear or through the built-in subtractive synth engines (16 voices, 3 oscillators and the regular gamut of wave shapes, envelopes, resonant filters, detuning/harmonics and presets). The sample player holds 4 loops, 4 one-shots and 32 drum samples (4 drum tracks/kits with 8 samples per kit). There is also a guitar tuner, sheet music viewer, external MIDI Clock support, MIDI routing and a song editor.  The following MIDI controllers are integrated in the live system: Akai MPKmini, Korg NanoPad2 and Kontrol2, Line6 FBV Shortboard, Jamstik MIDI guitar, an old Arturia BeatStep, a Behringer Crave synth and their UMC1820 digital interface. A few recordings made: https://www.youtube.com/user/judahmu/videos  User generated material is stored in a separate project: https://github.com/jeffmasty/Setlist
 
 ## Technologies
 
@@ -18,8 +18,10 @@ Wav File handling provided by Dr. Andrew Greensted (http://www.labbookpages.co.u
 
 Midi24 clock provided by (https://github.com/widdly/midiclock) and controlled with the Illposed OSC library (http://www.illposed.com/software/javaosc.html)
 
+SongPro.org adapted to process ChordPro files (https://github.com/SongProOrg/songpro-java)
+
 ## Build
-Built with Lombok (https://projectlombok.org/) and Maven. 
+Built with Java 11+, Lombok (https://projectlombok.org/) and Maven. 
 
 ## Running
 The Jack sound system needs to be up and running.  

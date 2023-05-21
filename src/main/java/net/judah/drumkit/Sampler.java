@@ -51,9 +51,13 @@ public class Sampler extends ArrayList<Sample> {
 		}
 		try {
 			stepSamples.add(new StepSample("Crickets", this, 4, 12));
+			stepSamples.add(new StepSample("Block", this, 4, 12));
+			stepSamples.add(new StepSample("Cowbell", this, 4, 12));
 			stepSamples.add(new StepSample("Claves", this, 4, 10, 14));
 			stepSamples.add(new StepSample("Ride", this, 0, 4, 8, 12));
+			stepSamples.add(new StepSample("Tambo", this, 0, 2, 4, 6, 8, 10, 12, 14));
 			stepSamples.add(new StepSample("Shaker", this, 0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15));
+			stepSamples.add(new StepSample("Clap", this, 4, 12));
 			stepSamples.add(new StepSample("Snares", this, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15));
 			stepSamples.add(new StepSample("4x4", this, 0, 4, 8, 12));
 			stepSample = stepSamples.get(0);

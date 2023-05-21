@@ -11,7 +11,7 @@ public class DrumEnvelope {
 	
 	public void reset() {
 		attack = 0; 
-		decay = Integer.MAX_VALUE;
+		decay = ad.getDecayTime();
 	}
 	
 	public float calcEnv() {

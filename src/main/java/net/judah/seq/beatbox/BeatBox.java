@@ -15,11 +15,12 @@ import net.judah.drumkit.DrumType;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.midi.Midi;
+import net.judah.seq.Edit;
+import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiPair;
 import net.judah.seq.MidiTab;
 import net.judah.seq.MusicBox;
 import net.judah.seq.Prototype;
-import net.judah.util.RTLogger;
 
 public class BeatBox extends MusicBox {
 	
@@ -42,17 +43,18 @@ public class BeatBox extends MusicBox {
     }
 
     @Override public void timeSig() {
-    	float old = unit;
 		unit = totalWidth / (2f * track.getClock().getSteps());
-		RTLogger.log(this, "TimeSig from " + old + " to " + unit);
 		repaint();
 	}
     
 	@Override public long toTick(Point p) {
-		return (long) (p.x / totalWidth * track.getWindow() + track.getLeft());
+		return track.quantize((long) (p.x / totalWidth * track.getWindow() + track.getLeft()));
 	}
 
 	@Override public int toData1(Point p) {
+		int idx = p.y / rowHeight;
+		if (idx >= PADS)
+			idx = PADS - 1;
 		return DrumType.values()[p.y / rowHeight].getData1();
 	}
     
@@ -68,6 +70,7 @@ public class BeatBox extends MusicBox {
             }
         }
         
+        long offset = track.getLeft();
         scroll.populate();
         ShortMessage on;
         int x, y;
@@ -75,7 +78,7 @@ public class BeatBox extends MusicBox {
         for (MidiPair p : scroll) {
         	on = (ShortMessage)p.getOn().getMessage();
 			y = DrumType.index(on.getData1());
-			x = (int) ( (p.getOn().getTick() / window) * totalWidth); 
+			x = (int) ( (  (p.getOn().getTick()-offset) / window) * totalWidth); 
 			if (y >=0 && x >= 0) {
 				if (selected.isBeatSelected(p))
 					highlight(g, x, y, on.getData2());
@@ -103,38 +106,64 @@ public class BeatBox extends MusicBox {
     	oval(g, x, y, highlightColor(data2));
     }
 
-    @Override public void mouseClicked(MouseEvent evt) {
+    @Override public void mousePressed(MouseEvent mouse) {
     	((BeatsTab)tab).setCurrent(view);
-
-    	Prototype click = translate(evt.getPoint());
-        MidiEvent existing = track.get(NOTE_ON, click.data1, click.tick);
-        // TODO right mouse button menu?
-        if (existing == null) {
-        	MidiEvent create = new MidiEvent(Midi.create(NOTE_ON, track.getCh(), click.data1, 
-        			(int) (track.getAmp() * 127f)), click.tick);
-        	track.getT().add(create);
-        	selected.clear();
-        	selected.add(new MidiPair(create, null));
-        }
-        else {
-        	MidiPair pair = new MidiPair(existing, null);
-        	if (evt.isControlDown()) {
-        		if (selected.isBeatSelected(pair)) {
-        			selected.remove(pair);
-        		}
-        		else {
-        			selected.add(pair);
-        		}
-        	}
-        	else {
-        		selected.clear();
-        		selected.add(pair);
-        	}
-        		
-        }
-        repaint();
-        MainFrame.qwerty();
+    	click = translate(mouse.getPoint());
+		MidiEvent existing = track.get(NOTE_ON, click.data1, click.tick);
+		if (mouse.isShiftDown()) { // drag-n-select;
+			drag = mouse.getPoint();
+			mode = DragMode.SELECT;
+		}
+		else if (existing == null) {
+			drag = mouse.getPoint();
+			mode = DragMode.CREATE;
+		}
+		else {
+			MidiPair pair = new MidiPair(existing, null);
+			if (mouse.isControlDown()) {
+				if (selected.contains(pair))
+					selected.remove(pair);
+				else 
+					selected.add(pair);
+			}
+			else {
+				if (selected.contains(pair)) {
+					dragStart(mouse.getPoint()); // already selected, start drag-n-drop
+				}
+				else { // simple select click
+					selected.clear();
+					selected.add(pair);
+				}
+			}
+		}
+		repaint();
     }
+    
+	@Override public void mouseReleased(MouseEvent mouse) {
+		if (mode != null) {
+			switch(mode) {
+			case CREATE: 
+				MidiEvent create = new MidiEvent(Midi.create(NOTE_ON, track.getCh(), click.data1, 
+						(int) (track.getAmp() * 127f)), click.tick);
+				push(new Edit(Type.NEW, new MidiPair(create, null)));
+				break;
+			case SELECT: 
+				Prototype a = translate(drag);
+				Prototype b = translate(mouse.getPoint());
+				drag = null;
+				selectArea(a.getTick(), b.getTick(), a.getData1(), b.getData1());
+				break;
+			case TRANSLATE: 
+				drop(mouse.getPoint());
+				break;
+			}
+			mode = null;
+			repaint();
+			click = null;
+		}
+        MainFrame.qwerty();
+	}
+
 
 	
 }

@@ -14,7 +14,7 @@ public class ParamList extends ArrayList<Param> {
 	public long getTimeCode() {
 		for (Param p : this)
 			if (p.cmd == Cmd.TimeCode)
-				return p.val;
+				return Long.parseLong(p.val);
 		return 0;
 	}
 	

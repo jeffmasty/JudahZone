@@ -41,7 +41,7 @@ public class Midi extends ShortMessage {
 	public static Midi create(int command, int channel, int data1, int data2) {
 		try { return new Midi(command, channel, data1, data2);
 		} catch(Throwable t) { 
-			RTLogger.warn("Midi.create()", t); }
+			RTLogger.warn("Midi.create(" + data1 + ", " + data2 + ")", t); }
 		return null;
 	}
 
@@ -129,8 +129,10 @@ public class Midi extends ShortMessage {
 	}
 	public boolean isProgChange() { return isProgChange(this); }
 
-	public static boolean isNoteOn(ShortMessage msg) {
-		return msg != null && msg.getStatus() - msg.getChannel() == NOTE_ON;
+	public static boolean isNoteOn(MidiMessage msg) {
+		if (msg instanceof ShortMessage == false)
+			return false;
+		return msg != null && msg.getStatus() - ((ShortMessage)msg).getChannel() == NOTE_ON;
 	}
 	
 	public static boolean isNoteOff(ShortMessage msg) {

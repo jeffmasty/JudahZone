@@ -2,6 +2,7 @@ package net.judah.util;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.Arrays;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -35,9 +36,14 @@ public class Folders {
     	return isDrums ? DRUM_IMPORT : PIANO_IMPORT;
     }
     	
-    
     @Setter @Getter private static File setlist = getSetlists()[0];
+    public static File[] sortSetlist() {
+    	File[] result = setlist.listFiles(); 
+    	Arrays.sort(result);
+    	return result;
+    }
 
+    
     @Getter static final File Log4j = new File(ROOT, "log4j.xml");
 
 }

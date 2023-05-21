@@ -31,25 +31,35 @@ public class Measure extends ArrayList<MidiPair> implements MidiConstants {
 	
 	/** loads two bars from measure of track into the supplied result, zero-basing the ticks*/
 	public void loadDrums() {
-		long oneBar = track.getBarTicks();
-		long startTick = track.getLeft();
-		long bTick = track.getRight();
-		long end = bTick + oneBar;
-
+		long start = track.getLeft();
+		long end = start + track.getWindow();
+		MidiEvent e;
 		for (int i = 0; i < t.size(); i++) {
-			MidiEvent e = t.get(i);
-			if (e.getTick() < startTick) continue;
-			if (e.getTick() >= bTick) break;
-			if (e.getMessage() instanceof ShortMessage && Midi.isNoteOn(((ShortMessage)e.getMessage())))
-				add(new MidiPair(new MidiEvent(e.getMessage(), e.getTick() - startTick), null));
-		}
-		for (int i = 0; i < t.size(); i++) {
-			MidiEvent e = t.get(i);
-			if (e.getTick() < bTick) continue;
+			e = t.get(i);
+			if (e.getTick() < start) continue;
 			if (e.getTick() >= end) break;
-			if (e.getMessage() instanceof ShortMessage && Midi.isNoteOn(((ShortMessage)e.getMessage())))
-				add(new MidiPair(new MidiEvent(e.getMessage(), e.getTick() - bTick + oneBar), null));
+			if (e.getMessage() instanceof ShortMessage && Midi.isNoteOn((e.getMessage())))
+				add(new MidiPair(e, null));
 		}
+//		long oneBar = track.getBarTicks();
+//		long startTick = track.getLeft();
+//		long bTick = track.getRight();
+//		long end = bTick + oneBar;
+//
+//		for (int i = 0; i < t.size(); i++) {
+//			MidiEvent e = t.get(i);
+//			if (e.getTick() < startTick) continue;
+//			if (e.getTick() >= bTick) break;
+//			if (e.getMessage() instanceof ShortMessage && Midi.isNoteOn(((ShortMessage)e.getMessage())))
+//				add(new MidiPair(new MidiEvent(e.getMessage(), e.getTick() - startTick), null));
+//		}
+//		for (int i = 0; i < t.size(); i++) {
+//			MidiEvent e = t.get(i);
+//			if (e.getTick() < bTick) continue;
+//			if (e.getTick() >= end) break;
+//			if (e.getMessage() instanceof ShortMessage && Midi.isNoteOn(((ShortMessage)e.getMessage())))
+//				add(new MidiPair(new MidiEvent(e.getMessage(), e.getTick() - bTick + oneBar), null));
+//		}
 	}
 	
 	
@@ -57,7 +67,6 @@ public class Measure extends ArrayList<MidiPair> implements MidiConstants {
 	public void loadPiano() {
 		stash.clear();
 		long startTick = track.getLeft();
-
 		long end = startTick + track.getWindow(); 
 		for (int i = 0; i < t.size(); i++) { 
 			MidiEvent e = t.get(i);

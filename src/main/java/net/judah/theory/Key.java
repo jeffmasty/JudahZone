@@ -1,4 +1,4 @@
-package net.judah.api;
+package net.judah.theory;
 
 import javax.sound.midi.ShortMessage;
 
@@ -29,10 +29,25 @@ public enum Key {
     	return Key.values()[data1 % 12].alt == null;
     }
     
+    public static Key lookup(String txt) {
+    	for (Key k : values())
+    		if (k.name().equals(txt) || txt.equals(k.alt)) 
+    			return k;
+    	return C; // fail
+    }
+    
     public Key key(ShortMessage m) {
 		return Key.values()[m.getData1() % 12];
 	}
 
     public String alt() { return alt; }
+
+	public Key offset(int offset) {
+		int target = ordinal() + offset;
+		while (target < 0)
+			target += Key.values().length;
+		target %= Key.values().length;
+		return Key.values()[target];
+	}
     
 }

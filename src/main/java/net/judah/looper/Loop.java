@@ -172,7 +172,7 @@ public class Loop extends AudioTrack {
     	
     	int counter = tapeCounter.get();
 		readRecordedBuffer();
-		if (active && !onMute && hasRecording()) {
+		if (active && !onMute && hasRecording() && recordedBuffer != null) {
 			playFrame(leftPort.getFloatBuffer(), rightPort.getFloatBuffer());
 		}
 		if (!recording()) 

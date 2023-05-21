@@ -11,7 +11,7 @@ public class Param {
 		CLOCK, LOOP, CH
 	}
 	
-	Cmd cmd;
-	int val;
+	public Cmd cmd;
+	public String val = "?";
 	
 }

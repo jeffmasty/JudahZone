@@ -85,7 +85,7 @@ public class TrackKnobs extends KnobPanel {
 				track.setFrame(Constants.ratio(data2, MidiConstants.MAX_FRAMES));
 				return true;
 			case 3: 
-				track.setAmp(Constants.midiToFloat(data2));
+				track.setAmp(data2 * 0.01f);
 				return true;
 			case 4: 
 				track.setCue((CUE) Constants.ratio(data2 -1, CUE.values()));

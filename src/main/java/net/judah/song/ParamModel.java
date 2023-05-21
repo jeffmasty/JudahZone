@@ -8,35 +8,38 @@ public class ParamModel extends DefaultTableModel {
 	static final int COL_CMD = 0;
 	static final int COL_VAL = 1;
 	
-	private final List<Param> model;
+	private final List<Param> data;
 	
 	public ParamModel(List<Param> sequence) {
 		super (new Object[] { "Command", "Value"}, 0);
-		model = sequence;
-		model.forEach(p -> addRow(new Object[] {p.getCmd(), p.getVal()}));
+		data = sequence;
+		data.forEach(p -> addRow(new Object[] {p.getCmd(), p.getVal()}));
 	}
 	
 	@Override
 	public Class<?> getColumnClass(int idx) {
 		switch (idx) {
 			case COL_CMD: return Cmd.class;
-			case COL_VAL: return Integer.class;
+			case COL_VAL: return String.class;
 		}
 		return super.getColumnClass(idx);
 	}
 
 	public Param getRow(int i) {
-		return model.get(i);
+		return data.get(i);
 	}
 	
 	@Override
 	public void setValueAt(Object val, int row, int column) {
-		if (column == COL_CMD)
-			model.get(row).setCmd((Cmd)val);
+		if (column == COL_CMD) {
+			data.get(row).setCmd((Cmd)val);
+			// TODO update value options
+		}
 		else 
-			model.get(row).setVal((int)val);
+			data.get(row).setVal("" + val);
 		super.setValueAt(val, row, column);
 	}
+	
 //	public ArrayList<Scene> getFilteredData() {
 //		ArrayList<Scene> result = new ArrayList<Scene>();
 //		for (int i = 0; i < getRowCount(); i++)
