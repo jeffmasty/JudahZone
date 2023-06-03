@@ -1,20 +1,22 @@
 TODO:
 
-PianoBox drag n drop other frames, BeatBox other frames
-
-Synth track follow Chord sheets, Arpeggiator (Racman sequence)
-ChordPro parser: https://github.com/SongProOrg/songpro-java  https://github.com/saipanman95/chordpro-parser
-walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
-hanging chads (unpaired NoteOn across frames)
+ABS/REL/MPK/REC
+MIDI file format bug, Solotrack/Sync bug
+update MidiGui ProgChange, MiniSeq color mode
+ChordPro directives, sections
+Arpeggiator gate, Swing Pt.II
 Loop copy/paste/chop/save,  Record session, Midi looper
-bass track no amp/vol, kit knobs scratchy, sample packs
-Editor falling water/zoomIn-Out/gain(mouseWheel)
+Delay and LFO sync to Clock & TapTempo
+bass track no amp/vol, kit knobs scratchy, sample packs, setlists
+Synth envelope to filter resonance
+walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
+hanging chads (unpaired NoteOn across frames), DragNDrop other frames
+Editor falling water/zoomIn-Out
 DBIndicator, Scope, Meters, Crave clock sync 
 Synth: LFO, glide, PWM, mono-synth
-IR Reverb, Delay and LFO sync to Clock & TapTempo
 Probability, Ritardando, CC in Midi tracks
 Sampler Fx (granularity, pitched frequency, wet)
-DrumSynth, Vocoder, Phasor, Shepherd
+IR Reverb, DrumSynth, Phasor, Shepherd, Vocoder
 record record record youtubes
 README credits
 make client-server architecture
@@ -42,6 +44,7 @@ https://github.com/ryukau/LV2Plugins
 Jack's alsa driver/client tries to use SND_PCM_FMT_S32_LE, signed 32-bit PCM little endian, 
 which is the format used by all current 24 bit audio cards except for some USB interfaces
 drum options:  DrMr, drumkv1-jack, hydrogen, fluid, drumsynth, black pearl
+ChordPro parser: https://github.com/SongProOrg/songpro-java  https://github.com/saipanman95/chordpro-parser
 
 sequencer:
 https://github.com/truj/midica/tree/master/src/org/midica/midi
@@ -131,8 +134,9 @@ separate setlist and code
 export beatbox as midi file, quantization
 midi-fluent Song editor
 BeatBox absolute resolution, Swing and Waltz gracefully 
-MidiEditor undo/redo/copy/paste/transpose/translate/drag-n-drop/record live
-ERRNOBUF - recover MIDI when bridge fails
+MidiEditor undo/redo/copy/paste/transpose/translate/drag-n-drop/velocity/record live
+ERRNOBUF - recover Jack MIDI when ALSA bridge fails
+Arpeggiator, ChordPro parser, Synth track follow chord sheets
 
 
 

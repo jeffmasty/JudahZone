@@ -19,9 +19,9 @@ public class PianoView extends MidiView implements PianoSize {
 		grid = new PianoBox(PIANO_GRID, this, (PianoSteps)steps, piano, tab);
 		setLayout(null);
 		add(menu);
+		add(instrumentPanel);
 		add(steps);
 		add(grid);
-		add(instrumentPanel);
 	}
 	
 }

@@ -14,6 +14,7 @@ import net.judah.gui.Size;
 import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.knobs.TrackKnobs;
 import net.judah.midi.Midi;
+import net.judah.seq.chords.ChordTrack;
 import net.judah.song.*;
 import net.judah.util.RTLogger;
 
@@ -28,8 +29,12 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
 	private final TrackList drumTracks;
 	private final TrackList synthTracks;
 	private final ArrayList<TrackKnobs> knobs = new ArrayList<>();
-
-	public Seq(TrackList drumTracks, TrackList synthTracks) {
+	
+	
+	private final ChordTrack chordTrack;
+	
+	public Seq(TrackList drumTracks, TrackList synthTracks, ChordTrack chords) {
+		this.chordTrack = chords;
 		this.drumTracks = drumTracks;
 		drumTracks.forEach(track->track.setCycle(CYCLE.AB));
 		this.synthTracks = synthTracks;
@@ -97,7 +102,7 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
         hats.getMidiOut().progChange("Hats");
         MidiTrack fills = byName(KitMode.Fills.name());
         fills.load(new File(fills.getFolder(), "Fills1"));
-        fills.setCue(CUE.Hot);
+        fills.setCue(Cue.Hot);
         fills.getMidiOut().progChange("VCO");
 	}
 
@@ -108,12 +113,16 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
     			RTLogger.warn(this, "Missing " + info.getTrack());
     			continue;
     		}
-    		
+    		if (info.getFile() != null && info.getFile().isFile()) 
+    			t.load(info.getFile());
+    		t.setCue(info.getCue());
+    		t.setGate(info.getGate());
+    		if (info.getArp() != null) {
+    			t.getArp().setMode(info.getArp().getAlgo());
+    			t.getArp().setRange(info.getArp().getRange());
+    		}
     		if (false == info.getProgram().equals(t.getMidiOut().getProg(t.getCh()))) 
     			t.getMidiOut().progChange(info.getProgram(), t.getCh());
-    		if (info.getFile() != null && !info.getFile().isEmpty()) {
-    			t.load(new File(info.getFile()));
-    		}
     	} 
 
 	}
@@ -154,5 +163,6 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
 		if (p.cmd == Cmd.Length)
 				JudahZone.getClock().setLength(Integer.parseInt(p.val));
 	}
+
 	
 }

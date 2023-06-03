@@ -5,6 +5,7 @@ import static net.judah.JudahZone.getPresets;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.event.ActionListener;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -16,6 +17,7 @@ import net.judah.fx.Preset;
 import net.judah.fx.PresetsDB;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
+import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.ModalDialog;
 import net.judah.mixer.Channel;
 import net.judah.util.Constants;
@@ -66,28 +68,22 @@ public class PresetsGui extends JPanel {
     	buttons.setLayout(new BoxLayout(buttons, BoxLayout.Y_AXIS));
         buttons.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 
-        JButton save = new Button(" Save ");
-        JButton create  = new Button("Create");
-        JButton delete  = new Button("Delete");
-        JButton copy    = new Button(" Copy ");
-        JButton paste   = new Button(" Paste");
-        JButton up      = new Button("  Up  ");
-        JButton down    = new Button(" Down ");
-        create.addActionListener(e -> {create();});
-        save.addActionListener(e -> {current(list.getSelectedIndex());});
-
+        JButton save 	= new Button(" Save ", e->current(list.getSelectedIndex()));
+        JButton create  = new Button("Create", e->create());
+        JButton delete  = new Button("Delete", e->delete(list.getSelectedIndex()));
+        JButton copy    = new Button(" Copy ", e->copy(list.getSelectedIndex()));
+        JButton close 	= new Button("Close", e->ModalDialog.getInstance().setVisible(false));
+        
     	buttons.add(Box.createRigidArea(new Dimension(1, 15)));
         buttons.add(save);
         buttons.add(create);
         buttons.add(delete);
         buttons.add(copy);
-        buttons.add(paste);
         buttons.add(Box.createRigidArea(new Dimension(1, 5)));
-        buttons.add(up);
-        buttons.add(down);
         buttons.add(Box.createRigidArea(new Dimension(1, 8)));
         buttons.add(new JLabel("apply to:"));
         buttons.add(target);
+        buttons.add(close);
         buttons.add(Box.createVerticalGlue());
         for (Component c : buttons.getComponents())
             if (c instanceof JComponent)
@@ -98,6 +94,17 @@ public class PresetsGui extends JPanel {
     }
 
 	
+	private void copy(int idx) {
+		if (list.getSelectedIndex() < 0) return;
+		String name = Gui.inputBox("New Name:");
+		if (name == null || name.isBlank()) return;
+		
+		
+		Preset source = getPresets().get(idx);
+		presets.add(new Preset(name, source));
+		save();
+	}
+
 	private void applyTo() {
         if (list.getSelectedIndex() < 0) return;
         String search = "" + target.getSelectedItem();
@@ -111,9 +118,9 @@ public class PresetsGui extends JPanel {
         ch.setPresetActive(true);
     }
 
-    class Button extends JButton {
-        Button(String lbl) {
-            super(lbl);
+    class Button extends Btn {
+        Button(String lbl, ActionListener e) {
+            super(lbl, e);
             setPreferredSize(BTN_SZ);
             setMaximumSize(BTN_SZ);
         }
@@ -122,12 +129,13 @@ public class PresetsGui extends JPanel {
     public void delete(int idx) {
         if (idx < 0 || idx >= getPresets().size())
             throw new InvalidParameterException("" + idx);
+        getPresets().remove(idx);
     }
 
     public void create() {
         String name = Gui.inputBox("Preset Name:");
         if (name == null || name.isEmpty()) return;
-        JudahZone.getPresets().add(JudahZone.getFxRack().getChannel().toPreset(name));
+        presets.add(JudahZone.getFxRack().getChannel().toPreset(name));
         save();
     }
 
@@ -137,7 +145,7 @@ public class PresetsGui extends JPanel {
 
 
         Channel channel = JudahZone.getFxRack().getChannel();
-        Preset old = getPresets().get(idx);
+        Preset old = presets.get(idx);
         Preset replace = channel.toPreset(old.getName());
         getPresets().set(idx, replace);
         save();

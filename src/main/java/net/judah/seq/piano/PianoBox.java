@@ -4,9 +4,9 @@ import static java.awt.event.KeyEvent.*;
 import static net.judah.seq.MidiTools.*;
 
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
-import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 
@@ -168,7 +168,7 @@ public class PianoBox extends MusicBox implements BeatsSize {
 			switch(mode) {
 			case CREATE: try {
 				long tick = 1 + toTick(mouse.getPoint());
-				MidiEvent off = create(tick, NOTE_OFF, click.getData1(), 1);
+				MidiEvent off = Midi.createEvent(tick, NOTE_OFF, track.getCh(), click.getData1(), 1);
 				if (click.getTick() > off.getTick()) {
 					long temp = click.getTick();
 					click.setTick(off.getTick());
@@ -176,8 +176,8 @@ public class PianoBox extends MusicBox implements BeatsSize {
 					// RTLogger.log(this, "swapping " + off.getTick() + " to " + on.getTick());				
 				}
 				off.setTick(-1 + track.quantizePlus(tick));
-				MidiEvent start = create(click.getTick(), 
-						NOTE_ON, click.getData1(), (int) (track.getAmp() * 127f));
+				MidiEvent start = Midi.createEvent(click.getTick(), NOTE_ON, 
+						track.getCh(), click.getData1(), (int) (track.getAmp() * 127f));
 				push(new Edit(Type.NEW, new MidiPair(start, off)));
 				} catch (Exception e) {
 					RTLogger.warn(this, e); }
@@ -198,11 +198,21 @@ public class PianoBox extends MusicBox implements BeatsSize {
 		
 	}
 	
-	private MidiEvent create(long tick, int cmd, int data1, int data2) throws InvalidMidiDataException {
-		Midi midi = new Midi(cmd, track.getCh(), data1, data2);
-		return new MidiEvent(midi, tick);
+	@Override
+	public void drag(Point mouse) {
+		piano.highlight(toData1(mouse));
+		steps.highlight(mouse);
+		super.drag(mouse);
 	}
-
+	
+	@Override
+	public void keyTyped(KeyEvent e) {
+		super.keyTyped(e);
+		if (chromaticKeyboard(e.getKeyCode()) > 0) {
+			
+		}
+		
+	}
 	/**@return Z to COMMA keys are white keys, and black keys, up to 12, no match = -1*/
 	public static int chromaticKeyboard(final int keycode) {
 		switch(keycode) {
@@ -222,6 +232,27 @@ public class PianoBox extends MusicBox implements BeatsSize {
 			default: return -1;
 		}
 	}
-
 	
 }
+
+
+//	public boolean keyPressed(final int keycode) { 
+//		int note = chromaticKeyboard(keycode);
+//		if (note < 0) {
+//			if (keycode == VK_UP) 
+//				return setOctave(true); 
+//			else if (keycode == VK_DOWN)
+//				return setOctave(false);
+//			else 
+//				return false;
+//		}
+//		track.getMidiOut().send(Midi.create(Midi.NOTE_ON, track.getCh(), note + (octave * 12), 99), JudahMidi.ticker());
+//		return true;
+//	}
+//	public boolean keyReleased(int keycode) {
+//		int note = chromaticKeyboard(keycode);
+//		if (note < 0)
+//			return false;
+//		track.getMidiOut().send(Midi.create(Midi.NOTE_OFF, track.getCh(), note + (octave * 12), 99), JudahMidi.ticker());
+//		return true;
+//	}

@@ -59,7 +59,7 @@ public class Channel {
                 getLfo(), getFilter(), getParty(), getEq(),
                 getChorus(), getOverdrive(),
                 getDelay(), getReverb(), getCompression()});
-        preset = JudahZone.getPresets().getFirst();
+        preset = JudahZone.getPresets().getDefault();
         gui = new EffectsRack(this);
        	lfoKnobs = new LFOKnobs(this);
     }
@@ -83,7 +83,7 @@ public class Channel {
     private void applyPreset() {
     	reset();
     	if (preset == null)
-    		preset = JudahZone.getPresets().getFirst();
+    		preset = JudahZone.getPresets().getDefault();
         setting:
         for (Setting s : preset) {
             for (Effect e : effects) {
@@ -122,8 +122,9 @@ public class Channel {
     }
     
 	public void setOnMute(boolean mute) {
+		if (mute != onMute)
+			MainFrame.update(this);
 		onMute = mute;
-		MainFrame.update(this);
 	}
 
     public Preset toPreset(String name) { 
@@ -142,9 +143,6 @@ public class Channel {
 		for (Effect fx : effects)
 			if (fx != filter)
 				fx.setActive(false);
-		gain.set(Gain.PAN, 50);
-		if (this instanceof Instrument == false)
-			gain.set(Gain.VOLUME, 50);
 		MainFrame.update(this);
 	}
 

@@ -24,9 +24,9 @@ public class LineMix extends MixWidget {
 			title.setText(channel.getName());
 		else 
             title.setIcon(channel.getIcon());
+		mute.addActionListener(e->mute());
 	}
 
-	@Override
 	protected void mute() {
 		in.setMuteRecord(!mute.isSelected());
 	}
@@ -44,7 +44,7 @@ public class LineMix extends MixWidget {
 		
 		if (channel.isOnMute())  // line in/master track 
 			bg = Color.BLACK;
-		else if (muted())
+		else if (quiet())
 			bg = Color.DARK_GRAY;
 		
 		if (soloTrack.isSolo() && soloTrack.getSoloTrack() == in)

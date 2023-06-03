@@ -3,17 +3,17 @@ package net.judah.gui.settable;
 import java.util.HashSet;
 
 import net.judah.seq.CYCLE;
-import net.judah.seq.MidiTrack;
+import net.judah.seq.Computer;
 import net.judah.util.Constants;
 
 public class Cycle extends SetCombo<CYCLE> {
 	
 	private static final HashSet<Cycle> instances = new HashSet<>();
-	private final MidiTrack track;
+	private final Computer track;
 	
-	public Cycle(MidiTrack t) {
-		super(CYCLE.values(), t.getCycle());
-		track = t;
+	public Cycle(Computer track) {
+		super(CYCLE.values(), track.getCycle());
+		this.track = track;
 		instances.add(this);
 	}
 
@@ -25,7 +25,7 @@ public class Cycle extends SetCombo<CYCLE> {
 		update(track);
 	}
 	
-	public static void update(MidiTrack t) {
+	public static void update(Computer t) {
 		Constants.execute(()->{
 			for (Cycle c : instances)
 				if (c.track == t && c.getSelectedItem() != t.getCycle())

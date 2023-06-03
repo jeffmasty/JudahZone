@@ -10,7 +10,7 @@ import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
-import net.judah.seq.CUE;
+import net.judah.seq.Cue;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiTrack;
 
@@ -67,7 +67,7 @@ public class MpkTranspose extends JButton implements TimeListener {
 
 	public boolean setAmount(Midi midi) {
 		if (!active) return false;
-		if (track.getCue() == CUE.Hot)
+		if (track.getCue() == Cue.Hot)
 			amount = midi.getData1() - MidiConstants.MIDDLE_C;
 		else
 			onDeck = midi.getData1() - MidiConstants.MIDDLE_C;

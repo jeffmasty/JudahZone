@@ -123,9 +123,10 @@ public class SynthKnobs extends KnobPanel {
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		update();
 		listeners();
-		
-		synthOne.setBackground(synth == JudahZone.getSynth1() ? Pastels.GREEN : null);
-		synthTwo.setBackground(synth == JudahZone.getSynth2() ? Pastels.GREEN : null);
+		titleBar.setOpaque(true);
+		synthOne.setOpaque(true);
+		synthTwo.setOpaque(true);
+		bg();
 		synthOne.addActionListener(e->MainFrame.setFocus(JudahZone.getSynth1().getSynthKnobs()));
 		synthTwo.addActionListener(e->MainFrame.setFocus(JudahZone.getSynth2().getSynthKnobs()));
 		titleBar.add(synthOne);
@@ -135,7 +136,13 @@ public class SynthKnobs extends KnobPanel {
 	@Override
 	public JPanel installing() {
 		MainFrame.setFocus(synth);
+		bg();
 		return titleBar;
+	}
+	
+	private void bg() {
+		synthOne.setBackground(synth == JudahZone.getSynth1() ? C : null);
+		synthTwo.setBackground(synth == JudahZone.getSynth1() ? null : C);
 	}
 	
 	private void listeners() {

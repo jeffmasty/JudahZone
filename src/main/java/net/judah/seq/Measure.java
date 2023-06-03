@@ -41,25 +41,6 @@ public class Measure extends ArrayList<MidiPair> implements MidiConstants {
 			if (e.getMessage() instanceof ShortMessage && Midi.isNoteOn((e.getMessage())))
 				add(new MidiPair(e, null));
 		}
-//		long oneBar = track.getBarTicks();
-//		long startTick = track.getLeft();
-//		long bTick = track.getRight();
-//		long end = bTick + oneBar;
-//
-//		for (int i = 0; i < t.size(); i++) {
-//			MidiEvent e = t.get(i);
-//			if (e.getTick() < startTick) continue;
-//			if (e.getTick() >= bTick) break;
-//			if (e.getMessage() instanceof ShortMessage && Midi.isNoteOn(((ShortMessage)e.getMessage())))
-//				add(new MidiPair(new MidiEvent(e.getMessage(), e.getTick() - startTick), null));
-//		}
-//		for (int i = 0; i < t.size(); i++) {
-//			MidiEvent e = t.get(i);
-//			if (e.getTick() < bTick) continue;
-//			if (e.getTick() >= end) break;
-//			if (e.getMessage() instanceof ShortMessage && Midi.isNoteOn(((ShortMessage)e.getMessage())))
-//				add(new MidiPair(new MidiEvent(e.getMessage(), e.getTick() - bTick + oneBar), null));
-//		}
 	}
 	
 	
@@ -85,7 +66,7 @@ public class Measure extends ArrayList<MidiPair> implements MidiConstants {
 						new MidiEvent(Midi.create(NOTE_OFF, track.getCh(), s.getData1()), e.getTick())));
 			}
 		}
-		// anything left in accumulator?
+		// anything left in accumulator? // TODO hanging chads
 		for (MidiEvent e : stash) {
 			ShortMessage on = (ShortMessage)e.getMessage();
 			ShortMessage off = Midi.create(NOTE_OFF, track.getCh(), on.getData1(), on.getData2());

@@ -24,31 +24,31 @@ import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.Sample;
 import net.judah.drumkit.Sampler;
+import net.judah.fx.Gain;
 import net.judah.fx.LFO;
 import net.judah.gui.fx.FxPanel;
 import net.judah.gui.fx.MultiSelect;
-import net.judah.gui.fx.Row;
 import net.judah.gui.knobs.KitKnobs;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.knobs.LFOKnobs;
-import net.judah.gui.knobs.SampleKnobs;
 import net.judah.gui.settable.Program;
-import net.judah.gui.widgets.LoopWidget;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
-import net.judah.mixer.LoopMix;
 import net.judah.seq.MidiTab;
 import net.judah.seq.MidiTrack;
 import net.judah.seq.Seq;
 import net.judah.seq.TrackList;
 import net.judah.seq.beatbox.BeatsTab;
+import net.judah.seq.chords.Chord;
+import net.judah.seq.chords.ChordTrack;
 import net.judah.seq.piano.PianoTab;
 import net.judah.song.Scene;
 import net.judah.song.ScenesView;
 import net.judah.song.SongTab;
+import net.judah.song.SongTrack;
 import net.judah.song.SongView;
 import net.judah.synth.JudahSynth;
 import net.judah.util.Console;
@@ -73,6 +73,7 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 	private final Seq seq;
     private final Looper looper;
     private final MiniLooper loops;
+    private final ChordTrack chords;
 	private final JComboBox<KnobMode> mode = new JComboBox<>(KnobMode.values());
 	private final JudahMenu menu;
 	private final FxPanel effects;
@@ -82,7 +83,7 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
     private final JPanel left = new JPanel(); // clock, midi panel, fx controls
     private final JPanel knobHolder = new JPanel();
     
-    public MainFrame(String name, FxPanel controls, DJJefe djJefe, Seq sequencer, Looper looper, SongTab songs) {
+    public MainFrame(String name, FxPanel controls, DJJefe djJefe, Seq sequencer, Looper looper, SongTab songs, ChordTrack chords) {
     	super(name);
         instance = this;
         this.effects = controls;
@@ -90,7 +91,7 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
         this.looper = looper;
         this.seq = sequencer;
         this.songs = songs;
-
+        this.chords = chords;
         synthBox = new PianoTab(seq.getSynthTracks());
     	beatBox = new BeatsTab(seq.getDrumTracks());
     	menu = new JudahMenu(Size.WIDTH_KNOBS, looper);
@@ -116,7 +117,15 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
         	sheetMusic = new SheetMusicPnl(new File(Folders.getSheetMusic(), "Four.png"), TAB_SIZE);
         } catch (Exception e) { e.printStackTrace(); }
 
-        tabs = new Qwerty(songs, beatBox, synthBox, sheetMusic);
+        tabs = new Qwerty(songs, beatBox, synthBox, sheetMusic, chords.getChordSheet());
+        tabs.addChangeListener(change->{
+			if (tabs.getSelectedComponent() != null && tabs.getSelectedComponent() instanceof MidiTab) {
+				MidiTrack track = ((MidiTab)tabs.getSelectedComponent()).getCurrent().getTrack();
+				focus(track.getMidiOut());
+				focus(seq.getKnobs(track));
+			}
+		});
+
         beatBox.init();
         
         mode.setFont(Gui.BOLD13);
@@ -184,6 +193,7 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
     	sheetMusic(files[i]);
     }
 
+    
     public void sheetMusic(String s) {
     	sheetMusic(new File(Folders.getSheetMusic(), s));
     }
@@ -218,6 +228,7 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 
     private void focus(Object o) {
 		if (o instanceof DrumKit) { 
+			JudahZone.getDrumMachine().setCurrent((DrumKit)o);
 			if (knobMode != KnobMode.Kits)
 				knobMode(KnobMode.Kits);
 			else 
@@ -299,7 +310,7 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
     		}
 			if (o instanceof Sample) {// will also hit channel update
 				if (knobMode == KnobMode.Samples) 
-					((SampleKnobs)knobs).update((Sample)o);
+					JudahZone.getSampler().getView().update((Sample)o);
 			}
 			else if (o instanceof DrumSample) { // turn DrumPad green while playing
 				if (knobs instanceof KitKnobs)
@@ -331,14 +342,13 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 					beatBox.midiUpdate(true);
 				else if (o == beatBox.getBottom().getCurrent().getMidiOut())
 					beatBox.midiUpdate(false);
-				if (knobMode == KnobMode.Kits && o == ((KitKnobs)knobs).getKit())
+				if (knobMode == KnobMode.Kits && knobs instanceof KitKnobs && o == ((KitKnobs)knobs).getKit())
 					knobs.update();
 			}
 			else if (o instanceof MidiTrack) {
 				MidiTrack t = (MidiTrack)o;
 				miniSeq.update(t);
-				if (knobMode == KnobMode.Track)
-					knobs.update();
+				seq.getKnobs(t).update();
 				synthBox.update(t);
 				beatBox.update(t);
 				songs.update(t);
@@ -358,17 +368,13 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 				if (knobs instanceof LFOKnobs && ((LFOKnobs)knobs).getChannel() == ch)
 					knobs.update();
 			}
-
 			else if (o == mixer)
 				mixer.updateAll();
 			else if (o instanceof float[] /*PitchDetectionResult*/) {
 				effects.getChannel().getLfoKnobs().getTuner().process((float[])o);
 			}
-			else if (o instanceof LoopWidget) {
-				((LoopWidget)o).update();
-			}
-			else if (o instanceof LoopMix) {
-				((LoopMix)o).update();
+			else if (o instanceof Updateable) {
+				((Updateable)o).update();
 			}
 			else if (o instanceof KnobData) {
 				doKnob(((KnobData)o).idx, ((KnobData)o).data2);
@@ -377,13 +383,23 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 				if (effects.getChannel().getLfo() == o)
 					effects.getChannel().getGui().update();
 			}
-			else if (o instanceof Row)
-				((Row)o).update();
-			else if (o instanceof KnobPanel) 
-				((KnobPanel)o).update();
 			else if (o instanceof SongView) {
 				((SongView)o).update();
 				miniSeq.sceneText();
+			}
+			else if (o instanceof Chord) {
+				chords.getView().update();
+				chords.getChordSheet().update((Chord)o);
+			}
+			else if (o instanceof Gain) {
+				for (DrumKit kit : JudahZone.getDrumMachine().getKits())
+					if (kit.getGain() == o) {
+						if (effects.getChannel() == kit)
+							kit.getGui().update();
+						for (SongTrack t : songs.getTracks())
+							if (t.getTrack().getMidiOut() == kit)
+								t.update();
+					}
 			}
 			else  {
 				mixer.updateAll();
@@ -396,7 +412,8 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 
 	private void knobMode(KnobMode knobs) {
     	knobMode = knobs;
-		KnobPanel focus = null;
+		mode.setSelectedItem(knobMode);
+    	KnobPanel focus = null;
 		switch(knobs) {
 			case Midi: focus = JudahZone.getMidiGui(); break;
 			case Kits: focus = JudahZone.getDrumMachine().getKnobs(); 
@@ -405,11 +422,10 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 			case LFO: focus = JudahZone.getFxRack().getChannel().getLfoKnobs(); break;
 			case Synth: focus = JudahZone.getSynth1().getSynthKnobs(); 
 			break;
-			case Samples: focus = new SampleKnobs(JudahZone.getSampler()); 
+			case Samples: focus = JudahZone.getSampler().getView(); 
 				setFocus(JudahZone.getSampler());
 				break;
 		}
-		mode.setSelectedItem(knobMode);
 		knobPanel(focus);
     }
     
@@ -419,6 +435,11 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
     		return;
     	}
     	knobs = view;
+    	if (knobMode != view.getKnobMode()) {
+    		knobMode = view.getKnobMode();
+    		mode.setSelectedItem(knobMode);
+    	}
+
     	knobHolder.removeAll();
     	knobHolder.invalidate();
     	JPanel title = new JPanel();
@@ -453,7 +474,6 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
             UIManager.getLookAndFeel().getDefaults().put("JToggleButton.contentMargins", new Insets(1, 1, 1, 1));
             Thread.sleep(111); // let numbus start up
 		} catch (Exception e) { RTLogger.log(MainFrame.class, e.getMessage()); }
-
 	}
 
 	public static void qwerty() {
@@ -474,7 +494,8 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 			synthBox.getTracks().setCurrent(track);
 			tabs.setSelectedComponent(synthBox);
 		}
+		focus(track.getMidiOut());
+		focus(seq.getKnobs(track));
 	}
-
 	
 }

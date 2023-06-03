@@ -1,20 +1,18 @@
 package net.judah.seq.piano;
 
-import static java.awt.event.KeyEvent.*;
-
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.util.List;
 
+import javax.sound.midi.ShortMessage;
 import javax.swing.JPanel;
 
 import lombok.Getter;
+import net.judah.JudahZone;
 import net.judah.gui.Pastels;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
@@ -22,7 +20,7 @@ import net.judah.seq.MidiTab;
 import net.judah.seq.MidiTrack;
 import net.judah.seq.beatbox.BeatsSize;
 
-public class Piano extends JPanel implements BeatsSize, MouseListener, MouseWheelListener, MouseMotionListener {
+public class Piano extends JPanel implements BeatsSize, MouseListener, MouseMotionListener {
 
 	private final MidiTab tab;
 	private final MidiTrack track;
@@ -39,7 +37,6 @@ public class Piano extends JPanel implements BeatsSize, MouseListener, MouseWhee
 		setBounds(r);
 		addMouseListener(this);
 		addMouseMotionListener(this);
-		addMouseWheelListener(this);
 	}
 	
 	/** label Octave C
@@ -102,9 +99,9 @@ public class Piano extends JPanel implements BeatsSize, MouseListener, MouseWhee
 	//////  MOUSE  //////  
 	
 	@Override public void mousePressed(MouseEvent e) {
-		off();
+		sound(false);
 		pressed = tab.getCurrent().getGrid().toData1(e.getPoint());
-		on();
+		sound(true);
 	}
 	
 	@Override
@@ -117,45 +114,23 @@ public class Piano extends JPanel implements BeatsSize, MouseListener, MouseWhee
 		int next = tab.getCurrent().getGrid().toData1(e.getPoint());
 		if (next == pressed) return;
 		mouseMoved(e);
-		off();
+		sound(false);
 		pressed = next;
-		on();
+		sound(true);
 	}
 	@Override public void mouseReleased(MouseEvent e) {
-		off();
+		sound(false);
 	}
 
-	private void on() {
+	private void sound(boolean on) {
 		if (pressed < 0) return;
-		track.getMidiOut().send(Midi.create(Midi.NOTE_ON, track.getCh(), pressed, 99), JudahMidi.ticker());
-	}
-	
-	private boolean off() {
-		if (pressed < 0) return false;
-		track.getMidiOut().send(Midi.create(Midi.NOTE_OFF, track.getCh(), pressed, 99), JudahMidi.ticker());
-		pressed = -1;
-		return true;
-	}
-
-	/**@return Z to COMMA keys are white keys, and black keys, up to 12, no match = -1*/
-	public int chromaticKeyboard(final int keycode) {
-		switch(keycode) {
-			case VK_Z: return 0; // low C
-			case VK_S: return 1; 
-			case VK_X: return 2;
-			case VK_D: return 3;
-			case VK_C: return 4;
-			case VK_V: return 5; // F
-			case VK_G : return 6;
-			case VK_B : return 7; // G
-			case VK_H: return 8; 
-			case VK_N: return 9;
-			case VK_J: return 10;
-			case VK_M: return 11;
-			case VK_COMMA: return 12;// high C
-			
-			default: return -1;
-		}
+		ShortMessage msg = Midi.create(on ? Midi.NOTE_ON : Midi.NOTE_OFF, track.getCh(), pressed, (int) (track.getState().getAmp() * 127));
+		if (track.getMidiOut() == JudahZone.getFluid()) 
+			JudahMidi.queue(msg, JudahZone.getFluid().getMidiPort().getPort());
+		else 
+			track.getMidiOut().send(msg, JudahMidi.ticker());
+		if (!on)
+			pressed = -1;
 	}
 	
 	public boolean setOctave(boolean up) {
@@ -167,39 +142,6 @@ public class Piano extends JPanel implements BeatsSize, MouseListener, MouseWhee
 		return true;
 	}
 	
-	public boolean keyPressed(final int keycode) { 
-		int note = chromaticKeyboard(keycode);
-		if (note < 0) {
-			if (keycode == VK_UP) 
-				return setOctave(true); 
-			else if (keycode == VK_DOWN)
-				return setOctave(false);
-			else 
-				return false;
-		}
-		track.getMidiOut().send(Midi.create(Midi.NOTE_ON, track.getCh(), note + (octave * 12), 99), JudahMidi.ticker());
-		return true;
-	}
-	public boolean keyReleased(int keycode) {
-		int note = chromaticKeyboard(keycode);
-		if (note < 0)
-			return false;
-		track.getMidiOut().send(Midi.create(Midi.NOTE_OFF, track.getCh(), note + (octave * 12), 99), JudahMidi.ticker());
-		return true;
-	}
-
-	@Override
-	public void mouseWheelMoved(MouseWheelEvent wheel) {
-// 		boolean up = wheel.getPreciseWheelRotation() < 0;
-//		int velocity = track.getVelocity() * 100 + (up ? 5 : -1); // ??5
-//		if (velocity < 0)
-//			velocity = 0;
-//		if (velocity > 127)
-//			velocity = 127;
-//		track.setVelocity(velocity); // velocity converted to float
-//		RTLogger.log(this, "Track velocity: " + velocity);
-	}
-
 	@Override
 	public void mouseClicked(MouseEvent e) {
 	}

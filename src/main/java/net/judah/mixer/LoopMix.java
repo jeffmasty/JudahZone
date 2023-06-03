@@ -11,12 +11,13 @@ import net.judah.api.AudioMode;
 import net.judah.api.Notification;
 import net.judah.api.TimeListener;
 import net.judah.gui.MainFrame;
+import net.judah.gui.Updateable;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.util.RTLogger;
 
-public class LoopMix extends MixWidget implements TimeListener {
+public class LoopMix extends MixWidget implements TimeListener, Updateable {
 	public static final int BSYNC_UP = Integer.MAX_VALUE;
 	public static final int BSYNC_DOWN = 1000000;
 
@@ -35,7 +36,7 @@ public class LoopMix extends MixWidget implements TimeListener {
 		if (loop == looper.getLoopC())
 			rec.setText("free");
 		rec.addActionListener(e -> loop.trigger());
-		mute.addActionListener(e -> mute());
+		mute.addActionListener(e -> channel.setOnMute(!channel.isOnMute()));
 		if (loop == looper.getSoloTrack()) {
 			sync.setText("solo");
 			sync.addActionListener(e -> looper.getSoloTrack().toggle());
@@ -72,6 +73,8 @@ public class LoopMix extends MixWidget implements TimeListener {
 			staticTitle();
 		
 		mute.setBackground(loop.isOnMute() ? PURPLE : null);
+		if (mute.isSelected() != channel.isOnMute())
+			mute.setSelected(channel.isOnMute());
 		
 		Color bg = BLUE;
 		if (loop.isRecording() == AudioMode.RUNNING) {
@@ -87,7 +90,7 @@ public class LoopMix extends MixWidget implements TimeListener {
 			bg = ONDECK;
 		else if (channel.isOnMute())  // line in/master track 
 			bg = Color.BLACK;
-		else if (muted())
+		else if (quiet())
 			bg = Color.DARK_GRAY;
 		else if (loop.isPlaying() == AudioMode.RUNNING && loop.isActive())
 			bg = GREEN;

@@ -68,7 +68,9 @@ public class KorgMixer implements Controller {
 		
 		// knobs = drumkit or synths gain
 		else if (data1 >= knoboff && data1 < knoboff + 4) {
-			getDrumMachine().getKits().get(data1 - knoboff).getGain().set(Gain.VOLUME, data2);
+			Gain gain = getDrumMachine().getKits().get(data1 - knoboff).getGain();
+			gain.set(Gain.VOLUME, data2);
+			MainFrame.update(gain);
 		}
 		else if (data1 >= knoboff + 4 && data1 < knoboff + 8) {
 			data1 = data1 - (knoboff + 4);

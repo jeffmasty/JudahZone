@@ -11,14 +11,17 @@ import javax.swing.*;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 import lombok.Getter;
+import net.judah.JudahZone;
 import net.judah.controllers.Jamstik;
 import net.judah.drumkit.Sampler;
 import net.judah.fluid.FluidSynth;
 import net.judah.gui.Gui;
+import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.settable.Program;
 import net.judah.gui.settable.Songs;
 import net.judah.gui.widgets.Btn;
+import net.judah.gui.widgets.Click;
 import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.LengthWidget;
 import net.judah.midi.JudahClock;
@@ -34,6 +37,7 @@ import net.judah.util.RTLogger;
 /** clock tempo, loop length, setlist, midi cables */
 public class MidiGui extends KnobPanel {
 	public static final Dimension COMBO_SIZE = new Dimension(114, 28);
+	@Getter private final KnobMode knobMode = KnobMode.Midi;
 	
 	@Getter private final Songs songsCombo = new Songs();
 	private final JudahClock clock;
@@ -135,22 +139,28 @@ public class MidiGui extends KnobPanel {
 		JPanel result = new JPanel();
 		result.setLayout(new GridLayout(4, 1));
 		JPanel row = new JPanel();
-		row.add(new JLabel(getSynth1().getName()));
+		
+		row.add(new Click(getSynth1().getName(), e-> {
+			MainFrame.setFocus(KnobMode.Synth);	
+			midi.setKeyboardSynth(getSeq().get(getSynth1())); }));
 		row.add(Gui.resize(one, COMBO_SIZE));
 		result.add(row);
+
 		row = new JPanel();
-		row.add(new JLabel(getSynth2().getName()));
+		row.add(new Click(getSynth2().getName(), e-> {
+			MainFrame.setFocus(JudahZone.getSynth2().getSynthKnobs());
+			midi.setKeyboardSynth(getSeq().get(getSynth1())); }));
 		row.add(Gui.resize(two, COMBO_SIZE));
 		result.add(row);
 		
 		row = new JPanel();
-		row.add(new JLabel("Jam"));
+		row.add(new Click("JAM", e->getJamstik().toggle()));
 		row.add(Gui.resize(jamstik, COMBO_SIZE));
 		result.add(row);
-		mpkPanel.add(new JLabel("MPK"));
+		
+		mpkPanel.add(new Click("MPK", e->midi.getKeyboardSynth().getTransposer().toggle()));
         mpkPanel.add(Gui.resize(mpk, COMBO_SIZE));
 		result.add(mpkPanel);
-
 		return result;
 	}
 	

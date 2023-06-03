@@ -12,16 +12,10 @@ public class SigProvider implements Cmdr {
 	@Getter private final String[] keys = new String[Signature.values().length];
 
 	private SigProvider() {
+		for (int i = 0; i < Signature.values().length; i++)
+			keys[i] = Signature.values()[i].name;
 	}
 	
-//	@Override
-//	public int value(String key) {
-//		for (int i = 0; i < keys.length; i++)
-//			if (keys[i].equals(key))
-//				return i;
-//		return 0;
-//	}
-
 	@Override
 	public Signature resolve(String key) {
 		for (Signature s : Signature.values())

@@ -21,8 +21,8 @@ public class Fx extends SetCombo<Preset> implements ListCellRenderer<Preset> {
 	public Fx(Channel channel, Preset[] presets) {
 		super(presets, channel.getPreset());
 		this.ch = channel;
-		 ((JLabel)getRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
-		 Gui.resize(this, Size.COMBO_SIZE);
+		((JLabel)getRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
+		Gui.resize(this, Size.COMBO_SIZE);
 	}
 
 	@Override

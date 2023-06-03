@@ -12,11 +12,12 @@ public interface Musician extends MouseListener, MouseWheelListener, MouseMotion
 	long toTick(Point p);
 	int toData1(Point p);
 	Prototype translate(Point p) ;
+	void push(Edit e);
+	boolean undo();
+	boolean redo();
 	void delete();
 	void copy();
 	void paste();
-	boolean undo();
-	boolean redo();
 	void dragStart(Point p);
 	void drag(Point p);
 	void drop(Point p);

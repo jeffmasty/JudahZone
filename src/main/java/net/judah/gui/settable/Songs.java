@@ -13,7 +13,7 @@ public class Songs extends SetCombo<File> {
 	private static ArrayList<Songs> instances = new ArrayList<>();
 
 	public Songs() {
-		super(Folders.sortSetlist(), null);
+		super(Folders.sort(Folders.getSetlist()), null);
 		setRenderer(new FileRender());
 		instances.add(this);
 	}
@@ -44,7 +44,7 @@ public class Songs extends SetCombo<File> {
 	public static void refill() {
 		Constants.execute(()->
 			instances.forEach(combo->
-				combo.refill(Folders.getSetlist().listFiles(), JudahZone.getCurrent().getFile())));
+				combo.refill(Folders.sort(Folders.getSetlist()), JudahZone.getCurrent().getFile())));
 	}
 
 }

@@ -182,8 +182,7 @@ public class JudahMidi extends BasicClient implements Closeable {
         	jamstik = inPorts.get(IN.JAMSTIK.ordinal());
         }
         
-        // if (switchboard.isEmpty()) 
-        	RTLogger.log(this, switchboard.size() + " controllers connected");
+        RTLogger.log(this, switchboard.size() + " controllers connected");
 
         Thread timePolling = new Thread(scheduler);
         timePolling.setPriority(7);

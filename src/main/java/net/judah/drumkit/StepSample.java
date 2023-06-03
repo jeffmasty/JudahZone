@@ -5,7 +5,8 @@ import lombok.Setter;
 import net.judah.JudahZone;
 
 public class StepSample extends Sample {
-
+	private static final float STEP_BOOST = 0.125f;
+	
 	@Setter @Getter boolean on;
 	int[] steps;
 	
@@ -35,7 +36,7 @@ public class StepSample extends Sample {
 	public void process() {
 		if (!active || !hasRecording()) return;
 		readRecordedBuffer();
-		env = BOOST * sampler.stepMix;
+		env = STEP_BOOST * sampler.stepMix;
 		playFrame(leftPort.getFloatBuffer(), rightPort.getFloatBuffer()); 
     }
 

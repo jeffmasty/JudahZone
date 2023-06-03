@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.sound.midi.Receiver;
 
+import net.judah.fx.Gain;
 import net.judah.midi.MidiPort;
 
 public interface MidiReceiver extends Receiver, Closeable {
@@ -24,6 +25,8 @@ public interface MidiReceiver extends Receiver, Closeable {
 	String getProg(int ch);
 	
 	boolean isMuteRecord();
+	
+	Gain getGain();
 	
 
 }

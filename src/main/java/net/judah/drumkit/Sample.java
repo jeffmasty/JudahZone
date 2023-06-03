@@ -13,7 +13,7 @@ import net.judah.util.Folders;
 /** currently, plays ((crickets)) on 2 and 4 */
 public class Sample extends AudioTrack {
 	
-	protected static final float BOOST = 0.15f;
+	protected static final float BOOST = 0.25f;
 	protected final Sampler sampler;
 	@Getter protected File file;
 	
@@ -26,7 +26,6 @@ public class Sample extends AudioTrack {
 		this(name, type, left, right, sampler);
 		this.file = f;
 		setRecording(new Recording(file));
-		env = BOOST; // boost
 	}
 
 	/** blank sample */

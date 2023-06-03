@@ -33,11 +33,11 @@ public abstract class MidiView extends JPanel implements TimeListener, MidiConst
 	
 	@Override
 	public void update(Property prop, Object value) {
-		if (prop == Property.STEP && track.isActive() && isVisible()) {
+		// if (prop == Property.STEP && track.isActive() && isVisible()) {
 			// getSteps().setStart((int)value); // waterfall
-			getGrid().repaint();
-		}
-		else if (prop == Property.MEASURE) {
+			// getGrid().repaint();
+		//} else 
+		if (prop == Property.MEASURE) {
 			getSteps().timeSig();
 			getGrid().timeSig();
 		}

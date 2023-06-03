@@ -37,7 +37,8 @@ public class FileChooser {
 		if (result == JFileChooser.APPROVE_OPTION) {
 		    File selectedFile = fc.getSelectedFile();
 		    currentDir = fc.getCurrentDirectory();
-		    return selectedFile;
+		    return selectedFile == null ? null : 
+		    	new File(selectedFile.getAbsolutePath()); // JSON doesn't like File subclass
 		}
 		return null;
 	}

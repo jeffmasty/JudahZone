@@ -37,16 +37,6 @@ public abstract class MixWidget extends JPanel implements Pastels {
 	@Getter protected final JToggleButton fx = new JToggleButton("fx");
 	@Getter protected final JToggleButton sync = new JToggleButton("sync");
 
-
-	protected void mute() {
-		boolean target = channel.isOnMute();
-		boolean selected = mute.isSelected();
-		if (target != selected)
-			channel.setOnMute(selected);
-        mute.setBackground(selected ? PURPLE : null);
-	}
-
-	
 	protected RainbowFader volume;
 	protected final JLabel title = new JLabel("", CENTER);
 	protected JPanel sidecar = new JPanel(new GridLayout(3, 1));
@@ -80,7 +70,6 @@ public abstract class MixWidget extends JPanel implements Pastels {
 			MainFrame.setFocus(channel);}});
 		
 		fx.addActionListener(e -> channel.setPresetActive(!channel.isPresetActive())); 
-		mute.addActionListener(e -> mute());
 
 	}
 	
@@ -91,7 +80,8 @@ public abstract class MixWidget extends JPanel implements Pastels {
 		return c;
 	}
 
-	protected boolean muted() {
+	
+	protected boolean quiet() {
 		return channel.getGain().getGain() < 0.05f;
 	}
 	
@@ -102,7 +92,7 @@ public abstract class MixWidget extends JPanel implements Pastels {
 		indicators.sync();		
 		updateVolume();
 		fx.setSelected(channel.isPresetActive());
-		fx.setBackground(fx.isSelected() ? BLUE : null);
+		fx.setBackground(fx.isSelected() ? YELLOW : null);
 	}
 	
 	public void updateVolume() {

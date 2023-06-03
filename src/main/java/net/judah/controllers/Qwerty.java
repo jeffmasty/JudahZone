@@ -7,10 +7,8 @@ import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
-import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
-import javax.swing.KeyStroke;
 
 import net.judah.api.AudioMode;
 import net.judah.gui.MainFrame;
@@ -36,10 +34,11 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
         setPreferredSize(TAB_SIZE);
         setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         setFocusable(true);
-        setFocusTraversalKeysEnabled(false);
         
-		getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("LEFT"), null);
-		getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("RIGHT"), null);
+        // setFocusTraversalKeysEnabled(false);
+		// getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("LEFT"), null);
+		// getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("RIGHT"), null);
+        
         addKeyListener(this);	
 		for (JPanel tab : tabs)
 			if (tab != null)
@@ -81,7 +80,6 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
 			if (getComponentAt(i) == tab)
 				setTitleAt(i, tab.getName());
 			}
-
 	}
 	
 	public void tab(boolean fwd) {
@@ -95,7 +93,7 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
 
 	@Override
 	public void setSelectedIndex(int index) {
-		if (getSelectedIndex() != index)
+		if (getSelectedIndex() != index) 
 			super.setSelectedIndex(index);
 		requestFocusInWindow();
 	}
@@ -115,16 +113,10 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
 //				((MidiTab)main.getTab()).keyPressed(e);
 //			return true;
 //		}
-//		
-//		else if (e.getID() != KeyEvent.KEY_RELEASED) {
-//			return false;
-//		}
-//		
+//		else if (e.getID() != KeyEvent.KEY_RELEASED)  return false;
 //		if (main.getTab() instanceof MidiTab)
 //			((MidiTab)main.getTab()).keyReleased(e);
-//		if (e.isConsumed())
-//			return true;
-		
+//		if (e.isConsumed()) return true;
 		int code = e.getKeyCode();
         Channel focus = getFxRack().getChannel();
         Looper looper = getLooper();

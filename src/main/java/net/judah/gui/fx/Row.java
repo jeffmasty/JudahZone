@@ -5,12 +5,13 @@ import java.util.ArrayList;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.judah.gui.Updateable;
 import net.judah.gui.settable.Fx;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.mixer.Channel;
 
 @RequiredArgsConstructor
-public class Row {
+public class Row implements Updateable {
 
 	protected final Channel channel;
 	

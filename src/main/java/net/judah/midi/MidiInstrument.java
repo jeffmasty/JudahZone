@@ -19,8 +19,9 @@ import net.judah.util.Constants;
 public class MidiInstrument extends Instrument implements MidiReceiver {
 
 	protected final ArrayList<Integer> actives = new ArrayList<>();
-	protected String[] patches = new String[] {"none"};
+	protected String[] patches = new String[] {};
 	@Setter protected MidiPort midiPort;
+	boolean mono;
 	
 	// boolean doesProgChange
 	// boolean isMono
@@ -66,5 +67,8 @@ public class MidiInstrument extends Instrument implements MidiReceiver {
 		return "none";
 	}
 
+	public void setMono() {
+		mono = true;
+	}
 
 }

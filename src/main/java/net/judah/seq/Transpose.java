@@ -6,13 +6,13 @@ import java.util.ArrayList;
 
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.widgets.Btn;
+import net.judah.gui.widgets.Integers;
 import net.judah.gui.widgets.ModalDialog;
 import net.judah.midi.Midi;
 import net.judah.seq.Edit.Type;
@@ -52,14 +52,6 @@ public class Transpose {
 		view.push(e);
 	}
 
-	private class Integers extends JComboBox<Integer> {
-		Integers(int start, int end) {
-			for (int i = start; i < end; i++)
-				addItem(i);
-			setSelectedItem(0);
-		}
-	}
-	
 	/**
 	 * @param in source note (off is null for drums)
 	 * @param destination x = +/-ticks,   y = +/-data1

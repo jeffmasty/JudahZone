@@ -6,9 +6,10 @@ import javax.swing.JSlider;
 
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
+import net.judah.gui.Updateable;
 import net.judah.looper.Looper;
 
-public class LoopWidget extends JPanel {
+public class LoopWidget extends JPanel implements Updateable {
 	private static final String FRESH = "0.0s";
 	public static final int BSYNC_UP = Integer.MAX_VALUE;
 	public static final int BSYNC_DOWN = 1000000;

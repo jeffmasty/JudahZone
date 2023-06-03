@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import net.judah.gui.Pastels;
 
 @RequiredArgsConstructor 
-public enum CUE implements Pastels {
+public enum Cue implements Pastels {
 	Hot(PINK), Bar(ORANGE), Loop(YELLOW);
 	
 	@Getter private final Color color;

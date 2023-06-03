@@ -12,15 +12,19 @@ public class MainsMix extends MixWidget {
 			title.setText(channel.getName());
 		else 
             title.setIcon(channel.getIcon());
-
+		mute.addActionListener(e->channel.setOnMute(!channel.isOnMute()));
 	}
 
 	@Override
 	protected Color thisUpdate() {
 		if (channel.isOnMute())  
 			return Color.BLACK;
-		if (muted())
+		if (quiet())
 			return Color.DARK_GRAY;
+		
+		if (mute.isSelected() != channel.isOnMute())
+			mute.setSelected(channel.isOnMute());
+		
 		return BLUE; // Mains channel 
 	}
 	

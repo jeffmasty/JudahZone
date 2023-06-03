@@ -4,11 +4,14 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import net.judah.JudahZone;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 public class PresetsDB extends ArrayList<Preset> {
 	public static final String DEFAULT = "Freeverb";
+	private Preset standard;
+	
 	
     public PresetsDB() {
         this(Folders.getPresetsFile());
@@ -50,10 +53,13 @@ public class PresetsDB extends ArrayList<Preset> {
         return result.toString();
     }
 
-	public Preset getFirst() {
-		if (isEmpty()) 
-			return null;
-		return get(0);
+	public Preset getDefault() {
+		if (standard == null) {
+			standard = byName(DEFAULT);
+			if (standard == null) 
+				standard = JudahZone.getMains().toPreset(DEFAULT);
+		}
+		return standard;
 	}
 	
 	public ArrayList<String> getList() {

@@ -47,8 +47,7 @@ public class Gain implements Effect {
 
 	@Override
 	public void setActive(boolean active) {
-		if (!active)
-			stereo = 0.5f;
+		if (!active) stereo = 0.5f;
 	}
 
 	@Override

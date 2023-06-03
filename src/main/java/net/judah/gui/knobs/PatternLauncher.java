@@ -6,6 +6,7 @@ import java.awt.GridLayout;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -17,6 +18,7 @@ public class PatternLauncher extends JPanel {
 	private static final int SIZE = Size.STD_HEIGHT;
 	private static final int UNITS = 8;
 	
+	
 	class Button extends JLabel {
 		Button(String lbl, ActionListener action) {
 			super(lbl);
@@ -26,16 +28,17 @@ public class PatternLauncher extends JPanel {
 		}});}
 		
 	}
-	private final Button left, right;
+//	private final Button left, right;
 	private final MidiTrack track;
+	private final ArrayList<TrackPattern> patterns = new ArrayList<>();
 	private final JPanel holder = new JPanel();
 	
 	public PatternLauncher(MidiTrack track) {
 		setLayout(new FlowLayout(FlowLayout.LEFT, 1, 0));
 		this.track = track;
 		
-		left = new Button("<", e->position(false));
-		right = new Button(">", e->position(true));
+//		left = new Button("<", e->position(false));
+//		right = new Button(">", e->position(true));
 		Dimension holderSz = new Dimension(SIZE * UNITS, SIZE);
 		
 		holder.setLayout(new GridLayout(1, UNITS, 1, 0));
@@ -45,22 +48,21 @@ public class PatternLauncher extends JPanel {
 		setMaximumSize(new Dimension(holderSz.width + 2 * SIZE, SIZE));
 		setOpaque(true);
 		fill();
-		add(left);
+//		add(left);
 		add(holder);
-		add(right);
+//		add(right);
 	}
 
-	private void position(boolean right) {
-		
-	}
+//	private void position(boolean right) {	}
 	
 	public void update() {
-		for (int i = 0; i < holder.getComponentCount(); i++) {
-			if (holder.getComponent(i) instanceof TrackPattern)
-				((TrackPattern)holder.getComponent(i)).update();
-		}
-		left.setVisible(track.bars() > 6);
-		right.setVisible(track.bars() > 6);
+		
+		if (track.frames() != patterns.size())
+			fill();
+		for (TrackPattern pattern : patterns)
+			pattern.update();
+//		left.setVisible(track.bars() > 6);
+//		right.setVisible(track.bars() > 6);
 //		if (track.size() > UNITS) {
 //			left.setVisible(true);
 //			right.setVisible(true);
@@ -79,10 +81,10 @@ public class PatternLauncher extends JPanel {
 
 	public void fill() {
 		holder.removeAll();
+		patterns.clear();
 		int frames = track.frames();
 		for (int i = 0; i < frames; i++) 
-			holder.add(new TrackPattern(track, i));
-		
+			patterns.add((TrackPattern)holder.add(new TrackPattern(track, i)));
 		update();
 		invalidate();
 	}

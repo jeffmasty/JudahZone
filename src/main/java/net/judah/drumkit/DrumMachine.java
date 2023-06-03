@@ -1,7 +1,6 @@
 package net.judah.drumkit;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import org.jaudiolibs.jnajack.JackPort;
@@ -45,8 +44,6 @@ public class DrumMachine extends LineIn {
 	}
 	
 	public KitKnobs getKnobs() {
-		if (knobs.get(current) == null)
-			throw new NullPointerException(current + " --- " + Arrays.toString(knobs.keySet().toArray()));
 		return knobs.get(current);
 	}
 

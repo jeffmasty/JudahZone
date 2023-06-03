@@ -14,9 +14,9 @@ import lombok.Setter;
 // Combos: MidiGui: song, file, *6 synths, Track: *prog, file, pattern? LFO: type Synth: prog?
 public abstract class SetCombo<T> extends  JComboBox<T> {
 	
-	private static final Border HIGHLIGHT = BorderFactory.createSoftBevelBorder(
+	protected static final Border HIGHLIGHT = BorderFactory.createSoftBevelBorder(
 			BevelBorder.RAISED, Color.RED, Color.RED.darker());
-	private final Border old;
+	protected final Border old;
 	
 	@SuppressWarnings("rawtypes")
 	@Setter @Getter protected static SetCombo set;
@@ -42,7 +42,7 @@ public abstract class SetCombo<T> extends  JComboBox<T> {
 		removeAllItems();
 		for (T option : options) {
 			addItem(option);
-			if (selected.equals(option))
+			if (selected.equals(option) && selected != null)
 				setSelectedItem(selected);
 		}
 		addActionListener(listener);

@@ -122,8 +122,14 @@ public abstract class MusicBox extends JPanel implements Musician {
 			switch(intchar) {
 			case 1: selectFrame(); break; // ctrl-a
 			case 3: copy(); break; // ctrl-c
+			case 4: selectNone(); break; // ctrl-d
+			case 12: new Duration(this); break; // ctrl-l
+			case 18: undo(); break; // ctrl-r
+			case 19: track.save(); break; // ctrl-s
+			case 20: new Transpose(this); break; // ctrl-t
 			case 22: paste(); break; // ctrl-v
 			case 26: undo(); break; // ctrl-z
+			
 			default: RTLogger.log(this, "key: " + ch + "=" + intchar + ";" + e.getModifiersEx());
 			}
 		}
@@ -132,23 +138,61 @@ public abstract class MusicBox extends JPanel implements Musician {
 		else 
 			RTLogger.log(this, "key: " + ch + "=" + intchar + ";" + e.getModifiersEx());
 	}
-	// public void mouseReleased(MouseEvent e) { } subclass implement
-	// public void mousePressed(MouseEvent e) { } subclass implement
+
 	@Override public final void mouseEntered(MouseEvent e) {MainFrame.qwerty();}
 	@Override public void mouseMoved(MouseEvent e) { }
 	@Override public void mouseExited(MouseEvent e) { }
 	@Override public final void mouseClicked(MouseEvent e) { } 
-	@Override public final void mouseWheelMoved(MouseWheelEvent wheel) { }
 	@Override public final void keyPressed(KeyEvent e) {RTLogger.log(this, track.getName() + " pressed " + e.getKeyChar()); }
 	@Override public final void keyReleased(KeyEvent e) { RTLogger.log(this, track.getName() + " released " + e.getKeyChar());}
-	// if (e.getKeyCode() == CTRL_DOWN_MASK) switch(e.getKeyCode()) {
-	//        	case VK_UP: case VK_DOWN: case VK_LEFT: VK_RIGHT: break;  
-	//	MouseWheel: boolean up = wheel.getPreciseWheelRotation() < 0;
-	//	int velocity = menu.getVelocity().getValue() + (up ? 5 : -1); // ??5
-	//	if (velocity < 0)  velocity = 0;
-	//	if (velocity > 100)  velocity = 99;
-	//	menu.getVelocity().setValue(velocity);
-
+	// public void mouseReleased(MouseEvent e) { } subclass implement
+	// public void mousePressed(MouseEvent e) { } subclass implement
+	@Override public final void mouseWheelMoved(MouseWheelEvent wheel) { 
+		boolean up = wheel.getPreciseWheelRotation() < 0;
+		
+		if (selected.isEmpty()) {
+			int velocity = view.getMenu().getVol().getValue() + (up ? 5 : -1); // ??5
+			if (velocity < 0)  velocity = 0;
+			if (velocity > 100)  velocity = 99;
+			view.getMenu().getVol().setValue(velocity);
+			return;
+		}
+		float ratio = up ? 1.1f : 0.9f;
+		ArrayList<MidiPair> replace = new ArrayList<>();
+		int data2;
+		ShortMessage source, create;
+		for (MidiPair p : selected) {
+			if (p.getOn().getMessage() instanceof ShortMessage == false)
+				continue;
+			source = (ShortMessage) p.getOn().getMessage(); 
+			data2 = (int) (source.getData2() * ratio);
+			if (data2 == source.getData2())
+				data2 += up ? 1 : -1;
+			if (data2 > 127) 
+				data2 = 127;
+			else if (data2 < 1) // no ghosts
+				data2 = 1;
+			create = Midi.create(source.getCommand(), source.getChannel(), source.getData1(), data2);
+			replace.add(new MidiPair(new MidiEvent(create, p.getOn().getTick()) ,p.getOff()));
+		}
+		editDel(selected);
+		editAdd(replace);
+	}
+	
+	protected void length(Edit e, boolean undo) {
+		ArrayList<MidiPair> replace = new ArrayList<MidiPair>();
+		long ticks = e.getDestination().tick;
+		e.getNotes().forEach(p-> replace.add(new MidiPair(p.getOn(), 
+			new MidiEvent(p.getOff().getMessage(), p.getOn().getTick() + ticks))));
+		if (undo) {
+			editDel(replace);
+			editAdd(e.getNotes());
+		}
+		else {
+			editDel(e.getNotes());
+			editAdd(replace);
+		}
+	}
 
 	protected void transpose(ArrayList<MidiPair> notes, Prototype destination) {
 		editDel(notes);
@@ -176,17 +220,18 @@ public abstract class MusicBox extends JPanel implements Musician {
 			break;
 		case NEW:
 			editAdd(e.getNotes());
-			click = null;
 			break;
 		case TRANS:
 			if (track.isActive())
 				Constants.execute(new Panic(track.getMidiOut(), track.getCh()));
 			transpose(e.getNotes(), e.getDestination());
-			click = null;
 			break;
+		case LENGTH:
+			length(e, false);
 		default: // GAIN
-			break;
 		}
+		click = null;
+
 	}
 	
 	@Override
@@ -210,6 +255,8 @@ public abstract class MusicBox extends JPanel implements Musician {
 				Constants.execute(new Panic(track.getMidiOut(), track.getCh()));
 			decompose(e.getNotes(), e.getDestination());
 			break;
+		case LENGTH:
+			length(e, true);
 		default:
 			break;
 		}
@@ -217,9 +264,9 @@ public abstract class MusicBox extends JPanel implements Musician {
 		return true;
 	}
 
-	protected void editAdd(ArrayList<MidiPair> list) {
+	protected void editAdd(ArrayList<MidiPair> replace) {
 		selected.clear(); // add zero-based selection
-		for (MidiPair p : list) {
+		for (MidiPair p : replace) {
 			selected.add(p); 
 			track.getT().add(p.getOn());
 			if (p.getOff() != null)
@@ -237,6 +284,7 @@ public abstract class MusicBox extends JPanel implements Musician {
 	}
 	
 	/** execute edit and add to undo stack */
+	@Override
 	public void push(Edit e) {
 		stack.add(e);
 		caret = stack.size() - 1;	

@@ -79,9 +79,7 @@ public class JudahClock extends Thread implements TimeProvider {
 				new ArrayList<TimeListener>(listeners).forEach(
 						listener -> {if (listener != null) listener.update(n.prop, n.value);});
 			}
-		} catch (Exception e) {
-			RTLogger.warn(this, e);		
-		}
+		} catch (Exception e) { RTLogger.warn(this, e); }
 	}
 
 	private void midi24() {
@@ -101,11 +99,13 @@ public class JudahClock extends Thread implements TimeProvider {
 				announce(Property.BEAT, beat);
 			}
 		}
-		if (0 == midiPulseCount % unit) {
-			step = beat * timeSig.div + midiPulseCount / unit;// measure; 
+		if (midiPulseCount % unit == 0) {
+			step = beat * timeSig.div + midiPulseCount / unit;
 			letItBeKnown(STEP, step);
-			if (active)
+			if (active) {
+				JudahZone.getChords().step(step);
 				sampler.step(step);
+			}
 		}
 		if (!active)
 			return;
@@ -139,10 +139,9 @@ public class JudahClock extends Thread implements TimeProvider {
             end();
         
         else if (ShortMessage.CONTINUE == stat) {
-            RTLogger.log(this, "MIDI24 CONTINUE");
             letItBeKnown(TRANSPORT, JackTransportState.JackTransportRolling); 
             JudahZone.getMidi().synchronize(bytes);
-            RTLogger.log(JudahMidi.class.getSimpleName(), "CONT MidiSync");
+            RTLogger.log(this, "MidiSync CONTINUE");
         }
 	}
 
@@ -215,7 +214,6 @@ public class JudahClock extends Thread implements TimeProvider {
 		active = true;
 		announce(TRANSPORT, JackTransportState.JackTransportStarting);
 		JudahZone.getMidi().synchronize(MIDI_START);
-		RTLogger.log(JudahMidi.class.getSimpleName(), "PLAY MidiSync");
 	}
 
 	@Override
@@ -223,7 +221,6 @@ public class JudahClock extends Thread implements TimeProvider {
 	    active = false;
 	    JudahZone.getMidi().synchronize(MIDI_STOP);
 	    letItBeKnown(TRANSPORT, JackTransportState.JackTransportStopped);
-	    RTLogger.log(JudahMidi.class.getSimpleName(), "STOP MidiSync");
 	}
 
 	public void reset() {

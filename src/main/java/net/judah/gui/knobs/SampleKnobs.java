@@ -20,6 +20,7 @@ import net.judah.gui.widgets.Slider;
 public class SampleKnobs extends KnobPanel {
 
 	private final Sampler sampler;
+	@Getter private final KnobMode knobMode = KnobMode.Samples;
 	@Getter private final JPanel titleBar = new JPanel();
 	private final Slider vol; 
 	private final ArrayList<SamplePad> updates = new ArrayList<>();

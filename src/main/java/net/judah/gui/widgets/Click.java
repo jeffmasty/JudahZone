@@ -14,6 +14,11 @@ import net.judah.gui.Pastels;
 public class Click extends JLabel {
 	static Border border = new LineBorder(Pastels.BLUE, 1, true);
 
+	public Click(String msg, ActionListener l) {
+		this(msg);
+		addActionListener(l);
+	}
+	
     public Click(String msg) {
     	super(msg, JLabel.CENTER);
     	setBorder(border);

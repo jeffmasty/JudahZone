@@ -11,6 +11,8 @@ import lombok.Setter;
 import net.judah.api.ProcessAudio.Type;
 import net.judah.fx.Fader;
 import net.judah.gui.MainFrame;
+import net.judah.gui.knobs.KnobMode;
+import net.judah.gui.knobs.SampleKnobs;
 import net.judah.util.RTLogger;
 
 @Getter
@@ -40,6 +42,7 @@ public class Sampler extends ArrayList<Sample> {
 	@Getter private int selected;
 	private final ArrayList<StepSample> stepSamples = new ArrayList<>();
 	private StepSample stepSample;
+	private final SampleKnobs view;
 	
 	public Sampler(JackPort left, JackPort right) {
 		for (int i = 0; i < NAMES.length; i++) {
@@ -53,17 +56,18 @@ public class Sampler extends ArrayList<Sample> {
 			stepSamples.add(new StepSample("Crickets", this, 4, 12));
 			stepSamples.add(new StepSample("Block", this, 4, 12));
 			stepSamples.add(new StepSample("Cowbell", this, 4, 12));
+			stepSamples.add(new StepSample("Clap", this, 4, 12));
 			stepSamples.add(new StepSample("Claves", this, 4, 10, 14));
 			stepSamples.add(new StepSample("Ride", this, 0, 4, 8, 12));
 			stepSamples.add(new StepSample("Tambo", this, 0, 2, 4, 6, 8, 10, 12, 14));
 			stepSamples.add(new StepSample("Shaker", this, 0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15));
-			stepSamples.add(new StepSample("Clap", this, 4, 12));
 			stepSamples.add(new StepSample("Snares", this, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15));
 			stepSamples.add(new StepSample("4x4", this, 0, 4, 8, 12));
 			stepSample = stepSamples.get(0);
 		} catch (Exception e) {
 			RTLogger.warn(this, e);
 		}
+		view = new SampleKnobs(this);
 	}
 	
     /** play and/or record loops and samples in Real-Time thread */
@@ -77,6 +81,8 @@ public class Sampler extends ArrayList<Sample> {
 
 	public void play(Sample s, boolean on) {
 		if (on) {
+			if (MainFrame.getKnobMode() != KnobMode.Samples)
+				MainFrame.setFocus(KnobMode.Samples);
 			if (s.getType() == Type.ONE_SHOT) 
 				s.setTapeCounter(0);
 			else 

@@ -17,9 +17,9 @@ public interface Size {
     Dimension KNOB_PANEL = new Dimension(WIDTH_KNOBS - 2, HEIGHT_KNOBS - 2);
     Dimension MIXER_SIZE = new Dimension(WIDTH_FRAME - WIDTH_KNOBS, HEIGHT_MIXER);
     
-    Dimension COMBO_SIZE = new Dimension(100, 28);
+    Dimension COMBO_SIZE = new Dimension(100, 27);
     Dimension MEDIUM_COMBO = new Dimension(85, Size.STD_HEIGHT);
-    Dimension SMALLER_COMBO = new Dimension(67, 28);
+    Dimension SMALLER_COMBO = new Dimension(67, 27);
     Dimension MICRO = new Dimension(50, 23);
 
 }

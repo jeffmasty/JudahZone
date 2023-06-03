@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import net.judah.gui.widgets.FileRender;
 import net.judah.seq.MidiTrack;
 import net.judah.util.Constants;
+import net.judah.util.Folders;
 
 public class Folder extends SetCombo<File> {
 
@@ -25,40 +26,33 @@ public class Folder extends SetCombo<File> {
 		removeActionListener(listener);
 		removeAllItems();
 		addItem(null);
-		for (File f : track.getFolder().listFiles()) {
+		for (File f : Folders.sort(track.getFolder())) 
 			if (f.isFile()) 
 				addItem(f);
-		}
 		setSelectedItem(track.getFile());
 		addActionListener(listener);
 	}
 	
+	
+	@Override
+	public void override(File val) {
+		super.override(val);
+	}
+	
 	public static void update(MidiTrack t) {
-		Constants.execute(()->{
-			for (Folder f : instances)
-				if (f.track == t)
-					f.update();
-		});
+		for (Folder f : instances)
+			if (f.track == t && f.getBorder() != HIGHLIGHT)
+				f.update();
 	}
 	
 	public void update() {
 		if (track.getFile() != getSelectedItem())
 			override(track.getFile());
-//		if (getSelectedItem() == null) {
-//			if (track.getFile() != null)
-//				refill();
-//		}
-//		else if (false == getSelectedItem().equals(track.getFile()))
-//			refill(track.getFolder().listFiles(), track.getFile());
 	}
 
 	@Override
 	protected void action() {
-		File f = (File)getSelectedItem();
-		if (f == null) 
-			track.load(null);
-		else if (false == f.equals(track.getFile())) 
-			track.load(f);
+		track.load((File)getSelectedItem());
 	}
 
 	public static void refill(MidiTrack t) {

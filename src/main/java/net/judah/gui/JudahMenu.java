@@ -56,8 +56,6 @@ public class JudahMenu extends JMenuBar {
 		setSize(d);
 		setMinimumSize(d);
 		
-        for (File f : Folders.getSetlists()) 
-			setlist.add(new Actionable(f.getName(), e -> Folders.setSetlist(f)));
         	
 		song.add(new Actionable("Next", e->nextSong()));
         song.add(new Actionable("Save", e->save()));
@@ -72,8 +70,12 @@ public class JudahMenu extends JMenuBar {
         	}));
     	song.add(new Actionable("Reload", e->reload()));
         song.add(new Actionable("Load..", e -> loadSong(FileChooser.choose(Folders.getSetlist()))));
-    	song.add(new Actionable("New", e -> setCurrent(new Song())));
-        song.add(setlist);
+    	song.add(new Actionable("New", e -> setCurrent(new Song(getSeq(), (int)(getClock().getTempo())))));
+    	
+    	for (File f : Folders.getSetlists()) 
+			setlist.add(new Actionable(f.getName(), e -> Folders.setSetlist(f)));
+        // song.add(setlist); // TODO
+    	
     	
     	erase.add(new Actionable("All", e->getLooper().clear()));
     	looper.forEach(loop->erase.add(new Actionable(loop.getName(), e->loop.erase())));
@@ -108,7 +110,8 @@ public class JudahMenu extends JMenuBar {
         	getFrame().getTabs().setSelectedComponent(getFrame().getSheetMusic());
         }));
         
-        // views.add(new Actionable("ChordPro", e->new ChordPro()));
+        views.add(new Actionable("ChordPro..", e-> getChords().load(
+        		FileChooser.choose(Folders.getChordPro()), getCurrent())));
         
         add(loops);
         add(song);

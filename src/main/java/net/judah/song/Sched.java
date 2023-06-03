@@ -9,7 +9,7 @@ public class Sched {
 	
 	// serialize state
 	public boolean active;               
-	public CYCLE cycle = CYCLE.ABCD;     
+	public CYCLE cycle = CYCLE.AB;     
 	public int launch;                   
 	public float amp = 0.65f;            
 	

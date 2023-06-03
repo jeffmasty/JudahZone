@@ -28,6 +28,7 @@ public class KitKnobs extends KnobPanel {
 	private final JComboBox<Modes> modes = new JComboBox<>(Modes.values());
 	
 	@Getter private final DrumKit kit;
+	@Getter private final KnobMode knobMode = KnobMode.Kits;
 	private JComboBox<String> preset = new CenteredCombo<>();
 	private ArrayList<KitPad> pads = new ArrayList<>(DrumKit.SAMPLES);
 	private final JComboBox<KitMode> kits = new JComboBox<>(KitMode.values());

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
@@ -19,6 +20,7 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 import net.judah.drumkit.GMDrum;
+import net.judah.seq.chords.Key;
 import net.judah.util.RTLogger;
 
 /** Utilities added to javax ShortMessage, with an optional source Midi port */
@@ -51,6 +53,10 @@ public class Midi extends ShortMessage {
         return create(command, 0, data1, data2);
     }
 
+    public static MidiEvent createEvent(long tick, int cmd, int ch, int data1, int data2) {
+    	Midi midi = create(cmd, ch, data1, data2);
+    	return new MidiEvent(midi, tick);
+	}
 
 	/** @see javax.sound.midi.ShortMessage#setMessage(int, int, int, int) */
 	public Midi(int command, int channel, int data1, int data2) throws InvalidMidiDataException {
@@ -81,6 +87,8 @@ public class Midi extends ShortMessage {
         b.append(getChannel()).append("/");
         if (getChannel() == 9)
         	b.append(GMDrum.lookup(getData1()).name());
+        else if (isNote())
+        	b.append(Key.key(getData1())).append(getData1() / 12);
         else 
         	b.append(getData1());
         b.append("/").append(getData2());
@@ -139,8 +147,8 @@ public class Midi extends ShortMessage {
 		return msg != null && msg.getStatus() - msg.getChannel() == NOTE_OFF;
 	}
 	
-	public static boolean isNote(ShortMessage msg) {
-		int stat = msg.getStatus() - msg.getChannel();
+	public static boolean isNote(MidiMessage msg) {
+		int stat = msg instanceof ShortMessage ? msg.getStatus() - ((ShortMessage)msg).getChannel() : msg.getStatus();
 		return stat == Midi.NOTE_OFF || stat == NOTE_ON;
 	}
 	public boolean isNote() { return isNote(this); }

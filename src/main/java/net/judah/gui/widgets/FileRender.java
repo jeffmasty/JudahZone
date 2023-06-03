@@ -14,7 +14,14 @@ public class FileRender implements ListCellRenderer<File> {
 	@Override
 	public Component getListCellRendererComponent(JList<? extends File> list, File value, int index, boolean isSelected,
 			boolean cellHasFocus) {
-		render.setText(value == null ? "?" : value.getName());
+		if (value == null) {
+			render.setText("?");
+			return render;
+		}
+		if (value.getName().indexOf('.') > 1)
+			render.setText(value.getName().substring(0, value.getName().lastIndexOf('.')));
+		else 
+			render.setText(value.getName());
 		return render;
 	}
 	
