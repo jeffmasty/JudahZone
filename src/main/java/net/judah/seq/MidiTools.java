@@ -11,7 +11,6 @@ import javax.sound.midi.Track;
 import net.judah.midi.Midi;
 
 public class MidiTools {
-    private static final Pattern work = new Pattern();
     
 	public static boolean match(MidiMessage a, MidiMessage b) {
 		if (a == null && b == null) return true;
@@ -26,11 +25,10 @@ public class MidiTools {
 		return a.equals(b);
 	}
 	
-		/**Piano lookup
+	/**Piano lookup
 	 * @param tick
 	 * @param cmd
-	 * @param data1
-	 */
+	 * @param data1 */
 	public static MidiPair lookup(long tick, int data1, Track t) {
 		MidiEvent found = null;
 		for (int i = 0; i < t.size(); i++) {
@@ -111,13 +109,6 @@ public class MidiTools {
 		return measureCount(ticks, measureTicks(resolution, beats));
 	}
 	
-	/** loads one bar from measure of track into the supplied result, zero-basing the ticks*/
-	public static AbstractCollection<MidiEvent> loadMeasure(int measure, MidiTrack track, AbstractCollection<MidiEvent> result) {
-		long start = measure * track.getBarTicks();
-		long end = start + track.getBarTicks();
-		return loadSection(start, end, track.getT(), result);
-	}
-	
 	public static AbstractCollection<MidiEvent> loadSection(long start, long end, Track t, AbstractCollection<MidiEvent> result) {
 		result.clear();
 		for (int i = 0; i < t.size(); i++) {
@@ -129,18 +120,6 @@ public class MidiTools {
 		return result;
 	}
 
-	/** copy/paste given measure to end of track */
-	public static void append(int measure, MidiTrack track) {
-		int target = measureCount(track.getT().ticks(), track.getBarTicks()) + 1;
-		long base = target * track.getBarTicks();
-		Track t = track.getT();
-		loadMeasure(measure, track, work);
-		for (MidiEvent e : work) {
-			t.add(new MidiEvent(e.getMessage(), e.getTick() + base));
-		}
-		
-	}
-	
 	/** @return true if delete was matched and removed from track */
 	public static boolean delete(MidiEvent delete, Track t) {
 		long tick = delete.getTick();
@@ -191,6 +170,25 @@ public class MidiTools {
 				p.getOff() == null ? null : new MidiEvent(p.getOff().getMessage(), p.getOff().getTick() - left));
 	}
 }
+
+//  private static final Pattern work = new Pattern();
+//	/** loads one bar from measure of track into the supplied result, zero-basing the ticks*/
+//	public static AbstractCollection<MidiEvent> loadMeasure(int measure, MidiTrack track, AbstractCollection<MidiEvent> result) {
+//		long start = measure * track.getBarTicks();
+//		long end = start + track.getBarTicks();
+//		return loadSection(start, end, track.getT(), result);
+//	}
+//	/** copy/paste given measure to end of track */
+//	public static void append(int measure, MidiTrack track) {
+//		int target = measureCount(track.getT().ticks(), track.getBarTicks()) + 1;
+//		long base = target * track.getBarTicks();
+//		Track t = track.getT();
+//		loadMeasure(measure, track, work);
+//		for (MidiEvent e : work) {
+//			t.add(new MidiEvent(e.getMessage(), e.getTick() + base));
+//		}
+//		
+//	}
 
 //	public static Note translate(MidiEvent e, MidiTrack track) {
 //		float twoBar = 2 * track.getBarTicks();
@@ -437,8 +435,6 @@ public class MidiTools {
 //				break;
 //		}
 //	}
-	
-
 
 //	public MidiEvent findNext(int cmd, int data1, int ref, long fromTick) {
 //		for (int i = ref; i < 4; i++) {
@@ -501,41 +497,4 @@ public class MidiTools {
 //			t.add(new MidiEvent(new ShortMessage(NOTE_OFF, notes[i], 1), (notes[i-1] + 1) * res + offset));
 //		}
 //		RTLogger.log(MidiTools.class, "oompah size " + t.size());
-//	}
-//    // TODO odd/swing subdivision
-//	public static long quantize(long tick, Gate gate, int resolution) {
-//		if (getClock().getTimeSig().div == 3 && (gate == Gate.SIXTEENTH || gate == Gate.EIGHTH))
-//			return swing(tick, gate, resolution);
-//		
-//		switch(gate) {
-//		case SIXTEENTH: return tick - tick % (resolution / 4);
-//		case EIGHTH: return tick - tick % (resolution / 2);
-//		case QUARTER: return tick - tick % resolution;
-//		case HALF: return tick - tick % (2 * resolution);
-//		case WHOLE: return tick - tick % (4 * resolution);
-//		case MICRO: return resolution > 16 ? 
-//				tick - tick % (resolution / 8) : tick - tick % (resolution / getClock().getTimeSig().div);
-//		case RATCHET: // approx MIDI_24
-//		default: // NONE
-//			return tick;
-//		}
-//	}
-//
-//	protected static long swing(long tick, Gate gate, int resolution) {
-//		if (gate == Gate.SIXTEENTH) 
-//			return tick - tick % (resolution / 6);
-//		return tick - tick % (resolution / 3);
-//	}
-//
-//	public static long quantizePlus(long tick, Gate gate, int resolution, Signature timeSig) {
-//		switch(gate) {
-//		case SIXTEENTH: return quantize(tick, gate, resolution) + (resolution / 4);
-//		case EIGHTH:	return quantize(tick, gate, resolution) + (resolution / 2);
-//		case QUARTER:	return quantize(tick, gate, resolution) + (resolution);
-//		case HALF:		return quantize(tick, gate, resolution) + (2 * resolution);
-//		case WHOLE: 	return quantize(tick, gate, resolution) + (4 * resolution);
-//		case MICRO:		return quantize(tick, gate, resolution) + (resolution / 8);
-//		case RATCHET:	return quantize(tick, gate, resolution) + 1 /*RATCHET*/;
-//		default: return tick;
-//		}
 //	}

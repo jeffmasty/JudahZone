@@ -155,7 +155,7 @@ public class JudahMidi extends BasicClient implements Closeable {
         	midiclock = inPorts.get(IN.MIDICLOCK.ordinal());
         }
         
-        while (JudahZone.getSeq() == null) // sync w/ audio Thread
+        while (JudahZone.getSeq() == null || JudahZone.getLooper() == null) // sync w/ audio Thread
         	Constants.sleep(10);
         if (sz > IN.KEYBOARD.ordinal()) {
         	keyboard = inPorts.get(IN.KEYBOARD.ordinal());
@@ -297,10 +297,18 @@ public class JudahMidi extends BasicClient implements Closeable {
                     }
                     else if (switchboard.get(port).midiProcessed(midi))
                     	continue; 
-            		else if (midi.getChannel() == 9) 
-            			JudahZone.getFluid().send(midi, ticker());
-            		else if (Midi.isNote(midi) || Midi.isPitchBend(midi))
-            			keyboardSynth.getMidiOut().send(Midi.format(midi, keyboardSynth.getCh(), 1), ticker());
+            		else if (midi.getChannel() == 9) { // Mode.REC?
+            			JackMidi.eventWrite(fluidOut, ticker(), midi.getMessage(), midi.getLength());
+            			JudahZone.getLooper().getSoloTrack().beatboy();
+            		}
+            		else if (Midi.isNote(midi) || Midi.isPitchBend(midi)) {
+            			midi = (Midi)Midi.format(midi, keyboardSynth.getCh(), 1);
+            			if (keyboardSynth.getMidiOut().getMidiPort().getPort() == null)
+            				keyboardSynth.getMidiOut().send(midi, ticker());
+            			else 
+            				JackMidi.eventWrite(keyboardSynth.getMidiOut().getMidiPort().getPort(), 
+            						ticker(), midi.getMessage(), midi.getLength()); 
+            		}
                 }
             }
         	// check sequencers for output

@@ -7,18 +7,18 @@ import javax.sound.midi.ShortMessage;
 
 import lombok.Data;
 import net.judah.JudahZone;
+import net.judah.api.Key;
+import net.judah.api.TimeListener;
 import net.judah.gui.MainFrame;
 import net.judah.gui.settable.ModeCombo;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
 import net.judah.seq.MidiTrack;
-import net.judah.seq.Mode;
 import net.judah.seq.Poly;
 import net.judah.seq.chords.Chord;
 import net.judah.seq.chords.ChordListener;
 import net.judah.seq.chords.ChordTrack;
-import net.judah.seq.chords.Key;
 import net.judah.util.Constants;
 
 @Data
@@ -28,7 +28,8 @@ public class Arp implements ChordListener {
 	private final ChordTrack chords = JudahZone.getChords();
 
 	private Mode mode = Mode.Off;
-	private Algo algo;
+	private Algo algo = new Echo();
+
 	private int range = 24;
 	private final Deltas deltas = new Deltas();
 	private final Poly workArea = new Poly();
@@ -58,43 +59,61 @@ public class Arp implements ChordListener {
 		}
 	}
 
+	public void clear() {
+		if (deltas.isEmpty()) return;
+		Midi off = Midi.create(Midi.NOTE_OFF, track.getCh(), 36, 1);
+		for (Map.Entry<ShortMessage, List<Integer>> item : deltas.list()) 
+			out(off, item.getValue());
+		deltas.clear();
+	}
+	
 	public void setMode(Mode m) {
+		if (algo instanceof TimeListener)
+			track.getClock().removeListener((TimeListener)algo);
+		clear();
+		if (mode == m) return;
 		mode = m;
 		Constants.execute(new Panic(track.getMidiOut(), track.getCh()));
-		deltas.clear();
 		switch(m) {
 			case Off: algo = new Echo(); break; // not used
-			// TODO MPK/REC
 			case CHRD: algo = new Gen(); break;
 			case BASS: algo = new Bass(); break;
-//			case ABS: algo = new ABS(); break;
-//			case REL: algo = new Modal(); break;
+			case REC: algo = new REC(track); break;
+			case MPK: algo = new MPKTranspose(track); break;
+			case ABS: algo = new ABS(); break;
+			// case REL: algo = new REL(); break;
 			case UP: algo = new Up(); break;
 			case DWN: algo = new Down(); break;
-			case UPDN: algo = new UpDown(); break;
+			case UPDN: algo = new UpDown(true); break;
+			case DNUP: algo = new UpDown(false); break;
 			case RND: algo = new RND(); break;
 			case RACM: algo = new Racman(); break;
 		}
 		algo.setRange(range);
 		ModeCombo.update(track);
-		MainFrame.update(track);
+		MainFrame.update(track); // miniSeq
 	}
 
 	/** externally triggered */
 	public void process(ShortMessage msg) {
-		process(msg, chords.getChord());
+		if (chords.isActive() || algo instanceof Ignorant)
+			process(msg, chords.getChord());
 	}
 
 	private void process(ShortMessage msg, Chord chord) {
+		if (chord == null) {
+			clear();
+			return;
+		}
+
 		if (Midi.isNoteOn(msg)) {
-			algo.process(msg, chord, workArea.empty());
+				algo.process(msg, chord, workArea.empty());
 			if (!workArea.isEmpty()) {
 				deltas.add(msg, workArea);
 				out(msg, workArea);
 			}
 		} else if (Midi.isNoteOff(msg)) {
-			List<Integer> offs = deltas.remove(msg);
-			out(msg, offs);
+			out(msg, deltas.remove(msg));
 		}
 	}
 	
@@ -106,6 +125,14 @@ public class Arp implements ChordListener {
 				input.getCommand(), input.getChannel(), data1, input.getData2()), JudahMidi.ticker());
 	}
 
+	public boolean mpkFeed(Midi midi) {
+		if (mode != Mode.REC && mode != Mode.MPK)
+			return false;
+		((Feed)algo).feed(midi);
+		return true;
+	}
+
+	
 	public class Echo extends Algo implements Ignorant {
 	@Override public void process(ShortMessage m, Chord chord, Poly result) {
 		result.add(m.getData1()); }}
@@ -118,5 +145,15 @@ public class Arp implements ChordListener {
 	public class Bass extends Algo {
 		@Override public void process(ShortMessage m, Chord chord, Poly result) {
 			result.add(m.getData1() + Key.key(m.getData1()).interval(chord.getBass())); }}
+
+	/** translate root of chord by off from middle C of m.getData1() */
+	public class ABS extends Algo implements Ignorant {
+		@Override public void process(ShortMessage m, Chord chord, Poly result) {
+			result.add(m.getData1() + chord.getRoot().ordinal()); }}
+
+	public void toggle(Mode m) {
+		setMode(mode == m ? Mode.Off : m);
+	}
+
 	
 }

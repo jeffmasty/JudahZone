@@ -52,6 +52,7 @@ public class Folder extends SetCombo<File> {
 
 	@Override
 	protected void action() {
+		if (set == this) return;
 		track.load((File)getSelectedItem());
 	}
 
@@ -60,6 +61,13 @@ public class Folder extends SetCombo<File> {
 			for (Folder folder : instances)
 				if (folder.track == t)
 					folder.refill();
+		});
+	}
+
+	public static void refillAll() {
+		Constants.execute(()->{
+			for (Folder folder : instances)
+				folder.refill();
 		});
 	}
 	

@@ -36,8 +36,8 @@ public class DrumKit extends LineIn implements Engine, Knobs {
 	private final KitMode kitMode;
 	private final KnobMode knobMode = KnobMode.Kits;
 	private final List<Integer> actives = new ArrayList<>();
-	
 	private final int channel = 9;
+	@Override public boolean isMono() { return false; }
 	
 	public DrumKit(KitMode mode) {
 		this(mode, "Drums.png");

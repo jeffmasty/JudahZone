@@ -1,16 +1,17 @@
 package net.judah.fluid;
 
 import lombok.AllArgsConstructor;
+import lombok.ToString;
 
-@AllArgsConstructor
+@AllArgsConstructor @ToString
 class FluidPatch {
 	public final int group;
 	public final int index;
 	public final String name;
 
-	@Override
-	public String toString() {
-		return name;
-	}
+//	@Override
+//	public String toString() {
+//		return name;
+//	}
 
 }

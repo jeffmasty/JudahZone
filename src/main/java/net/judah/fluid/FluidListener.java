@@ -66,7 +66,7 @@ class FluidListener extends Thread {
             		}
 
             	}
-            	else if (!line.contains("> gain ") && !line.contains("synth.reverb")) 
+            	else if (!line.contains("> gain ") && !line.contains("synth.reverb") && !line.contains(" prog ")) 
             		RTLogger.log(this, line);
             }
         } catch (Exception e) {

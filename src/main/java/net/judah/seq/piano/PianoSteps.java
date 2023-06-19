@@ -15,6 +15,7 @@ import lombok.Getter;
 import net.judah.gui.Pastels;
 import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
+import net.judah.midi.Signature;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiPair;
@@ -45,7 +46,7 @@ public class PianoSteps extends Steps implements BeatsSize, MouseMotionListener,
 		this.width = r.width;
 		this.height = r.height;
 		setBounds(r);
-		timeSig();
+		timeSig(view.getTrack().getClock().getTimeSig());
 		addMouseMotionListener(this);
 		addMouseListener(this);
 	}
@@ -54,7 +55,7 @@ public class PianoSteps extends Steps implements BeatsSize, MouseMotionListener,
 	public void paint(Graphics g) {
 		super.paint(g);
 		g.drawRect(0, 0, width, height);
-		int beats = clock.getTimeSig().getBeats();
+		int beats = clock.getTimeSig().beats;
 		int steps = clock.getSteps();
 		int div = clock.getSubdivision();
 		int count = start;
@@ -88,8 +89,6 @@ public class PianoSteps extends Steps implements BeatsSize, MouseMotionListener,
 			if (++count == steps)
 				count = 0;
 		}
-		
-		
 	}
 
 	@Override
@@ -162,8 +161,8 @@ public class PianoSteps extends Steps implements BeatsSize, MouseMotionListener,
 	@Override public void mouseEntered(MouseEvent e) { }
 
 	@Override
-	public void timeSig() {
-		total = 2 * clock.getSteps();
+	public void timeSig(Signature sig) {
+		total = 2 * sig.steps;
 		unit = height / total;
 	}
 	

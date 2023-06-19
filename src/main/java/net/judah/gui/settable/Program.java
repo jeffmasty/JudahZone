@@ -29,6 +29,7 @@ public class Program extends SetCombo<String> {
 	
 	@Override
 	protected void action() {
+		if (set == this) return;
 		port.progChange(getSelectedItem().toString(), ch);
 	}
 

@@ -7,7 +7,7 @@ import javax.swing.JComboBox;
 import net.judah.midi.JudahClock;
 
 
-public class LengthWidget extends JComboBox<Integer> {
+public class LengthCombo extends JComboBox<Integer> {
 
 	public static final Integer[] LENGTHS = {1, 1, 2, 2, 2, 3, 4, 4, 4, 4, 5, 6, 6, 7, 8, 8, 8, 8, 9, 
 			10, 10, 11, 12, 12, 12, 13, 14, 15, 16, 16, 16, 16, 17, 18, 19, 20, 20, 21, 22, 23, 24, 
@@ -21,7 +21,7 @@ public class LengthWidget extends JComboBox<Integer> {
 		}
 	}
 	
-	public LengthWidget(JudahClock clock) {
+	public LengthCombo(JudahClock clock) {
 		for (Integer i : NO_DUPS) 
 			addItem(i);
 		setSelectedItem(clock.getLength());
@@ -32,6 +32,6 @@ public class LengthWidget extends JComboBox<Integer> {
 		});
 
 	}
-	
+
 	
 }

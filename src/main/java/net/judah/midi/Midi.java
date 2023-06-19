@@ -19,8 +19,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
+import net.judah.api.Key;
 import net.judah.drumkit.GMDrum;
-import net.judah.seq.chords.Key;
 import net.judah.util.RTLogger;
 
 /** Utilities added to javax ShortMessage, with an optional source Midi port */

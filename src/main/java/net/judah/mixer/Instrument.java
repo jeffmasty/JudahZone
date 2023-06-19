@@ -49,7 +49,7 @@ public class Instrument extends LineIn {
 			processStereoFx(gain.getGain());
 		}
 		else {
-			processFx(leftPort.getFloatBuffer(), 4);
+			processFx(leftPort.getFloatBuffer());
 			toStereo(leftPort.getFloatBuffer());
 		}
 	}

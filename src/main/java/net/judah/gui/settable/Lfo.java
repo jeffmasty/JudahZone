@@ -15,6 +15,7 @@ public class Lfo extends SetCombo<Target> {
 	
 	@Override
 	protected void action() {
+		if (set == this) return;
 		Target selected = (Target)getSelectedItem();
 		if (ch.getLfo().getTarget() != selected)
 			ch.getLfo().setTarget(selected);

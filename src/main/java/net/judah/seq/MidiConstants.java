@@ -8,15 +8,17 @@ import net.judah.gui.Size;
 public interface MidiConstants {
 
 	int NOTE_ON = 0x90;
-    int NOTE_OFF = 0x80;
-    int NAME_STATUS = 73;
+	int NOTE_OFF = 0x80;
+	int NAME_STATUS = 73;
 	int NOTE_OFFSET = 24;
 	int VELOCITY = 99;
-	public static final String[] NOTES = {"C", "C#", "D", "Db", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"};
 	List<Integer> BLACK_KEYS = List.of(1, 3, 6, 8, 10);
 	public static final int RATCHET = 1;
 	public static final int MIDDLE_C = 60;
 
+	String FLAT = "\u266D";
+	String SHARP = "\u266F";
+	
 	int KEY_WIDTH = 14;
 	int KEY_HEIGHT = 24;
 	int STEP_WIDTH = 27;
@@ -26,5 +28,5 @@ public interface MidiConstants {
 	Rectangle BOUNDS_MENU = new Rectangle(0, 0, Size.TAB_SIZE.width, MENU_HEIGHT);
 
 	int MAX_FRAMES = 32; // 64 measures
-	
+
 }

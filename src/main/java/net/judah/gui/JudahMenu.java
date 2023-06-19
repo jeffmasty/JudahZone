@@ -17,11 +17,13 @@ import net.judah.JudahZone;
 import net.judah.gui.fx.PresetsGui;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.settable.SetCombo;
-import net.judah.gui.settable.Songs;
+import net.judah.gui.settable.SongsCombo;
 import net.judah.gui.widgets.FileChooser;
 import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
 import net.judah.song.Song;
+import net.judah.song.setlist.Setlist;
+import net.judah.song.setlist.SetlistView;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
@@ -60,21 +62,21 @@ public class JudahMenu extends JMenuBar {
 		song.add(new Actionable("Next", e->nextSong()));
         song.add(new Actionable("Save", e->save()));
         song.add(new Actionable("Save As..", e->{
-        		File f = FileChooser.choose(Folders.getSetlist());
+        		File f = FileChooser.choose(getSetlists().getDefault());
         		if (f == null) return;
         		save(f);
         		Constants.timer(200, () -> {
-        			Songs.refill();
-        			Songs.refresh();
+        			SongsCombo.refill();
+        			SongsCombo.refresh();
         		});;
         	}));
     	song.add(new Actionable("Reload", e->reload()));
-        song.add(new Actionable("Load..", e -> loadSong(FileChooser.choose(Folders.getSetlist()))));
+        song.add(new Actionable("Load..", e -> loadSong(FileChooser.choose(getSetlists().getDefault()))));
     	song.add(new Actionable("New", e -> setCurrent(new Song(getSeq(), (int)(getClock().getTempo())))));
     	
-    	for (File f : Folders.getSetlists()) 
-			setlist.add(new Actionable(f.getName(), e -> Folders.setSetlist(f)));
-        // song.add(setlist); // TODO
+    	for (Setlist list : getSetlists()) 
+			setlist.add(new Actionable(list.toString(), e -> getSetlists().setCurrent(list.getSource())));
+        song.add(setlist); 
     	
     	
     	erase.add(new Actionable("All", e->getLooper().clear()));
@@ -110,11 +112,15 @@ public class JudahMenu extends JMenuBar {
         	getFrame().getTabs().setSelectedComponent(getFrame().getSheetMusic());
         }));
         
-        views.add(new Actionable("ChordPro..", e-> getChords().load(
-        		FileChooser.choose(Folders.getChordPro()), getCurrent())));
-        
-        add(loops);
+        views.add(new Actionable("ChordPro..", e-> {
+        	File f = FileChooser.choose(Folders.getChordPro());
+        	if (f == null) return;
+        	getChords().load(f);
+        	getFrame().getTabs().setSelectedComponent(getChords().getChordSheet());
+        }));
+        views.add(new Actionable("Setlist..", e->{new SetlistView(getSetlists());}));
         add(song);
+        add(loops);
         add(control);
         add(views);
     }

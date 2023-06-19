@@ -23,7 +23,7 @@ public abstract class Computer {
     public CYCLE getCycle() { return state.cycle; }
     public int getLaunch() { return state.launch; }
     public float getAmp() { return state.amp; }
-	public boolean isEven() { return current % 2 == 0; }
+    public boolean isEven() { return current % 2 == 0; }
 	
 	public void setCycle(CYCLE x) {
 		state.cycle = x;
@@ -40,7 +40,7 @@ public abstract class Computer {
 		case AB:
 			if (isEven()) {
 				left = current * barTicks;
-				right = (current + 1) * barTicks;
+				right = after(current) * barTicks;
 			}
 			else {
 				left = before(current) * barTicks;
@@ -117,13 +117,13 @@ public abstract class Computer {
 			setCurrent(change);
 	}
 	
-	private int after(int idx) {
+	int after(int idx) {
 		int result = idx + 1;
 		if (result >= bars()) 
 			result = 0;
 		return result;
 	}
-	private int before(int idx) {
+	int before(int idx) {
 		int result = idx - 1;
 		if (result < 0)
 			return bars() - 1;
@@ -135,7 +135,5 @@ public abstract class Computer {
 			return state.launch;
 		return input + 1;
 	}
-
-	
 
 }

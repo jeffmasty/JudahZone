@@ -45,6 +45,7 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
     private final Shape[] shapes = new Shape[] {Shape.SIN, Shape.TRI, Shape.SAW};
 	private final CutFilter loCut = new CutFilter(false);
 	private final ModWheel modWheel;
+	private boolean mono = false; // TODO monosynth
 	
 	private SynthPresets synthPresets;
 	private final List<Integer> actives = new ArrayList<>();
@@ -58,6 +59,7 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
 		leftPort = left;
 		rightPort = right;
 		midiPort = new MidiPort(this);
+		factor = 1.33f;
 		setIcon(Icons.get(iconName));		
 		
 		for (int i = 0; i < dcoGain.length; i++)
@@ -134,31 +136,42 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
 	public boolean hasWork() {
 		return (active && !onMute); //&& !notes.isEmpty() -- wouldn't account for reverb/delay transients */
 	}
+	
+	@Override public boolean isMono() { return mono; }
 
-	@Override
-	public void progChange(String preset) {
+
+	@Override public void progChange(String preset) {
 		getSynthPresets().load(preset);
 		MainFrame.update(Program.first(this, 0)); 
 	}
 	
-	@Override
-	public void progChange(String preset, int bank) {
+	@Override public void progChange(String preset, int bank) {
 		progChange(preset); // banks/channels not implemented
 	}
 
-	@Override
-	public String[] getPatches() {
+	@Override public String[] getPatches() {
 		List<String> result = JudahZone.getSynthPresets().keys();
 		return result.toArray(new String[result.size()]);
 	}
 
-
-	@Override
-	public String getProg(int ch) {
+	@Override public String getProg(int ch) {
 		if (synthPresets.getCurrent() == null)
 			return "none";
 		return synthPresets.getCurrent();
 	}
+
+	public float detune(int dco, float hz) {
+		return detune[dco] * hz;
+	}
+
+	@Override public List<Integer> getActives() {
+		actives.clear();
+		for (ShortMessage m : notes.getNotes()) 
+			if (m != null && Midi.isNoteOn(m)) 
+				actives.add(m.getData1());
+		return actives;
+	}
+
 
 	/**Pitch Bend message  https://sites.uci.edu/camp2014/2014/04/30/managing-midi-pitchbend-messages/ <pre>
 	1. Combine the MSB and LSB to get a 14-bit value.
@@ -172,6 +185,7 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
 		return (float)Math.pow(2, bendPercent / 12f);
 	}
 
+	
 	/////////////////////////////////
 	//     PROCESS AUDIO           //
 	/////////////////////////////////
@@ -186,24 +200,11 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
         	voice.process(notes, adsr, work);
         }
         loCut.process(work);
-        processFx(work, 1f);
+        processFx(work);
         toStereo(work);
         AudioTools.mix(left, leftPort.getFloatBuffer());
         AudioTools.mix(right, rightPort.getFloatBuffer());
 
-	}
-
-	public float detune(int dco, float hz) {
-		return detune[dco] * hz;
-	}
-
-	@Override
-	public List<Integer> getActives() {
-		actives.clear();
-		for (ShortMessage m : notes.getNotes()) 
-			if (m != null && Midi.isNoteOn(m)) 
-				actives.add(m.getData1());
-		return actives;
 	}
 
 }

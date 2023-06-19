@@ -17,11 +17,6 @@ public class BooleanProvider implements Cmdr {
 	}
 
 	@Override
-	public String lookup(int value) {
-		return value == 1 ? TRUE : FALSE;
-	}
-
-	@Override
 	public Boolean resolve(String key) {
 		return TRUE.equals(key);
 	}

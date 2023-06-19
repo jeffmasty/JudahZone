@@ -9,7 +9,7 @@ import javax.swing.plaf.basic.BasicArrowButton;
 import net.judah.gui.Pastels;
 
 public class Arrow extends BasicArrowButton {
-	public static final Dimension SIZE = new Dimension(28, 23);
+	public static final Dimension SIZE = new Dimension(23, 22);
 
 	public Arrow(int dir, ActionListener action) {
 		super(dir, Pastels.EGGSHELL, Pastels.MY_GRAY, Color.DARK_GRAY, Color.LIGHT_GRAY);

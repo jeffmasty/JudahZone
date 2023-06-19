@@ -1,7 +1,5 @@
 package net.judah.song;
 
-import java.io.File;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -17,7 +15,7 @@ import net.judah.seq.arp.ArpInfo;
 public class TrackInfo {
 
 	private String track;
-	private File file;
+	private String file;
 	private String program;
 	private Cue cue = Cue.Bar;
 	private Gate gate = Gate.SIXTEENTH;
@@ -32,7 +30,7 @@ public class TrackInfo {
 	 
 	public TrackInfo(MidiTrack t) {
 		track = t.getName();
-		file = t.getFile();
+		file = t.getFile() == null ? null : t.getFile().getName();
 		program = t.getMidiOut().getProg(t.getCh());
 		cue = t.getCue();
 		gate = t.getGate();

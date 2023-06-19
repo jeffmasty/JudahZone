@@ -1,11 +1,10 @@
 package net.judah.util;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.util.Arrays;
 
 import lombok.Getter;
-import lombok.Setter;
+import net.judah.JudahZone;
 
 public class Folders {
 
@@ -21,25 +20,24 @@ public class Folders {
 	@Getter static final File Samples = new File(_home, "samples");
 	@Getter static final File Kits = new File(_home, "kits");
 	@Getter static final File SheetMusic = new File(_home, "sheets");
-	@Getter static final File Midi = new File(_home, "midi");
+	@Getter static final File Synths = new File(_home, "synths");
+	@Getter static final File Beats = new File(_home, "beats");
+	@Getter static final File Bass = new File(_home, "bass");
+	
 	@Getter static final File PresetsFile = new File(_home, "presets.zone");
 	@Getter static final File SynthPresets = new File(_home, "synths.zone");
-	@Getter static final File Chords = new File(Midi, "Chords");
 	@Getter static final File ChordPro = new File(_home, "chordpro");
 
-	static final File SetlistHome = new File(_home, "songs");
-    public static File[] getSetlists() {
-    	return SetlistHome.listFiles(new FileFilter() {
-			@Override public boolean accept(File pathname) {
-				return pathname.isDirectory();
-			}});}
+	@Getter static final File SetlistHome = new File(_home, "songs");
     
     public static File getImport(boolean isDrums) {
     	return isDrums ? DRUM_IMPORT : PIANO_IMPORT;
     }
     	
-    @Setter @Getter private static File setlist = getSetlists()[0];
-
+    public static File midi(File parent) {
+    	return new File(parent, JudahZone.getClock().getTimeSig().name());
+    }
+    
     @Getter static final File Log4j = new File(ROOT, "log4j.xml");
 
     public static File[] sort(File folder) {

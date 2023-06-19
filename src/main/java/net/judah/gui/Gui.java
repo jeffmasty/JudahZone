@@ -60,3 +60,15 @@ public interface Gui {
 	    return JOptionPane.showInputDialog(infoMessage);
 	}
 }
+
+//	  List<String> colorKeys = new ArrayList<String>();
+//    Set<Entry<Object, Object>> entries = UIManager.getLookAndFeelDefaults().entrySet();
+//    for (Entry entry : entries) {
+//      if (entry.getValue() instanceof Color)
+//      { colorKeys.add((String) entry.getKey()); }}
+//    // sort the color keys
+//    Collections.sort(colorKeys);
+//    // print the color keys
+//    for (String colorKey : colorKeys)
+//    {      System.out.println(colorKey);}
+  

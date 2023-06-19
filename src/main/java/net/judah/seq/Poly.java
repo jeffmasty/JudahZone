@@ -3,7 +3,7 @@ package net.judah.seq;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.judah.seq.chords.Key;
+import net.judah.api.Key;
 
 public class Poly extends ArrayList<Integer> {
 	

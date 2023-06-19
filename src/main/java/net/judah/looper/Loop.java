@@ -10,6 +10,7 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import net.judah.api.AudioMode;
+import net.judah.api.Status;
 import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumMachine;
 import net.judah.gui.Icons;
@@ -94,17 +95,20 @@ public class Loop extends AudioTrack {
             this.active = true;
             if (mode == NEW) 
             	_start = System.currentTimeMillis();
+            clock.loop(Status.ACTIVE);
         } else if (mode == RUNNING) {
         	endRecord();
         }
     }
 
-	private void endRecord() {
+	protected void endRecord() {
 		isRecording.set(STOPPED);
 		clock.syncDown(this);
 		active = true;
-		if (length == null && looper.getPrimary() == null) // initial recording 
+		if (length == null && looper.getPrimary() == null) {// initial recording 
 			looper.setRecordedLength(_start, this);
+			looper.getSoloTrack().record(false);
+		}
 		MainFrame.update(this);
 	}
 	

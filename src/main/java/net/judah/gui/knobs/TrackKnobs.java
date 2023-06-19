@@ -1,6 +1,6 @@
 package net.judah.gui.knobs;
 
-import static net.judah.gui.Pastels.*;
+import static net.judah.gui.Pastels.GREEN;
 
 import java.awt.Component;
 import java.awt.GridBagConstraints;
@@ -24,8 +24,8 @@ import net.judah.gui.widgets.*;
 import net.judah.mixer.Channel;
 import net.judah.seq.Gate;
 import net.judah.seq.MidiTrack;
-import net.judah.seq.Mode;
 import net.judah.seq.Seq;
+import net.judah.seq.arp.Mode;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
 
@@ -37,8 +37,8 @@ public class TrackKnobs extends KnobPanel {
 	private final Seq seq;
 	private final JPanel titleBar = new JPanel();
 	private final JButton play = new JButton("Play");
-	private final JButton record = new JButton("Rec");
-	private final JButton mpk = new JButton("MPK");
+//	private final JButton record = new JButton("Rec");
+//	private final JButton mpk = new JButton("MPK");
 	
 	private final Folder file;
 	private final Program progChange;
@@ -58,6 +58,7 @@ public class TrackKnobs extends KnobPanel {
 	private final JPanel grid = new JPanel();
 	private final GridBagConstraints c = new GridBagConstraints();
 	private final PatternLauncher patterns;
+	@Override public Component installing() { return titleBar; }
 	
 	private class Lbl extends JLabel {
 		Lbl(String lbl) {
@@ -66,9 +67,6 @@ public class TrackKnobs extends KnobPanel {
 		}
 	}
 	
-	@Override public Component installing() {
-		return titleBar;
-	}
 	
 	// transpose amount?
 	public TrackKnobs(MidiTrack t, Seq seq) {
@@ -87,10 +85,10 @@ public class TrackKnobs extends KnobPanel {
 		cycle = new Cycle(track);
 		cue = new CueCombo(track);
 		gate = new GateCombo(track);
-		total = new JLabel("of " + track.frames(), JLabel.CENTER);
-		Arrow left = new Arrow(Arrow.WEST, e->track.setFrame(track.getFrame() - 1));
-		Arrow right = new Arrow(Arrow.EAST, e->track.setFrame(track.getFrame() + 1));
-		Btn home = new Btn(UIManager.getIcon("FileChooser.homeFolderIcon"), e->track.setFrame(0));
+		total = new JLabel("of " + track.bars(), JLabel.CENTER);
+		Arrow left = new Arrow(Arrow.WEST, e->track.next(false));
+		Arrow right = new Arrow(Arrow.EAST, e->track.next(true));
+		Btn home = new Btn(UIManager.getIcon("FileChooser.homeFolderIcon"), e->track.setCurrent(0));
 		
 		if (track.isDrums()) {
 			snare = new Slider(null);
@@ -224,8 +222,7 @@ public class TrackKnobs extends KnobPanel {
 	@Override
 	public void update() {
 		play.setBackground(track.isActive() ? GREEN : null);
-		record.setBackground(track.getRecorder().isActive() ? RED : null);
-		total.setText("/" + track.frames());
+		total.setText("/" + track.bars());
 		
 		if (track.isDrums()) {
 			int vol = ((DrumKit)track.getMidiOut()).getSamples()[DrumType.Snare.ordinal()].getVolume();
@@ -259,7 +256,7 @@ public class TrackKnobs extends KnobPanel {
 				track.setAmp(data2 * 0.01f);
 				return true;
 			case 4: // current
-				track.setFrame(Constants.ratio(data2, track.frames()));
+				track.setCurrent(Constants.ratio(data2, track.bars()));
 				return true;
 			case 5: // gate
 				track.setGate((Gate)Constants.ratio(data2, Gate.values()));
@@ -272,7 +269,7 @@ public class TrackKnobs extends KnobPanel {
 				return true;
 			case 7: // clap/octaves
 				if (track.isSynth())
-					Constants.execute(()-> octaves.setSelectedIndex(Constants.ratio(data2, 4)));
+					Constants.execute(()-> octaves.setSelectedIndex(Constants.ratio(data2, 3)));
 				else
 					drumVol(data2, DrumType.Clap);
 				return true;

@@ -5,6 +5,7 @@ import org.jaudiolibs.jnajack.JackPort;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.api.AudioMode;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.LineIn;
@@ -62,11 +63,6 @@ public class SoloTrack extends Loop implements Cmdr {
 	}
 
 	@Override
-	public String lookup(int value) {
-		return null;
-	}
-
-	@Override
 	public Boolean resolve(String key) {
 		if (BooleanProvider.TRUE.equals(key))
 			return true;
@@ -78,5 +74,26 @@ public class SoloTrack extends Loop implements Cmdr {
 		if (p.cmd == Cmd.Solo) 
 			solo(resolve(p.val));
 	}
-    
+
+	/**Called from drum pads, if there is no recording and loop is sync'd up 
+	 * then start a FREE loop and sync clock's tempo to it */
+	public void beatboy() {
+		if (looper.getOnDeck().contains(this) == false) return;
+		if (isRecording.get() != AudioMode.NEW) return;
+		type = Type.FREE;
+		looper.getOnDeck().remove(this);
+		record(true);
+	}
+	
+	@Override
+	protected void endRecord() {
+		super.endRecord();
+		if (type == Type.FREE) {
+			type = Type.DRUMTRACK;
+			clock.syncToLoop();
+			clock.begin();
+		}
+			
+	}
+	
 }

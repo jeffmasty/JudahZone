@@ -33,11 +33,6 @@ public class IntProvider implements Cmdr {
 	}
 
 	@Override
-	public String lookup(int value) {
-		return "" + value;
-	}
-
-	@Override
 	public Long resolve(String key) {
 		return Long.parseLong(key);
 	}

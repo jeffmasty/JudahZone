@@ -1,6 +1,8 @@
 package net.judah.gui.widgets;
 
 
+import static net.judah.gui.Pastels.GREEN;
+
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -9,7 +11,6 @@ import javax.swing.SwingConstants;
 
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.gui.Pastels;
 import net.judah.seq.MidiTrack;
 
 public class TrackButton extends JLabel {
@@ -32,8 +33,13 @@ public class TrackButton extends JLabel {
 	}
 	
 	public void update() {
-		setBackground(track.isActive() ? Pastels.GREEN : track.isOnDeck() ? track.getCue().getColor() : null);
-		setText("" + (1 + track.getFrame()));
+		setBackground(track.isActive() ? 
+				track.isSynth() ? track.getArp().getMode().getColor() : GREEN 
+				: track.isOnDeck() ? track.getCue().getColor() : null);
+		int idx = 1 + track.getCurrent();
+		if (idx < 10)
+			setText(" " + idx);
+		else setText("" + idx);
 	}
 	
 	

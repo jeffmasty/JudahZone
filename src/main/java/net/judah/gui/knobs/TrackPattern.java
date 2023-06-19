@@ -22,11 +22,11 @@ public class TrackPattern extends JButton {
 		setMaximumSize(d);
 		setPreferredSize(d);
 		setOpaque(true);
-		addActionListener(e->track.setFrame(frame));
+		addActionListener(e->track.setCurrent(frame * 2));
 	}
 	
 	public void update() {
-		setBackground(track.getFrame() == frame ? Pastels.GREEN : null);
+		setBackground(Math.ceil(track.getCurrent() / 2) == frame ? Pastels.GREEN : null);
 	}
 	
 }

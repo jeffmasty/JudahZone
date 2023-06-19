@@ -2,20 +2,18 @@ package net.judah.controllers;
 
 import static net.judah.JudahZone.*;
 
-import java.awt.event.WindowEvent;
 import java.util.List;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
-import net.judah.gui.settable.SetCombo;
-import net.judah.gui.widgets.ModalDialog;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
-import net.judah.seq.MidiTab;
+import net.judah.seq.MidiTrack;
 import net.judah.seq.Seq;
+import net.judah.seq.arp.Mode;
 import net.judah.song.Scene;
 import net.judah.util.Constants;
 
@@ -73,18 +71,8 @@ public class KorgMixer implements Controller {
 			MainFrame.update(gain);
 		}
 		else if (data1 >= knoboff + 4 && data1 < knoboff + 8) {
-			data1 = data1 - (knoboff + 4);
-			Channel synth;
-			switch (data1) {
-				case 1: synth = getSynth2(); break;
-				case 2: synth = getCrave(); break;
-				case 3: synth = getFluid(); break;
-				default: synth = getSynth1();
-			}
-			synth.getGain().set(Gain.VOLUME, data2);
-			MainFrame.update(synth);
+			vol(data1 - (knoboff + 4), data2);
 		}
-		
 		else if (data2 > 0 && data1 >= soff && data1 < soff + 8) { // play/stop sequencer tracks
 			seq.get(data1 - soff).trigger();
 		}
@@ -95,26 +83,18 @@ public class KorgMixer implements Controller {
 			else 
 				ch.setOnMute(!ch.isOnMute());
 		}
-//		if (data1 >= moff + 4 && data1 < moff + 8) { // MUTE LOOPS 
-//			getLooper().get(data1 - (moff + 4)).setOnMute(data2 > 0);
-//		}
 		else if (data2 > 0 && data1 >= roff && data1 < roff + 8) { // LAUNCH SCENE
 			int idx = data1 - roff; 
+			
 			List<Scene> scenes = getCurrent().getScenes();
 			if (scenes.size() > idx) 
 				getSongs().setOnDeck(scenes.get(idx));
+			else if (idx == 6 || idx == 7) // double duty: launch Fluid+ tracks
+				seq.get(idx + 2).trigger();
 		}
 			
 		else if (data1 == SET.getVal() && data2 != 0) { // Run SettableCombo or hide modal dialog
-			if (ModalDialog.getInstance() != null) {
-				ModalDialog.getInstance().dispatchEvent(new WindowEvent(
-                    ModalDialog.getInstance(), WindowEvent.WINDOW_CLOSING));
-			}
-			else if (SetCombo.getSet() != null)
-				SetCombo.set();
-			else if (getFrame().getTabs().getSelectedComponent() instanceof MidiTab) {
-				((MidiTab)getFrame().getTabs().getSelectedComponent()).getMusician().delete();
-			}
+			// TODO override = select track's Frame on KorgPads
 		}
 		else if (data1 == CYCLE.getVal()) {
 			getLooper().verseChorus();
@@ -125,10 +105,10 @@ public class KorgMixer implements Controller {
 			seq.getTracks().next(true);
 		
 		else if (data1 == PREV2.getVal() && data2 != 0) { // change pattern
-			seq.getCurrent().setFrame(seq.getCurrent().getFrame() - 1);
+			seq.getCurrent().next(false);
 		}
 		else if (data1 == NEXT2.getVal() && data2 != 0) { // change pattern
-			seq.getCurrent().setFrame(seq.getCurrent().getFrame() + 1);
+			seq.getCurrent().next(true);
 		}
 		else if (data1 == RWND.getVal() && data2 != 0) { // prev Tab
 			MainFrame.changeTab(false);
@@ -145,13 +125,34 @@ public class KorgMixer implements Controller {
 			else 
 				getClock().begin();
 		}
-		else if (data1 == RECORD.getVal()) { 
-			seq.getCurrent().getRecorder().toggle(); 
+		else if (data1 == RECORD.getVal()) {
+			if (seq.getCurrent().isSynth())
+				seq.getCurrent().getArp().setMode(Mode.REC);
 		}
 		
 		return true;
 	}
 
+	private void vol(int idx, int data2) {
+		Channel ch;
+		MidiTrack t;
+		switch (idx) {
+			case 0: ch = getSynth1();
+				ch.getGain().set(Gain.VOLUME, data2); 
+				MainFrame.update(ch); break;
+			case 1: ch = getSynth2();
+				ch.getGain().set(Gain.VOLUME, data2); 
+				MainFrame.update(ch); break;
+			case 2: t = getSeq().byName("Fluid1");
+					t.setAmp(data2 * 0.01f); 
+					MainFrame.update(t); break;
+			case 3: t = getSeq().byName("Fluid2");
+					t.setAmp(data2 * 0.01f);
+					MainFrame.update(t); break;
+			}
+		
+	}
+	
 	private Channel target(int idx) {
 		if (idx < 4)
 			return getLooper().get(idx);

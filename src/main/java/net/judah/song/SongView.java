@@ -8,7 +8,6 @@ import javax.swing.*;
 
 import lombok.Getter;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Size;
 import net.judah.gui.widgets.Btn;
 import net.judah.util.Constants;
 
@@ -23,7 +22,7 @@ public class SongView extends JPanel {
 	private final JPanel paramBtns = new JPanel();
 	private final JTextField notes = new JTextField(12);
 
-	public SongView(Song smashHit, SongTab tab) {
+	public SongView(Song smashHit, SongTab tab, Dimension props, Dimension btns) {
 		this.song = smashHit;
 		this.tab = tab;
 		params = new ParamView(song.getScenes().get(0).getCommands());
@@ -31,10 +30,8 @@ public class SongView extends JPanel {
 		menus();
 
 		JScrollPane scroll = new JScrollPane(params);
-		Dimension props = new Dimension((int)(Size.WIDTH_TAB * 0.3f), (int)(Size.HEIGHT_TAB * 0.27f));
 		scroll.setMaximumSize(props);
 		scroll.setPreferredSize(props);
-		Dimension btns = new Dimension((int)(Size.WIDTH_TAB * 0.39f), (int)(Size.WIDTH_TAB * 0.27f));
 		launcher.setPreferredSize(btns);
 		launcher.setMaximumSize(btns);
 		

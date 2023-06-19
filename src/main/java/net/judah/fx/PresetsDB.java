@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 import net.judah.JudahZone;
+import net.judah.mixer.Channel;
+import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
@@ -42,11 +44,13 @@ public class PresetsDB extends ArrayList<Preset> {
         } catch (Throwable e) {
             RTLogger.warn(this, presetFile.getName() + " " + e.getMessage());
         }
-
     }
-    
-    @Override
-    public String toString() {
+
+    public void save() {
+    	Constants.writeToFile(Folders.getPresetsFile(), toString());
+    }
+
+    @Override public String toString() {
         StringBuffer result = new StringBuffer();
         for (Preset p : this)
             result.append(p.toFile());
@@ -80,6 +84,18 @@ public class PresetsDB extends ArrayList<Preset> {
 		return toArray(new Preset[size()]);
 	}
 
+	public void replace(Channel channel) {
+		int idx = indexOf(channel.getPreset());
+		if (idx < 0) {
+			RTLogger.warn(this, "Unknown Preset on " + channel.getName() 
+				+ ": " + channel.getPreset() == null ? "null" : channel.getPreset().getName());
+			return;
+		}
+		Preset p = channel.toPreset(channel.getPreset().getName());
+        set(idx, p);
+        RTLogger.log(this, "saved " + p.getName() + " from " + channel.getName() +
+                " with " + p.size() + " FX");
+	}
     
 }
 

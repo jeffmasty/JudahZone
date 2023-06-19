@@ -46,7 +46,12 @@ public class Deltas {
 		return new HashSet<Entry<ShortMessage, List<Integer>>>(deltas.entrySet()); 
 	}
 	
-	public void clear() { // note-offs?
+	void clear() { 
 		deltas.clear();
 	}
+	
+	boolean isEmpty() {
+		return deltas.isEmpty();
+	}
+	
 }

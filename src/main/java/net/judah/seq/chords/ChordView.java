@@ -1,48 +1,72 @@
 package net.judah.seq.chords;
 
-import static net.judah.gui.Pastels.*;
+import javax.swing.*;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JPanel;
-
-import lombok.Getter;
 import lombok.Setter;
-import net.judah.gui.Gui;
-import net.judah.gui.Size;
-import net.judah.gui.Updateable;
-import net.judah.gui.settable.ChordProFiles;
-import net.judah.gui.widgets.Btn;
+import net.judah.gui.Pastels;
+import net.judah.gui.widgets.Arrow;
 import net.judah.song.Song;
 
-public class ChordView extends JPanel implements Updateable {
+public class ChordView extends JPanel {
 	
 	private final ChordTrack chords;
 	@Setter private Song song;
-	private final JButton play;
-	private final ChordProFiles folder = new ChordProFiles();
-	@Getter private final ChordScroll scroll;
+	private Section section;
+	private final JLabel bar = new JLabel("?");
+	private final JLabel bars = new JLabel("/?");
+	private final Arrow next;
+	private final JToggleButton loop;
 	
 	public ChordView(ChordTrack trk) {
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
-		this.chords = trk;
-		play = new Btn("▶️ Chords", e-> chords.toggle());
-		play.setOpaque(true);
-		scroll = new ChordScroll(chords);
-		add(play);
-		add(Gui.resize(folder, Size.COMBO_SIZE));
-		add(scroll);
-		add(Box.createGlue());
-		update();
 		setOpaque(true);
+
+		this.chords = trk;
+		next = new Arrow(SwingConstants.EAST, e->chords.next());
+		next.setEnabled(false);
+		next.setBackground(Pastels.BUTTONS);
+		loop = new JToggleButton("🔁");
+		loop.setSelected(trk.getSection() != null && trk.getSection().isOnLoop());
+		loop.addActionListener(e->trk.getSection().toggle(Directive.LOOP));
+		loop.setEnabled(false);
+		bar.setBackground(Pastels.BUTTONS); bar.setOpaque(true);
+		bars.setBackground(Pastels.BUTTONS); bars.setOpaque(true);
+		add(chords.createBtn("▶️ Chords"));
+		add(new ChordProCombo());
+		add(new SectionCombo(chords));
+		add(loop);
+		add(next);
+		add(new ChordScroll(chords));
+		add(Box.createHorizontalStrut(5));
+		add(bar);
+		add(bars);
+		setBackground(Pastels.BUTTONS);
+		
 	}
 	
-	@Override
-	public void update() {
-		if (song != null && folder.getSelectedItem() != song.getChordpro())
-			folder.setSelectedItem(song.getChordpro());
-		play.setBackground(chords.isActive() ? GREEN : chords.isOnDeck() ? YELLOW : null);
+	public void setSection(Section s) {
+		this.section = s;
+		if (section == null) {
+			bars.setText("");
+			loop.setEnabled(false);
+			next.setEnabled(false);
+		}
+		else {
+			bars.setText("/" + chords.bars(section.getCount()));
+			loop.setEnabled(true);
+			next.setEnabled(true);
+			if (section != null && loop.isSelected() != section.isOnLoop())
+				loop.setSelected(section.isOnLoop());
+		}
+	}
+	
+	public void update(Chord chord) {
+		bar.setText("" + (chords.getBar() + 1));
+		if (section == null) {
+			loop.setEnabled(false);
+			next.setEnabled(false);
+		}
+			
 	}
 	
 }

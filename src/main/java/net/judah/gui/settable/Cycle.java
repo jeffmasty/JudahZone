@@ -2,6 +2,8 @@ package net.judah.gui.settable;
 
 import java.util.HashSet;
 
+import net.judah.gui.Gui;
+import net.judah.gui.Size;
 import net.judah.seq.CYCLE;
 import net.judah.seq.Computer;
 import net.judah.util.Constants;
@@ -15,14 +17,13 @@ public class Cycle extends SetCombo<CYCLE> {
 		super(CYCLE.values(), track.getCycle());
 		this.track = track;
 		instances.add(this);
+		Gui.resize(this, Size.SMALLER_COMBO);
 	}
 
-	@Override
-	protected void action() {
+	@Override protected void action() {
 		CYCLE c = (CYCLE)getSelectedItem();
 		if (track.getCycle() != c)
 			track.setCycle(c);
-		update(track);
 	}
 	
 	public static void update(Computer t) {

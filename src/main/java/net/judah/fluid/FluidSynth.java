@@ -5,6 +5,7 @@ import static net.judah.util.Constants.NL;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
@@ -12,6 +13,7 @@ import javax.sound.midi.ShortMessage;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import net.judah.gui.MainFrame;
 import net.judah.gui.settable.Program;
 import net.judah.midi.Midi;
@@ -26,18 +28,18 @@ public class FluidSynth extends MidiInstrument {
 	public static final String RIGHT_PORT = "fluidsynth-midi:right"; // "fluidsynth:r_00";
 	public static final String MIDI_PORT = "fluidsynth-midi:midi_00"; // "fluidsynth:midi";
 	public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // "/usr/share/sounds/sf2/JJazzLab-SoundFont.sf2"
-	public static final int CHANNELS = 4;
+	private static final int CHANNELS = 4;
 	
 	private final String shellCommand;
 	private Process process;
-	private String[] changes = new String[CHANNELS];
-	
-	@Getter private final FluidChannels channels = new FluidChannels();
-	private FluidListener listener;
 	/** talks to FluidSynth on it's stdin */
 	private OutputStream outStream;
 	@Getter private final FluidConsole console;
+	private FluidListener listener;
 	private float gain = 1f; // max 5.0
+	private final String[] changes = new String[CHANNELS];
+	@Getter private final FluidChannels channels = new FluidChannels();
+	@Getter private final ArrayList<Drum> drums = new ArrayList<>();
 
 	public FluidSynth(int sampleRate, JackPort left, JackPort right, JackPort midi) {
 		super(Constants.FLUID, LEFT_PORT, RIGHT_PORT, left, right, "Fluid.png");
@@ -109,11 +111,13 @@ public class FluidSynth extends MidiInstrument {
 			throw new Exception("Fluid Error reading instruments");
 
 		int size = listener.instruments.size();
-		if (size > 99) // knob has 100 instruments
-			size = 99;
-		patches = new String[size];
-		for (int i = 0; i < size; i++) 
-			patches[i] = listener.instruments.get(i).name;
+		patches = new String[99];
+		for (int i = 0; i < size; i++) {
+			if (i < 99) // knob has 100 instruments
+				patches[i] = listener.instruments.get(i).name;
+			else if (listener.instruments.get(i).group == 128)
+				drums.add(new Drum(listener.instruments.get(i).name, listener.instruments.get(i).index));
+		}
 		RTLogger.log(this, "Loaded " + size + " instruments");
 	}
 
@@ -142,7 +146,7 @@ public class FluidSynth extends MidiInstrument {
 		sendCommand(cmd.code);
 	}
 
-	void sendCommand(FluidCommand cmd, Object value) {
+	public void sendCommand(FluidCommand cmd, Object value) {
 		String send = cmd.code + value;
 		sendCommand(send);
 	}
@@ -229,5 +233,10 @@ public class FluidSynth extends MidiInstrument {
 				MainFrame.update(Program.first(this, ch)); 
 			}
 	}
-	
+
+	@RequiredArgsConstructor
+	public static class Drum {
+		public final String name;
+		public final int prog;
+	}
 }

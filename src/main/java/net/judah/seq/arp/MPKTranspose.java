@@ -1,53 +1,32 @@
-package net.judah.midi;
+package net.judah.seq.arp;
 
 import javax.sound.midi.ShortMessage;
-import javax.swing.JButton;
 
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
-import net.judah.gui.MainFrame;
-import net.judah.gui.Pastels;
+import net.judah.midi.Midi;
 import net.judah.seq.Cue;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiTrack;
+import net.judah.seq.Poly;
+import net.judah.seq.chords.Chord;
 
-public class MpkTranspose extends JButton implements TimeListener {
+public class MPKTranspose extends Algo implements TimeListener, Feed, Ignorant {
 
 	private final MidiTrack track;
 	@Getter private int amount;
 	@Setter @Getter private static Integer onDeck;
-	@Getter private boolean active;
 	
-	public MpkTranspose(MidiTrack track) {
-		super(" 🔁 ");
-		this.track = track;
-		addActionListener(e->toggle());
-		setOpaque(true);
-	}
-	
-	public void setActive(boolean active) {
-		
-		this.active = active;
-		if (active) {
-			track.getClock().addListener(this);
-			JudahZone.getMidi().setKeyboardSynth(track);
-		}
-		else
-			track.getClock().removeListener(this);
-		JudahZone.getMidiGui().transpose(active);
-	}
-	
-	public void toggle() {
-		setActive(!active);
-		MainFrame.update(track);
+	public MPKTranspose(MidiTrack t) {
+		this.track = t;
+		track.getClock().addListener(this);
+		JudahZone.getMidi().setKeyboardSynth(track);
 	}
 
 	public ShortMessage apply(ShortMessage midi)  {
-		if (!active)
-			return midi;
 		return Midi.create(midi.getCommand(), midi.getChannel(), midi.getData1() + amount, midi.getData2());
 	}
 
@@ -61,17 +40,17 @@ public class MpkTranspose extends JButton implements TimeListener {
 		}
 	}
 
-	public void update() {
-		setBackground(active ? Pastels.PINK : null);
-	}
-
-	public boolean setAmount(Midi midi) {
-		if (!active) return false;
+	@Override
+	public void feed(ShortMessage midi) {
 		if (track.getCue() == Cue.Hot)
 			amount = midi.getData1() - MidiConstants.MIDDLE_C;
 		else
 			onDeck = midi.getData1() - MidiConstants.MIDDLE_C;
-		return true;
+	}
+
+	@Override
+	public void process(ShortMessage m, Chord chord, Poly result) {
+		result.add(m.getData1() + amount);
 	}
 	
 }

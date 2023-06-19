@@ -6,9 +6,6 @@ public interface TimeProvider extends TimeNotifier {
 	/**@return true if the operation is supported and successful */
 	void writeTempo(int tempo);
 
-	/** beats per bar */
-	int getMeasure();
-
 	void begin();
 	void end();
 

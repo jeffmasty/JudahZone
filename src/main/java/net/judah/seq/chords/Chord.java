@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import javax.sound.midi.ShortMessage;
 
 import lombok.Data;
+import net.judah.api.Key;
 import net.judah.seq.Poly;
 
 @Data 
@@ -100,14 +101,16 @@ public class Chord extends ArrayList<Key> {
 		} else if (suffix.contains("6"))
 			sixth();
 
-		if (suffix.contains("b9"))
-			flat9();
-		else if (suffix.contains("9"))
-			add9();
-		else if (suffix.contains("#9")) {
-			sharp9();
-		}
-		
+		if (suffix.contains("9")) {
+			if (!isMaj7() && !isDominant())
+				dominant7();
+			if (suffix.contains("b9"))
+				flat9();
+			else if (suffix.contains("#9")) 
+				sharp9();
+			else
+				add9();
+		}		
 		int inverted = suffix.indexOf('/');
 		if (inverted > 0 && suffix.length() > inverted)
 			bass = Key.lookup(suffix.substring(inverted + 1));
@@ -291,6 +294,7 @@ public class Chord extends ArrayList<Key> {
 	public boolean equals(Object obj) {
 		if (this == obj)
 			return true;
+		if (obj == null) return false;
 		if (getClass() != obj.getClass())
 			return false;
 		Chord other = (Chord) obj;

@@ -5,6 +5,7 @@ import static net.judah.JudahZone.getPresets;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.awt.event.ActionListener;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
@@ -20,41 +21,38 @@ import net.judah.gui.MainFrame;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.ModalDialog;
 import net.judah.mixer.Channel;
-import net.judah.util.Constants;
-import net.judah.util.Folders;
-import net.judah.util.RTLogger;
 
+/** creates modal dialog box */
 public class PresetsGui extends JPanel {
 
-	final static Dimension BTN_SZ = new Dimension(80, 26);
+	private static final int offset = 5;
+    public static final int buttonsWidth = 95;
+    public static final int presetsHeight = 500;
+    public static final int presetsWidth = 265;
+    private static final int buttonsX = presetsWidth + offset;
+	public static final Dimension BTN_SZ = new Dimension(80, 26);
+	public static final Dimension SIZE = new Dimension(presetsWidth, presetsHeight);
+	public static final Dimension DIALOG = new Dimension(presetsWidth + buttonsWidth + 3 * offset, presetsHeight + 75);
+
 	
-    private JList<String> list;
-    JComboBox<String> target;
-    private final int offset = 5;
-    private final int buttonsWidth = 95;
-    private final int presetsHeight = 500;
-    private final int presetsWidth = 265;
-    private final int buttonsX = presetsWidth + offset;
 	private final PresetsDB presets;
+	private final JList<String> list = new JList<>();
+    private final JComboBox<String> target;
     
 	public PresetsGui(PresetsDB presets) {
-		setLayout(null);
 		this.presets = presets;
-		Dimension size = new Dimension(presetsWidth + buttonsWidth + 10, presetsHeight);
-        setPreferredSize(size);
-        list = new JList<>(presetModel());
-        JScrollPane scrollPane = new JScrollPane(list);
-        JPanel buttons = new JPanel();
+        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        renew();
         target = createMixerCombo();
         target.addActionListener( e -> {applyTo();} );
         target.setMaximumSize(new Dimension(buttonsX - 10, BTN_SZ.height));
-        presetsBtns(buttons);
+        JScrollPane scrollPane = new JScrollPane(list);
         scrollPane.setBounds(offset, offset + 35, presetsWidth, presetsHeight);
-        buttons.setBounds(buttonsX, offset + 35, buttonsWidth, presetsHeight);
+		setLayout(null);
         add(scrollPane);
-        add(buttons);
-        Dimension dialog = new Dimension(size.width + 10, size.height + 20);
-        new ModalDialog(this, dialog, MainFrame.getKnobMode());
+        add(presetsBtns(new Rectangle(buttonsX, offset + 35, buttonsWidth, presetsHeight)));
+        setName("Presets");
+        new ModalDialog(this, DIALOG, MainFrame.getKnobMode());
 	}
 
 	private JComboBox<String> createMixerCombo() {
@@ -64,9 +62,11 @@ public class PresetsGui extends JPanel {
         return new JComboBox<>(channels.toArray(new String[channels.size()]));
 	}
 	
-	private void presetsBtns(JPanel buttons) {
+	private JPanel presetsBtns(Rectangle rectangle) {
+		JPanel buttons = new JPanel();
     	buttons.setLayout(new BoxLayout(buttons, BoxLayout.Y_AXIS));
         buttons.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        buttons.setBounds(rectangle);
 
         JButton save 	= new Button(" Save ", e->current(list.getSelectedIndex()));
         JButton create  = new Button("Create", e->create());
@@ -91,14 +91,13 @@ public class PresetsGui extends JPanel {
         JLabel title = new JLabel("Presets", JLabel.CENTER);
         title.setBounds(30, offset, 200, 30);
         add(title);
+        return buttons;
     }
 
-	
 	private void copy(int idx) {
 		if (list.getSelectedIndex() < 0) return;
 		String name = Gui.inputBox("New Name:");
 		if (name == null || name.isBlank()) return;
-		
 		
 		Preset source = getPresets().get(idx);
 		presets.add(new Preset(name, source));
@@ -118,11 +117,10 @@ public class PresetsGui extends JPanel {
         ch.setPresetActive(true);
     }
 
-    class Button extends Btn {
-        Button(String lbl, ActionListener e) {
+    public static class Button extends Btn {
+        public Button(String lbl, ActionListener e) {
             super(lbl, e);
-            setPreferredSize(BTN_SZ);
-            setMaximumSize(BTN_SZ);
+            Gui.resize(this, BTN_SZ);
         }
     }
 
@@ -130,6 +128,7 @@ public class PresetsGui extends JPanel {
         if (idx < 0 || idx >= getPresets().size())
             throw new InvalidParameterException("" + idx);
         getPresets().remove(idx);
+        renew();
     }
 
     public void create() {
@@ -142,8 +141,6 @@ public class PresetsGui extends JPanel {
     public void current(int idx) {
         if (idx < 0 || idx >+ getPresets().size())
             throw new InvalidParameterException("" + idx);
-
-
         Channel channel = JudahZone.getFxRack().getChannel();
         Preset old = presets.get(idx);
         Preset replace = channel.toPreset(old.getName());
@@ -152,23 +149,20 @@ public class PresetsGui extends JPanel {
     }
 
     public void save() {
-        try {
-            Constants.writeToFile(Folders.getPresetsFile(), getPresets().toString());
-            list.setModel(presetModel());
-        } catch (Exception e) {RTLogger.warn(this, e);}
+    	presets.save();
+    	renew();
     }
 
-    public DefaultListModel<String> presetModel() {
+    private void renew() {
         DefaultListModel<String> model = new DefaultListModel<>();
-        ArrayList<Preset> list = JudahZone.getPresets();
-        list.sort(new Comparator<Preset>() {
+        presets.sort(new Comparator<Preset>() {
 			@Override public int compare(Preset o1, Preset o2) {
 				return o1.getName().compareTo(o2.getName());
 			}
 		});
-        for(Preset p : list)
+        for(Preset p : presets)
             model.addElement(p.getName() + p.condenseEffects());
-        return model;
+        list.setModel(model);
     }
 
 }

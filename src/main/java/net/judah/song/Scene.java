@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,7 +15,7 @@ import net.judah.seq.Seq;
 @Data @AllArgsConstructor @NoArgsConstructor
 public class Scene {
 	
-	UUID id = UUID.randomUUID();
+	@JsonIgnore UUID id = UUID.randomUUID();
 	Trigger type = Trigger.BAR;
 	String notes;
 	ParamList commands = new ParamList();

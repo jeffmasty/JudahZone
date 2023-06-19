@@ -1,9 +1,12 @@
-/* original source: https://github.com/SongProOrg/songpro-java  (MIT license) */
+/* original source file: https://github.com/SongProOrg/songpro-java  (MIT license) */
 
 package net.judah.seq.chords;
 
+import static net.judah.seq.chords.Directive.*;
+
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,8 +21,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.judah.util.Constants;
 
+/** .pro file parser (https://www.chordpro.org/chordpro/chordpro-directives/)*/
 @Setter @Getter
-public class ChordProParser {
+public class ChordPro {
+	public static final String SUFFIX = ".pro";
 	
 	@NoArgsConstructor @AllArgsConstructor @Getter
 	class Pair { 
@@ -31,21 +36,19 @@ public class ChordProParser {
 	private final static Pattern COMMENT_REGEX = Pattern.compile(">\\s*([^$]*)");
 	private static final String SECTION_START = "{start_of_";
 	private static final String SECTION_END = "{end_of_";
-	
+	private static final String ABREV_START = "{so";
+	private static final String ABREV_END = "{eo";
+			
 	ChordProData data = new ChordProData();
 	private final List<Section> sections = new ArrayList<>();
+	private final List<Directive> directives = new ArrayList<>();
 	private final int steps;
 	private Section current;
 	
-	public static ChordProParser load(File file, int steps) {
-		ChordProParser result = null;
-		if (file != null && file.isFile()) 
-			result = new ChordProParser(file, steps);
-		return result;
-	}
-	
-	private ChordProParser(File file, int steps) {
+	public ChordPro(File file, int steps) throws ParseException {
 		this.steps = steps;
+		if (file == null || file.isFile() == false) 
+			throw new ParseException(new FileNotFoundException("not file"), "" + file);
 		parse(readFile(file.getAbsolutePath()));
 	}
 
@@ -62,35 +65,54 @@ public class ChordProParser {
         return songLines;
     }
 
-	private void parse(List<String> lines) {
+	private void parse(List<String> lines) throws ParseException {
 
-		current = new Section("");
-		sections.add(current);
-
-		for (String text : lines) {
-			if (text.isBlank())
-				continue;
-			if (text.startsWith("http")) {
-				data.hyperlink = text;
-				continue;
-			} else if (text.startsWith(SECTION_START)) {
-				processSection(text);
-			} else if (text.startsWith(SECTION_END)) {
-				current = new Section("");
-				sections.add(current);
-			} else if (text.startsWith("{")) {
-				processAttribute(text);
-			} else {
-				if (text.startsWith("|-"))
+		for (int x = 0; x < lines.size(); x++) {
+			String text = lines.get(x);
+			try { 
+				if (text.isBlank())
 					continue;
-				else if (text.startsWith(">")) {
-					Matcher matcher = COMMENT_REGEX.matcher(text);
-					if (matcher.matches())
+				if (text.startsWith("http")) {
+					data.hyperlink = text;
+					continue;
+				}
+				if (text.startsWith(SECTION_START)) {
+					processSection(text);
+				} else if (text.startsWith(ABREV_START)) {
+					processAbrev(text);
+				} else if (text.startsWith(SECTION_END) || text.startsWith(ABREV_END)) {
+					current = new Section("");
+					sections.add(current);
+				} else if (text.startsWith(MUTES.getLiteral())) {
+					directives.add(MUTES);
+				} else if (text.startsWith(SCENES.getLiteral())) {
+					directives.add(Directive.SCENES);
+				} else if (text.startsWith(LENGTH.getLiteral())) {
+					if (current != null)
+						current.getDirectives().add(Directive.LENGTH);
+				} else if (text.startsWith(LOOP.getLiteral())) {
+					if (current == null)
+						directives.add(Directive.LOOP);
+					else
+						current.getDirectives().add(LOOP);
+				} else if (text.startsWith("{")) {
+					processAttribute(text);
+				} else {
+					if (text.startsWith("|-"))
 						continue;
-				} else
-					processChords(text);
-			}
+					else if (text.startsWith(">")) {
+						Matcher matcher = COMMENT_REGEX.matcher(text);
+						if (matcher.matches())
+							continue;
+					} else {
+						processChords(text);
+					}
+				}
+			} catch (Throwable t) { throw new ParseException(t, "line" + x + ": " + text); }
 		}
+		if (current.isEmpty())
+			sections.remove(current);
+		renameSections();
 	}
 
 	private void processAttribute(String line) {
@@ -131,22 +153,42 @@ public class ChordProParser {
 		}
 	}
 
-	private void processSection(String text) {
-		int idx = text.lastIndexOf('_');
-
-		String name = text.substring(idx + 1).replace("}", "");
-		if (current.isEmpty() && current.getName().isEmpty())
-			current.setName(name);
-		else {
-			current = new Section(name);
+	private void checkCurrent() {
+		if (current == null) { // first time, get an initial Current started
+			current = new Section("");
 			sections.add(current);
 		}
+	}
+	private String qualified(String text) {
+		if (text.contains(":") == false)
+			return text;
+		return text.split(":")[1];
+	}
+	
+	private void processAbrev(String text) {
+		String raw = text.substring(ABREV_START.length()).replace("}", "");
+		// RTLogger.log(this, raw);
+		Part part = Part.parse(raw.charAt(0));
+		checkCurrent();
+		if (raw.length() == 1)
+			current.setName(part.getLiteral());
+		else
+			current.setName(qualified(raw));
+		current.setPart(part);
+	}
+
+	private void processSection(String text) {
+		String raw = text.substring(SECTION_START.length()).replace("}", "");
+		// RTLogger.log(this, raw);
+		checkCurrent();
+		current.setName(qualified(raw));
+		current.setPart(Part.parse(raw.split(":")[0]));
 	}
 
 	private void processChords(String text) {
 		if (text.isEmpty())
 			return;
-
+		checkCurrent();
 		String[] split = text.split("\\|");
 		@SuppressWarnings("unchecked")
 		ArrayList<Pair>[] parts = new ArrayList[split.length];
@@ -214,6 +256,13 @@ public class ChordProParser {
 
 	}
 
+	private void renameSections() {
+		int count = 1;
+		for (Section s : sections)
+			if (s.getName() == null || s.getName().isBlank())
+				s.setName("part" + count++);
+	}
+	
 	@Override
 	public String toString() {
 		StringBuffer buf = new StringBuffer(Constants.NL);

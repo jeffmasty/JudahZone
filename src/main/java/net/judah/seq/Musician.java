@@ -6,9 +6,11 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
 
+import net.judah.midi.Signature;
+
 public interface Musician extends MouseListener, MouseWheelListener, MouseMotionListener, MidiConstants, KeyListener {
 	
-	void timeSig();
+	void timeSig(Signature value);
 	long toTick(Point p);
 	int toData1(Point p);
 	Prototype translate(Point p) ;

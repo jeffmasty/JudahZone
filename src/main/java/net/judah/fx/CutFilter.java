@@ -76,7 +76,7 @@ public class CutFilter implements Effect {
         ;
         private final String description;
     };
-    private static final int PARTY_FREQUENCY = 1200;
+    private static final int PARTY_FREQUENCY = 1300;
 
     /** y = 1/30 * x ^ 2.81 + bassFloor */
 	public static float knobToFrequency(int val) {
@@ -106,8 +106,8 @@ public class CutFilter implements Effect {
 
     @Getter private Type filterType = Type.pArTy;
     @Setter @Getter private boolean active;
-    @Getter private float frequency = 650;
-    private double resonancedB = 5.;
+    @Getter private float frequency = 700;
+    private double resonancedB = 3.3;
     private Type oldParty;
 
     public CutFilter(boolean isStereo, Type type, float freq) {
@@ -140,7 +140,7 @@ public class CutFilter implements Effect {
         if (idx == Settings.Frequency.ordinal())
             return frequencyToKnob(getFrequency());
         if (idx == Settings.Resonance.ordinal())
-            return (int)(getResonance() * 4);
+            return (int)(getResonance() * 20);
         throw new InvalidParameterException();
     }
 
@@ -151,7 +151,7 @@ public class CutFilter implements Effect {
         else if (idx == Settings.Frequency.ordinal())
             setFrequency(knobToFrequency(value));
         else if (idx == Settings.Resonance.ordinal())
-        	setResonance(value * 0.25f);
+        	setResonance(value * 0.05f);
         else throw new InvalidParameterException();
     }
 

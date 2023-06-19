@@ -24,6 +24,7 @@ import net.judah.util.Constants;
 
 /** Controller substitute, reroute guitar midi to synths */
 public class Jamstik extends JComboBox<MidiReceiver>{
+	public static final boolean ENABLED = false;
 	
 	@Getter private static boolean active = false;
 	@Getter private static MidiReceiver out;

@@ -1,7 +1,5 @@
 package net.judah.seq;
 
-import java.util.ArrayList;
-
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
@@ -10,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import net.judah.midi.Midi;
 
 @RequiredArgsConstructor
-public class Measure extends ArrayList<MidiPair> implements MidiConstants {
+public class Measure extends Notes implements MidiConstants {
 	
 	private final Accumulator stash = new Accumulator();
 	private final MidiTrack track;
@@ -46,8 +44,10 @@ public class Measure extends ArrayList<MidiPair> implements MidiConstants {
 	
 	/** loads two bars from measure of track into the supplied result*/
 	public void loadPiano() {
+		int bar = track.getCurrent() / 2;
+		
 		stash.clear();
-		long startTick = track.getLeft();
+		long startTick = bar * track.getWindow();
 		long end = startTick + track.getWindow(); 
 		for (int i = 0; i < t.size(); i++) { 
 			MidiEvent e = t.get(i);

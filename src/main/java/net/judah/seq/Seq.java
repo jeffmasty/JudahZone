@@ -30,7 +30,6 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
 	private final TrackList synthTracks;
 	private final ArrayList<TrackKnobs> knobs = new ArrayList<>();
 	
-	
 	private final ChordTrack chordTrack;
 	
 	public Seq(TrackList drumTracks, TrackList synthTracks, ChordTrack chords) {
@@ -43,7 +42,6 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
 
 		for(MidiTrack track : this) 
 			knobs.add(new TrackKnobs(track, this));
-		
 	}
 	
 	public MidiTrack getCurrent() {
@@ -104,8 +102,10 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
         fills.load(new File(fills.getFolder(), "Fills1"));
         fills.setCue(Cue.Hot);
         fills.getMidiOut().progChange("VCO");
+        
 	}
 
+	/** load song */
 	public void loadTracks(List<TrackInfo> trax) {
 		for (TrackInfo info : trax) {
     		MidiTrack t = byName(info.getTrack());
@@ -113,8 +113,9 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
     			RTLogger.warn(this, "Missing " + info.getTrack());
     			continue;
     		}
-    		if (info.getFile() != null && info.getFile().isFile()) 
-    			t.load(info.getFile());
+    		if (info.getFile() != null && !info.getFile().isBlank()) {
+    			t.load(new File(t.getFolder(), info.getFile()));
+    		}
     		t.setCue(info.getCue());
     		t.setGate(info.getGate());
     		if (info.getArp() != null) {
@@ -124,33 +125,22 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
     		if (false == info.getProgram().equals(t.getMidiOut().getProg(t.getCh()))) 
     			t.getMidiOut().progChange(info.getProgram(), t.getCh());
     	} 
-
 	}
 
 	/**Perform recording or translate activities on tracks
 	 * @param midi user note press 
 	 * @return true if any track is recording */
 	public boolean rtCheck(Midi midi) {
-		for (MidiTrack track : tracks)
-			if (track.getRecorder().record(midi))
-				return true;
-			
-		for (MidiTrack track : tracks)
-			if (track.getTransposer().setAmount(midi))
-				return true;
-			
-		return false;
+		boolean result = false;
+		for (MidiTrack track : synthTracks) 
+			if (track.getArp().mpkFeed(midi)) 
+				result = true;
+		return result;
 	}
-
 	
 	@Override
 	public String[] getKeys() {
 		return IntProvider.instance(1, 64, 1).getKeys();
-	}
-
-	@Override
-	public String lookup(int value) {
-		return "" + value;
 	}
 
 	@Override

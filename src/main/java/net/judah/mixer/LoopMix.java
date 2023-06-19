@@ -136,19 +136,27 @@ public class LoopMix extends MixWidget implements TimeListener, Updateable {
 		if (bars == BSYNC_DOWN) {
 			loop.record(false); // bSync
 			clock.setLength(counter + 1);
-			clock.setBar(0);
+			JudahClock.setBar(0);
 			RTLogger.log(this, "BSync ended");
 			return;
 		}
 			
 		if (counter < 0) {
 			loop.record(true);
+			checkSoloSync();
 			title.setText("Go ! ");
 		}
 		counter ++;
 		if (counter == bars) {
 			loop.record(false);
-//			clock.listen(loop);
+		}
+	}
+	
+	private void checkSoloSync() {
+		if (loop.hasRecording()) return;
+		if (looper.getSoloTrack().isSolo() && looper.getOnDeck().contains(looper.getSoloTrack())) {
+			looper.getSoloTrack().record(true);
+			looper.getOnDeck().remove(looper.getSoloTrack());
 		}
 	}
 	

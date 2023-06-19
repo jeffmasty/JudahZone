@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.swing.BoxLayout;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
@@ -19,24 +18,26 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
-import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
-import net.judah.gui.settable.Songs;
-import net.judah.gui.widgets.Btn;
 import net.judah.midi.JudahClock;
-import net.judah.midi.Signature;
 import net.judah.mixer.Channel;
 import net.judah.seq.MidiTrack;
 import net.judah.seq.Seq;
 import net.judah.seq.TrackList;
 import net.judah.seq.chords.ChordView;
+import net.judah.song.setlist.Setlists;
 import net.judah.util.RTLogger;
 
 /** left: SongView, right: midi tracks list*/
 @Getter
 public class SongTab extends JPanel implements TimeListener, Cmdr {
+	private static final Dimension listSz = new Dimension((int) (TAB_SIZE.width * 0.60f), TAB_SIZE.height - 30);
+	private static final Dimension sceneSz = new Dimension((int) (TAB_SIZE.width * 0.39f), TAB_SIZE.height);
+	private static final Dimension props = new Dimension((int)(Size.WIDTH_TAB * 0.35f), (int)(Size.HEIGHT_TAB * 0.27f));
+	private static final Dimension btns = new Dimension((int)(Size.WIDTH_TAB * 0.38f), (int)(Size.WIDTH_TAB * 0.27f));
+
 	
 	private final JudahClock clock;
 	private Song song;
@@ -45,67 +46,55 @@ public class SongTab extends JPanel implements TimeListener, Cmdr {
 	private int count;
 	private String[] keys;
 	private SongView songView;
+	private final SongTitle songTitle;
 	private final ArrayList<SongTrack> tracks = new ArrayList<>();
 	private final JPanel holder = new JPanel();
-	private final JComboBox<Signature> timeSig = new JComboBox<>(Signature.values());
 
-	public SongTab(JudahClock clock, ChordView chords) {
+	public SongTab(JudahClock clock, ChordView chords, Setlists setlists) {
 		this.clock = clock;
 		clock.addListener(this);
 		setPreferredSize(TAB_SIZE);
-		Dimension listSz = new Dimension((int) (TAB_SIZE.width * 0.59f), TAB_SIZE.height - 30);
-		Dimension sceneSz = new Dimension((int) (TAB_SIZE.width * 0.4f), TAB_SIZE.height);
+
 		holder.setMinimumSize(sceneSz);
 		JPanel trackPnl = new JPanel();
 		trackPnl.setLayout(new BoxLayout(trackPnl, BoxLayout.PAGE_AXIS));
 		trackPnl.setPreferredSize(listSz);
 		trackPnl.setMinimumSize(listSz);
 		trackPnl.setOpaque(true);
-		
 		getSeq().getTracks().forEach(track-> tracks.add(new SongTrack(track)));
-		
-		JPanel title = new JPanel();
-		title.add(new JLabel("Song"));
-		title.add(new Songs()); 
-		title.add(new Btn("Save", e->JudahZone.save()));
-		title.add(new Btn("Reload", e->JudahZone.reload()));
-		title.add(Gui.resize(timeSig, Size.SMALLER_COMBO));
-		
-		title.add(chords);
-		trackPnl.add(title);
-		// trackPnl.add(chords);
-		trackPnl.add(labels(listSz));
-		tracks.forEach(track->trackPnl.add(track));
+		songTitle = new SongTitle(clock, setlists);
+		trackPnl.add(songTitle);
+		// trackPnl.add(labels(listSz));
+		for (int i = 0; i < 4; i++)
+			trackPnl.add(tracks.get(i));
+		trackPnl.add(chords);
+		for (int i = 4; i < tracks.size(); i++)
+			trackPnl.add(tracks.get(i));
+
 		add(trackPnl);
 		add(holder);
 		setName(JudahZone.JUDAHZONE);
-		timeSig.addActionListener(e->song.setTimeSig((Signature)timeSig.getSelectedItem()));
 		
 	}
 	
+	@SuppressWarnings("unused")
 	private JPanel labels(Dimension sz) {
 		ArrayList<String> lbls = new ArrayList<>(Arrays.asList(new String[]
-			{"Track", "File", "", "Preset", "", "Cycle", "Init", "Edit", "Current", "Amp", "Arp/Vol"}));
+			{"Track    ", "Arp/Vol", "     File", "  ", "Preset", "", "Cycle", "Init ", "Edit  ", " Current", "Amp"}));
 		JPanel result = new JPanel(new GridLayout(0, lbls.size()));
 		result.setBackground(Pastels.BUTTONS);
 		lbls.forEach(name->result.add(new JLabel(name, JLabel.CENTER)));
 		return result;
 	}
 	
-	public void update() {
-		songView.update();
-		tracks.forEach(track->track.update());
-		if (timeSig.getSelectedItem() != clock.getTimeSig())
-			timeSig.setSelectedItem(clock.getTimeSig());
-
-	}
-
 	public void setSong(Song next) {
 		song = next;
 		setName(song.getFile() == null ? JudahZone.JUDAHZONE : song.getFile().getName());
-		holder.removeAll();
+		songTitle.setSong(next);
+		songTitle.update();
 
-		songView = new SongView(song, this);
+		holder.removeAll();
+		songView = new SongView(song, this, props, btns);
 		holder.add(songView);
 		if (song.getScenes().isEmpty())
 			song.getScenes().add(new Scene(getSeq()));
@@ -248,14 +237,12 @@ public class SongTab extends JPanel implements TimeListener, Cmdr {
 					ch.setPresetActive(false);
 			}
 		}
-		
 		MainFrame.setFocus(current);
 	}
 	
 	@Override public void update(Property prop, Object value) {
 		if (onDeck == null) 
 			return;
-		
 		if (prop == Property.BARS && onDeck.type == Trigger.BAR)	
 			go();
 		else if (prop == Property.LOOP && onDeck.type == Trigger.LOOP) 
@@ -265,13 +252,20 @@ public class SongTab extends JPanel implements TimeListener, Cmdr {
 				go();
 		}
 		else if (onDeck.type == Trigger.REL && prop == Property.BEAT) {
-			
 			if (++count >= onDeck.getCommands().getTimeCode()) 
 				go();
 			else 
 				MainFrame.update(onDeck);
 		}
+		
 	}
+
+	public void update() {
+		songTitle.update();
+		songView.update();
+		tracks.forEach(track->track.update());
+	}
+
 
 	public void update(MidiTrack t) {
 		for (SongTrack track : tracks) 
@@ -285,13 +279,6 @@ public class SongTab extends JPanel implements TimeListener, Cmdr {
 			keys[i] = "" + i;
 	}
 	
-	@Override
-	public String lookup(int value) {
-		if (value >= 0 && value < song.getScenes().size())
-			return "" + value;
-		return "null"; // fail
-	}
-
 	@Override
 	public Object resolve(String key) {
 		return song.getScenes().get(Integer.parseInt(key));

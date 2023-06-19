@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.gui.Pastels;
+import net.judah.midi.Signature;
 import net.judah.seq.MidiTrack;
 import net.judah.seq.Steps;
 
@@ -26,14 +27,15 @@ public class BeatSteps extends Steps {
     	this.width = r.width;
     	setLayout(null);
     	setBounds(r);
-    	createLabels();
+    	createLabels(track.getClock().getTimeSig());
     	addLbls();
     }
     
-    public ArrayList<BeatLabel> createLabels() {
+    public ArrayList<BeatLabel> createLabels(Signature sig) {
         all.clear();
-        total =  2 * track.getClock().getSteps();
-        int stepsPerBeat = track.getClock().getSteps() / track.getClock().getMeasure();
+        total =  2 * sig.steps;
+        unit = width / total;
+        int stepsPerBeat = track.getClock().getSteps() / sig.beats;
         int beat = 1;
         for (int x = 0; x < total; x++) {
             if (x % stepsPerBeat == 0) {
@@ -62,7 +64,6 @@ public class BeatSteps extends Steps {
 	}
 
 	private void addLbls() {
-		unit = width / (2 * track.getClock().getSteps());
         for (int i = 0; i < all.size(); i++) {
             BeatLabel lbl = all.get(i);
             lbl.setBounds((int)(i * unit) + 3 + BeatBox.X_OFF, 1, 26, 26);
@@ -71,8 +72,8 @@ public class BeatSteps extends Steps {
 	}
 
 	@Override
-	public void timeSig() { // TODO test time signature
-		createLabels();
+	public void timeSig(Signature sig) { // TODO test time signature
+		createLabels(sig);
 		addLbls();
 		invalidate();
 	}

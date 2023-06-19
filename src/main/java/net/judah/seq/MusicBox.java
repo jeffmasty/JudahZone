@@ -15,11 +15,13 @@ import javax.sound.midi.Track;
 import javax.swing.JPanel;
 
 import lombok.Getter;
+import net.judah.api.Key;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
 import net.judah.seq.Edit.Type;
+import net.judah.seq.piano.PianoBox;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -133,8 +135,14 @@ public abstract class MusicBox extends JPanel implements Musician {
 			default: RTLogger.log(this, "key: " + ch + "=" + intchar + ";" + e.getModifiersEx());
 			}
 		}
-		else if (intchar == 10)
-			track.setFrame(track.getFrame() + 1);
+		else if (intchar == 10) // ?
+			track.setCurrent(track.getCurrent() + 1);
+		else if (track.isSynth() && PianoBox.chromaticKeyboard(ch) >= 0) {
+			int ordinal = PianoBox.chromaticKeyboard(ch);
+			while (ordinal >= 12)
+				ordinal -= 12;
+			RTLogger.log(this, "pressed " + Key.values()[ordinal]);
+		}
 		else 
 			RTLogger.log(this, "key: " + ch + "=" + intchar + ";" + e.getModifiersEx());
 	}
@@ -330,6 +338,12 @@ public abstract class MusicBox extends JPanel implements Musician {
 		}
 		repaint();
 	}
+	
+	public void select(Notes notes) {
+		selected.clear();
+		selected.addAll(notes);
+		repaint();
+	}
 
 	public void selectFrame() {
 		long start = track.getLeft();
@@ -337,13 +351,6 @@ public abstract class MusicBox extends JPanel implements Musician {
 		selectArea(start, end);
 	}
 	
-	public void selectStep(int step) {
-		long div = track.getResolution() / clock.getSubdivision();
-		long start = track.getLeft() + (step * div);
-		long end = start + div;
-		selectArea(start, end, 0, 127);
-	}
-
 	@Override
 	public void selectArea(long start, long end, int low, int high) {
 		selected.clear();
@@ -392,3 +399,11 @@ public abstract class MusicBox extends JPanel implements Musician {
 	}
 	
 }
+
+//	public void selectStep(int step) {
+//		long div = track.getResolution() / clock.getSubdivision();
+//		long start = track.getLeft() + (step * div);
+//		long end = start + div;
+//		selectArea(start, end, 0, 127);
+//	}
+

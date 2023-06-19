@@ -134,7 +134,7 @@ public class Constants {
 		assert percent <= max && percent >= min;
 		
 		// The result should be between min and max
-		if (min <= 0) min = 0.001f;
+		if (min <= 0) min = 0.0001f;
 		double minv = Math.log(min);
 		double maxv = Math.log(max);
 	

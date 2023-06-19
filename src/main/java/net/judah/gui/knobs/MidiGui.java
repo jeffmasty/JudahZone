@@ -1,6 +1,5 @@
 package net.judah.gui.knobs;
 import static net.judah.JudahZone.*;
-import static net.judah.fluid.FluidSynth.CHANNELS;
 
 import java.awt.Component;
 import java.awt.Dimension;
@@ -14,37 +13,40 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.controllers.Jamstik;
 import net.judah.drumkit.Sampler;
+import net.judah.fluid.FluidCommand;
 import net.judah.fluid.FluidSynth;
+import net.judah.fluid.FluidSynth.Drum;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.settable.Program;
-import net.judah.gui.settable.Songs;
-import net.judah.gui.widgets.Btn;
+import net.judah.gui.settable.SongsCombo;
 import net.judah.gui.widgets.Click;
 import net.judah.gui.widgets.Knob;
-import net.judah.gui.widgets.LengthWidget;
+import net.judah.gui.widgets.LengthCombo;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
-import net.judah.midi.Signature;
 import net.judah.seq.MidiTrack;
 import net.judah.seq.Seq;
+import net.judah.seq.arp.Mode;
+import net.judah.song.setlist.Setlists;
+import net.judah.song.setlist.SetlistsCombo;
 import net.judah.synth.JudahSynth;
 import net.judah.util.Constants;
-import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 /** clock tempo, loop length, setlist, midi cables */
 public class MidiGui extends KnobPanel {
-	public static final Dimension COMBO_SIZE = new Dimension(114, 28);
-	@Getter private final KnobMode knobMode = KnobMode.Midi;
+	public static final Dimension COMBO_SIZE = new Dimension(113, 28);
+	public static final int CHANNELS = 3;
 	
-	@Getter private final Songs songsCombo = new Songs();
+	@Getter private final KnobMode knobMode = KnobMode.Midi;
+	@Getter private final SongsCombo songsCombo = new SongsCombo();
 	private final JudahClock clock;
 	private final JudahMidi midi;
 	private final Sampler sampler;
 	private final FluidSynth fluid;
-    private final LengthWidget sync;
+	private final Setlists setlists;
     private final Program one;
     private final Program two;
 	private final Program[] fluids = new Program[CHANNELS];
@@ -57,23 +59,21 @@ public class MidiGui extends KnobPanel {
     private final JToggleButton fluidBtn = new JToggleButton("Fluid");
 	private final JPanel mpkPanel = new JPanel();
 	private final JPanel titleBar = new JPanel();
-	private final JComboBox<Signature> sig = new JComboBox<Signature>(Signature.values());
 	
 	public MidiGui(JudahMidi midi, JudahClock clock, Jamstik jam, Sampler sampler,
-			JudahSynth a, JudahSynth b, FluidSynth fsynth, Seq seq) {
+			JudahSynth a, JudahSynth b, FluidSynth fsynth, Seq seq, Setlists setlists) {
 		super(KnobMode.Midi.name());
 		this.clock = clock;
 		this.sampler = sampler;
 		this.fluid = fsynth;
 		this.jamstik = jam;
 		this.midi = midi;
+		this.setlists = setlists;
     	jamstik.setFrame(this);
     	
     	titleBar.add(new JLabel("Song"));
     	titleBar.add(songsCombo);
-    	titleBar.add(new Btn("Load", e->loadSong((File)songsCombo.getSelectedItem())));
     	
-    	setOpaque(true);
     	one = new Program(a);
     	two = new Program(b);
     	seq.getSynthTracks().forEach(track->mpk.addItem(track));
@@ -96,14 +96,13 @@ public class MidiGui extends KnobPanel {
 		stepPlay.addActionListener(e-> sampler.setStepping(!sampler.isStepping()));
 		stepPlay.setOpaque(true);
 		
-		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+
 		JPanel top = new JPanel();
-		sync = new LengthWidget(clock);
-		sig.addActionListener(e->clock.setTimeSig((Signature)sig.getSelectedItem()));
+		top.setLayout(new BoxLayout(top, BoxLayout.LINE_AXIS));
 		
-		top.add(new JLabel("Bars"));
-		top.add(sync);
-		top.add(sig);
+		top.add(new JLabel("  Setlist "));
+		top.add(new SetlistsCombo(setlists));
+		top.add(Box.createHorizontalGlue());
 		top.add(stepper);
 		top.add(stepVol);
 		top.add(stepPlay);
@@ -120,20 +119,21 @@ public class MidiGui extends KnobPanel {
 		which.add(zoneBtn);
 		which.add(fluidBtn);
 		zoneBtn.setSelected(true);
-		labels.add(zoneBtn);
 		labels.add(fluidBtn);
+		labels.add(zoneBtn);
 		
 			
 		JPanel bottom = new JPanel(new GridLayout(1, 2));
+		bottom.add(fluids());
 		bottom.add(internals());
-		bottom.add(fluids(fsynth));
-		
-        update();
-        
+		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+    	setOpaque(true);
         add(top);
 		add(labels);
         add(Gui.wrap(bottom));
-    }
+        update();
+
+	}
 	
 	private JPanel internals() { // Synth1, Synth2, Jamstik, MPK
 		JPanel result = new JPanel();
@@ -158,26 +158,40 @@ public class MidiGui extends KnobPanel {
 		row.add(Gui.resize(jamstik, COMBO_SIZE));
 		result.add(row);
 		
-		mpkPanel.add(new Click("MPK", e->midi.getKeyboardSynth().getTransposer().toggle()));
+		mpkPanel.add(new Click("  MPK  ", e->midi.getKeyboardSynth().getArp().toggle(
+				((Click)e.getSource()).isRight() ? Mode.REC : Mode.MPK)));
         mpkPanel.add(Gui.resize(mpk, COMBO_SIZE));
 		result.add(mpkPanel);
 		return result;
 	}
 	
-	private JPanel fluids(FluidSynth fluid) {
+	private JPanel fluids() {
 		JPanel result = new JPanel();
 		try {
 			for (int i = 0; i < CHANNELS; i++) {
 				fluids[i] = new Program(fluid, i);
-				fluids[i].setPreferredSize(COMBO_SIZE);
+				Gui.resize(fluids[i], COMBO_SIZE);
 			}
 			result.setLayout(new GridLayout(4, 1));
 			for (int i = 0; i < CHANNELS; i++) {
 				JPanel row = new JPanel();
-				row.add(new JLabel("CH " + i));
+				row.add(new JLabel("CH " + (i + 1)));
 				row.add(fluids[i]);
 				result.add(row);
 			}
+			JComboBox<String> drums = new JComboBox<>();
+			for (Drum d : fluid.getDrums())
+				drums.addItem(d.name);
+			Gui.resize(drums, COMBO_SIZE);
+			drums.addActionListener(e->{
+				Integer prog = fluid.getDrums().get(drums.getSelectedIndex()).prog;
+				fluid.sendCommand(FluidCommand.PROG_CHANGE, 9 + " " + prog);
+			});
+			JPanel row = new JPanel();
+			row.add(new JLabel("Drum"));
+			row.add(drums);
+			result.add(row);
+			
 		} catch (Exception e) { RTLogger.warn(this, e); }
 		return result;
 	}
@@ -196,10 +210,10 @@ public class MidiGui extends KnobPanel {
 			if (data2 == 0) 
 				clock.setLength(1);
 			else 
-				clock.setLength((int) Constants.ratio(data2, LengthWidget.LENGTHS));
+				clock.setLength((int) Constants.ratio(data2, LengthCombo.LENGTHS));
 			break;
     	case 1: // Select song
- 	    	songsCombo.midiShow((File)Constants.ratio(data2 - 1, Folders.getSetlist().listFiles()));
+ 	    	songsCombo.midiShow((File)Constants.ratio(data2 - 1, setlists.getCurrent()));
     		break;
     	case 2: // Select StepSample
     		sampler.setSelected(Constants.ratio(data2, sampler.getStepSamples().size()));
@@ -248,18 +262,6 @@ public class MidiGui extends KnobPanel {
 			zoneBtn.setSelected(true);
 	}
 	
-	public void length(int bars) {
-		sync.setSelectedItem(bars);
-	}
-	
-	public void record(boolean active) {
-		mpkPanel.setBackground(active ? Pastels.RED : Pastels.BUTTONS);
-	}
-	
-	public void transpose(boolean active) {
-		mpkPanel.setBackground(active ? Pastels.PINK: Pastels.BUTTONS);
-	}
-
 	static final BasicComboBoxRenderer STYLE = new BasicComboBoxRenderer() {
         	@Override public Component getListCellRendererComponent(
         			@SuppressWarnings("rawtypes") JList list, Object value,
@@ -269,16 +271,20 @@ public class MidiGui extends KnobPanel {
         		setText(item == null ? "?" : item.toString());
         		return this;
     }};
+    
+    public void updateSynth() {
+    	Mode m = midi.getKeyboardSynth().getArp().getMode();
+    	if (m == Mode.MPK || m == Mode.REC) 
+    		mpkPanel.setBackground(m.getColor());
+    	else mpkPanel.setBackground(null);
+    }
 
 	@Override
 	public void update() {
 		if (stepVol.getValue() != (int) (sampler.getStepMix() * 100))
 			stepVol.setValue((int) (sampler.getStepMix() * 100));
-		sync.setSelectedItem(clock.getLength());
 		stepper.setSelectedIndex(sampler.getSelected());
 		stepPlay.setBackground(sampler.isStepping() ? Pastels.GREEN : null);
-		if (clock.getTimeSig() != sig.getSelectedItem())
-			sig.setSelectedItem(clock.getTimeSig());
 		if (midi.getKeyboardSynth() != (MidiTrack)mpk.getSelectedItem())
 			mpk.setSelectedItem(midi.getKeyboardSynth());	
 	}

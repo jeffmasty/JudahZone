@@ -120,9 +120,8 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Cmdr {
 
     
     public void flush() {
-    	for (int i = onDeck.size() - 1; i >= 0; i--) {
+    	for (int i = onDeck.size() - 1; i >= 0; i--) 
     		MainFrame.update(onDeck.removeLast());
-    	}
     }
     
 	public void onDeck(Loop loop) {
@@ -178,13 +177,6 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Cmdr {
 				continue;
 			l.catchUp(loop.getRecording().size());
 		}
-	}
-
-	@Override
-	public String lookup(int value) {
-		if (value >= 0 && value < size())
-			return get(value).getName();
-		return loopA.getName();
 	}
 
 	@Override

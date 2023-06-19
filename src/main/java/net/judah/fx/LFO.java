@@ -135,6 +135,7 @@ public class LFO implements Effect {
         	else if (result > 100) result = 100;
             return result;
         }
+        // TODO Shape <| |> ~~
         throw new InvalidParameterException();
     }
 

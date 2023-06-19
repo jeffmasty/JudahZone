@@ -2,33 +2,32 @@
 package net.judah.seq.chords;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import net.judah.gui.MainFrame;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 @Data @AllArgsConstructor @NoArgsConstructor @EqualsAndHashCode(callSuper = true)
 public class Section extends ArrayList<Chord> {
+	@JsonIgnore
+	private final UUID uuid = UUID.randomUUID();
+	private String name = "main";
+	private Part part = Part.MAIN;
+	private final List<Directive> directives = new ArrayList<>();
+	private Integer count; // total steps in section
 	
-	public static enum Type { INTRO, VERSE, CHORUS, BRIDGE, ENDING, OTHER };
-	
-	private String name = "Main";
-	private Type type;
-
 	public Section(String name) {
-		setName(name);
-	}
-
-	public void setName(String name) {
-		for (Type t : Type.values())
-			if (t.name().equalsIgnoreCase(name))
-				type = t;
 		this.name = name;
 	}
-	
+
 	@Override
 	public boolean add(Chord e) {
 		if (e.size() == 0)
@@ -36,8 +35,7 @@ public class Section extends ArrayList<Chord> {
 		return super.add(e);
 	}
 	
-	@Override
-	public String toString() {
+	public String dump() {
 		StringBuffer buf = new StringBuffer();
 		if (name != null && !name.isBlank())
 			buf.append("--" + name + "-- ");
@@ -54,34 +52,53 @@ public class Section extends ArrayList<Chord> {
 		return buf.append(Constants.NL).toString();
 	}
 
-	public int stepCount() {
-		int result = 0;
-		for (Chord c : this)
-			result += c.getSteps();
-		return result;
+	public int getCount() {
+		if (count == null) {
+			int result = 0;
+			for (Chord c : this)
+				result += c.getSteps();
+			count = result;
+		}
+		return count;
 	}
 
 	public Chord getChordAt(int step) {
-		
-		
-		
 		int counter = 0;
 		for (Chord c : this) {
 			counter += c.getSteps();
 			if (counter >= step)
 				return c;
 		}
-		
 		RTLogger.log(this, name + " No chord at " + step);
-		
 		return null;
 	}
+	
+	public int getStepsAt(Chord chord) {
+		int count = 0;
+		for (Chord c : this) {
+			if (c == chord)
+				return count;
+			count += c.getSteps();
+		}
+		return -1;
+	}
 
-	public int steps() {
-		int steps = 0;
-		for (Chord c : this) 
-				steps += c.getSteps();
-		return steps;
+	public void toggle(Directive d) {
+		if (directives.contains(d))
+			directives.remove(d);
+		else 
+			directives.add(d);
+		MainFrame.update(this);
+	}
+		
+
+	
+	public boolean isOnLoop() {
+		return directives.contains(Directive.LOOP);
 	}
 	
+	@Override
+	public String toString() {
+		return name;
+	}
 }

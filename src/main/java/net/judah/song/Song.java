@@ -12,6 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.judah.JudahZone;
+import net.judah.api.Key;
 import net.judah.fx.PresetsDB;
 import net.judah.gui.widgets.FileChooser;
 import net.judah.midi.Signature;
@@ -19,9 +20,7 @@ import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
 import net.judah.seq.Seq;
 import net.judah.seq.chords.ChordTrack;
-import net.judah.seq.chords.Key;
 import net.judah.seq.chords.Scale;
-import net.judah.util.Folders;
 import net.judah.util.JsonUtil;
 import net.judah.util.RTLogger;
 
@@ -31,17 +30,17 @@ import net.judah.util.RTLogger;
 public class Song {
 	@JsonIgnore private File file;
 
-	private List<TrackInfo> tracks = new ArrayList<>();
-	private List<Scene> scenes = new ArrayList<>();
-	private List<FxData> fx = new ArrayList<>();
+	private Signature timeSig = Signature.FOURFOUR;
 	@JsonInclude(Include.NON_NULL)
-	private Signature timeSig;
-	@JsonInclude(Include.NON_NULL)
-	private File chordpro;
+	private String chordpro;
 	@JsonInclude(Include.NON_NULL)
 	private Key key;
 	@JsonInclude(Include.NON_NULL)
 	private Scale scale;
+	private List<TrackInfo> tracks = new ArrayList<>();
+	private List<Scene> scenes = new ArrayList<>();
+	private List<FxData> fx = new ArrayList<>();
+	private List<String> record = new ArrayList<>();
 	
 	public Song(Seq seq, int tempo) {
 		Scene fresh = new Scene(seq);
@@ -52,7 +51,7 @@ public class Song {
 	/** @param scene the current scene to save Efx.*/
     public void saveSong(DJJefe mixer, Seq seq, Scene scene, ChordTrack chordTrack) {
     	if (file == null)
-    		file = FileChooser.choose(Folders.getSetlist());
+    		file = FileChooser.choose(JudahZone.getSetlists().getDefault());
     	if (file == null) return;
     	
     	// populate top level track name, file(null), and progChange for each MidiTrack 
@@ -66,9 +65,15 @@ public class Song {
 			if (ch.isPresetActive()) 
 				scene.getFx().add(ch.getName());
 		}
+		int idx = scenes.indexOf(scene);
+		if (idx == 0) { // save mutes
+			record.clear();
+			mixer.getSources().forEach(line ->{
+				if (!line.isMuteRecord())record.add(line.getName());});
+		}
     	try {
 			JsonUtil.writeJson(this, file);
-			RTLogger.log(this, "Saved " + file.getName());
+			RTLogger.log(this, "Saved " + file.getName() + " (" + scenes.indexOf(scene) + ")");
 		} catch (Exception e) { RTLogger.warn(JudahZone.class, e); }
     }
 

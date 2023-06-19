@@ -23,10 +23,9 @@ public class ModalDialog extends JDialog {
 		this.view = view;
 		setModal(true);
         setSize(size);
-        
-        Dimension screen = JudahZone.getFrame().getSize();
-        // multi-screen?
-        setLocation(screen.width / 2 - size.width / 2, screen.height / 3 - size.height / 2);
+        if (view.getName() != null)
+        	setTitle(view.getName());
+        setLocation(JudahZone.getFrame().getSize().width / 2 - size.width / 2, 50); // multi-screen?
         previousMode = MainFrame.getKnobMode();
 		if (mode != null)
 			MainFrame.setFocus(mode);

@@ -10,8 +10,8 @@ public class Notification {
 		TEMPO,
 		/**TimeProvider's current status */
 		STATUS,
-		/** beats per measure */
-		MEASURE,
+		/** beats per measure or subdivision change */
+		SIGNATURE,
 		/** volume change */
 		VOLUME,
 		/** transport change */

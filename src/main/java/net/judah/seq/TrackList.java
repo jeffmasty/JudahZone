@@ -59,21 +59,6 @@ public class TrackList extends ArrayList<MidiTrack> implements Cmdr {
 			keys[i] = mpk.get(i).getName();
 	}
 
-//	@Override
-//	public int value(String key) {
-//		for (int i = 0; i < size(); i++)
-//			if (get(i).getName().equals(key))
-//				return i;
-//		return 0;
-//	}
-
-	@Override
-	public String lookup(int value) {
-		if (value >= 0 && value < size())
-			return get(value).getName();
-		return get(0).getName(); // fail
-	}
-
 	@Override
 	public MidiTrack resolve(String key) {
 		for (MidiTrack t : this)

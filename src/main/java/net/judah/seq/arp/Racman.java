@@ -1,14 +1,12 @@
-/* see: https://github.com/ybalcanci/Sequence-Player */
 package net.judah.seq.arp;
 
 import javax.sound.midi.ShortMessage;
 
-import lombok.Getter;
 import lombok.Setter;
 import net.judah.seq.Poly;
 import net.judah.seq.chords.Chord;
 
-@Getter
+/** Original: https://github.com/ybalcanci/Sequence-Player */
 public class Racman extends Algo implements Ignorant {
 
 	private int idx;
@@ -18,18 +16,16 @@ public class Racman extends Algo implements Ignorant {
 	@Setter private int modulus = 48;
 
 	public Racman() {
-		this(128, 72); // five octaves
+		this(104, 60); 
 	}
 	
 	public Racman(int numOfElements) {
 		this(numOfElements, numOfElements);
 	}
 	
-	/**@param numOfElementsToCalculate This is the number of elements to calculate in the sequence.
-	 * @param modulusOfElementsConvertingToNote This is the modulus value for each element in the noteSequence will
-	 *                                          be modulo of the corresponding value in sequnce.
-	 * @param noteOffset This value will be added to each value in the sequence while converting
-	 *                   them the notes.*/
+	/**@param numOfElementsToCalculate number of elements to calculate in the sequence.
+	 * @param modulusOfElementsConvertingToNote modulus value for each element in the 
+	 * noteSequence will be modulo of the corresponding value in sequnce.*/
 	public Racman(int numOfElementsToCalculate, int modulusOfElementsConvertingToNote){
 		this.numElements = numOfElementsToCalculate;
 		this.modulus = modulusOfElementsConvertingToNote;
@@ -52,11 +48,9 @@ public class Racman extends Algo implements Ignorant {
 	}
 
 	private boolean isANumberUsed(int num, int currentArraySize){
-		int[] sequence = getSequence();
-		for(int i = 0; i < currentArraySize; i++){
-			if(sequence[i] == num)
+		for (int i = 0; i < currentArraySize; i++)
+			if (sequence[i] == num)
 				return true;
-		}
 		return false;
 	}
 	
@@ -67,6 +61,8 @@ public class Racman extends Algo implements Ignorant {
 			idx = 0;
 		while (note > range + m.getData1() || note > 127)
 			note -= modulus;
+		while (note < m.getData1())
+			note += 12;
 		result.add(note);
 	}
 

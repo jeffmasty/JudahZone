@@ -1,5 +1,6 @@
 package net.judah.gui.knobs;
 
+import static net.judah.fx.CutFilter.Settings.*;
 import static net.judah.gui.Size.STD_HEIGHT;
 
 import java.awt.Color;
@@ -164,12 +165,10 @@ public class SynthKnobs extends KnobPanel {
 		s.addListener(e-> adsr.setSustainGain(s.getValue() * 0.01f));
 		r.addListener(e->adsr.setReleaseTime(r.getValue()));
 
-		lpFreq.addListener(data2 -> synth.getFilter().setFrequency(
-				CutFilter.knobToFrequency(data2)));
-		lpReso.addListener(data2 ->  synth.getFilter().setResonance(data2));
-		hpFreq.addListener(data2 -> synth.getLoCut().setFrequency(
-				CutFilter.knobToFrequency(data2)));
-		hpReso.addListener(data2 ->  synth.getLoCut().setResonance(data2));
+		lpFreq.addListener(data2 -> synth.getFilter().set(Frequency.ordinal(), data2));
+		lpReso.addListener(data2 ->  synth.getFilter().set(Resonance.ordinal(), data2));
+		hpFreq.addListener(data2 -> synth.getLoCut().set(Frequency.ordinal(), data2));
+		hpReso.addListener(data2 ->  synth.getLoCut().set(Resonance.ordinal(), data2));
 		if (synth.getModSemitones() != (int)mod.getSelectedItem())
 				mod.setSelectedItem(synth.getModSemitones());
 	}

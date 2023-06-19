@@ -1,10 +1,8 @@
 package net.judah.seq.piano;
 
-import static java.awt.event.KeyEvent.*;
 import static net.judah.seq.MidiTools.*;
 
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
 import javax.sound.midi.MidiEvent;
@@ -12,6 +10,7 @@ import javax.sound.midi.ShortMessage;
 
 import net.judah.gui.Pastels;
 import net.judah.midi.Midi;
+import net.judah.midi.Signature;
 import net.judah.seq.*;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.beatbox.BeatsSize;
@@ -33,7 +32,7 @@ public class PianoBox extends MusicBox implements BeatsSize {
 		height = r.height;
 		this.steps = currentBeat;
 		this.piano = roll;
-		timeSig();
+		timeSig(view.getTrack().getClock().getTimeSig());
 	}
 	
 	@Override public long toTick(Point p) {
@@ -54,7 +53,7 @@ public class PianoBox extends MusicBox implements BeatsSize {
 			x = i * KEY_WIDTH;
 			if (piano.isLabelC(i)) {
 				g.setColor(Pastels.BLUE);
-				g.fillRect(x, 0, (int)unit, height);
+				g.fillRect(x, 0, KEY_WIDTH, height);
 				g.setColor(Pastels.FADED);
 			}
 			g.drawLine(x, 0, x, height);
@@ -86,7 +85,7 @@ public class PianoBox extends MusicBox implements BeatsSize {
 			y = (int) ((p.getOn().getTick() - track.getLeft()) * ratio);
 			
 			yheight = (int) ((p.getOff().getTick() - p.getOn().getTick()) * ratio);
-			if (selected.isNoteSelected(p.getOn().getTick(), s.getData1()))
+			if (selected.contains(p.getOn().getTick(), s.getData1()))
 				g.setColor(highlightColor(s.getData2()));
 			else 
 				g.setColor(velocityColor(s.getData2()));
@@ -115,8 +114,8 @@ public class PianoBox extends MusicBox implements BeatsSize {
 		// else if (mode == DragMode.TRANSLATE) // shown as selected
 	}
 
-	@Override public void timeSig() {
-		unit = height / (2f * clock.getSteps());
+	@Override public void timeSig(Signature sig) {
+		unit = height / (2f * sig.steps);
 		if (steps != null) steps.repaint();
 		repaint();
 	}
@@ -183,6 +182,7 @@ public class PianoBox extends MusicBox implements BeatsSize {
 					RTLogger.warn(this, e); }
 				break;
 			case SELECT: 
+				if (drag == null) break;
 				Prototype a = translate(drag);
 				Prototype b = translate(mouse.getPoint());
 				drag = null;
@@ -205,30 +205,30 @@ public class PianoBox extends MusicBox implements BeatsSize {
 		super.drag(mouse);
 	}
 	
-	@Override
-	public void keyTyped(KeyEvent e) {
-		super.keyTyped(e);
-		if (chromaticKeyboard(e.getKeyCode()) > 0) {
-			
-		}
-		
-	}
+//	@Override
+//	public void keyTyped(KeyEvent e) {
+//		super.keyTyped(e);
+//		if (chromaticKeyboard(e.getKeyCode()) > 0) {
+//			
+//		}
+//		
+//	}
 	/**@return Z to COMMA keys are white keys, and black keys, up to 12, no match = -1*/
-	public static int chromaticKeyboard(final int keycode) {
-		switch(keycode) {
-			case VK_Z: return 0; // low C
-			case VK_S: return 1; 
-			case VK_X: return 2;
-			case VK_D: return 3;
-			case VK_C: return 4;
-			case VK_V: return 5; // F
-			case VK_G : return 6;
-			case VK_B : return 7; // G
-			case VK_H: return 8; 
-			case VK_N: return 9;
-			case VK_J: return 10;
-			case VK_M: return 11;
-			case VK_COMMA: return 12;// high C
+	public static int chromaticKeyboard(final char key) {
+		switch(key) {
+			case 'z': return 0; // low C
+			case 's': return 1; 
+			case 'x': return 2;
+			case 'd': return 3;
+			case 'c': return 4;
+			case 'v': return 5; // F
+			case 'g' : return 6;
+			case 'b' : return 7; // G
+			case 'h': return 8; 
+			case 'n': return 9;
+			case 'j': return 10;
+			case 'm': return 11;
+			case ',': return 12;// high C
 			default: return -1;
 		}
 	}

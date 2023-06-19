@@ -12,6 +12,7 @@ import net.judah.util.Constants;
 @Getter
 public abstract class LineIn extends Channel {
 
+	@Setter protected float factor = 4;
 	protected boolean muteRecord;
     protected LatchEfx latchEfx = new LatchEfx(this);
     /** set to <code>null</code> for no processing */
@@ -38,7 +39,7 @@ public abstract class LineIn extends Channel {
 		}
     }
     
-	public void processFx(FloatBuffer mono, float factor) {
+	public void processFx(FloatBuffer mono) {
 		mono.rewind();
 		if (this == GuitarTuner.getChannel()){
 			MainFrame.update(AudioTools.copy(mono, bufSize));

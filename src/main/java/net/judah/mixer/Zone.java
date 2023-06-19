@@ -32,7 +32,7 @@ public class Zone extends ArrayList<LineIn> implements Cmdr {
 		return null;
 	}
 
-	public Channel byName(String search) {
+	public LineIn byName(String search) {
 		for (LineIn in : this)
 			if (in.getName().equals(search))
 				return in;
@@ -55,24 +55,9 @@ public class Zone extends ArrayList<LineIn> implements Cmdr {
 		JudahZone.getMic().getGain().setGain(0.3f);
 		JudahZone.getFluid().getGain().setGain(0.5f);
 		JudahZone.getGuitar().getGain().setGain(0.5f);
-		JudahZone.getCrave().getGain().setGain(0.5f);
+		JudahZone.getCrave().getGain().setGain(0.66f);
 		JudahZone.getSynth1().getGain().setGain(0.5f);
 		JudahZone.getSynth2().getGain().setGain(0.5f);
-	}
-
-//	@Override
-//	public int value(String key) {
-//		for (int i = 0; i < this.size(); i++)
-//			if (get(i).getName().equals(key))
-//				return i;
-//		return 0;
-//	}
-
-	@Override
-	public String lookup(int value) {
-		if (value >= 0 && value < size())
-		return get(value).getName();
-		return "null";
 	}
 	
 	@Override

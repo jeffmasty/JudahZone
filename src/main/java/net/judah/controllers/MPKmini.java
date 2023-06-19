@@ -15,6 +15,7 @@ import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.seq.Seq;
+import net.judah.seq.arp.Mode;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -61,8 +62,6 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 				}
 		}
 		
-		
-		
 		if (seq.rtCheck(midi)) 
 			return true; // track will send
 
@@ -90,8 +89,8 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 
 	private boolean cc_pad(int data1, int data2) {
 		///////// ROW 1 /////////////////
-		if (data1 == PRIMARY_CC.get(0))  { // Jamstik
-			getJamstik().toggle();
+		if (data1 == PRIMARY_CC.get(0))  { // Chords, formerly Jamstik
+			getChords().toggle();
 		}
 		else if (data1 == PRIMARY_CC.get(1)) { // sync Crave's internal sequencer
 			sys.synchronize(getCrave());
@@ -110,10 +109,10 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 			
 		///////// ROW 2 /////////////////
 		else if (data1 == PRIMARY_CC.get(4)) { 
-			sys.getKeyboardSynth().getTransposer().toggle();
+			sys.getKeyboardSynth().getArp().toggle(Mode.MPK);
 		}
 		else if (data1 == PRIMARY_CC.get(5)) {
-			sys.getKeyboardSynth().getRecorder().toggle();
+			sys.getKeyboardSynth().getArp().toggle(Mode.REC);
 		}
 		else if (data1 == PRIMARY_CC.get(6) && data2 > 0) { // focus Synth1 or Synth2 or Sampler
 			if (MainFrame.getKnobMode() == KnobMode.Synth) {
@@ -125,12 +124,8 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 			else 
 				MainFrame.setFocus(KnobMode.Synth);
 		}
-		else if (data1 == PRIMARY_CC.get(7) && data2 > 0) { // focus Drum Kits
-			if (MainFrame.getKnobMode() != KnobMode.Kits)
-				MainFrame.setFocus(KnobMode.Kits);
-			else
-				getDrumMachine().increment();
-
+		else if (data1 == PRIMARY_CC.get(7) && data2 > 0) { // SET SettableCombo
+			MainFrame.set();
 		} 
 		else 
 			return false;
@@ -159,58 +154,51 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 	}
 	
 	private boolean doProgChange(int data1, int data2) {
-
-			// ProgChange pads
-            //  upInst   upDrum   upSheet   upSong
-            // downInst downDrum downSheet downSong
-
-			MidiReceiver fluid = getFluid();
-            
-            if (data1 == PRIMARY_PROG[0]) {// up fluid inst patch
+		MidiReceiver fluid = getFluid();
+        //  upInst   upDrum   upSheet   upSong
+        // downInst downDrum downSheet downSong
+		if (data1 == PRIMARY_PROG[0]) {// up fluid inst patch
 //            	ProgChange.next(true, fluid, 9);
 //            else if (data1 == PRIMARY_PROG[1]) { // up gm drum patch
 //            	ProgChange.next(true, fluid, 9);
-            } 
-            else if (data1 == PRIMARY_PROG[2]) { // up sheetMusic
+		} 
+		else if (data1 == PRIMARY_PROG[2]) { // up sheetMusic
 //            	getFrame().sheetMusic(true);
 //            } else if (data1 == PRIMARY_PROG[3]) { // up song
 //            	nextSong();
-            } 
-            else if (data1 == PRIMARY_PROG[4]) { // down fluid inst patch
+		} 
+		else if (data1 == PRIMARY_PROG[4]) { // down fluid inst patch
 //                ProgChange.next(false, fluid, 0);
 //            } else if (data1 == PRIMARY_PROG[5]) { // down gm drum patch
 //            	ProgChange.next(false, fluid, 0);
-            } else 
-            if (data1 == PRIMARY_PROG[6]) { // down sheet music
-            	getFrame().sheetMusic(false);
-            } else if (data1 == PRIMARY_PROG[7]) { // reset stage
-            	getMidiGui().getSongsCombo().setSelectedItem(0);
-            	loadSong(getCurrent().getFile());
-            }
+		} else if (data1 == PRIMARY_PROG[6]) { // down sheet music
+			getFrame().sheetMusic(false);
+		} else if (data1 == PRIMARY_PROG[7]) { // reset stage
+        	getMidiGui().getSongsCombo().setSelectedItem(0);
+        	loadSong(getCurrent().getFile());
+        }
 
-            // B BANK 
-            else if (data1 == B_PROG[0]) // I want bass
-            	fluid.progChange("Acoustic Bass");
-            else if (data1 == B_PROG[1]) { 
-            	fluid.progChange("Sitar");
-            } else if (data1 == B_PROG[2]) { 
-            	fluid.progChange("Harp");
-            } else if (data1 == B_PROG[3]) { 
-            	fluid.progChange("Rhodes EP");
-            }
-
-            else if (data1 == B_PROG[4]) { // strings
-            	fluid.progChange("Tremolo");
-            } else if (data1 == B_PROG[5]) { 
-            	fluid.progChange("Vibraphone");
-            } else if (data1 == B_PROG[6]) 
-            	fluid.progChange("Rock Organ");
-            else if (data1 == B_PROG[7]) { 
-            	fluid.progChange("Honky Tonk");
-            } else 
-            	return false;
-            
-		return true;
+        // B BANK 
+        else if (data1 == B_PROG[0]) // I want bass
+        	fluid.progChange("Acoustic Bass");
+        else if (data1 == B_PROG[1]) { 
+        	fluid.progChange("Sitar");
+        } else if (data1 == B_PROG[2]) { 
+        	fluid.progChange("Harp");
+        } else if (data1 == B_PROG[3]) { 
+        	fluid.progChange("Rhodes EP");
+        }
+        else if (data1 == B_PROG[4]) { // strings
+        	fluid.progChange("Tremolo");
+        } else if (data1 == B_PROG[5]) { 
+        	fluid.progChange("Vibraphone");
+        } else if (data1 == B_PROG[6]) 
+        	fluid.progChange("Rock Organ");
+        else if (data1 == B_PROG[7]) { 
+        	fluid.progChange("Honky Tonk");
+        } else 
+        	return false;
+	return true;
 	}
 		
 }

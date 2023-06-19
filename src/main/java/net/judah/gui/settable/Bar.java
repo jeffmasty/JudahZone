@@ -22,16 +22,17 @@ public class Bar extends SetCombo<Integer> {
 	
 	@Override
 	protected void action() {
-		if (getSelectedItem() != null && track.getFrame() -1 != (int)getSelectedItem())
-			track.setFrame(-1 + (int)getSelectedItem());
+		if (set == this) return;
+		if (getSelectedIndex() !=  track.getCurrent())
+			track.setCurrent(getSelectedIndex());
 	}
 
 	public static void update(MidiTrack t) {
 		Constants.execute(()->{
-			int frame = t.getFrame() + 1;
+			int frame = t.getCurrent();
 			for (Bar update : instances)
-				if (update.track == t && (int)update.getSelectedItem() != frame)
-					update.override(frame);
+				if (update.track == t && update.getSelectedIndex() != frame)
+					update.override(frame + 1);
 		});
 	}
 	

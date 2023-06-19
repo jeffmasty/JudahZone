@@ -99,7 +99,7 @@ public class ChannelTitle extends JPanel {
 		if (channel instanceof LineIn) {
 			if (mute.isSelected() != ((LineIn)channel).isMuteRecord())
 				mute.setSelected(!mute.isSelected());
-			mute.setBackground(mute.isSelected() ? Pastels.BLUE : Pastels.GREEN);
+			mute.setBackground(((LineIn)channel).isMuteRecord()? null : Pastels.BLUE);
 		}
 		else if (mute.isSelected() != channel.isOnMute()) {
 			mute.setSelected(!mute.isSelected());

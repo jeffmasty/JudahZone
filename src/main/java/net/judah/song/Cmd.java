@@ -1,36 +1,19 @@
 package net.judah.song;
 
 import static net.judah.JudahZone.*;
-import static net.judah.song.Param.Type.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.song.Param.Type;
 
-// TODO ProgChange/CC in Midi file
 @RequiredArgsConstructor
 public enum Cmd {
 
-	Start(CLOCK), Tempo(CLOCK), Length(CLOCK), MPK(CLOCK), 
-	TimeSig(CLOCK), TimeCode(CLOCK), Jump(CLOCK),// Absolute/Relative scene cues
-	Record(LOOP), RecEnd(LOOP), Sync(LOOP), Dup(LOOP), Delete(LOOP), Solo(LOOP), SoloCh(LOOP), // looper
-	// FXOFF
-	FX(CH), Latch(CH), FadeOut(CH), FadeIn(CH), Mute(CH), Unmute(CH), 
-	OffTape(CH), OnTape(CH) // fx/channel 
+	Start, Tempo, Length, MPK, // Clock 
+	TimeCode, Jump,// Absolute/Relative scene cues
+	Record, RecEnd, Sync, Dup, Delete, Solo, SoloCh, // Looper
+	FX, Latch, FadeOut, FadeIn, Mute, Unmute, // Channel 
+	OffTape, OnTape, // LineIn
+	Part, Chords // ChordTrack
 	;  
-	
-	@Getter private final Type type;
-	
-	public static List<Cmd> get(Type type) {
-		ArrayList<Cmd> result = new ArrayList<Cmd>();
-		for (Cmd cmd : values())
-			if (cmd.type == type)
-				result.add(cmd);
-		return result;
-	}
 	
 	public static Cmdr getCmdr(Cmd cmd) {
 		switch (cmd) {
@@ -38,7 +21,6 @@ public enum Cmd {
 		case MPK:		return getSeq().getSynthTracks();
 		case Length:	return getSeq();
 		case TimeCode:	return IntProvider.instance();
-		case TimeSig:	return SigProvider.instance;
 		case Start:		return BooleanProvider.instance;
 		case Tempo:		return getClock().getMidiClock(); 
 		case Jump:		return getSongs();
@@ -60,6 +42,9 @@ public enum Cmd {
 		case FadeIn:	return getMixer();
 		case FadeOut:	return getMixer();
 		case FX:		return getMixer();
+		
+		case Part: 		return getChords();
+		case Chords: 	return getChords().getPlayer();
 		
 		default: return null;
 		}

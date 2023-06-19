@@ -41,7 +41,9 @@ public class Transpose {
 
 		pnl.add(new Btn("Ok", e->ok()));
 		pnl.add(new Btn("Cancel", e->ModalDialog.getInstance().setVisible(false)));
-		new ModalDialog(Gui.wrap(pnl), new Dimension(220, 160), MainFrame.getKnobMode());
+		pnl = Gui.wrap(pnl);
+		pnl.setName("Transpose");
+		new ModalDialog(pnl, new Dimension(220, 160), MainFrame.getKnobMode());
 	}
 
 	private void ok() {
@@ -69,7 +71,7 @@ public class Transpose {
 	
 	private static MidiEvent trans(ShortMessage source, long sourceTick, Prototype destination, MidiTrack t) {
 		long window = t.getWindow();
-		long start = t.getFrame() * t.getWindow();
+		long start = t.getCurrent() * t.getBarTicks();
 		long tick = sourceTick + destination.getTick() * t.getStepTicks();
 		if (tick < start) tick += window;
 		if (tick >= start + window) tick -= window;

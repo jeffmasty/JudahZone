@@ -22,6 +22,7 @@ import net.judah.api.TimeListener;
 import net.judah.api.TimeProvider;
 import net.judah.drumkit.Sampler;
 import net.judah.gui.MainFrame;
+import net.judah.gui.settable.Folder;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.mixer.LoopMix;
@@ -57,9 +58,8 @@ public class JudahClock extends Thread implements TimeProvider {
 	@Getter private int step = 0;
     /** current beat */
 	@Getter private int beat;
-	@Setter @Getter private int bar;
+	@Setter @Getter static private int bar;
 	@Getter private Signature timeSig = Signature.FOURFOUR;
-    @Getter private int measure = timeSig.steps / timeSig.div;
     @Getter private int unit = MIDI_24 / timeSig.div;
     
     /** sync to external Midi24 pulse */
@@ -90,7 +90,7 @@ public class JudahClock extends Thread implements TimeProvider {
 			computeTempo(getTempo());
 			if (active) {
 				beat++;
-				if (beat >= measure) { // new Bar
+				if (beat >= timeSig.beats) { // new Bar
 					bar++; beat = 0;
 					if (bar >= length)
 						bar = 0;
@@ -113,10 +113,11 @@ public class JudahClock extends Thread implements TimeProvider {
 		seq.getTracks().forEach(track->track.playTo(percent));
 	}
 	
-	public boolean isEven() { return bar % 2 == 0; }
-	public int getSteps() { return timeSig.steps; }
+	public static boolean isEven() 	{ return bar % 2 == 0; }
+	public int getSteps() 		{ return timeSig.steps; }
 	public int getSubdivision() { return timeSig.div; }
-	
+	public int getMeasure() 	{ return timeSig.beats; }
+
 	/** receive clock message from external source in real-time */
 	public void processTime(byte[] bytes) throws JackException {
 		// if (mode != Mode.Midi24) return;
@@ -139,7 +140,7 @@ public class JudahClock extends Thread implements TimeProvider {
             end();
         
         else if (ShortMessage.CONTINUE == stat) {
-            letItBeKnown(TRANSPORT, JackTransportState.JackTransportRolling); 
+            announce(TRANSPORT, JackTransportState.JackTransportRolling); 
             JudahZone.getMidi().synchronize(bytes);
             RTLogger.log(this, "MidiSync CONTINUE");
         }
@@ -253,10 +254,10 @@ public class JudahClock extends Thread implements TimeProvider {
 		if (timeSig == time)
 			return;
 		timeSig = time;
-		measure = timeSig.steps/timeSig.div;
 		unit = MIDI_24 / timeSig.div;
+		letItBeKnown(Property.SIGNATURE, timeSig);
+		Folder.refillAll();
 		MainFrame.update(this); // both update and announce?
-		letItBeKnown(Property.MEASURE, measure);
 	}
 	
 	private void computeTempo(float avg) {

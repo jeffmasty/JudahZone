@@ -31,9 +31,10 @@ public class DJJefe extends JPanel implements Cmdr {
 	@Getter private final ArrayList<Channel> channels = new ArrayList<>();
 	@Getter private final String[] keys;
 	private final ArrayList<MixWidget> faders = new ArrayList<MixWidget>();
+	@Getter private final Zone sources;
 
     public DJJefe(Channel mains, Looper looper, Zone sources, List<DrumKit> kits, Sampler sampler) {
-        
+        this.sources = sources;
     	all.addAll(looper);
 		all.addAll(sources);
 		for (DrumKit k : kits)
@@ -146,24 +147,6 @@ public class DJJefe extends JPanel implements Cmdr {
 		}
 	}
 
-
-//	@Override
-//	public int value(String key) {
-//		for (int i = 0; i < keys.length; i++)
-//			if (keys[i].equals(key))
-//				return i;
-//		return 0;
-//	}
-
-
-	@Override
-	public String lookup(int value) {
-		if (value >= 0 && value < channels.size())
-			return (channels.get(value).getName());
-		return channels.get(0).getName();
-	}
-
-
 	@Override
 	public Channel resolve(String key) {
 		for (Channel ch : channels) 
@@ -195,6 +178,23 @@ public class DJJefe extends JPanel implements Cmdr {
 				ch.setOnMute(false);
 				break;
 			default: throw new InvalidParameterException("" + p);
+		}
+	}
+
+
+	public void mutes(List<String> record) {
+		
+		for (LineIn in : sources)
+			in.setMuteRecord(true);
+		for (Channel ch : channels)
+			ch.setOnMute(false);
+		for (String name : record) {
+			LineIn ch = sources.byName(name);
+			if (ch == null) {
+				RTLogger.log(this, "Unknown channel: " + name);
+				continue;
+			}
+			ch.setMuteRecord(false);
 		}
 	}
 

@@ -1,27 +1,25 @@
 TODO:
 
-ABS/REL/MPK/REC
-MIDI file format bug, Solotrack/Sync bug
-update MidiGui ProgChange, MiniSeq color mode
-ChordPro directives, sections
-Arpeggiator gate, Swing Pt.II
+REC UP5 DN5 REL
+MPK ProgChange, pad2
 Loop copy/paste/chop/save,  Record session, Midi looper
 Delay and LFO sync to Clock & TapTempo
-bass track no amp/vol, kit knobs scratchy, sample packs, setlists
-Synth envelope to filter resonance
+Arpeggiator gate, Swing Pt.II
+bass track no amp/vol, kit knobs scratchy, sample packs
 walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
 hanging chads (unpaired NoteOn across frames), DragNDrop other frames
-Editor falling water/zoomIn-Out
+Editor falling water/zoomIn-Out, Modal translate
 DBIndicator, Scope, Meters, Crave clock sync 
-Synth: LFO, glide, PWM, mono-synth
-Probability, Ritardando, CC in Midi tracks
-Sampler Fx (granularity, pitched frequency, wet)
+Synth: envelope to filter, LFO, glide, PWM, mono-synth, 
+Probability, Ritardando, CC in Midi tracks, microsteps
+Sampler FX (granularity, pitched frequency, wet)
 IR Reverb, DrumSynth, Phasor, Shepherd, Vocoder
 record record record youtubes
 README credits
 make client-server architecture
 support JavaSound/non-Jack, make accessible setup and settings
 
+-------------------------
 Latency + bleeding edge
 clipping/xruns filter see https://github.com/psambit9791/jDSP Peak/Spike
 Hacking the Arturia Beatstep:
@@ -44,7 +42,7 @@ https://github.com/ryukau/LV2Plugins
 Jack's alsa driver/client tries to use SND_PCM_FMT_S32_LE, signed 32-bit PCM little endian, 
 which is the format used by all current 24 bit audio cards except for some USB interfaces
 drum options:  DrMr, drumkv1-jack, hydrogen, fluid, drumsynth, black pearl
-ChordPro parser: https://github.com/SongProOrg/songpro-java  https://github.com/saipanman95/chordpro-parser
+ChordPro parsers: https://github.com/SongProOrg/songpro-java  https://github.com/saipanman95/chordpro-parser
 
 sequencer:
 https://github.com/truj/midica/tree/master/src/org/midica/midi
@@ -99,7 +97,6 @@ scales, melodic step sequencer,
 Calf Fluid Synth reverb
 fluid reverb, track/master pan,
 Step sequencer note-off's
-recover from midi network ENOBUF
 multiple clocks, multiple beat grids
 Arduino foot pedal: load/reload  latchB
 midi mapper by instrument - mixer, pads, keys, pedal, aux
@@ -117,7 +114,7 @@ joystick  (pitch bend) (left/right cc = distortion or delay)
 focus/highlight system of knobs
 fx/preset instead of compression, function 2
 transposer, fix cutfilter & freeverb stereo, calf reverb
-solo lineIn to loop D 
+solo lineIn to loop D/beatsTrack 
 step sequencer chords, arppegiator
 Midi Mixer: style/arp/pattern/song/chords/channel    
 verse-chorus control
@@ -136,8 +133,8 @@ midi-fluent Song editor
 BeatBox absolute resolution, Swing and Waltz gracefully 
 MidiEditor undo/redo/copy/paste/transpose/translate/drag-n-drop/velocity/record live
 ERRNOBUF - recover Jack MIDI when ALSA bridge fails
-Arpeggiator, ChordPro parser, Synth track follow chord sheets
-
+Arpeggiator, ChordPro parser, Synth track follow ChordSheet/MPK/ABS/REC
+Setlists
 
 
 REFERENCE------------------------------------------------------------
@@ -197,3 +194,4 @@ SONG:
 	    commands: key, val
 	    fx: active channels
 [fx:]  channelName, presetName
+[record:] channelName

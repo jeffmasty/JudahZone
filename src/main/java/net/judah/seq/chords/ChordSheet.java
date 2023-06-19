@@ -1,11 +1,14 @@
 package net.judah.seq.chords;
 
-import static net.judah.gui.Pastels.*;
+import static net.judah.gui.Pastels.BUTTONS;
 
+import java.awt.Color;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.swing.*;
@@ -14,27 +17,25 @@ import net.judah.JudahZone;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
-import net.judah.gui.settable.ChordProFiles;
 import net.judah.gui.widgets.Btn;
+import net.judah.gui.widgets.Click;
 import net.judah.song.Song;
+import net.judah.util.RTLogger;
 
 public class ChordSheet extends JPanel {
 	private static final int TABS = 4;
+	private static final int WIDTH = Size.WIDTH_TAB - 50;
+	
 	private int measure;
 	private final ChordTrack chords;
-	JScrollPane scroll = new JScrollPane();
-	JPanel content;
-	JPanel top = new JPanel();
-	JLabel section = new JLabel("      ");
-	JLabel bar = new JLabel();
-	JLabel total = new JLabel();
+	private JScrollPane scroll = new JScrollPane();
+	private JPanel content;
 	
-	ArrayList<Crd> parts = new ArrayList<>();
-	ChordProFiles file = new ChordProFiles();
-	Btn play;
-	private final JComboBox<Key> key = new JComboBox<>(Key.values());
-	private final JComboBox<Scale> scale = new JComboBox<>(Scale.values());
-
+	private final ArrayList<Crd> parts = new ArrayList<>();
+	private final ChordProCombo file = new ChordProCombo();
+	private final ArrayList<Group> groups = new ArrayList<>();
+	private final JLabel directives = new JLabel();
+	private final JToggleButton loop = new JToggleButton(" 🔁 ");
 	
 	public ChordSheet(ChordTrack chrds) {
 		this.chords = chrds;
@@ -43,100 +44,85 @@ public class ChordSheet extends JPanel {
 		scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		scroll.setAutoscrolls(true);
-		Gui.resize(scroll, new Dimension(Size.WIDTH_TAB - 200, Size.HEIGHT_TAB - 100));
-		play = new Btn("▶️ Chords", e-> chords.toggle());
-		play.setOpaque(true);
+		Gui.resize(scroll, new Dimension(WIDTH, Size.HEIGHT_TAB - 80));
 
-		top.add(play);
+		JPanel top = new JPanel();
+		top.setLayout(new BoxLayout(top, BoxLayout.LINE_AXIS));
+		top.add(Box.createHorizontalStrut(10));
+		top.add(chords.createBtn("▶️ Chords"));
 		top.add(file);
-		top.add(section);
-		top.add(new JLabel("Bar"));
-		top.add(bar);
-		top.add(new JLabel("of"));
-		top.add(total);
+		top.add(new Btn("Edit", e->edit()));
+		top.add(new SectionCombo(chords));
+		top.add(loop);
+		top.add(directives);
+		loop.setSelected(chords.getDirectives().contains(Directive.LOOP));
+		loop.addActionListener(e->chords.toggle(Directive.LOOP));
+		top.add(Box.createHorizontalGlue());
 		
-		top.add(Gui.resize(key, Size.MICRO));
-		top.add(Gui.resize(scale, Size.COMBO_SIZE));
-		scale.addActionListener(e->JudahZone.getCurrent().setScale((Scale) scale.getSelectedItem()));
-		key.addActionListener(e->JudahZone.getCurrent().setKey((Key) key.getSelectedItem()));
-		
-		add(Box.createVerticalGlue());
 		add(top);
-		add(Box.createVerticalStrut(10));
+		add(Box.createVerticalStrut(5));
 		add(scroll);
 		add(Box.createVerticalGlue());
 		refresh();
 	}
 
+	void edit() {
+		Song song = JudahZone.getCurrent(); 
+		if (song == null || song.getChordpro() == null || song.getChordpro().isBlank())
+			return;
+		try {
+			Desktop.getDesktop().open(ChordTrack.fromSong(song));
+		} catch (IOException e) { RTLogger.warn(this, e.getMessage()); }
+	}
+	
 	public void update(Chord chord) {
 		for (Crd crd : parts) {
 			if (crd.getBackground() == Pastels.BLUE)
 				if (crd.chord != chord)
-					crd.setBackground(null);
+					crd.setBackground(Color.WHITE);
 			if (crd.chord == chord) {
 				crd.scrollRectToVisible(crd.getBounds());			
 				crd.setBackground(Pastels.BLUE);
 			}
 		}
-		section();
-		play.setBackground(chords.isActive() ? GREEN : chords.isOnDeck() ? YELLOW : null);
+		for (Group g : groups)
+			if (g.section == chords.getSection())
+				g.update();
 		scroll.repaint();
 	}
 	
-	JPanel createContent(Section s) {
-		JPanel result = new JPanel(new GridLayout(0, TABS, 8, 10));
-		JLabel onDeck = null;
-		for (Chord chord : s) {
-			if (onDeck != null) {
-				JPanel duo = new JPanel(new GridLayout(1, 2));
-				duo.add(onDeck);
-				duo.add(new Crd(chord));
-				result.add(duo);
-				onDeck = null;
-			}
-			else if (chord.steps < measure)
-				onDeck = new Crd(chord);
-			else result.add(new Crd(chord));
-		}
-		if (onDeck != null)
-			result.add(onDeck);
-		result.setBorder(BorderFactory.createTitledBorder(s.getName()));
-		return result;
-	}
-	
 	public void refresh() {
-		section();
 		parts.clear();
 		scroll.getViewport().removeAll();
 		content = new JPanel();
 		content.setLayout(new BoxLayout(content, BoxLayout.PAGE_AXIS));
 		content.setOpaque(true);
-		measure = chords.getClock().getSteps();
-		for (Section s : chords.getSections())
-			content.add(createContent(s));
-		
+		measure = chords.getSig().steps;
+		groups.clear();
+		for (int i = 0 ; i < chords.getSections().size(); i++) 
+			new Group(chords.getSections().get(i));
 		scroll.setViewportView(content);
-		Song song = JudahZone.getCurrent();
-		if (song == null) return;
-		if (file.getSelectedItem() != song.getChordpro())
-			file.setSelectedItem(song.getChordpro());
-		if (song.getKey() != null && key.getSelectedItem() != song.getKey())
-			key.setSelectedItem(song.getKey());
-		if (song.getScale() != null && scale.getSelectedItem() != song.getScale())
-			scale.setSelectedItem(song.getScale());		
+		
+		loop.setSelected(chords.getDirectives().contains(Directive.LOOP));
+		
+		String dir = " ";
+		for (Directive d : chords.getDirectives())
+			if (d != Directive.LOOP)
+				dir += d.name() + " ";
+		directives.setText(dir);
 	}
 
-	public void section() {
-		Section part = chords.getSection();
-		if (part == null || part.getName() == null || part.getName().isBlank())
-			section.setText("Main");
-		else 
-			section.setText(section.getName());
-		bar.setText("" + (chords.getBar() + 1));
-		if (part != null)
-			total.setText("" + chords.bars(part.steps()));
+	public void setSection(Section part) {
+		for (int i = 0; i < groups.size(); i++)
+			groups.get(i).highlight(part);
+		
 	}
+	
 
+	private void length() {
+		if (chords.getSection() == null) return;
+		JudahZone.getClock().setLength(chords.bars(chords.getSection().getCount()));
+	}
 	class Crd extends JLabel {
 		final Chord chord;
 		Crd(Chord chord) {
@@ -147,11 +133,81 @@ public class ChordSheet extends JPanel {
 			text += "</html>";
 			setText(text);
 			setOpaque(true);
+			setBackground(Color.white);
 			parts.add(this);
-			addMouseListener(new MouseAdapter() { @Override public void mouseClicked(MouseEvent me) {
-					chords.setCurrent(chord);}});
-			}
+			addMouseListener(new MouseAdapter() { 
+				@Override public void mouseClicked(MouseEvent me) {
+					chords.click(chord);}});}
 	}
 	
+	private class Group extends JPanel {
+		final Section section;
+		JToggleButton loop = new JToggleButton(" 🔁 ");
+		JLabel bar = new JLabel("1");
+		JPanel left = new JPanel();
+		JPanel lbls = new JPanel();
 
+		Click total = new Click("of 0", e->length());
+
+		Group(Section s) {
+			groups.add(this);
+			setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
+			section = s;
+			total.setText(" of " + chords.bars(section.getCount()) + " ");
+			loop.setSelected(section.isOnLoop());
+			loop.addActionListener(e->section.toggle(Directive.LOOP));
+
+			lbls.setOpaque(true);
+			lbls.add(new JLabel("Bar")); lbls.add(bar); lbls.add(total);
+
+			Gui.resize(left, new Dimension(135, 60));
+			left.setLayout(new BoxLayout(left, BoxLayout.PAGE_AXIS));
+			left.add(lbls);
+			left.add(loop);
+			left.add(Box.createVerticalGlue());
+			
+			add(left);
+			add(createContent());
+			setBorder(BorderFactory.createTitledBorder(s.getName()));
+			content.add(this);
+			addMouseListener(new MouseAdapter() {
+				@Override public void mouseClicked(MouseEvent e) {
+					chords.setSection(section, true);
+				};
+			});
+		}
+
+		JPanel createContent() {
+			JPanel result = new JPanel(new GridLayout(0, TABS, 8, 10));
+			result.setBackground(Color.WHITE);
+			JLabel onDeck = null;
+			for (Chord chord : section) {
+				if (onDeck != null) {
+					JPanel duo = new JPanel(new GridLayout(1, 2));
+					duo.add(onDeck);
+					duo.add(new Crd(chord));
+					result.add(duo);
+					onDeck = null;
+				}
+				else if (chord.steps < measure)
+					onDeck = new Crd(chord);
+				else result.add(new Crd(chord));
+			}
+			if (onDeck != null)
+				result.add(onDeck);
+			
+			return result;
+		}
+		
+		void update() {
+			bar.setText("" + (chords.getBar() + 1));
+		}
+		
+		void highlight(Section s) {
+			setBackground(s == section ? BUTTONS : null);
+			left.setBackground(getBackground());
+			lbls.setBackground(getBackground());
+		}
+	}
+	
 }

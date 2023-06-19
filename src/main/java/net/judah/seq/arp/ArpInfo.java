@@ -3,7 +3,6 @@ package net.judah.seq.arp;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import net.judah.seq.Mode;
 
 @Data @NoArgsConstructor
 public class ArpInfo {

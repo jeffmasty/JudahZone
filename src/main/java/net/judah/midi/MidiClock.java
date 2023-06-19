@@ -83,11 +83,6 @@ public class MidiClock implements Closeable, Cmdr {
 	}
 
 	@Override
-	public String lookup(int value) {
-		return "" + value;
-	}
-
-	@Override
 	public Integer resolve(String key) {
 		return Integer.parseInt(key);
 	}

@@ -62,7 +62,7 @@ public class Duration { // TODO TimeListener TimeSig
 
 		slider = new Slider(0, measure * 2, null);
 		slider.setPaintTicks(true);
-		slider.setMajorTickSpacing(measure / view.clock.getTimeSig().getBeats());
+		slider.setMajorTickSpacing(measure / view.clock.getTimeSig().beats);
 		slider.setMinorTickSpacing(1);
 		slider.setSnapToTicks(true);
 		slider.setMinimumSize(new Dimension(WIDTH / 2, 50));
@@ -86,7 +86,7 @@ public class Duration { // TODO TimeListener TimeSig
 		pnl.add(Gui.wrap(
 				new Btn("Ok", e->ok()), 
 				new Btn("Cancel", e->ModalDialog.getInstance().setVisible(false))));
-
+		pnl.setName("Duration");
 		new ModalDialog(Gui.wrap(pnl), new Dimension(400, 190), MainFrame.getKnobMode());
 	}
 

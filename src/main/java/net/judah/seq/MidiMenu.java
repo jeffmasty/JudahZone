@@ -6,6 +6,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Enumeration;
 
+import javax.sound.midi.MidiEvent;
+import javax.sound.midi.ShortMessage;
+import javax.sound.midi.Track;
 import javax.swing.*;
 
 import lombok.Getter;
@@ -20,8 +23,9 @@ import net.judah.gui.widgets.Arrow;
 import net.judah.gui.widgets.FxButton;
 import net.judah.gui.widgets.GateCombo;
 import net.judah.gui.widgets.TrackVol;
-import net.judah.midi.MpkTranspose;
+import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
+import net.judah.seq.arp.Mode;
 import net.judah.seq.beatbox.BeatsSize;
 import net.judah.seq.beatbox.BeatsTab;
 
@@ -40,8 +44,7 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 	private final Program progChange;
 	@Getter private final TrackVol vol;
 	private final JButton playWidget = new JButton(" ▶️ ");
-	private final Recorder record;
-	private final MpkTranspose transpose;
+	private final CueCombo cue; 
 	private final JButton metroWidget = new JButton(Icons.get("left.png"));
 	private final JLabel total = new JLabel();
 	private ButtonGroup mode;
@@ -56,8 +59,6 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		setBorder(BorderFactory.createDashedBorder(Color.BLUE));
 
-		record = track.getRecorder();
-		transpose = track.getTransposer();
 		progChange = new Program(track.getMidiOut(), track.getCh());
 		frames = new Bar(track);
 		cycle = new Cycle(track);
@@ -65,7 +66,7 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 		vol = new TrackVol(track);
 		files = new Folder(track);
 		metroWidget.addActionListener(e->track.cycle());
-		CueCombo cue = new CueCombo(track);
+		cue = new CueCombo(track);
 		playWidget.addActionListener(e->track.trigger());
 		playWidget.setOpaque(true);
 		gate = new GateCombo(track);
@@ -79,14 +80,12 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 		Gui.resize(progChange, Size.COMBO_SIZE);
 
 		add(playWidget);
-		add(cue);
 		menu.add(traxMenu());
 		menu.add(fileMenu());
 		menu.add(barMenu());
 		add(menu);
 		add(files);
-		add(new JLabel(" Cycle "));
-		add(cycle);
+		add(progChange);
 		add(Box.createHorizontalGlue());
 		add(metroWidget);
 		add(new JLabel(" Init "));
@@ -94,18 +93,17 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 		add(new JLabel("of "));
 		add(total);
 		add(new JLabel(" "));
-		add(new Arrow(Arrow.WEST, e->track.setFrame(track.getFrame() - 1)));
+		add(new Arrow(Arrow.WEST, e->track.next(false)));
 		add(frames);
-		add(new Arrow(Arrow.EAST, e->track.setFrame(track.getFrame() + 1)));
+		add(new Arrow(Arrow.EAST, e->track.next(true)));
+		add(cycle);
+
 		add(Box.createHorizontalGlue());
 		add(new JLabel("Gate"));
 		add(gate);
 		add(new JLabel(" Vol"));
 		add(vol);
 		add(new FxButton((Channel)track.getMidiOut()));
-		add(record);
-		add(transpose);
-		add(progChange);
 
 		update();
 		addMouseListener(this);
@@ -114,12 +112,10 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 
 	public void update() {
 		playWidget.setBackground(track.isActive() ? Pastels.GREEN : track.isOnDeck() ? track.getCue().getColor() : null);
-		record.update();
-		transpose.update();
-		metroWidget.setIcon(track.isEven() ? Icons.get("left.png") : Icons.get("right.png"));
+		metroWidget.setIcon(JudahClock.isEven() ? Icons.get("left.png") : Icons.get("right.png"));
 		if (track.isDrums())
 			setBorder(tab.getCurrent() == view ? Gui.RED : Gui.SUBTLE);
-		total.setText("" + track.frames());
+		total.setText("" + track.bars());
 		if (mode != null) {
 			int i = 0;
 			Enumeration<AbstractButton> it = mode.getElements();
@@ -170,13 +166,14 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 		JMenu result = new JMenu("Edit");
 		
 		JMenu frames = new JMenu("Frame");
-		frames.add(new Actionable("New", e->track.setFrame(track.frames() + 1)));
-		frames.add(new Actionable("Copy", e->track.copyFrame(track.getFrame())));
-		frames.add(new Actionable("Delete", e->track.deleteFrame(track.getFrame())));
+		frames.add(new Actionable("New", e->track.setCurrent(track.bars() + 1)));
+		frames.add(new Actionable("Copy", e->copyFrame()));
+		frames.add(new Actionable("Paste", e->insertFrame()));
+		frames.add(new Actionable("Delete", e->deleteFrame()));
 		JMenu select = new JMenu("Select");
 		select.add(new Actionable("All", e->view.getGrid().selectFrame()));
 		select.add(new Actionable("None", e->view.getGrid().selectNone()));
-		
+
 		result.add(new Actionable("Copy", e-> view.getGrid().copy()));
 		result.add(new Actionable("Paste", e->view.getGrid().paste()));
 		result.add(new Actionable("Delete", e->view.getGrid().delete()));
@@ -190,8 +187,57 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 		// result.add(new Actionable("CC", e->{ }));
 		// result.add(new Actionable("Prog", e->{ }));
 		// result.add(new Actionable("Chords...", e->{ }));
-
 		return result;
+	}
+	
+	private void copyFrame() {
+		MusicBox grid = view.getGrid();
+		Notes selected = new Notes(grid.getSelected());
+		grid.selectFrame();
+		grid.copy();
+		grid.select(selected);
+	}
+
+	// TODO undo/redo
+	private void deleteFrame() {
+		view.getGrid().selectFrame();
+		view.getGrid().delete();
+		
+		
+		int frame = track.getCurrent() - (track.isEven() ? 0 : 1);
+		long ref = frame * track.barTicks;
+		Track t = track.getT();
+		MidiEvent e;
+		long diff = track.getWindow();
+		for (int i = t.size() - 1; i > -1; i--) {
+			if (t.get(i).getMessage() instanceof ShortMessage == false)
+				continue;
+			e = t.get(i);
+			if (e.getTick() < ref)
+				break;
+			e.setTick(e.getTick() - diff);
+		}
+		view.getGrid().repaint();
+		
+	}
+	
+	// TODO undo/redo
+	private void insertFrame() {
+		int frame = track.getCurrent() - (track.isEven() ? 0 : 1);
+
+		long ref = frame * track.barTicks;
+		long diff = track.getWindow();
+		Track t = track.getT();
+		MidiEvent e;
+		for (int i = t.size() - 1; i > -1; i--) {
+			if (t.get(i).getMessage() instanceof ShortMessage == false)
+				continue;
+			e = t.get(i);
+			if (e.getTick() < ref)
+				break;
+			e.setTick(e.getTick() + diff);
+		}
+		view.getGrid().paste();
 	}
 
 	@Override

@@ -31,7 +31,7 @@ public class RowKnobs extends Row {
 			controls.add(new FxKnob(ch, ch.getGain(), Gain.VOLUME, ""));
 			break;
 		case 3: 
-			controls.add(new Fx(ch, JudahZone.getPresets().array()));
+			controls.add(new Fx(ch, JudahZone.getPresets()));
 			controls.add(new FxKnob(ch, ch.getParty(), CutFilter.Settings.Frequency.ordinal(), "Hz."));
 			controls.add(new FxKnob(ch, ch.getFilter(), CutFilter.Settings.Frequency.ordinal(), "Hz."));
 			controls.add(new FxKnob(ch, ch.getGain(), Gain.PAN, ""));

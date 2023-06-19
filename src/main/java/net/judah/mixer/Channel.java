@@ -109,8 +109,7 @@ public class Channel {
     }
     
     public void setPreset(Preset p) {
-    	if (p != preset)
-    		RTLogger.log(this, name + "->" + p.getName() );
+    	// if (p != preset) RTLogger.log(this, name + "->" + p.getName() );
         preset = p;
         applyPreset();
     }
@@ -133,8 +132,6 @@ public class Channel {
             if (!e.isActive()) continue;
             presets.add(new Setting(e)); // saving gain?
         }
-        RTLogger.log(this, "Saving " + getName() + " to preset " + name +
-                " with " + presets.size() + " effect settings");
         preset = new Preset(name, presets);
         return preset;
     }

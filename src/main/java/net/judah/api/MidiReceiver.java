@@ -26,6 +26,8 @@ public interface MidiReceiver extends Receiver, Closeable {
 	
 	boolean isMuteRecord();
 	
+	boolean isMono();
+	
 	Gain getGain();
 	
 

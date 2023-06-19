@@ -10,6 +10,7 @@ import javax.swing.border.Border;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.util.Constants;
 
 // Combos: MidiGui: song, file, *6 synths, Track: *prog, file, pattern? LFO: type Synth: prog?
 public abstract class SetCombo<T> extends  JComboBox<T> {
@@ -17,6 +18,8 @@ public abstract class SetCombo<T> extends  JComboBox<T> {
 	protected static final Border HIGHLIGHT = BorderFactory.createSoftBevelBorder(
 			BevelBorder.RAISED, Color.RED, Color.RED.darker());
 	protected final Border old;
+	
+	private T override;
 	
 	@SuppressWarnings("rawtypes")
 	@Setter @Getter protected static SetCombo set;
@@ -40,10 +43,11 @@ public abstract class SetCombo<T> extends  JComboBox<T> {
 	public void refill(T[] options, T selected) {
 		removeActionListener(listener);
 		removeAllItems();
+		addItem(null);
 		for (T option : options) {
 			addItem(option);
-			if (selected.equals(option) && selected != null)
-				setSelectedItem(selected);
+			if (selected == option)
+				setSelectedItem(option);
 		}
 		addActionListener(listener);
 	}
@@ -58,11 +62,26 @@ public abstract class SetCombo<T> extends  JComboBox<T> {
 	}
 	
 	public void midiShow(T val) {
-		if (set != null)
-			set.setBorder(set.old);
-		override(val);
-		set = this;
-		setBorder(HIGHLIGHT);
+		
+		if (set != null && set != this) {
+			@SuppressWarnings("rawtypes")
+			final SetCombo old = set;
+			Constants.execute(()-> old.override(old.override));
+		}
+		if (set != this) {
+			override = (T)getSelectedItem();
+			set = this;
+		}
+		
+		if (getSelectedItem() != val) {
+			final T midiVal = val;
+			Constants.execute(()->{
+				removeActionListener(listener);
+				setSelectedItem(midiVal);
+				addActionListener(listener);
+				setBorder(HIGHLIGHT);
+			});
+		}
 	}
 	
 	protected abstract void action();
@@ -71,8 +90,9 @@ public abstract class SetCombo<T> extends  JComboBox<T> {
 		if (set == null)
 			return;
 		set.setBorder(set.old);
-		set.action();
+		SetCombo engage = set;
 		set = null;
+		engage.action();
 	}
 	
 	

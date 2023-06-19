@@ -1,5 +1,7 @@
 package net.judah.gui.widgets;
 
+import java.awt.Dimension;
+
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -18,18 +20,22 @@ public class LoopWidget extends JPanel implements Updateable {
 	private final Slider slider;
     private final JLabel loopLbl = new JLabel(FRESH);
 
-	public LoopWidget(Looper sync) {
+	public LoopWidget(Looper sync, int width) {
 		this.looper = sync;
 		sync.setFeedback(this);
 		slider = new Slider(null);
 		slider.setOrientation(JSlider.HORIZONTAL);
         slider.setEnabled(false);
-        Gui.resize(slider, Size.MEDIUM_COMBO);
+        slider.setPaintTicks(true);
+        slider.setMajorTickSpacing(-1);
+        slider.setMinorTickSpacing(25);
+        Gui.resize(slider, new Dimension(width, Size.STD_HEIGHT + 6));
         add(new JLabel("Loop:"));
         add(loopLbl);
         add(slider);
 	}
 	
+	@Override
 	public void update() {
 		if (looper.getRecordedLength() == 0) {
 			loopLbl.setText(FRESH);

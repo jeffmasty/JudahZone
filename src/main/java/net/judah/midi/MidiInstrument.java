@@ -23,9 +23,6 @@ public class MidiInstrument extends Instrument implements MidiReceiver {
 	@Setter protected MidiPort midiPort;
 	boolean mono;
 	
-	// boolean doesProgChange
-	// boolean isMono
-	
 	public MidiInstrument(String channelName, String sourceLeft, String sourceRight, JackPort left, JackPort right, String icon) {
 		super(channelName, sourceLeft, sourceRight, icon);
 		leftPort = left;

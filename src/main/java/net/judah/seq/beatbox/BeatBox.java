@@ -11,10 +11,12 @@ import java.awt.event.MouseEvent;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 
+import net.judah.JudahZone;
 import net.judah.drumkit.DrumType;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.midi.Midi;
+import net.judah.midi.Signature;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiPair;
@@ -39,11 +41,11 @@ public class BeatBox extends MusicBox {
 		setOpaque(true);
     	setBackground(Pastels.MY_GRAY);
         setLayout(null);
-        timeSig();
+        timeSig(JudahZone.getClock().getTimeSig());
     }
 
-    @Override public void timeSig() {
-		unit = totalWidth / (2f * track.getClock().getSteps());
+    @Override public void timeSig(Signature sig) {
+		unit = totalWidth / (2f * sig.steps);
 		repaint();
 	}
     
@@ -80,7 +82,7 @@ public class BeatBox extends MusicBox {
 			y = DrumType.index(on.getData1());
 			x = (int) ( (  (p.getOn().getTick()-offset) / window) * totalWidth); 
 			if (y >=0 && x >= 0) {
-				if (selected.isBeatSelected(p))
+				if (selected.contains(p))
 					highlight(g, x, y, on.getData2());
 				else
 					oval(g, x, y, on.getData2()); 

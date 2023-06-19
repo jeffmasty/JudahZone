@@ -2,20 +2,25 @@ package net.judah.seq.arp;
 
 import javax.sound.midi.ShortMessage;
 
-import lombok.RequiredArgsConstructor;
+import net.judah.api.Key;
 import net.judah.seq.Poly;
 import net.judah.seq.chords.Chord;
-import net.judah.seq.chords.Key;
 
-@RequiredArgsConstructor
 public class UpDown extends Algo {
 	public static final int SIZE = 4;
+	private final boolean init;
 	private int idx;
 	private int interval;
 	private boolean descending;
 	
+	public UpDown(boolean upstart) {
+		init = upstart;
+		descending = !init;
+	}
+	
 	@Override
 	public void process(ShortMessage m, Chord chord, Poly result) {
+		if (chord == null) return;
 		if (descending) 
 			down(m, chord, result);
 		else 
@@ -32,7 +37,7 @@ public class UpDown extends Algo {
 		while (up < interval) 
 			up += 12;
 		if (interval > range) {
-			descending = true;
+			descending = init;
 			interval = 0;
 		}
 		else interval = up;
@@ -54,7 +59,7 @@ public class UpDown extends Algo {
 		while (down < interval) 
 			down += 12;
 		if (down >= range) {
-			descending = false;
+			descending = init;
 			interval = 0;
 		}
 		else interval = down;
@@ -70,7 +75,8 @@ public class UpDown extends Algo {
 	
 	@Override public void change() { // reset on chord change
 		interval = 0;
-		descending = false;
+		descending = !init;
 	}
+
 
 }
