@@ -7,6 +7,8 @@ import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
 import net.judah.midi.JudahClock;
 import net.judah.midi.Signature;
+import net.judah.seq.track.TrackMenu;
+import net.judah.seq.track.MidiTrack;
 
 @Getter
 public abstract class MidiView extends JPanel implements TimeListener, MidiConstants {
@@ -17,7 +19,7 @@ public abstract class MidiView extends JPanel implements TimeListener, MidiConst
 
 	protected final JudahClock clock;
 	protected final MidiTrack track;
-	protected MidiMenu menu;
+	protected TrackMenu menu;
 	protected MusicBox grid;
 	protected JPanel instrumentPanel;
 	protected Steps steps;

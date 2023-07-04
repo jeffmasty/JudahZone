@@ -11,9 +11,9 @@ import net.judah.gui.MainFrame;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
-import net.judah.seq.MidiTrack;
 import net.judah.seq.Seq;
 import net.judah.seq.arp.Mode;
+import net.judah.seq.track.MidiTrack;
 import net.judah.song.Scene;
 import net.judah.util.Constants;
 

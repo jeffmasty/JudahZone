@@ -46,7 +46,19 @@ public class DrumMachine extends LineIn {
 	public KitKnobs getKnobs() {
 		return knobs.get(current);
 	}
+	
+	public KitKnobs getKnobs(DrumKit kit) {
+		return knobs.get(kit);
+	}
 
+	public Object getKnobs(KitMode mode) {
+		for (KitKnobs k : knobs.values())
+			if (k.getKit().getKitMode() == mode)
+				return k;
+		return null;
+	}
+
+	
 	// process+mix each drumkit, process this channel's fx, place on mains
 	public void process() {
 		AudioTools.silence(left);
@@ -68,5 +80,6 @@ public class DrumMachine extends LineIn {
 		current = kits.get(idx);
 		MainFrame.setFocus(current);
 	}
+
 	
 }

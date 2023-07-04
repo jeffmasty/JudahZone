@@ -1,6 +1,7 @@
 package net.judah.seq;
 
 import java.util.ArrayList;
+import java.util.Vector;
 
 import javax.swing.JComboBox;
 
@@ -9,12 +10,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
+import net.judah.seq.track.MidiTrack;
 import net.judah.song.Cmd;
 import net.judah.song.Cmdr;
 import net.judah.song.Param;
 
 @NoArgsConstructor
-public class TrackList extends ArrayList<MidiTrack> implements Cmdr {
+public class TrackList extends Vector<MidiTrack> implements Cmdr {
 
 	private MidiTrack current;
 	@Setter private Runnable update;

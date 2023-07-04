@@ -95,11 +95,11 @@ public class ChannelTitle extends JPanel {
 	public void update() {
 		if (fx.isSelected() != channel.isPresetActive())
 			fx.setSelected(!fx.isSelected());
-		fx.setBackground(fx.isSelected() ? Pastels.YELLOW: null);
+		fx.setBackground(fx.isSelected() ? Pastels.BLUE: null);
 		if (channel instanceof LineIn) {
 			if (mute.isSelected() != ((LineIn)channel).isMuteRecord())
 				mute.setSelected(!mute.isSelected());
-			mute.setBackground(((LineIn)channel).isMuteRecord()? null : Pastels.BLUE);
+			mute.setBackground(((LineIn)channel).isMuteRecord()? null : Pastels.ONTAPE);
 		}
 		else if (mute.isSelected() != channel.isOnMute()) {
 			mute.setSelected(!mute.isSelected());

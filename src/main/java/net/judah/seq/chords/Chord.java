@@ -36,12 +36,22 @@ public class Chord extends ArrayList<Key> {
 	}
 	
 	public Chord(String parse) {
+		
 		chord = parse;
+		
+		
+		
 		int caret = 1;
 		if (parse == null || parse.isEmpty()) {
 			major("C");
 			return;
 		}
+		
+		int inverted = parse.indexOf('/');
+		if (inverted > 0 && parse.length() > inverted)
+			bass = Key.lookup(parse.substring(inverted + 1));
+
+		
 		String key = parse.substring(0, 1);
 		if (parse.length() == 1) {
 			major(key);
@@ -59,12 +69,13 @@ public class Chord extends ArrayList<Key> {
 			}
 		}
 
+		String suffix = parse.substring(caret);
+
 		if (caret == parse.length()) {
 			major(key);
 			return;
 		}
 
-		String suffix = parse.substring(caret);
 		caret = 0;
 		if ( (suffix.startsWith("m") && suffix.startsWith("maj") == false)
 				|| suffix.startsWith("-")) {
@@ -110,10 +121,8 @@ public class Chord extends ArrayList<Key> {
 				sharp9();
 			else
 				add9();
-		}		
-		int inverted = suffix.indexOf('/');
-		if (inverted > 0 && suffix.length() > inverted)
-			bass = Key.lookup(suffix.substring(inverted + 1));
+		}
+		
 		// TODO b11 #13, 
 	}
 
@@ -250,20 +259,20 @@ public class Chord extends ArrayList<Key> {
 	
 	public boolean isFlat9() {
 		for (Key k : this)
-			if (bass.interval(k) == HALF.ordinal())
+			if (get(0).interval(k) == HALF.ordinal())
 				return true;
 		return false;
 	}
 	public boolean isAdd9() {
 		for (Key k : this)
-			if (bass.interval(k) == WHOLE.ordinal())
+			if (get(0).interval(k) == WHOLE.ordinal())
 				return true;
 		return false;
 	}
 	
-	public void tight(int data1, Poly result) {
+	public void tight(int low, Poly result) {
 		outer: 
-		for (int counter = data1; counter < 127; counter++) {
+		for (int counter = low; counter < 127; counter++) {
 			if (contains(Key.key(counter)) && result.has(Key.key(counter)) == false) {
 				result.add(counter);
 			}

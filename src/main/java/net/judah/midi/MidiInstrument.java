@@ -1,6 +1,7 @@
 package net.judah.midi;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
@@ -67,5 +68,13 @@ public class MidiInstrument extends Instrument implements MidiReceiver {
 	public void setMono() {
 		mono = true;
 	}
-
+	
+	public static void offs(MidiReceiver out, int ch, List<Integer> actives) {
+		Constants.execute(()->{
+			for (int i = 0; i < actives.size(); i++) 
+				out.send(Midi.create(ShortMessage.NOTE_OFF, ch, actives.get(i), 0), JudahMidi.ticker());
+			actives.clear();
+		});
+	}
+	
 }

@@ -10,7 +10,6 @@ import java.awt.event.KeyListener;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
-import net.judah.api.AudioMode;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.ModalDialog;
@@ -150,7 +149,7 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
             		if (loop == looper.getLoopA())
             			getLooper().getLoopA().trigger();
             		else 
-            			loop.record(loop.isRecording() != AudioMode.RUNNING);
+            			loop.record(!loop.isRecording());
             	} else if (focus instanceof Instrument) {
             		Instrument line = (Instrument)focus;
             		line.setMuteRecord(!line.isMuteRecord());
@@ -158,7 +157,7 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
             	return true;
             case VK_D: 
             	if (focus instanceof Loop) 
-            		((Loop)focus).erase();
+            		((Loop)focus).clear();
             	return true;
             case VK_X: 
             	if (focus instanceof Loop) 

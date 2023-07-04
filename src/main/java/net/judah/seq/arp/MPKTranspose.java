@@ -8,11 +8,11 @@ import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
 import net.judah.midi.Midi;
-import net.judah.seq.Cue;
 import net.judah.seq.MidiConstants;
-import net.judah.seq.MidiTrack;
 import net.judah.seq.Poly;
 import net.judah.seq.chords.Chord;
+import net.judah.seq.track.Cue;
+import net.judah.seq.track.MidiTrack;
 
 public class MPKTranspose extends Algo implements TimeListener, Feed, Ignorant {
 

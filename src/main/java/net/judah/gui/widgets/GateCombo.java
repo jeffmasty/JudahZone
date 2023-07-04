@@ -4,8 +4,8 @@ import java.util.ArrayList;
 
 import javax.swing.JComboBox;
 
-import net.judah.seq.Gate;
-import net.judah.seq.MidiTrack;
+import net.judah.seq.track.Gate;
+import net.judah.seq.track.MidiTrack;
 import net.judah.util.Constants;
 
 public class GateCombo extends JComboBox<Gate> {

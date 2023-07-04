@@ -1,25 +1,33 @@
 TODO:
 
-REC UP5 DN5 REL
-MPK ProgChange, pad2
-Loop copy/paste/chop/save,  Record session, Midi looper
-Delay and LFO sync to Clock & TapTempo
+Directives.BREAKS ChordPro.@ ChordPro.%   Cycle breaks: A3_ ABC_ TOF_?
+Loops wander when Mains muted, Fx and SceneREL OnDeck CMD2.0
+Move Arp and Program to Sched
+ch fx rightclick = looper.fxSync (yellow)
+Setlist + Presets to KnobPanel
+MPK ProgChange, pad2, fx to pads/lfo to beatstep
+Hot Mic 2.0, kit knobs scratchy
+Delay + LFO sync to Clock/TapTempo, LFO resource hog
+UP5/DN5, REC = MidiLooper
 Arpeggiator gate, Swing Pt.II
-bass track no amp/vol, kit knobs scratchy, sample packs
+sample packs, doubletap oneshots = loop
 walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
 hanging chads (unpaired NoteOn across frames), DragNDrop other frames
-Editor falling water/zoomIn-Out, Modal translate
+Editor falling water/zoomIn-Out, REL = Modal translate
 DBIndicator, Scope, Meters, Crave clock sync 
 Synth: envelope to filter, LFO, glide, PWM, mono-synth, 
 Probability, Ritardando, CC in Midi tracks, microsteps
 Sampler FX (granularity, pitched frequency, wet)
 IR Reverb, DrumSynth, Phasor, Shepherd, Vocoder
+SongEditor undo/redo
 record record record youtubes
-README credits
+user manual
 make client-server architecture
 support JavaSound/non-Jack, make accessible setup and settings
 
 -------------------------
+https://freesound.org/people/laffik/packs/38658/
+
 Latency + bleeding edge
 clipping/xruns filter see https://github.com/psambit9791/jDSP Peak/Spike
 Hacking the Arturia Beatstep:
@@ -124,29 +132,53 @@ Sampler (bicycle, creek, rain sounds), cricket sound on 2 and 4
 Settable interface (files, instruments, setlist)
 JudahSynth = velocity-sensitive polyphonic synthesizer w/ ADSR, presets, detune
 portWrapper for midiOut to JudahSynth/JudahBeats, redo DJJefe
-8-track player, atk/rel drum sample envelope
+10-track player, atk/rel drum sample envelope
 LFO on samples, LFO cleanup, Compressor
 mixbus multi-select
 separate setlist and code
 export beatbox as midi file, quantization
-midi-fluent Song editor
+midi-fluent Song editor, midi track resolution
 BeatBox absolute resolution, Swing and Waltz gracefully 
 MidiEditor undo/redo/copy/paste/transpose/translate/drag-n-drop/velocity/record live
 ERRNOBUF - recover Jack MIDI when ALSA bridge fails
-Arpeggiator, ChordPro parser, Synth track follow ChordSheet/MPK/ABS/REC
-Setlists
+Arpeggiator, ChordPro parser, Synth tracks follow ChordPro/MPK/ABS/Racman
+Setlists, save/load loops to/from disk, record session audio
 
 
 REFERENCE------------------------------------------------------------
 [Mixer]                [FX]
 [Loops] [Ins]  [Main]  
 1 2 3 4 5 6 7 8..      1  2  3  4
-| | | | | | | |        5  6  7  8
-| | | | | | | |        9  10 11 12
-| | | | | | | |        13 14 15 16
+| | + | | | | |        5  6  7  8
++ + | | + + + |        9  10 11 12
+| | | + | | | +        13 14 15 16
 
 
-*nanoPAD2
+Class Hierarchy:
+Channel
+   LineIn
+       Instrument - guitar, mic
+           MidiInstrument - crave, fluid
+       JudahSynth
+       DrumMachine
+   AudioTrack
+       Loop - A/B/C
+          SoloTrack - D
+       DrumSamples - to DrumMachine
+       Sample    
+          StepSample
+  
+
+Song JSON:
+[tracks:] trackName, file, progChange
+[scenes:] type, notes,
+	    tracks: active, vol, cycle, launch
+	    commands: key, val
+	    fx: active channels
+[fx:]  channelName, presetName
+[record:] channelName
+
+nanoPAD2:
 recordA	   recordB  recordC recordDrum sheetMusic   Gtr.Efx.sync  x	               x
 reload/AAB latchB   latchC  latchSolo  Verse/Chorus MuteA/B    	  clockStop/syncx  Crickets/++
 
@@ -172,26 +204,3 @@ SYNTH
 	A      D   S 	 R
 
 
-Class Hierarchy
-Channel
-   LineIn
-       Instrument - guitar, mic
-           MidiInstrument - crave, fluid
-       JudahSynth
-       DrumMachine
-   AudioTrack
-       Loop - A/B/C
-          SoloTrack - D
-       DrumSamples - to DrumMachine
-       Sample    
-          StepSample
-  
-
-SONG:
-[tracks:] trackName, file, progChange
-[scenes:] type, notes,
-	    tracks: active, vol, cycle, launch
-	    commands: key, val
-	    fx: active channels
-[fx:]  channelName, presetName
-[record:] channelName

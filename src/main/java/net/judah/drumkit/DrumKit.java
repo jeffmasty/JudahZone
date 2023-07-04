@@ -35,8 +35,8 @@ public class DrumKit extends LineIn implements Engine, Knobs {
 	private DrumPreset kit;
 	private final KitMode kitMode;
 	private final KnobMode knobMode = KnobMode.Kits;
-	private final List<Integer> actives = new ArrayList<>();
 	private final int channel = 9;
+	private final List<Integer> actives = new ArrayList<>(); // not used
 	@Override public boolean isMono() { return false; }
 	
 	public DrumKit(KitMode mode) {
@@ -54,8 +54,8 @@ public class DrumKit extends LineIn implements Engine, Knobs {
 
 	public void setKit(String name) {
 		for (DrumSample s : samples) {
-			s.setActive(false);
-			s.setTapeCounter(0);
+			s.play(false);
+			s.rewind();
 		}
 		// todo custom kits
 		for (File folder : Folders.getKits().listFiles()) {
@@ -77,20 +77,20 @@ public class DrumKit extends LineIn implements Engine, Knobs {
 	
 	public void play(DrumSample s, boolean on, int velocity) {
 		if (on) {
-			s.setTapeCounter(0);
+			s.rewind();
 			s.setVelocity(midiToFloat(velocity));
 			s.getEnvelope().reset();
-			s.setActive(true);
+			s.play(true);
 			if (choked && s.getDrumType() == DrumType.CHat) {// TODO multi
 				DrumSample ohat = samples[DrumType.OHat.ordinal()];
-				if (ohat.isActive()) {
-					ohat.setActive(false);
+				if (ohat.isPlaying()) {
+					ohat.play(false);
 					MainFrame.update(ohat);
 				}
 			}
 		}
 		else {
-			s.setActive(false);
+			s.play(false);
 		}
 		MainFrame.update(s); 
 	}
@@ -112,7 +112,7 @@ public class DrumKit extends LineIn implements Engine, Knobs {
 	@Override
 	public boolean hasWork() {
 		for (DrumSample drum : samples)
-			if (drum.isActive()) return true;
+			if (drum.isPlaying()) return true;
 		return false;
 	}
 	

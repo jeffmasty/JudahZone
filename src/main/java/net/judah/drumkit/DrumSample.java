@@ -32,22 +32,18 @@ public class DrumSample extends AudioTrack implements AtkDec {
 	}
 	
 	public void process(FloatBuffer outLeft, FloatBuffer outRight) {
-		if (!active) return;
-		if (hasRecording()) {
-			readRecordedBuffer();
-			if (onMute)
-				return;
-			env = 2 * velocity * envelope.calcEnv();
-			playFrame(outLeft, outRight);
-    	} 	
+		if (!playing) return;
+		readRecordedBuffer();
+		if (onMute)
+			return;
+		env = 2 * velocity * envelope.calcEnv();
+		playFrame(outLeft, outRight);
 	}
 
 	@Override public void clear() {
         tapeCounter.set(0);
         recording = null;
-        length = null;
-        recording = null;
-        active = false;
+        playing = false;
         MainFrame.update(this);
     }
 	

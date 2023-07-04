@@ -26,15 +26,15 @@ public class StepSample extends Sample {
 		
 		for (int x : steps)
 			if (x == step) {
-				setTapeCounter(0);
-				active = true;
+				rewind();
+				playing = true;
 				return;
 			}
 	}
 	
 	@Override
 	public void process() {
-		if (!active || !hasRecording()) return;
+		if (!playing) return;
 		readRecordedBuffer();
 		env = STEP_BOOST * sampler.stepMix;
 		playFrame(leftPort.getFloatBuffer(), rightPort.getFloatBuffer()); 

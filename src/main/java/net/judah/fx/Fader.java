@@ -53,7 +53,7 @@ public class Fader {
         });
 	    if (ch instanceof Sample)
 			result.cleanup = () ->{
-				((Sample)ch).setActive(false);
+				((Sample)ch).play(false);
 				MainFrame.update(ch);};
 		return result;
 	}

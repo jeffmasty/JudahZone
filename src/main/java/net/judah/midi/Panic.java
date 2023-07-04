@@ -5,6 +5,7 @@ import javax.sound.midi.ShortMessage;
 
 import lombok.RequiredArgsConstructor;
 import net.judah.api.MidiReceiver;
+import net.judah.seq.track.MidiTrack;
 import net.judah.util.RTLogger;
 
 @RequiredArgsConstructor
@@ -13,6 +14,9 @@ public class Panic implements Runnable {
 	private final MidiPort port;
 	private int channel = 0;
 	
+	public Panic(MidiTrack t) {
+		this(t.getMidiOut(), t.getCh());
+	}
 
 	public Panic(MidiReceiver r, int channel) {
 		this(r.getMidiPort(), channel);

@@ -1,12 +1,11 @@
 package net.judah.seq;
 
-import java.util.ArrayList;
-
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
 import lombok.Getter;
 import net.judah.gui.MainFrame;
+import net.judah.seq.track.MidiTrack;
 
 @Getter
 public abstract class MidiTab extends JPanel {
@@ -15,7 +14,7 @@ public abstract class MidiTab extends JPanel {
 	protected MidiView current;
 	
 	/** ticks are zero-based */
-	protected final ArrayList<MidiPair> clipboard = new ArrayList<>();
+	protected final Clipboard clipboard = new Clipboard();
 	
 	public MidiTab(TrackList list) {
 		this.tracks = list;

@@ -8,6 +8,9 @@ public interface TimeProvider extends TimeNotifier {
 
 	void begin();
 	void end();
+	
+	int getMeasure();
+	int getBeat();
 
 	//	/**@return in milliseconds, -1 if request is not valid in context */
 	//	long getNextPulse();

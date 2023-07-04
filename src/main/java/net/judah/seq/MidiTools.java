@@ -7,8 +7,11 @@ import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
+import javax.swing.JOptionPane;
 
 import net.judah.midi.Midi;
+import net.judah.seq.track.MidiTrack;
+import net.judah.util.RTLogger;
 
 public class MidiTools {
     
@@ -169,6 +172,33 @@ public class MidiTools {
 		return new MidiPair(new MidiEvent(p.getOn().getMessage(), p.getOn().getTick() - left), 
 				p.getOff() == null ? null : new MidiEvent(p.getOff().getMessage(), p.getOff().getTick() - left));
 	}
+	
+	public static void resolution(MidiTrack track, int rez) {
+			float factor = rez / (float)track.getResolution();
+			Track t = track.getT();
+			for (int i = t.size() - 1; i >= 0; i--) {
+				t.get(i).setTick((long) (t.get(i).getTick() * factor));
+			}
+			track.setResolution(rez);
+	}
+	
+	public static void resolution(MidiTrack track) {
+		String init = "" + track.getResolution();
+		String rez = JOptionPane.showInputDialog("Resolution: ", init);
+		if (rez == null || rez.equals(init) || rez.isBlank()) return;
+		try {
+			int change = Integer.parseInt(rez);
+			change -= change % 2;
+			if (change < 2 && change > 2048) {
+				RTLogger.log("Resolution", "what are you doing?");
+				return;
+			}
+			resolution(track, change);
+		} catch (Throwable e) {
+			RTLogger.log("Resolution", rez + ": " + e.getMessage());
+		}
+	}
+
 }
 
 //  private static final Pattern work = new Pattern();
@@ -184,12 +214,9 @@ public class MidiTools {
 //		long base = target * track.getBarTicks();
 //		Track t = track.getT();
 //		loadMeasure(measure, track, work);
-//		for (MidiEvent e : work) {
+//		for (MidiEvent e : work) 
 //			t.add(new MidiEvent(e.getMessage(), e.getTick() + base));
-//		}
-//		
 //	}
-
 //	public static Note translate(MidiEvent e, MidiTrack track) {
 //		float twoBar = 2 * track.getBarTicks();
 //		if (e.getMessage() instanceof ShortMessage == false)
@@ -206,126 +233,11 @@ public class MidiTools {
 //		float top = (e.getTick() - translate) / twoBar;
 //		return new Note(top, top, m.getData1(), m.getData2());
 //	}
-
 //	private static void collateDrums(Bar b, long barTicks, Measure result, boolean first) {
 //		result.clear();
-//		for (MidiEvent e : b) {
+//		for (MidiEvent e : b) 
 //			result.add(new MidiPair(new MidiEvent(e.getMessage(), e.getTick() + (first ? 0 : barTicks)), null));
-//		}
 //	}
-
-//	public static void publishBeats(MidiTrack track, Measure result) {
-//		long barTicks = track.getBarTicks();
-//		result.clear();
-////		if (track.getView().isLive()) {
-////			// setStartRef
-////		}
-////		else {
-//			if (track.isEven()) { // even, display current | next
-//				result.startTick = track.getCurrent() * barTicks;
-//				result.setBTick(track.getNext() * barTicks);
-//				for (MidiEvent e : loadMeasure(track.getCurrent(), track, work)) 
-//					result.add(new MidiPair(e, null));
-//				for (MidiEvent e : loadMeasure(track.getNext(), track, work)) 
-//					result.add(new MidiPair(new MidiEvent(e.getMessage(), e.getTick() + barTicks), null));
-//			}
-//			else { // odd, display previous | current
-//				result.startTick = track.getPrevious() * barTicks;
-//				result.setBTick(track.getCurrent() * barTicks);
-//				for (MidiEvent e : loadMeasure(track.getPrevious(), track, work)) 
-//					result.add(new MidiPair(e, null));
-//				for (MidiEvent e : loadMeasure(track.getCurrent(), track, work)) 
-//					result.add(new MidiPair(new MidiEvent(e.getMessage(), e.getTick() + barTicks), null));
-//			}
-////		}
-//	}
-	
-	
-//	public static void publishPiano(MidiTrack track, Measure result) {
-//		long barTicks = track.getBarTicks();
-//		if (track.getView().isLive()) {
-//			// setStartRef
-//		}
-//		else {
-//		result.load(track);
-//		result.load(track);
-//			if (track.isEven()) { // even, display current | next
-//				result.startTick = track.getCurrent() * barTicks;
-//				result.setBTick(track.getNext() * barTicks);
-//				for (MidiEvent e : loadMeasure(track.getCurrent(), track, work)) 
-//					result.add(new MidiPair(e, null));
-//				for (MidiEvent e : loadMeasure(track.getNext(), track, work)) 
-//					result.add(new MidiPair(new MidiEvent(e.getMessage(), e.getTick() + barTicks), null));
-//			}
-//			else { // odd, display previous | current
-//				result.startTick = track.getPrevious() * barTicks;
-//				result.setBTick(track.getCurrent() * barTicks);
-//				for (MidiEvent e : loadMeasure(track.getPrevious(), track, work)) 
-//					result.add(new MidiPair(e, null));
-//				for (MidiEvent e : loadMeasure(track.getCurrent(), track, work)) 
-//					result.add(new MidiPair(new MidiEvent(e.getMessage(), e.getTick() + barTicks), null));
-//			}
-///////////////		
-//			result.startTick = track.getCurrent() * barTicks;
-//			loadMeasure(track.getCurrent(), track, work);
-//			if (track.isDrums()) {
-//				for (MidiEvent e : work) 
-//					result.add(new MidiPair(e, null));
-//			}
-//			else 
-//				; //collateNotes(work, track.getBarTicks(), result.a, result);
-//			
-//			result.setBTick(track.getNext() * track.getBarTicks());
-//			loadMeasure(track.getNext(), track, work);
-////			collateNotes(work, track.getBarTicks(), result.b, result);
-//			
-////		}
-//		
-		
-//		snip(work, track.getBarTicks(), 0, result.a);
-//
-//		long start = result.getStartref() % barTicks; 
-//		long end = barTicks - start;
-//
-//		MidiTools.loadMeasure(scheduler.current, this, result.one);
-//		snip(result.one, start, barTicks, 0, result);
-//		
-//		MidiTools.loadMeasure(scheduler.next, this, result.two);
-//		snip(result.two, 0, barTicks, barTicks - start, result);
-//		if (end != barTicks) {
-//			MidiTools.loadMeasure(scheduler.afterNext, this, result.three);
-//			snip(result.three, 0, end, (2 * barTicks) - start, result);
-//		}
-//		else 
-//			result.three = null;
-	
-		// anything left in accumulator?
-//		for (MidiEvent e : result.stash) {
-//			ShortMessage on = (ShortMessage)e.getMessage();
-//			result.add(new Note(e.getTick(), 2 * barTicks, on.getData1(), on.getData2()));
-//		}
-
-//	public static Midi transpose(Midi in, int steps) throws InvalidMidiDataException {
-//		if (steps == 0) return in;
-//		return new Midi(in.getCommand(), in.getChannel(), in.getData1() + steps, in.getData2());
-//	}
-//
-//	public static Midi transpose(Midi in, int steps, float gain) throws InvalidMidiDataException {
-//		if (steps == 0 && gain >= 1f) return in;
-//		return new Midi(in.getCommand(), in.getChannel(), in.getData1() + steps, (int)(in.getData2() * gain));
-//	}
-//
-//	public static Midi gain(Midi in, float gain) throws InvalidMidiDataException {
-//		if (gain == 1f) return in;
-//		return new Midi(in.getCommand(), in.getChannel(), in.getData1(), (int)(in.getData2() * gain));
-//	}
-//
-//	public static Midi transpose(Midi in, int steps, int channel) throws InvalidMidiDataException {
-//		return new Midi(in.getCommand(), channel, in.getData1() + steps, in.getData2());
-//	}
-
-
-
 //	private void snipNotes(Bar bar, long start, long end, long translate, Measure result, Accumulator stash) {
 //		float twoBar = 2 * barTicks;
 //		for (MidiEvent e : bar) {
@@ -350,7 +262,6 @@ public class MidiTools {
 //		}
 //	}
     
-    
 //	/** move trailing midi back */
 //	public static void deleteMeasure(MidiTrack t) {
 //		long measure = MidiTools.measureTicks(t.getResolution());
@@ -363,16 +274,14 @@ public class MidiTools {
 //				continue;
 //			if (cleansed)
 //				e.setTick(e.getTick() - measure);
-//			else if (e.getTick() < end) {
+//			else if (e.getTick() < end) 
 //				track.remove(e);
-//			}
 //			else {
 //				cleansed = true;
 //				e.setTick(e.getTick() - measure);
 //			}
 //		}
 //	}
-
 	
 //	/** find next CMD (i.e. note_off) starting from tick (i.e. note_on) or null*/
 //	public static MidiEvent findNext(int cmd, long tick, int data1, Track track) {
@@ -385,7 +294,6 @@ public class MidiTools {
 //		}
 //		return null;
 //	}
-
 	
 //	public static void copyMeasure(Track track, long start, long end, ArrayList<MidiEvent> result, long offset) {
 //		for (int i = 0; i < track.size(); i++) {
@@ -401,7 +309,6 @@ public class MidiTools {
 //				return;
 //		}
 //	}
-
 	
 //	public static void copy(Collection<MidiEvent> source, Snippet dest, long start) {
 //		long end = start + dest.getLength();

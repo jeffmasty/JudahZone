@@ -7,66 +7,61 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.api.AudioMode;
-import net.judah.api.ProcessAudio;
+import net.judah.api.PlayAudio;
 import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 import net.judah.util.AudioTools;
+import net.judah.util.Constants;
 
 @Getter
-public abstract class AudioTrack extends Channel implements ProcessAudio {
+public abstract class AudioTrack extends Channel implements PlayAudio {
 
-	protected Recording recording = new Recording();
-	protected float[][] recordedBuffer;
-	@Setter protected boolean active;
 	@Setter protected Type type = Type.ONE_SHOT;
-	protected final AtomicInteger tapeCounter = new AtomicInteger();
-	@Setter protected Integer length;
-	protected float env = 1f;
-
-	public AudioTrack(String name) {
-		this(name, Type.ONE_SHOT);
-	}
+	protected boolean playing; 
+	protected Recording recording = new Recording();
+	protected final AtomicInteger tapeCounter = new AtomicInteger(0);
+	protected float[][] playBuffer;
+	protected float env = 1f; // envelope/boost
 
 	public AudioTrack(String name, Type type) {
 		super(name, true);
 		this.type = type;
 	}
 
-	public boolean hasRecording() {
-		return length != null && length > 1 && recording != null;
+	public AudioTrack(String name) {
+		this(name, Type.ONE_SHOT);
 	}
 
-	public void setRecording(Recording sample) {
-		if (recording != null)
-			recording.close();
+	@Override public void play(boolean play) {
+		this.playing = play;
+	}
+
+	@Override public void setRecording(Recording sample) {
+		tapeCounter.set(0);
 		recording = sample;
-		length = recording.size();
 	}
 
-	@Override
-	public final AudioMode isPlaying() {
-		return active ? AudioMode.RUNNING : AudioMode.ARMED;
+	@Override public int getLength() {
+		return recording.size();
 	}
-
-	@Override // Loop has more sophisticated version
-	public void readRecordedBuffer() {
-		int updated = tapeCounter.get();
-		recordedBuffer = recording.get(updated);
-		if (++updated == recording.size()) {
-			updated = 0;
+	
+	// not for loops
+	protected void readRecordedBuffer() {
+		int frame = tapeCounter.getAndIncrement();
+		if (frame + 1 >= recording.size()) {
+			tapeCounter.set(0);
 			if (type == Type.ONE_SHOT) {
-				active = false;
+				playing = false;
 				MainFrame.update(this);
 			}
 		}
-		tapeCounter.set(updated);
+		playBuffer = recording.get(frame);
 	}
 
 	protected void playFrame(FloatBuffer outLeft, FloatBuffer outRight) {
 
-		AudioTools.replace(recordedBuffer[LEFT_CHANNEL], left, env * gain.getLeft());
-		AudioTools.replace(recordedBuffer[RIGHT_CHANNEL], right, env * gain.getRight());
+		AudioTools.replace(playBuffer[LEFT], left, env * gain.getLeft());
+		AudioTools.replace(playBuffer[RIGHT], right, env * gain.getRight());
 		
 		party.process(left, right);
 		filter.process(left, right);
@@ -101,14 +96,20 @@ public abstract class AudioTrack extends Channel implements ProcessAudio {
 		AudioTools.mix(right, outRight);
 	}
 
-	@Override
-	public String toString() {
-		return this.getClass().getSimpleName() + " " + name;
+	@Override public final void rewind() {
+		tapeCounter.set(0);
+	}
+	
+//	@Override public final void setTapeCounter(int current) {
+//		tapeCounter.set(current);
+//	}
+
+	@Override public final float seconds() { 
+		return getLength() / Constants.fps();
 	}
 
-	@Override
-	public final void setTapeCounter(int current) {
-		tapeCounter.set(current);
+	@Override public String toString() {
+		return this.getClass().getSimpleName() + " " + name;
 	}
 
 }

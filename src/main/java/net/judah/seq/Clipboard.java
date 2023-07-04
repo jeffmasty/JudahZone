@@ -1,85 +1,39 @@
 package net.judah.seq;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.List;
 
-import javax.sound.midi.Track;
+import javax.sound.midi.MidiEvent;
 
-import lombok.RequiredArgsConstructor;
+import lombok.Getter;
+import net.judah.seq.track.MidiTrack;
 
-/** add undo redo peek */
-@RequiredArgsConstructor
 public class Clipboard {
 	
-	private final Track t;
-	private final MusicBox b;
-	
-	private ArrayList<Edit> stack = new ArrayList<>();
-	private int caret;
-	
-	
-	private void execute() {
-		Edit e = stack.get(caret);
-		switch (e.getType()) {
-		case DEL:
-			for (MidiPair p: e.getNotes()) {
-				MidiTools.delete(p.getOn(), t);
-				if (p.getOff() != null)
-					MidiTools.delete(p.getOff(), t);
-            }
-			b.selected.clear();
-			b.repaint();
-			break;
-		case NEW:
-			b.selected.clear(); // add zero-based selection
-			for (MidiPair p : e.getNotes()) {
-				t.add(p.getOn());
-				t.add(p.getOff());
-				b.selected.add(p); 
-			}
-			break;
-		default:
-			break;
+	private final ArrayDeque<MidiPair> list = new ArrayDeque<>();
+	/** source track resolution */
+	@Getter private int resolution;
+
+	public void copy(Notes selected, MidiTrack track) {
+		list.clear();
+		resolution = track.getResolution();
+		for (MidiPair p : selected) 
+			list.add(MidiTools.zeroBase(p, track.getLeft()));
+	}
+
+	public List<MidiPair> paste(MidiTrack track) {
+		ArrayList<MidiPair> result = new ArrayList<>();
+		long offset = track.getLeft();
+		float ratio = track.getResolution() / (float)resolution;
+		for (MidiPair p : list) {
+			MidiEvent off = null;
+			if (p.getOff() != null)
+				off = new MidiEvent(p.getOff().getMessage(), (long)(p.getOff().getTick() * ratio) + offset);
+			result.add(new MidiPair(new MidiEvent(p.getOn().getMessage(), (long)(p.getOn().getTick() * ratio) + offset), off));
 		}
+		return result;
 	}
-	
-	public void add(Edit e) {
-		stack.add(e);
-		caret = stack.size() - 1;	
-		execute();
-	}
-	
-	public Edit peek() {
-		if (caret >= stack.size())
-			return null;
-		return stack.get(caret);
-	}
-	
-	public boolean undo() {
-		if (stack.size() <= caret) {
-			return false;
-		}
-		Edit e = stack.get(caret);
-		switch (e.getType()) {
-		case DEL:
-			
-			break;
-		case NEW:
-			
-		default:
-			break;
-		}
-		caret--;
-		return true;
-	}
-	
-	public boolean redo() {
-		if (stack.size() <= caret + 1) 
-			return false;
-		caret++;
-		execute();
-		return true;
-	}
-	
 	
 
 }

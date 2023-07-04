@@ -1,4 +1,4 @@
-package net.judah.song;
+package net.judah.seq.track;
 
 import com.fasterxml.jackson.annotation.JsonCreator.Mode;
 

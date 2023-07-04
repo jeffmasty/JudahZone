@@ -6,6 +6,7 @@ import javax.sound.midi.Track;
 
 import lombok.RequiredArgsConstructor;
 import net.judah.midi.Midi;
+import net.judah.seq.track.MidiTrack;
 
 @RequiredArgsConstructor
 public class Measure extends Notes implements MidiConstants {

@@ -4,10 +4,16 @@ import java.awt.Color;
 
 public class MainsMix extends MixWidget {
 
-	public MainsMix(Channel channel) {
+	public MainsMix(Mains channel) {
 		super(channel);
 		sidecar.add(font(mute));
 		sidecar.add(font(fx));
+		sidecar.add(font(sync));
+		
+		sync.setSelected(channel.isHotMic());
+		sync.setText("mic");
+		sync.addActionListener(e->channel.hotMic());
+
 		if (channel.getIcon() == null) 
 			title.setText(channel.getName());
 		else 
@@ -17,13 +23,16 @@ public class MainsMix extends MixWidget {
 
 	@Override
 	protected Color thisUpdate() {
-		if (channel.isOnMute())  
-			return Color.BLACK;
-		if (quiet())
-			return Color.DARK_GRAY;
+		if (sync.isSelected() != ((Mains)channel).isHotMic())
+			sync.setSelected(((Mains)channel).isHotMic());
+		sync.setBackground(sync.isSelected() ? YELLOW : null);
 		
 		if (mute.isSelected() != channel.isOnMute())
 			mute.setSelected(channel.isOnMute());
+		if (channel.isOnMute())  
+			return Color.BLACK;
+		if (quiet())
+			return Color.GRAY;
 		
 		return BLUE; // Mains channel 
 	}

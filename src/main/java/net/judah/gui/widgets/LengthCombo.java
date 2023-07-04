@@ -4,6 +4,8 @@ import java.util.ArrayList;
 
 import javax.swing.JComboBox;
 
+import net.judah.gui.Gui;
+import net.judah.gui.Size;
 import net.judah.midi.JudahClock;
 
 
@@ -24,12 +26,13 @@ public class LengthCombo extends JComboBox<Integer> {
 	public LengthCombo(JudahClock clock) {
 		for (Integer i : NO_DUPS) 
 			addItem(i);
-		setSelectedItem(clock.getLength());
+		setSelectedItem(JudahClock.getLength());
 		addActionListener(e -> {
-			if (clock.getLength() != (int)getSelectedItem()) {
+			if (JudahClock.getLength() != (int)getSelectedItem()) {
 				clock.setLength((int)getSelectedItem());
 			}
 		});
+		Gui.resize(this, Size.MICRO);
 
 	}
 

@@ -20,26 +20,28 @@ public class ChordProCombo extends JComboBox<File> {
 	public ChordProCombo() {
 		Gui.resize(this, Size.MEDIUM_COMBO);
 		setRenderer(new FileRender());
-		refill(null);
+		refill();
 		instances.add(this);
 	}
 
+	/** set Selected */
 	public static void refresh(File selected) {
-		for (ChordProCombo instance : instances) 
-			if (instance.getSelectedItem() != selected)
-				instance.setSelectedItem(selected);
+		for (ChordProCombo instance : instances) { 
+			if (instance.getSelectedItem() == selected) 
+				continue;
+			instance.removeActionListener(instance.listener);
+			instance.setSelectedItem(selected);
+			instance.addActionListener(instance.listener);
+		}
 	}
 	
-	public void refill(File selected) {
+	public void refill() {
 		removeActionListener(listener);
 		removeAllItems();
 		addItem(null); 
 		for (File f : Folders.sort(Folders.getChordPro())) {
-			if (f.isFile()) {
+			if (f.isFile()) 
 				addItem(f);
-				if (f.equals(selected))
-					setSelectedItem(f);
-			}
 		}
 		addActionListener(listener);
 	}
@@ -49,5 +51,10 @@ public class ChordProCombo extends JComboBox<File> {
 		JudahZone.getChords().load(target);
 	}
 	
+	public static void refill(File f) {
+		for (ChordProCombo instance : instances)
+			instance.refill();
+		refresh(f);
+	}
 	
 }

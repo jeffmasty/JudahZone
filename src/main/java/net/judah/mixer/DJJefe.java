@@ -33,7 +33,7 @@ public class DJJefe extends JPanel implements Cmdr {
 	private final ArrayList<MixWidget> faders = new ArrayList<MixWidget>();
 	@Getter private final Zone sources;
 
-    public DJJefe(Channel mains, Looper looper, Zone sources, List<DrumKit> kits, Sampler sampler) {
+    public DJJefe(Mains mains, Looper looper, Zone sources, List<DrumKit> kits, Sampler sampler) {
         this.sources = sources;
     	all.addAll(looper);
 		all.addAll(sources);
@@ -44,7 +44,7 @@ public class DJJefe extends JPanel implements Cmdr {
     	
     	for (Loop loop : looper) {
     		channels.add(loop);
-    		MixWidget fader = new LoopMix(loop, looper);
+    		MixWidget fader = looper.getDisplay(loop);
     		faders.add(fader);
     		add(fader);
     	}
@@ -61,7 +61,7 @@ public class DJJefe extends JPanel implements Cmdr {
         keys = new String[channels.size()];
         for (int i = 0; i < keys.length; i++)
         	keys[i] = channels.get(i).getName();
-    	setLayout(new GridLayout(1, channels.size()));
+    	setLayout(new GridLayout(1, channels.size(), 0, 0));
         doLayout();
     }
 

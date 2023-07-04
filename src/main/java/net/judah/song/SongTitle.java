@@ -1,10 +1,6 @@
 package net.judah.song;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.*;
 
 import lombok.Setter;
 import net.judah.JudahZone;
@@ -32,15 +28,12 @@ public class SongTitle extends JPanel {
 		
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		add(new SongsCombo()); 
-		add(new Btn("Save", e->JudahZone.save()));
-		add(new Btn("Reload", e->JudahZone.reload()));
+		add(new Btn(" 🔁 ", e->JudahZone.reload(), "Reload"));
+		add(new Btn(UIManager.getIcon("FileView.floppyDriveIcon"), e->JudahZone.save()));
 		add(Gui.resize(timeSig, Size.SMALLER_COMBO));
 		add(Gui.resize(key, Size.MICRO));
-		add(Gui.resize(scale, Size.COMBO_SIZE));
-
-		add(key);
-		add(scale);
-		add(new JLabel(" Set:"));
+		add(Gui.resize(scale, Size.MEDIUM_COMBO));
+		add(new JLabel("Set:"));
 		add(new SetlistsCombo(setlists));
 		add(Box.createGlue());
 
@@ -48,7 +41,6 @@ public class SongTitle extends JPanel {
 		scale.addActionListener(e->JudahZone.getCurrent().setScale((Scale) scale.getSelectedItem()));
 		key.addActionListener(e->JudahZone.getCurrent().setKey((Key) key.getSelectedItem()));
 		timeSig.addActionListener(e->song.setTimeSig((Signature)timeSig.getSelectedItem()));
-
 	}
 	
 	
@@ -61,7 +53,5 @@ public class SongTitle extends JPanel {
 		if (song.getScale() != null && scale.getSelectedItem() != song.getScale())
 			scale.setSelectedItem(song.getScale());		
 	}
-
-
 	
 }

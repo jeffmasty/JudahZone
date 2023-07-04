@@ -1,6 +1,5 @@
 package net.judah.seq;
 
-import java.awt.Dimension;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -10,32 +9,34 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.api.MidiReceiver;
 import net.judah.drumkit.KitMode;
-import net.judah.gui.Size;
 import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.knobs.TrackKnobs;
 import net.judah.midi.Midi;
 import net.judah.seq.chords.ChordTrack;
-import net.judah.song.*;
+import net.judah.seq.track.Cue;
+import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.TrackInfo;
+import net.judah.song.Cmd;
+import net.judah.song.Cmdr;
+import net.judah.song.IntProvider;
+import net.judah.song.Param;
+import net.judah.song.Sched;
 import net.judah.util.RTLogger;
 
+/** Sequencer */
 @Getter 
 public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
 	public static final int TRACKS = 10;
-	public static final String NAME = "Seq";
-	
-	Dimension size = new Dimension(Size.WIDTH_TAB / 3, (Size.HEIGHT_TAB - 50) / 5);
 
 	private final TrackList tracks = new TrackList();
 	private final TrackList drumTracks;
 	private final TrackList synthTracks;
 	private final ArrayList<TrackKnobs> knobs = new ArrayList<>();
-	
 	private final ChordTrack chordTrack;
 	
 	public Seq(TrackList drumTracks, TrackList synthTracks, ChordTrack chords) {
 		this.chordTrack = chords;
 		this.drumTracks = drumTracks;
-		drumTracks.forEach(track->track.setCycle(CYCLE.AB));
 		this.synthTracks = synthTracks;
 		tracks.addAll(drumTracks);
 		tracks.addAll(synthTracks);
@@ -77,8 +78,8 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
 
 	public void init(List<Sched> tracks) {
 		tracks.clear();
-		for (MidiTrack t : this)
-			tracks.add(new Sched(t.isDrums())); // ??
+		for (int i = 0; i < TRACKS; i++)
+			tracks.add(new Sched()); 
 	}
 
 	public MidiTrack byName(String track) {
@@ -105,7 +106,7 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
         
 	}
 
-	/** load song */
+	/** load song into sequencer */
 	public void loadTracks(List<TrackInfo> trax) {
 		for (TrackInfo info : trax) {
     		MidiTrack t = byName(info.getTrack());
@@ -153,6 +154,5 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
 		if (p.cmd == Cmd.Length)
 				JudahZone.getClock().setLength(Integer.parseInt(p.val));
 	}
-
 	
 }

@@ -16,9 +16,10 @@ import net.judah.JudahZone;
 import net.judah.fx.Compressor;
 import net.judah.fx.LFO;
 import net.judah.gui.Gui;
+import net.judah.gui.MainFrame;
 import net.judah.gui.fx.Row;
 import net.judah.gui.fx.RowLabels;
-import net.judah.gui.settable.Lfo;
+import net.judah.gui.settable.LfoCombo;
 import net.judah.gui.widgets.FxButton;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.gui.widgets.GuitarTuner;
@@ -34,6 +35,7 @@ public class LFOKnobs extends KnobPanel {
     @Getter private final Channel channel;
     private final JPanel lfoPanel = new JPanel(new GridLayout(2, 4));
     private final JPanel compressor = new JPanel(new GridLayout(2, 4));
+    private final LfoCombo lfoCombo;
     @Getter private final GuitarTuner tuner = new GuitarTuner();
     private final JToggleButton tunerBtn = new JToggleButton("Tuner");
     private final ArrayList<RowLabels> labels = new ArrayList<>();
@@ -45,6 +47,7 @@ public class LFOKnobs extends KnobPanel {
     	this.comp = channel.getCompression();
     	this.lfo = channel.getLfo();
 
+    	lfoCombo = new LfoCombo(channel);
     	KeyPair blankLfo = new KeyPair(" ", channel.getLfo());
     	KeyPair blankComp = new KeyPair(" ", channel.getCompression());
     	RowLabels lfoLbl = new RowLabels(channel, blankLfo, new KeyPair("LFO", channel.getLfo()), blankLfo, 
@@ -57,7 +60,7 @@ public class LFOKnobs extends KnobPanel {
     	knobs.add(new FxKnob(channel, lfo, LFO.Settings.Min.ordinal(), "Min"));
     	knobs.add(new FxKnob(channel, lfo, LFO.Settings.Max.ordinal(), "Max"));
     	knobs.add(new FxKnob(channel, lfo, LFO.Settings.MSec.ordinal(), "Time"));
-    	knobs.add(new Lfo(channel));
+    	knobs.add(lfoCombo);
 
     	for (Component c : lfoLbl.getControls())
 			lfoPanel.add(c);
@@ -114,6 +117,7 @@ public class LFOKnobs extends KnobPanel {
     		break;
     	case 3:
     		lfo.set(LFO.Settings.Target.ordinal(), data2);
+    		MainFrame.update(this);
     		break;
 
     	case 4: 
@@ -145,7 +149,7 @@ public class LFOKnobs extends KnobPanel {
         	lbl.update();
 		row.update();
 		tunerBtn.setSelected(GuitarTuner.getChannel() == channel);
-
+		
 	}
 
 }

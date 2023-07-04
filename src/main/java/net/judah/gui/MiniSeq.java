@@ -12,11 +12,11 @@ import javax.swing.border.LineBorder;
 
 import net.judah.gui.widgets.TrackButton;
 import net.judah.midi.JudahClock;
-import net.judah.seq.MidiTrack;
 import net.judah.seq.TrackList;
+import net.judah.seq.track.MidiTrack;
 
 public class MiniSeq extends JPanel {
-	private final Dimension TRX = new Dimension(Size.WIDTH_KNOBS / 2 - 15, 85);
+	private final Dimension TRX = new Dimension(Size.WIDTH_KNOBS / 2 - 15, 75);
 	private final Border highlight = BorderFactory.createRaisedSoftBevelBorder();
 
 	private final TrackList tracks;
@@ -36,12 +36,8 @@ public class MiniSeq extends JPanel {
 
         // [d1 d2 d3 d4 s5]
         // [s1 s2 s3 s4 s6]
-        for (int i = 0; i < 4; i++) 
-        	add(btns.get(i));
-        add(btns.get(8));
-        for (int i = 4; i < 8; i++)
-        	add(btns.get(i));
-        add(btns.get(9));
+        for (TrackButton b : btns) 
+        	add(b);
         
         btns.get(8).setFont(btns.get(8).getFont().deriveFont(Font.ITALIC));
         btns.get(9).setFont(btns.get(9).getFont().deriveFont(Font.ITALIC));

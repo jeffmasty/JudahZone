@@ -8,6 +8,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
@@ -16,21 +17,22 @@ import javax.swing.JPanel;
 
 import lombok.Getter;
 import net.judah.api.Key;
+import net.judah.drumkit.DrumType;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.piano.PianoBox;
+import net.judah.seq.track.MidiTrack;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 public abstract class MusicBox extends JPanel implements Musician {
 	private static final char DELETE = '\u007F';
 	private static final char ESCAPE = '\u001b';
-
-	protected static enum DragMode { CREATE, TRANSLATE, SELECT }
 	protected static final Composite transparent = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);
+	public static enum DragMode { CREATE, TRANSLATE, SELECT }
 	
 	protected final MidiTrack track;
 	protected final Track t;
@@ -93,20 +95,11 @@ public abstract class MusicBox extends JPanel implements Musician {
 	}
 
 	@Override public void copy() {
-		tab.getClipboard().clear();
-		for (MidiPair p : selected) 
-			tab.getClipboard().add(MidiTools.zeroBase(p, track.getLeft()));
+		tab.getClipboard().copy(selected, track);
 	}
 
-	@Override public void paste() {
-		ArrayList<MidiPair> notes = new ArrayList<>();
-		long offset = track.getLeft();
-		for (MidiPair p : tab.getClipboard()) {
-			MidiEvent off = null;
-			if (p.getOff() != null)
-				off = new MidiEvent(p.getOff().getMessage(), p.getOff().getTick() + offset); 
-			notes.add(new MidiPair(new MidiEvent(p.getOn().getMessage(), p.getOn().getTick() + offset), off));
-		}
+	@Override public void paste() { // TODO differences in track Resolution
+		List<MidiPair> notes = tab.getClipboard().paste(track);
 		push(new Edit(Type.NEW, notes));
 	}
 
@@ -128,15 +121,15 @@ public abstract class MusicBox extends JPanel implements Musician {
 			case 12: new Duration(this); break; // ctrl-l
 			case 18: undo(); break; // ctrl-r
 			case 19: track.save(); break; // ctrl-s
-			case 20: new Transpose(this); break; // ctrl-t
+			case 20: new Transpose(track, this); break; // ctrl-t
 			case 22: paste(); break; // ctrl-v
 			case 26: undo(); break; // ctrl-z
 			
 			default: RTLogger.log(this, "key: " + ch + "=" + intchar + ";" + e.getModifiersEx());
 			}
 		}
-		else if (intchar == 10) // ?
-			track.setCurrent(track.getCurrent() + 1);
+//		else if (intchar == 10) // ?
+//			track.offset(track.getCurrent() + 1);
 		else if (track.isSynth() && PianoBox.chromaticKeyboard(ch) >= 0) {
 			int ordinal = PianoBox.chromaticKeyboard(ch);
 			while (ordinal >= 12)
@@ -381,8 +374,10 @@ public abstract class MusicBox extends JPanel implements Musician {
 		if (now.equals(recent)) // hovering
 			return; 
 		// note or step changed, move from most recent drag spot
-		Prototype destination = new Prototype(now.getData1() - recent.getData1(), 
-				((now.getTick() - recent.getTick()) % track.getWindow()) / track.getStepTicks());
+		int data1 = track.isSynth() ? now.getData1() - recent.getData1() :
+			DrumType.index(now.getData1()) - DrumType.index(recent.getData1());
+		long tick = ((now.getTick() - recent.getTick()) % track.getWindow()) / track.getStepTicks();
+		Prototype destination = new Prototype(data1, tick);
 		recent = now;
 		transpose(selected, destination);
 	}

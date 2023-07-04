@@ -23,6 +23,7 @@ import net.judah.controllers.Jamstik;
 import net.judah.drumkit.DrumMachine;
 import net.judah.drumkit.Sampler;
 import net.judah.fluid.FluidSynth;
+import net.judah.fx.Effect;
 import net.judah.fx.Fader;
 import net.judah.fx.Gain;
 import net.judah.fx.PresetsDB;
@@ -31,7 +32,6 @@ import net.judah.gui.fx.FxPanel;
 import net.judah.gui.knobs.MidiGui;
 import net.judah.gui.settable.SongsCombo;
 import net.judah.gui.widgets.FileChooser;
-import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
@@ -41,10 +41,10 @@ import net.judah.mixer.DJJefe;
 import net.judah.mixer.Instrument;
 import net.judah.mixer.Mains;
 import net.judah.mixer.Zone;
-import net.judah.seq.MidiTrack;
 import net.judah.seq.Seq;
 import net.judah.seq.TrackList;
 import net.judah.seq.chords.ChordTrack;
+import net.judah.seq.track.MidiTrack;
 import net.judah.song.Song;
 import net.judah.song.SongTab;
 import net.judah.song.setlist.Setlists;
@@ -62,14 +62,14 @@ public class JudahZone extends BasicClient {
     public static final String JUDAHZONE = JudahZone.class.getSimpleName();
 
     @Setter @Getter private static boolean initialized;
+    @Getter private static Song current;
     @Getter private static JackClient client;
     @Getter private static JudahMidi midi;
     @Getter private static JudahClock clock;
-    @Getter private static JackPort outL, outR;
-    @Getter private static Mains mains;
-    @Getter private static Song current;
     @Getter private static Seq seq;
     @Getter private static ChordTrack chords;
+    @Getter private static JackPort outL, outR;
+    @Getter private static Mains mains;
     @Getter private static Instrument guitar;
     @Getter private static Instrument mic;
     @Getter private static MidiInstrument crave;
@@ -159,11 +159,11 @@ public class JudahZone extends BasicClient {
         instruments.add(fluid);
         instruments.add(crave);
         instruments.init();
-        looper = new Looper(outL, outR, instruments, mic, clock);
+        looper = new Looper(outL, outR, instruments, mic, clock, jackclient);
     	mixer = new DJJefe(mains, looper, instruments, drumMachine.getKits(), sampler);
     	
     	fxRack = new FxPanel();
-    	songs = new SongTab(clock, chords.getView(), setlists);
+    	songs = new SongTab(clock, chords.getView(), setlists, seq, looper, mixer);
     	jamstik = new Jamstik(services, synths);
     	midiGui = new MidiGui(midi, clock, jamstik, sampler, synth1, synth2, fluid, seq, setlists);
     	frame = new MainFrame(JUDAHZONE, clock, fxRack, mixer, seq, looper, songs, chords);
@@ -171,17 +171,20 @@ public class JudahZone extends BasicClient {
     	clock.writeTempo(93);
     	setCurrent(new Song(seq, (int)clock.getTempo()));
     	guitar.setMuteRecord(false);
+    	synth1.setMuteRecord(false);
     	Constants.timer(10, ()-> {
     		initSynths();
     		seq.loadDrumMachine();
+    		MainFrame.setFocus(guitar); 
     		//justInTimeCompiler();
-    		MainFrame.setFocus(guitar); }); 
+    		}); 
+    	System.gc();
     	mains.setOnMute(false);
+    	Fader.execute(Fader.fadeIn());    	
     	initialized = true;
     	////////////////////////////////////////////////////////////
         //                 now the system is live                 //
         ////////////////////////////////////////////////////////////
-    	Fader.execute(Fader.fadeIn());    	
     }
 	
 	@Override
@@ -238,81 +241,23 @@ public class JudahZone extends BasicClient {
 		seq.byName("Bass").load("Bass2");
 		while (fluid.getPatches() == null)
 			Constants.sleep(100);
-    	fluid.progChange("Rhodes EP", 0);
+    	fluid.progChange("Strings", 0);
         fluid.progChange("Palm Muted Guitar", 1);
         fluid.progChange("Harp", 2);
     }
     
-    // put algorithms through their paces
-    @SuppressWarnings("unused")
-	private void justInTimeCompiler() {
-    	// Chord.test();
-    	
-        looper.getSoloTrack().toggle();
-        mains.getReverb().setActive(true);
-        mic.getReverb().setActive(true);
-        final Loop c = looper.getLoopC();
-    	c.record(true);
-        guitar.getReverb().setActive(true);
-        guitar.getDelay().setActive(true);
-        guitar.getChorus().setActive(true);
-        guitar.getLfo().setActive(true);
-        guitar.getEq().setActive(true);
-        guitar.getParty().setActive(true);
-        guitar.getCompression().setActive(true);
-        fluid.getLfo().setActive(true);
-        
-        int timer = 777;
-        Constants.timer(timer, () ->{
-        	c.record(false);
-        	jamstik.toggle();
-        	guitar.getLfo().setActive(false);
-        	guitar.getReverb().setActive(false);
-	        guitar.getDelay().setActive(false);
-	        guitar.getChorus().setActive(false);
-	        guitar.getEq().setActive(false);
-	        guitar.getParty().setActive(false);
-	        guitar.getGain().set(Gain.PAN, 50);
-	        guitar.getCompression().setActive(false);
-        });
-        Constants.timer(timer * 2, () -> {
-        		mains.setOnMute(true);
-        		if (Jamstik.isActive())
-        			jamstik.toggle();
-        		looper.reset();
-        		looper.getSoloTrack().solo(false);
-        		mic.getReverb().setActive(false);
-        		mains.getReverb().setActive(false);
-        		fluid.getLfo().setActive(false);
-        		fluid.getGain().set(Gain.PAN, 50);
-        		System.gc();
-        		Constants.timer(50, () -> mains.setOnMute(false));});
-        
-//        Setlist mine = new Setlist();
-//        mine.setSource(new File(Setlists.ROOT, "RedRocks.set"));
-//        mine.add(new File(setlists.getDefault(), "AutumnLeaves"));
-//        try {
-//			JsonUtil.writeJson(mine, mine.getSource());
-//			RTLogger.log(this, "Saved Red Rocks setlist!");
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-    }
-    
     public static void setCurrent(Song song) {
-    	looper.flush();
-    	clock.syncFlush();
-    	current = song;
+    	looper.clear();
+    	clock.reset();
+    	drumMachine.getKits().forEach(kit->kit.reset());
 
+    	current = song;
     	clock.setTimeSig(current.getTimeSig());
     	seq.loadTracks(current.getTracks());
     	mixer.loadFx(current.getFx());
     	mixer.mutes(current.getRecord());
     	songs.setSong(current);
     	chords.load(current);
-    	
-    	
     	
     	frame.getHq().sceneText();
     	frame.getMiniSeq().update();
@@ -348,6 +293,8 @@ public class JudahZone extends BasicClient {
     public static void reload() {
 		int idx = current.getScenes().indexOf(frame.getSongs().getCurrent());
 		Song newSong = JudahZone.loadSong(current.getFile());
+		if (newSong == null)
+			return;
 		MainFrame.setFocus(newSong.getScenes().get(idx));
     }
     
@@ -375,13 +322,53 @@ public class JudahZone extends BasicClient {
     	loadSong((File)setlist.getSelectedItem());
 	}
 
+    // put algorithms through their paces
+	public static void justInTimeCompiler() {
+
+		looper.onDeck(looper.getSoloTrack());
+    	looper.getSoloTrack().solo(true);
+    	mains.getReverb().setActive(true);
+    	final float restore = mains.getGain().getGain();
+    	mains.getGain().setGain(0.05f);
+    	mains.setOnMute(false);
+    	mic.getReverb().setActive(true);
+		final Effect[] fx = {guitar.getReverb(), guitar.getDelay(), guitar.getChorus(), 
+				guitar.getLfo(), guitar.getEq(), guitar.getParty(), guitar.getCompression()};
+    	for (Effect effect : fx)
+    		effect.setActive(true);
+		looper.getLoopC().trigger();
+        fluid.getLfo().setActive(true);
+        int timer = 777;
+        Constants.timer(timer, () ->{
+        	looper.getLoopC().record(false);
+        	jamstik.toggle();
+        	for (Effect effect : fx)
+        		effect.setActive(false);
+	        guitar.getGain().set(Gain.PAN, 25);
+        });
+        Constants.timer(timer * 2 + 100, () -> {
+    		if (Jamstik.isActive())
+    			jamstik.toggle();
+    		looper.clear();
+    		mains.getReverb().setActive(false);
+    		fluid.getLfo().setActive(false);
+    		looper.getSoloTrack().solo(false);
+    		guitar.getGain().set(Gain.PAN, 50);
+    		mic.getReverb().setActive(false);
+    		mains.getGain().setGain(restore);
+	    	// Chord.test(); 
+			// try { Tape.toDisk(sampler.get(7).getRecording(), new File("/home/judah/djShadow.wav"), 
+			//	 sampler.get(7).getLength()); } catch (Throwable t) { RTLogger.warn("JudahZone.JIT", t); }
+        	looper.get(0).load("Satoshi2", true);
+        });
+    }
+
     static void shutdown() {
     	mains.setOnMute(true);
-    	for (Closeable s : services)
-    		try { s.close(); } 
-    	catch (Exception e) { System.err.println(e); }
+    	for (int i = services.size() - 1; i >= 0; i--)
+    		try {services.get(i).close();}
+    		catch (Exception e) { System.err.println(e); }
     }
-    
     ////////////////////////////////////////////////////
     //                PROCESS AUDIO                   //
     ////////////////////////////////////////////////////
@@ -393,8 +380,16 @@ public class JudahZone extends BasicClient {
         silence(outL.getFloatBuffer());
         silence(outR.getFloatBuffer());
 
-        if (mains.isOnMute() || !initialized) 
+        if (!initialized) return true;
+        if (mains.isOnMute()) {
+        	if (mains.isHotMic()) {
+        		mic.process();
+        		mix(mic.getLeft(), outL.getFloatBuffer());
+        		mix(mic.getRight(), outR.getFloatBuffer());
+        		mains.process();
+        	}
         	return true;
+        }
 
         // mix the live streams
         for (Instrument ch : instruments.getInstruments()) {

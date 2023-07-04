@@ -21,6 +21,7 @@ import net.judah.mixer.DJJefe;
 import net.judah.seq.Seq;
 import net.judah.seq.chords.ChordTrack;
 import net.judah.seq.chords.Scale;
+import net.judah.seq.track.TrackInfo;
 import net.judah.util.JsonUtil;
 import net.judah.util.RTLogger;
 

@@ -30,5 +30,4 @@ public interface MidiReceiver extends Receiver, Closeable {
 	
 	Gain getGain();
 	
-
 }

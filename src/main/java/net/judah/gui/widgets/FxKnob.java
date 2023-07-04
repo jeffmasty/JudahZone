@@ -11,10 +11,11 @@ import net.judah.fx.Reverb;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
+import net.judah.gui.Updateable;
 import net.judah.mixer.Channel;
 
 /** a knob and label, paints itself on update when effect is active */
-public class FxKnob extends JPanel {
+public class FxKnob extends JPanel implements Updateable {
 
 	private final Effect effect;
 	private final Channel ch;
@@ -55,6 +56,7 @@ public class FxKnob extends JPanel {
 		add(label);
 	}
 	
+	@Override
 	public void update() {
 		if (effect == null) {
 			if (knob.getValue() != ch.getReverb().get(idx))

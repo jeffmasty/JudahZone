@@ -6,7 +6,6 @@ import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -14,6 +13,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
@@ -28,7 +28,7 @@ public class MiniLooper extends JPanel implements TimeListener {
 	private static final int WIDTH = 82;
 	
 	private final JudahClock clock;
-	private final LoopWidget loopWidget;
+	@Getter private final LoopWidget loopWidget;
    	private final JLabel tempoLbl = new JLabel("?", JLabel.CENTER);
 	private final TapTempo tapButton = new TapTempo("Tempo", msec -> {
             JudahZone.getClock().writeTempo(Math.round(60000 / msec));});	
@@ -44,9 +44,9 @@ public class MiniLooper extends JPanel implements TimeListener {
 	public MiniLooper(Looper loops, JudahClock time) {
 		this.clock = time;
 		clock.addListener(this);
-		loopWidget = new LoopWidget(loops, WIDTH);
+		Dimension size = new Dimension(WIDTH, Size.STD_HEIGHT + 6);
+		loopWidget = new LoopWidget(loops, size);
 		tempoKnob = new Slider(55, 155, null);
-        Gui.resize(tempoKnob, new Dimension(WIDTH, Size.STD_HEIGHT));
 
 		tempoLbl.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
@@ -58,14 +58,18 @@ public class MiniLooper extends JPanel implements TimeListener {
                 	RTLogger.log(this, t.getMessage() + " -> " + input); 
                 }
             }});
-        tempoLbl.setFont(Gui.BOLD);
-
+		tempoLbl.setText("####");
+		tempoLbl.setFont(Gui.BOLD);
+        Gui.resize(tempoKnob, size);
         setBorder(new LineBorder(Pastels.MY_GRAY, 1));
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
   
         add(loopWidget);
-        add(Box.createVerticalStrut(4));
-        add(Gui.wrap(tapButton, tempoLbl, tempoKnob));
+        JPanel btm = new JPanel();
+        btm.add(tapButton);
+        btm.add(tempoLbl);
+        btm.add(tempoKnob);
+        add(btm);
         tempoKnob.addChangeListener(tempoEar);
         
 	}
@@ -81,5 +85,6 @@ public class MiniLooper extends JPanel implements TimeListener {
 			return;
 		}
 	}
+
 
 }

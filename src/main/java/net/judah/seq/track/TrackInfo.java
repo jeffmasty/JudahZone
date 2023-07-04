@@ -1,4 +1,4 @@
-package net.judah.song;
+package net.judah.seq.track;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -6,9 +6,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import net.judah.seq.Cue;
-import net.judah.seq.Gate;
-import net.judah.seq.MidiTrack;
 import net.judah.seq.arp.ArpInfo;
 
 @Data @AllArgsConstructor @NoArgsConstructor
@@ -16,10 +13,10 @@ public class TrackInfo {
 
 	private String track;
 	private String file;
-	private String program;
 	private Cue cue = Cue.Bar;
 	private Gate gate = Gate.SIXTEENTH;
 	
+	private String program;
 	@JsonInclude(Include.NON_NULL)
 	private ArpInfo arp; // mode, octaves
 	

@@ -42,7 +42,7 @@ public class ChordTrack implements TimeListener, Cmdr {
 	private final ChordView view = new ChordView(this);
 	private final ChordSheet chordSheet = new ChordSheet(this);
 	private final Cmdr player = new PlayCmdr();
-	
+	private boolean loading;
 	private ArrayList<ChordListener> listeners = new ArrayList<>();
 	public void addListener(ChordListener l) { if (!listeners.contains(l)) listeners.add(l); }
 	public void removeListener(ChordListener l) {listeners.remove(l);}
@@ -165,6 +165,7 @@ public class ChordTrack implements TimeListener, Cmdr {
 
 	
 	public ChordPro load(File file) {
+		loading = true;
 		Song song = JudahZone.getCurrent();
 		clear();
 		ChordPro chordPro = null;
@@ -194,10 +195,12 @@ public class ChordTrack implements TimeListener, Cmdr {
 		SectionCombo.refresh();
 		chordSheet.refresh();	
 		ChordProCombo.refresh(file);
+		ChordPlay.update();
 		setSection(sections.isEmpty() ? null : sections.get(0), true);
 		for (Section s:sections)
 			if (s.getDirectives().contains(Directive.LENGTH))
 				JudahZone.getClock().setLength(bars(s.getCount()));
+		loading = false;
 		return chordPro; // not used
 	}
 	
@@ -300,10 +303,10 @@ public class ChordTrack implements TimeListener, Cmdr {
 		step = 0;
 		bar = 0;
 		if (section == null) return;
-		checkDirectives();
 		if (setChord)
 			setChord(section.getChordAt(0)); // else defaultChord()
-		MainFrame.update(section);
+		if (loading == false)
+			checkDirectives();
 	}
 	
 	public void toggle(Directive d) {
@@ -317,20 +320,17 @@ public class ChordTrack implements TimeListener, Cmdr {
 	private void checkDirectives() {
 		if (directives.contains(Directive.MUTES)) {
 			if (Part.VERSE.literal.equals(section.getName()) 
-					|| Part.CHORUS.literal.equals(section.getName()))
+					|| Part.CHORUS.literal.equals(section.getName())) {
 				JudahZone.getLooper().verseChorus();
+			}
 		}
-		else if (directives.contains(Directive.SCENES)) {
+		else if (active && directives.contains(Directive.SCENES)) {
 			for (Scene s : JudahZone.getCurrent().getScenes())
 				if (section.getName().equals(s.getNotes())) {
 						JudahZone.getSongs().launchScene(s);
 						return;
 				}
 		}
-	}
-	
-	public ChordPlay createBtn(String lbl) {
-		return new ChordPlay(lbl, this);
 	}
 	
 	@Override

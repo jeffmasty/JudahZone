@@ -7,7 +7,7 @@ import javax.swing.border.LineBorder;
 
 import lombok.RequiredArgsConstructor;
 import net.judah.gui.Pastels;
-import net.judah.seq.MidiTrack;
+import net.judah.seq.track.MidiTrack;
 
 @RequiredArgsConstructor
 public class BeatLabel extends JLabel {

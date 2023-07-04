@@ -44,7 +44,6 @@ public abstract class MixWidget extends JPanel implements Pastels {
 	
 	public MixWidget(Channel channel) {
 		this.channel = channel;
-		//setBorder(BorderFactory.createDashedBorder(Color.DARK_GRAY));
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(BUTTONS);
 		
@@ -92,7 +91,7 @@ public abstract class MixWidget extends JPanel implements Pastels {
 		indicators.sync();		
 		updateVolume();
 		fx.setSelected(channel.isPresetActive());
-		fx.setBackground(fx.isSelected() ? YELLOW : null);
+		fx.setBackground(fx.isSelected() ? BLUE : null);
 	}
 	
 	public void updateVolume() {

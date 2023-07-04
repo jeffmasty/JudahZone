@@ -12,7 +12,7 @@ import javax.swing.JPanel;
 import javax.swing.border.BevelBorder;
 
 import net.judah.JudahZone;
-import net.judah.api.ProcessAudio.Type;
+import net.judah.api.PlayAudio.Type;
 import net.judah.drumkit.Sample;
 import net.judah.fx.Gain;
 import net.judah.gui.Pastels;
@@ -30,7 +30,7 @@ public class SamplePad extends JPanel {
 		Color color = s.getType() == Type.ONE_SHOT ? Pastels.MY_GRAY : Pastels.BLUE;
 		addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) {
-				boolean on = !s.isActive();
+				boolean on = !s.isPlaying();
 				JudahZone.getSampler().play(s, on);
 			}});
 		setBorder(BorderFactory.createSoftBevelBorder(BevelBorder.RAISED, color, color.darker()));
@@ -50,7 +50,7 @@ public class SamplePad extends JPanel {
 	}
 
 	public void update() {
-		setBackground(sample.isActive() ? Pastels.GREEN : null);
+		setBackground(sample.isPlaying() ? Pastels.GREEN : null);
 		name.setBackground(getBackground());
 		btns.setBackground(getBackground());
 		vol.setValue(sample.getVolume());

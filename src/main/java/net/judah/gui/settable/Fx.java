@@ -15,10 +15,11 @@ import net.judah.fx.Preset;
 import net.judah.fx.PresetsDB;
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
+import net.judah.gui.Updateable;
 import net.judah.mixer.Channel;
 
 /** FilterType, LFOType, Presets */
-public class Fx extends SetCombo<Preset> implements ListCellRenderer<Preset> {
+public class Fx extends SetCombo<Preset> implements ListCellRenderer<Preset>, Updateable {
 
 	private final Channel ch;
 
@@ -41,6 +42,7 @@ public class Fx extends SetCombo<Preset> implements ListCellRenderer<Preset> {
 			ch.setPreset(selected);
 	}
 	
+	@Override
 	public final void update() {
 		Preset selected = (Preset)getSelectedItem();
 		if (ch.getPreset() != selected && set != this)

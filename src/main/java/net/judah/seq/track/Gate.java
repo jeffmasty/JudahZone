@@ -1,4 +1,4 @@
-package net.judah.seq;
+package net.judah.seq.track;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

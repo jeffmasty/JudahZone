@@ -6,9 +6,9 @@ import javax.sound.midi.ShortMessage;
 import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahMidi;
-import net.judah.seq.MidiTrack;
 import net.judah.seq.Poly;
 import net.judah.seq.chords.Chord;
+import net.judah.seq.track.MidiTrack;
 
 public class REC extends Algo implements Ignorant, Feed {
 

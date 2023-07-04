@@ -5,7 +5,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
-/** Creates float arrays in a side thread and supplies them for recording */
+/** Creates a steady supply of float arrays in a side thread to be used for recording by realtime thread */
 public class Memory {
 
 	static final int PRELOAD = 4000;

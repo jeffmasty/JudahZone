@@ -8,7 +8,7 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.api.ProcessAudio.Type;
+import net.judah.api.PlayAudio.Type;
 import net.judah.fx.Fader;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
@@ -24,11 +24,11 @@ public class Sampler extends ArrayList<Sample> {
 	// Bicycle https://freesound.org/people/bojan_t95/sounds/507013/
 	public static final String[] LOOPS = {"Creek", "Rain", "Birds", "Bicycle"};
 	
-	// FeelGood: Gorilaz sample
+	// Satoshi: Pantone Color of the Year Landr pack Coy loop
 	// Prrrrrr: https://freesound.org/people/Duisterwho/sounds/644104/
 	// DropBass: https://freesound.org/people/qubodup/sounds/218891/
 	// DJOutlaw: https://freesound.org/people/tim.kahn/sounds/94748/
-	public static final String[] ONESHOTS = {"FeelGood", "Prrrrrr", "DropBass", "DJOutlaw"}; 
+	public static final String[] ONESHOTS = {"Satoshi", "Prrrrrr", "DropBass", "DJOutlaw"}; 
 	
 	public static final String[] NAMES = Stream.concat(
 			Arrays.stream(LOOPS), Arrays.stream(ONESHOTS)).toArray(String[]::new);
@@ -61,6 +61,8 @@ public class Sampler extends ArrayList<Sample> {
 			stepSamples.add(new StepSample("Ride", this, 0, 4, 8, 12));
 			stepSamples.add(new StepSample("Tambo", this, 0, 2, 4, 6, 8, 10, 12, 14));
 			stepSamples.add(new StepSample("Shaker", this, 0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15));
+			stepSamples.add(new StepSample("Disco", this, 2, 6, 10, 14));
+			stepSamples.add(new StepSample("Hats16", this, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15));
 			stepSamples.add(new StepSample("Snares", this, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15));
 			stepSamples.add(new StepSample("4x4", this, 0, 4, 8, 12));
 			stepSample = stepSamples.get(0);
@@ -84,14 +86,14 @@ public class Sampler extends ArrayList<Sample> {
 			if (MainFrame.getKnobMode() != KnobMode.Samples)
 				MainFrame.setFocus(KnobMode.Samples);
 			if (s.getType() == Type.ONE_SHOT) 
-				s.setTapeCounter(0);
+				s.rewind();
 			else 
 				Fader.execute(Fader.fadeIn(s));
-			s.setActive(true);
+			s.play(true);
 		}
 		else {
 			if (s.getType() == Type.ONE_SHOT) 
-				s.setActive(false);
+				s.play(false);
 			else 
 				Fader.execute(Fader.fadeOut(s));
 		}

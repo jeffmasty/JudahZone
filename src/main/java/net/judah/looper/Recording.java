@@ -1,21 +1,17 @@
 package net.judah.looper;
 
-import static net.judah.util.Constants.getLE;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Vector;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import net.judah.util.AudioTools;
 import net.judah.util.Constants;
-import net.judah.util.RTLogger;
 
-/** Actual audio data of a Loop or Sample, with the ability to overdub off the RT thread and load from disk. <br/>
+/**	------------WavFile------------<br/>
+ * Audio data for a Loop or Sample, blank for recording or load .wav file from disk. <br/>
  * <br/><br/><pre>
 	Wav file IO class
  	A.Greensted
@@ -25,96 +21,45 @@ import net.judah.util.RTLogger;
 	http://www.sonicspot.com/guide/wavefiles.html
 	http://www.blitter.com/~russtopia/MIDI/~jglatt/tech/wave.htm </pre>*/
 @NoArgsConstructor
-public class Recording extends Vector<float[][]> {
+public class Recording extends Vector<float[][]> implements WavConstants {
 	public static final float BOOST = 5f;
-	
+
 	@Getter private long creationTime = System.currentTimeMillis();
-	@Getter private File file; // can be null				
-	private BlockingQueue<float[][]> newQueue;
-	private BlockingQueue<float[][]> oldQueue;
-	private BlockingQueue<Integer> locationQueue;
-	private class Runner extends Thread {
-		@Override public void run() {
-			try {
-				while (true) { // MIX
-					int idx = locationQueue.take();
-					if (idx < size()) 
-						set(idx, AudioTools.overdub(newQueue.take(), oldQueue.take()));
-					else {
-						RTLogger.warn(file == null ? this : file.getAbsolutePath(), "tape counter: " + idx + " of " + size());
-						if (size() > 0)
-							set(0, AudioTools.overdub(newQueue.take(), oldQueue.take()));
-						else 
-							newQueue.take(); oldQueue.take();
-					}
-				}
-			} catch (InterruptedException e) { 
-			} catch (Exception e) {
-				RTLogger.warn(this, e);
-			}}};
-	private Runner runner;
-	
-	// ------------WavFile --------------------------
-	private byte[] buffer = new byte[4096]; // local buffer for disk IO
-	@Getter private static final int validBits = 16;		// 2 bytes unsigned, 0x0002 (2) to 0xFFFF (65,535)
-	private static final int bufSize = Constants.bufSize();
-	private static final int LEFT = Constants.LEFT_CHANNEL;
-	private static final int RIGHT = Constants.RIGHT_CHANNEL;
-	private static final int STEREO = Constants.STEREO;
-	
-	private enum IOState {READING, WRITING, CLOSED};
-	private static final int BUFFER_SIZE = 4096;
-	
-	private static final int FMT_CHUNK_ID = 0x20746D66;
-	private static final int DATA_CHUNK_ID = 0x61746164;
-	private static final int RIFF_CHUNK_ID = 0x46464952;
-	private static final int RIFF_TYPE_ID = 0x45564157;
-	
-	private IOState ioState;			// Specifies the IO State of the Wav File (used for sanity checking)
-	private int bytesPerSample;			// Number of bytes required to store a single sample
-	@Getter private long numFrames;		// Number of frames within the data section
-	//private FileOutputStream oStream;	// Output stream used for writting data
+	@Getter private File file; // can be null (looper)				
 	private FileInputStream iStream;	// Input stream used for reading data
-	private double floatScale;			// Scaling factor used for int <-> float conversion				
-	private double floatOffset;			// Offset factor used for int <-> float conversion				
-	//private boolean wordAlignAdjust;	// Specify if an extra byte at the end of the data chunk is required for word alignment
-	// Wav Header
-	@Getter int numChannels;	// 2 bytes unsigned, 0x0001 (1) to 0xFFFF (65,535)
-	@Getter boolean stereo;
-	// 4 bytes unsigned, 0x00000001 (1) to 0xFFFFFFFF (4,294,967,295)
-	// Although a java int is 4 bytes, it is signed, so need to use a long
-	@Getter int blockAlign;		// 2 bytes unsigned, 0x0001 (1) to 0xFFFF (65,535)
-	// Buffering
+	private final byte[] buffer = new byte[BUFFER_SIZE]; // local buffer for disk IO
+	private int numFrames;		// Number of frames within the data section
+	int numChannels = 2;	// 2 bytes unsigned, 0x0001 (1) to 0xFFFF (65,535)
+	boolean stereo = true;
+	long blockAlign;		// 2 bytes unsigned, 0x0001 (1) to 0xFFFF (65,535)
 	private int bufferPointer;			// Points to the current position in local buffer
 	private int bytesRead;				// Bytes read after last read into local buffer
-	private long frameCounter;			// Current number of frames read or written
-
-//	/** create a listening recording of given size */
-//	public Recording(int size) {
-//		int bufferSize = Constants.bufSize();
-//		for (int j = 0; j < size; j++) {
-//			float[][] data = new float[2][bufferSize];
-//			add(data);
-//		}
-//		startListeners();
-//	}
-
+	private int frameCounter;			// Current number of frames read or written
+	
 	public Recording(Recording recording, int duplications) {
-		int bufferSize = Constants.bufSize();
 		int size = recording.size() * duplications;
 		int x = 0;
 		for (int j = 0; j < size; j++) {
 			x++;
 			if (x >= recording.size())
 				x = 0;
-			float[][] data = new float[2][bufferSize];
+			float[][] data = new float[2][JACK_SIZE];
 			AudioTools.copy(recording.get(x), data);
 			add(data);
 		}
-		startListeners();
 	}
-
+	
+	public Recording (File file, float factor) throws Exception {
+		load(file, factor);
+	}
+	
 	public Recording (File file) throws Exception {
+		load(file, BOOST);
+	}
+	
+	/**@return size of file in frames */
+	public int load(File file, float factor) throws Exception {
+		final int size = size();
 		this.file = file;
 		iStream = new FileInputStream(file);
 
@@ -124,7 +69,7 @@ public class Recording extends Vector<float[][]> {
 
 		// Extract parts from the header
 		long riffChunkID = getLE(buffer, 0, 4);
-		long chunkSize = getLE(buffer, 4, 4);
+		int chunkSize = getLE(buffer, 4, 4);
 		long riffTypeID = getLE(buffer, 8, 4);
 
 		// Check the header bytes contains the correct signature
@@ -140,8 +85,7 @@ public class Recording extends Vector<float[][]> {
 		boolean foundData = false;
 
 		// Search for the Format and Data Chunks
-		while (true)
-		{
+		while (true) {
 			// Read the first 8 bytes of the chunk (ID and chunk size)
 			bytesRead = iStream.read(buffer, 0, 8);
 			if (bytesRead == -1) throw new Exception("Reached end of file without finding format chunk");
@@ -157,192 +101,145 @@ public class Recording extends Vector<float[][]> {
 			// the actual number of bytes in the chunk
 			long numChunkBytes = (chunkSize%2 == 1) ? chunkSize+1 : chunkSize;
 
-			if (chunkID == FMT_CHUNK_ID)
-			{
+			if (chunkID == FMT_CHUNK_ID) {
 				// Flag that the format chunk has been found
 				foundFormat = true;
-
+				
 				// Read in the header info
-				bytesRead = iStream.read(buffer, 0, 16);
-
-				// Check this is uncompressed data
-				int compressionCode = (int) getLE(buffer, 0, 2);
-				if (compressionCode != 1) throw new Exception("Compression Code " + compressionCode + " not supported");
-
-				// Extract the format information
-				numChannels = (int) getLE(buffer, 2, 2);
-				long srate = getLE(buffer, 4, 4);
-				if (srate != Constants.sampleRate()) 
-					throw new Exception("Sample rate(" + Constants.sampleRate() + ") vs: " + srate + " " + file.getAbsolutePath());
-				
-				// sampleRate = getLE(buffer, 4, 4);
-				blockAlign = (int) getLE(buffer, 12, 2);
-				
-				long bits = getLE(buffer, 14, 2);
-				if (bits != validBits)
-					throw new Exception("Bit Depth(" + validBits + ") vs: " + bits + " " + file.getAbsolutePath());
-				
-				if (numChannels == 0) throw new Exception("Number of channels specified in header is equal to zero");
-				if (blockAlign == 0) throw new Exception("Block Align specified in header is equal to zero");
-
-				// Calculate the number of bytes required to hold 1 sample
-				bytesPerSample = (validBits + 7) / 8;
-				if (bytesPerSample * numChannels != blockAlign)
-					throw new Exception("Block Align does not agree with bytes required for validBits and number of channels");
-
-				// Account for number of format bytes and then skip over
-				// any extra format bytes
+				bytesRead = readFormat();
+				// Account for number of format bytes and skip over any extra format bytes
 				numChunkBytes -= 16;
 				if (numChunkBytes > 0) iStream.skip(numChunkBytes);
 			}
-			else if (chunkID == DATA_CHUNK_ID)
-			{
-				// Check if we've found the format chunk,
-				// If not, throw an exception as we need the format information
-				// before we can read the data chunk
-				if (foundFormat == false) throw new Exception("Data chunk found before Format chunk");
+			else if (chunkID == DATA_CHUNK_ID) {
+				if (!foundFormat) throw new Exception("Data chunk found before Format chunk");
 
 				// Check that the chunkSize (wav data length) is a multiple of the
 				// block align (bytes per frame)
 				if (chunkSize % blockAlign != 0) throw new Exception("Data Chunk size is not multiple of Block Align");
 
 				// Calculate the number of frames
-				numFrames = chunkSize / blockAlign;
+				numFrames = (int) (chunkSize / blockAlign);
 				
 				// Flag that we've found the wave data chunk
 				foundData = true;
 
 				break;
 			}
-			else
-			{
+			else {
 				// If an unknown chunk ID is found, just skip over the chunk data
 				iStream.skip(numChunkBytes);
 			}
-		
 		}
-		// Throw an exception if no data chunk has been found
+
 		if (foundData == false) throw new Exception("Did not find a data chunk");
-
-		// Calculate the scaling factor for converting to a normalised double 
-		// If more than 8 validBits, data is signed
-		// Conversion required dividing by magnitude of max negative value
-		floatOffset = 0;
-		floatScale = 1 << (validBits - 1);
-
 		bufferPointer = 0;
-		bytesRead = 0;
 		frameCounter = 0;
-		ioState = IOState.READING;
-
-		stereo = getNumChannels() == 2;
+		bytesRead = 0;
+		int jackFrame = 0;
+		stereo = numChannels == 2;
 		// Create a buffer of jack frame size
-		double[] buffer = new double[bufSize * STEREO];
-
+		float[] buffer = new float[JACK_SIZE * STEREO];
 		int framesRead;
 		do {
             // Read frames into buffer
-            framesRead = readFrames(buffer, 0, bufSize);
+            framesRead = readFrames(buffer, 0, JACK_SIZE);
 
-            float[][] frame = new float[2][bufSize]; 
+            float[][] frame = new float[2][JACK_SIZE]; 
             if (stereo)
 	            // cycle through frames and put them in loop Recording format
 	            for (int i = 0 ; i < framesRead * STEREO; i += 2) {
-	            	frame[LEFT][i/2] = BOOST * (float)buffer[i];
-	            	frame[RIGHT][i/2] = BOOST * (float)buffer[i + 1];
+	            	int jack = i / 2;
+	            	frame[LEFT][jack] = factor * buffer[i];
+	            	frame[RIGHT][jack] = factor * buffer[i + 1];
 	            }
             else 
 	            for (int i = 0 ; i < framesRead; i++) {
-	            	frame[LEFT][i] = BOOST * (float)buffer[i];
-	            	frame[RIGHT][i] = BOOST * (float)buffer[i];
+	            	frame[LEFT][i] = factor * buffer[i];
+	            	frame[RIGHT][i] = frame[LEFT][i];
 	            }
-            add(frame);
-		} while (framesRead != 0);
+            
+            if (jackFrame < size)
+            	set(jackFrame, frame);
+            else add(frame);
+            jackFrame++;
+        } while (framesRead != 0);
 		
 		if (iStream != null) {
 			iStream.close();
 			iStream = null;
 		}
+		return jackFrame;
 	}
 
-	/** get off the process thread */
-	public void dub(float[][] newBuffer, float[][] oldBuffer, int location) {
-		if (newBuffer == null || oldQueue == null) return;
-		newQueue.add(newBuffer);
-		oldQueue.add(oldBuffer);
-		locationQueue.add(location);
+	private int readFrames(float[] sampleBuffer, int offset, int numFramesToRead) throws IOException, Exception {
+		for (int f = 0 ; f < numFramesToRead ; f++) {
+			if (frameCounter == numFrames) return f;
+			for (int c=0 ; c<numChannels ; c++) {
+				sampleBuffer[offset] = readSample() / FLOAT_SCALE;
+				offset ++;
+			}
+			frameCounter ++;
+		}
+		return numFramesToRead;
 	}
-
+	
 	private long readSample() throws Exception {
 		long val = 0;
-
-		for (int b=0 ; b<bytesPerSample ; b++) {
+		for (int b=0 ; b<SAMPLE_BYTES ; b++) {
 			if (bufferPointer == bytesRead)  {
 				int read = iStream.read(buffer, 0, BUFFER_SIZE);
 				if (read == -1) throw new Exception("Not enough data available");
 				bytesRead = read;
 				bufferPointer = 0;
 			}
-
 			int v = buffer[bufferPointer];
-			if (b < bytesPerSample-1 || bytesPerSample == 1) v &= 0xFF;
+			if (b < SAMPLE_BYTES - 1 || SAMPLE_BYTES == 1) v &= 0xFF;
 			val += v << (b * 8);
-
 			bufferPointer ++;
 		}
-
 		return val;
 	}
+
+	private int readFormat() throws IOException {
+		int result = iStream.read(buffer, 0, 16);
+
+		// Check this is uncompressed data
+		int compressionCode = getLE(buffer, 0, 2);
+		if (compressionCode != 1) throw new IOException("Compression Code " + compressionCode + " not supported");
+		
+		// Extract the format information
+		numChannels = getLE(buffer, 2, 2);
+		long srate = getLE(buffer, 4, 4);
+		if (srate != S_RATE) 
+			throw new IOException("Sample rate(" + S_RATE + ") vs: " + srate + " " + file.getAbsolutePath());
+		blockAlign = getLE(buffer, 12, 2);
+		
+		int bits = getLE(buffer, 14, 2);
+		if (bits != VALID_BITS)
+			throw new IOException("Bit Depth(" + VALID_BITS + ") vs: " + bits + " " + file.getAbsolutePath());
+		if (numChannels == 0) throw new IOException("Number of channels specified in header is equal to zero");
+		if (blockAlign == 0) throw new IOException("Block Align specified in header is equal to zero");
+		if (SAMPLE_BYTES * numChannels != blockAlign)
+			throw new IOException("Block Align does not agree with bytes required for VALID_BITS and number of channels");
+		return result;
+	}
 	
-	public int readFrames(double[] sampleBuffer, int offset, int numFramesToRead) throws IOException, Exception {
-		if (ioState != IOState.READING) throw new IOException("Cannot read from WavFile instance");
-
-		for (int f=0 ; f<numFramesToRead ; f++) {
-			if (frameCounter == numFrames) return f;
-
-			for (int c=0 ; c<numChannels ; c++) {
-				sampleBuffer[offset] = floatOffset + readSample() / floatScale;
-				offset ++;
-			}
-
-			frameCounter ++;
-		}
-
-		return numFramesToRead;
+	/**@param supplied buffer
+	 * @param pos
+	 * @param numBytes
+	 * @return little endiean data to long from pos in the supplied buffer */
+	public static int getLE(byte[] buffer, int pos, int numBytes) {
+		numBytes --;
+		pos += numBytes;
+		int val = buffer[pos] & 0xFF;
+		for (int b=0 ; b<numBytes ; b++) 
+			val = (val << 8) + (buffer[--pos] & 0xFF);
+		return val;
 	}
 
-	public boolean isListening() {
-		return newQueue != null;
-	}
-
-	public void startListeners() {
-		newQueue = new LinkedBlockingQueue<>();
-		oldQueue = new LinkedBlockingQueue<>();
-		locationQueue = new LinkedBlockingQueue<>();
-		runner = new Runner();
-		runner.start();
-	}
-
-	public void close() {
-		if (runner != null) {
-			runner.interrupt();
-			runner = null;
-		}
+	@Override public float seconds() {
+		return size() / Constants.fps();
 	}
 
 }
-
-
-//	/** deep copy the 2D float array */
-//	Recording(Recording toCopy, boolean startListeners) {
-//		this(startListeners);
-//		float[][] copy;
-//		for (float[][] buffer : toCopy) {
-//		    copy = new float[buffer.length][];
-//		    for (int i = 0; i < buffer.length; i++) {
-//		        copy[i] = buffer[i].clone();
-//		    }
-//		    add(copy);
-//		}
-//	}
-//

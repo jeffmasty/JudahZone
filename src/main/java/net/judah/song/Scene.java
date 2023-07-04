@@ -17,7 +17,7 @@ public class Scene {
 	
 	@JsonIgnore UUID id = UUID.randomUUID();
 	Trigger type = Trigger.BAR;
-	String notes;
+	String notes = "";
 	ParamList commands = new ParamList();
 	List<Sched> tracks = new ArrayList<>();
 	List<String> fx = new ArrayList<>();

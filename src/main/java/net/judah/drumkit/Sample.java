@@ -1,6 +1,7 @@
 package net.judah.drumkit;
 
 import java.io.File;
+import java.nio.FloatBuffer;
 
 import org.jaudiolibs.jnajack.JackPort;
 
@@ -37,18 +38,22 @@ public class Sample extends AudioTrack {
 		this.type = type;
 	}
 
+	public Sample(FloatBuffer left, FloatBuffer right, File f) throws Exception {
+		super(f.getName().replace(".wav", ""));
+		sampler = null;
+		setRecording(new Recording(f, 1));
+	}
+
 	@Override public void clear() {
         tapeCounter.set(0);
         recording = null;
-        length = null;
-        recording = null;
-        active = false;
+        playing = false;
         MainFrame.update(this);
         file = null;
     }
 	
 	public void process() {
-		if (!active || !hasRecording()) return;
+		if (!playing) return;
 		readRecordedBuffer();
 		env = BOOST * sampler.mix;
 		playFrame(leftPort.getFloatBuffer(), rightPort.getFloatBuffer()); 

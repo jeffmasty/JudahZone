@@ -23,7 +23,7 @@ import net.judah.gui.widgets.Knob.KnobListener;
 public class KitPad extends JPanel implements KnobListener {
 	private static final Color borderColor = Pastels.PURPLE;
 	private static final float ATK_SCALE = 0.2f;
-		
+	public static final Color PAD_COLOR = Pastels.MY_GRAY;
 		
 	private final DrumType type;
 	private final KitKnobs view;
@@ -72,7 +72,7 @@ public class KitPad extends JPanel implements KnobListener {
 			if (view.getKit().isChoked() != choke.isSelected())
 				choke.setSelected(view.getKit().isChoked());
 		DrumSample sample = findSample();
-		top.setBackground(sample.isActive() ? Pastels.DRUM_PAD : Pastels.EGGSHELL);
+		top.setBackground(sample.isPlaying() ? PAD_COLOR : null);
 		int current = knob.getValue();
 		switch(view.getMode()) {
 			case Volume: 

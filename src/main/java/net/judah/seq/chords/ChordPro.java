@@ -128,6 +128,7 @@ public class ChordPro {
 			break;
 		case "a":
 		case "artist":
+		case "author":
 			data.artist = value;
 			break;
 		case "key":
@@ -207,6 +208,10 @@ public class ChordPro {
 				current.add(new Chord(b.chord, b.lyrics, steps - first));
 			}
 		}
+		// line breaks in lyrics
+		Chord last = current.get(current.size() - 1);
+		last.setLyrics(last.getLyrics() + "  ");
+		
 	}
 	private ArrayList<Pair> subtext(String text) {
 		ArrayList<Pair> result = new ArrayList<>();

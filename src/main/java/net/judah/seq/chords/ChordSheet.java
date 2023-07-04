@@ -32,7 +32,6 @@ public class ChordSheet extends JPanel {
 	private JPanel content;
 	
 	private final ArrayList<Crd> parts = new ArrayList<>();
-	private final ChordProCombo file = new ChordProCombo();
 	private final ArrayList<Group> groups = new ArrayList<>();
 	private final JLabel directives = new JLabel();
 	private final JToggleButton loop = new JToggleButton(" 🔁 ");
@@ -49,10 +48,11 @@ public class ChordSheet extends JPanel {
 		JPanel top = new JPanel();
 		top.setLayout(new BoxLayout(top, BoxLayout.LINE_AXIS));
 		top.add(Box.createHorizontalStrut(10));
-		top.add(chords.createBtn("▶️ Chords"));
-		top.add(file);
+		top.add(new ChordPlay("▶️ Chords", chords));
+		top.add(Gui.resize(new ChordProCombo(), Size.WIDE_SIZE));
 		top.add(new Btn("Edit", e->edit()));
-		top.add(new SectionCombo(chords));
+		
+		top.add(Gui.resize(new SectionCombo(chords), Size.COMBO_SIZE));
 		top.add(loop);
 		top.add(directives);
 		loop.setSelected(chords.getDirectives().contains(Directive.LOOP));
@@ -76,7 +76,8 @@ public class ChordSheet extends JPanel {
 	}
 	
 	public void update(Chord chord) {
-		for (Crd crd : parts) {
+		for (int i = 0; i < parts.size(); i++) {
+			Crd crd = parts.get(i);
 			if (crd.getBackground() == Pastels.BLUE)
 				if (crd.chord != chord)
 					crd.setBackground(Color.WHITE);
@@ -85,9 +86,10 @@ public class ChordSheet extends JPanel {
 				crd.setBackground(Pastels.BLUE);
 			}
 		}
-		for (Group g : groups)
-			if (g.section == chords.getSection())
-				g.update();
+		for (int i = 0; i < groups.size(); i++) 
+			if (groups.get(i).section == chords.getSection())
+				groups.get(i).update();
+		
 		scroll.repaint();
 	}
 	
@@ -137,7 +139,14 @@ public class ChordSheet extends JPanel {
 			parts.add(this);
 			addMouseListener(new MouseAdapter() { 
 				@Override public void mouseClicked(MouseEvent me) {
-					chords.click(chord);}});}
+					if (SwingUtilities.isRightMouseButton(me)) {
+						chord.build();
+						RTLogger.log(this, chord.toString());
+					}
+					else 
+						chords.click(chord);
+				}});
+		}
 	}
 	
 	private class Group extends JPanel {

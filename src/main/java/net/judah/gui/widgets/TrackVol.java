@@ -3,8 +3,7 @@ package net.judah.gui.widgets;
 import java.util.ArrayList;
 
 import net.judah.gui.Pastels;
-import net.judah.seq.MidiTrack;
-import net.judah.util.Constants;
+import net.judah.seq.track.MidiTrack;
 
 public class TrackVol extends Knob {
 	
@@ -23,11 +22,9 @@ public class TrackVol extends Knob {
 	}
 	
 	public static void update(MidiTrack track) {
-		Constants.execute(()->{
-			instances.forEach(vol->{
-				if (track == vol.track && vol.getValue() != track.getAmp() * 100)
-					vol.setValue((int) (track.getAmp() * 100));
-			});
+		instances.forEach(vol->{
+			if (track == vol.track && vol.getValue() != track.getAmp() * 100)
+				vol.setValue((int) (track.getAmp() * 100));
 		});
 	}
 

@@ -3,9 +3,11 @@ package net.judah.gui.knobs;
 import static net.judah.JudahZone.getDrumMachine;
 
 import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
@@ -16,7 +18,6 @@ import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
 import net.judah.drumkit.KitMode;
-import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.widgets.CenteredCombo;
 
@@ -32,7 +33,7 @@ public class KitKnobs extends KnobPanel {
 	private JComboBox<String> preset = new CenteredCombo<>();
 	private ArrayList<KitPad> pads = new ArrayList<>(DrumKit.SAMPLES);
 	private final JComboBox<KitMode> kits = new JComboBox<>(KitMode.values());
-	private final JPanel titleBar;
+	private final JPanel titleBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 
 	public Modes getMode() {
 		return (Modes) modes.getSelectedItem();
@@ -49,22 +50,20 @@ public class KitKnobs extends KnobPanel {
     		pads.add(pad);
     		wrap.add(pad);
     	}
-    	for (String s : DrumDB.getKits())
-    		preset.addItem(s);
+    	for (String s : DrumDB.getKits()) preset.addItem(s);
     	
-    	setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
+    	setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
     	preset.addActionListener(e->kit.setKit("" + preset.getSelectedItem()));
     	kits.setSelectedItem(kit.getKitMode());
-    	kits.addActionListener(e->MainFrame.setFocus(getDrumMachine().getKits().get(kits.getSelectedIndex())));
-
+    	kits.addActionListener(e->MainFrame.setFocus(getDrumMachine().getKnobs((KitMode)kits.getSelectedItem())));
     	modes.addActionListener(e-> update());
-    	JPanel title = new JPanel();
-    	title.add(kits);
-    	title.add(modes);
-    	title.add(preset);
-    	titleBar = Gui.wrap(title);
-    	
+    	titleBar.add(kits);
+    	titleBar.add(modes);
+    	titleBar.add(preset);
+    	add(Box.createGlue());
     	add(wrap);
+    	add(Box.createGlue());
+
 	}
 	
 	@Override
@@ -74,7 +73,6 @@ public class KitKnobs extends KnobPanel {
 	
 	@Override
 	public void update() {
-//		kits.setSelectedItem(kit.getKitMode());
 //		if (kits.getSelectedItem() != kit)
 //			kits.setSelectedItem(kit);
 		if (preset.getSelectedItem() != kit.getKit().getFolder().getName()) 

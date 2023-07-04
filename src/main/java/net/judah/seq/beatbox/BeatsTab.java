@@ -6,9 +6,9 @@ import lombok.Getter;
 import net.judah.drumkit.DrumSample;
 import net.judah.gui.MainFrame;
 import net.judah.seq.MidiTab;
-import net.judah.seq.MidiTrack;
 import net.judah.seq.MidiView;
 import net.judah.seq.TrackList;
+import net.judah.seq.track.MidiTrack;
 
 public class BeatsTab extends MidiTab {
 	public static final String NAME = "BeatBox";

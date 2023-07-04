@@ -1,4 +1,4 @@
-package net.judah.seq;
+package net.judah.seq.track;
 
 import java.awt.Color;
 import java.awt.Rectangle;
@@ -13,23 +13,31 @@ import javax.swing.*;
 
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.drumkit.DrumKit;
 import net.judah.gui.Gui;
-import net.judah.gui.Icons;
 import net.judah.gui.JudahMenu.Actionable;
-import net.judah.gui.Pastels;
+import net.judah.gui.MainFrame;
+import net.judah.gui.PlayWidget;
 import net.judah.gui.Size;
-import net.judah.gui.settable.*;
-import net.judah.gui.widgets.Arrow;
+import net.judah.gui.settable.Folder;
+import net.judah.gui.settable.ModeCombo;
+import net.judah.gui.settable.Program;
+import net.judah.gui.widgets.Btn;
+import net.judah.gui.widgets.CueCombo;
 import net.judah.gui.widgets.FxButton;
 import net.judah.gui.widgets.GateCombo;
-import net.judah.gui.widgets.TrackVol;
+import net.judah.gui.widgets.TrackAmp;
 import net.judah.midi.JudahClock;
+import net.judah.midi.Panic;
 import net.judah.mixer.Channel;
+import net.judah.seq.*;
 import net.judah.seq.arp.Mode;
 import net.judah.seq.beatbox.BeatsSize;
 import net.judah.seq.beatbox.BeatsTab;
+import net.judah.synth.JudahSynth;
+import net.judah.util.Constants;
 
-public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
+public class TrackMenu extends JPanel implements BeatsSize, MouseListener {
 
 	private final MidiTrack track;
 	private final MidiView view;
@@ -38,18 +46,11 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 	private final JMenuBar menu = new JMenuBar();
 	private final GateCombo gate;
 	private final Folder files;
-	private final Cycle cycle;
-	private final Launch launch;
-	private final Bar frames;
 	private final Program progChange;
-	@Getter private final TrackVol vol;
-	private final JButton playWidget = new JButton(" ▶️ ");
-	private final CueCombo cue; 
-	private final JButton metroWidget = new JButton(Icons.get("left.png"));
-	private final JLabel total = new JLabel();
+	@Getter private final TrackAmp vol;
 	private ButtonGroup mode;
 	
-	public MidiMenu(Rectangle bounds, MidiView view, TrackList tracks, MidiTab tab) {
+	public TrackMenu(Rectangle bounds, MidiView view, TrackList tracks, MidiTab tab) {
 		this.view = view;
 		this.track = view.getTrack();
 		this.tracks = tracks;
@@ -60,62 +61,55 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 		setBorder(BorderFactory.createDashedBorder(Color.BLUE));
 
 		progChange = new Program(track.getMidiOut(), track.getCh());
-		frames = new Bar(track);
-		cycle = new Cycle(track);
-		launch = new Launch(track);
-		vol = new TrackVol(track);
+		vol = new TrackAmp(track);
 		files = new Folder(track);
-		metroWidget.addActionListener(e->track.cycle());
-		cue = new CueCombo(track);
-		playWidget.addActionListener(e->track.trigger());
-		playWidget.setOpaque(true);
 		gate = new GateCombo(track);
 
-		Gui.resize(cue, Size.SMALLER_COMBO);
 		Gui.resize(files, Size.COMBO_SIZE);
-		Gui.resize(cycle, Size.SMALLER_COMBO);
 		Gui.resize(gate, Size.SMALLER_COMBO);
-		Gui.resize(frames, Size.MICRO);
-		Gui.resize(launch, Size.MICRO);
 		Gui.resize(progChange, Size.COMBO_SIZE);
 
-		add(playWidget);
 		menu.add(traxMenu());
 		menu.add(fileMenu());
 		menu.add(barMenu());
+
+		add(new PlayWidget(track));
 		add(menu);
 		add(files);
 		add(progChange);
+		if (track.isSynth()) {
+			add(new JLabel("  Arp"));
+			add(new ModeCombo(track));
+		}
+		add(new Programmer(track));
 		add(Box.createHorizontalGlue());
-		add(metroWidget);
-		add(new JLabel(" Init "));
-		add(launch);
-		add(new JLabel("of "));
-		add(total);
-		add(new JLabel(" "));
-		add(new Arrow(Arrow.WEST, e->track.next(false)));
-		add(frames);
-		add(new Arrow(Arrow.EAST, e->track.next(true)));
-		add(cycle);
-
-		add(Box.createHorizontalGlue());
-		add(new JLabel("Gate"));
+		if (track.isDrums()) add(new JLabel("Cue")); // space considerations
+		add(new CueCombo(track));
+		if (track.isDrums()) add(new JLabel("Gate")); 
 		add(gate);
-		add(new JLabel(" Vol"));
 		add(vol);
+		
 		add(new FxButton((Channel)track.getMidiOut()));
-
+		add(new Btn(UIManager.getIcon("FileChooser.detailsViewIcon"), 
+				e->MainFrame.setFocus(JudahZone.getSeq().getKnobs(track))));
+        if (track.isDrums())
+        	add(new Btn("Kit", e->MainFrame.setFocus(JudahZone.getDrumMachine().getKnobs((DrumKit)track.getMidiOut()))));
+        else {
+	        if (track.getMidiOut() == JudahZone.getSynth1() || track.getMidiOut() == JudahZone.getSynth2())
+	        	add(new Btn("DCO", e->MainFrame.setFocus(((JudahSynth)track.getMidiOut()).getSynthKnobs())));
+			add(new Btn(" ! ", e->Constants.execute(new Panic(track))));
+        }
+        add(new Btn(UIManager.getIcon("FileView.floppyDriveIcon"), e->track.setCurrent(track.bars() + 1))); 
+		add(new Btn(UIManager.getIcon("FileView.fileIcon"), e->track.setCurrent(track.bars() + 1)));
+		
 		update();
 		addMouseListener(this);
 
 	}
 
 	public void update() {
-		playWidget.setBackground(track.isActive() ? Pastels.GREEN : track.isOnDeck() ? track.getCue().getColor() : null);
-		metroWidget.setIcon(JudahClock.isEven() ? Icons.get("left.png") : Icons.get("right.png"));
 		if (track.isDrums())
 			setBorder(tab.getCurrent() == view ? Gui.RED : Gui.SUBTLE);
-		total.setText("" + track.bars());
 		if (mode != null) {
 			int i = 0;
 			Enumeration<AbstractButton> it = mode.getElements();
@@ -146,6 +140,7 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 		result.add(new Actionable("Save", e->track.save()));
 		result.add(new Actionable("Save As...", e ->track.saveAs()));
 		result.add(new Actionable("Import...", e->new ImportMidi(track)));
+		result.add(new Actionable("Resolution..", e->MidiTools.resolution(track)));
 		if (track.isSynth()) {
 			JMenu modes = new JMenu("Mode");
 			mode = new ButtonGroup();
@@ -156,7 +151,6 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 				modes.add(item);
 				mode.add(item);
 				item.addActionListener(e-> track.getArp().setMode(m));
-
 			}
 			result.add(modes);
 		}
@@ -179,7 +173,7 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 		result.add(new Actionable("Delete", e->view.getGrid().delete()));
 		result.add(frames);
 		result.add(select);
-		result.add(new Actionable("Transpose...", e->new Transpose(view.getGrid())));
+		result.add(new Actionable("Transpose...", e->new Transpose(track, view.getGrid())));
 		if (view.getTrack().isSynth())
 			result.add(new Actionable("Duration...", e->new Duration(view.getGrid())));
 		result.add(new Actionable("Undo", e->view.getGrid().undo()));
@@ -203,8 +197,7 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 		view.getGrid().selectFrame();
 		view.getGrid().delete();
 		
-		
-		int frame = track.getCurrent() - (track.isEven() ? 0 : 1);
+		int frame = track.getCurrent() - (JudahClock.isEven() ? 0 : 1);
 		long ref = frame * track.barTicks;
 		Track t = track.getT();
 		MidiEvent e;
@@ -218,12 +211,11 @@ public class MidiMenu extends JPanel implements BeatsSize, MouseListener {
 			e.setTick(e.getTick() - diff);
 		}
 		view.getGrid().repaint();
-		
 	}
 	
 	// TODO undo/redo
 	private void insertFrame() {
-		int frame = track.getCurrent() - (track.isEven() ? 0 : 1);
+		int frame = track.getCurrent() - (JudahClock.isEven() ? 0 : 1);
 
 		long ref = frame * track.barTicks;
 		long diff = track.getWindow();

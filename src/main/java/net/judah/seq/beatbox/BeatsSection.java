@@ -3,11 +3,11 @@ package net.judah.seq.beatbox;
 import java.awt.Point;
 
 import lombok.Getter;
-import net.judah.seq.Gate;
-import net.judah.seq.MidiMenu;
-import net.judah.seq.MidiTrack;
 import net.judah.seq.MidiView;
 import net.judah.seq.TrackList;
+import net.judah.seq.track.Gate;
+import net.judah.seq.track.TrackMenu;
+import net.judah.seq.track.MidiTrack;
 
 public class BeatsSection extends MidiView implements BeatsSize {
 	
@@ -19,7 +19,7 @@ public class BeatsSection extends MidiView implements BeatsSize {
 		steps = new BeatSteps(BEAT_STEPS, track);
 
 		mutes = new DrumMutes(BOUNDS_MUTES, this); 
-		menu = new MidiMenu(BOUNDS_MENU, this, tracks, tab);
+		menu = new TrackMenu(BOUNDS_MENU, this, tracks, tab);
 		grid = new BeatBox(BEATBOX_GRID, this, tab);
 		instrumentPanel = mutes;
 		

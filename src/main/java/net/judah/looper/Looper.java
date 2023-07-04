@@ -1,129 +1,125 @@
 package net.judah.looper;
 
-import static net.judah.api.AudioMode.*;
-
 import java.security.InvalidParameterException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
+import java.util.Vector;
 
+import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import net.judah.api.AudioMode;
 import net.judah.api.Notification.Property;
-import net.judah.api.ProcessAudio.Type;
-import net.judah.api.Status;
+import net.judah.api.PlayAudio.Type;
 import net.judah.api.TimeListener;
 import net.judah.gui.MainFrame;
-import net.judah.gui.widgets.LoopWidget;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
+import net.judah.mixer.LoopMix;
 import net.judah.mixer.Zone;
 import net.judah.song.Cmdr;
 import net.judah.song.Param;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
-@RequiredArgsConstructor 
-public class Looper extends ArrayList<Loop> implements TimeListener, Cmdr {
+@Getter
+public class Looper extends Vector<Loop> implements TimeListener, Cmdr {
+	
 	public static final int LOOPERS = 4;
-
-	@Getter private final JudahClock clock;
-	@Getter private final Memory memory;
-	@Getter private final Loop loopA;
-    @Getter private final Loop loopB;
-    @Getter private final Loop loopC;
-    @Getter private final SoloTrack soloTrack;
-    @Getter private long recordedLength;
-    @Getter private Loop primary;
-    @Getter private final ArrayDeque<Loop> onDeck = new ArrayDeque<>();
-    @Getter private final String[] keys;
+	public static final int BSYNC_UP = Integer.MAX_VALUE;
+	public static final int BSYNC_DOWN = 1000000;
+	public static final int SYNC_INIT = -1;
+	
+	private final JudahClock clock;
+	private final JackClient jackClient;
+	private final Memory memory;
+	private final Loop loopA;
+    private final Loop loopB;
+    private final Loop loopC;
+    private final SoloTrack soloTrack;
+    private final Vector<LoopMix> displays = new Vector<>();
+    private final Vector<Loop> onDeck = new Vector<>();
+    private final Vector<LoopMix> sync = new Vector<>();
+    private final String[] keys;
+    private String recordedLength = "0.0s";
+    private Loop primary;
+    private int barCounter;
+	private int counter = SYNC_INIT;
+	private int bars;
+	private int countUp;
     
-    private int syncCounter;
-    @Setter protected LoopWidget feedback;
-
-	public Looper(JackPort l, JackPort r, Zone sources, LineIn solo, JudahClock clock) {
+	public Looper(JackPort l, JackPort r, Zone sources, LineIn solo, JudahClock clock, JackClient client) {
 		this.clock = clock;
+		this.jackClient = client;
 		memory = new Memory(Constants.STEREO, Constants.bufSize());
-		loopA = new Loop("A", this, sources, "LoopA.png", Type.SYNC, clock, l, r);
-        loopB = new Loop("B", this, sources, "LoopB.png", Type.BSYNC, clock, l, r);
-        loopC = new Loop("C", this, sources, "LoopC.png", Type.FREE, clock, l, r);
-        soloTrack = new SoloTrack(solo, this, sources, "LoopD.png", clock, l, r);
+		loopA = new Loop("A", "LoopA.png", Type.SYNC, this, sources, l, r, memory);
+        loopB = new Loop("B", "LoopB.png", Type.BSYNC, this, sources, l, r, memory);
+        loopC = new Loop("C", "LoopCA.png", Type.FREE, this, sources, l, r, memory);
+        soloTrack = new SoloTrack(solo, this, sources, l, r, memory);
         add(loopA);
         add(loopB);
         add(loopC);
         add(soloTrack);
         keys = new String[size()];
-        for (int i = 0; i < size(); i++)
+        for (int i = 0; i < size(); i++) {
+        	displays.add(new LoopMix(get(i), this));
         	keys[i] = get(i).getName();
+        }
         clock.addListener(this);
 	}
-	
+
 	/** play and/or record loops and samples in Real-Time thread */
 	public void process() {
-    	for (Loop l : this)
-    		l.process();
-    	if (feedback != null && ++syncCounter > 8) { 
-    		MainFrame.update(feedback);
-        	syncCounter = 0;
-        }
+		forEach(loop->loop.process());
+		if (hasRecording() && ++countUp == 8) {
+			MainFrame.update(this); // LoopWidget feedback
+			countUp = 0;
+		}
     }
 
-    void setRecordedLength(long start, Loop primary) {
+	public boolean hasRecording() {
+		return primary != null && primary.getLength() != 0;
+	}
+	
+	public int getLength() {
+		return hasRecording() ? primary.getLength() : 0;
+	}
+	
+    void setPrimary(Loop primary) {
     	this.primary = primary;
-    	recordedLength = System.currentTimeMillis() - start;
-    	int frames = primary.getRecording().size();
-    	Constants.execute(()->{
-	    	for (Loop l : this) {
-	    		l.catchUp(frames);
-	    		l.setLength(frames);
-	    	}
-    	});
-    	clock.loop(Status.NEW);
-    	RTLogger.log(this, primary + " recorded " + frames + " frames");
+    	clock.reset();
+    	MainFrame.update(loopC);
+    	recordedLength = Float.toString(primary.seconds());
+    	if (recordedLength.length() > 4)
+				recordedLength = recordedLength.substring(0, 4);
+    	recordedLength += "s";
+    	MainFrame.update(this);  
+    	int tape = primary.getTapeCounter().get();
+    	
+    	for (int i = 0; i < size(); i++) {
+    		Loop loop = get(i);
+    		if (loop == primary) continue;
+    		if (loop.isRecording()) loop.record(false); // soloTrack
+    		loop.getTapeCounter().set(tape);
+    	}
+    	RTLogger.log("Primary", primary + " frames: " +  primary.length);
     }
     
-    public Loop byName(String key) {
-    	for (Loop l : this) 
-				if (l.getName().equals(key))
-					return l;
-    	return loopA; // fail
-    }
-
-    public void reset() { 
-    	Constants.timer(23, ()->clear()); // get a process() in
-    	forEach(l->l.isRecording.compareAndSet(RUNNING, STOPPING));
-    }
-
-    /** deletes loops */
-	@Override
-	public void clear() {
-        recordedLength = 0;
+    /** deletes loop recordings, ignore super.clear() */
+	@Override public void clear() {
         primary = null;
-        for (Loop loop : this)
-        	loop.clear();
-        if (feedback != null)
-        	MainFrame.update(feedback);
-        loopC.setType(Type.FREE);
-        // flush onDeck?
-    }
-
-    public int indexOf(Channel loop) {
-    	for (int i = 0; i < size(); i++)
-    		if (get(i) == loop)
-    			return i;
-    	return -1;
-    }
-
-    
-    public void flush() {
-    	for (int i = onDeck.size() - 1; i >= 0; i--) 
-    		MainFrame.update(onDeck.removeLast());
-    }
-    
+        loopB.type = Type.BSYNC;
+        loopC.type = Type.FREE;
+        counter = SYNC_INIT;
+        for (int i = 0; i < size(); i++)
+        	get(i).clear(); // clear loops
+		for(int i = sync.size() - 1; i >= 0; i--) 
+			MainFrame.update(sync.remove(i)); // clear sync 
+    	for (int i = onDeck.size() - 1; i >= 0; i--) // clear onDeck
+    		MainFrame.update(onDeck.remove(onDeck.size() - 1));
+		recordedLength = "0.0s";
+    	MainFrame.update(this);
+	}
+  
 	public void onDeck(Loop loop) {
 		if (onDeck.contains(loop) == false)
 			onDeck.add(loop);
@@ -139,67 +135,93 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Cmdr {
 		}
 	}
 
-	public void head() {
-		for (Loop l : this) {
-			l.setOnMute(false);
-			if (l.hasRecording())
-				l.setTapeCounter(0);
-		}
+	public void checkSoloSync() {
+		if (soloTrack.isSolo() && onDeck.contains(soloTrack)) 
+			soloTrack.record(true);
 	}
 
-	@Override
-	public void update(Property prop, Object value) {
-		if (primary == null)
+	public void loopCount(Loop looper, Object broadcast) {
+		if (looper != primary)
 			return;
-		if (prop == Property.BARS && value instanceof Integer && 0 == (int)value) {
-			for (Loop loop : this) {
-				if (!loop.isActive() || loop.getType() == Type.FREE) 
-					continue;
-				// loop boundary, hard sync to start
-				loop.setTapeCounter(loop.getRecording().size() - 1);
-			}
+		checkSyncDown();
+		checkOnDeck();
+		clock.loopCount(broadcast);
+	}	
+
+	private void checkOnDeck() {
+		if (onDeck.isEmpty()) return;
+		Constants.execute(()->{
+			Loop startup = onDeck.remove(0);
+			syncUp(startup, -1);
+			startup.record(true);
+		});
+	}
+	
+	private void checkSyncDown() {
+		if (sync.isEmpty()) return;
+		LoopMix display = sync.get(0);
+		if (display.getLoop().isRecording) {
+			sync.remove(display);
+			display.getLoop().endRecord();
 		}
 	}
 
-	void loopCount(int count) {
-		if (false == onDeck.isEmpty() && recordedLength > 0) { 
-			Loop start = onDeck.poll();
-			clock.syncUp(start, 0);
-			start.record(true);
-		}
-		clock.loop(count);
-	}
-
-	public void catchUp(Loop loop) {
+	public void rewind() {
 		for (Loop l : this) {
-			if (l == loop) continue;
-			if (l.isRecording() == AudioMode.RUNNING)
-				continue;
-			l.catchUp(loop.getRecording().size());
+			if (l.isPlaying())
+				l.rewind();
 		}
 	}
 
-	@Override
-	public void execute(Param p) {
-		Loop loop = null;
-		for (Loop l : this) 
-			if (l.getName().equals(p.val))
-				loop = l;
+	void catchUp(Loop loop, int frames) {
+		if (primary == null)
+		Constants.execute(()->{
+			for (Loop l : this) {
+				if (l == loop) continue;
+				if (l.isRecording()) 
+					continue; // solotrack
+				l.catchUp(frames);
+		}});
+	}
+
+    public Loop byName(String key) {
+    	for (Loop l : this) 
+				if (l.getName().equals(key))
+					return l;
+    	return loopA; // fail
+    }
+
+    public int indexOf(Channel loop) {
+    	for (int i = 0; i < size(); i++)
+    		if (get(i) == loop)
+    			return i;
+    	return -1;
+    }
+    
+    @Override public Loop resolve(String key) {
+    	for (int i = 0; i < size(); i++)
+    		if (get(i).getName().equals(key))
+				return get(i);
+		return null;
+	}
+    
+	@Override public void execute(Param p) {
+		Loop loop = resolve(p.val);
 		if (loop == null)
 			return;
 		switch(p.getCmd()) {
 			case Delete:
-				loop.erase();
+				loop.clear();
 				break;
 			case Dup:
-				loop.duplicate();
+				loop.doubled();
 				break;
 			case Record:
 				if (!clock.isActive())
 					break; // ignore in edit mode
 				loop.record(true);
 				if (loop.getType() != Type.FREE)
-					clock.syncUp(loop, 0);
+					syncUp(loop, 0);
 				MainFrame.update(loop);
 				break;
 			case RecEnd:
@@ -211,37 +233,96 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Cmdr {
 			default: throw new InvalidParameterException("" + p);
 		}
 	}
-
-	@Override
-	public Object resolve(String key) {
+	public LoopMix getDisplay(Loop loop) {
+		for (LoopMix display : displays)
+			if (display.getLoop() == loop)
+				return display;
 		return null;
 	}
 	
+	public boolean isSync(Loop loop) {
+		return sync.contains(getDisplay(loop));
+	}
+	
+	public void tail(Loop loop) {
+		LoopMix sync = getDisplay(loop);
+		bars = BSYNC_DOWN;
+		sync.setUpdate("BDN");
+	}
+	
+	public void syncUp(Loop loop, int init) {
+		LoopMix widget = getDisplay(loop);
+		if (sync.contains(widget)) {
+			syncDown(loop);
+			return;
+		}
+		sync.add(widget); 
+		counter = SYNC_INIT;
+		bars = JudahClock.getLength();
+		if (!hasRecording() && loop.getType() == Type.BSYNC) {
+			bars = BSYNC_UP;
+			widget.setUpdate(" 🔁 ");
+		}
+		MainFrame.update(loop);
+	}
+	
+	public void syncDown(Loop loop) {
+		LoopMix display = getDisplay(loop);
+		if (sync.remove(display)) {
+			display.setUpdate(null);
+			MainFrame.update(display);
+		}
+	}
+
+	@Override public void update(Property prop, Object value) {
+		if (prop == Property.BARS && (int)value == 0)
+			for (int i = 0; i < size(); i++) 
+				get(i).boundary(); // sync loops to clock
+		if (sync.isEmpty()) 
+			return;
+		else if (prop == Property.BARS) 
+			updateBar((int)value);
+		else if (prop == Property.BEAT) 
+			updateBeat();
+	}
+	
+	private void updateBar(int bar) {
+		counter ++;
+		for (int i = sync.size() - 1; i >= 0; i--) {
+			LoopMix widget = sync.get(i);
+			Loop loop = widget.getLoop();
+			if (bars == BSYNC_DOWN) { // BSYNC ended
+				loop.record(false); 
+				clock.setLength(counter);
+			}
+			else if (loop.isRecording == false && clock.getBeat() % clock.getMeasure() == 0) {
+				loop.record(true);
+				checkSoloSync();
+				widget.setUpdate("Go!");
+			}
+			else if (counter == bars) {
+				if (!onDeck.isEmpty() && onDeck.get(0) == loop)
+					onDeck.remove(loop);
+				loop.endRecord();
+			}
+		}
+	}
+	
+	private void updateBeat() {
+		if (counter <= SYNC_INIT) { // not started, display beats until start
+			int countdown = clock.getBeat() % clock.getMeasure() - clock.getMeasure();
+			for (LoopMix widget : sync) 
+				widget.setUpdate(countdown + "");
+		}
+		else 
+			for (LoopMix widget : sync) 
+				if (widget.getLoop().isRecording()) {
+					int measure = clock.getMeasure();
+					StringBuffer sb = new StringBuffer().append(1 + clock.getBeat() % measure);
+					sb.append("/").append(measure);
+					int showBars = bars < 100 ? bars - counter : counter + 1;
+					widget.setUpdate("<html>"+ sb.toString() +"<br/>"+ showBars +"</html>");
+				}
+	}
+	
 }
-
-//    /** pause/unpause specific loops */
-//    private Pause suspended = null; 
-//	/** pause/unpause specific loops, clock-aware */
-//    @RequiredArgsConstructor @Getter
-//    private class Pause extends ArrayList<Loop> {
-//    	private final boolean activeClock; }
-//	/** pause/unpause any running loops, stop/restart clock if it is running */
-//	public void pause(boolean pauseClock) {
-//		if (suspended == null) {
-//			boolean clock = getClock().isActive();
-//			suspended = new Pause(pauseClock? false : clock);
-//			if (clock && pauseClock) 
-//				getClock().end();
-//			for (Loop s : this) 
-//				if (s.isPlaying() == AudioMode.RUNNING) {
-//					s.setTapeCounter(0);
-//					suspended.add(s);
-//		}}  else {
-//			for (Loop s : suspended) 
-//				s.setOnMute(true);
-//			if (suspended.isActiveClock()) 
-//				getClock().begin();
-//			else if (pauseClock == false && getClock().isActive())
-//				getClock().begin(); // re-sync
-//			suspended = null;	}}
-

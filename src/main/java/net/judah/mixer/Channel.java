@@ -121,9 +121,10 @@ public class Channel {
     }
     
 	public void setOnMute(boolean mute) {
-		if (mute != onMute)
-			MainFrame.update(this);
+		if (mute == onMute) 
+			return;
 		onMute = mute;
+		MainFrame.update(this);
 	}
 
     public Preset toPreset(String name) { 

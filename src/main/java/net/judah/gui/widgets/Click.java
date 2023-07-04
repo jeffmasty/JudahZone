@@ -5,6 +5,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
@@ -22,6 +23,11 @@ public class Click extends JLabel {
 		addActionListener(l);
 	}
 	
+	public Click(Icon icon, ActionListener l) {
+		super(icon);
+		addActionListener(l);
+	}
+	
     public Click(String msg) {
     	super(msg, JLabel.CENTER);
     	setBorder(border);
@@ -29,8 +35,7 @@ public class Click extends JLabel {
     	addMouseListener(new MouseAdapter() {
         @Override public void mouseClicked(MouseEvent me) {
         	right = SwingUtilities.isRightMouseButton(me);
-        	fireActionPerformed(new ActionEvent(Click.this, ActionEvent.ACTION_PERFORMED,
-              getText()));}
+        	fireActionPerformed(new ActionEvent(Click.this, ActionEvent.ACTION_PERFORMED, getText()));}
     	});
     }
 

@@ -1,4 +1,4 @@
-package net.judah.seq;
+package net.judah.seq.track;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.Sequence;

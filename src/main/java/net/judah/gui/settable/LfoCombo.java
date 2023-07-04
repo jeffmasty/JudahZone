@@ -2,13 +2,14 @@ package net.judah.gui.settable;
 
 import net.judah.fx.LFO;
 import net.judah.fx.LFO.Target;
+import net.judah.gui.Updateable;
 import net.judah.mixer.Channel;
 
-public class Lfo extends SetCombo<Target> {
+public class LfoCombo extends SetCombo<Target> implements Updateable {
 
 	private final Channel ch;
 	
-	public Lfo(Channel channel) {
+	public LfoCombo(Channel channel) {
 		super(LFO.Target.values(), channel.getLfo().getTarget());
 		this.ch = channel;
 	}
@@ -21,4 +22,10 @@ public class Lfo extends SetCombo<Target> {
 			ch.getLfo().setTarget(selected);
 	}
 
+	@Override
+	public void update() {
+		if (ch.getLfo().getTarget() != getSelectedItem())
+			override(ch.getLfo().getTarget());
+	}
+	
 }

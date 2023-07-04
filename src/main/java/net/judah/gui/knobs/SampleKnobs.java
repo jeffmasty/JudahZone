@@ -1,6 +1,7 @@
 package net.judah.gui.knobs;
 
 import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 
@@ -21,7 +22,7 @@ public class SampleKnobs extends KnobPanel {
 
 	private final Sampler sampler;
 	@Getter private final KnobMode knobMode = KnobMode.Samples;
-	@Getter private final JPanel titleBar = new JPanel();
+	@Getter private final JPanel titleBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 	private final Slider vol; 
 	private final ArrayList<SamplePad> updates = new ArrayList<>();
 	
@@ -36,10 +37,13 @@ public class SampleKnobs extends KnobPanel {
 		for (int i = 4; i < 8; i++)
 			updates.add(new SamplePad(sampler.get(i), oneShots));
 
+		
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		add(loops);
 		add(new JLabel(""));
 		add(oneShots);
+		
+		
 		vol = new Slider(0, 100, e -> sampler.setMix(((Slider)e.getSource()).getValue() * 0.01f), "Sampler Volume");
 		vol.setValue((int) (sampler.getMix() * 100));
 		Gui.resize(vol, Size.SMALLER_COMBO);

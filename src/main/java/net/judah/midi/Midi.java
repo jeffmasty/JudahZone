@@ -23,7 +23,7 @@ import net.judah.api.Key;
 import net.judah.drumkit.GMDrum;
 import net.judah.util.RTLogger;
 
-/** Utilities added to javax ShortMessage, with an optional source Midi port */
+/** Utilities added to javax ShortMessage*/
 @JsonDeserialize(using = Midi.Deserialization.class)
 @JsonSerialize(using = Midi.Serialization.class) 
 public class Midi extends ShortMessage {

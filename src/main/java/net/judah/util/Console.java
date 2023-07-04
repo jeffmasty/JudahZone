@@ -16,7 +16,7 @@ import lombok.extern.log4j.Log4j;
 import net.judah.JudahZone;
 
 @Log4j
-public class Console /* implements MidiListener */{
+public class Console {
 
     private static Console instance;
     public static Console getInstance() {
@@ -35,10 +35,9 @@ public class Console /* implements MidiListener */{
 		textarea.setForeground(Color.BLUE.darker()/* new Color(1, 77, 13) *//* dark green */);
         
         scroller = new JScrollPane(textarea);
-        scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         scroller.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
-        //participants.add(this);
         participants.add(JudahZone.getFluid().getConsole());
     }
 

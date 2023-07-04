@@ -3,6 +3,7 @@ import static net.judah.JudahZone.*;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.io.File;
 
@@ -26,9 +27,9 @@ import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.LengthCombo;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
-import net.judah.seq.MidiTrack;
 import net.judah.seq.Seq;
 import net.judah.seq.arp.Mode;
+import net.judah.seq.track.MidiTrack;
 import net.judah.song.setlist.Setlists;
 import net.judah.song.setlist.SetlistsCombo;
 import net.judah.synth.JudahSynth;
@@ -58,7 +59,7 @@ public class MidiGui extends KnobPanel {
     private final JToggleButton zoneBtn = new JToggleButton("Zone");
     private final JToggleButton fluidBtn = new JToggleButton("Fluid");
 	private final JPanel mpkPanel = new JPanel();
-	private final JPanel titleBar = new JPanel();
+	private final JPanel titleBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 	
 	public MidiGui(JudahMidi midi, JudahClock clock, Jamstik jam, Sampler sampler,
 			JudahSynth a, JudahSynth b, FluidSynth fsynth, Seq seq, Setlists setlists) {
@@ -71,8 +72,8 @@ public class MidiGui extends KnobPanel {
 		this.setlists = setlists;
     	jamstik.setFrame(this);
     	
-    	titleBar.add(new JLabel("Song"));
-    	titleBar.add(songsCombo);
+    	titleBar.add(new JLabel(" Song  "));
+    	titleBar.add(Gui.resize(songsCombo, new Dimension(150, 28)));
     	
     	one = new Program(a);
     	two = new Program(b);
@@ -96,13 +97,10 @@ public class MidiGui extends KnobPanel {
 		stepPlay.addActionListener(e-> sampler.setStepping(!sampler.isStepping()));
 		stepPlay.setOpaque(true);
 		
-
 		JPanel top = new JPanel();
 		top.setLayout(new BoxLayout(top, BoxLayout.LINE_AXIS));
-		
 		top.add(new JLabel("  Setlist "));
 		top.add(new SetlistsCombo(setlists));
-		top.add(Box.createHorizontalGlue());
 		top.add(stepper);
 		top.add(stepVol);
 		top.add(stepPlay);
@@ -122,7 +120,6 @@ public class MidiGui extends KnobPanel {
 		labels.add(fluidBtn);
 		labels.add(zoneBtn);
 		
-			
 		JPanel bottom = new JPanel(new GridLayout(1, 2));
 		bottom.add(fluids());
 		bottom.add(internals());
@@ -196,8 +193,7 @@ public class MidiGui extends KnobPanel {
 		return result;
 	}
 	
-	@Override
-	public JPanel installing() {
+	@Override public JPanel installing() {
 		return titleBar;
 	}
 

@@ -6,11 +6,10 @@ import java.awt.Color;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.gui.Pastels;
 
 @RequiredArgsConstructor @Getter
 public enum Mode { 
-	Off(Pastels.GREEN), 
+	Off(null), 
 	BASS(BLUE),
 	CHRD(CYAN),
 	MPK(ORANGE), 
@@ -22,7 +21,8 @@ public enum Mode {
 	UPDN(GRAY),
 	DNUP(GRAY),
 	RND(MAGENTA), 
-	RACM(PINK), 
+	RACM(PINK),
+	ETH(CYAN),
 	// UP5
 	// DN5
 	// SCL1(MAGENTA),

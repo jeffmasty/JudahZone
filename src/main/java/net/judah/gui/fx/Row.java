@@ -6,8 +6,6 @@ import java.util.ArrayList;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.gui.Updateable;
-import net.judah.gui.settable.Fx;
-import net.judah.gui.widgets.FxKnob;
 import net.judah.mixer.Channel;
 
 @RequiredArgsConstructor
@@ -17,12 +15,11 @@ public class Row implements Updateable {
 	
 	@Getter protected final ArrayList<Component> controls = new ArrayList<>();
 	
+	@Override
 	public final void update() {
     	for (Component c : getControls()) 
-			if (c instanceof FxKnob)
-				((FxKnob)c).update();
-			else if (c instanceof Fx)
-				((Fx)c).update();
+			if (c instanceof Updateable)
+				((Updateable)c).update();
 	}
 
 }

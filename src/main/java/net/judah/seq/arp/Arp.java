@@ -14,11 +14,11 @@ import net.judah.gui.settable.ModeCombo;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
-import net.judah.seq.MidiTrack;
 import net.judah.seq.Poly;
 import net.judah.seq.chords.Chord;
 import net.judah.seq.chords.ChordListener;
 import net.judah.seq.chords.ChordTrack;
+import net.judah.seq.track.MidiTrack;
 import net.judah.util.Constants;
 
 @Data
@@ -88,6 +88,7 @@ public class Arp implements ChordListener {
 			case DNUP: algo = new UpDown(false); break;
 			case RND: algo = new RND(); break;
 			case RACM: algo = new Racman(); break;
+			case ETH: algo = new Ethereal(); break;
 		}
 		algo.setRange(range);
 		ModeCombo.update(track);

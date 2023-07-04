@@ -20,7 +20,10 @@ public class ChordView extends JPanel {
 	public ChordView(ChordTrack trk) {
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		setOpaque(true);
-
+		setBackground(Pastels.BUTTONS);
+		bar.setOpaque(true);		bar.setBackground(Pastels.BUTTONS); 
+		bars.setOpaque(true);		bars.setBackground(Pastels.BUTTONS); 
+		
 		this.chords = trk;
 		next = new Arrow(SwingConstants.EAST, e->chords.next());
 		next.setEnabled(false);
@@ -29,9 +32,7 @@ public class ChordView extends JPanel {
 		loop.setSelected(trk.getSection() != null && trk.getSection().isOnLoop());
 		loop.addActionListener(e->trk.getSection().toggle(Directive.LOOP));
 		loop.setEnabled(false);
-		bar.setBackground(Pastels.BUTTONS); bar.setOpaque(true);
-		bars.setBackground(Pastels.BUTTONS); bars.setOpaque(true);
-		add(chords.createBtn("▶️ Chords"));
+		add(new ChordPlay("▶️ Chords", chords));
 		add(new ChordProCombo());
 		add(new SectionCombo(chords));
 		add(loop);
@@ -40,8 +41,6 @@ public class ChordView extends JPanel {
 		add(Box.createHorizontalStrut(5));
 		add(bar);
 		add(bars);
-		setBackground(Pastels.BUTTONS);
-		
 	}
 	
 	public void setSection(Section s) {

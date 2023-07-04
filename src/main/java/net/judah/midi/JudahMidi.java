@@ -24,7 +24,7 @@ import net.judah.api.BasicClient;
 import net.judah.api.MidiReceiver;
 import net.judah.controllers.*;
 import net.judah.gui.MainFrame;
-import net.judah.seq.MidiTrack;
+import net.judah.seq.track.MidiTrack;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 

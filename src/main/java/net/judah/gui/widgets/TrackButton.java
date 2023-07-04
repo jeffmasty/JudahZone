@@ -11,7 +11,7 @@ import javax.swing.SwingConstants;
 
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.seq.MidiTrack;
+import net.judah.seq.track.MidiTrack;
 
 public class TrackButton extends JLabel {
 	
@@ -36,7 +36,7 @@ public class TrackButton extends JLabel {
 		setBackground(track.isActive() ? 
 				track.isSynth() ? track.getArp().getMode().getColor() : GREEN 
 				: track.isOnDeck() ? track.getCue().getColor() : null);
-		int idx = 1 + track.getCurrent();
+		int idx = 1 + track.getCurrent() / 2;
 		if (idx < 10)
 			setText(" " + idx);
 		else setText("" + idx);

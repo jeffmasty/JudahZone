@@ -10,6 +10,7 @@ import javax.swing.border.Border;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.JudahZone;
 import net.judah.util.Constants;
 
 // Combos: MidiGui: song, file, *6 synths, Track: *prog, file, pattern? LFO: type Synth: prog?
@@ -17,13 +18,11 @@ public abstract class SetCombo<T> extends  JComboBox<T> {
 	
 	protected static final Border HIGHLIGHT = BorderFactory.createSoftBevelBorder(
 			BevelBorder.RAISED, Color.RED, Color.RED.darker());
-	protected final Border old;
-	
-	private T override;
-	
 	@SuppressWarnings("rawtypes")
 	@Setter @Getter protected static SetCombo set;
 	protected final ActionListener listener = (e)->action();
+	protected final Border old;
+	private T override;
 	
 	public SetCombo() {
 		old = getBorder();
@@ -61,6 +60,7 @@ public abstract class SetCombo<T> extends  JComboBox<T> {
 		setBorder(old);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public void midiShow(T val) {
 		
 		if (set != null && set != this) {
@@ -71,6 +71,7 @@ public abstract class SetCombo<T> extends  JComboBox<T> {
 		if (set != this) {
 			override = (T)getSelectedItem();
 			set = this;
+			Constants.execute(()->JudahZone.getFrame().getHq().sceneText());
 		}
 		
 		if (getSelectedItem() != val) {
@@ -90,9 +91,11 @@ public abstract class SetCombo<T> extends  JComboBox<T> {
 		if (set == null)
 			return;
 		set.setBorder(set.old);
+		@SuppressWarnings("rawtypes")
 		SetCombo engage = set;
 		set = null;
 		engage.action();
+		JudahZone.getFrame().getHq().sceneText();
 	}
 	
 	

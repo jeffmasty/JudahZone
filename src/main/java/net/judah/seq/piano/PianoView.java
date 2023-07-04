@@ -1,10 +1,10 @@
 package net.judah.seq.piano;
 
 import lombok.Getter;
-import net.judah.seq.MidiMenu;
 import net.judah.seq.MidiTab;
-import net.judah.seq.MidiTrack;
 import net.judah.seq.MidiView;
+import net.judah.seq.track.TrackMenu;
+import net.judah.seq.track.MidiTrack;
 
 @Getter 
 public class PianoView extends MidiView implements PianoSize {
@@ -15,7 +15,7 @@ public class PianoView extends MidiView implements PianoSize {
 		instrumentPanel = piano;
 		
 		steps = new PianoSteps(PIANO_STEPS, this);
-		menu = new MidiMenu(BOUNDS_MENU, this, tab.getTracks(), tab);
+		menu = new TrackMenu(BOUNDS_MENU, this, tab.getTracks(), tab);
 		grid = new PianoBox(PIANO_GRID, this, (PianoSteps)steps, piano, tab);
 		setLayout(null);
 		add(menu);

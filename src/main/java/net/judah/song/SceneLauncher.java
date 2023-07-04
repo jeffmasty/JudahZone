@@ -9,21 +9,22 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
 
+import net.judah.JudahZone;
 import net.judah.gui.Pastels;
 
 /** launch scenes */
-public class ScenesView extends JPanel {
-	private static final int ROWS = 2; // 3 rows allows 12 scenes
+public class SceneLauncher extends JPanel {
+	private static final int ROWS = 3; 
 	private static final int COLS = 4;
-	public static final int MAX = ROWS * COLS;
+	public static final int MAX = ROWS * COLS; // 12 Scenes
 	
 	private final Song song;
 	private final SongTab tab;
 	
-	public ScenesView(Song song, SongTab tab) {
+	public SceneLauncher(Song song, SongTab tab) {
 		this.song = song;
 		this.tab= tab;
-		setLayout(new GridLayout(ROWS, COLS, 4, 8));
+		setLayout(new GridLayout(ROWS, COLS, 1, 1));
 		fill();
 		setBackground(Color.WHITE);
 	}
@@ -34,26 +35,30 @@ public class ScenesView extends JPanel {
 		if (size > MAX)
 			size = MAX;
 		for (int i = 0; i < size; i++) 
-			add(new LaunchPad(song.getScenes().get(i), tab));
+			add(new ScenePad(song.getScenes().get(i), tab, i));
 		
 		if (size >= MAX) return;
-		JLabel create = new JLabel("CREATE");
-		create.setBorder(UIManager.getBorder("TitledBorder.border"));
-		create.addMouseListener(new MouseAdapter() {
-			@Override public void mouseClicked(MouseEvent e) {
-					tab.newScene();}});
-		create.setBackground(Pastels.BUTTONS);
-		create.setOpaque(true);
-		add(create);
+		if (JudahZone.getMains().isRecording() == false) { 
+			JLabel create = new JLabel("(Create)", JLabel.CENTER);
+			create.setBorder(UIManager.getBorder("TitledBorder.border"));
+			create.addMouseListener(new MouseAdapter() {
+				@Override public void mouseClicked(MouseEvent e) {
+						tab.newScene();}});
+			create.setBackground(Pastels.BUTTONS);
+			create.setOpaque(true);
+			add(create);
+			size++;
+		}
 		while (++size < MAX) 
 			add(new JLabel()); // filler
 		update();
+		doLayout();
 	}
 	
 	public void update(Scene s) {
 		for (int i = 0; i < getComponentCount(); i++) {
-			if (getComponent(i) instanceof LaunchPad) {
-				LaunchPad pad = (LaunchPad)getComponent(i);
+			if (getComponent(i) instanceof ScenePad) {
+				ScenePad pad = (ScenePad)getComponent(i);
 				if (pad.getScene() == s) {
 					pad.update();
 					pad.repaint();
@@ -62,11 +67,10 @@ public class ScenesView extends JPanel {
 		}
 	}
 	
-	
 	public void update() {
 		for (int i = 0; i < getComponentCount(); i++) {
-			if (getComponent(i) instanceof LaunchPad)
-				((LaunchPad)getComponent(i)).update();
+			if (getComponent(i) instanceof ScenePad)
+				((ScenePad)getComponent(i)).update();
 		}
 		repaint();
 	}

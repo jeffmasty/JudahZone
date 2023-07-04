@@ -1,4 +1,4 @@
-package net.judah.seq;
+package net.judah.seq.track;
 
 import java.awt.Dimension;
 import java.io.File;
@@ -15,7 +15,6 @@ import javax.swing.JPanel;
 import net.judah.gui.Gui;
 import net.judah.gui.widgets.FileChooser;
 import net.judah.gui.widgets.ModalDialog;
-import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 public class ImportMidi extends JPanel {
@@ -35,13 +34,16 @@ public class ImportMidi extends JPanel {
 	public ImportMidi(MidiTrack p, Sequence s) {
 		this.track= p;
 		trackDialog(s);
-		
 	}
 	
 	public ImportMidi(MidiTrack p) {
 		this.track = p;
 		// select and parse file
-		File f = FileChooser.choose(Folders.getImport(track.isDrums()));
+		File folder = track.isDrums() ? 
+			new File("/home/judah/tracks/beatbuddy/"):
+			new File("/home/judah/tracks/midi");
+
+		File f = FileChooser.choose(folder);
 		if (f == null) return;
 		try {
 			processSequence(f, -1);
@@ -54,6 +56,8 @@ public class ImportMidi extends JPanel {
 	private void processSequence(File f, int tracknum) throws Exception {
 		Sequence sequence = MidiSystem.getSequence(f);
 		Track[] tracks = sequence.getTracks();
+		if (tracks.length == 1)
+			tracknum = 0;
 		if (tracknum < 0 || tracknum >= tracks.length)
 			trackDialog(sequence);
 		else {

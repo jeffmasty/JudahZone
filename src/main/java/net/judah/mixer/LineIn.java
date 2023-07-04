@@ -4,6 +4,7 @@ import java.nio.FloatBuffer;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
 import net.judah.gui.widgets.GuitarTuner;
 import net.judah.util.AudioTools;
@@ -42,7 +43,9 @@ public abstract class LineIn extends Channel {
 	public void processFx(FloatBuffer mono) {
 		mono.rewind();
 		if (this == GuitarTuner.getChannel()){
-			MainFrame.update(AudioTools.copy(mono, bufSize));
+			float[] mem = JudahZone.getLooper().getMemory().getArray()[0];
+			AudioTools.copy(mono, bufSize, mem);
+			MainFrame.update(mem);
 		}
 		for (int z = 0; z < Constants.bufSize(); z++)
 			mono.put(mono.get(z) * factor);
@@ -74,7 +77,9 @@ public abstract class LineIn extends Channel {
 		right.rewind();
 		
 		if (this == GuitarTuner.getChannel()) {
-			MainFrame.update(AudioTools.copy(left, bufSize));
+			float[] mem = JudahZone.getLooper().getMemory().getArray()[0];
+			AudioTools.copy(left, bufSize, mem);
+			MainFrame.update(mem);
 		}
 
 		float l = amplification * (1 - gain.getStereo());

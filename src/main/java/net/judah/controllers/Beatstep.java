@@ -105,13 +105,13 @@ public class Beatstep implements Controller {
 		else if (midi.getCommand() == 240 && data1 == 127) { // start/stop btns to clock
 			if (getClock().isActive()) {
 				for (Loop l : getLooper())
-					if (l.hasRecording())
+					if (l.isPlaying())
 						l.setOnMute(true);
 				getClock().end();
 			}
 			else {
 				getClock().begin();
-				getLooper().head();
+				getLooper().rewind();
 			}
 		}
 		return true;

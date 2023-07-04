@@ -1,5 +1,6 @@
 package net.judah.seq.beatbox;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -12,9 +13,8 @@ import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
 import net.judah.gui.Gui;
-import net.judah.gui.Pastels;
-import net.judah.seq.MidiTrack;
 import net.judah.seq.MidiView;
+import net.judah.seq.track.MidiTrack;
 
 public class DrumMutes extends JPanel {
 	static UIDefaults def = new UIDefaults();
@@ -25,7 +25,6 @@ public class DrumMutes extends JPanel {
 	private final int rowHeight;
 	
 	private class Mute extends JToggleButton {
-
 		private final DrumType type;
 		Mute(DrumType type, int y) {
 			super(type.name());
@@ -77,7 +76,7 @@ public class DrumMutes extends JPanel {
 	public void update(DrumSample pad) {
 		for (DrumSample s : ((DrumKit)track.getMidiOut()).getSamples()) 
 			if (s == pad)
-				getComponent(s.getDrumType().ordinal()).setBackground(pad.isActive() ? Pastels.DRUM_PAD : null);
+				getComponent(s.getDrumType().ordinal()).setBackground(pad.isOnMute() ? Color.GRAY : null);
 	}
 	
 

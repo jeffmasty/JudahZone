@@ -3,9 +3,9 @@ package net.judah.seq.piano;
 import java.util.ArrayList;
 
 import net.judah.seq.MidiTab;
-import net.judah.seq.MidiTrack;
 import net.judah.seq.MidiView;
 import net.judah.seq.TrackList;
+import net.judah.seq.track.MidiTrack;
 
 public class PianoTab extends MidiTab {
 

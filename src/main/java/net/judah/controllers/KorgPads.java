@@ -76,7 +76,8 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		case 11:
 		case 12:
 			Loop onDeck = looper.get(data1 - 9);
-			/*if*/ doubleTap(onDeck); // double loop length
+			if (doubleTap(onDeck)) 
+				return true;
 			looper.onDeck(onDeck);
 			return true;
 			
@@ -153,17 +154,15 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 	private boolean doubleTap(Object o) {
 		if (tapTarget == o && System.currentTimeMillis() - lastPress < Constants.DOUBLE_CLICK) {
 			lastPress = 0;
-			if (o == getLooper())
-				((Looper)o).reset(); 
-			else if (o instanceof Integer)
-				getLooper().get((int)o).erase();
+			if (o instanceof Integer)
+				getLooper().get((int)o).clear();
 			else if (o instanceof Loop) {
 				Loop loop = (Loop)o;
 				Looper loops = getLooper(); 
 				if (loop == loops.getLoopA()) 
-					loops.reset();
-				else if (loop.hasRecording()) 
-					loop.duplicate();
+					loops.clear();
+				else if (loop.isPlaying()) 
+					loop.doubled();
 				else if (loop == loops.getLoopB()) 
 					loops.verseChorus();
 				else if (loop == loops.getLoopC()) 

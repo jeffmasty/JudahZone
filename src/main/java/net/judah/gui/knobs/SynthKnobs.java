@@ -5,6 +5,7 @@ import static net.judah.gui.Size.STD_HEIGHT;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 
@@ -62,7 +63,7 @@ public class SynthKnobs extends KnobPanel {
 	
 	private final JButton synthOne = new JButton(JudahSynth.NAMES[0]);
 	private final JButton synthTwo = new JButton(JudahSynth.NAMES[1]);
-	private final JPanel titleBar = new JPanel();
+	private final JPanel titleBar = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
 	
 	public SynthKnobs(JudahSynth zynth) {
 		
@@ -132,6 +133,8 @@ public class SynthKnobs extends KnobPanel {
 		synthTwo.addActionListener(e->MainFrame.setFocus(JudahZone.getSynth2().getSynthKnobs()));
 		titleBar.add(synthOne);
 		titleBar.add(synthTwo);
+		titleBar.add(new Btn(UIManager.getIcon("FileChooser.detailsViewIcon"), 
+				e->JudahZone.getFrame().edit(JudahZone.getSeq().byName(synth.getName()))));
 	}
 
 	@Override

@@ -6,6 +6,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 import net.judah.JudahZone;
+import net.judah.gui.Gui;
 import net.judah.gui.widgets.FileRender;
 import net.judah.song.Song;
 import net.judah.util.Constants;
@@ -18,6 +19,7 @@ public class SongsCombo extends SetCombo<File> {
 		super(JudahZone.getSetlists().getCurrent().array(), null);
 		setRenderer(new FileRender());
 		instances.add(this);
+		setFont(Gui.BOLD13);
 	}
 	
 	public static void refresh() {

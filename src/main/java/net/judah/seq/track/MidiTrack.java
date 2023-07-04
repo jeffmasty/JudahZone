@@ -1,9 +1,8 @@
-package net.judah.seq;
+package net.judah.seq.track;
 
 import static net.judah.midi.JudahClock.MIDI_24;
 
 import java.io.File;
-import java.util.ArrayList;
 
 import javax.sound.midi.*;
 
@@ -14,20 +13,20 @@ import net.judah.api.MidiReceiver;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
 import net.judah.drumkit.DrumKit;
+import net.judah.drumkit.DrumType;
+import net.judah.drumkit.GMDrum;
 import net.judah.gui.MainFrame;
-import net.judah.gui.settable.Bar;
-import net.judah.gui.settable.CueCombo;
-import net.judah.gui.settable.Cycle;
+import net.judah.gui.PlayWidget;
+import net.judah.gui.settable.CurrentCombo;
 import net.judah.gui.settable.Folder;
-import net.judah.gui.settable.Launch;
-import net.judah.gui.widgets.FileChooser;
-import net.judah.gui.widgets.GateCombo;
-import net.judah.gui.widgets.TrackVol;
+import net.judah.gui.widgets.*;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
 import net.judah.midi.Signature;
+import net.judah.seq.MidiConstants;
+import net.judah.seq.MidiTools;
 import net.judah.seq.arp.Arp;
 import net.judah.seq.arp.Mode;
 import net.judah.song.Sched;
@@ -47,11 +46,10 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 	private final MidiReceiver midiOut;
 	private final int ch;
 	private File file;
+	private long recent; // sequencer sweep
+	private Cue cue = Cue.Bar; 
 	Gate gate = Gate.SIXTEENTH;
- 	private Cue cue = Cue.Bar; 
-
 	private boolean onDeck; 
-	private final ArrayList<ShortMessage> actives = new ArrayList<>();
 	private final Arp arp;
 	
     /** ch = 0 or 9 (drumkit midiout) 
@@ -73,8 +71,7 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 		this.clock = clock;
 		s = new MidiFile(rez);
 		t = s.createTrack();
-		state = new Sched(isDrums());
-		barTicks = clock.getMeasure() * s.getResolution();
+		setBarTicks(clock.getMeasure() * s.getResolution());
 		arp = isSynth() ? new Arp(this) :  null;
 		clock.addListener(this);
     }
@@ -87,6 +84,12 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
     @Override public String toString() { return name; }
     public final boolean isDrums() { return ch == 9; }
     public final boolean isSynth() { return ch != 9; }
+    public void setResolution(int rez) { 
+    	s.setResolution(rez); 
+		setBarTicks(clock.getTimeSig().beats * rez);
+		compute();
+		MainFrame.update(this);
+    }
     public int getResolution() { return s.getResolution(); }
     public long getWindow() { return 2 * barTicks; }
 	public long getStepTicks() { return s.getResolution() / clock.getSubdivision(); }
@@ -100,38 +103,34 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 	}
 
     public void setState(Sched sched) {
-		count = 0;
+		count = JudahClock.isEven() ? 0 : 1;
+		offset = 0;
     	boolean previous = state.active;
-    	CYCLE old = state.cycle;
+    	Cycle old = state.cycle;
 		state = sched;
 		setAmp(sched.amp);
-		if (current != state.launch) {
-			setCurrent(state.launch);
-			if (isSynth())
-				playTo(0f);
-		}
+		if (old != state.cycle) 
+			CycleCombo.update(this);
+		if (current != sched.launch + count) 
+			setCurrent(sched.launch + count);
 		else 
 			compute();
-		if (old != state.cycle) 
-			Cycle.update(this);
-		if (previous != state.active && isSynth() && !state.active) 
-			Constants.execute(new Panic(midiOut, ch));
-		Launch.update(this);
+		if (previous != state.active) {
+			PlayWidget.update(this);
+			if (isSynth() && !state.active) {
+				arp.clear();
+				Constants.execute(new Panic(midiOut, ch));
+			}
+		}
     }
 	
-	public void setLaunch(int frame) {
-		if (state.launch == frame) return;
-		state.launch = frame;
-		Launch.update(this);
-		if (!state.active)
-			setCurrent(frame);
-	}
-
 	public void setActive(boolean on) {
 		onDeck = false;
+		if (JudahClock.isEven() != (count % 2 == 0))
+			cycle();
 		state.active = on;
 		if (!on && isSynth()) {
-			arp.clear();
+			if (state.mode != Mode.Off) arp.clear();
 			Constants.execute(new Panic(midiOut, ch));
 		}
 		MainFrame.update(this);
@@ -143,21 +142,20 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
     		RTLogger.warn(this, "Track vol: " + amp);
     		return;
     	}
-    	TrackVol.update(this);
+    	Constants.execute(()->{
+    		TrackAmp.update(this);
+    		TrackVol.update(this);});
     }
 
 	@Override
-	public void setCurrent(int change) {
+	protected void setCurrent(int change) {
 		if (current == change) return;
 		if (change < 0) 
 			change = JudahClock.isEven() ? 0 : 1;
-		if (isSynth())
-			flush();
 		recent = change * barTicks + (recent - current * barTicks);
 		current = change;
 		compute();
 		MainFrame.update(this);
-		Bar.update(this);
 	}
 
     public void playTo(float percent) {
@@ -186,7 +184,9 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 		}
     }
     
-	private void flush() { // mode check?
+	@Override
+	protected void flush() { // mode check?
+		if (isDrums()) return;
 		long end = (current + 1) * barTicks;
 		for (int i = 0; i < t.size(); i++) {
 			MidiEvent e = t.get(i);
@@ -200,19 +200,19 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
     @Override
 	public void update(Property prop, Object value) {
 		if (prop == Property.BARS) {
-			if (state.active) 
+			if ((int)value == 0)
+				reset();
+			else if (state.active) 
 				cycle();
-			else if (onDeck && cue == Cue.Bar) {
+			else if (onDeck && cue == Cue.Bar) 
 				setActive(true);
-			}
 		}
 		else if (prop == Property.SIGNATURE) {
 			barTicks = s.getResolution() * ((Signature)value).beats; 
 			init();
 		}
-		else if (onDeck && prop == Property.LOOP) {
+		else if (prop == Property.LOOP && onDeck && cue == Cue.Loop) 
 			setActive(true);
-		}
 		else if (prop == Property.TRANSPORT) {
 			if (value == JackTransportState.JackTransportStopped && isActive())
 				new Panic(midiOut, ch).run();
@@ -220,53 +220,11 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 				init();
 		}
 	}
-    
-//	/** copy measure to end of track */
-//	public void copyFrame(int frame) {
-//		long start = frame * getWindow();
-//		ArrayList<MidiEvent> work = new ArrayList<>();
-//		MidiTools.loadSection(start, start + getWindow(), t, work);
-//		long transfer = frames() * getWindow();
-//		for (MidiEvent e : work)
-//			if (e.getMessage() instanceof ShortMessage)
-//				t.add(new MidiEvent(Midi.copy((ShortMessage)e.getMessage()), e.getTick() + transfer));
-//		setFrame(frames());
-//		MainFrame.update(this);
-//	}
-//
-//	/** remove notes and update state */
-//	public void deleteFrame(int frame) {
-//		long start = frame * getWindow();
-//		long end = start + getWindow();
-//		long subtract = getWindow();
-//		for (int i = 0; i < t.size(); i++) {
-//			MidiEvent e = t.get(i);
-//			if (e.getTick() < start) continue;
-//			if (e.getTick() >= end)
-//				e.setTick(e.getTick() - subtract);
-//			else {
-//				t.remove(e);
-//				i--;
-//			}
-//		}
-//		
-//		if (getFrame() > frame)
-//			setFrame(getFrame() - 1);
-//		else if (getFrame() == frame) {
-//			if (getFrame() - 1 < 0)
-//				setFrame(0);
-//			else setFrame(getFrame() - 1);
-//		}
-//		compute();
-//		MainFrame.update(this);
-//	}
 	
 	public void setGate(Gate gate2) {
 		gate = gate2;
 		GateCombo.refresh(this);
 	}
-
-
 	
 	public final void setCue(Cue cue) {
 		this.cue = cue;
@@ -284,11 +242,9 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 			for (int i = t.size() -1; i >= 0; i--)
 				t.remove(t.get(i));
 		}
-		init();
-		s.setResolution(MIDI_24);
-		barTicks = clock.getTimeSig().beats * s.getResolution();
 		setFile(null);
-		MainFrame.update(this);
+		init();
+		setResolution(MIDI_24);
 	}
 	
 	public File getFolder() {
@@ -345,18 +301,43 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 	public void importTrack(Track incoming, int rez) {
 		for (int i = t.size() -1; i >= 0; i--)
 			t.remove(t.get(i)); // clear
-		Constants.execute(new Panic(midiOut, ch));
-		if (isSynth())
+		if (isSynth()) {
 			arp.clear();
+			Constants.execute(new Panic(midiOut, ch));
+		}
 		
-		s.setResolution(rez);
-		this.barTicks = clock.getTimeSig().beats * rez;
-		// notes
-		for (int i = 0; i < incoming.size(); i++) 
-			t.add(incoming.get(i));
-		
+		setResolution(rez);
+
+		if (isDrums()) {
+			for (int i = 0; i < incoming.size(); i++) {
+				MidiEvent e = incoming.get(i);
+				if (Midi.isNoteOn(e.getMessage())) {
+					int data1 = ((ShortMessage)e.getMessage()).getData1();
+					if (DrumType.index(data1) >= 0) 
+						t.add(e);
+					else if (DrumType.alt(data1) < 0) {
+						int newVal = data1 % 6 + 2; // skip bass and snare
+						ShortMessage orig = (ShortMessage)e.getMessage();
+						t.add(new MidiEvent(Midi.create(
+								orig.getCommand(), orig.getChannel(), DrumType.values()[newVal].getData1(), orig.getData2()), e.getTick()));
+						RTLogger.log(this, "remap'd " + data1 + " " + GMDrum.lookup(data1) + " to " + DrumType.values()[newVal]);
+					}
+					else {
+						ShortMessage orig = (ShortMessage)e.getMessage();
+						t.add(new MidiEvent(Midi.create(
+								orig.getCommand(), orig.getChannel(), DrumType.alt(data1), orig.getData2()), e.getTick()));
+					}
+				} // else t.add(e);
+			}
+		} else {
+			for (int i = 0; i < incoming.size(); i++) 
+				t.add(incoming.get(i));
+		}
 		count = 0;
 		setCurrent(0);
+		CurrentCombo.update(this);
+		MainFrame.update(this);
+		
 	}
 
 	public MidiEvent get(int cmd, int data1, long tick) {
@@ -374,8 +355,6 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 	}
 
 	public void trigger() {
-		
-		setCurrent(state.launch);
 		if (!clock.isActive()) 
 			setActive(!isActive());
 		else if (isActive()) {
@@ -384,11 +363,10 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 			setActive(true);
 		else {
 			onDeck = !onDeck;
-			MainFrame.update(this);
 		}
+		MainFrame.update(this);
 	}
 	
-	// TODO odd/swing subdivision
 	public long quantize(long tick) {
 		int resolution = s.getResolution();
 		if (clock.getTimeSig().div == 3 && (gate == Gate.SIXTEENTH || gate == Gate.EIGHTH))
@@ -411,9 +389,11 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 
 	public long quantizePlus(long tick) {
 		int resolution = s.getResolution();
+		boolean swing = clock.getTimeSig().div == 3;
+		
 		switch(gate) {
-		case SIXTEENTH: return quantize(tick) + (resolution / 4);
-		case EIGHTH:	return quantize(tick) + (resolution / 2);
+		case SIXTEENTH: return quantize(tick) + (swing ? resolution / 6 : resolution / 4);
+		case EIGHTH:	return quantize(tick) + (swing ? resolution / 3 : resolution / 2);
 		case QUARTER:	return quantize(tick) + (resolution);
 		case HALF:		return quantize(tick) + (2 * resolution);
 		case WHOLE: 	return quantize(tick) + (4 * resolution);
@@ -427,13 +407,12 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 		if (gate == Gate.SIXTEENTH) 
 			return tick - tick % (resolution / 6);
 		return tick - tick % (resolution / 3);
-		
 	}
 
-	public void next(boolean fwd) {
-		setCurrent(fwd ? after(after(current)) : before(before(current)));
+	@Override public void next(boolean fwd) {
 		if (isSynth())
 			arp.clear();
+		super.next(fwd);
 	}
 
 }

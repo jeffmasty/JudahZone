@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 import net.judah.gui.widgets.FileRender;
-import net.judah.seq.MidiTrack;
+import net.judah.seq.track.MidiTrack;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
 

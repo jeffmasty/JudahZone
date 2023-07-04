@@ -17,8 +17,8 @@ import net.judah.gui.Pastels;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.seq.MidiTab;
-import net.judah.seq.MidiTrack;
 import net.judah.seq.beatbox.BeatsSize;
+import net.judah.seq.track.MidiTrack;
 
 public class Piano extends JPanel implements BeatsSize, MouseListener, MouseMotionListener {
 

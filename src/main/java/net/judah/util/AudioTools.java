@@ -2,6 +2,8 @@ package net.judah.util;
 
 import java.nio.FloatBuffer;
 
+import net.judah.looper.Recording;
+
 public class AudioTools  {
 
 
@@ -16,18 +18,17 @@ public class AudioTools  {
 	 * @param overdub
 	 * @param oldLoop*/
 	public static float[][] overdub(float[][] overdub, float[][] oldLoop) {
-		float[][] channels = new float[oldLoop.length][];
-		float[] in, out, result;
+//		float[][] channels = new float[oldLoop.length][];
+		float[] in, out;//, result;
 		for (int channel = 0; channel < oldLoop.length; channel++) {
 			in = overdub[channel];
 			out = oldLoop[channel];
-			result = new float[out.length];
-			for (int x = 0; x < out.length; x++) {
-				result[x] = in[x] + out[x];
-			}
-			channels[channel] = result;
+			//result = new float[out.length]; // malloc
+			for (int x = 0; x < out.length; x++) 
+				out[x] = in[x] + out[x];
+//			channels[channel] = result;
 		}
-		return channels;
+		return oldLoop;
 	}
 	
 	/** MIX in and out with gain applied to the input*/
@@ -82,14 +83,32 @@ public class AudioTools  {
 		return out;
 	}
 
-	// malloc()
-	public static float[] copy(FloatBuffer in, int bufSize) {
+	public static void copy(FloatBuffer in, int bufSize, float[] result) {
 		in.rewind();
-		float[] result = new float[bufSize];
 		for (int i = 0 ; i < bufSize; i++) 
 			result[i] = in.get();
 		in.rewind();
-		return result;
+	}
+
+	public static void silence(Recording recording) {
+		for (int frame = 0; frame < recording.size(); frame++) 
+			for (int channel = 0; channel < recording.get(frame).length; channel++) 
+				zero(recording.get(frame)[channel]);
+	}
+
+	public static void silence(Recording recording, Integer end) {
+		if (end == null || end == 0)
+			return;
+		if (end > recording.size())
+			end = recording.size();
+		for (int frame = 0; frame < end; frame++) 
+			for (int ch = Constants.LEFT; ch < recording.get(frame).length; ch++) 
+				zero(recording.get(frame)[ch]);
+	}
+	
+	private static void zero(float[] channel) {
+		for (int i = 0; i < channel.length; i++)
+			channel[i] = 0;
 	}
 	
 }

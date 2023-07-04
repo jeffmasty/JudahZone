@@ -19,10 +19,10 @@ import net.judah.midi.Signature;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiPair;
-import net.judah.seq.MidiTrack;
 import net.judah.seq.MidiView;
 import net.judah.seq.Steps;
 import net.judah.seq.beatbox.BeatsSize;
+import net.judah.seq.track.MidiTrack;
 
 public class PianoSteps extends Steps implements BeatsSize, MouseMotionListener, MouseListener {
 

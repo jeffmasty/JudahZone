@@ -28,7 +28,7 @@ import net.judah.util.RTLogger;
 @Getter // Wishlist: portamento/glide, LFOs, PWM, mono-synth, true stereo
 public class JudahSynth extends LineIn implements Engine, Knobs {
 	public static final String[] NAMES = {"S.One", "S.Two"};
-	public static final int POLYPHONY = 16;
+	public static final int POLYPHONY = 24;
 	public static final int DCO_COUNT = 3;
 	public static final int ZERO_BEND = 8192;
 	

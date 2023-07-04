@@ -16,7 +16,7 @@ import javax.swing.event.ChangeListener;
  * @author Tsukino, Fumino and Jeff Masty (Nov 28, 2021) */
 public class RainbowFader extends JSlider {
 
-	public static final Dimension MINIMUM = new Dimension(30, 64);
+	public static final Dimension MINIMUM = new Dimension(32, 66);
 	public static final int THUMB_WIDTH = 15; 
 	public static final int THUMB_HEIGHT = 25; 
 

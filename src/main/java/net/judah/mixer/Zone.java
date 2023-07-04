@@ -2,6 +2,7 @@ package net.judah.mixer;
 
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
+import java.util.Vector;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +11,7 @@ import net.judah.song.Cmdr;
 import net.judah.song.Param;
 
 @RequiredArgsConstructor
-public class Zone extends ArrayList<LineIn> implements Cmdr {
+public class Zone extends Vector<LineIn> implements Cmdr {
 
 	@Getter private final ArrayList<Instrument> instruments = new ArrayList<>();
 	@Getter private String[] keys;

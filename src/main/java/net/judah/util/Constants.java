@@ -12,18 +12,19 @@ import lombok.Getter;
 
 public class Constants {
 	private static final ClassLoader loader = Constants.class.getClassLoader();
-	private static final ExecutorService threads = Executors.newFixedThreadPool(32);
+	private static final ExecutorService threads = Executors.newFixedThreadPool(48);
 
 	// TODO generalize
 	public static int sampleRate() { return 48000; }
 	public static int bufSize() { return 512; } //TODO 256
+	public static float fps() { return sampleRate() / (float)bufSize(); }
 	public static final float TUNING = 440;
 	/** Digital Interface name */
 	@Getter static String di = "UMC1820 MIDI 1"; //return "Komplete ";
 	public static final float TO_100 = 0.7874f; // 127 <--> 100
 	
-    public static final int LEFT_CHANNEL = 0;
-	public static final int RIGHT_CHANNEL = 1;
+    public static final int LEFT = 0;
+	public static final int RIGHT = 1;
 	public static final int STEREO = 2;
 	public static final int MONO = 1;
 
@@ -97,34 +98,6 @@ public class Constants {
 		return (int) (data2 / (100 / (float)size));
 	}
 
-	/**@param supplied buffer
-	 * @param pos
-	 * @param numBytes
-	 * @return little endiean data to long from pos in the supplied buffer */
-	public static long getLE(byte[] buffer, int pos, int numBytes) {
-		numBytes --;
-		pos += numBytes;
-
-		long val = buffer[pos] & 0xFF;
-		for (int b=0 ; b<numBytes ; b++) 
-			val = (val << 8) + (buffer[--pos] & 0xFF);
-
-		return val;
-	}
-
-	/**put val as little endian at pos in supplied buffer
-	 * @param val
-	 * @param buffer
-	 * @param pos
-	 * @param numBytes */
-	public static void putLE(long val, byte[] buffer, int pos, int numBytes) {
-		for (int b=0 ; b<numBytes ; b++) {
-			buffer[pos] = (byte) (val & 0xFF);
-			val >>= 8;
-			pos ++;
-		}
-	}
-
     /** see https://stackoverflow.com/a/846249 */ 	
 	public static float logarithmic(int percent, float min, float max) {
 		
@@ -162,12 +135,10 @@ public class Constants {
 	    		r.run();}
 	    	).start();
 	    });
-	    
 	}
 
 	public static void execute(Runnable r) {
 		threads.execute(r);
 	}
-	
 	
 }

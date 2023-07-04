@@ -21,10 +21,7 @@ public class FxPanel extends JPanel {
         placeholder.setBorder(new LineBorder(Pastels.MY_GRAY, 3));
         add(placeholder);
         doLayout();
-        Channel main = JudahZone.getMains();
-        main.getGui();
-        JudahZone.getGuitar().getGui();
-        setFocus(main);
+        setFocus(JudahZone.getMains());
     }
 
     public void addFocus(Channel ch) {

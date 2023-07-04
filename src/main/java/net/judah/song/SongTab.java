@@ -1,45 +1,50 @@
 package net.judah.song;
 
-import static net.judah.JudahZone.*;
 import static net.judah.gui.Size.TAB_SIZE;
 
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
+import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
+import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
-import net.judah.seq.MidiTrack;
+import net.judah.mixer.DJJefe;
 import net.judah.seq.Seq;
 import net.judah.seq.TrackList;
 import net.judah.seq.chords.ChordView;
+import net.judah.seq.track.MidiTrack;
 import net.judah.song.setlist.Setlists;
 import net.judah.util.RTLogger;
 
 /** left: SongView, right: midi tracks list*/
 @Getter
 public class SongTab extends JPanel implements TimeListener, Cmdr {
-	private static final Dimension listSz = new Dimension((int) (TAB_SIZE.width * 0.60f), TAB_SIZE.height - 30);
-	private static final Dimension sceneSz = new Dimension((int) (TAB_SIZE.width * 0.39f), TAB_SIZE.height);
-	private static final Dimension props = new Dimension((int)(Size.WIDTH_TAB * 0.35f), (int)(Size.HEIGHT_TAB * 0.27f));
-	private static final Dimension btns = new Dimension((int)(Size.WIDTH_TAB * 0.38f), (int)(Size.WIDTH_TAB * 0.27f));
 
-	
+	private static final Dimension SCENE_SZ = new Dimension((int) (TAB_SIZE.width * 0.379), TAB_SIZE.height - 14);
+	private static final Dimension LIST_SZ = new Dimension((int) (TAB_SIZE.width * 0.62), SCENE_SZ.height - 14);
+	private static final Dimension props = new Dimension((int)(Size.WIDTH_TAB * 0.33), (int)(SCENE_SZ.height * 0.2));
+	private static final Dimension BTNS = new Dimension((int)(Size.WIDTH_TAB * 0.365), (int)(SCENE_SZ.height * 0.66));
+
 	private final JudahClock clock;
+	private final Seq seq;
+	private final Looper looper;
+	private final DJJefe mixer;
 	private Song song;
 	private Scene current;
 	private Scene onDeck;
@@ -48,43 +53,33 @@ public class SongTab extends JPanel implements TimeListener, Cmdr {
 	private SongView songView;
 	private final SongTitle songTitle;
 	private final ArrayList<SongTrack> tracks = new ArrayList<>();
-	private final JPanel holder = new JPanel();
+	private final JPanel holder = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+	private final JPanel trackPnl = new JPanel();
 
-	public SongTab(JudahClock clock, ChordView chords, Setlists setlists) {
+	public SongTab(JudahClock clock, ChordView chords, Setlists setlists, Seq seq, Looper looper, DJJefe mixer) {
 		this.clock = clock;
+		this.seq = seq;
+		this.looper = looper;
+		this.mixer = mixer;
 		clock.addListener(this);
-		setPreferredSize(TAB_SIZE);
-
-		holder.setMinimumSize(sceneSz);
-		JPanel trackPnl = new JPanel();
-		trackPnl.setLayout(new BoxLayout(trackPnl, BoxLayout.PAGE_AXIS));
-		trackPnl.setPreferredSize(listSz);
-		trackPnl.setMinimumSize(listSz);
-		trackPnl.setOpaque(true);
-		getSeq().getTracks().forEach(track-> tracks.add(new SongTrack(track)));
 		songTitle = new SongTitle(clock, setlists);
+		trackPnl.setOpaque(true);
+		seq.getTracks().forEach(track-> tracks.add(new SongTrack(track)));
+		trackPnl.setLayout(new GridLayout(tracks.size() + 2, 1));
+		
+		Gui.resize(this, TAB_SIZE);
+		Gui.resize(trackPnl, LIST_SZ);
+		Gui.resize(holder, SCENE_SZ);
+		holder.setBorder(BorderFactory.createLineBorder(Pastels.FADED));
+		
 		trackPnl.add(songTitle);
-		// trackPnl.add(labels(listSz));
-		for (int i = 0; i < 4; i++)
+		for (int i = 0; i < tracks.size(); i++)
 			trackPnl.add(tracks.get(i));
 		trackPnl.add(chords);
-		for (int i = 4; i < tracks.size(); i++)
-			trackPnl.add(tracks.get(i));
-
+		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		add(trackPnl);
 		add(holder);
 		setName(JudahZone.JUDAHZONE);
-		
-	}
-	
-	@SuppressWarnings("unused")
-	private JPanel labels(Dimension sz) {
-		ArrayList<String> lbls = new ArrayList<>(Arrays.asList(new String[]
-			{"Track    ", "Arp/Vol", "     File", "  ", "Preset", "", "Cycle", "Init ", "Edit  ", " Current", "Amp"}));
-		JPanel result = new JPanel(new GridLayout(0, lbls.size()));
-		result.setBackground(Pastels.BUTTONS);
-		lbls.forEach(name->result.add(new JLabel(name, JLabel.CENTER)));
-		return result;
 	}
 	
 	public void setSong(Song next) {
@@ -92,12 +87,13 @@ public class SongTab extends JPanel implements TimeListener, Cmdr {
 		setName(song.getFile() == null ? JudahZone.JUDAHZONE : song.getFile().getName());
 		songTitle.setSong(next);
 		songTitle.update();
-
+		
 		holder.removeAll();
-		songView = new SongView(song, this, props, btns);
+		songView = new SongView(song, this, props, BTNS);
 		holder.add(songView);
 		if (song.getScenes().isEmpty())
-			song.getScenes().add(new Scene(getSeq()));
+			song.getScenes().add(new Scene(seq));
+		repaint();
 		launchScene(song.getScenes().get(0));
 		keys();
 	}
@@ -152,7 +148,7 @@ public class SongTab extends JPanel implements TimeListener, Cmdr {
 		if (next < song.getScenes().size()) 
 			setOnDeck(song.getScenes().get(next));
 		else 
-			getLooper().verseChorus();
+			looper.verseChorus();
 	}
 	
 	/** @return true on valid Jump cmd */
@@ -204,7 +200,7 @@ public class SongTab extends JPanel implements TimeListener, Cmdr {
 			onDeck = null;
 		else if (scene.getType() == Trigger.HOT)
 			launchScene(scene);
-		else if (onDeck == scene)  // force
+		else if (onDeck == scene || !clock.isActive())  // force
 			launchScene(scene);
 		else {
 			onDeck = scene;
@@ -215,27 +211,25 @@ public class SongTab extends JPanel implements TimeListener, Cmdr {
 	
 	public void launchScene(Scene s) {
 		onDeck = null;
+		clock.reset();
 		// commands
 		for (Param p : s.getCommands())
-			if (runParam(p)) // true = Jump Cmd
+			if (runParam(p) && clock.isActive()) // true = Jump Cmd
 				return;
 		current = s;
 		// track state
-		Seq seq = getSeq();
 		TrackList tracks = seq.getTracks();
 		for (int i = 0; i < current.getTracks().size(); i++)
 			if (tracks.size() > i)
 				seq.getTracks().get(i).setState(current.getTracks().get(i));
 		List<String> fx = current.getFx();
-		for (Channel ch : getMixer().getChannels()) {
+		for (Channel ch : mixer.getChannels()) {
 			if (fx.contains(ch.getName())) {
 				if (!ch.isPresetActive())
 					ch.setPresetActive(true);
 			}
-			else {
-				if (ch.isPresetActive())
+			else if (ch.isPresetActive())
 					ch.setPresetActive(false);
-			}
 		}
 		MainFrame.setFocus(current);
 	}

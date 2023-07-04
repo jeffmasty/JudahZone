@@ -174,7 +174,7 @@ public class PianoBox extends MusicBox implements BeatsSize {
 					off.setTick(temp);
 					// RTLogger.log(this, "swapping " + off.getTick() + " to " + on.getTick());				
 				}
-				off.setTick(-1 + track.quantizePlus(tick));
+				off.setTick(track.quantizePlus(tick));
 				MidiEvent start = Midi.createEvent(click.getTick(), NOTE_ON, 
 						track.getCh(), click.getData1(), (int) (track.getAmp() * 127f));
 				push(new Edit(Type.NEW, new MidiPair(start, off)));

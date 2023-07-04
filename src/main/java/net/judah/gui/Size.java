@@ -4,23 +4,24 @@ import java.awt.Dimension;
 
 public interface Size {
 
-    int STD_HEIGHT = 24;
 	int WIDTH_FRAME = 1366;
     int WIDTH_KNOBS = 346;
-    int WIDTH_TAB = WIDTH_FRAME - WIDTH_KNOBS - 12; 
+    int WIDTH_TAB = WIDTH_FRAME - WIDTH_KNOBS - 2; 
     int HEIGHT_FRAME = 734;
     int HEIGHT_KNOBS = 260;
-    int HEIGHT_MIXER = 152;
+    int HEIGHT_MIXER = 150;
     int HEIGHT_TAB = HEIGHT_FRAME - HEIGHT_MIXER;
 
     Dimension TAB_SIZE = new Dimension(WIDTH_TAB, HEIGHT_TAB);
     Dimension KNOB_PANEL = new Dimension(WIDTH_KNOBS - 2, HEIGHT_KNOBS - 2);
-    Dimension MIXER_SIZE = new Dimension(WIDTH_FRAME - WIDTH_KNOBS, HEIGHT_MIXER);
-    
-    Dimension WIDE_SIZE = new Dimension(125, 27);
-    Dimension COMBO_SIZE = new Dimension(100, 27);
-    Dimension MEDIUM_COMBO = new Dimension(85, Size.STD_HEIGHT);
-    Dimension SMALLER_COMBO = new Dimension(67, 27);
-    Dimension MICRO = new Dimension(50, 23);
+    Dimension MIXER_SIZE = new Dimension(WIDTH_TAB, HEIGHT_MIXER);
+
+    int STD_HEIGHT = 26;
+    Dimension WIDE_SIZE = new Dimension(120, STD_HEIGHT);
+    Dimension COMBO_SIZE = new Dimension(100, STD_HEIGHT);
+    Dimension MEDIUM_COMBO = new Dimension(82, STD_HEIGHT);
+    Dimension SMALLER_COMBO = new Dimension(66, STD_HEIGHT);
+    Dimension MICRO = new Dimension(51, STD_HEIGHT);
+	Dimension MODE_SIZE = new Dimension(70, STD_HEIGHT);
 
 }

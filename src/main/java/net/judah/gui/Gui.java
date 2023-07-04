@@ -40,7 +40,7 @@ public interface Gui {
 	}
 	
 	static JPanel wrap(Component... items) {
-		JPanel result = new JPanel();
+		JPanel result = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
 		for (Component p : items)
 			result.add(p);
 		return result;

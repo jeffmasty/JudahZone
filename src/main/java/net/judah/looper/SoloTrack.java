@@ -5,9 +5,7 @@ import org.jaudiolibs.jnajack.JackPort;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.api.AudioMode;
 import net.judah.gui.MainFrame;
-import net.judah.midi.JudahClock;
 import net.judah.mixer.LineIn;
 import net.judah.mixer.Zone;
 import net.judah.song.BooleanProvider;
@@ -22,9 +20,9 @@ public class SoloTrack extends Loop implements Cmdr {
     private boolean muteStash = true;
     private LineIn soloTrack;
     
-    public SoloTrack(LineIn soloTrack, Looper looper, Zone sources, String icon, JudahClock clock,
-    		JackPort l, JackPort r) {
-        super(NAME, looper, sources, icon, Type.DRUMTRACK, clock, l, r);
+    public SoloTrack(LineIn soloTrack, Looper looper, Zone sources, 
+    		JackPort l, JackPort r, Memory mem) {
+        super(NAME, "LoopD.png", Type.DRUMTRACK, looper, sources, l, r, mem);
         this.soloTrack = soloTrack;
     }
 
@@ -36,7 +34,7 @@ public class SoloTrack extends Loop implements Cmdr {
         }
         else {
         	type = Type.DRUMTRACK;
-        	clock.syncDown(this);
+        	looper.syncDown(this);
             soloTrack.setMuteRecord(muteStash);
         }
         MainFrame.update(this);
@@ -79,21 +77,20 @@ public class SoloTrack extends Loop implements Cmdr {
 	 * then start a FREE loop and sync clock's tempo to it */
 	public void beatboy() {
 		if (looper.getOnDeck().contains(this) == false) return;
-		if (isRecording.get() != AudioMode.NEW) return;
+		if (isPlaying()) return;
 		type = Type.FREE;
 		looper.getOnDeck().remove(this);
 		record(true);
 	}
 	
-	@Override
-	protected void endRecord() {
-		super.endRecord();
-		if (type == Type.FREE) {
-			type = Type.DRUMTRACK;
-			clock.syncToLoop();
-			clock.begin();
-		}
-			
-	}
+//	@Override
+//	protected void endRecord() {
+//		super.endRecord();
+//		if (type == Type.FREE) {
+//			type = Type.DRUMTRACK;
+//			clock.syncToLoop();
+//			clock.begin();
+//		}
+//	}
 	
 }

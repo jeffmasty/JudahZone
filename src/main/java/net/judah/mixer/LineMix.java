@@ -35,7 +35,7 @@ public class LineMix extends MixWidget {
 	public void updateVolume() {
 		super.updateVolume();
 		if (!in.isMuteRecord())
-			volume.setBackground(BLUE);
+			volume.setBackground(ONTAPE);
 	}
 	
 	@Override
@@ -45,7 +45,7 @@ public class LineMix extends MixWidget {
 		if (channel.isOnMute())  // line in/master track 
 			bg = Color.BLACK;
 		else if (quiet())
-			bg = Color.DARK_GRAY;
+			bg = Color.GRAY;
 		
 		if (soloTrack.isSolo() && soloTrack.getSoloTrack() == in)
 			sync.setBackground(YELLOW);
@@ -54,7 +54,7 @@ public class LineMix extends MixWidget {
 
 		sync.setSelected(in == soloTrack.getSoloTrack());
 		mute.setSelected(!in.isMuteRecord());
-		mute.setBackground(mute.isSelected() ? BLUE : null);
+		mute.setBackground(mute.isSelected() ? ONTAPE : null);
 		return bg;
 	}
 
