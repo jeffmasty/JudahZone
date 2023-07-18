@@ -143,8 +143,10 @@ public class Midi extends ShortMessage {
 		return msg != null && msg.getStatus() - ((ShortMessage)msg).getChannel() == NOTE_ON;
 	}
 	
-	public static boolean isNoteOff(ShortMessage msg) {
-		return msg != null && msg.getStatus() - msg.getChannel() == NOTE_OFF;
+	public static boolean isNoteOff(MidiMessage msg) {
+		if (msg instanceof ShortMessage )
+			return msg != null && msg.getStatus() - ((ShortMessage)msg).getChannel() == NOTE_OFF;
+		return msg != null && msg.getStatus() == NOTE_OFF;
 	}
 	
 	public static boolean isNote(MidiMessage msg) {

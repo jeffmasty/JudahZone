@@ -3,6 +3,7 @@ package net.judah.gui.knobs;
 import static net.judah.fx.Compressor.Settings.*;
 
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 
@@ -15,15 +16,19 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.fx.Compressor;
 import net.judah.fx.LFO;
+import net.judah.fx.LFO.Target;
 import net.judah.gui.Gui;
-import net.judah.gui.MainFrame;
+import net.judah.gui.Size;
+import net.judah.gui.fx.FxTrigger;
 import net.judah.gui.fx.Row;
 import net.judah.gui.fx.RowLabels;
+import net.judah.gui.fx.TimePanel;
 import net.judah.gui.settable.LfoCombo;
 import net.judah.gui.widgets.FxButton;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.gui.widgets.GuitarTuner;
 import net.judah.mixer.Channel;
+import net.judah.util.Constants;
 import net.judah.util.KeyPair;
 
 public class LFOKnobs extends KnobPanel {
@@ -38,20 +43,25 @@ public class LFOKnobs extends KnobPanel {
     private final LfoCombo lfoCombo;
     @Getter private final GuitarTuner tuner = new GuitarTuner();
     private final JToggleButton tunerBtn = new JToggleButton("Tuner");
-    private final ArrayList<RowLabels> labels = new ArrayList<>();
+    private final ArrayList<Row> labels = new ArrayList<>();
     private final Row row;
 
     public LFOKnobs(final Channel ch) {
-    	super("extras");
     	this.channel = ch;
     	this.comp = channel.getCompression();
     	this.lfo = channel.getLfo();
 
     	lfoCombo = new LfoCombo(channel);
-    	KeyPair blankLfo = new KeyPair(" ", channel.getLfo());
+    	LFO lfoFx = channel.getLfo();
+    	
+    	Row lfoLbl = new Row(ch);
+    	ArrayList<Component> components = lfoLbl.getControls();
+    	components.add(new FxTrigger(" ", lfoFx, ch));  // blank
+    	components.add(new FxTrigger("LFO", lfoFx, ch));
+    	components.add(new FxTrigger("Target", channel.getLfo(), ch));
+    	components.add(new TimePanel(lfoFx));
+    			
     	KeyPair blankComp = new KeyPair(" ", channel.getCompression());
-    	RowLabels lfoLbl = new RowLabels(channel, blankLfo, new KeyPair("LFO", channel.getLfo()), blankLfo, 
-    			new KeyPair("Target", channel.getLfo()));
     	RowLabels compLbl = new RowLabels(channel, blankComp, new KeyPair("Compressor", channel.getCompression()), blankComp, blankComp);
     	
     	row = new Row(channel);
@@ -59,8 +69,8 @@ public class LFOKnobs extends KnobPanel {
     	
     	knobs.add(new FxKnob(channel, lfo, LFO.Settings.Min.ordinal(), "Min"));
     	knobs.add(new FxKnob(channel, lfo, LFO.Settings.Max.ordinal(), "Max"));
-    	knobs.add(new FxKnob(channel, lfo, LFO.Settings.MSec.ordinal(), "Time"));
     	knobs.add(lfoCombo);
+    	knobs.add(new FxKnob(channel, lfo, LFO.Settings.MSec.ordinal(), "Time"));
 
     	for (Component c : lfoLbl.getControls())
 			lfoPanel.add(c);
@@ -70,9 +80,9 @@ public class LFOKnobs extends KnobPanel {
     	labels.add(lfoLbl);
     	labels.add(compLbl);
     	
-    	knobs.add(new FxKnob(channel, comp, Ratio.ordinal(), "Ratio"));
 		knobs.add(new FxKnob(channel, comp, Threshold.ordinal(), "THold"));
 		knobs.add(new FxKnob(channel, comp, Boost.ordinal(), "Gain"));
+    	knobs.add(new FxKnob(channel, comp, Ratio.ordinal(), "Ratio"));
 		knobs.add(new FxKnob(channel, comp, Release.ordinal(), "A/R"));
 		for (Component c : compLbl.getControls())
 			compressor.add(c);
@@ -83,6 +93,7 @@ public class LFOKnobs extends KnobPanel {
 		
 		add(lfoPanel);
 		add(compressor);
+		add(Box.createVerticalGlue());
     	JPanel tunerPnl = new JPanel();
 		tunerBtn.setSelected(false);
 		tunerBtn.addChangeListener(e -> {
@@ -91,11 +102,9 @@ public class LFOKnobs extends KnobPanel {
 		tunerPnl.add(tunerBtn);
 		tunerPnl.add(tuner);
     	
-    	add(tunerPnl);
+    	add(Gui.resize(tunerPnl, new Dimension(Size.WIDTH_KNOBS - 10, 150)));
     	add(Box.createVerticalGlue());
-    	doLayout();
     	update();
-    	
     }
     
     @Override
@@ -116,23 +125,26 @@ public class LFOKnobs extends KnobPanel {
     		lfo.set(LFO.Settings.MSec.ordinal(), data2);
     		break;
     	case 3:
-    		lfo.set(LFO.Settings.Target.ordinal(), data2);
-    		MainFrame.update(this);
+    		Target target = (Target)Constants.ratio(data2, Target.values());
+    		if (lfo.isActive())
+    			lfoCombo.midiShow(target);
+    		else 
+    			lfo.set(LFO.Settings.Target.ordinal(), target.ordinal());
     		break;
 
-    	case 4: 
-			comp.set(Ratio.ordinal(), data2);
-			comp.setActive(data2 > 5);
-			break;
-		case 5: // -30 to -1
+		case 4: // -30 to -1
 			comp.set(Threshold.ordinal(), data2);
 			comp.setActive(data2 > 0);
 			break;
-		case 6:
+		case 5:
 			comp.set(Boost.ordinal(), data2);
 			comp.setActive(data2 > 0);
 			break;
-    	case 7:
+    	case 6: 
+			comp.set(Ratio.ordinal(), data2);
+			comp.setActive(data2 > 5);
+			break;
+		case 7:
 			comp.set(Release.ordinal(), data2);
 			comp.set(Attack.ordinal(), data2);
 			comp.setActive(data2 > 0);
@@ -144,8 +156,18 @@ public class LFOKnobs extends KnobPanel {
 	}
 
 	@Override
+	public void pad1() {
+		tunerBtn.doClick();
+	}
+	
+	@Override
+	public void pad2() {
+		lfo.setActive(!lfo.isActive());
+	}
+	
+	@Override
 	public final void update() {
-		for (RowLabels lbl : labels) 
+		for (Row lbl : labels) 
         	lbl.update();
 		row.update();
 		tunerBtn.setSelected(GuitarTuner.getChannel() == channel);

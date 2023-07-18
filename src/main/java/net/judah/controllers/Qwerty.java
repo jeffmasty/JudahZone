@@ -20,7 +20,7 @@ import net.judah.mixer.Instrument;
 import net.judah.mixer.Zone;
 import net.judah.seq.MidiTab;
 import net.judah.song.Song;
-import net.judah.song.SongTab;
+import net.judah.song.Overview;
 import net.judah.util.RTLogger;
 
 public class Qwerty extends JTabbedPane implements KeyListener, Size {
@@ -70,7 +70,7 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
 		if (current == null || current.getFile() == null)
 			return;
 		for (int i = 0; i < getTabCount(); i++)
-			if (getTabComponentAt(i) instanceof SongTab)
+			if (getTabComponentAt(i) instanceof Overview)
 				setTitleAt(i, current.getFile().getName());
 	}
 

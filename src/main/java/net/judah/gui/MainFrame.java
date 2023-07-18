@@ -1,5 +1,7 @@
 package net.judah.gui;
 
+
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GraphicsDevice;
@@ -29,6 +31,7 @@ import net.judah.fx.Gain;
 import net.judah.fx.LFO;
 import net.judah.gui.fx.FxPanel;
 import net.judah.gui.fx.MultiSelect;
+import net.judah.gui.fx.PresetsGui;
 import net.judah.gui.knobs.KitKnobs;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
@@ -48,11 +51,12 @@ import net.judah.seq.chords.*;
 import net.judah.seq.piano.PianoTab;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.Programmer;
+import net.judah.song.Overview;
 import net.judah.song.Scene;
 import net.judah.song.SceneLauncher;
-import net.judah.song.SongTab;
 import net.judah.song.SongTrack;
 import net.judah.song.SongView;
+import net.judah.song.setlist.SetlistView;
 import net.judah.synth.JudahSynth;
 import net.judah.util.Console;
 import net.judah.util.Constants;
@@ -68,7 +72,7 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 
 	@Getter private static KnobMode knobMode = KnobMode.Midi;
     @Getter private KnobPanel knobs;
-	@Getter private final SongTab songs;
+	@Getter private final Overview songs;
     @Getter private final Qwerty tabs;
     @Getter private SheetMusicPnl sheetMusic;
     @Getter private final MiniSeq miniSeq;
@@ -88,7 +92,7 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
     private final JPanel knobHolder = new JPanel();
     
     public MainFrame(String name, JudahClock clock, FxPanel controls, DJJefe djJefe, 
-    		Seq sequencer, Looper looper, SongTab songs, ChordTrack chords) {
+    		Seq sequencer, Looper looper, Overview songs, ChordTrack chords) {
     	super(name);
         instance = this;
         this.effects = controls;
@@ -128,7 +132,7 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 				focus(track.getMidiOut());
 				focus(seq.getKnobs(track));
 			}
-			else if (tabs.getSelectedComponent() instanceof SongTab) 
+			else if (tabs.getSelectedComponent() instanceof Overview) 
 				focus(KnobMode.Midi);
 			
 		});
@@ -238,11 +242,14 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 			knobPanel((KnobPanel)o);
 		
 		if (o instanceof Channel) {
-    		effects.setFocus((Channel)o);
-    		mixer.highlight((Channel)o);
+			Channel ch = (Channel)o;
+    		effects.setFocus(ch);
+    		mixer.highlight(ch);
     		update(o);
-    	}
-		else if (o instanceof MultiSelect) {
+    		if (knobMode == KnobMode.LFO)
+    			knobPanel(ch.getLfoKnobs());
+		}
+		else if (o instanceof MultiSelect) { // TODO LFO/Compressor
 			ArrayList<Channel> multiselect = (MultiSelect)o;
 			Channel next = multiselect.get(multiselect.size()-1);
 			mixer.highlight(multiselect);
@@ -274,9 +281,9 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
     			beatBox.changeTrack();
     		}
     	}
-    	else if (o instanceof KnobMode) {
+    	else if (o instanceof KnobMode) 
     		knobMode((KnobMode)o);
-    	}
+    	
     }
 
     // every MIDI controller change?
@@ -309,7 +316,7 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 					effects.getChannel().getGui().update();
 				if (knobs instanceof LFOKnobs && ((LFOKnobs)knobs).getChannel() == ch)
 					knobs.update();
-				if (ch instanceof MidiReceiver) {
+				else if (ch instanceof MidiReceiver) {
 					if (o == seq.getSynthTracks().getCurrent().getMidiOut())
 						synthBox.getCurrent().getInstrumentPanel().repaint();
 					else if (o == beatBox.getTop().getCurrent().getMidiOut())
@@ -351,8 +358,8 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 					((JudahSynth)prog.getPort()).getSynthKnobs().update();
 			}
 			else if (o instanceof Scene) {
-				songs.getSongView().getLauncher().update((Scene)o);
 				hq.sceneText();
+				songs.getSongView().update((Scene)o);
 			}
 			else if (o == seq || o == songs)
 				songs.update();
@@ -384,6 +391,11 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 				SectionCombo.setSection((Section)o);
 				ChordPlay.update();
 			}
+			else if (o instanceof ChordTrack) {
+				chords.getView().updateDirectives();
+				chords.getChordSheet().updateDirectives();
+			}
+			
 			else if (o instanceof Gain) {
 				for (DrumKit kit : JudahZone.getDrumMachine().getKits())
 					if (kit.getGain() == o) {
@@ -409,10 +421,16 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
 				break;
 			case Track: focus = seq.getKnobs(seq.getCurrent()); break;
 			case LFO: focus = JudahZone.getFxRack().getChannel().getLfoKnobs(); break;
-			case Synth: focus = JudahZone.getSynth1().getSynthKnobs(); 
+			case DCO: focus = JudahZone.getSynth1().getSynthKnobs(); 
 			break;
 			case Samples: focus = JudahZone.getSampler().getView(); 
-				setFocus(JudahZone.getSampler());
+				// setFocus(JudahZone.getSampler());
+				break;
+			case Presets:
+				focus = new PresetsGui(JudahZone.getPresets(), JudahZone.getMidiGui());
+				break;
+			case Setlist:
+				focus = new SetlistView(JudahZone.getSetlists(), JudahZone.getMidiGui());
 				break;
 		}
 		knobPanel(focus);
@@ -432,23 +450,17 @@ public class MainFrame extends JFrame implements Size, Runnable, Pastels {
     	knobHolder.removeAll();
     	JPanel title = new JPanel();
     	title.setLayout(new BoxLayout(title, BoxLayout.LINE_AXIS));
-    	title.add(Box.createHorizontalStrut(4));
     	title.add(Gui.wrap(mode));
     	title.add(view.installing());
+    	title.doLayout();
     	knobHolder.add(title);
     	knobHolder.add(knobs);
-    	left.invalidate();
     	left.repaint();
     }
     
-	private boolean doKnob(int idx, int data2) {
-		if (knobs != null) {
-			if (knobs.doKnob(idx, data2)) {
-				MainFrame.update(knobs);
-				return true;
-			}
-		}
-		return false;
+	private void doKnob(int idx, int data2) {
+		if (knobs != null && knobs.doKnob(idx, data2)) 
+			update(knobs);
 	}
 	
 	public static void startNimbus() {

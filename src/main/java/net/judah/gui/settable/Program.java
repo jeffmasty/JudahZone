@@ -3,7 +3,9 @@ package net.judah.gui.settable;
 import java.util.ArrayList;
 
 import lombok.Getter;
+import net.judah.JudahZone;
 import net.judah.api.MidiReceiver;
+import net.judah.seq.track.MidiTrack;
 
 public class Program extends SetCombo<String> {
 	
@@ -11,30 +13,35 @@ public class Program extends SetCombo<String> {
 
 	@Getter private final MidiReceiver port;
 	@Getter private final int ch;
-	
-	public Program(MidiReceiver midi) {
-		this(midi, 0);
+	private MidiTrack track;
+
+	public Program(MidiTrack t) {
+		this(t.getMidiOut(), t.getCh());
+		track = t;
 	}
 	
-	public Program(MidiReceiver midi, int channel) {
-		super(midi.getPatches(), midi.getProg(channel));
-		port = midi;
-		ch = channel;
+	public Program(MidiReceiver rcv, int channel) {
+		super(rcv.getPatches(), rcv.getProg(channel));
+		this.port = rcv;
+		this.ch = channel;
 		instances.add(this);
-	}
-	
-	public String[] getPrograms() {
-		return port.getPatches();
 	}
 	
 	@Override
 	protected void action() {
 		if (set == this) return;
-		port.progChange(getSelectedItem().toString(), ch);
+		getTrack().progChange(getSelectedItem().toString());
 	}
 
+	public MidiTrack getTrack() {
+		if (track == null)
+			track = JudahZone.getSeq().lookup(port, ch);
+		return track;
+	}
+	
 	public static void update(Program data) {
-		String current = data.getPort().getProg(data.ch);
+		
+		String current = data.port.getProg(data.ch);
 		for (Program c : instances)
 			if (c.port == data.port && c.ch == data.ch)
 				if (false == current.equals(c.getSelectedItem()))

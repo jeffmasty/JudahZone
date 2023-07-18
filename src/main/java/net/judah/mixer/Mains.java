@@ -25,7 +25,7 @@ public class Mains extends Channel {
 	
 	public Mains(JackPort left, JackPort right) {
 		super("MAIN", true);
-		setIcon(Icons.get("Speakers.png"));
+		icon = Icons.get("Speakers.png");
 		this.speakersLeft = left;
 		this.speakersRight = right;
 		setOnMute(true);
@@ -38,8 +38,8 @@ public class Mains extends Channel {
 	    AudioTools.gain(left, (1 - gain.getStereo()) * (gain.getGain() * BOOST));
 	    AudioTools.gain(right, gain.getStereo() * (gain.getGain() * BOOST));
 
-        filter.process(left, right);
-        party.process(left, right);
+        filter2.process(left, right);
+        filter1.process(left, right);
         if (chorus.isActive())
             chorus.processStereo(left, right);
 

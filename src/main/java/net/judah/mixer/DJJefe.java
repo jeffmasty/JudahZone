@@ -10,6 +10,8 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
 import lombok.Getter;
+import net.judah.api.Notification.Property;
+import net.judah.api.TimeListener;
 import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.Sampler;
 import net.judah.fx.Fader;
@@ -18,13 +20,13 @@ import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
-import net.judah.song.Cmdr;
 import net.judah.song.FxData;
-import net.judah.song.Param;
+import net.judah.song.cmd.Cmdr;
+import net.judah.song.cmd.Param;
 import net.judah.util.RTLogger;
 
 /** Graphical representation of the Mixer*/
-public class DJJefe extends JPanel implements Cmdr {
+public class DJJefe extends JPanel implements Cmdr, TimeListener {
 
 	@Getter private final ArrayList<Channel> all = new ArrayList<>();
 	/** has GUI representation */
@@ -50,19 +52,18 @@ public class DJJefe extends JPanel implements Cmdr {
     	}
         for (LineIn instrument : sources) {
         	channels.add(instrument);
-    		MixWidget fader = new LineMix(instrument, looper.getSoloTrack());
+    		MixWidget fader = new LineMix(instrument, looper);
     		faders.add(fader);
     		add(fader);
         }
         channels.add(mains);
-        MixWidget fader = new MainsMix(mains);
+        MixWidget fader = new MainsMix(mains, looper);
         faders.add(fader);
         add(fader);
         keys = new String[channels.size()];
         for (int i = 0; i < keys.length; i++)
         	keys[i] = channels.get(i).getName();
     	setLayout(new GridLayout(1, channels.size(), 0, 0));
-        doLayout();
     }
 
     
@@ -169,7 +170,7 @@ public class DJJefe extends JPanel implements Cmdr {
 				Fader.execute(new Fader(ch, Target.Gain, Fader.DEFAULT_FADE, 0, 51));
 				break;
 			case FX:
-				ch.setPresetActive(!ch.isPresetActive());
+				ch.toggleFx();
 				break;
 			case Mute:
 				ch.setOnMute(true);
@@ -196,6 +197,13 @@ public class DJJefe extends JPanel implements Cmdr {
 			}
 			ch.setMuteRecord(false);
 		}
+	}
+
+
+	@Override public void update(Property prop, Object value) {
+		if (prop != Property.TEMPO) return;
+		float tempo = (float)value;
+		all.forEach(ch->ch.tempo(tempo));
 	}
 
 }

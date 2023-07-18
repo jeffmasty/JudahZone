@@ -22,11 +22,13 @@ import net.judah.seq.Seq;
 import net.judah.seq.chords.ChordTrack;
 import net.judah.seq.chords.Scale;
 import net.judah.seq.track.TrackInfo;
+import net.judah.song.cmd.Cmd;
+import net.judah.song.cmd.Param;
 import net.judah.util.JsonUtil;
 import net.judah.util.RTLogger;
 
 /* Stages of a song.
- * midi track files, fx, scenes, params and chordPro file*/
+ * midi track files, fx, scenes(params, bar cycle, progChange, arp) and chordPro file*/
 @Getter @Setter @NoArgsConstructor
 public class Song {
 	@JsonIgnore private File file;
@@ -44,9 +46,9 @@ public class Song {
 	private List<String> record = new ArrayList<>();
 	
 	public Song(Seq seq, int tempo) {
-		Scene fresh = new Scene(seq);
-		fresh.getCommands().add(new Param(Cmd.Tempo, "" + tempo));
-		scenes.add(fresh); // init w/ 10 midi tracks 
+		Scene created = new Scene(seq); // init w/ 10 midi tracks 
+ 		created.getCommands().add(new Param(Cmd.Tempo, "" + tempo));
+		scenes.add(created); 
 	}
 	
 	/** @param scene the current scene to save Efx.*/
@@ -75,7 +77,7 @@ public class Song {
     	try {
 			JsonUtil.writeJson(this, file);
 			RTLogger.log(this, "Saved " + file.getName() + " (" + scenes.indexOf(scene) + ")");
-		} catch (Exception e) { RTLogger.warn(JudahZone.class, e); }
+    	} catch (Exception e) { RTLogger.warn(JudahZone.class, e); }
     }
 
     public void setTimeSig(Signature sig) {
@@ -83,8 +85,7 @@ public class Song {
     	JudahZone.getClock().setTimeSig(sig);
     }
     
-	@Override
-	public String toString() {
+	@Override public String toString() {
 		if (file != null)
 			return file.getName();
 		return "_??";

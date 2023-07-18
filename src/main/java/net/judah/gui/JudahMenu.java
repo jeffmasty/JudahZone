@@ -14,22 +14,23 @@ import javax.swing.JMenuItem;
 
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.gui.fx.PresetsGui;
+import net.judah.fx.Chorus;
+import net.judah.fx.Delay;
+import net.judah.fx.LFO;
 import net.judah.gui.knobs.KnobMode;
-import net.judah.gui.settable.SongsCombo;
+import net.judah.gui.settable.SongCombo;
 import net.judah.gui.widgets.FileChooser;
 import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
-import net.judah.seq.chords.ChordProCombo;
 import net.judah.song.Song;
 import net.judah.song.setlist.Setlist;
-import net.judah.song.setlist.SetlistView;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 public class JudahMenu extends JMenuBar {
-	
+	static String[] TYPE = {"1/8", "1/4", "3/8", "1/2"};
+
 	/** If true, focus on sheet music tab when songs load */ 
 	@Getter private final JCheckBoxMenuItem sheets = new JCheckBoxMenuItem();
 	
@@ -62,7 +63,6 @@ public class JudahMenu extends JMenuBar {
 		setSize(d);
 		setMinimumSize(d);
 		
-
     	song.add(new Actionable("Next", e->nextSong()));
 		song.add(new Actionable("Save", e->save()));
         song.add(new Actionable("Save As..", e->{
@@ -70,13 +70,13 @@ public class JudahMenu extends JMenuBar {
         		if (f == null) return;
         		save(f);
         		Constants.timer(200, () -> {
-        			SongsCombo.refill();
-        			SongsCombo.refresh();
+        			SongCombo.refill();
+        			SongCombo.refresh();
         		});;
         	}));
     	song.add(new Actionable("Reload", e->reload()));
         song.add(new Actionable("Load..", e -> loadSong(FileChooser.choose(getSetlists().getDefault()))));
-    	song.add(new Actionable("New", e -> setCurrent(new Song(getSeq(), (int)(getClock().getTempo())))));
+    	song.add(new Actionable("New", e -> setSong(new Song(getSeq(), (int)(getClock().getTempo())))));
     	for (Setlist list : getSetlists()) 
 			setlist.add(new Actionable(list.toString(), e -> getSetlists().setCurrent(list.getSource())));
         song.add(setlist); 
@@ -98,6 +98,7 @@ public class JudahMenu extends JMenuBar {
     	loops.add(load);
     	loops.add(new Actionable("Solo on/off", e->solo.toggle()));
     	loops.add(solotrack);
+    	
 		JMenu clock = new JMenu("Clock");
 		clock.add(new Actionable("Toggle", e->getClock().toggle()));
     	clock.add(new Actionable("Reset", e->getClock().reset()));
@@ -105,15 +106,27 @@ public class JudahMenu extends JMenuBar {
     	clock.add(new Actionable("SyncTempo", e->getClock().syncTempo(looper.getPrimary())));
     	clock.add(new Actionable("Runners dial zero", e->getClock().runnersDialZero()));
     	
+    	
+    	JMenu lfo = new JMenu("LFO");
+    	JMenu delay = new JMenu("Delay");
+    	JMenu chorus = new JMenu("Chorus");
+    	
+    	for (int i = 0; i < TYPE.length; i++) {
+    		final int idx = i;
+    		lfo.add(new Actionable(TYPE[i], e->getFxRack().timeFx(idx, LFO.class)));
+    		delay.add(new Actionable(TYPE[i], e->getFxRack().timeFx(idx, Delay.class)));
+    		chorus.add(new Actionable(TYPE[i], e->getFxRack().timeFx(idx, Chorus.class)));
+    	}
+    	clock.add(lfo);
+    	clock.add(delay);
+    	clock.add(chorus);
+    	
         sheets.setSelected(false);
         sheets.setToolTipText("Focus on Song SheetMusic");
         sheets.setText("Sheets");
     	for (KnobMode mode : KnobMode.values()) 
         	controls.add(new Actionable(mode.toString(), e->MainFrame.setFocus(mode)));
 
-    		// TODO move setlists, presets to knob panel
-    	tools.add(new Actionable("Presets", e -> new PresetsGui(getPresets())));
-        tools.add(new Actionable("Setlist..", e->{new SetlistView(getSetlists());}));
     	tools.add(new Actionable("Record Session", e -> JudahZone.getMains().tape(true)));
         tools.add(sheets);
         tools.add(new Actionable("SheetMusic..", e->{
@@ -121,11 +134,8 @@ public class JudahMenu extends JMenuBar {
         	getFrame().getTabs().setSelectedComponent(getFrame().getSheetMusic());
         }));
         tools.add(new Actionable("ChordPro..", e-> {
-        	File f = FileChooser.choose(Folders.getChordPro());
-        	if (f == null) return;
-        	if (getChords().load(f) != null) 
-        		ChordProCombo.refill(f);
-        	getFrame().getTabs().setSelectedComponent(getChords().getChordSheet());
+        	if (getChords().load() != null) 
+        		getFrame().getTabs().setSelectedComponent(getChords().getChordSheet());
         }));
     	tools.add(new Actionable("JIT!", e->JudahZone.justInTimeCompiler()));
         tools.add(new Actionable("A2J!", e->JudahZone.getMidi().recoverMidi()));
@@ -139,6 +149,7 @@ public class JudahMenu extends JMenuBar {
 
 	private void setLength() {
 		String s = Gui.inputBox("Loop Bar Length:");
+		if (s == null || s.isBlank()) return;
 		try {
 			getClock().setLength(Integer.parseInt(s));
 		} catch (Throwable t) {
@@ -146,4 +157,30 @@ public class JudahMenu extends JMenuBar {
 		}
 	}
     
+	
+	
+	
+	public static void lfo(int type) {
+		getClock().getTempo();
+		
+		
+		
+		switch(type) {
+		case 0:
+		case 1:
+		case 2:
+			default:
+				
+		}
+	}
+	public static void delay(int type) {
+		switch(type) {
+		case 0:
+		case 1:
+		case 2:
+			default:
+		}
+		
+	}
+	
 }

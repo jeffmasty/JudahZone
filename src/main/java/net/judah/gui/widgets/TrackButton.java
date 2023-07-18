@@ -3,6 +3,7 @@ package net.judah.gui.widgets;
 
 import static net.judah.gui.Pastels.GREEN;
 
+import java.awt.Color;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -33,13 +34,15 @@ public class TrackButton extends JLabel {
 	}
 	
 	public void update() {
-		setBackground(track.isActive() ? 
-				track.isSynth() ? track.getArp().getMode().getColor() : GREEN 
-				: track.isOnDeck() ? track.getCue().getColor() : null);
 		int idx = 1 + track.getCurrent() / 2;
 		if (idx < 10)
 			setText(" " + idx);
 		else setText("" + idx);
+		
+		Color bg = track.isActive() ?
+				track.isSynth() && track.getArp().isActive() ? track.getArp().getMode().getColor() : GREEN
+				: track.isOnDeck() ? track.getCue().getColor() : null;
+		setBackground(bg);
 	}
 	
 	

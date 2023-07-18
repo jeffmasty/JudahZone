@@ -1,6 +1,8 @@
 package net.judah.looper;
 
-import static net.judah.util.Constants.*;
+import static net.judah.util.Constants.LEFT;
+import static net.judah.util.Constants.RIGHT;
+import static net.judah.util.Constants.STEREO;
 
 import java.io.File;
 import java.nio.FloatBuffer;
@@ -52,8 +54,7 @@ public class Loop extends AudioTrack implements RecordAudio, Runnable {
     	this.memory = mem;
     	this.leftPort = l;
     	this.rightPort = r;
-    	if (icon != null)
-    		setIcon(Icons.get(icon));
+    	this.icon = Icons.get(icon);
     	for (int i = 0; i < INIT; i++)
     		recording.add(new float[STEREO][bufSize]);
     	new Thread(this).start();
@@ -63,14 +64,13 @@ public class Loop extends AudioTrack implements RecordAudio, Runnable {
 	@Override public void clear() {
 		isRecording = false;
         onMute = false;
-		tapeCounter.set(0);
 		playBuffer = null;
         loopCount = 0;
-		AudioTools.silence(recording, length);
-		length = 0;
+        AudioTools.silence(recording, length);
+        tapeCounter.set(0);
+        length = 0;
 		MainFrame.update(this);
 	}
-    
     
     @Override public void setRecording(Recording music) {
     	isRecording = false;
@@ -139,11 +139,15 @@ public class Loop extends AudioTrack implements RecordAudio, Runnable {
 
     @Override public void record(boolean record) {
         if (record) { 
-        	isRecording = true;
-        	if (!looper.hasRecording()) 
-        		tapeCounter.set(0); // we are primary
-        	else if (length == 0) 
+        	if (looper.getPrimary() == null) { // we will be primary
+        		tapeCounter.set(0); 
+        		if (!JudahClock.isEven()) looper.getClock().skipBar();
+        	}
+        	else if (length == 0) {
         		length = looper.getLength(); // start rolling
+        		tapeCounter.set(looper.getPrimary().getTapeCounter().get());
+        	}
+        	isRecording = true;
         }
         else if (isRecording) 
         	endRecord();
@@ -152,17 +156,17 @@ public class Loop extends AudioTrack implements RecordAudio, Runnable {
 
 	protected void endRecord() {
 		isRecording = false;
-		if (type == Type.FREE || type == Type.BSYNC)
-			type = Type.SYNC;
 		if (length == 0) {
 			length = looper.getLength();
 			if (length > 0) 
 				catchUp(length);
 			else {
-				length = tapeCounter.get() - 2;
+				length = tapeCounter.get() - 1;
 				tapeCounter.set(length);
 				looper.setPrimary(this);
 			}
+			if (type == Type.FREE || type == Type.BSYNC)
+				type = Type.SYNC;
 		}
 		looper.syncDown(this);
 		MainFrame.update(this);

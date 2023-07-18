@@ -1,4 +1,4 @@
-package net.judah.song;
+package net.judah.song.cmd;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

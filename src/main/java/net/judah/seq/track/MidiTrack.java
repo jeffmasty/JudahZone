@@ -15,6 +15,7 @@ import net.judah.api.TimeListener;
 import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumType;
 import net.judah.drumkit.GMDrum;
+import net.judah.drumkit.KitMode;
 import net.judah.gui.MainFrame;
 import net.judah.gui.PlayWidget;
 import net.judah.gui.settable.CurrentCombo;
@@ -74,6 +75,8 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 		setBarTicks(clock.getMeasure() * s.getResolution());
 		arp = isSynth() ? new Arp(this) :  null;
 		clock.addListener(this);
+		if (name.equals(KitMode.Fills.name()))
+			cue = Cue.Hot;
     }
     
 	@Override public boolean equals(Object o) {
@@ -102,25 +105,32 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 			setCurrent(state.launch);
 	}
 
+    /** Scene change */
     public void setState(Sched sched) {
+    	
 		count = JudahClock.isEven() ? 0 : 1;
+		
 		offset = 0;
     	boolean previous = state.active;
     	Cycle old = state.cycle;
+    	
 		state = sched;
-		setAmp(sched.amp);
+		setAmp(state.amp);
+		if (isSynth() && state.getArp() != null) // setup arpeggiator
+			arp.setInfo(state.getArp());
+		if (state.getProgram() != null && !state.getProgram().equals(midiOut.getProg(ch))) 
+			midiOut.progChange(state.getProgram(), ch);
 		if (old != state.cycle) 
 			CycleCombo.update(this);
-		if (current != sched.launch + count) 
-			setCurrent(sched.launch + count);
+		if (current != state.launch) 
+			setCurrent(state.launch);
 		else 
 			compute();
+		
 		if (previous != state.active) {
 			PlayWidget.update(this);
-			if (isSynth() && !state.active) {
-				arp.clear();
-				Constants.execute(new Panic(midiOut, ch));
-			}
+			if (isSynth() && !state.active) 
+				flush();
 		}
     }
 	
@@ -130,8 +140,9 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 			cycle();
 		state.active = on;
 		if (!on && isSynth()) {
-			if (state.mode != Mode.Off) arp.clear();
-			Constants.execute(new Panic(midiOut, ch));
+			if (arp.isActive()) 
+				arp.clear();
+			new Panic(this);
 		}
 		MainFrame.update(this);
 	}
@@ -150,6 +161,8 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 	@Override
 	protected void setCurrent(int change) {
 		if (current == change) return;
+		if (isSynth())
+			arp.clear();
 		if (change < 0) 
 			change = JudahClock.isEven() ? 0 : 1;
 		recent = change * barTicks + (recent - current * barTicks);
@@ -174,9 +187,7 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 			if (e.getTick() > to) break;
 			if (Midi.isNote(e.getMessage())) {
 				ShortMessage formatted = Midi.format((ShortMessage)e.getMessage(), ch, state.amp); // malloc
-		    	if (isDrums())
-		    		midiOut.send(formatted, JudahMidi.ticker());
-		    	else if (arp.getMode() == Mode.Off)
+		    	if (isDrums() || arp.getMode() == Mode.Off)
 		    		midiOut.send(formatted, JudahMidi.ticker());
 		    	else  
 		    		arp.process(formatted);
@@ -192,9 +203,11 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 			MidiEvent e = t.get(i);
 			if (e.getTick() <= recent) continue;
 			if (e.getTick() > end) break;
-			if (e.getMessage() instanceof ShortMessage && Midi.isNoteOff((ShortMessage)e.getMessage())) 
+			if (e.getMessage() instanceof ShortMessage && Midi.isNoteOff(e.getMessage())) 
 				midiOut.send(Midi.format((ShortMessage)e.getMessage(), ch, 1), JudahMidi.ticker());
 		}
+		if (arp.isActive())
+			arp.clear();
 	}
 
     @Override
@@ -215,7 +228,7 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 			setActive(true);
 		else if (prop == Property.TRANSPORT) {
 			if (value == JackTransportState.JackTransportStopped && isActive())
-				new Panic(midiOut, ch).run();
+				new Panic(this);
 			else if (value == JackTransportState.JackTransportNetStarting)
 				init();
 		}
@@ -237,7 +250,6 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 	}
 
 	public void clear() {
-		Constants.execute(new Panic(midiOut, ch));
 		synchronized (t) {
 			for (int i = t.size() -1; i >= 0; i--)
 				t.remove(t.get(i));
@@ -245,6 +257,7 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 		setFile(null);
 		init();
 		setResolution(MIDI_24);
+		new Panic(this);
 	}
 	
 	public File getFolder() {
@@ -303,7 +316,7 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 			t.remove(t.get(i)); // clear
 		if (isSynth()) {
 			arp.clear();
-			Constants.execute(new Panic(midiOut, ch));
+			new Panic(this);
 		}
 		
 		setResolution(rez);
@@ -413,6 +426,11 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 		if (isSynth())
 			arp.clear();
 		super.next(fwd);
+	}
+
+	public void progChange(String name) {
+		if (midiOut.progChange(name, ch))
+			state.setProgram(name);
 	}
 
 }

@@ -134,12 +134,12 @@ public class ToDisk extends LinkedBlockingQueue<float[][]> implements Closeable,
 		oStream.close();
 		oStream = null;
 		JudahZone.getServices().remove(this);
-		JudahZone.getFrame().getHq().update();
+		JudahZone.getMidiGui().updateTape();
 		RTLogger.log(this, target.getAbsolutePath());
 	}
 
 	@Override public void run() {
-		JudahZone.getFrame().getHq().update();
+		JudahZone.getMidiGui().updateTape();
 		try {
 			while (active) {
 				writeFrame(take());

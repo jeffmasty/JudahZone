@@ -96,8 +96,10 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 			sys.synchronize(getCrave());
 		}
 		else if (data1 == PRIMARY_CC.get(2) && data2 > 0) // focus MidiGui or LFO
-			if (MainFrame.getKnobMode() == KnobMode.Midi)
-				{MainFrame.setFocus(KnobMode.LFO);}
+			if (MainFrame.getKnobMode() == KnobMode.Setlist) 
+				MainFrame.setFocus(KnobMode.LFO);
+			else if (MainFrame.getKnobMode() == KnobMode.Midi)
+				MainFrame.setFocus(KnobMode.Setlist);
 			else 
 				MainFrame.setFocus(KnobMode.Midi); 
 		else if (data1 == PRIMARY_CC.get(3) && data2 > 0) {// focus TRACKS
@@ -115,14 +117,14 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 			sys.getKeyboardSynth().getArp().toggle(Mode.REC);
 		}
 		else if (data1 == PRIMARY_CC.get(6) && data2 > 0) { // focus Synth1 or Synth2 or Sampler
-			if (MainFrame.getKnobMode() == KnobMode.Synth) {
+			if (MainFrame.getKnobMode() == KnobMode.DCO) {
 				if (JudahZone.getFrame().getKnobs() == JudahZone.getSynth1().getSynthKnobs()) 
 					MainFrame.setFocus(JudahZone.getSynth2().getSynthKnobs());
 				else 
 					MainFrame.setFocus(KnobMode.Samples);
 				}
 			else 
-				MainFrame.setFocus(KnobMode.Synth);
+				MainFrame.setFocus(KnobMode.DCO);
 		}
 		else if (data1 == PRIMARY_CC.get(7) && data2 > 0) { // SET SettableCombo
 			MainFrame.set();
@@ -138,7 +140,7 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 		if (data2 <= 4) 
 			return true;
 		if (d.getDelay() < Delay.DEFAULT_TIME) 
-			d.setDelay(Delay.DEFAULT_TIME);
+			d.setDelayTime(Delay.DEFAULT_TIME);
 		d.setFeedback(Constants.midiToFloat(data2));
 		MainFrame.update(sys.getKeyboardSynth().getMidiOut());
 		return true;
@@ -175,7 +177,7 @@ public class MPKmini implements Controller, MPKTools, Pastels {
 			getFrame().sheetMusic(false);
 		} else if (data1 == PRIMARY_PROG[7]) { // reset stage
         	getMidiGui().getSongsCombo().setSelectedItem(0);
-        	loadSong(getCurrent().getFile());
+        	loadSong(getSong().getFile());
         }
 
         // B BANK 

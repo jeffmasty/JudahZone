@@ -194,11 +194,11 @@ public final class Freeverb extends Reverb {
     @Override
     public void set(int idx, int value) {
         if (idx == Settings.Room.ordinal())
-            setRoomSize(value / 100f);
+            setRoomSize(value * 0.01f);
         else if (idx == Settings.Damp.ordinal())
-            setDamp(value / 100f);
+            setDamp(value * 0.01f);
         else if (idx == Settings.Wet.ordinal())
-            setWet(value / 100f);
+            setWet(value * 0.01f);
         else throw new InvalidParameterException();
     }
 

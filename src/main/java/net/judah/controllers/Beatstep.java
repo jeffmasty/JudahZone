@@ -29,7 +29,7 @@ public class Beatstep implements Controller {
 	private static final int MAINS = 51;
 	private static final int KITS = 40;
 	private static final int RECORD = 41;
-	private static final int FX = 42;
+	private static final int LFO = 42;
 	private static final int FADER = 43;
 	
 	private long tempoLookedUp;
@@ -61,11 +61,14 @@ public class Beatstep implements Controller {
 					else 
 						current.setOnMute(!current.isOnMute());
 			}
-			else if (data1 == FX) { 
-				if (!Midi.isNoteOn(midi)) return true;
-				for (Channel current : getFxRack().getSelected()) 
-					current.setPresetActive(!current.isPresetActive());
+			else if (data1 == LFO) {
+				if (MainFrame.getKnobMode() == KnobMode.LFO)
+					for (Channel current : getFxRack().getSelected())
+						current.getLfo().setActive(current.getLfo().isActive());
+				else 
+					MainFrame.setFocus(KnobMode.LFO);
 			}
+			
 			else if (data1 == FADER) { 
 				if (!Midi.isNoteOn(midi)) return true;
 				for (Channel ch : getFxRack().getSelected()) {

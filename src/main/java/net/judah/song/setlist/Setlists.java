@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
-import net.judah.gui.settable.SongsCombo;
+import net.judah.gui.settable.SongCombo;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
@@ -39,7 +39,7 @@ public class Setlists extends ArrayList<Setlist> {
 					return;
 				current = s;
 				SetlistsCombo.setCurrent(list);
-				SongsCombo.refill();
+				SongCombo.refill();
 			}
 	}
 

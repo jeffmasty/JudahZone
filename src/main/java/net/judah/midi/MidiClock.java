@@ -10,10 +10,10 @@ import com.illposed.osc.OSCMessage;
 import com.illposed.osc.transport.udp.OSCPortOut;
 
 import net.judah.JudahZone;
-import net.judah.song.Cmd;
-import net.judah.song.Cmdr;
-import net.judah.song.IntProvider;
-import net.judah.song.Param;
+import net.judah.song.cmd.Cmd;
+import net.judah.song.cmd.Cmdr;
+import net.judah.song.cmd.IntProvider;
+import net.judah.song.cmd.Param;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 

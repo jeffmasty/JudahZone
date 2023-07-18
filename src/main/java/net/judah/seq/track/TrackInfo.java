@@ -16,22 +16,21 @@ public class TrackInfo {
 	private Cue cue = Cue.Bar;
 	private Gate gate = Gate.SIXTEENTH;
 	
+	// LEGACY
+	@JsonInclude(Include.NON_NULL)
 	private String program;
 	@JsonInclude(Include.NON_NULL)
 	private ArpInfo arp; // mode, octaves
 	
 	public TrackInfo(String track, boolean isDrums) {
 		this.track = track;
-		arp = isDrums ? null : new ArpInfo();
 	}
 	 
 	public TrackInfo(MidiTrack t) {
 		track = t.getName();
 		file = t.getFile() == null ? null : t.getFile().getName();
-		program = t.getMidiOut().getProg(t.getCh());
 		cue = t.getCue();
 		gate = t.getGate();
-		arp = t.isDrums() ? null : new ArpInfo(t.getArp());
 	}
 	
 }

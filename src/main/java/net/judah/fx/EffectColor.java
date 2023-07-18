@@ -13,7 +13,7 @@ public class EffectColor implements Pastels {
 			return YELLOW;
 		if (Chorus.class.equals(class1))
 			return GREEN;
-		if (CutFilter.class.equals(class1))
+		if (Filter.class.equals(class1))
 			return PINK;
 		if (EQ.class.equals(class1)) 
 			return Color.LIGHT_GRAY;

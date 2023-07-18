@@ -93,6 +93,7 @@ public class PresetsDB extends ArrayList<Preset> {
 		}
 		Preset p = channel.toPreset(channel.getPreset().getName());
         set(idx, p);
+        save();
         RTLogger.log(this, "saved " + p.getName() + " from " + channel.getName() +
                 " with " + p.size() + " FX");
 	}

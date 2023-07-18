@@ -3,12 +3,12 @@ package net.judah.mixer;
 import static javax.swing.SwingConstants.CENTER;
 
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
@@ -18,7 +18,9 @@ import net.judah.fx.Gain;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
+import net.judah.gui.widgets.TogglePreset;
 import net.judah.gui.widgets.RainbowFader;
+import net.judah.looper.Looper;
 
 /**Mixer view
  * <pre>
@@ -33,8 +35,8 @@ public abstract class MixWidget extends JPanel implements Pastels {
 	@Getter protected final Channel channel;
 	@Getter protected final JPanel banner = new JPanel();
 
-	@Getter protected final JToggleButton mute = new JToggleButton("mute");
-	@Getter protected final JToggleButton fx = new JToggleButton("fx");
+	@Getter protected final JButton mute = new JButton("mute");
+	@Getter protected final TogglePreset fx;
 	@Getter protected final JToggleButton sync = new JToggleButton("sync");
 
 	protected RainbowFader volume;
@@ -42,8 +44,11 @@ public abstract class MixWidget extends JPanel implements Pastels {
 	protected JPanel sidecar = new JPanel(new GridLayout(3, 1));
 	private final LEDs indicators;
 	
-	public MixWidget(Channel channel) {
+	public MixWidget(Channel channel, Looper looper) {
 		this.channel = channel;
+		
+		fx = new TogglePreset(channel, looper);
+		fx.setOpaque(true);
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(BUTTONS);
 		
@@ -67,18 +72,9 @@ public abstract class MixWidget extends JPanel implements Pastels {
 		// TODO right/double click menu
 		@Override public void mouseClicked(MouseEvent e) {
 			MainFrame.setFocus(channel);}});
-		
-		fx.addActionListener(e -> channel.setPresetActive(!channel.isPresetActive())); 
-
 	}
 	
 	protected abstract Color thisUpdate(); 
-	
-	protected Component font(Component c) {
-		c.setFont(Gui.FONT9);
-		return c;
-	}
-
 	
 	protected boolean quiet() {
 		return channel.getGain().getGain() < 0.05f;
@@ -90,15 +86,12 @@ public abstract class MixWidget extends JPanel implements Pastels {
 			banner.setBackground(bg);
 		indicators.sync();		
 		updateVolume();
-		fx.setSelected(channel.isPresetActive());
-		fx.setBackground(fx.isSelected() ? BLUE : null);
+		fx.update();
 	}
 	
 	public void updateVolume() {
-		if (channel.getVolume() != volume.getValue()) {
+		if (channel.getVolume() != volume.getValue()) 
 			volume.setValue(channel.getVolume());
-			volume.repaint();
-		}
 		if (channel.isOnMute())
 			volume.setBackground(PURPLE);
 		else 

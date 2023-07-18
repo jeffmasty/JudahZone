@@ -1,6 +1,7 @@
 package net.judah.gui.settable;
 
-import static net.judah.JudahZone.*;
+import static net.judah.JudahZone.getClock;
+import static net.judah.JudahZone.getSeq;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -11,15 +12,15 @@ import net.judah.gui.widgets.FileRender;
 import net.judah.song.Song;
 import net.judah.util.Constants;
 
-public class SongsCombo extends SetCombo<File> {
+public class SongCombo extends SetCombo<File> {
 
-	private static ArrayList<SongsCombo> instances = new ArrayList<>();
+	private static ArrayList<SongCombo> instances = new ArrayList<>();
 
-	public SongsCombo() {
+	public SongCombo() {
 		super(JudahZone.getSetlists().getCurrent().array(), null);
 		setRenderer(new FileRender());
 		instances.add(this);
-		setFont(Gui.BOLD13);
+		setFont(Gui.BOLD12);
 	}
 	
 	public static void refresh() {
@@ -28,7 +29,7 @@ public class SongsCombo extends SetCombo<File> {
 
 	public void update() {
 		File select = (File)getSelectedItem();
-		File song = JudahZone.getCurrent().getFile();
+		File song = JudahZone.getSong().getFile();
 		
 		if (select == null && song == null)
 			return;
@@ -44,15 +45,17 @@ public class SongsCombo extends SetCombo<File> {
 	protected void action() {
 		if (set == this) return;
 		if (getSelectedItem() == null)
-			JudahZone.setCurrent(new Song(getSeq(), (int)(getClock().getTempo())));
-		else 
+			JudahZone.setSong(new Song(getSeq(), (int)(getClock().getTempo())));
+		else if (JudahZone.getSong().getFile() == null)
+			JudahZone.loadSong((File)getSelectedItem());
+		else if (!JudahZone.getSong().getFile().equals(getSelectedItem()))
 			JudahZone.loadSong((File)getSelectedItem()); 
 	}
 
 	public static void refill() {
 		Constants.execute(()->
 			instances.forEach(combo->
-				combo.refill(JudahZone.getSetlists().getCurrent().array(), JudahZone.getCurrent().getFile())));
+				combo.refill(JudahZone.getSetlists().getCurrent().array(), JudahZone.getSong().getFile())));
 	}
 
 }

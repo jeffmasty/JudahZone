@@ -11,14 +11,11 @@ import net.judah.gui.Updateable;
 
 public abstract class KnobPanel extends JPanel implements Updateable {
 
-	public KnobPanel(String title) {
-		setName(title);
-	}
-
 	public abstract KnobMode getKnobMode();
 	
 	public abstract boolean doKnob(int idx, int value);
 	
+	@Override
 	public abstract void update();
 	
 	/**Called when the KnobPanel is going to be displayed. 

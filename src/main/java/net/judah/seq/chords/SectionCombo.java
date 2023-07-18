@@ -21,7 +21,7 @@ public class SectionCombo extends JComboBox<Section> {
 				chords.setSection((Section)getSelectedItem(), true);};
 		refill();
 		instances.add(this);
-		Gui.resize(this, Size.SMALLER_COMBO);
+		Gui.resize(this, Size.COMBO_SIZE);
 	}
 	
 	public static void refresh() {

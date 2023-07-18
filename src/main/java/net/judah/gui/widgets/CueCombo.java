@@ -32,10 +32,11 @@ public class CueCombo extends JComboBox<Cue> {
 	// TODO hookup
 	public static void refresh(MidiTrack t) {
 		Constants.execute(()->{
-		for (CueCombo c : instances)
-			if (c.track == t)
-				c.action();
-		});
+			Cue cue = t.getCue();
+			for (CueCombo c : instances)
+				if (c.track == t && cue != c.getSelectedItem())
+					c.setSelectedItem(t.getCue());
+			});
 	}
 	
 }

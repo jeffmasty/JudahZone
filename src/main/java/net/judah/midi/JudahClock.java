@@ -1,6 +1,7 @@
 package net.judah.midi;
 
-import static net.judah.api.Notification.Property.*;
+import static net.judah.api.Notification.Property.STEP;
+import static net.judah.api.Notification.Property.TRANSPORT;
 
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
@@ -54,9 +55,9 @@ public class JudahClock extends Thread implements TimeProvider {
 	@Getter private int beat;
 	@Getter private Signature timeSig = Signature.FOURFOUR;
     private int unit = MIDI_24 / timeSig.div;
-    private long lastPulse = System.currentTimeMillis();
+    private long lastPulse = 0;
 	private int midiPulseCount;
-    private boolean onDeck;
+    @Getter private boolean onDeck;
     private boolean runnersDialZero;
     
     /** sync to external Midi24 pulse */
@@ -126,8 +127,6 @@ public class JudahClock extends Thread implements TimeProvider {
 				if (beat >= timeSig.beats) { 
 					bar++; // new Bar
 					beat = 0;
-					if (bar >= length)
-						bar = 0;
 					announce(Property.BARS, bar);
 				}
 				announce(Property.BEAT, beat);
@@ -159,6 +158,7 @@ public class JudahClock extends Thread implements TimeProvider {
 
 	@Override
     public void begin() {
+		lastPulse = 0;
 	    midiPulseCount = -1;
 	    step = 0;
 		beat = -1;
@@ -179,6 +179,12 @@ public class JudahClock extends Thread implements TimeProvider {
 		step = 0;
         beat = 0;
         bar = 0;
+	}
+
+	
+	public void reset(Signature signature) {
+		setTimeSig(signature);
+		reset();
 	}
 	
 	public void toggle() {
@@ -205,6 +211,10 @@ public class JudahClock extends Thread implements TimeProvider {
 	}
 	
 	private void computeTempo(float avg) {
+		if (lastPulse <= 0) {
+			lastPulse = System.currentTimeMillis();
+			return;
+		}
 		long now = System.currentTimeMillis();
 		float tempo2 = Constants.bpmPerBeat(now - lastPulse);
 		lastPulse = now;

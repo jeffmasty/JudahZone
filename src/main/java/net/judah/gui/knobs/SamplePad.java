@@ -54,7 +54,6 @@ public class SamplePad extends JPanel {
 		name.setBackground(getBackground());
 		btns.setBackground(getBackground());
 		vol.setValue(sample.getVolume());
-		repaint();
 	}
 	
 }

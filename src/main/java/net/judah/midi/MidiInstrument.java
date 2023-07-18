@@ -56,9 +56,9 @@ public class MidiInstrument extends Instrument implements MidiReceiver {
 	}
 
 	/** no-op, subclass override */
-	@Override public void progChange(String preset, int ch) {	}
+	@Override public boolean progChange(String preset, int ch) { return false; }
 	/** no-op, subclass override */
-	@Override public void progChange(String preset) { }
+	@Override public boolean progChange(String preset) { return false; }
 
 	@Override
 	public String getProg(int ch) {

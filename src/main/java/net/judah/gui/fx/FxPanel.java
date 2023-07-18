@@ -8,6 +8,11 @@ import javax.swing.border.LineBorder;
 
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.fx.Chorus;
+import net.judah.fx.Delay;
+import net.judah.fx.LFO;
+import net.judah.fx.TimeEffect;
+import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.mixer.Channel;
 
@@ -47,6 +52,18 @@ public class FxPanel extends JPanel {
     		return null;
         return selected.get(0);
     }
+    
+    public void timeFx(int subdiv, Class<? extends TimeEffect> type) {
+    	if (type == Delay.class) 
+    		selected.forEach(ch->ch.getDelay().sync());
+    	else if (type == LFO.class) 
+    		selected.forEach(ch->ch.getLfo().sync());
+    	else if (type == Chorus.class)
+    		selected.forEach(ch->ch.getChorus().sync());
+    	MainFrame.update(getChannel());
+    }
+
+
 
 
 }

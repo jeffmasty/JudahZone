@@ -1,4 +1,4 @@
-package net.judah.song;
+package net.judah.song.cmd;
 
 import static net.judah.JudahZone.*;
 
@@ -25,7 +25,7 @@ public enum Cmd {
 		case TimeCode:	return IntProvider.instance();
 		case Start:		return BooleanProvider.instance;
 		case Tempo:		return getClock().getMidiClock(); 
-		case Jump:		return getSongs();
+		case Jump:		return getOverview();
 
 		case OffTape:	return getInstruments();
 		case OnTape:	return getInstruments();

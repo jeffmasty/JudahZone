@@ -11,13 +11,14 @@ import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
 import net.judah.gui.MainFrame;
+import net.judah.gui.widgets.FileChooser;
 import net.judah.midi.JudahClock;
 import net.judah.midi.Signature;
-import net.judah.song.Cmd;
-import net.judah.song.Cmdr;
-import net.judah.song.Param;
 import net.judah.song.Scene;
 import net.judah.song.Song;
+import net.judah.song.cmd.Cmd;
+import net.judah.song.cmd.Cmdr;
+import net.judah.song.cmd.Param;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
@@ -166,7 +167,7 @@ public class ChordTrack implements TimeListener, Cmdr {
 	
 	public ChordPro load(File file) {
 		loading = true;
-		Song song = JudahZone.getCurrent();
+		Song song = JudahZone.getSong();
 		clear();
 		ChordPro chordPro = null;
 		String name = null; 
@@ -307,6 +308,7 @@ public class ChordTrack implements TimeListener, Cmdr {
 			setChord(section.getChordAt(0)); // else defaultChord()
 		if (loading == false)
 			checkDirectives();
+		MainFrame.update(section);
 	}
 	
 	public void toggle(Directive d) {
@@ -325,10 +327,10 @@ public class ChordTrack implements TimeListener, Cmdr {
 			}
 		}
 		else if (active && directives.contains(Directive.SCENES)) {
-			for (Scene s : JudahZone.getCurrent().getScenes())
+			for (Scene s : JudahZone.getSong().getScenes())
 				if (section.getName().equals(s.getNotes())) {
-						JudahZone.getSongs().launchScene(s);
-						return;
+					JudahZone.setScene(s);
+					return;
 				}
 		}
 	}
@@ -382,6 +384,15 @@ public class ChordTrack implements TimeListener, Cmdr {
 			}
 		}
 		return -1;
+	}
+	public ChordPro load() {
+		File f = FileChooser.choose(Folders.getChordPro());
+		if (f == null) 
+			return null;
+		ChordPro result = load(f);
+		if (result != null) 
+			ChordProCombo.refill(f);
+		return result;
 	}
 	
 }

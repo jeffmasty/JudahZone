@@ -12,7 +12,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.api.Engine;
-import net.judah.fx.CutFilter;
+import net.judah.fx.Filter;
 import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
@@ -35,7 +35,7 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
     private final FloatBuffer work = FloatBuffer.allocate(bufSize); // mono-synth algorithm
 	
 	private final int channel = 0;
-	private final KnobMode knobMode = KnobMode.Synth;
+	private final KnobMode knobMode = KnobMode.DCO;
 	protected boolean active = true;
     private final Adsr adsr = new Adsr();
     private final Voice[] voices = new Voice[POLYPHONY];
@@ -43,9 +43,10 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
     private final float[] dcoGain = new float[DCO_COUNT];
     private final float[] detune = new float[DCO_COUNT];
     private final Shape[] shapes = new Shape[] {Shape.SIN, Shape.TRI, Shape.SAW};
-	private final CutFilter loCut = new CutFilter(false);
 	private final ModWheel modWheel;
 	private boolean mono = false; // TODO monosynth
+	private final Filter loCut = new Filter(false);
+	private final Filter hiCut = new Filter(false);
 	
 	private SynthPresets synthPresets;
 	private final List<Integer> actives = new ArrayList<>();
@@ -60,7 +61,7 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
 		rightPort = right;
 		midiPort = new MidiPort(this);
 		factor = 1.33f;
-		setIcon(Icons.get(iconName));		
+		icon = Icons.get(iconName);		
 		
 		for (int i = 0; i < dcoGain.length; i++)
 			dcoGain[i] = 0.50f;
@@ -69,18 +70,18 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
 		for (int i = 0; i < detune.length; i++)
 			detune[i] = 1f;
 
-		filter.setFilterType(CutFilter.Type.LP24);
-		filter.setFrequency(6000);
-		filter.setResonance(3);
-		filter.setActive(true);
-		
-		loCut.setFilterType(CutFilter.Type.HP24);
+		loCut.setFilterType(Filter.Type.LoCut);
 		loCut.setFrequency(60);
 		loCut.setResonance(2);
 		loCut.setActive(true);
 
+		hiCut.setFilterType(Filter.Type.HiCut);
+		hiCut.set(Filter.Settings.Frequency.ordinal(), 65);
+		hiCut.setResonance(2.5f);
+		hiCut.setActive(true);
+
 		synthPresets = new SynthPresets(this);
-		modWheel = new ModWheel(loCut, filter);
+		modWheel = new ModWheel(hiCut, loCut);
 		synthKnobs = new SynthKnobs(this);
 
 	}
@@ -140,13 +141,16 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
 	@Override public boolean isMono() { return mono; }
 
 
-	@Override public void progChange(String preset) {
-		getSynthPresets().load(preset);
-		MainFrame.update(Program.first(this, 0)); 
+	@Override public boolean progChange(String preset) {
+		if (getSynthPresets().load(preset)) {
+			MainFrame.update(Program.first(this, 0)); 
+			return true;
+		}
+		return false; 
 	}
 	
-	@Override public void progChange(String preset, int bank) {
-		progChange(preset); // banks/channels not implemented
+	@Override public boolean progChange(String preset, int bank) {
+		return progChange(preset); // banks/channels not implemented
 	}
 
 	@Override public String[] getPatches() {
@@ -199,7 +203,10 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
         for (Voice voice : voices) {
         	voice.process(notes, adsr, work);
         }
+        
+        
         loCut.process(work);
+        hiCut.process(work);
         processFx(work);
         toStereo(work);
         AudioTools.mix(left, leftPort.getFloatBuffer());

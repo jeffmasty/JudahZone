@@ -18,9 +18,10 @@ public interface MidiReceiver extends Receiver, Closeable {
 	
 	String[] getPatches();
 	
-	void progChange(String preset);
+	boolean progChange(String preset);
 	
-	void progChange(String preset, int channel);
+	/** true if a match is found in patches, no exception thrown */
+	boolean progChange(String preset, int channel);
 	
 	String getProg(int ch);
 	

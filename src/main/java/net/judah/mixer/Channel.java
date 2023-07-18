@@ -10,7 +10,6 @@ import javax.swing.ImageIcon;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
-import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.fx.*;
 import net.judah.gui.MainFrame;
@@ -28,23 +27,23 @@ public class Channel {
 
 	protected final String name;
     protected final boolean isStereo;
-	@Setter protected ImageIcon icon;
+	protected ImageIcon icon;
 	protected boolean onMute;
 	protected Preset preset;
 	protected boolean presetActive;
 	
     protected final Gain gain = new Gain();
     protected final LFO lfo = new LFO(this);
-    protected final CutFilter party;
-    protected final CutFilter filter;
+    protected final Filter filter1;
+    protected final Filter filter2;
     protected final EQ eq = new EQ();
     protected final Overdrive overdrive = new Overdrive();
     protected final Chorus chorus = new Chorus();
 	protected Delay delay = new Delay();
     protected Reverb reverb;
     protected Compressor compression = new Compressor();
-    @Setter protected JackPort leftPort;
-    @Setter protected JackPort rightPort;
+    protected JackPort leftPort;
+    protected JackPort rightPort;
     protected final List<Effect> effects;
     protected EffectsRack gui;
     protected LFOKnobs lfoKnobs;
@@ -52,22 +51,31 @@ public class Channel {
     public Channel(String name, boolean isStereo) {
         this.name = name;
         this.isStereo = isStereo;
-        party = new CutFilter(isStereo);
-        filter = new CutFilter(isStereo, CutFilter.Type.LP24, 16000); // hicut
+        filter1 = new Filter("Filter1", isStereo, Filter.Type.pArTy, 700);
+        filter2 = new Filter("Filter2", isStereo, Filter.Type.HiCut, 16000); 
         reverb = new Freeverb(isStereo);
         effects = Arrays.asList(new Effect[] {
-                getLfo(), getFilter(), getParty(), getEq(),
-                getChorus(), getOverdrive(),
-                getDelay(), getReverb(), getCompression()});
+                lfo, filter1, filter2, eq,
+                chorus, overdrive, delay, getReverb(), compression});
         preset = JudahZone.getPresets().getDefault();
-        gui = new EffectsRack(this);
-       	lfoKnobs = new LFOKnobs(this);
     }
 
     @Override public boolean equals(Object obj) {
     	if (obj == null || obj instanceof Channel == false)
     		return false;
     	return gain.equals( ((Channel)obj).getGain());
+    }
+    
+    public EffectsRack getGui() {
+    	if (gui == null) // lazy load
+    		gui = new EffectsRack(this, JudahZone.getLooper());
+    	return gui;
+    }
+    
+    public LFOKnobs getLfoKnobs() {
+    	if (lfoKnobs == null)
+    		lfoKnobs = new LFOKnobs(this);
+    	return lfoKnobs;
     }
     
     @Override public int hashCode() {
@@ -88,8 +96,10 @@ public class Channel {
         for (Setting s : preset) {
             for (Effect e : effects) {
                 if (e.getName().equals(s.getEffectName())) {
-                    for (int i = 0; i < s.size(); i++)
-                        e.set(i, s.get(i));
+                	try {
+	                    for (int i = 0; i < s.size(); i++)
+	                        e.set(i, s.get(i));
+                	} catch (Throwable t) { RTLogger.log(name, preset.getName() + " " + t.getMessage()); }
                     e.setActive(presetActive);
                     continue setting;
                 }
@@ -131,7 +141,7 @@ public class Channel {
         ArrayList<Setting> presets = new ArrayList<>();
         for (Effect e : effects) {
             if (!e.isActive()) continue;
-            presets.add(new Setting(e)); // saving gain?
+            presets.add(new Setting(e)); 
         }
         preset = new Preset(name, presets);
         return preset;
@@ -139,8 +149,7 @@ public class Channel {
 
 	public void reset() {
 		for (Effect fx : effects)
-			if (fx != filter)
-				fx.setActive(false);
+			fx.setActive(false);
 		MainFrame.update(this);
 	}
 
@@ -155,6 +164,20 @@ public class Channel {
 	}
 	
 	@Override public String toString() { return name; }
+
+	public void toggleFx() {
+		setPresetActive(!isPresetActive());
+	}
+
+	public void tempo(float tempo) {
+    	float unit = Constants.millisPerBeat(tempo) / (float)JudahZone.getClock().getSubdivision();
+		if (delay.isSync())
+			delay.sync(unit);
+		if (lfo.isSync())
+			lfo.sync(unit);
+		if (chorus.isSync())
+			chorus.sync(unit);
+	}
 
 }
 

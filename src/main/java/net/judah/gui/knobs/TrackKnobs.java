@@ -8,7 +8,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 import lombok.Getter;
 import net.judah.JudahZone;
@@ -16,6 +20,7 @@ import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumType;
 import net.judah.fx.Gain;
 import net.judah.gui.Gui;
+import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.PlayWidget;
 import net.judah.gui.Size;
@@ -64,14 +69,13 @@ public class TrackKnobs extends KnobPanel {
 	
 	// transpose amount?
 	public TrackKnobs(MidiTrack t, Seq seq) {
-		super(t.getName());
 		this.track = t;
 		this.seq = seq;
 		titleBar();
 		
 		///////////////////////////
 		file = new Folder(track);
-		progChange = new Program(track.getMidiOut(), track.getCh());
+		progChange = new Program(track);
         patterns = new PatternLauncher(track);
 		cue = new CueCombo(track);
 		gate = new GateCombo(track);
@@ -168,9 +172,9 @@ public class TrackKnobs extends KnobPanel {
 		tracks.setFont(Gui.BOLD);
 		Gui.resize(tracks, Size.COMBO_SIZE);
 		titleBar.add(tracks);
-		titleBar.add(new Btn(UIManager.getIcon("FileView.floppyDriveIcon"), e->track.save()));
-		titleBar.add(new Btn(UIManager.getIcon("FileChooser.homeFolderIcon"), e->track.toFrame(0)));
-		titleBar.add(new Btn(UIManager.getIcon("FileView.fileIcon"), e->track.toFrame(track.frames() + 1))); 
+		titleBar.add(new Btn(Icons.SAVE, e->track.save()));
+		titleBar.add(new Btn(Icons.HOME, e->track.toFrame(0)));
+		titleBar.add(new Btn(Icons.NEW_FILE, e->track.toFrame(track.frames() + 1))); 
 	}
 	
 	private void drumVol(int val, DrumType type) {

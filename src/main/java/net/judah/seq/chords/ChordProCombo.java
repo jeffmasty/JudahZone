@@ -18,7 +18,7 @@ public class ChordProCombo extends JComboBox<File> {
 	protected final ActionListener listener = (e)->action();
 	
 	public ChordProCombo() {
-		Gui.resize(this, Size.MEDIUM_COMBO);
+		Gui.resize(this, Size.COMBO_SIZE);
 		setRenderer(new FileRender());
 		refill();
 		instances.add(this);

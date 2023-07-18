@@ -19,10 +19,10 @@ public class RowKnobs extends Row {
 			controls.add(new FxKnob(ch, ch.getDelay(), Delay.Settings.DelayTime.ordinal(), "Time"));
 			break;
 		case 1: 
-			controls.add(new FxKnob(ch, ch.getChorus(), Chorus.Settings.Rate.ordinal(), Chorus.Settings.Rate.name()));
+			controls.add(new FxKnob(ch, ch.getOverdrive(), 0, "Gain"));
 			controls.add(new FxKnob(ch, ch.getChorus(), Chorus.Settings.Depth.ordinal(), Chorus.Settings.Depth.name()));
 			controls.add(new FxKnob(ch, ch.getChorus(), Chorus.Settings.Feedback.ordinal(), "F/B"));
-			controls.add(new FxKnob(ch, ch.getOverdrive(), 0, "Gain"));
+			controls.add(new FxKnob(ch, ch.getChorus(), Chorus.Settings.Rate.ordinal(), Chorus.Settings.Rate.name()));
 			break;
 		case 2: 
 			controls.add(new FxKnob(ch, ch.getEq(), EQ.EqBand.Bass.ordinal(), EQ.EqBand.Bass.name()));
@@ -32,8 +32,8 @@ public class RowKnobs extends Row {
 			break;
 		case 3: 
 			controls.add(new Fx(ch, JudahZone.getPresets()));
-			controls.add(new FxKnob(ch, ch.getParty(), CutFilter.Settings.Frequency.ordinal(), "Hz."));
-			controls.add(new FxKnob(ch, ch.getFilter(), CutFilter.Settings.Frequency.ordinal(), "Hz."));
+			controls.add(new FxKnob(ch, ch.getFilter1(), Filter.Settings.Frequency.ordinal(), "Hz."));
+			controls.add(new FxKnob(ch, ch.getFilter2(), Filter.Settings.Frequency.ordinal(), "Hz."));
 			controls.add(new FxKnob(ch, ch.getGain(), Gain.PAN, ""));
 			break;
 		default:

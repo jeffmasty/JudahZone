@@ -10,9 +10,9 @@ public class ArpInfo {
 	Mode algo = Mode.Off;
 	int range = 12;
 
-	public ArpInfo(Arp arp) {
-		algo = arp.getMode();
-		range = arp.getRange();
+	public ArpInfo(ArpInfo clone) {
+		this.algo = clone.algo;
+		this.range = clone.range;
 	}
 
 	

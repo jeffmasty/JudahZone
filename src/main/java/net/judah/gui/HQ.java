@@ -1,5 +1,8 @@
 package net.judah.gui;
 
+import static net.judah.JudahZone.*;
+
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 
 import javax.swing.JButton;
@@ -15,55 +18,54 @@ import net.judah.gui.widgets.StartBtn;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
-import net.judah.seq.MidiConstants;
 import net.judah.seq.chords.ChordPlay;
 import net.judah.seq.chords.ChordTrack;
-import net.judah.song.SongTab;
+import net.judah.song.Overview;
 
 public class HQ extends JPanel implements TimeListener {
-	@Override public void update(Property prop, Object value) {
-		if (prop == Property.BARS)
-			metro.setIcon(JudahClock.isEven() ? Icons.get("left.png") : Icons.get("right.png"));
-	}
 	
 	private final JudahClock clock;
 	private final Looper looper;
-	private final SongTab songs;
+	private final Overview songs;
 	private final Btn scene = new Btn("OpenMic", e->trigger());
 	private final Btn record = new Btn("Record", e->record());
-	private final Btn tape = new Btn(" ⏺️ ", e->JudahZone.getMains().tape());
     private final LengthCombo sync;
 	private Loop recording;
 	private final JButton metro;
 	
-    public HQ(JudahClock clock, Looper loops, SongTab songs, ChordTrack chords) {
+    public HQ(JudahClock clock, Looper loops, Overview songs, ChordTrack chords) {
     	this.clock = clock;
     	this.looper = loops;
     	this.songs = songs;
     	sync = new LengthCombo(clock);
-    	tape.setOpaque(true);
 		Gui.resize(scene, Size.SMALLER_COMBO);
     	
-    	setLayout(new FlowLayout(FlowLayout.LEFT, 0, 4));
+    	setLayout(new FlowLayout(FlowLayout.LEFT, 0, 2));
     	add(new StartBtn(clock));
     	metro = new Btn(Icons.get("left.png"), e->clock.skipBar());
+    	metro.setOpaque(true);
 		add(metro);
     	add(scene);
-    	add(new ChordPlay(" " + MidiConstants.SHARP + " " + MidiConstants.FLAT + " ", chords));
+    	add(Gui.resize(new ChordPlay(chords).makeFancy(), new Dimension(54, Size.STD_HEIGHT)));
     	add(record);
     	add(sync);
     	add(new Btn("Del", e->looper.clear()));
-    	add(tape);
     	clock.addListener(this);
     }
+    
+	@Override public void update(Property prop, Object value) {
+		if (prop == Property.BARS)
+			metro.setIcon(JudahClock.isEven() ? Icons.get("left.png") : Icons.get("right.png"));
+		metro.setBackground(clock.isActive() == false && clock.isOnDeck() ? Pastels.YELLOW : null);
+	}
     
 	private void trigger() {
 		if (SetCombo.getSet() != null)
 			SetCombo.set();
-		else if (songs.getOnDeck() != null)
-			songs.launchScene(songs.getOnDeck());
+		else if (getOnDeck() != null)
+			setScene(JudahZone.getOnDeck());
 		else 
-			JudahZone.getSongs().trigger();
+			songs.trigger();
 	}
 
 	void record() {
@@ -84,24 +86,21 @@ public class HQ extends JPanel implements TimeListener {
 	
 	public void sceneText() {
 		StringBuffer sb = new StringBuffer();
-		int idx = songs.getSong().getScenes().indexOf(songs.getCurrent());
-		boolean onDeck = songs.getOnDeck() != null;
+		int idx = getSong().getScenes().indexOf(getScene());
+		boolean onDeck = getOnDeck() != null;
 		if (idx == 0 && !onDeck)
 			sb.append("Home");
 		else {
-			if (songs.getOnDeck() == null && idx < 10)
+			if (getOnDeck() == null && idx < 10)
 				sb.append("Scene:");
 			sb.append(idx);
-			if (songs.getOnDeck() != null) 
-				sb.append(" to ").append(songs.getSong().getScenes().indexOf(songs.getOnDeck()));
+			if (getOnDeck() != null) 
+				sb.append(" to ").append(getSong().getScenes().indexOf(getOnDeck()));
 		}
 		if (SetCombo.getSet() != null)
 			sb.append("!");
 		scene.setText(sb.toString());
 	}
 
-	public void update() {
-		tape.setBackground(JudahZone.getMains().getTape() == null ? null : Pastels.RED);
-	}
-	
+
 }

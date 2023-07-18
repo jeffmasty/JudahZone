@@ -1,6 +1,7 @@
 package net.judah.looper;
 
-import static net.judah.util.Constants.*;
+import static net.judah.util.Constants.LEFT;
+import static net.judah.util.Constants.RIGHT;
 
 import java.nio.FloatBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,7 +38,7 @@ public abstract class AudioTrack extends Channel implements PlayAudio {
 	}
 
 	@Override public void setRecording(Recording sample) {
-		tapeCounter.set(0);
+		rewind();
 		recording = sample;
 	}
 
@@ -63,8 +64,8 @@ public abstract class AudioTrack extends Channel implements PlayAudio {
 		AudioTools.replace(playBuffer[LEFT], left, env * gain.getLeft());
 		AudioTools.replace(playBuffer[RIGHT], right, env * gain.getRight());
 		
-		party.process(left, right);
-		filter.process(left, right);
+		filter1.process(left, right);
+		filter2.process(left, right);
 
 		if (chorus.isActive())
 			chorus.processStereo(left, right);
@@ -100,10 +101,6 @@ public abstract class AudioTrack extends Channel implements PlayAudio {
 		tapeCounter.set(0);
 	}
 	
-//	@Override public final void setTapeCounter(int current) {
-//		tapeCounter.set(current);
-//	}
-
 	@Override public final float seconds() { 
 		return getLength() / Constants.fps();
 	}

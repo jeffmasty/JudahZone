@@ -6,8 +6,6 @@ import java.util.ArrayDeque;
 import javax.swing.JComboBox;
 
 import net.judah.JudahZone;
-import net.judah.gui.Gui;
-import net.judah.gui.Size;
 import net.judah.gui.widgets.FileRender;
 
 public class SetlistsCombo extends JComboBox<File> {
@@ -19,7 +17,6 @@ public class SetlistsCombo extends JComboBox<File> {
     	setSelectedItem(setlists.getCurrent().getSource());
     	addActionListener(e->JudahZone.getSetlists().setCurrent((File)getSelectedItem()));
 		setRenderer(new FileRender());
-		Gui.resize(this, Size.WIDE_SIZE);
     	instances.add(this);
     }
 

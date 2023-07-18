@@ -9,15 +9,13 @@ import lombok.Getter;
 import lombok.Setter;
 import net.judah.util.Constants;
 
-public class Chorus implements Effect {
+public class Chorus implements TimeEffect {
 
     public enum Settings {
-        Rate, Depth, Feedback
+        Rate, Depth, Feedback, Type, Sync
     }
 
-    public static final float MAX_DELAY = 1;
     private static final float PI2 = (float) Math.PI * 2;
-
     private static final float defaultRate = 3f;
     private static final float defaultDepth = 0.4f;
     private static final float defaultFeedback = 0.4f;
@@ -32,13 +30,15 @@ public class Chorus implements Effect {
     /** between 0 and 1 */
     @Getter private float depth = defaultDepth;
     /** between 0 and 1 */
-    @Getter @Setter private float feedback = defaultFeedback;
+    @Getter private float feedback = defaultFeedback;
     /** between 0 and 1 */
     @Getter @Setter private float phase = 0.42f;
 
     private final LFODelay leftDsp;
     private final LFODelay rightDsp;
     private int lfocount;
+	@Setter @Getter String type = TYPE[0];
+	@Setter @Getter boolean sync;
 
     public Chorus(int sampleRate, int nframes) {
         this.sampleRate = sampleRate;
@@ -71,17 +71,25 @@ public class Chorus implements Effect {
             return Math.round(getDepth() * 100);
         if (idx == Settings.Feedback.ordinal())
             return Math.round(getFeedback() * 100);
+        if (idx == Settings.Type.ordinal()) 
+        	return TimeEffect.indexOf(type);
+        if (idx == Settings.Sync.ordinal())
+        	return sync ? 1 : 0;
         throw new InvalidParameterException();
     }
 
     @Override
     public void set(int idx, int value) {
         if (idx == Settings.Rate.ordinal())
-        	setRate(value/10f);
+        	rate = value/10f;
         else if (idx == Settings.Depth.ordinal())
             setDepth(value/100f);
         else if (idx == Settings.Feedback.ordinal())
-            setFeedback(value/100f);
+            feedback = value/100f;
+        else if (idx == Settings.Type.ordinal() && value < TimeEffect.TYPE.length)
+        	type = TimeEffect.TYPE[value];
+        else if (idx == Settings.Sync.ordinal())
+        	sync = value > 0;
         else throw new InvalidParameterException();
     }
 
@@ -198,6 +206,19 @@ public class Chorus implements Effect {
             lastdelay = delay;
         }
     }
+
+    
+    
+    @Override
+	public void sync() {
+    	sync(TimeEffect.unit());
+    }
+    
+	@Override
+	public void sync(float unit) {
+		float msec = 0.001f * (unit + unit * TimeEffect.indexOf(type));
+		setRate(1 / msec);
+	}
 
 }
 

@@ -80,31 +80,33 @@ import net.judah.util.Constants;
  *
  * @author Neil C Smith (derived from code by Karl Helgason)
  */
-public class Delay implements Effect {
+public class Delay implements TimeEffect {
 
     public enum Settings {
-        DelayTime, Feedback
+        DelayTime, Feedback, Type, Sync
     }
     
     // in seconds
-    public static final float DEF_MAX_DELAY = 4f; 
-    public static final float DEF_MIN_DELAY = 0.02f;
-    public static final float DEFAULT_TIME = .25f;
+    public static final float MAX_DELAY = 9f; 
+    public static final float MIN_DELAY = 0.19f;
+    public static final float DIFF = MAX_DELAY - MIN_DELAY;
+    public static final float DEFAULT_TIME = .28f;
     
     private final float sampleRate;
     private final float nframes; 
     /** in seconds */
-    private float delaytime = DEFAULT_TIME; 
-    @Getter private float maxDelay = DEF_MAX_DELAY;
+    @Setter private float delayTime = DEFAULT_TIME; 
     @Getter private float feedback = 0.36f;
 
     @Getter private boolean active;
     private final VariableDelayOp left;
     private final VariableDelayOp right;
     @Setter private boolean slapback;
+	@Setter @Getter String type = TYPE[0];
+	@Setter @Getter boolean sync;
     
     public Delay() {
-        this(Constants.sampleRate(), Constants.bufSize(), DEF_MAX_DELAY);
+        this(Constants.sampleRate(), Constants.bufSize(), MAX_DELAY);
         reset();
     }
 
@@ -113,9 +115,6 @@ public class Delay implements Effect {
 
         this.sampleRate = sampleRate;
         this.nframes = bufferSize;
-        if (maxdelay > 0)
-            this.maxDelay = maxdelay;
-
         int delayBufSize = (int) (maxdelay * sampleRate) + 10;
         left = new VariableDelayOp(delayBufSize);
         right = new VariableDelayOp(delayBufSize);
@@ -142,16 +141,19 @@ public class Delay implements Effect {
     public int get(int idx) {
         if (idx == Settings.DelayTime.ordinal()) {
         	// pre-logarithmic: return Math.round(100 * getDelay() / getMaxDelay());
-        	float ratio = delaytime / maxDelay;
+        	float ratio = (delayTime - MIN_DELAY) / DIFF;
         	for (int i = 0; i < Constants.getReverseLog().length; i++)
         		if (ratio < Constants.getReverseLog()[i])
         			return i;
         	return 0;
         }
-        	
-            
         if (idx == Settings.Feedback.ordinal())
             return Math.round(getFeedback() * 100);
+        if (idx == Settings.Type.ordinal()) 
+        	return TimeEffect.indexOf(type);
+        if (idx == Settings.Sync.ordinal())
+        	return sync ? 1 : 0;
+        
         throw new InvalidParameterException();
     }
     
@@ -161,21 +163,22 @@ public class Delay implements Effect {
         	value -= 2;
         	if (value < 0)
         		value = 0;
-        	setDelay(Constants.getReverseLog()[value] * maxDelay);
+        	if (value > 99)
+        		value = 99;
+        	delayTime = Constants.getReverseLog()[value] * DIFF + MIN_DELAY;
         }
         else if (idx == Settings.Feedback.ordinal())
             setFeedback(value / 100f);
+        else if (idx == Settings.Type.ordinal() && value < TimeEffect.TYPE.length)
+        	type = TimeEffect.TYPE[value];
+        else if (idx == Settings.Sync.ordinal())
+        	sync = value > 0;
         else throw new InvalidParameterException();
-    }
-
-    public void setDelay(float seconds) {
-    	if (seconds > DEF_MIN_DELAY)
-    		this.delaytime = seconds;
     }
 
     /** @return delay time in seconds */
     public float getDelay() {
-        return this.delaytime;
+        return delayTime;
     }
 
     public void setFeedback(float feedback) {
@@ -200,9 +203,11 @@ public class Delay implements Effect {
 
 	public void slapback(FloatBuffer in, FloatBuffer out, boolean isLeft) {
 		if (isLeft) left.process(in, out, slapback);
-		else if (!slapback) right.process(in, out, false);
+		else 
+			right.process(in, out, !slapback);
     }
 
+	// TODO zero work area when delay time shrink (ghost echoes)
 	private class VariableDelayOp {
 	    float[] workArea;
 	    int rovepos = 0;
@@ -214,12 +219,11 @@ public class Delay implements Effect {
 	        this.lastdelay = 0;
 		}
 
-	    // TODO overflow when delay time large
 	    void process(FloatBuffer in, FloatBuffer out, boolean replace) {
 	    	
         	out.rewind();
             float srate = sampleRate;
-            float delay = delaytime * srate;
+            float delay = delayTime * srate;
             float ldelay = lastdelay;
             float fb = feedback;
             int rnlen = workArea.length;
@@ -260,6 +264,18 @@ public class Delay implements Effect {
             lastdelay = delay;
         }
 	}
+
+	@Override
+	public void sync() {
+		sync(TimeEffect.unit());
+	}
+	
+	@Override
+	public void sync(float unit) {
+		float msec = 0.001f * (unit + unit * TimeEffect.indexOf(type));
+		setDelayTime(msec);
+	}
+
 }
 
 

@@ -17,13 +17,13 @@ public class LfoCombo extends SetCombo<Target> implements Updateable {
 	@Override
 	protected void action() {
 		if (set == this) return;
-		Target selected = (Target)getSelectedItem();
-		if (ch.getLfo().getTarget() != selected)
-			ch.getLfo().setTarget(selected);
+		ch.getLfo().setTarget((Target)getSelectedItem());
 	}
 
 	@Override
 	public void update() {
+		if (set == this)
+			return;
 		if (ch.getLfo().getTarget() != getSelectedItem())
 			override(ch.getLfo().getTarget());
 	}

@@ -38,10 +38,11 @@ public class PatternLauncher extends JPanel {
 	public void fill() {
 		removeAll();
 		patterns.clear();
-		for (int i = 0; i < track.frames(); i++) 
-			patterns.add(new TrackPattern(track, i));
-		for (TrackPattern p : patterns)
+		for (int i = 0; i < track.frames(); i++) {
+			TrackPattern p = new TrackPattern(track, i); 
+			patterns.add(p);
 			add(p);
+		}
 		invalidate();
 	}
 	

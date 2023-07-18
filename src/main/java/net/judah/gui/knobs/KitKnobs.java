@@ -40,7 +40,6 @@ public class KitKnobs extends KnobPanel {
 	}
 	
 	public KitKnobs(DrumKit k) {
-		super("DrumKits");
 		kit = k;
     	setOpaque(true);
     	
@@ -53,7 +52,7 @@ public class KitKnobs extends KnobPanel {
     	for (String s : DrumDB.getKits()) preset.addItem(s);
     	
     	setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-    	preset.addActionListener(e->kit.setKit("" + preset.getSelectedItem()));
+    	preset.addActionListener(e->kit.progChange("" + preset.getSelectedItem()));
     	kits.setSelectedItem(kit.getKitMode());
     	kits.addActionListener(e->MainFrame.setFocus(getDrumMachine().getKnobs((KitMode)kits.getSelectedItem())));
     	modes.addActionListener(e-> update());

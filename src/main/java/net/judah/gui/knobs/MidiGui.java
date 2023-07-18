@@ -1,5 +1,4 @@
 package net.judah.gui.knobs;
-import static net.judah.JudahZone.*;
 
 import java.awt.Component;
 import java.awt.Dimension;
@@ -20,8 +19,10 @@ import net.judah.fluid.FluidSynth.Drum;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
+import net.judah.gui.Size;
 import net.judah.gui.settable.Program;
-import net.judah.gui.settable.SongsCombo;
+import net.judah.gui.settable.SongCombo;
+import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.Click;
 import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.LengthCombo;
@@ -42,11 +43,13 @@ public class MidiGui extends KnobPanel {
 	public static final int CHANNELS = 3;
 	
 	@Getter private final KnobMode knobMode = KnobMode.Midi;
-	@Getter private final SongsCombo songsCombo = new SongsCombo();
+	@Getter private final SongCombo songsCombo = new SongCombo();
 	private final JudahClock clock;
 	private final JudahMidi midi;
+	private final Seq seq;
 	private final Sampler sampler;
 	private final FluidSynth fluid;
+	private final JudahSynth synth1, synth2;
 	private final Setlists setlists;
     private final Program one;
     private final Program two;
@@ -60,13 +63,16 @@ public class MidiGui extends KnobPanel {
     private final JToggleButton fluidBtn = new JToggleButton("Fluid");
 	private final JPanel mpkPanel = new JPanel();
 	private final JPanel titleBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-	
+	private final Btn tape = new Btn(" ⏺️ ", e->JudahZone.getMains().tape());
+
 	public MidiGui(JudahMidi midi, JudahClock clock, Jamstik jam, Sampler sampler,
 			JudahSynth a, JudahSynth b, FluidSynth fsynth, Seq seq, Setlists setlists) {
-		super(KnobMode.Midi.name());
 		this.clock = clock;
+		this.seq = seq;
 		this.sampler = sampler;
 		this.fluid = fsynth;
+		this.synth1 = a;
+		this.synth2 = b;
 		this.jamstik = jam;
 		this.midi = midi;
 		this.setlists = setlists;
@@ -74,9 +80,11 @@ public class MidiGui extends KnobPanel {
     	
     	titleBar.add(new JLabel(" Song  "));
     	titleBar.add(Gui.resize(songsCombo, new Dimension(150, 28)));
+    	tape.setOpaque(true);
+    	titleBar.add(tape);
     	
-    	one = new Program(a);
-    	two = new Program(b);
+    	one = new Program(synth1, synth1.getChannel());
+    	two = new Program(synth2, synth2.getChannel());
     	seq.getSynthTracks().forEach(track->mpk.addItem(track));
 		mpk.setRenderer(STYLE);
 		mpk.setSelectedItem(midi.getKeyboardSynth());
@@ -100,7 +108,7 @@ public class MidiGui extends KnobPanel {
 		JPanel top = new JPanel();
 		top.setLayout(new BoxLayout(top, BoxLayout.LINE_AXIS));
 		top.add(new JLabel("  Setlist "));
-		top.add(new SetlistsCombo(setlists));
+		top.add(Gui.resize(new SetlistsCombo(setlists), Size.COMBO_SIZE));
 		top.add(stepper);
 		top.add(stepVol);
 		top.add(stepPlay);
@@ -129,7 +137,6 @@ public class MidiGui extends KnobPanel {
 		add(labels);
         add(Gui.wrap(bottom));
         update();
-
 	}
 	
 	private JPanel internals() { // Synth1, Synth2, Jamstik, MPK
@@ -137,21 +144,21 @@ public class MidiGui extends KnobPanel {
 		result.setLayout(new GridLayout(4, 1));
 		JPanel row = new JPanel();
 		
-		row.add(new Click(getSynth1().getName(), e-> {
-			MainFrame.setFocus(KnobMode.Synth);	
-			midi.setKeyboardSynth(getSeq().get(getSynth1())); }));
+		row.add(new Click(synth1.getName(), e-> {
+			MainFrame.setFocus(KnobMode.DCO);	
+			midi.setKeyboardSynth(seq.lookup(synth1, synth1.getChannel())); }));
 		row.add(Gui.resize(one, COMBO_SIZE));
 		result.add(row);
 
 		row = new JPanel();
-		row.add(new Click(getSynth2().getName(), e-> {
-			MainFrame.setFocus(JudahZone.getSynth2().getSynthKnobs());
-			midi.setKeyboardSynth(getSeq().get(getSynth1())); }));
+		row.add(new Click(synth2.getName(), e-> {
+			MainFrame.setFocus(synth2.getSynthKnobs());
+			midi.setKeyboardSynth(seq.lookup(synth2, synth2.getChannel())); }));
 		row.add(Gui.resize(two, COMBO_SIZE));
 		result.add(row);
 		
 		row = new JPanel();
-		row.add(new Click("JAM", e->getJamstik().toggle()));
+		row.add(new Click("JAM", e->jamstik.toggle()));
 		row.add(Gui.resize(jamstik, COMBO_SIZE));
 		result.add(row);
 		
@@ -176,7 +183,7 @@ public class MidiGui extends KnobPanel {
 				row.add(fluids[i]);
 				result.add(row);
 			}
-			JComboBox<String> drums = new JComboBox<>();
+			JComboBox<String> drums = new JComboBox<>(); // TODO broken
 			for (Drum d : fluid.getDrums())
 				drums.addItem(d.name);
 			Gui.resize(drums, COMBO_SIZE);
@@ -221,25 +228,25 @@ public class MidiGui extends KnobPanel {
  	    	if (zoneBtn.isSelected()) 
  	    		one.midiShow(patch(one.getPort().getPatches(), data2));
  	    	else 
- 	    		fluids[idx - 4].midiShow(patch(fluids[idx-4].getPrograms(), data2));
+ 	    		fluids[idx - 4].midiShow(patch(fluid.getPatches(), data2));
  	    	break;
     	case 5: // change sequencer track focus
  	    	if (zoneBtn.isSelected()) 
- 	    		two.midiShow(patch(two.getPrograms(), data2));
+ 	    		two.midiShow(patch(two.getPort().getPatches(), data2));
  	    	else 
- 	    		fluids[idx - 4].midiShow(patch(fluids[idx-4].getPrograms(), data2));
+ 	    		fluids[idx - 4].midiShow(patch(fluid.getPatches(), data2));
     		break;
     	case 6: // Jamstik out
     		if (zoneBtn.isSelected()) 
-    			jamstik.setSelectedIndex(Constants.ratio(data2 - 1, getSynths().size()));
+    			jamstik.setSelectedIndex(Constants.ratio(data2 - 1, jamstik.getItemCount()));
  	    	else 
- 	    		fluids[idx - 4].midiShow(patch(fluids[idx-4].getPrograms(), data2));
+ 	    		fluids[idx - 4].midiShow(patch(fluid.getPatches(), data2));
     		break;
     	case 7: // MPK keys out
     		if (zoneBtn.isSelected()) 
     			mpk.setSelectedIndex(Constants.ratio(data2 - 1, mpk.getItemCount()));
  	    	else 
- 	    		fluids[idx - 4].midiShow(patch(fluids[idx-4].getPrograms(), data2));
+ 	    		fluids[idx - 4].midiShow(patch(fluid.getPatches(), data2));
     		break;
     	default: return false;
     	}   
@@ -284,5 +291,8 @@ public class MidiGui extends KnobPanel {
 		if (midi.getKeyboardSynth() != (MidiTrack)mpk.getSelectedItem())
 			mpk.setSelectedItem(midi.getKeyboardSynth());	
 	}
-	
+
+	public void updateTape() {
+		tape.setBackground(JudahZone.getMains().getTape() == null ? null : Pastels.RED);
+	}
 }

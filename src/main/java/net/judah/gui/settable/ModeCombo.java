@@ -31,10 +31,8 @@ public class ModeCombo extends SetCombo<Mode> {
 		Constants.execute(()->{
 			for (ModeCombo c : instances) {
 				if (c.track != t) continue;
-				if (c.getSelectedItem() == c.track.getArp().getMode()) {
-					c.repaint();
+				if (c.getSelectedItem() == c.track.getArp().getMode()) 
 					continue;
-				}
 				c.override(t.getArp().getMode());
 		}});
 	}

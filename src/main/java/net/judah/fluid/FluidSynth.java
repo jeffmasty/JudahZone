@@ -64,7 +64,7 @@ public class FluidSynth extends MidiInstrument {
 		int delay = 200;
 		Constants.sleep(delay);
 		outStream = process.getOutputStream();
-		Constants.sleep(delay);
+		Constants.sleep(2 * delay);
 		try {
 			syncInstruments();
 			syncChannels();
@@ -217,11 +217,11 @@ public class FluidSynth extends MidiInstrument {
 		return changes[ch];
 	}
 
-	@Override public void progChange(String preset) {
-		progChange(preset, 0);
+	@Override public boolean progChange(String preset) {
+		return progChange(preset, 0);
 	}
 
-	@Override public void progChange(String preset, int ch) {
+	@Override public boolean progChange(String preset, int ch) {
 		for (int i = 0; i < patches.length; i++)
 			if (patches[i].equals(preset)) {
 				final int val = i;
@@ -230,8 +230,10 @@ public class FluidSynth extends MidiInstrument {
 				// flooding: JudahMidi.queue(Midi.create(ShortMessage.PROGRAM_CHANGE, ch, i, 0), midiPort.getPort());
 				if (ch < changes.length) 
 					changes[ch] = preset;
-				MainFrame.update(Program.first(this, ch)); 
+				MainFrame.update(Program.first(this, ch));
+				return true;
 			}
+		return false;
 	}
 
 	@RequiredArgsConstructor

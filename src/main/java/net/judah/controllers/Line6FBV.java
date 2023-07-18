@@ -26,7 +26,7 @@ public class Line6FBV implements Controller {
 				return true;
 			}
 			if (midi.getData1() == 1) { // "UP" button
-				JudahZone.getSongs().trigger();
+				JudahZone.getOverview().trigger();
 				// getJamstik().nextMidiOut(); 
 				return true;
 			}

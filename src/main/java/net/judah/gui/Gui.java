@@ -23,6 +23,7 @@ public interface Gui {
 
 	Font BOLD10 = new Font("Arial", Font.BOLD, 10);
 	Font BOLD = new Font("Arial", Font.BOLD, 11);
+	Font BOLD12 = new Font("Arial", Font.BOLD, 12);
 	Font BOLD13 = new Font("Arial", Font.BOLD, 13);
 	Font FONT13 = new Font("Arial", Font.PLAIN, 13);
 	Font FONT12 = new Font("Arial", Font.PLAIN, 12);
@@ -30,6 +31,17 @@ public interface Gui {
 	Font FONT10 = new Font("Arial", Font.PLAIN, 10);
 	Border GRAY1 = new LineBorder(Color.GRAY, 1);
 	Font FONT9 = new Font("Arial", Font.PLAIN, 9);
+	
+	
+	public static JComponent font(JComponent c, Font f) {
+		c.setFont(f);
+		return c;
+	}
+	
+	public static JComponent font(JComponent c) {
+		return font(c, FONT9);
+	}
+
 	
 	static JPanel duo(Component left, Component right) {
 		JPanel result = new JPanel();

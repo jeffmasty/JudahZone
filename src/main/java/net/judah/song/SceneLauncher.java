@@ -19,11 +19,11 @@ public class SceneLauncher extends JPanel {
 	public static final int MAX = ROWS * COLS; // 12 Scenes
 	
 	private final Song song;
-	private final SongTab tab;
+	private Overview tab;
 	
-	public SceneLauncher(Song song, SongTab tab) {
+	public SceneLauncher(Song song, Overview tab) {
 		this.song = song;
-		this.tab= tab;
+		this.tab = tab;
 		setLayout(new GridLayout(ROWS, COLS, 1, 1));
 		fill();
 		setBackground(Color.WHITE);
@@ -42,8 +42,7 @@ public class SceneLauncher extends JPanel {
 			JLabel create = new JLabel("(Create)", JLabel.CENTER);
 			create.setBorder(UIManager.getBorder("TitledBorder.border"));
 			create.addMouseListener(new MouseAdapter() {
-				@Override public void mouseClicked(MouseEvent e) {
-						tab.newScene();}});
+				@Override public void mouseClicked(MouseEvent e) { tab.getSongView().newScene();}});
 			create.setBackground(Pastels.BUTTONS);
 			create.setOpaque(true);
 			add(create);
@@ -59,10 +58,8 @@ public class SceneLauncher extends JPanel {
 		for (int i = 0; i < getComponentCount(); i++) {
 			if (getComponent(i) instanceof ScenePad) {
 				ScenePad pad = (ScenePad)getComponent(i);
-				if (pad.getScene() == s) {
+				if (pad.getScene() == s) 
 					pad.update();
-					pad.repaint();
-				}
 			}
 		}
 	}
@@ -72,7 +69,6 @@ public class SceneLauncher extends JPanel {
 			if (getComponent(i) instanceof ScenePad)
 				((ScenePad)getComponent(i)).update();
 		}
-		repaint();
 	}
 	
 }

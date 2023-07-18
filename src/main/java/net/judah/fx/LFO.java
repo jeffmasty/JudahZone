@@ -7,34 +7,45 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
-import net.judah.util.Constants;
-import net.judah.util.RTLogger;
 
 /** A calculated sin wave LFO.  Default amplitude returns queries between 0 and 85 */
-@RequiredArgsConstructor @Getter @Setter
-public class LFO implements Effect {
+@RequiredArgsConstructor 
+public class LFO implements TimeEffect {
 
 	public static final int LFO_MIN = 90;
     public static final int LFO_MAX = 1990;
-
+	long throttle;
+	@Setter @Getter String type = TYPE[0];
+	@Setter @Getter boolean sync;
 	
     public enum Settings {
-        Target, Min, Max, MSec
+        Target, Min, Max, MSec, Type, Sync 
     }
 
 	public static enum Target {
-		OFF, CutEQ, Gain, Reverb, Delay, Pan
+		CutEQ, Gain, Reverb, Delay, Pan
 	};
 
 	private final Channel ch;
-	private boolean active;
-	private Target target = Target.OFF;
+	@Getter private boolean active;
+	@Getter private Target target = Target.CutEQ;
 	private int recover = -1;
 	private boolean wasActive;
 	
-	
+	@Override
+	public void setActive(boolean active) {
+		if (this.active == active)
+			return;
+		if (active)
+			setup();
+		else 
+			recover();
+		this.active = active;
+		throttle = 0;
+		MainFrame.update(ch);
+	}
 	/** in kilohertz (msec per cycle). default: oscillates over a 1.2 seconds. */
-	@Getter private double frequency = 1200;
+	@Setter @Getter private double frequency = 1200;
 	/** align the wave on the jack frame buffer by millisecond (not implemented)*/
 	private long shift;
 	/** set maximum output level of queries. default: 90. */
@@ -45,12 +56,20 @@ public class LFO implements Effect {
     public void setTarget(Target target) {
     	if (this.target == target)
     		return;
+    	if (active)
+    		recover();
+		this.target = target;
+		if (active) 
+			setup();
+	}
 
-		if (recover >= 0)
-			switch (this.target) {
+    private void recover() {
+    	if (!active || recover < 0) 
+    		return;
+    	switch (target) {
 			case CutEQ:
-				ch.getParty().setFrequency(CutFilter.knobToFrequency(recover));
-				ch.getParty().setActive(wasActive);
+				ch.getFilter1().setFrequency(Filter.knobToFrequency(recover));
+				ch.getFilter1().setActive(wasActive);
 				break;
 			case Delay:
 				ch.getDelay().set(Delay.Settings.DelayTime.ordinal(), recover);
@@ -65,45 +84,36 @@ public class LFO implements Effect {
 				break;
 			case Pan:
 				ch.getGain().set(Gain.PAN, recover);
-				break;
-			case OFF:
-				break;
-			}
-
-		this.target = target;
-		this.active = target != Target.OFF;
-
-		if (active) {
-			switch (this.target) {
-			case CutEQ:
-				recover = CutFilter.frequencyToKnob(ch.getParty().getFrequency());
-				wasActive = ch.getParty().isActive();
-				ch.getParty().setActive(true);
-				break;
-			case Delay:
-				recover = ch.getDelay().get(Delay.Settings.DelayTime.ordinal());
-				wasActive = ch.getDelay().isActive();
-				ch.getDelay().setActive(true);
-				break;
-			case Reverb:
-				recover = ch.getReverb().get(Reverb.Settings.Wet.ordinal());
-				wasActive = ch.getReverb().isActive();
-				ch.getReverb().setActive(true);
-				break;
-			case Gain:
-				recover = ch.getVolume();
-				break;
-			case Pan:
-				recover = ch.getPan();
-				break;
-			case OFF:
-				break;
-			}
-		}		
-		RTLogger.log(this, target.name());
-		
-	}
-
+				break;    
+    	}
+    }
+    
+    private void setup() {
+    	switch (this.target) {
+		case CutEQ:
+			recover = Filter.frequencyToKnob(ch.getFilter1().getFrequency());
+			wasActive = ch.getFilter1().isActive();
+			ch.getFilter1().setActive(true);
+			break;
+		case Delay:
+			recover = ch.getDelay().get(Delay.Settings.DelayTime.ordinal());
+			wasActive = ch.getDelay().isActive();
+			ch.getDelay().setActive(true);
+			break;
+		case Reverb:
+			recover = ch.getReverb().get(Reverb.Settings.Wet.ordinal());
+			wasActive = ch.getReverb().isActive();
+			ch.getReverb().setActive(true);
+			break;
+		case Gain:
+			recover = ch.getVolume();
+			break;
+		case Pan:
+			recover = ch.getPan();
+			break;
+		}
+    }
+    
 	public void setMax(int val) {
 	    if (val < min) return;
 	    max = val;
@@ -123,11 +133,11 @@ public class LFO implements Effect {
     @Override
     public int get(int idx) {
         if (idx == Settings.Target.ordinal())
-            return (int)(target.ordinal() / (float)Target.values().length) * 100;
+            return target.ordinal(); 
         if (idx == Settings.Min.ordinal())
-            return getMin();
+            return min;
         if (idx == Settings.Max.ordinal())
-            return getMax();
+            return max;
         if (idx == Settings.MSec.ordinal()) {
         	// map 90 to 1990 to 0 to 100
         	int result = ((int)( (getFrequency() - 90) / 19f));
@@ -135,6 +145,10 @@ public class LFO implements Effect {
         	else if (result > 100) result = 100;
             return result;
         }
+        if (idx == Settings.Type.ordinal()) 
+        	return TimeEffect.indexOf(type);
+        if (idx == Settings.Sync.ordinal())
+        	return sync ? 1 : 0;
         // TODO Shape <| |> ~~
         throw new InvalidParameterException();
     }
@@ -142,13 +156,17 @@ public class LFO implements Effect {
     @Override
     public void set(int idx, int value) {
         if (idx == Settings.Target.ordinal()) 
-        	setTarget((Target)Constants.ratio(value, Target.values()));
+        	setTarget(Target.values()[value]);
         else if (idx == Settings.Min.ordinal())
             setMin(value);
         else if (idx == Settings.Max.ordinal())
             setMax(value);
         else if (idx == Settings.MSec.ordinal()) 
-        	setFrequency(value * 19 + 90);   // 90msec to 1990msec
+        	frequency = value * 19 + 90;   // 90msec to 1990msec
+        else if (idx == Settings.Type.ordinal() && value < TimeEffect.TYPE.length)
+        	type = TimeEffect.TYPE[value];
+        else if (idx == Settings.Sync.ordinal())
+        	sync = value > 0;
         else throw new InvalidParameterException();
     }
 
@@ -172,14 +190,16 @@ public class LFO implements Effect {
 		int val = (int)query();
 		switch(target) {
 			case Gain: ch.getGain().set(Gain.VOLUME, val); break;
-			case CutEQ: ch.getParty().setFrequency(
-					CutFilter.knobToFrequency((int)ch.getLfo().query())); break;
+			case CutEQ: ch.getFilter1().setFrequency(
+					Filter.knobToFrequency((int)ch.getLfo().query())); break;
 			case Reverb: ch.getReverb().set(Reverb.Settings.Wet.ordinal(), val); break;
 			case Delay: ch.getDelay().setFeedback(val * 0.01f); break;
 			case Pan: ch.getGain().set(Gain.PAN, val); break;
-			case OFF: return;
 		}
-		MainFrame.update(ch);
+		if (++throttle > 6) {// throttle gui updates
+			throttle = 0;
+			MainFrame.update(ch);
+		}
 	}
 
 	
@@ -193,7 +213,6 @@ public class LFO implements Effect {
 	//}
 
 	
-	
 	public static class LFOTest extends Thread {
 		final LFO lfo = new LFO(new Channel("test", false));
 
@@ -205,7 +224,7 @@ public class LFO implements Effect {
 		double max = Double.MIN_VALUE;
 
 		public LFOTest(int freq) {
-			lfo.setFrequency(freq);
+			lfo.frequency = freq;
 		}
 
 		@Override
@@ -232,6 +251,18 @@ public class LFO implements Effect {
 		public static void main2(String[] args) {
 			new LFOTest(1200).start(); // 3 second LFO
 		}
+	}
+
+
+	@Override
+	public void sync(float unit) {
+		float msec = 2 * 0.001f * (unit + unit * TimeEffect.indexOf(type));
+    	setFrequency(msec);		
+	}
+
+	@Override
+	public void sync() {
+		sync(TimeEffect.unit());
 	}
 
 	

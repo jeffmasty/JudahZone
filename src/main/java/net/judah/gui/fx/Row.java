@@ -17,7 +17,7 @@ public class Row implements Updateable {
 	
 	@Override
 	public final void update() {
-    	for (Component c : getControls()) 
+    	for (Component c : controls) 
 			if (c instanceof Updateable)
 				((Updateable)c).update();
 	}

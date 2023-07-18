@@ -28,7 +28,7 @@ public class ChordScroll extends JPanel {
 	public ChordScroll(ChordTrack t) {
 		chords = t;
 		crds = new JLabel[] {a, b, c, d, e};
-		JPanel top = new JPanel(new GridLayout(1, 5, 0, 0));
+		JPanel top = new JPanel(new GridLayout(1, 5, 1, 1));
 		for (JLabel it : crds) it.setFont(Gui.BOLD);
 		for (JLabel it : crds) top.add(it);
 		a.setOpaque(true);
@@ -40,13 +40,12 @@ public class ChordScroll extends JPanel {
 		bottom.add(aLyrics); bottom.add(bLyrics);
 		
 		aLyrics.setFont(Gui.BOLD);
-		setLayout(new GridLayout(2, 1, 0, 0));
+		setLayout(new GridLayout(2, 1, 1, 2));
 		add(top);
 		add(bottom);
 		setBorder(BorderFactory.createLineBorder(Pastels.BUTTONS, 2));
 		
 		instances.add(this);
-		doLayout();
 	}
 
 	public static void scroll() {

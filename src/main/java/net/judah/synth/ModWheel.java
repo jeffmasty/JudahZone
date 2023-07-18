@@ -1,14 +1,14 @@
 package net.judah.synth;
 
 import lombok.RequiredArgsConstructor;
-import net.judah.fx.CutFilter;
+import net.judah.fx.Filter;
 
 /** crank up Resonance on CutFilters */
 @RequiredArgsConstructor
 public class ModWheel {
 
-	private final CutFilter lo;
-	private final CutFilter hi;
+	private final Filter lo;
+	private final Filter hi;
 	private Float oldHi;
 	private Float oldLo;
 	

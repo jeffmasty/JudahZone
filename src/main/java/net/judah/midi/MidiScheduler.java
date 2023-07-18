@@ -24,14 +24,17 @@ public class MidiScheduler implements Runnable {
 	public MidiScheduler() {
 		offering = new LinkedBlockingQueue<>(2);
 	}
-
-	@Override
-	public void run() {
+	
+	private int count = 0;
+	@Override public void run() {
 		try {
 			while (true) {
 				current = offering.take();
-				pulseLFOs(); // query any running LFOs
-				Fader.pulse();
+//				if (++count > 1) { // throttle
+					pulseLFOs(); // query any running LFOs
+					Fader.pulse();
+//					count = 0;
+//				}
 			}
 		} catch (Throwable t) {
 			RTLogger.warn(this, t);

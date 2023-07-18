@@ -15,7 +15,6 @@ public abstract class LineIn extends Channel {
 
 	@Setter protected float factor = 4;
 	protected boolean muteRecord;
-    protected LatchEfx latchEfx = new LatchEfx(this);
     /** set to <code>null</code> for no processing */
     @Setter protected GuitarTuner tuner;
     
@@ -50,8 +49,8 @@ public abstract class LineIn extends Channel {
 		for (int z = 0; z < Constants.bufSize(); z++)
 			mono.put(mono.get(z) * factor);
 
-		filter.process(mono);
-		party.process(mono);
+		filter1.process(mono);
+		filter2.process(mono);
 		if (eq.isActive()) {
 			eq.process(mono, true);
 		}
@@ -89,8 +88,8 @@ public abstract class LineIn extends Channel {
 			right.put(right.get(z) * r);
 		}
 		
-		filter.process(left, right);
-		party.process(left, right);
+		filter2.process(left, right);
+		filter1.process(left, right);
 		
 		if (chorus.isActive()) {
 			chorus.processStereo(left, right);

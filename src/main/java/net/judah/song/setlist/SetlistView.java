@@ -1,8 +1,8 @@
 package net.judah.song.setlist;
 
-import static net.judah.gui.fx.PresetsGui.*;
-
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -13,16 +13,21 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.gui.Gui;
+import net.judah.gui.Icons;
+import net.judah.gui.Size;
 import net.judah.gui.fx.PresetsGui.Button;
+import net.judah.gui.knobs.KnobMode;
+import net.judah.gui.knobs.KnobPanel;
+import net.judah.gui.knobs.MidiGui;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.FileChooser;
 import net.judah.gui.widgets.FileRender;
-import net.judah.gui.widgets.ModalDialog;
 import net.judah.util.RTLogger;
 
-public class SetlistView extends JPanel implements ListSelectionListener {
+public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ implements ListSelectionListener {
 	public static final String TABNAME = "Setlists";
 	
 	private final Setlists setlists;
@@ -31,22 +36,34 @@ public class SetlistView extends JPanel implements ListSelectionListener {
 	private final JComboBox<Setlist> custom  = new JComboBox<>(); 
 	private final ActionListener setlister;
 	private File memory = Setlists.ROOT;
+	private final JPanel titleBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 	
 	private final JButton upSong = 		new Button(" up ", e->moveSong(true));
 	private final JButton downSong = 	new Button("down", e->moveSong(false));
 	private final JButton deleteSong = 	new Button("delete", e->deleteSong());
 	private final JButton addSong = 	new Button(" add ", e->addSong());
-	private final JButton close = 		new Button("close", e->ModalDialog.getInstance().setVisible(false));
+	private final JButton close = 		new Button("open", e->loadSong());
+	@Getter private final KnobMode knobMode = KnobMode.Setlist;
+	private final MidiGui knobs;
+	@Override public Component installing() { return titleBar; }
 
-	public SetlistView(Setlists setlists) {
-		
+	
+	private void loadSong() {
+		if (jsongs.getSelectedValue() != null)
+			JudahZone.loadSong(jsongs.getSelectedValue());
+	}
+
+	public SetlistView(Setlists setlists, MidiGui knobs) {
+		this.knobs = knobs;
 		this.setlists = setlists;
 		setlister = e->setSetlist((Setlist)custom.getSelectedItem());
 		custom.setRenderer(new ListCellRenderer<Setlist>() {
-			private final JLabel render = new JLabel();
+			private final JLabel render = new JLabel("", JLabel.CENTER);
 			@Override public Component getListCellRendererComponent(JList<? extends Setlist> list, Setlist setlist, 
 					int index, boolean isSelected, boolean cellHasFocus) {
-			    File file = setlist.getSource();
+			    render.setHorizontalAlignment(JLabel.CENTER);
+			    render.setFont(Gui.BOLD);
+				File file = setlist.getSource();
 				if (file == null) {
 					render.setText("?");
 					return render;
@@ -64,6 +81,7 @@ public class SetlistView extends JPanel implements ListSelectionListener {
 					int index, boolean isSelected, boolean cellHasFocus) {
 				super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 				setText(FileRender.defix((File)value));
+				setHorizontalAlignment(JLabel.CENTER);
 				return this;
 			}});
 		jsongs.addListSelectionListener(this);
@@ -76,23 +94,22 @@ public class SetlistView extends JPanel implements ListSelectionListener {
 		if (custom.getSelectedItem() != null)
 			setSetlist((Setlist)custom.getSelectedItem());
 
-		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-		Component scroll = Gui.resize(new JScrollPane(jsongs), SIZE);
-		
+		Component scroll = new JScrollPane(jsongs);
 		JPanel btns = new JPanel();
 		btns.setLayout(new BoxLayout(btns, BoxLayout.PAGE_AXIS));
+		btns.add(Box.createVerticalStrut(3));
 		btns.add(addSong); btns.add(deleteSong); btns.add(upSong); btns.add(downSong);
 		btns.add(close); btns.add(Box.createVerticalGlue());
 		
-		JPanel bottom = new JPanel();
-		bottom.setLayout(new BoxLayout(bottom, BoxLayout.LINE_AXIS));
-		bottom.add(scroll); bottom.add(btns);
-		add(Gui.wrap(new JLabel("Setlist:"), custom, 
-				new Btn("save", e-> {if (setlist != null) setlist.save();}), 
-				new Btn("new", e->newSetlist())));
-		add(bottom);
-		setName(TABNAME);
-		new ModalDialog(this, DIALOG, null);
+		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
+		add(Box.createHorizontalStrut(6));
+		add(Gui.resize(btns, new Dimension(92, Size.HEIGHT_KNOBS - 30)));
+		add(scroll); 
+		add(Box.createHorizontalStrut(13));
+		
+		titleBar.add(Gui.resize(custom, Size.WIDE_SIZE));
+		titleBar.add(new Btn(Icons.SAVE, e-> {if (setlist != null) setlist.save();}));
+		titleBar.add(new Btn(Icons.NEW_FILE, e->newSetlist())); 
 	}
 	
 	private void setSetlist(Setlist s) {
@@ -188,6 +205,15 @@ public class SetlistView extends JPanel implements ListSelectionListener {
 		}
 		
 		
+	}
+
+	@Override
+	public boolean doKnob(int idx, int value) {
+		return knobs.doKnob(idx, value);
+	}
+
+	@Override
+	public void update() {
 	}
 	
 }

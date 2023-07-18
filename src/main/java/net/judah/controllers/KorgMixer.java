@@ -86,9 +86,9 @@ public class KorgMixer implements Controller {
 		else if (data2 > 0 && data1 >= roff && data1 < roff + 8) { // LAUNCH SCENE
 			int idx = data1 - roff; 
 			
-			List<Scene> scenes = getCurrent().getScenes();
+			List<Scene> scenes = getSong().getScenes();
 			if (scenes.size() > idx) 
-				getSongs().setOnDeck(scenes.get(idx));
+				setOnDeck(scenes.get(idx));
 			else if (idx == 6 || idx == 7) // double duty: launch Fluid+ tracks
 				seq.get(idx + 2).trigger();
 		}
@@ -181,26 +181,7 @@ public class KorgMixer implements Controller {
 	
 	
 }
-/*
-//	@Getter private final ArrayList<MapEntry> list= new ArrayList<MapEntry>(); 
-//	@Getter private final ArrayList<MapEntry> faders = new ArrayList<MapEntry>();
-//	@Getter private final ArrayList<MapEntry> knobs = new ArrayList<MapEntry>();
-//	@Getter private final ArrayList<MapEntry> mutes = new ArrayList<MapEntry>();
-//	@Getter private final ArrayList<MapEntry> solos = new ArrayList<MapEntry>();
-//	@Getter private final ArrayList<MapEntry> tracks = new ArrayList<MapEntry>();
-//	@Getter private final ArrayList<MapEntry> others = new ArrayList<MapEntry>();
-	for (int x = 0; x < 8; x++) {
-		faders.add(new MapEntry(new String("Fade" + x), TYPE.KNOB, x));
-		knobs.add(new MapEntry(new String("RvbWet" + x), TYPE.KNOB, x + knoboff));
-		solos.add(new MapEntry(new String("Goto" + x), TYPE.MOMENTARY, x + soff));
-		mutes.add(new MapEntry(new String("Mute" + x), TYPE.TOGGLE, x + moff));
-		tracks.add(new MapEntry(new String("Revb" + x), TYPE.TOGGLE, x + roff));
-	}
-	others.addAll(Arrays.asList(new MapEntry[] {
-		PREV, NEXT, LOOP, SET, PREV2, NEXT2, RWND, FWRD, STOP, PLAY, RECORD
-	}));
-	list.addAll(faders);list.addAll(knobs);...
- */
+
 /** 
 
         nanoKONTROL2 MIDI Implementation             Revision 1.00 (2010.12.14)

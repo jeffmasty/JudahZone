@@ -8,10 +8,10 @@ import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
 import net.judah.mixer.LineIn;
 import net.judah.mixer.Zone;
-import net.judah.song.BooleanProvider;
-import net.judah.song.Cmd;
-import net.judah.song.Cmdr;
-import net.judah.song.Param;
+import net.judah.song.cmd.BooleanProvider;
+import net.judah.song.cmd.Cmd;
+import net.judah.song.cmd.Cmdr;
+import net.judah.song.cmd.Param;
 
 @Getter @EqualsAndHashCode(callSuper = true) 
 public class SoloTrack extends Loop implements Cmdr {

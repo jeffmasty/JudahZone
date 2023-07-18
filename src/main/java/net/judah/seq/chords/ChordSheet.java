@@ -67,7 +67,7 @@ public class ChordSheet extends JPanel {
 	}
 
 	void edit() {
-		Song song = JudahZone.getCurrent(); 
+		Song song = JudahZone.getSong(); 
 		if (song == null || song.getChordpro() == null || song.getChordpro().isBlank())
 			return;
 		try {
@@ -105,19 +105,12 @@ public class ChordSheet extends JPanel {
 			new Group(chords.getSections().get(i));
 		scroll.setViewportView(content);
 		
-		loop.setSelected(chords.getDirectives().contains(Directive.LOOP));
-		
-		String dir = " ";
-		for (Directive d : chords.getDirectives())
-			if (d != Directive.LOOP)
-				dir += d.name() + " ";
-		directives.setText(dir);
+		updateDirectives();
 	}
 
 	public void setSection(Section part) {
 		for (int i = 0; i < groups.size(); i++)
 			groups.get(i).highlight(part);
-		
 	}
 	
 
@@ -217,6 +210,15 @@ public class ChordSheet extends JPanel {
 			left.setBackground(getBackground());
 			lbls.setBackground(getBackground());
 		}
+	}
+
+	public void updateDirectives() {
+		loop.setSelected(chords.getDirectives().contains(Directive.LOOP));
+		String dir = " ";
+		for (Directive d : chords.getDirectives())
+			if (d != Directive.LOOP)
+				dir += d.name() + " ";
+		directives.setText(dir);
 	}
 	
 }

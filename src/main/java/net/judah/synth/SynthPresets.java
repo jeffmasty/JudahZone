@@ -4,6 +4,7 @@ import static net.judah.synth.SynthDB.DASH;
 
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.util.RTLogger;
 
 @Getter
 public class SynthPresets {
@@ -17,9 +18,14 @@ public class SynthPresets {
 		this.adsr = synth.getAdsr();
 	}
 	
-	public void load(String name) {
-		current = name;
-		JudahZone.getSynthPresets().apply(name, this);
+	public boolean load(String name) {
+		try {
+			if (JudahZone.getSynthPresets().apply(name, this)) {
+				current = name;
+				return true;
+			}
+		} catch (Throwable t) { RTLogger.warn(this, t); }
+		return false;
 	}
 	
 	public int getProg() {
@@ -33,10 +39,10 @@ public class SynthPresets {
 		adsr.setReleaseTime(Integer.parseInt(dat[3]));
 	}
 	public void filter(String[] dat) {
-		synth.getFilter().setFrequency(Float.parseFloat(dat[1]));
-		synth.getFilter().setResonance(Float.parseFloat(dat[2]));
-		synth.getLoCut().setFrequency(Float.parseFloat(dat[3]));
-		synth.getLoCut().setResonance(Float.parseFloat(dat[4]));
+		synth.getHiCut().setFrequency(Float.parseFloat(dat[0]));
+		synth.getHiCut().setResonance(Float.parseFloat(dat[1]));
+		synth.getLoCut().setFrequency(Float.parseFloat(dat[2]));
+		synth.getLoCut().setResonance(Float.parseFloat(dat[3]));
 	}
 	public void dco(String name, String[] dat) {
 		int idx = Integer.parseInt(name.split(DASH)[1]);
@@ -45,10 +51,5 @@ public class SynthPresets {
 		synth.getDetune()[idx] = dat.length > 2 ?
 			synth.getDetune()[idx] = Float.parseFloat(dat[2]) : 1f;
 	}
-
-	public void update() {
-		// TODO
-	}
-
 
 }

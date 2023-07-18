@@ -26,8 +26,8 @@ public class LEDs extends JPanel {
 	public static final int COMPRESSION = 5;
 	public static final int LFO = 6;
 	@SuppressWarnings("unchecked")
-	private Class<Effect>[] lookup = new Class[] {Reverb.class, Delay.class, Chorus.class, 
-		Overdrive.class, CutFilter.class, Compressor.class, LFO.class};
+	private Class<Effect>[] lookup = new Class[] {Reverb.class, Delay.class, Overdrive.class, 
+			Chorus.class, Filter.class, Compressor.class, LFO.class};
 				
 
 	@Getter boolean[] model = new boolean[UNITS];
@@ -76,8 +76,8 @@ public class LEDs extends JPanel {
 			model[LFO] = channel.getLfo().isActive();
 			repaint = true;
 		}
-		if (channel.getParty().isActive() != model[CUTFILTER]) {
-			model[CUTFILTER] = channel.getParty().isActive();
+		if (channel.getFilter1().isActive() != model[CUTFILTER]) {
+			model[CUTFILTER] = channel.getFilter1().isActive();
 			repaint = true;
 		}
 		if (channel.getCompression().isActive() != model[COMPRESSION]) {

@@ -16,11 +16,11 @@ import net.judah.seq.chords.ChordTrack;
 import net.judah.seq.track.Cue;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.TrackInfo;
-import net.judah.song.Cmd;
-import net.judah.song.Cmdr;
-import net.judah.song.IntProvider;
-import net.judah.song.Param;
 import net.judah.song.Sched;
+import net.judah.song.cmd.Cmd;
+import net.judah.song.cmd.Cmdr;
+import net.judah.song.cmd.IntProvider;
+import net.judah.song.cmd.Param;
 import net.judah.util.RTLogger;
 
 /** Sequencer */
@@ -56,9 +56,9 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
 		return null;
 	}
 	
-	public MidiTrack get(MidiReceiver rcv) {
+	public MidiTrack lookup(MidiReceiver rcv, int ch) {
 		for (MidiTrack t : tracks)
-			if (t.getMidiOut() == rcv)
+			if (t.getMidiOut() == rcv && t.getCh() == ch)
 				return t;
 		return null;
 	}
@@ -79,7 +79,7 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
 	public void init(List<Sched> tracks) {
 		tracks.clear();
 		for (int i = 0; i < TRACKS; i++)
-			tracks.add(new Sched()); 
+			tracks.add(new Sched(get(i).isSynth())); 
 	}
 
 	public MidiTrack byName(String track) {
@@ -107,7 +107,7 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
 	}
 
 	/** load song into sequencer */
-	public void loadTracks(List<TrackInfo> trax) {
+	public void loadSong(List<TrackInfo> trax) {
 		for (TrackInfo info : trax) {
     		MidiTrack t = byName(info.getTrack());
     		if (t == null) {
@@ -119,15 +119,9 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
     		}
     		t.setCue(info.getCue());
     		t.setGate(info.getGate());
-    		if (info.getArp() != null) {
-    			t.getArp().setMode(info.getArp().getAlgo());
-    			t.getArp().setRange(info.getArp().getRange());
-    		}
-    		if (false == info.getProgram().equals(t.getMidiOut().getProg(t.getCh()))) 
-    			t.getMidiOut().progChange(info.getProgram(), t.getCh());
     	} 
 	}
-
+	
 	/**Perform recording or translate activities on tracks
 	 * @param midi user note press 
 	 * @return true if any track is recording */

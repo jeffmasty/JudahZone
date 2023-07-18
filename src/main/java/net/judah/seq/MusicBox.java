@@ -25,7 +25,6 @@ import net.judah.midi.Panic;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.piano.PianoBox;
 import net.judah.seq.track.MidiTrack;
-import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 public abstract class MusicBox extends JPanel implements Musician {
@@ -224,7 +223,7 @@ public abstract class MusicBox extends JPanel implements Musician {
 			break;
 		case TRANS:
 			if (track.isActive())
-				Constants.execute(new Panic(track.getMidiOut(), track.getCh()));
+				new Panic(track);
 			transpose(e.getNotes(), e.getDestination());
 			break;
 		case LENGTH:
@@ -253,7 +252,7 @@ public abstract class MusicBox extends JPanel implements Musician {
 			break;
 		case TRANS:
 			if (track.isActive())
-				Constants.execute(new Panic(track.getMidiOut(), track.getCh()));
+				new Panic(track);
 			decompose(e.getNotes(), e.getDestination());
 			break;
 		case LENGTH:

@@ -7,8 +7,8 @@ import java.util.Vector;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
-import net.judah.song.Cmdr;
-import net.judah.song.Param;
+import net.judah.song.cmd.Cmdr;
+import net.judah.song.cmd.Param;
 
 @RequiredArgsConstructor
 public class Zone extends Vector<LineIn> implements Cmdr {
@@ -72,7 +72,7 @@ public class Zone extends Vector<LineIn> implements Cmdr {
 				ch.setMuteRecord(false);
 				break;
 			case Latch:
-				ch.getLatchEfx().latch();
+				JudahZone.getLooper().syncFx(ch);
 				break;
 			case SoloCh:
 				JudahZone.getLooper().getSoloTrack().setSoloTrack(resolve(p.val));

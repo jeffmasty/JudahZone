@@ -6,7 +6,7 @@ import java.util.ArrayList;
 
 import net.judah.drumkit.Sampler;
 import net.judah.fx.Chorus;
-import net.judah.fx.CutFilter;
+import net.judah.fx.Filter;
 import net.judah.fx.Delay;
 import net.judah.fx.Overdrive;
 import net.judah.gui.MainFrame;
@@ -57,11 +57,12 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 				return true;
 			looper.get(data1 - 1).trigger();
 			return true;
-		case 5: // Show Sheet Music 
-			new Thread(()->getFrame().sheetMusic(true)).start();
+		case 5: // toggle FX
+			fxrack.getChannel().toggleFx();
 			return true; 
 		case 6: // latch guitar EFX to looper
-			getGuitar().getLatchEfx().latch();
+			looper.syncFx(getGuitar());
+			// getGuitar().getLatchEfx().latch();
 			return true;
 		case 7: 
 			getFrame().getKnobs().pad1();
@@ -81,17 +82,20 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			looper.onDeck(onDeck);
 			return true;
 			
-		case 13: // Cycle verse/chorus 
-			getSongs().trigger();
-			return true; 
-		case 14: // Toggle mutes
+		case 13: // toggle Verse/Chorus mutes
 			looper.verseChorus();
+			return true; 
+			
+		case 14: // next scene 
+			getOverview().trigger();
 			return true;
 		case 15: // Clock off/sync
 			if (getClock().isActive())
 				getClock().end();
-			else 
+			else if (getLooper().hasRecording())
 				getClock().syncToLoop();
+			else 
+				getClock().begin();
 			return true;
 		case 16: 	
 			Sampler sampler = getSampler();
@@ -112,7 +116,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			boolean right = data2 > RIGHT;
 			if (left) {
 				if (delay.getDelay() < Delay.DEFAULT_TIME) 
-					delay.setDelay(Delay.DEFAULT_TIME);
+					delay.setDelayTime(Delay.DEFAULT_TIME);
 				// cc 50 to 0 = 0 to max delay
 				delay.setFeedback(.02f * (50 - data2));
 				delay.setActive(true);
@@ -130,15 +134,15 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			MainFrame.updateCurrent();
 			return true;
 		case JOYSTICK_Y: 
-			CutFilter party = fxrack.getChannel().getParty();
+			Filter party = fxrack.getChannel().getFilter1();
 			boolean down = data2 < LEFT - 10;
 			boolean up = data2 > RIGHT + 10;
 			if (up) {
-				party.setFrequency(CutFilter.knobToFrequency(data2 - 60));
+				party.setFrequency(Filter.knobToFrequency(data2 - 60));
 				party.setActive(true);
 			}
 			else if (down) {
-				party.setFrequency(CutFilter.knobToFrequency(data2));
+				party.setFrequency(Filter.knobToFrequency(data2));
 				party.setActive(true);
 			}
 			else {
@@ -154,9 +158,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 	private boolean doubleTap(Object o) {
 		if (tapTarget == o && System.currentTimeMillis() - lastPress < Constants.DOUBLE_CLICK) {
 			lastPress = 0;
-			if (o instanceof Integer)
-				getLooper().get((int)o).clear();
-			else if (o instanceof Loop) {
+			if (o instanceof Loop) {
 				Loop loop = (Loop)o;
 				Looper loops = getLooper(); 
 				if (loop == loops.getLoopA()) 

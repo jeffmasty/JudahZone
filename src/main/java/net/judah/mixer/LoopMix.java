@@ -1,5 +1,7 @@
 package net.judah.mixer;
 
+import static net.judah.gui.Gui.font;
+
 import java.awt.Color;
 
 import javax.swing.JToggleButton;
@@ -22,7 +24,7 @@ public class LoopMix extends MixWidget implements Updateable {
 	private String update = "";
 	
 	public LoopMix(Loop l, Looper looper) {
-		super(l);
+		super(l, looper);
 		this.loop = l;
 		this.looper = looper;
 		if (loop.getType() == Type.FREE)

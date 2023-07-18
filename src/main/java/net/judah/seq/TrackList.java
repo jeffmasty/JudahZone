@@ -11,9 +11,9 @@ import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
 import net.judah.seq.track.MidiTrack;
-import net.judah.song.Cmd;
-import net.judah.song.Cmdr;
-import net.judah.song.Param;
+import net.judah.song.cmd.Cmd;
+import net.judah.song.cmd.Cmdr;
+import net.judah.song.cmd.Param;
 
 @NoArgsConstructor
 public class TrackList extends Vector<MidiTrack> implements Cmdr {

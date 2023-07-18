@@ -1,7 +1,10 @@
 package net.judah.mixer;
 
+import static net.judah.gui.Gui.font;
+
 import java.awt.Color;
 
+import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
 
 public class LineMix extends MixWidget {
@@ -9,15 +12,15 @@ public class LineMix extends MixWidget {
 	private final LineIn in;
 	private final SoloTrack soloTrack;
 	
-	public LineMix(LineIn channel, SoloTrack solo) {
-		super(channel);
+	public LineMix(LineIn channel, Looper looper) {
+		super(channel, looper);
 		this.in = channel;
-		this.soloTrack = solo;
+		this.soloTrack = looper.getSoloTrack();
 		sidecar.add(font(mute));
 		sidecar.add(font(fx));
 		sidecar.add(font(sync));
 		mute.setText("tape");
-		mute.setSelected(!channel.isMuteRecord());
+//		mute.setSelected(!channel.isMuteRecord());
 		sync.setText("solo");
 		sync.addActionListener(e->solo());
 		if (channel.getIcon() == null) 
@@ -28,7 +31,7 @@ public class LineMix extends MixWidget {
 	}
 
 	protected void mute() {
-		in.setMuteRecord(!mute.isSelected());
+		in.setMuteRecord(!in.isMuteRecord());
 	}
 
 	@Override
@@ -53,8 +56,7 @@ public class LineMix extends MixWidget {
 			sync.setBackground(null);
 
 		sync.setSelected(in == soloTrack.getSoloTrack());
-		mute.setSelected(!in.isMuteRecord());
-		mute.setBackground(mute.isSelected() ? ONTAPE : null);
+		mute.setBackground(in.isMuteRecord() ? null : ONTAPE);
 		return bg;
 	}
 

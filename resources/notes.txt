@@ -2,15 +2,12 @@ TODO:
 
 Directives.BREAKS ChordPro.@ ChordPro.%   Cycle breaks: A3_ ABC_ TOF_?
 Loops wander when Mains muted, Fx and SceneREL OnDeck CMD2.0
-Move Arp and Program to Sched
-ch fx rightclick = looper.fxSync (yellow)
-Setlist + Presets to KnobPanel
-MPK ProgChange, pad2, fx to pads/lfo to beatstep
-Hot Mic 2.0, kit knobs scratchy
-Delay + LFO sync to Clock/TapTempo, LFO resource hog
+PK ProgChange, pad2
+BeatBox>|Selecta
+Hot Mic 2.0, Kit Knobs & Distortion scratchy
 UP5/DN5, REC = MidiLooper
-Arpeggiator gate, Swing Pt.II
 sample packs, doubletap oneshots = loop
+Arpeggiator gate, Swing Pt.II
 walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
 hanging chads (unpaired NoteOn across frames), DragNDrop other frames
 Editor falling water/zoomIn-Out, REL = Modal translate
@@ -19,7 +16,7 @@ Synth: envelope to filter, LFO, glide, PWM, mono-synth,
 Probability, Ritardando, CC in Midi tracks, microsteps
 Sampler FX (granularity, pitched frequency, wet)
 IR Reverb, DrumSynth, Phasor, Shepherd, Vocoder
-SongEditor undo/redo
+SongEditor undo/redo, internal clock
 record record record youtubes
 user manual
 make client-server architecture
@@ -143,7 +140,7 @@ MidiEditor undo/redo/copy/paste/transpose/translate/drag-n-drop/velocity/record 
 ERRNOBUF - recover Jack MIDI when ALSA bridge fails
 Arpeggiator, ChordPro parser, Synth tracks follow ChordPro/MPK/ABS/Racman
 Setlists, save/load loops to/from disk, record session audio
-
+Delay + LFO sync to Tempo
 
 REFERENCE------------------------------------------------------------
 [Mixer]                [FX]

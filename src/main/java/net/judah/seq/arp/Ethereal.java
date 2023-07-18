@@ -7,6 +7,7 @@ import net.judah.api.Key;
 import net.judah.seq.Poly;
 import net.judah.seq.chords.Chord;
 
+/** 1 5 9 chord */
 public class Ethereal extends Algo {
 	
 	@Override public void process(ShortMessage m, Chord chord, Poly result) {

@@ -6,13 +6,13 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import net.judah.JudahZone;
 import net.judah.seq.Seq;
+import net.judah.song.cmd.ParamList;
 
-@Data @AllArgsConstructor @NoArgsConstructor
+@Data @NoArgsConstructor
 public class Scene {
 	
 	@JsonIgnore UUID id = UUID.randomUUID();
@@ -21,7 +21,7 @@ public class Scene {
 	ParamList commands = new ParamList();
 	List<Sched> tracks = new ArrayList<>();
 	List<String> fx = new ArrayList<>();
-	 
+	
 	public Scene(Seq seq) {
 		seq.init(tracks);
 	}
@@ -42,7 +42,7 @@ public class Scene {
 
 	@Override
 	public String toString() {
-		return "" + JudahZone.getCurrent().getScenes().indexOf(this);
+		return "" + JudahZone.getSong().getScenes().indexOf(this);
 	}
 
 	

@@ -1,6 +1,6 @@
 package net.judah.gui.widgets;
 
-import java.util.HashSet;
+import java.util.Vector;
 
 import javax.swing.JComboBox;
 
@@ -12,7 +12,7 @@ import net.judah.util.Constants;
 
 public class CycleCombo extends JComboBox<Cycle> {
 	
-	private static final HashSet<CycleCombo> instances = new HashSet<>();
+	private static final Vector<CycleCombo> instances = new Vector<>();
 	private final Computer track;
 	
 	public CycleCombo(Computer track) {
@@ -32,6 +32,7 @@ public class CycleCombo extends JComboBox<Cycle> {
 	
 	public static void update(Computer t) {
 		Constants.execute(()->{
+			
 			for (CycleCombo c : instances)
 				if (c.track == t && c.getSelectedItem() != t.getCycle()) {
 					c.setSelectedItem(t.getCycle());

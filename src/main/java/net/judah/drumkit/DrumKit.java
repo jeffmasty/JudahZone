@@ -46,17 +46,16 @@ public class DrumKit extends LineIn implements Engine, Knobs {
 	public DrumKit(KitMode mode, String iconName) {
 		super(mode.name(), true);
 		kitMode = mode;
-		setIcon(Icons.get(iconName));
+		icon = Icons.get(iconName);
 		midiPort = new MidiPort(this);
 		for (int i = 0; i < SAMPLES; i++)
 			samples[i] = new DrumSample(DrumType.values()[i]);
 	}
 
-	public void setKit(String name) {
-		for (DrumSample s : samples) {
+	@Override
+	public boolean progChange(String name) {
+		for (DrumSample s : samples) 
 			s.play(false);
-			s.rewind();
-		}
 		// todo custom kits
 		for (File folder : Folders.getKits().listFiles()) {
 			if (folder.isDirectory() == false)
@@ -71,8 +70,10 @@ public class DrumKit extends LineIn implements Engine, Knobs {
 				} catch (Exception e) {
 					RTLogger.warn(this, e);
 				}
+				return true;
 			}
 		}
+		return false;
 	}
 	
 	public void play(DrumSample s, boolean on, int velocity) {
@@ -123,17 +124,8 @@ public class DrumKit extends LineIn implements Engine, Knobs {
 	}
 
 	@Override
-	public void progChange(String preset, int channel) {
-		progChange(preset);
-	}
-
-	@Override
-	public void progChange(String preset) {
-		try {
-			setKit(preset);
-		} catch (Exception e) {
-			RTLogger.log(this, e.getMessage());
-		}
+	public boolean progChange(String preset, int channel) {
+		return progChange(preset);
 	}
 
 	@Override

@@ -27,7 +27,6 @@ public class SampleKnobs extends KnobPanel {
 	private final ArrayList<SamplePad> updates = new ArrayList<>();
 	
 	public SampleKnobs(Sampler sampler) {
-		super("Samples");
 		this.sampler = sampler;
 
 		JPanel loops = new JPanel(new GridLayout(2, 2, 3, 3));

@@ -13,24 +13,19 @@ import net.judah.gui.MainFrame;
 import net.judah.gui.settable.ModeCombo;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
-import net.judah.midi.Panic;
 import net.judah.seq.Poly;
 import net.judah.seq.chords.Chord;
 import net.judah.seq.chords.ChordListener;
 import net.judah.seq.chords.ChordTrack;
 import net.judah.seq.track.MidiTrack;
-import net.judah.util.Constants;
 
 @Data
 public class Arp implements ChordListener {
 
 	private final MidiTrack track;
 	private final ChordTrack chords = JudahZone.getChords();
-
-	private Mode mode = Mode.Off;
+	private ArpInfo info = new ArpInfo();
 	private Algo algo = new Echo();
-
-	private int range = 24;
 	private final Deltas deltas = new Deltas();
 	private final Poly workArea = new Poly();
 
@@ -40,7 +35,7 @@ public class Arp implements ChordListener {
 	}
 	
 	public void setRange(int range) {
-		this.range = range;
+		info.setRange(range);
 		if (algo != null) algo.setRange(range);
 		MainFrame.update(track);
 	}
@@ -66,15 +61,41 @@ public class Arp implements ChordListener {
 			out(off, item.getValue());
 		deltas.clear();
 	}
+
+	public void toggle(Mode m) {
+		setMode(info.algo == m ? Mode.Off : m);
+	}
+
+	public void setInfo(ArpInfo arp) {
+		boolean setMode = info.algo != arp.algo;
+		info = arp;
+		if (setMode) 
+			setMode(info.algo);
+		else  
+			clear();
+		if (algo != null) 
+			algo.setRange(arp.getRange());
+	}
+
+	public Mode getMode() {
+		return info.getAlgo();
+	}
+	
+	public int getRange() {
+		return info.getRange();
+	}
+
+	public boolean isActive() {
+		return info.algo != Mode.Off;
+	}
 	
 	public void setMode(Mode m) {
 		if (algo instanceof TimeListener)
 			track.getClock().removeListener((TimeListener)algo);
 		clear();
-		if (mode == m) return;
-		mode = m;
-		Constants.execute(new Panic(track.getMidiOut(), track.getCh()));
-		switch(m) {
+		//new Panic(track);
+		info.algo = m;
+		switch(info.algo) {
 			case Off: algo = new Echo(); break; // not used
 			case CHRD: algo = new Gen(); break;
 			case BASS: algo = new Bass(); break;
@@ -82,6 +103,7 @@ public class Arp implements ChordListener {
 			case MPK: algo = new MPKTranspose(track); break;
 			case ABS: algo = new ABS(); break;
 			// case REL: algo = new REL(); break;
+			// case UP5: case DN5:
 			case UP: algo = new Up(); break;
 			case DWN: algo = new Down(); break;
 			case UPDN: algo = new UpDown(true); break;
@@ -90,7 +112,7 @@ public class Arp implements ChordListener {
 			case RACM: algo = new Racman(); break;
 			case ETH: algo = new Ethereal(); break;
 		}
-		algo.setRange(range);
+		algo.setRange(info.range);
 		ModeCombo.update(track);
 		MainFrame.update(track); // miniSeq
 	}
@@ -127,12 +149,11 @@ public class Arp implements ChordListener {
 	}
 
 	public boolean mpkFeed(Midi midi) {
-		if (mode != Mode.REC && mode != Mode.MPK)
+		if (info.algo != Mode.REC && info.algo != Mode.MPK)
 			return false;
 		((Feed)algo).feed(midi);
 		return true;
 	}
-
 	
 	public class Echo extends Algo implements Ignorant {
 	@Override public void process(ShortMessage m, Chord chord, Poly result) {
@@ -152,9 +173,4 @@ public class Arp implements ChordListener {
 		@Override public void process(ShortMessage m, Chord chord, Poly result) {
 			result.add(m.getData1() + chord.getRoot().ordinal()); }}
 
-	public void toggle(Mode m) {
-		setMode(mode == m ? Mode.Off : m);
-	}
-
-	
 }

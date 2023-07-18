@@ -52,7 +52,7 @@ import net.judah.util.RTLogger;
  * buffers may be the same.
  * @author Neil C Smith (derived from code by Karl Helgason)
  */
-public class CutFilter implements Effect {
+public class Filter implements Effect {
 
     public enum Settings {
         Type, Frequency, Resonance
@@ -65,16 +65,13 @@ public class CutFilter implements Effect {
 
     @RequiredArgsConstructor @Getter
     public static enum Type {
-        LP6("6dB one pole low pass"),
-        LP12("12dB two pole low pass"),
-        HP12("12dB two pole high pass"),
-        BP12("12dB two pole band pass"),
-        NP12("12dB two pole notch pass"),
-        LP24("24dB four pole low pass"),
-        HP24("24dB four pole high pass"),
-        pArTy("low freq low pass, high freq hi pass")
+        pArTy("low freq low pass, high freq hi pass"),
+    	HiCut("12dB low pass"),
+        LoCut("12dB high pass"),
+        Band("12dB two pole notch pass")
         ;
-        private final String description;
+
+    	private final String description;
     };
     private static final int PARTY_FREQUENCY = 1300;
 
@@ -96,42 +93,44 @@ public class CutFilter implements Effect {
 	    return 100;
 	}
 
+	@Getter private final String name;
     private final double sampleRate;
     private final int bufferSize;
-
-    /** left channel */
-    private final IIRFilter filter = new IIRFilter();
-    /** right channel */
-    private final CutFilter stereo;
-
     @Getter private Type filterType = Type.pArTy;
     @Setter @Getter private boolean active;
     @Getter private float frequency = 700;
     private double resonancedB = 3.3;
     private Type oldParty;
+    /** left channel */
+    private final IIRFilter filter = new IIRFilter();
+    /** right channel */
+    private final Filter stereo;
 
-    public CutFilter(boolean isStereo, Type type, float freq) {
-    	this(isStereo);
+    public Filter(String name, boolean isStereo, Type type, float freq) {
+    	this(name, isStereo);
     	setFilterType(type);
     	setFrequency(freq);
     }
     
-	public CutFilter(boolean isStereo) {
-    	this(Constants.sampleRate(), Constants.bufSize(), isStereo);
+    public Filter(boolean isStereo) {
+    	this(Filter.class.getSimpleName(), isStereo);
+    }
+    
+	public Filter(String name, boolean isStereo) {
+    	this(name, Constants.sampleRate(), Constants.bufSize(), isStereo);
 	}
 
-    public CutFilter(int sampleRate, int bufferSize, boolean isStereo) {
+    public Filter(String name, int sampleRate, int bufferSize, boolean isStereo) {
+    	this.name = name;
     	this.sampleRate = sampleRate;
     	this.bufferSize = bufferSize;
     	filter.reset();
-    	stereo = isStereo ? new CutFilter(sampleRate, bufferSize, false) : null;
+    	stereo = isStereo ? new Filter(name, sampleRate, bufferSize, false) : null;
     }
 
     @Override public int getParamCount() {
         return Settings.values().length; }
 
-    @Override public String getName() {
-        return CutFilter.class.getSimpleName(); }
 
     @Override
     public int get(int idx) {
@@ -203,9 +202,8 @@ public class CutFilter implements Effect {
     	if (this.filterType == filtertype) return;
         this.filterType = filtertype;
         filter.dirty = true;
-        if (filterType == Type.pArTy) {
-        	oldParty = frequency <= PARTY_FREQUENCY ? Type.LP12 : Type.HP12;
-        }
+        if (filterType == Type.pArTy) 
+        	oldParty = frequency <= PARTY_FREQUENCY ? Type.HiCut: Type.LoCut;
         // RTLogger.log(this, "filter type: " + filterType);
     }
 
@@ -216,18 +214,10 @@ public class CutFilter implements Effect {
     		return;
     	mono.rewind();
         switch (filterType) {
-        case LP6:
-    		filter.filter1Replace(mono);
-            break;
-        case LP12:
-        case HP12:
-        case NP12:
-        case BP12:
+        case LoCut:
+        case HiCut:
+        case Band:
         	filter.filter2Replace(mono, 1f);
-            break;
-        case LP24:
-        case HP24:
-        	filter.filter4Replace(mono);
             break;
         case pArTy:
         	checkParty();
@@ -242,21 +232,11 @@ public class CutFilter implements Effect {
     	left.rewind();
     	right.rewind();
         switch (filterType) {
-        case LP6:
-    		filter.filter1Replace(left);
-    		stereo.filter.filter1Replace(right);
-            break;
-        case LP12:
-        case HP12:
-        case NP12:
-        case BP12:
+        case LoCut:
+        case HiCut:
+        case Band:
         	filter.filter2Replace(left, 1f);
         	stereo.filter.filter2Replace(right, 1f);
-            break;
-        case LP24:
-        case HP24:
-        	filter.filter4Replace(left);
-        	stereo.filter.filter4Replace(right);
             break;
         case pArTy:
         	checkParty();
@@ -268,19 +248,19 @@ public class CutFilter implements Effect {
 
     private void checkParty() {
 		if (frequency <= PARTY_FREQUENCY) {
-			if (oldParty != Type.LP12) {
+			if (oldParty != Type.HiCut) {
 				filter.dirty = true;
 				if (stereo != null)
 					stereo.filter.dirty = true;
-				oldParty = Type.LP12;
+				oldParty = Type.HiCut;
 			}
 		}
 		else {
-			if (oldParty != Type.HP12) {
+			if (oldParty != Type.LoCut) {
 				filter.dirty = true;
 				if (stereo != null)
 					stereo.filter.dirty = true;
-				oldParty = Type.HP12;
+				oldParty = Type.LoCut;
 			}
 		}
     }
@@ -621,11 +601,7 @@ public class CutFilter implements Effect {
 	        if (rdB > 30) {
 	            rdB = 30;   // At least 22.5 dB is needed.
 	        }
-	        if (filterType == Type.LP24 || filterType == Type.HP24) {
-	            rdB *= 0.6;
-	        }
-
-	        if (filterType == Type.BP12) {
+	        if (filterType == Type.Band) {
 	            wet = 1;
 	            double r = (frequency / sampleRate);
 	            if (r > 0.45) {
@@ -654,36 +630,8 @@ public class CutFilter implements Effect {
 	            this.a2 = (_b2 * cf);
 	        }
 
-	        if (filterType == Type.NP12) {
-	            wet = 1;
-	            double r = (frequency / sampleRate);
-	            if (r > 0.45) {
-	                r = 0.45;
-	            }
 
-	            double bandwidth = Math.PI * Math.pow(10.0, -(rdB / 20));
-
-	            double omega = 2 * Math.PI * r;
-	            double cs = Math.cos(omega);
-	            double sn = Math.sin(omega);
-	            double alpha = sn * sinh((Math.log(2) * bandwidth * omega) / (sn * 2));
-
-	            double _b0 = 1;
-	            double _b1 = -2 * cs;
-	            double _b2 = 1;
-	            double _a0 = 1 + alpha;
-	            double _a1 = -2 * cs;
-	            double _a2 = 1 - alpha;
-
-	            double cf = 1.0 / _a0;
-	            this.b1 = (_a1 * cf);
-	            this.b2 = (_a2 * cf);
-	            this.a0 = (_b0 * cf);
-	            this.a1 = (_b1 * cf);
-	            this.a2 = (_b2 * cf);
-	        }
-
-	        if (filterType == Type.LP12 || filterType == Type.LP24 ||
+			if (filterType == Type.HiCut || /* filterType == Type.LP24 || */
 	        		(filterType == Type.pArTy && frequency <= PARTY_FREQUENCY)) {
 	            double r = (frequency / sampleRate);
 	            if (r > 0.45) {
@@ -717,7 +665,7 @@ public class CutFilter implements Effect {
 
 	        }
 
-	        if (filterType == Type.HP12 || filterType == Type.HP24 ||
+			if (filterType == Type.LoCut || /* filterType == Type.HP24 || */
 	        		(filterType == Type.pArTy && frequency > PARTY_FREQUENCY)) {
 	            double r = (frequency / sampleRate);
 	            if (r > 0.45) {

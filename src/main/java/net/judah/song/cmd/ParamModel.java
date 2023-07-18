@@ -1,10 +1,11 @@
-package net.judah.song;
+package net.judah.song.cmd;
 
 import java.util.List;
 
 import javax.swing.table.DefaultTableModel;
 
 import net.judah.JudahZone;
+import net.judah.gui.MainFrame;
 
 public class ParamModel extends DefaultTableModel {
 	static final int COL_CMD = 0;
@@ -37,7 +38,7 @@ public class ParamModel extends DefaultTableModel {
 		else 
 			data.get(row).setVal("" + val);
 		super.setValueAt(val, row, column);
-		JudahZone.getSongs().getSongView().getLauncher().update(JudahZone.getSongs().getCurrent());
+		MainFrame.update(JudahZone.getScene());
 	}
 	
 }

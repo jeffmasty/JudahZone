@@ -12,7 +12,7 @@ import javax.swing.border.LineBorder;
 
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
-import net.judah.fx.CutFilter;
+import net.judah.fx.Filter;
 import net.judah.fx.Gain;
 import net.judah.gui.Pastels;
 import net.judah.gui.widgets.Btn;
@@ -88,8 +88,8 @@ public class KitPad extends JPanel implements KnobListener {
 					knob.setValue(sample.getDecayTime()); 
 				break;
 			case pArTy: 
-				if (sample.getParty().get(CutFilter.Settings.Frequency.ordinal()) != current)
-					knob.setValue(sample.getParty().get(CutFilter.Settings.Frequency.ordinal()));
+				if (sample.getFilter1().get(Filter.Settings.Frequency.ordinal()) != current)
+					knob.setValue(sample.getFilter1().get(Filter.Settings.Frequency.ordinal()));
 				break;
 			case Dist: 
 				if (sample.getOverdrive().get(0) != current)
@@ -119,9 +119,9 @@ public class KitPad extends JPanel implements KnobListener {
 					sample.setDecayTime(value);
 				break;
 			case pArTy: 
-				if (sample.getParty().get(CutFilter.Settings.Frequency.ordinal()) != value) {
-					sample.getParty().set(CutFilter.Settings.Frequency.ordinal(), value);
-					sample.getParty().setActive(value < 97);
+				if (sample.getFilter1().get(Filter.Settings.Frequency.ordinal()) != value) {
+					sample.getFilter1().set(Filter.Settings.Frequency.ordinal(), value);
+					sample.getFilter1().setActive(value < 97);
 				}
 				break;
 			case Dist: 

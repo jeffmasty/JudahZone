@@ -13,8 +13,8 @@ import net.judah.gui.Gui;
 /**A JLabel that establishes a tap tempo on mouse clicks */
 public class TapTempo extends JLabel {
 
-    private long last;
-
+	private long last;
+    
     public static interface TapDancer {
         /**Called when a tap tempo has been established or on right click (msec = -1)
          * @param msec the most recent tap tempo or -1 if right mouse button clicked */
@@ -29,6 +29,7 @@ public class TapTempo extends JLabel {
 
     public TapTempo(String lbl, TapDancer listener) {
         this(lbl);
+        setToolTipText("Tap Tempo");
         addMouseListener(new MouseAdapter() {
             @Override public void mousePressed(MouseEvent e) {
                 if (SwingUtilities.isRightMouseButton(e)) {

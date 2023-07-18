@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import lombok.Getter;
-import net.judah.fx.CutFilter;
+import net.judah.fx.Filter;
 import net.judah.gui.MainFrame;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
@@ -30,7 +30,7 @@ public class SynthDB extends HashMap<String, String> {
 	public static final String DASH = "-";
 
 	public static final String ENVELOPE = "Envelope";
-	public static final String FILTER = "Filter";
+	public static final String FILTER = "Filter"; 
 	public static final String DCO = "Dco";
 	
 	@Getter private File loaded;
@@ -122,9 +122,8 @@ public class SynthDB extends HashMap<String, String> {
 		buf.append(env.getAttackTime()).append(SPLIT).append(env.getDecayTime()).append(SPLIT);
 		buf.append(env.getSustainGain()).append(SPLIT).append(env.getReleaseTime()).append(Constants.NL);
 		buf.append(OPEN).append(FILTER).append(CLOSE);
-		buf.append(synth.getGain().getGain()).append(SPLIT); // NOT USED
-		CutFilter hi = synth.getFilter();
-		CutFilter lo = synth.getLoCut();
+		Filter hi = synth.getHiCut();
+		Filter lo = synth.getLoCut();
 		buf.append(hi.getFrequency()).append(SPLIT).append(hi.getResonance()).append(SPLIT);
 		buf.append(lo.getFrequency()).append(SPLIT).append(lo.getResonance()).append(Constants.NL);
 		
@@ -137,12 +136,11 @@ public class SynthDB extends HashMap<String, String> {
 		}
 		return buf.toString();
 	}
-	
 
-	public void apply(String name, SynthPresets handler) {
+	public boolean apply(String name, SynthPresets handler) {
 		String preset = get(name);
 		if (preset == null) 
-			return;
+			return false;
 		for (String line : preset.split(Constants.NL)) {
 			if (!line.startsWith(OPEN))
             	throw new InvalidParameterException("format: " + OPEN);
@@ -165,6 +163,7 @@ public class SynthDB extends HashMap<String, String> {
             } else 
             	throw new InvalidParameterException("type: " + type); 
         }
+		return true;
 	}
 	
 

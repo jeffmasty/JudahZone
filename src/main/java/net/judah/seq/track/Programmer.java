@@ -35,7 +35,6 @@ public class Programmer extends JPanel {
 		add(cycle);
 		Gui.resize(total, Size.MICRO);
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
-		doLayout();
 		instances.add(this);
 	}
 

@@ -1,10 +1,13 @@
 package net.judah.seq.piano;
 
 import lombok.Getter;
+import net.judah.gui.Gui;
+import net.judah.gui.widgets.Btn;
+import net.judah.midi.Panic;
 import net.judah.seq.MidiTab;
 import net.judah.seq.MidiView;
-import net.judah.seq.track.TrackMenu;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.TrackMenu;
 
 @Getter 
 public class PianoView extends MidiView implements PianoSize {
@@ -22,6 +25,11 @@ public class PianoView extends MidiView implements PianoSize {
 		add(instrumentPanel);
 		add(steps);
 		add(grid);
+		
+		Btn panic = new Btn(" ! ", e->new Panic(t), "MidiOut Panic");
+		panic.setFont(Gui.BOLD);
+		panic.setBounds(0, MENU_HEIGHT, STEP_WIDTH, KEY_HEIGHT);
+		add(panic);
 	}
 	
 }

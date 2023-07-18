@@ -24,10 +24,9 @@ public class DrumMachine extends LineIn {
 	
 	public DrumMachine(String name, JackPort outL, JackPort outR, String icon) {
 		super(name, true);
-		setIcon(Icons.get(icon));
-		setLeftPort(outL);
-		setRightPort(outR);
-		
+		this.icon = Icons.get(icon);
+		leftPort = outL;
+		rightPort = outR;
 		drum1 = new DrumKit(KitMode.Drum1);
 		drum2 = new DrumKit(KitMode.Drum2);
 		hats = new DrumKit(KitMode.Hats);

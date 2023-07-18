@@ -15,6 +15,7 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.drumkit.DrumKit;
 import net.judah.gui.Gui;
+import net.judah.gui.Icons;
 import net.judah.gui.JudahMenu.Actionable;
 import net.judah.gui.MainFrame;
 import net.judah.gui.PlayWidget;
@@ -28,14 +29,12 @@ import net.judah.gui.widgets.FxButton;
 import net.judah.gui.widgets.GateCombo;
 import net.judah.gui.widgets.TrackAmp;
 import net.judah.midi.JudahClock;
-import net.judah.midi.Panic;
 import net.judah.mixer.Channel;
 import net.judah.seq.*;
 import net.judah.seq.arp.Mode;
 import net.judah.seq.beatbox.BeatsSize;
 import net.judah.seq.beatbox.BeatsTab;
 import net.judah.synth.JudahSynth;
-import net.judah.util.Constants;
 
 public class TrackMenu extends JPanel implements BeatsSize, MouseListener {
 
@@ -60,7 +59,7 @@ public class TrackMenu extends JPanel implements BeatsSize, MouseListener {
 		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		setBorder(BorderFactory.createDashedBorder(Color.BLUE));
 
-		progChange = new Program(track.getMidiOut(), track.getCh());
+		progChange = new Program(track);
 		vol = new TrackAmp(track);
 		files = new Folder(track);
 		gate = new GateCombo(track);
@@ -76,12 +75,14 @@ public class TrackMenu extends JPanel implements BeatsSize, MouseListener {
 		add(new PlayWidget(track));
 		add(menu);
 		add(files);
+        add(new Btn(Icons.SAVE, e->track.save())); 
 		add(progChange);
 		if (track.isSynth()) {
 			add(new JLabel("  Arp"));
 			add(new ModeCombo(track));
 		}
 		add(new Programmer(track));
+		add(new Btn(Icons.NEW_FILE, e->track.setCurrent(track.bars() + 1)));
 		add(Box.createHorizontalGlue());
 		if (track.isDrums()) add(new JLabel("Cue")); // space considerations
 		add(new CueCombo(track));
@@ -90,17 +91,11 @@ public class TrackMenu extends JPanel implements BeatsSize, MouseListener {
 		add(vol);
 		
 		add(new FxButton((Channel)track.getMidiOut()));
-		add(new Btn(UIManager.getIcon("FileChooser.detailsViewIcon"), 
-				e->MainFrame.setFocus(JudahZone.getSeq().getKnobs(track))));
+		add(new Btn(Icons.DETAILS_VEW, e->MainFrame.setFocus(JudahZone.getSeq().getKnobs(track))));
         if (track.isDrums())
         	add(new Btn("Kit", e->MainFrame.setFocus(JudahZone.getDrumMachine().getKnobs((DrumKit)track.getMidiOut()))));
-        else {
-	        if (track.getMidiOut() == JudahZone.getSynth1() || track.getMidiOut() == JudahZone.getSynth2())
+        else if (track.getMidiOut() == JudahZone.getSynth1() || track.getMidiOut() == JudahZone.getSynth2())
 	        	add(new Btn("DCO", e->MainFrame.setFocus(((JudahSynth)track.getMidiOut()).getSynthKnobs())));
-			add(new Btn(" ! ", e->Constants.execute(new Panic(track))));
-        }
-        add(new Btn(UIManager.getIcon("FileView.floppyDriveIcon"), e->track.setCurrent(track.bars() + 1))); 
-		add(new Btn(UIManager.getIcon("FileView.fileIcon"), e->track.setCurrent(track.bars() + 1)));
 		
 		update();
 		addMouseListener(this);
