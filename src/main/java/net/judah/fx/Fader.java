@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
 import net.judah.drumkit.Sample;
-import net.judah.fx.LFO.Target;
 import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
@@ -19,7 +18,6 @@ public class Fader {
 	
 	final Channel channel;
 	final DJJefe mixer = JudahZone.getMixer();
-	final LFO.Target target;
 	final long msec;
 	final double startVal, endVal;
 	long startTime;
@@ -31,7 +29,7 @@ public class Fader {
 	}
 	
 	public static Fader fadeIn(Channel ch) {
-		return new Fader(ch, Target.Gain, DEFAULT_FADE, 0, 51, new Runnable() {
+		return new Fader(ch, DEFAULT_FADE, 0, 51, new Runnable() {
 		    @Override public void run() {
 		    	if (getMixer().getFader(ch) != null)
 		    		getMixer().getFader(ch).updateVolume();
@@ -42,10 +40,9 @@ public class Fader {
 	public static Fader fadeIn() {
 		return fadeIn(JudahZone.getMains());
 	}
-
 	
 	public static Fader fadeOut(Channel ch) {
-	    Fader result =  new Fader(ch, Target.Gain, DEFAULT_FADE, ch.getVolume(), 0, new Runnable() {
+	    Fader result =  new Fader(ch, DEFAULT_FADE, ch.getVolume(), 0, new Runnable() {
             @Override public void run() {
             	if (getMixer().getFader(ch) != null)
             		getMixer().getFader(ch).updateVolume();
@@ -62,8 +59,8 @@ public class Fader {
 		return fadeOut(JudahZone.getMains());
 	}
 
-    public Fader(Channel master, Target gain, int msec, int startVal, int endVal, Runnable cleanup) {
-        this(master, gain, msec, startVal, endVal);
+    public Fader(Channel master, int msec, int startVal, int endVal, Runnable cleanup) {
+        this(master, msec, startVal, endVal);
         this.cleanup = cleanup;
     }
 
@@ -83,13 +80,7 @@ public class Fader {
 		    val = ratio * (endVal - startVal) + (startVal - endVal);
 
 		// set target value on channel
-		switch (target) {
-			case Gain:  channel.getGain().set(Gain.VOLUME, (int)val); break;
-			case CutEQ: channel.getFilter1().setFrequency(Filter.knobToFrequency((int)val)); break;
-			case Reverb: channel.getReverb().setRoomSize((float) val * 0.01f); break;
-			case Delay: channel.getDelay().setFeedback((float) val * 0.01f); break;
-			case Pan: channel.getGain().set(Gain.PAN, (int)val); break;
-		}
+		channel.getGain().set(Gain.VOLUME, (int)val); 
 		MainFrame.update(channel);
 	}
 
@@ -100,6 +91,7 @@ public class Fader {
 	}
 
 	private static long current;
+	
 	public static void pulse() {
 		if (faders.isEmpty()) return;
 		current = System.currentTimeMillis();

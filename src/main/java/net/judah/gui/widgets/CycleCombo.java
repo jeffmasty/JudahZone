@@ -32,7 +32,6 @@ public class CycleCombo extends JComboBox<Cycle> {
 	
 	public static void update(Computer t) {
 		Constants.execute(()->{
-			
 			for (CycleCombo c : instances)
 				if (c.track == t && c.getSelectedItem() != t.getCycle()) {
 					c.setSelectedItem(t.getCycle());

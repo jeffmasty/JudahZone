@@ -15,8 +15,6 @@ public class TrackInfo {
 	private String file;
 	private Cue cue = Cue.Bar;
 	private Gate gate = Gate.SIXTEENTH;
-	
-	// LEGACY
 	@JsonInclude(Include.NON_NULL)
 	private String program;
 	@JsonInclude(Include.NON_NULL)

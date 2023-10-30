@@ -3,6 +3,8 @@ package net.judah.drumkit;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import javax.sound.midi.InvalidMidiDataException;
+
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
@@ -10,27 +12,28 @@ import lombok.Setter;
 import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KitKnobs;
+import net.judah.midi.JudahClock;
 import net.judah.mixer.LineIn;
 import net.judah.util.AudioTools;
 
 @Getter 
 public class DrumMachine extends LineIn {
-	
+
 	private final DrumKit drum1, drum2, hats, fills;
 	private final ArrayList<DrumKit> kits = new ArrayList<>();
 	private final HashMap<DrumKit, KitKnobs> knobs = new HashMap<>();
 	/** current midi controller input and view */
 	@Setter private DrumKit current;
-	
-	public DrumMachine(String name, JackPort outL, JackPort outR, String icon) {
-		super(name, true);
-		this.icon = Icons.get(icon);
+
+	public DrumMachine(JackPort outL, JackPort outR, JudahClock clock) throws InvalidMidiDataException {
+		super("Drums", true);
+		icon = Icons.get("DrumMachine.png");
 		leftPort = outL;
 		rightPort = outR;
-		drum1 = new DrumKit(KitMode.Drum1);
-		drum2 = new DrumKit(KitMode.Drum2);
-		hats = new DrumKit(KitMode.Hats);
-		fills = new DrumKit(KitMode.Fills);
+		drum1 = new DrumKit(KitMode.Drum1, clock);
+		drum2 = new DrumKit(KitMode.Drum2, clock);
+		hats = new DrumKit(KitMode.Hats, clock);
+		fills = new DrumKit(KitMode.Fills, clock);
 		kits.add(drum1); kits.add(drum2); kits.add(hats); kits.add(fills);
 		current = drum1;
 		knobs.put(drum1, new KitKnobs(drum1));
@@ -38,14 +41,12 @@ public class DrumMachine extends LineIn {
 		knobs.put(hats, new KitKnobs(hats));
 		knobs.put(fills, new KitKnobs(fills));
 		setPreset("Drumz");
-		setPresetActive(true);
-		
 	}
-	
+
 	public KitKnobs getKnobs() {
 		return knobs.get(current);
 	}
-	
+
 	public KitKnobs getKnobs(DrumKit kit) {
 		return knobs.get(kit);
 	}
@@ -57,8 +58,15 @@ public class DrumMachine extends LineIn {
 		return null;
 	}
 
-	
-	// process+mix each drumkit, process this channel's fx, place on mains
+	public void increment() {
+		int idx = kits.indexOf(current) + 1;
+		if (idx>= kits.size())
+			idx = 0;
+		current = kits.get(idx);
+		MainFrame.setFocus(current);
+	}
+
+	// process + mix each drumkit, process this channel's fx, place on mains
 	public void process() {
 		AudioTools.silence(left);
 		AudioTools.silence(right);
@@ -69,16 +77,7 @@ public class DrumMachine extends LineIn {
 		}
 		processStereoFx(gain.getGain());
 		AudioTools.mix(left, leftPort.getFloatBuffer()); 
-        AudioTools.mix(right, rightPort.getFloatBuffer());  
-	}
-	
-	public void increment() {
-		int idx = kits.indexOf(current) + 1;
-		if (idx>= kits.size())
-			idx = 0;
-		current = kits.get(idx);
-		MainFrame.setFocus(current);
+		AudioTools.mix(right, rightPort.getFloatBuffer());  
 	}
 
-	
 }

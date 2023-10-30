@@ -17,19 +17,19 @@ import net.judah.seq.Poly;
 import net.judah.seq.chords.Chord;
 import net.judah.seq.chords.ChordListener;
 import net.judah.seq.chords.ChordTrack;
-import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.PianoTrack;
 
 @Data
 public class Arp implements ChordListener {
 
-	private final MidiTrack track;
+	private final PianoTrack track;
 	private final ChordTrack chords = JudahZone.getChords();
 	private ArpInfo info = new ArpInfo();
 	private Algo algo = new Echo();
 	private final Deltas deltas = new Deltas();
 	private final Poly workArea = new Poly();
 
-	public Arp(MidiTrack t) {
+	public Arp(PianoTrack t) {
 		track = t;
 		chords.addListener(this);
 	}
@@ -55,7 +55,7 @@ public class Arp implements ChordListener {
 	}
 
 	public void clear() {
-		if (deltas.isEmpty()) return;
+		if (!isActive() || deltas.isEmpty()) return;
 		Midi off = Midi.create(Midi.NOTE_OFF, track.getCh(), 36, 1);
 		for (Map.Entry<ShortMessage, List<Integer>> item : deltas.list()) 
 			out(off, item.getValue());
@@ -99,11 +99,8 @@ public class Arp implements ChordListener {
 			case Off: algo = new Echo(); break; // not used
 			case CHRD: algo = new Gen(); break;
 			case BASS: algo = new Bass(); break;
-			case REC: algo = new REC(track); break;
 			case MPK: algo = new MPKTranspose(track); break;
 			case ABS: algo = new ABS(); break;
-			// case REL: algo = new REL(); break;
-			// case UP5: case DN5:
 			case UP: algo = new Up(); break;
 			case DWN: algo = new Down(); break;
 			case UPDN: algo = new UpDown(true); break;
@@ -111,6 +108,9 @@ public class Arp implements ChordListener {
 			case RND: algo = new RND(); break;
 			case RACM: algo = new Racman(); break;
 			case ETH: algo = new Ethereal(); break;
+			// case REC: algo = new REC(track); break;
+			// case REL: algo = new REL(); break;
+			// case UP5: case DN5:
 		}
 		algo.setRange(info.range);
 		ModeCombo.update(track);
@@ -149,7 +149,7 @@ public class Arp implements ChordListener {
 	}
 
 	public boolean mpkFeed(Midi midi) {
-		if (info.algo != Mode.REC && info.algo != Mode.MPK)
+		if (info.algo != Mode.MPK)
 			return false;
 		((Feed)algo).feed(midi);
 		return true;

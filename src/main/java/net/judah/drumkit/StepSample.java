@@ -13,7 +13,7 @@ public class StepSample extends Sample {
 	public StepSample(String wavName, Sampler sampler, int... steps) throws Exception {
 		super(JudahZone.getOutL(), JudahZone.getOutR(), wavName, Type.ONE_SHOT, sampler);
 		this.steps = steps;
-		env = BOOST;
+		env = STEP_BOOST;
 	}
 	
 	public void step(int step) {

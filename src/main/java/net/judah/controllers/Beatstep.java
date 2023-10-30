@@ -6,7 +6,6 @@ import javax.sound.midi.ShortMessage;
 
 import net.judah.JudahZone;
 import net.judah.fx.Fader;
-import net.judah.fx.LFO.Target;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.MultiSelect;
 import net.judah.gui.knobs.KnobMode;
@@ -62,9 +61,10 @@ public class Beatstep implements Controller {
 						current.setOnMute(!current.isOnMute());
 			}
 			else if (data1 == LFO) {
+				if (!Midi.isNoteOn(midi)) return true;
 				if (MainFrame.getKnobMode() == KnobMode.LFO)
 					for (Channel current : getFxRack().getSelected())
-						current.getLfo().setActive(current.getLfo().isActive());
+						current.getLfo().setActive(!current.getLfo().isActive());
 				else 
 					MainFrame.setFocus(KnobMode.LFO);
 			}
@@ -74,10 +74,10 @@ public class Beatstep implements Controller {
 				for (Channel ch : getFxRack().getSelected()) {
 					if (ch.isOnMute() || ch.getGain().getGain() <= 0.05f) {
 						ch.setOnMute(false);
-						Fader.execute(new Fader(ch, Target.Gain, Fader.DEFAULT_FADE, 0, 51));
+						Fader.execute(new Fader(ch, Fader.DEFAULT_FADE, 0, 51));
 					}
 					else 
-						Fader.execute(new Fader(ch, Target.Gain, Fader.DEFAULT_FADE, ch.getVolume(), 0));
+						Fader.execute(new Fader(ch, Fader.DEFAULT_FADE, ch.getVolume(), 0));
 				}
 			}
 			else if (data1 >= LOOPA && data1 <= MAINS) {
@@ -132,7 +132,6 @@ public class Beatstep implements Controller {
 			MainFrame.setFocus(channels.size() == 1 ? ch : channels);
 		}
 	}
-	
 
 	private Channel channel(int data1) {
 		if (data1 < LOOPA || data1 > MAINS)

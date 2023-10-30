@@ -39,8 +39,8 @@ public class Looper extends Vector<Loop> implements TimeListener, Cmdr {
 	private final Loop loopC;
 	private final SoloTrack soloTrack;
 	private final Vector<LoopMix> displays = new Vector<>();
+	private Loop countdown;
 	private final Vector<Loop> onDeck = new Vector<>();
-	private final Vector<LoopMix> sync = new Vector<>();
 	private final Vector<Channel> fx = new Vector<>();
 	private final String[] keys;
 	private String recordedLength = ZERO;
@@ -90,22 +90,22 @@ public class Looper extends Vector<Loop> implements TimeListener, Cmdr {
 	void setPrimary(Loop primary) {
 		this.primary = primary;
 		clock.reset();
-		MainFrame.update(loopC);
 		recordedLength = Float.toString(primary.seconds());
 		if (recordedLength.length() > 4)
 			recordedLength = recordedLength.substring(0, 4);
 		recordedLength += "s";
-		MainFrame.update(this);
+		
 		int tape = primary.getTapeCounter().get();
-
 		for (int i = 0; i < size(); i++) {
 			Loop loop = get(i);
 			if (loop == primary)
 				continue;
-			if (loop.isRecording())
+			if (loop.isRecording() && loop instanceof SoloTrack && ((SoloTrack)loop).isSolo())
 				loop.record(false); // soloTrack
 			loop.getTapeCounter().set(tape);
 		}
+		MainFrame.update(loopC);
+		MainFrame.update(this);
 		RTLogger.log("Primary", primary + " frames: " + primary.length);
 	}
 
@@ -118,10 +118,9 @@ public class Looper extends Vector<Loop> implements TimeListener, Cmdr {
 		counter = SYNC_INIT;
 		for (int i = 0; i < size(); i++)
 			get(i).clear(); // clear loops
-		for (int i = sync.size() - 1; i >= 0; i--)
-			MainFrame.update(sync.remove(i)); // clear sync
 		for (int i = onDeck.size() - 1; i >= 0; i--) // clear onDeck
 			MainFrame.update(onDeck.remove(onDeck.size() - 1));
+		countdown = null;
 		recordedLength = ZERO;
 		MainFrame.update(this);
 	}
@@ -146,38 +145,20 @@ public class Looper extends Vector<Loop> implements TimeListener, Cmdr {
 			soloTrack.record(true);
 	}
 
-	public void loopCount(Loop looper, Object broadcast) {
-		if (looper != primary)
-			return;
-		checkSyncDown();
-		checkOnDeck();
-		checkFx();
-		clock.loopCount(broadcast);
-	}
-
-	private void checkOnDeck() {
-		if (onDeck.isEmpty())
-			return;
-		Constants.execute(() -> {
-			Loop startup = onDeck.remove(0);
-			syncUp(startup, -1);
-			startup.record(true);
-		});
-	}
-
-	private void checkSyncDown() {
-		if (sync.isEmpty())
-			return;
-		LoopMix display = sync.get(0);
-		if (display.getLoop().isRecording) {
-			sync.remove(display);
-			display.getLoop().endRecord();
+	public void loopCount(int count) {
+		if (countdown != null) {
+			countdown.record(false);
+			countdown = null;
 		}
-	}
-
-	private void checkFx() {
+		if (!onDeck.isEmpty()) {
+			countdown = onDeck.remove(0);
+			countdown.record(true);
+		}
+		
 		for (int i = fx.size() - 1; i >= 0; i--)
 			fx.remove(i).toggleFx();
+	
+		clock.loopCount(count);
 	}
 
 	public void syncFx(Channel ch) {
@@ -243,10 +224,9 @@ public class Looper extends Vector<Loop> implements TimeListener, Cmdr {
 		case Record:
 			if (!clock.isActive())
 				break; // ignore in edit mode
+			loop.record(true);
 			if (loop.getType() != Type.FREE)
 				syncUp(loop, JudahClock.getLength() - 1);
-			loop.record(true);
-			MainFrame.update(loop);
 			break;
 		case RecEnd:
 			loop.record(false);
@@ -266,84 +246,77 @@ public class Looper extends Vector<Loop> implements TimeListener, Cmdr {
 		return null;
 	}
 
-	public boolean isSync(Loop loop) {
-		return sync.contains(getDisplay(loop));
+	public boolean isOnDeck(Loop loop) {
+		return onDeck.contains(loop);
 	}
 
 	public void tail(Loop loop) {
 		LoopMix sync = getDisplay(loop);
 		bars = BSYNC_DOWN;
-		sync.setUpdate("BDN");
+		sync.setUpdate("xxx");
 	}
 
-	public void syncUp(Loop loop, int bars) {
-		LoopMix widget = getDisplay(loop);
-		if (sync.contains(widget)) {
-			syncDown(loop);
+	public void syncUp(Loop loop, int length) {
+		if (countdown == loop) { 
+			syncDown();
 			return;
 		}
-		sync.add(widget);
+		countdown = loop;
 		counter = SYNC_INIT;
-		this.bars = bars > 0 ? bars : JudahClock.getLength();
-		if (!hasRecording() && loop.getType() == Type.BSYNC) {
+		bars = length > 0 ? length : JudahClock.getLength();
+		if (loop.getType() == Type.BSYNC) {
 			this.bars = BSYNC_UP;
-			widget.setUpdate(BSYNC);
+			getDisplay(countdown).setUpdate(BSYNC);
 		}
-		MainFrame.update(loop);
+		else 
+			getDisplay(countdown).setUpdate(clock.countdown() + "");
 	}
 
-	public void syncDown(Loop loop) {
-		LoopMix display = getDisplay(loop);
-		if (sync.remove(display)) {
-			display.setUpdate(null);
-			MainFrame.update(display);
-		}
+	public void syncDown() {
+		if (countdown == null)
+			return;
+		getDisplay(countdown).setUpdate(null);
+		countdown = null;
 	}
 
 	@Override
 	public void update(Property prop, Object value) {
-		if (prop == Property.BARS && (int) value % JudahClock.getLength() == 0)
-			for (int i = 0; i < size(); i++)
-				get(i).boundary(); // sync loops to clock
-		if (sync.isEmpty())
-			return;
-		else if (prop == Property.BARS)
+		if (prop == Property.BARS) {
 			updateBar((int) value);
+			if ((int) value % JudahClock.getLength() == 0) 
+				for (int i = 0; i < size(); i++)
+					get(i).boundary(); // sync loops to clock
+		}
 		else if (prop == Property.BEAT)
 			updateBeat();
 	}
 
 	private void updateBar(int bar) {
+		if (countdown == null) return;
 		counter++;
-		for (int i = sync.size() - 1; i >= 0; i--) {
-			LoopMix widget = sync.get(i);
-			Loop loop = widget.getLoop();
-			if (bars == BSYNC_DOWN) { // BSYNC ended
-				loop.record(false);
-				clock.setLength(counter);
-			} else if (loop.isRecording == false && clock.getBeat() % clock.getMeasure() == 0) {
-				loop.record(true);
-				checkSoloSync();
-				widget.setUpdate("Go!");
-			} else if (counter == bars) {
-				loop.endRecord();
-				if (!onDeck.isEmpty() && onDeck.get(0) == loop)
-					onDeck.remove(loop);
-			}
+		if (bars == BSYNC_DOWN) { // BSYNC ended
+			countdown.record(false);
+			clock.setLength(counter);
+		} else if (countdown.isRecording == false) {
+			countdown.record(true);
+			checkSoloSync();
+		} else if (bars == counter) {
+			countdown.record(false);
 		}
 	}
 
 	private void updateBeat() {
-		if (counter <= SYNC_INIT) { // not started, display beats until start
-			int countdown = clock.getBeat() % clock.getMeasure() - clock.getMeasure();
-			for (LoopMix widget : sync)
-				widget.setUpdate(countdown + "");
-		} else for (LoopMix widget : sync)
-			if (widget.getLoop().isRecording()) {
-				int measure = clock.getMeasure();
-				String show = "" + (bars == BSYNC_DOWN ? "BDN" : bars < 100 ? bars - counter : counter + 1);
-				widget.setUpdate("<html><u>" + (1 + clock.getBeat() % measure) + "<br/></u>" + show + "</html>");
-			}
+		if (countdown == null)
+			return;
+		if (countdown.isRecording && countdown.getLength() == 0) {
+			int measure = clock.getMeasure();
+			String show = "" + (bars == BSYNC_DOWN ? "BDN" : bars < 100 ? bars - counter : counter + 1);
+			getDisplay(countdown).setUpdate("<html><u>" + (1 + clock.getBeat() % measure) + "<br/></u>" + show + "</html>");
+		}
+		else if (counter <= SYNC_INIT)  // not started, display beats until start
+			getDisplay(countdown).setUpdate(clock.countdown() + "");
+		else 
+			getDisplay(countdown).setUpdate(null);
 	}
 
 	@Override

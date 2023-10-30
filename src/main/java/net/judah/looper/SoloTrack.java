@@ -34,7 +34,7 @@ public class SoloTrack extends Loop implements Cmdr {
         }
         else {
         	type = Type.DRUMTRACK;
-        	looper.syncDown(this);
+        	looper.syncDown();
             soloTrack.setMuteRecord(muteStash);
         }
         MainFrame.update(this);

@@ -1,15 +1,19 @@
 package net.judah.gui.fx;
 
-import javax.swing.*;
+import java.awt.Dimension;
 
-import net.judah.drumkit.DrumKit;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+
 import net.judah.drumkit.Sample;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.gui.knobs.KnobMode;
-import net.judah.gui.widgets.TogglePreset;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.mixer.Channel;
@@ -17,31 +21,26 @@ import net.judah.mixer.LineIn;
 
 public class ChannelTitle extends JPanel {
 
-	protected final JButton mute = new JButton("");
-	protected final TogglePreset fx;
-	protected final JButton lfo = new JButton("lfo");
+	protected final JButton mute;
+	protected final JButton lfo;
 	private final Channel channel;
 	private final JLabel name;
 	
 	public ChannelTitle(Channel ch, Looper looper) {
-		fx = new TogglePreset(ch, looper);
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		setOpaque(true);
 		this.channel = ch;
 		name = new JLabel(standard(), JLabel.CENTER);
 		name.setFont(Gui.BOLD13);
+		mute = new JButton("");
+		lfo = new JButton("lfo");
+		
 		add(Box.createHorizontalGlue());
-		add(name);
+		add(Gui.resize(name, new Dimension(Size.WIDTH_KNOBS - 3 * Size.TINY.width, Size.TINY.height)));
 		add(Box.createHorizontalGlue());
-		
-		JComponent[] btns;
-		if (channel instanceof DrumKit || channel instanceof Sample) 
-			btns = new JComponent[] {fx, lfo};
-		else btns = new JComponent[]{fx, lfo, mute};
-		
-		for(JComponent c : btns)
-			add(Gui.resize(Gui.font(c, Gui.FONT10), Size.TINY));
-		
+		add(Gui.resize(Gui.font(mute, Gui.FONT10), Size.TINY));
+		add(Gui.resize(Gui.font(lfo, Gui.FONT10), Size.TINY));
+
 		if (channel instanceof LineIn) {
 			mute.setText("tape");
 			mute.addActionListener(e-> ((LineIn)channel).setMuteRecord(! ((LineIn)channel).isMuteRecord()));
@@ -80,7 +79,6 @@ public class ChannelTitle extends JPanel {
 	}
 
 	public void update() {
-		fx.update();
 		if (channel instanceof LineIn) 
 			mute.setBackground(((LineIn)channel).isMuteRecord() ? null : Pastels.ONTAPE);
 		else mute.setBackground(channel.isOnMute() ? Pastels.PURPLE : null);

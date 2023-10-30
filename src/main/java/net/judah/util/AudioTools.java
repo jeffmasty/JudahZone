@@ -6,27 +6,45 @@ import net.judah.looper.Recording;
 
 public class AudioTools  {
 
-
 	public static void silence(FloatBuffer a) {
 		a.rewind();
 		while(a.hasRemaining())
 			a.put(0f);
 		a.rewind();
 	}
+	
+	public static void silence(Recording recording) {
+		for (int frame = 0; frame < recording.size(); frame++) 
+			for (int channel = 0; channel < recording.get(frame).length; channel++) 
+				zero(recording.get(frame)[channel]);
+	}
 
+	public static void silence(Recording recording, Integer end) {
+		if (end == null || end == 0)
+			return;
+		if (end > recording.size())
+			end = recording.size();
+		for (int frame = 0; frame < end; frame++) 
+			for (int ch = Constants.LEFT; ch < recording.get(frame).length; ch++) 
+				zero(recording.get(frame)[ch]);
+	}
+	
+	private static void zero(float[] channel) {
+		for (int i = 0; i < channel.length; i++)
+			channel[i] = 0;
+	}
+
+	
 	/** MIX
 	 * @param overdub
 	 * @param oldLoop*/
 	public static float[][] overdub(float[][] overdub, float[][] oldLoop) {
-//		float[][] channels = new float[oldLoop.length][];
 		float[] in, out;//, result;
 		for (int channel = 0; channel < oldLoop.length; channel++) {
 			in = overdub[channel];
 			out = oldLoop[channel];
-			//result = new float[out.length]; // malloc
 			for (int x = 0; x < out.length; x++) 
 				out[x] = in[x] + out[x];
-//			channels[channel] = result;
 		}
 		return oldLoop;
 	}
@@ -88,27 +106,6 @@ public class AudioTools  {
 		for (int i = 0 ; i < bufSize; i++) 
 			result[i] = in.get();
 		in.rewind();
-	}
-
-	public static void silence(Recording recording) {
-		for (int frame = 0; frame < recording.size(); frame++) 
-			for (int channel = 0; channel < recording.get(frame).length; channel++) 
-				zero(recording.get(frame)[channel]);
-	}
-
-	public static void silence(Recording recording, Integer end) {
-		if (end == null || end == 0)
-			return;
-		if (end > recording.size())
-			end = recording.size();
-		for (int frame = 0; frame < end; frame++) 
-			for (int ch = Constants.LEFT; ch < recording.get(frame).length; ch++) 
-				zero(recording.get(frame)[ch]);
-	}
-	
-	private static void zero(float[] channel) {
-		for (int i = 0; i < channel.length; i++)
-			channel[i] = 0;
 	}
 	
 }

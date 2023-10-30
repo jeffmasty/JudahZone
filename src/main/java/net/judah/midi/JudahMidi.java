@@ -1,5 +1,6 @@
 package net.judah.midi;
-import static org.jaudiolibs.jnajack.JackPortFlags.*;
+import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsInput;
+import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsOutput;
 import static org.jaudiolibs.jnajack.JackPortType.MIDI;
 
 import java.io.Closeable;
@@ -8,7 +9,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import javax.sound.midi.ShortMessage;
+import javax.sound.midi.MidiMessage;
 
 import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
@@ -24,18 +25,17 @@ import net.judah.api.BasicClient;
 import net.judah.api.MidiReceiver;
 import net.judah.controllers.*;
 import net.judah.gui.MainFrame;
-import net.judah.seq.track.MidiTrack;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 /** Setup MIDI ports and handle MIDI integration with Jack */
 @Getter 
-public class JudahMidi extends BasicClient implements Closeable {
+public class JudahMidi extends BasicClient implements Closeable /* , ReRoute */{
 	public static final String JACKCLIENT_NAME = "JudahMidi";
 
 	@RequiredArgsConstructor
 	public static enum IN { // in Midi ports
-		MIDICLOCK("a2j:midiclock"),
+		MIDICLOCK("clock24"),
 		KEYBOARD("keyboard"), 
 		MIXER("mixer"),
 		PADS("pads"),
@@ -55,7 +55,6 @@ public class JudahMidi extends BasicClient implements Closeable {
 	
 	private static Process a2j; // jack to alsa midi bridge
 	private final JudahClock clock;
-    @Getter private MidiTrack keyboardSynth;
 	private ArrayList<JackPort> inPorts = new ArrayList<>();  
     private JackPort midiclock;
     private JackPort keyboard;
@@ -64,16 +63,21 @@ public class JudahMidi extends BasicClient implements Closeable {
     private JackPort mixer;
     private JackPort line6;
     private JackPort beatstep;
-    private JackPort jamstik;
+    private JackPort gtrMidi;
     private final ArrayList<JackPort> outPorts = new ArrayList<>(); 
     private JackPort fluidOut;
     private JackPort craveOut;
     private JackPort tempo;
-    private final ArrayList<MidiPort> sync = new ArrayList<>();
+    private final ArrayList<MidiReceiver> sync = new ArrayList<>();
     private final MidiScheduler scheduler = new MidiScheduler();
     private final HashMap<JackPort, Controller> switchboard = new HashMap<>();
+
     private static final ConcurrentLinkedQueue<PortMessage> queue = new ConcurrentLinkedQueue<>();
     private static int ticker;
+
+    private final Jamstik jamstik = new Jamstik();
+    private MPKmini mpk;
+
     private long counter;
     private final byte[] DATA1 = new byte[1], DATA2 = new byte[2], DATA3 = new byte[3]; // for process()
     private final Event midiEvent = new JackMidi.Event(); // for process()
@@ -121,7 +125,9 @@ public class JudahMidi extends BasicClient implements Closeable {
 			a2j();
 			initialize();
 			makeConnections();
-			JudahZone.getFluid().setMidiPort(new MidiPort(fluidOut));
+			JudahZone.getFluid().setMidiPort(fluidOut);
+			JudahZone.getCrave().setMidiPort(craveOut);
+			
     	} catch (JackException e) { RTLogger.warn(this, e.getMessage());}
 		JudahZone.setInitialized(true);
 		if (running)
@@ -139,27 +145,25 @@ public class JudahMidi extends BasicClient implements Closeable {
             inPorts.add(jackclient.registerPort(port.port, MIDI, JackPortIsInput));
         
         int sz = outPorts.size();
-        if (sz > OUT.TEMPO.ordinal()) {
+        if (sz > OUT.TEMPO.ordinal()) 
         	tempo = outPorts.get(OUT.TEMPO.ordinal());
-        }
-        if (sz > OUT.SYNTH_OUT.ordinal()) {
+        if (sz > OUT.SYNTH_OUT.ordinal()) 
         	fluidOut = outPorts.get(OUT.SYNTH_OUT.ordinal());
-        }
-        if (sz > OUT.CRAVE_OUT.ordinal()) {
+        if (sz > OUT.CRAVE_OUT.ordinal()) 
         	craveOut = outPorts.get(OUT.CRAVE_OUT.ordinal());
-        }
 
-        // connect midi controllers to software handlers
-        sz = inPorts.size();
-        if (sz > IN.MIDICLOCK.ordinal()) {
-        	midiclock = inPorts.get(IN.MIDICLOCK.ordinal());
-        }
-        
         while (JudahZone.getSeq() == null || JudahZone.getLooper() == null) // sync w/ audio Thread
         	Constants.sleep(10);
+        
+        // connect midi controllers to software handlers
+        sz = inPorts.size();
+        if (sz > IN.MIDICLOCK.ordinal()) 
+        	midiclock = inPorts.get(IN.MIDICLOCK.ordinal());
         if (sz > IN.KEYBOARD.ordinal()) {
         	keyboard = inPorts.get(IN.KEYBOARD.ordinal());
-        	switchboard.put(keyboard, new MPKmini(this, JudahZone.getSeq()));
+        	if (mpk == null)
+        		mpk = new MPKmini(this, JudahZone.getSeq());
+        	switchboard.put(keyboard, mpk);
         }
         if (sz > IN.MIXER.ordinal()) {
         	mixer = inPorts.get(IN.MIXER.ordinal());
@@ -167,7 +171,7 @@ public class JudahMidi extends BasicClient implements Closeable {
         	switchboard.put(mixer, controller);
 	        if (sz > IN.PADS.ordinal()) {
 	        	pads = inPorts.get(IN.PADS.ordinal());
-	        	switchboard.put(pads, new KorgPads(controller));
+	        	switchboard.put(pads, new KorgPads());
 	        }
         }
         if (sz > IN.LINE6_IN.ordinal()) {
@@ -179,7 +183,8 @@ public class JudahMidi extends BasicClient implements Closeable {
         	switchboard.put(beatstep, new Beatstep());
         }
         if (sz > IN.JAMSTIK.ordinal()) {
-        	jamstik = inPorts.get(IN.JAMSTIK.ordinal());
+        	gtrMidi = inPorts.get(IN.JAMSTIK.ordinal());
+        	switchboard.put(gtrMidi, jamstik);
         }
         
         RTLogger.log(this, switchboard.size() + " controllers connected");
@@ -196,63 +201,46 @@ public class JudahMidi extends BasicClient implements Closeable {
     	final EnumSet<JackPortFlags> OUT = EnumSet.of(JackPortIsOutput);
     	final EnumSet<JackPortFlags> INS = EnumSet.of(JackPortIsInput);
     	
-    	for (String port : jack.getPorts(jackclient, Beatstep.NAME, MIDI, OUT)) {
-            RTLogger.log(this, "connecting beatstep: " + port + " to " + beatstep.getName());
-    		jack.connect(jackclient, port, beatstep.getName());
-    	}
-        for (String port : jack.getPorts(jackclient, MPKmini.NAME, MIDI, OUT)) {
-            RTLogger.log(this, "connecting MPK: " + port + " to " + keyboard.getName());
-            jack.connect(jackclient, port, keyboard.getName());
-        }
-        for (String port : jack.getPorts(jackclient, "CASIO USB-MIDI", MIDI, OUT)) {
-            RTLogger.log(this, "connecting piano: " + port + " to " + keyboard.getName());
-        	jack.connect(jackclient, port, keyboard.getName());
-        }
-        for (String port : jack.getPorts(jackclient, KorgPads.NAME, MIDI, OUT)) {
-            RTLogger.log(this, "connecting korg pads: " + port + " to " + pads.getName());
-            jack.connect(jackclient, port, pads.getName());
-        }
-        for (String port : jack.getPorts(jackclient, KorgMixer.NAME, MIDI, OUT)) {
-            RTLogger.log(this, "connecting korg mixer: " + port + " to " + mixer.getName());
-            jack.connect(jackclient, port, mixer.getName());
-        }
+    	// TODO ALSA connect midi clock to MPKMini (arpeggios) and Crave
+    	// CLOCK IN
+    	for (String port : jack.getPorts(jackclient, "a2j:midiclock", MIDI, OUT)) 
+    		connect("MidiClock", midiclock.getName(), port);
+    	// CLOCK OUT
+    	for (String port : jack.getPorts(jackclient, "a2j:midiclock", MIDI, INS)) 
+    		connect("TempoOut", port, tempo.getName());
+    	
+    	for (String port : jack.getPorts(jackclient, Beatstep.NAME, MIDI, OUT)) 
+    		connect("Beatstep", beatstep.getName(), port);
+        for (String port : jack.getPorts(jackclient, MPKmini.NAME, MIDI, OUT)) 
+        	connect("MPK", keyboard.getName(), port);
+        for (String port : jack.getPorts(jackclient, KorgPads.NAME, MIDI, OUT)) 
+        	connect("Pads", pads.getName(), port);
+        for (String port : jack.getPorts(jackclient, KorgMixer.NAME, MIDI, OUT)) 
+        	connect("Mixer", mixer.getName(), port);
         for (String port : jack.getPorts(jackclient, Line6FBV.NAME, MIDI, OUT)) {
-    		RTLogger.log(this, "connecting pedal board: " + port + " to " + line6.getName());
-    		jack.connect(jackclient, port, line6.getName());
-    		break;
+        	connect("Line6", line6.getName(), port);
+        	break;
         }
-        for (String port : jack.getPorts(jackclient, Constants.getDi(), MIDI, OUT)) {
-        	RTLogger.log(this, "connecting jamstik through DI: " + port);
-        	jack.connect(jackclient, port, jamstik.getName());
-        }
+        for (String port : jack.getPorts(jackclient, Constants.getDi(), MIDI, OUT)) 
+        	connect("DI/Jamstik", gtrMidi.getName(), port);
+        for (String port : jack.getPorts(jackclient, Constants.getDi(), MIDI, INS)) 
+        	connect("Crave", port, craveOut.getName());
         
-        for (String port : jack.getPorts(jackclient, IN.MIDICLOCK.getPort(), MIDI, OUT)) {
-        	RTLogger.log(this, "connecting midiclock " + port + " to " + midiclock.getName());
-        	jack.connect(jackclient, port, midiclock.getName());
-        	// TODO connect MPKMini (arpeggios) and Crave to ALSA clock
-        }
-        
-        for (String port : jack.getPorts(jackclient, Constants.getDi(), MIDI, INS)) {
-        	RTLogger.log(this, "connecting Crave " + craveOut.getName() + " to " + port);
-        	jack.connect(jackclient, craveOut.getName(), port);
-        }
-        
-        for (String port : jack.getPorts(jackclient, IN.MIDICLOCK.getPort(), MIDI, INS)) {
-        	RTLogger.log(this, "connecting Tempo " + tempo.getName() + " to " + port);
-        	jack.connect(jackclient, tempo.getName(), port);
-        }
-        
-        String [] fluid = jack.getPorts(jackclient, "midi_00", MIDI, INS);
+        String[] fluid = jack.getPorts(jackclient, "midi_00", MIDI, INS);
         while (fluid.length == 0) {
-        	Constants.sleep(100);
+        	Constants.sleep(30);
         	fluid = jack.getPorts(jackclient, "midi_00", MIDI, INS);
         }
-    	for (String port : fluid) {
-        	RTLogger.log(this, "connecting Fluid " + fluidOut.getName() + " to " + port);
-        	jack.connect(jackclient, fluidOut.getName(), port); 
-    	}
+    	for (String port : fluid) 
+    		connect("Fluid", port, fluidOut.getName());
+        for (String port : jack.getPorts(jackclient, "CASIO USB-MIDI", MIDI, OUT)) 
+        	connect("Piano", keyboard.getName(), port);
     }
 
+    private void connect(String controller, String inPort, String outPort) throws JackException {
+    	RTLogger.log(controller, inPort + " connecting... " + outPort);
+    	jack.connect(jackclient, outPort, inPort);
+    }
     
     @Override
     public boolean process(JackClient client, int nframes) {
@@ -267,7 +255,6 @@ public class JudahMidi extends BasicClient implements Closeable {
             
         	// check for incoming midi
         	int eventCount;
-        	Midi midi;
         	byte[] data;
         	for (JackPort port : inPorts) {
                 eventCount = JackMidi.getEventCount(port);
@@ -290,42 +277,20 @@ public class JudahMidi extends BasicClient implements Closeable {
 	                    default: data = new byte[midiEvent.size()];
                     }
                     midiEvent.read(data);
-                    midi = new Midi(data);
-                    if (port == jamstik) {
-                    	if (Jamstik.isActive())
-                    		Jamstik.getOut().send(midi, index);
-                    }
-                    else if (switchboard.get(port).midiProcessed(midi))
-                    	continue; 
-            		else if (midi.getChannel() == 9) { // Mode.REC?
-            			JackMidi.eventWrite(fluidOut, ticker(), midi.getMessage(), midi.getLength());
-            			JudahZone.getLooper().getSoloTrack().beatboy();
-            		}
-            		else if (Midi.isNote(midi) || Midi.isPitchBend(midi)) {
-            			midi = (Midi)Midi.format(midi, keyboardSynth.getCh(), 1);
-            			if (keyboardSynth.getMidiOut().getMidiPort().getPort() == null)
-            				keyboardSynth.getMidiOut().send(midi, ticker());
-            			else 
-            				JackMidi.eventWrite(keyboardSynth.getMidiOut().getMidiPort().getPort(), 
-            						ticker(), midi.getMessage(), midi.getLength()); 
-            		}
+                    switchboard.get(port).midiProcessed(new Midi(data));
+                    	
                 }
             }
         	// check sequencers for output
-        	if (queue.isEmpty())
-        		return true;
             PortMessage route = queue.poll();
-            while(route != null) {
-            	JackMidi.eventWrite(route.getPort(), 
-            				ticker(), route.getMidi().getMessage(), route.getMidi().getLength());
+            while (route != null) {
+            		JackMidi.eventWrite(route.getPort(), ticker(), 
+            				route.getMidi().getMessage(), route.getMidi().getLength());
             	route = queue.poll();
             }
         } catch (Throwable e) {
             RTLogger.warn(this, e);
-            if ("ENOBUF".equals(e.getMessage())) {
-            	// TODO zone.recoverMidi();
-                return true;
-            }
+            if ("ENOBUF".equals(e.getMessage())) ; // a2j?
         }
         return true;
     }
@@ -334,37 +299,33 @@ public class JudahMidi extends BasicClient implements Closeable {
     	return ++ticker;
     }
     
-    public static void queue(ShortMessage msg, JackPort midiOut) {
-    	queue.add(new PortMessage(msg, midiOut));
+    public static void queue(MidiMessage msg, JackPort out) {
+    	queue.add(new PortMessage(msg, out));
     }
 
     public void synchronize(MidiReceiver ch) {
-    	if (sync.contains(ch.getMidiPort())) {
+    	if (sync.contains(ch)) {
     		// TODO send MIDI_RT_STOP to ch
-			sync.remove(ch.getMidiPort());
+			sync.remove(ch);
     	}
 		else
-			sync.add(ch.getMidiPort());
+			sync.add(ch);
     	MainFrame.update(ch);
     }
     
     /** send start/stop to midi listeners */
 	public void synchronize(byte[] midi) {
-		for (MidiPort p : sync)
+		for (MidiReceiver p : sync)
 			p.send(new Midi(midi), JudahMidi.ticker());
 	}
 
-	public void setKeyboardSynth(MidiTrack port) {
-		if (keyboardSynth == port)
-			return;
-		keyboardSynth = port;
-		if (JudahZone.getMidiGui() != null)
-			MainFrame.update(JudahZone.getMidiGui());
-	}
-	
+//	public void createPatches(TrackList synths) {
+//		mpk = new MidiPatch(synths);
+//		jamstik = new Jamstik(synths);
+//	}
+
 }
 
-// @Getter private JackPort clockOut;
 // @Getter private JackPort circuitIn;
 // @Getter private JackPort circuitOut;
 //        	CircuitTracks.setOut1(calfOut);
@@ -405,16 +366,3 @@ public class JudahMidi extends BasicClient implements Closeable {
 //    if (sz > IN.ARDUINO.ordinal()) {
 //    	arduino = inPorts.get(IN.ARDUINO.ordinal());
 //    	switchboard.put(arduino, new ArduinoPedal());}
-//public void routeChannel(HashMap<String, Object> props) {
-//    try {
-//        boolean active = Boolean.parseBoolean("" + props.get("Active"));
-//        int from = Integer.parseInt("" + props.get("from"));
-//        int to = Integer.parseInt("" + props.get("to"));
-//        Route route = new Route(from, to);
-//        if (active) getRouter().add(route);
-//        else  getRouter().remove(route);
-//    } catch (NumberFormatException e) {
-//        log.error(e.getMessage() + " " + Constants.prettyPrint(props));
-//    }}
-
-

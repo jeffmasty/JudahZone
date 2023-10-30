@@ -5,6 +5,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import lombok.RequiredArgsConstructor;
 
+/** LinkedBlockingQueue to capture log statements and post them off the real-time thread */
 public class RTLogger {
 
     @RequiredArgsConstructor private static class Log {
@@ -13,7 +14,7 @@ public class RTLogger {
         final boolean warn;
     }
 
-    private static final BlockingQueue<Log> debugQueue = new LinkedBlockingQueue<>(2048); // logging for Realtime threads
+    private static final BlockingQueue<Log> debugQueue = new LinkedBlockingQueue<>(2048); 
 
     public static void log(Object o, String msg) {
         debugQueue.offer(new Log(o instanceof String 

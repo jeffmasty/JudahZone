@@ -35,8 +35,8 @@ public class Sampler extends ArrayList<Sample> {
 	public static final int SIZE = NAMES.length;
 
 	/** gain factor for all samples */
-	@Setter @Getter float mix = 0.6f;
-	@Setter @Getter float stepMix = 0.6f;
+	@Setter @Getter float mix = 0.5f;
+	@Setter @Getter float stepMix = 0.5f;
 
 	/** selected step sample */
 	@Getter private int selected;

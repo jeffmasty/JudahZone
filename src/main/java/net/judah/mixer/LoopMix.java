@@ -17,10 +17,15 @@ import net.judah.midi.JudahClock;
 public class LoopMix extends MixWidget implements Updateable {
 	public static final Color CLOCKSYNC = YELLOW;
 	public static final Color ONDECK = PINK;
-
-	private final Looper looper;
+	public static final Color PLAIN = BLUE;
+	public static final Color PLAYING = GREEN;
+	public static final Color RECORDING = RED;
+	public static final Color MUTED = Color.BLACK;
+	public static final Color QUIET = Color.GRAY;
+	
 	@Getter private final Loop loop;
-	@Getter private final JToggleButton rec = new JToggleButton("rec");
+	private final Looper looper;
+	private final JToggleButton rec = new JToggleButton("rec");
 	private String update = "";
 	
 	public LoopMix(Loop l, Looper looper) {
@@ -44,27 +49,28 @@ public class LoopMix extends MixWidget implements Updateable {
 
 	@Override protected Color thisUpdate() {
 		if (looper.getSoloTrack().isSolo() && loop == looper.getSoloTrack())
-			sync.setBackground(YELLOW);
+			sync.setBackground(CLOCKSYNC);
 		else 
 			sync.setBackground(null);
 		
 		if (loop.isRecording())
 			rec.setSelected(true);
-		else if (looper.isSync(loop))
+		else if (looper.getCountdown() == loop)
 			rec.setSelected(true);
 		else rec.setSelected(false);
+		
 		if (loop.getType() == Type.FREE) {
 			if (! rec.getText().equals("free")) rec.setText("free");
-		} else if (! rec.getText().equals("rec")) rec.setText("rec");
-
+		} else if (! rec.getText().equals("rec")) 
+			rec.setText("rec");
+		
 		if (loop == looper.getSoloTrack()) {
 			sync.setSelected(looper.getSoloTrack().isSolo());
-			sync.setBackground(sync.isSelected() ? YELLOW : null);
+			sync.setBackground(sync.isSelected() ? CLOCKSYNC: null);
 		}
 		else 
 			sync.setSelected(looper.getOnDeck().contains(loop));
-		
-		if (looper.isSync(loop) && update != null) {
+		if (update != null && looper.getCountdown() == loop) {
 			if (title.getText().equals(update) == false)
 				title.setText(update);
 		}
@@ -75,22 +81,19 @@ public class LoopMix extends MixWidget implements Updateable {
 		if (mute.isSelected() != channel.isOnMute())
 			mute.setSelected(channel.isOnMute());
 		
-		Color bg = BLUE;
-		if (loop.isRecording()) {
-			bg = RED;
-			// if (bars == BSYNC_DOWN)
-			// TODO	bg = CLOCKSYNC;
-		}
-		else if (looper.isSync(loop))
+		Color bg = PLAIN;
+		if (loop.isRecording()) 
+			bg = RECORDING;
+		else if (looper.getCountdown() == loop)
 			bg = CLOCKSYNC;
-		else if (looper.getOnDeck().contains(loop)) 
+		else if (looper.isOnDeck(loop))
 			bg = ONDECK;
 		else if (channel.isOnMute())  // line in/master track 
-			bg = Color.BLACK;
+			bg = MUTED;
 		else if (quiet())
-			bg = Color.GRAY;
+			bg = QUIET;
 		else if (loop.isPlaying())
-			bg = GREEN;
+			bg = PLAYING;
 		return bg;
 	}
 
@@ -101,12 +104,16 @@ public class LoopMix extends MixWidget implements Updateable {
 				"-" + JudahClock.getLength() + "-" :
 				"" + JudahClock.getLength();
 		else 
-			text = " " + channel.getName() + " ";
+			text = channel.getName();
 		if (!title.getText().equals(text))
 			title.setText(text);
 	}
 	
 	public void setUpdate(String string) {
+		if (string == null && update == null)
+			return;
+		if (update != null && update.equals(string))
+			return;
 		update = string;
 		MainFrame.update(this);
 	}

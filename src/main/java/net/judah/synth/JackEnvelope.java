@@ -7,6 +7,7 @@ import javax.sound.midi.ShortMessage;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.judah.gui.MainFrame;
 
 /**Performs an envelope's life cycle per Jack frame based on supplied Adsr settings.
  * 
@@ -26,8 +27,8 @@ public class JackEnvelope {
 	}
 
 	/** sensitive to adsr, velocity, and dampen */
-	public float calcEnv(Polyphony notes, int idx, Adsr adsr) {
-		ShortMessage voice = notes.getNotes()[idx];
+	public float calcEnv(Polyphony notes, int data1, Adsr adsr) {
+		ShortMessage voice = notes.find(data1);
 		if (voice == null) 
 			return 0f;
 		if (voice.getCommand() == ShortMessage.NOTE_ON) { 
@@ -58,13 +59,19 @@ public class JackEnvelope {
 			}
 		}
 		if (result <= 0)
-			return silence(notes, voice, idx);
+			return silence(notes, voice, data1);
 		return result * dampen * midiToFloat(voice.getData2());  
 	}
 
-	private float silence(Polyphony notes, ShortMessage voice, int idx) {
-		if (voice.getCommand() == ShortMessage.NOTE_OFF)
-			notes.getNotes()[idx] = null; 
+	private float silence(Polyphony notes, ShortMessage voice, int data1) {
+		
+		if (voice.getCommand() == ShortMessage.NOTE_OFF) {
+			int idx = notes.indexOf(data1);
+			if (idx > -1) {
+				notes.remove(idx);
+				MainFrame.update(notes);
+			}
+		}
 		// else, user is fiddling with sustain to 0, while note pressed
 		return 0f;
 	}

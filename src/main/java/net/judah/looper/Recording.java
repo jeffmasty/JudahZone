@@ -25,13 +25,13 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 	public static final float BOOST = 5f;
 
 	@Getter private long creationTime = System.currentTimeMillis();
-	@Getter private File file; // can be null (looper)				
+	@Getter private File file; 			// can be null (looper)				
 	private FileInputStream iStream;	// Input stream used for reading data
 	private final byte[] buffer = new byte[BUFFER_SIZE]; // local buffer for disk IO
-	private int numFrames;		// Number of frames within the data section
-	int numChannels = 2;	// 2 bytes unsigned, 0x0001 (1) to 0xFFFF (65,535)
+	private int numFrames;				// Number of frames within the data section
+	int numChannels = 2;				// 2 bytes unsigned, 0x0001 (1) to 0xFFFF (65,535)
 	boolean stereo = true;
-	long blockAlign;		// 2 bytes unsigned, 0x0001 (1) to 0xFFFF (65,535)
+	long blockAlign;					// 2 bytes unsigned, 0x0001 (1) to 0xFFFF (65,535)
 	private int bufferPointer;			// Points to the current position in local buffer
 	private int bytesRead;				// Bytes read after last read into local buffer
 	private int frameCounter;			// Current number of frames read or written

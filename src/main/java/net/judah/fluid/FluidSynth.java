@@ -18,7 +18,6 @@ import net.judah.gui.MainFrame;
 import net.judah.gui.settable.Program;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiInstrument;
-import net.judah.midi.MidiPort;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -36,13 +35,14 @@ public class FluidSynth extends MidiInstrument {
 	private OutputStream outStream;
 	@Getter private final FluidConsole console;
 	private FluidListener listener;
-	private float gain = 1f; // max 5.0
+	private float gain = 1f; // max 5f
 	private final String[] changes = new String[CHANNELS];
-	@Getter private final FluidChannels channels = new FluidChannels();
+	/** General-Midi presets */
+	@Getter private final FluidChannels GM = new FluidChannels();
 	@Getter private final ArrayList<Drum> drums = new ArrayList<>();
 
 	public FluidSynth(int sampleRate, JackPort left, JackPort right, JackPort midi) {
-		super(Constants.FLUID, LEFT_PORT, RIGHT_PORT, left, right, "Fluid.png");
+		super(Constants.FLUID, LEFT_PORT, RIGHT_PORT, left, right, "Fluid.png", midi);
 		reverb = new FluidReverb(this); // use external reverb
 
 		shellCommand = "fluidsynth" +
@@ -56,7 +56,6 @@ public class FluidSynth extends MidiInstrument {
 		} catch (IOException e) {
 			RTLogger.warn(this, e);
 		}
-		setMidiPort(new MidiPort(midi));
 		new FluidListener(process.getErrorStream(), true).start();
 		listener = new FluidListener(process.getInputStream(), false);
 		listener.start();
@@ -88,13 +87,13 @@ public class FluidSynth extends MidiInstrument {
 			if (listener.channels.isEmpty())
 				throw new Exception("Error reading channels");
 			else {
-				channels.clear();
+				GM.clear();
 				for (FluidChannel c : listener.channels)
-					channels.add(c);
+					GM.add(c);
 			}
 			for (int i = 0; i < changes.length; i++)
-				if (channels.size() > i)
-					changes[i] = channels.get(i).name;
+				if (GM.size() > i)
+					changes[i] = GM.get(i).name;
 			
 		} catch (Exception e) { RTLogger.warn(this, e);  }
 	}

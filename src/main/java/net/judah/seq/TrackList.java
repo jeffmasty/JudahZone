@@ -11,6 +11,7 @@ import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.PianoTrack;
 import net.judah.song.cmd.Cmd;
 import net.judah.song.cmd.Cmdr;
 import net.judah.song.cmd.Param;
@@ -72,7 +73,7 @@ public class TrackList extends Vector<MidiTrack> implements Cmdr {
 	@Override
 	public void execute(Param p) {
 		if (p.cmd == Cmd.MPK)
-			JudahZone.getMidi().setKeyboardSynth(resolve(p.val));
+			JudahZone.getMidi().getMpk().setPort((PianoTrack)resolve(p.val));
 	}
 
 	

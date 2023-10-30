@@ -16,10 +16,9 @@ public class TogglePreset extends JButton {
 	private final Looper looper;
 	
 	public TogglePreset(Channel channel, Looper looper) {
-		super("  fx  ");
+		super(" fx ");
 		this.channel = channel;
 		this.looper = looper;
-		setOpaque(true);
 		addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent me) {
 				if (SwingUtilities.isRightMouseButton(me)) 

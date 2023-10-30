@@ -24,7 +24,10 @@ import net.judah.util.RTLogger;
 
 public class ChordSheet extends JPanel {
 	private static final int TABS = 4;
-	private static final int WIDTH = Size.WIDTH_TAB - 50;
+	private static final int WIDTH = Size.WIDTH_TAB - 32;
+	private static final int LBLS = 70;
+	private static final int PAD = 4;
+	private static final Dimension COLUMN = new Dimension( (WIDTH - LBLS - PAD - 30) / 4, 43);
 	
 	private int measure;
 	private final ChordTrack chords;
@@ -41,13 +44,14 @@ public class ChordSheet extends JPanel {
 		setName("Chords");
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-		scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		scroll.setAutoscrolls(true);
+		scroll.getVerticalScrollBar().setUnitIncrement(20);
 		Gui.resize(scroll, new Dimension(WIDTH, Size.HEIGHT_TAB - 80));
 
 		JPanel top = new JPanel();
 		top.setLayout(new BoxLayout(top, BoxLayout.LINE_AXIS));
-		top.add(Box.createHorizontalStrut(10));
+		top.add(Box.createHorizontalStrut(8));
 		top.add(new ChordPlay("▶️ Chords", chords));
 		top.add(Gui.resize(new ChordProCombo(), Size.WIDE_SIZE));
 		top.add(new Btn("Edit", e->edit()));
@@ -67,7 +71,7 @@ public class ChordSheet extends JPanel {
 	}
 
 	void edit() {
-		Song song = JudahZone.getSong(); 
+		Song song = JudahZone.getOverview().getSong(); 
 		if (song == null || song.getChordpro() == null || song.getChordpro().isBlank())
 			return;
 		try {
@@ -104,7 +108,6 @@ public class ChordSheet extends JPanel {
 		for (int i = 0 ; i < chords.getSections().size(); i++) 
 			new Group(chords.getSections().get(i));
 		scroll.setViewportView(content);
-		
 		updateDirectives();
 	}
 
@@ -122,9 +125,9 @@ public class ChordSheet extends JPanel {
 		final Chord chord;
 		Crd(Chord chord) {
 			this.chord = chord;
-			String text ="<html>" + chord.getChord();
-			text += "<BR>";
-			text += chord.getLyrics() == null || chord.getLyrics().isBlank() ? "  " : chord.getLyrics();  
+			String text ="<html><b>" + chord.getChord(); // TODO TimeSig
+			text += "</b><BR/>";
+			text += chord.getLyrics() == null || chord.getLyrics().isBlank() ? "&nbsp;" : chord.getLyrics();  
 			text += "</html>";
 			setText(text);
 			setOpaque(true);
@@ -143,34 +146,40 @@ public class ChordSheet extends JPanel {
 	}
 	
 	private class Group extends JPanel {
+		
 		final Section section;
-		JToggleButton loop = new JToggleButton(" 🔁 ");
-		JLabel bar = new JLabel("1");
+		JToggleButton loop = new JToggleButton("🔁");
+		JLabel bar = new JLabel("1", JLabel.CENTER);
+		Click total = new Click(" 0 ", e->length());
 		JPanel left = new JPanel();
 		JPanel lbls = new JPanel();
-
-		Click total = new Click("of 0", e->length());
+		JPanel btns = new JPanel();
 
 		Group(Section s) {
 			groups.add(this);
-			setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 			section = s;
-			total.setText(" of " + chords.bars(section.getCount()) + " ");
+			
+			int measures = chords.bars(section.getCount());
+			total.setText(" / " + measures);
 			loop.setSelected(section.isOnLoop());
 			loop.addActionListener(e->section.toggle(Directive.LOOP));
+			loop.setAlignmentX(0);
+			
+			lbls.add(bar); 
+			lbls.add(total);
 
-			lbls.setOpaque(true);
-			lbls.add(new JLabel("Bar")); lbls.add(bar); lbls.add(total);
-
-			Gui.resize(left, new Dimension(135, 60));
 			left.setLayout(new BoxLayout(left, BoxLayout.PAGE_AXIS));
 			left.add(lbls);
-			left.add(loop);
-			left.add(Box.createVerticalGlue());
-			
+			btns.add(loop);
+			left.add(btns);
+						
+			setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 			add(left);
+			add(Box.createHorizontalStrut(PAD));
 			add(createContent());
+
 			setBorder(BorderFactory.createTitledBorder(s.getName()));
+			setOpaque(true);
 			content.add(this);
 			addMouseListener(new MouseAdapter() {
 				@Override public void mouseClicked(MouseEvent e) {
@@ -180,7 +189,7 @@ public class ChordSheet extends JPanel {
 		}
 
 		JPanel createContent() {
-			JPanel result = new JPanel(new GridLayout(0, TABS, 8, 10));
+			JPanel result = new JPanel(new GridLayout(0, TABS, 0, 0));
 			result.setBackground(Color.WHITE);
 			JLabel onDeck = null;
 			for (Chord chord : section) {
@@ -197,7 +206,8 @@ public class ChordSheet extends JPanel {
 			}
 			if (onDeck != null)
 				result.add(onDeck);
-			
+			for (int i = 0; i < result.getComponentCount(); i++)
+				Gui.resize((JComponent)result.getComponent(i), COLUMN);
 			return result;
 		}
 		
@@ -206,9 +216,11 @@ public class ChordSheet extends JPanel {
 		}
 		
 		void highlight(Section s) {
-			setBackground(s == section ? BUTTONS : null);
-			left.setBackground(getBackground());
-			lbls.setBackground(getBackground());
+			Color bg = s == section ? BUTTONS : null;
+			setBackground(bg);
+			left.setBackground(bg);
+			lbls.setBackground(bg);
+			btns.setBackground(bg);
 		}
 	}
 

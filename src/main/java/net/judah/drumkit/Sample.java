@@ -11,10 +11,10 @@ import net.judah.looper.AudioTrack;
 import net.judah.looper.Recording;
 import net.judah.util.Folders;
 
-/** currently, plays ((crickets)) on 2 and 4 */
+/** Audio from disk */
 public class Sample extends AudioTrack {
 	
-	protected static final float BOOST = 0.25f;
+	protected static final float BOOST = 0.125f;
 	protected final Sampler sampler;
 	@Getter protected File file;
 	

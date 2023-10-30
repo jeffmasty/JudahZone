@@ -13,7 +13,6 @@ import lombok.Getter;
 import net.judah.controllers.MPKTools;
 import net.judah.fx.*;
 import net.judah.gui.MainFrame;
-import net.judah.gui.settable.Fx;
 import net.judah.gui.widgets.FilterType;
 import net.judah.looper.Looper;
 import net.judah.mixer.Channel;
@@ -46,8 +45,8 @@ public class EffectsRack extends JPanel implements MPKTools {
         lbls = new Row(channel);
         components = lbls.getControls();
         components.add(new FxTrigger("Dist.", channel.getOverdrive(), channel));
-        components.add(new FxTrigger("Chorus", channel.getChorus(), channel));
         components.add(new FxTrigger("  ", channel.getChorus(), channel));
+        components.add(new FxTrigger("Chorus", channel.getChorus(), channel));
         components.add(new TimePanel(channel.getChorus()));
         labels.add(lbls);
         
@@ -59,9 +58,9 @@ public class EffectsRack extends JPanel implements MPKTools {
 	    		new KeyPair("     ", channel.getEq()),
         		new KeyPair("Volume", channel.getGain())}));
 
-       lbls = new Row(channel);
+        lbls = new Row(channel);
         components = lbls.getControls();
-        components.add(new FxTrigger("Preset", null, channel));
+        components.add(channel.getPresets());
         components.add(new FilterType(channel.getFilter1(), channel));
         components.add(new FilterType(channel.getFilter2(), channel));
         components.add(new FxTrigger("Pan", channel.getGain(), channel));
@@ -77,7 +76,7 @@ public class EffectsRack extends JPanel implements MPKTools {
         GridBagConstraints c = new GridBagConstraints();
         c.ipadx = 0;
         c.fill = GridBagConstraints.HORIZONTAL;
-        c.insets = new Insets(1, 0, 1, 0);
+        c.insets = new Insets(0, 0, 0, 0);
         for (int y = 0; y < knobs.size() * 2; y++) 
         	for (int x = 0; x < COLUMNS; x++) {
     			c.gridx = x;
@@ -172,7 +171,7 @@ public class EffectsRack extends JPanel implements MPKTools {
         	channel.getChorus().setActive(rate < thresholdHi);
 			break;
         case 12:			
-        	((Fx)knobs.get(3).getControls().get(0)).increment(up); // not elegant
+        	channel.getPresets().increment(up);
         	break;
         case 13:
         	Filter filter = channel.getFilter1();
@@ -184,11 +183,11 @@ public class EffectsRack extends JPanel implements MPKTools {
         	filter.setFrequency(Filter.knobToFrequency(freak));
 			break;
         case 14:
-        	Filter hello = channel.getFilter2();
-        	int hz = offset(Filter.frequencyToKnob(hello.getFrequency()), up);
-        	hello.setActive(hz < thresholdHi);
-        	if (!hello.isActive()) return;
-        	hello.setFrequency(Filter.knobToFrequency(hz));
+        	Filter filter2 = channel.getFilter2();
+        	int hz = offset(Filter.frequencyToKnob(filter2.getFrequency()), up);
+        	filter2.setActive(hz < thresholdHi);
+        	if (!filter2.isActive()) return;
+        	filter2.setFrequency(Filter.knobToFrequency(hz));
         	break;
         case 15:  
         	channel.getGain().set(Gain.PAN, offset(channel.getPan(), up));

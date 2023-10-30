@@ -10,6 +10,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 
+import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
 import net.judah.fx.Filter;
@@ -19,6 +20,9 @@ import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.FxButton;
 import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.Knob.KnobListener;
+import net.judah.midi.Actives;
+import net.judah.midi.JudahMidi;
+import net.judah.midi.Midi;
 
 public class KitPad extends JPanel implements KnobListener {
 	private static final Color borderColor = Pastels.PURPLE;
@@ -56,7 +60,10 @@ public class KitPad extends JPanel implements KnobListener {
 		}
 		addMouseListener(new MouseAdapter() {
 			@Override public void mousePressed(MouseEvent e) {
-				view.getKit().play(findSample(), true, 100);
+				DrumKit kit = view.getKit();
+				DrumSample s = findSample();
+				Midi click = Midi.create(Midi.NOTE_ON, kit.getTracks().get(0).getCh(), s.getDrumType().getData1(), 100);
+				kit.send(click, JudahMidi.ticker());
 			}
 		});
 		
@@ -72,7 +79,6 @@ public class KitPad extends JPanel implements KnobListener {
 			if (view.getKit().isChoked() != choke.isSelected())
 				choke.setSelected(view.getKit().isChoked());
 		DrumSample sample = findSample();
-		top.setBackground(sample.isPlaying() ? PAD_COLOR : null);
 		int current = knob.getValue();
 		switch(view.getMode()) {
 			case Volume: 
@@ -102,6 +108,7 @@ public class KitPad extends JPanel implements KnobListener {
 		}
 	}
 
+	
 	@Override
 	public void knobChanged(int value) {
 		DrumSample sample = findSample();
@@ -135,6 +142,11 @@ public class KitPad extends JPanel implements KnobListener {
 					sample.getGain().set(Gain.PAN, value);
 				break;
 		}
+	}
+	
+		
+	void background(Actives a) {
+		top.setBackground( a.find(type.getData1()) == null ? null : PAD_COLOR); 
 	}
 	
 	private DrumSample findSample() {

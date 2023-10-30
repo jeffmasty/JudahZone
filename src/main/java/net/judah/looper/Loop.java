@@ -13,7 +13,6 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.api.AudioMode;
 import net.judah.api.RecordAudio;
 import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumMachine;
@@ -31,16 +30,16 @@ import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 public class Loop extends AudioTrack implements RecordAudio, Runnable {
-	protected static int INIT = 15000; // nice chunk of preloaded blank tape
-	protected static final float STD_BOOST = 4f;
+	protected static int INIT = 9999; // nice chunk of preloaded blank tape
+	protected static final float STD_BOOST = 3;
 	protected static final float DRUM_BOOST = 1.5f;
 	
+    @Getter protected boolean isRecording;
+    @Getter protected int length;
     protected final Zone sources;
 	protected final Looper looper;
     protected final Memory memory;
-    @Getter protected boolean isRecording;
-    @Getter protected int loopCount;
-    @Getter protected int length;
+    protected int loopCount;
     protected int frame;
 	private final BlockingQueue<float[][]> newQueue = new LinkedBlockingQueue<>();
 	private final BlockingQueue<float[][]> oldQueue = new LinkedBlockingQueue<>();
@@ -57,7 +56,7 @@ public class Loop extends AudioTrack implements RecordAudio, Runnable {
     	this.icon = Icons.get(icon);
     	for (int i = 0; i < INIT; i++)
     		recording.add(new float[STEREO][bufSize]);
-    	new Thread(this).start();
+    	new Thread(this).start(); // overdub listening
     }
     
 	/** ignore super */
@@ -100,7 +99,7 @@ public class Loop extends AudioTrack implements RecordAudio, Runnable {
     		tapeCounter.set(length - 1); 
     }
 
-    public void catchUp(int size) {
+    void catchUp(int size) {
 		while (recording.size() < size) 
 			recording.add(memory.getArray());
     }
@@ -139,50 +138,49 @@ public class Loop extends AudioTrack implements RecordAudio, Runnable {
 
     @Override public void record(boolean record) {
         if (record) { 
-        	if (looper.getPrimary() == null) { // we will be primary
+        	Loop primary = looper.getPrimary();
+        	if (primary == null) // we will be primary
         		tapeCounter.set(0); 
-        		if (!JudahClock.isEven()) looper.getClock().skipBar();
-        	}
         	else if (length == 0) {
-        		length = looper.getLength(); // start rolling
-        		tapeCounter.set(looper.getPrimary().getTapeCounter().get());
+        		length = primary.getLength();
+        		if (length >= recording.size())
+        		catchUp(length);
+        		tapeCounter.set(primary.getTapeCounter().get());
         	}
         	isRecording = true;
         }
         else if (isRecording) 
         	endRecord();
+        else return;
         MainFrame.update(this);
     }
 
-	protected void endRecord() {
+	private void endRecord() {
 		isRecording = false;
-		if (length == 0) {
-			length = looper.getLength();
-			if (length > 0) 
-				catchUp(length);
-			else {
-				length = tapeCounter.get() - 1;
-				tapeCounter.set(length);
-				looper.setPrimary(this);
-			}
-			if (type == Type.FREE || type == Type.BSYNC)
-				type = Type.SYNC;
+		if (type == Type.FREE || type == Type.BSYNC)
+			type = Type.SYNC;
+		if (looper.getPrimary() == null) {
+			length = tapeCounter.get() - 1;
+			tapeCounter.set(length);
+			looper.setPrimary(this);
 		}
-		looper.syncDown(this);
+		else if (length == 0) 
+			length = looper.getLength();
+		looper.syncDown();
 		MainFrame.update(this);
 	}
 	
 	public void doubled() { 
 		if (length == 0) { // activate blank tape of double primary's length
-			if (looper.getPrimary() == null) return;
-			length = looper.getLength();
-			Constants.execute(()->catchUp(length * 2));
-			RTLogger.log(toString(), "Duplicated: " + length * 2);
-			length *= 2;
+			Loop primary = looper.getPrimary();
+			if (primary == null) return; 
+			length = primary.getLength() * 2;
+			Constants.execute(()->catchUp(length));
+			RTLogger.log(toString(), "Duplicated: " + length);
 			return;
 		}
-		// copy 
-		Constants.execute(()->{
+
+		Constants.execute(()->{ // duplicate recording
 			if (this == looper.getPrimary())
 				JudahZone.getClock().setLength(JudahClock.getLength() * 2);
 
@@ -199,7 +197,7 @@ public class Loop extends AudioTrack implements RecordAudio, Runnable {
 	/** user engaged the record button, setup depending on loop type */
     public void trigger() { 
 		if (isRecording()) {
-			if (type == Type.BSYNC && !looper.hasRecording() && looper.isSync(this))
+			if (type == Type.BSYNC && !looper.hasRecording() && looper.getCountdown() == this)
 				looper.tail(this);
 			else 
 				record(false);
@@ -225,8 +223,8 @@ public class Loop extends AudioTrack implements RecordAudio, Runnable {
     }
 
 	private void playFrame() {
-		if (frame == 0) 
-			looper.loopCount(this, loopCount == 0 ? AudioMode.NEW: loopCount++);
+		if (frame == 0 && this == looper.getPrimary()) 
+			looper.loopCount(loopCount++);
 		if (frame >= length) {
 			frame = 0;
 			tapeCounter.set(0);
@@ -246,15 +244,15 @@ public class Loop extends AudioTrack implements RecordAudio, Runnable {
             if (in != solo && type == Type.SOLO) continue;
             
             if (in instanceof Instrument)
-            	recordCh(newBuffer, in.getLeft(), in.getRight(), newBuffer, STD_BOOST);
+            	recordCh(in.getLeft(), in.getRight(), newBuffer, STD_BOOST);
             else if (in instanceof JudahSynth) {
             	JudahSynth synth = (JudahSynth)in;
-            	if (synth.hasWork() && !synth.isMuteRecord())
-            		recordCh(newBuffer, synth.getLeft(), synth.getRight(), newBuffer, STD_BOOST);
+            	if (!synth.isMuteRecord() && synth.isActive() && !synth.isOnMute())
+            		recordCh(synth.getLeft(), synth.getRight(), newBuffer, STD_BOOST);
             }
             else if (in instanceof DrumMachine)
             	for (DrumKit kit : ((DrumMachine)in).getKits())
-            		recordCh(newBuffer, kit.getLeft(), kit.getRight(), newBuffer, DRUM_BOOST);
+            		recordCh(kit.getLeft(), kit.getRight(), newBuffer, DRUM_BOOST);
         }
 
     	if (frame < recording.size()) {
@@ -274,7 +272,8 @@ public class Loop extends AudioTrack implements RecordAudio, Runnable {
 	        }    		
     	} 
 	}
-    private void recordCh(float[][] newBUffer, FloatBuffer channelLeft, FloatBuffer channelRight, float[][] newBuffer, float amp) {
+	
+    private void recordCh(FloatBuffer channelLeft, FloatBuffer channelRight, float[][] newBuffer, float amp) {
     	AudioTools.add(amp, channelLeft, newBuffer[LEFT]);
     	AudioTools.add(amp, channelRight, newBuffer[RIGHT]);
     }

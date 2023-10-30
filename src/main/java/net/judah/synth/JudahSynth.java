@@ -1,8 +1,8 @@
 package net.judah.synth;
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
 import java.util.List;
 
+import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
@@ -16,57 +16,50 @@ import net.judah.fx.Filter;
 import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
-import net.judah.gui.knobs.Knobs;
 import net.judah.gui.knobs.SynthKnobs;
 import net.judah.gui.settable.Program;
+import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
-import net.judah.midi.MidiPort;
-import net.judah.mixer.LineIn;
+import net.judah.seq.track.PianoTrack;
 import net.judah.util.AudioTools;
 import net.judah.util.RTLogger;
 
-@Getter // Wishlist: portamento/glide, LFOs, PWM, mono-synth, true stereo
-public class JudahSynth extends LineIn implements Engine, Knobs {
-	public static final String[] NAMES = {"S.One", "S.Two"};
+@Getter // Wishlist: portamento/glide, LFOs, PWM, mono-synth, true stereo, envelope to filter
+public class JudahSynth extends Engine {
 	public static final int POLYPHONY = 24;
+	public static final String[][] NAMES = {{"S.One", "Synth.png"}, {"S.Two", "Waveform.png"}};
 	public static final int DCO_COUNT = 3;
 	public static final int ZERO_BEND = 8192;
 	
     private final FloatBuffer work = FloatBuffer.allocate(bufSize); // mono-synth algorithm
-	
-	private final int channel = 0;
+    
+	private final boolean mono = false; // TODO monosynth switch
+	private final int MIDI_CH = 0; // TODO channel-aware
 	private final KnobMode knobMode = KnobMode.DCO;
 	protected boolean active = true;
-    private final Adsr adsr = new Adsr();
-    private final Voice[] voices = new Voice[POLYPHONY];
-    private final Polyphony notes = new Polyphony(voices);
+	private final Adsr adsr = new Adsr();
+    private final Polyphony notes;
     private final float[] dcoGain = new float[DCO_COUNT];
     private final float[] detune = new float[DCO_COUNT];
     private final Shape[] shapes = new Shape[] {Shape.SIN, Shape.TRI, Shape.SAW};
 	private final ModWheel modWheel;
-	private boolean mono = false; // TODO monosynth
 	private final Filter loCut = new Filter(false);
 	private final Filter hiCut = new Filter(false);
 	
 	private SynthPresets synthPresets;
-	private final List<Integer> actives = new ArrayList<>();
-	@Setter @Getter private MidiPort midiPort;
     /** modwheel pitchbend semitones */
     @Setter private int modSemitones = 1;
     private final SynthKnobs synthKnobs;
     
-	public JudahSynth(String name, JackPort left, JackPort right, String iconName) {
-		super(name, false);
+    public JudahSynth(int idx, JackPort left, JackPort right, JudahClock clock) {
+		super(NAMES[idx][0], false);
 		leftPort = left;
 		rightPort = right;
-		midiPort = new MidiPort(this);
 		factor = 1.33f;
-		icon = Icons.get(iconName);		
+		icon = Icons.get(NAMES[idx][1]);		
 		
 		for (int i = 0; i < dcoGain.length; i++)
 			dcoGain[i] = 0.50f;
-		for (int i = 0; i < voices.length; i++)
-			voices[i] = new Voice(i, this);
 		for (int i = 0; i < detune.length; i++)
 			detune[i] = 1f;
 
@@ -82,9 +75,12 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
 
 		synthPresets = new SynthPresets(this);
 		modWheel = new ModWheel(hiCut, loCut);
+		notes = new Polyphony(this, MIDI_CH, POLYPHONY);
+		try {
+			tracks.add(new PianoTrack(name, notes, clock));
+		} catch (InvalidMidiDataException e) { RTLogger.warn(this, e); }
 		synthKnobs = new SynthKnobs(this);
-
-	}
+    }
 
 	public float computeGain(int dco) { 
 		return dcoGain[dco] * 0.1f; // dampen
@@ -110,13 +106,10 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
 	public void send(MidiMessage midi, long timeStamp) {
 		ShortMessage m = (ShortMessage)midi;
 		if (Midi.isNote(m)) {
-			if (Midi.isNoteOn(m)) { 
-				if (notes.noteOn(m))
-					MainFrame.update(this);
-			}
-			else if (notes.noteOff(m)) {
-				MainFrame.update(this);
-			}
+			if (Midi.isNoteOn(m))
+				notes.noteOn(m);
+			else 
+				notes.noteOff(m); 
 		}
 		else if (Midi.isProgChange(m)) {
 			RTLogger.log(this, "TODO ProgChange " + new Midi(m.getMessage()).toString());
@@ -128,18 +121,10 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
 		}
 		else if (Midi.isPitchBend(m)) {
 			float factor = bendFactor(m, modSemitones);
-			for (Voice v : voices) 
+			for (Voice v : notes.voices) 
 				v.bend(factor);
 		}
 	}
-
-	@Override
-	public boolean hasWork() {
-		return (active && !onMute); //&& !notes.isEmpty() -- wouldn't account for reverb/delay transients */
-	}
-	
-	@Override public boolean isMono() { return mono; }
-
 
 	@Override public boolean progChange(String preset) {
 		if (getSynthPresets().load(preset)) {
@@ -168,15 +153,6 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
 		return detune[dco] * hz;
 	}
 
-	@Override public List<Integer> getActives() {
-		actives.clear();
-		for (ShortMessage m : notes.getNotes()) 
-			if (m != null && Midi.isNoteOn(m)) 
-				actives.add(m.getData1());
-		return actives;
-	}
-
-
 	/**Pitch Bend message  https://sites.uci.edu/camp2014/2014/04/30/managing-midi-pitchbend-messages/ <pre>
 	1. Combine the MSB and LSB to get a 14-bit value.
 	2. Map that value (which will be in the range 0 to 16,383) to reside in the range -1 to 1. 
@@ -196,11 +172,11 @@ public class JudahSynth extends LineIn implements Engine, Knobs {
 	@Override
 	public void process() {
 		
-		if (!hasWork()) 
+		if (!active || onMute) 
 			return;
         AudioTools.silence(work);
 
-        for (Voice voice : voices) {
+        for (Voice voice : notes.voices) {
         	voice.process(notes, adsr, work);
         }
         

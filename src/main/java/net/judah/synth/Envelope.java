@@ -63,7 +63,7 @@ public class Envelope {
 	}
 
 	public float calcEnv(Polyphony notes, int idx) {
-		ShortMessage voice = notes.getNotes()[idx];
+		ShortMessage voice = notes.get(idx);
 		if (voice != null && voice.getCommand() == ShortMessage.NOTE_ON) { 
 			// note is pressed, perform either of A/D or S
 			if (attack < adsr.attackGain && adsr.attackTime > 0) {
@@ -98,7 +98,7 @@ public class Envelope {
 	}
 
 	private float silence(Polyphony notes, int idx) {
-		notes.getNotes()[idx] = null;
+		notes.set(idx, null);
 		return 0f;
 	}
 }

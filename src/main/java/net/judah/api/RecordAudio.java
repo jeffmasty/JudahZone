@@ -6,5 +6,4 @@ public interface RecordAudio extends PlayAudio {
 	
 	boolean isRecording();
 	
-	// hasRecording == isPlaying
 }

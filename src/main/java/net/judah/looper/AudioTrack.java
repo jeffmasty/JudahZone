@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.api.PlayAudio;
+import net.judah.drumkit.DrumSample;
 import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 import net.judah.util.AudioTools;
@@ -51,7 +52,10 @@ public abstract class AudioTrack extends Channel implements PlayAudio {
 		int frame = tapeCounter.getAndIncrement();
 		if (frame + 1 >= recording.size()) {
 			tapeCounter.set(0);
-			if (type == Type.ONE_SHOT) {
+			if (this instanceof DrumSample) {
+				((DrumSample)this).off();
+			}
+			else if (type == Type.ONE_SHOT) {
 				playing = false;
 				MainFrame.update(this);
 			}

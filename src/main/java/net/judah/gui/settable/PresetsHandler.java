@@ -1,5 +1,7 @@
 package net.judah.gui.settable;
 
+import static net.judah.JudahZone.getPresets;
+
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -12,26 +14,26 @@ import javax.swing.SwingUtilities;
 
 import net.judah.JudahZone;
 import net.judah.fx.Preset;
-import net.judah.fx.PresetsDB;
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.gui.Updateable;
 import net.judah.mixer.Channel;
 
-/** FilterType, LFOType, Presets */
-public class Fx extends SetCombo<Preset> implements ListCellRenderer<Preset>, Updateable {
+/** Presets */
+public class PresetsHandler extends SetCombo<Preset> implements ListCellRenderer<Preset>, Updateable {
 
 	private final Channel ch;
-
-	public Fx(Channel channel, PresetsDB presets) {
-		super(presets.array(), channel.getPreset());
+	private final JLabel render = new JLabel();
+	
+	public PresetsHandler(Channel channel) {
+		super(JudahZone.getPresets().array(), channel.getPreset());
 		this.ch = channel;
 		((JLabel)getRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
 		Gui.resize(this, Size.COMBO_SIZE);
 		addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) {
 				if (SwingUtilities.isRightMouseButton(e))
-					presets.replace(ch);}});
+					getPresets().replace(ch);}});
 	}
 
 	@Override
@@ -62,10 +64,8 @@ public class Fx extends SetCombo<Preset> implements ListCellRenderer<Preset>, Up
 		return JudahZone.getPresets().indexOf(getSelectedItem());
 	}
 	
-	private final JLabel render = new JLabel();
-	@Override
-	public Component getListCellRendererComponent(JList<? extends Preset> list, Preset value, int index,
-			boolean isSelected, boolean cellHasFocus) {
+	@Override public Component getListCellRendererComponent(JList<? extends Preset> list, 
+			Preset value, int index, boolean isSelected, boolean cellHasFocus) {
 		render.setText(value == null ? "?" : value.getName());
 		return render;
 	}

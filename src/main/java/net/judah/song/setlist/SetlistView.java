@@ -14,7 +14,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import lombok.Getter;
-import net.judah.JudahZone;
 import net.judah.gui.Gui;
 import net.judah.gui.Icons;
 import net.judah.gui.Size;
@@ -25,6 +24,7 @@ import net.judah.gui.knobs.MidiGui;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.FileChooser;
 import net.judah.gui.widgets.FileRender;
+import net.judah.song.Overview;
 import net.judah.util.RTLogger;
 
 public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ implements ListSelectionListener {
@@ -32,6 +32,7 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 	
 	private final Setlists setlists;
 	private Setlist setlist;
+	private final Overview tab;
 	private final JList<File> jsongs = new JList<File>();
 	private final JComboBox<Setlist> custom  = new JComboBox<>(); 
 	private final ActionListener setlister;
@@ -50,10 +51,11 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 	
 	private void loadSong() {
 		if (jsongs.getSelectedValue() != null)
-			JudahZone.loadSong(jsongs.getSelectedValue());
+			tab.loadSong(jsongs.getSelectedValue());
 	}
 
-	public SetlistView(Setlists setlists, MidiGui knobs) {
+	public SetlistView(Setlists setlists, MidiGui knobs, Overview overview) {
+		this.tab = overview;
 		this.knobs = knobs;
 		this.setlists = setlists;
 		setlister = e->setSetlist((Setlist)custom.getSelectedItem());
@@ -88,7 +90,7 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 		jsongs.addMouseListener(new MouseAdapter() {
 			 @Override public void mouseClicked(MouseEvent mouseEvent) {
 				 if (mouseEvent.getClickCount() == 2 && jsongs.getSelectedIndex() >= 0 && !mouseEvent.isConsumed()) { 
-					 JudahZone.loadSong(jsongs.getSelectedValue());
+					 tab.loadSong(jsongs.getSelectedValue());
 					 mouseEvent.consume();
 				 }}});
 		if (custom.getSelectedItem() != null)

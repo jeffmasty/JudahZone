@@ -20,6 +20,7 @@ import net.judah.drumkit.DrumType;
 import net.judah.drumkit.KitMode;
 import net.judah.gui.MainFrame;
 import net.judah.gui.widgets.CenteredCombo;
+import net.judah.midi.Actives;
 
 public class KitKnobs extends KnobPanel {
 	
@@ -72,8 +73,6 @@ public class KitKnobs extends KnobPanel {
 	
 	@Override
 	public void update() {
-//		if (kits.getSelectedItem() != kit)
-//			kits.setSelectedItem(kit);
 		if (preset.getSelectedItem() != kit.getKit().getFolder().getName()) 
 			preset.setSelectedItem(kit.getKit().getFolder().getName());
 		pads.forEach(p->p.update());
@@ -97,6 +96,10 @@ public class KitKnobs extends KnobPanel {
 		if (i == modes.getItemCount())
 			i = 0;
 		modes.setSelectedIndex(i);
+	}
+
+	public void update(Actives a) {
+		pads.forEach(pad-> pad.background(a));
 	}
 
 }

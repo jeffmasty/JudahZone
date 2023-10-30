@@ -11,9 +11,10 @@ import javax.swing.UIManager;
 
 import net.judah.JudahZone;
 import net.judah.gui.Pastels;
+import net.judah.gui.Updateable;
 
 /** launch scenes */
-public class SceneLauncher extends JPanel {
+public class SceneLauncher extends JPanel implements Updateable {
 	private static final int ROWS = 3; 
 	private static final int COLS = 4;
 	public static final int MAX = ROWS * COLS; // 12 Scenes
@@ -64,6 +65,7 @@ public class SceneLauncher extends JPanel {
 		}
 	}
 	
+	@Override
 	public void update() {
 		for (int i = 0; i < getComponentCount(); i++) {
 			if (getComponent(i) instanceof ScenePad)

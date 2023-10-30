@@ -9,14 +9,15 @@ import net.judah.midi.JudahMidi;
 import net.judah.seq.Poly;
 import net.judah.seq.chords.Chord;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.PianoTrack;
 
 public class REC extends Algo implements Ignorant, Feed {
 
 	private final MidiTrack track;
 	
-	public REC(MidiTrack track) {
+	public REC(PianoTrack track) {
 		this.track = track;
-   		JudahZone.getMidi().setKeyboardSynth(track);
+   		JudahZone.getMidi().getMpk().setPort(track);
 	}
 	
 	@Override

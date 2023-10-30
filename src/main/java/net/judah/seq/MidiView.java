@@ -4,9 +4,9 @@ import javax.swing.JPanel;
 
 import lombok.Getter;
 import net.judah.api.Notification.Property;
+import net.judah.api.Signature;
 import net.judah.api.TimeListener;
 import net.judah.midi.JudahClock;
-import net.judah.midi.Signature;
 import net.judah.seq.track.TrackMenu;
 import net.judah.seq.track.MidiTrack;
 

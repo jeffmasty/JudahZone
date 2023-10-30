@@ -15,11 +15,11 @@ import net.judah.api.TimeListener;
 import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.Sampler;
 import net.judah.fx.Fader;
-import net.judah.fx.LFO.Target;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
+import net.judah.midi.JudahClock;
 import net.judah.song.FxData;
 import net.judah.song.cmd.Cmdr;
 import net.judah.song.cmd.Param;
@@ -35,15 +35,15 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 	private final ArrayList<MixWidget> faders = new ArrayList<MixWidget>();
 	@Getter private final Zone sources;
 
-    public DJJefe(Mains mains, Looper looper, Zone sources, List<DrumKit> kits, Sampler sampler) {
+    public DJJefe(JudahClock clock, Mains mains, Looper looper, Zone sources, List<DrumKit> kits, Sampler sampler) {
         this.sources = sources;
-    	all.addAll(looper);
+    	all.add(mains);
+        all.addAll(looper);
 		all.addAll(sources);
 		for (DrumKit k : kits)
 			all.add(k);
 		all.addAll(sampler);
 		all.addAll(sampler.getStepSamples());
-    	
     	for (Loop loop : looper) {
     		channels.add(loop);
     		MixWidget fader = looper.getDisplay(loop);
@@ -57,13 +57,14 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
     		add(fader);
         }
         channels.add(mains);
+    	setLayout(new GridLayout(1, channels.size(), 0, 0));
         MixWidget fader = new MainsMix(mains, looper);
         faders.add(fader);
         add(fader);
         keys = new String[channels.size()];
         for (int i = 0; i < keys.length; i++)
         	keys[i] = channels.get(i).getName();
-    	setLayout(new GridLayout(1, channels.size(), 0, 0));
+        clock.addListener(this);
     }
 
     
@@ -156,7 +157,6 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 		return null;
 	}
 
-
 	@Override
 	public void execute(Param p) {
 		Channel ch = resolve(p.val);
@@ -164,10 +164,10 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 			return;
 		switch (p.cmd) {
 			case FadeOut:
-				Fader.execute(new Fader(ch, Target.Gain, Fader.DEFAULT_FADE, ch.getVolume(), 0));
+				Fader.execute(new Fader(ch, Fader.DEFAULT_FADE, ch.getVolume(), 0));
 				break;
 			case FadeIn:
-				Fader.execute(new Fader(ch, Target.Gain, Fader.DEFAULT_FADE, 0, 51));
+				Fader.execute(new Fader(ch, Fader.DEFAULT_FADE, 0, 51));
 				break;
 			case FX:
 				ch.toggleFx();
@@ -181,7 +181,6 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 			default: throw new InvalidParameterException("" + p);
 		}
 	}
-
 
 	public void mutes(List<String> record) {
 		
@@ -198,7 +197,6 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 			ch.setMuteRecord(false);
 		}
 	}
-
 
 	@Override public void update(Property prop, Object value) {
 		if (prop != Property.TEMPO) return;

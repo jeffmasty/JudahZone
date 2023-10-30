@@ -1,13 +1,28 @@
 TODO:
 
+Currently, DrumKit is an Engine with a DrumTrack but in the Future:
+DrumMachine = Engine
+    DrumTracks 1-4 have DrumKit Actives
+SynthEngine 
+	Synth1 track
+	Synth2 track
+
+LOOPER:
+CieloStanza duplicate
+extended loop governor
+onDeck gui hiccup
+B_SYNC onDeckA hiccup
+
+Loops wander when Mains muted, 
+mutes: bass, mic, drums, main
 Directives.BREAKS ChordPro.@ ChordPro.%   Cycle breaks: A3_ ABC_ TOF_?
-Loops wander when Mains muted, Fx and SceneREL OnDeck CMD2.0
-PK ProgChange, pad2
+Scene REL OnDeck Cmd2.0, step cmd, jamstik cmd
+MPK ProgChange, pad2, Fluid Drum ProgChange
 BeatBox>|Selecta
 Hot Mic 2.0, Kit Knobs & Distortion scratchy
-UP5/DN5, REC = MidiLooper
-sample packs, doubletap oneshots = loop
-Arpeggiator gate, Swing Pt.II
+DrumSample-Channel?,  StepSample=Channel?
+Fifths arppegiator, MidiLooper, gate, Swing Pt.II
+sample packs, double-tap one-shots: change to loop
 walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
 hanging chads (unpaired NoteOn across frames), DragNDrop other frames
 Editor falling water/zoomIn-Out, REL = Modal translate
@@ -18,13 +33,12 @@ Sampler FX (granularity, pitched frequency, wet)
 IR Reverb, DrumSynth, Phasor, Shepherd, Vocoder
 SongEditor undo/redo, internal clock
 record record record youtubes
-user manual
+user manual, Qwerty
 make client-server architecture
 support JavaSound/non-Jack, make accessible setup and settings
 
 -------------------------
-https://freesound.org/people/laffik/packs/38658/
-
+samples: https://freesound.org/people/laffik/packs/38658/
 Latency + bleeding edge
 clipping/xruns filter see https://github.com/psambit9791/jDSP Peak/Spike
 Hacking the Arturia Beatstep:
@@ -107,7 +121,6 @@ Arduino foot pedal: load/reload  latchB
 midi mapper by instrument - mixer, pads, keys, pedal, aux
 visual feedback from midi controllers, track select
 onDeck, eraseLoop
-Midi24 out: inside step sequencer 
 migrate beatbox to 8-track
 Track KnobMode
 Sync BeatBox to external time control,	process time from Circuit, 
@@ -141,6 +154,7 @@ ERRNOBUF - recover Jack MIDI when ALSA bridge fails
 Arpeggiator, ChordPro parser, Synth tracks follow ChordPro/MPK/ABS/Racman
 Setlists, save/load loops to/from disk, record session audio
 Delay + LFO sync to Tempo
+note-on/off tracker per channel
 
 REFERENCE------------------------------------------------------------
 [Mixer]                [FX]
@@ -165,6 +179,50 @@ Channel
        Sample    
           StepSample
   
+
+javax.sound.midi.Receiver:
+
+
+
+	MidiReceiver 
+		Midi Tracks
+		- MidiPort  (JackPort or Engine)
+		patches
+		send
+
+      MidiInstrument (Crave)
+      	FluidSynth
+      Engine
+      	JudahSynth
+      	DrumKit (x4)
+
+
+		
+
+	MidiTrack  
+		MidiReceiver  {Midi Tracks}
+		- Actives per Channel
+		progChange
+		send
+		
+
+			
+   
+   MidiReceiver  --> Actives per Channel, MidiPort(JackPort or Engine)
+   ZoneMidi
+   
+   -- interface -- CC/OnOff/Prog/StartStop? 
+   
+      MidiInstrument (Crave)
+      	FluidSynth
+      Engine
+      	JudahSynth
+      	DrumKit (x4)
+
+ --Updates--  Actives -> DrumKnobs or PianoView
+ --Updates--   Knobs --> DrumKnobs or SynthKnobs
+ --Updates--  MidiNote Updates to Musician
+ 
 
 Song JSON:
 [tracks:] trackName, file, progChange

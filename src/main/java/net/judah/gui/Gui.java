@@ -71,6 +71,7 @@ public interface Gui {
 	static String inputBox(String infoMessage) {
 	    return JOptionPane.showInputDialog(infoMessage);
 	}
+
 }
 
 //	  List<String> colorKeys = new ArrayList<String>();

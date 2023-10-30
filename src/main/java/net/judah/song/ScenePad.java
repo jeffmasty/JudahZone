@@ -9,7 +9,6 @@ import javax.swing.JPanel;
 import javax.swing.UIManager;
 
 import lombok.Getter;
-import net.judah.JudahZone;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 import net.judah.song.cmd.Param;
@@ -31,7 +30,7 @@ public class ScenePad extends JPanel implements Pastels {
 		setBorder(UIManager.getBorder("TitledBorder.border"));
 		addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) {
-				JudahZone.setOnDeck(scene);
+				tab.setOnDeck(scene);
 			}});
 		params.setFont(Gui.FONT10);
 
@@ -52,9 +51,9 @@ public class ScenePad extends JPanel implements Pastels {
 		for (Param p : scene.getCommands())
 			sb.append(p.getCmd()).append(": ").append(p.getVal()).append("<br/>");
 		params.setText(sb.append("</html>").toString());
-		if (JudahZone.getScene() == scene)
+		if (tab.getScene() == scene)
 			setBackground(GREEN);
-		else if (JudahZone.getOnDeck() == scene) {
+		else if (tab.getOnDeck() == scene) {
 			setBackground(scene.getType().getColor());
 			if (scene.getType() == Trigger.REL) {
 				int countdown = (int)scene.getCommands().getTimeCode() - tab.getCount();

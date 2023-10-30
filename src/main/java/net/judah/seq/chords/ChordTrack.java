@@ -9,11 +9,11 @@ import java.util.List;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
+import net.judah.api.Signature;
 import net.judah.api.TimeListener;
 import net.judah.gui.MainFrame;
 import net.judah.gui.widgets.FileChooser;
 import net.judah.midi.JudahClock;
-import net.judah.midi.Signature;
 import net.judah.song.Scene;
 import net.judah.song.Song;
 import net.judah.song.cmd.Cmd;
@@ -72,10 +72,11 @@ public class ChordTrack implements TimeListener, Cmdr {
     
 	private void setChord(Chord next) {
 		if (chord == next) return;
-		for (ChordListener l : listeners)
-			l.chordChange(chord, next);
-		chord = next;
+		Chord previous = chord;
 		
+		chord = next;
+		for (ChordListener l : listeners)
+			l.chordChange(previous, chord);
 		MainFrame.update(chord);
 	}
 
@@ -97,6 +98,8 @@ public class ChordTrack implements TimeListener, Cmdr {
 		result.clear();
 		if (section == null || chord == null) return;
 		int now = section.getStepsAt(chord);
+		
+		
 		int half = 2 * sig.div;
 		if (step % sig.steps < half) // 1st half of bar
 			for (int i : new int[] {now - half, now, now + half, now + 2 * half, now + 3 * half})
@@ -167,7 +170,7 @@ public class ChordTrack implements TimeListener, Cmdr {
 	
 	public ChordPro load(File file) {
 		loading = true;
-		Song song = JudahZone.getSong();
+		Song song = JudahZone.getOverview().getSong();
 		clear();
 		ChordPro chordPro = null;
 		String name = null; 
@@ -327,9 +330,9 @@ public class ChordTrack implements TimeListener, Cmdr {
 			}
 		}
 		else if (active && directives.contains(Directive.SCENES)) {
-			for (Scene s : JudahZone.getSong().getScenes())
+			for (Scene s : JudahZone.getOverview().getSong().getScenes())
 				if (section.getName().equals(s.getNotes())) {
-					JudahZone.setScene(s);
+					JudahZone.getOverview().setScene(s);
 					return;
 				}
 		}

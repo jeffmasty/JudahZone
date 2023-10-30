@@ -207,7 +207,7 @@ public class Delay implements TimeEffect {
 			right.process(in, out, !slapback);
     }
 
-	// TODO zero work area when delay time shrink (ghost echoes)
+	// TODO zero out work area when delay time shrinks (ghost echoes)
 	private class VariableDelayOp {
 	    float[] workArea;
 	    int rovepos = 0;

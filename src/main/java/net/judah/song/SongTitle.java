@@ -7,8 +7,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Setter;
-import net.judah.JudahZone;
 import net.judah.api.Key;
+import net.judah.api.Signature;
 import net.judah.gui.Gui;
 import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
@@ -18,7 +18,6 @@ import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.settable.SongCombo;
 import net.judah.gui.widgets.Btn;
 import net.judah.midi.JudahClock;
-import net.judah.midi.Signature;
 import net.judah.seq.chords.Scale;
 import net.judah.song.setlist.Setlists;
 import net.judah.song.setlist.SetlistsCombo;
@@ -33,15 +32,15 @@ public class SongTitle extends JPanel {
 	private final JComboBox<Scale> scale = new JComboBox<>(Scale.values());
 	private final JLabel bar = new JLabel("0", JLabel.CENTER);
 	
-	public SongTitle(JudahClock clock, Setlists setlists) {
+	public SongTitle(JudahClock clock, Setlists setlists, Overview overview) {
 		this.clock = clock;
 		
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		add(Box.createHorizontalStrut(3));
 		add(Gui.resize(new SongCombo(), Size.TITLE_SIZE)); 
+		add(new Btn(Icons.SAVE, e->overview.save()));
+		add(new Btn(" 🔁 ", e->overview.reload(), "Reload"));
 		add(Gui.resize(new SetlistsCombo(setlists), Size.MEDIUM_COMBO));
-		add(new Btn(Icons.SAVE, e->JudahZone.save()));
-		add(new Btn(" 🔁 ", e->JudahZone.reload(), "Reload"));
 		add(new Btn(Icons.DETAILS_VEW, e->MainFrame.setFocus(KnobMode.Setlist)));
 		add(Box.createHorizontalGlue());
 		add(Gui.resize(timeSig, Size.SMALLER_COMBO));
@@ -51,8 +50,8 @@ public class SongTitle extends JPanel {
 		
 		setBackground(Pastels.BUTTONS);
 		update();
-		scale.addActionListener(e->JudahZone.getSong().setScale((Scale) scale.getSelectedItem()));
-		key.addActionListener(e->JudahZone.getSong().setKey((Key) key.getSelectedItem()));
+		scale.addActionListener(e->overview.getSong().setScale((Scale) scale.getSelectedItem()));
+		key.addActionListener(e->overview.getSong().setKey((Key) key.getSelectedItem()));
 		timeSig.addActionListener(e->song.setTimeSig((Signature)timeSig.getSelectedItem()));
 	}
 	

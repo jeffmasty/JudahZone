@@ -6,15 +6,22 @@ import java.util.Iterator;
 import java.util.List;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.api.MidiReceiver;
+import net.judah.drumkit.DrumKit;
+import net.judah.drumkit.DrumMachine;
 import net.judah.drumkit.KitMode;
 import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.knobs.TrackKnobs;
+import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
+import net.judah.mixer.LineIn;
+import net.judah.mixer.Zone;
 import net.judah.seq.chords.ChordTrack;
 import net.judah.seq.track.Cue;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.TrackInfo;
 import net.judah.song.Sched;
 import net.judah.song.cmd.Cmd;
@@ -29,20 +36,30 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
 	public static final int TRACKS = 10;
 
 	private final TrackList tracks = new TrackList();
-	private final TrackList drumTracks;
-	private final TrackList synthTracks;
+	private final TrackList drumTracks = new TrackList();
+	private final TrackList synthTracks = new TrackList();
 	private final ArrayList<TrackKnobs> knobs = new ArrayList<>();
 	private final ChordTrack chordTrack;
+	@Setter private boolean record;
 	
-	public Seq(TrackList drumTracks, TrackList synthTracks, ChordTrack chords) {
+	public Seq(Zone instruments, ChordTrack chords, JudahClock clock) {
 		this.chordTrack = chords;
-		this.drumTracks = drumTracks;
-		this.synthTracks = synthTracks;
+		clock.setSeq(this);
+		for (LineIn line : instruments) {
+			if (line instanceof DrumMachine) 
+				for (DrumKit kit : ((DrumMachine)line).getKits()) 
+					drumTracks.add(kit.getTracks().get(0));
+			
+			else if (line instanceof MidiReceiver)
+				for (MidiTrack t : ((MidiReceiver)line).getTracks())
+					synthTracks.add(t);
+		}
 		tracks.addAll(drumTracks);
 		tracks.addAll(synthTracks);
 
 		for(MidiTrack track : this) 
 			knobs.add(new TrackKnobs(track, this));
+
 	}
 	
 	public MidiTrack getCurrent() {
@@ -94,7 +111,7 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
         drum1.load(new File(drum1.getFolder(), "Rock1"));
         drum1.getMidiOut().progChange("Pearl");
         MidiTrack drum2 = byName(KitMode.Drum2.name());
-        drum2.load(new File(drum2.getFolder(), "Rap1"));
+        drum2.load(new File(drum2.getFolder(), "Bossa1"));
         drum2.getMidiOut().progChange("808");
         MidiTrack hats = byName(KitMode.Hats.name());
         hats.load(new File(hats.getFolder(), "Hats1"));
@@ -124,13 +141,14 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
 	
 	/**Perform recording or translate activities on tracks
 	 * @param midi user note press 
-	 * @return true if any track is recording */
+	 * @return true if any track is recording or transposing*/
 	public boolean rtCheck(Midi midi) {
-		boolean result = false;
+		if (record)
+			return true;
 		for (MidiTrack track : synthTracks) 
-			if (track.getArp().mpkFeed(midi)) 
-				result = true;
-		return result;
+			if (((PianoTrack)track).getArp().mpkFeed(midi)) 
+				return true;
+		return false;
 	}
 	
 	@Override

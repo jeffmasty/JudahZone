@@ -1,6 +1,7 @@
 /* original source: https://github.com/SongProOrg/songpro-java  (MIT license) */
 package net.judah.seq.chords;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -80,7 +81,7 @@ public class Section extends ArrayList<Chord> {
 				return count;
 			count += c.getSteps();
 		}
-		return -1;
+		throw new InvalidParameterException();
 	}
 
 	public void toggle(Directive d) {

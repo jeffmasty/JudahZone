@@ -1,6 +1,6 @@
 package net.judah.midi;
 
-import javax.sound.midi.ShortMessage;
+import javax.sound.midi.MidiMessage;
 
 import org.jaudiolibs.jnajack.JackException;
 import org.jaudiolibs.jnajack.JackMidi;
@@ -15,19 +15,19 @@ import net.judah.util.RTLogger;
 public class MidiPort {
 	
 	private final JackPort port;
-	private final Engine receiver;
+	private final Engine engine;
 	
 	public MidiPort(JackPort port) {
 		if (port == null)
 			throw new NullPointerException();
 		this.port = port;
-		receiver = null;	
+		engine = null;	
 	}
 	
 	public MidiPort(Engine engine) {
 		if (engine == null)
 			throw new NullPointerException();
-		this.receiver = engine;
+		this.engine = engine;
 		port = null;
 	}
 	
@@ -35,10 +35,11 @@ public class MidiPort {
 		return port != null;
 	}
 	
-	public void send(ShortMessage midi, int ticker) {
+	public void send(MidiMessage midi, int ticker) {
 		if (port == null)
-			receiver.send(midi, ticker);
+			engine.send(midi, ticker);
 		else  
+			JudahMidi.queue(midi, port);
 			try { // realtime
 				JackMidi.eventWrite(port, ticker, midi.getMessage(), midi.getLength());
 			} catch (JackException e) {
@@ -50,8 +51,8 @@ public class MidiPort {
 	public String toString() {
 		if (port != null)
 			return port.getShortName();
-		if (receiver != null)
-			return receiver.getName();
+		if (engine != null)
+			return engine.getName();
 		return "NULL!";
 	}
 	

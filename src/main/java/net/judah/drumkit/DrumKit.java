@@ -1,11 +1,8 @@
 package net.judah.drumkit;
 
-import static net.judah.util.Constants.midiToFloat;
-
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
+import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
@@ -17,39 +14,88 @@ import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.Knobs;
 import net.judah.gui.settable.Program;
+import net.judah.midi.Actives;
+import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
-import net.judah.midi.MidiPort;
-import net.judah.mixer.LineIn;
+import net.judah.seq.track.DrumTrack;
 import net.judah.util.AudioTools;
+import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 @Getter
-public class DrumKit extends LineIn implements Engine, Knobs {
+public class DrumKit extends Engine implements Knobs {
 	public static final int SAMPLES = 8;
 
 	/** true if OHat shuts off when CHat plays */
 	@Setter private boolean choked = true; 
-	@Setter private MidiPort midiPort; // final
 	private final DrumSample[] samples = new DrumSample[SAMPLES];
 	private DrumPreset kit;
 	private final KitMode kitMode;
 	private final KnobMode knobMode = KnobMode.Kits;
-	private final int channel = 9;
-	private final List<Integer> actives = new ArrayList<>(); // not used
-	@Override public boolean isMono() { return false; }
+	private final DrumTrack drumtrack;
+	private final Actives actives;
 	
-	public DrumKit(KitMode mode) {
-		this(mode, "Drums.png");
-	}
-
-	public DrumKit(KitMode mode, String iconName) {
+	public DrumKit(KitMode mode, JudahClock clock) throws InvalidMidiDataException {
 		super(mode.name(), true);
 		kitMode = mode;
-		icon = Icons.get(iconName);
-		midiPort = new MidiPort(this);
+		icon = Icons.get("Drums.png");
+		drumtrack = new DrumTrack(this, clock);
+		getTracks().add(drumtrack);
+		actives = drumtrack.getActives();
 		for (int i = 0; i < SAMPLES; i++)
-			samples[i] = new DrumSample(DrumType.values()[i]);
+			samples[i] = new DrumSample(DrumType.values()[i], actives);
+	}
+
+	@Override
+	public void send(MidiMessage message, long timeStamp) {
+		if (message instanceof ShortMessage == false) return;
+		ShortMessage midi = Midi.copy((ShortMessage)message);
+		if (false == Midi.isNoteOn(midi))
+			return;
+		int data1 = midi.getData1();
+		
+		for (DrumSample sample : samples) {
+			if (sample.getDrumType().getData1() != data1) continue;
+			sample.rewind();
+			sample.setVelocity(Constants.midiToFloat(midi.getData2()));
+			sample.getEnvelope().reset();
+			sample.play(true);
+			if (sample.getDrumType() == DrumType.CHat && choked) {// TODO multi
+				DrumSample ohat = samples[DrumType.OHat.ordinal()];
+				if (ohat.isPlaying()) {
+					actives.off(ohat.getDrumType().getData1());
+				}
+			}
+
+			int idx = actives.indexOf(data1);
+			if (idx < 0)
+				actives.add(midi);
+			else
+				actives.set(idx, midi);
+		}
+		MainFrame.update(actives);
+		
+	}
+
+	private void off(DrumSample s) {
+		s.play(false);
+		int idx = actives.indexOf(s.getDrumType().getData1());
+		if (idx >= 0) 
+			actives.remove(idx);
+		MainFrame.update(actives);
+	}
+	
+	public boolean hasWork() {
+		for (DrumSample drum : samples)
+			if (drum.isPlaying()) return true;
+		return false;
+	}
+	
+	@Override
+	public void close() {
+		for (DrumSample s : samples) 
+			off(s);
 	}
 
 	@Override
@@ -75,67 +121,10 @@ public class DrumKit extends LineIn implements Engine, Knobs {
 		}
 		return false;
 	}
-	
-	public void play(DrumSample s, boolean on, int velocity) {
-		if (on) {
-			s.rewind();
-			s.setVelocity(midiToFloat(velocity));
-			s.getEnvelope().reset();
-			s.play(true);
-			if (choked && s.getDrumType() == DrumType.CHat) {// TODO multi
-				DrumSample ohat = samples[DrumType.OHat.ordinal()];
-				if (ohat.isPlaying()) {
-					ohat.play(false);
-					MainFrame.update(ohat);
-				}
-			}
-		}
-		else {
-			s.play(false);
-		}
-		MainFrame.update(s); 
-	}
-
-	@Override
-	public void send(MidiMessage message, long timeStamp) {
-		if (message instanceof ShortMessage == false) return;
-		ShortMessage midi = (ShortMessage)message;
-		if (false == Midi.isNoteOn(midi))
-			return;
-		int data1 = midi.getData1();
-		
-		for (DrumSample drum : samples) {
-			if (drum.getGmDrum().getData1() == data1)
-				play(drum, true, midi.getData2());
-		}
-	}
-
-	@Override
-	public boolean hasWork() {
-		for (DrumSample drum : samples)
-			if (drum.isPlaying()) return true;
-		return false;
-	}
-	
-	@Override
-	public void close() {
-		for (DrumSample s : samples) 
-			play(s, false, 0);
-	}
 
 	@Override
 	public boolean progChange(String preset, int channel) {
 		return progChange(preset);
-	}
-
-	@Override
-	public void process() {
-		AudioTools.silence(left);
-		AudioTools.silence(right);
-		for (DrumSample drum: samples)  
-			drum.process(left, right);
-		
-		processStereoFx(gain.getGain());
 	}
 
 	@Override
@@ -148,6 +137,16 @@ public class DrumKit extends LineIn implements Engine, Knobs {
 		if (kit == null)
 			return "?";
 		return kit.getFolder().getName();
+	}
+
+	@Override
+	public void process() {
+		AudioTools.silence(left);
+		AudioTools.silence(right);
+		for (DrumSample drum: samples)  
+			drum.process(left, right);
+		
+		processStereoFx(gain.getGain());
 	}
 
 }

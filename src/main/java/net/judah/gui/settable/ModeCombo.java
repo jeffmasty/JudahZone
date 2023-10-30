@@ -5,15 +5,15 @@ import java.util.ArrayList;
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.seq.arp.Mode;
-import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.PianoTrack;
 import net.judah.util.Constants;
 
 public class ModeCombo extends SetCombo<Mode> {
 
-	private final MidiTrack track;
+	private final PianoTrack track;
 	private static final ArrayList<ModeCombo> instances = new ArrayList<>();
 	
-	public ModeCombo(MidiTrack t) {
+	public ModeCombo(PianoTrack t) {
 		super(Mode.values(), t.getArp().getMode());
 		this.track = t;
 		instances.add(this);
@@ -27,7 +27,7 @@ public class ModeCombo extends SetCombo<Mode> {
 		setBackground(track.getArp().getMode().getColor());
 	}
 	
-	public static void update(MidiTrack t) {
+	public static void update(PianoTrack t) {
 		Constants.execute(()->{
 			for (ModeCombo c : instances) {
 				if (c.track != t) continue;

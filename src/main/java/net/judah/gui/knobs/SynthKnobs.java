@@ -63,13 +63,13 @@ public class SynthKnobs extends KnobPanel {
 	private final ArrayList<JComboBox<String>> detune = new ArrayList<>();
 	private final JComboBox<Integer> mod = new JComboBox<>(); 
 	
-	private final JButton synthOne = new JButton(JudahSynth.NAMES[0]);
-	private final JButton synthTwo = new JButton(JudahSynth.NAMES[1]);
+	private final JButton synthOne = new JButton(JudahSynth.NAMES[0][0]);
+	private final JButton synthTwo = new JButton(JudahSynth.NAMES[1][1]);
 	private final JPanel titleBar = new JPanel(new FlowLayout(FlowLayout.CENTER, 3, 0));
 	
 	public SynthKnobs(JudahSynth zynth) {
 		this.synth = zynth;
-		this.presets = new Program(synth, synth.getChannel());
+		this.presets = new Program(synth.getTracks().get(0));
 		this.adsr = synth.getAdsr(); 
 		
 		for (int i = 0; i < synth.getShapes().length; i++) {
@@ -107,10 +107,10 @@ public class SynthKnobs extends KnobPanel {
  		add(row);
 		
 		JPanel knobs = new JPanel(new GridLayout(2, 4, 4, 4));
-		knobs.add(Gui.duo(a, new JLabel(" A")));
-		knobs.add(Gui.duo(d, new JLabel(" D")));
-		knobs.add(Gui.duo(s, new JLabel(" S")));
-		knobs.add(Gui.duo(r, new JLabel(" R")));
+		knobs.add(Gui.duo(a, new JLabel(" Atk")));
+		knobs.add(Gui.duo(d, new JLabel(" Dec")));
+		knobs.add(Gui.duo(s, new JLabel(" Sus")));
+		knobs.add(Gui.duo(r, new JLabel(" Rel")));
 		knobs.add(Gui.duo(lcFreq, new JLabel("LoCut")));
 		knobs.add(Gui.duo(lcReso, new JLabel("Res")));
 		knobs.add(Gui.duo(hcFreq, new JLabel("HiCut")));

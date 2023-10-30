@@ -1,4 +1,3 @@
-/* original source file: https://github.com/SongProOrg/songpro-java  (MIT license) */
 
 package net.judah.seq.chords;
 
@@ -12,7 +11,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import lombok.AllArgsConstructor;
@@ -20,8 +18,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.judah.util.Constants;
+import net.judah.util.RTLogger;
 
-/** .pro file parser (https://www.chordpro.org/chordpro/chordpro-directives/)*/
+/**.pro file parser ref: https://www.chordpro.org/chordpro/chordpro-directives/ <br/><br/>
+ *  original source: https://github.com/SongProOrg/songpro-java  (MIT license) */
 @Setter @Getter
 public class ChordPro {
 	public static final String SUFFIX = ".pro";
@@ -38,7 +38,12 @@ public class ChordPro {
 	private static final String SECTION_END = "{end_of_";
 	private static final String ABREV_START = "{so";
 	private static final String ABREV_END = "{eo";
-			
+	private static final String TIME = "{time: ";		
+	private static final String PIPE = "\\|"; // java escape, regex escape, vertical bar
+	
+	
+	// ChordPro.@ ChordPro.%   Cycle breaks: A3_ ABC_ TOF_?
+	
 	ChordProData data = new ChordProData();
 	private final List<Section> sections = new ArrayList<>();
 	private final List<Directive> directives = new ArrayList<>();
@@ -95,19 +100,18 @@ public class ChordPro {
 						directives.add(Directive.LOOP);
 					else
 						current.getDirectives().add(LOOP);
-				} else if (text.startsWith("{")) {
+				} else if (text.startsWith(TIME)) 
+					processSignature(text.substring(TIME.length()).replace("}", "").trim());
+				else if (text.startsWith("{")) 
 					processAttribute(text);
-				} else {
-					if (text.startsWith("|-"))
-						continue;
-					else if (text.startsWith(">")) {
-						Matcher matcher = COMMENT_REGEX.matcher(text);
-						if (matcher.matches())
-							continue;
-					} else {
-						processChords(text);
-					}
+				else if (COMMENT_REGEX.matcher(text).matches()) {
+					data.comment = COMMENT_REGEX.matcher(text).toMatchResult().group();
+					RTLogger.log(this, "comment: " + COMMENT_REGEX.matcher(text).toMatchResult().group());
+					continue;
 				}
+				else
+					processChords(text);
+				
 			} catch (Throwable t) { throw new ParseException(t, "line" + x + ": " + text); }
 		}
 		if (current.isEmpty())
@@ -115,12 +119,15 @@ public class ChordPro {
 		renameSections();
 	}
 
+	private void processSignature(String trim) {
+		
+	}
+
 	private void processAttribute(String line) {
 		String[] split = line.split(":");
 		String key = split[0].replace("{", "").trim();
 		String value = split[1].replace("}", "").trim();
 
-		
 		switch (key) {
 		case "t":
 		case "title":
@@ -168,7 +175,6 @@ public class ChordPro {
 	
 	private void processAbrev(String text) {
 		String raw = text.substring(ABREV_START.length()).replace("}", "");
-		// RTLogger.log(this, raw);
 		Part part = Part.parse(raw.charAt(0));
 		checkCurrent();
 		if (raw.length() == 1)
@@ -180,7 +186,6 @@ public class ChordPro {
 
 	private void processSection(String text) {
 		String raw = text.substring(SECTION_START.length()).replace("}", "");
-		// RTLogger.log(this, raw);
 		checkCurrent();
 		current.setName(qualified(raw));
 		current.setPart(Part.parse(raw.split(":")[0]));
@@ -190,11 +195,18 @@ public class ChordPro {
 		if (text.isEmpty())
 			return;
 		checkCurrent();
-		String[] split = text.split("\\|");
+		
+		
+		
+		
+		
+		String[] bars = text.split(PIPE);  //  2 bars rather than 4:  [C7][Am7] | [Dm7][G7]  
+		
 		@SuppressWarnings("unchecked")
-		ArrayList<Pair>[] parts = new ArrayList[split.length];
-		for (int i = 0; i < split.length; i++) {
-			parts[i] = subtext(split[i]);
+		ArrayList<Pair>[] parts = new ArrayList[bars.length];
+		
+		for (int i = 0; i < bars.length; i++) {
+			parts[i] = subtext(bars[i]);
 			if (parts[i].size() != 2 || (
 					i == 0 && text.indexOf('|') > text.indexOf('['))) {
 				for (Pair p : parts[i]) 
@@ -233,7 +245,8 @@ public class ChordPro {
 				}
 			} 
 			else if (c == '/' && idx + 1 < length && text.charAt(idx + 1) == '/' && part.getChord() != null) {
-				result.add(part); // duplicate
+				// isRepeat. duplicate chord, not lyrics
+				result.add(part); 
 				part = new Pair(part.getChord());
 				idx++;
 			}

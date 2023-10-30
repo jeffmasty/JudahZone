@@ -1,13 +1,11 @@
 package net.judah.gui.knobs;
 
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.io.File;
 
 import javax.swing.*;
-import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 import lombok.Getter;
 import net.judah.JudahZone;
@@ -26,11 +24,12 @@ import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.Click;
 import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.LengthCombo;
+import net.judah.gui.widgets.MidiPatch;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.seq.Seq;
 import net.judah.seq.arp.Mode;
-import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.PianoTrack;
 import net.judah.song.setlist.Setlists;
 import net.judah.song.setlist.SetlistsCombo;
 import net.judah.synth.JudahSynth;
@@ -45,7 +44,6 @@ public class MidiGui extends KnobPanel {
 	@Getter private final KnobMode knobMode = KnobMode.Midi;
 	@Getter private final SongCombo songsCombo = new SongCombo();
 	private final JudahClock clock;
-	private final JudahMidi midi;
 	private final Seq seq;
 	private final Sampler sampler;
 	private final FluidSynth fluid;
@@ -54,8 +52,9 @@ public class MidiGui extends KnobPanel {
     private final Program one;
     private final Program two;
 	private final Program[] fluids = new Program[CHANNELS];
-    private final JComboBox<MidiTrack> mpk = new JComboBox<>();
-	private final Jamstik jamstik;
+    private final MidiPatch mpk; 
+    private final Jamstik jamstik;
+	
 	private final JComboBox<String> stepper = new JComboBox<>();
 	private final Knob stepVol = new Knob(Pastels.MY_GRAY);
 	private final JButton stepPlay = new JButton("▶");
@@ -65,7 +64,7 @@ public class MidiGui extends KnobPanel {
 	private final JPanel titleBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 	private final Btn tape = new Btn(" ⏺️ ", e->JudahZone.getMains().tape());
 
-	public MidiGui(JudahMidi midi, JudahClock clock, Jamstik jam, Sampler sampler,
+	public MidiGui(JudahMidi midi, JudahClock clock, Sampler sampler,
 			JudahSynth a, JudahSynth b, FluidSynth fsynth, Seq seq, Setlists setlists) {
 		this.clock = clock;
 		this.seq = seq;
@@ -73,24 +72,17 @@ public class MidiGui extends KnobPanel {
 		this.fluid = fsynth;
 		this.synth1 = a;
 		this.synth2 = b;
-		this.jamstik = jam;
-		this.midi = midi;
 		this.setlists = setlists;
-    	jamstik.setFrame(this);
-    	
+		this.jamstik = midi.getJamstik();
+		this.mpk = midi.getMpk();
+		
     	titleBar.add(new JLabel(" Song  "));
     	titleBar.add(Gui.resize(songsCombo, new Dimension(150, 28)));
     	tape.setOpaque(true);
     	titleBar.add(tape);
     	
-    	one = new Program(synth1, synth1.getChannel());
-    	two = new Program(synth2, synth2.getChannel());
-    	seq.getSynthTracks().forEach(track->mpk.addItem(track));
-		mpk.setRenderer(STYLE);
-		mpk.setSelectedItem(midi.getKeyboardSynth());
-		mpk.addActionListener(e-> {
-			if (midi.getKeyboardSynth() != (MidiTrack)mpk.getSelectedItem())
-				midi.setKeyboardSynth((MidiTrack)mpk.getSelectedItem());});
+    	one = new Program(synth1.getTracks().get(0));
+    	two = new Program(synth2.getTracks().get(0));
 
 		sampler.getStepSamples().forEach(s->stepper.addItem(s.getName()));
 		stepper.setSelectedIndex(sampler.getSelected());
@@ -100,6 +92,7 @@ public class MidiGui extends KnobPanel {
 			sampler.setSelected(stepper.getSelectedIndex());
 			stepVol.setValue((int) (sampler.getStepMix() * 100));
 			});
+		
 		stepVol.setValue((int) (sampler.getStepMix() * 100));
 		stepVol.addListener(val->sampler.setStepMix(val * 0.01f));
 		stepPlay.addActionListener(e-> sampler.setStepping(!sampler.isStepping()));
@@ -146,25 +139,29 @@ public class MidiGui extends KnobPanel {
 		
 		row.add(new Click(synth1.getName(), e-> {
 			MainFrame.setFocus(KnobMode.DCO);	
-			midi.setKeyboardSynth(seq.lookup(synth1, synth1.getChannel())); }));
+			mpk.setPort((PianoTrack)synth2.getTracks().get(0)); }));
 		row.add(Gui.resize(one, COMBO_SIZE));
 		result.add(row);
 
 		row = new JPanel();
 		row.add(new Click(synth2.getName(), e-> {
 			MainFrame.setFocus(synth2.getSynthKnobs());
-			midi.setKeyboardSynth(seq.lookup(synth2, synth2.getChannel())); }));
+			mpk.setPort((PianoTrack)synth2.getTracks().get(0)); }));
 		row.add(Gui.resize(two, COMBO_SIZE));
 		result.add(row);
 		
 		row = new JPanel();
-		row.add(new Click("JAM", e->jamstik.toggle()));
-		row.add(Gui.resize(jamstik, COMBO_SIZE));
+		row.add(new Click("   JAM  ", e->jamstik.toggle()));
+		jamstik.install(row, seq.getSynthTracks());
 		result.add(row);
 		
-		mpkPanel.add(new Click("  MPK  ", e->midi.getKeyboardSynth().getArp().toggle(
-				((Click)e.getSource()).isRight() ? Mode.REC : Mode.MPK)));
-        mpkPanel.add(Gui.resize(mpk, COMBO_SIZE));
+		mpkPanel.add(new Click("  MPK  ", e-> {
+			if (((Click)e.getSource()).isRight())
+				seq.setRecord(!seq.isRecord());
+			else
+				mpk.getTrack().getArp().toggle(Mode.MPK);
+		}));
+		mpk.install(mpkPanel, seq.getSynthTracks());
 		result.add(mpkPanel);
 		return result;
 	}
@@ -207,7 +204,6 @@ public class MidiGui extends KnobPanel {
 	/**@param idx knob 0 to 7
      * @param data2  user input */
 	@Override public boolean doKnob(int idx, int data2) {
-		// seq.setCurrent(seq.get(Constants.ratio(data2 - 1, seq.getTotal())));
     	switch(idx) {
     	case 0: // sync loop length 
 			if (data2 == 0) 
@@ -236,17 +232,14 @@ public class MidiGui extends KnobPanel {
  	    	else 
  	    		fluids[idx - 4].midiShow(patch(fluid.getPatches(), data2));
     		break;
-    	case 6: // Jamstik out
+    	case 6: // TODO Jamstik out
     		if (zoneBtn.isSelected()) 
     			jamstik.setSelectedIndex(Constants.ratio(data2 - 1, jamstik.getItemCount()));
  	    	else 
  	    		fluids[idx - 4].midiShow(patch(fluid.getPatches(), data2));
     		break;
     	case 7: // MPK keys out
-    		if (zoneBtn.isSelected()) 
-    			mpk.setSelectedIndex(Constants.ratio(data2 - 1, mpk.getItemCount()));
- 	    	else 
- 	    		fluids[idx - 4].midiShow(patch(fluid.getPatches(), data2));
+    		mpk.setSelectedIndex(Constants.ratio(data2 - 1, mpk.getItemCount()));
     		break;
     	default: return false;
     	}   
@@ -265,34 +258,17 @@ public class MidiGui extends KnobPanel {
 			zoneBtn.setSelected(true);
 	}
 	
-	static final BasicComboBoxRenderer STYLE = new BasicComboBoxRenderer() {
-        	@Override public Component getListCellRendererComponent(
-        			@SuppressWarnings("rawtypes") JList list, Object value,
-        			int index, boolean isSelected, boolean cellHasFocus) {
-        		setHorizontalAlignment(SwingConstants.CENTER);
-        		MidiTrack item = (MidiTrack) value;
-        		setText(item == null ? "?" : item.toString());
-        		return this;
-    }};
-    
-    public void updateSynth() {
-    	Mode m = midi.getKeyboardSynth().getArp().getMode();
-    	if (m == Mode.MPK || m == Mode.REC) 
-    		mpkPanel.setBackground(m.getColor());
-    	else mpkPanel.setBackground(null);
-    }
-
 	@Override
 	public void update() {
 		if (stepVol.getValue() != (int) (sampler.getStepMix() * 100))
 			stepVol.setValue((int) (sampler.getStepMix() * 100));
 		stepper.setSelectedIndex(sampler.getSelected());
 		stepPlay.setBackground(sampler.isStepping() ? Pastels.GREEN : null);
-		if (midi.getKeyboardSynth() != (MidiTrack)mpk.getSelectedItem())
-			mpk.setSelectedItem(midi.getKeyboardSynth());	
 	}
 
 	public void updateTape() {
 		tape.setBackground(JudahZone.getMains().getTape() == null ? null : Pastels.RED);
 	}
+	
+	
 }

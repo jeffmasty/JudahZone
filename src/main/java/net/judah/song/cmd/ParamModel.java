@@ -38,7 +38,7 @@ public class ParamModel extends DefaultTableModel {
 		else 
 			data.get(row).setVal("" + val);
 		super.setValueAt(val, row, column);
-		MainFrame.update(JudahZone.getScene());
+		MainFrame.update(JudahZone.getOverview().getScene());
 	}
 	
 }

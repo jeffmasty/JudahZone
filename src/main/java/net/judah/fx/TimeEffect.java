@@ -1,7 +1,7 @@
 package net.judah.fx;
 
-import net.judah.JudahZone;
-import net.judah.util.Constants;
+import static net.judah.JudahZone.getClock;
+import static net.judah.util.Constants.millisPerBeat;
 
 public interface TimeEffect extends Effect {
 
@@ -11,12 +11,11 @@ public interface TimeEffect extends Effect {
 		for (int i = 0; i < TYPE.length; i++)
 			if (TYPE[i].equals(type))
 				return i;
-		return 0;
+		return 0; // fail
 	}
 	
 	static float unit() {
-		return 2 * Constants.millisPerBeat(
-				JudahZone.getClock().getTempo()) / (float)JudahZone.getClock().getSubdivision();
+		return 2 * millisPerBeat(getClock().getTempo()) / (float)getClock().getSubdivision();
 	}
 	
 	void setType(String type);

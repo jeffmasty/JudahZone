@@ -8,9 +8,9 @@ import java.awt.event.MouseEvent;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 
+import net.judah.api.Signature;
 import net.judah.gui.Pastels;
 import net.judah.midi.Midi;
-import net.judah.midi.Signature;
 import net.judah.seq.*;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.beatbox.BeatsSize;

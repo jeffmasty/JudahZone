@@ -2,7 +2,6 @@ package net.judah.gui.fx;
 
 import net.judah.JudahZone;
 import net.judah.fx.*;
-import net.judah.gui.settable.Fx;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.mixer.Channel;
 import net.judah.util.RTLogger;
@@ -31,7 +30,7 @@ public class RowKnobs extends Row {
 			controls.add(new FxKnob(ch, ch.getGain(), Gain.VOLUME, ""));
 			break;
 		case 3: 
-			controls.add(new Fx(ch, JudahZone.getPresets()));
+			controls.add(new PresetsBtns(ch, JudahZone.getLooper()));
 			controls.add(new FxKnob(ch, ch.getFilter1(), Filter.Settings.Frequency.ordinal(), "Hz."));
 			controls.add(new FxKnob(ch, ch.getFilter2(), Filter.Settings.Frequency.ordinal(), "Hz."));
 			controls.add(new FxKnob(ch, ch.getGain(), Gain.PAN, ""));

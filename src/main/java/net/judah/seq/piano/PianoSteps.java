@@ -10,12 +10,13 @@ import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 
 import javax.sound.midi.MidiEvent;
+import javax.sound.midi.ShortMessage;
 
 import lombok.Getter;
+import net.judah.api.Signature;
 import net.judah.gui.Pastels;
 import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
-import net.judah.midi.Signature;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiPair;
@@ -131,7 +132,7 @@ public class PianoSteps extends Steps implements BeatsSize, MouseMotionListener,
 	/** stop playing notes */
 	@Override public void mouseReleased(MouseEvent e) { 
 		off = toStep(e.getPoint().y) + 1;
-		if (track.getMidiOut().getActives().size() == 0) 
+		if (track.getActives().size() == 0) 
 			return;
 		
 		int step = track.getResolution() / clock.getSubdivision();
@@ -141,10 +142,10 @@ public class PianoSteps extends Steps implements BeatsSize, MouseMotionListener,
 		long end = track.getLeft() + off * step - 1;
 		on = off = null;
 		ArrayList<MidiPair> notes = new ArrayList<>();
-		for (int data1 : track.getMidiOut().getActives()) {
+		for (ShortMessage m : track.getActives()) {
 			notes.add(new MidiPair(
-					new MidiEvent(Midi.create(NOTE_ON, ch, data1, data2), begin),
-					new MidiEvent(Midi.create(NOTE_OFF, ch, data1, 127), end)));
+					new MidiEvent(Midi.create(NOTE_ON, ch, m.getData1(), data2), begin),
+					new MidiEvent(Midi.create(NOTE_OFF, ch, m.getData1(), 127), end)));
 		}
 		view.getGrid().push(new Edit(Type.NEW, notes));
 	}

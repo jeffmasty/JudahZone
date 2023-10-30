@@ -2,7 +2,6 @@ package net.judah.controllers;
 
 import static net.judah.JudahZone.*;
 
-import net.judah.JudahZone;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
@@ -26,7 +25,7 @@ public class Line6FBV implements Controller {
 				return true;
 			}
 			if (midi.getData1() == 1) { // "UP" button
-				JudahZone.getOverview().trigger();
+				getOverview().trigger();
 				// getJamstik().nextMidiOut(); 
 				return true;
 			}
@@ -79,7 +78,7 @@ public class Line6FBV implements Controller {
 				clock.begin();
 			return true;
 		case 6: // Func(2) turn on/off Jamstik midi 
-			getJamstik().toggle();
+			getMidi().getJamstik().toggle();
 			// guitar.setPresetActive(data2 > 0);
 			return true;
 		case 7: // TAP()   toggle record vs. mute controls

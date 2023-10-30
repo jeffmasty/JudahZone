@@ -16,7 +16,7 @@ import net.judah.seq.TrackList;
 import net.judah.seq.track.MidiTrack;
 
 public class MiniSeq extends JPanel {
-	private final Dimension TRX = new Dimension(Size.WIDTH_KNOBS / 2 - 15, 75);
+	private final Dimension TRX = new Dimension(Size.WIDTH_KNOBS / 2 - 10, 73);
 	private final Border highlight = BorderFactory.createRaisedSoftBevelBorder();
 
 	private final TrackList tracks;
@@ -26,24 +26,20 @@ public class MiniSeq extends JPanel {
 		this.tracks = tracks;
 		
         setBorder(new LineBorder(Pastels.MY_GRAY, 1));
-        Dimension plusOne = new Dimension(TRX.width + 1, TRX.height + 1);
-        setPreferredSize(plusOne);
-        setMaximumSize(plusOne);
+        Gui.resize(this, TRX);
         setLayout(new GridLayout(2, 5, 1, 1));
         setOpaque(true);
         
         tracks.forEach(t->btns.add(new TrackButton(t)));
 
-        // [d1 d2 d3 d4 s5]
-        // [s1 s2 s3 s4 s6]
+        // [d1 d2 d3 d4 s1]
+        // [s2 f1 f2 f3 bs]
         for (TrackButton b : btns) 
         	add(b);
         
         btns.get(8).setFont(btns.get(8).getFont().deriveFont(Font.ITALIC));
         btns.get(9).setFont(btns.get(9).getFont().deriveFont(Font.ITALIC));
-        
         update();
-
 	}
 
 	public void update(MidiTrack t) {

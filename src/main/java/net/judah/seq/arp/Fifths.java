@@ -5,12 +5,13 @@ import javax.sound.midi.ShortMessage;
 import net.judah.seq.Poly;
 import net.judah.seq.chords.Chord;
 
+// stub
 public class Fifths extends Algo {
 
 	private final boolean init;
 	
-	private int idx;
-	private int interval;
+//	private int idx;
+//	private int interval;
 	private boolean ascending;
 
 	public Fifths(boolean up) {
@@ -40,7 +41,7 @@ public class Fifths extends Algo {
 	}
 	
 	@Override public void change() { // reset on chord change
-		interval = 0;
+		// interval = 0;
 		ascending = init;
 	}
 

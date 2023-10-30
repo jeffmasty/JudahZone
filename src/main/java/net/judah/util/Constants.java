@@ -11,7 +11,6 @@ import java.util.concurrent.Executors;
 import lombok.Getter;
 
 public class Constants {
-	private static final ClassLoader loader = Constants.class.getClassLoader();
 	private static final ExecutorService threads = Executors.newFixedThreadPool(48);
 
 	// TODO generalize
@@ -20,8 +19,12 @@ public class Constants {
 	public static float fps() { return sampleRate() / (float)bufSize(); }
 	public static final float TUNING = 440;
 	/** Digital Interface name */
-	@Getter static String di = "UMC1820 MIDI 1"; //return "Komplete ";
-	public static final float TO_100 = 0.7874f; // 127 <--> 100
+	@Getter static String di = "UMC1820 MIDI 1"; //di = "Komplete ";
+	public static final String GUITAR_PORT = "system:capture_1";
+	public static final String CRAVE_PORT = "system:capture_3";
+	public static final String MIC_PORT = "system:capture_4";
+	public static final String LEFT_PORT = "system:playback_1";
+	public static final String RIGHT_PORT = "system:playback_2";
 	
     public static final int LEFT = 0;
 	public static final int RIGHT = 1;
@@ -30,22 +33,27 @@ public class Constants {
 
 	public static final String GUITAR = "Gtr"; 
 	public static final String MIC = "Mic";
-	public static final String CRAVE = "Bass";
-	public static final String CRAVE_PORT = "system:capture_3";
+	public static final String BASS = "Bass";
 	public static final String FLUID = "Fluid";
 	public static final String MAIN = "Main";
 		
 	public static final String NL = System.getProperty("line.separator", "\r\n");
 	public static final String CUTE_NOTE = "♫ ";
-	public static final String FILE_SEPERATOR = System.getProperty("file.separator");
-	public static final String TAB = "    ";
-	public static final String NONE = "none";
 	public static final String DOT_MIDI = ".mid";
 
 	/** milliseconds between checking the update queue */
 	public static final int GUI_REFRESH = 7;
-	public static final long DOUBLE_CLICK = 400;
+	public static final long DOUBLE_CLICK = 500;
+	public static final float TO_100 = 0.7874f; // 127 <--> 100
 
+	@Getter static float[] reverseLog = new float[100];
+	static {
+		for (int i = 0; i < reverseLog.length; i++)
+			reverseLog[i] = logarithmic(i, 0, 1);
+	}
+
+
+	
     /**@param data2 0 to 127
      * @return data2 / 127 */
 	public static float midiToFloat(int data2) {
@@ -57,7 +65,7 @@ public class Constants {
     }
     
     public static float bpmPerBeat(float msec) {
-        return 60000f / msec;
+        return 60000 / msec;
     }
 
 	public static long millisPerBeat(float beatsPerMinute) {
@@ -65,21 +73,12 @@ public class Constants {
 	}
 	
 	public static float toBPM(long delta, int beats) {
-		return 60000 / (delta / beats);
+		return 60000 / (delta / (float)beats);
 	}
 
 	public static float midiToHz(int data1) {
         return (float)(Math.pow(2, (data1 - 57d) / 12d)) * TUNING;
     }
-
-	public static File resource(String filename) {
-	    try {
-	        return new File(loader.getResource(filename).getFile());
-	    } catch (Throwable t) {
-	        Console.warn(t);
-	        return null;
-	    }
-	}
 
     public static void writeToFile(File file, String content) {
     	execute(() -> {
@@ -116,12 +115,6 @@ public class Constants {
 		return (float)Math.exp(minv + scale * (percent - minp));
 	}
 	
-	@Getter static float[] reverseLog = new float[100];
-	static {
-		for (int i = 0; i < reverseLog.length; i++)
-			reverseLog[i] = logarithmic(i, 0, 1);
-	}
-
 	public static void sleep(long millis) {
 	    try {
 	        Thread.sleep(millis);
@@ -130,10 +123,8 @@ public class Constants {
 	
 	public static void timer(long msec, final Runnable r) {
 	    threads.execute(()->{
-	    	new Thread(()->{
-	    		sleep(msec);
-	    		r.run();}
-	    	).start();
+    		sleep(msec);
+    		r.run();
 	    });
 	}
 

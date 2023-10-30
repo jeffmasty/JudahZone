@@ -6,13 +6,12 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.util.List;
+import java.util.HashSet;
 
 import javax.sound.midi.ShortMessage;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import net.judah.JudahZone;
 import net.judah.gui.Pastels;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
@@ -28,6 +27,7 @@ public class Piano extends JPanel implements BeatsSize, MouseListener, MouseMoti
 	private int highlight = -1;
 	private int pressed;
 	@Getter private int octave = 4;
+	private HashSet<Integer> actives = new HashSet<>();
 	
 	public Piano(Rectangle r, MidiTrack t, MidiTab tab) {
 		this.tab = tab;
@@ -48,10 +48,11 @@ public class Piano extends JPanel implements BeatsSize, MouseListener, MouseMoti
 	@Override
 	public void paint(Graphics g) {
 		super.paint(g);
-		List<Integer> actives = track.getMidiOut().getActives();
 		g.setColor(Color.GRAY);
 		g.drawRect(0, 0, width, height);
 		int x;
+		
+		track.getActives().ints(actives);
 		for (int i = 0; i < PianoBox.VISIBLE_NOTES; i++) {
 			x = i * KEY_WIDTH;
 			g.drawRect(x, 0, KEY_WIDTH, KEY_HEIGHT);
@@ -125,10 +126,7 @@ public class Piano extends JPanel implements BeatsSize, MouseListener, MouseMoti
 	private void sound(boolean on) {
 		if (pressed < 0) return;
 		ShortMessage msg = Midi.create(on ? Midi.NOTE_ON : Midi.NOTE_OFF, track.getCh(), pressed, (int) (track.getState().getAmp() * 127));
-		if (track.getMidiOut() == JudahZone.getFluid()) 
-			JudahMidi.queue(msg, JudahZone.getFluid().getMidiPort().getPort());
-		else 
-			track.getMidiOut().send(msg, JudahMidi.ticker());
+		track.getMidiOut().send(msg, JudahMidi.ticker());
 		if (!on)
 			pressed = -1;
 	}

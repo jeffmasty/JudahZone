@@ -33,6 +33,7 @@ import net.judah.seq.Seq;
 import net.judah.seq.arp.Mode;
 import net.judah.seq.track.Gate;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.Programmer;
 import net.judah.synth.JudahSynth;
 import net.judah.util.Constants;
@@ -92,10 +93,10 @@ public class TrackKnobs extends KnobPanel {
 			Gui.resize(clap, Size.COMBO_SIZE);
 		}
 		else {
-			mode = new ModeCombo(track);
+			mode = new ModeCombo(((PianoTrack)track));
 			octaves = new Integers(1, 5);
-			octaves.setSelectedItem(track.getArp().getRange() / 12);
-			octaves.addActionListener(e->track.getArp().setRange((Integer)octaves.getSelectedItem() * 12));
+			octaves.setSelectedItem(((PianoTrack)track).getArp().getRange() / 12);
+			octaves.addActionListener(e->((PianoTrack)track).getArp().setRange((Integer)octaves.getSelectedItem() * 12));
 			Gui.resize(mode, Size.COMBO_SIZE);
 			Gui.resize(octaves, Size.COMBO_SIZE);
 		}
@@ -191,8 +192,8 @@ public class TrackKnobs extends KnobPanel {
 			if (clap.getValue() != vol)
 				clap.setValue(vol);
 		}
-		else if ((Integer)octaves.getSelectedItem() * 12 != track.getArp().getRange() ) 
-				octaves.setSelectedItem(track.getArp().getRange() / 12);
+		else if ((Integer)octaves.getSelectedItem() * 12 != ((PianoTrack)track).getArp().getRange() ) 
+				octaves.setSelectedItem(((PianoTrack)track).getArp().getRange() / 12);
 		if (velocity.getValue() != (int)(track.getAmp() * 100))
 			velocity.setValue((int) (track.getAmp() * 100));
 		patterns.update();

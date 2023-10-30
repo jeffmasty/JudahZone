@@ -24,7 +24,7 @@ public class Icons {
     public static ImageIcon get(String name) {
     	if (map.get(name) == null) {
     		try {
-    			map.put(name, new ImageIcon(new File(Folders.ICONS, name).toURI().toURL()));
+    			map.put(name, new ImageIcon(new File(Folders.getICONS(), name).toURI().toURL()));
     		} catch (Exception e) {
     			RTLogger.warn("Icons " + name, e);
     		}

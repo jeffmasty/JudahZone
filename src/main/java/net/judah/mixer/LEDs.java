@@ -20,8 +20,8 @@ public class LEDs extends JPanel {
 	
 	public static final int REVERB = 0;
 	public static final int DELAY = 1;
-	public static final int CHORUS = 2;
-	public static final int OVERDRIVE = 3;
+	public static final int OVERDRIVE = 2;
+	public static final int CHORUS = 3;
 	public static final int CUTFILTER = 4;
 	public static final int COMPRESSION = 5;
 	public static final int LFO = 6;

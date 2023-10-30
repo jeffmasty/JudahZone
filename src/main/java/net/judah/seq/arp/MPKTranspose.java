@@ -12,18 +12,19 @@ import net.judah.seq.MidiConstants;
 import net.judah.seq.Poly;
 import net.judah.seq.chords.Chord;
 import net.judah.seq.track.Cue;
-import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.PianoTrack;
 
 public class MPKTranspose extends Algo implements TimeListener, Feed, Ignorant {
 
-	private final MidiTrack track;
+	private final PianoTrack track;
 	@Getter private int amount;
 	@Setter @Getter private static Integer onDeck;
 	
-	public MPKTranspose(MidiTrack t) {
+	public MPKTranspose(PianoTrack t) {
 		this.track = t;
 		track.getClock().addListener(this);
-		JudahZone.getMidi().setKeyboardSynth(track);
+		
+		JudahZone.getMidi().getMpk().setPort(track);
 	}
 
 	public ShortMessage apply(ShortMessage midi)  {

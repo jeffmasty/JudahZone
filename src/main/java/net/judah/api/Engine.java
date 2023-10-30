@@ -1,14 +1,20 @@
 package net.judah.api;
 
-import java.nio.FloatBuffer;
+import java.util.Vector;
+
+import lombok.Getter;
+import net.judah.gui.knobs.Knobs;
+import net.judah.mixer.LineIn;
+import net.judah.seq.track.MidiTrack;
 
 /** internal Sound generators that respond to Midi (synths, drum machines) */
-public interface Engine extends MidiReceiver {
+public abstract class Engine extends LineIn implements MidiReceiver, Knobs {
 
-	FloatBuffer getLeft();
-	FloatBuffer getRight();
+	@Getter protected Vector<MidiTrack> tracks = new Vector<>();
 	
-	boolean hasWork();
+	public Engine(String name, boolean isStereo) {
+		super(name, isStereo);
+	}
 	
-	void process();
+	public abstract void process();
 }

@@ -7,7 +7,6 @@ import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 
 import lombok.Getter;
-import net.judah.JudahZone;
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
 import net.judah.fx.LFO;
@@ -23,13 +22,14 @@ public class FxPanel extends JPanel {
     
     public FxPanel() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        placeholder.setBorder(new LineBorder(Pastels.MY_GRAY, 3));
+        placeholder.setBorder(new LineBorder(Pastels.MY_GRAY, 2));
         add(placeholder);
         doLayout();
-        setFocus(JudahZone.getMains());
     }
 
     public void addFocus(Channel ch) {
+    	if (selected.contains(ch))
+    		return;
     	selected.add(ch);
     	getChannel().getGui().getTitle().name(selected); 
     }
@@ -48,7 +48,7 @@ public class FxPanel extends JPanel {
     }
     
     public Channel getChannel() {
-    	if (selected.isEmpty())
+    	if (selected.isEmpty()) 
     		return null;
         return selected.get(0);
     }

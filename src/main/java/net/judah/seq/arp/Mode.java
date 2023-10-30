@@ -13,7 +13,7 @@ public enum Mode {
 	BASS(BLUE),
 	CHRD(CYAN),
 	MPK(ORANGE), 
-	REC(RED),
+//	REC(RED),
 	ABS(YELLOW),
 	// REL(PINK),
 	UP(GRAY), 

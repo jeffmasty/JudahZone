@@ -1,20 +1,18 @@
 package net.judah.api;
 
 import java.io.Closeable;
-import java.util.List;
+import java.util.Vector;
 
 import javax.sound.midi.Receiver;
 
-import net.judah.fx.Gain;
-import net.judah.midi.MidiPort;
+import net.judah.seq.track.MidiTrack;
 
 public interface MidiReceiver extends Receiver, Closeable {
 
-	List<Integer> getActives(); // ?
-	
 	String getName();
 	
-	MidiPort getMidiPort();
+	/** Midi Channels managed by this receiver */
+	Vector<MidiTrack> getTracks();
 	
 	String[] getPatches();
 	
@@ -24,11 +22,5 @@ public interface MidiReceiver extends Receiver, Closeable {
 	boolean progChange(String preset, int channel);
 	
 	String getProg(int ch);
-	
-	boolean isMuteRecord();
-	
-	boolean isMono();
-	
-	Gain getGain();
 	
 }

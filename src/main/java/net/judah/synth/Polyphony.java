@@ -1,85 +1,69 @@
 package net.judah.synth;
 
-import static net.judah.synth.JudahSynth.POLYPHONY;
-
 import javax.sound.midi.ShortMessage;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import net.judah.gui.MainFrame;
+import net.judah.midi.Actives;
 import net.judah.midi.Midi;
-import net.judah.util.Constants;
 
-@RequiredArgsConstructor
-public class Polyphony {
+public class Polyphony extends Actives {
 	
-	@Getter private final ShortMessage[] notes = new ShortMessage[POLYPHONY];
-	private final Voice[] voices;
-	private boolean monophonic;
+	final Voice[] voices;
 	
-	public boolean noteOn(ShortMessage m) {
-		int data1 = m.getData1();
-		if (monophonic)
-			return monoOn(m);
+	public Polyphony(JudahSynth out, int ch, int polyphony) {
+		super(out, ch, polyphony);
+		voices = new Voice[polyphony];
+		for (int i = 0; i < voices.length; i++)
+			voices[i] = new Voice(out);
+	}
+	
+	public void noteOn(ShortMessage msg) {
+
+		int data1 = msg.getData1();
 		
-		for (int i = 0; i < POLYPHONY; i++) {
-			if (notes[i] != null && notes[i].getData1() == data1) {
-				if (notes[i].getCommand() == ShortMessage.NOTE_OFF) {
-					// re-press during release
-					voices[i].reset(Constants.midiToHz(m.getData1()));
-				}
-				notes[i] = Midi.copy(m);
-				return true;
+		ShortMessage midi = find(data1);
+		
+		if (midi != null) {
+			int idx = indexOf(midi);
+			if (midi.getCommand() == ShortMessage.NOTE_OFF) {
+				// re-press during release
+				voices[idx].reset(data1);
 			}
+			set(idx, Midi.copy(msg));
+			return;
 		}
-		for (int i = 0; i < POLYPHONY; i++) 
-			if (notes[i] == null) {
-				notes[i] = Midi.copy(m);
-				voices[i].reset(Constants.midiToHz(m.getData1()));
-				return true;
+		else if (getPolyphony() > size()) {
+			add(Midi.copy(msg));
+			voices[indexOf(data1)].reset(data1);
 		}
-		return false;
+		MainFrame.update(this);
 	}
 	
-	boolean monoOn(ShortMessage m) {
-		return false;
-	}
-	
-	void monoOff(ShortMessage m) {
-		;
-	}
-	
-	public boolean noteOff(ShortMessage m) {
-		//if (monophonic)
-		//	return monoOff(m);
+	public void noteOff(ShortMessage m) {
 		
-		for (int i = 0; i < POLYPHONY; i++)
-			if (notes[i] != null && notes[i].getData1() == m.getData1()) {
+		for (int i = 0; i < size(); i++) {
+			ShortMessage midi = get(i);
+			if (midi != null && midi.getData1() == m.getData1()) {
 				// start release on envelope,  when release completes note switched to null and Voice ready for polyphony
-				notes[i] = Midi.create(m.getCommand(), m.getChannel(), m.getData1(), notes[i].getData2());
-				return true;
+				set(i, Midi.create(m.getCommand(), m.getChannel(), m.getData1(), midi.getData2()));
+				MainFrame.update(this);
+				return;
 			}
-		return false;
+		}
 	}
 	
 	public int count() {
 		int result = 0;
-		for (ShortMessage m: notes)
+		for (ShortMessage m: this)
 			if (m != null)
 				result++;
 		return result;
 	}
 
-	public int indexOf(int data1) {
-		for (int i = 0; i < POLYPHONY; i++)
-			if (notes[i] != null && notes[i].getData1() == data1)
-				return i;
-		return -1;
-	}
-	
 	public ShortMessage highest() {
 		int dat = -1;
 		ShortMessage result = null;
-		for (ShortMessage m : notes) {
+		for (ShortMessage m : this) {
 			if (m != null && m.getData1() > dat) {
 				dat = m.getData1();
 				result = m;
@@ -91,7 +75,7 @@ public class Polyphony {
 	public ShortMessage lowest() {
 		int dat = 128;
 		ShortMessage result = null;
-		for (ShortMessage m : notes) {
+		for (ShortMessage m : this) {
 			if (m != null && m.getData1() < dat) {
 				dat = m.getData1();
 				result = m;
@@ -100,24 +84,18 @@ public class Polyphony {
 		return result;
 	}
 
+	@Override
 	public boolean isEmpty() {
-		for (ShortMessage m : notes)
+		for (ShortMessage m : this)
 			if (m != null) return false;
 		return true;
 	}
 
 	public void panic() {
-		for (int i = 0; i < POLYPHONY; i++) {
-			ShortMessage m = notes[i];
-			if (m != null && Midi.isNoteOn(m)) { // flip NoteOn to NoteOff for graceful release
-				notes[i] = Midi.create(ShortMessage.NOTE_OFF, m.getChannel(), m.getData1(), m.getData2());
-			}
+		for (int i = 0; i < size(); i++) {
+			ShortMessage m = get(i);
+			midiOut.send(Midi.create(ShortMessage.NOTE_OFF, m.getChannel(), m.getData1(), m.getData2()), 1);
 		}
-	}
-
-	public void flush() {
-		for (int i = 0; i < POLYPHONY; i++)
-			notes[i] = null;
 	}
 	
 }

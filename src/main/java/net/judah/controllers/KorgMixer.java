@@ -12,7 +12,6 @@ import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.seq.Seq;
-import net.judah.seq.arp.Mode;
 import net.judah.seq.track.MidiTrack;
 import net.judah.song.Scene;
 import net.judah.util.Constants;
@@ -86,9 +85,9 @@ public class KorgMixer implements Controller {
 		else if (data2 > 0 && data1 >= roff && data1 < roff + 8) { // LAUNCH SCENE
 			int idx = data1 - roff; 
 			
-			List<Scene> scenes = getSong().getScenes();
+			List<Scene> scenes = getOverview().getSong().getScenes();
 			if (scenes.size() > idx) 
-				setOnDeck(scenes.get(idx));
+				getOverview().setOnDeck(scenes.get(idx));
 			else if (idx == 6 || idx == 7) // double duty: launch Fluid+ tracks
 				seq.get(idx + 2).trigger();
 		}
@@ -125,10 +124,8 @@ public class KorgMixer implements Controller {
 			else 
 				getClock().begin();
 		}
-		else if (data1 == RECORD.getVal()) {
-			if (seq.getCurrent().isSynth())
-				seq.getCurrent().getArp().setMode(Mode.REC);
-		}
+		else if (data1 == RECORD.getVal()) 
+			seq.setRecord(!seq.isRecord());
 		
 		return true;
 	}

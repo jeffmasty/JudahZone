@@ -1,4 +1,4 @@
-package net.judah.midi;
+package net.judah.api;
 
 public enum Signature {
 
@@ -6,6 +6,7 @@ public enum Signature {
 	SWING("Swing", 12, 3), 
 	WALTZ("Waltz", 12, 4), 
 	SWALTZ("9/8", 9, 3), 
+	TWOFOUR("2/4", 8, 4),
 	FIVEFOUR("5/4", 20, 4), 
 	STEP32("32x", 32, 8); 
 	

@@ -11,82 +11,83 @@ import org.jaudiolibs.jnajack.JackTransportState;
 import lombok.Getter;
 import net.judah.api.MidiReceiver;
 import net.judah.api.Notification.Property;
+import net.judah.api.Signature;
 import net.judah.api.TimeListener;
-import net.judah.drumkit.DrumKit;
-import net.judah.drumkit.DrumType;
-import net.judah.drumkit.GMDrum;
 import net.judah.drumkit.KitMode;
 import net.judah.gui.MainFrame;
-import net.judah.gui.PlayWidget;
 import net.judah.gui.settable.CurrentCombo;
 import net.judah.gui.settable.Folder;
 import net.judah.gui.widgets.*;
+import net.judah.midi.Actives;
 import net.judah.midi.JudahClock;
-import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
-import net.judah.midi.Signature;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiTools;
-import net.judah.seq.arp.Arp;
-import net.judah.seq.arp.Mode;
 import net.judah.song.Sched;
+import net.judah.synth.Polyphony;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 @Getter 
-public class MidiTrack extends Computer implements TimeListener, MidiConstants {
+public abstract class MidiTrack extends Computer implements TimeListener, MidiConstants {
 	public static final String SUFFIX = ".mid";
 	
 	private final JudahClock clock;
 	/** Sequence (for save) */
 	private final MidiFile s; 
-	private final Track t; 
+	protected final Track t; 
     private final String name;
-	private final MidiReceiver midiOut;
-	private final int ch;
-	private File file;
-	private long recent; // sequencer sweep
-	private Cue cue = Cue.Bar; 
-	Gate gate = Gate.SIXTEENTH;
-	private boolean onDeck; 
-	private final Arp arp;
 	
-    /** ch = 0 or 9 (drumkit midiout) 
-     * @throws InvalidMidiDataException */
-    public MidiTrack(MidiReceiver out, JudahClock clock) throws InvalidMidiDataException {
-    	this(out.getName(), out, out instanceof DrumKit ? 9 : 0, MIDI_24, clock);
-    }
-    
-    /** Fluid track at standard Resolution 
-     * @throws InvalidMidiDataException */
-    public MidiTrack(MidiReceiver out, int ch, JudahClock clock) throws InvalidMidiDataException {
-    	this(out.getName() + (ch + 1), out, ch, MIDI_24, clock);
-    }
-    
-    public MidiTrack(String name, MidiReceiver out, int ch, int rez, JudahClock clock) throws InvalidMidiDataException {
+    /** parent midi port */
+    protected final MidiReceiver midiOut; 
+	protected final int ch;
+    protected final Actives actives;
+	
+	private File file;
+	protected long recent; // sequencer sweep
+	private Cue cue = Cue.Bar; 
+	private Gate gate = Gate.SIXTEENTH;
+	private boolean onDeck; 
+	private float gain = 0.9f;
+	
+    public MidiTrack(String name, MidiReceiver out, final int ch, int rez, JudahClock clock, int polyphony) throws InvalidMidiDataException {
 		this.name = name;
 		this.ch = ch;
 		this.midiOut = out;
 		this.clock = clock;
 		s = new MidiFile(rez);
-		t = s.createTrack();
 		setBarTicks(clock.getMeasure() * s.getResolution());
-		arp = isSynth() ? new Arp(this) :  null;
-		clock.addListener(this);
+		t = s.createTrack();
 		if (name.equals(KitMode.Fills.name()))
 			cue = Cue.Hot;
+		
+		actives = new Actives(midiOut, ch, polyphony);
+		clock.addListener(this);
     }
     
+	public MidiTrack(String name, Polyphony notes, JudahClock clock) throws InvalidMidiDataException {
+		this.name = name;
+		this.ch = notes.getChannel();
+		this.midiOut = notes.getMidiOut();
+		this.clock = clock;
+		s = new MidiFile(JudahClock.MIDI_24);
+		setBarTicks(clock.getMeasure() * s.getResolution());
+		t = s.createTrack();
+		actives = notes;
+		clock.addListener(this);
+	}
+
 	@Override public boolean equals(Object o) {
-    	if (false == o instanceof MidiTrack) return false;
-    	return name.equals(((MidiTrack)o).getName()) && midiOut == ((MidiTrack)o).getMidiOut() && ch == ((MidiTrack)o).ch; 
+    	if (o instanceof MidiTrack) 
+    		return name.equals(((MidiTrack)o).getName()) && midiOut == ((MidiTrack)o).getMidiOut() && ch == ((MidiTrack)o).ch;
+    	return false;
     }
     @Override public int hashCode() { return name.hashCode() * ch;}
     @Override public String toString() { return name; }
-    public final boolean isDrums() { return ch == 9; }
-    public final boolean isSynth() { return ch != 9; }
+    public final boolean isDrums() { return ch == DRUM_CH; }
+    public final boolean isSynth() { return ch != DRUM_CH; }
     public void setResolution(int rez) { 
     	s.setResolution(rez); 
 		setBarTicks(clock.getTimeSig().beats * rez);
@@ -113,11 +114,10 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 		offset = 0;
     	boolean previous = state.active;
     	Cycle old = state.cycle;
-    	
 		state = sched;
 		setAmp(state.amp);
-		if (isSynth() && state.getArp() != null) // setup arpeggiator
-			arp.setInfo(state.getArp());
+		if (previous != state.active)
+			setActive(state.active);
 		if (state.getProgram() != null && !state.getProgram().equals(midiOut.getProg(ch))) 
 			midiOut.progChange(state.getProgram(), ch);
 		if (old != state.cycle) 
@@ -126,12 +126,6 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 			setCurrent(state.launch);
 		else 
 			compute();
-		
-		if (previous != state.active) {
-			PlayWidget.update(this);
-			if (isSynth() && !state.active) 
-				flush();
-		}
     }
 	
 	public void setActive(boolean on) {
@@ -139,11 +133,6 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 		if (JudahClock.isEven() != (count % 2 == 0))
 			cycle();
 		state.active = on;
-		if (!on && isSynth()) {
-			if (arp.isActive()) 
-				arp.clear();
-			new Panic(this);
-		}
 		MainFrame.update(this);
 	}
 	
@@ -161,8 +150,7 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 	@Override
 	protected void setCurrent(int change) {
 		if (current == change) return;
-		if (isSynth())
-			arp.clear();
+		flush();
 		if (change < 0) 
 			change = JudahClock.isEven() ? 0 : 1;
 		recent = change * barTicks + (recent - current * barTicks);
@@ -180,36 +168,18 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 		recent = newTime + 1;
 	}
     
+    protected abstract void playNote(ShortMessage m);
+    
     private void playNotes(long from, long to) {
     	for (int i = 0; i < t.size(); i++) {
 			MidiEvent e = t.get(i);
 			if (e.getTick() < from) continue;
 			if (e.getTick() > to) break;
-			if (Midi.isNote(e.getMessage())) {
-				ShortMessage formatted = Midi.format((ShortMessage)e.getMessage(), ch, state.amp); // malloc
-		    	if (isDrums() || arp.getMode() == Mode.Off)
-		    		midiOut.send(formatted, JudahMidi.ticker());
-		    	else  
-		    		arp.process(formatted);
-			}
+			if (Midi.isNote(e.getMessage())) 
+		    	playNote(Midi.format((ShortMessage)e.getMessage(), ch, state.amp)); // malloc
 		}
     }
     
-	@Override
-	protected void flush() { // mode check?
-		if (isDrums()) return;
-		long end = (current + 1) * barTicks;
-		for (int i = 0; i < t.size(); i++) {
-			MidiEvent e = t.get(i);
-			if (e.getTick() <= recent) continue;
-			if (e.getTick() > end) break;
-			if (e.getMessage() instanceof ShortMessage && Midi.isNoteOff(e.getMessage())) 
-				midiOut.send(Midi.format((ShortMessage)e.getMessage(), ch, 1), JudahMidi.ticker());
-		}
-		if (arp.isActive())
-			arp.clear();
-	}
-
     @Override
 	public void update(Property prop, Object value) {
 		if (prop == Property.BARS) {
@@ -261,7 +231,8 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 	}
 	
 	public File getFolder() {
-		return Folders.midi(isSynth() ? midiOut.isMono() ? Folders.getBass() : Folders.getSynths() : Folders.getBeats());
+		return Folders.midi(isDrums() ? Folders.getBeats() : 
+			actives.getPolyphony() == 1 ? Folders.getBass() : Folders.getSynths());
 	}
 	
 	public void save() {
@@ -314,38 +285,34 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 	public void importTrack(Track incoming, int rez) {
 		for (int i = t.size() -1; i >= 0; i--)
 			t.remove(t.get(i)); // clear
-		if (isSynth()) {
-			arp.clear();
-			new Panic(this);
-		}
-		
 		setResolution(rez);
 
-		if (isDrums()) {
-			for (int i = 0; i < incoming.size(); i++) {
-				MidiEvent e = incoming.get(i);
-				if (Midi.isNoteOn(e.getMessage())) {
-					int data1 = ((ShortMessage)e.getMessage()).getData1();
-					if (DrumType.index(data1) >= 0) 
-						t.add(e);
-					else if (DrumType.alt(data1) < 0) {
-						int newVal = data1 % 6 + 2; // skip bass and snare
-						ShortMessage orig = (ShortMessage)e.getMessage();
-						t.add(new MidiEvent(Midi.create(
-								orig.getCommand(), orig.getChannel(), DrumType.values()[newVal].getData1(), orig.getData2()), e.getTick()));
-						RTLogger.log(this, "remap'd " + data1 + " " + GMDrum.lookup(data1) + " to " + DrumType.values()[newVal]);
-					}
-					else {
-						ShortMessage orig = (ShortMessage)e.getMessage();
-						t.add(new MidiEvent(Midi.create(
-								orig.getCommand(), orig.getChannel(), DrumType.alt(data1), orig.getData2()), e.getTick()));
-					}
-				} // else t.add(e);
-			}
-		} else {
-			for (int i = 0; i < incoming.size(); i++) 
-				t.add(incoming.get(i));
-		}
+		
+//		if (isDrums()) {
+//			for (int i = 0; i < incoming.size(); i++) {
+//				MidiEvent e = incoming.get(i);
+//				if (Midi.isNoteOn(e.getMessage())) {
+//					int data1 = ((ShortMessage)e.getMessage()).getData1();
+//					if (DrumType.index(data1) >= 0) 
+//						t.add(e);
+//					else if (DrumType.alt(data1) < 0) {
+//						int newVal = data1 % 6 + 2; // skip bass and snare
+//						ShortMessage orig = (ShortMessage)e.getMessage();
+//						t.add(new MidiEvent(Midi.create(
+//								orig.getCommand(), orig.getChannel(), DrumType.values()[newVal].getData1(), orig.getData2()), e.getTick()));
+//						RTLogger.log(this, "remap'd " + data1 + " " + GMDrum.lookup(data1) + " to " + DrumType.values()[newVal]);
+//					}
+//					else {
+//						ShortMessage orig = (ShortMessage)e.getMessage();
+//						t.add(new MidiEvent(Midi.create(
+//								orig.getCommand(), orig.getChannel(), DrumType.alt(data1), orig.getData2()), e.getTick()));
+//					}
+//				} // else t.add(e);
+////			}
+//		} else {
+//			for (int i = 0; i < incoming.size(); i++) 
+//				t.add(incoming.get(i));
+//		}
 		count = 0;
 		setCurrent(0);
 		CurrentCombo.update(this);
@@ -422,11 +389,6 @@ public class MidiTrack extends Computer implements TimeListener, MidiConstants {
 		return tick - tick % (resolution / 3);
 	}
 
-	@Override public void next(boolean fwd) {
-		if (isSynth())
-			arp.clear();
-		super.next(fwd);
-	}
 
 	public void progChange(String name) {
 		if (midiOut.progChange(name, ch))

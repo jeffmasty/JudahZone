@@ -1,5 +1,7 @@
 package net.judah.gui.fx;
 
+import java.awt.FlowLayout;
+
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
@@ -17,6 +19,8 @@ public class TimePanel extends JPanel implements Updateable {
 	private final JComboBox<String> type = new JComboBox<>(TimeEffect.TYPE);
 	
 	public TimePanel(TimeEffect effect) {
+		super(new FlowLayout(FlowLayout.CENTER, 0, 1));
+
 		fx = effect;
 		type.addActionListener(e->{
 			if (!type.getSelectedItem().equals(fx.getType())) {

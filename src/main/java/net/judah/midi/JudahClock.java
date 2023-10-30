@@ -17,7 +17,7 @@ import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.api.Notification;
 import net.judah.api.Notification.Property;
-import net.judah.api.Status;
+import net.judah.api.Signature;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeProvider;
 import net.judah.drumkit.Sampler;
@@ -26,6 +26,7 @@ import net.judah.gui.settable.Folder;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.seq.Seq;
+import net.judah.seq.chords.ChordTrack;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -152,8 +153,12 @@ public class JudahClock extends Thread implements TimeProvider {
 			float tempo = Constants.computeTempo((long) (1000 * looper.getPrimary().seconds()), length * getMeasure());
 			writeTempo(Math.round(tempo));
 			onDeck = true;
-			RTLogger.log(this, "Tempo Sync: " + tempo);
 		}
+		
+		// Reset Chord Track
+		ChordTrack chords = JudahZone.getChords();
+		if (chords.isActive() && chords.getSection() != null)
+			chords.click(chords.getSection().get(0));
 	}
 
 	@Override
@@ -224,10 +229,10 @@ public class JudahClock extends Thread implements TimeProvider {
 		}
 	}
 
-	public void loopCount(Object value) {
-		if (Status.NEW == value && runnersDialZero) 
+	public void loopCount(int count) {
+		if (count == 0 && runnersDialZero) 
 			bar = 0;
-		announce(Property.LOOP, value);
+		announce(Property.LOOP, count);
 		if (onDeck && !active) 
 			begin();
 		onDeck = false;
@@ -243,6 +248,10 @@ public class JudahClock extends Thread implements TimeProvider {
 		for (Object o : listeners.toArray())
 			((TimeListener)o).update(prop, value);
 	}
+
+	public int countdown() {
+		return beat % timeSig.beats - timeSig.beats;
+	}
 	
 	/** send to background thread */
 	private void letItBeKnown(Property prop, Object value) {
@@ -257,6 +266,7 @@ public class JudahClock extends Thread implements TimeProvider {
 		writeTempo(tempo);
 	}
 
+	/** not used, when Loop repeats, reset sequencer to time 0 */
 	public void runnersDialZero() {
 		runnersDialZero = !runnersDialZero;
 	}

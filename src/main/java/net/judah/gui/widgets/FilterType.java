@@ -4,6 +4,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import net.judah.fx.Filter;
@@ -26,6 +28,7 @@ public class FilterType extends JComboBox<Type> {
 				}
 			}
 		});
+		((JLabel)getRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
 		addActionListener(e->filter.setFilterType((Type)getSelectedItem()));
 	}
 

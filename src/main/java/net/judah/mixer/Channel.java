@@ -15,6 +15,7 @@ import net.judah.fx.*;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.EffectsRack;
 import net.judah.gui.knobs.LFOKnobs;
+import net.judah.gui.settable.PresetsHandler;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -29,8 +30,10 @@ public class Channel {
     protected final boolean isStereo;
 	protected ImageIcon icon;
 	protected boolean onMute;
-	protected Preset preset;
+	
+	protected Preset preset = JudahZone.getPresets().getDefault();
 	protected boolean presetActive;
+	protected final PresetsHandler presets;
 	
     protected final Gain gain = new Gain();
     protected final LFO lfo = new LFO(this);
@@ -57,7 +60,7 @@ public class Channel {
         effects = Arrays.asList(new Effect[] {
                 lfo, filter1, filter2, eq,
                 chorus, overdrive, delay, getReverb(), compression});
-        preset = JudahZone.getPresets().getDefault();
+        presets = new PresetsHandler(this);
     }
 
     @Override public boolean equals(Object obj) {

@@ -9,6 +9,8 @@ import java.awt.RenderingHints;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 
+import net.judah.gui.Pastels;
+
 /**An extended JSlider that paints the Thumb chromatically based on the slider position.
  * <br/><br/>
  * Source: <a href="https://jasperpotts.com/blog/2008/08/skinning-a-slider-with-nimbus/">Skinning a Slider with Nimbus</a>
@@ -16,9 +18,9 @@ import javax.swing.event.ChangeListener;
  * @author Tsukino, Fumino and Jeff Masty (Nov 28, 2021) */
 public class RainbowFader extends JSlider {
 
-	public static final Dimension MINIMUM = new Dimension(32, 66);
-	public static final int THUMB_WIDTH = 15; 
-	public static final int THUMB_HEIGHT = 25; 
+	public static final Dimension MINIMUM = new Dimension(50, 76);
+	public static final int THUMB_WIDTH = 14; 
+	public static final int THUMB_HEIGHT = 28; 
 
 	static final float slope = 0.04f;
     
@@ -52,19 +54,24 @@ public class RainbowFader extends JSlider {
     
     static UIDefaults newDefaults = new UIDefaults();
     static {
-    	int round = 10;
+    	int round = 12;
     	newDefaults.put("Slider.thumbWidth", THUMB_WIDTH);
-        newDefaults.put("Slider.thumbHeight", THUMB_HEIGHT);
+        newDefaults.put("Slider.thumbHeight", THUMB_HEIGHT + 1);
         newDefaults.put("Slider:SliderThumb.backgroundPainter", new Painter<JComponent>() {
             @Override
             public void paint(Graphics2D g, JComponent comp, int w, int h) {
+            	
+            	// coords rotated
             	g.setColor(Color.DARK_GRAY);
             	g.fillRoundRect(0, 0, w, h-1, round, round);
-            	g.setColor(Color.BLACK);
-            	g.fillRoundRect(1, 0, w-2, h-3, round, round);
 
             	g.setColor(chaseTheRainbow(((JSlider)comp).getValue()));
-            	g.fillRoundRect(1, 1, w-3, h-4, round, round);
+            	g.fillRoundRect(1, 2, w-4, h-5, round, round);
+
+            	// spicy highlight
+            	g.setColor(Color.GRAY);
+            	g.drawLine(w/2 + 1, 4, w/2 + 1, h-4);
+            	g.drawLine(w/2, 3, w/2, h-3);
             }
         });
         newDefaults.put("Slider:SliderTrack.backgroundPainter", new Painter<JComponent>() {
@@ -72,10 +79,10 @@ public class RainbowFader extends JSlider {
             public void paint(Graphics2D g, JComponent c, int w, int h) {
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g.setStroke(new BasicStroke(2f));
-                g.setColor(Color.LIGHT_GRAY);
-                g.fillRoundRect(0, 8, w-1, 4, 4, 4);
+                g.setColor(Pastels.MY_GRAY);
+                g.fillRoundRect(0, 12, w-1, 4, 4, 4);
                 g.setColor(Color.GRAY);
-                g.drawRoundRect(0, 8, w-1, 4, 4, 4);
+                g.drawRoundRect(0, 12, w-1, 4, 4, 4);
             }
         });
     }
@@ -104,7 +111,7 @@ public class RainbowFader extends JSlider {
         
     }
 
-    public static void main(String[] args) {
+    public static void main2(String[] args) {
 	   try {
             UIManager.setLookAndFeel ("javax.swing.plaf.nimbus.NimbusLookAndFeel");
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException

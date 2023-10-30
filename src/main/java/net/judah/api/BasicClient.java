@@ -1,6 +1,6 @@
 package net.judah.api;
 
-import static net.judah.api.Status.*;
+//import static net.judah.api.Status.*;
 
 import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicReference;
@@ -11,30 +11,36 @@ import lombok.Getter;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
-/** Creators of BasicClients must manually {@link #start()} the client */ 
+/**Creators of Jack clients must manually {@link #start()} the client.  Once started the client will 
+ * connect to Jack and call lifecycle events: {@link #initialize()} and {@link #makeConnections()} */ 
 public abstract class BasicClient extends Thread implements JackProcessCallback, JackShutdownCallback  {
 
+	enum Status {
+	NEW, INITIALISING, ACTIVE, CLOSING, TERMINATED, OVERDUBBED;
+	}	
+	
     static final EnumSet<JackOptions> OPTIONS = EnumSet.of(JackOptions.JackNoStartServer);
     static final EnumSet<JackStatus> STATUS = EnumSet.noneOf(JackStatus.class);
 
     protected final String clientName;
     protected final Jack jack;
     protected JackClient jackclient;
-    protected final AtomicReference<Status> state = new AtomicReference<>(NEW);
+    protected final AtomicReference<Status> state = new AtomicReference<>(Status.NEW);
     @Getter private int bufferSize;
 	@Getter private int sampleRate;
     
-	/**Once you manually start your BasicClient thread, it should 
-	 * connect to Jack and call lifecycle events: {@link #initialize()} and {@link #makeConnections()}
-	 * 
-	 * @param name
-	 * @throws JackException */
     public BasicClient(String name) throws Exception {
     	clientName = name;
     	setPriority(Thread.MAX_PRIORITY);
     	setName(name);
     	jack = Jack.getInstance();
     }	
+    
+    /** Jack Client created but not started. Register ports in implementation. */
+	protected abstract void initialize() throws Exception;
+	/** Jack Client has been started */
+	protected abstract void makeConnections() throws JackException;
+
 
     /** NOTE: blocks while Midi jack client is initialized */
 	public JackClient getJackclient() {
@@ -44,9 +50,9 @@ public abstract class BasicClient extends Thread implements JackProcessCallback,
     	return jackclient;
     }
 
-	/* Create a Thread to run our server. All servers require a Thread to run in. */
+	/** Create a Thread to run our client. All clients require a Thread to run in. */
 	@Override public void run() {
-        if (!state.compareAndSet(NEW, INITIALISING)) {
+        if (!state.compareAndSet(Status.NEW, Status.INITIALISING)) {
             throw new IllegalStateException("" + state.get());
         }
         try {
@@ -54,7 +60,7 @@ public abstract class BasicClient extends Thread implements JackProcessCallback,
         	sampleRate = jackclient.getSampleRate();
         	bufferSize = jackclient.getBufferSize();
             initialize();
-	        if (state.compareAndSet(INITIALISING, ACTIVE)) {
+	        if (state.compareAndSet(Status.INITIALISING, Status.ACTIVE)) {
 	                jackclient.setProcessCallback(this);
 	                jackclient.onShutdown(this);
 	                jackclient.activate();
@@ -71,13 +77,13 @@ public abstract class BasicClient extends Thread implements JackProcessCallback,
 	}
 
 	public void close() {
-		if (TERMINATED == state.get()) return;
-		state.set(CLOSING);
+		if (Status.TERMINATED == state.get()) return;
+		state.set(Status.CLOSING);
 		System.out.println("Closing Jack client " + clientName);
 		if (jackclient != null)
 	        try {
 	            jackclient.close();
-	            state.set(TERMINATED);
+	            state.set(Status.TERMINATED);
 	        } catch (Throwable t) {System.err.println(t.getMessage());}
     }
 
@@ -87,11 +93,5 @@ public abstract class BasicClient extends Thread implements JackProcessCallback,
     	jackclient = null;
     	close();
     }
-
-	/** Jack Client created but not started. Register ports. */
-	protected abstract void initialize() throws Exception;
-	/** Jack Client has been started */
-	protected abstract void makeConnections() throws JackException;
-
 
 }

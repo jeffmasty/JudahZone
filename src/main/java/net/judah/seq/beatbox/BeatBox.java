@@ -12,11 +12,11 @@ import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 
 import net.judah.JudahZone;
+import net.judah.api.Signature;
 import net.judah.drumkit.DrumType;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.midi.Midi;
-import net.judah.midi.Signature;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiPair;

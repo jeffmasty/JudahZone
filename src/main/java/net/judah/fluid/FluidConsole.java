@@ -37,8 +37,8 @@ class FluidConsole implements ConsoleParticipant {
 		}
 
 		if (text.equals("channels")) {
-			Console.addText("channels: " + fluid.getChannels().size() + NL);
-			for (FluidChannel channel : fluid.getChannels()) {
+			Console.addText("channels: " + fluid.getGM().size() + NL);
+			for (FluidChannel channel : fluid.getGM()) {
 				Console.addText(channel.toString() + NL);
 			}
 		}

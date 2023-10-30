@@ -34,7 +34,12 @@ public class Scene {
 	public Scene clone() {
 		Scene result = new Scene();
 		result.setCommands(new ParamList(commands));
-		result.setTracks(new ArrayList<>(tracks));
+		ArrayList<Sched> trax = new ArrayList<>(tracks.size());
+		for (Sched source : tracks)
+			trax.add(new Sched(source));
+		result.setTracks(trax);
+		for (String ch : fx) 
+			result.fx.add(ch);
 		result.notes = notes;
 		result.type = type;
 		return result;
@@ -42,7 +47,7 @@ public class Scene {
 
 	@Override
 	public String toString() {
-		return "" + JudahZone.getSong().getScenes().indexOf(this);
+		return "" + JudahZone.getOverview().getSong().getScenes().indexOf(this);
 	}
 
 	

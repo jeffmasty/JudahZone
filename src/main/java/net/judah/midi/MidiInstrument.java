@@ -1,7 +1,7 @@
 package net.judah.midi;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
@@ -13,46 +13,44 @@ import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.api.MidiReceiver;
 import net.judah.mixer.Instrument;
+import net.judah.seq.track.MidiTrack;
 import net.judah.util.Constants;
 
 /** base function for an external synth */
-@Getter
 public class MidiInstrument extends Instrument implements MidiReceiver {
 
-	protected final ArrayList<Integer> actives = new ArrayList<>();
-	protected String[] patches = new String[] {};
-	@Setter protected MidiPort midiPort;
-	boolean mono;
+	@Setter @Getter protected JackPort midiPort;
+	@Getter protected String[] patches = new String[] {};
+	@Getter protected Vector<MidiTrack> tracks = new Vector<>();
 	
-	public MidiInstrument(String channelName, String sourceLeft, String sourceRight, JackPort left, JackPort right, String icon) {
+	public MidiInstrument(String channelName, String sourceLeft, String sourceRight, JackPort left, JackPort right, String icon, JackPort midi) {
 		super(channelName, sourceLeft, sourceRight, icon);
 		leftPort = left;
 		rightPort = right;
 		JudahZone.getServices().add(this);
+		midiPort = midi;
 	}
 	
 	/** mono-synth */
-	public MidiInstrument(String name, String sourcePort, JackPort mono, JackPort midi, String icon) {
+	public MidiInstrument(String name, String sourcePort, JackPort mono, String icon, JackPort midi) {
 		super(name, sourcePort, mono, icon);
 		JudahZone.getServices().add(this);
-		setMidiPort(new MidiPort(midi));
+		midiPort = midi;
 	}
 
 	@Override
 	public final void send(MidiMessage message, long timeStamp) {
-		ShortMessage msg = (ShortMessage)message;
-		if (Midi.isNoteOn(msg)) {
-			actives.add(msg.getData1());
-		}
-		else if (Midi.isNote(msg))
-			actives.remove((Integer)msg.getData1());
-		
-		midiPort.send(msg, (int)timeStamp);
+//		midiPort.send(message, (int)timeStamp);
+		JudahMidi.queue(message, midiPort);
+//		channels.send(message, timeStamp, jackPort);
+//		MainFrame.update();
+//		channels.update((ShortMessage)message);
+
 	}
 
 	@Override
 	public void close() {
-		Constants.execute(new Panic(midiPort, 0 /*monosynth*/));
+		new Panic(midiPort, 0); // ?
 	}
 
 	/** no-op, subclass override */
@@ -65,9 +63,9 @@ public class MidiInstrument extends Instrument implements MidiReceiver {
 		return "none";
 	}
 
-	public void setMono() {
-		mono = true;
-	}
+//	public void setMono() {
+//		mono = true;
+//	}
 	
 	public static void offs(MidiReceiver out, int ch, List<Integer> actives) {
 		Constants.execute(()->{
@@ -76,5 +74,5 @@ public class MidiInstrument extends Instrument implements MidiReceiver {
 			actives.clear();
 		});
 	}
-	
+
 }

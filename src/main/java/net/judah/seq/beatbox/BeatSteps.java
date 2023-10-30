@@ -6,8 +6,8 @@ import java.util.ArrayList;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.judah.api.Signature;
 import net.judah.gui.Pastels;
-import net.judah.midi.Signature;
 import net.judah.seq.Steps;
 import net.judah.seq.track.MidiTrack;
 

@@ -79,7 +79,7 @@ public class TrackMenu extends JPanel implements BeatsSize, MouseListener {
 		add(progChange);
 		if (track.isSynth()) {
 			add(new JLabel("  Arp"));
-			add(new ModeCombo(track));
+			add(new ModeCombo((PianoTrack)track));
 		}
 		add(new Programmer(track));
 		add(new Btn(Icons.NEW_FILE, e->track.setCurrent(track.bars() + 1)));
@@ -109,7 +109,7 @@ public class TrackMenu extends JPanel implements BeatsSize, MouseListener {
 			int i = 0;
 			Enumeration<AbstractButton> it = mode.getElements();
 			while (it.hasMoreElements()) 
-				if (track.getArp() == null || track.getArp().getMode().ordinal() == i++) 
+				if (((PianoTrack)track).getArp().getMode().ordinal() == i++) 
 					it.nextElement().setSelected(true);
 				else 
 					it.nextElement();
@@ -141,11 +141,11 @@ public class TrackMenu extends JPanel implements BeatsSize, MouseListener {
 			mode = new ButtonGroup();
 			for (Mode m : Mode.values()) {
 				JRadioButtonMenuItem item = new JRadioButtonMenuItem(m.name());
-				if (track.getArp().getMode() == m)
+				if (((PianoTrack)track).getArp().getMode() == m)
 					item.setSelected(true);
 				modes.add(item);
 				mode.add(item);
-				item.addActionListener(e-> track.getArp().setMode(m));
+				item.addActionListener(e-> ((PianoTrack)track).getArp().setMode(m));
 			}
 			result.add(modes);
 		}

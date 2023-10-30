@@ -6,8 +6,8 @@ import java.util.ArrayList;
 
 import net.judah.drumkit.Sampler;
 import net.judah.fx.Chorus;
-import net.judah.fx.Filter;
 import net.judah.fx.Delay;
+import net.judah.fx.Filter;
 import net.judah.fx.Overdrive;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.FxPanel;
@@ -31,9 +31,6 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 	private final int JOYSTICK_Y = 74;
 	private final int LEFT = 55;
 	private final int RIGHT = 74;
-	
-	public KorgPads(KorgMixer mixer) {
-	}
 	
 	@Override public boolean midiProcessed(Midi midi) {
 		int data1 = midi.getData1();
@@ -158,17 +155,15 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 	private boolean doubleTap(Object o) {
 		if (tapTarget == o && System.currentTimeMillis() - lastPress < Constants.DOUBLE_CLICK) {
 			lastPress = 0;
-			if (o instanceof Loop) {
+			if (o instanceof Integer) 
+				getLooper().get((Integer)o).clear();
+			else if (o instanceof Loop) {
 				Loop loop = (Loop)o;
 				Looper loops = getLooper(); 
 				if (loop == loops.getLoopA()) 
 					loops.clear();
 				else if (loop.isPlaying()) 
 					loop.doubled();
-				else if (loop == loops.getLoopB()) 
-					loops.verseChorus();
-				else if (loop == loops.getLoopC()) 
-					loops.verseChorus();
 				else if (loop == loops.getSoloTrack()) 
 					((SoloTrack)loop).toggle();
 			}

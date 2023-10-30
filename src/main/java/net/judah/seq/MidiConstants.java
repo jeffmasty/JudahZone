@@ -26,5 +26,6 @@ public interface MidiConstants {
 	int GRID_HEIGHT = Size.HEIGHT_TAB - MENU_HEIGHT - KEY_HEIGHT - 31;
 	int WIDTH_BEATBOX = Size.TAB_SIZE.width - 2 * STEP_WIDTH - 10;
 	Rectangle BOUNDS_MENU = new Rectangle(0, 0, Size.TAB_SIZE.width, MENU_HEIGHT);
+	int DRUM_CH = 9;
 
 }

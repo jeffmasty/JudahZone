@@ -23,12 +23,12 @@ public class LFO implements TimeEffect {
     }
 
 	public static enum Target {
-		CutEQ, Gain, Reverb, Delay, Pan
+		Filter, Gain, Reverb, Room, Delay, Pan, Chorus, Rate, Depth
 	};
 
 	private final Channel ch;
 	@Getter private boolean active;
-	@Getter private Target target = Target.CutEQ;
+	@Getter private Target target = Target.Filter;
 	private int recover = -1;
 	private boolean wasActive;
 	
@@ -67,7 +67,7 @@ public class LFO implements TimeEffect {
     	if (!active || recover < 0) 
     		return;
     	switch (target) {
-			case CutEQ:
+			case Filter:
 				ch.getFilter1().setFrequency(Filter.knobToFrequency(recover));
 				ch.getFilter1().setActive(wasActive);
 				break;
@@ -79,18 +79,35 @@ public class LFO implements TimeEffect {
 				ch.getReverb().set(Reverb.Settings.Wet.ordinal(), recover);
 				ch.getReverb().setActive(wasActive);
 				break;
+			case Room:
+				ch.getReverb().set(Reverb.Settings.Room.ordinal(), recover);
+				ch.getReverb().setActive(wasActive);
+				break;
 			case Gain:
 				ch.getGain().set(Gain.VOLUME, recover);
 				break;
 			case Pan:
 				ch.getGain().set(Gain.PAN, recover);
-				break;    
+				break;
+			case Chorus: 				
+				ch.getChorus().set(Chorus.Settings.Feedback.ordinal(), recover);
+				ch.getChorus().setActive(wasActive);
+				break;
+			case Depth: 				
+				ch.getChorus().set(Chorus.Settings.Depth.ordinal(), recover);
+				ch.getChorus().setActive(wasActive);
+				break;
+			case Rate: 				
+				ch.getChorus().set(Chorus.Settings.Rate.ordinal(), recover);
+				ch.getChorus().setActive(wasActive);
+				break;
+
     	}
     }
     
     private void setup() {
-    	switch (this.target) {
-		case CutEQ:
+    	switch (target) {
+		case Filter:
 			recover = Filter.frequencyToKnob(ch.getFilter1().getFrequency());
 			wasActive = ch.getFilter1().isActive();
 			ch.getFilter1().setActive(true);
@@ -105,13 +122,33 @@ public class LFO implements TimeEffect {
 			wasActive = ch.getReverb().isActive();
 			ch.getReverb().setActive(true);
 			break;
+		case Room:
+			recover = ch.getReverb().get(Reverb.Settings.Room.ordinal());
+			wasActive = ch.getReverb().isActive();
+			ch.getReverb().setActive(true);
+			break;
 		case Gain:
 			recover = ch.getVolume();
 			break;
 		case Pan:
 			recover = ch.getPan();
 			break;
-		}
+    	case Chorus:
+    		recover = ch.getChorus().get(Chorus.Settings.Feedback.ordinal());
+			wasActive = ch.getChorus().isActive();
+    		ch.getChorus().setActive(true);
+			break;
+    	case Depth:
+    		recover = ch.getChorus().get(Chorus.Settings.Depth.ordinal());
+			wasActive = ch.getChorus().isActive();
+    		ch.getChorus().setActive(true);
+			break;
+    	case Rate:
+    		recover = ch.getChorus().get(Chorus.Settings.Rate.ordinal());
+			wasActive = ch.getChorus().isActive();
+    		ch.getChorus().setActive(true);
+			break;
+    	}
     }
     
 	public void setMax(int val) {
@@ -190,13 +227,18 @@ public class LFO implements TimeEffect {
 		int val = (int)query();
 		switch(target) {
 			case Gain: ch.getGain().set(Gain.VOLUME, val); break;
-			case CutEQ: ch.getFilter1().setFrequency(
+			case Filter: ch.getFilter1().setFrequency(
 					Filter.knobToFrequency((int)ch.getLfo().query())); break;
 			case Reverb: ch.getReverb().set(Reverb.Settings.Wet.ordinal(), val); break;
+			case Room: ch.getReverb().set(Reverb.Settings.Room.ordinal(), val); break;
 			case Delay: ch.getDelay().setFeedback(val * 0.01f); break;
 			case Pan: ch.getGain().set(Gain.PAN, val); break;
+			case Chorus: ch.getChorus().set(Chorus.Settings.Feedback.ordinal(), val); break;
+			case Depth: ch.getChorus().set(Chorus.Settings.Depth.ordinal(), val); break;
+			case Rate: ch.getChorus().set(Chorus.Settings.Rate.ordinal(), val); break;
+
 		}
-		if (++throttle > 6) {// throttle gui updates
+		if (++throttle > 4) {// throttle gui updates
 			throttle = 0;
 			MainFrame.update(ch);
 		}
@@ -256,7 +298,7 @@ public class LFO implements TimeEffect {
 
 	@Override
 	public void sync(float unit) {
-		float msec = 2 * 0.001f * (unit + unit * TimeEffect.indexOf(type));
+		float msec = 2 * (unit + unit * TimeEffect.indexOf(type));
     	setFrequency(msec);		
 	}
 

@@ -3,23 +3,20 @@ package net.judah.mixer;
 import static javax.swing.SwingConstants.CENTER;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JToggleButton;
+import javax.swing.*;
 
 import lombok.Getter;
 import net.judah.fx.Gain;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
-import net.judah.gui.widgets.TogglePreset;
 import net.judah.gui.widgets.RainbowFader;
+import net.judah.gui.widgets.TogglePreset;
 import net.judah.looper.Looper;
 
 /**Mixer view
@@ -34,6 +31,8 @@ public abstract class MixWidget extends JPanel implements Pastels {
 	
 	@Getter protected final Channel channel;
 	@Getter protected final JPanel banner = new JPanel();
+	
+	private static final Dimension BTNS = new Dimension(50, 63);
 
 	@Getter protected final JButton mute = new JButton("mute");
 	@Getter protected final TogglePreset fx;
@@ -41,14 +40,13 @@ public abstract class MixWidget extends JPanel implements Pastels {
 
 	protected RainbowFader volume;
 	protected final JLabel title = new JLabel("", CENTER);
-	protected JPanel sidecar = new JPanel(new GridLayout(3, 1));
+	protected JPanel sidecar = new JPanel(new GridLayout(3, 1, 0, 0));
 	private final LEDs indicators;
 	
 	public MixWidget(Channel channel, Looper looper) {
 		this.channel = channel;
 		
 		fx = new TogglePreset(channel, looper);
-		fx.setOpaque(true);
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(BUTTONS);
 		
@@ -64,10 +62,15 @@ public abstract class MixWidget extends JPanel implements Pastels {
 		banner.add(title);
 		banner.add(sidecar);
 		sidecar.setOpaque(false);
+		Gui.resize(sidecar, BTNS);
+		Gui.resize(title, BTNS);
 		
 		add(banner);
 		add(indicators);
+		add(Box.createVerticalStrut(1));
 		add(volume);
+		add(Box.createVerticalStrut(1));
+		
 		addMouseListener(new MouseAdapter() {
 		// TODO right/double click menu
 		@Override public void mouseClicked(MouseEvent e) {

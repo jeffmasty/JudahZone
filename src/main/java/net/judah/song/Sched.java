@@ -21,7 +21,7 @@ public class Sched {
 	
 	private String program;
 	@JsonInclude(Include.NON_NULL)
-	private ArpInfo arp; // mode, octaves
+	private ArpInfo arp = new ArpInfo(); // mode, octaves
 
 	public Sched(Sched clone) {
 		launch = clone.launch;
@@ -32,9 +32,12 @@ public class Sched {
 		arp = clone.arp == null ? null : new ArpInfo(clone.arp);
 	}
 
+	
+	
 	public Sched(boolean synth) {
 		if (synth)
 			arp = new ArpInfo();
 	}
+
 	
 }

@@ -25,7 +25,7 @@ public enum Cmd {
 		case TimeCode:	return IntProvider.instance();
 		case Start:		return BooleanProvider.instance;
 		case Tempo:		return getClock().getMidiClock(); 
-		case Jump:		return getOverview();
+		case Jump:		return SceneProvider.getInstance();
 
 		case OffTape:	return getInstruments();
 		case OnTape:	return getInstruments();

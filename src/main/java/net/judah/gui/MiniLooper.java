@@ -3,6 +3,7 @@ package net.judah.gui;
 import static net.judah.api.Notification.Property.TEMPO;
 
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -25,7 +26,7 @@ import net.judah.midi.JudahClock;
 import net.judah.util.RTLogger;
 
 public class MiniLooper extends JPanel implements TimeListener {
-	private static final int WIDTH = 82;
+	private static final int WIDTH = 84;
 	
 	private final JudahClock clock;
 	@Getter private final LoopWidget loopWidget;
@@ -44,7 +45,7 @@ public class MiniLooper extends JPanel implements TimeListener {
 	public MiniLooper(Looper loops, JudahClock time) {
 		this.clock = time;
 		clock.addListener(this);
-		Dimension size = new Dimension(WIDTH, Size.STD_HEIGHT + 6);
+		Dimension size = new Dimension(WIDTH, Size.STD_HEIGHT + 4);
 		loopWidget = new LoopWidget(loops, size);
 		tempoKnob = new Slider(55, 155, null);
 
@@ -61,11 +62,12 @@ public class MiniLooper extends JPanel implements TimeListener {
 		tempoLbl.setText("####");
 		tempoLbl.setFont(Gui.BOLD);
         Gui.resize(tempoKnob, size);
+        
         setBorder(new LineBorder(Pastels.MY_GRAY, 1));
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
   
         add(loopWidget);
-        JPanel btm = new JPanel();
+        JPanel btm = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 0));
         btm.add(tapButton);
         btm.add(tempoLbl);
         btm.add(tempoKnob);

@@ -1,7 +1,5 @@
 package net.judah.song;
 
-import static net.judah.JudahZone.getScene;
-import static net.judah.JudahZone.getSong;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -22,7 +20,6 @@ import net.judah.gui.widgets.Btn;
 import net.judah.song.cmd.Param;
 import net.judah.song.cmd.ParamModel;
 import net.judah.song.cmd.ParamTable;
-import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 public class SongView extends JPanel {
@@ -31,8 +28,10 @@ public class SongView extends JPanel {
 	private final ParamTable params;
 	private final JComboBox<Trigger> sceneType = new JComboBox<>(Trigger.values());
 	private final JTextField notes = new JTextField(12);
+	private final Overview songs;
 
 	public SongView(Song smashHit, Overview tab, Dimension props, Dimension btns) {
+		songs = tab;
 		launcher = new SceneLauncher(smashHit, tab);
 		params = new ParamTable(smashHit.getScenes().get(0).getCommands());
 		JScrollPane scroll = new JScrollPane(params);
@@ -47,10 +46,12 @@ public class SongView extends JPanel {
 		JPanel paramBtns = new JPanel(new GridLayout(0, 1));
 		paramBtns.add(new Btn("Add", e->addParam()));
 		paramBtns.add(new Btn("Del", e->removeParam()));
-		paramBtns.add(new Btn("Save", e->JudahZone.save()));
+		paramBtns.add(new Btn("Save", e->tab.save()));
 		paramBtns.setBackground(Pastels.BUTTONS);
-		JPanel bottom = Gui.wrap(scroll, paramBtns);
+		JPanel bottom = new JPanel();
 		bottom.setBackground(Pastels.BUTTONS);
+		bottom.add(scroll);
+		bottom.add(paramBtns);
 		add(bottom);
 	}
 
@@ -58,8 +59,8 @@ public class SongView extends JPanel {
 		sceneType.addActionListener(e->triggerType());
 		notes.addKeyListener(new KeyAdapter() {
 			@Override public void keyPressed(KeyEvent e) {
-				getScene().setNotes(notes.getText());
-				launcher.update(getScene());
+				songs.getScene().setNotes(notes.getText());
+				launcher.update(songs.getScene());
 			}});
 
 		JPanel result = new JPanel();
@@ -83,30 +84,25 @@ public class SongView extends JPanel {
 	}
 			
 	private void triggerType() {
-		getScene().setType((Trigger)sceneType.getSelectedItem());
-		MainFrame.update(getScene());
+		songs.getScene().setType((Trigger)sceneType.getSelectedItem());
+		MainFrame.update(songs.getScene());
 	}
 	
 	public void setCurrent(Scene s) {
-		Constants.execute(() -> 
-			params.setModel(new ParamModel(s.getCommands())));
 		notes.setText(s.getNotes());
 		if (sceneType.getSelectedItem() != s.getType())
 			sceneType.setSelectedItem(s.getType());
-	}
-
-	public void update() {
-		launcher.update();
+		params.setModel(new ParamModel(s.getCommands()));
 	}
 
 	public void update(Scene s) {
-		params.setModel(new ParamModel(getScene().getCommands())); //overkill?
+		params.setModel(new ParamModel(songs.getScene().getCommands())); //overkill?
 		launcher.update(s);
 	}
 	
 	private void addParam() {
-		getScene().getCommands().add(new Param());
-		update(getScene());
+		songs.getScene().getCommands().add(new Param());
+		update(songs.getScene());
 	}
 
 	private void removeParam() {
@@ -114,39 +110,39 @@ public class SongView extends JPanel {
 		if (selected == -1) 
 			selected = 1;
 		
-		if (selected < getScene().getCommands().size())
-			getScene().getCommands().remove(selected);
-		update(getScene());
+		if (selected < songs.getScene().getCommands().size())
+			songs.getScene().getCommands().remove(selected);
+		update(songs.getScene());
 	}
 
 	public void addScene(Scene add) {
-		getSong().getScenes().add(add);
-		MainFrame.setFocus(launcher);
-		MainFrame.setFocus(add);
-		JudahZone.setOnDeck(null);
+		songs.getSong().getScenes().add(add);
+		songs.setOnDeck(null);
+		MainFrame.update(launcher);
+		songs.setScene(add);
 	}
 	
 	public void copy() {
-		addScene(getScene().clone());
+		addScene(songs.getScene().clone());
 	}
 
 	public void newScene() {
-		addScene(new Scene(getScene().getTracks()));
+		addScene(new Scene(JudahZone.getSeq()));
 	}
 
 	public void delete() {
-		Song song = getSong();
-		Scene current = getScene();
+		Song song = songs.getSong();
+		Scene current = songs.getScene();
 		if (current == song.getScenes().get(0)) 
 			return; // don't remove initial scene
 		song.getScenes().remove(current);
 		launcher.fill();
-		JudahZone.setScene(0);
+		songs.setScene(song.getScenes().get(0));
 	}
 	
 	public void shift(boolean left) {
-		List<Scene> scenes = getSong().getScenes();
-		int old = scenes.indexOf(getScene());
+		List<Scene> scenes = songs.getSong().getScenes();
+		int old = scenes.indexOf(songs.getScene());
 		if (old == 0) { 
 			RTLogger.log(this, "INIT Scene is fixed.");
 			return; 
@@ -158,7 +154,7 @@ public class SongView extends JPanel {
 			idx = 1;
 		Collections.swap(scenes, old, idx);
 		launcher.fill();
-		MainFrame.setFocus(getScene());
+		MainFrame.setFocus(songs.getScene());
 	}
 	
 

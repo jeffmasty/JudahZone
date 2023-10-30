@@ -12,28 +12,28 @@ import net.judah.gui.settable.CurrentCombo;
 import net.judah.gui.widgets.Arrow;
 import net.judah.gui.widgets.CycleCombo;
 
-/** Display track current progress, launch and cycle */
+/** Display track's current bar, launch and cycle <br/><br/>
+ * 	[<-] [##-] [->] [Init/Total] [Cycle]  */
 public class Programmer extends JPanel {
-	// [<-][##-][->][Init/Total][Cycle] 
 	
 	private static final ArrayDeque<Programmer> instances = new ArrayDeque<>();
 	private final Computer track;
 	private final CycleCombo cycle;
 	private final CurrentCombo bar;
-	private final JButton total = new JButton();
+	private final JButton launch = new JButton();
 	
 	public Programmer(Computer t) {
 		track = t;
 		bar = new CurrentCombo(track);
 		cycle = new CycleCombo(track);
-		total.setText(launchCode());
-		total.addActionListener(e-> track.reLaunch());
+		launch.setText(launchCode());
+		launch.addActionListener(e-> track.setLaunch(track.getFrame() * 2));
 		add(new Arrow(Arrow.WEST, e->track.next(false)));
 		add(bar);		
 		add(new Arrow(Arrow.EAST, e->track.next(true)));
-		add(total);
+		add(launch);
 		add(cycle);
-		Gui.resize(total, Size.MICRO);
+		Gui.resize(launch, Size.MICRO);
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		instances.add(this);
 	}
@@ -41,10 +41,10 @@ public class Programmer extends JPanel {
 	public static void update(Computer midiTrack) {
 		for (Programmer instance : instances)
 			if (instance.track == midiTrack) {
-					instance.total.setText(instance.launchCode());
+					instance.launch.setText(instance.launchCode());
 					instance.bar.update();
 			}
-		}
+	}
 	
 	private String launchCode() {
 		String code = (1 + track.getLaunch() / 2) + "/" + track.frames();

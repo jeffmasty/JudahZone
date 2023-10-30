@@ -79,6 +79,7 @@ public abstract class Computer {
 				break;
 		case TO8:
 		case TO12:
+		case TO16:
 			if (count >= state.cycle.getLength())
 				reset();
 			else 
@@ -101,8 +102,8 @@ public abstract class Computer {
 		case A:
 			left = right = current * barTicks;
 			break;
-		case AB:	case ABCD:	case TO12:
-		case TO8:	case CLCK:
+		case AB:	case ABCD:	case TO8:
+		case TO12:	case TO16: case CLCK:
 			left = isEven() ? current * barTicks : before(current) * barTicks;
 			right = isEven() ? (current + 1) * barTicks : current * barTicks; 
 			break;
@@ -147,11 +148,7 @@ public abstract class Computer {
 		setCurrent(next);
 	}
 
-	public void reLaunch() {
-		setLaunch(state.launch + 2 * offset);
-	}
-	
-	private void setLaunch(int bar) {
+	public void setLaunch(int bar) {
 		state.launch = bar;
 		offset = 0;
 		MainFrame.update(this);

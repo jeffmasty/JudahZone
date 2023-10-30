@@ -24,6 +24,10 @@ public class FxKnob extends JPanel implements Updateable {
 	private final JLabel label;
 
 	public FxKnob(Channel ch, Effect fx, int idx, String lbl) {
+		this(ch, fx, idx, lbl, Pastels.BLUE);
+	}
+	
+	public FxKnob(Channel ch, Effect fx, int idx, String lbl, Color highlight) {
 		effect = fx;
 		this.ch = ch;
 		this.idx = idx;
@@ -31,13 +35,13 @@ public class FxKnob extends JPanel implements Updateable {
 				fx.set(idx, value);
 				MainFrame.update(ch);
 			});
-		knob.setKnobColor(Pastels.BLUE);
+		knob.setKnobColor(highlight);
 		add(knob);
 
 		label = new JLabel(lbl, JLabel.LEFT);
 		label.setFont(Gui.FONT11);
 		add(label);
-	}
+	}	
 	
 	// inelegant realtime reverb
 	public FxKnob(Channel ch, int idx, String lbl) {

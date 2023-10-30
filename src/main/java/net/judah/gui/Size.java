@@ -4,12 +4,12 @@ import java.awt.Dimension;
 
 public interface Size {
 
-	int WIDTH_FRAME = 1366;
+	int WIDTH_FRAME = 1368;
     int WIDTH_KNOBS = 346;
-    int WIDTH_TAB = WIDTH_FRAME - WIDTH_KNOBS - 2; 
+    int WIDTH_TAB = WIDTH_FRAME - WIDTH_KNOBS - 1; 
     int HEIGHT_FRAME = 734;
     int HEIGHT_KNOBS = 260;
-    int HEIGHT_MIXER = 150;
+    int HEIGHT_MIXER = 157;
     int HEIGHT_TAB = HEIGHT_FRAME - HEIGHT_MIXER;
 
     Dimension TAB_SIZE = new Dimension(WIDTH_TAB, HEIGHT_TAB);

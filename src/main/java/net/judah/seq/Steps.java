@@ -4,7 +4,7 @@ import java.awt.Point;
 
 import javax.swing.JPanel;
 
-import net.judah.midi.Signature;
+import net.judah.api.Signature;
 
 public abstract class Steps extends JPanel {
 	

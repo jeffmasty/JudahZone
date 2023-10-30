@@ -22,6 +22,7 @@ import net.judah.gui.settable.SongCombo;
 import net.judah.gui.widgets.FileChooser;
 import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
+import net.judah.song.Overview;
 import net.judah.song.Song;
 import net.judah.song.setlist.Setlist;
 import net.judah.util.Constants;
@@ -45,7 +46,7 @@ public class JudahMenu extends JMenuBar {
 		}
 	}
 	
-	public JudahMenu(int width, Looper looper) {
+	public JudahMenu(int width, Looper looper, Overview overview) {
 
 		JMenu song = new JMenu("Song");
 		JMenu setlist = new JMenu("Setlist");
@@ -55,28 +56,28 @@ public class JudahMenu extends JMenuBar {
 	    JMenu save = new JMenu("Save");
 	    JMenu load = new JMenu("Load");
 	    JMenu solotrack = new JMenu("Solo Track");
-	    JMenu controls = new JMenu("Controls");
 	    JMenu tools = new JMenu("Tools");
+	    JMenu knobs = new JMenu("View");
 
 		Dimension d = new Dimension(width - 8, Size.STD_HEIGHT);
 		setPreferredSize(d);
 		setSize(d);
 		setMinimumSize(d);
 		
-    	song.add(new Actionable("Next", e->nextSong()));
-		song.add(new Actionable("Save", e->save()));
+    	song.add(new Actionable("Next", e->overview.nextSong()));
+		song.add(new Actionable("Save", e->overview.save()));
         song.add(new Actionable("Save As..", e->{
         		File f = FileChooser.choose(getSetlists().getDefault());
         		if (f == null) return;
-        		save(f);
+        		overview.save(f);
         		Constants.timer(200, () -> {
         			SongCombo.refill();
         			SongCombo.refresh();
         		});;
         	}));
-    	song.add(new Actionable("Reload", e->reload()));
-        song.add(new Actionable("Load..", e -> loadSong(FileChooser.choose(getSetlists().getDefault()))));
-    	song.add(new Actionable("New", e -> setSong(new Song(getSeq(), (int)(getClock().getTempo())))));
+    	song.add(new Actionable("Reload", e->overview.reload()));
+        song.add(new Actionable("Load..", e -> overview.loadSong(FileChooser.choose(getSetlists().getDefault()))));
+    	song.add(new Actionable("New", e -> overview.setSong(new Song(getSeq(), (int)(getClock().getTempo())))));
     	for (Setlist list : getSetlists()) 
 			setlist.add(new Actionable(list.toString(), e -> getSetlists().setCurrent(list.getSource())));
         song.add(setlist); 
@@ -125,7 +126,7 @@ public class JudahMenu extends JMenuBar {
         sheets.setToolTipText("Focus on Song SheetMusic");
         sheets.setText("Sheets");
     	for (KnobMode mode : KnobMode.values()) 
-        	controls.add(new Actionable(mode.toString(), e->MainFrame.setFocus(mode)));
+        	knobs.add(new Actionable(mode.toString(), e->MainFrame.setFocus(mode)));
 
     	tools.add(new Actionable("Record Session", e -> JudahZone.getMains().tape(true)));
         tools.add(sheets);
@@ -143,9 +144,10 @@ public class JudahMenu extends JMenuBar {
         add(song);
         add(loops);
         add(clock);
-        add(controls);
+        add(knobs);
         add(tools);
-    }
+
+	}
 
 	private void setLength() {
 		String s = Gui.inputBox("Loop Bar Length:");
@@ -155,32 +157,6 @@ public class JudahMenu extends JMenuBar {
 		} catch (Throwable t) {
 			RTLogger.log(this, "Length not changed.");
 		}
-	}
-    
-	
-	
-	
-	public static void lfo(int type) {
-		getClock().getTempo();
-		
-		
-		
-		switch(type) {
-		case 0:
-		case 1:
-		case 2:
-			default:
-				
-		}
-	}
-	public static void delay(int type) {
-		switch(type) {
-		case 0:
-		case 1:
-		case 2:
-			default:
-		}
-		
 	}
 	
 }

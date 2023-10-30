@@ -7,8 +7,11 @@ import javax.swing.JPanel;
 
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.fx.Gain;
-import net.judah.gui.*;
+import net.judah.gui.Gui;
+import net.judah.gui.Icons;
+import net.judah.gui.Pastels;
+import net.judah.gui.PlayWidget;
+import net.judah.gui.Size;
 import net.judah.gui.settable.Folder;
 import net.judah.gui.settable.ModeCombo;
 import net.judah.gui.settable.Program;
@@ -16,6 +19,7 @@ import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.Slider;
 import net.judah.gui.widgets.TrackVol;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.Programmer;
 
  // TODO MouseWheel listener -> change pattern? 
@@ -40,15 +44,15 @@ public class SongTrack extends JPanel implements Size {
 		setBorder(Gui.SUBTLE);
 		add(Gui.resize(new PlayWidget(t, t.getName()), SMALLER_COMBO));
 		if (t.isSynth()) 
-			add(new ModeCombo(track));
+			add(new ModeCombo(((PianoTrack)track)));
 		else {
 			setBackground(Pastels.BUTTONS);
 			gain = new Slider(null);
-			gain.setValue(track.getMidiOut().getGain().get(Gain.VOLUME));
+			gain.setValue((int) (track.getAmp() * 100));
 			gain.addChangeListener(e->{
-				Gain fx = track.getMidiOut().getGain();
-				fx.set(Gain.VOLUME, gain.getValue());
-				MainFrame.update(fx);
+				if (track.getAmp() * 100f != gain.getValue()) {
+					track.setAmp(gain.getValue() * 0.01f); // TODO GUI updates?
+				}
 			});
 			add(Gui.resize(gain, SMALLER_COMBO));
 		}
@@ -65,8 +69,8 @@ public class SongTrack extends JPanel implements Size {
 	}
 	
 	public void update() {
-		if (gain != null && gain.getValue() != track.getMidiOut().getGain().get(Gain.VOLUME))
-			gain.setValue(track.getMidiOut().getGain().get(Gain.VOLUME));
+		if (gain != null && gain.getValue() != track.getAmp() * 100)
+			gain.setValue((int) (track.getAmp() * 100));
 	}
 	
 }
