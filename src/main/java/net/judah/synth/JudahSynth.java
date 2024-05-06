@@ -1,6 +1,7 @@
 package net.judah.synth;
 import java.nio.FloatBuffer;
 import java.util.List;
+import java.util.Vector;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiMessage;
@@ -20,14 +21,16 @@ import net.judah.gui.knobs.SynthKnobs;
 import net.judah.gui.settable.Program;
 import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
+import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.util.AudioTools;
 import net.judah.util.RTLogger;
 
 @Getter // Wishlist: portamento/glide, LFOs, PWM, mono-synth, true stereo, envelope to filter
 public class JudahSynth extends Engine {
-	public static final int POLYPHONY = 24;
+
 	public static final String[][] NAMES = {{"S.One", "Synth.png"}, {"S.Two", "Waveform.png"}};
+	public static final int POLYPHONY = 24;
 	public static final int DCO_COUNT = 3;
 	public static final int ZERO_BEND = 8192;
 	
@@ -53,11 +56,10 @@ public class JudahSynth extends Engine {
     
     public JudahSynth(int idx, JackPort left, JackPort right, JudahClock clock) {
 		super(NAMES[idx][0], false);
+		icon = Icons.get(NAMES[idx][1]);
 		leftPort = left;
 		rightPort = right;
-		factor = 1.33f;
-		icon = Icons.get(NAMES[idx][1]);		
-		
+				
 		for (int i = 0; i < dcoGain.length; i++)
 			dcoGain[i] = 0.50f;
 		for (int i = 0; i < detune.length; i++)
@@ -80,8 +82,13 @@ public class JudahSynth extends Engine {
 			tracks.add(new PianoTrack(name, notes, clock));
 		} catch (InvalidMidiDataException e) { RTLogger.warn(this, e); }
 		synthKnobs = new SynthKnobs(this);
+		setPreamp(1.8f);
     }
 
+    @Override
+	public Vector<MidiTrack> getTracks() {
+    	return tracks;
+    }
 	public float computeGain(int dco) { 
 		return dcoGain[dco] * 0.1f; // dampen
 	}
@@ -105,19 +112,14 @@ public class JudahSynth extends Engine {
 	@Override
 	public void send(MidiMessage midi, long timeStamp) {
 		ShortMessage m = (ShortMessage)midi;
-		if (Midi.isNote(m)) {
-			if (Midi.isNoteOn(m))
-				notes.noteOn(m);
-			else 
-				notes.noteOff(m); 
-		}
+		if (Midi.isNote(midi)) 
+			notes.receive(m);
 		else if (Midi.isProgChange(m)) {
 			RTLogger.log(this, "TODO ProgChange " + new Midi(m.getMessage()).toString());
 		}
 		else if (Midi.isCC(m)) {
-			if (m.getData1() == 1) { // modWheel
+			if (m.getData1() == 1)  // modWheel
 				modWheel.mod(m.getData2());
-			}
 		}
 		else if (Midi.isPitchBend(m)) {
 			float factor = bendFactor(m, modSemitones);
@@ -180,14 +182,12 @@ public class JudahSynth extends Engine {
         	voice.process(notes, adsr, work);
         }
         
-        
         loCut.process(work);
         hiCut.process(work);
         processFx(work);
         toStereo(work);
         AudioTools.mix(left, leftPort.getFloatBuffer());
         AudioTools.mix(right, rightPort.getFloatBuffer());
-
 	}
 
 }

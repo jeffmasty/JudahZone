@@ -10,6 +10,8 @@ import net.judah.seq.MidiView;
 import net.judah.seq.TrackList;
 import net.judah.seq.track.MidiTrack;
 
+
+/**Handles a top and bottom drum track */
 public class BeatsTab extends MidiTab {
 	public static final String NAME = "BeatBox";
 
@@ -21,18 +23,22 @@ public class BeatsTab extends MidiTab {
 	public BeatsTab(TrackList list) {
 		super(list);
 		setName(NAME);
-		
 		top.addAll(list);
 		top.forEach(t->topViews.add(new BeatsSection(t, this, top)));
-
+		top.init(top.get(0)); // drum1 
 		bottom.addAll(list);
 		bottom.forEach(t->bottomViews.add(new BeatsSection(t, this, bottom)));
+		bottom.init(bottom.get(2)); // hats
+
 		current = topViews.get(0);
 	}
 	
-	public void init() { // fires updates 
-		top.setCurrent(top.get(0)); // drum1
-        bottom.setCurrent(bottom.get(2)); // hats
+	@Override
+	public MidiView getView(MidiTrack t) {
+		BeatsSection it = getView(t, true);
+		if (it != null)
+			return it;
+		return getView(t, false);
 	}
 
 	public BeatsSection getView(MidiTrack t, boolean upper) {

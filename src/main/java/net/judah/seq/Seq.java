@@ -1,17 +1,13 @@
 package net.judah.seq;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import lombok.Getter;
-import lombok.Setter;
 import net.judah.JudahZone;
-import net.judah.api.MidiReceiver;
-import net.judah.drumkit.DrumKit;
+import net.judah.api.ZoneMidi;
 import net.judah.drumkit.DrumMachine;
-import net.judah.drumkit.KitMode;
 import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.knobs.TrackKnobs;
 import net.judah.midi.JudahClock;
@@ -19,7 +15,6 @@ import net.judah.midi.Midi;
 import net.judah.mixer.LineIn;
 import net.judah.mixer.Zone;
 import net.judah.seq.chords.ChordTrack;
-import net.judah.seq.track.Cue;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.TrackInfo;
@@ -40,18 +35,17 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
 	private final TrackList synthTracks = new TrackList();
 	private final ArrayList<TrackKnobs> knobs = new ArrayList<>();
 	private final ChordTrack chordTrack;
-	@Setter private boolean record;
 	
 	public Seq(Zone instruments, ChordTrack chords, JudahClock clock) {
 		this.chordTrack = chords;
 		clock.setSeq(this);
 		for (LineIn line : instruments) {
 			if (line instanceof DrumMachine) 
-				for (DrumKit kit : ((DrumMachine)line).getKits()) 
-					drumTracks.add(kit.getTracks().get(0));
+				for (MidiTrack track : ((DrumMachine)line).getTracks()) 
+					drumTracks.add(track);
 			
-			else if (line instanceof MidiReceiver)
-				for (MidiTrack t : ((MidiReceiver)line).getTracks())
+			else if (line instanceof ZoneMidi)
+				for (MidiTrack t : ((ZoneMidi)line).getTracks())
 					synthTracks.add(t);
 		}
 		tracks.addAll(drumTracks);
@@ -73,7 +67,7 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
 		return null;
 	}
 	
-	public MidiTrack lookup(MidiReceiver rcv, int ch) {
+	public MidiTrack lookup(ZoneMidi rcv, int ch) {
 		for (MidiTrack t : tracks)
 			if (t.getMidiOut() == rcv && t.getCh() == ch)
 				return t;
@@ -105,23 +99,8 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
 				return t;
 		return null;
 	}
-
-	public void loadDrumMachine() {
-        MidiTrack drum1 = byName(KitMode.Drum1.name());
-        drum1.load(new File(drum1.getFolder(), "Rock1"));
-        drum1.getMidiOut().progChange("Pearl");
-        MidiTrack drum2 = byName(KitMode.Drum2.name());
-        drum2.load(new File(drum2.getFolder(), "Bossa1"));
-        drum2.getMidiOut().progChange("808");
-        MidiTrack hats = byName(KitMode.Hats.name());
-        hats.load(new File(hats.getFolder(), "Hats1"));
-        hats.getMidiOut().progChange("Hats");
-        MidiTrack fills = byName(KitMode.Fills.name());
-        fills.load(new File(fills.getFolder(), "Fills1"));
-        fills.setCue(Cue.Hot);
-        fills.getMidiOut().progChange("VCO");
-        
-	}
+	
+	
 
 	/** load song into sequencer */
 	public void loadSong(List<TrackInfo> trax) {
@@ -131,20 +110,16 @@ public class Seq implements Iterable<MidiTrack>, MidiConstants, Cmdr {
     			RTLogger.warn(this, "Missing " + info.getTrack());
     			continue;
     		}
-    		if (info.getFile() != null && !info.getFile().isBlank()) {
-    			t.load(new File(t.getFolder(), info.getFile()));
-    		}
-    		t.setCue(info.getCue());
-    		t.setGate(info.getGate());
+    		t.load(info);
     	} 
 	}
 	
-	/**Perform recording or translate activities on tracks
+	/**Performs recording or translate activities on tracks
 	 * @param midi user note press 
 	 * @return true if any track is recording or transposing*/
-	public boolean rtCheck(Midi midi) {
-		if (record)
-			return true;
+	public boolean arpCheck(Midi midi) {
+		if (midi.getChannel() >= MidiConstants.DRUM_CH)
+			return false;
 		for (MidiTrack track : synthTracks) 
 			if (((PianoTrack)track).getArp().mpkFeed(midi)) 
 				return true;

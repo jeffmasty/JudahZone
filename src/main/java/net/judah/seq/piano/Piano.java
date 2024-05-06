@@ -15,13 +15,14 @@ import lombok.Getter;
 import net.judah.gui.Pastels;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
-import net.judah.seq.MidiTab;
+import net.judah.midi.MidiInstrument;
 import net.judah.seq.beatbox.BeatsSize;
 import net.judah.seq.track.MidiTrack;
 
+/** Display keys of a piano above PianoBox */
 public class Piano extends JPanel implements BeatsSize, MouseListener, MouseMotionListener {
 
-	private final MidiTab tab;
+	private final PianoView view;
 	private final MidiTrack track;
 	private final int width, height;
 	private int highlight = -1;
@@ -29,8 +30,8 @@ public class Piano extends JPanel implements BeatsSize, MouseListener, MouseMoti
 	@Getter private int octave = 4;
 	private HashSet<Integer> actives = new HashSet<>();
 	
-	public Piano(Rectangle r, MidiTrack t, MidiTab tab) {
-		this.tab = tab;
+	public Piano(Rectangle r, MidiTrack t, PianoView view) {
+		this.view = view;
 		this.track = t;
 		width = r.width;
 		height = r.height;
@@ -40,9 +41,9 @@ public class Piano extends JPanel implements BeatsSize, MouseListener, MouseMoti
 	}
 	
 	/** label Octave C
-	 * @return true if idx is integral of 12, ignore first and last Octave*/
-	public boolean isLabelC(int idx) {
-		return idx % 12 == 0 && idx != 0; 
+	 * @return true if data1 is integral of 12*/
+	public boolean isLabelC(int data1) {
+		return data1% 12 == 0; 
 	}
 	
 	@Override
@@ -52,41 +53,44 @@ public class Piano extends JPanel implements BeatsSize, MouseListener, MouseMoti
 		g.drawRect(0, 0, width, height);
 		int x;
 		
-		track.getActives().ints(actives);
-		for (int i = 0; i < PianoBox.VISIBLE_NOTES; i++) {
-			x = i * KEY_WIDTH;
-			g.drawRect(x, 0, KEY_WIDTH, KEY_HEIGHT);
+		float noteWidth = view.scaledWidth;
+		int keyWidth = (int)noteWidth;
+		
+		track.getActives().data1(actives);
+		for (int i = 0; i < view.range + 1; i++) {
+			x = (int) (i * noteWidth);
+			g.drawRect(x, 0, keyWidth, KEY_HEIGHT);
 			if (actives.contains(gridToData1(i))) 
-				rect(g, Pastels.GREEN, x);
+				rect(g, Pastels.GREEN, x, keyWidth);
 			else if (highlight == i) {
 				if (BLACK_KEYS.contains(i % 12))
-					rect(g, Pastels.YELLOW.darker(), x);
+					rect(g, Pastels.YELLOW.darker(), x, keyWidth);
 				else
-					rect(g, Pastels.YELLOW, x);
+					rect(g, Pastels.YELLOW, x, keyWidth);
 			}
 			else if (BLACK_KEYS.contains(i % 12))
-				g.fillRect(x, 0, KEY_WIDTH, KEY_HEIGHT);
+				g.fillRect(x, 0, keyWidth, KEY_HEIGHT);
 			else 
-				rect(g, Color.WHITE, x);
+				rect(g, Color.WHITE, x, keyWidth);
 			
-			if (isLabelC(i))
-				g.drawString("" + i/12, x + 2, 18);
+			if (isLabelC(i + view.tonic))
+				g.drawString("" + (i + view.tonic)/12, x + 2, 18);
 		}
 	}
 
-	private void rect(Graphics g, Color c, int x) {
+	private void rect(Graphics g, Color c, int x, int keyWidth) {
 		g.setColor(c);
-		g.fillRect(x + 1, 1, KEY_WIDTH - 1, KEY_HEIGHT - 1);
+		g.fillRect(x + 1, 1, keyWidth - 1, KEY_HEIGHT - 1);
 		g.setColor(Color.GRAY);
 	}
 	
 	/**Convert x-axis note to midi note*/
-	public static int gridToData1(int idx) {
-			return idx + NOTE_OFFSET;
+	public int gridToData1(int idx) {
+			return idx + view.tonic;
 	}
 	/**Convert midi note to x-axis note */
-	public static int data1ToGrid(int midi) {
-		return midi - NOTE_OFFSET;
+	public int data1ToGrid(int midi) {
+		return midi - view.tonic;
 	}
 	
 	public void highlight(int data1) {
@@ -101,18 +105,18 @@ public class Piano extends JPanel implements BeatsSize, MouseListener, MouseMoti
 	
 	@Override public void mousePressed(MouseEvent e) {
 		sound(false);
-		pressed = tab.getCurrent().getGrid().toData1(e.getPoint());
+		pressed = view.getGrid().toData1(e.getPoint());
 		sound(true);
 	}
 	
 	@Override
 	public void mouseMoved(MouseEvent e) {
-		highlight = e.getX() / BeatsSize.KEY_WIDTH;  
+		highlight = (int) (e.getX() / view.scaledWidth);  
 		repaint();
 	}
 	
 	@Override public void mouseDragged(MouseEvent e) {
-		int next = tab.getCurrent().getGrid().toData1(e.getPoint());
+		int next = view.getGrid().toData1(e.getPoint());
 		if (next == pressed) return;
 		mouseMoved(e);
 		sound(false);
@@ -126,7 +130,10 @@ public class Piano extends JPanel implements BeatsSize, MouseListener, MouseMoti
 	private void sound(boolean on) {
 		if (pressed < 0) return;
 		ShortMessage msg = Midi.create(on ? Midi.NOTE_ON : Midi.NOTE_OFF, track.getCh(), pressed, (int) (track.getState().getAmp() * 127));
-		track.getMidiOut().send(msg, JudahMidi.ticker());
+		if (track.getMidiOut() instanceof MidiInstrument) 
+			JudahMidi.queue(msg, ((MidiInstrument)track.getMidiOut()).getMidiPort());
+		else
+			track.getMidiOut().send(msg, JudahMidi.ticker());
 		if (!on)
 			pressed = -1;
 	}

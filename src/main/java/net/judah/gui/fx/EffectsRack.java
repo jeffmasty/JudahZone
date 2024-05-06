@@ -152,8 +152,7 @@ public class EffectsRack extends JPanel implements MPKTools {
         	Overdrive dist = channel.getOverdrive();
         	int od = offset(dist.get(0), up);
         	dist.set(0, od);
-        	//TODO scratchy if (od > 90) RTLogger.log(this, "drive; " + od + " " + dist.getDrive());
-            dist.setActive(od > 0);
+            dist.setActive(od > 3);
             break;
         case 9:
         	int depth = offset(channel.getChorus().get(Chorus.Settings.Depth.ordinal()), up);
@@ -177,20 +176,17 @@ public class EffectsRack extends JPanel implements MPKTools {
         	Filter filter = channel.getFilter1();
         	int freak = Filter.frequencyToKnob(filter.getFrequency());
         	freak = offset(freak, up);
-        	filter.setActive(freak < thresholdHi);
-        	if (!filter.isActive()) return;
-        	filter.setFilterType(Filter.Type.pArTy);
         	filter.setFrequency(Filter.knobToFrequency(freak));
+        	filter.setActive(freak < thresholdHi);
 			break;
         case 14:
         	Filter filter2 = channel.getFilter2();
         	int hz = offset(Filter.frequencyToKnob(filter2.getFrequency()), up);
-        	filter2.setActive(hz < thresholdHi);
-        	if (!filter2.isActive()) return;
         	filter2.setFrequency(Filter.knobToFrequency(hz));
+        	filter2.setActive(hz < thresholdHi);
         	break;
         case 15:  
-        	channel.getGain().set(Gain.PAN, offset(channel.getPan(), up));
+        	channel.getGain().set(Gain.PAN, offset(channel.getGain().get(Gain.PAN), up));
         	break;
     	}
     	MainFrame.update(channel);

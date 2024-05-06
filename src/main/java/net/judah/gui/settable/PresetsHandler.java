@@ -29,7 +29,7 @@ public class PresetsHandler extends SetCombo<Preset> implements ListCellRenderer
 		super(JudahZone.getPresets().array(), channel.getPreset());
 		this.ch = channel;
 		((JLabel)getRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
-		Gui.resize(this, Size.COMBO_SIZE);
+		Gui.resize(this, Size.MEDIUM_COMBO);
 		addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) {
 				if (SwingUtilities.isRightMouseButton(e))
@@ -38,7 +38,6 @@ public class PresetsHandler extends SetCombo<Preset> implements ListCellRenderer
 
 	@Override
 	protected void action() {
-		if (set == this) return;
 		Preset selected = (Preset)getSelectedItem();
 		if (ch.getPreset() != selected)
 			ch.setPreset(selected);

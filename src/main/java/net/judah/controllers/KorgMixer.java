@@ -65,9 +65,8 @@ public class KorgMixer implements Controller {
 		
 		// knobs = drumkit or synths gain
 		else if (data1 >= knoboff && data1 < knoboff + 4) {
-			Gain gain = getDrumMachine().getKits().get(data1 - knoboff).getGain();
-			gain.set(Gain.VOLUME, data2);
-			MainFrame.update(gain);
+			MidiTrack t = getDrumMachine().getTracks().get(data1 - knoboff);
+			t.setAmp(data2 * 0.01f);
 		}
 		else if (data1 >= knoboff + 4 && data1 < knoboff + 8) {
 			vol(data1 - (knoboff + 4), data2);
@@ -75,11 +74,13 @@ public class KorgMixer implements Controller {
 		else if (data2 > 0 && data1 >= soff && data1 < soff + 8) { // play/stop sequencer tracks
 			seq.get(data1 - soff).trigger();
 		}
-		else if (data2 > 0 && data1 >= moff && data1 < moff + 8) { // MUTE RECORD INPUT
+		else if (data2 > 0 && data1 >= moff && data1 < moff + 8) { // MUTE/RECORD 
 			Channel ch = target(data1 - moff);
-			if (ch instanceof LineIn)
+			if (ch == getMic())
 				((LineIn)ch).setMuteRecord(!((LineIn)ch).isMuteRecord());
-			else 
+			else if (ch == getGuitar()) // swap 
+				getBass().setOnMute(!getBass().isOnMute());
+			else
 				ch.setOnMute(!ch.isOnMute());
 		}
 		else if (data2 > 0 && data1 >= roff && data1 < roff + 8) { // LAUNCH SCENE
@@ -125,7 +126,7 @@ public class KorgMixer implements Controller {
 				getClock().begin();
 		}
 		else if (data1 == RECORD.getVal()) 
-			seq.setRecord(!seq.isRecord());
+			seq.getCurrent().setRecord(!seq.getCurrent().isRecord());
 		
 		return true;
 	}

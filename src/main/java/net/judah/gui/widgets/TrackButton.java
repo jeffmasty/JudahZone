@@ -10,6 +10,7 @@ import javax.swing.SwingConstants;
 
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
@@ -38,7 +39,7 @@ public class TrackButton extends JLabel {
 		if (idx < 10)
 			setText(" " + idx);
 		else setText("" + idx);
-		
+		setBorder(track.isRecord() ? Gui.RED : null);
 		setBackground(bgColor(track));
 	}
 

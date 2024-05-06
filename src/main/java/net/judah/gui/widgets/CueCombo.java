@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import javax.swing.JComboBox;
 
 import net.judah.gui.Gui;
+import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.seq.track.Cue;
 import net.judah.seq.track.MidiTrack;
@@ -29,13 +30,17 @@ public class CueCombo extends JComboBox<Cue> {
 		if (track.getCue() != getSelectedItem()) track.setCue((Cue)getSelectedItem());	
 	}
 
-	// TODO hookup
 	public static void refresh(MidiTrack t) {
 		Constants.execute(()->{
+			MainFrame.getMidiView(t).getMenu().updateCue(); // kludge
 			Cue cue = t.getCue();
-			for (CueCombo c : instances)
-				if (c.track == t && cue != c.getSelectedItem())
+			for (CueCombo c : instances) {
+				if (c.track != t)
+					continue;
+				
+				if (cue != c.getSelectedItem())
 					c.setSelectedItem(t.getCue());
+			}
 			});
 	}
 	

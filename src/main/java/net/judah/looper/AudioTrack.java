@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.api.PlayAudio;
-import net.judah.drumkit.DrumSample;
 import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 import net.judah.util.AudioTools;
@@ -17,6 +16,7 @@ import net.judah.util.Constants;
 
 @Getter
 public abstract class AudioTrack extends Channel implements PlayAudio {
+	protected final int bufSize = Constants.bufSize();
 
 	@Setter protected Type type = Type.ONE_SHOT;
 	protected boolean playing; 
@@ -42,20 +42,19 @@ public abstract class AudioTrack extends Channel implements PlayAudio {
 		rewind();
 		recording = sample;
 	}
-
+	
+	
+	// Loop overrides
 	@Override public int getLength() {
 		return recording.size();
 	}
 	
-	// not for loops
+	// Loop overrides
 	protected void readRecordedBuffer() {
 		int frame = tapeCounter.getAndIncrement();
 		if (frame + 1 >= recording.size()) {
 			tapeCounter.set(0);
-			if (this instanceof DrumSample) {
-				((DrumSample)this).off();
-			}
-			else if (type == Type.ONE_SHOT) {
+			if (type == Type.ONE_SHOT) {
 				playing = false;
 				MainFrame.update(this);
 			}
@@ -90,8 +89,7 @@ public abstract class AudioTrack extends Channel implements PlayAudio {
 		}
 
 		if (delay.isActive()) {
-			delay.process(left, right, true);
-			delay.process(left, right, false);
+			delay.process(left, right);
 		}
 		if (reverb.isActive())
 			reverb.process(left, right);

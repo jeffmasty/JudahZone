@@ -19,8 +19,9 @@ import net.judah.util.RTLogger;
 
 /** communicates with https://github.com/widdly/midiclock over OSC */ 
 public class MidiClock implements Closeable, Cmdr {
+	public static final String PORT_NAME = "a2j:midiclock";
 
-	public static final int port = 4040;
+	public static final int PORT = 4040;
 	private OSCPortOut out;
 	// port communications
 	private final ArrayList<Object> dat = new ArrayList<>();
@@ -28,7 +29,7 @@ public class MidiClock implements Closeable, Cmdr {
 	public MidiClock() throws Exception {
 		// TODO check for/start midiclock process...
 		// ~/git/midiclock/midiclock -s -t95
-		out = new OSCPortOut(InetAddress.getLocalHost(), port);
+		out = new OSCPortOut(InetAddress.getLocalHost(), PORT);
 		JudahZone.getServices().add(this);
 		Constants.sleep(40);
 	}

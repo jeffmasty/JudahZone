@@ -1,26 +1,25 @@
 package net.judah.gui.widgets;
 
-import java.awt.Dimension;
-
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 
-import net.judah.gui.Gui;
+import lombok.Getter;
+import net.judah.gui.MainFrame;
 import net.judah.gui.Updateable;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 
 public class LoopWidget extends JPanel implements Updateable {
 	public static final String FRESH = "0.0s";
-	public static final int BSYNC_UP = Integer.MAX_VALUE;
-	public static final int BSYNC_DOWN = 1000000;
+	public static final int COUNTUP = 8;
 	
 	private final Looper looper;
-	private final Slider slider;
+	@Getter private final Slider slider;
     private final JLabel loopLbl = new JLabel(FRESH);
-
-	public LoopWidget(Looper loops, Dimension size) {
+    private int countUp;
+    
+	public LoopWidget(Looper loops) {
 		this.looper = loops;
 		slider = new Slider(null);
 		slider.setOrientation(JSlider.HORIZONTAL);
@@ -28,7 +27,6 @@ public class LoopWidget extends JPanel implements Updateable {
         slider.setPaintTicks(true);
         slider.setMajorTickSpacing(-1);
         slider.setMinorTickSpacing(25);
-        Gui.resize(slider, size);
         add(new JLabel("Loop:"));
         add(loopLbl);
         add(slider);
@@ -47,6 +45,13 @@ public class LoopWidget extends JPanel implements Updateable {
 			int val = (int) Math.floor(100 * primary.getTapeCounter().intValue() / (float)primary.getLength());
 			if (val != slider.getValue()) 
 				slider.setValue(val);
+		}
+	}
+
+	public void countUp() {
+		if (++countUp == COUNTUP) {
+			MainFrame.update(this); // schedule feedback
+			countUp = 0;
 		}
 	}
 

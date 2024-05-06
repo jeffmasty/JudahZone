@@ -7,20 +7,26 @@ import javax.sound.midi.Receiver;
 
 import net.judah.seq.track.MidiTrack;
 
-public interface MidiReceiver extends Receiver, Closeable {
+/** javax Receiver with channels and presets */
+public interface ZoneMidi extends Receiver, Closeable {
 
+	/** Name of this Receiver */
 	String getName();
 	
 	/** Midi Channels managed by this receiver */
 	Vector<MidiTrack> getTracks();
 	
+	/** list of program names */
 	String[] getPatches();
 	
+	/** program change on default channel
+	 * @return true on success */
 	boolean progChange(String preset);
 	
-	/** true if a match is found in patches, no exception thrown */
+	/** @return true if a match is found in patches */
 	boolean progChange(String preset, int channel);
 	
+	/** current Program name loaded into a managed channel or -1 */
 	String getProg(int ch);
 	
 }

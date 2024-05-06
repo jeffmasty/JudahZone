@@ -14,10 +14,10 @@ import net.judah.util.Folders;
 import net.judah.util.JsonUtil;
 import net.judah.util.RTLogger;
 
-/** Encapsulates a disk folder or a list of files */
-@Getter @NoArgsConstructor
+/** Encapsulates a disk folder (genre) OR a list of files (mix-n-match) */
+@NoArgsConstructor
 public class Setlist extends ArrayList<File> {
-	@JsonIgnore @Setter private File source;
+	@JsonIgnore @Setter @Getter private File source;
 	
 	public Setlist(File f) throws IOException {
 		source = f;

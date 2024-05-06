@@ -16,12 +16,9 @@ import net.judah.drumkit.DrumType;
 import net.judah.fx.Filter;
 import net.judah.fx.Gain;
 import net.judah.gui.Pastels;
-import net.judah.gui.widgets.Btn;
-import net.judah.gui.widgets.FxButton;
 import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.Knob.KnobListener;
 import net.judah.midi.Actives;
-import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 
 public class KitPad extends JPanel implements KnobListener {
@@ -62,16 +59,11 @@ public class KitPad extends JPanel implements KnobListener {
 			@Override public void mousePressed(MouseEvent e) {
 				DrumKit kit = view.getKit();
 				DrumSample s = findSample();
-				Midi click = Midi.create(Midi.NOTE_ON, kit.getTracks().get(0).getCh(), s.getDrumType().getData1(), 100);
-				kit.send(click, JudahMidi.ticker());
+				Midi click = Midi.create(Midi.NOTE_ON, kit.getChannel(), s.getDrumType().getData1(), 100);
+				kit.send(click);
 			}
 		});
-		
-		Btn fxWrapper = new Btn("", e->new FxButton(findSample()).doClick());
-		fxWrapper.setIcon(FxButton.icon());
-		
 		bottom.add(knob);
- 		bottom.add(fxWrapper);
 	}
 
 	public void update() {
@@ -94,8 +86,8 @@ public class KitPad extends JPanel implements KnobListener {
 					knob.setValue(sample.getDecayTime()); 
 				break;
 			case pArTy: 
-				if (sample.getFilter1().get(Filter.Settings.Frequency.ordinal()) != current)
-					knob.setValue(sample.getFilter1().get(Filter.Settings.Frequency.ordinal()));
+				if (sample.getFilter().get(Filter.Settings.Frequency.ordinal()) != current)
+					knob.setValue(sample.getFilter().get(Filter.Settings.Frequency.ordinal()));
 				break;
 			case Dist: 
 				if (sample.getOverdrive().get(0) != current)
@@ -126,9 +118,9 @@ public class KitPad extends JPanel implements KnobListener {
 					sample.setDecayTime(value);
 				break;
 			case pArTy: 
-				if (sample.getFilter1().get(Filter.Settings.Frequency.ordinal()) != value) {
-					sample.getFilter1().set(Filter.Settings.Frequency.ordinal(), value);
-					sample.getFilter1().setActive(value < 97);
+				if (sample.getFilter().get(Filter.Settings.Frequency.ordinal()) != value) {
+					sample.getFilter().set(Filter.Settings.Frequency.ordinal(), value);
+					sample.getFilter().setActive(value < 97);
 				}
 				break;
 			case Dist: 

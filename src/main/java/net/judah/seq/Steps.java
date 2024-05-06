@@ -8,7 +8,7 @@ import net.judah.api.Signature;
 
 public abstract class Steps extends JPanel {
 	
-	public abstract void setStart(int num);
+//	public abstract void setStart(int num);
 	
 	public abstract void timeSig(Signature value);
 

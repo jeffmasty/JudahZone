@@ -26,7 +26,6 @@ public class Line6FBV implements Controller {
 			}
 			if (midi.getData1() == 1) { // "UP" button
 				getOverview().trigger();
-				// getJamstik().nextMidiOut(); 
 				return true;
 			}
 		}
@@ -78,8 +77,10 @@ public class Line6FBV implements Controller {
 				clock.begin();
 			return true;
 		case 6: // Func(2) turn on/off Jamstik midi 
-			getMidi().getJamstik().toggle();
-			// guitar.setPresetActive(data2 > 0);
+			if (mutes)
+				getMidi().getJamstik().octaver();
+			else
+				getMidi().getJamstik().toggle();
 			return true;
 		case 7: // TAP()   toggle record vs. mute controls
 			mutes = data2 > 0;
@@ -107,7 +108,7 @@ public class Line6FBV implements Controller {
 			int percent = (int)(data2 / 1.27f);
 			if (Math.abs(pedalMemory - percent) < 2)
 				return true; // ignore minor fluctuations of vol pedal
-			if (getFxRack() == null)
+			if (getFxRack() == null) // startup?
 				return true;
 			Channel ch = getFxRack().getChannel();
 			if (Math.abs(ch.getVolume() - percent) > 3){

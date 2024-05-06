@@ -1,4 +1,4 @@
-package net.judah.drumkit;
+package net.judah.sampler;
 
 import java.util.ArrayList;
 import java.util.Arrays;

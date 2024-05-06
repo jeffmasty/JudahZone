@@ -3,40 +3,28 @@ package net.judah.gui.settable;
 import java.util.ArrayList;
 
 import lombok.Getter;
-import net.judah.JudahZone;
-import net.judah.api.MidiReceiver;
+import net.judah.api.ZoneMidi;
 import net.judah.seq.track.MidiTrack;
 
 public class Program extends SetCombo<String> {
 	
 	private static final ArrayList<Program> instances = new ArrayList<>();
 
-	@Getter private final MidiReceiver port;
-	@Getter private final int ch;
-	private MidiTrack track;
+	private final MidiTrack track;
+	@Getter private final ZoneMidi port;
+	private final int ch;
 
 	public Program(MidiTrack t) {
-		this(t.getMidiOut(), t.getCh());
+		super(t.getMidiOut().getPatches(), t.getMidiOut().getProg(t.getCh()));
 		track = t;
-	}
-	
-	public Program(MidiReceiver rcv, int channel) {
-		super(rcv.getPatches(), rcv.getProg(channel));
-		this.port = rcv;
-		this.ch = channel;
+		port = track.getMidiOut();
+		ch = track.getCh();
 		instances.add(this);
 	}
 	
 	@Override
 	protected void action() {
-		if (set == this) return;
-		getTrack().progChange(getSelectedItem().toString());
-	}
-
-	public MidiTrack getTrack() {
-		if (track == null)
-			track = JudahZone.getSeq().lookup(port, ch);
-		return track;
+		track.progChange(getSelectedItem().toString());
 	}
 	
 	public static void update(Program data) {
@@ -48,13 +36,11 @@ public class Program extends SetCombo<String> {
 					c.override(current);
 	}
 
-	public static Program first(MidiReceiver synth, int ch) {
+	public static Program first(ZoneMidi synth, int ch) {
 		for (Program c : instances)
 			if (c.port == synth && c.ch == ch)
 				return c;
 		return null;
 	}
-
-	
 	
 }

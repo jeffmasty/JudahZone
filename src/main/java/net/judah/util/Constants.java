@@ -20,29 +20,29 @@ public class Constants {
 	public static final float TUNING = 440;
 	/** Digital Interface name */
 	@Getter static String di = "UMC1820 MIDI 1"; //di = "Komplete ";
-	public static final String GUITAR_PORT = "system:capture_1";
-	public static final String CRAVE_PORT = "system:capture_3";
-	public static final String MIC_PORT = "system:capture_4";
 	public static final String LEFT_PORT = "system:playback_1";
 	public static final String RIGHT_PORT = "system:playback_2";
+	public static final String GUITAR_PORT = "system:capture_5";
+	public static final String MIC_PORT = "system:capture_4";
+	public static final String CRAVE_PORT = "system:capture_3";
+	
+	public static final String GUITAR = "Gtr"; 
+	public static final String MIC = "Mic";
+	public static final String BASS = "Bass";
+	public static final String FLUID = "Fluid";
+	public static final String MAIN = "Main";
 	
     public static final int LEFT = 0;
 	public static final int RIGHT = 1;
 	public static final int STEREO = 2;
 	public static final int MONO = 1;
 
-	public static final String GUITAR = "Gtr"; 
-	public static final String MIC = "Mic";
-	public static final String BASS = "Bass";
-	public static final String FLUID = "Fluid";
-	public static final String MAIN = "Main";
-		
 	public static final String NL = System.getProperty("line.separator", "\r\n");
 	public static final String CUTE_NOTE = "♫ ";
 	public static final String DOT_MIDI = ".mid";
 
 	/** milliseconds between checking the update queue */
-	public static final int GUI_REFRESH = 7;
+	public static final int GUI_REFRESH = 8;
 	public static final long DOUBLE_CLICK = 500;
 	public static final float TO_100 = 0.7874f; // 127 <--> 100
 
@@ -51,8 +51,6 @@ public class Constants {
 		for (int i = 0; i < reverseLog.length; i++)
 			reverseLog[i] = logarithmic(i, 0, 1);
 	}
-
-
 	
     /**@param data2 0 to 127
      * @return data2 / 127 */
@@ -95,6 +93,15 @@ public class Constants {
 	}
 	public static int ratio(long data2, long size) {
 		return (int) (data2 / (100 / (float)size));
+	}
+	
+	public static int rotary(int input, int size, boolean up) {
+		 input += (up ? 1 : -1);
+		 if (input >= size) 
+    		input = 0;
+    	if (input < 0) 
+    		input = size - 1;
+    	return input;
 	}
 
     /** see https://stackoverflow.com/a/846249 */ 	

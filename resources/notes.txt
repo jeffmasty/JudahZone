@@ -1,41 +1,25 @@
 TODO:
 
-Currently, DrumKit is an Engine with a DrumTrack but in the Future:
-DrumMachine = Engine
-    DrumTracks 1-4 have DrumKit Actives
-SynthEngine 
-	Synth1 track
-	Synth2 track
-
-LOOPER:
-CieloStanza duplicate
-extended loop governor
-onDeck gui hiccup
-B_SYNC onDeckA hiccup
-
-Loops wander when Mains muted, 
-mutes: bass, mic, drums, main
+Miditrack: Record progchange, CC, pitchbend
+PianoEditor: drag-n-drop/transpose across frame, falling water, REL/Modal
+Drum decay based on sample length (Kit Knobs & Distortion scratchy)
+scope audio tools, Hot Mic 2.0, pattern navigation 
 Directives.BREAKS ChordPro.@ ChordPro.%   Cycle breaks: A3_ ABC_ TOF_?
+Probability, Ritardando, microsteps
 Scene REL OnDeck Cmd2.0, step cmd, jamstik cmd
-MPK ProgChange, pad2, Fluid Drum ProgChange
-BeatBox>|Selecta
-Hot Mic 2.0, Kit Knobs & Distortion scratchy
-DrumSample-Channel?,  StepSample=Channel?
-Fifths arppegiator, MidiLooper, gate, Swing Pt.II
-sample packs, double-tap one-shots: change to loop
-walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
-hanging chads (unpaired NoteOn across frames), DragNDrop other frames
-Editor falling water/zoomIn-Out, REL = Modal translate
-DBIndicator, Scope, Meters, Crave clock sync 
+internal clock, Fifths arppegiator, gate, Swing Pt.II
+sample packs, double-tap one-shot samples switch to loop
 Synth: envelope to filter, LFO, glide, PWM, mono-synth, 
-Probability, Ritardando, CC in Midi tracks, microsteps
-Sampler FX (granularity, pitched frequency, wet)
+Electronics Github Repository, credits 
+walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
+Sampler FX (granularity, pitched frequency, lofi, wet)
 IR Reverb, DrumSynth, Phasor, Shepherd, Vocoder
-SongEditor undo/redo, internal clock
+SongEditor undo/redo, Reload setlists on new Song
 record record record youtubes
-user manual, Qwerty
-make client-server architecture
+user manual, Qwerty, client-server architecture
 support JavaSound/non-Jack, make accessible setup and settings
+Subwoofer library, Fluid drums
+Scope, Meters [log  vol  tune  hz]
 
 -------------------------
 samples: https://freesound.org/people/laffik/packs/38658/
@@ -62,15 +46,14 @@ Jack's alsa driver/client tries to use SND_PCM_FMT_S32_LE, signed 32-bit PCM lit
 which is the format used by all current 24 bit audio cards except for some USB interfaces
 drum options:  DrMr, drumkv1-jack, hydrogen, fluid, drumsynth, black pearl
 ChordPro parsers: https://github.com/SongProOrg/songpro-java  https://github.com/saipanman95/chordpro-parser
-
-sequencer:
+Arduino clock: https://github.com/midilab/uClock
+sequencers:
 https://github.com/truj/midica/tree/master/src/org/midica/midi
 https://github.com/perkowitz/sequence/tree/master/src/main/java/net/perkowitz/sequence
 odin purplepip
 arpeggio this! https://github.com/ybalcanci/Sequence-Player/blob/master/RecamanSequence.java
 java sequencer https://github.com/sebastianruizva/JMidiSequencer
 java launchpad sequencer https://github.com/perkowitz/sequence/wiki/User%20Manual
-
 LV2 plugins
 ARty effects  https://github.com/openAVproductions/openAV-ArtyFX/blob/master/manual.md
 Rudolf556 drum machine http://ll-plugins.nongnu.org/lv2/rudolf556.html
@@ -80,7 +63,7 @@ https://github.com/VCVRack  modular synth
 distortion plugins: https://github.com/olegkapitonov/Kapitonov-Plugins-Pack
 Simple converter ttl to JSON
 https://github.com/PedalController/Lv2Library/blob/master/src/br/com/srmourasilva/lv2library/Lv2Mapper.java
-
+https://midilab.co/jc303/
 javafx
 eclipse plugin: https://www.eclipse.org/efxclipse/install.html#for-the-lazy
 export PATH_TO_FX=path/to/javafx-sdk-13/lib
@@ -149,20 +132,21 @@ separate setlist and code
 export beatbox as midi file, quantization
 midi-fluent Song editor, midi track resolution
 BeatBox absolute resolution, Swing and Waltz gracefully 
-MidiEditor undo/redo/copy/paste/transpose/translate/drag-n-drop/velocity/record live
+MidiEditor undo/redo/copy/paste/transpose/translate/drag-n-drop/velocity/record live/zoom+center
 ERRNOBUF - recover Jack MIDI when ALSA bridge fails
 Arpeggiator, ChordPro parser, Synth tracks follow ChordPro/MPK/ABS/Racman
 Setlists, save/load loops to/from disk, record session audio
 Delay + LFO sync to Tempo
 note-on/off tracker per channel
+db indicator
 
 REFERENCE------------------------------------------------------------
 [Mixer]                [FX]
-[Loops] [Ins]  [Main]  
-1 2 3 4 5 6 7 8..      1  2  3  4
-| | + | | | | |        5  6  7  8
-+ + | | + + + |        9  10 11 12
-| | | + | | | +        13 14 15 16
+[Loops] [Inputs]  [Main]  
+1 2 3 4 5 6 7 8..      
+| | + | | | | |        
++ + | | + + + |        
+| | | + | | | +        
 
 
 Class Hierarchy:
@@ -182,9 +166,7 @@ Channel
 
 javax.sound.midi.Receiver:
 
-
-
-	MidiReceiver 
+	ZoneMidi
 		Midi Tracks
 		- MidiPort  (JackPort or Engine)
 		patches
@@ -195,34 +177,12 @@ javax.sound.midi.Receiver:
       Engine
       	JudahSynth
       	DrumKit (x4)
-
-
 		
 
 	MidiTrack  
-		MidiReceiver  {Midi Tracks}
 		- Actives per Channel
 		progChange
 		send
-		
-
-			
-   
-   MidiReceiver  --> Actives per Channel, MidiPort(JackPort or Engine)
-   ZoneMidi
-   
-   -- interface -- CC/OnOff/Prog/StartStop? 
-   
-      MidiInstrument (Crave)
-      	FluidSynth
-      Engine
-      	JudahSynth
-      	DrumKit (x4)
-
- --Updates--  Actives -> DrumKnobs or PianoView
- --Updates--   Knobs --> DrumKnobs or SynthKnobs
- --Updates--  MidiNote Updates to Musician
- 
 
 Song JSON:
 [tracks:] trackName, file, progChange
@@ -233,15 +193,17 @@ Song JSON:
 [fx:]  channelName, presetName
 [record:] channelName
 
-nanoPAD2:
+[nanoPAD2]
 recordA	   recordB  recordC recordDrum sheetMusic   Gtr.Efx.sync  x	               x
 reload/AAB latchB   latchC  latchSolo  Verse/Chorus MuteA/B    	  clockStop/syncx  Crickets/++
 
-KNOBS:
-FX 
-	Rev.Wet    Rev.Room  Del.F/B   Del.Time   Eq.Bass  Eq.Mid  Eq.High  Vol  
-	Cho.Rate   Cho.Deep  Cho.F/B   Overdrive  Eq.Type  Eq.Party Eq.Cut  Pan/Comp.gain 
-	
+[Beatstep FX Knobs]
+	1  2  3  4   9  10 11 12
+	5  6  7  8   13 14 15 16
+	Rev.Wet   Rev.Room  Del.F/B Del.Time   Eq.Bass  Eq.Mid   Eq.High  Vol  
+	Overdrive Cho.Deep  Cho.F/B Cho.Rate   Preset   Eq.Party Eq.Cut   Pan 
+
+[Views]	
 LFO/Compressor 
 	type   min     max       time
 	Ratio  Thresh  Boost     Atk/Rel

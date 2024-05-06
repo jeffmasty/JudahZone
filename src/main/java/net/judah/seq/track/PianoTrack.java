@@ -1,16 +1,22 @@
 package net.judah.seq.track;
 
+import java.util.ArrayList;
+
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
 import lombok.Getter;
-import net.judah.api.MidiReceiver;
+import net.judah.api.ZoneMidi;
+import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
+import net.judah.seq.Edit;
+import net.judah.seq.Edit.Type;
+import net.judah.seq.MidiPair;
 import net.judah.seq.arp.Arp;
 import net.judah.seq.arp.Mode;
 import net.judah.song.Sched;
@@ -20,10 +26,11 @@ public class PianoTrack extends MidiTrack {
 	
 	public static int DEFAULT_POLYPHONY = 24;
 	public static int MONOPHONIC = 1;
-
-	@Getter private final Arp arp = new Arp(this);
 	
-	public PianoTrack(String name, MidiReceiver out, int ch, JudahClock clock) throws InvalidMidiDataException {
+	@Getter private final Arp arp = new Arp(this);
+	private final ArrayList<MidiEvent> chads = new ArrayList<>();
+	
+	public PianoTrack(String name, ZoneMidi out, int ch, JudahClock clock) throws InvalidMidiDataException {
 		this(name, out, ch, clock, DEFAULT_POLYPHONY);
 	}
 	
@@ -31,8 +38,7 @@ public class PianoTrack extends MidiTrack {
 		super(name, notes, clock);
 	}
 
-
-	public PianoTrack(String name, MidiReceiver out, int ch, JudahClock clock, int polyphony) throws InvalidMidiDataException {
+	public PianoTrack(String name, ZoneMidi out, int ch, JudahClock clock, int polyphony) throws InvalidMidiDataException {
 		super(name, out, ch, JudahClock.MIDI_24, clock, polyphony);
 	}
 
@@ -51,9 +57,7 @@ public class PianoTrack extends MidiTrack {
 				arp.clear();
 			new Panic(this);
 		}
-
 	}
-
 
 	@Override
 	protected void playNote(ShortMessage msg) {
@@ -61,7 +65,6 @@ public class PianoTrack extends MidiTrack {
     		midiOut.send(msg, JudahMidi.ticker());
     	else  
     		arp.process(msg);
-		
 	}
 	
 	@Override
@@ -76,25 +79,42 @@ public class PianoTrack extends MidiTrack {
 		}
 		if (arp.isActive())
 			arp.clear();
-		
-	}
-
-	@Override
-	public void importTrack(Track incoming, int rez) {
-		super.importTrack(incoming, rez);
-		
-		if (arp.isActive())
-			arp.clear();
-		new Panic(this);
-		for (int i = 0; i < incoming.size(); i++) 
-			t.add(incoming.get(i));
-
 	}
 
 	@Override public void next(boolean fwd) {
 		if (arp.isActive())
 			arp.clear();
 		super.next(fwd);
+	}
+
+	@Override
+	protected void parse(Track incoming) {
+		if (arp.isActive())
+			arp.clear();
+		new Panic(this);
+		for (int i = 0; i < incoming.size(); i++) 
+			t.add(incoming.get(i));
+	}
+
+	@Override
+	protected void processRecord(ShortMessage m, long ticker) {
+		midiOut.send(m, ticker);
+		if (Midi.isNoteOn(m)) 
+			chads.add(new MidiEvent(Midi.copy(m), recent));
+		else if (Midi.isNoteOff(m)) {
+			MidiEvent used = null;
+			for (MidiEvent on : chads) {
+				if (((ShortMessage)on.getMessage()).getData1() != m.getData1()) 
+					continue;
+				used = on;
+				MainFrame.getMidiView(this).getGrid().push(
+					new Edit(Type.NEW, new MidiPair(on, new MidiEvent(Midi.copy(m), recent))));
+				break;
+			}
+			if (used != null)
+				chads.remove(used);
+		}
+		// TODO CC, progchange, pitchbend
 	}
 
 }

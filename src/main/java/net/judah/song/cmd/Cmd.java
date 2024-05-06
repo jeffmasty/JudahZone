@@ -4,6 +4,7 @@ import static net.judah.JudahZone.*;
 
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
+import net.judah.looper.LoopCmdr;
 import net.judah.looper.Looper;
 
 @RequiredArgsConstructor
@@ -32,11 +33,11 @@ public enum Cmd {
 		case SoloCh:	return getInstruments();
 		case Latch:		return getInstruments();
 
-		case Record:	return getLooper();
-		case RecEnd:	return getLooper();
+		case Record:	return getLoops();
+		case RecEnd:	return getLoops();
 		case Sync:		if (sinker == null) sinker = new Sinker(getLooper()); return sinker;
-		case Delete: 	return getLooper();
-		case Dup:	 	return getLooper();
+		case Delete: 	return getLoops();
+		case Dup:	 	return getLoops();
 		case Solo:		return getLooper().getSoloTrack();
 
 		case Mute:		return getMixer();
@@ -52,18 +53,25 @@ public enum Cmd {
 		}
 	}
 
+	private static LoopCmdr loops;
+	private static LoopCmdr getLoops() {
+		if (loops == null)
+			loops = new LoopCmdr(getLooper());
+		return loops;
+	}
+	
 	private static Sinker sinker;
 	@RequiredArgsConstructor
 	private static class Sinker implements Cmdr {
     	private String[] keys;
     	private final Looper looper;
-    	@Override public Object resolve(String key) { return looper.resolve(key); }
+    	@Override public Object resolve(String key) { return getLoops().resolve(key); }
 		@Override public String[] getKeys() {
 			if (keys == null) {
-				keys = new String[looper.getKeys().length + 1];
+				keys = new String[getLoops().getKeys().length + 1];
 				keys[keys.length - 1] = "Tempo";
-				for (int i = 0; i < looper.getKeys().length; i++)
-					keys[i] = looper.getKeys()[i];
+				for (int i = 0; i < getLoops().getKeys().length; i++)
+					keys[i] = getLoops().getKeys()[i];
 			}
 			return keys;
 		}
@@ -72,7 +80,7 @@ public enum Cmd {
 			if (resolve(p.val) == null && p.cmd == Cmd.Sync)
 				JudahZone.getClock().syncTempo(looper.getPrimary());
 			else 
-				looper.execute(p);
+				getLoops().execute(p);
 		}
 	}
 	

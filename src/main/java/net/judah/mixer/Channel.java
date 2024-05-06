@@ -10,6 +10,7 @@ import javax.swing.ImageIcon;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.fx.*;
 import net.judah.gui.MainFrame;
@@ -19,21 +20,22 @@ import net.judah.gui.settable.PresetsHandler;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
-/** A mixer bus for either Input or Output audio */
+/** An effects bus for input or output audio */
 @Getter 
 public class Channel {
 	protected final int bufSize = Constants.bufSize();
-    protected final FloatBuffer left = FloatBuffer.allocate(bufSize);
-    protected final FloatBuffer right = FloatBuffer.allocate(bufSize);
+    protected final FloatBuffer left = FloatBuffer.wrap(new float[bufSize]);
+    protected final FloatBuffer right = FloatBuffer.wrap(new float[bufSize]);
+    protected JackPort leftPort;
+    protected JackPort rightPort;
 
 	protected final String name;
-    protected final boolean isStereo;
 	protected ImageIcon icon;
+	protected final boolean isStereo;
 	protected boolean onMute;
-	
+	protected final PresetsHandler presets = new PresetsHandler(this);
 	protected Preset preset = JudahZone.getPresets().getDefault();
 	protected boolean presetActive;
-	protected final PresetsHandler presets;
 	
     protected final Gain gain = new Gain();
     protected final LFO lfo = new LFO(this);
@@ -44,23 +46,20 @@ public class Channel {
     protected final Chorus chorus = new Chorus();
 	protected Delay delay = new Delay();
     protected Reverb reverb;
-    protected Compressor compression = new Compressor();
-    protected JackPort leftPort;
-    protected JackPort rightPort;
+    protected final Compressor compression = new Compressor();
     protected final List<Effect> effects;
     protected EffectsRack gui;
-    protected LFOKnobs lfoKnobs;
+    @Setter protected LFOKnobs lfoKnobs;
     
     public Channel(String name, boolean isStereo) {
         this.name = name;
         this.isStereo = isStereo;
-        filter1 = new Filter("Filter1", isStereo, Filter.Type.pArTy, 700);
-        filter2 = new Filter("Filter2", isStereo, Filter.Type.HiCut, 16000); 
+        filter1 = new Filter(isStereo, Filter.Type.pArTy, 700);
+        filter2 = new Filter(isStereo, Filter.Type.HiCut, 16000); 
         reverb = new Freeverb(isStereo);
         effects = Arrays.asList(new Effect[] {
-                lfo, filter1, filter2, eq,
-                chorus, overdrive, delay, getReverb(), compression});
-        presets = new PresetsHandler(this);
+        		reverb, delay, overdrive, chorus,
+                eq, filter1, filter2, compression, lfo });
     }
 
     @Override public boolean equals(Object obj) {
@@ -77,14 +76,13 @@ public class Channel {
     
     public LFOKnobs getLfoKnobs() {
     	if (lfoKnobs == null)
-    		lfoKnobs = new LFOKnobs(this);
+    		lfoKnobs = new LFOKnobs(this, JudahZone.getMixer());
     	return lfoKnobs;
     }
     
     @Override public int hashCode() {
     	return gain.hashCode();
     }
-    
     
     public void setPresetActive(boolean active) {
     	presetActive = active;
@@ -159,11 +157,6 @@ public class Channel {
 	/**@return 0 to 100*/
 	public int getVolume() {
 		return gain.get(Gain.VOLUME);
-	}
-	
-	/**@return 0 to 100*/
-	public int getPan() {
-		return gain.get(Gain.PAN);
 	}
 	
 	@Override public String toString() { return name; }

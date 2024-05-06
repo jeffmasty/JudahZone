@@ -11,9 +11,6 @@ public interface TimeProvider extends TimeNotifier {
 	
 	int getMeasure();
 	int getBeat();
-
-	//	/**@return in milliseconds, -1 if request is not valid in context */
-	//	long getNextPulse();
-	//  void setMeasure(int bpb);
+	Signature getTimeSig();
 
 }

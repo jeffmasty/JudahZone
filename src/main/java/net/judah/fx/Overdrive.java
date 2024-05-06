@@ -29,7 +29,7 @@ public final class Overdrive implements Effect {
 
     @Getter @Setter boolean active;
     @Getter private float drive = 0.06f;
-    private float makeupGain = makeupGain();
+    private float makeupGain = 0.85f;
     private int nframes;
     
     public Overdrive() {
@@ -56,24 +56,14 @@ public final class Overdrive implements Effect {
     }
 
     @Override public void set(int idx, int value) {
-    	value--;
-    	if (value < 0)
-    		setDrive(0);
-    	else if (value > 99)
-    		setDrive(.9999f);
+    	if (value < 2)
+    		drive = 0.00001f;
+    	else if (value >= 95)
+    		drive = 0.666f;
     	else 
-    		setDrive(Constants.logarithmic(value, 0, 1));
+    		drive = Constants.logarithmic(value, 0, 1);
     }
 
-    public void setDrive(float drive) {
-        this.drive = drive < 0 ? 0 : drive > 1 ? 1 : drive;
-        this.makeupGain = makeupGain();
-    }
-
-    private float makeupGain() {
-    	return (1.2f - (drive + 0.75f)) * 1.3f;
-    }
-    
     public void processAdd(FloatBuffer buf) {
         buf.rewind();
         double preMul = drive * 99 + 1;

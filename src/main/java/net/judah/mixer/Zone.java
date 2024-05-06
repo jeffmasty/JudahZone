@@ -1,5 +1,7 @@
 package net.judah.mixer;
 
+import static net.judah.JudahZone.*;
+
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Vector;
@@ -7,8 +9,11 @@ import java.util.Vector;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
+import net.judah.midi.fluid.FluidSynth.Tracks;
+import net.judah.seq.track.MidiTrack;
 import net.judah.song.cmd.Cmdr;
 import net.judah.song.cmd.Param;
+import net.judah.util.Constants;
 
 @RequiredArgsConstructor
 public class Zone extends Vector<LineIn> implements Cmdr {
@@ -48,17 +53,39 @@ public class Zone extends Vector<LineIn> implements Cmdr {
 	
 	/** By default, don't record drum track, microphone, sequencer */
     public void initMutes() {
-        JudahZone.getMic().setMuteRecord(true);
-        JudahZone.getDrumMachine().setMuteRecord(true);
-        JudahZone.getSynth2().setMuteRecord(true);
+        getMic().setMuteRecord(true);
+        getDrumMachine().setMuteRecord(true);
+        getSynth2().setMuteRecord(true);
 	}
 	public void initVolume() {
-		JudahZone.getMic().getGain().setGain(0.3f);
-		JudahZone.getFluid().getGain().setGain(0.5f);
-		JudahZone.getGuitar().getGain().setGain(0.5f);
-		JudahZone.getCrave().getGain().setGain(0.66f);
-		JudahZone.getSynth1().getGain().setGain(0.5f);
-		JudahZone.getSynth2().getGain().setGain(0.5f);
+		getMic().getGain().setGain(0.3f);
+		getFluid().getGain().setGain(0.5f);
+		getGuitar().getGain().setGain(0.5f);
+		getBass().getGain().setGain(0.5f);
+		getSynth1().getGain().setGain(0.5f);
+		getSynth2().getGain().setGain(0.5f);
+	}
+	
+	public void initSynths() {
+		getSynth1().progChange("FeelGood");
+		getSynth2().progChange("Drops1");
+		getSynth1().getTracks().get(0).load("0s");
+		getSynth2().getTracks().get(0).load("16ths");
+		getBass().getTracks().get(0).load("Bass2");
+		
+		while (getFluid().getChannels().isEmpty())
+			Constants.sleep(100); // allow time for FluidSynth to sync TODO timeout
+		Vector<MidiTrack> tracks = getFluid().getTracks();
+		MidiTrack fluid1 = tracks.get(Tracks.Fluid1.ordinal());
+		fluid1.load("8ths");
+		fluid1.getMidiOut().progChange("Strings", fluid1.getCh());
+		MidiTrack fluid2 = tracks.get(Tracks.Fluid2.ordinal());
+		fluid2.load("CRDSKNK");
+		fluid2.getMidiOut().progChange("Palm Muted Guitar", fluid2.getCh());
+		MidiTrack fluid3 = tracks.get(Tracks.Fluid3.ordinal());
+		fluid3.load("Synco");
+		fluid3.getMidiOut().progChange("Harp", fluid3.getCh());
+
 	}
 	
 	@Override

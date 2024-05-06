@@ -16,14 +16,11 @@ import javax.sound.midi.Track;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import net.judah.api.Key;
-import net.judah.drumkit.DrumType;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
 import net.judah.seq.Edit.Type;
-import net.judah.seq.piano.PianoBox;
 import net.judah.seq.track.MidiTrack;
 import net.judah.util.RTLogger;
 
@@ -47,8 +44,6 @@ public abstract class MusicBox extends JPanel implements Musician {
 	protected Prototype click;
 	protected Point drag = null;
 	protected DragMode mode = null;
-	private ArrayList<MidiPair> dragging = new ArrayList<>();
-	private Prototype recent;
 	
 	public MusicBox(MidiView view, Rectangle r, MidiTab tab) {
 		this.track = view.getTrack();
@@ -70,22 +65,16 @@ public abstract class MusicBox extends JPanel implements Musician {
 	}
 
 	@Override public void mouseDragged(MouseEvent mouse) { 
-		if (mode != null) {
-			switch(mode) {
+		if (mode == null) 
+			return;
+		switch(mode) {
 			case CREATE: 
-				repaint();
-				break;
-			case SELECT: 
-				if (mouse.getPoint().x < drag.x)
-					drag = null; // veto inverse squares
-				if (mouse.getPoint().y < drag.y)
-					drag = null;
+			case SELECT:
 				repaint();
 				break;
 			case TRANSLATE: 
 				drag(mouse.getPoint());
 				break;
-			}
 		}
 	}
 	
@@ -113,27 +102,18 @@ public abstract class MusicBox extends JPanel implements Musician {
 		else if (ch == ' ')
 			track.setActive(!track.isActive());
 		else if (e.getModifiersEx() == 128) {
-			switch(intchar) {
-			case 1: selectFrame(); break; // ctrl-a
-			case 3: copy(); break; // ctrl-c
-			case 4: selectNone(); break; // ctrl-d
-			case 12: new Duration(this); break; // ctrl-l
-			case 18: undo(); break; // ctrl-r
-			case 19: track.save(); break; // ctrl-s
-			case 20: new Transpose(track, this); break; // ctrl-t
-			case 22: paste(); break; // ctrl-v
-			case 26: undo(); break; // ctrl-z
-			
+			switch (intchar) {
+				case 1: selectFrame(); break; 		// ctrl-a
+				case 3: copy(); break; 				// ctrl-c
+				case 4: selectNone(); break; 		// ctrl-d
+				case 12: new Duration(this); break; // ctrl-l
+				case 18: undo(); break; 			// ctrl-r
+				case 19: track.save(); break; 		// ctrl-s
+				case 20: new Transpose(track, this); break; // ctrl-t
+				case 22: paste(); break; 			// ctrl-v
+				case 26: undo(); break; 			// ctrl-z
 			default: RTLogger.log(this, "key: " + ch + "=" + intchar + ";" + e.getModifiersEx());
 			}
-		}
-//		else if (intchar == 10) // ?
-//			track.offset(track.getCurrent() + 1);
-		else if (track.isSynth() && PianoBox.chromaticKeyboard(ch) >= 0) {
-			int ordinal = PianoBox.chromaticKeyboard(ch);
-			while (ordinal >= 12)
-				ordinal -= 12;
-			RTLogger.log(this, "pressed " + Key.values()[ordinal]);
 		}
 		else 
 			RTLogger.log(this, "key: " + ch + "=" + intchar + ";" + e.getModifiersEx());
@@ -151,10 +131,10 @@ public abstract class MusicBox extends JPanel implements Musician {
 		boolean up = wheel.getPreciseWheelRotation() < 0;
 		
 		if (selected.isEmpty()) {
-			int velocity = view.getMenu().getVol().getValue() + (up ? 5 : -1); // ??5
+			float velocity = track.getAmp() + (up ? 0.05f : -0.05f);
 			if (velocity < 0)  velocity = 0;
-			if (velocity > 100)  velocity = 99;
-			view.getMenu().getVol().setValue(velocity);
+			if (velocity > 1)  velocity = 1;
+			track.setAmp(velocity);
 			return;
 		}
 		float ratio = up ? 1.1f : 0.9f;
@@ -194,23 +174,6 @@ public abstract class MusicBox extends JPanel implements Musician {
 		}
 	}
 
-	protected void transpose(ArrayList<MidiPair> notes, Prototype destination) {
-		editDel(notes);
-		ArrayList<MidiPair> replace = new ArrayList<>();
-		for (MidiPair note : notes) 
-			replace.add(Transpose.compute(note, destination, track));
-		editAdd(replace);
-	}
-	
-	private void decompose(ArrayList<MidiPair> notes, Prototype destination) {
-		ArrayList<MidiPair> delete = new ArrayList<>();
-		for (MidiPair note : notes)
-			delete.add(Transpose.compute(note, destination, track));
-		editDel(delete);
-		editAdd(notes);
-		click = null;
-	}
-	
 	private void execute(Edit e) {
 		switch (e.getType()) {
 		case DEL:
@@ -253,7 +216,7 @@ public abstract class MusicBox extends JPanel implements Musician {
 		case TRANS:
 			if (track.isActive())
 				new Panic(track);
-			decompose(e.getNotes(), e.getDestination());
+			decompose(e);
 			break;
 		case LENGTH:
 			length(e, true);
@@ -343,61 +306,21 @@ public abstract class MusicBox extends JPanel implements Musician {
 		selectArea(start, end);
 	}
 	
-	@Override
-	public void selectArea(long start, long end, int low, int high) {
-		selected.clear();
-		for (int i = 0; i < t.size(); i++) {
-			long tick = t.get(i).getTick();
-			if (tick < start) continue;
-			if (tick >= end) break;
-			if (Midi.isNoteOn(t.get(i).getMessage())) {
-				ShortMessage on = (ShortMessage)t.get(i).getMessage();
-				int data1 = on.getData1();
-				if (data1 >= low && data1 <= high)
-					selected.add(track.isDrums() ? new MidiPair(t.get(i), null) : MidiTools.noteOff(t.get(i), t));
-			}
+	private final Rectangle shadeRect = new Rectangle();
+	protected Rectangle shadeRect(int x, int y) {
+		if (drag.x < x) {
+			if (drag.y < y)
+				shadeRect.setBounds(drag.x, drag.y, x - drag.x, y - drag.y);
+			else
+				shadeRect.setBounds(drag.x, y, x - drag.x, drag.y - y);
+		} else {
+			if (drag.y < y)
+				shadeRect.setBounds(x, drag.y, drag.x - x, y - drag.y);
+			else
+				shadeRect.setBounds(x, y, drag.x - x, drag.y - y);
 		}
-		repaint();
-	}
-
-	//////// Drag and Drop /////////
-	@Override public void dragStart(Point mouse) {
-		mode = DragMode.TRANSLATE;
-		dragging.clear();
-		selected.forEach(p -> dragging.add(new MidiPair(p)));
-		click = recent = new Prototype(toData1(mouse), track.quantize(toTick(mouse)));
-	}
-	
-	@Override public void drag(Point mouse) {
-		Prototype now = new Prototype(toData1(mouse), track.quantize(toTick(mouse)));
-		if (now.equals(recent)) // hovering
-			return; 
-		// note or step changed, move from most recent drag spot
-		int data1 = track.isSynth() ? now.getData1() - recent.getData1() :
-			DrumType.index(now.getData1()) - DrumType.index(recent.getData1());
-		long tick = ((now.getTick() - recent.getTick()) % track.getWindow()) / track.getStepTicks();
-		Prototype destination = new Prototype(data1, tick);
-		recent = now;
-		transpose(selected, destination);
-	}
-	
-	@Override public void drop(Point mouse) {
-		// delete selected, create undo from start/init
-		editDel(selected);
-		Edit e = new Edit(Type.TRANS, dragging);
-		Prototype now = new Prototype(toData1(mouse), track.quantize(toTick(mouse)));
-		Prototype destination = new Prototype(now.getData1() - click.getData1(), 
-				((now.getTick() - click.getTick()) % track.getWindow()) / track.getStepTicks());
-		e.setDestination(destination);
-		push(e);
+		return shadeRect;
 	}
 	
 }
-
-//	public void selectStep(int step) {
-//		long div = track.getResolution() / clock.getSubdivision();
-//		long start = track.getLeft() + (step * div);
-//		long end = start + div;
-//		selectArea(start, end, 0, 127);
-//	}
 

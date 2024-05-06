@@ -16,4 +16,15 @@ public class MidiFile extends Sequence {
 			resolution = rez;
 	}
 	
+	int biggest() {
+		int events = 0;
+		int idx = 0;
+		for (int i = 0; i < getTracks().length; i++)
+			if (getTracks()[i].size() > events) {
+				idx = i;
+				events = getTracks()[i].size();
+			}
+		return idx;
+	}
+	
 }

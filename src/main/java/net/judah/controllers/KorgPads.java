@@ -4,18 +4,18 @@ import static net.judah.JudahZone.*;
 
 import java.util.ArrayList;
 
-import net.judah.drumkit.Sampler;
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
 import net.judah.fx.Filter;
 import net.judah.fx.Overdrive;
 import net.judah.gui.MainFrame;
-import net.judah.gui.fx.FxPanel;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
+import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
+import net.judah.sampler.Sampler;
 import net.judah.util.Constants;
 
 /** CC 1 - 16 on channel 13 */
@@ -42,7 +42,6 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			return true;
 		}
 		Looper looper = getLooper();
-		FxPanel fxrack = getFxRack();
 		
 		switch (data1) {
 		// Loops top row
@@ -55,17 +54,30 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			looper.get(data1 - 1).trigger();
 			return true;
 		case 5: // toggle FX
-			fxrack.getChannel().toggleFx();
+			getFxRack().getChannel().toggleFx();
 			return true; 
 		case 6: // latch guitar EFX to looper
 			looper.syncFx(getGuitar());
 			// getGuitar().getLatchEfx().latch();
 			return true;
-		case 7: 
-			getFrame().getKnobs().pad1();
+		case 7: // Clock off/sync
+			JudahClock clock = getClock();
+			if (clock.isActive())
+				clock.end();
+			else if (looper.hasRecording()) {
+				if (clock.isOnDeck())
+					clock.offSync();
+				else clock.syncToLoop();
+			}
+			else 
+				getClock().begin();
 			return true;
-		case 8: 
-			getFrame().getKnobs().pad2();
+		case 8: // Crickets step sequencer 			
+			Sampler sampler = getSampler();
+			if (doubleTap(sampler)) // increment sample
+				sampler.nextStepSample();
+			sampler.setStepping(!sampler.isStepping());
+ 
 			return true;
 			
 		// Loops bottom row
@@ -86,26 +98,18 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		case 14: // next scene 
 			getOverview().trigger();
 			return true;
-		case 15: // Clock off/sync
-			if (getClock().isActive())
-				getClock().end();
-			else if (getLooper().hasRecording())
-				getClock().syncToLoop();
-			else 
-				getClock().begin();
+		case 15: 
+			getFrame().getKnobs().pad1();
 			return true;
-		case 16: 	
-			Sampler sampler = getSampler();
-			if (doubleTap(sampler)) // increment crickets/shaker sample
-				sampler.nextStepSample();
-			sampler.setStepping(!sampler.isStepping());
+		case 16:
+			getFrame().getKnobs().pad2();
 			return true;
 
 		case JOYSTICK_ON: 
 			joystick(true);
 			return true;
 		case JOYSTICK_X:
-			Channel fx = fxrack.getChannel();
+			Channel fx = getFxRack().getChannel();
 			Delay delay = fx.getDelay();
 			Chorus chorus = fx.getChorus();
 			Overdrive od = fx.getOverdrive();
@@ -119,7 +123,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 				delay.setActive(true);
 			}
 			else if (right) {
-				od.setDrive(Constants.logarithmic((data2 - 77) * 2, 0, 1));
+				od.set(0, data2);
 				chorus.setActive(true);
 				od.setActive(true);
 			}
@@ -128,10 +132,11 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 				od.setActive(false);
 				chorus.setActive(false);
 			}
-			MainFrame.updateCurrent();
+			MainFrame.update(fx);
 			return true;
 		case JOYSTICK_Y: 
-			Filter party = fxrack.getChannel().getFilter1();
+			Channel ch = getFxRack().getChannel();
+			Filter party = ch.getFilter1();
 			boolean down = data2 < LEFT - 10;
 			boolean up = data2 > RIGHT + 10;
 			if (up) {
@@ -145,7 +150,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			else {
 				party.setActive(false);
 			}
-			MainFrame.updateCurrent();
+			MainFrame.update(ch);
 			return true;
 		}
 		return false;
@@ -156,14 +161,15 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		if (tapTarget == o && System.currentTimeMillis() - lastPress < Constants.DOUBLE_CLICK) {
 			lastPress = 0;
 			if (o instanceof Integer) 
-				getLooper().get((Integer)o).clear();
+				getLooper().clear(getLooper().get((Integer)o));
+			
 			else if (o instanceof Loop) {
 				Loop loop = (Loop)o;
 				Looper loops = getLooper(); 
 				if (loop == loops.getLoopA()) 
 					loops.clear();
 				else if (loop.isPlaying()) 
-					loop.doubled();
+					loop.duplicate();
 				else if (loop == loops.getSoloTrack()) 
 					((SoloTrack)loop).toggle();
 			}
@@ -175,15 +181,16 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 	}
 
 	private void joystick(boolean active) {
+		Channel ch = getFxRack().getChannel();
 		if (active) {
-			getFxRack().getChannel().reset();
 			// TODO stash preset
+			ch.reset();
 		}
 		else {
-			getFxRack().getChannel().reset();
-			// TODO restore preset
+			ch.reset();
+			// TODO restore preset?
 		}
-		MainFrame.updateCurrent();
+		MainFrame.update(ch);
 	}
 	
 }

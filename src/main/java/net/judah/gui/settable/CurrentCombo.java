@@ -23,7 +23,6 @@ public class CurrentCombo extends SetCombo<Integer> {
 	
 	@Override
 	protected void action() {
-		if (set == this) return;
 		if (getSelectedIndex() !=  track.getFrame())
 			track.toFrame(getSelectedIndex());
 	}

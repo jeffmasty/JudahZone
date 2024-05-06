@@ -14,12 +14,12 @@ import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
 import net.judah.gui.Gui;
 import net.judah.seq.MidiView;
-import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.DrumTrack;
 
 public class DrumMutes extends JPanel {
 	static UIDefaults def = new UIDefaults();
 	
-	private final MidiTrack track;
+	private final DrumTrack track;
 	private final MidiView view;
 	private final Rectangle r;
 	private final int rowHeight;
@@ -38,7 +38,7 @@ public class DrumMutes extends JPanel {
 	public DrumMutes(Rectangle r, MidiView view) {
 		this.r = r;
 		this.view = view;
-		this.track = view.getTrack();
+		this.track = (DrumTrack)view.getTrack();
 		setBounds(r);
 		setLayout(null);
 		rowHeight = (int)Math.ceil((r.height) / DrumType.values().length);
@@ -54,7 +54,7 @@ public class DrumMutes extends JPanel {
 			if (false == c instanceof Mute)
 				continue;
 			Mute btn = (Mute)c;
-			btn.setSelected(getSample(btn.type).isOnMute());
+			btn.setSelected(track.getSample(btn.type).isOnMute());
 		}
 	}
 	
@@ -64,14 +64,11 @@ public class DrumMutes extends JPanel {
 			btn.setSelected(!btn.isSelected());
 		}
 		else {
-			DrumSample s = getSample(btn.type);
+			DrumSample s = track.getSample(btn.type);
 			s.setOnMute(!s.isOnMute());
 		}
 	}
 
-	public DrumSample getSample(DrumType t) {
-		return ((DrumKit) track.getMidiOut()).getSamples()[t.ordinal()];
-	}
 
 	public void update(DrumSample pad) {
 		for (DrumSample s : ((DrumKit)track.getMidiOut()).getSamples()) 

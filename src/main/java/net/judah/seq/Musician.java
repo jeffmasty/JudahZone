@@ -5,6 +5,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
+import java.util.ArrayList;
 
 import net.judah.api.Signature;
 
@@ -25,5 +26,8 @@ public interface Musician extends MouseListener, MouseWheelListener, MouseMotion
 	void drop(Point p);
 	void selectArea(long start, long end, int low, int high);
 	void selectNone();
+	void transpose(ArrayList<MidiPair> notes, Prototype destination);
+	void decompose(Edit e);	
+
 	
 }

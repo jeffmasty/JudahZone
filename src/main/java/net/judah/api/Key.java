@@ -21,7 +21,7 @@ public enum Key {
     Bb (0, 2, "A#"),
     B  (0, 5, null);
 
-	public static final int TOTAL = 12;
+	public static final int OCTAVE = 12;
 	@Getter private final int sharps;
     @Getter private final int flats;
     private final String alt;
@@ -38,7 +38,7 @@ public enum Key {
     }
     
     public static Key key(int data1) {
-    	return Key.values()[data1 % TOTAL];
+    	return Key.values()[data1 % OCTAVE];
     }
     
     public static Key key(ShortMessage m) {
@@ -59,7 +59,7 @@ public enum Key {
 		int mine = ordinal();
 		int other = key.ordinal();
 		if (mine > other)
-			mine -= TOTAL;
+			mine -= OCTAVE;
 		return other - mine;
 	}
 

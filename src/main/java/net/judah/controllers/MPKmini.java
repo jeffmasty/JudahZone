@@ -3,9 +3,6 @@ package net.judah.controllers;
 import static net.judah.JudahZone.*;
 
 import lombok.RequiredArgsConstructor;
-import net.judah.api.MidiReceiver;
-import net.judah.drumkit.DrumType;
-import net.judah.drumkit.Sample;
 import net.judah.fx.Delay;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
@@ -14,8 +11,11 @@ import net.judah.gui.widgets.MidiPatch;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
+import net.judah.sampler.Sample;
+import net.judah.seq.MidiConstants;
 import net.judah.seq.Seq;
 import net.judah.seq.arp.Mode;
+import net.judah.seq.track.DrumTrack;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -25,9 +25,11 @@ public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels 
 
 	public static final byte[] SUSTAIN_ON = Midi.create(Midi.CONTROL_CHANGE, 0, 64, 127).getMessage();
 	public static final byte[] SUSTAIN_OFF = Midi.create(Midi.CONTROL_CHANGE, 0, 64, 0).getMessage();
-	
 	private static final int JOYSTICK_L = 127;
 	private static final int JOYSTICK_R = 0;
+	private final String[] ROMPLER = new String[] {
+				"Acoustic Bass", "Vibraphone", "Rock Organ", "Rhodes EP",
+				"Tremolo", "Oboe", "Ahh Choir", "Harp"};
 
 	private final JudahMidi sys;
 	private final Seq seq;
@@ -35,39 +37,41 @@ public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels 
 	@Override
 	public boolean midiProcessed(Midi midi) {
 
-		if (Midi.isCC(midi)) {
+		if (Midi.isCC(midi)) 
 			return checkCC(midi.getData1(), midi.getData2());
-		}
+		
 		if (Midi.isProgChange(midi)) 
 			return doProgChange(midi.getData1(), midi.getData2());
 
-		if (midi.getChannel() == 9) {
+		if (midi.getChannel() == MidiConstants.DRUM_CH) { // user playing drum pads
 			int data1 = midi.getData1();
-			for (int i = 0; i < DRUMS_A.size() ; i++)
+			DrumTrack drums = null;
+			int i;
+			for (i = 0; i < DRUMS_A.size() ; i++) {
 				if (DRUMS_A.get(i) == data1) {
-					int translate = getDrumMachine().getDrum1().getSamples()[i].getDrumType().getData1();
-					try {
-						midi.setMessage(midi.getCommand(), 9, translate, midi.getData2());
-					} catch (Exception e) { RTLogger.warn(this, e);}
+					drums = getDrumMachine().getDrum1();
+					break;
 				}
-			
-			for (int i = 0; i < DRUMS_B.size() ; i++)
 				if (DRUMS_B.get(i) == data1) {
-					try {
-						midi.setMessage(midi.getCommand(), 9, DrumType.values()[i].getData1(), midi.getData2());
-					} catch (Exception e) { RTLogger.warn(this, e);}
+					drums = getDrumMachine().getDrum2();
+					break;
 				}
+			}
+			if (drums != null) {
+				int translate = drums.getKit().getSamples()[i].getDrumType().getData1();
+				try {
+					midi.setMessage(midi.getCommand(), drums.getCh(), translate, (int) (midi.getData2() * track.getAmp()));
+				} catch (Exception e) { RTLogger.warn(this, e);}
+				drums.send(midi, JudahMidi.ticker());
+				getLooper().getSoloTrack().beatboy(); // hot sync
+			}
+			return true;
 		}
 		
-		if (seq.rtCheck(midi)) 
-			return true; // track will send
-		
-		// Final input processing/playing	
-		if (midi.getChannel() == 9) { // Mode.REC?
-			getLooper().getSoloTrack().beatboy();
-		}
+		if (seq.arpCheck(midi))
+			return true;
     	if (Midi.isNote(midi) || Midi.isPitchBend(midi)) {
-    		send(Midi.format(midi, track.getCh(), 1), JudahMidi.ticker());
+    		track.send(midi, JudahMidi.ticker());
     		return true;
     	}
 		return false;
@@ -98,16 +102,12 @@ public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels 
 			getChords().toggle();
 		}
 		else if (data1 == PRIMARY_CC.get(1)) { // sync Crave's internal sequencer
-			sys.synchronize(getCrave());
+			sys.synchronize(getBass());
 		}
-		else if (data1 == PRIMARY_CC.get(2) && data2 > 0) // focus MidiGui or LFO
-			if (MainFrame.getKnobMode() == KnobMode.Setlist) 
-				MainFrame.setFocus(KnobMode.LFO);
-			else if (MainFrame.getKnobMode() == KnobMode.Midi)
-				MainFrame.setFocus(KnobMode.Setlist);
-			else 
-				MainFrame.setFocus(KnobMode.Midi); 
-		else if (data1 == PRIMARY_CC.get(3) && data2 > 0) {// focus TRACKS
+		
+		else if (data1 == PRIMARY_CC.get(2) && data2 > 0 && !doubleClick()) // focus MidiGui or LFO
+			nextMidiBtn();
+		else if (data1 == PRIMARY_CC.get(3) && data2 > 0 && !doubleClick()) {// focus TRACKS
 			if (MainFrame.getKnobMode() == KnobMode.Track)
 				getSeq().getTracks().next(true);
 			else 
@@ -116,13 +116,12 @@ public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels 
 			
 		///////// ROW 2 /////////////////
 		else if (data1 == PRIMARY_CC.get(4)) 
-			seq.setRecord(!seq.isRecord());
+			track.setRecord(track.isRecord());
 		
 		else if (data1 == PRIMARY_CC.get(5)) 
 			track.getArp().toggle(Mode.MPK);
 
-		
-		else if (data1 == PRIMARY_CC.get(6) && data2 > 0) { // focus Synth1 or Synth2 or Sampler
+		else if (data1 == PRIMARY_CC.get(6) && data2 > 0 && !doubleClick()) { // focus Synth1 or Synth2 or Sampler
 			if (MainFrame.getKnobMode() == KnobMode.DCO) {
 				if (getFrame().getKnobs() == getSynth1().getSynthKnobs()) 
 					MainFrame.setFocus(getSynth2().getSynthKnobs());
@@ -134,10 +133,37 @@ public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels 
 		}
 		else if (data1 == PRIMARY_CC.get(7) && data2 > 0) { // SET SettableCombo
 			MainFrame.set();
-		} 
+		}
+		
 		else 
 			return false;
 		return true;
+	}
+
+	private long doubleClick = System.currentTimeMillis();
+	private boolean doubleClick() {
+		if (System.currentTimeMillis() < Constants.DOUBLE_CLICK + doubleClick)
+			return true;
+		doubleClick = System.currentTimeMillis();
+		return false;
+	}
+
+	private final KnobMode[] midiBtnSequence = new KnobMode[] 
+			{KnobMode.Midi, KnobMode.Setlist, KnobMode.Presets, KnobMode.Tools};
+	private void nextMidiBtn() {
+		KnobMode mode = MainFrame.getKnobMode();
+		int idx = 0;
+		for (; idx < midiBtnSequence.length; idx++) {
+			if (mode == midiBtnSequence[idx]) {
+				if (idx == midiBtnSequence.length - 1)
+				  idx = 0;
+				else 
+					idx++;
+				MainFrame.setFocus(midiBtnSequence[idx]);
+				return;
+			}
+		}
+		MainFrame.setFocus(KnobMode.Midi);
 	}
 
 	private boolean joystickL(int data2) { // delay
@@ -162,61 +188,35 @@ public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels 
 	}
 	
 	private boolean doProgChange(int data1, int data2) {
-		MidiReceiver fluid = getFluid();
-        //  upInst   upDrum   upSheet   upSong
-        // downInst downDrum downSheet downSong
-		if (data1 == PRIMARY_PROG[0]) {// up fluid inst patch
-//            	ProgChange.next(true, fluid, 9);
-//            else if (data1 == PRIMARY_PROG[1]) { // up gm drum patch
-//            	ProgChange.next(true, fluid, 9);
-		} 
-		else if (data1 == PRIMARY_PROG[2]) { // up sheetMusic
-//            	getFrame().sheetMusic(true);
-//            } else if (data1 == PRIMARY_PROG[3]) { // up song
-//            	nextSong();
-		} 
-		else if (data1 == PRIMARY_PROG[4]) { // down fluid inst patch
-//                ProgChange.next(false, fluid, 0);
-//            } else if (data1 == PRIMARY_PROG[5]) { // down gm drum patch
-//            	ProgChange.next(false, fluid, 0);
-		} else if (data1 == PRIMARY_PROG[6]) { // down sheet music
-			getFrame().sheetMusic(false);
-		} else if (data1 == PRIMARY_PROG[7]) { // reset stage
-//        	getMidiGui().getSongsCombo().setSelectedItem(0);
-//        	loadSong(getSong().getFile());
-        }
-
-        // B BANK 
-        else if (data1 == B_PROG[0]) // I want bass
-        	fluid.progChange("Acoustic Bass");
-        else if (data1 == B_PROG[1]) { 
-        	fluid.progChange("Sitar");
-        } else if (data1 == B_PROG[2]) { 
-        	fluid.progChange("Harp");
-        } else if (data1 == B_PROG[3]) { 
-        	fluid.progChange("Rhodes EP");
-        }
-        else if (data1 == B_PROG[4]) { // strings
-        	fluid.progChange("Tremolo");
-        } else if (data1 == B_PROG[5]) { 
-        	fluid.progChange("Vibraphone");
-        } else if (data1 == B_PROG[6]) 
-        	fluid.progChange("Rock Organ");
-        else if (data1 == B_PROG[7]) { 
-        	fluid.progChange("Honky Tonk");
-        } else 
-        	return false;
-		return true;
+		// Bank A: Fluid presets
+		for (int i = 0; i < PRIMARY_PROG.length; i++) 
+			if (data1 == PRIMARY_PROG[i]) {
+				getFluid().progChange(ROMPLER[i]);
+				return true;
+			}
+		// Bank B: set current track's pattern #
+		for (int i = 0; i < B_PROG.length; i++) {
+			if (data1 == B_PROG[i]) {
+				seq.getCurrent().toFrame(i);
+				return true;
+			}
+		}
+		return false;
 	}
-	
-//	// TODO
-//	public void updateSynth() {
-//    	Mode m = track.getArp().getMode();
-//    	if (m == Mode.MPK || m == Mode.REC) 
-//    		frame.setBackground(m.getColor());
-//    	else frame.setBackground(null);
-//    }
 
+	public void record() {
+		track.setRecord(!track.isRecord());
+		if (frame == null)
+			return;
+		frame.setBackground(track.isRecord() ? Pastels.RED : null);	
+	}
+
+	public void transpose() {
+		track.getArp().toggle(Mode.MPK);
+		if (frame == null)
+			return;
+		frame.setBackground(track.getArp().getMode() == Mode.MPK ? Mode.MPK.getColor() : null);	
+	}
 	
 }
 

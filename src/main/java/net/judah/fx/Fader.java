@@ -6,10 +6,10 @@ import java.util.ArrayList;
 
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
-import net.judah.drumkit.Sample;
 import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
+import net.judah.sampler.Sample;
 
 @RequiredArgsConstructor
 public class Fader {

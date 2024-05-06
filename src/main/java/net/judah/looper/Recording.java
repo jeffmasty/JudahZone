@@ -242,4 +242,21 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 		return size() / Constants.fps();
 	}
 
+	
+	public float[] getLeft() {
+		return getChannel(LEFT);
+	}
+	public float[] getRight() {
+		return getChannel(RIGHT);
+	}
+	float[] getChannel(int ch) {
+		int buffer = Constants.bufSize();
+		float[] result = new float[size() * buffer];
+		for (int i = 0; i < size(); i++) {
+			System.arraycopy(get(i)[ch], 0, result, i * buffer, buffer);
+		}
+		return result;
+			
+	}
+	
 }

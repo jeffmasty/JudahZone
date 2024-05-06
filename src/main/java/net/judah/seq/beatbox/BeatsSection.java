@@ -6,11 +6,12 @@ import lombok.Getter;
 import net.judah.seq.MidiView;
 import net.judah.seq.TrackList;
 import net.judah.seq.track.Gate;
-import net.judah.seq.track.TrackMenu;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.TrackMenu;
 
 public class BeatsSection extends MidiView implements BeatsSize {
-	
+	private static final int BEAT_WIDTH = 14;
+	private static final int DATA1_OFFSET = 24;
 	@Getter private final DrumMutes mutes;
 	@Getter private final BeatSteps steps;
 	
@@ -30,10 +31,10 @@ public class BeatsSection extends MidiView implements BeatsSize {
 	}
 	
 	public static int toData1(Point p) {
-		return p.x / KEY_WIDTH + NOTE_OFFSET;
+		return p.x / BEAT_WIDTH + DATA1_OFFSET;
 	}
 	public static int toX(int data1) {
-		return (data1 - NOTE_OFFSET) * KEY_WIDTH;
+		return (data1 - DATA1_OFFSET) * BEAT_WIDTH;
 	}
 
 	public static int toY(long tick, long measure, int height) {

@@ -1,6 +1,5 @@
 package net.judah.gui;
 
-
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 
@@ -36,13 +35,12 @@ public class HQ extends JPanel implements TimeListener {
     	this.looper = loops;
     	this.songs = songs;
     	sync = new LengthCombo(clock);
-		Gui.resize(scene, Size.SMALLER_COMBO);
-    	
-    	setLayout(new FlowLayout(FlowLayout.LEFT, 0, 2));
-    	add(new StartBtn(clock));
     	metro = new Btn(Icons.get("left.png"), e->clock.skipBar());
     	metro.setOpaque(true);
-    	add(scene);
+    	
+    	setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    	add(new StartBtn(clock));
+    	add(Gui.resize(scene, Size.SMALLER_COMBO));
     	add(Gui.resize(new ChordPlay(chords).makeFancy(), new Dimension(54, Size.STD_HEIGHT)));
     	add(record);
     	add(sync);
@@ -54,7 +52,7 @@ public class HQ extends JPanel implements TimeListener {
 	@Override public void update(Property prop, Object value) {
 		if (prop == Property.BARS)
 			metro.setIcon(JudahClock.isEven() ? Icons.get("left.png") : Icons.get("right.png"));
-		metro.setBackground(clock.isActive() == false && clock.isOnDeck() ? Pastels.YELLOW : null);
+		metronome();
 	}
     
 	private void trigger() {
@@ -64,6 +62,7 @@ public class HQ extends JPanel implements TimeListener {
 			songs.setScene(songs.getOnDeck());
 		else 
 			songs.trigger();
+		sceneText();
 	}
 
 	void record() {
@@ -82,7 +81,11 @@ public class HQ extends JPanel implements TimeListener {
 			sync.setSelectedItem(JudahClock.getLength());
 	}
 	
-	public void sceneText() {
+	public void metronome() {
+		metro.setBackground(clock.isActive() == false && clock.isOnDeck() ? Pastels.YELLOW : null);
+	}
+
+	void sceneText() {
 		StringBuffer sb = new StringBuffer();
 		int idx = songs.getSong().getScenes().indexOf(songs.getScene());
 		boolean onDeck = songs.getOnDeck() != null;
@@ -100,6 +103,5 @@ public class HQ extends JPanel implements TimeListener {
 		scene.setText(sb.toString());
 		scene.setBackground(onDeck ? songs.getOnDeck().getType().getColor() : null);
 	}
-
 
 }

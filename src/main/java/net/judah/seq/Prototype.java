@@ -1,13 +1,12 @@
 package net.judah.seq;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
 
-@Data @NoArgsConstructor @AllArgsConstructor
+@AllArgsConstructor @EqualsAndHashCode
 public class Prototype {
 
-	public int data1;
-	public long tick;
+	public final int data1;
+	public final long tick;
 	
 }

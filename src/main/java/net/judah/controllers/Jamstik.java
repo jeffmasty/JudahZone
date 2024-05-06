@@ -5,7 +5,10 @@ import static net.judah.JudahZone.getGuitar;
 import static net.judah.JudahZone.getMixer;
 
 import lombok.Getter;
+import net.judah.api.Key;
 import net.judah.fx.Gain;
+import net.judah.gui.Gui;
+import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.widgets.MidiPatch;
 import net.judah.midi.JudahMidi;
@@ -19,6 +22,7 @@ public class Jamstik extends MidiPatch implements Controller {
 	
 	@Getter private boolean active;
 	private int volStash = 50;
+	private boolean octaver;
 	
 	public void setActive(boolean active) {
 		this.active = active;
@@ -35,7 +39,7 @@ public class Jamstik extends MidiPatch implements Controller {
 				frame.setBackground(active ? Pastels.GREEN : null);		
 			getMixer().update(guitar);
 			if (getFxRack().getChannel() == getGuitar())
-				getFxRack().getChannel().getGui().update();
+				MainFrame.update(guitar);
 		});
 
 	}
@@ -44,11 +48,22 @@ public class Jamstik extends MidiPatch implements Controller {
 		setActive(!active);
 	}
 
-	@Override
-	public boolean midiProcessed(Midi midi) {
-		if (active && Midi.isNote(midi))
-			send(midi, JudahMidi.ticker());
-		return true;
+	public void octaver() {
+		octaver = !octaver;
+		Constants.execute(() -> setFont(octaver ? Gui.BOLD12 : Gui.FONT11));
+		if (octaver && !active)
+			toggle();
 	}
 	
+	@Override
+	public boolean midiProcessed(Midi midi) {
+		if (active && Midi.isNote(midi)) // TODO pitchbend
+			if (octaver)
+				track.send(Midi.create(midi.getCommand(), track.getCh(), midi.getData1() - Key.OCTAVE, 
+						midi.getData2()), JudahMidi.ticker());
+			else 
+				track.send(midi, JudahMidi.ticker());
+		return true;
+	}
+
 }

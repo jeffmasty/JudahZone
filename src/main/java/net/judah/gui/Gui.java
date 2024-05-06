@@ -8,7 +8,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 
 public interface Gui {
 
@@ -29,7 +28,6 @@ public interface Gui {
 	Font FONT12 = new Font("Arial", Font.PLAIN, 12);
 	Font FONT11 = new Font("Arial", Font.PLAIN, 11);
 	Font FONT10 = new Font("Arial", Font.PLAIN, 10);
-	Border GRAY1 = new LineBorder(Color.GRAY, 1);
 	Font FONT9 = new Font("Arial", Font.PLAIN, 9);
 	
 	

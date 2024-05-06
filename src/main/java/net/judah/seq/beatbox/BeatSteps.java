@@ -59,10 +59,6 @@ public class BeatSteps extends Steps {
         previous.setActive(true);
     }
 
-	@Override
-	public void setStart(int num) {
-	}
-
 	private void addLbls() {
         for (int i = 0; i < all.size(); i++) {
             BeatLabel lbl = all.get(i);

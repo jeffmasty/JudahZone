@@ -10,6 +10,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import net.judah.JudahZone;
 import net.judah.util.Constants;
+import net.judah.util.Memory;
 import net.judah.util.RTLogger;
 
 /** Save a loop or live audio to disk. <br/>
@@ -111,7 +112,7 @@ public class ToDisk extends LinkedBlockingQueue<float[][]> implements Closeable,
 	}
 
 	public void offer(FloatBuffer left, FloatBuffer right) {
-		float[][] data = memory.getArray();
+		float[][] data = memory.getFrame();
 		left.rewind(); right.rewind();
 		for (int i = 0; i < JACK_SIZE; i++) {
 			data[LEFT][i] = left.get();

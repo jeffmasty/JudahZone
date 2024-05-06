@@ -71,7 +71,7 @@ public class Song {
 		int idx = scenes.indexOf(scene);
 		if (idx == 0) { // save mutes
 			record.clear();
-			mixer.getSources().forEach(line ->{
+			JudahZone.getInstruments().forEach(line ->{
 				if (!line.isMuteRecord())record.add(line.getName());});
 		}
     	try {

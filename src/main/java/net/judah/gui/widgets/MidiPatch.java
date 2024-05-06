@@ -3,7 +3,6 @@ package net.judah.gui.widgets;
 import java.awt.Component;
 import java.util.List;
 
-import javax.sound.midi.ShortMessage;
 import javax.swing.JComboBox;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -15,7 +14,6 @@ import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.Updateable;
-import net.judah.midi.Midi;
 import net.judah.midi.Panic;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
@@ -41,13 +39,12 @@ public abstract class MidiPatch extends JComboBox<PianoTrack> implements Updatea
 		ports.forEach(track -> addItem((PianoTrack)track));
 		track = (PianoTrack)ports.get(0);
 		setSelectedItem(track);
-		addActionListener(e -> setPort((PianoTrack)getSelectedItem()));
-
+		addActionListener(e -> setMidiTrack((PianoTrack)getSelectedItem()));
 		this.frame = frame;
 		frame.add(Gui.resize(this, Size.COMBO_SIZE));
 	}
 
-	public void setPort(PianoTrack out) {
+	public void setMidiTrack(PianoTrack out) {
 		if (track == out)
 			return;
 		if (track != null)
@@ -60,12 +57,5 @@ public abstract class MidiPatch extends JComboBox<PianoTrack> implements Updatea
 		if (track != (MidiTrack)getSelectedItem())
 			setSelectedItem(track);
 	}
-	
-	public void send(ShortMessage m, int ticker) {
-		if (m.getChannel() == track.getCh())
-			track.getMidiOut().send(m, ticker);
-		else
-			track.getMidiOut().send(Midi.format(m, track.getCh(), 1f), ticker);
-	}
-	
+		
 }

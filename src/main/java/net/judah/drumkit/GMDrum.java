@@ -1,10 +1,7 @@
 package net.judah.drumkit;
 
-import java.security.InvalidParameterException;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.midi.GMNames;
 import net.judah.midi.Midi;
 
 @RequiredArgsConstructor @Getter
@@ -92,13 +89,6 @@ public enum GMDrum {
 	@Override
 	public String toString() {
 	    return display;
-	}
-
-	public static int indexOf(String instrument) {
-		for (int i = 0 ; i < GMNames.GM_DRUMSETS.length; i++)
-			if (GMNames.GM_DRUMSETS[i].equals(instrument))
-				return i;
-		throw new InvalidParameterException(instrument);
 	}
 
     

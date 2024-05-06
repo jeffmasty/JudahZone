@@ -64,8 +64,8 @@ public class SynthKnobs extends KnobPanel {
 	private final JComboBox<Integer> mod = new JComboBox<>(); 
 	
 	private final JButton synthOne = new JButton(JudahSynth.NAMES[0][0]);
-	private final JButton synthTwo = new JButton(JudahSynth.NAMES[1][1]);
-	private final JPanel titleBar = new JPanel(new FlowLayout(FlowLayout.CENTER, 3, 0));
+	private final JButton synthTwo = new JButton(JudahSynth.NAMES[1][0]);
+	private final JPanel title = new JPanel(new FlowLayout(FlowLayout.CENTER, 3, 0));
 	
 	public SynthKnobs(JudahSynth zynth) {
 		this.synth = zynth;
@@ -125,23 +125,23 @@ public class SynthKnobs extends KnobPanel {
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		update();
 		listeners();
-		titleBar.setOpaque(true);
+		title.setOpaque(true);
 		synthOne.setOpaque(true);
 		synthTwo.setOpaque(true);
 		bg();
 		synthOne.addActionListener(e->MainFrame.setFocus(JudahZone.getSynth1().getSynthKnobs()));
 		synthTwo.addActionListener(e->MainFrame.setFocus(JudahZone.getSynth2().getSynthKnobs()));
-		titleBar.add(synthOne);
-		titleBar.add(synthTwo);
-		titleBar.add(new Btn(Icons.DETAILS_VEW, 
+		title.add(synthOne);
+		title.add(synthTwo);
+		title.add(new Btn(Icons.DETAILS_VEW, 
 				e->JudahZone.getFrame().edit(JudahZone.getSeq().byName(synth.getName()))));
+		validate();
 	}
 
 	@Override
-	public JPanel installing() {
-		MainFrame.setFocus(synth);
-		bg();
-		return titleBar;
+	public JPanel getTitle() {
+		Constants.execute(()->bg());
+		return title;
 	}
 	
 	private void bg() {
@@ -202,12 +202,6 @@ public class SynthKnobs extends KnobPanel {
 			r.setValue(adsr.getReleaseTime());
 
 		conformDetune();
-		
-		hcFreq.setEnabled(freqMode);
-		hcReso.setEnabled(freqMode);
-		lcFreq.setEnabled(!freqMode);
-		lcReso.setEnabled(!freqMode);
-		
 	}
 
 	private void conformDetune() {
@@ -256,11 +250,10 @@ public class SynthKnobs extends KnobPanel {
 			case 3:
 				adsr.setReleaseTime(data2);
 				break;
-			case 4: Constants.execute(() -> presets.setSelectedIndex( // execute?
+			case 4: Constants.execute(() -> presets.setSelectedIndex( 
 						Constants.ratio(data2, presets.getItemCount() - 1)));
 				break;
-			case 5:
-				synth.setModSemitones(Constants.ratio(data2, OCTAVE));
+			case 5: Constants.execute(() -> mod.setSelectedItem(Constants.ratio(data2, OCTAVE)));
 				break;
 			case 6: 
 				if (freqMode)
@@ -283,13 +276,14 @@ public class SynthKnobs extends KnobPanel {
 	@Override
 	public void pad1() {
 		JudahSynth target = (synth == JudahZone.getSynth1()) ? JudahZone.getSynth2() : JudahZone.getSynth1();
-			MainFrame.setFocus(target.getSynthKnobs());
+		MainFrame.setFocus(target.getSynthKnobs());
 	}
 
 	@Override
 	public void pad2() {
 		freqMode = !freqMode;
-		MainFrame.update(this);
+		MainFrame.update(this); // TODO freqMode feedback in update()
+		
 	}
 	
 }

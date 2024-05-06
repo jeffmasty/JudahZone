@@ -13,11 +13,11 @@ import javax.swing.border.BevelBorder;
 
 import net.judah.JudahZone;
 import net.judah.api.PlayAudio.Type;
-import net.judah.drumkit.Sample;
 import net.judah.fx.Gain;
 import net.judah.gui.Pastels;
 import net.judah.gui.widgets.FxButton;
 import net.judah.gui.widgets.Knob;
+import net.judah.sampler.Sample;
 
 public class SamplePad extends JPanel {
 	public final Sample sample;

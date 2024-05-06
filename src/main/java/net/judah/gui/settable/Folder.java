@@ -52,7 +52,6 @@ public class Folder extends SetCombo<File> {
 
 	@Override
 	protected void action() {
-		if (set == this) return;
 		track.load((File)getSelectedItem());
 	}
 

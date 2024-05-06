@@ -12,6 +12,7 @@ import net.judah.song.cmd.BooleanProvider;
 import net.judah.song.cmd.Cmd;
 import net.judah.song.cmd.Cmdr;
 import net.judah.song.cmd.Param;
+import net.judah.util.Memory;
 
 @Getter @EqualsAndHashCode(callSuper = true) 
 public class SoloTrack extends Loop implements Cmdr {
@@ -19,11 +20,13 @@ public class SoloTrack extends Loop implements Cmdr {
     public static final String NAME = "D";
     private boolean muteStash = true;
     private LineIn soloTrack;
+    private boolean soloOn;
     
     public SoloTrack(LineIn soloTrack, Looper looper, Zone sources, 
     		JackPort l, JackPort r, Memory mem) {
-        super(NAME, "LoopD.png", Type.DRUMTRACK, looper, sources, l, r, mem);
+        super(NAME, "LoopD.png", Type.SYNC, looper, sources, l, r, mem);
         this.soloTrack = soloTrack;
+        drumTrack = true;
     }
 
     public void solo(boolean engage) { 
@@ -33,8 +36,7 @@ public class SoloTrack extends Loop implements Cmdr {
             soloTrack.setMuteRecord(false);
         }
         else {
-        	type = Type.DRUMTRACK;
-        	looper.syncDown();
+        	type = Type.SYNC;
             soloTrack.setMuteRecord(muteStash);
         }
         MainFrame.update(this);

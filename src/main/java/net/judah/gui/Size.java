@@ -8,8 +8,8 @@ public interface Size {
     int WIDTH_KNOBS = 346;
     int WIDTH_TAB = WIDTH_FRAME - WIDTH_KNOBS - 1; 
     int HEIGHT_FRAME = 734;
-    int HEIGHT_KNOBS = 260;
-    int HEIGHT_MIXER = 157;
+    int HEIGHT_KNOBS = 290;
+    int HEIGHT_MIXER = 154;
     int HEIGHT_TAB = HEIGHT_FRAME - HEIGHT_MIXER;
 
     Dimension TAB_SIZE = new Dimension(WIDTH_TAB, HEIGHT_TAB);
@@ -25,5 +25,6 @@ public interface Size {
     Dimension MICRO = new Dimension(51, STD_HEIGHT);
     Dimension TINY = new Dimension(43, STD_HEIGHT);
 	Dimension MODE_SIZE = new Dimension(70, STD_HEIGHT);
-
+	Dimension FADER_SIZE = new Dimension(50, 76);
+	Dimension KNOB_TITLE = new Dimension(100, 33);
 }

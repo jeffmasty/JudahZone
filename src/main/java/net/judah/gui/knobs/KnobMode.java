@@ -8,6 +8,7 @@ public enum KnobMode {
 	Kits,
 	Samples,
 	Presets,
-	Setlist;
+	Setlist,
+	Tools;
 	
 }

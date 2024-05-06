@@ -234,7 +234,8 @@ public class Overview extends JPanel implements TimeListener {
     public void setSong(Song smashHit) {
     	looper.clear();
     	clock.reset();
-    	getDrumMachine().getKits().forEach(kit->kit.reset());
+    	
+    	getDrumMachine().reset();
 
     	song = smashHit;
     	clock.reset(song.getTimeSig());

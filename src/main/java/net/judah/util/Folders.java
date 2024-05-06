@@ -20,18 +20,18 @@ public class Folders {
 	@Getter static final File SheetMusic = new File(_home, "sheets");
 	@Getter static final File ChordPro = new File(_home, "chords");
 	@Getter static final File Loops = new File(_home, "loops");
-	
 	@Getter static final File PresetsFile = new File(_home, "presets.zone");
 	@Getter static final File SynthPresets = new File(_home, "synths.zone");
-    
-    public static File midi(File parent) {
-    	return new File(parent, JudahZone.getClock().getTimeSig().name());
-    }
-
     // TODO not hardcoded
 	static final File ROOT = new File("/home/judah/git/JudahZone/resources/");
     @Getter static final File Log4j = new File(ROOT, "log4j.xml");
     @Getter static final File ICONS = new File(ROOT, "icons");
+	@Getter static final File ImportDrums = new File("/home/judah/tracks/beatbuddy/");
+	@Getter static final File ImportMidi= new File("/home/judah/tracks/midi/");
+
+    public static File midi(File parent) {
+    	return new File(parent, JudahZone.getClock().getTimeSig().name());
+    }
 
 	public static File[] sort(File folder) {
 		File[] result = folder.listFiles();

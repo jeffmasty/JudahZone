@@ -70,6 +70,13 @@
 	    <version>2.4-1</version>
 	</dependency>
 
+<!--    <dependency>
+    	<groupId>dsp-collection-java</groupId>
+    	<artifactId>dsp-collection-java</artifactId>
+	    <version>0.0.1-SNAPSHOT</version>
+	</dependency>
+-->
+
 </dependencies>
   
 </project>

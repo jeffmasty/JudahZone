@@ -10,10 +10,7 @@ import javax.swing.*;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.controllers.Jamstik;
-import net.judah.drumkit.Sampler;
-import net.judah.fluid.FluidCommand;
-import net.judah.fluid.FluidSynth;
-import net.judah.fluid.FluidSynth.Drum;
+import net.judah.controllers.MPKmini;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
@@ -24,11 +21,13 @@ import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.Click;
 import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.LengthCombo;
-import net.judah.gui.widgets.MidiPatch;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
+import net.judah.midi.fluid.FluidCommand;
+import net.judah.midi.fluid.FluidSynth;
+import net.judah.midi.fluid.FluidSynth.Drum;
+import net.judah.sampler.Sampler;
 import net.judah.seq.Seq;
-import net.judah.seq.arp.Mode;
 import net.judah.seq.track.PianoTrack;
 import net.judah.song.setlist.Setlists;
 import net.judah.song.setlist.SetlistsCombo;
@@ -43,6 +42,8 @@ public class MidiGui extends KnobPanel {
 	
 	@Getter private final KnobMode knobMode = KnobMode.Midi;
 	@Getter private final SongCombo songsCombo = new SongCombo();
+	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+
 	private final JudahClock clock;
 	private final Seq seq;
 	private final Sampler sampler;
@@ -52,7 +53,7 @@ public class MidiGui extends KnobPanel {
     private final Program one;
     private final Program two;
 	private final Program[] fluids = new Program[CHANNELS];
-    private final MidiPatch mpk; 
+    private final MPKmini mpk; 
     private final Jamstik jamstik;
 	
 	private final JComboBox<String> stepper = new JComboBox<>();
@@ -61,7 +62,6 @@ public class MidiGui extends KnobPanel {
     private final JToggleButton zoneBtn = new JToggleButton("Zone");
     private final JToggleButton fluidBtn = new JToggleButton("Fluid");
 	private final JPanel mpkPanel = new JPanel();
-	private final JPanel titleBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 	private final Btn tape = new Btn(" ⏺️ ", e->JudahZone.getMains().tape());
 
 	public MidiGui(JudahMidi midi, JudahClock clock, Sampler sampler,
@@ -76,10 +76,10 @@ public class MidiGui extends KnobPanel {
 		this.jamstik = midi.getJamstik();
 		this.mpk = midi.getMpk();
 		
-    	titleBar.add(new JLabel(" Song  "));
-    	titleBar.add(Gui.resize(songsCombo, new Dimension(150, 28)));
-    	tape.setOpaque(true);
-    	titleBar.add(tape);
+		tape.setOpaque(true);
+    	title.add(new JLabel(" Song  "));
+    	title.add(Gui.resize(songsCombo, new Dimension(150, 28)));
+    	title.add(tape);
     	
     	one = new Program(synth1.getTracks().get(0));
     	two = new Program(synth2.getTracks().get(0));
@@ -139,27 +139,32 @@ public class MidiGui extends KnobPanel {
 		
 		row.add(new Click(synth1.getName(), e-> {
 			MainFrame.setFocus(KnobMode.DCO);	
-			mpk.setPort((PianoTrack)synth2.getTracks().get(0)); }));
+			mpk.setMidiTrack((PianoTrack)synth2.getTracks().get(0)); }));
 		row.add(Gui.resize(one, COMBO_SIZE));
 		result.add(row);
 
 		row = new JPanel();
 		row.add(new Click(synth2.getName(), e-> {
 			MainFrame.setFocus(synth2.getSynthKnobs());
-			mpk.setPort((PianoTrack)synth2.getTracks().get(0)); }));
+			mpk.setMidiTrack((PianoTrack)synth2.getTracks().get(0)); }));
 		row.add(Gui.resize(two, COMBO_SIZE));
 		result.add(row);
 		
 		row = new JPanel();
-		row.add(new Click("   JAM  ", e->jamstik.toggle()));
+		row.add(new Click("   JAM  ", e->{
+			if (((Click)e.getSource()).isRight()) 
+				jamstik.octaver();
+			else 
+				jamstik.toggle();	
+		}));
 		jamstik.install(row, seq.getSynthTracks());
 		result.add(row);
 		
 		mpkPanel.add(new Click("  MPK  ", e-> {
 			if (((Click)e.getSource()).isRight())
-				seq.setRecord(!seq.isRecord());
+				mpk.record();
 			else
-				mpk.getTrack().getArp().toggle(Mode.MPK);
+				mpk.transpose();
 		}));
 		mpk.install(mpkPanel, seq.getSynthTracks());
 		result.add(mpkPanel);
@@ -170,7 +175,7 @@ public class MidiGui extends KnobPanel {
 		JPanel result = new JPanel();
 		try {
 			for (int i = 0; i < CHANNELS; i++) {
-				fluids[i] = new Program(fluid, i);
+				fluids[i] = new Program(fluid.getTracks().get(i));
 				Gui.resize(fluids[i], COMBO_SIZE);
 			}
 			result.setLayout(new GridLayout(4, 1));
@@ -197,10 +202,6 @@ public class MidiGui extends KnobPanel {
 		return result;
 	}
 	
-	@Override public JPanel installing() {
-		return titleBar;
-	}
-
 	/**@param idx knob 0 to 7
      * @param data2  user input */
 	@Override public boolean doKnob(int idx, int data2) {
@@ -224,19 +225,19 @@ public class MidiGui extends KnobPanel {
  	    	if (zoneBtn.isSelected()) 
  	    		one.midiShow(patch(one.getPort().getPatches(), data2));
  	    	else 
- 	    		fluids[idx - 4].midiShow(patch(fluid.getPatches(), data2));
+ 	    		fluids[0].midiShow(patch(fluid.getPatches(), data2));
  	    	break;
     	case 5: // change sequencer track focus
  	    	if (zoneBtn.isSelected()) 
  	    		two.midiShow(patch(two.getPort().getPatches(), data2));
  	    	else 
- 	    		fluids[idx - 4].midiShow(patch(fluid.getPatches(), data2));
+ 	    		fluids[1].midiShow(patch(fluid.getPatches(), data2));
     		break;
     	case 6: // TODO Jamstik out
     		if (zoneBtn.isSelected()) 
     			jamstik.setSelectedIndex(Constants.ratio(data2 - 1, jamstik.getItemCount()));
  	    	else 
- 	    		fluids[idx - 4].midiShow(patch(fluid.getPatches(), data2));
+ 	    		fluids[2].midiShow(patch(fluid.getPatches(), data2));
     		break;
     	case 7: // MPK keys out
     		mpk.setSelectedIndex(Constants.ratio(data2 - 1, mpk.getItemCount()));
@@ -250,16 +251,18 @@ public class MidiGui extends KnobPanel {
 		return (String) Constants.ratio(data2, patches);
 	}
 	
-	@Override
-	public void pad1() {
+	@Override public void pad1() {
 		if (zoneBtn.isSelected())
 			fluidBtn.setSelected(true);
 		else 
 			zoneBtn.setSelected(true);
 	}
 	
-	@Override
-	public void update() {
+	@Override public void pad2() {
+		JudahZone.getMains().hotMic();
+	}
+	
+	@Override public void update() {
 		if (stepVol.getValue() != (int) (sampler.getStepMix() * 100))
 			stepVol.setValue((int) (sampler.getStepMix() * 100));
 		stepper.setSelectedIndex(sampler.getSelected());

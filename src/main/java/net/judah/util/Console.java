@@ -3,8 +3,11 @@ package net.judah.util;
 import static net.judah.util.Constants.NL;
 
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.util.ArrayList;
 
+import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
@@ -13,56 +16,53 @@ import org.apache.log4j.Level;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j;
-import net.judah.JudahZone;
+import net.judah.gui.Gui;
+import net.judah.gui.Pastels;
+import net.judah.gui.Size;
+import net.judah.scope.ScopeView;
 
 @Log4j
-public class Console {
+public class Console extends ScopeView {
 
-    private static Console instance;
-    public static Console getInstance() {
-        if (instance == null) instance = new Console();
-        return instance;
-    }
-    
+    @Getter private static Console instance = new Console();
     @Getter @Setter private static Level level = Level.DEBUG;
-    @Getter private final JScrollPane scroller;
-    private final JTextArea textarea = new JTextArea(3, 28);
+    @Getter private final JLabel ticker = new JLabel("", JLabel.LEFT);
+    private final JScrollPane scroller = new JScrollPane();
     @Getter private ArrayList<ConsoleParticipant> participants = new ArrayList<>();
+    private final JTextArea textarea = new JTextArea(3, 28);
 
     private Console() {
-        instance = this;
-        textarea.setEditable(false);
-		textarea.setForeground(Color.BLUE.darker()/* new Color(1, 77, 13) *//* dark green */);
-        
-        scroller = new JScrollPane(textarea);
+    	setLayout(new GridLayout(1, 1));
+        Gui.resize(ticker, new Dimension(Size.WIDTH_KNOBS - 6, Size.STD_HEIGHT - 4));
+    	textarea.setEditable(false);
+		textarea.setForeground(Color.BLUE.darker());
+		ticker.setOpaque(true);
+		ticker.setForeground(Color.BLUE.darker());
+		ticker.setBackground(Pastels.BUTTONS);
+		
+		
+		
+    	scroller.setViewportView(textarea);
         scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         scroller.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-
-        participants.add(JudahZone.getFluid().getConsole());
+        add(scroller);
     }
-
 
     /** output to console (not for realtime) */
     public static void addText(String in) {
         log.debug(in);
-        String s = in == null ? null : new String(in);
-        if (instance == null || instance.textarea == null) {
-            return;
-        }
-        if (s == null) {
-            s = "null" + NL;
-        }
+        instance.ticker.setText(in);
+        if (in == null) 
+            in = "null" + NL;
+        if (false == in.endsWith(NL))
+            in += NL;
 
-        if (false == s.endsWith(NL))
-            s = s + NL;
-
-        instance.textarea.append(s);
-
+        instance.textarea.append(new String(in));
         instance.textarea.setCaretPosition(instance.textarea.getDocument().getLength() - 1);
+        
         instance.scroller.getVerticalScrollBar().setValue( instance.scroller.getVerticalScrollBar().getMaximum() - 1 );
         instance.scroller.getHorizontalScrollBar().setValue(0);
-        instance.scroller.invalidate();
-
+        instance.invalidate();
     }
 
     public static void newLine() {
@@ -89,19 +89,19 @@ public class Console {
             addText("debug " + s);
     }
 
+	@Override // Scope interface no-op
+	public void process(float[][] stereo) {
+	}
 
 }
 
 //public interface MidiListener {
 //	enum PassThrough {ALL, NONE, NOTES, NOT_NOTES}
 //	void feed(Midi midi);
-//	PassThrough getPassThroughMode();
-//}
-//    @Override
-//    public PassThrough getPassThroughMode() {
+//	PassThrough getPassThroughMode();}
+//    @Override public PassThrough getPassThroughMode() {
 //        return PassThrough.ALL; }
-//    @Override
-//    public void feed(Midi midi) {
+//    @Override public void feed(Midi midi) {
 //        addText("midilisten: " + midi); }
 //    private void midiListen() {
 //        midiListen = !midiListen;

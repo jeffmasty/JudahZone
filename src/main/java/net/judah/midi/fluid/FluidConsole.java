@@ -1,8 +1,7 @@
-package net.judah.fluid;
+package net.judah.midi.fluid;
 
 import static net.judah.util.Constants.NL;
 
-import net.judah.midi.GMNames;
 import net.judah.util.Console;
 import net.judah.util.ConsoleParticipant;
 import net.judah.util.RTLogger;
@@ -37,8 +36,8 @@ class FluidConsole implements ConsoleParticipant {
 		}
 
 		if (text.equals("channels")) {
-			Console.addText("channels: " + fluid.getGM().size() + NL);
-			for (FluidChannel channel : fluid.getGM()) {
+			Console.addText("channels: " + fluid.getChannels().size() + NL);
+			for (FluidChannel channel : fluid.getChannels()) {
 				Console.addText(channel.toString() + NL);
 			}
 		}
@@ -53,10 +52,6 @@ class FluidConsole implements ConsoleParticipant {
 //		}
 		if (text.equals("mute")) {
 			fluid.mute();
-		}
-		if (text.equals("GM_NAMES")) {
-			for (int i = 0; i < GMNames.GM_NAMES.length; i++)
-				Console.addText(i + " " + GMNames.GM_NAMES[i]);
 		}
 		else {
 			if (input.length > 2) text = text + " " + input[2];

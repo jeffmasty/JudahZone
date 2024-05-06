@@ -14,11 +14,9 @@ import javax.swing.border.LineBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
-import net.judah.gui.widgets.LoopWidget;
 import net.judah.gui.widgets.Slider;
 import net.judah.gui.widgets.TapTempo;
 import net.judah.looper.Looper;
@@ -29,7 +27,6 @@ public class MiniLooper extends JPanel implements TimeListener {
 	private static final int WIDTH = 84;
 	
 	private final JudahClock clock;
-	@Getter private final LoopWidget loopWidget;
    	private final JLabel tempoLbl = new JLabel("?", JLabel.CENTER);
 	private final TapTempo tapButton = new TapTempo("Tempo", msec -> {
             JudahZone.getClock().writeTempo(Math.round(60000 / msec));});	
@@ -45,8 +42,7 @@ public class MiniLooper extends JPanel implements TimeListener {
 	public MiniLooper(Looper loops, JudahClock time) {
 		this.clock = time;
 		clock.addListener(this);
-		Dimension size = new Dimension(WIDTH, Size.STD_HEIGHT + 4);
-		loopWidget = new LoopWidget(loops, size);
+		final Dimension size = new Dimension(WIDTH, Size.STD_HEIGHT + 4);
 		tempoKnob = new Slider(55, 155, null);
 
 		tempoLbl.addMouseListener(new MouseAdapter() {
@@ -61,21 +57,19 @@ public class MiniLooper extends JPanel implements TimeListener {
             }});
 		tempoLbl.setText("####");
 		tempoLbl.setFont(Gui.BOLD);
-        Gui.resize(tempoKnob, size);
         
         setBorder(new LineBorder(Pastels.MY_GRAY, 1));
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-  
-        add(loopWidget);
+        Gui.resize(loops.getLoopWidget().getSlider(), size);
+        add(loops.getLoopWidget());
         JPanel btm = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 0));
         btm.add(tapButton);
         btm.add(tempoLbl);
-        btm.add(tempoKnob);
+        btm.add(Gui.resize(tempoKnob, size));
         add(btm);
         tempoKnob.addChangeListener(tempoEar);
         
 	}
-
 	
 	@Override
 	public void update(Property prop, Object value) {
@@ -87,6 +81,5 @@ public class MiniLooper extends JPanel implements TimeListener {
 			return;
 		}
 	}
-
 
 }

@@ -1,29 +1,33 @@
 package net.judah.midi;
 
-import java.util.List;
 import java.util.Vector;
 
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
+import org.jaudiolibs.jnajack.JackMidi;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
-import net.judah.api.MidiReceiver;
+import net.judah.api.ZoneMidi;
 import net.judah.mixer.Instrument;
 import net.judah.seq.track.MidiTrack;
-import net.judah.util.Constants;
+import net.judah.synth.Polyphony;
+import net.judah.util.RTLogger;
 
 /** base function for an external synth */
-public class MidiInstrument extends Instrument implements MidiReceiver {
+@Getter
+public class MidiInstrument extends Instrument implements ZoneMidi {
 
-	@Setter @Getter protected JackPort midiPort;
-	@Getter protected String[] patches = new String[] {};
-	@Getter protected Vector<MidiTrack> tracks = new Vector<>();
+	@Setter protected JackPort midiPort;
+	protected String[] patches = new String[] {};
+	protected Vector<MidiTrack> tracks = new Vector<>();
+	private Polyphony notes;
 	
-	public MidiInstrument(String channelName, String sourceLeft, String sourceRight, JackPort left, JackPort right, String icon, JackPort midi) {
+	public MidiInstrument(String channelName, String sourceLeft, String sourceRight, 
+			JackPort left, JackPort right, String icon, JackPort midi) {
 		super(channelName, sourceLeft, sourceRight, icon);
 		leftPort = left;
 		rightPort = right;
@@ -38,18 +42,18 @@ public class MidiInstrument extends Instrument implements MidiReceiver {
 		midiPort = midi;
 	}
 
-	@Override
-	public final void send(MidiMessage message, long timeStamp) {
-//		midiPort.send(message, (int)timeStamp);
-		JudahMidi.queue(message, midiPort);
-//		channels.send(message, timeStamp, jackPort);
-//		MainFrame.update();
-//		channels.update((ShortMessage)message);
-
+	@Override public final void send(MidiMessage message, long timeStamp) {
+		try {
+			JackMidi.eventWrite(midiPort, (int)timeStamp, 
+					message.getMessage(), message.getLength());
+			if (message instanceof ShortMessage)
+				for (MidiTrack t : getTracks())
+					if (t.getCh() == ((ShortMessage)message).getChannel())
+						t.getActives().receive((ShortMessage)message);
+		} catch (Exception e) {RTLogger.warn(this, e);}
 	}
 
-	@Override
-	public void close() {
+	@Override public void close() {
 		new Panic(midiPort, 0); // ?
 	}
 
@@ -62,17 +66,12 @@ public class MidiInstrument extends Instrument implements MidiReceiver {
 	public String getProg(int ch) {
 		return "none";
 	}
-
-//	public void setMono() {
-//		mono = true;
-//	}
 	
-	public static void offs(MidiReceiver out, int ch, List<Integer> actives) {
-		Constants.execute(()->{
-			for (int i = 0; i < actives.size(); i++) 
-				out.send(Midi.create(ShortMessage.NOTE_OFF, ch, actives.get(i), 0), JudahMidi.ticker());
-			actives.clear();
-		});
+	public MidiTrack trackByName(String name) {
+		for (MidiTrack t : tracks)
+			if (t.getName().equals(name))
+				return t;
+		return null;
 	}
 
 }

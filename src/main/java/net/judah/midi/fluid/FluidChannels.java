@@ -1,8 +1,8 @@
-package net.judah.fluid;
+package net.judah.midi.fluid;
 
 import java.util.ArrayList;
 
-class FluidChannels extends ArrayList<FluidChannel> {
+public class FluidChannels extends ArrayList<FluidChannel> {
 	public static final int CHANNELS = 4;
 	
 

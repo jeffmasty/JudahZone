@@ -8,7 +8,6 @@ import javax.swing.JButton;
 
 import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
-import net.judah.mixer.Channel;
 
 public class FxButton extends JButton {
 	private static final Insets ZERO = new Insets(0, 0, 0, 0);
@@ -22,20 +21,9 @@ public class FxButton extends JButton {
 		return Icons.get("fx.png");
 	}
 	
-	public FxButton(Channel ch) {
+	public FxButton(Object ch) {
 		this();
 		addActionListener(e -> MainFrame.setFocus(ch));
 	}
-
-//	public FxButton(MidiReceiver midiOut) {
-//		this();
-//		addActionListener(e ->{
-//			for (Channel ch : JudahZone.getNoizeMakers()) {
-//				if (ch instanceof Midi)
-//			}
-//		});
-//		// TODO Auto-generated constructor stub
-//	}
-
 	
 }

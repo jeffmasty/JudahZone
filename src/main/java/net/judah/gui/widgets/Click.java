@@ -31,7 +31,7 @@ public class Click extends JLabel {
     public Click(String msg) {
     	super(msg, JLabel.CENTER);
     	setBorder(border);
-
+    	setOpaque(true);
     	addMouseListener(new MouseAdapter() {
         @Override public void mouseClicked(MouseEvent me) {
         	right = SwingUtilities.isRightMouseButton(me);

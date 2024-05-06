@@ -17,7 +17,7 @@ public class REC extends Algo implements Ignorant, Feed {
 	
 	public REC(PianoTrack track) {
 		this.track = track;
-   		JudahZone.getMidi().getMpk().setPort(track);
+   		JudahZone.getMidi().getMpk().setMidiTrack(track);
 	}
 	
 	@Override

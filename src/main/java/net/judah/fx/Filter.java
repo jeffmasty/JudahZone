@@ -93,7 +93,7 @@ public class Filter implements Effect {
 	    return 100;
 	}
 
-	@Getter private final String name;
+	@Getter private final String name = Filter.class.getSimpleName();
     private final double sampleRate;
     private final int bufferSize;
     @Getter private Type filterType = Type.pArTy;
@@ -106,26 +106,21 @@ public class Filter implements Effect {
     /** right channel */
     private final Filter stereo;
 
-    public Filter(String name, boolean isStereo, Type type, float freq) {
-    	this(name, isStereo);
+    public Filter(boolean isStereo, Type type, float freq) {
+    	this(isStereo);
     	setFilterType(type);
     	setFrequency(freq);
     }
     
-    public Filter(boolean isStereo) {
-    	this(Filter.class.getSimpleName(), isStereo);
-    }
-    
-	public Filter(String name, boolean isStereo) {
-    	this(name, Constants.sampleRate(), Constants.bufSize(), isStereo);
+	public Filter(boolean isStereo) {
+    	this(Constants.sampleRate(), Constants.bufSize(), isStereo);
 	}
 
-    public Filter(String name, int sampleRate, int bufferSize, boolean isStereo) {
-    	this.name = name;
+    public Filter(int sampleRate, int bufferSize, boolean isStereo) {
     	this.sampleRate = sampleRate;
     	this.bufferSize = bufferSize;
     	filter.reset();
-    	stereo = isStereo ? new Filter(name, sampleRate, bufferSize, false) : null;
+    	stereo = isStereo ? new Filter(sampleRate, bufferSize, false) : null;
     }
 
     @Override public int getParamCount() {

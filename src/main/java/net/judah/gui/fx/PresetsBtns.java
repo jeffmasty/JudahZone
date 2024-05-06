@@ -27,11 +27,12 @@ public class PresetsBtns extends JPanel implements Updateable {
 		this.ch = ch;
 		this.looper = looper;
 		fx = new Btn("Fx", e->ch.setPresetActive(!ch.isPresetActive()));
-		latch = new Btn(" 🔁 ", e->looper.syncFx(ch));
+		latch = new Btn(" 🔁 ", e->looper.syncFx(ch), "Loop Sync");
+		
 		add(fx);
 		add(latch);
-		add(new Btn(Icons.SAVE, e->getPresets().replace(ch)));
-		add(new Btn(Icons.NEW_FILE, e->create()));
+		add(new Btn(Icons.SAVE, e->getPresets().replace(ch)), "Save Current");
+		add(new Btn(Icons.NEW_FILE, e->create()), "New Preset");
 	}
 	
     public void create() {

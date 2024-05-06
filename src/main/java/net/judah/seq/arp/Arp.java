@@ -18,6 +18,7 @@ import net.judah.seq.chords.Chord;
 import net.judah.seq.chords.ChordListener;
 import net.judah.seq.chords.ChordTrack;
 import net.judah.seq.track.PianoTrack;
+import net.judah.util.Constants;
 
 @Data
 public class Arp implements ChordListener {
@@ -113,8 +114,13 @@ public class Arp implements ChordListener {
 			// case UP5: case DN5:
 		}
 		algo.setRange(info.range);
-		ModeCombo.update(track);
-		MainFrame.update(track); // miniSeq
+		Constants.execute(()-> {
+			ModeCombo.update(track);
+			MainFrame.miniSeq().update(track);
+			MainFrame.getMidiView(track).getMenu().updateMode();
+		});
+		
+		
 	}
 
 	/** externally triggered */
@@ -149,6 +155,8 @@ public class Arp implements ChordListener {
 	}
 
 	public boolean mpkFeed(Midi midi) {
+		if (track.isRecord())
+			return false;
 		if (info.algo != Mode.MPK)
 			return false;
 		((Feed)algo).feed(midi);

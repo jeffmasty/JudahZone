@@ -20,15 +20,16 @@ public class Measure extends Notes implements MidiConstants {
 		this.t = track.getT();
 	}
 	
-	public void populate() {
+	public Measure populate() {
 		clear();
 		if (track.isDrums()) 
 			loadDrums();
 		else 
 			loadPiano();
+		return this;
 	}
 	
-	/** loads two bars from measure of track into the supplied result, zero-basing the ticks*/
+	/** loads two bars from track's current position, not aware of NoteOFFs */
 	public void loadDrums() {
 		long start = track.getLeft();
 		long end = start + track.getWindow();
@@ -37,22 +38,20 @@ public class Measure extends Notes implements MidiConstants {
 			e = t.get(i);
 			if (e.getTick() < start) continue;
 			if (e.getTick() >= end) break;
-			if (e.getMessage() instanceof ShortMessage && Midi.isNoteOn((e.getMessage())))
+			if (Midi.isNoteOn((e.getMessage())))
 				add(new MidiPair(e, null));
 		}
 	}
 	
 	
-	/** loads two bars from measure of track into the supplied result*/
+	/** loads two bars of notes from track's current position*/
 	public void loadPiano() {
-		int bar = track.getCurrent() / 2;
-		
 		stash.clear();
-		long startTick = bar * track.getWindow();
-		long end = startTick + track.getWindow(); 
+		long start = track.getLeft();
+		long end = start + track.getWindow(); 
 		for (int i = 0; i < t.size(); i++) { 
 			MidiEvent e = t.get(i);
-			if (e.getTick() < startTick) continue;
+			if (e.getTick() < start) continue;
 			if (e.getTick() >= end) break;
 			if (e.getMessage() instanceof ShortMessage == false) continue;
 			ShortMessage s = (ShortMessage)e.getMessage();
@@ -60,7 +59,7 @@ public class Measure extends Notes implements MidiConstants {
 				stash.add(e); 
 			else if (s.getCommand() == NOTE_OFF) {
 				MidiEvent on = stash.get(s);
-				long time = on == null ? startTick : on.getTick(); 
+				long time = on == null ? start : on.getTick(); 
 				int velocity = on == null ? 99 : ((ShortMessage)on.getMessage()).getData2();
 				add(new MidiPair(
 						new MidiEvent(Midi.create(NOTE_ON, track.getCh(), s.getData1(), velocity), time),

@@ -10,7 +10,6 @@ import javax.swing.border.Border;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.JudahZone;
 import net.judah.util.Constants;
 
 // Combos: MidiGui: song, file, *6 synths, Track: *prog, file, pattern? LFO: type Synth: prog?
@@ -20,7 +19,9 @@ public abstract class SetCombo<T> extends  JComboBox<T> {
 			BevelBorder.RAISED, Color.RED, Color.RED.darker());
 	@SuppressWarnings("rawtypes")
 	@Setter @Getter protected static SetCombo set;
-	protected final ActionListener listener = (e)->action();
+	protected final ActionListener listener = (e)-> {
+		if (set != this) action(); 
+	};
 	protected final Border old;
 	private T override;
 	
@@ -51,27 +52,34 @@ public abstract class SetCombo<T> extends  JComboBox<T> {
 		addActionListener(listener);
 	}
 	
-	public void override(T val) {
-		if (getSelectedItem() != val) {
-			removeActionListener(listener);
-			setSelectedItem(val);
-			addActionListener(listener);
-		}
-		setBorder(old);
+	@SuppressWarnings("unchecked")
+	public static void override() {
+		if (set == null)
+			return;
+		@SuppressWarnings("rawtypes")
+		final SetCombo old = set;
+		Constants.execute(()-> old.override(old.override));
+	}
+ 	
+	protected void override(T val) {
+		Constants.execute(() ->{
+			if (getSelectedItem() != val) {
+				removeActionListener(listener);
+				setSelectedItem(val);
+				addActionListener(listener);
+			}
+			setBorder(old);
+		});
 	}
 	
 	@SuppressWarnings("unchecked")
 	public void midiShow(T val) {
 		
-		if (set != null && set != this) {
-			@SuppressWarnings("rawtypes")
-			final SetCombo old = set;
-			Constants.execute(()-> old.override(old.override));
-		}
+		if (set != null && set != this) 
+			override();
 		if (set != this) {
 			override = (T)getSelectedItem();
 			set = this;
-			Constants.execute(()->JudahZone.getFrame().getHq().sceneText());
 		}
 		
 		if (getSelectedItem() != val) {
@@ -95,7 +103,6 @@ public abstract class SetCombo<T> extends  JComboBox<T> {
 		SetCombo engage = set;
 		set = null;
 		engage.action();
-		JudahZone.getFrame().getHq().sceneText();
 	}
 	
 	

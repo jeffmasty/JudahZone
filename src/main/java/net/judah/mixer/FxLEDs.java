@@ -13,7 +13,7 @@ import net.judah.fx.*;
 
 /**effect indicator lights: red reverb, orange delay, yellow distortion, green chorus, blue LFO
  * @author judah */
-public class LEDs extends JPanel {
+public class FxLEDs extends JPanel {
 
 	private final int UNITS = 7;
 	private final Channel channel;
@@ -32,7 +32,7 @@ public class LEDs extends JPanel {
 
 	@Getter boolean[] model = new boolean[UNITS];
 	
-	public LEDs(Channel channel) { 
+	public FxLEDs(Channel channel) { 
 		this.channel = channel;
 		add(new JLabel());
 	}

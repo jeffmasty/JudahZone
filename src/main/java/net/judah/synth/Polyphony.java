@@ -39,13 +39,18 @@ public class Polyphony extends Actives {
 		MainFrame.update(this);
 	}
 	
+	@Override
+	public void off(int data1) {
+		noteOff(Midi.create(Midi.NOTE_OFF, data1, 1));
+	}
+	
 	public void noteOff(ShortMessage m) {
 		
 		for (int i = 0; i < size(); i++) {
 			ShortMessage midi = get(i);
 			if (midi != null && midi.getData1() == m.getData1()) {
 				// start release on envelope,  when release completes note switched to null and Voice ready for polyphony
-				set(i, Midi.create(m.getCommand(), m.getChannel(), m.getData1(), midi.getData2()));
+				set(i, Midi.create(Midi.NOTE_OFF, m.getChannel(), m.getData1(), midi.getData2()));
 				MainFrame.update(this);
 				return;
 			}
@@ -98,4 +103,12 @@ public class Polyphony extends Actives {
 		}
 	}
 	
+	
+	@Override
+	public void receive(ShortMessage msg) {
+		if (Midi.isNoteOn(msg)) 
+			noteOn(msg);
+		else 
+			noteOff(msg);
+	}
 }

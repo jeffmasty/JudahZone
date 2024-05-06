@@ -24,7 +24,7 @@ public class MPKTranspose extends Algo implements TimeListener, Feed, Ignorant {
 		this.track = t;
 		track.getClock().addListener(this);
 		
-		JudahZone.getMidi().getMpk().setPort(track);
+		JudahZone.getMidi().getMpk().setMidiTrack(track);
 	}
 
 	public ShortMessage apply(ShortMessage midi)  {

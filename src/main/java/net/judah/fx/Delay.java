@@ -94,16 +94,16 @@ public class Delay implements TimeEffect {
     
     private final float sampleRate;
     private final float nframes; 
+
+    @Getter private boolean active;
+	@Setter @Getter boolean sync;
     /** in seconds */
     @Setter private float delayTime = DEFAULT_TIME; 
     @Getter private float feedback = 0.36f;
-
-    @Getter private boolean active;
-    private final VariableDelayOp left;
+	private final VariableDelayOp left;
     private final VariableDelayOp right;
     @Setter private boolean slapback;
 	@Setter @Getter String type = TYPE[0];
-	@Setter @Getter boolean sync;
     
     public Delay() {
         this(Constants.sampleRate(), Constants.bufSize(), MAX_DELAY);
@@ -195,17 +195,19 @@ public class Delay implements TimeEffect {
         if (right.workArea != null)
             Arrays.fill(right.workArea, 0);
     }
+	
+	public void process(FloatBuffer inL, FloatBuffer inR) {
+		left.process(inL);
 
-	public void process(FloatBuffer in, FloatBuffer out, boolean isLeft) {
-        if (isLeft) left.process(in, out, false);
-        else right.process(in, out, false);
-    }
-
-	public void slapback(FloatBuffer in, FloatBuffer out, boolean isLeft) {
-		if (isLeft) left.process(in, out, slapback);
-		else 
-			right.process(in, out, !slapback);
-    }
+		if (slapback) { // not implemented
+			right.slapback(inL); 
+			return;
+		}
+		
+		if (inR == null) 
+			return;
+		right.process(inR);
+	}
 
 	// TODO zero out work area when delay time shrinks (ghost echoes)
 	private class VariableDelayOp {
@@ -219,9 +221,9 @@ public class Delay implements TimeEffect {
 	        this.lastdelay = 0;
 		}
 
-	    void process(FloatBuffer in, FloatBuffer out, boolean replace) {
+	    void process(FloatBuffer in) {
 	    	
-        	out.rewind();
+        	in.rewind();
             float srate = sampleRate;
             float delay = delayTime * srate;
             float ldelay = lastdelay;
@@ -232,34 +234,50 @@ public class Delay implements TimeEffect {
 
             float r, s, a, b, o;
             int ri;
-            if (replace) {
-                for (int i = 0; i < nframes; i++) {
-                    r = pos - (ldelay + 2) + rnlen;
-                    ri = (int) r;
-                    s = r - ri;
-                    a = workArea[ri % rnlen];
-                    b = workArea[(ri + 1) % rnlen];
-                    o = a * (1 - s) + b * s;
-                    workArea[pos] = in.get(i) + o * fb;
-                    out.put(o);
-                    pos = (pos + 1) % rnlen;
-                    ldelay += delta;
-                }
-
-            } else {
-                for (int i = 0; i < nframes; i++) {
-                    r = pos - (ldelay + 2) + rnlen;
-                    ri = (int) r;
-                    s = r - ri;
-                    a = workArea[ri % rnlen];
-                    b = workArea[(ri + 1) % rnlen];
-                    o = a * (1 - s) + b * s;
-                    workArea[pos] = in.get(i) + o * fb;
-                    out.put(out.get(i) + o);
-                    pos = (pos + 1) % rnlen;
-                    ldelay += delta;
-                }
+            float scratch;
+            for (int i = 0; i < nframes; i++) {
+                r = pos - (ldelay + 2) + rnlen;
+                ri = (int) r;
+                s = r - ri;
+                a = workArea[ri % rnlen];
+                b = workArea[(ri + 1) % rnlen];
+                o = a * (1 - s) + b * s;
+                scratch = in.get(i) + o;
+                workArea[pos] = scratch * fb;
+                in.put(scratch);
+                pos = (pos + 1) % rnlen;
+                ldelay += delta;
             }
+            rovepos = pos;
+            lastdelay = delay;
+        }
+	    
+	    void slapback(FloatBuffer in) {
+        	in.rewind();
+            float srate = sampleRate;
+            float delay = delayTime * srate;
+            float ldelay = lastdelay;
+            float fb = feedback;
+            int rnlen = workArea.length;
+            int pos = rovepos;
+            float delta = (delay - ldelay) / nframes;
+
+            float r, s, a, b, o;
+            int ri;
+            // slapback mode:
+            for (int i = 0; i < nframes; i++) {
+                r = pos - (ldelay + 2) + rnlen;
+                ri = (int) r;
+                s = r - ri;
+                a = workArea[ri % rnlen];
+                b = workArea[(ri + 1) % rnlen];
+                o = a * (1 - s) + b * s;
+                workArea[pos] = in.get(i) + o * fb;
+                in.put(o);
+                pos = (pos + 1) % rnlen;
+                ldelay += delta;
+            }
+
             rovepos = pos;
             lastdelay = delay;
         }

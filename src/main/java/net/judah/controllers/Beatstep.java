@@ -47,14 +47,16 @@ public class Beatstep implements Controller {
 			// LOOPA, 37(loopB), 38(loopC),  LOOPD,     KITS,       RECORD,   FX,       FADER 
 			if (data1 == KITS) { 
 				if (!Midi.isNoteOn(midi)) return true;
-				if (MainFrame.getKnobMode() != KnobMode.Kits)
+				if (MainFrame.getKnobMode() != KnobMode.Kits) {
 					MainFrame.setFocus(KnobMode.Kits);
+					MainFrame.setFocus(getDrumMachine().getCurrent().getKit().getFx());
+				}
 				else 
 					getDrumMachine().increment();
 			}
 			else if (data1 == RECORD) { 
 				if (!Midi.isNoteOn(midi)) return true;
-				for (Channel current : getFxRack().getSelected()) 
+				for (Channel current : getSelected()) 
 					if (current instanceof LineIn) 
 						((LineIn)current).setMuteRecord(!((LineIn)current).isMuteRecord());
 					else 
@@ -63,7 +65,7 @@ public class Beatstep implements Controller {
 			else if (data1 == LFO) {
 				if (!Midi.isNoteOn(midi)) return true;
 				if (MainFrame.getKnobMode() == KnobMode.LFO)
-					for (Channel current : getFxRack().getSelected())
+					for (Channel current : getSelected())
 						current.getLfo().setActive(!current.getLfo().isActive());
 				else 
 					MainFrame.setFocus(KnobMode.LFO);
@@ -71,7 +73,7 @@ public class Beatstep implements Controller {
 			
 			else if (data1 == FADER) { 
 				if (!Midi.isNoteOn(midi)) return true;
-				for (Channel ch : getFxRack().getSelected()) {
+				for (Channel ch : getSelected()) {
 					if (ch.isOnMute() || ch.getGain().getGain() <= 0.05f) {
 						ch.setOnMute(false);
 						Fader.execute(new Fader(ch, Fader.DEFAULT_FADE, 0, 51));
@@ -99,7 +101,7 @@ public class Beatstep implements Controller {
 
 			for (int i = 0; i < KNOBS.length; i++)
 				if (KNOBS[i] == data1) {
-					for (Channel ch : getFxRack().getSelected()) {
+					for (Channel ch : getSelected()) {
 						ch.getGui().knob(i, data2 < 64);
 					}
 					return true;

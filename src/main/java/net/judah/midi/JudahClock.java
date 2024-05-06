@@ -20,11 +20,11 @@ import net.judah.api.Notification.Property;
 import net.judah.api.Signature;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeProvider;
-import net.judah.drumkit.Sampler;
 import net.judah.gui.MainFrame;
 import net.judah.gui.settable.Folder;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
+import net.judah.sampler.Sampler;
 import net.judah.seq.Seq;
 import net.judah.seq.chords.ChordTrack;
 import net.judah.util.Constants;
@@ -71,7 +71,7 @@ public class JudahClock extends Thread implements TimeProvider {
 	}
 
 	@Override public void addListener(TimeListener l) 	 { if (!listeners.contains(l)) listeners.add(l); }
-	@Override public void removeListener(TimeListener l) { listeners.remove(l); }
+	@Override public boolean removeListener(TimeListener l) { return listeners.remove(l); }
 	/** write to tempo control port */
 	@Override public void writeTempo(int bpm)  { midiClock.writeTempo(bpm); }
 	@Override public int getMeasure() 	{ return timeSig.beats; }
@@ -152,6 +152,7 @@ public class JudahClock extends Thread implements TimeProvider {
 		if (looper.getPrimary() != null) {
 			float tempo = Constants.computeTempo((long) (1000 * looper.getPrimary().seconds()), length * getMeasure());
 			writeTempo(Math.round(tempo));
+			looper.clockSync();
 			onDeck = true;
 		}
 		
@@ -186,7 +187,6 @@ public class JudahClock extends Thread implements TimeProvider {
         bar = 0;
 	}
 
-	
 	public void reset(Signature signature) {
 		setTimeSig(signature);
 		reset();
@@ -238,26 +238,6 @@ public class JudahClock extends Thread implements TimeProvider {
 		onDeck = false;
 	}
 
-	public void skipBar() {
-		bar++;
-		letItBeKnown(Property.BARS, bar);
-	}
-	
-	/** in real-time */
-	private void announce(Property prop, Object value) {
-		for (Object o : listeners.toArray())
-			((TimeListener)o).update(prop, value);
-	}
-
-	public int countdown() {
-		return beat % timeSig.beats - timeSig.beats;
-	}
-	
-	/** send to background thread */
-	private void letItBeKnown(Property prop, Object value) {
-		notifications.offer(new Notification(prop, value));
-	}
-
 	public void syncTempo(Loop primary) {
 		if (primary == null || !primary.isPlaying()) return;
 		long millis = (long) (1000 * primary.seconds());
@@ -266,9 +246,34 @@ public class JudahClock extends Thread implements TimeProvider {
 		writeTempo(tempo);
 	}
 
+	public void skipBar() {
+		bar++;
+		letItBeKnown(Property.BARS, bar);
+	}
+	
+	public int countdown() {
+		return beat % timeSig.beats - timeSig.beats;
+	}
+	
+	/** send to background thread */
+	private void letItBeKnown(Property prop, Object value) {
+		notifications.offer(new Notification(prop, value));
+	}
+	
+	/** in real-time */
+	private void announce(Property prop, Object value) {
+		for (Object o : listeners.toArray())
+			((TimeListener)o).update(prop, value);
+	}
+
 	/** not used, when Loop repeats, reset sequencer to time 0 */
 	public void runnersDialZero() {
 		runnersDialZero = !runnersDialZero;
+	}
+
+	public void offSync() {
+		onDeck = false;
+		MainFrame.update(this);
 	}
 
 }

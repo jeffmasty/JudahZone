@@ -19,16 +19,19 @@ import net.judah.mixer.Channel;
 import net.judah.mixer.Instrument;
 import net.judah.mixer.Zone;
 import net.judah.seq.MidiTab;
-import net.judah.song.Song;
 import net.judah.song.Overview;
+import net.judah.song.Song;
+import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 public class Qwerty extends JTabbedPane implements KeyListener, Size {
 
 	private static final int ASCII_ONE = 49;
+	
+	private final JPanel sheetMusic;
 
-	public Qwerty(JPanel... tabs) {
-		
+	public Qwerty(JPanel images, JPanel... tabs) {
+		sheetMusic = images;
 		setMaximumSize(TAB_SIZE);
         setPreferredSize(TAB_SIZE);
         setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
@@ -42,6 +45,7 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
 		for (JPanel tab : tabs)
 			if (tab != null)
 				addTab(tab.getName(), tab);
+		addTab(sheetMusic.getName(), sheetMusic);
 	}
 	
 	@Override
@@ -52,6 +56,10 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
 		
 	}
 
+	public void sheetMusic() {
+		setSelectedComponent(sheetMusic);
+	}
+	
 	@Override
 	public void keyPressed(KeyEvent e) {
 //		if (getSelectedComponent() instanceof MidiTab) {
@@ -82,11 +90,7 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
 	}
 	
 	public void tab(boolean fwd) {
-		int idx = getSelectedIndex() + (fwd ? 1 : -1);
-		if (idx >= getTabCount())
-			idx = 0;
-		if (idx < 0)
-			idx = getTabCount() - 1;
+		int idx = Constants.rotary(getSelectedIndex(), getTabCount(), fwd);
 		setSelectedIndex(idx);
 	}
 
@@ -132,7 +136,7 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
             case VK_F7: MainFrame.setFocus(getDrumMachine()); return true;
             case VK_F8: MainFrame.setFocus(getSynth1()); return true;
             case VK_F9: MainFrame.setFocus(getSynth2()); return true;
-            case VK_F10: MainFrame.setFocus(getCrave()); return true;
+            case VK_F10: MainFrame.setFocus(getBass()); return true;
             case VK_F11: MainFrame.setFocus(getFluid()); return true;
 //            case VK_UP: return volume(true, focus); 
 //            case VK_DOWN: return volume(false, focus); 
@@ -157,7 +161,7 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
             	return true;
             case VK_D: 
             	if (focus instanceof Loop) 
-            		((Loop)focus).clear();
+            		looper.clear((Loop)focus);
             	return true;
             case VK_X: 
             	if (focus instanceof Loop) 

@@ -34,7 +34,6 @@ public class AudioTools  {
 			channel[i] = 0;
 	}
 
-	
 	/** MIX
 	 * @param overdub
 	 * @param oldLoop*/
@@ -49,7 +48,7 @@ public class AudioTools  {
 		return oldLoop;
 	}
 	
-	/** MIX in and out with gain applied to the input*/
+	/** MIX in and out */
 	public static void mix(FloatBuffer in, FloatBuffer out) {
 		in.rewind();
 		out.rewind();
@@ -57,6 +56,12 @@ public class AudioTools  {
 			out.put(out.get(z) + in.get(z));
 	}
 
+	public static void mix(FloatBuffer in, float[] out) {
+		in.rewind();
+		for (int i = 0; i < out.length; i++)
+			out[i] += in.get();
+	}
+	
 	/** MIX */
 	public static void add(float factor, FloatBuffer in, float[] out) {
 		in.rewind();
@@ -70,13 +75,11 @@ public class AudioTools  {
 			out[i] = in.get() * gain;
 	}
 
-
 	public static void replace(float[] in, FloatBuffer out, float gain) {
 		out.rewind();
 		for (int i = 0; i < in.length; i++)
 			out.put(in[i] * gain);
 	}
-
 
 	public static void gain(FloatBuffer buffer, float gain) {
 		buffer.rewind();
@@ -88,8 +91,17 @@ public class AudioTools  {
 	public static void copy(FloatBuffer in, FloatBuffer out) {
 		in.rewind();
 		out.rewind();
-		while(in.hasRemaining())
+		while(in.hasRemaining() && out.hasRemaining())
 			out.put(in.get());
+	}
+
+	public static void copy(FloatBuffer in, float[] out) {
+		in.rewind();
+		int max = in.remaining();
+		if (out.length < max)
+			max = out.length;
+		for (int i = 0; i < max; i++)
+			out[i] = in.get();
 	}
 	
 	public static float[][] copy(float[][] in, float[][] out) {
@@ -106,6 +118,12 @@ public class AudioTools  {
 		for (int i = 0 ; i < bufSize; i++) 
 			result[i] = in.get();
 		in.rewind();
+	}
+
+	public static void silence(float[][] stereo) {
+		for (int ch = 0; ch < stereo.length; ch++)
+			for (int i = 0; i < stereo[ch].length; i++)
+				stereo[ch][i] = 0;
 	}
 	
 }

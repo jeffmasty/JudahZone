@@ -7,36 +7,33 @@ import javax.sound.midi.ShortMessage;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.api.MidiReceiver;
+import net.judah.api.ZoneMidi;
 import net.judah.gui.MainFrame;
 
 @RequiredArgsConstructor @Getter
 public class Actives extends ArrayList<ShortMessage> {
 	
-	protected final MidiReceiver midiOut;
+	protected final ZoneMidi midiOut;
 	protected final int channel;
 	/** max number of notes per channel */
 	protected final int polyphony;
 
+	// Polyphony class overrides for JudahSynth
 	public void receive(ShortMessage msg) {
-		if (Midi.isNote(msg) == false) 
-			return;
-		if (Midi.isNoteOn(msg)) {
-			if (add(msg))
-				MainFrame.update(this);
-		}
-		else if (remove(msg))
-			MainFrame.update(this); 
+		if (Midi.isNoteOn(msg)) 
+			add(msg);
+		else 
+			off(msg.getData1());
+		MainFrame.update(this); 
 	}
 
-
-	public void ints(Set<Integer> ref) {
+	/**@param ref  fill ref with data1 midi values of current voices */
+	public void data1(Set<Integer> ref) {
 		ref.clear();
 		for (int i = 0; i < size(); i++)
 			if (get(i) != null)
 				ref.add(get(i).getData1());
 	}
-
 
 	public ShortMessage find(int data1) {
 		for (int i = 0; i < size(); i++) 
@@ -52,10 +49,12 @@ public class Actives extends ArrayList<ShortMessage> {
 	}
 
 	public void off(int data1) {
-		ShortMessage m = find(data1);
-		if (m == null) return;
-		remove(m);
-		MainFrame.update(this);
+		ShortMessage midi = find(data1);
+		while (midi != null) {
+			remove(midi);
+			MainFrame.update(this);
+			midi = find(data1);
+		}
 	}
 
 	public int indexOf(int data1) {

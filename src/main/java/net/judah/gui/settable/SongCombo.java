@@ -43,7 +43,6 @@ public class SongCombo extends SetCombo<File> {
 	}
 
 	@Override protected void action() {
-		if (set == this) return;
 		Overview songs = JudahZone.getOverview();
 		if (getSelectedItem() == null)
 			songs.setSong(new Song(getSeq(), (int)(getClock().getTempo())));

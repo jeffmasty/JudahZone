@@ -1,7 +1,5 @@
 package net.judah.api;
 
-//import static net.judah.api.Status.*;
-
 import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -16,7 +14,7 @@ import net.judah.util.RTLogger;
 public abstract class BasicClient extends Thread implements JackProcessCallback, JackShutdownCallback  {
 
 	enum Status {
-	NEW, INITIALISING, ACTIVE, CLOSING, TERMINATED, OVERDUBBED;
+		NEW, INITIALISING, ACTIVE, CLOSING, TERMINATED, OVERDUBBED;
 	}	
 	
     static final EnumSet<JackOptions> OPTIONS = EnumSet.of(JackOptions.JackNoStartServer);
@@ -72,7 +70,6 @@ public abstract class BasicClient extends Thread implements JackProcessCallback,
         } catch (Exception e) {
         	RTLogger.warn(this, e);
         }
-
         close();
 	}
 

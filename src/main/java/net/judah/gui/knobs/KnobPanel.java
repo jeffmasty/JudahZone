@@ -20,13 +20,12 @@ public abstract class KnobPanel extends JPanel implements Updateable {
 	
 	/**Called when the KnobPanel is going to be displayed. 
 	 * @return an optional and separate set of title bar component(s) */
-	public Component installing() {
+	public Component getTitle() {
 		return Gui.wrap(new JLabel(getName()));
 	}
 
-	public void pad1() {
+	public abstract void pad1();
 		
-	}
 	
 	public void pad2() {
 		

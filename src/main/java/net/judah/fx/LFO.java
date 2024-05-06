@@ -128,10 +128,10 @@ public class LFO implements TimeEffect {
 			ch.getReverb().setActive(true);
 			break;
 		case Gain:
-			recover = ch.getVolume();
+			recover = ch.getGain().get(Gain.VOLUME);
 			break;
 		case Pan:
-			recover = ch.getPan();
+			recover = ch.getGain().get(Gain.PAN);
 			break;
     	case Chorus:
     		recover = ch.getChorus().get(Chorus.Settings.Feedback.ordinal());
@@ -255,45 +255,45 @@ public class LFO implements TimeEffect {
 	//}
 
 	
-	public static class LFOTest extends Thread {
-		final LFO lfo = new LFO(new Channel("test", false));
-
-		long sleep = 80;
-		final long spells = 50;
-		int count;
-
-		double min = Double.MAX_VALUE;
-		double max = Double.MIN_VALUE;
-
-		public LFOTest(int freq) {
-			lfo.frequency = freq;
-		}
-
-		@Override
-		public void run() {
-			while(count <= spells) {
-				double query = lfo.query();
-				if (query > max) max = query;
-				if (query < min) min = query;
-
-				long spaces = Math.round(query / 5);
-				String display = "";
-				for (int i = 0; i< spaces; i++)
-					display += " ";
-				display += "*";
-				System.out.println(display + "       " + query);
-
-				count++;
-				try { Thread.sleep(sleep);
-				} catch (Throwable t) { }
-			}
-			System.out.println("done. min: " + min + " max: " + max + " frequency: " + lfo.getFrequency());
-		}
-		
-		public static void main2(String[] args) {
-			new LFOTest(1200).start(); // 3 second LFO
-		}
-	}
+//	public static class LFOTest extends Thread {
+//		final LFO lfo = new LFO(new Channel("test", false));
+//
+//		long sleep = 80;
+//		final long spells = 50;
+//		int count;
+//
+//		double min = Double.MAX_VALUE;
+//		double max = Double.MIN_VALUE;
+//
+//		public LFOTest(int freq) {
+//			lfo.frequency = freq;
+//		}
+//
+//		@Override
+//		public void run() {
+//			while(count <= spells) {
+//				double query = lfo.query();
+//				if (query > max) max = query;
+//				if (query < min) min = query;
+//
+//				long spaces = Math.round(query / 5);
+//				String display = "";
+//				for (int i = 0; i< spaces; i++)
+//					display += " ";
+//				display += "*";
+//				System.out.println(display + "       " + query);
+//
+//				count++;
+//				try { Thread.sleep(sleep);
+//				} catch (Throwable t) { }
+//			}
+//			System.out.println("done. min: " + min + " max: " + max + " frequency: " + lfo.getFrequency());
+//		}
+//		
+//		public static void main2(String[] args) {
+//			new LFOTest(1200).start(); // 3 second LFO
+//		}
+//	}
 
 
 	@Override

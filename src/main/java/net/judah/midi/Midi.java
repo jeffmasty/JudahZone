@@ -28,8 +28,6 @@ import net.judah.util.RTLogger;
 @JsonSerialize(using = Midi.Serialization.class) 
 public class Midi extends ShortMessage {
 
-	public static int MIDDLE_C = 60;
-
 	public static final String PARAM_COMMAND = "command";
 	public static final String PARAM_CHANNEL = "channel";
 	public static final String PARAM_DATA1 = "data1";

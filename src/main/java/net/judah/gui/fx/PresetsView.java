@@ -14,29 +14,31 @@ import javax.swing.*;
 
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.fx.Gain;
 import net.judah.fx.Preset;
 import net.judah.fx.PresetsDB;
 import net.judah.gui.Gui;
+import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
-import net.judah.gui.knobs.MidiGui;
 import net.judah.gui.widgets.Btn;
+import net.judah.gui.widgets.LengthCombo;
+import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
+import net.judah.util.Constants;
 
-/** creates modal dialog box */
-public class PresetsGui extends KnobPanel /* fwd knob input to MidiGui */  {
+public class PresetsView extends KnobPanel  {
 	public static final Dimension BTN_SZ = new Dimension(80, Size.STD_HEIGHT);
 
 	@Getter private final KnobMode knobMode = KnobMode.Presets;
-	private final MidiGui knobs;
+	@Getter private final JPanel title = new JPanel();
 	private final PresetsDB presets;
 	private final JList<String> list = new JList<>();
     private final JComboBox<String> target;
 
-	public PresetsGui(PresetsDB presets, MidiGui knobs) {
+	public PresetsView(PresetsDB presets) {
 		this.presets = presets;
-		this.knobs = knobs;
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         renew();
         target = createMixerCombo();
@@ -46,12 +48,9 @@ public class PresetsGui extends KnobPanel /* fwd knob input to MidiGui */  {
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
         add(scrollPane);
         add(Gui.resize(presetsBtns(), new Dimension(BTN_SZ.width + 8, Size.HEIGHT_KNOBS - 30)));
+        validate();
 	}
 
-	@Override public Component installing() {
-		return new JPanel();
-	}
-	
 	private JComboBox<String> createMixerCombo() {
 	    ArrayList<String> channels = new ArrayList<>();
         for (Channel c : JudahZone.getMixer().getChannels())
@@ -161,8 +160,32 @@ public class PresetsGui extends KnobPanel /* fwd knob input to MidiGui */  {
     }
 
 	@Override
-	public boolean doKnob(int idx, int value) {
-		return knobs.doKnob(idx, value);
+	public boolean doKnob(int idx, int data2) {
+		switch (idx) {
+    	case 0: // sync loop length 
+    		JudahClock clock = JudahZone.getClock();
+			if (data2 == 0) 
+				clock.setLength(1);
+			else 
+				clock.setLength((int) Constants.ratio(data2, LengthCombo.LENGTHS));
+			break;
+    	case 1: // Select preset
+    		Constants.execute(()->list.setSelectedIndex(Constants.ratio(data2, list.getModel().getSize() - 1)));
+    		break;
+    	case 2: // apply to
+    		// Constants.execute(()->target.setSelectedIndex(Constants.ratio(data2, target.getItemCount() - 1)));
+    		break;
+    	case 3: 
+    		JudahZone.getMains().getGain().set(Gain.VOLUME, data2);
+    		MainFrame.update(JudahZone.getMains());
+    		break;
+		}
+		return true;
 	}
     
+	@Override
+	public void pad1() {
+		applyTo();
+	}
+	
 }

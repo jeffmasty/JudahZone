@@ -28,25 +28,26 @@ public class SongTrack extends JPanel implements Size {
 
 	
 	@Getter private final MidiTrack track;
-	private final TrackVol vol;
-	private Slider gain = null; // drumTrack
+	private Slider gain = null; // DrumTrack
 				
 	//  namePlay file cycle bar preview preset amp
 	public SongTrack(MidiTrack t) {
-		setLayout(new FlowLayout(FlowLayout.LEFT, 4, 4));
-
 		this.track = t;
-		vol = new TrackVol(track);
-		Program progChange = new Program(track);
-		Gui.resize(progChange, COMBO_SIZE);
+		Programmer computer = new Programmer(track);
 
+		setLayout(new FlowLayout(FlowLayout.LEFT, 4, 4));
 		setOpaque(true);
 		setBorder(Gui.SUBTLE);
 		add(Gui.resize(new PlayWidget(t, t.getName()), SMALLER_COMBO));
-		if (t.isSynth()) 
+		add(Gui.resize(new Program(track), COMBO_SIZE));		
+
+		if (t.isSynth()) {
 			add(new ModeCombo(((PianoTrack)track)));
+			add(new TrackVol(track));
+		}
 		else {
 			setBackground(Pastels.BUTTONS);
+			computer.setBackground(Pastels.BUTTONS);
 			gain = new Slider(null);
 			gain.setValue((int) (track.getAmp() * 100));
 			gain.addChangeListener(e->{
@@ -54,16 +55,11 @@ public class SongTrack extends JPanel implements Size {
 					track.setAmp(gain.getValue() * 0.01f); // TODO GUI updates?
 				}
 			});
-			add(Gui.resize(gain, SMALLER_COMBO));
+			Dimension GAIN_SIZE = new Dimension(105, STD_HEIGHT);
+			add(Gui.resize(gain, GAIN_SIZE));
 		}
-		add(vol);
 		add(Gui.resize(new Folder(track), COMBO_SIZE));		
-		Programmer computer = new Programmer(track);
-		Gui.resize(computer, COMPUTER);
-		if (track.isDrums())
-			computer.setBackground(Pastels.BUTTONS);
-		add(computer);
-		add(progChange);		
+		add(Gui.resize(computer, COMPUTER));
 		add(new Btn(Icons.DETAILS_VEW, e->JudahZone.getFrame().edit(track)));
 		update();
 	}

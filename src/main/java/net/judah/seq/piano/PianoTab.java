@@ -34,13 +34,13 @@ public class PianoTab extends MidiTab {
 		repaint();
 	}
 
+	@Override
 	public MidiView getView(MidiTrack t) {
 		for (MidiView v : viewList)
 			if (v.getTrack() == t)
 				return v;
-		return null;
+		return null; 
 	}
-
 
 
 }

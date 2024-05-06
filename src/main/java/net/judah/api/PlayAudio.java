@@ -5,13 +5,11 @@ import net.judah.looper.Recording;
 /**Participates in real time audio processing, can respond to some commands*/
 public interface PlayAudio {
 
-	public enum Type {ONE_SHOT, FREE, SOLO, DRUMTRACK, SYNC, BSYNC}
+	public enum Type {ONE_SHOT, SYNC, BSYNC, FREE, SOLO}
 
 	void setRecording(Recording r);
 	
 	Recording getRecording();
-	
-//	void setTapeCounter(int i);
 	
 	void play(boolean onOrOff);
 	

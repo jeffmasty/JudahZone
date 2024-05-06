@@ -2,14 +2,15 @@ package net.judah.gui.widgets;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 
+import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
+import net.judah.gui.Size;
 
 /**An extended JSlider that paints the Thumb chromatically based on the slider position.
  * <br/><br/>
@@ -18,7 +19,6 @@ import net.judah.gui.Pastels;
  * @author Tsukino, Fumino and Jeff Masty (Nov 28, 2021) */
 public class RainbowFader extends JSlider {
 
-	public static final Dimension MINIMUM = new Dimension(50, 76);
 	public static final int THUMB_WIDTH = 14; 
 	public static final int THUMB_HEIGHT = 28; 
 
@@ -106,9 +106,8 @@ public class RainbowFader extends JSlider {
         setPaintTicks(true);
         setMajorTickSpacing(-1);
         setMinorTickSpacing(25);
-        setPreferredSize(MINIMUM); 
-        setMinimumSize(MINIMUM);
-        
+        Gui.resize(this, Size.FADER_SIZE);
+        setOpaque(true);
     }
 
     public static void main2(String[] args) {

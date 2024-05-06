@@ -39,7 +39,7 @@ public class MidiPort {
 		if (port == null)
 			engine.send(midi, ticker);
 		else  
-			JudahMidi.queue(midi, port);
+			//JudahMidi.queue(midi, port);
 			try { // realtime
 				JackMidi.eventWrite(port, ticker, midi.getMessage(), midi.getLength());
 			} catch (JackException e) {

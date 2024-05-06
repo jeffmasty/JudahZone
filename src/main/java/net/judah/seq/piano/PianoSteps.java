@@ -92,7 +92,7 @@ public class PianoSteps extends Steps implements BeatsSize, MouseMotionListener,
 		}
 	}
 
-	@Override
+//	@Override not used
 	public void setStart(int start) {
 		this.start = start;
 		repaint();
@@ -129,7 +129,7 @@ public class PianoSteps extends Steps implements BeatsSize, MouseMotionListener,
 		 off = toStep(e.getPoint().y) + 1;
 	}
 	
-	/** stop playing notes */
+	/** add actives to track*/
 	@Override public void mouseReleased(MouseEvent e) { 
 		off = toStep(e.getPoint().y) + 1;
 		if (track.getActives().size() == 0) 

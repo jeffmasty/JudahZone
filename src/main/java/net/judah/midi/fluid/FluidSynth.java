@@ -1,4 +1,4 @@
-package net.judah.fluid;
+package net.judah.midi.fluid;
 
 import static net.judah.util.Constants.NL;
 
@@ -16,8 +16,12 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.gui.MainFrame;
 import net.judah.gui.settable.Program;
+import net.judah.midi.JudahClock;
+import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiInstrument;
+import net.judah.seq.track.PianoTrack;
+import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -27,6 +31,9 @@ public class FluidSynth extends MidiInstrument {
 	public static final String RIGHT_PORT = "fluidsynth-midi:right"; // "fluidsynth:r_00";
 	public static final String MIDI_PORT = "fluidsynth-midi:midi_00"; // "fluidsynth:midi";
 	public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // "/usr/share/sounds/sf2/JJazzLab-SoundFont.sf2"
+	public static enum Tracks {
+		Fluid1, Fluid2, Fluid3
+	}
 	private static final int CHANNELS = 4;
 	
 	private final String shellCommand;
@@ -38,10 +45,10 @@ public class FluidSynth extends MidiInstrument {
 	private float gain = 1f; // max 5f
 	private final String[] changes = new String[CHANNELS];
 	/** General-Midi presets */
-	@Getter private final FluidChannels GM = new FluidChannels();
+	@Getter private final FluidChannels channels = new FluidChannels();
 	@Getter private final ArrayList<Drum> drums = new ArrayList<>();
 
-	public FluidSynth(int sampleRate, JackPort left, JackPort right, JackPort midi) {
+	public FluidSynth(int sampleRate, JackPort midi, JudahClock clock, JackPort left, JackPort right) {
 		super(Constants.FLUID, LEFT_PORT, RIGHT_PORT, left, right, "Fluid.png", midi);
 		reverb = new FluidReverb(this); // use external reverb
 
@@ -72,6 +79,13 @@ public class FluidSynth extends MidiInstrument {
 		}
 		sendCommand("chorus off");
 		gain(gain);
+		try {
+			for (Tracks t : Tracks.values())
+				tracks.add(new PianoTrack(t.name(), this, t.ordinal(), clock));
+		} catch (InvalidMidiDataException e) {
+			RTLogger.warn(this, e);
+		}
+		Console.getInstance().getParticipants().add(console);
 	}
 
 	public void syncChannels() {
@@ -87,13 +101,13 @@ public class FluidSynth extends MidiInstrument {
 			if (listener.channels.isEmpty())
 				throw new Exception("Error reading channels");
 			else {
-				GM.clear();
+				channels.clear();
 				for (FluidChannel c : listener.channels)
-					GM.add(c);
+					channels.add(c);
 			}
 			for (int i = 0; i < changes.length; i++)
-				if (GM.size() > i)
-					changes[i] = GM.get(i).name;
+				if (channels.size() > i)
+					changes[i] = channels.get(i).name;
 			
 		} catch (Exception e) { RTLogger.warn(this, e);  }
 	}
@@ -221,15 +235,18 @@ public class FluidSynth extends MidiInstrument {
 	}
 
 	@Override public boolean progChange(String preset, int ch) {
+		
 		for (int i = 0; i < patches.length; i++)
 			if (patches[i].equals(preset)) {
 				final int val = i;
-				Constants.execute(() ->
-					sendCommand(FluidCommand.PROG_CHANGE, ch + " " + val));
-				// flooding: JudahMidi.queue(Midi.create(ShortMessage.PROGRAM_CHANGE, ch, i, 0), midiPort.getPort());
+				//Constants.execute(() -> {
+				//sendCommand(FluidCommand.PROG_CHANGE, ch + " " + val);
+				// flooding: 
+				JudahMidi.queue(Midi.create(ShortMessage.PROGRAM_CHANGE, ch, val, 0), midiPort);
 				if (ch < changes.length) 
 					changes[ch] = preset;
 				MainFrame.update(Program.first(this, ch));
+				//});
 				return true;
 			}
 		return false;

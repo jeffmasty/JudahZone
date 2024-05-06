@@ -7,7 +7,6 @@ import javax.swing.JComboBox;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
 import net.judah.seq.track.MidiTrack;
@@ -15,12 +14,14 @@ import net.judah.seq.track.PianoTrack;
 import net.judah.song.cmd.Cmd;
 import net.judah.song.cmd.Cmdr;
 import net.judah.song.cmd.Param;
+import net.judah.util.Constants;
 
 @NoArgsConstructor
 public class TrackList extends Vector<MidiTrack> implements Cmdr {
 
 	private MidiTrack current;
-	@Setter private Runnable update;
+	private long flooding;
+	private static final long INTERVAL = 10 * Constants.GUI_REFRESH;
 	@Getter private String[] keys;
 	
 	public MidiTrack getCurrent() {
@@ -29,20 +30,21 @@ public class TrackList extends Vector<MidiTrack> implements Cmdr {
 		return current;
 	}
 	
+	public void init (MidiTrack init) {
+		current = init;
+	}
+	
 	public void setCurrent(MidiTrack change) {
+		
+		if (JudahZone.isInitialized() && System.currentTimeMillis() < flooding) 
+			return;
 		this.current = change;
-		if (update != null)
-			update.run();
-		MainFrame.setFocus(this);
+		MainFrame.setFocus(this);	
+		flooding = System.currentTimeMillis() + INTERVAL;
 	}
 	
 	public void next(boolean up) {
-		
-		int next = indexOf(current) + (up ? 1 : -1);
-		if (next >= size())
-			next = 0;
-		if (next < 0)
-			next = size() - 1;
+		int next = Constants.rotary(indexOf(current), size(), up);
 		setCurrent(get(next));
 	}
 	
@@ -73,7 +75,7 @@ public class TrackList extends Vector<MidiTrack> implements Cmdr {
 	@Override
 	public void execute(Param p) {
 		if (p.cmd == Cmd.MPK)
-			JudahZone.getMidi().getMpk().setPort((PianoTrack)resolve(p.val));
+			JudahZone.getMidi().getMpk().setMidiTrack((PianoTrack)resolve(p.val));
 	}
 
 	

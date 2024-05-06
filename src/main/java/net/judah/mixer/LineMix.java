@@ -20,7 +20,6 @@ public class LineMix extends MixWidget {
 		sidecar.add(font(fx));
 		sidecar.add(font(sync));
 		mute.setText("tape");
-//		mute.setSelected(!channel.isMuteRecord());
 		sync.setText("solo");
 		sync.addActionListener(e->solo());
 		if (channel.getIcon() == null) 
@@ -38,7 +37,7 @@ public class LineMix extends MixWidget {
 	public void updateVolume() {
 		super.updateVolume();
 		if (!in.isMuteRecord())
-			volume.setBackground(ONTAPE);
+			fader.setBackground(ONTAPE);
 	}
 	
 	@Override

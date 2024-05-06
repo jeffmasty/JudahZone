@@ -2,8 +2,6 @@ package net.judah.gui.widgets;
 
 import java.util.ArrayList;
 
-import net.judah.gui.Gui;
-import net.judah.gui.Size;
 import net.judah.seq.track.MidiTrack;
 
 public class TrackAmp extends Slider {
@@ -13,8 +11,7 @@ public class TrackAmp extends Slider {
 	
 	public TrackAmp(MidiTrack t) {
 		super(0, 100, null, "Data2");
-		Gui.resize(this, Size.SMALLER_COMBO);
-		// super(Pastels.EGGSHELL);
+		
 		this.track = t;
 		setValue((int) (track.getAmp() * 100));
 		addChangeListener(evt->{

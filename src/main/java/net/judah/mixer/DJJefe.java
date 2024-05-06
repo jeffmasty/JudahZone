@@ -12,14 +12,17 @@ import javax.swing.JPanel;
 import lombok.Getter;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
-import net.judah.drumkit.DrumKit;
-import net.judah.drumkit.Sampler;
+import net.judah.drumkit.DrumMachine;
 import net.judah.fx.Fader;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
+import net.judah.gui.knobs.LFOKnobs;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
+import net.judah.sampler.Sampler;
+import net.judah.seq.track.DrumTrack;
+import net.judah.seq.track.MidiTrack;
 import net.judah.song.FxData;
 import net.judah.song.cmd.Cmdr;
 import net.judah.song.cmd.Param;
@@ -33,22 +36,31 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 	@Getter private final ArrayList<Channel> channels = new ArrayList<>();
 	@Getter private final String[] keys;
 	private final ArrayList<MixWidget> faders = new ArrayList<MixWidget>();
-	@Getter private final Zone sources;
+	private final Zone sources;
+	private final Mains mains;
+	private final int size;
+	private int idx;
 
-    public DJJefe(JudahClock clock, Mains mains, Looper looper, Zone sources, List<DrumKit> kits, Sampler sampler) {
-        this.sources = sources;
+    public DJJefe(JudahClock clock, Mains mains, Looper looper, Zone sources, DrumMachine drums, Sampler sampler) {
+		this.mains = mains;
+    	// preload channel gui's
+    	for (LineIn i : sources)
+        	i.getGui();
+		for (Loop l : looper)
+			l.getGui();
+    	
+    	this.sources = sources;
     	all.add(mains);
         all.addAll(looper);
 		all.addAll(sources);
-		for (DrumKit k : kits)
-			all.add(k);
+		for (MidiTrack track : drums.getTracks()) 
+			all.add( ((DrumTrack)track).getKit().getFx());
 		all.addAll(sampler);
 		all.addAll(sampler.getStepSamples());
     	for (Loop loop : looper) {
     		channels.add(loop);
-    		MixWidget fader = looper.getDisplay(loop);
-    		faders.add(fader);
-    		add(fader);
+    		faders.add(loop.getDisplay());
+    		add(loop.getDisplay());
     	}
         for (LineIn instrument : sources) {
         	channels.add(instrument);
@@ -57,11 +69,14 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
     		add(fader);
         }
         channels.add(mains);
-    	setLayout(new GridLayout(1, channels.size(), 0, 0));
+        size = channels.size();
+        for (Channel ch : channels)
+        	ch.setLfoKnobs(new LFOKnobs(ch, this));
+    	setLayout(new GridLayout(1, size, 0, 0));
         MixWidget fader = new MainsMix(mains, looper);
         faders.add(fader);
         add(fader);
-        keys = new String[channels.size()];
+        keys = new String[size];
         for (int i = 0; i < keys.length; i++)
         	keys[i] = channels.get(i).getName();
         clock.addListener(this);
@@ -86,7 +101,7 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
  	    
 	public void update(Channel channel) {
 		for (MixWidget ch : faders) 
-			if (ch.getChannel().equals(channel)) 
+			if (ch.channel.equals(channel)) 
 				ch.update();
 	}
 
@@ -97,18 +112,18 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 
 	public void highlight(ArrayList<Channel> s) {
 		for (MixWidget ch : faders) {
-			ch.setBorder(s.contains(ch.getChannel()) ? Gui.HIGHLIGHT : Gui.NO_BORDERS);
+			ch.setBorder(s.contains(ch.channel) ? Gui.HIGHLIGHT : Gui.NO_BORDERS);
 		}
 	}
 	
 	public void highlight(Channel o) {
 		for (MixWidget ch : faders) 
-			ch.setBorder(ch.getChannel() == o ? Gui.HIGHLIGHT : Gui.NO_BORDERS);
+			ch.setBorder(ch.channel == o ? Gui.HIGHLIGHT : Gui.NO_BORDERS);
 	}
 
 	public MixWidget getFader(Channel ch) {
 		for (MixWidget fade : faders)
-			if (fade.getChannel() == ch)
+			if (fade.channel == ch)
 				return fade;
 		return null;
 	}
@@ -204,4 +219,18 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 		all.forEach(ch->ch.tempo(tempo));
 	}
 
+	public void process(int numChannels) { // Gain
+		for (int i = 0; i < numChannels; i++)
+			process();
+	}
+
+	private void process() {
+		if (++idx == size)
+			idx = 0;
+		Channel ch = channels.get(idx);
+		if (ch == mains)
+			mains.setCopy(true);
+		MainFrame.update(getFader(ch).gain);
+	}
+	
 }

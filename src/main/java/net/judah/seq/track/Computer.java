@@ -15,7 +15,7 @@ public abstract class Computer {
 	@Setter protected long barTicks; // ticks in resolution of timeSig
 	protected Sched state = new Sched(); // from Song file Scenes
 	protected int current; 	// current measure/bar (not frame)
-	protected int offset; 	// frame adjustment away from Scene.launch by user
+	protected int offset; 	// frame adjustment by user away from Scene.launch
 	protected int count; 	// internal cycle bar increment
 	protected long left; 	// left bar's computed start tick 
 	protected long right; 	// right bar's computed start tick

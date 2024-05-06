@@ -33,7 +33,7 @@ public class RowKnobs extends Row {
 			controls.add(new PresetsBtns(ch, JudahZone.getLooper()));
 			controls.add(new FxKnob(ch, ch.getFilter1(), Filter.Settings.Frequency.ordinal(), "Hz."));
 			controls.add(new FxKnob(ch, ch.getFilter2(), Filter.Settings.Frequency.ordinal(), "Hz."));
-			controls.add(new FxKnob(ch, ch.getGain(), Gain.PAN, ""));
+			controls.add(new FxKnob(ch, ch.getGain(), Gain.PAN, ""));			
 			break;
 		default:
 			RTLogger.warn(this, new Exception(idx + " what? " + ch));

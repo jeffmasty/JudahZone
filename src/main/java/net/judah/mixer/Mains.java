@@ -7,6 +7,7 @@ import java.nio.FloatBuffer;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.widgets.FileChooser;
@@ -22,15 +23,20 @@ public class Mains extends Channel {
 	private final JackPort speakersLeft, speakersRight;
 	@Getter private ToDisk tape;
 	@Getter private boolean hotMic;
+	@Setter private boolean copy;
 	
 	public Mains(JackPort left, JackPort right) {
 		super("MAIN", true);
 		icon = Icons.get("Speakers.png");
 		this.speakersLeft = left;
 		this.speakersRight = right;
-		setOnMute(true);
 	}
 
+	public Mains(JackPort left, JackPort right, String preset) {
+		this(left, right);
+		setPreset(preset);
+	}
+	
 	public void process() {
 		FloatBuffer left = speakersLeft.getFloatBuffer();
 	    FloatBuffer right = speakersRight.getFloatBuffer();
@@ -58,14 +64,18 @@ public class Mains extends Channel {
         }
 
         if (delay.isActive()) {
-            delay.process(left, left, true);
-            delay.process(right, right, false);
+        	delay.process(left, right);
         }
 		if (reverb.isActive()) {
 			reverb.process(left, right);
 		}
 		if (tape != null)
 			tape.offer(left, right);
+		if (copy) {
+			copy = false;
+			AudioTools.copy(left, getLeft().array());
+			AudioTools.copy(right, getRight().array());
+		}
 	}
 
 	public boolean isRecording() { return tape != null; }

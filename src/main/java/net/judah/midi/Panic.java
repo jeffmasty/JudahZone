@@ -40,7 +40,6 @@ public class Panic implements Runnable  {
 		channel = ch;
 		Constants.execute(this);
 	}
-
 	
 	@Override public void run() {
 		try {
