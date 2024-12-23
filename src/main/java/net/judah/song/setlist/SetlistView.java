@@ -9,7 +9,18 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.List;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -17,39 +28,40 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.fx.Gain;
 import net.judah.gui.Gui;
-import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.fx.PresetsView.Button;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.widgets.Btn;
-import net.judah.gui.widgets.FileChooser;
 import net.judah.gui.widgets.FileRender;
 import net.judah.gui.widgets.LengthCombo;
 import net.judah.midi.JudahClock;
+import net.judah.omni.Icons;
+import net.judah.omni.Threads;
 import net.judah.song.Overview;
 import net.judah.util.Constants;
+import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ implements ListSelectionListener {
 	public static final String TABNAME = "Setlists";
-	
+
 	private final Setlists setlists;
 	private Setlist setlist;
 	private final Overview tab;
 	private final JList<File> jsongs = new JList<File>();
-	private final JComboBox<Setlist> custom  = new JComboBox<>(); 
+	private final JComboBox<Setlist> custom  = new JComboBox<>();
 	private final ActionListener setlister;
 	private File memory = Setlists.ROOT;
 	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-	
+
 	private final JButton upSong = 		new Button(" up ", e->moveSong(true));
 	private final JButton downSong = 	new Button("down", e->moveSong(false));
 	private final JButton deleteSong = 	new Button("delete", e->deleteSong());
 	private final JButton addSong = 	new Button(" add ", e->addSong());
-	@Getter private final KnobMode knobMode = KnobMode.Setlist;
-	
+	@Getter private final KnobMode knobMode = KnobMode.SETLIST;
+
 	private void loadSong() {
 		if (jsongs.getSelectedValue() != null)
 			tab.loadSong(jsongs.getSelectedValue());
@@ -61,7 +73,7 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 		setlister = e->setSetlist((Setlist)custom.getSelectedItem());
 		custom.setRenderer(new ListCellRenderer<Setlist>() {
 			private final JLabel render = new JLabel("", JLabel.CENTER);
-			@Override public Component getListCellRendererComponent(JList<? extends Setlist> list, Setlist setlist, 
+			@Override public Component getListCellRendererComponent(JList<? extends Setlist> list, Setlist setlist,
 					int index, boolean isSelected, boolean cellHasFocus) {
 			    render.setHorizontalAlignment(JLabel.CENTER);
 			    render.setFont(Gui.BOLD);
@@ -72,14 +84,14 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 				}
 				if (file.getName().indexOf('.') > 1)
 					render.setText(file.getName().substring(0, file.getName().lastIndexOf('.')));
-				else 
+				else
 					render.setText(file.getName());
 				return render;
 			}});
 		refill();
 		jsongs.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		jsongs.setCellRenderer(new DefaultListCellRenderer() {
-			@Override public Component getListCellRendererComponent(javax.swing.JList<?> list, Object value, 
+			@Override public Component getListCellRendererComponent(javax.swing.JList<?> list, Object value,
 					int index, boolean isSelected, boolean cellHasFocus) {
 				super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 				setText(FileRender.defix((File)value));
@@ -89,7 +101,7 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 		jsongs.addListSelectionListener(this);
 		jsongs.addMouseListener(new MouseAdapter() {
 			 @Override public void mouseClicked(MouseEvent mouseEvent) {
-				 if (mouseEvent.getClickCount() == 2 && jsongs.getSelectedIndex() >= 0 && !mouseEvent.isConsumed()) { 
+				 if (mouseEvent.getClickCount() == 2 && jsongs.getSelectedIndex() >= 0 && !mouseEvent.isConsumed()) {
 					 loadSong();
 					 mouseEvent.consume();
 				 }}});
@@ -102,19 +114,20 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 		btns.add(Box.createVerticalStrut(3));
 		btns.add(addSong); btns.add(deleteSong); btns.add(upSong); btns.add(downSong);
 		btns.add(new Button("open", e->loadSong())); btns.add(Box.createVerticalGlue());
-		
+
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		add(Box.createHorizontalStrut(6));
 		add(Gui.resize(btns, new Dimension(92, Size.HEIGHT_KNOBS - 30)));
-		add(scroll); 
+		add(scroll);
 		add(Box.createHorizontalStrut(13));
-		
+
 		title.add(Gui.resize(custom, Size.WIDE_SIZE));
 		title.add(new Btn(Icons.SAVE, e-> {if (setlist != null) setlist.save();}));
-		title.add(new Btn(Icons.NEW_FILE, e->newSetlist())); 
-		validate();
+		title.add(new Btn(Icons.NEW_FILE, e->newSetlist()));
+		title.invalidate();
+		invalidate();
 	}
-	
+
 	private void setSetlist(Setlist s) {
 		if (setlist == s)
 			return;
@@ -131,7 +144,7 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 		for (int i = 0; i < list.size(); i++) {
 			current = list.get(i);
 			custom.addItem(current);
-			if (current == select) 
+			if (current == select)
 				custom.setSelectedItem(current);
 		}
 		custom.addActionListener(setlister);
@@ -142,9 +155,9 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 		model.addAll(setlist);
 		jsongs.setModel(model);
 	}
-	
+
 	private void addSong() {
-		File choose = FileChooser.choose(memory);
+		File choose = Folders.choose(memory);
 		if (choose == null || choose.isFile() == false)
 			return;
 		memory = choose.getParentFile();
@@ -153,25 +166,25 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 		renew();
 		jsongs.setSelectedIndex(idx);
 	}
-	
+
 	private void deleteSong() {
 		if (jsongs.getSelectedIndex() < 0) return;
 		setlist.remove(jsongs.getSelectedIndex());
 		renew();
 	}
-	
+
 	private void moveSong(boolean up) {
 		if (jsongs.getSelectedIndex() < 0) return;
 		int move = jsongs.getSelectedIndex() + (up ? -1 : 1);
 		if (move < 0) return;
 		File f = setlist.remove(jsongs.getSelectedIndex());
-		if (move > setlist.size()) 
+		if (move > setlist.size())
 			move = setlist.size();
 		setlist.add(move, f);
 		renew();
 		jsongs.setSelectedIndex(move);
 	}
-	
+
 	private void newSetlist( ) {
 		String input = Gui.inputBox("Setlist Name");
 		if (input == null || input.isBlank())
@@ -183,7 +196,7 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 			RTLogger.warn(this, "Already exists: " + file.getAbsolutePath());
 			return;
 		}
-		
+
 		Setlist created = new Setlist();
 		created.setSource(file);
 		created.save();
@@ -191,12 +204,12 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 		setlists.setCurrent(file);
 		refill();
 		renew();
-		RTLogger.log(this, input + " setlist created");	
+		RTLogger.log(this, input + " setlist created");
 	}
-	
+
 	@Override public void valueChanged(ListSelectionEvent e) {
 		int selected[] = jsongs.getSelectedIndices();
-		
+
 		if (selected.length == 0) {
 			deleteSong.setEnabled(false);
 			upSong.setEnabled(false);
@@ -206,26 +219,24 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 			upSong.setEnabled(true);
 			downSong.setEnabled(true);
 		}
-		
-		
 	}
 
 	@Override
 	public boolean doKnob(int idx, int data2) {
 		switch(idx) {
 		case 0: JudahClock clock = JudahZone.getClock();
-			if (data2 == 0) 
+			if (data2 == 0)
 				clock.setLength(1);
-			else 
+			else
 				clock.setLength((int) Constants.ratio(data2, LengthCombo.LENGTHS));
 			break;
     	case 1: // Select song
-    		Constants.execute(()->jsongs.setSelectedIndex(Constants.ratio(data2, jsongs.getModel().getSize() - 1)));
+    		Threads.execute(()->jsongs.setSelectedIndex(Constants.ratio(data2, jsongs.getModel().getSize() - 1)));
     		break;
     	case 2: // Select StepSample
-    		Constants.execute(()->custom.setSelectedIndex(Constants.ratio(data2, custom.getItemCount() - 1)));
+    		Threads.execute(()->custom.setSelectedIndex(Constants.ratio(data2, custom.getItemCount() - 1)));
     		break;
-    	case 3: 
+    	case 3:
     		JudahZone.getMains().getGain().set(Gain.VOLUME, data2);
     		MainFrame.update(JudahZone.getMains());
     		break;
@@ -237,9 +248,9 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 	public void pad1() {
 		loadSong();
 	}
-	
+
 	@Override
 	public void update() {
 	}
-	
+
 }

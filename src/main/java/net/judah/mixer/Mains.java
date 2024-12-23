@@ -8,23 +8,23 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
-import net.judah.gui.widgets.FileChooser;
 import net.judah.looper.ToDisk;
-import net.judah.util.AudioTools;
+import net.judah.omni.AudioTools;
+import net.judah.omni.Icons;
+import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 /**The unified effects/volume track just before hitting the speakers/external effects.
  * A master track initializes in a muted state.*/
 public class Mains extends Channel {
 	private final float BOOST = 12f;
-	
+
 	private final JackPort speakersLeft, speakersRight;
 	@Getter private ToDisk tape;
 	@Getter private boolean hotMic;
 	@Setter private boolean copy;
-	
+
 	public Mains(JackPort left, JackPort right) {
 		super("MAIN", true);
 		icon = Icons.get("Speakers.png");
@@ -36,7 +36,7 @@ public class Mains extends Channel {
 		this(left, right);
 		setPreset(preset);
 	}
-	
+
 	public void process() {
 		FloatBuffer left = speakersLeft.getFloatBuffer();
 	    FloatBuffer right = speakersRight.getFloatBuffer();
@@ -53,7 +53,7 @@ public class Mains extends Channel {
         	compression.process(left);
         	compression.process(right);
         }
-        
+
         if (overdrive.isActive()) {
             overdrive.processAdd(left);
             overdrive.processAdd(right);
@@ -79,22 +79,22 @@ public class Mains extends Channel {
 	}
 
 	public boolean isRecording() { return tape != null; }
-	
+
 	public void tape(boolean openFileDialog) {
 		if (tape == null && openFileDialog) {
-			File f = FileChooser.choose(new File(System.getProperty("user.home")));
+			File f = Folders.choose(new File(System.getProperty("user.home")));
 			if (f == null) return;
 			try {
 				tape = new ToDisk(f);
 			} catch (IOException e) { RTLogger.warn(this, e); }
 		}
-		else 
+		else
 			tape();
 	}
-	
+
 	public void tape() {
 		try {
-			if (tape == null) 
+			if (tape == null)
 				tape = new ToDisk();
 			else {
 				ToDisk old = tape;
@@ -111,7 +111,7 @@ public class Mains extends Channel {
 
 }
 
-//	if (reverb.isInternal()) 
+//	if (reverb.isInternal())
 //		((Freeverb)reverb).process(left, right);
 //	else { // external reverb
 //        mix(left, getGainL(), effectsL.getFloatBuffer());

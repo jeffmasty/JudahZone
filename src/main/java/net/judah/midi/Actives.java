@@ -22,8 +22,8 @@ public class Actives extends ArrayList<ShortMessage> {
 	public void receive(ShortMessage msg) {
 		if (Midi.isNoteOn(msg)) 
 			add(msg);
-		else 
-			off(msg.getData1());
+		else if (Midi.isNoteOff(msg))
+			noteOff(msg);
 		MainFrame.update(this); 
 	}
 
@@ -47,13 +47,13 @@ public class Actives extends ArrayList<ShortMessage> {
 		super.clear();
 		MainFrame.update(this);
 	}
-
-	public void off(int data1) {
-		ShortMessage midi = find(data1);
-		while (midi != null) {
-			remove(midi);
+	
+	public void noteOff(ShortMessage msg) {
+		ShortMessage found = find(msg.getData1());
+		while (found != null) {
+			remove(found);
 			MainFrame.update(this);
-			midi = find(data1);
+			found = find(msg.getData1());
 		}
 	}
 

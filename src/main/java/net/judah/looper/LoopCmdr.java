@@ -3,16 +3,15 @@ package net.judah.looper;
 import java.security.InvalidParameterException;
 
 import lombok.Getter;
-import net.judah.api.PlayAudio.Type;
 import net.judah.song.cmd.Cmdr;
 import net.judah.song.cmd.Param;
 
 public class LoopCmdr implements Cmdr {
 
-	@Getter private final String[] keys; 
+	@Getter private final String[] keys;
 
 	private final Looper looper;
-	
+
 	public LoopCmdr(Looper loops) {
 		this.looper = loops;
 		keys = new String[looper.size()];
@@ -20,7 +19,7 @@ public class LoopCmdr implements Cmdr {
 			keys[i] = looper.get(i).getName();
 		}
 	}
-	
+
 	@Override
 	public Loop resolve(String key) {
 		for (int i = 0; i < looper.size(); i++)
@@ -42,13 +41,12 @@ public class LoopCmdr implements Cmdr {
 			loop.duplicate();
 			break;
 		case Record:
-			if (loop.getType() == Type.FREE)
-				loop.record(true); // rare?
-			else if (looper.getClock().isActive())
-				loop.syncRecord(); // ignore in edit mode
+			if (false == looper.getClock().isActive())
+				break;
+			loop.trigger();
 			break;
 		case RecEnd:
-			loop.record(false);
+			loop.capture(false);
 			break;
 		case Sync:
 			looper.onDeck(loop);

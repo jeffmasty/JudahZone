@@ -1,4 +1,6 @@
 package net.judah.midi;
+
+import static net.judah.JudahZone.*;
 import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsInput;
 import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsOutput;
 import static org.jaudiolibs.jnajack.JackPortType.MIDI;
@@ -20,25 +22,32 @@ import org.jaudiolibs.jnajack.JackPortFlags;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.JudahZone;
 import net.judah.api.BasicClient;
+import net.judah.api.MidiClock;
 import net.judah.api.ZoneMidi;
-import net.judah.controllers.*;
+import net.judah.controllers.Beatstep;
+import net.judah.controllers.Controller;
+import net.judah.controllers.Jamstik;
+import net.judah.controllers.KorgMixer;
+import net.judah.controllers.KorgPads;
+import net.judah.controllers.Line6FBV;
+import net.judah.controllers.MPKmini;
 import net.judah.gui.MainFrame;
 import net.judah.midi.fluid.FluidSynth;
+import net.judah.omni.Threads;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 
 /** Setup MIDI ports and handle MIDI integration with Jack */
-@Getter 
+@Getter
 public class JudahMidi extends BasicClient implements Closeable {
 	public static final String JACKCLIENT_NAME = "JudahMidi";
 
 	/** Hard-coded Line-In MidiPorts */ @RequiredArgsConstructor
 	public static enum IN {
-		MIDICLOCK("clock24"),
-		KEYBOARD("keyboard"), 
+		MIDICLOCK("clockIn"),
+		KEYBOARD("keyboard"),
 		MIXER("mixer"),
 		PADS("pads"),
 		LINE6_IN("line6In"),
@@ -49,18 +58,17 @@ public class JudahMidi extends BasicClient implements Closeable {
 
 	/** Hard-coded Line-Out MidiPorts */ @RequiredArgsConstructor
 	public enum OUT {
-		TEMPO("Tempo"),
-		SYNTH_OUT("Fluid"), 
+		TEMPO("clockOut"),
+		SYNTH_OUT("Fluid"),
 		CRAVE_OUT("Crave");
 		public final String port;
 	}
-	
-    private static final ConcurrentLinkedQueue<PortMessage> queue = new ConcurrentLinkedQueue<>();
-    private static int ticker;
 
+    private static int ticker;
 	private static Process a2j; // jack to alsa midi bridge
+
 	private final JudahClock clock;
-    private JackPort midiclock;
+    private JackPort clockIn;
     private JackPort keyboard;
     private JackPort pedal;
     private JackPort pads;
@@ -68,30 +76,31 @@ public class JudahMidi extends BasicClient implements Closeable {
     private JackPort line6;
     private JackPort beatstep;
     private final Jamstik jamstik = new Jamstik();
-    private MPKmini mpk;
+    private final MPKmini mpk = new MPKmini();
     private JackPort gtrMidi;
     private JackPort fluidOut;
     private JackPort craveOut;
-    private JackPort tempo;
-	private final ArrayList<JackPort> inPorts = new ArrayList<>();  
-    private final ArrayList<JackPort> outPorts = new ArrayList<>(); 
+    private JackPort clockOut;
+	private final ArrayList<JackPort> inPorts = new ArrayList<>();
+    private final ArrayList<JackPort> outPorts = new ArrayList<>();
     private final ArrayList<ZoneMidi> sync = new ArrayList<>();
     private final MidiScheduler scheduler = new MidiScheduler();
-    private final HashMap<JackPort, Controller> switchboard = new HashMap<>();
-
     private long counter;
-    private final byte[] DATA1 = new byte[1], DATA2 = new byte[2], DATA3 = new byte[3]; // for process()
-    private final Event midiEvent = new JackMidi.Event(); // for process()
+    private final HashMap<JackPort, Controller> switchboard = new HashMap<>();
+    private static final ConcurrentLinkedQueue<PortMessage> queue = new ConcurrentLinkedQueue<>();
+    // for process()
+    private final byte[] DATA1 = new byte[1], DATA2 = new byte[2], DATA3 = new byte[3];
+    private final Event midiEvent = new JackMidi.Event();
 
-    public JudahMidi(JudahClock clock) throws Exception {
-    	this(JACKCLIENT_NAME, clock);
+    public JudahMidi() throws Exception {
+    	this(JACKCLIENT_NAME);
     }
-    
-    public JudahMidi(String name, JudahClock clock) throws Exception {
+
+    public JudahMidi(String name) throws Exception {
         super(name);
-        this.clock = clock;
-        JudahZone.getServices().add(this);
+        clock = new JudahClock(this);
         a2j();
+        getServices().add(this);
         start();
     }
 
@@ -100,41 +109,44 @@ public class JudahMidi extends BasicClient implements Closeable {
     	if (a2j != null) a2j.destroy();
     }
 
-    private void a2j() {
+    @SuppressWarnings("deprecation")
+	private void a2j() {
 		String shellCommand = "a2jmidid -e";
 		try {
 			if (a2j != null) {
 				a2j.destroy();
-				Constants.sleep(50);
+				Threads.sleep(50);
 			}
-			
+
 			a2j = Runtime.getRuntime().exec(shellCommand);
-			Constants.sleep(333);
+			Threads.sleep(333);
 		} catch (Exception e) { System.err.println(e.getMessage()); }
 	}
-    
+
     //when external a2jmidi bridge fails
     public void recoverMidi() {
     	boolean running = clock.isActive();
-    	JudahZone.setInitialized(false);
+    	setInitialized(false);
     	clock.end();
     	try {
-			for (JackPort port : outPorts) 
+			for (JackPort port : outPorts)
 				jackclient.unregisterPort(port);
-			for (JackPort port : inPorts) 
+			for (JackPort port : inPorts)
 				jackclient.unregisterPort(port);
 			a2j();
 			initialize();
 			makeConnections();
-			JudahZone.getFluid().setMidiPort(fluidOut);
-			JudahZone.getBass().setMidiPort(craveOut);
-			
+			getFluid().setMidiPort(fluidOut);
+			getBass().setMidiPort(craveOut);
+			getMidiGui().recover(this);
+
     	} catch (JackException e) { RTLogger.warn(this, e.getMessage());}
-		JudahZone.setInitialized(true);
+		setInitialized(true);
 		if (running)
 			clock.begin();
+		RTLogger.log(this, "Midi re-connect");
     }
-    
+
 	@Override
     protected void initialize() throws JackException {
     	switchboard.clear();
@@ -144,26 +156,24 @@ public class JudahMidi extends BasicClient implements Closeable {
             outPorts.add(jackclient.registerPort(port.port, MIDI, JackPortIsOutput));
         for (IN port : IN.values())
             inPorts.add(jackclient.registerPort(port.port, MIDI, JackPortIsInput));
-        
+
         int sz = outPorts.size();
-        if (sz > OUT.TEMPO.ordinal()) 
-        	tempo = outPorts.get(OUT.TEMPO.ordinal());
-        if (sz > OUT.SYNTH_OUT.ordinal()) 
+        if (sz > OUT.TEMPO.ordinal())
+        	clockOut = outPorts.get(OUT.TEMPO.ordinal());
+        if (sz > OUT.SYNTH_OUT.ordinal())
         	fluidOut = outPorts.get(OUT.SYNTH_OUT.ordinal());
-        if (sz > OUT.CRAVE_OUT.ordinal()) 
+        if (sz > OUT.CRAVE_OUT.ordinal())
         	craveOut = outPorts.get(OUT.CRAVE_OUT.ordinal());
 
-        while (JudahZone.getSeq() == null || JudahZone.getLooper() == null) // sync w/ audio Thread
-        	Constants.sleep(10);
-        
+        while (getSeq() == null || getLooper() == null) // sync w/ audio Thread
+        	Threads.sleep(10);
+
         // connect midi controllers to software handlers
         sz = inPorts.size();
-        if (sz > IN.MIDICLOCK.ordinal()) 
-        	midiclock = inPorts.get(IN.MIDICLOCK.ordinal());
+        if (sz > IN.MIDICLOCK.ordinal())
+        	clockIn = inPorts.get(IN.MIDICLOCK.ordinal());
         if (sz > IN.KEYBOARD.ordinal()) {
         	keyboard = inPorts.get(IN.KEYBOARD.ordinal());
-        	if (mpk == null)
-        		mpk = new MPKmini(this, JudahZone.getSeq());
         	switchboard.put(keyboard, mpk);
         }
         if (sz > IN.MIXER.ordinal()) {
@@ -187,7 +197,7 @@ public class JudahMidi extends BasicClient implements Closeable {
         	gtrMidi = inPorts.get(IN.JAMSTIK.ordinal());
         	switchboard.put(gtrMidi, jamstik);
         }
-        
+
         RTLogger.log(this, switchboard.size() + " controllers connected");
 
         Thread timePolling = new Thread(scheduler);
@@ -198,63 +208,67 @@ public class JudahMidi extends BasicClient implements Closeable {
 
     @Override
     public void makeConnections() throws JackException {
-    	
+
     	final EnumSet<JackPortFlags> OUT = EnumSet.of(JackPortIsOutput);
     	final EnumSet<JackPortFlags> INS = EnumSet.of(JackPortIsInput);
-    	
-    	// TODO ALSA connect midi clock to MPKMini (arpeggios) and Crave
-    	// CLOCK IN
-    	for (String port : jack.getPorts(jackclient, MidiClock.PORT_NAME, MIDI, OUT)) 
-    		connect("MidiClock", midiclock.getName(), port);
-    	// CLOCK OUT
-    	for (String port : jack.getPorts(jackclient, MidiClock.PORT_NAME, MIDI, INS)) 
-    		connect("TempoOut", port, tempo.getName());
-    	
-    	for (String port : jack.getPorts(jackclient, Beatstep.NAME, MIDI, OUT)) 
+
+    	for (String port : jack.getPorts(jackclient, Beatstep.NAME, MIDI, OUT))
     		connect("Beatstep", beatstep.getName(), port);
-        for (String port : jack.getPorts(jackclient, MPKmini.NAME, MIDI, OUT)) 
+        for (String port : jack.getPorts(jackclient, MPKmini.NAME, MIDI, OUT))
         	connect("MPK", keyboard.getName(), port);
-        for (String port : jack.getPorts(jackclient, KorgPads.NAME, MIDI, OUT)) 
+        for (String port : jack.getPorts(jackclient, KorgPads.NAME, MIDI, OUT))
         	connect("Pads", pads.getName(), port);
-        for (String port : jack.getPorts(jackclient, KorgMixer.NAME, MIDI, OUT)) 
+        for (String port : jack.getPorts(jackclient, KorgMixer.NAME, MIDI, OUT))
         	connect("Mixer", mixer.getName(), port);
         for (String port : jack.getPorts(jackclient, Line6FBV.NAME, MIDI, OUT)) {
         	connect("Line6", line6.getName(), port);
         	break;
         }
-        for (String port : jack.getPorts(jackclient, Constants.getDi(), MIDI, OUT)) 
+        for (String port : jack.getPorts(jackclient, Constants.getDi(), MIDI, OUT))
         	connect("DI/Jamstik", gtrMidi.getName(), port);
-        for (String port : jack.getPorts(jackclient, Constants.getDi(), MIDI, INS)) 
+        for (String port : jack.getPorts(jackclient, Constants.getDi(), MIDI, INS)) {
         	connect("Crave", port, craveOut.getName());
-        
+        	connect("BassClock", port, clockOut.getName());
+        }
+
         String[] fluid = jack.getPorts(jackclient, FluidSynth.MIDI_PORT, MIDI, INS);
         while (fluid.length == 0) {
-        	Constants.sleep(30);
+        	Threads.sleep(30);
         	fluid = jack.getPorts(jackclient, FluidSynth.MIDI_PORT, MIDI, INS);
         }
-    	for (String port : fluid) 
+    	for (String port : fluid)
     		connect("Fluid", port, fluidOut.getName());
-        for (String port : jack.getPorts(jackclient, "CASIO USB-MIDI", MIDI, OUT)) // not used
-        	connect("Piano", keyboard.getName(), port);
+
+    	// MPK arpeggio clock
+    	for (String port : jack.getPorts(jackclient, "MPKmini2", MIDI, INS))
+    		connect("MPKClock", port, clockOut.getName());
+
+    	try {
+    	// External CLOCK IN Ticks
+    	for (String port : jack.getPorts(jackclient, MidiClock.PORT_NAME, MIDI, OUT))
+    		connect("MidiClock", clockIn.getName(), port);
+    	} catch (Exception e) { RTLogger.log(this, "No external clock named " + MidiClock.PORT_NAME + "? " + e.getMessage()); }
     }
 
     private void connect(String controller, String inPort, String outPort) throws JackException {
-    	RTLogger.log(controller, inPort + " connecting... " + outPort);
+    	RTLogger.log(controller, "connecting " + inPort + " to " + outPort);
     	jack.connect(jackclient, outPort, inPort);
     }
-    
+
     @Override
     public boolean process(JackClient client, int nframes) {
-    	if (!JudahZone.isInitialized())
+    	if (!isInitialized())
     		return true;
         try {
             scheduler.offer(counter++);
             ticker = 0;
+
             for (JackPort port : outPorts)
                 JackMidi.clearBuffer(port);
-            // if (clock.getMode() == Mode.Internal) clock.process();
-            
-        	// check for incoming midi
+            // check to send midi_24 clock pulse
+            clock.jackFrame();
+
+            // check for incoming midi
         	int eventCount;
         	byte[] data;
         	for (JackPort port : inPorts) {
@@ -266,12 +280,12 @@ public class JudahMidi extends BasicClient implements Closeable {
                         break;
                     }
                     JackMidi.eventGet(midiEvent, port, index);
-                    if (port == midiclock) {
+                    if (port == clockIn) {
                     	midiEvent.read(DATA1);
                     	clock.processTime(DATA1);
                     	continue;
                     }
-                    
+
                     switch (midiEvent.size()) {
 	                    case 2: data = DATA2; break;
 	                    case 3: data = DATA3; break;
@@ -279,13 +293,13 @@ public class JudahMidi extends BasicClient implements Closeable {
                     }
                     midiEvent.read(data);
                     switchboard.get(port).midiProcessed(new Midi(data));
-                    	
+
                 }
             }
         	// check sequencers for output
             PortMessage route = queue.poll();
             while (route != null) {
-            		JackMidi.eventWrite(route.getPort(), ticker(), 
+            		JackMidi.eventWrite(route.getPort(), ticker(),
             				route.getMidi().getMessage(), route.getMidi().getLength());
             	route = queue.poll();
             }
@@ -299,7 +313,11 @@ public class JudahMidi extends BasicClient implements Closeable {
     public static int ticker() {
     	return ++ticker;
     }
-    
+
+    public void queue(MidiMessage msg) {
+    	queue(msg, clockOut);
+    }
+
     public static void queue(MidiMessage msg, JackPort out) {
     	queue.add(new PortMessage(msg, out));
     }
@@ -313,7 +331,7 @@ public class JudahMidi extends BasicClient implements Closeable {
 			sync.add(ch);
     	MainFrame.update(ch);
     }
-    
+
     /** send start/stop to midi listeners */
 	public void synchronize(byte[] midi) {
 		for (ZoneMidi p : sync)
@@ -322,6 +340,7 @@ public class JudahMidi extends BasicClient implements Closeable {
 
 }
 
+// Misc. connections
 //		for (String portname : usbSource) {
 //			if (portname.contains("Midi Out 1"))
 //				jack.connect(jackclient, portname, drumsIn.getName());

@@ -18,14 +18,21 @@ import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
 import net.judah.fx.Gain;
 import net.judah.gui.Gui;
-import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.PlayWidget;
 import net.judah.gui.Size;
 import net.judah.gui.settable.Folder;
 import net.judah.gui.settable.ModeCombo;
 import net.judah.gui.settable.Program;
-import net.judah.gui.widgets.*;
+import net.judah.gui.widgets.Btn;
+import net.judah.gui.widgets.CueCombo;
+import net.judah.gui.widgets.FxButton;
+import net.judah.gui.widgets.GateCombo;
+import net.judah.gui.widgets.Integers;
+import net.judah.gui.widgets.Slider;
+import net.judah.gui.widgets.TrackAmp;
+import net.judah.omni.Icons;
+import net.judah.omni.Threads;
 import net.judah.seq.Seq;
 import net.judah.seq.arp.Mode;
 import net.judah.seq.track.DrumTrack;
@@ -37,13 +44,13 @@ import net.judah.synth.JudahSynth;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
 
-// TODO MouseWheel listener -> change pattern 
+// TODO MouseWheel listener -> change pattern
 public class TrackKnobs extends KnobPanel {
 
-	@Getter private final KnobMode knobMode = KnobMode.Track;
+	@Getter private final KnobMode knobMode = KnobMode.TRACK;
 	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 	@Getter private final MidiTrack track;
-	
+
 	private final Seq seq;
 	private final Folder file;
 	private final Program progChange;
@@ -51,13 +58,13 @@ public class TrackKnobs extends KnobPanel {
 	private final TrackAmp velocity;
 	private final CueCombo cue;
 	private final PatternLauncher patterns;
-	
+
 	// piano vs. drums
 	private ModeCombo mode;
 	private JComboBox<Integer> octaves;
-	private JComboBox<DrumType> focus = new JComboBox<DrumType>(DrumType.values()); 
-	private Slider focusVol = new Slider(null); 
-	
+	private JComboBox<DrumType> focus = new JComboBox<DrumType>(DrumType.values());
+	private Slider focusVol = new Slider(null);
+
 	private class Lbl extends JLabel {
 		Lbl(String lbl) {
 			super(lbl, JLabel.RIGHT);
@@ -65,13 +72,13 @@ public class TrackKnobs extends KnobPanel {
 			Gui.resize(this, Size.MICRO);
 		}
 	}
-	
+
 	// transpose amount?
 	public TrackKnobs(MidiTrack t, Seq seq) {
 		this.track = t;
 		this.seq = seq;
 		titleBar();
-		
+
 		///////////////////////////
 		file = new Folder(track);
 		progChange = new Program(track);
@@ -79,7 +86,7 @@ public class TrackKnobs extends KnobPanel {
 		cue = new CueCombo(track);
 		gate = new GateCombo(track);
 		velocity = new TrackAmp(track);
-		
+
 		if (track.isDrums()) {
 			focus.setSelectedItem(DrumType.Snare);
 			focus.addActionListener(e->update());
@@ -119,14 +126,14 @@ public class TrackKnobs extends KnobPanel {
 		column.add(Gui.resize(progChange, Size.COMBO_SIZE));
 		column.add(Gui.resize(cue, Size.COMBO_SIZE));
 		JPanel btns = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-		btns.add(new Btn("Rec", e->track.setRecord(!track.isRecord()))); 
-		btns.add(new Btn(track.isDrums() ? "Kit" : "MPK", e->pad2())); 
+		btns.add(new Btn("Rec", e->track.setRecord(!track.isRecord())));
+		btns.add(new Btn(track.isDrums() ? "Kit" : "MPK", e->pad2()));
         if (track.getMidiOut() == getSynth1() || track.getMidiOut() == getSynth2())
         	btns.add(new Btn("DCO", e->MainFrame.setFocus(((JudahSynth)track.getMidiOut()).getSynthKnobs())));
 
 		column.add(btns);
 		settings.add(column);
-		
+
 		column = new JPanel();
 		column.setLayout(new BoxLayout(column, BoxLayout.PAGE_AXIS));
 		column.add(new Lbl("Amp "));
@@ -134,7 +141,7 @@ public class TrackKnobs extends KnobPanel {
 		column.add(new Lbl(track.isDrums() ? "Focus " : "Mode "));
 		column.add(new Lbl(track.isDrums() ? "Gain " : "Octs. "));
 		settings.add(column);
-		
+
 		column = new JPanel();
 		column.setLayout(new BoxLayout(column, BoxLayout.PAGE_AXIS));
 		column.add(Gui.resize(velocity, Size.COMBO_SIZE));
@@ -142,20 +149,20 @@ public class TrackKnobs extends KnobPanel {
 		column.add(Gui.resize(track.isDrums() ? focus : mode, Size.COMBO_SIZE));
 		column.add(Gui.resize(track.isDrums() ? focusVol : octaves, Size.COMBO_SIZE));
 		settings.add(column);
-		
+
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
         add(patterns);
         add(top);
         add(settings);
-        
+
 	}
-	
+
 	private void drumVol(int gain) {
 		DrumSample s = ((DrumTrack)track).getKit().getSample((DrumType)focus.getSelectedItem());
 		s.getGain().set(Gain.VOLUME, gain);
 		MainFrame.update(this);
 	}
-	
+
 
 	private void titleBar() {
 		JComboBox<MidiTrack> tracks = new JComboBox<>(seq.getTracks().toArray(new MidiTrack[seq.numTracks()]));
@@ -174,18 +181,18 @@ public class TrackKnobs extends KnobPanel {
 		title.add(tracks);
 		title.add(new Btn(Icons.SAVE, e->track.save()));
 		title.add(new Btn(Icons.HOME, e->track.toFrame(0)));
-		title.add(new Btn(Icons.NEW_FILE, e->track.toFrame(track.frames() + 1))); 
+		title.add(new Btn(Icons.NEW_FILE, e->track.toFrame(track.frames() + 1)));
 	}
-	
-	
+
+
 	@Override public void update() {
-		
+
 		if (track.isDrums()) {
-			DrumSample s = ((DrumTrack)track).getKit().getSample((DrumType)focus.getSelectedItem());  
+			DrumSample s = ((DrumTrack)track).getKit().getSample((DrumType)focus.getSelectedItem());
 			if (s.getGain().get(Gain.VOLUME) != focusVol.getValue())
 				focusVol.setValue(s.getGain().get(Gain.VOLUME));
 		}
-		else if (/*synth*/ (Integer)octaves.getSelectedItem() * 12 != ((PianoTrack)track).getArp().getRange() ) 
+		else if (/*synth*/ (Integer)octaves.getSelectedItem() * 12 != ((PianoTrack)track).getArp().getRange() )
 				octaves.setSelectedItem(((PianoTrack)track).getArp().getRange() / 12);
 		if (velocity.getValue() != (int)(track.getAmp() * 100))
 			velocity.setValue((int) (track.getAmp() * 100));
@@ -208,26 +215,26 @@ public class TrackKnobs extends KnobPanel {
 			case 3: // preset (settable)
 				progChange.midiShow(Constants.ratio(data2, track.getMidiOut().getPatches()).toString());
 				return true;
-			case 4: // amp 
+			case 4: // amp
 				track.setAmp(data2 * 0.01f);
 				return true;
 			case 5: // gate
 				track.setGate((Gate)Constants.ratio(data2, Gate.values()));
 				return true;
 			case 6: // snare/mode
-				if (track.isSynth()) 
+				if (track.isSynth())
 					mode.midiShow((Mode)Constants.ratio(data2, Mode.values()));
 				else
 					focus.setSelectedItem(Constants.ratio(data2, DrumType.values()));
 				return true;
 			case 7: // clap/octaves
 				if (track.isSynth())
-					Constants.execute(()-> octaves.setSelectedIndex(Constants.ratio(data2, 3)));
+					Threads.execute(()-> octaves.setSelectedIndex(Constants.ratio(data2, 3)));
 				else
 					drumVol(data2);
 				return true;
 		}
-		return false;		
+		return false;
 	}
 
 	@Override
@@ -242,5 +249,5 @@ public class TrackKnobs extends KnobPanel {
 		else
 			getMidi().getMpk().setMidiTrack((PianoTrack)track);
 	}
-	
+
 }

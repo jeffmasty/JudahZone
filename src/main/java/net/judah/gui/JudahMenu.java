@@ -18,23 +18,21 @@ import net.judah.fx.Delay;
 import net.judah.fx.LFO;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.settable.SongCombo;
-import net.judah.gui.widgets.FileChooser;
 import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
 import net.judah.midi.JudahClock;
+import net.judah.omni.Threads;
 import net.judah.song.Overview;
-import net.judah.song.Song;
 import net.judah.song.setlist.Setlist;
-import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 public class JudahMenu extends JMenuBar {
 	static String[] TYPE = {"1/8", "1/4", "3/8", "1/2"};
 
-	/** If true, focus on sheet music tab when songs load */ 
-	@Getter private final JCheckBoxMenuItem sheets = new JCheckBoxMenuItem();
-	
+	/** If true, focus on sheet music tab when songs load */
+	@Getter private final JCheckBoxMenuItem sheets = new JCheckBoxMenuItem("Sheets");
+
 	public static class Actionable extends JMenuItem {
 		public Actionable(String lbl, ActionListener l) {
 			super(lbl);
@@ -45,7 +43,7 @@ public class JudahMenu extends JMenuBar {
 			setMnemonic(mnemonic);
 		}
 	}
-	
+
 	public JudahMenu(int width) {
 
 		JMenu song = new JMenu("Song");
@@ -63,33 +61,33 @@ public class JudahMenu extends JMenuBar {
 		setPreferredSize(d);
 		setSize(d);
 		setMinimumSize(d);
-		
+
 		Overview overview = getOverview();
     	song.add(new Actionable("Next", e->overview.nextSong()));
 		song.add(new Actionable("Save", e->overview.save()));
         song.add(new Actionable("Save As..", e->{
-        		File f = FileChooser.choose(getSetlists().getDefault());
+        		File f = Folders.choose(getSetlists().getDefault());
         		if (f == null) return;
         		overview.save(f);
-        		Constants.timer(200, () -> {
+        		Threads.timer(200, () -> {
         			SongCombo.refill();
         			SongCombo.refresh();
         		});;
         	}));
     	song.add(new Actionable("Reload", e->overview.reload()));
-        song.add(new Actionable("Load..", e -> overview.loadSong(FileChooser.choose(getSetlists().getDefault()))));
-    	song.add(new Actionable("New", e -> overview.setSong(new Song(getSeq(), (int)(getClock().getTempo())))));
-    	for (Setlist list : getSetlists()) 
+        song.add(new Actionable("Load..", e -> overview.loadSong(Folders.choose(getSetlists().getDefault()))));
+    	song.add(new Actionable("New", e -> overview.newSong()));
+    	for (Setlist list : getSetlists())
 			setlist.add(new Actionable(list.toString(), e -> getSetlists().setCurrent(list.getSource())));
-        song.add(setlist); 
+        song.add(setlist);
     	song.add(new Actionable("Exit", e->System.exit(0), KeyEvent.VK_E));
 
     	Looper looper = getLooper();
     	erase.add(new Actionable("All", e->looper.clear()));
     	looper.forEach(loop->erase.add(new Actionable(loop.getName(), e->looper.clear(loop))));
     	looper.forEach(loop->duplicate.add(new Actionable(loop.getName(), e->loop.duplicate())));
-    	looper.forEach(loop->save.add(new Actionable(loop.getName(), e-> loop.save()))); 
-    	looper.forEach(loop->load.add(new Actionable(loop.getName(), e-> Constants.execute(()->loop.load(true)))));
+    	looper.forEach(loop->save.add(new Actionable(loop.getName(), e-> loop.save())));
+    	looper.forEach(loop->load.add(new Actionable(loop.getName(), e-> loop.load(true))));
 
     	SoloTrack solo = looper.getSoloTrack();
     	getInstruments().forEach(ch->solotrack.add(new Actionable(ch.getName(), e->solo.setSoloTrack(ch))));
@@ -101,19 +99,20 @@ public class JudahMenu extends JMenuBar {
     	loops.add(load);
     	loops.add(new Actionable("Solo on/off", e->solo.toggle()));
     	loops.add(solotrack);
-    	
+
 		JMenu time = new JMenu("Clock");
 		JudahClock clock = getClock();
-		time.add(new Actionable("Toggle", e->clock.toggle()));
+		time.add(new Actionable("Start/Stop", e->clock.toggle()));
     	time.add(new Actionable("Reset", e->clock.reset()));
+    	time.add(new Actionable("Send/Rcv", e->clock.primary()));
     	time.add(new Actionable("Sync2Loop", e->clock.syncToLoop()));
     	time.add(new Actionable("SyncTempo", e->clock.syncTempo(looper.getPrimary())));
-    	time.add(new Actionable("Runners dial zero", e->clock.runnersDialZero()));
-    	
+    	//time.add(new Actionable("Runners dial zero", e->clock.runnersDialZero()));
+
     	JMenu lfo = new JMenu("LFO");
     	JMenu delay = new JMenu("Delay");
     	JMenu chorus = new JMenu("Chorus");
-    	
+
     	for (int i = 0; i < TYPE.length; i++) {
     		final int idx = i;
     		lfo.add(new Actionable(TYPE[i], e->getFxRack().timeFx(idx, LFO.class)));
@@ -123,30 +122,30 @@ public class JudahMenu extends JMenuBar {
     	time.add(lfo);
     	time.add(delay);
     	time.add(chorus);
-    	
-        sheets.setSelected(false);
-        sheets.setToolTipText("Focus on Song SheetMusic");
-        sheets.setText("Sheets");
-    	for (KnobMode mode : KnobMode.values()) 
+
+    	for (KnobMode mode : KnobMode.values())
         	knobs.add(new Actionable(mode.toString(), e->MainFrame.setFocus(mode)));
 
     	tools.add(new Actionable("Record Session", e -> getMains().tape(true)));
+        sheets.setSelected(false);
+        sheets.setToolTipText("Focus on Song SheetMusic");
         tools.add(sheets);
         tools.add(new Actionable("SheetMusic..", e->{
-        	getFrame().sheetMusic(FileChooser.choose(Folders.getSheetMusic()));
+        	getFrame().sheetMusic(Folders.choose(Folders.getSheetMusic()));
         }));
         tools.add(new Actionable("ChordPro..", e-> {
-        	if (getChords().load() != null) 
+        	if (getChords().load() != null)
         		getFrame().getTabs().setSelectedComponent(getChords().getChordSheet());
         }));
     	tools.add(new Actionable("JIT!", e->justInTimeCompiler()));
         tools.add(new Actionable("A2J!", e->getMidi().recoverMidi()));
-        
+        tools.add(new Actionable("Scope", e->getFrame().getTabs().scope()));
         add(song);
         add(loops);
         add(time);
         add(knobs);
         add(tools);
+
 	}
 
 	private void setLength() {
@@ -158,5 +157,5 @@ public class JudahMenu extends JMenuBar {
 			RTLogger.log(this, "Length not changed.");
 		}
 	}
-	
+
 }

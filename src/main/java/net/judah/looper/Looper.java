@@ -15,7 +15,7 @@ import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.mixer.Zone;
-import net.judah.util.Constants;
+import net.judah.omni.Threads;
 import net.judah.util.Memory;
 import net.judah.util.RTLogger;
 
@@ -24,7 +24,7 @@ public class Looper extends Vector<Loop> implements TimeListener {
 
 	public static final int LOOPERS = 4;
 	private static final String ZERO = "0.0s";
-	
+
 	private final JudahClock clock;
 	private final Loop loopA;
 	private final Loop loopB;
@@ -32,10 +32,10 @@ public class Looper extends Vector<Loop> implements TimeListener {
 	private final SoloTrack soloTrack;
 	private Loop primary;
 	private String recordedLength = ZERO;
-	int bars;
 	private final Vector<Loop> onDeck = new Vector<>();
 	private final Vector<Channel> fx = new Vector<>();
 	private final LoopWidget loopWidget = new LoopWidget(this);
+	private int loopCount;
 
 	public Looper(JackPort l, JackPort r, Zone sources, LineIn solo, JudahClock clock, Memory memory) {
 		this.clock = clock;
@@ -52,17 +52,16 @@ public class Looper extends Vector<Loop> implements TimeListener {
 
 	/** play and/or record loops and samples in Real-Time thread */
 	public void process() {
-		forEach(loop->loop.process());		
-		if (hasRecording()) {
+		forEach(loop->loop.process());
+		if (hasRecording())
 			loopWidget.countUp();
-		}
 	}
 	/** process() silently (keep sync'd while mains muted) */
 	public void silently() {
-		if (!hasRecording())
-			return;
-		forEach(loop->loop.silently());		
-		loopWidget.countUp();
+		if (hasRecording()) {
+			forEach(loop->loop.silently());
+			loopWidget.countUp();
+		}
 	}
 
 	public boolean hasRecording() {
@@ -73,43 +72,33 @@ public class Looper extends Vector<Loop> implements TimeListener {
 		return hasRecording() ? primary.getLength() : 0;
 	}
 
+	public int getMeasures() {
+		return hasRecording() ? primary.getMeasures() : 0;
+	}
+
 	@Override public synchronized Loop remove(int index) {
 		throw new InvalidParameterException("remove not implemented");
 	}
 
 	void setPrimary(Loop primary) {
 		this.primary = primary;
-		//clock.reset();
-		
-		int tape = primary.getTapeCounter().get();
-		for (int i = 0; i < size(); i++) {
-			Loop loop = get(i);
-			if (loop == primary)
-				continue;
-			if (loop.isRecording() && loop instanceof SoloTrack && ((SoloTrack)loop).isSolo())
-				loop.record(false); 
-			loop.getTapeCounter().set(tape);
-			loop.setType(primary.getType() == Type.FREE ? Type.FREE : 
-					loop.type == Type.SOLO ?  Type.SOLO : Type.SYNC);
-			
-		}
-		
-		Type t = primary.getType();
-		if (t != Type.SOLO) {
-			for (Loop l : this)
-				if (l != primary)
-					l.setType(t);
-		}
-		if (t != Type.FREE)
-			bars = JudahClock.getLength();
+		setRecordedLength(primary.seconds());
+		stream().filter(loop-> loop != primary).forEach(loop->loop.conform(primary));
+		clock.loopCount(loopCount);
 
-		setRecordedLength();
-		RTLogger.log("Primary", primary + (primary.type == Type.FREE ? 
-				(" frames: " + primary.length) : " bars: " + bars));
+		RTLogger.log("Primary", primary + " frames: " + primary.length + " bars: " + primary.getMeasures());
+	}
+
+	void setRecordedLength(float seconds) {
+		recordedLength = Float.toString(seconds);
+		if (recordedLength.length() > 4)
+			recordedLength = recordedLength.substring(0, 4);
+		recordedLength += "s";
+		MainFrame.update(loopWidget);
 	}
 
 	public void rewind() {
-		for (Loop l : this) 
+		for (Loop l : this)
 			if (l.isPlaying())
 				l.rewind();
 	}
@@ -117,12 +106,11 @@ public class Looper extends Vector<Loop> implements TimeListener {
 	/** zeros-out loop recordings, ignore super.clear() */
 	@Override public void clear() {
 		primary = null;
-		bars = 0;
-		
-		for (int i = 0; i < size(); i++)
-			get(i).clear(); // clear loops
+		loopCount = 0;
 		for (int i = onDeck.size() - 1; i >= 0; i--) // clear onDeck
 			MainFrame.update(onDeck.remove(onDeck.size() - 1));
+		for (int i = 0; i < size(); i++)
+			get(i).clear(); // clear loops
 		recordedLength = ZERO;
 		MainFrame.update(loopWidget);
 	}
@@ -132,34 +120,26 @@ public class Looper extends Vector<Loop> implements TimeListener {
 			for (Loop next : this) {
 				if (next != loop && next.getLength() > 0) {
 					primary = next;
-					setRecordedLength();
+					setRecordedLength(primary.seconds()); // factor?
 				}
 			}
 		}
 		loop.clear();
-		loop.setType(primary.getType());
+		if (primary != null)
+			loop.setType(primary.getType());
 	}
 
-	void setRecordedLength() {
-		recordedLength = Float.toString(primary.seconds());
-		if (recordedLength.length() > 4)
-			recordedLength = recordedLength.substring(0, 4);
-		recordedLength += "s";
-		MainFrame.update(loopWidget);
-	}
-	
+
 	/** make sure all loops have enough blank tape */
-	void catchUp(Loop loop, int frames) {
-		if (primary == null)
-			Constants.execute(() -> {
-				for (Loop l : this) {
-					if (l == loop)
-						continue;
-					if (l.isRecording())
-						continue; // solotrack
-					l.catchUp(frames);
-				}
-			});
+	void catchUp(Loop primary, int frames) {
+
+		for (Loop l : this) {
+			if (l == primary)
+				continue;
+			if (l.isRecording())
+				continue; // solotrack
+			l.catchUp(frames);
+		}
 	}
 
 	public Loop byName(String key) {
@@ -189,29 +169,12 @@ public class Looper extends Vector<Loop> implements TimeListener {
 		MainFrame.update(ch);
 	}
 
-	void loopCount(int count) {
-		clock.loopCount(count);
-
-		// trigger fx changes
-		for (int i = fx.size() - 1; i >= 0; i--)
-			fx.remove(i).toggleFx();
-		
-		// govern other loops
-		for (int i = 0; i < size(); i++)
-			get(i).boundary(); 
-		
-
-		// progress onDeck
-		if (!onDeck.isEmpty())
-			onDeck.remove(0).syncRecord();
-		
-	}
 
 	public void onDeck(Loop loop) {
-		if (onDeck.contains(loop) == false)
-			onDeck.add(loop);
-		else
+		if (onDeck.contains(loop))
 			onDeck.remove(loop);
+		else
+			onDeck.add(loop);
 		MainFrame.update(loop.getDisplay());
 	}
 
@@ -219,34 +182,46 @@ public class Looper extends Vector<Loop> implements TimeListener {
 		return onDeck.contains(loop);
 	}
 
-	
-	@Override
-	public void update(Property prop, Object value) {
-		if (prop != Property.BARS) 
-			return;
-		if (primary == null || primary.getType() == Type.FREE)
-			return;
-		if ((int)value % JudahClock.getLength() == 0)
-			// sync loops to clock
-			for (int i = 0; i < size(); i++)
-				get(i).boundary(); 
-	}
-	
 	void checkSoloSync() {
 		if (onDeck.contains(soloTrack) && soloTrack.isSolo()) {
 			onDeck.remove(soloTrack);
-			soloTrack.syncRecord();
+			soloTrack.trigger();
 		}
+	}
+
+	void boundary() {
+
+		// govern other loops
+		stream().filter(element -> element != primary).forEach(Loop::boundary);
+
+		// progress onDeck
+		if (!onDeck.isEmpty())
+			Threads.execute(()->onDeck.removeFirst().syncRecord());
+
+		// trigger fx changes
+		for (int i = fx.size() - 1; i >= 0; i--)
+			fx.remove(i).toggleFx();
+	}
+
+
+	@Override
+	public void update(Property prop, Object value) {
+		if (primary == null)
+			return;
+		if (prop == Property.STATUS || prop == Property.BOUNDARY)
+			boundary();
+		if (prop != Property.BARS)
+			return;
+		if (primary == null || primary.getType() == Type.FREE)
+			return;
 	}
 
 	public void clockSync() {
 		forEach(loop -> loop.setType(loop.getType() == Type.SOLO ? Type.SOLO : Type.SYNC));
 	}
 
-	public int getBars() {
-		if (bars == 0)
-			return JudahClock.getLength();
-		return bars;
+	public int increment() {
+		return ++loopCount;
 	}
 
 }

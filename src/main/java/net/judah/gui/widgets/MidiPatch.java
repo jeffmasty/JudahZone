@@ -10,6 +10,7 @@ import javax.swing.SwingConstants;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
@@ -20,11 +21,12 @@ import net.judah.seq.track.PianoTrack;
 
 public abstract class MidiPatch extends JComboBox<PianoTrack> implements Updateable {
 
-	@Getter protected PianoTrack track;
+	@Setter @Getter protected PianoTrack track;
 	protected JPanel frame;
-	
+
+
 	static final BasicComboBoxRenderer STYLE = new BasicComboBoxRenderer() {
-		@Override public Component getListCellRendererComponent(@SuppressWarnings("rawtypes") JList list, 
+		@Override public Component getListCellRendererComponent(@SuppressWarnings("rawtypes") JList list,
 				Object value, int index, boolean isSelected, boolean cellHasFocus) {
 			setHorizontalAlignment(SwingConstants.CENTER);
 			MidiTrack item = (MidiTrack) value;
@@ -32,12 +34,12 @@ public abstract class MidiPatch extends JComboBox<PianoTrack> implements Updatea
 			return this;
 		}
 	};
-	
+
 	public void install(JPanel frame, List<MidiTrack> ports) {
 		setOpaque(true);
 		setRenderer(STYLE);
 		ports.forEach(track -> addItem((PianoTrack)track));
-		track = (PianoTrack)ports.get(0);
+		track = (PianoTrack)ports.getFirst();
 		setSelectedItem(track);
 		addActionListener(e -> setMidiTrack((PianoTrack)getSelectedItem()));
 		this.frame = frame;
@@ -57,5 +59,5 @@ public abstract class MidiPatch extends JComboBox<PianoTrack> implements Updatea
 		if (track != (MidiTrack)getSelectedItem())
 			setSelectedItem(track);
 	}
-		
+
 }

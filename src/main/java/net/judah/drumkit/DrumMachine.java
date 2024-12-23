@@ -10,29 +10,28 @@ import org.jaudiolibs.jnajack.JackPort;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.api.Engine;
-import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KitKnobs;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
+import net.judah.omni.AudioTools;
+import net.judah.omni.Icons;
 import net.judah.seq.track.Cue;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.MidiTrack;
-import net.judah.util.AudioTools;
 
-@Getter 
+@Getter
 public class DrumMachine extends Engine {
-
 
 	private final Channel mains;
 	private final DrumTrack drum1, drum2, hats, fills;
-	
+
 	/** current midi controller input and view */
 	@Setter private DrumTrack current;
 	private KitKnobs focus;
-	private final KnobMode knobMode = KnobMode.Kits;
+	private final KnobMode knobMode = KnobMode.KITS;
 
 	public DrumMachine(JackPort outL, JackPort outR, JudahClock clock, Channel mains) throws Exception {
 		super("Drums", true);
@@ -40,13 +39,13 @@ public class DrumMachine extends Engine {
 		icon = Icons.get("DrumMachine.png");
 		leftPort = outL;
 		rightPort = outR;
-		
+
 		drum1 = new DrumTrack(new DrumKit(this, KitMode.Drum1, "Pearl"), clock);
 		drum2 = new DrumTrack(new DrumKit(this, KitMode.Drum2, "808"), clock);
 		hats = new DrumTrack(new DrumKit(this, KitMode.Hats, "Hats"), clock);
 		fills = new DrumTrack(new DrumKit(this, KitMode.Fills, "VCO"), clock);
 		tracks.add(drum1);
-		tracks.add(drum2); 
+		tracks.add(drum2);
 		tracks.add(hats);
 		tracks.add(fills);
 		focus = drum1.getKit().getGui();
@@ -74,7 +73,7 @@ public class DrumMachine extends Engine {
 		}
 		return drum1.getKit().getGui(); // error
 	}
-	
+
 	@Override
 	public void reset() {
 		super.reset();
@@ -82,7 +81,7 @@ public class DrumMachine extends Engine {
 			for (DrumSample s : ((DrumTrack)t).getKit().getSamples())
 				s.reset();
 	}
-	
+
 	public void increment() {
 		int idx = tracks.indexOf(current) + 1;
 		if (idx>= tracks.size())
@@ -109,7 +108,7 @@ public class DrumMachine extends Engine {
 				return ((DrumTrack)tracks.get(i)).getKit().getPreset().getFolder().getName();
 			return "?";
 	}
-	
+
 	@Override
 	public boolean progChange(String preset) {
 		return drum1.getKit().progChange(preset);
@@ -117,7 +116,7 @@ public class DrumMachine extends Engine {
 
 	@Override
 	public void send(MidiMessage message, long timeStamp) {
-		if (onMute || mains.isOnMute()) 
+		if (onMute || mains.isOnMute())
 			return; // discard
 		if (false == Midi.isNoteOn(message))
 			return;
@@ -127,7 +126,7 @@ public class DrumMachine extends Engine {
 
 	private DrumKit getChannel(int channel) {
 		for (MidiTrack t : tracks)
-			if (t.getCh() == channel) 
+			if (t.getCh() == channel)
 				return ((DrumTrack)t).getKit();
 		return null;
 	}
@@ -142,7 +141,7 @@ public class DrumMachine extends Engine {
 		MainFrame.setFocus(target);
 	}
 
-	
+
 	@Override
 	public void close() {
 		reset();
@@ -156,7 +155,7 @@ public class DrumMachine extends Engine {
 		AudioTools.silence(right);
 		DrumKit kit;
 		if (onMute) {
-			for (MidiTrack track : tracks) 
+			for (MidiTrack track : tracks)
 				((DrumTrack)track).getKit().process();
 		}
 		else {
@@ -168,8 +167,8 @@ public class DrumMachine extends Engine {
 			}
 			processStereoFx(gain.getGain() * preamp);
 		}
-		AudioTools.mix(left, leftPort.getFloatBuffer()); 
-		AudioTools.mix(right, rightPort.getFloatBuffer());  
+		AudioTools.mix(left, leftPort.getFloatBuffer());
+		AudioTools.mix(right, rightPort.getFloatBuffer());
 	}
 
 }

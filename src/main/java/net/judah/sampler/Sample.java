@@ -8,21 +8,21 @@ import org.jaudiolibs.jnajack.JackPort;
 import lombok.Getter;
 import net.judah.gui.MainFrame;
 import net.judah.looper.AudioTrack;
-import net.judah.looper.Recording;
+import net.judah.omni.Recording;
 import net.judah.util.Folders;
 
 /** Audio from disk */
 public class Sample extends AudioTrack {
-	
+
 	protected static final float BOOST = 0.125f;
 	protected final Sampler sampler;
 	@Getter protected File file;
-	
+
 	/** load preset by name (without .wav) */
 	public Sample(JackPort left, JackPort right, String wavName, Type type, Sampler sampler) throws Exception {
 		this(left, right, wavName, new File(Folders.getSamples(), wavName + ".wav"), type, sampler);
 	}
-	
+
 	public Sample(JackPort left, JackPort right, String name, File f, Type type, Sampler sampler) throws Exception {
 		this(name, type, left, right, sampler);
 		this.file = f;
@@ -51,12 +51,25 @@ public class Sample extends AudioTrack {
         MainFrame.update(this);
         file = null;
     }
-	
+
+	@Override
 	public void process() {
 		if (!playing) return;
-		readRecordedBuffer();
 		env = BOOST * sampler.mix;
-		playFrame(leftPort.getFloatBuffer(), rightPort.getFloatBuffer()); 
+		readSampleBuffer();
+		playFrame(leftPort.getFloatBuffer(), rightPort.getFloatBuffer());
     }
-	
+
+	protected void readSampleBuffer() {
+		int frame = tapeCounter.getAndIncrement();
+		if (frame + 1 >= recording.size()) {
+			tapeCounter.set(0);
+			if (type == Type.ONE_SHOT) {
+				playing = false;
+				MainFrame.update(this);
+			}
+		}
+		playBuffer = recording.get(frame);
+	}
+
 }

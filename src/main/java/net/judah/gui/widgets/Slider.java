@@ -8,7 +8,7 @@ import javax.swing.Painter;
 import javax.swing.UIDefaults;
 import javax.swing.event.ChangeListener;
 
-import net.judah.gui.Icons;
+import net.judah.omni.Icons;
 
 /**Source: ThemeDemo https://jasperpotts.com/blog/2008/08/skinning-a-slider-with-nimbus/
  * @author Created by Jasper Potts (May 7, 2008) */

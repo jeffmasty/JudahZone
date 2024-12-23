@@ -28,8 +28,8 @@ import net.judah.gui.widgets.FxButton;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
+import net.judah.omni.Pair;
 import net.judah.util.Constants;
-import net.judah.util.KeyPair;
 
 public class LFOKnobs extends KnobPanel {
 
@@ -37,7 +37,7 @@ public class LFOKnobs extends KnobPanel {
     @Getter private final JPanel title;
 	@Getter private final LFO lfo;
     @Getter private final Compressor comp;
-    
+
     @Getter private final Channel channel;
     private final JPanel lfoLbls =  new JPanel(new GridLayout(1, 4, 0, 1));
     private final JPanel lfoPanel = new JPanel(new GridLayout(1, 4, 0, 0));
@@ -47,25 +47,25 @@ public class LFOKnobs extends KnobPanel {
     private final ArrayList<Row> labels = new ArrayList<>();
     private final Row row;
     private final JPanel wrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 9));
-    
+
     public LFOKnobs(final Channel ch, DJJefe mixer) {
     	this.channel = ch;
     	this.comp = channel.getCompression();
     	this.lfo = channel.getLfo();
     	title = Gui.wrap(mixer.getCombo(channel), new FxButton(channel));
-    	
+
     	lfoCombo = new LfoCombo(channel);
     	LFO lfoFx = channel.getLfo();
-    	
+
     	Row lfoLbl = new Row(ch);
     	ArrayList<Component> components = lfoLbl.getControls();
     	components.add(new FxTrigger("Target", channel.getLfo(), ch));
     	components.add(new FxTrigger(" ", lfoFx, ch));  // blank
     	components.add(new FxTrigger(" ", lfoFx, ch));  // blank
-    	components.add(new TimePanel(lfoFx));
-    			
-    	KeyPair blankComp = new KeyPair(" ", channel.getCompression());
-    	RowLabels compLbl = new RowLabels(channel, new KeyPair("Compressor", channel.getCompression()), blankComp, blankComp, blankComp);
+    	components.add(new TimePanel(lfoFx, channel));
+
+    	Pair blankComp = new Pair(" ", channel.getCompression());
+    	RowLabels compLbl = new RowLabels(channel, new Pair("Compressor", channel.getCompression()), blankComp, blankComp, blankComp);
     	wrap.setOpaque(true);
     	wrap.add(lfoCombo);
 
@@ -78,11 +78,11 @@ public class LFOKnobs extends KnobPanel {
 
     	for (Component c : lfoLbl.getControls())
 			lfoLbls.add(c);
-    	for (int i = 0; i < 4; i++) 
+    	for (int i = 0; i < 4; i++)
     		lfoPanel.add(knobs.get(i));
     	labels.add(lfoLbl);
     	labels.add(compLbl);
-    	
+
 		knobs.add(new FxKnob(channel, comp, Threshold.ordinal(), "THold", Pastels.EGGSHELL));
 		knobs.add(new FxKnob(channel, comp, Boost.ordinal(), "Gain", Pastels.EGGSHELL));
     	knobs.add(new FxKnob(channel, comp, Ratio.ordinal(), "Ratio", Pastels.EGGSHELL));
@@ -101,7 +101,7 @@ public class LFOKnobs extends KnobPanel {
 		update();
 		validate();
     }
-    
+
 	@Override
 	public boolean doKnob(int idx, int data2) {
     	switch(idx) {
@@ -109,16 +109,16 @@ public class LFOKnobs extends KnobPanel {
     		Target target = (Target)Constants.ratio(data2, Target.values());
     		if (lfo.isActive())
     			lfoCombo.midiShow(target);
-    		else 
+    		else
     			lfo.set(LFO.Settings.Target.ordinal(), target.ordinal());
     		break;
-    	case 1: 
+    	case 1:
     		lfo.set(LFO.Settings.Min.ordinal(), data2);
     		break;
-    	case 2: 
+    	case 2:
     		lfo.set(LFO.Settings.Max.ordinal(), data2);
     		break;
-    	case 3: 
+    	case 3:
     		lfo.set(LFO.Settings.MSec.ordinal(), data2);
     		break;
 
@@ -130,7 +130,7 @@ public class LFOKnobs extends KnobPanel {
 			comp.set(Boost.ordinal(), data2);
 			compress(2, data2);
 			break;
-    	case 6: 
+    	case 6:
 			comp.set(Ratio.ordinal(), data2);
 			compress(5, data2);
 			break;
@@ -139,7 +139,7 @@ public class LFOKnobs extends KnobPanel {
 			comp.set(Attack.ordinal(), data2);
 			compress(2, data2);
 			break;
-    	default: 
+    	default:
     		return false;
     	}
 		return true;
@@ -151,23 +151,23 @@ public class LFOKnobs extends KnobPanel {
 	private void compress(int threshhold, int input) {
 		boolean old = comp.isActive();
 		comp.setActive(input > threshhold);
-		if (old != comp.isActive()) 
+		if (old != comp.isActive())
 			MainFrame.update(channel);
 	}
-	
+
 	@Override public void pad1() {
 		lfo.setActive(!lfo.isActive());
 	}
-	
+
 	@Override public void pad2() {
 		comp.setActive(!comp.isActive());
 		MainFrame.update(channel);
 		MainFrame.update(this);
 	}
-	
+
 	@Override
 	public final void update() {
-		for (Row lbl : labels) 
+		for (Row lbl : labels)
         	lbl.update();
 		wrap.setBackground(lfo.isActive() ? EffectColor.get(lfo.getClass()) : null);
 		row.update();

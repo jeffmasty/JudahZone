@@ -11,6 +11,7 @@ import java.util.Scanner;
 import lombok.Getter;
 import net.judah.fx.Filter;
 import net.judah.gui.MainFrame;
+import net.judah.omni.Threads;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
@@ -22,20 +23,20 @@ import net.judah.util.RTLogger;
 	[dco-1]shape/gain(/detune)
 	[dco-2]shape/gain(/detune)
 */
-public class SynthDB extends HashMap<String, String> { 
-	
+public class SynthDB extends HashMap<String, String> {
+
 	public static final String SPLIT = "/";
 	public static final String OPEN = "[";
 	public static final String CLOSE = "]";
 	public static final String DASH = "-";
 
 	public static final String ENVELOPE = "Envelope";
-	public static final String FILTER = "Filter"; 
+	public static final String FILTER = "Filter";
 	public static final String DCO = "Dco";
-	
+
 	@Getter private File loaded;
 	private File file;
-	
+
 	public SynthDB() {
 		this(Folders.getSynthPresets());
 	}
@@ -60,7 +61,7 @@ public class SynthDB extends HashMap<String, String> {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 if (line.startsWith(DASH)) {
-                	if (!preset.isEmpty() && name != null) 
+                	if (!preset.isEmpty() && name != null)
                 		put(name, pack(preset));
                 	name = line.split("[-]")[1];
                 	preset.clear();
@@ -86,7 +87,7 @@ public class SynthDB extends HashMap<String, String> {
 			result.append(s).append(Constants.NL);
 		return result.toString();
 	}
-	
+
 	public List<String> keys() {
 		ArrayList<String> result = new ArrayList<>(keySet());
 		Collections.sort(result);
@@ -101,7 +102,7 @@ public class SynthDB extends HashMap<String, String> {
 					return i;
 		return 0;
 	}
-	
+
 	public void save(JudahSynth synth, String name) {
 		put(name, create(synth));
 		StringBuffer buf = new StringBuffer();
@@ -110,13 +111,13 @@ public class SynthDB extends HashMap<String, String> {
 			buf.append(get(key));
 		}
         try {
-            Constants.writeToFile(file, buf.toString());
+            Threads.writeToFile(file, buf.toString());
         } catch (Exception e) {RTLogger.warn(SynthDB.class, e);}
 		MainFrame.update(synth);
 	}
-	
+
 	public String create(JudahSynth synth) {
-		
+
 		StringBuffer buf = new StringBuffer(OPEN).append(ENVELOPE).append(CLOSE);
 		Adsr env = synth.getAdsr();
 		buf.append(env.getAttackTime()).append(SPLIT).append(env.getDecayTime()).append(SPLIT);
@@ -126,7 +127,7 @@ public class SynthDB extends HashMap<String, String> {
 		Filter lo = synth.getLoCut();
 		buf.append(hi.getFrequency()).append(SPLIT).append(hi.getResonance()).append(SPLIT);
 		buf.append(lo.getFrequency()).append(SPLIT).append(lo.getResonance()).append(Constants.NL);
-		
+
 		int length = synth.getShapes().length -1;
 		for (int i = 0; i <= length; i++) {
 			buf.append(OPEN).append(DCO).append(DASH).append(i).append(CLOSE);
@@ -139,7 +140,7 @@ public class SynthDB extends HashMap<String, String> {
 
 	public boolean apply(String name, SynthPresets handler) {
 		String preset = get(name);
-		if (preset == null) 
+		if (preset == null)
 			return false;
 		for (String line : preset.split(Constants.NL)) {
 			if (!line.startsWith(OPEN))
@@ -160,12 +161,12 @@ public class SynthDB extends HashMap<String, String> {
             }
             else if (type.startsWith(DCO)) {
             	handler.dco(type, dat.split(SPLIT));
-            } else 
-            	throw new InvalidParameterException("type: " + type); 
+            } else
+            	throw new InvalidParameterException("type: " + type);
         }
 		return true;
 	}
-	
+
 
 
 }

@@ -8,9 +8,19 @@ import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
-import java.util.Comparator;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
 
 import lombok.Getter;
 import net.judah.JudahZone;
@@ -26,12 +36,13 @@ import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.LengthCombo;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
+import net.judah.omni.Threads;
 import net.judah.util.Constants;
 
 public class PresetsView extends KnobPanel  {
 	public static final Dimension BTN_SZ = new Dimension(80, Size.STD_HEIGHT);
 
-	@Getter private final KnobMode knobMode = KnobMode.Presets;
+	@Getter private final KnobMode knobMode = KnobMode.PRESETS;
 	@Getter private final JPanel title = new JPanel();
 	private final PresetsDB presets;
 	private final JList<String> list = new JList<>();
@@ -57,17 +68,17 @@ public class PresetsView extends KnobPanel  {
             channels.add(c.getName());
         return new JComboBox<>(channels.toArray(new String[channels.size()]));
 	}
-	
+
 	private JPanel presetsBtns() {
 		JPanel buttons = new JPanel();
     	buttons.setLayout(new BoxLayout(buttons, BoxLayout.Y_AXIS));
         buttons.setBorder(BorderFactory.createLineBorder(Color.GRAY));
-        
+
         JButton save 	= new Button(" Save ", e->current(list.getSelectedIndex()));
         JButton create  = new Button("Create", e->create());
         JButton delete  = new Button("Delete", e->delete(list.getSelectedIndex()));
         JButton copy    = new Button(" Copy ", e->copy(list.getSelectedIndex()));
-        
+
     	buttons.add(Box.createVerticalStrut(4));
         buttons.add(save);
         buttons.add(create);
@@ -87,7 +98,7 @@ public class PresetsView extends KnobPanel  {
 		if (list.getSelectedIndex() < 0) return;
 		String name = Gui.inputBox("New Name:");
 		if (name == null || name.isBlank()) return;
-		
+
 		Preset source = getPresets().get(idx);
 		presets.add(new Preset(name, source));
 		save();
@@ -144,11 +155,7 @@ public class PresetsView extends KnobPanel  {
 
     private void renew() {
         DefaultListModel<String> model = new DefaultListModel<>();
-        presets.sort(new Comparator<Preset>() {
-			@Override public int compare(Preset o1, Preset o2) {
-				return o1.getName().compareTo(o2.getName());
-			}
-		});
+        presets.sort((o1, o2) -> o1.getName().compareTo(o2.getName()));
         for(Preset p : presets)
             model.addElement(p.getName() + p.condenseEffects());
         list.setModel(model);
@@ -156,36 +163,36 @@ public class PresetsView extends KnobPanel  {
 
     @Override
 	public void update() {
-    	
+
     }
 
 	@Override
 	public boolean doKnob(int idx, int data2) {
 		switch (idx) {
-    	case 0: // sync loop length 
+    	case 0: // sync loop length
     		JudahClock clock = JudahZone.getClock();
-			if (data2 == 0) 
+			if (data2 == 0)
 				clock.setLength(1);
-			else 
+			else
 				clock.setLength((int) Constants.ratio(data2, LengthCombo.LENGTHS));
 			break;
     	case 1: // Select preset
-    		Constants.execute(()->list.setSelectedIndex(Constants.ratio(data2, list.getModel().getSize() - 1)));
+    		Threads.execute(()->list.setSelectedIndex(Constants.ratio(data2, list.getModel().getSize() - 1)));
     		break;
     	case 2: // apply to
     		// Constants.execute(()->target.setSelectedIndex(Constants.ratio(data2, target.getItemCount() - 1)));
     		break;
-    	case 3: 
+    	case 3:
     		JudahZone.getMains().getGain().set(Gain.VOLUME, data2);
     		MainFrame.update(JudahZone.getMains());
     		break;
 		}
 		return true;
 	}
-    
+
 	@Override
 	public void pad1() {
 		applyTo();
 	}
-	
+
 }

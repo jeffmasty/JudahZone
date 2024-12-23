@@ -10,14 +10,14 @@ import net.judah.looper.Looper;
 @RequiredArgsConstructor
 public enum Cmd {
 
-	Start, Tempo, Length, MPK, // Clock 
+	Start, Tempo, Length, MPK, // Clock
 	TimeCode, Jump,// Absolute/Relative scene cues
 	Record, RecEnd, Sync, Dup, Delete, Solo, SoloCh, // Looper
-	FX, Latch, FadeOut, FadeIn, Mute, Unmute, // Channel 
+	FX, Latch, FadeOut, FadeIn, Mute, Unmute, // Channel
 	OffTape, OnTape, // LineIn
 	Part, Chords // ChordTrack
-	;  
-	
+	;
+
 	public static Cmdr getCmdr(Cmd cmd) {
 		switch (cmd) {
 
@@ -25,7 +25,7 @@ public enum Cmd {
 		case Length:	return getSeq();
 		case TimeCode:	return IntProvider.instance();
 		case Start:		return BooleanProvider.instance;
-		case Tempo:		return getClock().getMidiClock(); 
+		case Tempo:		return getClock();
 		case Jump:		return SceneProvider.getInstance();
 
 		case OffTape:	return getInstruments();
@@ -45,10 +45,10 @@ public enum Cmd {
 		case FadeIn:	return getMixer();
 		case FadeOut:	return getMixer();
 		case FX:		return getMixer();
-		
+
 		case Part: 		return getChords();
 		case Chords: 	return getChords().getPlayer();
-		
+
 		default: return null;
 		}
 	}
@@ -59,7 +59,7 @@ public enum Cmd {
 			loops = new LoopCmdr(getLooper());
 		return loops;
 	}
-	
+
 	private static Sinker sinker;
 	@RequiredArgsConstructor
 	private static class Sinker implements Cmdr {
@@ -75,15 +75,15 @@ public enum Cmd {
 			}
 			return keys;
 		}
-		
+
 		@Override public void execute(Param p) {
 			if (resolve(p.val) == null && p.cmd == Cmd.Sync)
 				JudahZone.getClock().syncTempo(looper.getPrimary());
-			else 
+			else
 				getLoops().execute(p);
 		}
 	}
-	
 
-	
+
+
 }

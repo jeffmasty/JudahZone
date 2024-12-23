@@ -11,3 +11,4 @@ pom.properties
 /old/
 old/**
 log4j.out.xml
+.factorypath

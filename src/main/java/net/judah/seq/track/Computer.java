@@ -1,23 +1,23 @@
 package net.judah.seq.track;
 
-import static net.judah.midi.JudahClock.isEven;
-
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.judah.gui.MainFrame;
 import net.judah.gui.widgets.CycleCombo;
 import net.judah.midi.JudahClock;
 import net.judah.song.Sched;
 
-@Getter 
+@RequiredArgsConstructor @Getter
 public abstract class Computer {
-	
+
+	protected final JudahClock clock;
 	@Setter protected long barTicks; // ticks in resolution of timeSig
-	protected Sched state = new Sched(); // from Song file Scenes
+	protected Sched state = new Sched(); // assigned when Song Scene changes
 	protected int current; 	// current measure/bar (not frame)
 	protected int offset; 	// frame adjustment by user away from Scene.launch
 	protected int count; 	// internal cycle bar increment
-	protected long left; 	// left bar's computed start tick 
+	protected long left; 	// left bar's computed start tick
 	protected long right; 	// right bar's computed start tick
 
 	/** end of the last note */
@@ -31,20 +31,20 @@ public abstract class Computer {
 	protected abstract void setCurrent(int bar);
 	protected abstract void flush();
 
-	public void setCycle(Cycle x) { 
+	public void setCycle(Cycle x) {
 		state.cycle = x;
-		count = isEven() ? 0 : 1;
+		count = clock.isEven() ? 0 : 1;
 		compute();
 		CycleCombo.update(this);
 		MainFrame.update(this);
 	}
-	
+
 	protected void reset() {
-		count = isEven() ? 0 : 1;
+		count = clock.isEven() ? 0 : 1;
 		flush();
 		setCurrent(state.launch + 2 * offset + count);
 	}
-	
+
 	/** sequence to next bar */
 	protected void cycle() {
 		flush();
@@ -52,7 +52,7 @@ public abstract class Computer {
 		int change = -1;
 		switch(state.cycle) {
 			case AB:
-				if (isEven()) reset();
+				if (clock.isEven()) reset();
 				else change = current + 1;
 				break;
 			case A3B:
@@ -65,12 +65,12 @@ public abstract class Computer {
 				switch (count % 4) {
 					case 0: reset();
 						break;
-					case 1: 
-					case 2: 
-					case 3: 
-						change = current + 1; 
+					case 1:
+					case 2:
+					case 3:
+						change = current + 1;
 						break;
-				} 
+				}
 				break;
 			case ALL:
 				change = after(current);
@@ -82,20 +82,20 @@ public abstract class Computer {
 		case TO16:
 			if (count >= state.cycle.getLength())
 				reset();
-			else 
+			else
 				change = after(current);
 			break;
 		case CLCK:
 			if (count >= JudahClock.getLength())
 				reset();
-			else 
+			else
 				change = after(current);
 			break;
 		}
 		if (change >= 0 && change != current)
 			setCurrent(change);
 	}
-	
+
 	/** compute left and right frame ticks based current state */
 	protected void compute() {
 		switch(state.cycle) {
@@ -104,31 +104,31 @@ public abstract class Computer {
 			break;
 		case AB:	case ABCD:	case TO8:
 		case TO12:	case TO16: case CLCK:
-			left = isEven() ? current * barTicks : before(current) * barTicks;
-			right = isEven() ? (current + 1) * barTicks : current * barTicks; 
+			left = clock.isEven() ? current * barTicks : before(current) * barTicks;
+			right = clock.isEven() ? (current + 1) * barTicks : current * barTicks;
 			break;
 		case A3B:
 			switch (count % 4) {
-				case 0: case 1: 
+				case 0: case 1:
 					left = right = current * barTicks; break;
-				case 2: 
-					left = current * barTicks; 
-					right = (current + 1) * barTicks; break; 
-				case 3: 
+				case 2:
+					left = current * barTicks;
+					right = (current + 1) * barTicks; break;
+				case 3:
 					left = before(current) * barTicks;
 					right = current * barTicks; break;
-			} 
+			}
 			break;
 		case ALL:
-			left = isEven() ? current * barTicks : before(current) * barTicks;
-			right = isEven() ? after(current) * barTicks : current * barTicks;
+			left = clock.isEven() ? current * barTicks : before(current) * barTicks;
+			right = clock.isEven() ? after(current) * barTicks : current * barTicks;
 			break;
 		}
 	}
-	
+
 	int after(int idx) {
 		int result = idx + 1;
-		if (result >= bars()) 
+		if (result >= bars())
 			result = 0;
 		return result;
 	}
@@ -143,7 +143,7 @@ public abstract class Computer {
 		flush();
 		offset += fwd ? 1 : -1;
 		int next = fwd ? after(after(current)) : before(before(current));
-		if (next % 2 == 0 != JudahClock.isEven())
+		if (next % 2 == 0 != clock.isEven())
 			next++;
 		setCurrent(next);
 	}
@@ -153,7 +153,7 @@ public abstract class Computer {
 		offset = 0;
 		MainFrame.update(this);
 	}
-	
+
 	public void toFrame(int frame) {
 		if (current / 2 == frame)
 			return;
@@ -164,6 +164,6 @@ public abstract class Computer {
 		if (offset <= frames() * -1)
 			offset += frames();
 		setCurrent(frame * 2);
-	}	
+	}
 
 }

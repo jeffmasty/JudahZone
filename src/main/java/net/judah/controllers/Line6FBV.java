@@ -18,9 +18,9 @@ public class Line6FBV implements Controller {
 
 	@Override
 	public boolean midiProcessed(Midi midi) {
-		
+
 		if (Midi.isProgChange(midi)) { // "DOWN" button
-			if (midi.getData1() == 0) { 
+			if (midi.getData1() == 0) {
 				getLooper().verseChorus(); // toggle mutes
 				return true;
 			}
@@ -31,7 +31,7 @@ public class Line6FBV implements Controller {
 		}
 
 		if (!Midi.isCC(midi)) return false;
-		
+
 		Instrument guitar = getGuitar();
 		Loop loop;
 		final int data2 = midi.getData2();
@@ -39,15 +39,15 @@ public class Line6FBV implements Controller {
 		case 1: // Loop A
 			if (data2 == 0) return true;
 			loop = getLooper().getLoopA();
-			if (mutes) 
+			if (mutes)
 				loop.setOnMute(!loop.isOnMute());
-			else 
+			else
 				loop.trigger();
 			return true;
 		case 2: // overdub B
 			if (data2 == 0) return true;
 			loop = getLooper().getLoopB();
-			if (mutes) 
+			if (mutes)
 				loop.setOnMute(!loop.isOnMute());
 			else {
 				loop.trigger();
@@ -56,7 +56,7 @@ public class Line6FBV implements Controller {
 		case 3: // record C (free)
 			if (data2 == 0) return true;
 			loop = getLooper().getLoopC();
-			if (mutes) 
+			if (mutes)
 				loop.setOnMute(!loop.isOnMute());
 			else // can be free-style loop
 				loop.trigger();
@@ -64,7 +64,7 @@ public class Line6FBV implements Controller {
 		case 4: // overdub D
 			if (midi.getData2() == 0) return true;
 			SoloTrack solo = getLooper().getSoloTrack();
-			if (mutes) 
+			if (mutes)
 				solo.setOnMute(!solo.isOnMute());
 			else
 				solo.trigger();
@@ -76,7 +76,7 @@ public class Line6FBV implements Controller {
 			else
 				clock.begin();
 			return true;
-		case 6: // Func(2) turn on/off Jamstik midi 
+		case 6: // Func(2) turn on/off Jamstik midi
 			if (mutes)
 				getMidi().getJamstik().octaver();
 			else
@@ -102,7 +102,7 @@ public class Line6FBV implements Controller {
 			guitar.getReverb().setActive(data2 > 0);
 			return true;
 
-		// 12 : toe switch ? 
+		// 12 : toe switch ?
 		// 13 : pedal wah
 		case 14: // pedal vol of focus channel
 			int percent = (int)(data2 / 1.27f);
@@ -110,14 +110,16 @@ public class Line6FBV implements Controller {
 				return true; // ignore minor fluctuations of vol pedal
 			if (getFxRack() == null) // startup?
 				return true;
+
 			Channel ch = getFxRack().getChannel();
+			if (ch == null) return true;
 			if (Math.abs(ch.getVolume() - percent) > 3){
 				ch.getGain().set(Gain.VOLUME, percent);
 				pedalMemory = percent;
 				MainFrame.update(ch);
 			}
 			return true;
-		}		
+		}
 		return false;
 	}
 

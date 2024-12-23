@@ -5,7 +5,7 @@ import java.util.Map;
 
 import javax.sound.midi.ShortMessage;
 
-import lombok.Data;
+import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.api.Key;
 import net.judah.api.TimeListener;
@@ -13,19 +13,18 @@ import net.judah.gui.MainFrame;
 import net.judah.gui.settable.ModeCombo;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
+import net.judah.omni.Threads;
 import net.judah.seq.Poly;
 import net.judah.seq.chords.Chord;
 import net.judah.seq.chords.ChordListener;
 import net.judah.seq.chords.ChordTrack;
 import net.judah.seq.track.PianoTrack;
-import net.judah.util.Constants;
 
-@Data
 public class Arp implements ChordListener {
 
 	private final PianoTrack track;
 	private final ChordTrack chords = JudahZone.getChords();
-	private ArpInfo info = new ArpInfo();
+	@Getter private ArpInfo info;
 	private Algo algo = new Echo();
 	private final Deltas deltas = new Deltas();
 	private final Poly workArea = new Poly();
@@ -33,14 +32,15 @@ public class Arp implements ChordListener {
 	public Arp(PianoTrack t) {
 		track = t;
 		chords.addListener(this);
+		info = t.getState().getArp();
 	}
-	
+
 	public void setRange(int range) {
 		info.setRange(range);
 		if (algo != null) algo.setRange(range);
 		MainFrame.update(track);
 	}
-	
+
 	@Override
 	public void chordChange(Chord from, Chord to) {
 		if (!track.isActive() || algo instanceof Ignorant)
@@ -58,7 +58,7 @@ public class Arp implements ChordListener {
 	public void clear() {
 		if (!isActive() || deltas.isEmpty()) return;
 		Midi off = Midi.create(Midi.NOTE_OFF, track.getCh(), 36, 1);
-		for (Map.Entry<ShortMessage, List<Integer>> item : deltas.list()) 
+		for (Map.Entry<ShortMessage, List<Integer>> item : deltas.list())
 			out(off, item.getValue());
 		deltas.clear();
 	}
@@ -70,18 +70,18 @@ public class Arp implements ChordListener {
 	public void setInfo(ArpInfo arp) {
 		boolean setMode = info.algo != arp.algo;
 		info = arp;
-		if (setMode) 
+		if (setMode)
 			setMode(info.algo);
-		else  
+		else
 			clear();
-		if (algo != null) 
+		if (algo != null)
 			algo.setRange(arp.getRange());
 	}
 
 	public Mode getMode() {
 		return info.getAlgo();
 	}
-	
+
 	public int getRange() {
 		return info.getRange();
 	}
@@ -89,7 +89,7 @@ public class Arp implements ChordListener {
 	public boolean isActive() {
 		return info.algo != Mode.Off;
 	}
-	
+
 	public void setMode(Mode m) {
 		if (algo instanceof TimeListener)
 			track.getClock().removeListener((TimeListener)algo);
@@ -114,13 +114,13 @@ public class Arp implements ChordListener {
 			// case UP5: case DN5:
 		}
 		algo.setRange(info.range);
-		Constants.execute(()-> {
+		Threads.execute(()-> {
 			ModeCombo.update(track);
 			MainFrame.miniSeq().update(track);
 			MainFrame.getMidiView(track).getMenu().updateMode();
 		});
-		
-		
+
+
 	}
 
 	/** externally triggered */
@@ -145,7 +145,7 @@ public class Arp implements ChordListener {
 			out(msg, deltas.remove(msg));
 		}
 	}
-	
+
 	private void out(ShortMessage input, List<Integer> work) {
 		if (work == null)
 			return;
@@ -162,16 +162,16 @@ public class Arp implements ChordListener {
 		((Feed)algo).feed(midi);
 		return true;
 	}
-	
+
 	public class Echo extends Algo implements Ignorant {
 	@Override public void process(ShortMessage m, Chord chord, Poly result) {
 		result.add(m.getData1()); }}
-	
+
 	public class Gen extends Algo {
 		@Override public void process(ShortMessage m, Chord chord, Poly result) {
-			if (range < 13)  chord.tight(m.getData1(), result); 
+			if (range < 13)  chord.tight(m.getData1(), result);
 			else chord.wide(m.getData1(), result); }}
-	
+
 	public class Bass extends Algo {
 		@Override public void process(ShortMessage m, Chord chord, Poly result) {
 			result.add(m.getData1() + Key.key(m.getData1()).interval(chord.getBass())); }}

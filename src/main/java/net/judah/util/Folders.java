@@ -3,11 +3,14 @@ package net.judah.util;
 import java.io.File;
 import java.util.Arrays;
 
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileFilter;
+
 import lombok.Getter;
 import net.judah.JudahZone;
 
 public class Folders {
-    
+
 	// TODO user settings gui/mkdir
 	static final File _home = new File(System.getProperty("user.home"), "Setlist");
 
@@ -38,5 +41,50 @@ public class Folders {
 		Arrays.sort(result);
 		return result;
 	}
+
+	static File currentDir = new File(System.getProperty("user.dir"));
+
+	public static void setCurrentDir(File folder) {
+		currentDir = folder;
+	}
+	public static void setCurrentFile(File file) {
+		currentDir = file;
+	}
+
+	public static File choose(int selectionMode, final String extension, final String description) {
+		JFileChooser fc = new JFileChooser();
+		if (selectionMode >= 0)
+			fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+		if (extension != null)
+			fc.setFileFilter(new FileFilter() {
+				@Override public String getDescription() {
+					return description; }
+				@Override public boolean accept(File f) {
+					return f.isDirectory() || f.getName().endsWith(extension); }
+			});
+
+		fc.setCurrentDirectory(new File(System.getProperty("user.home")));
+		if (currentDir != null && currentDir.isDirectory())
+			fc.setCurrentDirectory(currentDir);
+		else if (currentDir != null && currentDir.isFile())
+			fc.setSelectedFile(currentDir);
+		int result = fc.showOpenDialog(null);
+		if (result == JFileChooser.APPROVE_OPTION) {
+		    File selectedFile = fc.getSelectedFile();
+		    currentDir = fc.getCurrentDirectory();
+		    return selectedFile == null ? null :
+		    	new File(selectedFile.getAbsolutePath()); // JSON doesn't like File subclass
+		}
+		return null;
+	}
+
+	public static File choose() {
+		return choose(0, null, null);
+	}
+	public static File choose(File folder) {
+		setCurrentDir(folder);
+		return choose();
+	}
+
 
 }

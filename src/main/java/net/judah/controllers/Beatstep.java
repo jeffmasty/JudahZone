@@ -15,12 +15,12 @@ import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 
 public class Beatstep implements Controller {
-	
+
 	public static final String NAME = "Arturia BeatStep"; // ALSA prefix
 
 	private static final int TEMPO_KNOB = 7; // CC
 	private static final int[] KNOBS = new int[] {
-			10, 74, 71, 76, 77, 93, 73, 75, 
+			10, 74, 71, 76, 77, 93, 73, 75,
 			114, 18, 19, 16, 17, 91, 79, 72 };
 
 	private static final int GUITAR = 44;
@@ -30,36 +30,36 @@ public class Beatstep implements Controller {
 	private static final int RECORD = 41;
 	private static final int LFO = 42;
 	private static final int FADER = 43;
-	
-	private long tempoLookedUp;
-	private int tempo;
+
+//	private long tempoLookedUp;
+//	private int tempo;
 	private final MultiSelect channels = new MultiSelect();
-	
+
 	@Override
 	public boolean midiProcessed(Midi midi) {
-		
+
 		if (midi.getChannel() != 0) // ignore sequencer
 			return true;
 
 		int data1 = midi.getData1();
 		if (Midi.isNote(midi)) { // Pads
 			// GUITAR, 45(mic), 46(drums), 47(synth1), 48(synth1), 49(bass), 50(fluid), MAINS,
-			// LOOPA, 37(loopB), 38(loopC),  LOOPD,     KITS,       RECORD,   FX,       FADER 
-			if (data1 == KITS) { 
+			// LOOPA, 37(loopB), 38(loopC),  LOOPD,     KITS,       RECORD,   FX,       FADER
+			if (data1 == KITS) {
 				if (!Midi.isNoteOn(midi)) return true;
-				if (MainFrame.getKnobMode() != KnobMode.Kits) {
-					MainFrame.setFocus(KnobMode.Kits);
+				if (MainFrame.getKnobMode() != KnobMode.KITS) {
+					MainFrame.setFocus(KnobMode.KITS);
 					MainFrame.setFocus(getDrumMachine().getCurrent().getKit().getFx());
 				}
-				else 
+				else
 					getDrumMachine().increment();
 			}
-			else if (data1 == RECORD) { 
+			else if (data1 == RECORD) {
 				if (!Midi.isNoteOn(midi)) return true;
-				for (Channel current : getSelected()) 
-					if (current instanceof LineIn) 
+				for (Channel current : getSelected())
+					if (current instanceof LineIn)
 						((LineIn)current).setMuteRecord(!((LineIn)current).isMuteRecord());
-					else 
+					else
 						current.setOnMute(!current.isOnMute());
 			}
 			else if (data1 == LFO) {
@@ -67,18 +67,18 @@ public class Beatstep implements Controller {
 				if (MainFrame.getKnobMode() == KnobMode.LFO)
 					for (Channel current : getSelected())
 						current.getLfo().setActive(!current.getLfo().isActive());
-				else 
+				else
 					MainFrame.setFocus(KnobMode.LFO);
 			}
-			
-			else if (data1 == FADER) { 
+
+			else if (data1 == FADER) {
 				if (!Midi.isNoteOn(midi)) return true;
 				for (Channel ch : getSelected()) {
 					if (ch.isOnMute() || ch.getGain().getGain() <= 0.05f) {
 						ch.setOnMute(false);
 						Fader.execute(new Fader(ch, Fader.DEFAULT_FADE, 0, 51));
 					}
-					else 
+					else
 						Fader.execute(new Fader(ch, Fader.DEFAULT_FADE, ch.getVolume(), 0));
 				}
 			}
@@ -86,16 +86,13 @@ public class Beatstep implements Controller {
 				multiSelect(midi.getCommand(), data1);
 			}
 			return true;
-		}		
-		
+		}
+
 		if (Midi.isCC(midi)) {
 			int data2 = midi.getData2();
 			if (data1 == TEMPO_KNOB) {
-				if (System.currentTimeMillis() - tempoLookedUp > 5000) // stale
-					tempo = (int)JudahZone.getClock().getTempo();
-				tempo += (data2 == 127 ? -2 : 2);
-				JudahZone.getClock().writeTempo(tempo);
-				tempoLookedUp = System.currentTimeMillis();
+				float tempo = JudahZone.getClock().getTempo() + (data2 == 127 ? -2 : 1); // wonky physical knob?
+				JudahZone.getClock().setTempo(tempo);
 				return true;
 			}
 
@@ -121,7 +118,7 @@ public class Beatstep implements Controller {
 		}
 		return true;
 	}
-	
+
 	private void multiSelect(int command, int data1) {
 		Channel ch = channel(data1);
 		if (ch == null)
@@ -143,9 +140,9 @@ public class Beatstep implements Controller {
 				return getMains();
 			else if (data1 >= GUITAR)
 				return getInstruments().get(data1 - GUITAR);
-			else 
+			else
 				return getLooper().get(data1 - LOOPA);
 		}
 	}
-	
+
 }

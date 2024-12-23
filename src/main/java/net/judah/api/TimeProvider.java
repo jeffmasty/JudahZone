@@ -1,16 +1,23 @@
 package net.judah.api;
 
-public interface TimeProvider extends TimeNotifier {
+public interface TimeProvider {
 
-	float getTempo();
-	/**@return true if the operation is supported and successful */
-	void writeTempo(int tempo);
+	void addListener(TimeListener l);
+
+	boolean removeListener(TimeListener l);
 
 	void begin();
+
 	void end();
-	
-	int getMeasure();
-	int getBeat();
+
+	void setTimeSig(Signature time);
+
 	Signature getTimeSig();
+
+	int getMeasure();
+
+	int getBeat();
+
+	void reset();
 
 }

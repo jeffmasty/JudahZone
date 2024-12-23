@@ -16,6 +16,10 @@ import net.judah.util.RTLogger;
 @Data @EqualsAndHashCode(callSuper=false)
 public class MidiScheduler implements Runnable {
 
+	public MidiScheduler() {
+		new Thread(this).start();
+	}
+
 	@Getter private long current = -1;
 	private final BlockingQueue<Long> offering = new LinkedBlockingQueue<>(2);
 	private int count = 0;
@@ -40,7 +44,7 @@ public class MidiScheduler implements Runnable {
 	}
 
 	void pulseLFOs() {
-		for (Channel ch : JudahZone.getMixer().getChannels()) 
+		for (Channel ch : JudahZone.getMixer().getChannels())
 			ch.getLfo().pulse();
 		for (Sample s : JudahZone.getSampler())
 			s.getLfo().pulse();
@@ -49,5 +53,5 @@ public class MidiScheduler implements Runnable {
 //				s.getLfo().pulse();
 	}
 
-	
+
 }

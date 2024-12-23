@@ -82,7 +82,7 @@ public class SoloTrack extends Loop implements Cmdr {
 		if (isPlaying()) return;
 		type = Type.FREE;
 		looper.getOnDeck().remove(this);
-		record(true);
+		capture(true);
 	}
 	
 //	@Override

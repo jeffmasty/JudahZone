@@ -6,15 +6,15 @@ import java.util.Scanner;
 
 import net.judah.JudahZone;
 import net.judah.mixer.Channel;
-import net.judah.util.Constants;
+import net.judah.omni.Threads;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 public class PresetsDB extends ArrayList<Preset> {
 	public static final String DEFAULT = "Freeverb";
 	private Preset standard;
-	
-	
+
+
     public PresetsDB() {
         this(Folders.getPresetsFile());
     }
@@ -47,7 +47,7 @@ public class PresetsDB extends ArrayList<Preset> {
     }
 
     public void save() {
-    	Constants.writeToFile(Folders.getPresetsFile(), toString());
+    	Threads.writeToFile(Folders.getPresetsFile(), toString());
     }
 
     @Override public String toString() {
@@ -60,12 +60,12 @@ public class PresetsDB extends ArrayList<Preset> {
 	public Preset getDefault() {
 		if (standard == null) {
 			standard = byName(DEFAULT);
-			if (standard == null) 
+			if (standard == null)
 				standard = JudahZone.getMains().toPreset(DEFAULT);
 		}
 		return standard;
 	}
-	
+
 	public ArrayList<String> getList() {
 		ArrayList<String> result = new ArrayList<>();
 		for (Preset p : this)
@@ -87,7 +87,7 @@ public class PresetsDB extends ArrayList<Preset> {
 	public void replace(Channel channel) {
 		int idx = indexOf(channel.getPreset());
 		if (idx < 0) {
-			RTLogger.warn(this, "Unknown Preset on " + channel.getName() 
+			RTLogger.warn(this, "Unknown Preset on " + channel.getName()
 				+ ": " + channel.getPreset() == null ? "null" : channel.getPreset().getName());
 			return;
 		}
@@ -97,6 +97,6 @@ public class PresetsDB extends ArrayList<Preset> {
         RTLogger.log(this, "saved " + p.getName() + " from " + channel.getName() +
                 " with " + p.size() + " FX");
 	}
-    
+
 }
 

@@ -8,13 +8,13 @@ import javax.swing.JLabel;
 import net.judah.fx.Effect;
 import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
-import net.judah.util.KeyPair;
+import net.judah.omni.Pair;
 
 public class FxTrigger extends JLabel {
-	
+
 		final Effect fx;
-		FxTrigger(KeyPair p, Channel ch) {
-			this(p.getKey(), p.getValue() instanceof Effect ? (Effect)p.getValue() : null, ch);
+		FxTrigger(Pair p, Channel ch) {
+			this(p.key(), p.value() instanceof Effect ? (Effect)p.value() : null, ch);
 		}
 		public FxTrigger(String lbl, Effect effect, Channel ch) {
 			super(lbl, JLabel.CENTER);
@@ -27,5 +27,5 @@ public class FxTrigger extends JLabel {
 				}
 			});
 		}
-		
+
 	}

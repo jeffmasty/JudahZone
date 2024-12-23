@@ -8,7 +8,13 @@ import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.List;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 
 import lombok.Getter;
 import net.judah.JudahZone;
@@ -17,13 +23,14 @@ import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.Btn;
+import net.judah.omni.Threads;
 import net.judah.song.cmd.Param;
 import net.judah.song.cmd.ParamModel;
 import net.judah.song.cmd.ParamTable;
 import net.judah.util.RTLogger;
 
 public class SongView extends JPanel {
-	
+
 	@Getter private final SceneLauncher launcher;
 	private final ParamTable params;
 	private final JComboBox<Trigger> sceneType = new JComboBox<>(Trigger.values());
@@ -37,7 +44,7 @@ public class SongView extends JPanel {
 		JScrollPane scroll = new JScrollPane(params);
 		Gui.resize(scroll, props);
 		Gui.resize(launcher, btns);
-		
+
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		add(sceneBtns1());
 		add(sceneBtns2());
@@ -77,17 +84,17 @@ public class SongView extends JPanel {
 		JPanel result = new JPanel(new GridLayout(1, 5));
 		result.add(new Btn("<--", e->shift(true)));
 		result.add(new Btn("Create", e->newScene()));
-		result.add(new Btn("Copy", e->copy())); 
+		result.add(new Btn("Copy", e->copy()));
 		result.add(new Btn("Del", e->delete()));
 		result.add(new Btn("-->", e->shift(false)));
 		return result;
 	}
-			
+
 	private void triggerType() {
 		songs.getScene().setType((Trigger)sceneType.getSelectedItem());
 		MainFrame.update(songs.getScene());
 	}
-	
+
 	public void setCurrent(Scene s) {
 		notes.setText(s.getNotes());
 		if (sceneType.getSelectedItem() != s.getType())
@@ -99,7 +106,7 @@ public class SongView extends JPanel {
 		params.setModel(new ParamModel(songs.getScene().getCommands())); //overkill?
 		launcher.update(s);
 	}
-	
+
 	private void addParam() {
 		songs.getScene().getCommands().add(new Param());
 		update(songs.getScene());
@@ -107,9 +114,9 @@ public class SongView extends JPanel {
 
 	private void removeParam() {
 		int selected = params.getSelectedRow();
-		if (selected == -1) 
+		if (selected == -1)
 			selected = 1;
-		
+
 		if (selected < songs.getScene().getCommands().size())
 			songs.getScene().getCommands().remove(selected);
 		update(songs.getScene());
@@ -121,7 +128,7 @@ public class SongView extends JPanel {
 		MainFrame.update(launcher);
 		songs.setScene(add);
 	}
-	
+
 	public void copy() {
 		addScene(songs.getScene().clone());
 	}
@@ -133,19 +140,19 @@ public class SongView extends JPanel {
 	public void delete() {
 		Song song = songs.getSong();
 		Scene current = songs.getScene();
-		if (current == song.getScenes().get(0)) 
+		if (current == song.getScenes().get(0))
 			return; // don't remove initial scene
 		song.getScenes().remove(current);
 		launcher.fill();
 		songs.setScene(song.getScenes().get(0));
 	}
-	
+
 	public void shift(boolean left) {
 		List<Scene> scenes = songs.getSong().getScenes();
 		int old = scenes.indexOf(songs.getScene());
-		if (old == 0) { 
+		if (old == 0) {
 			RTLogger.log(this, "INIT Scene is fixed.");
-			return; 
+			return;
 		}
 		int idx = old + (left ? -1 : 1);
 		if (idx == 0)
@@ -156,7 +163,11 @@ public class SongView extends JPanel {
 		launcher.fill();
 		MainFrame.setFocus(songs.getScene());
 	}
-	
+
+	public void updatePad(Scene onDeck) {
+		Threads.execute(()->launcher.update(onDeck));
+	}
+
 
 
 }

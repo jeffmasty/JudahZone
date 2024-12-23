@@ -10,14 +10,18 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.fx.Filter;
 import net.judah.gui.Gui;
-import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
@@ -26,6 +30,8 @@ import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.CenteredCombo;
 import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.Slider;
+import net.judah.omni.Icons;
+import net.judah.omni.Threads;
 import net.judah.synth.Adsr;
 import net.judah.synth.JudahSynth;
 import net.judah.synth.Shape;
@@ -50,8 +56,8 @@ public class SynthKnobs extends KnobPanel {
 
 	private static final Color C = Pastels.PURPLE;
 	private final Knob hcFreq = new Knob(C);
-	private final Knob hcReso = new Knob(C);//0, 20 
-	private final Knob lcFreq = new Knob(C);//0, 50 
+	private final Knob hcReso = new Knob(C);//0, 20
+	private final Knob lcFreq = new Knob(C);//0, 50
 	private final Knob lcReso = new Knob(C);//0, 20
 	private final Adsr adsr;
 	@Getter private final Knob a = new Knob(C);//0, 200
@@ -61,17 +67,17 @@ public class SynthKnobs extends KnobPanel {
 	private final ArrayList<Slider> gains = new ArrayList<>();
 	private final ArrayList<JComboBox<Shape>> shapes = new ArrayList<>();
 	private final ArrayList<JComboBox<String>> detune = new ArrayList<>();
-	private final JComboBox<Integer> mod = new JComboBox<>(); 
-	
+	private final JComboBox<Integer> mod = new JComboBox<>();
+
 	private final JButton synthOne = new JButton(JudahSynth.NAMES[0][0]);
 	private final JButton synthTwo = new JButton(JudahSynth.NAMES[1][0]);
 	private final JPanel title = new JPanel(new FlowLayout(FlowLayout.CENTER, 3, 0));
-	
+
 	public SynthKnobs(JudahSynth zynth) {
 		this.synth = zynth;
 		this.presets = new Program(synth.getTracks().get(0));
-		this.adsr = synth.getAdsr(); 
-		
+		this.adsr = synth.getAdsr();
+
 		for (int i = 0; i < synth.getShapes().length; i++) {
 			JComboBox<Shape> combo = new CenteredCombo<>();
 			for(Shape val : Shape.values())
@@ -105,7 +111,7 @@ public class SynthKnobs extends KnobPanel {
 		row.add(new JLabel(" Bend "));
 		row.add(mod);
  		add(row);
-		
+
 		JPanel knobs = new JPanel(new GridLayout(2, 4, 4, 4));
 		knobs.add(Gui.duo(a, new JLabel(" Atk")));
 		knobs.add(Gui.duo(d, new JLabel(" Dec")));
@@ -119,7 +125,7 @@ public class SynthKnobs extends KnobPanel {
 
 		JPanel dco = new JPanel();
 		dco.setLayout(new BoxLayout(dco, BoxLayout.PAGE_AXIS));
-		for (int i = 0; i < synth.getDcoGain().length; i++) 
+		for (int i = 0; i < synth.getDcoGain().length; i++)
 			dco.add(Gui.wrap(new JLabel("DCO " + i + " "), shapes.get(i), gains.get(i), detune.get(i)));
 		add(dco);
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
@@ -133,22 +139,22 @@ public class SynthKnobs extends KnobPanel {
 		synthTwo.addActionListener(e->MainFrame.setFocus(JudahZone.getSynth2().getSynthKnobs()));
 		title.add(synthOne);
 		title.add(synthTwo);
-		title.add(new Btn(Icons.DETAILS_VEW, 
+		title.add(new Btn(Icons.DETAILS_VEW,
 				e->JudahZone.getFrame().edit(JudahZone.getSeq().byName(synth.getName()))));
 		validate();
 	}
 
 	@Override
 	public JPanel getTitle() {
-		Constants.execute(()->bg());
+		Threads.execute(()->bg());
 		return title;
 	}
-	
+
 	private void bg() {
 		synthOne.setBackground(synth == JudahZone.getSynth1() ? C : null);
 		synthTwo.setBackground(synth == JudahZone.getSynth1() ? null : C);
 	}
-	
+
 	private void listeners() {
 		for (int i = 0; i < gains.size(); i++) {
 			final int idx = i;
@@ -162,7 +168,7 @@ public class SynthKnobs extends KnobPanel {
 			final int idx = i;
 			detune.get(i).addActionListener(e->synth.getDetune()[idx] = DETUNE_AMOUNT[detune.get(idx).getSelectedIndex()]);
 		}
-		
+
 		a.addListener(e->adsr.setAttackTime(a.getValue()));
 		d.addListener(e->adsr.setDecayTime(d.getValue()));
 		s.addListener(e-> adsr.setSustainGain(s.getValue() * 0.01f));
@@ -175,7 +181,7 @@ public class SynthKnobs extends KnobPanel {
 		if (synth.getModSemitones() != (int)mod.getSelectedItem())
 				mod.setSelectedItem(synth.getModSemitones());
 	}
-	
+
 	@Override
 	public void update() {
 		if (hcReso.getValue() != synth.getHiCut().getResonance())
@@ -190,7 +196,7 @@ public class SynthKnobs extends KnobPanel {
 			checkGain(gains.get(i), i);
 		for (int i = 0; i < shapes.size(); i++)
 			checkShape(shapes.get(i), i);
-		
+
 		// adsr update
 		if (a.getValue() != adsr.getAttackTime())
 			a.setValue(adsr.getAttackTime());
@@ -215,7 +221,7 @@ public class SynthKnobs extends KnobPanel {
 			detune.get(i).setSelectedItem(target);
 		}
 	}
-	
+
 	private void checkShape(JComboBox<Shape> shape, int i) {
 		if (shape.getSelectedItem() != synth.getShape(i))
 			shape.setSelectedItem(synth.getShape(i));
@@ -232,10 +238,10 @@ public class SynthKnobs extends KnobPanel {
 			return;
 		JudahZone.getSynthPresets().save(synth, name);
 	}
-	
+
 	@Override
 	public boolean doKnob(int idx, int data2) {
-		
+
 		// preset, volume, hi-cut hz, lo-cut res, adsr
 		switch (idx) {
 			case 0:
@@ -250,20 +256,20 @@ public class SynthKnobs extends KnobPanel {
 			case 3:
 				adsr.setReleaseTime(data2);
 				break;
-			case 4: Constants.execute(() -> presets.setSelectedIndex( 
+			case 4: Threads.execute(() -> presets.setSelectedIndex(
 						Constants.ratio(data2, presets.getItemCount() - 1)));
 				break;
-			case 5: Constants.execute(() -> mod.setSelectedItem(Constants.ratio(data2, OCTAVE)));
+			case 5: Threads.execute(() -> mod.setSelectedItem(Constants.ratio(data2, OCTAVE)));
 				break;
-			case 6: 
+			case 6:
 				if (freqMode)
 					synth.getLoCut().setFrequency(Filter.knobToFrequency(data2));
-				else 
+				else
 					synth.getLoCut().setResonance(data2);
 				break;
-			case 7: 
+			case 7:
 				if (freqMode)
-					synth.getHiCut().setFrequency(Filter.knobToFrequency(data2));				
+					synth.getHiCut().setFrequency(Filter.knobToFrequency(data2));
 				else
 					synth.getHiCut().setResonance(data2);
 				break;
@@ -272,7 +278,7 @@ public class SynthKnobs extends KnobPanel {
 		}
 		return true;
 	}
-	
+
 	@Override
 	public void pad1() {
 		JudahSynth target = (synth == JudahZone.getSynth1()) ? JudahZone.getSynth2() : JudahZone.getSynth1();
@@ -283,7 +289,7 @@ public class SynthKnobs extends KnobPanel {
 	public void pad2() {
 		freqMode = !freqMode;
 		MainFrame.update(this); // TODO freqMode feedback in update()
-		
+
 	}
-	
+
 }

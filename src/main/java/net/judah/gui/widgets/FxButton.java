@@ -6,8 +6,8 @@ import java.awt.Insets;
 import javax.swing.Icon;
 import javax.swing.JButton;
 
-import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
+import net.judah.omni.Icons;
 
 public class FxButton extends JButton {
 	private static final Insets ZERO = new Insets(0, 0, 0, 0);

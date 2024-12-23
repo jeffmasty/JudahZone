@@ -1,20 +1,28 @@
 package net.judah.midi;
 
+//autowire JudahMidi, chords, sampler, looper, seq
+import static net.judah.JudahZone.*;
 import static net.judah.api.Notification.Property.STEP;
 import static net.judah.api.Notification.Property.TRANSPORT;
+import static net.judah.util.Constants.bpmPerBeat;
+import static net.judah.util.Constants.computeTempo;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.sound.midi.ShortMessage;
 
-import org.jaudiolibs.jnajack.JackException;
 import org.jaudiolibs.jnajack.JackTransportState;
 
+import com.illposed.osc.OSCMessage;
+import com.illposed.osc.transport.udp.OSCPortOut;
+
 import lombok.Getter;
-import lombok.Setter;
-import net.judah.JudahZone;
+import net.judah.api.MidiClock;
 import net.judah.api.Notification;
 import net.judah.api.Notification.Property;
 import net.judah.api.Signature;
@@ -24,73 +32,85 @@ import net.judah.gui.MainFrame;
 import net.judah.gui.settable.Folder;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
-import net.judah.sampler.Sampler;
-import net.judah.seq.Seq;
+import net.judah.omni.WavConstants;
 import net.judah.seq.chords.ChordTrack;
-import net.judah.util.Constants;
+import net.judah.song.cmd.Cmd;
+import net.judah.song.cmd.Cmdr;
+import net.judah.song.cmd.IntProvider;
+import net.judah.song.cmd.Param;
 import net.judah.util.RTLogger;
 
-public class JudahClock extends Thread implements TimeProvider {
-	public static final byte[] MIDI_CLOCK 	 = new byte[] {(byte)ShortMessage.TIMING_CLOCK};
-	public static final byte[] MIDI_START    = new byte[] {(byte)ShortMessage.START}; 
-	public static final byte[] MIDI_CONTINUE = new byte[] {(byte)ShortMessage.CONTINUE};
-	public static final byte[] MIDI_STOP     = new byte[] {(byte)ShortMessage.STOP};
-	static final int CLOCK_SZ = 1;
-	public static final float MAX_TEMPO = 300f; 
-	public static final int MIDI_24 = 24;
+public class JudahClock implements MidiClock, TimeProvider, Cmdr {
+
+	public static final int MAX_TEMPO = (int)Math.floor( WavConstants.FPS / MIDI_24 * 60f );
+
+	public static final int OSC_PORT = 4040;
 
 	/** current number of bars to record/computeTempo */
-	@Getter private static int length = 4; 
-	@Getter static private int bar;
-	@Getter private final MidiClock midiClock;
+	@Getter private static int length = 4;
+	@Getter private boolean active;
+	@Getter private int bar;
 
-	@Setter private Seq seq;
-	private final Sampler sampler;
-    private final ArrayList<TimeListener> listeners = new ArrayList<>();
-    private final BlockingQueue<Notification> notifications = new LinkedBlockingQueue<>();
-    @Getter private boolean active;
-    @Getter private float tempo = 89f;
-	/** current step */
-	@Getter private int step;
+	private final JudahMidi midi;
+
+	@Getter private float tempo = 90;
+	@Getter private Signature timeSig = Signature.FOURFOUR;
     /** current beat */
 	@Getter private int beat;
-	@Getter private Signature timeSig = Signature.FOURFOUR;
-    private int unit = MIDI_24 / timeSig.div;
-    private long lastPulse = 0;
-	private int midiPulseCount;
+	/** current step of current beat */
+	@Getter private int step;
+	/** clock ticks: send(T) vs. receive(F) */
+	@Getter private boolean internal = true;
     @Getter private boolean onDeck;
-    private boolean runnersDialZero;
-    
+
+	private long lastPulse = 0;
+	private int midiPulseCount;
+    private int unit = MIDI_24 / timeSig.div;
+    private final ArrayList<TimeListener> listeners = new ArrayList<>();
+    private final BlockingQueue<Notification> notifications = new LinkedBlockingQueue<>();
+	private float jackFramesPerTick;
+    private float callCounter = 0;
+    private OSCPortOut osc;
+	private final ArrayList<Object> oscData = new ArrayList<>();
+
     /** sync to external Midi24 pulse */
-	public JudahClock(Sampler sampler) throws Exception {
-		midiClock = new MidiClock();
-		midiClock.start();
-		this.sampler = sampler;
-		setPriority(8);
-		start();
+	public JudahClock(JudahMidi parent) {
+		midi = parent;
+
+		Thread announce = new Thread(()->{
+			try { while (true) {
+					Notification n = notifications.take();
+					new ArrayList<TimeListener>(listeners).forEach(
+							listener -> {if (listener != null) listener.update(n.prop, n.value);});
+				}
+			} catch (Exception e) { RTLogger.warn(this, e); }});
+		announce.setPriority(9);
+		announce.start();
+
+		getServices().add(this);
 	}
 
 	@Override public void addListener(TimeListener l) 	 { if (!listeners.contains(l)) listeners.add(l); }
 	@Override public boolean removeListener(TimeListener l) { return listeners.remove(l); }
-	/** write to tempo control port */
-	@Override public void writeTempo(int bpm)  { midiClock.writeTempo(bpm); }
 	@Override public int getMeasure() 	{ return timeSig.beats; }
-	public static boolean isEven() 		{ return bar % 2 == 0; }
+	public boolean isEven() 		{ return bar % 2 == 0; }
 	public int getSteps() 				{ return timeSig.steps; }
 	public int getSubdivision() 		{ return timeSig.div; }
 
-	@Override public void run() {
-		try {
-			while (true) {
-				Notification n = notifications.take();
-				new ArrayList<TimeListener>(listeners).forEach(
-						listener -> {if (listener != null) listener.update(n.prop, n.value);});
-			}
-		} catch (Exception e) { RTLogger.warn(this, e); }
+	public void jackFrame() {
+		if (!internal)
+			return;
+        callCounter += 1;
+        if (callCounter >= jackFramesPerTick) {
+            callCounter -= jackFramesPerTick;
+			midi24();
+        }
 	}
 
 	/** receive clock message from external source in real-time */
-	public void processTime(byte[] bytes) throws JackException {
+	public void processTime(byte[] bytes) {
+		if (internal)
+			return;
 		// if (mode != Mode.Midi24) return;
 		int stat = 0;
         if (bytes.length == CLOCK_SZ)
@@ -100,64 +120,73 @@ public class JudahClock extends Thread implements TimeProvider {
             stat = (stat << 8) | (bytes[0] & 0xFF);
         }
         else return;
-        
-        if (ShortMessage.TIMING_CLOCK == stat) 
+
+        if (ShortMessage.TIMING_CLOCK == stat)
         	midi24(); // process external time
-        
-        else if (ShortMessage.START == stat) 
+
+        else if (ShortMessage.START == stat)
             begin();
-        
-        else if (ShortMessage.STOP == stat) 
+
+        else if (ShortMessage.STOP == stat)
             end();
-        
+
         else if (ShortMessage.CONTINUE == stat) {
-            announce(TRANSPORT, JackTransportState.JackTransportRolling); 
-            JudahZone.getMidi().synchronize(bytes);
+            announce(TRANSPORT, JackTransportState.JackTransportRolling);
+            midi.synchronize(bytes);
             RTLogger.log(this, "MidiSync CONTINUE");
         }
 	}
 
 	private void midi24() {
+		midi.queue(MIDI_TICK);
 		midiPulseCount++;
 		if (midiPulseCount >= MIDI_24)
 			midiPulseCount = 0;
 		if (midiPulseCount == 0) { // new Beat
-			computeTempo(getTempo());
+			if (!internal)
+				averageTempo(tempo);
 			if (active) {
 				beat++;
-				if (beat >= timeSig.beats) { 
-					bar++; // new Bar
-					beat = 0;
-					announce(Property.BARS, bar);
-				}
+				if (beat >= timeSig.beats)
+					newBar();
 				announce(Property.BEAT, beat);
 			}
 		}
+
 		if (midiPulseCount % unit == 0) {
 			step = beat * timeSig.div + midiPulseCount / unit;
 			letItBeKnown(STEP, step);
 			if (active) {
-				JudahZone.getChords().step(step);
-				sampler.step(step);
+				getSeq().step(step);
 			}
 		}
 		if (!active)
 			return;
 		float percent = beat + midiPulseCount / (float)MIDI_24; //  + (isEven() ? 0 : 1);
-		seq.getTracks().forEach(track->track.playTo(percent));
+		getSeq().percent(percent);
 	}
-	
+
+	private void newBar() {
+		bar++; // new Bar
+		beat = 0;
+		announce(Property.BARS, bar);
+		if (bar % length == 0)
+			announce(Property.BOUNDARY, bar / length);
+	}
+
 	public void syncToLoop() {
-		Looper looper = JudahZone.getLooper();
-		if (looper.getPrimary() != null) {
-			float tempo = Constants.computeTempo((long) (1000 * looper.getPrimary().seconds()), length * getMeasure());
-			writeTempo(Math.round(tempo));
-			looper.clockSync();
-			onDeck = true;
-		}
-		
+		Looper looper = getLooper();
+		Loop primary =  looper.getPrimary();
+		looper.clockSync(); // off FREE
+		if (primary == null)
+			return;
+		onDeck = !onDeck;
+		if (!onDeck)
+			return;
+		float tempo = computeTempo((long) (1000 * primary.seconds()), length * getMeasure());
+		setTempo(tempo);
 		// Reset Chord Track
-		ChordTrack chords = JudahZone.getChords();
+		ChordTrack chords = getChords();
 		if (chords.isActive() && chords.getSection() != null)
 			chords.click(chords.getSection().get(0));
 	}
@@ -171,40 +200,56 @@ public class JudahClock extends Thread implements TimeProvider {
 		bar = 0;
 		active = true;
 		announce(TRANSPORT, JackTransportState.JackTransportStarting);
-		JudahZone.getMidi().synchronize(MIDI_START);
+		midi.synchronize(MIDI_START);
+		offSync();
 	}
 
 	@Override
     public void end() {
 	    active = false;
-	    JudahZone.getMidi().synchronize(MIDI_STOP);
+	    midi.synchronize(MIDI_STOP);
 	    letItBeKnown(TRANSPORT, JackTransportState.JackTransportStopped);
 	}
 
+	@Override
 	public void reset() {
-		step = 0;
-        beat = 0;
-        bar = 0;
+		step = beat = bar = 0;
+        announce(Property.STATUS, "reset");
 	}
 
-	public void reset(Signature signature) {
-		setTimeSig(signature);
-		reset();
+	public void primary() {
+
+		if (!internal)
+			stop();
+
+		internal = !internal;
+		// TODO connect ports
+		if (!internal)
+			try {
+				osc = external(); // TODO connect Midi Port ?
+			} catch (Exception e) { RTLogger.warn(this, e); }
+		setTempo(tempo);
 	}
-	
+
+	/** @return external comm port to control clock */
+	private OSCPortOut external() throws UnknownHostException, IOException {
+		return new OSCPortOut(InetAddress.getLocalHost(), OSC_PORT);
+	}
+
 	public void toggle() {
-		if (isActive()) 
+		if (active)
 			end();
 		else begin();
 	}
 
 	public void setLength(int bars) {
-		if (length == bars) 
+		if (length == bars)
 			return;
 		length = bars;
 		MainFrame.update(this);
 	}
-	
+
+	@Override
 	public void setTimeSig(Signature time) {
 		if (timeSig == time)
 			return;
@@ -214,66 +259,140 @@ public class JudahClock extends Thread implements TimeProvider {
 		Folder.refillAll();
 		MainFrame.update(this); // both update and announce?
 	}
-	
-	private void computeTempo(float avg) {
+
+	private void averageTempo(float avg) {
 		if (lastPulse <= 0) {
 			lastPulse = System.currentTimeMillis();
 			return;
 		}
 		long now = System.currentTimeMillis();
-		float tempo2 = Constants.bpmPerBeat(now - lastPulse);
+		float tempo2 = bpmPerBeat(now - lastPulse);
 		lastPulse = now;
-		if ((int)tempo2 != (int)tempo) {
-			tempo = (tempo2 + avg) / 2f;
-			letItBeKnown(Property.TEMPO, tempo);
-		}
+		if ((int)tempo2 != (int)tempo)
+			setTempo((tempo2 + avg) / 2f);
+
 	}
 
 	public void loopCount(int count) {
-		if (count == 0 && runnersDialZero) 
+		if (count == 0)
 			bar = 0;
 		announce(Property.LOOP, count);
-		if (onDeck && !active) 
+		if (onDeck && !active)
 			begin();
 		onDeck = false;
-	}
-
-	public void syncTempo(Loop primary) {
-		if (primary == null || !primary.isPlaying()) return;
-		long millis = (long) (1000 * primary.seconds());
-		int tempo = (int)Constants.computeTempo(millis, length * timeSig.beats);
-		RTLogger.log(this, "loop tempo: " + length + " bars @ " + tempo + " bpm");
-		writeTempo(tempo);
 	}
 
 	public void skipBar() {
 		bar++;
 		letItBeKnown(Property.BARS, bar);
 	}
-	
+
 	public int countdown() {
 		return beat % timeSig.beats - timeSig.beats;
 	}
-	
+
 	/** send to background thread */
 	private void letItBeKnown(Property prop, Object value) {
 		notifications.offer(new Notification(prop, value));
 	}
-	
+
 	/** in real-time */
 	private void announce(Property prop, Object value) {
-		for (Object o : listeners.toArray())
-			((TimeListener)o).update(prop, value);
-	}
-
-	/** not used, when Loop repeats, reset sequencer to time 0 */
-	public void runnersDialZero() {
-		runnersDialZero = !runnersDialZero;
+		for (int i = listeners.size() - 1; i >= 0; i--)
+			listeners.get(i).update(prop, value);
 	}
 
 	public void offSync() {
 		onDeck = false;
 		MainFrame.update(this);
+	}
+
+	@Override
+	public void setTempo(float bpm) {
+		if (bpm > MAX_TEMPO)
+			return;
+		tempo = bpm;
+			jackFramesPerTick = WavConstants.FPS / (tempo * 0.4f); // tempo / 60 * 24
+		if (!internal) {
+			oscData.clear();
+			oscData.add(Math.round(tempo));
+			send("/tempo");
+		}
+		letItBeKnown(Property.TEMPO, tempo);
+	}
+
+	@Override
+	public void close() throws IOException {
+		stop();
+		if (osc != null && osc.isConnected()) {
+			try {
+				osc.disconnect();
+			} catch (IOException e) {
+				RTLogger.warn(this, e);
+			}
+		}
+	}
+
+	@Override
+	public void start() {
+		if (internal)
+			return;
+		oscData.clear();
+		send("/start");
+	}
+
+	@Override
+	public void stop() {
+		if (internal)
+			return;
+		oscData.clear();
+		send("/stop");
+	}
+
+	@Override
+	public void cont() {
+		if (internal)
+			return;
+		oscData.clear();
+		send("/continue");
+	}
+
+	private void send(String address) {
+		if (osc == null)
+			return; // error state
+		try {
+			if (!osc.isConnected())
+				osc.connect();
+			osc.send(new OSCMessage(address, oscData));
+		} catch (Exception e) {
+			RTLogger.warn(this, "tempo " + e.getMessage());
+		}
+	}
+
+	public void syncTempo(Loop primary) {
+		if (primary == null || !primary.isPlaying()) return;
+		long millis = (long) (1000 * primary.seconds());
+		tempo = computeTempo(millis, JudahClock.getLength() * timeSig.beats);
+		setTempo(tempo);
+		RTLogger.log(this, "loop tempo: " + tempo + " bpm");
+	}
+
+	@Override
+	public String[] getKeys() {
+		return 	IntProvider.instance(40, 200, 2).getKeys();
+	}
+
+	@Override
+	public Integer resolve(String key) {
+		return Integer.parseInt(key);
+	}
+
+	@Override
+	public void execute(Param p) {
+		if (p.cmd == Cmd.Tempo)
+			try {
+				setTempo(Integer.parseInt(p.val));
+			} catch (NumberFormatException e) {RTLogger.warn(this, "tempo: " + p.val);}
 	}
 
 }

@@ -15,12 +15,13 @@ import net.judah.gui.widgets.StartBtn;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
+import net.judah.omni.Icons;
 import net.judah.seq.chords.ChordPlay;
 import net.judah.seq.chords.ChordTrack;
 import net.judah.song.Overview;
 
 public class HQ extends JPanel implements TimeListener {
-	
+
 	private final JudahClock clock;
 	private final Looper looper;
 	private final Overview songs;
@@ -29,7 +30,7 @@ public class HQ extends JPanel implements TimeListener {
     private final LengthCombo sync;
 	private Loop recording;
 	private final JButton metro;
-	
+
     public HQ(JudahClock clock, Looper loops, Overview songs, ChordTrack chords) {
     	this.clock = clock;
     	this.looper = loops;
@@ -37,7 +38,7 @@ public class HQ extends JPanel implements TimeListener {
     	sync = new LengthCombo(clock);
     	metro = new Btn(Icons.get("left.png"), e->clock.skipBar());
     	metro.setOpaque(true);
-    	
+
     	setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
     	add(new StartBtn(clock));
     	add(Gui.resize(scene, Size.SMALLER_COMBO));
@@ -48,19 +49,19 @@ public class HQ extends JPanel implements TimeListener {
 		add(metro);
     	clock.addListener(this);
     }
-    
+
 	@Override public void update(Property prop, Object value) {
 		if (prop == Property.BARS)
-			metro.setIcon(JudahClock.isEven() ? Icons.get("left.png") : Icons.get("right.png"));
+			metro.setIcon(clock.isEven() ? Icons.get("left.png") : Icons.get("right.png"));
 		metronome();
 	}
-    
+
 	private void trigger() {
 		if (SetCombo.getSet() != null)
 			SetCombo.set();
 		else if (songs.getOnDeck() != null)
 			songs.setScene(songs.getOnDeck());
-		else 
+		else
 			songs.trigger();
 		sceneText();
 	}
@@ -71,7 +72,7 @@ public class HQ extends JPanel implements TimeListener {
 			recording.trigger();
 		}
 		else {
-			recording.record(false);
+			recording.capture(false);
 			recording = null;
 		}
 	}
@@ -80,7 +81,7 @@ public class HQ extends JPanel implements TimeListener {
 		if (sync.getSelectedItem() != (Integer)JudahClock.getLength())
 			sync.setSelectedItem(JudahClock.getLength());
 	}
-	
+
 	public void metronome() {
 		metro.setBackground(clock.isActive() == false && clock.isOnDeck() ? Pastels.YELLOW : null);
 	}
@@ -95,7 +96,7 @@ public class HQ extends JPanel implements TimeListener {
 			if (songs.getOnDeck() == null && idx < 10)
 				sb.append("Scene:");
 			sb.append(idx);
-			if (songs.getOnDeck() != null) 
+			if (songs.getOnDeck() != null)
 				sb.append(" to ").append(songs.getSong().getScenes().indexOf(songs.getOnDeck()));
 		}
 		if (SetCombo.getSet() != null)

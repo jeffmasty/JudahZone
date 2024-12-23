@@ -1,6 +1,12 @@
 package net.judah.gui;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.Insets;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -14,10 +20,8 @@ public interface Gui {
 	int STD_HEIGHT = 18;
 	Insets BTN_MARGIN = new Insets(1,1,1,1);
 	Insets ZERO_MARGIN = new Insets(0,0,0,0);
-	
 	Border RED = BorderFactory.createLineBorder(Color.RED, 1);
 	Border HIGHLIGHT = BorderFactory.createLineBorder(Color.BLACK, 1);
-	Border SUBTLE = BorderFactory.createLineBorder(Pastels.MY_GRAY, 1);
 	Border NO_BORDERS = new EmptyBorder(BTN_MARGIN);
 
 	Font BOLD10 = new Font("Arial", Font.BOLD, 10);
@@ -29,18 +33,18 @@ public interface Gui {
 	Font FONT11 = new Font("Arial", Font.PLAIN, 11);
 	Font FONT10 = new Font("Arial", Font.PLAIN, 10);
 	Font FONT9 = new Font("Arial", Font.PLAIN, 9);
-	
-	
+
+
 	public static JComponent font(JComponent c, Font f) {
 		c.setFont(f);
 		return c;
 	}
-	
+
 	public static JComponent font(JComponent c) {
 		return font(c, FONT9);
 	}
 
-	
+
 	static JPanel duo(Component left, Component right) {
 		JPanel result = new JPanel();
 		result.setLayout(new GridLayout(1, 2));
@@ -48,7 +52,7 @@ public interface Gui {
 		result.add(right);
 		return result;
 	}
-	
+
 	static JPanel wrap(Component... items) {
 		JPanel result = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
 		for (Component p : items)
@@ -71,15 +75,3 @@ public interface Gui {
 	}
 
 }
-
-//	  List<String> colorKeys = new ArrayList<String>();
-//    Set<Entry<Object, Object>> entries = UIManager.getLookAndFeelDefaults().entrySet();
-//    for (Entry entry : entries) {
-//      if (entry.getValue() instanceof Color)
-//      { colorKeys.add((String) entry.getKey()); }}
-//    // sort the color keys
-//    Collections.sort(colorKeys);
-//    // print the color keys
-//    for (String colorKey : colorKeys)
-//    {      System.out.println(colorKey);}
-  

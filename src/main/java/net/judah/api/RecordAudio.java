@@ -2,8 +2,9 @@ package net.judah.api;
 
 public interface RecordAudio extends PlayAudio {
 
-	void record(boolean onOrOff);
-	
+	/** start or stop recording */
+	void capture(boolean onOrOff);
+
 	boolean isRecording();
-	
+
 }

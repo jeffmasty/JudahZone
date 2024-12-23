@@ -13,17 +13,17 @@ public interface TimeEffect extends Effect {
 				return i;
 		return 0; // fail
 	}
-	
+
 	static float unit() {
 		return 2 * millisPerBeat(getClock().getTempo()) / (float)getClock().getSubdivision();
 	}
-	
+
 	void setType(String type);
 	String getType();
-	
+
 	void setSync(boolean sync);
 	boolean isSync();
 	void sync(float unit);
 	void sync();
-	
+
 }

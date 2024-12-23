@@ -3,7 +3,13 @@ package net.judah.seq.piano;
 import static net.judah.seq.MidiTools.highlightColor;
 import static net.judah.seq.MidiTools.velocityColor;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Composite;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.MouseInfo;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
@@ -14,15 +20,20 @@ import net.judah.api.Key;
 import net.judah.api.Signature;
 import net.judah.gui.Pastels;
 import net.judah.midi.Midi;
-import net.judah.seq.*;
+import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
+import net.judah.seq.MidiPair;
+import net.judah.seq.MidiTab;
+import net.judah.seq.MidiTools;
+import net.judah.seq.MusicBox;
+import net.judah.seq.Prototype;
 import net.judah.seq.beatbox.BeatsSize;
 import net.judah.seq.track.MidiTrack;
 import net.judah.util.RTLogger;
 
 /** display midi music in piano grid */
 public class PianoBox extends MusicBox implements BeatsSize {
-	
+
 	private final Piano piano;
 	private final PianoSteps steps;
 	private final int width, height;
@@ -30,7 +41,7 @@ public class PianoBox extends MusicBox implements BeatsSize {
 	private final PianoView zoom;
 	private Prototype recent;
 	protected ArrayList<MidiPair> dragging = new ArrayList<>();
-	
+
 	public PianoBox(Rectangle r, PianoView view, PianoSteps currentBeat, Piano roll, MidiTab tab) {
 		super(view, r, tab);
 		zoom = view;
@@ -40,7 +51,7 @@ public class PianoBox extends MusicBox implements BeatsSize {
 		this.piano = roll;
 		timeSig(view.getTrack().getClock().getTimeSig());
 	}
-	
+
 	@Override public long toTick(Point p) {
 		return (long) (p.y / (float)GRID_HEIGHT * track.getWindow() + track.getLeft());
 	}
@@ -75,43 +86,43 @@ public class PianoBox extends MusicBox implements BeatsSize {
 			y = (int) (i * unit);
 			if (steps.isBeat(i))
 				g.fillRect(0, y, width, (int) unit);
-			else 
+			else
 				g.drawLine(0, (int)(y + unit), width, (int)(y + unit));
 			if (steps.isBar(i)) {
 				g.setColor(Color.GRAY);
 				g.drawLine(0, y, width, y);
 				g.setColor(Pastels.FADED);
-			}			
+			}
 		}
 
 		int yheight, data1;
 		for (MidiPair p : scroll.populate()) {
-			
-			if (p.getOn().getMessage() instanceof ShortMessage == false) 
+
+			if (p.getOn().getMessage() instanceof ShortMessage == false)
 				continue;
-			
+
 			ShortMessage s = (ShortMessage)p.getOn().getMessage();
 			data1 = s.getData1();
 			if (data1 < tonic || data1 > top)
 				continue;
-			
+
 			x = (int) (noteWidth * (data1 - tonic));
-			
+
 			y = (int) ((p.getOn().getTick() - track.getLeft()) * ratio);
-			
+
 			yheight = (int) ((p.getOff().getTick() - p.getOn().getTick()) * ratio);
 			if (selected.contains(p.getOn().getTick(), data1))
 				g.setColor(highlightColor(s.getData2()));
-			else 
+			else
 				g.setColor(velocityColor(s.getData2()));
 			g.fill3DRect(x, y, keyWidth, yheight, true);
 		}
 		g.setColor(Pastels.FADED);
 		g.drawRect(0, 0, width-1, height - 1); // border
-		
+
 		if (mode == null)
 			return;
-		
+
 		if (mode == DragMode.SELECT || mode == DragMode.CREATE) {
 			// highlight drag region
 			Graphics2D g2d = (Graphics2D)g;
@@ -122,7 +133,7 @@ public class PianoBox extends MusicBox implements BeatsSize {
 			Point mouse = MouseInfo.getPointerInfo().getLocation();
 			g2d.fill(shadeRect(mouse.x - origin.x, mouse.y - origin.y));
 			g2d.setComposite(original);
-		}		
+		}
 		// else if (mode == DragMode.TRANSLATE) // shown as selected
 	}
 
@@ -131,7 +142,7 @@ public class PianoBox extends MusicBox implements BeatsSize {
 		if (steps != null) steps.repaint();
 		repaint();
 	}
-	
+
 	@Override public void mouseExited(MouseEvent e) {
 		piano.highlight(-1);
 		steps.highlight(null);
@@ -142,7 +153,7 @@ public class PianoBox extends MusicBox implements BeatsSize {
 		piano.highlight(toData1(p));
 		steps.highlight(p);
 	}
-		
+
 	@Override public void mousePressed(MouseEvent mouse) {
 		Prototype dat = translate(mouse.getPoint());
 		MidiPair existing = MidiTools.lookup(dat.tick, dat.data1, t);
@@ -159,7 +170,7 @@ public class PianoBox extends MusicBox implements BeatsSize {
 		else if (mouse.isControlDown()) {
 			if (selected.contains(existing))
 				selected.remove(existing);
-			else 
+			else
 				selected.add(existing);
 		}
 		else {
@@ -173,7 +184,7 @@ public class PianoBox extends MusicBox implements BeatsSize {
 		}
 		repaint();
 	}
-	
+
 	@Override public void mouseReleased(MouseEvent mouse) {
 		if (mode != null) {
 			switch(mode) {
@@ -185,14 +196,14 @@ public class PianoBox extends MusicBox implements BeatsSize {
 					right = click.tick;
 				}
 				int data1 = toData1(mouse.getPoint());
-				MidiEvent on = Midi.createEvent(left, NOTE_ON, 
+				MidiEvent on = Midi.createEvent(left, NOTE_ON,
 						track.getCh(), data1, (int) (track.getAmp() * 127f));
 				MidiEvent off = Midi.createEvent(track.quantizePlus(right), NOTE_OFF, track.getCh(), data1, 1);
 				push(new Edit(Type.NEW, new MidiPair(on, off)));
 				} catch (Exception e) {
 					RTLogger.warn(this, e); }
 				break;
-			case SELECT: 
+			case SELECT:
 				if (drag == null) break;
 				Prototype a = translate(drag);
 				Prototype b = translate(mouse.getPoint());
@@ -211,16 +222,16 @@ public class PianoBox extends MusicBox implements BeatsSize {
 				drag = null;
 				selectArea(left, right, low, high);
 				break;
-			case TRANSLATE: 
+			case TRANSLATE:
 				drop(mouse.getPoint());
 				break;
 			}
 			mode = null;
 			repaint();
 		}
-		
+
 	}
-	
+
 	//////// Drag and Drop /////////
 	@Override public void dragStart(Point mouse) {
 		mode = DragMode.TRANSLATE;
@@ -228,12 +239,13 @@ public class PianoBox extends MusicBox implements BeatsSize {
 		selected.forEach(p -> dragging.add(new MidiPair(p)));
 		click = recent = new Prototype(toData1(mouse), track.quantize(toTick(mouse)));
 	}
+
 	@Override public void drag(Point mouse) {
 		piano.highlight(toData1(mouse));
 		steps.highlight(mouse);
 		Prototype now = new Prototype(toData1(mouse), track.quantize(toTick(mouse)));
 		if (now.equals(recent)) // hovering
-			return; 
+			return;
 		// note or step changed, move from most recent drag spot
 		int data1 = now.data1 - recent.data1;
 		long tick = ((now.tick - recent.tick) % track.getWindow()) / track.getStepTicks();
@@ -264,21 +276,22 @@ public class PianoBox extends MusicBox implements BeatsSize {
 		editDel(selected);
 		Edit e = new Edit(Type.TRANS, dragging);
 		Prototype now = new Prototype(toData1(mouse), track.quantize(toTick(mouse)));
-		Prototype destination = new Prototype(now.data1 - click.data1, 
+		Prototype destination = new Prototype(now.data1 - click.data1,
 				((now.tick - click.tick) % track.getWindow()) / track.getStepTicks());
 		e.setDestination(destination);
 		push(e);
 	}
-	
+
+	/////////////////////////////////////////
 	@Override
 	public void transpose(ArrayList<MidiPair> notes, Prototype destination) {
 		editDel(notes);
 		ArrayList<MidiPair> replace = new ArrayList<>();
-		for (MidiPair note : notes) 
+		for (MidiPair note : notes)
 			replace.add(compute(note, destination, track));
 		editAdd(replace);
 	}
-	
+
 	@Override
 	public void decompose(Edit e) {
 		ArrayList<MidiPair> delete = new ArrayList<>();
@@ -288,7 +301,7 @@ public class PianoBox extends MusicBox implements BeatsSize {
 		editAdd(e.getNotes());
 		click = null;
 	}
-	
+
 	/**@param in source note (off is null for drums)
 	 * @param destination x = +/-ticks,   y = +/-data1
 	 * @return new midi */
@@ -301,17 +314,17 @@ public class PianoBox extends MusicBox implements BeatsSize {
 			off = transpose((ShortMessage)in.getOff().getMessage(), in.getOff().getTick(), destination, t);
 		return new MidiPair(on, off);
 	}
-	
+
 	static MidiEvent transpose(ShortMessage source, long sourceTick, Prototype destination, MidiTrack t) {
 		long window = t.getWindow();
 		long start = t.getCurrent() * t.getBarTicks();
 		long tick = sourceTick + (destination.tick * t.getStepTicks());
-		
+
 		// TODO wonky, need to split?
 		if (tick < start) tick += window;
 		if (tick >= start + window) tick -= window;
-		
-		int data1 = source.getData1() + destination.data1; 
+
+		int data1 = source.getData1() + destination.data1;
 		if (data1 < 0) data1 += Key.OCTAVE;
 		if (data1 > 127) data1 -= Key.OCTAVE;
 		return new MidiEvent(Midi.create(source.getCommand(), source.getChannel(), data1, source.getData2()), tick);
@@ -322,11 +335,11 @@ public class PianoBox extends MusicBox implements BeatsSize {
 //	@Override public void keyTyped(KeyEvent e) {
 //		if (chromaticKeyboard(e.getKeyCode()) > 0) {
 //		} //		super.keyTyped(e);}
-//	public boolean keyPressed(final int keycode) { 
+//	public boolean keyPressed(final int keycode) {
 //		int note = chromaticKeyboard(keycode);
 //		if (note < 0) {
-//			if (keycode == VK_UP) 
-//				return setOctave(true); 
+//			if (keycode == VK_UP)
+//				return setOctave(true);
 //			else if (keycode == VK_DOWN)
 //				return setOctave(false);
 //			else  return false;		}
@@ -342,14 +355,14 @@ public class PianoBox extends MusicBox implements BeatsSize {
 //	public static int chromaticKeyboard(final char key) {
 //		switch(key) {
 //			case 'z': return 0; // low C
-//			case 's': return 1; 
+//			case 's': return 1;
 //			case 'x': return 2;
 //			case 'd': return 3;
 //			case 'c': return 4;
 //			case 'v': return 5; // F
 //			case 'g' : return 6;
 //			case 'b' : return 7; // G
-//			case 'h': return 8; 
+//			case 'h': return 8;
 //			case 'n': return 9;
 //			case 'j': return 10;
 //			case 'm': return 11;
@@ -357,4 +370,4 @@ public class PianoBox extends MusicBox implements BeatsSize {
 //			default: return -1;
 //		}
 //	}
-	
+

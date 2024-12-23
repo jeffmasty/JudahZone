@@ -9,8 +9,9 @@ import java.util.ArrayList;
 
 import net.judah.api.Signature;
 
-public interface Musician extends MouseListener, MouseWheelListener, MouseMotionListener, MidiConstants, KeyListener {
-	
+/** User interaction with a Midi Track */
+public interface Musician extends MidiConstants, KeyListener, MouseListener, MouseWheelListener, MouseMotionListener {
+
 	void timeSig(Signature value);
 	long toTick(Point p);
 	int toData1(Point p);
@@ -27,7 +28,6 @@ public interface Musician extends MouseListener, MouseWheelListener, MouseMotion
 	void selectArea(long start, long end, int low, int high);
 	void selectNone();
 	void transpose(ArrayList<MidiPair> notes, Prototype destination);
-	void decompose(Edit e);	
+	void decompose(Edit e);
 
-	
 }

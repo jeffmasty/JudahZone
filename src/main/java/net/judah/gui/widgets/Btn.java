@@ -22,8 +22,8 @@ public class Btn extends JButton {
 		addActionListener(l);
 	}
 
-	public Btn(String string, ActionListener actionListener, String string2) {
+	public Btn(String string, ActionListener actionListener, String tooltip) {
 		this(string, actionListener);
-		setToolTipText(string2);
+		setToolTipText(tooltip);
 	}
 }

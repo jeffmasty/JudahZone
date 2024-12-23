@@ -5,7 +5,7 @@ import java.security.InvalidParameterException;
 
 import lombok.Getter;
 import net.judah.fx.Reverb;
-import net.judah.util.Constants;
+import net.judah.omni.Threads;
 
 public class FluidReverb extends Reverb {
 
@@ -25,11 +25,11 @@ public class FluidReverb extends Reverb {
     /** Fluid Synth already started, we will initialize size/damp settings and activate */
     @Override
     public void initialize(int sampleRate, int bufferSize) {
-        Constants.timer(2000, () -> setWidth(0.7f));
-        Constants.timer(1600, () -> setWet(0.1f));
-        Constants.timer(1700, () -> setActive(true));
-        Constants.timer(1800, () -> setRoomSize(0.75f));
-        Constants.timer(1900, () -> setDamp(0.6f));
+        Threads.timer(2000, () -> setWidth(0.7f));
+        Threads.timer(1600, () -> setWet(0.1f));
+        Threads.timer(1700, () -> setActive(true));
+        Threads.timer(1800, () -> setRoomSize(0.75f));
+        Threads.timer(1900, () -> setDamp(0.6f));
 
     }
 
@@ -75,7 +75,7 @@ public class FluidReverb extends Reverb {
         fluid.sendCommand("set synth.reverb.level " + val);
         this.wet = val;
     }
-    
+
     @Override
     public int get(int idx) {
         if (idx == Settings.Room.ordinal())

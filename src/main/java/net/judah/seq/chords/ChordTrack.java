@@ -12,7 +12,6 @@ import net.judah.api.Notification.Property;
 import net.judah.api.Signature;
 import net.judah.api.TimeListener;
 import net.judah.gui.MainFrame;
-import net.judah.gui.widgets.FileChooser;
 import net.judah.midi.JudahClock;
 import net.judah.song.Scene;
 import net.judah.song.Song;
@@ -25,7 +24,6 @@ import net.judah.util.RTLogger;
 @Getter
 public class ChordTrack implements TimeListener, Cmdr {
 
-	private final JudahClock clock;
 	private boolean active = false;
 	private boolean onDeck = false;
 	/** current sequenced chord */
@@ -35,7 +33,7 @@ public class ChordTrack implements TimeListener, Cmdr {
 	private int step;
 	/** absolute bars since start */
 	private int bar;
-	
+
 	private final List<Section> sections = new ArrayList<>();
 	private final List<Directive> directives = new ArrayList<>();
 	private ChordProData data;
@@ -45,35 +43,37 @@ public class ChordTrack implements TimeListener, Cmdr {
 	private final Cmdr player = new PlayCmdr();
 	private boolean loading;
 	private ArrayList<ChordListener> listeners = new ArrayList<>();
+	private final JudahClock clock;
 	public void addListener(ChordListener l) { if (!listeners.contains(l)) listeners.add(l); }
 	public void removeListener(ChordListener l) {listeners.remove(l);}
 	public int bars() { return beats() / sig.beats; }
 	public int bars(int steps) { return steps / sig.div / sig.beats; }
 	public void toggle() { setActive(!active); }
-	
+
 	public ChordTrack(JudahClock clock) {
 		this.clock = clock;
 		sig = clock.getTimeSig();
 		clock.addListener(this);
 	}
+
 	@Override public void update(Property prop, Object value) {
 		if (prop == Property.SIGNATURE) {
 			sig = (Signature)value;
 		}
-		// else if (prop == Property.TRANSPORT && value == JackTransportState.JackTransportStarting) 
-		else if (prop == Property.BARS) { 
+		// else if (prop == Property.TRANSPORT && value == JackTransportState.JackTransportStarting)
+		else if (prop == Property.BARS) {
 			if (onDeck) {
-				active = true; 
+				active = true;
     			onDeck = false;
     			ChordPlay.update();
-			} 
+			}
     	}
     }
-    
+
 	private void setChord(Chord next) {
 		if (chord == next) return;
 		Chord previous = chord;
-		
+
 		chord = next;
 		for (ChordListener l : listeners)
 			l.chordChange(previous, chord);
@@ -88,18 +88,18 @@ public class ChordTrack implements TimeListener, Cmdr {
 		if (step == 0)
 			bar++;
 		int inSection = bar * sig.steps + step;
-		if (inSection > section.getCount()) 
+		if (inSection > section.getCount())
 			next();
-		else 
+		else
 			setChord(section.getChordAt(inSection));
 	}
-	
+
 	public void preview(Preview result) {
 		result.clear();
 		if (section == null || chord == null) return;
 		int now = section.getStepsAt(chord);
-		
-		
+
+
 		int half = 2 * sig.div;
 		if (step % sig.steps < half) // 1st half of bar
 			for (int i : new int[] {now - half, now, now + half, now + 2 * half, now + 3 * half})
@@ -110,7 +110,7 @@ public class ChordTrack implements TimeListener, Cmdr {
 				result.add(search(i));
 		}
 	}
-	
+
 	private Chord search(int step, Section sec) {
 		int count = 0;
 		Chord previous = null;
@@ -127,7 +127,7 @@ public class ChordTrack implements TimeListener, Cmdr {
 
 	private Chord search(int step) {
 		if (step < 0) {
-			if (section.isOnLoop()) 
+			if (section.isOnLoop())
 				step += section.getCount();
 			else if (sections.indexOf(section) > 0) {
 				Section prev = sections.get(sections.indexOf(section) - 1);
@@ -143,16 +143,16 @@ public class ChordTrack implements TimeListener, Cmdr {
 				return search(step - section.getCount(), next);
 			} else if (directives.contains(Directive.LOOP)) {
 				Section loop = sections.get(0);
-				if (loop.getPart() == Part.INTRO && sections.size() > 1) 
+				if (loop.getPart() == Part.INTRO && sections.size() > 1)
 					loop = sections.get(1);
 				return search(step - section.getCount(), loop);
 			}
-			else 
+			else
 				return null;
 		}
 		return search(step, section);
 	}
-	
+
 	public void load(Song song) {
 		view.setSong(song);
 		File f;
@@ -167,22 +167,22 @@ public class ChordTrack implements TimeListener, Cmdr {
 		return new File(Folders.getChordPro(), song.getChordpro() + SUFFIX);
 	}
 
-	
+
 	public ChordPro load(File file) {
 		loading = true;
 		Song song = JudahZone.getOverview().getSong();
 		clear();
 		ChordPro chordPro = null;
-		String name = null; 
+		String name = null;
 		if (file == null || file.isFile() == false) {
 			setActive(false);
 			if (song != null)
 				song.setChordpro(null);
 		}
 		else {
-			
+
 			name = file.getName().replace(SUFFIX, "");
-		
+
 			try {
 				chordPro = new ChordPro(file, sig.steps);
 				data = chordPro.getData();
@@ -197,7 +197,7 @@ public class ChordTrack implements TimeListener, Cmdr {
 		}
 
 		SectionCombo.refresh();
-		chordSheet.refresh();	
+		chordSheet.refresh();
 		ChordProCombo.refresh(file);
 		ChordPlay.update();
 		setSection(sections.isEmpty() ? null : sections.get(0), true);
@@ -207,21 +207,21 @@ public class ChordTrack implements TimeListener, Cmdr {
 		loading = false;
 		return chordPro; // not used
 	}
-	
+
 	private void parseTempo(String tempo) {
 		if (tempo == null || tempo.isBlank()) return;
-		try { JudahZone.getClock().writeTempo((int)Float.parseFloat(tempo));
+		try { clock.setTempo(Float.parseFloat(tempo));
 		} catch (Throwable t) {RTLogger.log(this, "Tempo: " + tempo);}
 	}
-	
+
 	private void parseKey(String key, Song song) {
 		if (song == null || key == null || key.isBlank()) return;
 		Chord k = new Chord(key);
 		song.setKey(k.getRoot());
-		song.setScale(k.isDominant() ? k.isMinor() ? Scale.MINOR : Scale.DOM7 : 
+		song.setScale(k.isDominant() ? k.isMinor() ? Scale.MINOR : Scale.DOM7 :
 			k.isMajor()? Scale.MAJOR : Scale.HARMONIC);
 	}
-	
+
 
 	private void clear() {
 		bar = 0;
@@ -237,15 +237,15 @@ public class ChordTrack implements TimeListener, Cmdr {
 		ChordScroll.scroll();
 		ChordPlay.update();
 	}
-	
+
 	public void setActive(boolean on) {
 		if (!on) {
 			active = false;
 			listeners.forEach(l->l.chordChange(chord, null));
 		}
-		else if (!clock.isActive()) 
+		else if (!clock.isActive())
 			active = true;
-		else 
+		else
 			onDeck = true;
 		ChordPlay.update();
 	}
@@ -266,13 +266,13 @@ public class ChordTrack implements TimeListener, Cmdr {
 			return;
 		}
 		int idx = sections.indexOf(section) + 1;
-		if (idx < sections.size()) 
+		if (idx < sections.size())
 			setSection(sections.get(idx), true);
 		else if (directives.contains(Directive.LOOP)) {
 			Section loop = sections.get(0);
 			if (loop.getPart() != Part.INTRO)
 				setSection(loop, true);
-			else if (sections.size() > 1) 
+			else if (sections.size() > 1)
 				setSection(sections.get(1), true);
 			else // ?
 				setActive(false);
@@ -280,12 +280,12 @@ public class ChordTrack implements TimeListener, Cmdr {
 			setActive(false);
 		}
 	}
-	
+
 	public void click(Chord chord) {
 		if (this.chord == chord) return;
-		
+
 		for (Section s : sections)
-			for (Chord c : s) 
+			for (Chord c : s)
 				if (c == chord) {
 					if (section != s) // switched sections by mouse?
 						setSection(s, false);
@@ -300,7 +300,7 @@ public class ChordTrack implements TimeListener, Cmdr {
 		step = step % sig.steps;
 		setChord(chord);
 	}
-	
+
 	public void setSection(Section selected, boolean setChord) {
 		if (sections.indexOf(selected) >= 0)
 			section = selected;
@@ -313,18 +313,18 @@ public class ChordTrack implements TimeListener, Cmdr {
 			checkDirectives();
 		MainFrame.update(section);
 	}
-	
+
 	public void toggle(Directive d) {
 		if (directives.contains(d))
 			directives.remove(d);
-		else 
+		else
 			directives.add(d);
 		MainFrame.update(this);
 	}
 
 	private void checkDirectives() {
 		if (directives.contains(Directive.MUTES)) {
-			if (Part.VERSE.literal.equals(section.getName()) 
+			if (Part.VERSE.literal.equals(section.getName())
 					|| Part.CHORUS.literal.equals(section.getName())) {
 				JudahZone.getLooper().verseChorus();
 			}
@@ -337,7 +337,7 @@ public class ChordTrack implements TimeListener, Cmdr {
 				}
 		}
 	}
-	
+
 	@Override
 	public String[] getKeys() {
 		String[] result = new String[sections.size()];
@@ -354,7 +354,7 @@ public class ChordTrack implements TimeListener, Cmdr {
 	}
 	@Override
 	public void execute(Param p) {
-		if (p.getCmd() != Cmd.Part) 
+		if (p.getCmd() != Cmd.Part)
 			return;
 		for (Section s : sections)
 			if (p.getVal().equals(s.getName())) {
@@ -362,7 +362,7 @@ public class ChordTrack implements TimeListener, Cmdr {
 				return;
 			}
 	}
-	
+
 	class PlayCmdr implements Cmdr {
 		@Getter private final String[] keys = {"play", "stop"};
 		@Override public Object resolve(String key) {
@@ -370,9 +370,11 @@ public class ChordTrack implements TimeListener, Cmdr {
 		}
 
 		@Override public void execute(Param p) {
-			if (p.getCmd() != Cmd.Chords) 
+			if (p.getCmd() != Cmd.Chords)
 				return;
 			active = p.getVal().equals(keys[0]);
+			if (active && section != null)
+				setChord(section.getChordAt(0));
 			ChordPlay.update();
 		}
 	}
@@ -389,13 +391,13 @@ public class ChordTrack implements TimeListener, Cmdr {
 		return -1;
 	}
 	public ChordPro load() {
-		File f = FileChooser.choose(Folders.getChordPro());
-		if (f == null) 
+		File f = Folders.choose(Folders.getChordPro());
+		if (f == null)
 			return null;
 		ChordPro result = load(f);
-		if (result != null) 
+		if (result != null)
 			ChordProCombo.refill(f);
 		return result;
 	}
-	
+
 }

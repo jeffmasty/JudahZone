@@ -12,13 +12,13 @@ import net.judah.seq.track.Cycle;
 /** Serialized MidiTrack state for a given Scene */
 @Data @NoArgsConstructor
 public class Sched {
-	
-	public boolean active;               
-	public Cycle cycle = Cycle.AB;     
-	public int launch;                   
+
+	public boolean active;
+	public Cycle cycle = Cycle.AB;
+	public int launch;
 	public float amp = 0.6f;
 	public Mode mode;
-	
+
 	private String program;
 	@JsonInclude(Include.NON_NULL)
 	private ArpInfo arp = new ArpInfo(); // mode, octaves
@@ -32,12 +32,12 @@ public class Sched {
 		arp = clone.arp == null ? null : new ArpInfo(clone.arp);
 	}
 
-	
-	
+
+
 	public Sched(boolean synth) {
 		if (synth)
 			arp = new ArpInfo();
 	}
 
-	
+
 }

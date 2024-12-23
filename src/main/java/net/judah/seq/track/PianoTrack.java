@@ -8,6 +8,7 @@ import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
 import lombok.Getter;
+import net.judah.api.MidiClock;
 import net.judah.api.ZoneMidi;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock;
@@ -23,32 +24,34 @@ import net.judah.song.Sched;
 import net.judah.synth.Polyphony;
 
 public class PianoTrack extends MidiTrack {
-	
+
 	public static int DEFAULT_POLYPHONY = 24;
 	public static int MONOPHONIC = 1;
-	
+
 	@Getter private final Arp arp = new Arp(this);
 	private final ArrayList<MidiEvent> chads = new ArrayList<>();
-	
+
 	public PianoTrack(String name, ZoneMidi out, int ch, JudahClock clock) throws InvalidMidiDataException {
 		this(name, out, ch, clock, DEFAULT_POLYPHONY);
 	}
-	
+
 	public PianoTrack(String name, Polyphony notes, JudahClock clock) throws InvalidMidiDataException {
 		super(name, notes, clock);
 	}
 
 	public PianoTrack(String name, ZoneMidi out, int ch, JudahClock clock, int polyphony) throws InvalidMidiDataException {
-		super(name, out, ch, JudahClock.MIDI_24, clock, polyphony);
+		super(name, out, ch, MidiClock.MIDI_24, clock, polyphony);
 	}
 
 	@Override
 	public void setState(Sched sched) {
 		super.setState(sched);
-		if (arp.getInfo() != state.getArp())
+		if (sched.getArp() != arp.getInfo())
 			arp.setInfo(state.getArp());
+		if (sched.active && clock.isActive() && clock.getBeat() == 0)
+			playTo(0); // kludge
 	}
-	
+
 	@Override
 	public void setActive(boolean on) {
 		super.setActive(on);
@@ -63,10 +66,10 @@ public class PianoTrack extends MidiTrack {
 	protected void playNote(ShortMessage msg) {
 		if (arp.getMode() == Mode.Off)
     		midiOut.send(msg, JudahMidi.ticker());
-    	else  
+    	else
     		arp.process(msg);
 	}
-	
+
 	@Override
 	protected void flush() { // mode check?
 		long end = (current + 1) * barTicks;
@@ -74,7 +77,7 @@ public class PianoTrack extends MidiTrack {
 			MidiEvent e = t.get(i);
 			if (e.getTick() <= recent) continue;
 			if (e.getTick() > end) break;
-			if (e.getMessage() instanceof ShortMessage && Midi.isNoteOff(e.getMessage())) 
+			if (e.getMessage() instanceof ShortMessage && Midi.isNoteOff(e.getMessage()))
 				midiOut.send(Midi.format((ShortMessage)e.getMessage(), ch, 1), JudahMidi.ticker());
 		}
 		if (arp.isActive())
@@ -92,19 +95,19 @@ public class PianoTrack extends MidiTrack {
 		if (arp.isActive())
 			arp.clear();
 		new Panic(this);
-		for (int i = 0; i < incoming.size(); i++) 
+		for (int i = 0; i < incoming.size(); i++)
 			t.add(incoming.get(i));
 	}
 
 	@Override
 	protected void processRecord(ShortMessage m, long ticker) {
 		midiOut.send(m, ticker);
-		if (Midi.isNoteOn(m)) 
+		if (Midi.isNoteOn(m))
 			chads.add(new MidiEvent(Midi.copy(m), recent));
 		else if (Midi.isNoteOff(m)) {
 			MidiEvent used = null;
 			for (MidiEvent on : chads) {
-				if (((ShortMessage)on.getMessage()).getData1() != m.getData1()) 
+				if (((ShortMessage)on.getMessage()).getData1() != m.getData1())
 					continue;
 				used = on;
 				MainFrame.getMidiView(this).getGrid().push(

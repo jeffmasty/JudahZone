@@ -1,20 +1,21 @@
 package net.judah.scope;
 
+import static be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm.MPM;
+
 import java.awt.Dimension;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JSlider;
 
 import be.tarsos.dsp.pitch.PitchDetectionResult;
 import be.tarsos.dsp.pitch.PitchDetector;
 import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
-import lombok.Getter;
-import lombok.Setter;
 import net.judah.gui.Gui;
+import net.judah.gui.Pastels;
 import net.judah.gui.widgets.RainbowFader;
-import net.judah.scope.Scope.Mode;
 import net.judah.util.Constants;
 
 
@@ -25,30 +26,21 @@ public class GuitarTuner extends ScopeView {
     public static final String[] GUITAR_STRINGS = new String[] {"E", "A", "D", "G", "B", "E"};
     private static final Dimension SLIDER = new Dimension(220, 50);
     private static final Dimension LBL = new Dimension(35, 40);
-    
-    private static PitchEstimationAlgorithm algo = PitchEstimationAlgorithm.MPM;
-	@Setter public static float probablity = 0.8f;
-    private static PitchDetector pitchDetector = 
-    		algo.getDetector(Constants.sampleRate(), Constants.bufSize());
-    public static void setAlgorithm(PitchEstimationAlgorithm algo) {
-    	GuitarTuner.algo = algo;
-    	pitchDetector = algo.getDetector(Constants.sampleRate(), Constants.bufSize());
-    }
-    
-    
-    @Getter private final Mode mode = Mode.Tuner;
+
+	private static float probablity = 0.8f;
+	private PitchDetector pitchDetector;
     private final JLabel note;
     private final JSlider tuning;
-    
-//    private final JComboBox<PitchEstimationAlgorithm> algorithms = new JComboBox<>();
-//    private final JComboBox<Float> chance = new JComboBox<>();
-    
-    public GuitarTuner(Scope scope)  {
-        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-        
+    // private final JComboBox<PitchEstimationAlgorithm> algo = new JComboBox<>(PitchEstimationAlgorithm.values());
+    // private final JComboBox<Float> chance = new JComboBox<>();
+
+    public GuitarTuner()  {
+    	JComponent tuner = Box.createHorizontalBox();
+
+    	setupPitch(MPM);
         note = new JLabel(" ");
         note.setFont(Gui.BOLD);
-        note.setBorder(Gui.SUBTLE);
+        note.setBorder(Pastels.SUBTLE);
         tuning = new RainbowFader(0, 80, e ->{/*no-op*/});
         tuning.setOrientation(JSlider.HORIZONTAL);
         tuning.setMajorTickSpacing(20);
@@ -59,20 +51,30 @@ public class GuitarTuner extends ScopeView {
         Gui.resize(note, LBL);
 
         int strut = 10;
-        add(Box.createHorizontalStrut(2 * strut));
-        add(note);
-        add(Box.createHorizontalStrut(strut));
-        add(tuning);
-        add(Box.createHorizontalStrut(2 * strut));
+
+        tuner.add(Box.createHorizontalStrut(2 * strut));
+        tuner.add(note);
+        tuner.add(Box.createHorizontalStrut(strut));
+        tuner.add(tuning);
+        tuner.add(Box.createHorizontalStrut(2 * strut));
+
+        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+
+        add(tuner);
+    	// algo.addActionListener(e->setupPitch((PitchEstimationAlgorithm) algo.getSelectedItem()));
+    	// algo.setSelectedItem(MPM);
+        // add(Gui.wrap(algo));
         doLayout();
     }
-    
+
+
+    private void setupPitch(PitchEstimationAlgorithm model) {
+    	pitchDetector = model.getDetector(Constants.sampleRate(), Constants.bufSize());
+    }
     /** @return computed hz or -1 */
-	public static float detectPitch(float[] data) {
-    	PitchDetectionResult info = pitchDetector.getPitch(data);
-    	if (info.getProbability() < probablity) 
-    		return -1;
-    	return info.getPitch();
+	float detectPitch(float[] data) {
+		PitchDetectionResult info = pitchDetector.getPitch(data);
+    	return info.getProbability() < probablity ? -1 : info.getPitch();
     }
 
 	/** https://github.com/dylstuart/GuitarTunerAndroid/blob/master/GuitarTuner%20-%20Copy/app/src/main/java/com/example/android/guitartuner/FrequencyDetector.java */
@@ -89,8 +91,8 @@ public class GuitarTuner extends ScopeView {
         }
         return result;
     }
-	
-	
+
+
 	@Override
 	public void process(float[][] stereo) {
 		float frequency = detectPitch(stereo[0]);
@@ -98,18 +100,27 @@ public class GuitarTuner extends ScopeView {
             note.setText("X");
             return;
         }
-        	
+
         int idx = detectString(frequency);
         if (idx == -1) {
             note.setText("-1");
+            tuning.setEnabled(false);
             return;
         }
         note.setText(GUITAR_STRINGS[idx]);
-
+        tuning.setEnabled(true);
         // slider shows +/- 4 hz of frequencies
         tuning.setValue(40 - Math.round((GUITAR_FREQUENCIES[idx] - frequency) * 10));
     }
 
 
+	@Override
+	public void knob(int idx, int value) {
+		switch (idx) {
+		case 4: // algo
+			break;
+		default:		}
+
+	}
 
 }

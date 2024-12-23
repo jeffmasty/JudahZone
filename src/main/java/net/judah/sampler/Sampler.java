@@ -83,8 +83,8 @@ public class Sampler extends ArrayList<Sample> {
 
 	public void play(Sample s, boolean on) {
 		if (on) {
-			if (MainFrame.getKnobMode() != KnobMode.Samples)
-				MainFrame.setFocus(KnobMode.Samples);
+			if (MainFrame.getKnobMode() != KnobMode.SAMPLE)
+				MainFrame.setFocus(KnobMode.SAMPLE);
 			if (s.getType() == Type.ONE_SHOT) 
 				s.rewind();
 			else 

@@ -1,7 +1,10 @@
 
 package net.judah.seq.chords;
 
-import static net.judah.seq.chords.Directive.*;
+import static net.judah.seq.chords.Directive.LENGTH;
+import static net.judah.seq.chords.Directive.LOOP;
+import static net.judah.seq.chords.Directive.MUTES;
+import static net.judah.seq.chords.Directive.SCENES;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -27,10 +30,10 @@ public class ChordPro {
 	public static final String SUFFIX = ".pro";
 	
 	@NoArgsConstructor @AllArgsConstructor @Getter
-	class Pair { 
+	class Unit { 
 		String chord; 
 		String lyrics = "";
-		Pair(String chord) { this.chord = chord;}
+		Unit(String chord) { this.chord = chord;}
 	}
 	
 	private final static Pattern COMMENT_REGEX = Pattern.compile(">\\s*([^$]*)");
@@ -196,25 +199,21 @@ public class ChordPro {
 			return;
 		checkCurrent();
 		
-		
-		
-		
-		
 		String[] bars = text.split(PIPE);  //  2 bars rather than 4:  [C7][Am7] | [Dm7][G7]  
 		
 		@SuppressWarnings("unchecked")
-		ArrayList<Pair>[] parts = new ArrayList[bars.length];
+		ArrayList<Unit>[] parts = new ArrayList[bars.length];
 		
 		for (int i = 0; i < bars.length; i++) {
 			parts[i] = subtext(bars[i]);
 			if (parts[i].size() != 2 || (
 					i == 0 && text.indexOf('|') > text.indexOf('['))) {
-				for (Pair p : parts[i]) 
+				for (Unit p : parts[i]) 
 					current.add(new Chord(p.chord, p.lyrics, steps));
 			}
 			else { // Only handles up to 2 chords per bar for now
-				Pair a = parts[i].get(0);
-				Pair b = parts[i].get(1);
+				Unit a = parts[i].get(0);
+				Unit b = parts[i].get(1);
 				int first = steps / 2;
 				current.add(new Chord(a.chord, a.lyrics, first));
 				current.add(new Chord(b.chord, b.lyrics, steps - first));
@@ -225,10 +224,10 @@ public class ChordPro {
 		last.setLyrics(last.getLyrics() + "  ");
 		
 	}
-	private ArrayList<Pair> subtext(String text) {
-		ArrayList<Pair> result = new ArrayList<>();
+	private ArrayList<Unit> subtext(String text) {
+		ArrayList<Unit> result = new ArrayList<>();
 		// character by character creating parts, chords and lyrics
-		Pair part = new Pair();
+		Unit part = new Unit();
 		int idx = 0;
 		int length = text.length();
 		while (idx < length) {
@@ -236,18 +235,18 @@ public class ChordPro {
 			if (c == '[') {
 				if (part.getChord() != null) {
 					result.add(part);
-					part = new Pair();
+					part = new Unit();
 				}
 				int end = text.indexOf(']', ++idx);
 				if (idx >= 0) {
-					part = new Pair(text.substring(idx, end));
+					part = new Unit(text.substring(idx, end));
 					idx = end;
 				}
 			} 
 			else if (c == '/' && idx + 1 < length && text.charAt(idx + 1) == '/' && part.getChord() != null) {
 				// isRepeat. duplicate chord, not lyrics
 				result.add(part); 
-				part = new Pair(part.getChord());
+				part = new Unit(part.getChord());
 				idx++;
 			}
 			else if (part.getChord() == null) // cat lyrics to previous...

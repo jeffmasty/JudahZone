@@ -3,16 +3,16 @@ package net.judah.gui.fx;
 import java.security.InvalidParameterException;
 
 import net.judah.mixer.Channel;
-import net.judah.util.KeyPair;
+import net.judah.omni.Pair;
 
 public class RowLabels extends Row {
 	public static final int KNOBS = 4;
 
-	public RowLabels(Channel ch, KeyPair... source) {
+	public RowLabels(Channel ch, Pair... source) {
 		super(ch);
-		if (source.length != KNOBS) 
+		if (source.length != KNOBS)
 			throw new InvalidParameterException("source knobs " + source.length);
-		for (KeyPair item : source) {
+		for (Pair item : source) {
 			controls.add(new FxTrigger(item, ch));
 		}
 	}
@@ -31,5 +31,5 @@ public class RowLabels extends Row {
 //			});
 //		}
 //	}
-	
+
 }

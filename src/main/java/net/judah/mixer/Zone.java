@@ -10,17 +10,19 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
 import net.judah.midi.fluid.FluidSynth.Tracks;
+import net.judah.omni.Threads;
 import net.judah.seq.track.MidiTrack;
 import net.judah.song.cmd.Cmdr;
 import net.judah.song.cmd.Param;
-import net.judah.util.Constants;
 
+
+/**Used for initialization/customization */
 @RequiredArgsConstructor
 public class Zone extends Vector<LineIn> implements Cmdr {
 
 	@Getter private final ArrayList<Instrument> instruments = new ArrayList<>();
 	@Getter private String[] keys;
-	
+
 	void prepare() {
 		keys = new String[size()];
 		for (int i = 0; i < keys.length; i++) {
@@ -44,13 +46,13 @@ public class Zone extends Vector<LineIn> implements Cmdr {
 				return in;
 		return null;
 	}
-	
+
 	public void init() {
 		initVolume();
         initMutes();
         prepare();
 	}
-	
+
 	/** By default, don't record drum track, microphone, sequencer */
     public void initMutes() {
         getMic().setMuteRecord(true);
@@ -65,16 +67,16 @@ public class Zone extends Vector<LineIn> implements Cmdr {
 		getSynth1().getGain().setGain(0.5f);
 		getSynth2().getGain().setGain(0.5f);
 	}
-	
+
 	public void initSynths() {
 		getSynth1().progChange("FeelGood");
 		getSynth2().progChange("Drops1");
 		getSynth1().getTracks().get(0).load("0s");
 		getSynth2().getTracks().get(0).load("16ths");
 		getBass().getTracks().get(0).load("Bass2");
-		
+
 		while (getFluid().getChannels().isEmpty())
-			Constants.sleep(100); // allow time for FluidSynth to sync TODO timeout
+			Threads.sleep(100); // allow time for FluidSynth to sync TODO timeout
 		Vector<MidiTrack> tracks = getFluid().getTracks();
 		MidiTrack fluid1 = tracks.get(Tracks.Fluid1.ordinal());
 		fluid1.load("8ths");
@@ -87,7 +89,7 @@ public class Zone extends Vector<LineIn> implements Cmdr {
 		fluid3.getMidiOut().progChange("Harp", fluid3.getCh());
 
 	}
-	
+
 	@Override
 	public void execute(Param p) {
 		LineIn ch = resolve(p.val);
@@ -107,7 +109,7 @@ public class Zone extends Vector<LineIn> implements Cmdr {
 			default: throw new InvalidParameterException("" + p);
 		}
 	}
-	
+
 	@Override
 	public LineIn resolve(String key) {
 		for (LineIn line : this)

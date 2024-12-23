@@ -10,7 +10,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import net.judah.gui.Gui;
-import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
@@ -20,6 +19,7 @@ import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
+import net.judah.omni.Icons;
 import net.judah.sampler.Sample;
 
 public class ChannelTitle extends JPanel {
@@ -47,7 +47,7 @@ public class ChannelTitle extends JPanel {
 		add(Box.createHorizontalGlue());
 		add(Gui.resize(Gui.font(mute, Gui.FONT10), Size.TINY));
 		add(Gui.resize(Gui.font(lfo, Gui.FONT10), Size.TINY));
-		add(new Btn(Icons.DETAILS_VEW, e->MainFrame.setFocus(KnobMode.Tools)));
+		add(new Btn(Icons.DETAILS_VEW, e->MainFrame.setFocus(KnobMode.TOOLS)));
 		update();
 	}
 

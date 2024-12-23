@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import lombok.Getter;
-import net.judah.looper.Recording;
+import net.judah.omni.Recording;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 

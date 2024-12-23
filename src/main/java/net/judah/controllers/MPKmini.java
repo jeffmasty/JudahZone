@@ -1,8 +1,8 @@
 package net.judah.controllers;
 
 import static net.judah.JudahZone.*;
+import static net.judah.gui.knobs.KnobMode.*;
 
-import lombok.RequiredArgsConstructor;
 import net.judah.fx.Delay;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
@@ -13,14 +13,13 @@ import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.sampler.Sample;
 import net.judah.seq.MidiConstants;
-import net.judah.seq.Seq;
 import net.judah.seq.arp.Mode;
 import net.judah.seq.track.DrumTrack;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
+
 /** Akai MPKmini, not the new one */
-@RequiredArgsConstructor
 public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels {
 
 	public static final byte[] SUSTAIN_ON = Midi.create(Midi.CONTROL_CHANGE, 0, 64, 127).getMessage();
@@ -31,16 +30,14 @@ public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels 
 				"Acoustic Bass", "Vibraphone", "Rock Organ", "Rhodes EP",
 				"Tremolo", "Oboe", "Ahh Choir", "Harp"};
 
-	private final JudahMidi sys;
-	private final Seq seq;
-	
+
 	@Override
 	public boolean midiProcessed(Midi midi) {
 
-		if (Midi.isCC(midi)) 
+		if (Midi.isCC(midi))
 			return checkCC(midi.getData1(), midi.getData2());
-		
-		if (Midi.isProgChange(midi)) 
+
+		if (Midi.isProgChange(midi))
 			return doProgChange(midi.getData1(), midi.getData2());
 
 		if (midi.getChannel() == MidiConstants.DRUM_CH) { // user playing drum pads
@@ -67,8 +64,8 @@ public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels 
 			}
 			return true;
 		}
-		
-		if (seq.arpCheck(midi))
+
+		if (getSeq().arpCheck(midi))
 			return true;
     	if (Midi.isNote(midi) || Midi.isPitchBend(midi)) {
     		track.send(midi, JudahMidi.ticker());
@@ -81,12 +78,12 @@ public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels 
 		if (KNOBS.contains(data1)) {
 			MainFrame.update(new KnobData(data1 - KNOBS.get(0), data2));
 			return false;
-		} 
+		}
 		if (data1 == JOYSTICK_L)
 			return joystickL(data2);
 		if (data1 == JOYSTICK_R)
 			return joystickR(data2);
-		if (PRIMARY_CC.contains(data1)) 
+		if (PRIMARY_CC.contains(data1))
 			return cc_pad(data1, data2);
 		if (SAMPLES_CC.contains(data1)) {
 			Sample s = getSampler().get(SAMPLES_CC.indexOf(data1));
@@ -102,54 +99,57 @@ public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels 
 			getChords().toggle();
 		}
 		else if (data1 == PRIMARY_CC.get(1)) { // sync Crave's internal sequencer
-			sys.synchronize(getBass());
+			getMidi().synchronize(getBass());
 		}
-		
-		else if (data1 == PRIMARY_CC.get(2) && data2 > 0 && !doubleClick()) // focus MidiGui or LFO
+
+		else if (data1 == PRIMARY_CC.get(2) && data2 > 0 && !flooding()) // focus MidiGui or LFO
 			nextMidiBtn();
-		else if (data1 == PRIMARY_CC.get(3) && data2 > 0 && !doubleClick()) {// focus TRACKS
-			if (MainFrame.getKnobMode() == KnobMode.Track)
+		else if (data1 == PRIMARY_CC.get(3) && data2 > 0 && !flooding()) {// focus TRACKS
+			if (MainFrame.getKnobMode() == TRACK)
 				getSeq().getTracks().next(true);
-			else 
-				MainFrame.setFocus(KnobMode.Track);
+			else
+				MainFrame.setFocus(TRACK);
 		}
-			
+
 		///////// ROW 2 /////////////////
-		else if (data1 == PRIMARY_CC.get(4)) 
+		else if (data1 == PRIMARY_CC.get(4))
 			track.setRecord(track.isRecord());
-		
-		else if (data1 == PRIMARY_CC.get(5)) 
+
+		else if (data1 == PRIMARY_CC.get(5))
 			track.getArp().toggle(Mode.MPK);
 
-		else if (data1 == PRIMARY_CC.get(6) && data2 > 0 && !doubleClick()) { // focus Synth1 or Synth2 or Sampler
-			if (MainFrame.getKnobMode() == KnobMode.DCO) {
-				if (getFrame().getKnobs() == getSynth1().getSynthKnobs()) 
+		else if (data1 == PRIMARY_CC.get(6) && data2 > 0 && !flooding()) { // focus Synth1 or Synth2 or Sampler
+			if (MainFrame.getKnobMode() == DCO) {
+				if (getFrame().getKnobs() == getSynth1().getSynthKnobs())
 					MainFrame.setFocus(getSynth2().getSynthKnobs());
-				else 
-					MainFrame.setFocus(KnobMode.Samples);
+				else
+					MainFrame.setFocus(SAMPLE);
 				}
-			else 
-				MainFrame.setFocus(KnobMode.DCO);
+			else
+				MainFrame.setFocus(DCO);
 		}
 		else if (data1 == PRIMARY_CC.get(7) && data2 > 0) { // SET SettableCombo
 			MainFrame.set();
 		}
-		
-		else 
+
+		else
 			return false;
 		return true;
 	}
 
+	// replacing knobs panel sometimes freezes Swing/AWT
+	private static final long FLOODING = Constants.DOUBLE_CLICK / 3;
 	private long doubleClick = System.currentTimeMillis();
-	private boolean doubleClick() {
-		if (System.currentTimeMillis() < Constants.DOUBLE_CLICK + doubleClick)
+	private boolean flooding() {
+		if (System.currentTimeMillis() < FLOODING + doubleClick)
 			return true;
 		doubleClick = System.currentTimeMillis();
 		return false;
 	}
 
-	private final KnobMode[] midiBtnSequence = new KnobMode[] 
-			{KnobMode.Midi, KnobMode.Setlist, KnobMode.Presets, KnobMode.Tools};
+	private final KnobMode[] midiBtnSequence = new KnobMode[]
+			{ MIDI, SETLIST, PRESETS, TOOLS, LOG };
+
 	private void nextMidiBtn() {
 		KnobMode mode = MainFrame.getKnobMode();
 		int idx = 0;
@@ -157,39 +157,39 @@ public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels 
 			if (mode == midiBtnSequence[idx]) {
 				if (idx == midiBtnSequence.length - 1)
 				  idx = 0;
-				else 
+				else
 					idx++;
 				MainFrame.setFocus(midiBtnSequence[idx]);
 				return;
 			}
 		}
-		MainFrame.setFocus(KnobMode.Midi);
+		MainFrame.setFocus(MIDI);
 	}
 
 	private boolean joystickL(int data2) { // delay
 		Delay d = ((Channel)track.getMidiOut()).getDelay();
 		d.setActive(data2 > 4);
-		if (data2 <= 4) 
+		if (data2 <= 4)
 			return true;
-		if (d.getDelay() < Delay.DEFAULT_TIME) 
+		if (d.getDelay() < Delay.DEFAULT_TIME)
 			d.setDelayTime(Delay.DEFAULT_TIME);
 		d.setFeedback(Constants.midiToFloat(data2));
 		MainFrame.update(track.getMidiOut());
 		return true;
 	}
-	
+
 	private boolean joystickR(int data2) { // filter
 		MainFrame.update(track.getMidiOut());
 		int ch = track.getCh();
-		track.getMidiOut().send( Midi.create(Midi.CONTROL_CHANGE, ch, 1, 
-				data2 > 4 ? data2 : 0), JudahMidi.ticker());  
-		
+		track.getMidiOut().send( Midi.create(Midi.CONTROL_CHANGE, ch, 1,
+				data2 > 4 ? data2 : 0), JudahMidi.ticker());
+
 		return true;
 	}
-	
+
 	private boolean doProgChange(int data1, int data2) {
 		// Bank A: Fluid presets
-		for (int i = 0; i < PRIMARY_PROG.length; i++) 
+		for (int i = 0; i < PRIMARY_PROG.length; i++)
 			if (data1 == PRIMARY_PROG[i]) {
 				getFluid().progChange(ROMPLER[i]);
 				return true;
@@ -197,7 +197,7 @@ public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels 
 		// Bank B: set current track's pattern #
 		for (int i = 0; i < B_PROG.length; i++) {
 			if (data1 == B_PROG[i]) {
-				seq.getCurrent().toFrame(i);
+				getSeq().getCurrent().toFrame(i);
 				return true;
 			}
 		}
@@ -208,15 +208,15 @@ public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels 
 		track.setRecord(!track.isRecord());
 		if (frame == null)
 			return;
-		frame.setBackground(track.isRecord() ? Pastels.RED : null);	
+		frame.setBackground(track.isRecord() ? Pastels.RED : null);
 	}
 
 	public void transpose() {
 		track.getArp().toggle(Mode.MPK);
 		if (frame == null)
 			return;
-		frame.setBackground(track.getArp().getMode() == Mode.MPK ? Mode.MPK.getColor() : null);	
+		frame.setBackground(track.getArp().getMode() == Mode.MPK ? Mode.MPK.getColor() : null);
 	}
-	
+
 }
 

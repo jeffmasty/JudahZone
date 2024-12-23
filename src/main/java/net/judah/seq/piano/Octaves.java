@@ -11,14 +11,14 @@ import net.judah.api.Key;
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.CenteredCombo;
-import net.judah.util.Constants;
+import net.judah.omni.Threads;
 import net.judah.util.RTLogger;
 
 public class Octaves extends CenteredCombo<Integer> {
 
 	private final PianoView view;
 	private boolean right = false;
-	
+
 	public Octaves(PianoView v) {
 		this.view = v;
 		for (int i = 1; i <= MAX_OCTAVES; i++)
@@ -31,7 +31,7 @@ public class Octaves extends CenteredCombo<Integer> {
 				right = SwingUtilities.isRightMouseButton(me);
 				if( !right )
 					return;
-				Constants.execute(()->{
+				Threads.execute(()->{
 			        String input = Gui.inputBox("Range:");
 					try {
 						view.setRange(Integer.parseInt(input));
@@ -43,7 +43,7 @@ public class Octaves extends CenteredCombo<Integer> {
 		});
 		addActionListener(e->trigger());
 	}
-	
+
 	private void trigger() {
 		if (right) { // veto action performed
 			setPopupVisible(false);
@@ -53,8 +53,8 @@ public class Octaves extends CenteredCombo<Integer> {
 	        setActionCommand(oldCommand);
 
 		}
-		else 
+		else
 			view.setRange((int)getSelectedItem() * Key.OCTAVE);
-		
+
 	}
 }

@@ -74,6 +74,7 @@ import java.util.Arrays;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.omni.Threads;
 import net.judah.util.Constants;
 
 /** the classic Freeverb algorithm, stereo handled as a separate internal Effect unit */
@@ -109,7 +110,7 @@ public final class Freeverb extends Reverb {
     //scratch buffers
     private float[] inScratch = null;
     private float[] outScratchL = null;
-    
+
     private final Freeverb stereoReverb;
 
     public Freeverb(boolean isStereo) {
@@ -268,7 +269,7 @@ public final class Freeverb extends Reverb {
     	process(left);
     	stereoReverb.process(right);
     }
-    
+
     @Override
     public void process(FloatBuffer buf) {
     	buf.rewind();
@@ -318,11 +319,11 @@ public final class Freeverb extends Reverb {
             bufsize = size;
             reset();
         }
-        
+
         public void reset() {
         	buffer = new float[bufsize];
         }
-        
+
 
         public void processMix(float inputs[], float outputs[], int buffersize) {
             for (int i = 0; i < buffersize; i++) {
@@ -342,16 +343,16 @@ public final class Freeverb extends Reverb {
 
                 filterstore = (output * damp2) + (filterstore * damp1);
                 //undenormalise(filterstore);
-                if (filterstore > 0.0 && filterstore < 1.0E-9) 
+                if (filterstore > 0.0 && filterstore < 1.0E-9)
                 	filterstore = 0;
-                else if (filterstore < 0.0 && filterstore > -1.0E-9) 
+                else if (filterstore < 0.0 && filterstore > -1.0E-9)
                         filterstore = 0;
 
                 buffer[bufidx] = inputs[i] + (filterstore * feedback);
 
-                if (++bufidx >= bufsize) 
+                if (++bufidx >= bufsize)
                     bufidx = 0;
-                
+
 
                 outputs[i] += output;
 
@@ -380,15 +381,15 @@ public final class Freeverb extends Reverb {
         public void reset() {
         	buffer = new float[bufsize];
         }
-        
+
         public void processReplace(float inputs[], float outputs[], int buffersize) {
         	float input;
             for (int i = 0; i < buffersize; i++) {
 
                 //undenormalise
-            	if (buffer[bufidx] > 0 && buffer[bufidx] < 1.0E-9) 
+            	if (buffer[bufidx] > 0 && buffer[bufidx] < 1.0E-9)
             		buffer[bufidx] = 0;
-            	else if (buffer[bufidx] < 0.0 && buffer[bufidx] > -1.0E-9) 
+            	else if (buffer[bufidx] < 0.0 && buffer[bufidx] > -1.0E-9)
                 	buffer[bufidx] = 0;
 
                 input = inputs[i];
@@ -407,7 +408,7 @@ public final class Freeverb extends Reverb {
 		if (stereoReverb != null)
 			stereoReverb.setActive(active);
 		if (active) return;
-		Constants.execute(() -> { // clear the echo
+		Threads.execute(() -> { // clear the echo
 			for (Allpass l : allpassL)
 				l.reset();
 			for (Comb l : combL)

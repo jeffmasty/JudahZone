@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class Notification {
-	
+
 	public static enum Property {
 		/**current tempo*/
 		TEMPO,
@@ -12,14 +12,14 @@ public class Notification {
 		STATUS,
 		/** beats per measure or subdivision change */
 		SIGNATURE,
-		/** volume change */
-		VOLUME,
 		/** transport change */
 		TRANSPORT,
 		/** current beat of TimeProvider */
 		BEAT,
 		/** current measure count */
 		BARS,
+		/** when bars / length == 0 */
+		BOUNDARY,
 		/** current loop count */
 		LOOP,
 		/** current step in step sequencer */

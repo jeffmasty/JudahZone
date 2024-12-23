@@ -3,10 +3,9 @@ package net.judah.midi.fluid;
 import static net.judah.util.Constants.NL;
 
 import net.judah.util.Console;
-import net.judah.util.ConsoleParticipant;
 import net.judah.util.RTLogger;
 
-class FluidConsole implements ConsoleParticipant {
+class FluidConsole implements Console.Participant {
 	public static final String PREFIX = "fluid";
 	private final FluidSynth fluid;
 
@@ -50,9 +49,9 @@ class FluidConsole implements ConsoleParticipant {
 //		if (text.equals("current")) {
 //			Console.addText("current: " + FluidSynth.getInstruments().get(fluid.getChannels().getCurrentPreset(0)));
 //		}
-		if (text.equals("mute")) {
-			fluid.mute();
-		}
+//		if (text.equals("mute")) {
+//			fluid.mute();
+//		}
 		else {
 			if (input.length > 2) text = text + " " + input[2];
 			if (input.length > 3) text = text + " " + input[3];

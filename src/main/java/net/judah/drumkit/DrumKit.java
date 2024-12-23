@@ -13,8 +13,9 @@ import net.judah.gui.knobs.KitKnobs;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.settable.Program;
 import net.judah.midi.Actives;
+import net.judah.midi.Midi;
 import net.judah.mixer.LineIn;
-import net.judah.util.AudioTools;
+import net.judah.omni.AudioTools;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
@@ -26,10 +27,11 @@ public class DrumKit extends Actives {
 	private final DrumMachine machine;
 	private final DrumSample[] samples = new DrumSample[SAMPLES];
 	private final KitMode kitMode;
-	private final KnobMode knobMode = KnobMode.Kits;
+	private final KnobMode knobMode = KnobMode.KITS;
 	protected final FloatBuffer left;
     protected final FloatBuffer right;
 	private final KitKnobs gui;
+	private final ShortMessage CHOKE = Midi.create(Midi.NOTE_OFF, DrumType.OHat.getData1(), 1);
 
 	/** true if OHat shuts off when CHat plays */
 	@Setter private boolean choked = true;
@@ -73,10 +75,8 @@ public class DrumKit extends Actives {
 			sample.getEnvelope().reset();
 			sample.play(true);
 			if (sample.getDrumType() == DrumType.CHat && choked) {// TODO multi
-				DrumSample ohat = samples[DrumType.OHat.ordinal()];
-				if (ohat.isPlaying()) {
-					off(ohat.getDrumType().getData1());
-				}
+				if (samples[DrumType.OHat.ordinal()].isPlaying()) 
+					noteOff(CHOKE);
 			}
 
 			int idx = indexOf(data1);

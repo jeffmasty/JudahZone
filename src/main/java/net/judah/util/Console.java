@@ -3,10 +3,12 @@ package net.judah.util;
 import static net.judah.util.Constants.NL;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 
+import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -19,29 +21,36 @@ import lombok.extern.log4j.Log4j;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
-import net.judah.scope.ScopeView;
+import net.judah.gui.knobs.KnobMode;
+import net.judah.gui.knobs.KnobPanel;
 
 @Log4j
-public class Console extends ScopeView {
+public class Console extends KnobPanel {
+
+	public static interface Participant {
+		void process(String[] input);
+	}
 
     @Getter private static Console instance = new Console();
     @Getter @Setter private static Level level = Level.DEBUG;
     @Getter private final JLabel ticker = new JLabel("", JLabel.LEFT);
     private final JScrollPane scroller = new JScrollPane();
-    @Getter private ArrayList<ConsoleParticipant> participants = new ArrayList<>();
+    @Getter private ArrayList<Participant> participants = new ArrayList<>();
     private final JTextArea textarea = new JTextArea(3, 28);
+    @Getter private final KnobMode knobMode = KnobMode.LOG;
+    @Getter private final Component title = Gui.wrap(new JLabel(""));
 
     private Console() {
     	setLayout(new GridLayout(1, 1));
-        Gui.resize(ticker, new Dimension(Size.WIDTH_KNOBS - 6, Size.STD_HEIGHT - 4));
+    	setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
+    	Gui.resize(ticker, new Dimension(Size.WIDTH_KNOBS - 6, Size.STD_HEIGHT - 4));
     	textarea.setEditable(false);
 		textarea.setForeground(Color.BLUE.darker());
 		ticker.setOpaque(true);
 		ticker.setForeground(Color.BLUE.darker());
 		ticker.setBackground(Pastels.BUTTONS);
-		
-		
-		
+
+
     	scroller.setViewportView(textarea);
         scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         scroller.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -52,14 +61,14 @@ public class Console extends ScopeView {
     public static void addText(String in) {
         log.debug(in);
         instance.ticker.setText(in);
-        if (in == null) 
+        if (in == null)
             in = "null" + NL;
         if (false == in.endsWith(NL))
             in += NL;
 
         instance.textarea.append(new String(in));
         instance.textarea.setCaretPosition(instance.textarea.getDocument().getLength() - 1);
-        
+
         instance.scroller.getVerticalScrollBar().setValue( instance.scroller.getVerticalScrollBar().getMaximum() - 1 );
         instance.scroller.getHorizontalScrollBar().setValue(0);
         instance.invalidate();
@@ -89,9 +98,19 @@ public class Console extends ScopeView {
             addText("debug " + s);
     }
 
-	@Override // Scope interface no-op
-	public void process(float[][] stereo) {
+	@Override
+	public boolean doKnob(int idx, int value) {
+		return false;
 	}
+
+	@Override
+	public void update() {
+	}
+
+	@Override
+	public void pad1() {
+	}
+
 
 }
 

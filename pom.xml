@@ -11,8 +11,8 @@
   <url>http://maven.apache.org</url>
 
  <properties>
-    <maven.compiler.source>1.11</maven.compiler.source>
-    <maven.compiler.target>1.11</maven.compiler.target>
+    <maven.compiler.source>1.21</maven.compiler.source>
+    <maven.compiler.target>1.21</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -21,9 +21,38 @@
     <id>clojars_repo</id>
     <url>https://clojars.org/repo/</url>
   </repository>
+  <repository>
+  <id>be.0110.repo-releases</id> <!-- -->
+  <name>0110.be repository</name>
+  <url>https://mvn.0110.be/releases</url>
+</repository>
 </repositories>
 
 <dependencies>
+	
+	<dependency>
+		<groupId>net.judah</groupId>
+		<artifactId>omni</artifactId>
+		<version>0.1</version>
+	</dependency>
+
+	<dependency>
+		<groupId>net.judah</groupId>
+		<artifactId>oscilloscope</artifactId>
+		<version>0.1</version>
+	</dependency>
+
+	<dependency>
+	    <groupId>org.knowm.xchart</groupId>
+	    <artifactId>xchart</artifactId>
+	    <version>3.8.0</version>
+	</dependency>
+    <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-math3</artifactId>
+        <version>3.6.1</version>
+    </dependency>
+	
 	<!-- Jack Support -->
   	<dependency>
     	<groupId>net.java.dev.jna</groupId>
@@ -64,12 +93,17 @@
 	    <version>0.6</version>
 	</dependency>
 	
-    <dependency>
-    	<groupId>com.github.axet</groupId>
-    	<artifactId>TarsosDSP</artifactId>
-	    <version>2.4-1</version>
+	<dependency>
+	  <groupId>be.tarsos.dsp</groupId>
+	  <artifactId>core</artifactId>
+	  <version>2.5</version>
 	</dependency>
-
+	<dependency>
+	  <groupId>be.tarsos.dsp</groupId>
+	  <artifactId>jvm</artifactId>
+	  <version>2.5</version>
+	</dependency>
+	
 <!--    <dependency>
     	<groupId>dsp-collection-java</groupId>
     	<artifactId>dsp-collection-java</artifactId>

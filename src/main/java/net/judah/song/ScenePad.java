@@ -21,7 +21,7 @@ public class ScenePad extends JPanel implements Pastels {
 	private final JLabel name = new JLabel();
 	private final JLabel type = new JLabel();
 	private final JLabel params = new JLabel();
-	
+
 	ScenePad(Scene scene, Overview tab, int idx) {
 		this.scene = scene;
 		this.tab = tab;
@@ -44,7 +44,7 @@ public class ScenePad extends JPanel implements Pastels {
 	public void update() {
 		if (idx == 0 && (scene.getNotes() == null || scene.getNotes().isBlank()))
 			name.setText("Home");
-		else 
+		else
 			name.setText(idx + ":" + (scene.getNotes() == null ? "" : scene.getNotes()));
 		type.setText(scene.getType().name());
 		StringBuffer sb = new StringBuffer("<html>");
@@ -55,12 +55,11 @@ public class ScenePad extends JPanel implements Pastels {
 			setBackground(GREEN);
 		else if (tab.getOnDeck() == scene) {
 			setBackground(scene.getType().getColor());
-			if (scene.getType() == Trigger.REL) {
-				int countdown = (int)scene.getCommands().getTimeCode() - tab.getCount();
-				type.setText(countdown + "!");
-			}
+			if (scene.getType() == Trigger.REL)
+
+				type.setText(tab.getCount() + "/" + scene.getCommands().getTimeCode() + "!");
 		}
 		else setBackground(Pastels.BUTTONS);
 	}
-	
+
 }

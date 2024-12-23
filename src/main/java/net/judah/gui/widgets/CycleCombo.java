@@ -4,17 +4,18 @@ import java.util.Vector;
 
 import javax.swing.JComboBox;
 
+import net.judah.JudahZone;
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
+import net.judah.omni.Threads;
 import net.judah.seq.track.Computer;
 import net.judah.seq.track.Cycle;
-import net.judah.util.Constants;
 
 public class CycleCombo extends JComboBox<Cycle> {
-	
+
 	private static final Vector<CycleCombo> instances = new Vector<>();
 	private final Computer track;
-	
+
 	public CycleCombo(Computer track) {
 		super(Cycle.values());
 		this.track = track;
@@ -29,9 +30,10 @@ public class CycleCombo extends JComboBox<Cycle> {
 		if (track.getCycle() != c)
 			track.setCycle(c);
 	}
-	
+
 	public static void update(Computer t) {
-		Constants.execute(()->{
+		if (JudahZone.isInitialized())
+		Threads.execute(()->{
 			for (CycleCombo c : instances)
 				if (c.track == t && c.getSelectedItem() != t.getCycle()) {
 					c.setSelectedItem(t.getCycle());
@@ -39,5 +41,5 @@ public class CycleCombo extends JComboBox<Cycle> {
 				}
 		});
 	}
-	
+
 }

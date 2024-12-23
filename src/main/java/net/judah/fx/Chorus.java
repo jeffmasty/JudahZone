@@ -7,7 +7,7 @@ import java.util.Arrays;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.util.Constants;
+import net.judah.omni.WavConstants;
 
 public class Chorus implements TimeEffect {
 
@@ -51,7 +51,7 @@ public class Chorus implements TimeEffect {
     }
 
     public Chorus() {
-        this(Constants.sampleRate(), Constants.bufSize());
+        this(WavConstants.S_RATE, WavConstants.JACK_BUFFER);
     }
 
     @Override public String getName() {
@@ -71,7 +71,7 @@ public class Chorus implements TimeEffect {
             return Math.round(getDepth() * 100);
         if (idx == Settings.Feedback.ordinal())
             return Math.round(getFeedback() * 100);
-        if (idx == Settings.Type.ordinal()) 
+        if (idx == Settings.Type.ordinal())
         	return TimeEffect.indexOf(type);
         if (idx == Settings.Sync.ordinal())
         	return sync ? 1 : 0;
@@ -129,7 +129,7 @@ public class Chorus implements TimeEffect {
         }
 
         void goFigure() {
-            if (rate > 0.0001 && range > 0) {
+            if (rate > 0.01 && range > 0) {
                 lfocount += nframes;
                 float lfolength = sampleRate / rate;
                 lfocount %= (int) (lfolength);
@@ -207,17 +207,17 @@ public class Chorus implements TimeEffect {
         }
     }
 
-    
-    
+
+
     @Override
 	public void sync() {
     	sync(TimeEffect.unit());
     }
-    
+
 	@Override
 	public void sync(float unit) {
 		float msec = 0.001f * (unit + unit * TimeEffect.indexOf(type));
-		setRate(1 / msec);
+		setRate(msec);
 	}
 
 }

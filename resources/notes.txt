@@ -1,27 +1,49 @@
 TODO:
 
-Miditrack: Record progchange, CC, pitchbend
+MPK(JAM):  synth fluid bass
+upgrade Fluid ver. (re-compile)
+   -p, --portname=[label]
+              Set  MIDI  port  name  (alsa_seq,  coremidi
+              drivers)
+--portname=[track.getName()]
+	-g, --gain
+              Set the master gain [0 < gain < 10, default
+              = 0.2]
++Synth +Fluid
+beatstep cycles through JudahSynths (each Channel) and Fluids (2 Channels)
+
+chorus time sync off (1/x)
+LoopToDisk recording length off
+Song: refactor {record} field to {capture} (Java keyword)
+FxChain: refactor Channel as list of available and active effects
+seq.loadSong(Unknown File) feedback
+Directives.BREAKS ChordPro.@ ChordPro.%   Cycle breaks: A3_ ABC_ TOF_?
+MidiTrack: tests, sustain note offs drag-n-drop, Record progchange, CC, pitchbend, vol
 PianoEditor: drag-n-drop/transpose across frame, falling water, REL/Modal
 Drum decay based on sample length (Kit Knobs & Distortion scratchy)
-scope audio tools, Hot Mic 2.0, pattern navigation 
-Directives.BREAKS ChordPro.@ ChordPro.%   Cycle breaks: A3_ ABC_ TOF_?
+Scope, Meters [log  vol  tune  hz] (MPKMini.midiBtnSequence
+Hot Mic 2.0, pattern navigation 
 Probability, Ritardando, microsteps
 Scene REL OnDeck Cmd2.0, step cmd, jamstik cmd
 internal clock, Fifths arppegiator, gate, Swing Pt.II
-sample packs, double-tap one-shot samples switch to loop
-Synth: envelope to filter, LFO, glide, PWM, mono-synth, 
-Electronics Github Repository, credits 
+sample packs, toggle one-shot/loop/hot
+Synth: envelope to filter, LFO, glide, PWM, mono-synth, env off
 walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
 Sampler FX (granularity, pitched frequency, lofi, wet)
 IR Reverb, DrumSynth, Phasor, Shepherd, Vocoder
-SongEditor undo/redo, Reload setlists on new Song
-record record record youtubes
+SongEditor undo/redo, Reload setlist on new Song
+toggle Korg looper/fx pads to Scene pads
+Electronics Github Repository, credits 
+record record record youtubes - MAC - Elevation - SUG
+
 user manual, Qwerty, client-server architecture
 support JavaSound/non-Jack, make accessible setup and settings
 Subwoofer library, Fluid drums
-Scope, Meters [log  vol  tune  hz]
+convert Songs to single Midi file
+add tracks/synths
 
--------------------------
+
+--etc-----------------------
 samples: https://freesound.org/people/laffik/packs/38658/
 Latency + bleeding edge
 clipping/xruns filter see https://github.com/psambit9791/jDSP Peak/Spike
@@ -72,6 +94,15 @@ javac --module-path $PATH_TO_FX --add-modules javafx.controls HelloFX.java
 <!--      <groupId>eu.hansolo</groupId> -->
 <!--      <artifactId>SteelSeries</artifactId> -->
 <!--      <version>3.9.30</version> -->
+
+SpencerPark/MellowD
+removed Steinberg's VST2 SDK:
+https://github.com/WeAreROLI/JUCE/commit/a3566b8c1edac29997490143982cd2b2eb089ffa
+midibox/mios32
+Deep-Symmetry/beat-link
+/home/matthias/java/jsresources/examples/src/DumpReceiver.java
+DerekCook/CoreMidi4J
+
 
 Done:
 Recompile Carla (modified modules/rtaudio.cpp)

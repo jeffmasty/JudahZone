@@ -16,7 +16,7 @@ import net.judah.seq.track.MidiTrack;
 import net.judah.song.Scene;
 import net.judah.util.Constants;
 
-/** Korg nanoKONTROL2 midi controller custom codes */ 	
+/** Korg nanoKONTROL2 midi controller custom codes */
 public class KorgMixer implements Controller {
 	public static final String NAME = "nanoKONTROL2";
 
@@ -35,7 +35,7 @@ public class KorgMixer implements Controller {
 	private static final int moff = 48;
 	private static final int roff = 64;
 	private static final int knoboff = 16;
-	
+
 	private static final MapEntry PREV = new MapEntry(new String("PREV"), TYPE.MOMENTARY, 58);
  	private static final MapEntry NEXT = new MapEntry(new String("NEXT"), TYPE.MOMENTARY, 59);
  	private static final MapEntry CYCLE = new MapEntry(new String("LOOP"), TYPE.TOGGLE, 46);
@@ -47,26 +47,27 @@ public class KorgMixer implements Controller {
 	private static final MapEntry STOP = new MapEntry("STOP", TYPE.MOMENTARY, 42);
 	private static final MapEntry PLAY = new MapEntry("PLAY", TYPE.TOGGLE, 41);
 	private static final MapEntry RECORD = new MapEntry("REC", TYPE.TOGGLE, 45);
-	
+
 	private long lastPress;
 	private int lastTrack;
-	
+
 	@Override
 	public boolean midiProcessed(Midi midi) {
 		int data1 = midi.getData1();
 		int data2 = (int)Math.floor(midi.getData2() / 1.27f);
 		Seq seq = getSeq();
-		
+
 		if (data1 >= 0 && data1 < 8) { // Main Faders
 			Channel ch = target(data1);
 			ch.getGain().set(Gain.VOLUME, data2);
 			MainFrame.update(ch);
 		}
-		
+
 		// knobs = drumkit or synths gain
 		else if (data1 >= knoboff && data1 < knoboff + 4) {
 			MidiTrack t = getDrumMachine().getTracks().get(data1 - knoboff);
 			t.setAmp(data2 * 0.01f);
+			MainFrame.update(t);
 		}
 		else if (data1 >= knoboff + 4 && data1 < knoboff + 8) {
 			vol(data1 - (knoboff + 4), data2);
@@ -74,36 +75,36 @@ public class KorgMixer implements Controller {
 		else if (data2 > 0 && data1 >= soff && data1 < soff + 8) { // play/stop sequencer tracks
 			seq.get(data1 - soff).trigger();
 		}
-		else if (data2 > 0 && data1 >= moff && data1 < moff + 8) { // MUTE/RECORD 
+		else if (data2 > 0 && data1 >= moff && data1 < moff + 8) { // MUTE/RECORD
 			Channel ch = target(data1 - moff);
 			if (ch == getMic())
 				((LineIn)ch).setMuteRecord(!((LineIn)ch).isMuteRecord());
-			else if (ch == getGuitar()) // swap 
+			else if (ch == getGuitar()) // swap
 				getBass().setOnMute(!getBass().isOnMute());
 			else
 				ch.setOnMute(!ch.isOnMute());
 		}
 		else if (data2 > 0 && data1 >= roff && data1 < roff + 8) { // LAUNCH SCENE
-			int idx = data1 - roff; 
-			
+			int idx = data1 - roff;
+
 			List<Scene> scenes = getOverview().getSong().getScenes();
-			if (scenes.size() > idx) 
+			if (scenes.size() > idx)
 				getOverview().setOnDeck(scenes.get(idx));
 			else if (idx == 6 || idx == 7) // double duty: launch Fluid+ tracks
 				seq.get(idx + 2).trigger();
 		}
-			
+
 		else if (data1 == SET.getVal() && data2 != 0) { // Run SettableCombo or hide modal dialog
 			// TODO override = select track's Frame on KorgPads
 		}
 		else if (data1 == CYCLE.getVal()) {
 			getLooper().verseChorus();
 		}
-		else if (data1 == PREV.getVal() && data2 != 0) 
+		else if (data1 == PREV.getVal() && data2 != 0)
 			seq.getTracks().next(false);
-		else if (data1 == NEXT.getVal() && data2 != 0) 
+		else if (data1 == NEXT.getVal() && data2 != 0)
 			seq.getTracks().next(true);
-		
+
 		else if (data1 == PREV2.getVal() && data2 != 0) { // change pattern
 			seq.getCurrent().next(false);
 		}
@@ -120,14 +121,11 @@ public class KorgMixer implements Controller {
 			seq.getCurrent().setActive(!seq.getCurrent().isActive());
 		}
 		else if (data1 == PLAY.getVal() && data2 > 0) {
-			if (getClock().isActive())
-				getClock().end();
-			else 
-				getClock().begin();
+			getClock().toggle();
 		}
-		else if (data1 == RECORD.getVal()) 
+		else if (data1 == RECORD.getVal())
 			seq.getCurrent().setRecord(!seq.getCurrent().isRecord());
-		
+
 		return true;
 	}
 
@@ -136,21 +134,21 @@ public class KorgMixer implements Controller {
 		MidiTrack t;
 		switch (idx) {
 			case 0: ch = getSynth1();
-				ch.getGain().set(Gain.VOLUME, data2); 
+				ch.getGain().set(Gain.VOLUME, data2);
 				MainFrame.update(ch); break;
 			case 1: ch = getSynth2();
-				ch.getGain().set(Gain.VOLUME, data2); 
+				ch.getGain().set(Gain.VOLUME, data2);
 				MainFrame.update(ch); break;
 			case 2: t = getSeq().byName("Fluid1");
-					t.setAmp(data2 * 0.01f); 
+					t.setAmp(data2 * 0.01f);
 					MainFrame.update(t); break;
 			case 3: t = getSeq().byName("Fluid2");
 					t.setAmp(data2 * 0.01f);
 					MainFrame.update(t); break;
 			}
-		
+
 	}
-	
+
 	private Channel target(int idx) {
 		if (idx < 4)
 			return getLooper().get(idx);
@@ -163,7 +161,7 @@ public class KorgMixer implements Controller {
 		}
 		return getGuitar();
 	}
-	
+
 	/** on double tap */
 	@SuppressWarnings("unused")
 	private boolean doubleClick(int track) {
@@ -176,11 +174,11 @@ public class KorgMixer implements Controller {
 		return false;
 	}
 
-	
-	
+
+
 }
 
-/** 
+/**
 
         nanoKONTROL2 MIDI Implementation             Revision 1.00 (2010.12.14)
 
@@ -230,7 +228,7 @@ public class KorgMixer implements Controller {
 
   This message is transmitted whenever an INQUIRY MESSAGE REQUEST is received.
 
- 
+
 
 1-3 System Exclusive Message Transmitted Command List
 
@@ -240,8 +238,8 @@ public class KorgMixer implements Controller {
  2nd Byte = 42 : KORG
  3rd Byte = 4g : g : Global MIDI Channel
  4th Byte = 00 : Software Project (nanoKONTROL2: 000113H)
- 5th Byte = 01 : 
- 6th Byte = 13 : 
+ 5th Byte = 01 :
+ 6th Byte = 13 :
  7th Byte = 00 : Sub ID
  8th Byte = cd : 0dvmmmmm  d     (1: Controller->Host)
                            v     (0: 2 Bytes Data Format, 1: Variable)
@@ -333,8 +331,8 @@ Transmitted when
  2nd Byte = 42 : KORG
  3rd Byte = 4g : g : Global MIDI Channel
  4th Byte = 00 : Software Project (nanoKONTROL2: 000113H)
- 5th Byte = 01 : 
- 6th Byte = 13 : 
+ 5th Byte = 01 :
+ 6th Byte = 13 :
  7th Byte = 00 : Sub ID
  8th Byte = cd : 0dvmmmmm  d     (0: Host->Controller)
                            v     (0: 2 Bytes Data Format, 1: Variable)
@@ -561,7 +559,7 @@ NOTE 2: The Dump Data Conversion
    7n+6,5,4,3,2,1,0         7n+0          7n+1 ~~ 7n+5         7n+6
 
 
- TABLE 1 : Scene Parameter            
+ TABLE 1 : Scene Parameter
 +--------+----------------------------+--------------------------------------------+
 |        |     PARAMETER              |                VALUE                       |
 +--------+----------------------------+--------------------------------------------+
@@ -726,7 +724,7 @@ Total 339 bytes
 | Status | Second   | Third |  Description                         |
 | [Hex]  | [Hex]    |       |                                      |
 +--------+----------+-------+--------------------------------------+
-|   BF   |  2E      |  ss   |  Cycle ss;on/off (on = 127 Off = 00) |  
+|   BF   |  2E      |  ss   |  Cycle ss;on/off (on = 127 Off = 00) |
 |   BF   |  2B      |  ss   |  REW                                 |
 |   BF   |  2C      |  ss   |  FF                                  |
 |   BF   |  2A      |  ss   |  STOP                                |
@@ -753,10 +751,9 @@ Total 339 bytes
 +--------+----------+-------+--------------------------------------+
 |   BF   |  10      |  vv   |  Group 1 Knob vv=value(0 ~ 127)      |
 |   BF   |  11 ~ 17 |  vv   |  Group 2 ~ 8 Knob                    |
-+--------+----------+-------+--------------------------------------+                             
++--------+----------+-------+--------------------------------------+
 |   BF   |  00      |  vv   |  Group 1 Slider vv=value(0~127)      |
 |   BF   |  01 ~ 07 |  vv   |  Group 2 ~ 8 Slider                  |
 +--------+----------+-------+--------------------------------------+
- 
+
 */
- 

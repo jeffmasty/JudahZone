@@ -3,8 +3,8 @@ package net.judah.mixer;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
-import net.judah.gui.Icons;
-import net.judah.util.AudioTools;
+import net.judah.omni.AudioTools;
+import net.judah.omni.Icons;
 
 @Getter
 public class Instrument extends LineIn {

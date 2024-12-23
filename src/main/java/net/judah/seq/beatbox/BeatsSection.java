@@ -14,22 +14,21 @@ public class BeatsSection extends MidiView implements BeatsSize {
 	private static final int DATA1_OFFSET = 24;
 	@Getter private final DrumMutes mutes;
 	@Getter private final BeatSteps steps;
-	
+
 	public BeatsSection(MidiTrack t, BeatsTab tab, TrackList tracks) {
 		super(t);
 		steps = new BeatSteps(BEAT_STEPS, track);
 
-		mutes = new DrumMutes(BOUNDS_MUTES, this); 
+		mutes = new DrumMutes(BOUNDS_MUTES, this);
 		menu = new TrackMenu(BOUNDS_MENU, this, tracks, tab);
 		grid = new BeatBox(BEATBOX_GRID, this, tab);
 		instrumentPanel = mutes;
-		
-		setLayout(null);
+
 		add(menu);
 		add(grid);
 		add(instrumentPanel);
 	}
-	
+
 	public static int toData1(Point p) {
 		return p.x / BEAT_WIDTH + DATA1_OFFSET;
 	}
@@ -40,7 +39,7 @@ public class BeatsSection extends MidiView implements BeatsSize {
 	public static int toY(long tick, long measure, int height) {
 		return (int) (ratioY(tick, measure) * height);
 	}
-	
+
 	public static float ratioY(long tick, long measure) {
 		return tick / (float)measure;
 	}
@@ -50,5 +49,5 @@ public class BeatsSection extends MidiView implements BeatsSize {
 		float units = tick / unit;
 		return (long)units * unit;
 	}
-	
+
 }

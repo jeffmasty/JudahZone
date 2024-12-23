@@ -3,10 +3,10 @@ package net.judah.controllers;
 import static java.awt.event.KeyEvent.*;
 import static net.judah.JudahZone.*;
 
-import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
@@ -27,39 +27,47 @@ import net.judah.util.RTLogger;
 public class Qwerty extends JTabbedPane implements KeyListener, Size {
 
 	private static final int ASCII_ONE = 49;
-	
-	private final JPanel sheetMusic;
 
-	public Qwerty(JPanel images, JPanel... tabs) {
+	private final JComponent sheetMusic;
+
+	public Qwerty(JComponent images, JComponent... tabs) {
 		sheetMusic = images;
 		setMaximumSize(TAB_SIZE);
         setPreferredSize(TAB_SIZE);
         setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         setFocusable(true);
-        
+
         // setFocusTraversalKeysEnabled(false);
 		// getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("LEFT"), null);
 		// getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("RIGHT"), null);
-        
-        addKeyListener(this);	
-		for (JPanel tab : tabs)
+
+        addKeyListener(this);
+		for (JComponent tab : tabs)
 			if (tab != null)
 				addTab(tab.getName(), tab);
 		addTab(sheetMusic.getName(), sheetMusic);
 	}
-	
+
 	@Override
 	public void keyTyped(KeyEvent e) {
 		if (getSelectedComponent() instanceof MidiTab) {
 			((MidiTab)getSelectedComponent()).getMusician().keyTyped(e);
 		} // else mixer?
-		
 	}
 
 	public void sheetMusic() {
 		setSelectedComponent(sheetMusic);
 	}
-	
+
+	public void scope() {
+//		if (scope == null) {
+//			scope = new Tools(TAB_SIZE, signal)
+//		}
+//		else {
+//
+//		}
+	}
+
 	@Override
 	public void keyPressed(KeyEvent e) {
 //		if (getSelectedComponent() instanceof MidiTab) {
@@ -88,7 +96,7 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
 				setTitleAt(i, tab.getName());
 			}
 	}
-	
+
 	public void tab(boolean fwd) {
 		int idx = Constants.rotary(getSelectedIndex(), getTabCount(), fwd);
 		setSelectedIndex(idx);
@@ -96,20 +104,16 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
 
 	@Override
 	public void setSelectedIndex(int index) {
-		if (getSelectedIndex() != index) 
+		if (getSelectedIndex() != index)
 			super.setSelectedIndex(index);
 		requestFocusInWindow();
 	}
-
-	public void closeTab(Component tab) {
-        remove(tab);
-    }
 
 	@SuppressWarnings("unused")
 	private boolean keyEvent(KeyEvent e) {
 		if (ModalDialog.getInstance() != null)
 			return false;
-		
+
 //		// TODO knob mode
 //		if (e.getID() == KeyEvent.KEY_PRESSED) {
 //			if (main.getTab() instanceof MidiTab)
@@ -138,33 +142,33 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
             case VK_F9: MainFrame.setFocus(getSynth2()); return true;
             case VK_F10: MainFrame.setFocus(getBass()); return true;
             case VK_F11: MainFrame.setFocus(getFluid()); return true;
-//            case VK_UP: return volume(true, focus); 
-//            case VK_DOWN: return volume(false, focus); 
-            case VK_LEFT: return nextChannel(false); 
-            case VK_RIGHT: return nextChannel(true); 
+//            case VK_UP: return volume(true, focus);
+//            case VK_DOWN: return volume(false, focus);
+            case VK_LEFT: return nextChannel(false);
+            case VK_RIGHT: return nextChannel(true);
 
             case VK_SPACE: case VK_M: mute(); return true;
             case VK_DELETE: RTLogger.log(this, "DELETE!"); return true;
 			case VK_ENTER: /* enterKey(); */return true;
 
-            case VK_R: 
+            case VK_R:
             	if (focus instanceof Loop) {
             		Loop loop = (Loop)focus;
             		if (loop == looper.getLoopA())
             			getLooper().getLoopA().trigger();
-            		else 
-            			loop.record(!loop.isRecording());
+            		else
+            			loop.capture(!loop.isRecording());
             	} else if (focus instanceof Instrument) {
             		Instrument line = (Instrument)focus;
             		line.setMuteRecord(!line.isMuteRecord());
             	}
             	return true;
-            case VK_D: 
-            	if (focus instanceof Loop) 
+            case VK_D:
+            	if (focus instanceof Loop)
             		looper.clear((Loop)focus);
             	return true;
-            case VK_X: 
-            	if (focus instanceof Loop) 
+            case VK_X:
+            	if (focus instanceof Loop)
             		((Loop)focus).clear();
             	return true;
         }
@@ -174,7 +178,7 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
             MainFrame.setFocus(looper.get(ch - (ASCII_ONE) ));
             return true;
         }
-        
+
         RTLogger.log(this, "pressed: " + KeyEvent.getKeyText(e.getKeyCode()));
         return false;
 
@@ -214,7 +218,7 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
             }
             MainFrame.setFocus(channels.get(i - 1));
             return true;
-        } 
+        }
         // else instanceof Sample
         int i = looper.indexOf(bus);
         if (toRight) {
@@ -232,7 +236,5 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
         MainFrame.setFocus(looper.get(i - 1));
         return true;
     }
-
-
 
 }

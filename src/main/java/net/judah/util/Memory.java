@@ -12,7 +12,7 @@ public class Memory {
 	private final LinkedBlockingQueue<float[]> memory = new LinkedBlockingQueue<>();
 	private final int channelCount;
 	private final int bufSize;
-	
+
 	public Memory(int numChannels, int bufferSize) {
 		this.channelCount = numChannels;
 		this.bufSize = bufferSize;
@@ -35,10 +35,8 @@ public class Memory {
 	}
 
 	private void preload(final int amount) {
-		Constants.execute(()->{				
-			for (int i = 0; i < amount; i++) 
-				memory.add(new float[bufSize]);
-		});
+		for (int i = 0; i < amount; i++)
+			memory.add(new float[bufSize]);
 	}
 
 }

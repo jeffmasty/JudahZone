@@ -11,24 +11,30 @@ import javax.swing.JPanel;
 
 import lombok.Getter;
 import net.judah.controllers.MPKTools;
-import net.judah.fx.*;
+import net.judah.fx.Chorus;
+import net.judah.fx.Delay;
+import net.judah.fx.EQ;
+import net.judah.fx.Filter;
+import net.judah.fx.Gain;
+import net.judah.fx.Overdrive;
+import net.judah.fx.Reverb;
 import net.judah.gui.MainFrame;
 import net.judah.gui.widgets.FilterType;
 import net.judah.looper.Looper;
 import net.judah.mixer.Channel;
-import net.judah.util.KeyPair;
+import net.judah.omni.Pair;
 
 public class EffectsRack extends JPanel implements MPKTools {
-	
+
     public static final String TAB_NAME = "Effects";
     public static final int COLUMNS = 4;
-    
+
     @Getter private final Channel channel;
     private final ArrayList<Row> labels = new ArrayList<>();
     private final ArrayList<Row> knobs = new ArrayList<>();
     private final JPanel rows;
     @Getter private final ChannelTitle title;
-    
+
     public EffectsRack(Channel channel, Looper looper) {
         this.channel = channel;
         title = new ChannelTitle(channel, looper);
@@ -39,7 +45,7 @@ public class EffectsRack extends JPanel implements MPKTools {
         components.add(new FxTrigger("Reverb", channel.getReverb(), channel));
         components.add(new FxTrigger("   ", channel.getReverb(), channel));
         components.add(new FxTrigger("Delay", channel.getDelay(), channel));
-        components.add(new TimePanel(channel.getDelay()));
+        components.add(new TimePanel(channel.getDelay(), channel));
         labels.add(lbls);
 
         lbls = new Row(channel);
@@ -47,16 +53,16 @@ public class EffectsRack extends JPanel implements MPKTools {
         components.add(new FxTrigger("Dist.", channel.getOverdrive(), channel));
         components.add(new FxTrigger("  ", channel.getChorus(), channel));
         components.add(new FxTrigger("Chorus", channel.getChorus(), channel));
-        components.add(new TimePanel(channel.getChorus()));
+        components.add(new TimePanel(channel.getChorus(), channel));
         labels.add(lbls);
-        
+
 		// EQ L/M/H  Vol
-		// Preset pArTy hiCut pan 
-        labels.add(new RowLabels(channel, new KeyPair[]{
-        		new KeyPair("     ", channel.getEq()),
-        		new KeyPair("EQ     ", channel.getEq()),
-	    		new KeyPair("     ", channel.getEq()),
-        		new KeyPair("Volume", channel.getGain())}));
+		// Preset pArTy hiCut pan
+        labels.add(new RowLabels(channel, new Pair[]{
+        		new Pair("     ", channel.getEq()),
+        		new Pair("EQ     ", channel.getEq()),
+	    		new Pair("     ", channel.getEq()),
+        		new Pair("Volume", channel.getGain())}));
 
         lbls = new Row(channel);
         components = lbls.getControls();
@@ -64,24 +70,24 @@ public class EffectsRack extends JPanel implements MPKTools {
         components.add(new FilterType(channel.getFilter1(), channel));
         components.add(new FilterType(channel.getFilter2(), channel));
         components.add(new FxTrigger("Pan", channel.getGain(), channel));
-        labels.add(lbls);        
+        labels.add(lbls);
 
         knobs.add(new RowKnobs(channel, 0));
         knobs.add(new RowKnobs(channel, 1));
         knobs.add(new RowKnobs(channel, 2));
         knobs.add(new RowKnobs(channel, 3));
-        
+
         GridBagLayout layout = new GridBagLayout();
         rows = new JPanel(layout);
         GridBagConstraints c = new GridBagConstraints();
         c.ipadx = 0;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.insets = new Insets(0, 0, 0, 0);
-        for (int y = 0; y < knobs.size() * 2; y++) 
+        for (int y = 0; y < knobs.size() * 2; y++)
         	for (int x = 0; x < COLUMNS; x++) {
     			c.gridx = x;
     			c.gridy = y;
-    			Component widget = (y % 2 == 0) ? 
+    			Component widget = (y % 2 == 0) ?
     					labels.get(y / 2).getControls().get(x) :
     					knobs.get(y / 2).getControls().get(x);
     			layout.setConstraints(widget, c);
@@ -91,12 +97,12 @@ public class EffectsRack extends JPanel implements MPKTools {
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
         add(title);
         add(rows);
-        
+
     }
 
     public void update() {
         title.update();
-        for (Row lbl : labels) 
+        for (Row lbl : labels)
         	lbl.update();
         for (Row knob : knobs)
         	knob.update();
@@ -112,7 +118,7 @@ public class EffectsRack extends JPanel implements MPKTools {
     	if (val < 0) val = 0;
     	return val;
     }
-    
+
     public void knob(int idx, boolean up) {
     	switch(idx) {
     	case 0:
@@ -121,7 +127,7 @@ public class EffectsRack extends JPanel implements MPKTools {
     		channel.getReverb().set(Reverb.Settings.Wet.ordinal(), reverb);
 			channel.getReverb().setActive(reverb > 0);
 			break;
-    	case 1: 
+    	case 1:
     		int room = (int)(channel.getReverb().getRoomSize() * 100f);
     		room = offset(room, up);
     		channel.getReverb().set(Reverb.Settings.Room.ordinal(), room);
@@ -142,7 +148,7 @@ public class EffectsRack extends JPanel implements MPKTools {
         case 5:
         	eq(EQ.EqBand.Mid, up);
         	break;
-        case 6:    	
+        case 6:
         	eq(EQ.EqBand.High, up);
         	break;
         case 7:
@@ -169,7 +175,7 @@ public class EffectsRack extends JPanel implements MPKTools {
         	channel.getChorus().set(Chorus.Settings.Rate.ordinal(), rate);
         	channel.getChorus().setActive(rate < thresholdHi);
 			break;
-        case 12:			
+        case 12:
         	channel.getPresets().increment(up);
         	break;
         case 13:
@@ -185,17 +191,17 @@ public class EffectsRack extends JPanel implements MPKTools {
         	filter2.setFrequency(Filter.knobToFrequency(hz));
         	filter2.setActive(hz < thresholdHi);
         	break;
-        case 15:  
+        case 15:
         	channel.getGain().set(Gain.PAN, offset(channel.getGain().get(Gain.PAN), up));
         	break;
     	}
     	MainFrame.update(channel);
     }
-    
+
     private void eq(EQ.EqBand band, boolean up) {
     	int db = offset(channel.getEq().get(band.ordinal()), up);
     	channel.getEq().eqGain(band, db);
     	channel.getEq().setActive(db > thresholdLo);
     }
-    
+
 }

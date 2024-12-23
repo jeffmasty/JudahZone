@@ -7,6 +7,7 @@ import javax.swing.JPanel;
 
 import net.judah.JudahZone;
 import net.judah.gui.Gui;
+import net.judah.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.gui.Updateable;
 import net.judah.gui.widgets.RainbowFader;
@@ -20,20 +21,20 @@ public class VolLED extends JPanel implements Updateable {
 	static final Dimension SIZE = new Dimension(WIDTH, HEIGHT);
 	static final int PAD = 3;
     private static final float FACTOR = 6f;
-	
+
 	private final Channel ch;
 	private float left, right;
-	
+
 	public VolLED(Channel ch) {
 		this.ch = ch;
 		Gui.resize(this, SIZE);
-		setBorder(Gui.SUBTLE);
+		setBorder(Pastels.SUBTLE);
 	}
-	
+
 	@Override
 	public void paint(Graphics g) {
 		super.paint(g);
-		
+
 		if (ch.isStereo()) {
 			int h = (int)(HEIGHT * left);
 			g.setColor(RainbowFader.chaseTheRainbow(left));
@@ -41,7 +42,7 @@ public class VolLED extends JPanel implements Updateable {
 			h = (int)(HEIGHT * right);
 			g.setColor(RainbowFader.chaseTheRainbow(right));
 			g.fillRect(HALF, HEIGHT - h, WIDTH - 1, h);
-			
+
 		}
 		else {
 			int h = (int)(HEIGHT * left);
@@ -59,11 +60,11 @@ public class VolLED extends JPanel implements Updateable {
 		}
 		return FACTOR * big;
 	}
-	
+
 	@Override
 	public void update() {
 		left = compute(ch.getLeft().array());
-		if (ch.isStereo()) 
+		if (ch.isStereo())
 			right = compute(ch.getRight().array());
 		if (ch instanceof Loop) {
 			left *= 1.5f;
