@@ -138,8 +138,8 @@ public class Qwerty extends JTabbedPane implements KeyListener, Size {
             case VK_F5: MainFrame.setFocus(getGuitar()); return true;
             case VK_F6: MainFrame.setFocus(getMic()); return true;
             case VK_F7: MainFrame.setFocus(getDrumMachine()); return true;
-            case VK_F8: MainFrame.setFocus(getSynth1()); return true;
-            case VK_F9: MainFrame.setFocus(getSynth2()); return true;
+//            case VK_F8: MainFrame.setFocus(getSynth1()); return true;
+//            case VK_F9: MainFrame.setFocus(getSynth2()); return true;
             case VK_F10: MainFrame.setFocus(getBass()); return true;
             case VK_F11: MainFrame.setFocus(getFluid()); return true;
 //            case VK_UP: return volume(true, focus);

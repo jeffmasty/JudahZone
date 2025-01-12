@@ -189,9 +189,8 @@ public class Looper extends Vector<Loop> implements TimeListener {
 		}
 	}
 
+	/** govern (synchronize) other loops */
 	void boundary() {
-
-		// govern other loops
 		stream().filter(element -> element != primary).forEach(Loop::boundary);
 
 		// progress onDeck
@@ -208,12 +207,10 @@ public class Looper extends Vector<Loop> implements TimeListener {
 	public void update(Property prop, Object value) {
 		if (primary == null)
 			return;
-		if (prop == Property.STATUS || prop == Property.BOUNDARY)
+		if (prop == Property.LOOP && primary.getType() == Type.FREE)
 			boundary();
-		if (prop != Property.BARS)
-			return;
-		if (primary == null || primary.getType() == Type.FREE)
-			return;
+		else if ( (prop == Property.STATUS || prop == Property.BOUNDARY) && primary.getType() != Type.FREE)
+			boundary();
 	}
 
 	public void clockSync() {

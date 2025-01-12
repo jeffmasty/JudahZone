@@ -1,4 +1,4 @@
-package net.judah.synth;
+package net.judah.synth.taco;
 
 import java.io.File;
 import java.security.InvalidParameterException;
@@ -72,7 +72,8 @@ public class SynthDB extends HashMap<String, String> {
             }
             if (!preset.isEmpty() && name != null) // last in file
             	put(name, pack(preset));
-            RTLogger.log(this, keySet().size() + " Synth Presets loaded.");
+            if (keySet().isEmpty())
+            	throw new ExceptionInInitializerError("No Synth Presets loaded");
         } catch (Throwable e) {
             RTLogger.warn(this, file.getName() + " line:" + lineNum + " - " + e.getMessage());
             return;
@@ -103,7 +104,7 @@ public class SynthDB extends HashMap<String, String> {
 		return 0;
 	}
 
-	public void save(JudahSynth synth, String name) {
+	public void save(TacoSynth synth, String name) {
 		put(name, create(synth));
 		StringBuffer buf = new StringBuffer();
 		for (String key : keys()) {
@@ -116,7 +117,7 @@ public class SynthDB extends HashMap<String, String> {
 		MainFrame.update(synth);
 	}
 
-	public String create(JudahSynth synth) {
+	public String create(TacoSynth synth) {
 
 		StringBuffer buf = new StringBuffer(OPEN).append(ENVELOPE).append(CLOSE);
 		Adsr env = synth.getAdsr();

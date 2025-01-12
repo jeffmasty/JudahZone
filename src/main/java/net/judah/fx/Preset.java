@@ -1,6 +1,6 @@
 package net.judah.fx;
 
-import static net.judah.synth.SynthDB.*;
+import static net.judah.synth.taco.SynthDB.*;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package net.judah.synth;
+package net.judah.synth.taco;
 
 import javax.sound.midi.ShortMessage;
 
@@ -6,16 +6,16 @@ import net.judah.midi.Actives;
 import net.judah.midi.Midi;
 
 public class Polyphony extends Actives {
-	
-	final Voice[] voices;
-	
-	public Polyphony(JudahSynth out, int ch, int polyphony) {
+
+	public final Voice[] voices;
+
+	public Polyphony(TacoSynth out, int ch, int polyphony) {
 		super(out, ch, polyphony);
 		voices = new Voice[polyphony];
 		for (int i = 0; i < voices.length; i++)
 			voices[i] = new Voice(out);
 	}
-	
+
 	/** only add under certain circumstances */
 	@Override
 	public boolean add(ShortMessage msg) {
@@ -24,7 +24,7 @@ public class Polyphony extends Actives {
 		ShortMessage midi = find(data1);
 		if (midi != null) {
 			int idx = indexOf(midi);
-			if (midi.getCommand() == ShortMessage.NOTE_OFF) 
+			if (midi.getCommand() == ShortMessage.NOTE_OFF)
 				voices[idx].reset(data1); // re-press during release
 			set(idx, Midi.copy(msg));
 		}
@@ -34,7 +34,7 @@ public class Polyphony extends Actives {
 		}
 		return true;
 	}
-	
+
 	@Override
 	public void noteOff(ShortMessage m) {
 		for (int i = 0; i < size(); i++) {
@@ -46,7 +46,7 @@ public class Polyphony extends Actives {
 			}
 		}
 	}
-	
+
 	public int count() {
 		int result = 0;
 		for (ShortMessage m: this)
@@ -66,7 +66,7 @@ public class Polyphony extends Actives {
 		}
 		return result;
 	}
-	
+
 	public ShortMessage lowest() {
 		int dat = 128;
 		ShortMessage result = null;
@@ -92,5 +92,5 @@ public class Polyphony extends Actives {
 			midiOut.send(Midi.create(ShortMessage.NOTE_OFF, m.getChannel(), m.getData1(), m.getData2()), 1);
 		}
 	}
-	
+
 }

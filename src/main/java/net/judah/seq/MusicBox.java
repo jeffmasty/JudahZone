@@ -107,10 +107,11 @@ public abstract class MusicBox extends JPanel implements Musician {
 				case 3: copy(); break; 				// ctrl-c
 				case 4: selectNone(); break; 		// ctrl-d
 				case 12: new Duration(this); break; // ctrl-l
-				case 18: undo(); break; 			// ctrl-r
+				case 18: redo(); break; 			// ctrl-r
 				case 19: track.save(); break; 		// ctrl-s
 				case 20: new Transpose(track, this); break; // ctrl-t
 				case 22: paste(); break; 			// ctrl-v
+				case 25: redo(); break; 			// crtl-y
 				case 26: undo(); break; 			// ctrl-z
 			default: RTLogger.log(this, "key: " + ch + "=" + intchar + ";" + e.getModifiersEx());
 			}

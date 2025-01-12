@@ -29,7 +29,6 @@ import net.judah.fx.Preset;
 import net.judah.fx.PresetsDB;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Size;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.widgets.Btn;
@@ -40,7 +39,7 @@ import net.judah.omni.Threads;
 import net.judah.util.Constants;
 
 public class PresetsView extends KnobPanel  {
-	public static final Dimension BTN_SZ = new Dimension(80, Size.STD_HEIGHT);
+	public static final Dimension BTN_SZ = new Dimension(80, STD_HEIGHT);
 
 	@Getter private final KnobMode knobMode = KnobMode.PRESETS;
 	@Getter private final JPanel title = new JPanel();
@@ -58,7 +57,7 @@ public class PresetsView extends KnobPanel  {
         JScrollPane scrollPane = new JScrollPane(list);
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
         add(scrollPane);
-        add(Gui.resize(presetsBtns(), new Dimension(BTN_SZ.width + 8, Size.HEIGHT_KNOBS - 30)));
+        add(Gui.resize(presetsBtns(), new Dimension(BTN_SZ.width + 8, HEIGHT_KNOBS - 30)));
         validate();
 	}
 

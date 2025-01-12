@@ -1,4 +1,4 @@
-package net.judah.synth;
+package net.judah.synth.taco;
 
 import java.nio.FloatBuffer;
 
@@ -8,12 +8,12 @@ import net.judah.util.Constants;
 public class Voice {
 	public static final int OSCILLATORS = 3;
 	
-	private final JudahSynth synth;
+	private final TacoSynth synth;
 	private int data1;
 	private final Dco[] oscillators = new Dco[OSCILLATORS];
 	private final JackEnvelope env = new JackEnvelope();
 	
-	public Voice(JudahSynth synth) {
+	public Voice(TacoSynth synth) {
 		this.synth = synth;
 		for (int i = 0; i < OSCILLATORS; i++)
 			oscillators[i] = new Dco(i, synth);

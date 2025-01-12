@@ -29,14 +29,14 @@ import net.judah.omni.Recording;
 import net.judah.omni.Threads;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.MidiTrack;
-import net.judah.synth.JudahSynth;
+import net.judah.synth.taco.TacoSynth;
 import net.judah.util.Folders;
 import net.judah.util.Memory;
 import net.judah.util.RTLogger;
 
 public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runnable {
 	public static final float STD_BOOST = 3;
-	public static final float DRUM_BOOST = 0.75f;
+	public static final float DRUM_BOOST = 0.35f;
 	public static final int OFF = -1;
 	protected static int INIT = 2 ^ 13; // nice chunk of preloaded blank tape
 
@@ -52,7 +52,10 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
     @Getter protected boolean drumTrack;
     /** used frames of AudioTrack's blank tape vector */
     @Getter protected int length;
+    @Getter protected boolean dirty = false;
+    /** Can be different measure count than Primary loop */
 	@Getter protected int measures;
+	private int boundary;
 	@Getter private boolean timer;
 	@Getter private int stopwatch;
     private boolean leadIn;
@@ -82,13 +85,14 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 	@Override public void clear() {
         if (length != 0)
         	recording.silence(length);
+        dirty = false;
 		type = reset;
         length = current = measures = stopwatch = 0;
 		isRecording = timer = onMute = false;
 		playBuffer = null;
 		clock.removeListener(this);
-        tapeCounter.set(0);
-        AudioTools.silence(left);
+		rewind();
+		AudioTools.silence(left);
         AudioTools.silence(right);
         display.clear();
 	}
@@ -100,7 +104,7 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
     }
 
     @Override public boolean isPlaying() {
-    	return length > 0; }
+    	return dirty && length > 0; }
 
     /** ratio of this length to primary's length (per duplications) */
     public float factor() {
@@ -108,29 +112,24 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
     		return 1;
     	if (measures == 0)
     		return 1;
-    	return measures / (float)looper.getMeasures();
+    	return length / (float)looper.getLength();
     }
 
-	@Override public void run() {
-		try {
-			do { // overdub
-				int idx = locationQueue.take();
-				recording.set(idx, AudioTools.overdub(newQueue.take(), oldQueue.take()));
-			} while (true);
-		}
-		catch (Exception e) { RTLogger.warn(this, e);}
-	}
-
-    /** loop boundary, hard sync to start.*/
+    /** primary loop boundary event, compensate for duplications then hard sync to start*/
     void boundary() {
-
-    	if (tapeCounter.get() != 0)
-    		tapeCounter.set(0);
-
-    	if (type == Type.FREE) {  // TODO factorize
-    		if (isRecording && timer)
-    			capture(false);
+    	if (!isPlaying())
     		return;
+
+    	boundary ++;
+    	if (factor() / boundary == 1) {
+    		boundary = 0;
+        	if (tapeCounter.get() != 0) { // triggered
+        		rewind();
+        	}
+        	if (type == Type.FREE) {  // TODO factorize
+        		if (isRecording && timer)
+        			capture(false);
+        	}
     	}
     }
 
@@ -149,12 +148,13 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 		clear();
 		try {
 			length = recording.load(f, 1);
+			dirty = true;
 			if (primary) {
 				rewind();
 				looper.setPrimary(this);
 			}
 			MainFrame.update(display);
-		} catch (Exception e) { RTLogger.warn(this, e);}
+		} catch (Exception e) { RTLogger.warn(name, e);}
     }
     public void load(String name, boolean primary) {
     	if (name.endsWith(".wav") == false)
@@ -163,7 +163,7 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
     	if (file.exists())
     		load(file, primary);
     	else
-    		RTLogger.log(this, "Not a file: " + file.getAbsolutePath());
+    		RTLogger.log(name, "Not a file: " + file.getAbsolutePath());
     }
 	public void load(boolean primary) {
 		File file = Folders.choose(Folders.getLoops());
@@ -176,26 +176,29 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 		if (length == 0) { // create blank tape that is twice primary's length
 			length = looper.getLength() * 2;
 			if (length == 0) return; // no primary
-
+			measures *= 2;
+			current = 0;
 			Threads.execute(()->catchUp(length));
-			RTLogger.log(toString(), "Doubled Tape: " + length);
+			RTLogger.log(name, "Doubled Tape: " + length);
+			return;
 		}
-		else {
-			Threads.execute(()->{ // duplicate current recording
-				if (this == looper.getPrimary() && type != Type.FREE)
-					JudahZone.getClock().setLength(JudahClock.getLength() * 2);
 
-				if (length * 2 >= recording.size())
-					catchUp(length * 2);
-				for (int i = 0; i < length; i++)
-					AudioTools.copy(recording.get(i), recording.get(i + length));
-				length *= 2;
-				RTLogger.log(toString(), "Audio Duplicated: " + length);
-			});
-		}
+		length *= 2;
 		measures *= 2;
-		if (this == looper.getPrimary())
+		if (this == looper.getPrimary()) {
 			looper.setRecordedLength(seconds());
+			if (type != Type.FREE)
+				JudahZone.getClock().setLength(measures);
+		}
+		Threads.execute(()->{ // duplicate current recording
+			if (length >= recording.size())
+				catchUp(length);
+			final int half = length / 2;
+			for (int i = 0; i < half; i++)
+				AudioTools.copy(recording.get(i), recording.get(i + half));
+			RTLogger.log(name, "Audio Duplicated: " + length);
+		});
+		MainFrame.update(display);
 	}
 
 	@Override
@@ -231,11 +234,11 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 	}
 
 	private void timerOn() {
-		timer = true;
-		if (type == Type.FREE)
-			return;
-		stopwatch = 0;
 		// set countdown for downbeat capture
+		timer = true;
+		stopwatch = 0;
+		if (measures == 0 && (type != Type.FREE || looper.getPrimary() == null))
+			measures = JudahClock.getLength();
 		clock.addListener(this);
 		MainFrame.update(display);
 	}
@@ -281,14 +284,17 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
         MainFrame.update(display);
     }
 
+
+    // TODO flooding of Free Primary
     private void startCapture() {
 
+    	if (!dirty)
+    		rewind();
+    	dirty = true;
     	isRecording = leadIn = true;
     	Loop primary = looper.getPrimary();
 
     	if (primary == null) { // this will be primary
-    		current = 0;
-    		tapeCounter.set(current);
     		if (type == Type.SYNC)
     			measures = JudahClock.getLength();
     		else if (type == Type.BSYNC) {
@@ -303,12 +309,11 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 
     		current = primary.getTapeCounter().get();
     		if (current >= recording.size()) {
-				RTLogger.warn(name, new Throwable("CatchUp error: " + current + " vs. " + recording.size()));
 				current = 0;
-				tapeCounter.set(current);
+				rewind();
     		}
-			else if (tapeCounter.get() != current)
-				tapeCounter.set(current);
+//			else if (tapeCounter.get() != current)
+//				tapeCounter.set(current);
     	}
     	display.measureFeedback();
     }
@@ -322,8 +327,9 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 			// this will be primary
 			length = current;
 			if (type != Type.BSYNC)
-				measures = JudahClock.getLength();
-			tapeCounter.set(0);
+				measures = stopwatch;
+			current = 0;
+			rewind();
 			looper.setPrimary(this);
 		} else if (length == 0) // ??
 			length = looper.getLength();
@@ -333,9 +339,15 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 	/* clock listener */
 	@Override
 	public void update(Property prop, Object value) {
-		if (prop == Property.BARS && type != Type.FREE)
+		if (type == Type.FREE) {
+			if (prop == Property.LOOP && timer && isRecording)
+				capture(false);
+			return;
+		}
+
+		if (prop == Property.BARS)
 			updateBar((int)value);
-		else if (prop == Property.BEAT && type != Type.FREE && looper.getPrimary() == null && !isRecording /* onDeck */)
+		else if (prop == Property.BEAT && looper.getPrimary() == null && !isRecording /* onDeck */)
 			display.setFeedback("- " + (clock.getMeasure() - ((int)value))); // pre-record countdown
 	}
 
@@ -386,7 +398,7 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 		}
 
 		if (current >= recording.size()) {
-			RTLogger.log("Loop " + name, "play error " + recording.size() + " vs. " + current + " vs. " + length);
+			RTLogger.log(name, "play error " + recording.size() + " vs. " + current + " vs. " + length);
 			current = 0;
 			tapeCounter.set(current);
 		}
@@ -413,9 +425,9 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 
             if (in instanceof Instrument)
             	recordCh(in.getLeft(), in.getRight(), newBuffer, amp);
-            else if (in instanceof JudahSynth) {
-            	JudahSynth synth = (JudahSynth)in;
-            	if (!synth.isMuteRecord() && synth.isActive() && !synth.isOnMute())
+            else if (in instanceof TacoSynth) {
+            	TacoSynth synth = (TacoSynth)in;
+            	if (!synth.isMuteRecord() && !synth.isOnMute())
             		recordCh(synth.getLeft(), synth.getRight(), newBuffer, amp);
             }
             else if (in instanceof DrumMachine)
@@ -442,5 +454,17 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
     	AudioTools.add(amp, sourceLeft, target[LEFT]);
     	AudioTools.add(amp, sourceRight, target[RIGHT]);
     }
+
+    /** overdub */
+	@Override public void run() {
+		try {
+			do {
+				int idx = locationQueue.take();
+				recording.set(idx, AudioTools.overdub(newQueue.take(), oldQueue.take()));
+			} while (true);
+		}
+		catch (Exception e) { RTLogger.warn(name, e);}
+	}
+
 
 }

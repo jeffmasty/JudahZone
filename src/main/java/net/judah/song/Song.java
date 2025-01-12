@@ -43,7 +43,7 @@ public class Song {
 	private List<TrackInfo> tracks = new ArrayList<>();
 	private List<Scene> scenes = new ArrayList<>();
 	private List<FxData> fx = new ArrayList<>();
-	private List<String> record = new ArrayList<>();
+	private List<String> capture = new ArrayList<>();
 
 	public Song(Seq seq, int tempo) {
 		Scene created = new Scene(seq); // init w/ 10 midi tracks
@@ -74,9 +74,9 @@ public class Song {
 		if (idx == -1)
 			RTLogger.warn(this, "Unknown scene: " + scene);
 		if (idx == 0) { // save mutes
-			record.clear();
+			capture.clear();
 			JudahZone.getInstruments().forEach(line ->{
-				if (!line.isMuteRecord())record.add(line.getName());});
+				if (!line.isMuteRecord())capture.add(line.getName());});
 		}
 
     	try {

@@ -5,6 +5,7 @@ import java.awt.Point;
 import lombok.Getter;
 import net.judah.seq.MidiView;
 import net.judah.seq.TrackList;
+import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.Gate;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.TrackMenu;
@@ -15,7 +16,7 @@ public class BeatsSection extends MidiView implements BeatsSize {
 	@Getter private final DrumMutes mutes;
 	@Getter private final BeatSteps steps;
 
-	public BeatsSection(MidiTrack t, BeatsTab tab, TrackList tracks) {
+	public BeatsSection(MidiTrack t, BeatsTab tab, TrackList<DrumTrack> tracks) {
 		super(t);
 		steps = new BeatSteps(BEAT_STEPS, track);
 

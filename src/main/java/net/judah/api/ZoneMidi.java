@@ -12,21 +12,21 @@ public interface ZoneMidi extends Receiver, Closeable {
 
 	/** Name of this Receiver */
 	String getName();
-	
+
 	/** Midi Channels managed by this receiver */
-	Vector<MidiTrack> getTracks();
-	
+	Vector<? extends MidiTrack> getTracks();
+
 	/** list of program names */
 	String[] getPatches();
-	
+
 	/** program change on default channel
 	 * @return true on success */
 	boolean progChange(String preset);
-	
+
 	/** @return true if a match is found in patches */
 	boolean progChange(String preset, int channel);
-	
+
 	/** current Program name loaded into a managed channel or -1 */
 	String getProg(int ch);
-	
+
 }

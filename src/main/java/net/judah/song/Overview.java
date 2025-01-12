@@ -240,7 +240,7 @@ public class Overview extends JPanel implements TimeListener {
     	clock.reset();
     	seq.loadSong(song.getTracks());
     	mixer.loadFx(song.getFx());
-    	mixer.mutes(song.getRecord());
+    	mixer.mutes(song.getCapture());
     	chords.load(song);
 
 		setName(song.getFile() == null ? getName() : song.getFile().getName());
@@ -282,9 +282,7 @@ public class Overview extends JPanel implements TimeListener {
 
     public void newSong() {
     	setSong(new Song(seq, (int) clock.getTempo()));
-		getGuitar().setMuteRecord(false);
-		getSynth1().setMuteRecord(false);
-
+    	getInstruments().initMutes();
     }
 
     /** reload from disk, re-set current scene */

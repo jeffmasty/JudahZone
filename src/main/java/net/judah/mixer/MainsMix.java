@@ -13,14 +13,14 @@ public class MainsMix extends MixWidget {
 		sidecar.add(font(mute));
 		sidecar.add(font(fx));
 		sidecar.add(font(sync));
-		
+
 		sync.setSelected(channel.isHotMic());
 		sync.setText("mic");
 		sync.addActionListener(e->channel.hotMic());
 
-		if (channel.getIcon() == null) 
+		if (channel.getIcon() == null)
 			title.setText(channel.getName());
-		else 
+		else
             title.setIcon(channel.getIcon());
 		mute.addActionListener(e->channel.setOnMute(!channel.isOnMute()));
 	}
@@ -29,16 +29,16 @@ public class MainsMix extends MixWidget {
 	protected Color thisUpdate() {
 		if (sync.isSelected() != ((Mains)channel).isHotMic())
 			sync.setSelected(((Mains)channel).isHotMic());
-		sync.setBackground(sync.isSelected() ? YELLOW : null);
-		
+		sync.setBackground(sync.isSelected() ? RED : null);
+
 		if (mute.isSelected() != channel.isOnMute())
 			mute.setSelected(channel.isOnMute());
-		if (channel.isOnMute())  
+		if (channel.isOnMute())
 			return Color.BLACK;
 		if (quiet())
 			return Color.GRAY;
-		
-		return BLUE; // Mains channel 
+
+		return BLUE; // Mains channel
 	}
-	
+
 }

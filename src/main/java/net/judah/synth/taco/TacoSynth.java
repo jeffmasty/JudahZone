@@ -1,11 +1,11 @@
-package net.judah.synth;
+package net.judah.synth.taco;
 import java.nio.FloatBuffer;
 import java.util.List;
-import java.util.Vector;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
+import javax.swing.ImageIcon;
 
 import org.jaudiolibs.jnajack.JackPort;
 
@@ -21,25 +21,21 @@ import net.judah.gui.settable.Program;
 import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
 import net.judah.omni.AudioTools;
-import net.judah.omni.Icons;
-import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.util.RTLogger;
 
-@Getter // Wishlist: portamento/glide, LFOs, PWM, mono-synth, true stereo, envelope to filter
-public class JudahSynth extends Engine {
+@Getter // TODO: portamento/glide, LFOs, PWM, mono-synth, true stereo, envelope to filter
+public class TacoSynth extends Engine {
 
-	public static final String[][] NAMES = {{"S.One", "Synth.png"}, {"S.Two", "Waveform.png"}};
 	public static final int POLYPHONY = 24;
 	public static final int DCO_COUNT = 3;
 	public static final int ZERO_BEND = 8192;
 
-    private final FloatBuffer work = FloatBuffer.allocate(bufSize); // mono-synth algorithm
-
-	private final boolean mono = false; // TODO monosynth switch
-	private final int MIDI_CH = 0; // TODO channel-aware
-	private final KnobMode knobMode = KnobMode.DCO;
-	protected boolean active = true;
+	// private final boolean mono = false; // TODO mono-synth switch
+	// private final int MIDI_CH = 0;  // TODO channel-aware
+	// private boolean active = true; // add/remove a synth from channels list
+    private final FloatBuffer work = FloatBuffer.allocate(bufSize); // not stereo
+	private final KnobMode knobMode = KnobMode.TACO;
 	private final Adsr adsr = new Adsr();
     private final Polyphony notes;
     private final float[] dcoGain = new float[DCO_COUNT];
@@ -48,15 +44,14 @@ public class JudahSynth extends Engine {
 	private final ModWheel modWheel;
 	private final Filter loCut = new Filter(false);
 	private final Filter hiCut = new Filter(false);
-
-	private SynthPresets synthPresets;
+	private final SynthPresets synthPresets;
+    private final SynthKnobs synthKnobs;
     /** modwheel pitchbend semitones */
     @Setter private int modSemitones = 1;
-    private final SynthKnobs synthKnobs;
 
-    public JudahSynth(int idx, JackPort left, JackPort right, JudahClock clock) {
-		super(NAMES[idx][0], false);
-		icon = Icons.get(NAMES[idx][1]);
+    public TacoSynth(String name, ImageIcon picture, JackPort left, JackPort right, JudahClock clock) {
+    	super(name, false);
+    	icon = picture;
 		leftPort = left;
 		rightPort = right;
 
@@ -77,18 +72,16 @@ public class JudahSynth extends Engine {
 
 		synthPresets = new SynthPresets(this);
 		modWheel = new ModWheel(hiCut, loCut);
-		notes = new Polyphony(this, MIDI_CH, POLYPHONY);
-		try {
-			tracks.add(new PianoTrack(name, notes, clock));
-		} catch (InvalidMidiDataException e) { RTLogger.warn(this, e); }
+		notes = new Polyphony(this, 0, POLYPHONY);
+		if (clock != null)
+			try {
+				tracks.add(new PianoTrack(name, notes, clock));
+			} catch (InvalidMidiDataException e) { RTLogger.warn(this, e); }
 		synthKnobs = new SynthKnobs(this);
 		setPreamp(1.8f);
+		gain.setGain(0.5f);
     }
 
-    @Override
-	public Vector<MidiTrack> getTracks() {
-    	return tracks;
-    }
 	public float computeGain(int dco) {
 		return dcoGain[dco] * 0.1f; // dampen
 	}
@@ -174,13 +167,12 @@ public class JudahSynth extends Engine {
 	@Override
 	public void process() {
 
-		if (!active || onMute)
+		if (onMute)
 			return;
         AudioTools.silence(work);
 
-        for (Voice voice : notes.voices) {
+        for (Voice voice : notes.voices)
         	voice.process(notes, adsr, work);
-        }
 
         loCut.process(work);
         hiCut.process(work);
@@ -191,17 +183,4 @@ public class JudahSynth extends Engine {
 	}
 
 }
-
-//	public void setActive(boolean on) {  add/remove synth from channels list
-//		active = on;
-//			if (active) {
-//				JudahZone.getMixer().addChannel(JudahSynth.this);
-//				JudahZone.getSynthPorts().add(midiPort);
-//				// JudahZone.getTracker().updateMidiPorts();
-//			}
-//			else {
-//				notes.flush();
-//				JudahZone.getMixer().removeChannel(JudahSynth.this);
-//				JudahZone.getSynthPorts().remove(midiPort);
-//				// JudahZone.getTracker().updateMidiPorts();
 

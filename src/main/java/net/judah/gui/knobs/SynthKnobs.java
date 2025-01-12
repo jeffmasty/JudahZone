@@ -2,7 +2,6 @@ package net.judah.gui.knobs;
 
 import static net.judah.fx.Filter.Settings.Frequency;
 import static net.judah.fx.Filter.Settings.Resonance;
-import static net.judah.gui.Size.STD_HEIGHT;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -11,7 +10,6 @@ import java.awt.GridLayout;
 import java.util.ArrayList;
 
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -24,7 +22,6 @@ import net.judah.fx.Filter;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
-import net.judah.gui.Size;
 import net.judah.gui.settable.Program;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.CenteredCombo;
@@ -32,15 +29,15 @@ import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.Slider;
 import net.judah.omni.Icons;
 import net.judah.omni.Threads;
-import net.judah.synth.Adsr;
-import net.judah.synth.JudahSynth;
-import net.judah.synth.Shape;
+import net.judah.synth.taco.Adsr;
+import net.judah.synth.taco.Shape;
+import net.judah.synth.taco.TacoSynth;
 import net.judah.util.Constants;
 
 public class SynthKnobs extends KnobPanel {
 	private static final int OCTAVE = 12;
 
-	@Getter private final KnobMode knobMode = KnobMode.DCO;
+	@Getter private final KnobMode knobMode = KnobMode.TACO;
 	private static final Dimension COMBO = new Dimension(55, STD_HEIGHT);
 	public static final String[] DETUNE_OPTIONS = new String[] {
 			"OCT", "5th", "+3", "+2", "+1", "+/-0", "-5th", "SUB"};
@@ -48,7 +45,7 @@ public class SynthKnobs extends KnobPanel {
 			2f, 1.5f, 1.015f, 1.01f, 1.005f, 1f, 0.75f ,0.5f};
 	public static final int DETUNE_NONE = 5;
 
-	@Getter private final JudahSynth synth;
+	@Getter private final TacoSynth synth;
 	@Setter @Getter private static boolean freqMode = true; //. vs resonance mode
 	@Getter private final Program presets;
 
@@ -69,14 +66,13 @@ public class SynthKnobs extends KnobPanel {
 	private final ArrayList<JComboBox<String>> detune = new ArrayList<>();
 	private final JComboBox<Integer> mod = new JComboBox<>();
 
-	private final JButton synthOne = new JButton(JudahSynth.NAMES[0][0]);
-	private final JButton synthTwo = new JButton(JudahSynth.NAMES[1][0]);
-	private final JPanel title = new JPanel(new FlowLayout(FlowLayout.CENTER, 3, 0));
+	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 1));
 
-	public SynthKnobs(JudahSynth zynth) {
-		this.synth = zynth;
-		this.presets = new Program(synth.getTracks().get(0));
-		this.adsr = synth.getAdsr();
+	public SynthKnobs(TacoSynth zynth) {
+		synth = zynth;
+		adsr = synth.getAdsr();
+		presets = synth.getTracks().isEmpty() ? new Program(synth)
+				: new Program(synth.getTracks().get(0));
 
 		for (int i = 0; i < synth.getShapes().length; i++) {
 			JComboBox<Shape> combo = new CenteredCombo<>();
@@ -95,7 +91,7 @@ public class SynthKnobs extends KnobPanel {
 			detune.add(tune);
 		}
 		mod.setToolTipText("Pitchbend Semitones");
-		Gui.resize(mod, Size.MICRO);
+		Gui.resize(mod, MICRO);
 		for (int i = 1; i <= OCTAVE; i++)
 			mod.addItem(i);
 		mod.addActionListener(e->{
@@ -131,28 +127,14 @@ public class SynthKnobs extends KnobPanel {
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		update();
 		listeners();
-		title.setOpaque(true);
-		synthOne.setOpaque(true);
-		synthTwo.setOpaque(true);
-		bg();
-		synthOne.addActionListener(e->MainFrame.setFocus(JudahZone.getSynth1().getSynthKnobs()));
-		synthTwo.addActionListener(e->MainFrame.setFocus(JudahZone.getSynth2().getSynthKnobs()));
-		title.add(synthOne);
-		title.add(synthTwo);
-		title.add(new Btn(Icons.DETAILS_VEW,
-				e->JudahZone.getFrame().edit(JudahZone.getSeq().byName(synth.getName()))));
+
+		title.add(new JLabel(synth.getIcon()));
+		title.add(new JLabel(" "  + synth.getName() + "    " ));
+		title.add(new Btn(" next ", e->JudahZone.getTacos().rotate()));
+		if (!synth.getTracks().isEmpty())
+			title.add(new Btn(Icons.DETAILS_VEW,
+					e->JudahZone.getFrame().edit(synth.getTracks().getFirst())));
 		validate();
-	}
-
-	@Override
-	public JPanel getTitle() {
-		Threads.execute(()->bg());
-		return title;
-	}
-
-	private void bg() {
-		synthOne.setBackground(synth == JudahZone.getSynth1() ? C : null);
-		synthTwo.setBackground(synth == JudahZone.getSynth1() ? null : C);
 	}
 
 	private void listeners() {
@@ -281,8 +263,8 @@ public class SynthKnobs extends KnobPanel {
 
 	@Override
 	public void pad1() {
-		JudahSynth target = (synth == JudahZone.getSynth1()) ? JudahZone.getSynth2() : JudahZone.getSynth1();
-		MainFrame.setFocus(target.getSynthKnobs());
+//		JudahSynth target = (synth == JudahZone.getSynth1()) ? JudahZone.getSynth2() : JudahZone.getSynth1();
+//		MainFrame.setFocus(target.getSynthKnobs());
 	}
 
 	@Override

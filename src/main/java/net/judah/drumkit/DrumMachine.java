@@ -18,6 +18,7 @@ import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.omni.AudioTools;
 import net.judah.omni.Icons;
+import net.judah.seq.Trax;
 import net.judah.seq.track.Cue;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.MidiTrack;
@@ -40,10 +41,10 @@ public class DrumMachine extends Engine {
 		leftPort = outL;
 		rightPort = outR;
 
-		drum1 = new DrumTrack(new DrumKit(this, KitMode.Drum1, "Pearl"), clock);
-		drum2 = new DrumTrack(new DrumKit(this, KitMode.Drum2, "808"), clock);
-		hats = new DrumTrack(new DrumKit(this, KitMode.Hats, "Hats"), clock);
-		fills = new DrumTrack(new DrumKit(this, KitMode.Fills, "VCO"), clock);
+		drum1 = new DrumTrack(new DrumKit(this, Trax.D1, "Pearl"), clock);
+		drum2 = new DrumTrack(new DrumKit(this, Trax.D2, "808"), clock);
+		hats = new DrumTrack(new DrumKit(this, Trax.H1, "Hats"), clock);
+		fills = new DrumTrack(new DrumKit(this, Trax.H2, "VCO"), clock);
 		tracks.add(drum1);
 		tracks.add(drum2);
 		tracks.add(hats);
@@ -66,7 +67,7 @@ public class DrumMachine extends Engine {
 		return current.getKit().getGui();
 	}
 
-	public KitKnobs getKnobs(KitMode mode) {
+	public KitKnobs getKnobs(Trax mode) {
 		for (int i = 0; i < tracks.size(); i++) {
 			if (((DrumTrack)tracks.get(i)).getKit().getKitMode() == mode)
 				return ((DrumTrack)tracks.get(i)).getKit().getGui();
@@ -124,14 +125,14 @@ public class DrumMachine extends Engine {
 		getChannel(midi.getChannel()).send(midi);
 	}
 
-	private DrumKit getChannel(int channel) {
+	public DrumKit getChannel(int channel) {
 		for (MidiTrack t : tracks)
 			if (t.getCh() == channel)
 				return ((DrumTrack)t).getKit();
 		return null;
 	}
 
-	public void focus (KitMode mode) {
+	public void focus (Trax mode) {
 		if (MainFrame.getKnobMode() != knobMode)
 			MainFrame.setFocus(knobMode);
 		KitKnobs target = getKnobs(mode);

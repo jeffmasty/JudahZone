@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import net.judah.seq.arp.ArpInfo;
-import net.judah.seq.arp.Mode;
+import net.judah.seq.arp.Arp;
 import net.judah.seq.track.Cycle;
 
 /** Serialized MidiTrack state for a given Scene */
@@ -17,7 +17,7 @@ public class Sched {
 	public Cycle cycle = Cycle.AB;
 	public int launch;
 	public float amp = 0.6f;
-	public Mode mode;
+	public Arp mode;
 
 	private String program;
 	@JsonInclude(Include.NON_NULL)

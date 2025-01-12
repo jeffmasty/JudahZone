@@ -18,6 +18,7 @@ public class Constants {
 	public static final String RIGHT_PORT = "system:playback_2";
 	public static final String GUITAR_PORT = "system:capture_5";
 	public static final String MIC_PORT = "system:capture_4";
+	public static final String AUX_PORT = "system:capture_1";
 	public static final String CRAVE_PORT = "system:capture_3";
 
 	public static final String GUITAR = "Gtr";

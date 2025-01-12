@@ -4,9 +4,9 @@ import javax.sound.midi.ShortMessage;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
+import net.judah.controllers.MPKmini;
 import net.judah.midi.Midi;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.Poly;
@@ -17,14 +17,14 @@ import net.judah.seq.track.PianoTrack;
 public class MPKTranspose extends Algo implements TimeListener, Feed, Ignorant {
 
 	private final PianoTrack track;
-	@Getter private int amount;
 	@Setter @Getter private static Integer onDeck;
-	
+	@Getter private int amount;
+
 	public MPKTranspose(PianoTrack t) {
 		this.track = t;
 		track.getClock().addListener(this);
-		
-		JudahZone.getMidi().getMpk().setMidiTrack(track);
+
+		MPKmini.instance.setCaptureTrack(track);
 	}
 
 	public ShortMessage apply(ShortMessage midi)  {
@@ -53,5 +53,5 @@ public class MPKTranspose extends Algo implements TimeListener, Feed, Ignorant {
 	public void process(ShortMessage m, Chord chord, Poly result) {
 		result.add(m.getData1() + amount);
 	}
-	
+
 }

@@ -14,7 +14,8 @@ import net.judah.JudahZone;
 import net.judah.api.ZoneMidi;
 import net.judah.mixer.Instrument;
 import net.judah.seq.track.MidiTrack;
-import net.judah.synth.Polyphony;
+import net.judah.seq.track.PianoTrack;
+import net.judah.synth.taco.Polyphony;
 import net.judah.util.RTLogger;
 
 /** base function for an external synth */
@@ -23,10 +24,10 @@ public class MidiInstrument extends Instrument implements ZoneMidi {
 
 	@Setter protected JackPort midiPort;
 	protected String[] patches = new String[] {};
-	protected Vector<MidiTrack> tracks = new Vector<>();
+	protected Vector<PianoTrack> tracks = new Vector<>();
 	private Polyphony notes;
-	
-	public MidiInstrument(String channelName, String sourceLeft, String sourceRight, 
+
+	public MidiInstrument(String channelName, String sourceLeft, String sourceRight,
 			JackPort left, JackPort right, String icon, JackPort midi) {
 		super(channelName, sourceLeft, sourceRight, icon);
 		leftPort = left;
@@ -34,7 +35,7 @@ public class MidiInstrument extends Instrument implements ZoneMidi {
 		JudahZone.getServices().add(this);
 		midiPort = midi;
 	}
-	
+
 	/** mono-synth */
 	public MidiInstrument(String name, String sourcePort, JackPort mono, String icon, JackPort midi) {
 		super(name, sourcePort, mono, icon);
@@ -44,7 +45,7 @@ public class MidiInstrument extends Instrument implements ZoneMidi {
 
 	@Override public final void send(MidiMessage message, long timeStamp) {
 		try {
-			JackMidi.eventWrite(midiPort, (int)timeStamp, 
+			JackMidi.eventWrite(midiPort, (int)timeStamp,
 					message.getMessage(), message.getLength());
 			if (message instanceof ShortMessage)
 				for (MidiTrack t : getTracks())
@@ -66,7 +67,7 @@ public class MidiInstrument extends Instrument implements ZoneMidi {
 	public String getProg(int ch) {
 		return "none";
 	}
-	
+
 	public MidiTrack trackByName(String name) {
 		for (MidiTrack t : tracks)
 			if (t.getName().equals(name))

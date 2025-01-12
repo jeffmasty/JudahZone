@@ -106,8 +106,13 @@ public class LoopMix extends MixWidget implements Updateable {
 			int countdown = JudahClock.getLength();
 			text = countdown < 10 ? "-" + countdown + "-" : "" + countdown;
 		}
-		else
+		else {
 			text = channel.getName();
+			if (looper.getPrimary() != null && loop.getType() != Type.FREE && loop.factor() > 1)
+				text = (int)loop.factor() + "x"; // duplications
+		}
+
+
 		if (!title.getText().equals(text))
 			title.setText(text);
 	}

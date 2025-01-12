@@ -12,7 +12,7 @@ import net.judah.gui.MainFrame;
 
 @RequiredArgsConstructor @Getter
 public class Actives extends ArrayList<ShortMessage> {
-	
+
 	protected final ZoneMidi midiOut;
 	protected final int channel;
 	/** max number of notes per channel */
@@ -20,11 +20,12 @@ public class Actives extends ArrayList<ShortMessage> {
 
 	// Polyphony class overrides for JudahSynth
 	public void receive(ShortMessage msg) {
-		if (Midi.isNoteOn(msg)) 
+		if (Midi.isNoteOn(msg))
 			add(msg);
 		else if (Midi.isNoteOff(msg))
 			noteOff(msg);
-		MainFrame.update(this); 
+		if (!midiOut.getTracks().isEmpty())
+			MainFrame.update(this);
 	}
 
 	/**@param ref  fill ref with data1 midi values of current voices */
@@ -36,7 +37,7 @@ public class Actives extends ArrayList<ShortMessage> {
 	}
 
 	public ShortMessage find(int data1) {
-		for (int i = 0; i < size(); i++) 
+		for (int i = 0; i < size(); i++)
 			if (get(i) != null && get(i).getData1() == data1)
 				return (get(i));
 		return null;
@@ -47,7 +48,7 @@ public class Actives extends ArrayList<ShortMessage> {
 		super.clear();
 		MainFrame.update(this);
 	}
-	
+
 	public void noteOff(ShortMessage msg) {
 		ShortMessage found = find(msg.getData1());
 		while (found != null) {
@@ -63,6 +64,6 @@ public class Actives extends ArrayList<ShortMessage> {
 				return i;
 		return -1;
 	}
-	
+
 
 }

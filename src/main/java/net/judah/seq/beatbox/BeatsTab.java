@@ -1,5 +1,7 @@
 package net.judah.seq.beatbox;
 
+import static net.judah.seq.MidiConstants.DRUM_CH;
+
 import java.util.ArrayList;
 
 import lombok.Getter;
@@ -8,6 +10,8 @@ import net.judah.gui.MainFrame;
 import net.judah.seq.MidiTab;
 import net.judah.seq.MidiView;
 import net.judah.seq.TrackList;
+import net.judah.seq.track.Computer;
+import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.MidiTrack;
 
 
@@ -15,24 +19,24 @@ import net.judah.seq.track.MidiTrack;
 public class BeatsTab extends MidiTab {
 	public static final String NAME = "BeatBox";
 
-	@Getter private final TrackList top = new TrackList();
-	@Getter private final TrackList bottom = new TrackList();
+	@Getter private final TrackList<DrumTrack> top = new TrackList<DrumTrack>();
+	@Getter private final TrackList<DrumTrack> bottom = new TrackList<DrumTrack>();
 	private final ArrayList<BeatsSection> bottomViews = new ArrayList<>();
 	private final ArrayList<BeatsSection> topViews = new ArrayList<>();
-	
-	public BeatsTab(TrackList list) {
+
+
+	public BeatsTab(TrackList<DrumTrack> list) {
 		super(list);
 		setName(NAME);
 		top.addAll(list);
 		top.forEach(t->topViews.add(new BeatsSection(t, this, top)));
-		top.init(top.get(0)); // drum1 
+		top.init(top.get(0)); // drum1
 		bottom.addAll(list);
 		bottom.forEach(t->bottomViews.add(new BeatsSection(t, this, bottom)));
 		bottom.init(bottom.get(2)); // hats
-
-		current = topViews.get(0);
+		tracks.setCurrent(tracks.getFirst());
 	}
-	
+
 	@Override
 	public MidiView getView(MidiTrack t) {
 		BeatsSection it = getView(t, true);
@@ -41,28 +45,36 @@ public class BeatsTab extends MidiTab {
 		return getView(t, false);
 	}
 
-	public BeatsSection getView(MidiTrack t, boolean upper) {
+	public BeatsSection getView(Computer t, boolean upper) {
 		for (BeatsSection v : upper ? topViews : bottomViews)
 				if (v.getTrack() == t)
 					return v;
 		return null;
 	}
-	
+
 	@Override
 	public void changeTrack() {
+		MidiTrack next = tracks.getCurrent();
+		int ch = tracks.getCurrent().getCh();
+		if (ch == DRUM_CH || ch == DRUM_CH + 1)
+			top.setCurrent(next);
+		else
+			bottom.setCurrent(next);
+
 		removeAll();
 		add(getView(top.getCurrent(), true));
 		add(getView(bottom.getCurrent(), false));
 		repaint();
 		MainFrame.qwerty();
+		requestFocusInWindow();
+
 	}
-	
+
 	public void midiUpdate(boolean upper) {
 		if (upper)
 			getView(top.getCurrent(), true).getInstrumentPanel().repaint();
 		else
 			getView(bottom.getCurrent(), false).getInstrumentPanel().repaint();
-
 	}
 
 	@Override public void update(MidiTrack o) {
@@ -78,11 +90,4 @@ public class BeatsTab extends MidiTab {
 		getView(bottom.getCurrent(), false).getMutes().update(pad);
 	}
 
-	public void setCurrent(MidiView view) {
-		current = view;
-		getView(top.getCurrent(), true).getMenu().update();
-		getView(bottom.getCurrent(), false).getMenu().update();
-		requestFocusInWindow();
-	}
-	
 }

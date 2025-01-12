@@ -21,11 +21,13 @@ import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.sampler.Sampler;
+import net.judah.seq.Trax;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.MidiTrack;
 import net.judah.song.FxData;
 import net.judah.song.cmd.Cmdr;
 import net.judah.song.cmd.Param;
+import net.judah.synth.taco.TacoTruck;
 import net.judah.util.RTLogger;
 
 /** Graphical representation of the Mixer*/
@@ -48,12 +50,12 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
         	i.getGui();
 		for (Loop l : looper)
 			l.getGui();
-    	
+
     	this.sources = sources;
     	all.add(mains);
         all.addAll(looper);
 		all.addAll(sources);
-		for (MidiTrack track : drums.getTracks()) 
+		for (MidiTrack track : drums.getTracks())
 			all.add( ((DrumTrack)track).getKit().getFx());
 		all.addAll(sampler);
 		all.addAll(sampler.getStepSamples());
@@ -82,31 +84,30 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
         clock.addListener(this);
     }
 
-    
     public void addChannel(Channel ch) {
     	for (Channel already : channels)
     		if (already == ch)
     			return;
 	    channels.add(ch);
     }
-	    
+
     public void removeChannel(Channel ch) {
-	    if (!channels.contains(ch)) 
+	    if (!channels.contains(ch))
 		    return;
 	    MixWidget fade = getFader(ch);
 	    remove(fade);
 	    faders.remove(fade);
 	    channels.remove(ch);
     }
- 	    
+
 	public void update(Channel channel) {
-		for (MixWidget ch : faders) 
-			if (ch.channel.equals(channel)) 
+		for (MixWidget ch : faders)
+			if (ch.channel.equals(channel))
 				ch.update();
 	}
 
 	public void updateAll() {
-		for (MixWidget ch : faders) 
+		for (MixWidget ch : faders)
 			ch.update();
 	}
 
@@ -115,9 +116,9 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 			ch.setBorder(s.contains(ch.channel) ? Gui.HIGHLIGHT : Gui.NO_BORDERS);
 		}
 	}
-	
+
 	public void highlight(Channel o) {
-		for (MixWidget ch : faders) 
+		for (MixWidget ch : faders)
 			ch.setBorder(ch.channel == o ? Gui.HIGHLIGHT : Gui.NO_BORDERS);
 	}
 
@@ -127,7 +128,7 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 				return fade;
 		return null;
 	}
-	
+
 	public Channel byName(String channel) {
 		for (Channel ch : all)
 			if (ch.getName().equals(channel))
@@ -143,7 +144,7 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 	    	combo = new JComboBox<>(chz.toArray(new Channel[chz.size()]));
 	    	combo.setFont(Gui.BOLD13);
 	    	combo.addActionListener(e-> {
-	    		if (!comboOverride) 
+	    		if (!comboOverride)
 	    			MainFrame.setFocus(((Channel)combo.getSelectedItem()).getLfoKnobs());});
 		}
 		comboOverride = true;
@@ -156,8 +157,9 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 	public void loadFx(List<FxData> data) {
 		for (FxData fx : data) {
 			Channel ch = byName(fx.getChannel());
-			if (ch == null) {
-				RTLogger.warn(this, "Skipping Ch Fx: " + fx.getChannel());
+			if (ch == null) { // Legacy
+				ch = sources.byName(TacoTruck.NAME);
+				RTLogger.warn(this, "remapped " + fx.getChannel() + " FX to " + ch.name);
 				continue;
 			}
 			ch.setPreset(fx.getPreset());
@@ -166,9 +168,12 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 
 	@Override
 	public Channel resolve(String key) {
-		for (Channel ch : channels) 
+		for (Channel ch : channels)
 			if (ch.getName().equals(key))
 				return ch;
+		for (Trax legacy : Trax.values())
+			if (legacy.getName().equals(key))
+				return resolve(legacy.toString());
 		return null;
 	}
 
@@ -190,7 +195,7 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 			case Mute:
 				ch.setOnMute(true);
 				break;
-			case Unmute: 
+			case Unmute:
 				ch.setOnMute(false);
 				break;
 			default: throw new InvalidParameterException("" + p);
@@ -198,7 +203,7 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 	}
 
 	public void mutes(List<String> record) {
-		
+
 		for (LineIn in : sources)
 			in.setMuteRecord(true);
 		for (Channel ch : channels)
@@ -232,5 +237,5 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 			mains.setCopy(true);
 		MainFrame.update(getFader(ch).gain);
 	}
-	
+
 }

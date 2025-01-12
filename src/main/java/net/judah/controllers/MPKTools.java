@@ -27,7 +27,6 @@ import net.judah.util.RTLogger;
  95 phaser */
 public interface MPKTools {
 
-	public static final String NAME = "MPKmini2"; // midi port
 	public static final int thresholdLo = 1;
 	public static final int thresholdHi = 98;
 
@@ -39,11 +38,34 @@ public interface MPKTools {
 	public static final int RED_BANK = 1;
 	public static final int ABANK = 0;
 	public static final int BBANK = 1;
+	public static final byte[] SUSTAIN_ON = Midi.create(Midi.CONTROL_CHANGE, 0, 64, 127).getMessage();
+	public static final byte[] SUSTAIN_OFF = Midi.create(Midi.CONTROL_CHANGE, 0, 64, 0).getMessage();
+	public static final int JOYSTICK_L = 127;
+	public  static final int JOYSTICK_R = 0;
+
 
 	public static final List<Integer> DRUMS_A = Arrays.asList(new Integer[]
 		{48, 49, 50, 51, 44, 45, 46, 47});
 	public static final List<Integer> DRUMS_B = Arrays.asList(new Integer[]
 			{36, 37, 38, 39, 32, 33, 34, 35});
+
+	public static int drumBank(int data1) {
+		for (int i = 0; i < DRUMS_B.size() ; i++)
+			if (DRUMS_B.get(i) == data1)
+				return 1;
+		return 0;
+	}
+
+	public static int drumIndex(int data1) {
+		for (int i = 0; i < DRUMS_A.size() ; i++)
+			if (DRUMS_A.get(i) == data1)
+				return i;
+			else if (DRUMS_B.get(i) == data1)
+				return i;
+		return 0;
+	}
+
+
 
 	/** handles Prog Select 0 */
 	public static String format(Midi midi) {
@@ -112,7 +134,7 @@ public interface MPKTools {
 
 	public static final List<Integer> SAMPLES_CC = Arrays.asList(
 			new Integer[] {90, 96, 99, 100, 97, 98, 101, 102});
-	
+
 	public static int [][][] PROG_CHANGES = {
 			{ 									   // green
 				{ 1,  2,  3,  4,  5,  6,  7,  8}, // lvl1

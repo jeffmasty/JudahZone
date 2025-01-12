@@ -29,7 +29,6 @@ import net.judah.JudahZone;
 import net.judah.fx.Gain;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Size;
 import net.judah.gui.fx.PresetsView.Button;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
@@ -117,11 +116,11 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		add(Box.createHorizontalStrut(6));
-		add(Gui.resize(btns, new Dimension(92, Size.HEIGHT_KNOBS - 30)));
+		add(Gui.resize(btns, new Dimension(92, HEIGHT_KNOBS - 30)));
 		add(scroll);
 		add(Box.createHorizontalStrut(13));
 
-		title.add(Gui.resize(custom, Size.WIDE_SIZE));
+		title.add(Gui.resize(custom, WIDE_SIZE));
 		title.add(new Btn(Icons.SAVE, e-> {if (setlist != null) setlist.save();}));
 		title.add(new Btn(Icons.NEW_FILE, e->newSetlist()));
 		title.invalidate();

@@ -4,9 +4,10 @@ import java.awt.Dimension;
 
 public interface Size {
 
+    int STD_HEIGHT = 26;
 	int WIDTH_FRAME = 1368;
     int WIDTH_KNOBS = 346;
-    int WIDTH_TAB = WIDTH_FRAME - WIDTH_KNOBS - 1; 
+    int WIDTH_TAB = WIDTH_FRAME - WIDTH_KNOBS - 1;
     int HEIGHT_FRAME = 734;
     int HEIGHT_KNOBS = 290;
     int HEIGHT_MIXER = 154;
@@ -15,8 +16,8 @@ public interface Size {
     Dimension TAB_SIZE = new Dimension(WIDTH_TAB, HEIGHT_TAB);
     Dimension KNOB_PANEL = new Dimension(WIDTH_KNOBS - 2, HEIGHT_KNOBS - 2);
     Dimension MIXER_SIZE = new Dimension(WIDTH_TAB, HEIGHT_MIXER);
+    Dimension KNOB_TITLE = new Dimension(KNOB_PANEL.width, STD_HEIGHT + 5);
 
-    int STD_HEIGHT = 26;
     Dimension TITLE_SIZE = new Dimension(150, 33);
     Dimension WIDE_SIZE = new Dimension(120, STD_HEIGHT);
     Dimension COMBO_SIZE = new Dimension(100, STD_HEIGHT);
@@ -26,5 +27,4 @@ public interface Size {
     Dimension TINY = new Dimension(43, STD_HEIGHT);
 	Dimension MODE_SIZE = new Dimension(70, STD_HEIGHT);
 	Dimension FADER_SIZE = new Dimension(50, 76);
-	Dimension KNOB_TITLE = new Dimension(100, 33);
 }

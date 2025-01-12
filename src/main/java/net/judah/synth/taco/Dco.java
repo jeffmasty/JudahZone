@@ -1,4 +1,4 @@
-package net.judah.synth;
+package net.judah.synth.taco;
 
 import java.nio.FloatBuffer;
 
@@ -13,7 +13,7 @@ public class Dco {
 	private final int SAMPLE_RATE = Constants.sampleRate();
 	private final int BUF_SIZE = Constants.bufSize();
 	private final int idx;
-	private final JudahSynth synth;
+	private final TacoSynth synth;
 	
 	@Getter private float freq;
 	private float phase;

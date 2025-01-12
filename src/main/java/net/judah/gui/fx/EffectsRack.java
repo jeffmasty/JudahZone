@@ -26,14 +26,12 @@ import net.judah.omni.Pair;
 
 public class EffectsRack extends JPanel implements MPKTools {
 
-    public static final String TAB_NAME = "Effects";
     public static final int COLUMNS = 4;
 
     @Getter private final Channel channel;
+    @Getter private final ChannelTitle title;
     private final ArrayList<Row> labels = new ArrayList<>();
     private final ArrayList<Row> knobs = new ArrayList<>();
-    private final JPanel rows;
-    @Getter private final ChannelTitle title;
 
     public EffectsRack(Channel channel, Looper looper) {
         this.channel = channel;
@@ -62,14 +60,14 @@ public class EffectsRack extends JPanel implements MPKTools {
         		new Pair("     ", channel.getEq()),
         		new Pair("EQ     ", channel.getEq()),
 	    		new Pair("     ", channel.getEq()),
-        		new Pair("Volume", channel.getGain())}));
+	    		new Pair(" Pan ", channel.getGain())}));
 
         lbls = new Row(channel);
         components = lbls.getControls();
         components.add(channel.getPresets());
         components.add(new FilterType(channel.getFilter1(), channel));
         components.add(new FilterType(channel.getFilter2(), channel));
-        components.add(new FxTrigger("Pan", channel.getGain(), channel));
+        components.add(new FxTrigger("Volume", channel.getGain(), channel));
         labels.add(lbls);
 
         knobs.add(new RowKnobs(channel, 0));
@@ -78,7 +76,7 @@ public class EffectsRack extends JPanel implements MPKTools {
         knobs.add(new RowKnobs(channel, 3));
 
         GridBagLayout layout = new GridBagLayout();
-        rows = new JPanel(layout);
+        JPanel rows = new JPanel(layout);
         GridBagConstraints c = new GridBagConstraints();
         c.ipadx = 0;
         c.fill = GridBagConstraints.HORIZONTAL;
@@ -152,7 +150,7 @@ public class EffectsRack extends JPanel implements MPKTools {
         	eq(EQ.EqBand.High, up);
         	break;
         case 7:
-        	channel.getGain().set(Gain.VOLUME, offset(channel.getVolume(), up));
+        	channel.getGain().set(Gain.PAN, offset(channel.getGain().get(Gain.PAN), up));
             break;
         case 8:
         	Overdrive dist = channel.getOverdrive();
@@ -192,7 +190,7 @@ public class EffectsRack extends JPanel implements MPKTools {
         	filter2.setActive(hz < thresholdHi);
         	break;
         case 15:
-        	channel.getGain().set(Gain.PAN, offset(channel.getGain().get(Gain.PAN), up));
+        	channel.getGain().set(Gain.VOLUME, offset(channel.getVolume(), up));
         	break;
     	}
     	MainFrame.update(channel);

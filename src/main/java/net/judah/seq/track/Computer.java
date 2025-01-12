@@ -23,7 +23,7 @@ public abstract class Computer {
 	/** end of the last note */
 	public abstract int bars();
 	public final int frames() { return (int) Math.ceil(bars() / 2f); }
-	public boolean isActive() { return state.active; }
+	public final boolean isActive() { return state.active; }
     public Cycle getCycle() { return state.cycle; }
     public int getLaunch() { return state.launch; }
     public float getAmp() { return state.amp; }

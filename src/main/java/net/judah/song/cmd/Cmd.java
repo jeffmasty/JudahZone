@@ -21,7 +21,7 @@ public enum Cmd {
 	public static Cmdr getCmdr(Cmd cmd) {
 		switch (cmd) {
 
-		case MPK:		return getSeq().getSynthTracks();
+		case MPK:		return getMidiGui();
 		case Length:	return getSeq();
 		case TimeCode:	return IntProvider.instance();
 		case Start:		return BooleanProvider.instance;

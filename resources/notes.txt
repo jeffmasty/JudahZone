@@ -1,31 +1,35 @@
 TODO:
 
-MPK(JAM):  synth fluid bass
-upgrade Fluid ver. (re-compile)
-   -p, --portname=[label]
-              Set  MIDI  port  name  (alsa_seq,  coremidi
-              drivers)
---portname=[track.getName()]
-	-g, --gain
-              Set the master gain [0 < gain < 10, default
-              = 0.2]
-+Synth +Fluid
-beatstep cycles through JudahSynths (each Channel) and Fluids (2 Channels)
+Scope, Meters [log  vol  tune  hz]
+MidiTrack Tests		PianoTrack synth =(PianoTrack) seq.getSynthTracks().getFirst();
+			DrumTrack drums = (DrumTrack) seq.getDrumTracks().getFirst();
+			// 1. load notes
+			// 2. select notes
+			// 3. drag notes
+			// 4. confirm/delete // ± ⏺
+			Etudes test = new Etudes(synth, (MusicBox) frame.getSynthBox().getMusician());
+			synth.clear();
 
+drag'n'drop bug
+capture individual Drum Track channels
+New Song save, update drop-downs and setlist
 chorus time sync off (1/x)
 LoopToDisk recording length off
-Song: refactor {record} field to {capture} (Java keyword)
-FxChain: refactor Channel as list of available and active effects
-seq.loadSong(Unknown File) feedback
-Directives.BREAKS ChordPro.@ ChordPro.%   Cycle breaks: A3_ ABC_ TOF_?
+Omni*[DrumZone].detach()
+Drum decay based on sample length (Kit Knobs & Distortion scratchy)
+MidiSongFile? meta messages, tracks [0], 1, 2, 3, 4, 5, 6,  9, 10, 11, 12 
 MidiTrack: tests, sustain note offs drag-n-drop, Record progchange, CC, pitchbend, vol
 PianoEditor: drag-n-drop/transpose across frame, falling water, REL/Modal
-Drum decay based on sample length (Kit Knobs & Distortion scratchy)
-Scope, Meters [log  vol  tune  hz] (MPKMini.midiBtnSequence
+FxChain: refactor Channel as list of available and active effects // forEach()-> activeFx.process(left, right);
+seq.loadSong(Unknown File) feedback
+upgrade Fluid ver. to multi-channel (re-compile)
+   -p, --portname=[label] Set  MIDI  port  name  (alsa_seq,  coremidi) --portname=[track.getName()]
+Directives.BREAKS ChordPro.@ ChordPro.%   Cycle breaks: A3_ ABC_ TOF_?
+
 Hot Mic 2.0, pattern navigation 
 Probability, Ritardando, microsteps
 Scene REL OnDeck Cmd2.0, step cmd, jamstik cmd
-internal clock, Fifths arppegiator, gate, Swing Pt.II
+Fifths arppegiator, gate, Swing Pt.II
 sample packs, toggle one-shot/loop/hot
 Synth: envelope to filter, LFO, glide, PWM, mono-synth, env off
 walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
@@ -44,6 +48,8 @@ add tracks/synths
 
 
 --etc-----------------------
+sudo systemctl disable docker
+https://melanchall.github.io/drywetmidi/articles/tools/Quantizer.html
 samples: https://freesound.org/people/laffik/packs/38658/
 Latency + bleeding edge
 clipping/xruns filter see https://github.com/psambit9791/jDSP Peak/Spike
@@ -62,7 +68,7 @@ https://github.com/orsjb/beads
 https://evanxmerz.com/soundsynthjava/Sound_Synth_Java.html#getting_started
 java analyse and sequence music https://github.com/arnaudh/elusive-sound
 Java music visualization: https://github.com/trungd/acoustic-signal-processing
-https://github.com/a-schild/jave2
+ffmpeg wrapper https://github.com/a-schild/jave2
 https://github.com/ryukau/LV2Plugins
 Jack's alsa driver/client tries to use SND_PCM_FMT_S32_LE, signed 32-bit PCM little endian, 
 which is the format used by all current 24 bit audio cards except for some USB interfaces

@@ -16,17 +16,18 @@ import net.judah.midi.Actives;
 import net.judah.midi.Midi;
 import net.judah.mixer.LineIn;
 import net.judah.omni.AudioTools;
+import net.judah.seq.Trax;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
-@Getter  
+@Getter
 public class DrumKit extends Actives {
-	public static final int SAMPLES = 8;
+	public static final int SAMPLES = DrumType.values().length;
 
 	private final DrumMachine machine;
 	private final DrumSample[] samples = new DrumSample[SAMPLES];
-	private final KitMode kitMode;
+	private final Trax kitMode;
 	private final KnobMode knobMode = KnobMode.KITS;
 	protected final FloatBuffer left;
     protected final FloatBuffer right;
@@ -36,11 +37,11 @@ public class DrumKit extends Actives {
 	/** true if OHat shuts off when CHat plays */
 	@Setter private boolean choked = true;
 	private DrumPreset preset;
-	private final LineIn fx; 
-	
-	public DrumKit(DrumMachine drums, KitMode mode) throws InvalidMidiDataException {
+	private final LineIn fx;
+
+	public DrumKit(DrumMachine drums, Trax mode) throws InvalidMidiDataException {
 		super(drums, mode.getCh(), SAMPLES);
-		
+
 		fx = new LineIn(mode.name(), true) ;
 		left = fx.getLeft();
 		right = fx.getRight();
@@ -50,10 +51,10 @@ public class DrumKit extends Actives {
 			samples[i] = new DrumSample(DrumType.values()[i], this);
 		gui = new KitKnobs(this);
 	}
-	
-	public DrumKit(DrumMachine drums, KitMode mode, String kit) throws Exception {
+
+	public DrumKit(DrumMachine drums, Trax mode, String kit) throws Exception {
 		this(drums, mode);
-		
+
 		for (File folder : Folders.getKits().listFiles()) {
 			if (folder.isDirectory()  && folder.getName().equals(kit)) {
 				this.preset = new DrumPreset(folder);
@@ -65,7 +66,7 @@ public class DrumKit extends Actives {
 		}
 		RTLogger.warn(this, mode.name() + " missing " + kit);
 	}
-	
+
 	public void send(ShortMessage midi) {
 		int data1 = midi.getData1();
 		for (DrumSample sample : samples) {
@@ -75,7 +76,7 @@ public class DrumKit extends Actives {
 			sample.getEnvelope().reset();
 			sample.play(true);
 			if (sample.getDrumType() == DrumType.CHat && choked) {// TODO multi
-				if (samples[DrumType.OHat.ordinal()].isPlaying()) 
+				if (samples[DrumType.OHat.ordinal()].isPlaying())
 					noteOff(CHOKE);
 			}
 
@@ -86,7 +87,7 @@ public class DrumKit extends Actives {
 				set(idx, midi);
 		}
 		MainFrame.update(this);
-		
+
 	}
 
 	public boolean hasWork() {
@@ -94,14 +95,14 @@ public class DrumKit extends Actives {
 			if (drum.isPlaying()) return true;
 		return false;
 	}
-	
+
 	public void close() {
-		for (DrumSample s : samples) 
+		for (DrumSample s : samples)
 			s.off();
 	}
 
 	public boolean progChange(String name) {
-		for (DrumSample s : samples) 
+		for (DrumSample s : samples)
 			s.play(false);
 		// todo custom kits
 		for (File folder : Folders.getKits().listFiles()) {
@@ -113,7 +114,7 @@ public class DrumKit extends Actives {
 					for (int i = 0; i < samples.length; i++)
 						if (preset.get(i) != null)
 							samples[i].setRecording(preset.get(i));
-					MainFrame.update(Program.first(machine, channel)); 
+					MainFrame.update(Program.first(machine, channel));
 				} catch (Exception e) {
 					RTLogger.warn(this, e);
 				}
@@ -126,7 +127,7 @@ public class DrumKit extends Actives {
 	public void process() {
 		AudioTools.silence(left);
 		AudioTools.silence(right);
-		for (DrumSample drum: samples)  
+		for (DrumSample drum: samples)
 			drum.process(left, right);
 		fx.processStereoFx(1f);
 	}

@@ -22,6 +22,7 @@ import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
 import net.judah.midi.JudahClock;
 import net.judah.omni.Threads;
+import net.judah.seq.track.MidiTrack;
 import net.judah.song.Overview;
 import net.judah.song.setlist.Setlist;
 import net.judah.util.Folders;
@@ -32,6 +33,7 @@ public class JudahMenu extends JMenuBar {
 
 	/** If true, focus on sheet music tab when songs load */
 	@Getter private final JCheckBoxMenuItem sheets = new JCheckBoxMenuItem("Sheets");
+	private final JMenu trax;
 
 	public static class Actionable extends JMenuItem {
 		public Actionable(String lbl, ActionListener l) {
@@ -45,8 +47,9 @@ public class JudahMenu extends JMenuBar {
 	}
 
 	public JudahMenu(int width) {
+	    trax = new JMenu(getSeq().getCurrent().getName());
 
-		JMenu song = new JMenu("Song");
+	    JMenu song = new JMenu("Song");
 		JMenu setlist = new JMenu("Setlist");
 	    JMenu loops = new JMenu("Looper");
 	    JMenu erase = new JMenu("Erase");
@@ -140,11 +143,16 @@ public class JudahMenu extends JMenuBar {
     	tools.add(new Actionable("JIT!", e->justInTimeCompiler()));
         tools.add(new Actionable("A2J!", e->getMidi().recoverMidi()));
         tools.add(new Actionable("Scope", e->getFrame().getTabs().scope()));
+
+        trax.add(new Actionable("Play/Stop", e->getSeq().getCurrent().trigger()));
+        trax.add(new Actionable("Send to...", e->getSeq().getDrumTracks().getLast().load(getSeq().getCurrent())));
+
         add(song);
         add(loops);
         add(time);
         add(knobs);
         add(tools);
+        add(trax);
 
 	}
 
@@ -156,6 +164,10 @@ public class JudahMenu extends JMenuBar {
 		} catch (Throwable t) {
 			RTLogger.log(this, "Length not changed.");
 		}
+	}
+
+	public void trax(MidiTrack hello) {
+		trax.setText(hello.getName());
 	}
 
 }

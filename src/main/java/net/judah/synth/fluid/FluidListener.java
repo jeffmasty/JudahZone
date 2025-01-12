@@ -1,4 +1,4 @@
-package net.judah.midi.fluid;
+package net.judah.synth.fluid;
 
 import java.io.BufferedReader;
 import java.io.InputStream;

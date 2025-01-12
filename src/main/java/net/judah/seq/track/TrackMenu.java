@@ -1,9 +1,12 @@
 package net.judah.seq.track;
 
+import static net.judah.JudahZone.getSeq;
+
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Enumeration;
+import java.util.Vector;
 
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
@@ -41,9 +44,8 @@ import net.judah.seq.MidiTools;
 import net.judah.seq.MidiView;
 import net.judah.seq.MusicBox;
 import net.judah.seq.Notes;
-import net.judah.seq.TrackList;
 import net.judah.seq.Transpose;
-import net.judah.seq.arp.Mode;
+import net.judah.seq.arp.Arp;
 import net.judah.seq.beatbox.BeatsSize;
 import net.judah.seq.beatbox.BeatsTab;
 import net.judah.seq.piano.Octaves;
@@ -53,13 +55,13 @@ public class TrackMenu extends JPanel implements BeatsSize, MouseListener {
 
 	private final MidiTrack track;
 	private final MidiView view;
-	private final TrackList tracks;
+	private final Vector<? extends MidiTrack> tracks;
 	private final MidiTab tab;
 	private final JMenuBar menu = new JMenuBar();
 	private final ButtonGroup mode = new ButtonGroup();
 	private final ButtonGroup cue = new ButtonGroup();
 
-	public TrackMenu(Rectangle bounds, MidiView view, TrackList tracks, MidiTab tab) {
+	public TrackMenu(Rectangle bounds, MidiView view, Vector<? extends MidiTrack> tracks, MidiTab tab) {
 		this.view = view;
 		this.track = view.getTrack();
 		this.tracks = tracks;
@@ -98,7 +100,7 @@ public class TrackMenu extends JPanel implements BeatsSize, MouseListener {
 
 	public void update() {
 		if (track.isDrums())
-			setBorder(tab.getCurrent() == view ? Gui.RED : Pastels.SUBTLE);
+			setBorder(tab.getCurrent() == track ? Gui.RED : Pastels.SUBTLE);
 		updateMode();
 		updateCue();
 	}
@@ -109,7 +111,7 @@ public class TrackMenu extends JPanel implements BeatsSize, MouseListener {
 		Enumeration<AbstractButton> it = mode.getElements();
 		PianoTrack t = (PianoTrack)track;
 		while (it.hasMoreElements())
-			if (t.getArp().getMode().ordinal() == i++)
+			if (t.getArp().ordinal() == i++)
 				it.nextElement().setSelected(true);
 			else
 				it.nextElement();
@@ -144,6 +146,8 @@ public class TrackMenu extends JPanel implements BeatsSize, MouseListener {
 		result.add(new Actionable("Save", e->track.save()));
 		result.add(new Actionable("Save As...", e ->track.saveAs()));
 		result.add(new Actionable("Import...", e->new ImportMidi(track)));
+		result.add(new SendTo(track));
+
 		result.add(new Actionable("Resolution..", e->MidiTools.resolution(track)));
 		JMenu cues = new JMenu("Cue");
 		for (Cue c : Cue.values()) {
@@ -158,16 +162,17 @@ public class TrackMenu extends JPanel implements BeatsSize, MouseListener {
 
 		if (track.isSynth()) {
 			JMenu modes = new JMenu("Arp");
-			for (Mode m : Mode.values()) {
+			for (Arp m : Arp.values()) {
 				JRadioButtonMenuItem item = new JRadioButtonMenuItem(m.name());
-				if (((PianoTrack)track).getArp().getMode() == m)
+				if (((PianoTrack)track).getArp() == m)
 					item.setSelected(true);
 				modes.add(item);
 				mode.add(item);
-				item.addActionListener(e-> ((PianoTrack)track).getArp().setMode(m));
+				item.addActionListener(e-> ((PianoTrack)track).setArp(m));
 			}
 			result.add(modes);
 		}
+		result.add(new Actionable("Info", e->track.info()));
 		return result;
 	}
 	private JMenu barMenu() { // try the wings!
@@ -261,7 +266,7 @@ public class TrackMenu extends JPanel implements BeatsSize, MouseListener {
 	@Override
 	public void mousePressed(MouseEvent e) {
 		if (track.isDrums())
-			((BeatsTab)tab).setCurrent(view);
+			((BeatsTab)tab).setCurrent(view.getTrack());
 		update();
 	}
 	@Override public void mouseClicked(MouseEvent e) { }
@@ -269,5 +274,15 @@ public class TrackMenu extends JPanel implements BeatsSize, MouseListener {
 	@Override public void mouseEntered(MouseEvent e) { }
 	@Override public void mouseExited(MouseEvent e) { }
 
+	// TODO transfer Scene/Computer
+	public static class SendTo extends JMenu {
+		public SendTo(MidiTrack source) {
+			super("SendTo...");
+	    	for (MidiTrack t : source.isDrums() ? getSeq().getDrumTracks() : getSeq().getSynthTracks())
+	    		if (t != source)
+	    			add(new Actionable(t.getName(), evt->t.load(source)));
+		}
+
+	}
 
 }

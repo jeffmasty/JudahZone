@@ -1,4 +1,4 @@
-package net.judah.midi.fluid;
+package net.judah.synth.fluid;
 
 import static net.judah.util.Constants.NL;
 
@@ -21,8 +21,8 @@ import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiInstrument;
 import net.judah.omni.Threads;
+import net.judah.seq.Trax;
 import net.judah.seq.track.PianoTrack;
-import net.judah.util.Console;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -32,38 +32,31 @@ public class FluidSynth extends MidiInstrument {
 	public static final String RIGHT_PORT = "fluidsynth-midi:right"; // "fluidsynth:r_00";
 	public static final String MIDI_PORT = "fluidsynth-midi:midi_00"; // "fluidsynth:midi";
 	public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // "/usr/share/sounds/sf2/JJazzLab-SoundFont.sf2"
-	public static enum Tracks {
-		Fluid1, Fluid2, Fluid3
-	}
 	private static final int CHANNELS = 4;
 
 	private final String shellCommand;
 	private Process process;
-	/** talks to FluidSynth on it's stdin */
-	private OutputStream outStream;
-	@Getter private final FluidConsole console;
-	private FluidListener listener;
-	private float gain = 1f; // max 5f
-	private final String[] changes = new String[CHANNELS];
+	/** talks to FluidSynth on stdin */
+	private final OutputStream outStream;
 	/** General-Midi presets */
 	@Getter private final FluidChannels channels = new FluidChannels();
 	@Getter private final ArrayList<Drum> drums = new ArrayList<>();
+	private final FluidConsole console;
+	private FluidListener listener;
+	private float gain = 1f; // max 5f
+	private final String[] changes = new String[CHANNELS];
 
 	@SuppressWarnings("deprecation")
-	public FluidSynth(int sampleRate, JackPort midi, JudahClock clock, JackPort left, JackPort right) {
+	public FluidSynth(int sampleRate, JackPort midi, JudahClock clock, JackPort left, JackPort right) throws IOException {
 		super(Constants.FLUID, LEFT_PORT, RIGHT_PORT, left, right, "Fluid.png", midi);
 		reverb = new FluidReverb(this); // use external reverb
 
-		shellCommand = "fluidsynth" +
-				" --midi-driver=jack --audio-driver=jack -o synth.ladspa.active=0  --sample-rate "
+		shellCommand = "fluidsynth --midi-driver=jack --audio-driver=jack -o synth.ladspa.active=0  --sample-rate "
 				+ sampleRate + " " + SOUND_FONT.getAbsolutePath();
 
 		console = new FluidConsole(this);
-		try {
-			process = Runtime.getRuntime().exec(shellCommand);
-		} catch (IOException e) {
-			RTLogger.warn(this, e);
-		}
+		process = Runtime.getRuntime().exec(shellCommand); // IOException
+
 		new FluidListener(process.getErrorStream(), true).start();
 		listener = new FluidListener(process.getInputStream(), false);
 		listener.start();
@@ -75,18 +68,14 @@ public class FluidSynth extends MidiInstrument {
 		try {
 			syncInstruments();
 			syncChannels();
-		} catch (Throwable t) {
-			RTLogger.warn(this, "sync failed. " + t.getMessage());
+			for (Trax create : Trax.fluids)
+				tracks.add(new PianoTrack(create.name(), this, create.getCh(), clock));
+		} catch (Throwable e) {
+			RTLogger.warn(this, e);
 		}
 		sendCommand("chorus off");
 		gain(gain);
-		try {
-			for (Tracks t : Tracks.values())
-				tracks.add(new PianoTrack(t.name(), this, t.ordinal(), clock));
-		} catch (InvalidMidiDataException e) {
-			RTLogger.warn(this, e);
-		}
-		Console.getInstance().getParticipants().add(console);
+		RTLogger.getParticipants().add(console);
 	}
 
 	public void syncChannels() {
@@ -184,39 +173,6 @@ public class FluidSynth extends MidiInstrument {
 		this.gain = value;
 	}
 
-//	public void mute() {
-//	sendCommand(FluidCommand.GAIN, FluidCommand.GAIN.min);
-//}
-
-//	// TODO chorus routines to MIDI "SF2 default modulators" (too many jack hangs on stdin)
-//	public void chorusDelayLines(int val) {
-//		FluidCommand delay = FluidCommand.CHORUS_DELAY_LINES;
-//		if (val > delay.max.intValue()) val = delay.max.intValue();
-//		if (val < delay.min.intValue()) val = delay.min.intValue();
-//		sendCommand(delay.code + val);
-//	}
-//
-//	public void chorusLevel(float val) {
-//		FluidCommand level = FluidCommand.CHORUS_OUTPUT;
-//		if (val > level.max.floatValue()) val = level.max.floatValue();
-//		if (val < level.min.intValue()) val = level.min.intValue();
-//		sendCommand(level.code + val);
-//	}
-//
-//	public void chorusSpeed(float val) {
-//		FluidCommand speed = FluidCommand.CHORUS_SPEED;
-//		if (val > speed.max.floatValue()) val = speed.max.floatValue();
-//		if (val < speed.min.floatValue()) val = speed.min.floatValue();
-//		sendCommand(speed.code + val);
-//	}
-//
-//	public void chorusDepth(int val) {
-//		FluidCommand depth = FluidCommand.CHORUS_DEPTH;
-//		if (val > depth.max.intValue()) val = depth.max.intValue();
-//		if (val < depth.min.intValue()) val = depth.min.intValue();
-//		sendCommand(depth.code + val);
-//	}
-
 	@Override
 	public void close() {
 		try {
@@ -240,14 +196,12 @@ public class FluidSynth extends MidiInstrument {
 		for (int i = 0; i < patches.length; i++)
 			if (patches[i].equals(preset)) {
 				final int val = i;
-				//Constants.execute(() -> {
+				// flooding: Constants.execute(() -> {
 				//sendCommand(FluidCommand.PROG_CHANGE, ch + " " + val);
-				// flooding:
 				JudahMidi.queue(Midi.create(ShortMessage.PROGRAM_CHANGE, ch, val, 0), midiPort);
 				if (ch < changes.length)
 					changes[ch] = preset;
 				MainFrame.update(Program.first(this, ch));
-				//});
 				return true;
 			}
 		return false;
@@ -259,3 +213,36 @@ public class FluidSynth extends MidiInstrument {
 		public final int prog;
 	}
 }
+
+//public void mute() {
+//sendCommand(FluidCommand.GAIN, FluidCommand.GAIN.min);
+//}
+
+//// TODO chorus routines to MIDI "SF2 default modulators" (too many jack hangs on stdin)
+//public void chorusDelayLines(int val) {
+//	FluidCommand delay = FluidCommand.CHORUS_DELAY_LINES;
+//	if (val > delay.max.intValue()) val = delay.max.intValue();
+//	if (val < delay.min.intValue()) val = delay.min.intValue();
+//	sendCommand(delay.code + val);
+//}
+//
+//public void chorusLevel(float val) {
+//	FluidCommand level = FluidCommand.CHORUS_OUTPUT;
+//	if (val > level.max.floatValue()) val = level.max.floatValue();
+//	if (val < level.min.intValue()) val = level.min.intValue();
+//	sendCommand(level.code + val);
+//}
+//
+//public void chorusSpeed(float val) {
+//	FluidCommand speed = FluidCommand.CHORUS_SPEED;
+//	if (val > speed.max.floatValue()) val = speed.max.floatValue();
+//	if (val < speed.min.floatValue()) val = speed.min.floatValue();
+//	sendCommand(speed.code + val);
+//}
+//
+//public void chorusDepth(int val) {
+//	FluidCommand depth = FluidCommand.CHORUS_DEPTH;
+//	if (val > depth.max.intValue()) val = depth.max.intValue();
+//	if (val < depth.min.intValue()) val = depth.min.intValue();
+//	sendCommand(depth.code + val);
+//}

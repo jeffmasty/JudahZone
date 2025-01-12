@@ -3,7 +3,7 @@ package net.judah.gui.knobs;
 public enum KnobMode {
 	MIDI,
 	TRACK,
-	DCO,
+	TACO,
 	LFO,
 	KITS,
 	SAMPLE,

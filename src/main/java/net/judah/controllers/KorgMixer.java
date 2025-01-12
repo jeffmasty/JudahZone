@@ -12,9 +12,10 @@ import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.seq.Seq;
+import net.judah.seq.arp.Arp;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.PianoTrack;
 import net.judah.song.Scene;
-import net.judah.util.Constants;
 
 /** Korg nanoKONTROL2 midi controller custom codes */
 public class KorgMixer implements Controller {
@@ -48,8 +49,6 @@ public class KorgMixer implements Controller {
 	private static final MapEntry PLAY = new MapEntry("PLAY", TYPE.TOGGLE, 41);
 	private static final MapEntry RECORD = new MapEntry("REC", TYPE.TOGGLE, 45);
 
-	private long lastPress;
-	private int lastTrack;
 
 	@Override
 	public boolean midiProcessed(Midi midi) {
@@ -70,7 +69,7 @@ public class KorgMixer implements Controller {
 			MainFrame.update(t);
 		}
 		else if (data1 >= knoboff + 4 && data1 < knoboff + 8) {
-			vol(data1 - (knoboff + 4), data2);
+			volKnob(data1 - (knoboff + 4), data2);
 		}
 		else if (data2 > 0 && data1 >= soff && data1 < soff + 8) { // play/stop sequencer tracks
 			seq.get(data1 - soff).trigger();
@@ -120,32 +119,28 @@ public class KorgMixer implements Controller {
 		if (data1 == STOP.getVal() && data2 != 0 && seq.getCurrent() != null) { // Track Active/Inactive
 			seq.getCurrent().setActive(!seq.getCurrent().isActive());
 		}
-		else if (data1 == PLAY.getVal() && data2 > 0) {
-			getClock().toggle();
+		else if (data1 == PLAY.getVal() && data2 > 0) { // MPK mode
+			if (seq.getCurrent() instanceof PianoTrack synth)
+				synth.toggle(Arp.MPK);
+			else
+				seq.getCurrent().setActive(!seq.getCurrent().isActive());
 		}
 		else if (data1 == RECORD.getVal())
-			seq.getCurrent().setRecord(!seq.getCurrent().isRecord());
+			seq.getCurrent().setCapture(!seq.getCurrent().isCapture());
 
 		return true;
 	}
 
-	private void vol(int idx, int data2) {
-		Channel ch;
-		MidiTrack t;
+	private void volKnob(int idx, int data2) {
+		Channel ch = getTacos().taco;
 		switch (idx) {
-			case 0: ch = getSynth1();
-				ch.getGain().set(Gain.VOLUME, data2);
-				MainFrame.update(ch); break;
-			case 1: ch = getSynth2();
-				ch.getGain().set(Gain.VOLUME, data2);
-				MainFrame.update(ch); break;
-			case 2: t = getSeq().byName("Fluid1");
-					t.setAmp(data2 * 0.01f);
-					MainFrame.update(t); break;
-			case 3: t = getSeq().byName("Fluid2");
-					t.setAmp(data2 * 0.01f);
-					MainFrame.update(t); break;
+			case 0: ch = getBass(); break;
+			case 1: ch = getTacos().taco; break;
+			case 2: ch = getFluid(); break;
+			case 3: ch = getAux(); break;
 			}
+		ch.getGain().set(Gain.VOLUME, data2);
+		MainFrame.update(ch);
 
 	}
 
@@ -161,20 +156,6 @@ public class KorgMixer implements Controller {
 		}
 		return getGuitar();
 	}
-
-	/** on double tap */
-	@SuppressWarnings("unused")
-	private boolean doubleClick(int track) {
-		if (lastTrack == track && System.currentTimeMillis() - lastPress < Constants.DOUBLE_CLICK) {
-			lastPress = 0;
-			return true;
-		}
-		lastPress = System.currentTimeMillis();
-		lastTrack = track;
-		return false;
-	}
-
-
 
 }
 

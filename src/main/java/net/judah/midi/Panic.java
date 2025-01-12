@@ -7,6 +7,7 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.RequiredArgsConstructor;
 import net.judah.api.Engine;
+import net.judah.api.ZoneMidi;
 import net.judah.drumkit.DrumKit;
 import net.judah.omni.Threads;
 import net.judah.seq.track.MidiTrack;
@@ -27,6 +28,15 @@ public class Panic implements Runnable  {
 			new Panic((Engine)t.getMidiOut(), t.getCh());
 		else
 			new Panic(((MidiInstrument)t.getMidiOut()).getMidiPort(), t.getCh());
+	}
+
+	public Panic(ZoneMidi it) {
+		if (it instanceof DrumKit)
+			return;
+		if (it instanceof Engine)
+			new Panic((Engine)it, 0);
+		else if (it instanceof MidiInstrument)
+			new Panic( ((MidiInstrument)it).getMidiPort(), 0);
 	}
 
 	public Panic(Engine e, int ch) {

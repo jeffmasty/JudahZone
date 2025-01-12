@@ -1,4 +1,4 @@
-package net.judah.midi.fluid;
+package net.judah.synth.fluid;
 
 import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;

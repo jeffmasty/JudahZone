@@ -1,6 +1,6 @@
-package net.judah.synth;
+package net.judah.synth.taco;
 
-import static net.judah.synth.SynthDB.DASH;
+import static net.judah.synth.taco.SynthDB.DASH;
 
 import lombok.Getter;
 import net.judah.JudahZone;
@@ -10,10 +10,10 @@ import net.judah.util.RTLogger;
 public class SynthPresets {
 
 	private String current;
-	private final JudahSynth synth;
+	private final TacoSynth synth;
 	private final Adsr adsr;
 
-	public SynthPresets(JudahSynth synth) {
+	public SynthPresets(TacoSynth synth) {
 		this.synth = synth;
 		this.adsr = synth.getAdsr();
 	}

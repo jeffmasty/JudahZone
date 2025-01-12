@@ -1,4 +1,4 @@
-package net.judah.synth;
+package net.judah.synth.taco;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

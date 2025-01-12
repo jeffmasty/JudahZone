@@ -20,14 +20,14 @@ import net.judah.seq.MidiPair;
 import net.judah.util.RTLogger;
 
 public class DrumTrack extends MidiTrack {
-	
+
 	@Getter private final DrumKit kit;
-	
+
 	public DrumTrack(DrumKit kit, JudahClock clock) throws InvalidMidiDataException {
 		super(kit.getKitMode().name(), kit, clock);
 		this.kit = kit;
 	}
-	
+
 	@Override
 	protected void playNote(ShortMessage formatted) {
 		midiOut.send(formatted, JudahMidi.ticker());
@@ -38,41 +38,46 @@ public class DrumTrack extends MidiTrack {
 	public DrumSample getSample(DrumType t) {
 		return kit.getSamples()[t.ordinal()];
 	}
-	
+
 	/** imports outside of 8 sample kit range */
 	@Override
 	protected void parse(Track incoming) {
 		for (int i= 0; i < incoming.size(); i++) {
 			MidiEvent e = incoming.get(i);
 			if (Midi.isNoteOn(e.getMessage())) {
-				int data1 = ((ShortMessage)e.getMessage()).getData1();
-				if (DrumType.index(data1) >= 0) 
-					t.add(e);
+				ShortMessage orig = (ShortMessage)e.getMessage();
+				int data1 = orig.getData1();
+				if (DrumType.index(data1) >= 0)
+					t.add(new MidiEvent(Midi.create(
+							orig.getCommand(), ch, data1, orig.getData2()), e.getTick()));
 				else if (DrumType.alt(data1) < 0) {
 					int newVal = data1 % 6 + 2; // skipping bass and snare
-					ShortMessage orig = (ShortMessage)e.getMessage();
 					t.add(new MidiEvent(Midi.create(
-							orig.getCommand(), orig.getChannel(), DrumType.values()[newVal].getData1(), orig.getData2()), e.getTick()));
+							orig.getCommand(), ch, DrumType.values()[newVal].getData1(), orig.getData2()), e.getTick()));
 					RTLogger.log(this, "remap'd " + data1 + " " + GMDrum.lookup(data1) + " to " + DrumType.values()[newVal]);
 				}
 				else {
-					ShortMessage orig = (ShortMessage)e.getMessage();
 					t.add(new MidiEvent(Midi.create(
-							orig.getCommand(), orig.getChannel(), DrumType.alt(data1), orig.getData2()), e.getTick()));
+							orig.getCommand(), ch, DrumType.alt(data1), orig.getData2()), e.getTick()));
 				}
-			} 
+			}
 		}
 	}
-	
+
 	@Override
-	protected void processRecord(ShortMessage m, long ticker) { 
-		if (Midi.isNoteOn(m)) {
+	public boolean capture(Midi m) {
+		if (!capture)
+			return false;
+		if (Midi.isNoteOn(m) && m.getChannel() >= DRUM_CH) {
 			long tick = quantize(recent);
-			MainFrame.getMidiView(this).getGrid().push(new Edit(Type.NEW, 
+			MainFrame.getMidiView(this).getGrid().push(new Edit(Type.NEW,
 					new MidiPair(Midi.createEvent(tick, NOTE_ON, ch, m.getData1(), m.getData2()), null)));
-			if (tick < recent) 
-				midiOut.send(m, ticker);
+			if (tick < recent)
+				midiOut.send(m, JudahMidi.ticker());
+			return true;
 		}
+		return false;
 	}
+
 
 }

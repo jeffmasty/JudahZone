@@ -3,7 +3,13 @@ package net.judah.seq.beatbox;
 import static net.judah.seq.MidiTools.highlightColor;
 import static net.judah.seq.MidiTools.velocityColor;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Composite;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.MouseInfo;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
@@ -24,11 +30,11 @@ import net.judah.seq.MusicBox;
 import net.judah.seq.Prototype;
 
 public class BeatBox extends MusicBox {
-	
+
 	public static final int X_OFF = 5;
 	private static final int RADIUS = 24;
     private static final int PADS = DrumType.values().length;
-	
+
 	private final int rowHeight;
 	private final float totalWidth;
 	private float unit;
@@ -49,11 +55,11 @@ public class BeatBox extends MusicBox {
 		unit = totalWidth / (2f * sig.steps);
 		repaint();
 	}
-    
+
 	@Override public long toTick(Point p) {
 		return track.quantize((long) (p.x / totalWidth * track.getWindow() + track.getLeft()));
 	}
-	
+
 	public int toDrumTypeIdx(Point p) {
 		int result = p.y / rowHeight;
 		if (result < 0)
@@ -69,7 +75,7 @@ public class BeatBox extends MusicBox {
 	@Override public int toData1(Point p) {
 		return toDrumType(p).getData1();
 	}
-    
+
     @Override public void paint(Graphics g) {
     	super.paint(g);
     	// background ovals
@@ -77,11 +83,11 @@ public class BeatBox extends MusicBox {
         for (int x = 0; x < 2 * stepz ; x++) {
             for (int y = 0; y < PADS; y++) {
             	drumpad(g, (int) (x * unit), y, x % clock.getSubdivision() == 0 ? Pastels.BLUE :Color.WHITE);
-            	if (x % stepz == 0) 
+            	if (x % stepz == 0)
             		mini(g, (int) (x * unit), y);
             }
         }
-        
+
         long offset = track.getLeft();
         ShortMessage on;
         int x, y;
@@ -89,12 +95,12 @@ public class BeatBox extends MusicBox {
         for (MidiPair p : scroll.populate()) {
         	on = (ShortMessage)p.getOn().getMessage();
 			y = DrumType.index(on.getData1());
-			x = (int) ( (  (p.getOn().getTick()-offset) / window) * totalWidth); 
+			x = (int) ( (  (p.getOn().getTick()-offset) / window) * totalWidth);
 			if (y >=0 && x >= 0) {
 				if (selected.contains(p))
 					highlight(g, x, y, on.getData2());
 				else
-					drumpad(g, x, y, on.getData2()); 
+					drumpad(g, x, y, on.getData2());
 			}
         }
         if (mode == DragMode.SELECT) {
@@ -107,9 +113,9 @@ public class BeatBox extends MusicBox {
 			Point mouse = MouseInfo.getPointerInfo().getLocation();
 			g2d.fill(shadeRect(mouse.x - origin.x, mouse.y - origin.y));
 			g2d.setComposite(original);
-		}		
+		}
     }
-    
+
     private void drumpad(Graphics g, int x, int y, Color c) {
     	g.setColor(c);
     	g.fillOval(x + X_OFF, y * rowHeight + 2, RADIUS, RADIUS);
@@ -119,17 +125,17 @@ public class BeatBox extends MusicBox {
     	g.setColor(Color.WHITE);
     	g.fillOval(x + X_OFF + RADIUS / 3, y * rowHeight + 2 + RADIUS / 3, RADIUS / 3, RADIUS / 3);
     }
-    
+
     private void drumpad(Graphics g, int x, int y, int data2) {
     	drumpad(g, x, y, velocityColor(data2));
     }
-    
+
     private void highlight(Graphics g, int x, int y, int data2) {
     	drumpad(g, x, y, highlightColor(data2));
     }
 
     @Override public void mousePressed(MouseEvent mouse) {
-    	((BeatsTab)tab).setCurrent(view);
+    	((BeatsTab)tab).setCurrent(view.getTrack());
     	click = translate(mouse.getPoint());
 		MidiEvent existing = track.get(NOTE_ON, click.data1, click.tick);
 		if (mouse.isShiftDown()) { // drag-n-select;
@@ -145,7 +151,7 @@ public class BeatBox extends MusicBox {
 			if (mouse.isControlDown()) {
 				if (selected.contains(pair))
 					selected.remove(pair);
-				else 
+				else
 					selected.add(pair);
 			}
 			else {
@@ -160,22 +166,22 @@ public class BeatBox extends MusicBox {
 		}
 		repaint();
     }
-    
+
 	@Override public void mouseReleased(MouseEvent mouse) {
 		if (mode != null) {
 			switch(mode) {
-			case CREATE: 
-				MidiEvent create = new MidiEvent(Midi.create(NOTE_ON, track.getCh(), click.data1, 
+			case CREATE:
+				MidiEvent create = new MidiEvent(Midi.create(NOTE_ON, track.getCh(), click.data1,
 						(int) (track.getAmp() * 127f)), click.tick);
 				push(new Edit(Type.NEW, new MidiPair(create, null)));
 				break;
-			case SELECT: 
+			case SELECT:
 				Prototype a = translate(drag);
 				Prototype b = translate(mouse.getPoint());
 				drag = null;
 				selectArea(a.tick, b.tick, a.data1, b.data1);
 				break;
-			case TRANSLATE: 
+			case TRANSLATE:
 				drop(mouse.getPoint());
 				break;
 			}
@@ -211,47 +217,47 @@ public class BeatBox extends MusicBox {
 		click = translate(mouse);
 		recent = new Prototype(toData1(mouse), click.tick);
 	}
-	
 
-	
-	@Override 
+
+
+	@Override
 	public void drop(Point mouse) {
 		// delete selected, create undo from start/init
 		editDel(selected);
 		Edit e = new Edit(Type.TRANS, dragging);
 		long now = track.quantize(toTick(mouse));
-		Prototype destination = new Prototype(toData1(mouse), 
+		Prototype destination = new Prototype(toData1(mouse),
 				((now - click.tick) % track.getWindow()) / track.getStepTicks());
 		e.setDestination(destination, click);
 		push(e);
 	}
-	
-	@Override 
+
+	@Override
 	public void drag(Point mouse) {
-		
+
 		Prototype now = new Prototype(toData1(mouse), track.quantize(toTick(mouse)));
 		if (now.equals(recent)) // hovering
-			return; 
+			return;
 		// note or step changed, move from most recent drag spot
 		long tick = ((now.tick - recent.tick) % track.getWindow()) / track.getStepTicks();
 		recent = now;
 		transpose(selected, new Prototype(now.data1, tick));
-		
+
 	}
-		
+
 	@Override
 	public void transpose(ArrayList<MidiPair> notes, Prototype destination) {
 		editDel(notes);
-		
+
 		ArrayList<MidiPair> replace = new ArrayList<>();
 		int delta = DrumType.index(destination.data1) - DrumType.index(click.data1);
 		long window = track.getWindow();
 		long start = track.getCurrent() * track.getBarTicks();
-		for (MidiPair note : notes) 
+		for (MidiPair note : notes)
 			replace.add(compute(note, delta, destination.tick, start, window));
 		editAdd(replace);
 	}
-	
+
 	@Override
 	public void decompose(Edit e) {
 		ArrayList<MidiPair> notes = e.getNotes();
@@ -279,5 +285,5 @@ public class BeatBox extends MusicBox {
 		int data1 =  DrumType.translate(source.getData1(), delta);
 		return new MidiPair(new MidiEvent(Midi.create(source.getCommand(), source.getChannel(), data1, source.getData2()), tick), null);
 	}
-	
+
 }

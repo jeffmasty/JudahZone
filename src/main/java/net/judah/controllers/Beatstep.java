@@ -31,8 +31,6 @@ public class Beatstep implements Controller {
 	private static final int LFO = 42;
 	private static final int FADER = 43;
 
-//	private long tempoLookedUp;
-//	private int tempo;
 	private final MultiSelect channels = new MultiSelect();
 
 	@Override

@@ -33,8 +33,8 @@ import net.judah.controllers.KorgPads;
 import net.judah.controllers.Line6FBV;
 import net.judah.controllers.MPKmini;
 import net.judah.gui.MainFrame;
-import net.judah.midi.fluid.FluidSynth;
 import net.judah.omni.Threads;
+import net.judah.synth.fluid.FluidSynth;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -76,7 +76,6 @@ public class JudahMidi extends BasicClient implements Closeable {
     private JackPort line6;
     private JackPort beatstep;
     private final Jamstik jamstik = new Jamstik();
-    private final MPKmini mpk = new MPKmini();
     private JackPort gtrMidi;
     private JackPort fluidOut;
     private JackPort craveOut;
@@ -138,7 +137,7 @@ public class JudahMidi extends BasicClient implements Closeable {
 			makeConnections();
 			getFluid().setMidiPort(fluidOut);
 			getBass().setMidiPort(craveOut);
-			getMidiGui().recover(this);
+			// getMidiGui().recover(this);
 
     	} catch (JackException e) { RTLogger.warn(this, e.getMessage());}
 		setInitialized(true);
@@ -174,7 +173,7 @@ public class JudahMidi extends BasicClient implements Closeable {
         	clockIn = inPorts.get(IN.MIDICLOCK.ordinal());
         if (sz > IN.KEYBOARD.ordinal()) {
         	keyboard = inPorts.get(IN.KEYBOARD.ordinal());
-        	switchboard.put(keyboard, mpk);
+        	switchboard.put(keyboard, MPKmini.instance);
         }
         if (sz > IN.MIXER.ordinal()) {
         	mixer = inPorts.get(IN.MIXER.ordinal());
@@ -293,7 +292,6 @@ public class JudahMidi extends BasicClient implements Closeable {
                     }
                     midiEvent.read(data);
                     switchboard.get(port).midiProcessed(new Midi(data));
-
                 }
             }
         	// check sequencers for output
@@ -340,7 +338,7 @@ public class JudahMidi extends BasicClient implements Closeable {
 
 }
 
-// Misc. connections
+// old connections
 //		for (String portname : usbSource) {
 //			if (portname.contains("Midi Out 1"))
 //				jack.connect(jackclient, portname, drumsIn.getName());

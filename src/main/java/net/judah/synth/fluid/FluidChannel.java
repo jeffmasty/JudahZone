@@ -1,4 +1,4 @@
-package net.judah.midi.fluid;
+package net.judah.synth.fluid;
 
 class FluidChannel {
 	public final int channel;

@@ -1,35 +1,41 @@
+
 package net.judah.controllers;
 
 import static net.judah.JudahZone.*;
+import static net.judah.controllers.MPKTools.*;
 import static net.judah.gui.knobs.KnobMode.*;
 
+import lombok.Getter;
+import lombok.Setter;
+import net.judah.api.ZoneMidi;
 import net.judah.fx.Delay;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.knobs.KnobMode;
-import net.judah.gui.widgets.MidiPatch;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
+import net.judah.midi.Panic;
 import net.judah.mixer.Channel;
 import net.judah.sampler.Sample;
-import net.judah.seq.MidiConstants;
-import net.judah.seq.arp.Mode;
-import net.judah.seq.track.DrumTrack;
+import net.judah.seq.arp.Arp;
+import net.judah.seq.track.PianoTrack;
 import net.judah.util.Constants;
-import net.judah.util.RTLogger;
 
 
 /** Akai MPKmini, not the new one */
-public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels {
+public class MPKmini implements Controller, Pastels {
 
-	public static final byte[] SUSTAIN_ON = Midi.create(Midi.CONTROL_CHANGE, 0, 64, 127).getMessage();
-	public static final byte[] SUSTAIN_OFF = Midi.create(Midi.CONTROL_CHANGE, 0, 64, 0).getMessage();
-	private static final int JOYSTICK_L = 127;
-	private static final int JOYSTICK_R = 0;
-	private final String[] ROMPLER = new String[] {
+	public static final MPKmini instance = new MPKmini();
+	private MPKmini() {}
+
+	public static final String NAME = "MPKmini2"; // midi port
+	private static final String[] ROMPLER = new String[] {
 				"Acoustic Bass", "Vibraphone", "Rock Organ", "Rhodes EP",
 				"Tremolo", "Oboe", "Ahh Choir", "Harp"};
 
+	@Setter private PianoTrack captureTrack;
+	@Getter private ZoneMidi midiOut;
+	public static boolean override;
 
 	@Override
 	public boolean midiProcessed(Midi midi) {
@@ -40,35 +46,14 @@ public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels 
 		if (Midi.isProgChange(midi))
 			return doProgChange(midi.getData1(), midi.getData2());
 
-		if (midi.getChannel() == MidiConstants.DRUM_CH) { // user playing drum pads
-			int data1 = midi.getData1();
-			DrumTrack drums = null;
-			int i;
-			for (i = 0; i < DRUMS_A.size() ; i++) {
-				if (DRUMS_A.get(i) == data1) {
-					drums = getDrumMachine().getDrum1();
-					break;
-				}
-				if (DRUMS_B.get(i) == data1) {
-					drums = getDrumMachine().getDrum2();
-					break;
-				}
-			}
-			if (drums != null) {
-				int translate = drums.getKit().getSamples()[i].getDrumType().getData1();
-				try {
-					midi.setMessage(midi.getCommand(), drums.getCh(), translate, (int) (midi.getData2() * track.getAmp()));
-				} catch (Exception e) { RTLogger.warn(this, e);}
-				drums.send(midi, JudahMidi.ticker());
-				getLooper().getSoloTrack().beatboy(); // hot sync
-			}
+		if (getSeq().captured(midi))  // recording or transposing or drums
 			return true;
-		}
 
-		if (getSeq().arpCheck(midi))
-			return true;
     	if (Midi.isNote(midi) || Midi.isPitchBend(midi)) {
-    		track.send(midi, JudahMidi.ticker());
+    		if (override)
+    			getSeq().getSynthTracks().getCurrent().send(midi, JudahMidi.ticker());
+    		else
+    			midiOut.send(midi, JudahMidi.ticker());
     		return true;
     	}
 		return false;
@@ -112,22 +97,18 @@ public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels 
 		}
 
 		///////// ROW 2 /////////////////
-		else if (data1 == PRIMARY_CC.get(4))
-			track.setRecord(track.isRecord());
-
-		else if (data1 == PRIMARY_CC.get(5))
-			track.getArp().toggle(Mode.MPK);
-
-		else if (data1 == PRIMARY_CC.get(6) && data2 > 0 && !flooding()) { // focus Synth1 or Synth2 or Sampler
-			if (MainFrame.getKnobMode() == DCO) {
-				if (getFrame().getKnobs() == getSynth1().getSynthKnobs())
-					MainFrame.setFocus(getSynth2().getSynthKnobs());
-				else
-					MainFrame.setFocus(SAMPLE);
-				}
-			else
-				MainFrame.setFocus(DCO);
+		else if (data1 == PRIMARY_CC.get(4)) {
+			if (captureTrack != null)
+				captureTrack.setCapture(!captureTrack.isCapture());
 		}
+
+		else if (data1 == PRIMARY_CC.get(5)) {
+			if (captureTrack != null)
+				captureTrack.toggle(Arp.MPK);
+		}
+
+		else if (data1 == PRIMARY_CC.get(6) && data2 > 0 && !flooding()) // focus Synth1 or Synth2 or Sampler
+			getTacos().rotate();
 		else if (data1 == PRIMARY_CC.get(7) && data2 > 0) { // SET SettableCombo
 			MainFrame.set();
 		}
@@ -148,7 +129,7 @@ public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels 
 	}
 
 	private final KnobMode[] midiBtnSequence = new KnobMode[]
-			{ MIDI, SETLIST, PRESETS, TOOLS, LOG };
+			{ MIDI, SETLIST, SAMPLE, PRESETS, TOOLS, LOG };
 
 	private void nextMidiBtn() {
 		KnobMode mode = MainFrame.getKnobMode();
@@ -167,21 +148,20 @@ public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels 
 	}
 
 	private boolean joystickL(int data2) { // delay
-		Delay d = ((Channel)track.getMidiOut()).getDelay();
+		Delay d = ((Channel)midiOut).getDelay();
 		d.setActive(data2 > 4);
 		if (data2 <= 4)
 			return true;
 		if (d.getDelay() < Delay.DEFAULT_TIME)
 			d.setDelayTime(Delay.DEFAULT_TIME);
 		d.setFeedback(Constants.midiToFloat(data2));
-		MainFrame.update(track.getMidiOut());
+		MainFrame.update(midiOut);
 		return true;
 	}
 
 	private boolean joystickR(int data2) { // filter
-		MainFrame.update(track.getMidiOut());
-		int ch = track.getCh();
-		track.getMidiOut().send( Midi.create(Midi.CONTROL_CHANGE, ch, 1,
+		MainFrame.update(midiOut);
+		midiOut.send( Midi.create(Midi.CONTROL_CHANGE, 0, 1,
 				data2 > 4 ? data2 : 0), JudahMidi.ticker());
 
 		return true;
@@ -204,18 +184,13 @@ public class MPKmini extends MidiPatch implements Controller, MPKTools, Pastels 
 		return false;
 	}
 
-	public void record() {
-		track.setRecord(!track.isRecord());
-		if (frame == null)
-			return;
-		frame.setBackground(track.isRecord() ? Pastels.RED : null);
-	}
-
-	public void transpose() {
-		track.getArp().toggle(Mode.MPK);
-		if (frame == null)
-			return;
-		frame.setBackground(track.getArp().getMode() == Mode.MPK ? Mode.MPK.getColor() : null);
+	public boolean setMidiOut(ZoneMidi out) {
+		if (midiOut == out)
+			return false;
+		if (midiOut != null)
+			new Panic(midiOut);
+		midiOut = out;
+		return true;
 	}
 
 }

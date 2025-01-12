@@ -45,20 +45,21 @@ public abstract class AudioTrack extends Channel implements PlayAudio {
 		recording = sample;
 	}
 
-
-
 	// Loop overrides
 	@Override public int getLength() {
 		return recording.size();
 	}
 
+	@Override public final void rewind() {
+		tapeCounter.set(0);
+	}
+
+	@Override public final float seconds() {
+		return getLength() / Constants.fps();
+	}
 
 	// env and playBuffer pre-calculated
 	protected void playFrame(FloatBuffer outLeft, FloatBuffer outRight) {
-
-		// I am a channel, my iterator is actives
-
-		// forEach()-> activeFx.process(left, right);
 
 		AudioTools.replace(playBuffer[LEFT], left, env * gain.getLeft());
 		AudioTools.replace(playBuffer[RIGHT], right, env * gain.getRight());
@@ -93,14 +94,6 @@ public abstract class AudioTrack extends Channel implements PlayAudio {
 		// gain & stereo pan to provided buffer
 		AudioTools.mix(left, outLeft);
 		AudioTools.mix(right, outRight);
-	}
-
-	@Override public final void rewind() {
-		tapeCounter.set(0);
-	}
-
-	@Override public final float seconds() {
-		return getLength() / Constants.fps();
 	}
 
 }

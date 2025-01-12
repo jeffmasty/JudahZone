@@ -1,13 +1,13 @@
 package net.judah.gui.knobs;
 
-import java.awt.Component;
-
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 
+import net.judah.gui.Size;
 import net.judah.gui.Updateable;
 
 
-public abstract class KnobPanel extends JPanel implements Updateable {
+public abstract class KnobPanel extends JPanel implements Updateable, Size {
 
 	public abstract KnobMode getKnobMode();
 
@@ -18,7 +18,7 @@ public abstract class KnobPanel extends JPanel implements Updateable {
 
 	/**Called when the KnobPanel is going to be displayed.
 	 * @return an optional and separate set of title bar component(s) */
-	public abstract Component getTitle(); // return Gui.wrap(new JLabel(getName()));
+	public abstract JComponent getTitle(); // return Gui.wrap(new JLabel(getName()));
 
 	public abstract void pad1();
 

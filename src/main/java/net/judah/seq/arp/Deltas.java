@@ -12,9 +12,9 @@ import net.judah.seq.Poly;
 
 
 public class Deltas {
-	
+
 	private HashMap<ShortMessage, List<Integer>> deltas = new HashMap<>();
-	
+
 	public void add(ShortMessage on, Poly work) {
 		if (contains(on.getData1()))
 			return; // re-trigger
@@ -27,31 +27,31 @@ public class Deltas {
 			return null;
 		return deltas.remove(key);
 	}
-	
+
 	boolean contains(int data1) {
 		for (ShortMessage m : deltas.keySet())
 			if (m.getData1() == data1)
 				return true;
 		return false;
 	}
-	
+
 	ShortMessage key(int data1) {
 		for (ShortMessage m : deltas.keySet())
 			if (m.getData1() == data1)
 				return m;
 		return null;
 	}
-	
+
 	public Set<Entry<ShortMessage, List<Integer>>> list() {
-		return new HashSet<Entry<ShortMessage, List<Integer>>>(deltas.entrySet()); 
+		return new HashSet<Entry<ShortMessage, List<Integer>>>(deltas.entrySet());
 	}
-	
-	void clear() { 
+
+	public void clear() {
 		deltas.clear();
 	}
-	
-	boolean isEmpty() {
+
+	public boolean isEmpty() {
 		return deltas.isEmpty();
 	}
-	
+
 }

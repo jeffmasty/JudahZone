@@ -15,9 +15,7 @@ package net.judah.scope;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.awt.event.ActionListener;
 
-import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Mixer;
 import javax.swing.ButtonGroup;
 import javax.swing.JPanel;
@@ -25,7 +23,6 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.border.TitledBorder;
 
-import be.tarsos.dsp.example.unverified.Shared;
 import net.judah.omni.AudioTools;
 
 public class InputPanel extends JPanel {
@@ -49,21 +46,21 @@ public class InputPanel extends JPanel {
 			buttonPanel.add(button);
 			group.add(button);
 			button.setActionCommand(info.toString());
-			button.addActionListener(setInput);
+//			button.addActionListener(setInput);
 		}
 		this.add(new JScrollPane(buttonPanel,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER),BorderLayout.CENTER);
 		this.setMaximumSize(new Dimension(300,150));
 		this.setPreferredSize(new Dimension(300,150));
 	}
 
-	private ActionListener setInput = arg0 -> {
-		for(Mixer.Info info : Shared.getMixerInfo(false, true)){
-			if(arg0.getActionCommand().equals(info.toString())){
-				Mixer newValue = AudioSystem.getMixer(info);
-				this.firePropertyChange("mixer", mixer, newValue);
-				this.mixer = newValue;
-			}
-		}
-	};
+//	private ActionListener setInput = arg0 -> {
+//		for(Mixer.Info info : Shared.getMixerInfo(false, true)){
+//			if(arg0.getActionCommand().equals(info.toString())){
+//				Mixer newValue = AudioSystem.getMixer(info);
+//				this.firePropertyChange("mixer", mixer, newValue);
+//				this.mixer = newValue;
+//			}
+//		}
+//	};
 
 }

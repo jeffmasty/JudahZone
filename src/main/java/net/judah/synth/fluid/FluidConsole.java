@@ -1,11 +1,10 @@
-package net.judah.midi.fluid;
+package net.judah.synth.fluid;
 
 import static net.judah.util.Constants.NL;
 
-import net.judah.util.Console;
 import net.judah.util.RTLogger;
 
-class FluidConsole implements Console.Participant {
+class FluidConsole implements RTLogger.Participant {
 	public static final String PREFIX = "fluid";
 	private final FluidSynth fluid;
 
@@ -35,9 +34,9 @@ class FluidConsole implements Console.Participant {
 		}
 
 		if (text.equals("channels")) {
-			Console.addText("channels: " + fluid.getChannels().size() + NL);
+			RTLogger.addText("channels: " + fluid.getChannels().size() + NL);
 			for (FluidChannel channel : fluid.getChannels()) {
-				Console.addText(channel.toString() + NL);
+				RTLogger.addText(channel.toString() + NL);
 			}
 		}
 //		if (text.equals("inst") || text.equals("instruments")) {
@@ -61,13 +60,13 @@ class FluidConsole implements Console.Participant {
 	}
 
 	private void doHelp() {
-		Console.addText("Fluid help, commands use 'fluid' prefix.");
+		RTLogger.addText("Fluid help, commands use 'fluid' prefix.");
 		fluid.sendCommand("help");
 		try { Thread.sleep(20); } catch (InterruptedException e) { }
-		Console.addText("fluid sync");
-		Console.addText("fluid instruments");
-		Console.addText("fluid current");
-		Console.addText("fluid GM_NAMES");
+		RTLogger.addText("fluid sync");
+		RTLogger.addText("fluid instruments");
+		RTLogger.addText("fluid current");
+		RTLogger.addText("fluid GM_NAMES");
 	}
 
 

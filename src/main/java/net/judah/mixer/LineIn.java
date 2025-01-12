@@ -4,19 +4,20 @@ import java.nio.FloatBuffer;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 import net.judah.gui.MainFrame;
 import net.judah.util.Constants;
 
-@Getter
+@Getter @Accessors(chain = true)
 public class LineIn extends Channel {
 
 	@Setter protected float preamp = 4;
-	protected boolean muteRecord;
-    
+	protected boolean muteRecord = true;
+
     public LineIn(String name, boolean stereo) {
     	super(name, stereo);
     }
-    
+
     public void setMuteRecord(boolean muteRecord) {
 		this.muteRecord = muteRecord;
 		MainFrame.update(this);
@@ -33,10 +34,10 @@ public class LineIn extends Channel {
 			right.put(work.get(i) * r);
 		}
     }
-    
+
 	public void processFx(FloatBuffer mono) {
 		mono.rewind();
-		
+
 		for (int z = 0; z < Constants.bufSize(); z++)
 			mono.put(mono.get(z) * preamp);
 
@@ -61,22 +62,22 @@ public class LineIn extends Channel {
 		}
 
 	}
-	
+
 	// stereo
 	public void processStereoFx(float amplification) {
 		left.rewind();
 		right.rewind();
-		
+
 		float l = amplification * (1 - gain.getStereo());
 		float r = amplification * gain.getStereo();
 		for (int z = 0; z < bufSize; z++) {
 			left.put(left.get(z) * l);
 			right.put(right.get(z) * r);
 		}
-		
+
 		filter2.process(left, right);
 		filter1.process(left, right);
-		
+
 		if (chorus.isActive()) {
 			chorus.processStereo(left, right);
 		}
@@ -100,7 +101,7 @@ public class LineIn extends Channel {
 		if (reverb.isActive()) {
 			reverb.process(left, right);
 		}
-		
+
 	}
 
 }
