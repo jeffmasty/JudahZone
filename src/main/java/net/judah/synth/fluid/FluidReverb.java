@@ -19,22 +19,14 @@ public class FluidReverb extends Reverb {
 
     public FluidReverb(FluidSynth synth) {
         this.fluid = synth;
-        initialize(1, 1);
-    }
-
-    /** Fluid Synth already started, we will initialize size/damp settings and activate */
-    @Override
-    public void initialize(int sampleRate, int bufferSize) {
         Threads.timer(2000, () -> setWidth(0.7f));
         Threads.timer(1600, () -> setWet(0.1f));
         Threads.timer(1700, () -> setActive(true));
         Threads.timer(1800, () -> setRoomSize(0.75f));
         Threads.timer(1900, () -> setDamp(0.6f));
-
     }
 
     @Override public boolean isInternal() { return false; }
-    @Override public void process(FloatBuffer buf) { /* no-op (external) */ }
 
     @Override
     public void setActive(boolean active) {
@@ -97,5 +89,10 @@ public class FluidReverb extends Reverb {
             setWet(value / 100f);
         else throw new InvalidParameterException();
     }
+
+	@Override
+	public void process(FloatBuffer left, FloatBuffer right) {
+		// No-op, external
+	}
 
 }

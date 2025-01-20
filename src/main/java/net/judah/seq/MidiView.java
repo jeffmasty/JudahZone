@@ -7,6 +7,7 @@ import net.judah.api.Notification.Property;
 import net.judah.api.Signature;
 import net.judah.api.TimeListener;
 import net.judah.midi.JudahClock;
+import net.judah.seq.piano.PianoBox;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.TrackMenu;
 
@@ -20,11 +21,10 @@ public abstract class MidiView extends JPanel implements TimeListener, MidiConst
 	protected final JudahClock clock;
 	protected final MidiTrack track;
 	protected TrackMenu menu;
-	protected MusicBox grid;
-	protected JPanel instrumentPanel;
-	protected Steps steps;
+	protected PianoBox grid;
 
 	public MidiView(MidiTrack t) {
+		setName(t.getName());
 		this.track = t;
 		this.clock = track.getClock();
 		clock.addListener(this);
@@ -42,9 +42,10 @@ public abstract class MidiView extends JPanel implements TimeListener, MidiConst
 		// getSteps().setStart((int)value); // waterfall
 		// getGrid().repaint();
 		// } else
-		if (prop == Property.SIGNATURE) {
-			getSteps().timeSig((Signature) value);
-			getGrid().timeSig((Signature) value);
+		if (value instanceof Signature sig) {
+			getGrid().timeSig(sig);
+//			if (this instanceof PianoView piano)
+//				piano.getSteps().timeSig(sig);
 		}
 	}
 

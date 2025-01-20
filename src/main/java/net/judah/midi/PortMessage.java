@@ -4,12 +4,6 @@ import javax.sound.midi.MidiMessage;
 
 import org.jaudiolibs.jnajack.JackPort;
 
-import lombok.Data;
+public record PortMessage (MidiMessage midi, JackPort port) {
 
-@Data
-public class PortMessage {
-
-	private final MidiMessage midi;
-	private final JackPort port;
-	
 }

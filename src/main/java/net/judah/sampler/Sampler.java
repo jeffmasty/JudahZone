@@ -1,10 +1,9 @@
 package net.judah.sampler;
 
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Stream;
-
-import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -12,27 +11,38 @@ import net.judah.api.PlayAudio.Type;
 import net.judah.fx.Fader;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
+import net.judah.gui.knobs.Knobs;
 import net.judah.gui.knobs.SampleKnobs;
+import net.judah.mixer.LineIn;
+import net.judah.omni.AudioTools;
+import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 @Getter
-public class Sampler extends ArrayList<Sample> {
-	
+public class Sampler extends LineIn implements Knobs {
+
+	private ArrayList<Sample> samples = new ArrayList<Sample>();
+	private final KnobMode knobMode = KnobMode.Samples;
+
 	// Fountain Creek: Fields Park, Manitou Springs, CO
 	// Rain in Cuba: https://freesound.org/people/kyles/sounds/362077/
 	// Birds: https://freesound.org/people/hargissssound/sounds/345851/
 	// Bicycle https://freesound.org/people/bojan_t95/sounds/507013/
 	public static final String[] LOOPS = {"Creek", "Rain", "Birds", "Bicycle"};
-	
+
 	// Satoshi: Pantone Color of the Year Landr pack Coy loop
 	// Prrrrrr: https://freesound.org/people/Duisterwho/sounds/644104/
 	// DropBass: https://freesound.org/people/qubodup/sounds/218891/
 	// DJOutlaw: https://freesound.org/people/tim.kahn/sounds/94748/
-	public static final String[] ONESHOTS = {"Satoshi", "Prrrrrr", "DropBass", "DJOutlaw"}; 
-	
-	public static final String[] NAMES = Stream.concat(
+	public static final String[] ONESHOTS = {"Satoshi", "Prrrrrr", "DropBass", "DJOutlaw"};
+
+	public static final String[] STANDARD = Stream.concat(
 			Arrays.stream(LOOPS), Arrays.stream(ONESHOTS)).toArray(String[]::new);
-	public static final int SIZE = NAMES.length;
+
+
+	public static final int SIZE = STANDARD.length;
+
+	private final String[] patches = new String[] {"STANDARD"};
 
 	/** gain factor for all samples */
 	@Setter @Getter float mix = 0.5f;
@@ -43,11 +53,12 @@ public class Sampler extends ArrayList<Sample> {
 	private final ArrayList<StepSample> stepSamples = new ArrayList<>();
 	private StepSample stepSample;
 	private final SampleKnobs view;
-	
-	public Sampler(JackPort left, JackPort right) {
-		for (int i = 0; i < NAMES.length; i++) {
+
+	public Sampler() {
+		super(Sampler.class.getSimpleName(), Constants.STEREO);
+		for (int i = 0; i < STANDARD.length; i++) {
 			try {
-				add(new Sample(left, right, NAMES[i], i < 4 ? Type.FREE : Type.ONE_SHOT, this));
+				samples.add(new Sample(STANDARD[i], i < 4 ? Type.FREE : Type.ONE_SHOT, this));
 			} catch (Exception e) {
 				RTLogger.warn(this, e);
 			}
@@ -71,30 +82,21 @@ public class Sampler extends ArrayList<Sample> {
 		}
 		view = new SampleKnobs(this);
 	}
-	
-    /** play and/or record loops and samples in Real-Time thread */
-	public void process() {
-    	for (Sample sample : this)
-    		sample.process();
-    	for (StepSample s : stepSamples)
-    		if (s.isOn())
-    			s.process();
-    }
 
 	public void play(Sample s, boolean on) {
 		if (on) {
-			if (MainFrame.getKnobMode() != KnobMode.SAMPLE)
-				MainFrame.setFocus(KnobMode.SAMPLE);
-			if (s.getType() == Type.ONE_SHOT) 
+			if (MainFrame.getKnobMode() != KnobMode.Samples)
+				MainFrame.setFocus(KnobMode.Samples);
+			if (s.getType() == Type.ONE_SHOT)
 				s.rewind();
-			else 
+			else
 				Fader.execute(Fader.fadeIn(s));
 			s.play(true);
 		}
 		else {
-			if (s.getType() == Type.ONE_SHOT) 
+			if (s.getType() == Type.ONE_SHOT)
 				s.play(false);
-			else 
+			else
 				Fader.execute(Fader.fadeOut(s));
 		}
 		MainFrame.update(s);
@@ -104,23 +106,23 @@ public class Sampler extends ArrayList<Sample> {
 		if (stepSample == null) return;
 		stepSample.step(step);
 	}
-	
+
 	public boolean isStepping() {
 		for (StepSample s : stepSamples)
 			if (s.isOn())
 				return true;
 		return false;
 	}
-	
+
 	public void stepperOff() {
-		for (StepSample s : stepSamples) 
+		for (StepSample s : stepSamples)
 			s.setOn(false);
 	}
-	
+
 	public void setSelected(int idx) {
 		if (idx < 0 || idx >= stepSamples.size())
 			return;
-		
+
 		boolean wasOn = false;
 		if (stepSample != null) {
 			wasOn = stepSample.isOn();
@@ -131,7 +133,7 @@ public class Sampler extends ArrayList<Sample> {
 		selected = idx;
 		MainFrame.update(this);
 	}
-	
+
 	public void setStepping(boolean active) {
 		if (active)
 			stepSamples.get(selected).setOn(active);
@@ -139,7 +141,7 @@ public class Sampler extends ArrayList<Sample> {
 			stepperOff();
 		MainFrame.update(this);
 	}
-	
+
 	public void nextStepSample() {
 		if (stepSample == null)
 			stepSample = stepSamples.get(stepSamples.size() -1);
@@ -150,5 +152,23 @@ public class Sampler extends ArrayList<Sample> {
 		MainFrame.update(this);
 	}
 
+	@Override
+	public void process(FloatBuffer outLeft, FloatBuffer outRight) {
+		AudioTools.silence(left);
+		AudioTools.silence(right);
+    	for (Sample sample : samples)
+    		sample.process(left, right);
+    	for (StepSample s : stepSamples)
+    		if (s.isOn()) {
+    			s.env = stepMix;
+    			s.process(left, right);
+    		}
+
+    	fx();
+
+		AudioTools.mix(left, outLeft);
+		AudioTools.mix(right, outRight);
+	}
+
 }
-	
+

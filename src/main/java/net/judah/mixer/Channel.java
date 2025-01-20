@@ -1,16 +1,10 @@
 package net.judah.mixer;
 
-import java.nio.FloatBuffer;
+import static net.judah.util.Constants.STEREO;
+
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import javax.swing.ImageIcon;
-
-import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
-import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.fx.Chorus;
 import net.judah.fx.Compressor;
@@ -19,7 +13,6 @@ import net.judah.fx.EQ;
 import net.judah.fx.Effect;
 import net.judah.fx.Filter;
 import net.judah.fx.Freeverb;
-import net.judah.fx.Gain;
 import net.judah.fx.LFO;
 import net.judah.fx.Overdrive;
 import net.judah.fx.Preset;
@@ -28,52 +21,44 @@ import net.judah.fx.Setting;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.EffectsRack;
 import net.judah.gui.knobs.LFOKnobs;
+import net.judah.gui.settable.Presets;
 import net.judah.gui.settable.PresetsHandler;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 /** An effects bus for input or output audio */
 @Getter
-public class Channel {
-	protected final int bufSize = Constants.bufSize();
-    protected final FloatBuffer left = FloatBuffer.wrap(new float[bufSize]);
-    protected final FloatBuffer right = FloatBuffer.wrap(new float[bufSize]);
-    protected JackPort leftPort;
-    protected JackPort rightPort;
+public abstract class Channel extends FxChain implements Presets {
 
-	protected final String name;
-	protected ImageIcon icon;
-	protected final boolean isStereo;
-	protected boolean onMute;
 	protected final PresetsHandler presets = new PresetsHandler(this);
 	protected Preset preset = JudahZone.getPresets().getDefault();
 	protected boolean presetActive;
 
-    protected final Gain gain = new Gain();
-    protected final LFO lfo = new LFO(this);
-    protected final Filter filter1;
-    protected final Filter filter2;
+    protected final Filter filter1 = new Filter(STEREO, Filter.Type.pArTy, 700);
+    protected final Filter filter2 = new Filter(STEREO, Filter.Type.HiCut, 16000);
     protected final EQ eq = new EQ();
+    protected final Compressor compression = new Compressor();
     protected final Overdrive overdrive = new Overdrive();
     protected final Chorus chorus = new Chorus();
+    protected Reverb reverb = new Freeverb();
 	protected final Delay delay = new Delay();
-    protected Reverb reverb;
-    protected final Compressor compression = new Compressor();
+    protected final LFO lfo = new LFO(this);
 
-    protected final List<Effect> effects;
     protected EffectsRack gui;
-    @Setter protected LFOKnobs lfoKnobs;
+    protected LFOKnobs lfoKnobs;
 
     public Channel(String name, boolean isStereo) {
-        this.name = name;
-        this.isStereo = isStereo;
-        filter1 = new Filter(isStereo, Filter.Type.pArTy, 700);
-        filter2 = new Filter(isStereo, Filter.Type.HiCut, 16000);
-        reverb = new Freeverb(isStereo);
-        effects = Arrays.asList(new Effect[] {
-        		reverb, delay, overdrive, chorus,
-                eq, filter1, filter2, compression, lfo });
+    	super(name, isStereo);
+        Effect[] order = new Effect[] {
+        		filter1, filter2, eq, compression, overdrive, chorus, reverb, delay, lfo};
+        for (Effect fx : order)
+        	add(fx);
     }
+
+	public void replace(Reverb r) {
+		set(indexOf(reverb), r);
+		reverb = r;
+	}
 
     @Override public boolean equals(Object obj) {
     	if (obj == null || obj instanceof Channel == false)
@@ -81,34 +66,34 @@ public class Channel {
     	return gain.equals( ((Channel)obj).getGain());
     }
 
-    public EffectsRack getGui() {
+    @Override public int hashCode() {
+    	return gain.hashCode();
+    }
+
+    public final EffectsRack getGui() {
     	if (gui == null) // lazy load
     		gui = new EffectsRack(this, JudahZone.getLooper());
     	return gui;
     }
 
-    public LFOKnobs getLfoKnobs() {
+    public final LFOKnobs getLfoKnobs() {
     	if (lfoKnobs == null)
     		lfoKnobs = new LFOKnobs(this, JudahZone.getMixer());
     	return lfoKnobs;
     }
 
-    @Override public int hashCode() {
-    	return gain.hashCode();
-    }
-
-    public void setPresetActive(boolean active) {
+    public final void setPresetActive(boolean active) {
     	presetActive = active;
         applyPreset();
     }
 
-    private void applyPreset() {
+    private final void applyPreset() {
     	reset();
     	if (preset == null)
     		preset = JudahZone.getPresets().getDefault();
         setting:
         for (Setting s : preset) {
-            for (Effect e : effects) {
+            for (Effect e : this) {
                 if (e.getName().equals(s.getEffectName())) {
                 	try {
 	                    for (int i = 0; i < s.size(); i++)
@@ -123,37 +108,36 @@ public class Channel {
         MainFrame.update(this);
     }
 
-    public void setPreset(String name, boolean active) {
+    public final void setPreset(String name, boolean active) {
     	setPreset(JudahZone.getPresets().byName(name));
     	setPresetActive(active);
     }
 
-    public void setPreset(String name) {
+    public final void setPreset(String name) {
     	setPreset(JudahZone.getPresets().byName(name));
     }
 
-    public void setPreset(Preset p) {
-    	// if (p != preset) RTLogger.log(this, name + "->" + p.getName() );
+    @Override
+	public final void setPreset(Preset p) {
         preset = p;
         applyPreset();
     }
 
-//    public void setDelay(Delay d) { // switch to slapback delay?
-//    	effects.remove(delay);
-//    	delay = d;
-//    	effects.add(delay);
-//    }
+    public final void toggleMute() {
+    	setOnMute(!isOnMute());
+    }
 
-	public void setOnMute(boolean mute) {
+	public final void setOnMute(boolean mute) {
 		if (mute == onMute)
 			return;
 		onMute = mute;
 		MainFrame.update(this);
 	}
 
-    public Preset toPreset(String name) {
+    @Override
+	public final Preset toPreset(String name) {
         ArrayList<Setting> presets = new ArrayList<>();
-        for (Effect e : effects) {
+        for (Effect e : this) {
             if (!e.isActive()) continue;
             presets.add(new Setting(e));
         }
@@ -161,20 +145,7 @@ public class Channel {
         return preset;
     }
 
-	public void reset() {
-		for (Effect fx : effects)
-			fx.setActive(false);
-		MainFrame.update(this);
-	}
-
-	/**@return 0 to 100*/
-	public int getVolume() {
-		return gain.get(Gain.VOLUME);
-	}
-
-	@Override public String toString() { return name; }
-
-	public void toggleFx() {
+	public final void toggleFx() {
 		setPresetActive(!isPresetActive());
 	}
 
@@ -186,6 +157,8 @@ public class Channel {
 			lfo.sync(unit);
 		if (chorus.isSync())
 			chorus.sync(unit);
+		if (delay.isSync() || lfo.isSync() || chorus.isSync())
+			MainFrame.update(this);
 	}
 
 }

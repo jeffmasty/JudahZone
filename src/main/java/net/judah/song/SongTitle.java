@@ -41,7 +41,7 @@ public class SongTitle extends JPanel {
 		add(new Btn(Icons.SAVE, e->overview.save()));
 		add(new Btn(" 🔁 ", e->overview.reload(), "Reload"));
 		add(Gui.resize(new SetlistsCombo(setlists), Size.MEDIUM_COMBO));
-		add(new Btn(Icons.DETAILS_VEW, e->MainFrame.setFocus(KnobMode.SETLIST)));
+		add(new Btn(Icons.DETAILS_VEW, e->MainFrame.setFocus(KnobMode.Setlist)));
 		add(Box.createHorizontalGlue());
 		add(Gui.resize(timeSig, Size.SMALLER_COMBO));
 		add(Gui.resize(key, Size.MICRO));

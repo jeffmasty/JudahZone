@@ -1,9 +1,9 @@
 package net.judah.looper;
 
+import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
 import java.util.Vector;
-
-import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import net.judah.api.Notification.Property;
@@ -20,7 +20,7 @@ import net.judah.util.Memory;
 import net.judah.util.RTLogger;
 
 @Getter
-public class Looper extends Vector<Loop> implements TimeListener {
+public class Looper extends ArrayList<Loop> implements TimeListener {
 
 	public static final int LOOPERS = 4;
 	private static final String ZERO = "0.0s";
@@ -37,12 +37,12 @@ public class Looper extends Vector<Loop> implements TimeListener {
 	private final LoopWidget loopWidget = new LoopWidget(this);
 	private int loopCount;
 
-	public Looper(JackPort l, JackPort r, Zone sources, LineIn solo, JudahClock clock, Memory memory) {
+	public Looper(Zone sources, LineIn solo, JudahClock clock, Memory memory) {
 		this.clock = clock;
-		loopA = new Loop("A", "LoopA.png", Type.SYNC, this, sources, l, r, memory);
-		loopB = new Loop("B", "LoopB.png", Type.BSYNC, this, sources, l, r, memory);
-		loopC = new Loop("C", "LoopC.png", Type.FREE, this, sources, l, r, memory);
-		soloTrack = new SoloTrack(solo, this, sources, l, r, memory);
+		loopA = new Loop("A", "LoopA.png", Type.SYNC, this, sources, memory);
+		loopB = new Loop("B", "LoopB.png", Type.BSYNC, this, sources, memory);
+		loopC = new Loop("C", "LoopC.png", Type.FREE, this, sources, memory);
+		soloTrack = new SoloTrack(solo, this, sources, memory);
 		add(loopA);
 		add(loopB);
 		add(loopC);
@@ -51,11 +51,12 @@ public class Looper extends Vector<Loop> implements TimeListener {
 	}
 
 	/** play and/or record loops and samples in Real-Time thread */
-	public void process() {
-		forEach(loop->loop.process());
+	public void process(FloatBuffer left, FloatBuffer right) {
+		forEach(loop->loop.process(left, right));
 		if (hasRecording())
 			loopWidget.countUp();
 	}
+
 	/** process() silently (keep sync'd while mains muted) */
 	public void silently() {
 		if (hasRecording()) {

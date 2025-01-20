@@ -1,20 +1,17 @@
 package net.judah.seq;
 
-import java.awt.Color;
 import java.util.AbstractCollection;
 
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
-import javax.swing.JOptionPane;
 
 import net.judah.midi.Midi;
 import net.judah.seq.track.MidiTrack;
-import net.judah.util.RTLogger;
 
 public class MidiTools {
-    
+
 	public static boolean match(MidiMessage a, MidiMessage b) {
 		if (a == null && b == null) return true;
 		if (a == null || b == null) return false;
@@ -27,7 +24,7 @@ public class MidiTools {
 		}
 		return a.equals(b);
 	}
-	
+
 	/**Piano lookup
 	 * @param tick
 	 * @param cmd
@@ -35,11 +32,11 @@ public class MidiTools {
 	public static MidiPair lookup(long tick, int data1, Track t) {
 		MidiEvent found = null;
 		for (int i = 0; i < t.size(); i++) {
-			if (false == t.get(i).getMessage() instanceof ShortMessage) 
+			if (false == t.get(i).getMessage() instanceof ShortMessage)
 				continue;
 			MidiEvent e = t.get(i);
 			ShortMessage m = (ShortMessage) e.getMessage();
-			
+
 			if (e.getTick() <= tick) {
 				if (found == null) {
 					if (Midi.isNoteOn(m) && m.getData1() == data1)
@@ -57,7 +54,7 @@ public class MidiTools {
 				}
 			}
 		}
-		if (found != null) 
+		if (found != null)
 			return new MidiPair(found, null);
 		return null;
 	}
@@ -66,22 +63,22 @@ public class MidiTools {
 		final long fromTick = on.getTick();
 		final int data1 = ((ShortMessage)on.getMessage()).getData1();
 		for (int i = 0; i < t.size(); i++) {
-			if (false == t.get(i).getMessage() instanceof ShortMessage) 
+			if (false == t.get(i).getMessage() instanceof ShortMessage)
 				continue;
 			MidiEvent e = t.get(i);
 			ShortMessage m = (ShortMessage) e.getMessage();
 			if (Midi.isNoteOff(m) && m.getData1() == data1) {
-			
-			if (e.getTick() <= fromTick) 
+
+			if (e.getTick() <= fromTick)
 				continue;
-			if (Midi.isNoteOff(m) && m.getData1() == data1) 
+			if (Midi.isNoteOff(m) && m.getData1() == data1)
 				return new MidiPair(on, e);
-				
+
 			}
 		}
 		return new MidiPair(on, null); // drums/hanging chad
 	}
-	
+
 	public static boolean match(MidiPair it, MidiPair other) {
 		return match(it.getOn(), other.getOn()) && match(it.getOff(), other.getOff());
 	}
@@ -91,27 +88,19 @@ public class MidiTools {
 		if (it.getTick() != other.getTick()) return false;
 		return match(it.getMessage(), other.getMessage());
 	}
-	
-    public static Color velocityColor(int data2) {
-    	return new Color(0, 112, 60, data2 * 2); // Dartmouth Green
-	}
-    
-    public static Color highlightColor(int data2) {
-    	return new Color(0xFF, 0xA5, 0x00, data2 * 2); // Orange
-    }
-	
+
 	public static long measureTicks(int resolution, int beats) {
 		return beats * resolution;
 	}
-	
+
 	public static int measureCount(long ticks, long measureTicks) {
 		return (int)Math.ceil(ticks / measureTicks) + 1;
 	}
-	
+
 	public static int measureCount(long ticks, int resolution, int beats) {
 		return measureCount(ticks, measureTicks(resolution, beats));
 	}
-	
+
 	public static AbstractCollection<MidiEvent> loadSection(long start, long end, Track t, AbstractCollection<MidiEvent> result) {
 		result.clear();
 		for (int i = 0; i < t.size(); i++) {
@@ -137,7 +126,7 @@ public class MidiTools {
 		}
 		return false;
 	}
-	
+
 	public static void delete(int measure, MidiTrack track) {
 		long start = measure * track.getBarTicks();
 		long end = start + track.getBarTicks();
@@ -151,52 +140,26 @@ public class MidiTools {
 			t.remove(e);
 		}
 	}
-	
+
 	/** insert a clipboard midi event into the current two-bar window */
 	public static MidiEvent interpolate(MidiEvent e, MidiTrack track) {
 		long base = e.getTick() >= track.getBarTicks() ? track.getRight() : track.getLeft();
 		long tick = e.getTick() + base;
 		return new MidiEvent(e.getMessage(), tick);
 	}
-	
-	
+
+
 	public static String formatTime(long timecode) {
 		long millis = (long) (timecode * 1000.0 + 0.5);
-		return String.format("%02d:%02d:%02d.%03d", millis / 60 / 60 / 1000, 
+		return String.format("%02d:%02d:%02d.%03d", millis / 60 / 60 / 1000,
 				(millis / 60 / 1000) % 60, (millis / 1000) % 60, millis % 1000);
 	}
 
 	public static MidiPair zeroBase(MidiPair p, long left) {
 		if (left == 0)
 			return p;
-		return new MidiPair(new MidiEvent(p.getOn().getMessage(), p.getOn().getTick() - left), 
+		return new MidiPair(new MidiEvent(p.getOn().getMessage(), p.getOn().getTick() - left),
 				p.getOff() == null ? null : new MidiEvent(p.getOff().getMessage(), p.getOff().getTick() - left));
-	}
-	
-	public static void resolution(MidiTrack track, int rez) {
-			float factor = rez / (float)track.getResolution();
-			Track t = track.getT();
-			for (int i = t.size() - 1; i >= 0; i--) {
-				t.get(i).setTick((long) (t.get(i).getTick() * factor));
-			}
-			track.setResolution(rez);
-	}
-	
-	public static void resolution(MidiTrack track) {
-		String init = "" + track.getResolution();
-		String rez = JOptionPane.showInputDialog("Resolution: ", init);
-		if (rez == null || rez.equals(init) || rez.isBlank()) return;
-		try {
-			int change = Integer.parseInt(rez);
-			change -= change % 2;
-			if (change < 2 && change > 2048) {
-				RTLogger.log("Resolution", "what are you doing?");
-				return;
-			}
-			resolution(track, change);
-		} catch (Throwable e) {
-			RTLogger.log("Resolution", rez + ": " + e.getMessage());
-		}
 	}
 
 }
@@ -214,7 +177,7 @@ public class MidiTools {
 //		long base = target * track.getBarTicks();
 //		Track t = track.getT();
 //		loadMeasure(measure, track, work);
-//		for (MidiEvent e : work) 
+//		for (MidiEvent e : work)
 //			t.add(new MidiEvent(e.getMessage(), e.getTick() + base));
 //	}
 //	public static Note translate(MidiEvent e, MidiTrack track) {
@@ -235,7 +198,7 @@ public class MidiTools {
 //	}
 //	private static void collateDrums(Bar b, long barTicks, Measure result, boolean first) {
 //		result.clear();
-//		for (MidiEvent e : b) 
+//		for (MidiEvent e : b)
 //			result.add(new MidiPair(new MidiEvent(e.getMessage(), e.getTick() + (first ? 0 : barTicks)), null));
 //	}
 //	private void snipNotes(Bar bar, long start, long end, long translate, Measure result, Accumulator stash) {
@@ -243,14 +206,14 @@ public class MidiTools {
 //		for (MidiEvent e : bar) {
 //			if (e.getTick() < start || e.getMessage() instanceof ShortMessage == false)
 //				continue;
-//			if (e.getTick() >= end) 
+//			if (e.getTick() >= end)
 //				return;
 //			ShortMessage s = (ShortMessage)e.getMessage();
 //			if (track.isDrums()) {
 //				float top = (e.getTick() + translate) / twoBar;
 //				result.add(new Note(top, top, s.getData1(), s.getData2()));
 //			}
-//			else if (s.getCommand() == NOTE_ON) 
+//			else if (s.getCommand() == NOTE_ON)
 //				stash.add(e);
 //			else if (s.getCommand() == NOTE_OFF) {
 //				MidiEvent on = stash.get(s);
@@ -261,7 +224,7 @@ public class MidiTools {
 //			}
 //		}
 //	}
-    
+
 //	/** move trailing midi back */
 //	public static void deleteMeasure(MidiTrack t) {
 //		long measure = MidiTools.measureTicks(t.getResolution());
@@ -274,7 +237,7 @@ public class MidiTools {
 //				continue;
 //			if (cleansed)
 //				e.setTick(e.getTick() - measure);
-//			else if (e.getTick() < end) 
+//			else if (e.getTick() < end)
 //				track.remove(e);
 //			else {
 //				cleansed = true;
@@ -282,7 +245,7 @@ public class MidiTools {
 //			}
 //		}
 //	}
-	
+
 //	/** find next CMD (i.e. note_off) starting from tick (i.e. note_on) or null*/
 //	public static MidiEvent findNext(int cmd, long tick, int data1, Track track) {
 //		for (int i = 0; i < track.size(); i++) {
@@ -294,7 +257,7 @@ public class MidiTools {
 //		}
 //		return null;
 //	}
-	
+
 //	public static void copyMeasure(Track track, long start, long end, ArrayList<MidiEvent> result, long offset) {
 //		for (int i = 0; i < track.size(); i++) {
 //			MidiEvent e = track.get(i);
@@ -309,7 +272,7 @@ public class MidiTools {
 //				return;
 //		}
 //	}
-	
+
 //	public static void copy(Collection<MidiEvent> source, Snippet dest, long start) {
 //		long end = start + dest.getLength();
 //		Iterator<MidiEvent> it = source.iterator();
@@ -317,11 +280,11 @@ public class MidiTools {
 //		while (it.hasNext()) {
 //			MidiEvent e = it.next();
 //			long tick = e.getTick();
-//			if (tick <= start) 
+//			if (tick <= start)
 //				continue;
 //			if (tick < end || (tick == end && e.getMessage().getStatus() == NOTE_OFF))
 //				dest.add(new MidiEvent(e.getMessage(), tick - start));
-//			else 
+//			else
 //				return;
 //		}
 //	}
@@ -329,7 +292,7 @@ public class MidiTools {
 //	/**put notes in result from track for the range as specified in result */
 //	public static void snippet(Snippet result, Track track) {
 //		result.clear();
-//		
+//
 //		long start = result.getStart();
 //		long end = result.getEnd();
 //		for (int i = 0; i < track.size(); i++) {
@@ -338,7 +301,7 @@ public class MidiTools {
 //				continue;
 //			if (tick >= start && tick < end)
 //				result.add(track.get(i));
-//			else 
+//			else
 //				break;
 //		}
 //	}
@@ -363,7 +326,7 @@ public class MidiTools {
 //	for (int i = 0; i < incoming.size(); i++) {
 //		if (incoming.get(i).getMessage() instanceof MetaMessage) {
 //        	MetaMessage m = (MetaMessage)incoming.get(i).getMessage();
-//        	if (m.getMessage()[1] == NAME_STATUS) { 
+//        	if (m.getMessage()[1] == NAME_STATUS) {
 //        		// long tick = incoming.get(i).getTick() / 2; // why divide tick by 2??
 //        		get((int) (incoming.get(i).getTick() / ticks)).setName(new String(m.getData()));}}}
 
@@ -372,7 +335,7 @@ public class MidiTools {
 //		t.add(new MidiEvent(new MetaMessage(NAME_STATUS, nombre, nombre.length), bar * ticks));
 //	} catch (InvalidMidiDataException e) {
 
-//    public abstract void next(boolean forward); 
+//    public abstract void next(boolean forward);
 //    /** copy bar from to tail of track */
 //    public abstract void copy(int from);
 //    /** copy bar from, inserting at to */
@@ -384,7 +347,7 @@ public class MidiTools {
 //  int note = key % 12;
 //  String noteName = NOTE_NAMES[note];
 //  int velocity = msg.getData2();
-//  System.out.println(cmd == NOTE_ON ? "NoteOn, " : "NoteOff, " + noteName + octave + 
+//  System.out.println(cmd == NOTE_ON ? "NoteOn, " : "NoteOff, " + noteName + octave +
 //  " key=" + key + " velocity: " + velocity);
 
 //	public static void oomPah(MidiTrack track) throws InvalidMidiDataException {
@@ -393,7 +356,7 @@ public class MidiTools {
 //		int res = track.getResolution();
 //		clear(t);
 //		int[] notes = new int[]{0, 36, 1, 40, 1, 43, 2, 31, 3, 40, 3, 43};
-//		
+//
 //		for (int i = 1; i < notes.length; i+=2) {
 //			t.add(new MidiEvent(new ShortMessage(NOTE_ON, notes[i], 100), notes[i-1] * res ));
 //			t.add(new MidiEvent(new ShortMessage(NOTE_OFF, notes[i], 1), (notes[i-1] + 1) * res ));

@@ -41,7 +41,7 @@ import net.judah.util.Constants;
 public class PresetsView extends KnobPanel  {
 	public static final Dimension BTN_SZ = new Dimension(80, STD_HEIGHT);
 
-	@Getter private final KnobMode knobMode = KnobMode.PRESETS;
+	@Getter private final KnobMode knobMode = KnobMode.Presets;
 	@Getter private final JPanel title = new JPanel();
 	private final PresetsDB presets;
 	private final JList<String> list = new JList<>();

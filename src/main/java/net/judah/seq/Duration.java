@@ -11,7 +11,6 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import net.judah.gui.Gui;
-import net.judah.gui.MainFrame;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.ModalDialog;
 import net.judah.gui.widgets.Slider;
@@ -28,13 +27,13 @@ public class Duration { // TODO TimeListener TimeSig
 	private MidiPair init;
 	private final int measure = getClock().getSteps();
 	private long quanta;
-	
+
 	private Slider slider;
 	private JTextField ticks, steps, end;
-	
+
 	private class Durr extends JTextField {
 		private final Input type;
-		
+
 		Durr(long value, Input t) {
 			super(4);
 			type = t;
@@ -42,7 +41,7 @@ public class Duration { // TODO TimeListener TimeSig
 			addActionListener(e->Duration.this.update(type, getText()));
 		}
 	}
-	
+
 	public Duration(MusicBox box) {
 		this.view = box;
 		if (view.getSelected().isEmpty()) {
@@ -55,7 +54,7 @@ public class Duration { // TODO TimeListener TimeSig
 		quanta = view.track.getStepTicks();
 		off = init.getOff() == null ? Integer.MAX_VALUE : init.getOff().getTick();
 		compute();
-		
+
 		ticks = new Durr(durr, Input.TICKS);
 		steps = new Durr(stpz, Input.STEPS);
 		end = new Durr(off, Input.END);
@@ -70,7 +69,7 @@ public class Duration { // TODO TimeListener TimeSig
 
 		slider.setValue(stpz);
 		slider.addChangeListener(e->update(Input.SLIDER, slider.getValue()));
-		
+
 		JPanel top = new JPanel();
 		top.add(new JLabel("steps"));
 		top.add(steps);
@@ -78,16 +77,16 @@ public class Duration { // TODO TimeListener TimeSig
 		top.add(ticks);
 		top.add(new JLabel(on + " to"));
 		top.add(end);
-		
+
 		JPanel pnl = new JPanel();
 		pnl.setLayout(new BoxLayout(pnl, BoxLayout.PAGE_AXIS));
 		pnl.add(top);
 		pnl.add(Gui.wrap(slider));
 		pnl.add(Gui.wrap(
-				new Btn("Ok", e->ok()), 
+				new Btn("Ok", e->ok()),
 				new Btn("Cancel", e->ModalDialog.getInstance().setVisible(false))));
 		pnl.setName("Duration");
-		new ModalDialog(Gui.wrap(pnl), new Dimension(400, 190), MainFrame.getKnobMode());
+		new ModalDialog(Gui.wrap(pnl), new Dimension(400, 190));
 	}
 
 	private void compute() {
@@ -111,18 +110,18 @@ public class Duration { // TODO TimeListener TimeSig
 			RTLogger.warn(this, txt + ": " + t.getMessage());
 		}
 	}
-	
+
 	void update(Input type, long value) {
 		if (value < 1) return;
-		
+
 		switch(type) {
 			case TICKS: off = on + value; break;
 			case SLIDER:
 			case STEPS: off = on + value * quanta; break;
-			case END: if (value > on) off = value; break; 
+			case END: if (value > on) off = value; break;
 		}
 		compute();
-		
+
 		if (slider.getValue() != stpz)
 			slider.setValue(stpz);
 		if (false == ticks.getText().equals(Long.toString(durr)))
@@ -131,10 +130,10 @@ public class Duration { // TODO TimeListener TimeSig
 			steps.setText(Integer.toString(stpz));
 		if (false == end.getText().equals(Long.toString(off)))
 			end.setText(Long.toString(off));
-		
+
 	}
 
-	
+
 //	/**
 //	 * @param in source note (off is null for drums)
 //	 * @param destination x = +/-ticks,   y = +/-data1
@@ -149,7 +148,7 @@ public class Duration { // TODO TimeListener TimeSig
 //			off = trans((ShortMessage)in.getOff().getMessage(), in.getOff().getTick(), destination, t);
 //		return new MidiPair(on, off);
 //	}
-//	
+//
 //	private static MidiEvent trans(ShortMessage source, long sourceTick, Prototype destination, MidiTrack t) {
 //		long window = t.getWindow();
 //		long start = t.getFrame() * t.getWindow();

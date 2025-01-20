@@ -15,11 +15,11 @@ import javax.sound.midi.Track;
 import org.jaudiolibs.jnajack.JackTransportState;
 
 import lombok.Getter;
+import net.judah.api.MidiClock;
 import net.judah.api.Notification.Property;
 import net.judah.api.Signature;
 import net.judah.api.TimeListener;
 import net.judah.api.ZoneMidi;
-import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.RecordWidget;
 import net.judah.gui.settable.CurrentCombo;
@@ -33,6 +33,7 @@ import net.judah.midi.Actives;
 import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
+import net.judah.mixer.LineIn;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiTools;
 import net.judah.seq.Trax;
@@ -45,11 +46,13 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 
 	/** Sequence (for save) */
 	private final MidiFile s;
-    protected final String name;
+	private final Trax type;
+	private final String name;
     protected final Track t;
     /** parent midi port */
     protected final ZoneMidi midiOut;
 	protected final int ch;
+	protected final LineIn fx;
     protected final Actives actives;
 
 	private File file;
@@ -61,30 +64,40 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 	private boolean onDeck;
 	private float gain = 0.9f;
 
-    public MidiTrack(String name, ZoneMidi out, final int ch, int rez, JudahClock clock, int polyphony) throws InvalidMidiDataException {
+	// PianoTrack
+    public MidiTrack(Trax type, ZoneMidi out, int rez, JudahClock clock, int polyphony, LineIn channel) throws InvalidMidiDataException {
     	super(clock);
-		this.name = name;
-		this.ch = ch;
+		this.type = type;
+		this.ch = type.getCh();
 		this.midiOut = out;
+		this.name = type.name();
 		s = new MidiFile(rez);
 		setBarTicks(clock.getMeasure() * s.getResolution());
 		t = s.createTrack();
 		actives = new Actives(midiOut, ch, polyphony);
-		if (name.equals(Trax.H2.name()))
+		if (type.name().equals(Trax.H2.name()))
 			cue = Cue.Hot;
 		clock.addListener(this);
+		fx = channel;
     }
 
-	public MidiTrack(String name, Actives actives, JudahClock clock) throws InvalidMidiDataException {
+	public MidiTrack(Trax type, ZoneMidi out, JudahClock clock, int polyphony, LineIn channel) throws InvalidMidiDataException {
+		this(type, out, MidiClock.MIDI_24, clock, polyphony, channel);
+	}
+
+    // DrumTrack
+	public MidiTrack(Trax type, Actives actives, JudahClock clock, LineIn fx) throws InvalidMidiDataException {
 		super(clock);
-		this.name = name;
 		this.ch = actives.getChannel();
+		this.type = type;
+		this.name = type.name();
 		this.midiOut = actives.getMidiOut();
 		s = new MidiFile();
 		setBarTicks(clock.getMeasure() * s.getResolution());
 		t = s.createTrack();
 		this.actives = actives;
 		clock.addListener(this);
+		this.fx = fx;
 	}
 
 	public void send(ShortMessage midi, long ticker) {
@@ -114,6 +127,12 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
     public final boolean isDrums() { return this instanceof DrumTrack; }
     public final boolean isSynth() { return this instanceof PianoTrack; }
     public void setResolution(int rez) {
+		if (rez < 2 || rez > 2048)
+			throw new NumberFormatException("out of bounds");
+		float factor = rez / (float)getResolution();
+		for (int i = t.size() - 1; i >= 0; i--) {
+			t.get(i).setTick((long) (t.get(i).getTick() * factor));
+		}
     	s.setResolution(rez);
 		setBarTicks(clock.getTimeSig().beats * rez);
 		compute();
@@ -165,6 +184,10 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 
     }
 
+	public void toggle() {
+		setActive(!isActive());
+	}
+
 	public void trigger() {
 		if (!clock.isActive())
 			setActive(!isActive());
@@ -185,6 +208,7 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 		onDeck = false;
 		MainFrame.update(name);
 	}
+
 
 	public void setAmp(float amp) {
     	state.amp = amp;
@@ -429,17 +453,18 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 		return bar * barTicks + step * getStepTicks();
 	}
 
-	public void info() {
-		StringBuffer sb = new StringBuffer();
-		if (getFile() != null)
-			sb.append(getFile().getAbsolutePath()).append(NL);
+	public String info() {
+		StringBuffer sb = new StringBuffer(getName() + " ");
+		sb.append(getClass().getSimpleName()).append(" Info").append(NL).append(NL);
+		if (getFile() != null && getFile().isFile()) {
+			sb.append("File:").append(NL);
+			String file = getFile().getAbsolutePath().replace(System.getProperty("user.home"), "~");
+			sb.append(file).append(NL);
+		}
 		sb.append("events: ").append(t.size()).append(NL);
 		sb.append("length: ").append(  t.ticks() / s.getResolution() ).append(" beats ").append(NL);
 		sb.append("    ").append(t.ticks()).append(" ticks @ ").append(s.getResolution()).append(" resolution").append(NL);
-		String title = name + " Track Info";
-		String payload = sb.toString();
-		RTLogger.log(title, payload);
-		Gui.infoBox(payload, title);
+		return sb.toString();
 	}
 
 }

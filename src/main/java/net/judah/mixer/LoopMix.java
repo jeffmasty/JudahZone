@@ -50,7 +50,7 @@ public class LoopMix extends MixWidget implements Updateable {
 	}
 
 	@Override protected Color thisUpdate() {
-		if (update != null && loop.getStopwatch() > Loop.OFF) {
+		if (update != null && loop.getStopwatch() >= 0) {
 			if (! title.getText().equals(update))
 				title.setText(update);
 		}

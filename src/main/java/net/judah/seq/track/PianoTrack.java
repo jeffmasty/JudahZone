@@ -12,20 +12,21 @@ import javax.sound.midi.Track;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.api.Key;
-import net.judah.api.MidiClock;
 import net.judah.api.TimeListener;
 import net.judah.api.ZoneMidi;
 import net.judah.gui.MainFrame;
+import net.judah.gui.Qwerty;
 import net.judah.gui.settable.ModeCombo;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
-import net.judah.omni.Threads;
+import net.judah.mixer.LineIn;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiPair;
 import net.judah.seq.Poly;
+import net.judah.seq.Trax;
 import net.judah.seq.arp.Algo;
 import net.judah.seq.arp.Arp;
 import net.judah.seq.arp.ArpInfo;
@@ -58,19 +59,19 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 	private Algo algo = new Echo();
 	private final ArrayList<MidiEvent> chads = new ArrayList<>();
 
-	public PianoTrack(String name, ZoneMidi out, int ch, JudahClock clock) throws InvalidMidiDataException {
-		this(name, out, ch, clock, DEFAULT_POLYPHONY);
+	public PianoTrack(Trax type, ZoneMidi out, JudahClock clock, LineIn channel) throws InvalidMidiDataException {
+		super(type, out, clock, DEFAULT_POLYPHONY, channel);
 		chords.addListener(this);
 		info = getState().getArp();
 		this.clear();
 	}
 
-	public PianoTrack(String name, Polyphony notes, JudahClock clock) throws InvalidMidiDataException {
-		super(name, notes, clock);
+	public PianoTrack(Trax type, Polyphony notes, JudahClock clock, LineIn fx) throws InvalidMidiDataException {
+		super(type, notes, clock, fx);
 	}
 
-	public PianoTrack(String name, ZoneMidi out, int ch, JudahClock clock, int polyphony) throws InvalidMidiDataException {
-		super(name, out, ch, MidiClock.MIDI_24, clock, polyphony);
+	public PianoTrack(Trax type, ZoneMidi out, JudahClock clock, int polyphony, LineIn channel) throws InvalidMidiDataException {
+		super(type, out, clock, polyphony, channel);
 	}
 
 	@Override
@@ -139,7 +140,7 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 				if (((ShortMessage)on.getMessage()).getData1() != m.getData1())
 					continue;
 				used = on;
-				MainFrame.getMidiView(this).getGrid().push(
+				Qwerty.getPianist(this).push(
 					new Edit(Type.NEW, new MidiPair(on, new MidiEvent(m, tick))));
 				break;
 			}
@@ -253,11 +254,11 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 			// case UP5: case DN5:
 		}
 		algo.setRange(info.range);
-		Threads.execute(()-> {
+
+		MainFrame.focus.execute(() -> {
 			ModeCombo.update(this);
 			MainFrame.miniSeq().update(this);
-			MainFrame.getMidiView(this).getMenu().updateMode();
-			//JudahZone.getMidiGui().update(this);
+			TrackMenu.updateCue(PianoTrack.this);
 		});
 	}
 

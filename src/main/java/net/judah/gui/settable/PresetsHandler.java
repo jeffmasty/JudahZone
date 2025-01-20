@@ -17,15 +17,14 @@ import net.judah.fx.Preset;
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.gui.Updateable;
-import net.judah.mixer.Channel;
 
 /** Presets */
 public class PresetsHandler extends SetCombo<Preset> implements ListCellRenderer<Preset>, Updateable {
 
-	private final Channel ch;
+	private final Presets ch;
 	private final JLabel render = new JLabel();
-	
-	public PresetsHandler(Channel channel) {
+
+	public PresetsHandler(Presets channel) {
 		super(JudahZone.getPresets().array(), channel.getPreset());
 		this.ch = channel;
 		((JLabel)getRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
@@ -42,7 +41,7 @@ public class PresetsHandler extends SetCombo<Preset> implements ListCellRenderer
 		if (ch.getPreset() != selected)
 			ch.setPreset(selected);
 	}
-	
+
 	@Override
 	public final void update() {
 		Preset selected = (Preset)getSelectedItem();
@@ -62,11 +61,11 @@ public class PresetsHandler extends SetCombo<Preset> implements ListCellRenderer
 	public int getIdx() {
 		return JudahZone.getPresets().indexOf(getSelectedItem());
 	}
-	
-	@Override public Component getListCellRendererComponent(JList<? extends Preset> list, 
+
+	@Override public Component getListCellRendererComponent(JList<? extends Preset> list,
 			Preset value, int index, boolean isSelected, boolean cellHasFocus) {
 		render.setText(value == null ? "?" : value.getName());
 		return render;
 	}
-	
+
 }

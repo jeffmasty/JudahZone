@@ -23,7 +23,7 @@ import net.judah.util.Memory;
 public class Scope extends KnobPanel {
 
 	public static enum Mode {Tuner, Wave}; //, OSC, HZ/FFT}
-    @Getter private final KnobMode knobMode = KnobMode.TOOLS;
+    @Getter private final KnobMode knobMode = KnobMode.Tools;
 
     @Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 
@@ -91,7 +91,7 @@ public class Scope extends KnobPanel {
 	}
 
 	public void process() {
-		if (MainFrame.getKnobMode() != KnobMode.TOOLS)
+		if (MainFrame.getKnobMode() != KnobMode.Tools)
 			return;
 
 		float[][] stereo = mem.getFrame();

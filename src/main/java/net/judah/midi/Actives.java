@@ -65,5 +65,4 @@ public class Actives extends ArrayList<ShortMessage> {
 		return -1;
 	}
 
-
 }

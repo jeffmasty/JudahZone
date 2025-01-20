@@ -4,7 +4,6 @@ import static net.judah.JudahZone.*;
 
 import javax.sound.midi.ShortMessage;
 
-import net.judah.JudahZone;
 import net.judah.fx.Fader;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.MultiSelect;
@@ -45,9 +44,9 @@ public class Beatstep implements Controller {
 			// LOOPA, 37(loopB), 38(loopC),  LOOPD,     KITS,       RECORD,   FX,       FADER
 			if (data1 == KITS) {
 				if (!Midi.isNoteOn(midi)) return true;
-				if (MainFrame.getKnobMode() != KnobMode.KITS) {
-					MainFrame.setFocus(KnobMode.KITS);
-					MainFrame.setFocus(getDrumMachine().getCurrent().getKit().getFx());
+				if (MainFrame.getKnobMode() != KnobMode.Kits) {
+					MainFrame.setFocus(KnobMode.Kits);
+					getDrumMachine().setCurrent(getDrumMachine().getCurrent());
 				}
 				else
 					getDrumMachine().increment();
@@ -89,8 +88,8 @@ public class Beatstep implements Controller {
 		if (Midi.isCC(midi)) {
 			int data2 = midi.getData2();
 			if (data1 == TEMPO_KNOB) {
-				float tempo = JudahZone.getClock().getTempo() + (data2 == 127 ? -2 : 1); // wonky physical knob?
-				JudahZone.getClock().setTempo(tempo);
+				float tempo = getClock().getTempo() + (data2 > 64 ? -2 : 2); // a little wonky
+				getClock().setTempo(tempo);
 				return true;
 			}
 

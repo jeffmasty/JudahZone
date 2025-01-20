@@ -30,15 +30,6 @@ public final class Overdrive implements Effect {
     @Getter @Setter boolean active;
     @Getter private float drive = 0.06f;
     private float makeupGain = 0.85f;
-    private int nframes;
-    
-    public Overdrive() {
-        initialize(Constants.sampleRate(), Constants.bufSize());
-    }
-
-    public void initialize(int samplerate, int buffersize) {
-        this.nframes = buffersize;
-    }
 
     @Override public String getName() {
         return Overdrive.class.getSimpleName();
@@ -60,18 +51,28 @@ public final class Overdrive implements Effect {
     		drive = 0.00001f;
     	else if (value >= 95)
     		drive = 0.666f;
-    	else 
+    	else
     		drive = Constants.logarithmic(value, 0, 1);
     }
 
-    public void processAdd(FloatBuffer buf) {
-        buf.rewind();
-        double preMul = drive * 99 + 1;
-        double postMul = 1 / (Math.log(preMul * 2) * LOG2);
-        for (int i = 0; i < nframes; i++) 
-			buf.put( makeupGain * (float) (Math.atan(buf.get(i) * preMul) * postMul));
+    @Override
+	public void process(FloatBuffer left, FloatBuffer right) {
+    	processAdd(left);
+    	processAdd(right);
     }
 
-    
+    private void processAdd(FloatBuffer buf) {
+        buf.rewind();
+
+        double preMul = drive * 99 + 1;
+        double postMul = 1 / (Math.log(preMul * 2) * LOG2);
+        float gain = makeupGain;
+
+        while (buf.hasRemaining()) {
+            float value = buf.get();
+            float processedValue = gain * (float) (Math.atan(value * preMul) * postMul);
+            buf.put(buf.position() - 1, processedValue);
+        }
+    }
 }
 

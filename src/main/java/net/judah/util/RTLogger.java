@@ -60,7 +60,7 @@ public class RTLogger extends KnobPanel {
         e.printStackTrace();
     }
 
-    @Getter private final KnobMode knobMode = KnobMode.LOG;
+    @Getter private final KnobMode knobMode = KnobMode.Log;
     @Getter private final JComponent title = Gui.wrap(new JLabel(""));
 
     private RTLogger() {

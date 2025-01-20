@@ -8,7 +8,6 @@ import javax.swing.JButton;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
-import net.judah.gui.JudahMenu.Actionable;
 import net.judah.seq.arp.Arp;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;

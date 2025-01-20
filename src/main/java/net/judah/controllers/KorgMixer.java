@@ -6,14 +6,15 @@ import java.util.List;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.judah.drumkit.DrumKit;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
+import net.judah.gui.Qwerty;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.seq.Seq;
 import net.judah.seq.arp.Arp;
-import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.song.Scene;
 
@@ -64,9 +65,9 @@ public class KorgMixer implements Controller {
 
 		// knobs = drumkit or synths gain
 		else if (data1 >= knoboff && data1 < knoboff + 4) {
-			MidiTrack t = getDrumMachine().getTracks().get(data1 - knoboff);
-			t.setAmp(data2 * 0.01f);
-			MainFrame.update(t);
+			DrumKit kit = getDrumMachine().getTracks().get(data1 - knoboff).getKit();
+			kit.getGain().set(Gain.VOLUME, data2);
+			MainFrame.update(kit);
 		}
 		else if (data1 >= knoboff + 4 && data1 < knoboff + 8) {
 			volKnob(data1 - (knoboff + 4), data2);
@@ -111,19 +112,19 @@ public class KorgMixer implements Controller {
 			seq.getCurrent().next(true);
 		}
 		else if (data1 == RWND.getVal() && data2 != 0) { // prev Tab
-			MainFrame.changeTab(false);
+			Qwerty.instance.changeTab(false);
 		}
 		else if (data1 == FWRD.getVal() && data2 != 0) { // next Tab
-			MainFrame.changeTab(true);
+			Qwerty.instance.changeTab(true);
 		}
 		if (data1 == STOP.getVal() && data2 != 0 && seq.getCurrent() != null) { // Track Active/Inactive
-			seq.getCurrent().setActive(!seq.getCurrent().isActive());
+			seq.getCurrent().toggle();
 		}
 		else if (data1 == PLAY.getVal() && data2 > 0) { // MPK mode
 			if (seq.getCurrent() instanceof PianoTrack synth)
 				synth.toggle(Arp.MPK);
-			else
-				seq.getCurrent().setActive(!seq.getCurrent().isActive());
+//			else
+//				seq.getCurrent().toggle();
 		}
 		else if (data1 == RECORD.getVal())
 			seq.getCurrent().setCapture(!seq.getCurrent().isCapture());
@@ -134,10 +135,10 @@ public class KorgMixer implements Controller {
 	private void volKnob(int idx, int data2) {
 		Channel ch = getTacos().taco;
 		switch (idx) {
-			case 0: ch = getBass(); break;
-			case 1: ch = getTacos().taco; break;
-			case 2: ch = getFluid(); break;
-			case 3: ch = getAux(); break;
+			case 0: ch = getTacos().taco; break;
+			case 1: ch = getTacos().tracks.getFirst(); break;
+			case 2: ch = getTacos().tracks.get(1); break;
+			case 3: ch = getFluid(); break;
 			}
 		ch.getGain().set(Gain.VOLUME, data2);
 		MainFrame.update(ch);

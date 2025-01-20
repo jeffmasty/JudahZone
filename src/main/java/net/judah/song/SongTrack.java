@@ -6,18 +6,19 @@ import java.awt.FlowLayout;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import net.judah.JudahZone;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 import net.judah.gui.PlayWidget;
+import net.judah.gui.Qwerty;
 import net.judah.gui.Size;
 import net.judah.gui.settable.Folder;
 import net.judah.gui.settable.ModeCombo;
 import net.judah.gui.settable.Program;
 import net.judah.gui.widgets.Btn;
-import net.judah.gui.widgets.Slider;
+import net.judah.gui.widgets.TrackGain;
 import net.judah.gui.widgets.TrackVol;
 import net.judah.omni.Icons;
+import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.Programmer;
@@ -25,10 +26,9 @@ import net.judah.seq.track.Programmer;
  // TODO MouseWheel listener -> change pattern?
 public class SongTrack extends JPanel implements Size {
 	private static final Dimension COMPUTER = new Dimension(204, 27);
-
+	private static final Dimension GAIN_SIZE = new Dimension(105, STD_HEIGHT);
 
 	@Getter private final MidiTrack track;
-	private Slider gain = null; // DrumTrack
 
 	//  namePlay file cycle bar preview preset amp
 	public SongTrack(MidiTrack t) {
@@ -37,36 +37,22 @@ public class SongTrack extends JPanel implements Size {
 
 		setLayout(new FlowLayout(FlowLayout.LEFT, 4, 4));
 		setOpaque(true);
-		setBorder(Pastels.SUBTLE);
+		setBorder(Gui.SUBTLE);
 		add(Gui.resize(new PlayWidget(t, t.getName()), SMALLER_COMBO));
 		add(Gui.resize(new Program(track), COMBO_SIZE));
 
-		if (t.isSynth()) {
-			add(new ModeCombo(((PianoTrack)track)));
-			add(new TrackVol(track));
-		}
-		else {
+		if (t instanceof DrumTrack d) {
 			setBackground(Pastels.BUTTONS);
 			computer.setBackground(Pastels.BUTTONS);
-			gain = new Slider(null);
-			gain.setValue((int) (track.getAmp() * 100));
-			gain.addChangeListener(e->{
-				if (track.getAmp() * 100f != gain.getValue()) {
-					track.setAmp(gain.getValue() * 0.01f); // TODO GUI updates?
-				}
-			});
-			Dimension GAIN_SIZE = new Dimension(105, STD_HEIGHT);
-			add(Gui.resize(gain, GAIN_SIZE));
+			add(Gui.resize(new TrackGain(d), GAIN_SIZE));
+		}
+		else if (t instanceof PianoTrack p) {
+			add(new ModeCombo(p));
+			add(new TrackVol(track));
 		}
 		add(Gui.resize(new Folder(track), COMBO_SIZE));
 		add(Gui.resize(computer, COMPUTER));
-		add(new Btn(Icons.DETAILS_VEW, e->JudahZone.getFrame().edit(track)));
-		update();
-	}
-
-	public void update() {
-		if (gain != null && gain.getValue() != track.getAmp() * 100)
-			gain.setValue((int) (track.getAmp() * 100));
+		add(new Btn(Icons.DETAILS_VEW, e->Qwerty.edit(track)));
 	}
 
 }

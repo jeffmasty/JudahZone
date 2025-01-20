@@ -9,21 +9,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.api.PlayAudio;
+import net.judah.fx.Effect;
 import net.judah.mixer.Channel;
 import net.judah.omni.AudioTools;
 import net.judah.omni.Recording;
 import net.judah.util.Constants;
 
+/** plays something already recorded */
 @Getter
 public abstract class AudioTrack extends Channel implements PlayAudio {
-	protected final int bufSize = Constants.bufSize();
 
 	@Setter protected Type type = Type.ONE_SHOT;
 	protected boolean playing;
 	protected Recording recording = new Recording();
 	protected final AtomicInteger tapeCounter = new AtomicInteger(0);
 	protected float[][] playBuffer;
-	protected float env = 1f; // envelope/boost
 
 	public AudioTrack(String name, Type type) {
 		super(name, true);
@@ -34,9 +34,7 @@ public abstract class AudioTrack extends Channel implements PlayAudio {
 		this(name, Type.ONE_SHOT);
 	}
 
-	public abstract void process();
-
-	@Override public void play(boolean play) {
+	@Override public final void play(boolean play) {
 		this.playing = play;
 	}
 
@@ -58,40 +56,13 @@ public abstract class AudioTrack extends Channel implements PlayAudio {
 		return getLength() / Constants.fps();
 	}
 
-	// env and playBuffer pre-calculated
-	protected void playFrame(FloatBuffer outLeft, FloatBuffer outRight) {
+	/** run active effects on the current frame being played */
+	public final void fx(FloatBuffer outLeft, FloatBuffer outRight) {
 
-		AudioTools.replace(playBuffer[LEFT], left, env * gain.getLeft());
-		AudioTools.replace(playBuffer[RIGHT], right, env * gain.getRight());
+		AudioTools.replace(playBuffer[LEFT], left, gain.getLeft());
+		AudioTools.replace(playBuffer[RIGHT], right, gain.getRight());
 
-		filter1.process(left, right);
-		filter2.process(left, right);
-
-		if (chorus.isActive())
-			chorus.processStereo(left, right);
-
-		if (compression.isActive()) {
-			compression.process(left);
-			compression.process(right);
-		}
-
-		if (overdrive.isActive()) {
-			overdrive.processAdd(left);
-			overdrive.processAdd(right);
-		}
-
-		if (eq.isActive()) {
-			eq.process(left, true);
-			eq.process(right, false);
-		}
-
-		if (delay.isActive()) {
-			delay.process(left, right);
-		}
-		if (reverb.isActive())
-			reverb.process(left, right);
-
-		// gain & stereo pan to provided buffer
+		stream().filter(Effect::isActive).forEach(fx -> fx.process(left, right));
 		AudioTools.mix(left, outLeft);
 		AudioTools.mix(right, outRight);
 	}

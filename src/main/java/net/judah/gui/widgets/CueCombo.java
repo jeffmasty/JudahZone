@@ -6,9 +6,9 @@ import java.util.ArrayList;
 import javax.swing.JComboBox;
 
 import net.judah.gui.Gui;
-import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.omni.Threads;
+import net.judah.seq.track.TrackMenu;
 import net.judah.seq.track.Cue;
 import net.judah.seq.track.MidiTrack;
 
@@ -32,12 +32,11 @@ public class CueCombo extends JComboBox<Cue> {
 
 	public static void refresh(MidiTrack t) {
 		Threads.execute(()->{
-			MainFrame.getMidiView(t).getMenu().updateCue(); // kludge
+			TrackMenu.updateCue(t);
 			Cue cue = t.getCue();
 			for (CueCombo c : instances) {
 				if (c.track != t)
 					continue;
-
 				if (cue != c.getSelectedItem())
 					c.setSelectedItem(t.getCue());
 			}

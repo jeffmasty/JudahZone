@@ -4,7 +4,6 @@ import java.util.Vector;
 
 import javax.swing.JComboBox;
 
-import net.judah.JudahZone;
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.omni.Threads;
@@ -19,9 +18,9 @@ public class CycleCombo extends JComboBox<Cycle> {
 	public CycleCombo(Computer track) {
 		super(Cycle.values());
 		this.track = track;
+		setSelectedItem(track.getCycle());
 		Gui.resize(this, Size.SMALLER_COMBO);
 		instances.add(this);
-		update(track);
 		addActionListener(e->action());
 	}
 
@@ -32,7 +31,6 @@ public class CycleCombo extends JComboBox<Cycle> {
 	}
 
 	public static void update(Computer t) {
-		if (JudahZone.isInitialized())
 		Threads.execute(()->{
 			for (CycleCombo c : instances)
 				if (c.track == t && c.getSelectedItem() != t.getCycle()) {

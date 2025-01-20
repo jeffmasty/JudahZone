@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 import net.judah.JudahZone;
-import net.judah.mixer.Channel;
+import net.judah.gui.settable.Presets;
 import net.judah.omni.Threads;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
@@ -84,7 +84,7 @@ public class PresetsDB extends ArrayList<Preset> {
 		return toArray(new Preset[size()]);
 	}
 
-	public void replace(Channel channel) {
+	public void replace(Presets channel) {
 		int idx = indexOf(channel.getPreset());
 		if (idx < 0) {
 			RTLogger.warn(this, "Unknown Preset on " + channel.getName()

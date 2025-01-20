@@ -25,7 +25,6 @@ public class MiniSeq extends Box {
 	public MiniSeq(TrackList<MidiTrack> tracks, JudahClock clock) {
 		super(BoxLayout.X_AXIS);
 		this.tracks = tracks;
-        //setBorder(new LineBorder(Pastels.MY_GRAY, 1));
         Gui.resize(this, TRX);
         setOpaque(true);
 

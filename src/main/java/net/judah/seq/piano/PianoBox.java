@@ -1,59 +1,55 @@
 package net.judah.seq.piano;
 
-import static net.judah.seq.MidiTools.highlightColor;
-import static net.judah.seq.MidiTools.velocityColor;
-
 import java.awt.Color;
 import java.awt.Composite;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.MouseInfo;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
+import javax.swing.BoxLayout;
 
 import net.judah.api.Key;
 import net.judah.api.Signature;
+import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 import net.judah.midi.Midi;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiPair;
-import net.judah.seq.MidiTab;
 import net.judah.seq.MidiTools;
 import net.judah.seq.MusicBox;
 import net.judah.seq.Prototype;
-import net.judah.seq.beatbox.BeatsSize;
+import net.judah.seq.TrackList;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.PianoTrack;
 import net.judah.util.RTLogger;
 
 /** display midi music in piano grid */
-public class PianoBox extends MusicBox implements BeatsSize {
+public class PianoBox extends MusicBox {
 
 	private final Piano piano;
 	private final PianoSteps steps;
-	private final int width, height;
 	private float unit;
 	private final PianoView zoom;
-	private Prototype recent;
-	protected ArrayList<MidiPair> dragging = new ArrayList<>();
 
-	public PianoBox(Rectangle r, PianoView view, PianoSteps currentBeat, Piano roll, MidiTab tab) {
-		super(view, r, tab);
+	private float ratio;
+
+	public PianoBox(PianoView view, PianoSteps currentBeat, Piano roll, TrackList<PianoTrack> parent) {
+		super(view.getTrack(), parent);
 		zoom = view;
-		width = r.width;
-		height = r.height;
 		this.steps = currentBeat;
 		this.piano = roll;
-		timeSig(view.getTrack().getClock().getTimeSig());
+		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 	}
 
 	@Override public long toTick(Point p) {
-		return (long) (p.y / (float)GRID_HEIGHT * track.getWindow() + track.getLeft());
+		return (long) (p.y / (float)(height) * track.getWindow() + track.getLeft());
 	}
 
 	@Override public int toData1(Point p) {
@@ -64,7 +60,6 @@ public class PianoBox extends MusicBox implements BeatsSize {
 		super.paint(g);
 		g.setColor(Pastels.FADED);
 
-		float ratio = height / (2f * track.getBarTicks());
 		float noteWidth = zoom.scaledWidth;
 		int keyWidth = (int)noteWidth;
 		int tonic = zoom.tonic;
@@ -98,24 +93,20 @@ public class PianoBox extends MusicBox implements BeatsSize {
 		int yheight, data1;
 		for (MidiPair p : scroll.populate()) {
 
-			if (p.getOn().getMessage() instanceof ShortMessage == false)
-				continue;
+			if (p.getOn().getMessage() instanceof ShortMessage s) {
+				data1 = s.getData1();
+				if (data1 < tonic || data1 > top)
+					continue;
 
-			ShortMessage s = (ShortMessage)p.getOn().getMessage();
-			data1 = s.getData1();
-			if (data1 < tonic || data1 > top)
-				continue;
-
-			x = (int) (noteWidth * (data1 - tonic));
-
-			y = (int) ((p.getOn().getTick() - track.getLeft()) * ratio);
-
-			yheight = (int) ((p.getOff().getTick() - p.getOn().getTick()) * ratio);
-			if (selected.contains(p.getOn().getTick(), data1))
-				g.setColor(highlightColor(s.getData2()));
-			else
-				g.setColor(velocityColor(s.getData2()));
-			g.fill3DRect(x, y, keyWidth, yheight, true);
+				if (selected.contains(p.getOn().getTick(), data1))
+					g.setColor(highlightColor(s.getData2()));
+				else
+					g.setColor(velocityColor(s.getData2()));
+				x = (int) (noteWidth * (data1 - tonic));
+				y = (int) ((p.getOn().getTick() - track.getLeft()) * ratio);
+				yheight = (int) ((p.getOff().getTick() - p.getOn().getTick()) * ratio);
+				g.fill3DRect(x, y, keyWidth, yheight, true);
+			}
 		}
 		g.setColor(Pastels.FADED);
 		g.drawRect(0, 0, width-1, height - 1); // border
@@ -139,8 +130,18 @@ public class PianoBox extends MusicBox implements BeatsSize {
 
 	@Override public void timeSig(Signature sig) {
 		unit = height / (2f * sig.steps);
-		if (steps != null) steps.repaint();
+		ratio = height / (2f * track.getBarTicks());
 		repaint();
+	}
+
+	@Override
+	public void resized(int w, int h) {
+		width = w;
+		height = h;
+		setMinimumSize(new Dimension(w, h));
+
+		Gui.resize(this, new Dimension(width, height));
+		timeSig(clock.getTimeSig());
 	}
 
 	@Override public void mouseExited(MouseEvent e) {

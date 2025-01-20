@@ -22,6 +22,7 @@ import net.judah.fx.Filter;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
+import net.judah.gui.Qwerty;
 import net.judah.gui.settable.Program;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.CenteredCombo;
@@ -37,7 +38,7 @@ import net.judah.util.Constants;
 public class SynthKnobs extends KnobPanel {
 	private static final int OCTAVE = 12;
 
-	@Getter private final KnobMode knobMode = KnobMode.TACO;
+	@Getter private final KnobMode knobMode = KnobMode.Taco;
 	private static final Dimension COMBO = new Dimension(55, STD_HEIGHT);
 	public static final String[] DETUNE_OPTIONS = new String[] {
 			"OCT", "5th", "+3", "+2", "+1", "+/-0", "-5th", "SUB"};
@@ -133,7 +134,7 @@ public class SynthKnobs extends KnobPanel {
 		title.add(new Btn(" next ", e->JudahZone.getTacos().rotate()));
 		if (!synth.getTracks().isEmpty())
 			title.add(new Btn(Icons.DETAILS_VEW,
-					e->JudahZone.getFrame().edit(synth.getTracks().getFirst())));
+					e->Qwerty.edit(synth.getTracks().getFirst())));
 		validate();
 	}
 

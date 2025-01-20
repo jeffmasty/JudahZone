@@ -42,13 +42,12 @@ import java.security.InvalidParameterException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 /**
  * IIR Filter op ported from Gervill in OpenJDK.
  *
- * This is a mono op and requires one input and output channel. Input and output
+ * This is a MONO op and requires one input and output channel. Input and output
  * buffers may be the same.
  * @author Neil C Smith (derived from code by Karl Helgason)
  */
@@ -79,7 +78,7 @@ public class Filter implements Effect {
 	public static float knobToFrequency(int val) {
 		return (float)(0.033333 * Math.pow((val + 1), 2.81)) + 50f;
 	}
-	
+
 	static float[] reverse = new float[100];
 	static {
 	    for (int i = 0; i < reverse.length; i++)
@@ -94,8 +93,6 @@ public class Filter implements Effect {
 	}
 
 	@Getter private final String name = Filter.class.getSimpleName();
-    private final double sampleRate;
-    private final int bufferSize;
     @Getter private Type filterType = Type.pArTy;
     @Setter @Getter private boolean active;
     @Getter private float frequency = 700;
@@ -106,21 +103,19 @@ public class Filter implements Effect {
     /** right channel */
     private final Filter stereo;
 
+    public Filter(int channels, Type type, float freq) {
+    	this(channels == 2, type, freq);
+    }
+
     public Filter(boolean isStereo, Type type, float freq) {
     	this(isStereo);
     	setFilterType(type);
     	setFrequency(freq);
     }
-    
-	public Filter(boolean isStereo) {
-    	this(Constants.sampleRate(), Constants.bufSize(), isStereo);
-	}
 
-    public Filter(int sampleRate, int bufferSize, boolean isStereo) {
-    	this.sampleRate = sampleRate;
-    	this.bufferSize = bufferSize;
+	public Filter(boolean isStereo) {
     	filter.reset();
-    	stereo = isStereo ? new Filter(sampleRate, bufferSize, false) : null;
+    	stereo = isStereo ? new Filter(false) : null;
     }
 
     @Override public int getParamCount() {
@@ -167,7 +162,7 @@ public class Filter implements Effect {
             return;
         resonancedB = db;
         filter.dirty = true;
-        if (stereo != null) 
+        if (stereo != null)
         	stereo.setResonance(db);
     }
 
@@ -175,29 +170,29 @@ public class Filter implements Effect {
     public float getResonance() {
         return (float) resonancedB;
     }
-    
+
     public void setTone(int tone) {
     	RTLogger.log(this, "Cut Tone " + tone);
     	if (tone > 39 && tone < 60) {
-    		active = false; 
+    		active = false;
     		return;
     	};
     	active = true;
     	setFilterType(Type.pArTy);
     	setFrequency(knobToFrequency(tone));
-    	if (stereo != null) 
+    	if (stereo != null)
     		stereo.setTone(tone);
     }
 
     /** Set filter type. */
     public void setFilterType(Type filtertype) {
-    	if (stereo != null) 
+    	if (stereo != null)
     		stereo.setFilterType(filterType);
 
     	if (this.filterType == filtertype) return;
         this.filterType = filtertype;
         filter.dirty = true;
-        if (filterType == Type.pArTy) 
+        if (filterType == Type.pArTy)
         	oldParty = frequency <= PARTY_FREQUENCY ? Type.HiCut: Type.LoCut;
         // RTLogger.log(this, "filter type: " + filterType);
     }
@@ -222,7 +217,8 @@ public class Filter implements Effect {
     }
 
     /** process replace stereo */
-    public void process(FloatBuffer left, FloatBuffer right) {
+    @Override
+	public void process(FloatBuffer left, FloatBuffer right) {
     	if (!active) return;
     	left.rewind();
     	right.rewind();
@@ -331,13 +327,13 @@ public class Filter implements Effect {
 	            double _b2 = this.last_b2;
 	            double _gain = this.last_gain;
 	            double _wet = this.last_wet;
-	            double a0_delta = (this.a0 - this.last_a0) / bufferSize;
-	            double a1_delta = (this.a1 - this.last_a1) / bufferSize;
-	            double a2_delta = (this.a2 - this.last_a2) / bufferSize;
-	            double b1_delta = (this.b1 - this.last_b1) / bufferSize;
-	            double b2_delta = (this.b2 - this.last_b2) / bufferSize;
-	            double gain_delta = (this.gain - this.last_gain) / bufferSize;
-	            double wet_delta = (this.wet - this.last_wet) / bufferSize;
+	            double a0_delta = (this.a0 - this.last_a0) / N_FRAMES;
+	            double a1_delta = (this.a1 - this.last_a1) / N_FRAMES;
+	            double a2_delta = (this.a2 - this.last_a2) / N_FRAMES;
+	            double b1_delta = (this.b1 - this.last_b1) / N_FRAMES;
+	            double b2_delta = (this.b2 - this.last_b2) / N_FRAMES;
+	            double gain_delta = (this.gain - this.last_gain) / N_FRAMES;
+	            double wet_delta = (this.wet - this.last_wet) / N_FRAMES;
 	            double _x1 = this.x1;
 	            double _x2 = this.x2;
 	            double _y1 = this.y1;
@@ -348,7 +344,7 @@ public class Filter implements Effect {
 	            double _yy2 = this.yy2;
 
 	            if (wet_delta != 0) {
-	                for (int i = 0; i < bufferSize; i++) {
+	                for (int i = 0; i < N_FRAMES; i++) {
 	                    _a0 += a0_delta;
 	                    _a1 += a1_delta;
 	                    _a2 += a2_delta;
@@ -371,7 +367,7 @@ public class Filter implements Effect {
 	                    _yy1 = yy;
 	                }
 	            } else if (a0_delta == 0 && a1_delta == 0 && a2_delta == 0 && b1_delta == 0 && b2_delta == 0) {
-	                for (int i = 0; i < bufferSize; i++) {
+	                for (int i = 0; i < N_FRAMES; i++) {
 	                    double x = data.get(i);
 	                    double y = (_a0 * x + _a1 * _x1 + _a2 * _x2 - _b1 * _y1 - _b2 * _y2);
 	                    double xx = (y * _gain) * _wet + (x) * (1 - _wet);
@@ -387,7 +383,7 @@ public class Filter implements Effect {
 	                    _yy1 = yy;
 	                }
 	            } else {
-	                for (int i = 0; i < bufferSize; i++) {
+	                for (int i = 0; i < N_FRAMES; i++) {
 	                    _a0 += a0_delta;
 	                    _a1 += a1_delta;
 	                    _a2 += a2_delta;
@@ -468,13 +464,13 @@ public class Filter implements Effect {
 	            double _b2 = this.last_b2;
 	            double _gain = this.last_gain;
 	            double _wet = this.last_wet;
-	            double a0_delta = (this.a0 - this.last_a0) / bufferSize;
-	            double a1_delta = (this.a1 - this.last_a1) / bufferSize;
-	            double a2_delta = (this.a2 - this.last_a2) / bufferSize;
-	            double b1_delta = (this.b1 - this.last_b1) / bufferSize;
-	            double b2_delta = (this.b2 - this.last_b2) / bufferSize;
-	            double gain_delta = (this.gain - this.last_gain) / bufferSize;
-	            double wet_delta = (this.wet - this.last_wet) / bufferSize;
+	            double a0_delta = (this.a0 - this.last_a0) / N_FRAMES;
+	            double a1_delta = (this.a1 - this.last_a1) / N_FRAMES;
+	            double a2_delta = (this.a2 - this.last_a2) / N_FRAMES;
+	            double b1_delta = (this.b1 - this.last_b1) / N_FRAMES;
+	            double b2_delta = (this.b2 - this.last_b2) / N_FRAMES;
+	            double gain_delta = (this.gain - this.last_gain) / N_FRAMES;
+	            double wet_delta = (this.wet - this.last_wet) / N_FRAMES;
 	            double _x1 = this.x1;
 	            double _x2 = this.x2;
 	            double _y1 = this.y1;
@@ -485,7 +481,7 @@ public class Filter implements Effect {
 	            double _yy2 = this.yy2;
 
 	            if (wet_delta != 0) {
-	                for (int i = 0; i < bufferSize; i++) {
+	                for (int i = 0; i < N_FRAMES; i++) {
 	                    _a0 += a0_delta;
 	                    _a1 += a1_delta;
 	                    _a2 += a2_delta;
@@ -508,7 +504,7 @@ public class Filter implements Effect {
 	                    _yy1 = yy;
 	                }
 	            } else if (a0_delta == 0 && a1_delta == 0 && a2_delta == 0 && b1_delta == 0 && b2_delta == 0) {
-	                for (int i = 0; i < bufferSize; i++) {
+	                for (int i = 0; i < N_FRAMES; i++) {
 	                    double x = in[i];
 	                    double y = (_a0 * x + _a1 * _x1 + _a2 * _x2 - _b1 * _y1 - _b2 * _y2);
 	                    double xx = (y * _gain) * _wet + (x) * (1 - _wet);
@@ -524,7 +520,7 @@ public class Filter implements Effect {
 	                    _yy1 = yy;
 	                }
 	            } else {
-	                for (int i = 0; i < bufferSize; i++) {
+	                for (int i = 0; i < N_FRAMES; i++) {
 	                    _a0 += a0_delta;
 	                    _a1 += a1_delta;
 	                    _a2 += a2_delta;
@@ -568,7 +564,7 @@ public class Filter implements Effect {
 	            this.yy1 = _yy1;
 	            this.yy2 = _yy2;
 	        } else {
-	            for (int i = 0; i < bufferSize; i++) {
+	            for (int i = 0; i < N_FRAMES; i++) {
 	                out[i] += in[i];
 	            }
 	        }
@@ -598,7 +594,7 @@ public class Filter implements Effect {
 	        }
 	        if (filterType == Type.Band) {
 	            wet = 1;
-	            double r = (frequency / sampleRate);
+	            double r = (frequency / SAMPLE_RATE);
 	            if (r > 0.45) {
 	                r = 0.45;
 	            }
@@ -628,7 +624,7 @@ public class Filter implements Effect {
 
 			if (filterType == Type.HiCut || /* filterType == Type.LP24 || */
 	        		(filterType == Type.pArTy && frequency <= PARTY_FREQUENCY)) {
-	            double r = (frequency / sampleRate);
+	            double r = (frequency / SAMPLE_RATE);
 	            if (r > 0.45) {
 	                if (wet == 0) {
 	                    if (rdB < 0.00001) {
@@ -662,7 +658,7 @@ public class Filter implements Effect {
 
 			if (filterType == Type.LoCut || /* filterType == Type.HP24 || */
 	        		(filterType == Type.pArTy && frequency > PARTY_FREQUENCY)) {
-	            double r = (frequency / sampleRate);
+	            double r = (frequency / SAMPLE_RATE);
 	            if (r > 0.45) {
 	                r = 0.45;
 	            }
@@ -717,20 +713,20 @@ public class Filter implements Effect {
 	            double _b2 = this.last_b2;
 	            double _gain = this.last_gain;
 	            double _wet = this.last_wet;
-	            double a0_delta = (this.a0 - this.last_a0) / bufferSize;
-	            double a1_delta = (this.a1 - this.last_a1) / bufferSize;
-	            double a2_delta = (this.a2 - this.last_a2) / bufferSize;
-	            double b1_delta = (this.b1 - this.last_b1) / bufferSize;
-	            double b2_delta = (this.b2 - this.last_b2) / bufferSize;
-	            double gain_delta = (this.gain - this.last_gain) / bufferSize;
-	            double wet_delta = (this.wet - this.last_wet) / bufferSize;
+	            double a0_delta = (this.a0 - this.last_a0) / N_FRAMES;
+	            double a1_delta = (this.a1 - this.last_a1) / N_FRAMES;
+	            double a2_delta = (this.a2 - this.last_a2) / N_FRAMES;
+	            double b1_delta = (this.b1 - this.last_b1) / N_FRAMES;
+	            double b2_delta = (this.b2 - this.last_b2) / N_FRAMES;
+	            double gain_delta = (this.gain - this.last_gain) / N_FRAMES;
+	            double wet_delta = (this.wet - this.last_wet) / N_FRAMES;
 	            double _x1 = this.x1;
 	            double _x2 = this.x2;
 	            double _y1 = this.y1;
 	            double _y2 = this.y2;
 
 	            if (wet_delta != 0) {
-	                for (int i = 0; i < bufferSize; i++) {
+	                for (int i = 0; i < N_FRAMES; i++) {
 	                    _a0 += a0_delta;
 	                    _a1 += a1_delta;
 	                    _a2 += a2_delta;
@@ -747,7 +743,7 @@ public class Filter implements Effect {
 	                    _y1 = y;
 	                }
 	            } else if (a0_delta == 0 && a1_delta == 0 && a2_delta == 0 && b1_delta == 0 && b2_delta == 0) {
-	                for (int i = 0; i < bufferSize; i++) {
+	                for (int i = 0; i < N_FRAMES; i++) {
 	                    double x = data.get(i) * vol;
 	                    double y = (_a0 * x + _a1 * _x1 + _a2 * _x2 - _b1 * _y1 - _b2 * _y2);
 	                    data.put( (float) (y * _gain) );
@@ -757,7 +753,7 @@ public class Filter implements Effect {
 	                    _y1 = y;
 	                }
 	            } else {
-	                for (int i = 0; i < bufferSize; i++) {
+	                for (int i = 0; i < N_FRAMES; i++) {
 	                    _a0 += a0_delta;
 	                    _a1 += a1_delta;
 	                    _a2 += a2_delta;
@@ -830,20 +826,20 @@ public class Filter implements Effect {
 	            double _b2 = this.last_b2;
 	            double _gain = this.last_gain;
 	            double _wet = this.last_wet;
-	            double a0_delta = (this.a0 - this.last_a0) / bufferSize;
-	            double a1_delta = (this.a1 - this.last_a1) / bufferSize;
-	            double a2_delta = (this.a2 - this.last_a2) / bufferSize;
-	            double b1_delta = (this.b1 - this.last_b1) / bufferSize;
-	            double b2_delta = (this.b2 - this.last_b2) / bufferSize;
-	            double gain_delta = (this.gain - this.last_gain) / bufferSize;
-	            double wet_delta = (this.wet - this.last_wet) / bufferSize;
+	            double a0_delta = (this.a0 - this.last_a0) / N_FRAMES;
+	            double a1_delta = (this.a1 - this.last_a1) / N_FRAMES;
+	            double a2_delta = (this.a2 - this.last_a2) / N_FRAMES;
+	            double b1_delta = (this.b1 - this.last_b1) / N_FRAMES;
+	            double b2_delta = (this.b2 - this.last_b2) / N_FRAMES;
+	            double gain_delta = (this.gain - this.last_gain) / N_FRAMES;
+	            double wet_delta = (this.wet - this.last_wet) / N_FRAMES;
 	            double _x1 = this.x1;
 	            double _x2 = this.x2;
 	            double _y1 = this.y1;
 	            double _y2 = this.y2;
 
 	            if (wet_delta != 0) {
-	                for (int i = 0; i < bufferSize; i++) {
+	                for (int i = 0; i < N_FRAMES; i++) {
 	                    _a0 += a0_delta;
 	                    _a1 += a1_delta;
 	                    _a2 += a2_delta;
@@ -860,7 +856,7 @@ public class Filter implements Effect {
 	                    _y1 = y;
 	                }
 	            } else if (a0_delta == 0 && a1_delta == 0 && a2_delta == 0 && b1_delta == 0 && b2_delta == 0) {
-	                for (int i = 0; i < bufferSize; i++) {
+	                for (int i = 0; i < N_FRAMES; i++) {
 	                    double x = in[i];
 	                    double y = (_a0 * x + _a1 * _x1 + _a2 * _x2 - _b1 * _y1 - _b2 * _y2);
 	                    out[i] += y * _gain;
@@ -870,7 +866,7 @@ public class Filter implements Effect {
 	                    _y1 = y;
 	                }
 	            } else {
-	                for (int i = 0; i < bufferSize; i++) {
+	                for (int i = 0; i < N_FRAMES; i++) {
 	                    _a0 += a0_delta;
 	                    _a1 += a1_delta;
 	                    _a2 += a2_delta;
@@ -904,7 +900,7 @@ public class Filter implements Effect {
 	            this.y1 = _y1;
 	            this.y2 = _y2;
 	        } else {
-	            for (int i = 0; i < bufferSize; i++) {
+	            for (int i = 0; i < N_FRAMES; i++) {
 	                out[i] += in[i];
 	            }
 	        }
@@ -924,7 +920,7 @@ public class Filter implements Effect {
 	        if (frequency < 110) {
 	            frequency = 110;
 	        }
-	        double c = (7.0 / 6.0) * Math.PI * 2 * frequency / sampleRate;
+	        double c = (7.0 / 6.0) * Math.PI * 2 * frequency / SAMPLE_RATE;
 	        if (c > 1) {
 	            c = 1;
 	        }
@@ -964,16 +960,16 @@ public class Filter implements Effect {
 	            double _q = this.last_q;
 	            double _gain = this.last_gain;
 	            double _wet = this.last_wet;
-	            double a0_delta = (this.a0 - this.last_a0) / bufferSize;
-	            double q_delta = (this.q - this.last_q) / bufferSize;
-	            double gain_delta = (this.gain - this.last_gain) / bufferSize;
-	            double wet_delta = (this.wet - this.last_wet) / bufferSize;
+	            double a0_delta = (this.a0 - this.last_a0) / N_FRAMES;
+	            double q_delta = (this.q - this.last_q) / N_FRAMES;
+	            double gain_delta = (this.gain - this.last_gain) / N_FRAMES;
+	            double wet_delta = (this.wet - this.last_wet) / N_FRAMES;
 	            double _y2 = this.y2;
 	            double _y1 = this.y1;
 
 	            if (wet_delta != 0) {
 	            	if (vol == 1f)
-		                for (int i = 0; i < bufferSize; i++) {
+		                for (int i = 0; i < N_FRAMES; i++) {
 		                    _a0 += a0_delta;
 		                    _q += q_delta;
 		                    _gain += gain_delta;
@@ -983,7 +979,7 @@ public class Filter implements Effect {
 		                    data[i] = data[i] + (float) (_y2 * _gain * _wet + data[i] * (1 - _wet));
 		                }
 	            	else
-		                for (int i = 0; i < bufferSize; i++) {
+		                for (int i = 0; i < N_FRAMES; i++) {
 		                    _a0 += a0_delta;
 		                    _q += q_delta;
 		                    _gain += gain_delta;
@@ -994,20 +990,20 @@ public class Filter implements Effect {
 		                }
 	            } else if (a0_delta == 0 && q_delta == 0) {
 	            	if (vol == 1f)
-		                for (int i = 0; i < bufferSize; i++) {
+		                for (int i = 0; i < N_FRAMES; i++) {
 		                    _y1 = (1 - _q * _a0) * _y1 - (_a0) * _y2 + (_a0) * data[i];
 		                    _y2 = (1 - _q * _a0) * _y2 + (_a0) * _y1;
 		                    data[i] = data[i] + (float) (_y2 * _gain);
 		                }
 	            	else
-		                for (int i = 0; i < bufferSize; i++) {
+		                for (int i = 0; i < N_FRAMES; i++) {
 		                    _y1 = (1 - _q * _a0) * _y1 - (_a0) * _y2 + (_a0) * (data[i] * vol);
 		                    _y2 = (1 - _q * _a0) * _y2 + (_a0) * _y1;
 		                    data[i] = data[i] + (float) (_y2 * _gain);
 		                }
 	            } else {
 	            	if (vol == 1f)
-		                for (int i = 0; i < bufferSize; i++) {
+		                for (int i = 0; i < N_FRAMES; i++) {
 		                    _a0 += a0_delta;
 		                    _q += q_delta;
 		                    _gain += gain_delta;
@@ -1016,7 +1012,7 @@ public class Filter implements Effect {
 		                    data[i] = data[i] + (float) (_y2 * _gain);
 		                }
 	            	else
-		                for (int i = 0; i < bufferSize; i++) {
+		                for (int i = 0; i < N_FRAMES; i++) {
 		                    _a0 += a0_delta;
 		                    _q += q_delta;
 		                    _gain += gain_delta;
@@ -1063,15 +1059,15 @@ public class Filter implements Effect {
 	            double _q = this.last_q;
 	            double _gain = this.last_gain;
 	            double _wet = this.last_wet;
-	            double a0_delta = (this.a0 - this.last_a0) / bufferSize;
-	            double q_delta = (this.q - this.last_q) / bufferSize;
-	            double gain_delta = (this.gain - this.last_gain) / bufferSize;
-	            double wet_delta = (this.wet - this.last_wet) / bufferSize;
+	            double a0_delta = (this.a0 - this.last_a0) / N_FRAMES;
+	            double q_delta = (this.q - this.last_q) / N_FRAMES;
+	            double gain_delta = (this.gain - this.last_gain) / N_FRAMES;
+	            double wet_delta = (this.wet - this.last_wet) / N_FRAMES;
 	            double _y2 = this.y2;
 	            double _y1 = this.y1;
 
 	            if (wet_delta != 0) {
-	                for (int i = 0; i < bufferSize; i++) {
+	                for (int i = 0; i < N_FRAMES; i++) {
 	                    _a0 += a0_delta;
 	                    _q += q_delta;
 	                    _gain += gain_delta;
@@ -1081,13 +1077,13 @@ public class Filter implements Effect {
 	                    data.put( (float) (_y2 * _gain * _wet + data.get(i) * (1 - _wet)) );
 	                }
 	            } else if (a0_delta == 0 && q_delta == 0) {
-	                for (int i = 0; i < bufferSize; i++) {
+	                for (int i = 0; i < N_FRAMES; i++) {
 	                    _y1 = (1 - _q * _a0) * _y1 - (_a0) * _y2 + (_a0) * data.get(i);
 	                    _y2 = (1 - _q * _a0) * _y2 + (_a0) * _y1;
 	                    data.put( (float) (_y2 * _gain) );
 	                }
 	            } else {
-	                for (int i = 0; i < bufferSize; i++) {
+	                for (int i = 0; i < N_FRAMES; i++) {
 	                    _a0 += a0_delta;
 	                    _q += q_delta;
 	                    _gain += gain_delta;
@@ -1133,15 +1129,15 @@ public class Filter implements Effect {
 	            double _q = this.last_q;
 	            double _gain = this.last_gain;
 	            double _wet = this.last_wet;
-	            double a0_delta = (this.a0 - this.last_a0) / bufferSize;
-	            double q_delta = (this.q - this.last_q) / bufferSize;
-	            double gain_delta = (this.gain - this.last_gain) / bufferSize;
-	            double wet_delta = (this.wet - this.last_wet) / bufferSize;
+	            double a0_delta = (this.a0 - this.last_a0) / N_FRAMES;
+	            double q_delta = (this.q - this.last_q) / N_FRAMES;
+	            double gain_delta = (this.gain - this.last_gain) / N_FRAMES;
+	            double wet_delta = (this.wet - this.last_wet) / N_FRAMES;
 	            double _y2 = this.y2;
 	            double _y1 = this.y1;
 
 	            if (wet_delta != 0) {
-	                for (int i = 0; i < bufferSize; i++) {
+	                for (int i = 0; i < N_FRAMES; i++) {
 	                    _a0 += a0_delta;
 	                    _q += q_delta;
 	                    _gain += gain_delta;
@@ -1151,13 +1147,13 @@ public class Filter implements Effect {
 	                    out[i] += _y2 * _gain * _wet + in[i] * (1 - _wet);
 	                }
 	            } else if (a0_delta == 0 && q_delta == 0) {
-	                for (int i = 0; i < bufferSize; i++) {
+	                for (int i = 0; i < N_FRAMES; i++) {
 	                    _y1 = (1 - _q * _a0) * _y1 - (_a0) * _y2 + (_a0) * in[i];
 	                    _y2 = (1 - _q * _a0) * _y2 + (_a0) * _y1;
 	                    out[i] += _y2 * _gain;
 	                }
 	            } else {
-	                for (int i = 0; i < bufferSize; i++) {
+	                for (int i = 0; i < N_FRAMES; i++) {
 	                    _a0 += a0_delta;
 	                    _q += q_delta;
 	                    _gain += gain_delta;
@@ -1176,7 +1172,7 @@ public class Filter implements Effect {
 	            this.y2 = _y2;
 	            this.y1 = _y1;
 	        } else {
-	            for (int i = 0; i < bufferSize; i++) {
+	            for (int i = 0; i < N_FRAMES; i++) {
 	                out[i] += in[i];
 	            }
 	        }

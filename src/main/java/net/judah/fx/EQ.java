@@ -4,7 +4,6 @@ import java.nio.FloatBuffer;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 /*https://github.com/adiblol/jackiir*/
@@ -33,9 +32,6 @@ public class EQ implements Effect {
 	public static final int CHANNELS_MAX = 32;
 	public static final int FILTERS_MAX = 32;
 	static final float LOG_2  = 0.693147f;
-
-	final int samplerate = Constants.sampleRate(); 
-	final int nframes = Constants.bufSize(); 
 
 	public static enum EqParam {
 		GAIN, FREQUENCY, BANDWIDTH
@@ -87,7 +83,7 @@ public class EQ implements Effect {
 				a1 = a2 = b1 = b2 = 0.0f;
 				return;
 			}
-			float w0 = (float)(2.0*Math.PI*frequency/samplerate);
+			float w0 = (float)(2.0*Math.PI*frequency/SAMPLE_RATE);
 			float sinw0 = (float)Math.sin(w0);
 			float cosw0 = (float)Math.cos(w0);
 			float alpha = 0f;
@@ -123,7 +119,7 @@ public class EQ implements Effect {
 
 		void processBuffer(FloatBuffer buff) {
 			buff.rewind();
-			for (int i=0; i<nframes; i++) {
+			for (int i=0; i<N_FRAMES; i++) {
 				float xn = buff.get(i); // copy
 				float yn = (b0*xn + b1*xn1 + b2*xn2 - a1*yn1 - a2*yn2) / a0;
 				buff.put(yn); // yn, our target, back into the buffer
@@ -166,7 +162,7 @@ public class EQ implements Effect {
 			case BANDWIDTH: filter.bandwidth = value; break;
 			case FREQUENCY: filter.frequency = value; break;
 			case GAIN: filter.gain_db = value;
-			
+
 			break;
 		}
 		filter.update();
@@ -186,7 +182,7 @@ public class EQ implements Effect {
         if (negative) result *= -1;
         update(eqBand, EqParam.GAIN, result);
 	}
-	
+
     @Override public String getName() {
         return EQ.class.getSimpleName();
     }
@@ -203,7 +199,7 @@ public class EQ implements Effect {
     @Override public void set(int idx, int value) {
     	eqGain(EqBand.values()[idx], value);
     }
-    
+
     public void setTone(int data2) {
     	RTLogger.log(this, "EQ tone " + data2);
     	if (data2 > 40 && data2 < 60) {
@@ -225,21 +221,20 @@ public class EQ implements Effect {
     		gain = (data2 - 60) * 0.6f;
     		update(EqBand.High, EqParam.GAIN, gain);
     	}
-    	
+
     }
-    
+
 	public float getGain(EqBand band) {
 	    return leftCh.filters[band.ordinal()].gain_db;
 	}
 
-	public void process(FloatBuffer data, boolean left) {
+	@Override
+	public void process(FloatBuffer left, FloatBuffer right) {
 		// TODO watch for Java's handling of denormals/flush-to-zero/etc...
-		if (left)
-			for (BiquadFilter filter : leftCh.filters)
-				filter.processBuffer(data);
-		else
-			for (BiquadFilter filter : rightCh.filters)
-				filter.processBuffer(data);
-
+		for (BiquadFilter filter : leftCh.filters)
+			filter.processBuffer(left);
+		for (BiquadFilter filter : rightCh.filters)
+			filter.processBuffer(right);
 	}
+
 }

@@ -1,66 +1,55 @@
 package net.judah.mixer;
 
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
 
+import javax.swing.ImageIcon;
+
+import lombok.Getter;
 import net.judah.fx.Effect;
-import net.judah.fx.Reverb;
+import net.judah.fx.Gain;
+import net.judah.gui.MainFrame;
+import net.judah.util.Constants;
 
-public class FxChain implements Iterable<Effect>, Comparator<Effect> {
+/** An input or output effects bus for mono or stereo audio */
+@Getter
+public abstract class FxChain extends ArrayList<Effect> {
+	protected static final int N_FRAMES = Constants.bufSize();
+    protected final FloatBuffer left = FloatBuffer.wrap(new float[N_FRAMES]);
+    protected final FloatBuffer right = FloatBuffer.wrap(new float[N_FRAMES]);
 
-    protected List<Effect> effects;
-    protected final List<Effect> active = new ArrayList<Effect>();;
+	protected final String name;
+	protected ImageIcon icon;
+	protected final boolean isStereo;
+	protected boolean onMute;
+	protected final Gain gain = new Gain();
 
-
-	public FxChain() {
-
+	public FxChain(String name, int numChannels) {
+		this(name, numChannels == Constants.STEREO);
 	}
 
-	public FxChain(Reverb custom) {
-
+	public FxChain(String name, boolean stereo) {
+		isStereo = stereo;
+		this.name = name;
 	}
 
-	public FxChain(int hzLow, int hzHigh) {
+	abstract public void process(FloatBuffer left, FloatBuffer right);
 
+	public void reset() {
+		forEach(fx->fx.setActive(false));
+		MainFrame.update(this);
 	}
 
-	// sort based on effects.indexOf(a) vs indexOf(b)
-
-	// process(FloatBuffer* outs) {
-	//   for(Fx : this)  process(outs)   }
-		// deliver for mix
-
-
-
-
-
-	public void activate(Effect e) {
-		// add
-		// sort
-		active.add(e);
-		active.sort(this);
+	/**@return 0 to 100*/
+	public final int getVolume() {
+		return gain.get(Gain.VOLUME);
 	}
 
-	public void deactivate(Effect e) {
-		active.remove(e);
-
+	/**@return 0 to 100*/
+	public final int getPan() {
+		return gain.get(Gain.PAN);
 	}
 
-	@Override
-	public Iterator<Effect> iterator() {
-		return active.iterator();
-	}
-
-    public Iterable<Effect> all() {
-    	return effects;
-    }
-
-	@Override
-	public int compare(Effect o1, Effect o2) {
-		return effects.indexOf(o1) - effects.indexOf(o2);
-	}
-
+	@Override public final String toString() { return name; }
 
 }

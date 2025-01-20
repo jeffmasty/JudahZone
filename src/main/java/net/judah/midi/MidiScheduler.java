@@ -3,17 +3,13 @@ package net.judah.midi;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.fx.Fader;
 import net.judah.mixer.Channel;
-import net.judah.sampler.Sample;
 import net.judah.util.RTLogger;
 
 /** increments any running LFOs */
-@Data @EqualsAndHashCode(callSuper=false)
 public class MidiScheduler implements Runnable {
 
 	public MidiScheduler() {
@@ -44,10 +40,10 @@ public class MidiScheduler implements Runnable {
 	}
 
 	void pulseLFOs() {
-		for (Channel ch : JudahZone.getMixer().getChannels())
+		for (Channel ch : JudahZone.getMixer().getAll())
 			ch.getLfo().pulse();
-		for (Sample s : JudahZone.getSampler())
-			s.getLfo().pulse();
+//		for (Sample s : JudahZone.getSampler())
+//			s.getLfo().pulse();
 //		for (DrumKit k : JudahZone.getDrumMachine().getKits())
 //			for (DrumSample s : k.getSamples())
 //				s.getLfo().pulse();

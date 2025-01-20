@@ -27,7 +27,7 @@ import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 /** runs fluid command line and connects to FluidSynth stdin and stdout ports */
-public class FluidSynth extends MidiInstrument {
+public final class FluidSynth extends MidiInstrument {
 	public static final String LEFT_PORT = "fluidsynth-midi:left"; // "fluidsynth:l_00";
 	public static final String RIGHT_PORT = "fluidsynth-midi:right"; // "fluidsynth:r_00";
 	public static final String MIDI_PORT = "fluidsynth-midi:midi_00"; // "fluidsynth:midi";
@@ -49,7 +49,7 @@ public class FluidSynth extends MidiInstrument {
 	@SuppressWarnings("deprecation")
 	public FluidSynth(int sampleRate, JackPort midi, JudahClock clock, JackPort left, JackPort right) throws IOException {
 		super(Constants.FLUID, LEFT_PORT, RIGHT_PORT, left, right, "Fluid.png", midi);
-		reverb = new FluidReverb(this); // use external reverb
+		replace(new FluidReverb(this)); // use external reverb
 
 		shellCommand = "fluidsynth --midi-driver=jack --audio-driver=jack -o synth.ladspa.active=0  --sample-rate "
 				+ sampleRate + " " + SOUND_FONT.getAbsolutePath();
@@ -69,7 +69,7 @@ public class FluidSynth extends MidiInstrument {
 			syncInstruments();
 			syncChannels();
 			for (Trax create : Trax.fluids)
-				tracks.add(new PianoTrack(create.name(), this, create.getCh(), clock));
+				tracks.add(new PianoTrack(create, this, clock, this));
 		} catch (Throwable e) {
 			RTLogger.warn(this, e);
 		}

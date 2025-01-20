@@ -71,7 +71,7 @@ public class MPKmini implements Controller, Pastels {
 		if (PRIMARY_CC.contains(data1))
 			return cc_pad(data1, data2);
 		if (SAMPLES_CC.contains(data1)) {
-			Sample s = getSampler().get(SAMPLES_CC.indexOf(data1));
+			Sample s = getSampler().getSamples().get(SAMPLES_CC.indexOf(data1));
 			getSampler().play(s, data2 > 0);
 			return true;
 		}
@@ -90,10 +90,10 @@ public class MPKmini implements Controller, Pastels {
 		else if (data1 == PRIMARY_CC.get(2) && data2 > 0 && !flooding()) // focus MidiGui or LFO
 			nextMidiBtn();
 		else if (data1 == PRIMARY_CC.get(3) && data2 > 0 && !flooding()) {// focus TRACKS
-			if (MainFrame.getKnobMode() == TRACK)
+			if (MainFrame.getKnobMode() == Track)
 				getSeq().getTracks().next(true);
 			else
-				MainFrame.setFocus(TRACK);
+				MainFrame.setFocus(Track);
 		}
 
 		///////// ROW 2 /////////////////
@@ -129,7 +129,7 @@ public class MPKmini implements Controller, Pastels {
 	}
 
 	private final KnobMode[] midiBtnSequence = new KnobMode[]
-			{ MIDI, SETLIST, SAMPLE, PRESETS, TOOLS, LOG };
+			{ MIDI, Setlist, Samples, Presets, Tools, Log };
 
 	private void nextMidiBtn() {
 		KnobMode mode = MainFrame.getKnobMode();

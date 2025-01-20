@@ -19,20 +19,22 @@ import net.judah.sampler.Sampler;
 public class SampleKnobs extends KnobPanel {
 
 	private final Sampler sampler;
-	@Getter private final KnobMode knobMode = KnobMode.SAMPLE;
+	private final ArrayList<Sample> samples;
+	@Getter private final KnobMode knobMode = KnobMode.Samples;
 	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 	private final Slider vol;
 	private final ArrayList<SamplePad> updates = new ArrayList<>();
 
 	public SampleKnobs(Sampler sampler) {
 		this.sampler = sampler;
+		this.samples = sampler.getSamples();
 
 		JPanel loops = new JPanel(new GridLayout(2, 2, 3, 3));
 		for (int i = 0; i < 4; i++)
-			updates.add(new SamplePad(sampler.get(i), loops));
+			updates.add(new SamplePad(samples.get(i), loops));
 		JPanel oneShots = new JPanel(new GridLayout(2, 2, 3, 3));
 		for (int i = 4; i < 8; i++)
-			updates.add(new SamplePad(sampler.get(i), oneShots));
+			updates.add(new SamplePad(samples.get(i), oneShots));
 
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		add(loops);
@@ -59,7 +61,7 @@ public class SampleKnobs extends KnobPanel {
 	private static final int[] KNOB_ORDER = { 0, 1, 4, 5, 2, 3, 6, 7};
 
 	@Override public boolean doKnob(int idx, int value) {
-		sampler.get(KNOB_ORDER[idx]).getGain().set(Gain.VOLUME, value);
+		samples.get(KNOB_ORDER[idx]).getGain().set(Gain.VOLUME, value);
 		return true;
 	}
 

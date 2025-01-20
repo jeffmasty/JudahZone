@@ -87,7 +87,7 @@ public class ImportMidi extends JPanel {
 		add(Gui.wrap(ok, cancel));
 		setName("Import MIDI");
 
-		new ModalDialog(this, SIZE, null);
+		new ModalDialog(this, SIZE);
 
 	}
 

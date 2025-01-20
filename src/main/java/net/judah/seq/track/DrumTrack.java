@@ -10,23 +10,41 @@ import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
 import net.judah.drumkit.GMDrum;
-import net.judah.gui.MainFrame;
+import net.judah.gui.Qwerty;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiPair;
+import net.judah.seq.Trax;
 import net.judah.util.RTLogger;
 
 public class DrumTrack extends MidiTrack {
 
 	@Getter private final DrumKit kit;
 
-	public DrumTrack(DrumKit kit, JudahClock clock) throws InvalidMidiDataException {
-		super(kit.getKitMode().name(), kit, clock);
+	public DrumTrack(Trax type, DrumKit kit, JudahClock clock) throws InvalidMidiDataException {
+		super(type, kit.getActives(), clock, kit);
 		this.kit = kit;
 	}
+
+//	public DrumTrack(Engine out, Trax type, JudahClock clock) throws InvalidMidiDataException {
+//		super(type.getName(), out, type.getCh())
+//
+//		super(kit.getKitMode().name(), kit, clock);
+//		kit = new DrumKit(this, Trax.D1, "Pearl"),
+//		this.kit = kit;
+//	}
+
+
+//	public DrumTrack(ZoneMidi engine, Trax type, JudahClock clock, String string) {
+//		super(type.name(), engine clock);
+//		this.kitMode = type;
+//		this.
+//		// TODO Auto-generated constructor stub
+//		new DrumKit(this, Trax.D1, "Pearl"),
+//	}
 
 	@Override
 	protected void playNote(ShortMessage formatted) {
@@ -70,7 +88,7 @@ public class DrumTrack extends MidiTrack {
 			return false;
 		if (Midi.isNoteOn(m) && m.getChannel() >= DRUM_CH) {
 			long tick = quantize(recent);
-			MainFrame.getMidiView(this).getGrid().push(new Edit(Type.NEW,
+			Qwerty.getDrummer(this).push(new Edit(Type.NEW,
 					new MidiPair(Midi.createEvent(tick, NOTE_ON, ch, m.getData1(), m.getData2()), null)));
 			if (tick < recent)
 				midiOut.send(m, JudahMidi.ticker());

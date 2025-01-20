@@ -297,8 +297,8 @@ public class JudahMidi extends BasicClient implements Closeable {
         	// check sequencers for output
             PortMessage route = queue.poll();
             while (route != null) {
-            		JackMidi.eventWrite(route.getPort(), ticker(),
-            				route.getMidi().getMessage(), route.getMidi().getLength());
+            		JackMidi.eventWrite(route.port(), ticker(),
+            				route.midi().getMessage(), route.midi().getLength());
             	route = queue.poll();
             }
         } catch (Throwable e) {

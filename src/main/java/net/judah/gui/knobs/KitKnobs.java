@@ -1,7 +1,6 @@
 package net.judah.gui.knobs;
 
 import static net.judah.JudahZone.getDrumMachine;
-import static net.judah.JudahZone.getFrame;
 
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
@@ -18,6 +17,7 @@ import net.judah.drumkit.DrumDB;
 import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
+import net.judah.gui.Qwerty;
 import net.judah.gui.widgets.CenteredCombo;
 import net.judah.midi.Actives;
 import net.judah.seq.Trax;
@@ -25,11 +25,11 @@ import net.judah.seq.Trax;
 public class KitKnobs extends KnobPanel {
 
 	public static enum Modes {
-		Pan, Volume, Attack, Decay, Dist, pArTy;
+		Volume, Pan, Attack, Decay; // Dist, pArTy;
 	}
 
 	@Getter private final DrumKit kit;
-	@Getter private final KnobMode knobMode = KnobMode.KITS;
+	@Getter private final KnobMode knobMode = KnobMode.Kits;
 	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 	private final JComboBox<String> preset = new CenteredCombo<>();
 	private final ArrayList<KitPad> pads = new ArrayList<>(DrumKit.SAMPLES);
@@ -53,10 +53,10 @@ public class KitKnobs extends KnobPanel {
     		preset.addItem(s);
 
     	preset.addActionListener(e->kit.progChange("" + preset.getSelectedItem()));
-    	kits.setSelectedItem(kit.getKitMode());
-    	kits.addActionListener(e-> getDrumMachine().focus((Trax)kits.getSelectedItem()));
+    	kits.setSelectedItem(kit.getType());
+    	kits.addActionListener(e-> getDrumMachine().setCurrent((Trax)kits.getSelectedItem()));
 
-    	modes.setSelectedItem(Modes.pArTy);
+    	modes.setSelectedItem(Modes.Volume);
     	modes.addActionListener(e-> update());
     	title.add(kits);
     	title.add(modes);
@@ -71,8 +71,8 @@ public class KitKnobs extends KnobPanel {
 
 	@Override
 	public void update() {
-		if (preset.getSelectedItem() != kit.getPreset().getFolder().getName())
-			preset.setSelectedItem(kit.getPreset().getFolder().getName());
+		if (preset.getSelectedItem() != kit.getProgram().getFolder().getName())
+			preset.setSelectedItem(kit.getProgram().getFolder().getName());
 		pads.forEach(p->p.update());
 	}
 
@@ -89,7 +89,7 @@ public class KitKnobs extends KnobPanel {
 	}
 
 	@Override public void pad1() {
-		getFrame().edit(JudahZone.getSeq().byName(kit.toString()));
+		Qwerty.edit(JudahZone.getSeq().byName(kit.getType().name()));
 	}
 
 	@Override public void pad2() {

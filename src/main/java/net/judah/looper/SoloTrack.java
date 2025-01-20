@@ -1,7 +1,5 @@
 package net.judah.looper;
 
-import org.jaudiolibs.jnajack.JackPort;
-
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import net.judah.JudahZone;
@@ -14,22 +12,21 @@ import net.judah.song.cmd.Cmdr;
 import net.judah.song.cmd.Param;
 import net.judah.util.Memory;
 
-@Getter @EqualsAndHashCode(callSuper = true) 
+@Getter @EqualsAndHashCode(callSuper = true)
 public class SoloTrack extends Loop implements Cmdr {
 
     public static final String NAME = "D";
     private boolean muteStash = true;
     private LineIn soloTrack;
     private boolean soloOn;
-    
-    public SoloTrack(LineIn soloTrack, Looper looper, Zone sources, 
-    		JackPort l, JackPort r, Memory mem) {
-        super(NAME, "LoopD.png", Type.SYNC, looper, sources, l, r, mem);
+
+    public SoloTrack(LineIn soloTrack, Looper looper, Zone sources, Memory mem) {
+        super(NAME, "LoopD.png", Type.SYNC, looper, sources, mem);
         this.soloTrack = soloTrack;
         drumTrack = true;
     }
 
-    public void solo(boolean engage) { 
+    public void solo(boolean engage) {
     	if (engage) {
     		type = Type.SOLO;
             muteStash = soloTrack.isMuteRecord();
@@ -46,7 +43,7 @@ public class SoloTrack extends Loop implements Cmdr {
     public boolean isSolo() {
     	return type == Type.SOLO;
     }
-    
+
     /** engage or disengage drumtrack */
     public void toggle() {
     	solo(type != Type.SOLO);
@@ -71,11 +68,11 @@ public class SoloTrack extends Loop implements Cmdr {
 
 	@Override
 	public void execute(Param p) {
-		if (p.cmd == Cmd.Solo) 
+		if (p.cmd == Cmd.Solo)
 			solo(resolve(p.val));
 	}
 
-	/**Called from drum pads, if there is no recording and loop is sync'd up 
+	/**Called from drum pads, if there is no recording and loop is sync'd up
 	 * then start a FREE loop and sync clock's tempo to it */
 	public void beatboy() {
 		if (looper.getOnDeck().contains(this) == false) return;
@@ -84,7 +81,7 @@ public class SoloTrack extends Loop implements Cmdr {
 		looper.getOnDeck().remove(this);
 		capture(true);
 	}
-	
+
 //	@Override
 //	protected void endRecord() {
 //		super.endRecord();
@@ -94,5 +91,5 @@ public class SoloTrack extends Loop implements Cmdr {
 //			clock.begin();
 //		}
 //	}
-	
+
 }

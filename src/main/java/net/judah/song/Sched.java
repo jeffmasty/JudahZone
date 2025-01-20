@@ -5,8 +5,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import net.judah.seq.arp.ArpInfo;
 import net.judah.seq.arp.Arp;
+import net.judah.seq.arp.ArpInfo;
 import net.judah.seq.track.Cycle;
 
 /** Serialized MidiTrack state for a given Scene */
@@ -31,8 +31,6 @@ public class Sched {
 		program = clone.program;
 		arp = clone.arp == null ? null : new ArpInfo(clone.arp);
 	}
-
-
 
 	public Sched(boolean synth) {
 		if (synth)

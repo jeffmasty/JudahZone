@@ -1,6 +1,5 @@
 package net.judah.fx;
 
-import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 
 public abstract class Reverb implements Effect {
@@ -12,8 +11,6 @@ public abstract class Reverb implements Effect {
     @Override public String getName() {
         return Reverb.class.getSimpleName();
     }
-
-    public abstract void initialize(int sampleRate, int bufferSize);
 
     /**@param size 0 to 1 */
     public abstract void setRoomSize(float size);
@@ -32,8 +29,9 @@ public abstract class Reverb implements Effect {
 
     /** if true, process() must be implemented */
     public abstract boolean isInternal();
-    public void process(FloatBuffer buf) {}
-    public void process(FloatBuffer left, FloatBuffer right) {}
+    //public void process(FloatBuffer buf) {}
+//    @Override
+//	public void process(FloatBuffer left, FloatBuffer right) {}
 
     // NO-OPs, overwrite in subclass
     @Override

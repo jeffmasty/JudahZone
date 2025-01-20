@@ -75,7 +75,6 @@ import java.util.Arrays;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.omni.Threads;
-import net.judah.util.Constants;
 
 /** the classic Freeverb algorithm, stereo handled as a separate internal Effect unit */
 public final class Freeverb extends Reverb {
@@ -88,13 +87,12 @@ public final class Freeverb extends Reverb {
     private static final float offsetroom = 0.7f;
 
     private static final float initialroom = 0.4f;
-    private static final float initialdamp = 1f;
+    private static final float initialdamp = 1.5f;
     private static final float initialwet = 1 / scalewet;
     private static final float initialdry = 0.5f;//1;
-    private static final float initialwidth = 1.0f;
+    private static final float initialwidth = 1.1f;
 
     @Getter private boolean active;
-    private int nframes = Constants.bufSize();
     private float roomsize;
     private float damp;
     private float wet, wet1;
@@ -113,21 +111,18 @@ public final class Freeverb extends Reverb {
 
     private final Freeverb stereoReverb;
 
-    public Freeverb(boolean isStereo) {
-        initialize(Constants.sampleRate(), Constants.bufSize());
-        stereoReverb = isStereo ? new Freeverb(false) : null;
+    public Freeverb() {
+    	this(true);
     }
 
-    @Override
-    public void initialize(int samplerate, int maxBufferSize) {
-		nframes = maxBufferSize;
+    private Freeverb(boolean isStereo) {
         setWet(initialwet);
         setRoomSize(initialroom);
         setDry(initialdry);
         setDamp(initialdamp);
         setWidth(initialwidth);
 
-        float freqscale = samplerate / 44100.0f;
+        float freqscale = SAMPLE_RATE / 44100.0f;
 
         /* Init Comb filters */
         int combtuningL1 = (int) (freqscale * (1116));
@@ -169,11 +164,12 @@ public final class Freeverb extends Reverb {
         }
 
         /* Init scratch buffers*/
-        inScratch = new float[maxBufferSize];
-        outScratchL = new float[maxBufferSize];
+        inScratch = new float[N_FRAMES];
+        outScratchL = new float[N_FRAMES];
 
         /* Prepare all buffers*/
         update();
+        stereoReverb = isStereo ? new Freeverb(false) : null;
     }
 
     @Override
@@ -267,29 +263,29 @@ public final class Freeverb extends Reverb {
     @Override
 	public void process(FloatBuffer left, FloatBuffer right) {
     	process(left);
-    	stereoReverb.process(right);
+    	if (right != null)
+    		stereoReverb.process(right);
     }
 
-    @Override
-    public void process(FloatBuffer buf) {
+    void process(FloatBuffer buf) {
     	buf.rewind();
         if (dirty) {
             update();
             dirty = false;
         }
         float ourGain = fixedgain;
-        for (int i = 0; i < nframes; i++)
+        for (int i = 0; i < N_FRAMES; i++)
             inScratch[i] = buf.get(i) * ourGain;
 
         Arrays.fill(outScratchL, 0);
 
         for (int i = 0; i < numcombs; i++)
-            combL[i].processMix(inScratch, outScratchL, nframes);
+            combL[i].processMix(inScratch, outScratchL, N_FRAMES);
 
         for (int i = 0; i < numallpasses; i++)
-            allpassL[i].processReplace(outScratchL, outScratchL, nframes);
+            allpassL[i].processReplace(outScratchL, outScratchL, N_FRAMES);
 
-            for (int i = 0; i < nframes; i++)
+            for (int i = 0; i < N_FRAMES; i++)
                 buf.put(buf.get(i) + // process add
                 		outScratchL[i] * wet1);// + outScratchR[i] * wet2);
 

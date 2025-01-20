@@ -1,10 +1,10 @@
 package net.judah.seq;
 
 import java.awt.AlphaComposite;
+import java.awt.Color;
 import java.awt.Composite;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
@@ -14,27 +14,26 @@ import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 import javax.swing.JPanel;
+import javax.swing.border.Border;
 
 import lombok.Getter;
+import net.judah.gui.Detached.Floating;
+import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
+import net.judah.gui.Updateable;
 import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.track.MidiTrack;
-import net.judah.util.RTLogger;
 
-public abstract class MusicBox extends JPanel implements Musician {
-	private static final char DELETE = '\u007F';
-	private static final char ESCAPE = '\u001b';
+public abstract class MusicBox extends JPanel implements Musician, Updateable, Floating {
 	protected static final Composite transparent = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);
 	public static enum DragMode { CREATE, TRANSLATE, SELECT }
 
 	@Getter protected final MidiTrack track;
 	protected final Track t;
 	protected final JudahClock clock;
-	protected final MidiTab tab;
-	protected final MidiView view;
 	protected final Measure scroll;
 	/** undo/redo */
 	protected ArrayList<Edit> stack = new ArrayList<>();
@@ -44,17 +43,19 @@ public abstract class MusicBox extends JPanel implements Musician {
 	protected Prototype click;
 	protected Point drag = null;
 	protected DragMode mode = null;
+	protected final TrackList<?> tracks;
 
-	public MusicBox(MidiView view, Rectangle r, MidiTab tab) {
-		this.track = view.getTrack();
+	protected Prototype recent;
+	protected ArrayList<MidiPair> dragging = new ArrayList<>();
+	protected int width, height;
+
+
+	public MusicBox(MidiTrack midiTrack, TrackList<? extends MidiTrack> tracks) {
+		this.track = midiTrack;
 		this.t = track.getT();
 		this.clock = track.getClock();
-		this.tab = tab;
-		this.view = view;
 		scroll = new Measure(track);
-		setBounds(r);
-		setMaximumSize(r.getSize());
-		setPreferredSize(r.getSize());
+		this.tracks = tracks;
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		addMouseWheelListener(this);
@@ -83,49 +84,19 @@ public abstract class MusicBox extends JPanel implements Musician {
 	}
 
 	@Override public void copy() {
-		tab.getClipboard().copy(selected, track);
+		tracks.getClipboard().copy(selected, track);
 	}
+
 
 	@Override public void paste() { // TODO differences in track Resolution
-		List<MidiPair> notes = tab.getClipboard().paste(track);
+		List<MidiPair> notes = tracks.getClipboard().paste(track);
 		push(new Edit(Type.NEW, notes));
-	}
-
-	@Override public void keyTyped(KeyEvent e) {
-		char ch = e.getKeyChar();
-		int intchar = ch;
-
-		if (ch == DELETE)
-			delete();
-		else if (ch == ESCAPE)
-			selectNone();
-		else if (ch == ' ')
-			track.setActive(!track.isActive());
-		else if (e.getModifiersEx() == 128) {
-			switch (intchar) {
-				case 1: selectFrame(); break; 		// ctrl-a
-				case 3: copy(); break; 				// ctrl-c
-				case 4: selectNone(); break; 		// ctrl-d
-				case 12: new Duration(this); break; // ctrl-l
-				case 18: redo(); break; 			// ctrl-r
-				case 19: track.save(); break; 		// ctrl-s
-				case 20: new Transpose(track, this); break; // ctrl-t
-				case 22: paste(); break; 			// ctrl-v
-				case 25: redo(); break; 			// crtl-y
-				case 26: undo(); break; 			// ctrl-z
-			default: RTLogger.log(this, "key: " + ch + "=" + intchar + ";" + e.getModifiersEx());
-			}
-		}
-		else
-			RTLogger.log(this, "key: " + ch + "=" + intchar + ";" + e.getModifiersEx());
 	}
 
 	@Override public final void mouseEntered(MouseEvent e) {MainFrame.qwerty();}
 	@Override public void mouseMoved(MouseEvent e) { }
 	@Override public void mouseExited(MouseEvent e) { }
 	@Override public final void mouseClicked(MouseEvent e) { }
-	@Override public final void keyPressed(KeyEvent e) {RTLogger.log(this, track.getName() + " pressed " + e.getKeyChar()); }
-	@Override public final void keyReleased(KeyEvent e) { RTLogger.log(this, track.getName() + " released " + e.getKeyChar());}
 	// public void mouseReleased(MouseEvent e) { } subclass implement
 	// public void mousePressed(MouseEvent e) { } subclass implement
 	@Override public final void mouseWheelMoved(MouseWheelEvent wheel) {
@@ -196,6 +167,18 @@ public abstract class MusicBox extends JPanel implements Musician {
 		}
 		click = null;
 
+	}
+
+	public void recalc() {
+		resized(getWidth(), getHeight());
+	}
+
+	@Override
+	public void velocity(boolean up) {
+		float velocity = track.getAmp() + (up ? 0.05f : -0.05f);
+		if (velocity < 0)  velocity = 0;
+		if (velocity > 1)  velocity = 1;
+		track.setAmp(velocity);
 	}
 
 	@Override
@@ -301,6 +284,7 @@ public abstract class MusicBox extends JPanel implements Musician {
 		repaint();
 	}
 
+	@Override
 	public void selectFrame() {
 		long start = track.getLeft();
 		long end = start + track.getWindow();
@@ -322,6 +306,29 @@ public abstract class MusicBox extends JPanel implements Musician {
 		}
 		return shadeRect;
 	}
+
+	@Override public void update() {
+		Border target = track.isCapture() ? Gui.RED : Gui.NO_BORDERS;
+		if (getBorder() != target)
+			setBorder(target);
+	}
+
+	// Color cache
+	static final int GRADIENTS = 32;
+	private static final Color[] VELOCITIES = new Color[GRADIENTS];
+	private static final Color[] HIGHLIGHTS = new Color[GRADIENTS];
+	static {
+		for (int i = 0; i < GRADIENTS; i++) {
+		    int alpha = (int) ((i / (float)(GRADIENTS - 1)) * 255);
+            VELOCITIES[i] = new Color(0, 112, 60, alpha); // Dartmouth Green
+			HIGHLIGHTS[i] = new Color(0xFF, 0xA5, 0x00, alpha); // Orange
+		}
+	}
+    public static Color velocityColor(int data2) {
+    	return VELOCITIES[data2 / 4];}
+    public static Color highlightColor(int data2) {
+    	return HIGHLIGHTS[data2 / 4];
+    }
 
 }
 

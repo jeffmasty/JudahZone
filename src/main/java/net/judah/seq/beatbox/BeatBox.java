@@ -1,63 +1,50 @@
 package net.judah.seq.beatbox;
 
-import static net.judah.seq.MidiTools.highlightColor;
-import static net.judah.seq.MidiTools.velocityColor;
-
 import java.awt.Color;
 import java.awt.Composite;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.MouseInfo;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 
-import net.judah.JudahZone;
 import net.judah.api.Signature;
 import net.judah.drumkit.DrumType;
+import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.midi.Midi;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiPair;
-import net.judah.seq.MidiTab;
 import net.judah.seq.MusicBox;
 import net.judah.seq.Prototype;
+import net.judah.seq.track.DrumTrack;
 
-public class BeatBox extends MusicBox {
+public class BeatBox extends MusicBox implements Pastels{
 
 	public static final int X_OFF = 5;
-	private static final int RADIUS = 24;
     private static final int PADS = DrumType.values().length;
 
-	private final int rowHeight;
-	private final float totalWidth;
-	private float unit;
-	private Prototype recent;
-	private ArrayList<MidiPair> dragging = new ArrayList<>();
+	private int rowHeight;
+	private float unitX, unitY;
+	private int minusX, minusY;
+	private final DrumZone tab;
 
-    public BeatBox(final Rectangle r, BeatsSection view, MidiTab tab) {
-    	super(view, r, tab);
-		totalWidth = r.width;
-    	rowHeight = (int)Math.ceil((r.height) / PADS);
-		setOpaque(true);
-    	setBackground(Pastels.MY_GRAY);
+    public BeatBox(DrumTrack t, DrumZone tab) {
+    	super(t, tab.getTracks());
+    	this.tab = tab;
         setLayout(null);
-        timeSig(JudahZone.getClock().getTimeSig());
+        update();
     }
 
-    @Override public void timeSig(Signature sig) {
-		unit = totalWidth / (2f * sig.steps);
-		repaint();
-	}
-
 	@Override public long toTick(Point p) {
-		return track.quantize((long) (p.x / totalWidth * track.getWindow() + track.getLeft()));
+		return track.quantize((long) (p.x / (float)width * track.getWindow() + track.getLeft()));
 	}
 
 	public int toDrumTypeIdx(Point p) {
@@ -77,17 +64,39 @@ public class BeatBox extends MusicBox {
 	}
 
     @Override public void paint(Graphics g) {
-    	super.paint(g);
-    	// background ovals
-        int stepz = clock.getSteps();
-        for (int x = 0; x < 2 * stepz ; x++) {
-            for (int y = 0; y < PADS; y++) {
-            	drumpad(g, (int) (x * unit), y, x % clock.getSubdivision() == 0 ? Pastels.BLUE :Color.WHITE);
-            	if (x % stepz == 0)
-            		mini(g, (int) (x * unit), y);
-            }
-        }
+    	// super.paint(g);
 
+
+    	Color bg, shade;
+    	if (tracks.getCurrent() == track) {
+    		bg = EGGSHELL;
+    		shade = SHADE;
+    	}
+    	else {
+    		bg = SHADE;
+    		shade = EGGSHELL;
+    	}
+    	g.setColor(bg);
+    	g.fillRect(0, 0, width, height);
+
+        int stepz = clock.getSteps();
+		int range = 2 * stepz;
+
+    	// shade beats and downbeats
+		for (int beat = 0; beat < 2 * clock.getTimeSig().beats; beat++) {
+			int x1 = (int)(beat * 4 * unitX);
+			g.setColor((beat % clock.getMeasure() == 0) ? DOWNBEAT : shade);
+			g.fillRect(x1, 0, (int)unitX, height);
+		}
+
+    	// draw grid
+        g.setColor(GRID);
+        for (int x = 0; x < range; x++)
+        	g.drawLine((int)(x * unitX), 0, (int)(x * unitX), height);
+        for (int y = 0; y <= PADS; y++)
+        	g.drawLine(0, (int)(y * unitY), width, (int)(y * unitY));
+
+        // draw notes
         long offset = track.getLeft();
         ShortMessage on;
         int x, y;
@@ -95,7 +104,7 @@ public class BeatBox extends MusicBox {
         for (MidiPair p : scroll.populate()) {
         	on = (ShortMessage)p.getOn().getMessage();
 			y = DrumType.index(on.getData1());
-			x = (int) ( (  (p.getOn().getTick()-offset) / window) * totalWidth);
+			x = (int) ( (  (p.getOn().getTick()-offset) / window) * width);
 			if (y >=0 && x >= 0) {
 				if (selected.contains(p))
 					highlight(g, x, y, on.getData2());
@@ -108,22 +117,18 @@ public class BeatBox extends MusicBox {
 			Graphics2D g2d = (Graphics2D)g;
 			Composite original = g2d.getComposite();
 			g2d.setComposite(transparent);
-			g2d.setPaint(mode == DragMode.SELECT ? Pastels.BLUE : Pastels.ORANGE);
+			g2d.setPaint(mode == DragMode.SELECT ? SHADE : SELECTED);
 			Point origin = getLocationOnScreen();
 			Point mouse = MouseInfo.getPointerInfo().getLocation();
 			g2d.fill(shadeRect(mouse.x - origin.x, mouse.y - origin.y));
 			g2d.setComposite(original);
 		}
+
     }
 
     private void drumpad(Graphics g, int x, int y, Color c) {
     	g.setColor(c);
-    	g.fillOval(x + X_OFF, y * rowHeight + 2, RADIUS, RADIUS);
-    }
-
-    private void mini(Graphics g, int x, int y) {
-    	g.setColor(Color.WHITE);
-    	g.fillOval(x + X_OFF + RADIUS / 3, y * rowHeight + 2 + RADIUS / 3, RADIUS / 3, RADIUS / 3);
+    	g.fillRect(x + 2, y * rowHeight + 1, minusX, minusY);
     }
 
     private void drumpad(Graphics g, int x, int y, int data2) {
@@ -134,8 +139,31 @@ public class BeatBox extends MusicBox {
     	drumpad(g, x, y, highlightColor(data2));
     }
 
+    @Override public void timeSig(Signature sig) {
+		unitX = width / (2f * sig.steps);
+		minusX = (int)unitX - 3;
+		repaint();
+	}
+
+    @Override
+    public void resized(int w, int h) {
+    	width = w;
+    	height = h;
+		unitY = height / (float)PADS;
+		minusY = (int)unitY - 5;
+    	rowHeight = (int)Math.ceil((height) / (float)PADS);
+    	timeSig(clock.getTimeSig());
+    }
+
+	@Override
+	public void setSize(Dimension d) {
+		super.setSize(d);
+		resized(d.width, d.height);
+		Gui.resize(this, d);
+	}
+
     @Override public void mousePressed(MouseEvent mouse) {
-    	((BeatsTab)tab).setCurrent(view.getTrack());
+		tab.setCurrent(track); // drums only
     	click = translate(mouse.getPoint());
 		MidiEvent existing = track.get(NOTE_ON, click.data1, click.tick);
 		if (mouse.isShiftDown()) { // drag-n-select;
@@ -218,8 +246,6 @@ public class BeatBox extends MusicBox {
 		recent = new Prototype(toData1(mouse), click.tick);
 	}
 
-
-
 	@Override
 	public void drop(Point mouse) {
 		// delete selected, create undo from start/init
@@ -286,4 +312,38 @@ public class BeatBox extends MusicBox {
 		return new MidiPair(new MidiEvent(Midi.create(source.getCommand(), source.getChannel(), data1, source.getData2()), tick), null);
 	}
 
+	@Override public void update() {
+		super.update();
+		repaint();
+	}
+
 }
+
+
+/*MidiView
+@Override
+public void setSize(Dimension d) {
+	grid.setSize(d);
+}
+
+public static int toData1(Point p) {
+	return p.x / BEAT_WIDTH + DATA1_OFFSET;
+}
+public static int toX(int data1) {
+	return (data1 - DATA1_OFFSET) * BEAT_WIDTH;
+}
+
+public static int toY(long tick, long measure, int height) {
+	return (int) (ratioY(tick, measure) * height);
+}
+
+public static float ratioY(long tick, long measure) {
+	return tick / (float)measure;
+}
+
+public static long quantize(long tick, int resolution, Gate gate) { // TODO only does 1/16th quantization for now
+	long unit = (long) (0.25f * resolution);
+	float units = tick / unit;
+	return (long)units * unit;
+}
+*/

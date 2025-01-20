@@ -14,7 +14,6 @@ import be.tarsos.dsp.pitch.PitchDetectionResult;
 import be.tarsos.dsp.pitch.PitchDetector;
 import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
 import net.judah.gui.Gui;
-import net.judah.gui.Pastels;
 import net.judah.gui.widgets.RainbowFader;
 import net.judah.util.Constants;
 
@@ -40,7 +39,7 @@ public class GuitarTuner extends ScopeView {
     	setupPitch(MPM);
         note = new JLabel(" ");
         note.setFont(Gui.BOLD);
-        note.setBorder(Pastels.SUBTLE);
+        note.setBorder(Gui.SUBTLE);
         tuning = new RainbowFader(0, 80, e ->{/*no-op*/});
         tuning.setOrientation(JSlider.HORIZONTAL);
         tuning.setMajorTickSpacing(20);

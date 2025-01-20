@@ -1,7 +1,5 @@
 package net.judah.gui.knobs;
 
-import static net.judah.JudahZone.getFrame;
-
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -21,6 +19,7 @@ import net.judah.fx.Gain;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.PlayWidget;
+import net.judah.gui.Qwerty;
 import net.judah.gui.Size;
 import net.judah.gui.settable.Folder;
 import net.judah.gui.settable.ModeCombo;
@@ -48,7 +47,7 @@ import net.judah.util.Folders;
 // TODO MouseWheel listener -> change pattern
 public class TrackKnobs extends KnobPanel {
 
-	@Getter private final KnobMode knobMode = KnobMode.TRACK;
+	@Getter private final KnobMode knobMode = KnobMode.Track;
 	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 	@Getter private final MidiTrack track;
 
@@ -240,7 +239,7 @@ public class TrackKnobs extends KnobPanel {
 
 	@Override
 	public void pad1() {
-		getFrame().edit(track);
+		Qwerty.edit(track);
 	}
 
 	@Override // TODO handle navigate away from TrackKnobs onDeck = !onDeck;

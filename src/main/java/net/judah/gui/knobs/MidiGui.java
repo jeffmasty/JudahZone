@@ -78,7 +78,7 @@ public class MidiGui extends KnobPanel implements Cmdr {
     	title.add(Gui.resize(songsCombo, new Dimension(150, 28)));
     	title.add(tape);
 
-		sampler.getStepSamples().forEach(s->stepper.addItem(s.getName()));
+		sampler.getStepSamples().forEach(s->stepper.addItem(s.toString()));
 		stepper.setSelectedIndex(sampler.getSelected());
 		stepper.addActionListener(e->{
 			if (sampler.getSelected() == stepper.getSelectedIndex())
@@ -141,7 +141,7 @@ public class MidiGui extends KnobPanel implements Cmdr {
 		fluids.add(f2);
 		fluids.add(f3);
 		for (TacoSynth s : truck.tracks)
-			tLbls.add(new ClickIt((PianoTrack) s.getTracks().getFirst()));
+			tLbls.add(new ClickIt(s.getTracks().getFirst()));
 		for (PianoTrack t : truck.fluid.getTracks())
 			fLbls.add(new ClickIt(t));
 
@@ -274,9 +274,9 @@ public class MidiGui extends KnobPanel implements Cmdr {
 		}
 		@Override public void actionPerformed(ActionEvent e) {
 			if (right)
-				t.toggle(Arp.MPK);
-			else
 				t.setCapture(!t.isCapture());
+			else
+				t.toggle(Arp.MPK);
 		}
 	}
 }

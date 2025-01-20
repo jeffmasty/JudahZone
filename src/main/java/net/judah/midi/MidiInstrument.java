@@ -68,7 +68,7 @@ public class MidiInstrument extends Instrument implements ZoneMidi {
 		return "none";
 	}
 
-	public MidiTrack trackByName(String name) {
+	public final MidiTrack trackByName(String name) {
 		for (MidiTrack t : tracks)
 			if (t.getName().equals(name))
 				return t;

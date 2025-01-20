@@ -3,16 +3,12 @@ package net.judah.gui;
 import static net.judah.JudahZone.*;
 
 import java.awt.Dimension;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
 
-import lombok.Getter;
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
 import net.judah.fx.LFO;
@@ -22,7 +18,7 @@ import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
 import net.judah.midi.JudahClock;
 import net.judah.omni.Threads;
-import net.judah.seq.track.MidiTrack;
+import net.judah.seq.Trax;
 import net.judah.song.Overview;
 import net.judah.song.setlist.Setlist;
 import net.judah.util.Folders;
@@ -30,42 +26,19 @@ import net.judah.util.RTLogger;
 
 public class JudahMenu extends JMenuBar {
 	static String[] TYPE = {"1/8", "1/4", "3/8", "1/2"};
+	private final Qwerty tabs;
 
-	/** If true, focus on sheet music tab when songs load */
-	@Getter private final JCheckBoxMenuItem sheets = new JCheckBoxMenuItem("Sheets");
-	private final JMenu trax;
-
-	public static class Actionable extends JMenuItem {
-		public Actionable(String lbl, ActionListener l) {
-			super(lbl);
-			addActionListener(l);
-		}
-		public Actionable(String lbl, ActionListener l, int mnemonic) {
-			this(lbl, l);
-			setMnemonic(mnemonic);
-		}
-	}
-
-	public JudahMenu(int width) {
-	    trax = new JMenu(getSeq().getCurrent().getName());
-
+	public JudahMenu(int width, Overview overview, Qwerty tabz) {
+		this.tabs = tabz;
 	    JMenu song = new JMenu("Song");
-		JMenu setlist = new JMenu("Setlist");
 	    JMenu loops = new JMenu("Looper");
-	    JMenu erase = new JMenu("Erase");
-	    JMenu duplicate = new JMenu("Duplicate");
-	    JMenu save = new JMenu("Save");
-	    JMenu load = new JMenu("Load");
-	    JMenu solotrack = new JMenu("Solo Track");
-	    JMenu tools = new JMenu("Tools");
-	    JMenu knobs = new JMenu("View");
+	    JMenu knobs = new JMenu("Knobs");
 
 		Dimension d = new Dimension(width - 8, Size.STD_HEIGHT);
 		setPreferredSize(d);
 		setSize(d);
 		setMinimumSize(d);
 
-		Overview overview = getOverview();
     	song.add(new Actionable("Next", e->overview.nextSong()));
 		song.add(new Actionable("Save", e->overview.save()));
         song.add(new Actionable("Save As..", e->{
@@ -80,12 +53,19 @@ public class JudahMenu extends JMenuBar {
     	song.add(new Actionable("Reload", e->overview.reload()));
         song.add(new Actionable("Load..", e -> overview.loadSong(Folders.choose(getSetlists().getDefault()))));
     	song.add(new Actionable("New", e -> overview.newSong()));
-    	for (Setlist list : getSetlists())
+
+		JMenu setlist = new JMenu("Setlist");
+		for (Setlist list : getSetlists())
 			setlist.add(new Actionable(list.toString(), e -> getSetlists().setCurrent(list.getSource())));
         song.add(setlist);
     	song.add(new Actionable("Exit", e->System.exit(0), KeyEvent.VK_E));
 
     	Looper looper = getLooper();
+	    JMenu erase = new JMenu("Erase");
+	    JMenu duplicate = new JMenu("Duplicate");
+	    JMenu save = new JMenu("Save");
+	    JMenu load = new JMenu("Load");
+	    JMenu solotrack = new JMenu("Solo Track");
     	erase.add(new Actionable("All", e->looper.clear()));
     	looper.forEach(loop->erase.add(new Actionable(loop.getName(), e->looper.clear(loop))));
     	looper.forEach(loop->duplicate.add(new Actionable(loop.getName(), e->loop.duplicate())));
@@ -125,35 +105,40 @@ public class JudahMenu extends JMenuBar {
     	time.add(lfo);
     	time.add(delay);
     	time.add(chorus);
+    	time.add(new Actionable("JIT!", e->justInTimeCompiler()));
+        time.add(new Actionable("A2J!", e->getMidi().recoverMidi()));
 
     	for (KnobMode mode : KnobMode.values())
         	knobs.add(new Actionable(mode.toString(), e->MainFrame.setFocus(mode)));
-
-    	tools.add(new Actionable("Record Session", e -> getMains().tape(true)));
-        sheets.setSelected(false);
-        sheets.setToolTipText("Focus on Song SheetMusic");
-        tools.add(sheets);
-        tools.add(new Actionable("SheetMusic..", e->{
-        	getFrame().sheetMusic(Folders.choose(Folders.getSheetMusic()));
-        }));
-        tools.add(new Actionable("ChordPro..", e-> {
-        	if (getChords().load() != null)
-        		getFrame().getTabs().setSelectedComponent(getChords().getChordSheet());
-        }));
-    	tools.add(new Actionable("JIT!", e->justInTimeCompiler()));
-        tools.add(new Actionable("A2J!", e->getMidi().recoverMidi()));
-        tools.add(new Actionable("Scope", e->getFrame().getTabs().scope()));
-
-        trax.add(new Actionable("Play/Stop", e->getSeq().getCurrent().trigger()));
-        trax.add(new Actionable("Send to...", e->getSeq().getDrumTracks().getLast().load(getSeq().getCurrent())));
 
         add(song);
         add(loops);
         add(time);
         add(knobs);
-        add(tools);
-        add(trax);
+        add(viewMenu());
 
+	}
+
+	private JMenu viewMenu() {
+		JMenu views = new JMenu("View");
+        views.add(new Actionable("BeatBox", e->{
+        	tabs.drumZone();
+        }));
+
+        JMenu track = new JMenu("Track");
+        for (Trax p : Trax.pianos)
+        	track.add(new Actionable(p.getName(), e->tabs.pianoTrack(p)));
+        views.add(track);
+
+        views.add(new Actionable("ChordPro..", e-> {
+        	if (getChords().load() != null)
+        		tabs.chordSheet();
+        }));
+        views.add(new Actionable("SheetMusic..", e->{
+        	tabs.sheetMusic(Folders.choose(Folders.getSheetMusic()), true);
+        }));
+        views.add(new Actionable("Detach", e->Qwerty.instance.detach()));
+        return views;
 	}
 
 	private void setLength() {
@@ -164,10 +149,6 @@ public class JudahMenu extends JMenuBar {
 		} catch (Throwable t) {
 			RTLogger.log(this, "Length not changed.");
 		}
-	}
-
-	public void trax(MidiTrack hello) {
-		trax.setText(hello.getName());
 	}
 
 }

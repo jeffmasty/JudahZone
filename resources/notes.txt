@@ -1,6 +1,23 @@
 TODO:
 
+MusicBox ratio can change if Track resolution changes...MusicBox.recalc();
+Free Trigger Flooding, ChordSheet.Floating
+Drum drag'n'drop wiggle left-right causes up-down motion
+duplicated free doesn't sync
+Omni*
+New Song save, update drop-downs, setlist. seq.loadSong(Unknown File) feedback
 Scope, Meters [log  vol  tune  hz]
+chorus time sync off (1/x)
+LoopToDisk recording length off
+Drum decay based on sample length (Kit Knobs & Distortion scratchy) + feedback
+Fluid attack, decay, filter
+MidiSongFile? meta messages, tracks [0], 1, 2, 3, 4, 5, 6,  9, 10, 11, 12 
+sustain note offs drag-n-drop, Record progchange, CC, pitchbend, vol
+drag'n'drop bug
+PianoEditor: drag-n-drop/transpose across frame, falling water, REL/Modal
+upgrade Fluid ver. to multi-channel (re-compile)
+   -p, --portname=[label] Set  MIDI  port  name  (alsa_seq,  coremidi) --portname=[track.getName()]
+Directives.BREAKS ChordPro.@ ChordPro.%   Cycle breaks: A3_ ABC_ TOF_?
 MidiTrack Tests		PianoTrack synth =(PianoTrack) seq.getSynthTracks().getFirst();
 			DrumTrack drums = (DrumTrack) seq.getDrumTracks().getFirst();
 			// 1. load notes
@@ -9,22 +26,6 @@ MidiTrack Tests		PianoTrack synth =(PianoTrack) seq.getSynthTracks().getFirst();
 			// 4. confirm/delete // ± ⏺
 			Etudes test = new Etudes(synth, (MusicBox) frame.getSynthBox().getMusician());
 			synth.clear();
-
-drag'n'drop bug
-capture individual Drum Track channels
-New Song save, update drop-downs and setlist
-chorus time sync off (1/x)
-LoopToDisk recording length off
-Omni*[DrumZone].detach()
-Drum decay based on sample length (Kit Knobs & Distortion scratchy)
-MidiSongFile? meta messages, tracks [0], 1, 2, 3, 4, 5, 6,  9, 10, 11, 12 
-MidiTrack: tests, sustain note offs drag-n-drop, Record progchange, CC, pitchbend, vol
-PianoEditor: drag-n-drop/transpose across frame, falling water, REL/Modal
-FxChain: refactor Channel as list of available and active effects // forEach()-> activeFx.process(left, right);
-seq.loadSong(Unknown File) feedback
-upgrade Fluid ver. to multi-channel (re-compile)
-   -p, --portname=[label] Set  MIDI  port  name  (alsa_seq,  coremidi) --portname=[track.getName()]
-Directives.BREAKS ChordPro.@ ChordPro.%   Cycle breaks: A3_ ABC_ TOF_?
 
 Hot Mic 2.0, pattern navigation 
 Probability, Ritardando, microsteps
@@ -48,6 +49,7 @@ add tracks/synths
 
 
 --etc-----------------------
+https://www.recordingblogs.com/wiki/midi-meta-messages
 sudo systemctl disable docker
 https://melanchall.github.io/drywetmidi/articles/tools/Quantizer.html
 samples: https://freesound.org/people/laffik/packs/38658/
@@ -175,7 +177,8 @@ Arpeggiator, ChordPro parser, Synth tracks follow ChordPro/MPK/ABS/Racman
 Setlists, save/load loops to/from disk, record session audio
 Delay + LFO sync to Tempo
 note-on/off tracker per channel
-db indicator
+dB indicator
+Multi-Document Interface
 
 REFERENCE------------------------------------------------------------
 [Mixer]                [FX]
@@ -187,39 +190,39 @@ REFERENCE------------------------------------------------------------
 
 
 Class Hierarchy:
-Channel
-   LineIn
+
+FXChain
+  Channel
+    LineIn
        Instrument - guitar, mic
            MidiInstrument - crave, fluid
        JudahSynth
+	   DrumKit
        DrumMachine
-   AudioTrack
+       Sampler
+    AudioTrack
        Loop - A/B/C
           SoloTrack - D
-       DrumSamples - to DrumMachine
-       Sample    
-          StepSample
+    Mains
+   
+    DrumSamples to DrumKit to DrumMachine
+    Sample    
+    StepSample
   
-
 javax.sound.midi.Receiver:
-
 	ZoneMidi
-		Midi Tracks
+	MidiTrack-> DrumTrack  PianoTrack(Arpeggiator)
 		- MidiPort  (JackPort or Engine)
-		patches
+		progChange, patchess, Actives
 		send
 
       MidiInstrument (Crave)
       	FluidSynth
       Engine
       	JudahSynth
-      	DrumKit (x4)
+      	DrumMachine
+	  DrumKit (x4)
 		
-
-	MidiTrack  
-		- Actives per Channel
-		progChange
-		send
 
 Song JSON:
 [tracks:] trackName, file, progChange
@@ -240,14 +243,10 @@ reload/AAB latchB   latchC  latchSolo  Verse/Chorus MuteA/B    	  clockStop/sync
 	Rev.Wet   Rev.Room  Del.F/B Del.Time   Eq.Bass  Eq.Mid   Eq.High  Vol  
 	Overdrive Cho.Deep  Cho.F/B Cho.Rate   Preset   Eq.Party Eq.Cut   Pan 
 
-[Views]	
+[Knobs]	
 LFO/Compressor 
 	type   min     max       time
 	Ratio  Thresh  Boost     Atk/Rel
-
-CLOCK 
-	sync shaker synth1  fluid
-	song track# jamOut  mpkOut
 
 TRACK 
 (Trk#) File [Patterns---]  Vol
@@ -256,5 +255,4 @@ TRACK
 SYNTH 
 	Preset Vol HiCut LoCut
 	A      D   S 	 R
-
 

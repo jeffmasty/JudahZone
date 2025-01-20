@@ -18,6 +18,7 @@ public class RecordWidget extends JButton implements Updateable {
 		addActionListener(e->track.setCapture(!track.isCapture()));
 		setOpaque(true);
 		instances.add(this);
+		update();
 	}
 
 	public RecordWidget(MidiTrack t) {
@@ -27,16 +28,15 @@ public class RecordWidget extends JButton implements Updateable {
 	@Override
 	public void update() {
 		setBackground(track.isCapture() ? Pastels.RED : null);
-		MainFrame.miniSeq().update(track);
-		PlayWidget.update(track);
 	}
 
 	public static void update(MidiTrack track) {
 		Threads.execute(()->{
-			//JudahZone.getMidiGui().update(track);
 			for (RecordWidget widget: instances)
 				if (widget.track == track)
 					widget.update();
+			MainFrame.miniSeq().update(track);
+			PlayWidget.update(track);
 		});
 	}
 

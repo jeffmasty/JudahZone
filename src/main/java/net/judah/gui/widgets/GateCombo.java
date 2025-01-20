@@ -7,6 +7,7 @@ import javax.swing.JComboBox;
 import net.judah.omni.Threads;
 import net.judah.seq.track.Gate;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.TrackMenu;
 
 public class GateCombo extends JComboBox<Gate> {
 
@@ -23,6 +24,7 @@ public class GateCombo extends JComboBox<Gate> {
 
 	public static void refresh(MidiTrack t) {
 		Threads.execute(()-> {
+			TrackMenu.updateGate(t);
 			for(GateCombo c : instances)
 				if (c.track == t && c.getSelectedItem() != c.track.getGate())
 					c.setSelectedItem(c.track.getGate());

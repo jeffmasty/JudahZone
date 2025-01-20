@@ -13,26 +13,26 @@ import javax.swing.border.LineBorder;
 import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
-import net.judah.fx.Filter;
 import net.judah.fx.Gain;
 import net.judah.gui.Pastels;
 import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.Knob.KnobListener;
 import net.judah.midi.Actives;
+import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 
 public class KitPad extends JPanel implements KnobListener {
 	private static final Color borderColor = Pastels.PURPLE;
 	private static final float ATK_SCALE = 0.2f;
 	public static final Color PAD_COLOR = Pastels.MY_GRAY;
-		
+
 	private final DrumType type;
 	private final KitKnobs view;
 	private final Knob knob;
 	private JCheckBox choke;
 	private final JPanel top = new JPanel();
 	private final JPanel bottom = new JPanel();
-	
+
 	public KitPad(KitKnobs view, DrumType t) {
 		this.type = t;
 		this.view = view;
@@ -46,7 +46,7 @@ public class KitPad extends JPanel implements KnobListener {
 		add(top);
 		add(bottom);
 		setOpaque(true);
-		
+
 		knob = new Knob(this);
 		knob.setKnobColor(Pastels.RED);
 		if (type == DrumType.OHat) {
@@ -60,7 +60,7 @@ public class KitPad extends JPanel implements KnobListener {
 				DrumKit kit = view.getKit();
 				DrumSample s = findSample();
 				Midi click = Midi.create(Midi.NOTE_ON, kit.getChannel(), s.getDrumType().getData1(), 100);
-				kit.send(click);
+				kit.send(click, JudahMidi.ticker());
 			}
 		});
 		bottom.add(knob);
@@ -73,74 +73,74 @@ public class KitPad extends JPanel implements KnobListener {
 		DrumSample sample = findSample();
 		int current = knob.getValue();
 		switch(view.getMode()) {
-			case Volume: 
+			case Volume:
 				if (sample.getVolume() != current)
-					knob.setValue(sample.getVolume()); 
+					knob.setValue(sample.getVolume());
 				break;
-			case Attack: 
+			case Attack:
 				if (sample.getAttackTime() != current * ATK_SCALE)
 					knob.setValue((int) (sample.getAttackTime() / ATK_SCALE));
 				break;
-			case Decay: 
+			case Decay:
 				if (sample.getDecayTime() != current)
-					knob.setValue(sample.getDecayTime()); 
+					knob.setValue(sample.getDecayTime());
 				break;
-			case pArTy: 
-				if (sample.getFilter().get(Filter.Settings.Frequency.ordinal()) != current)
-					knob.setValue(sample.getFilter().get(Filter.Settings.Frequency.ordinal()));
-				break;
-			case Dist: 
-				if (sample.getOverdrive().get(0) != current)
-					knob.setValue(sample.getOverdrive().get(0));
-				break;
-			case Pan: 
+//			case pArTy:
+//				if (sample.getFilter().get(Filter.Settings.Frequency.ordinal()) != current)
+//					knob.setValue(sample.getFilter().get(Filter.Settings.Frequency.ordinal()));
+//				break;
+//			case Dist:
+//				if (sample.getOverdrive().get(0) != current)
+//					knob.setValue(sample.getOverdrive().get(0));
+//				break;
+			case Pan:
 				if (sample.getPan() != current)
 					knob.setValue(sample.getPan());
 				break;
 		}
 	}
 
-	
+
 	@Override
 	public void knobChanged(int value) {
 		DrumSample sample = findSample();
 		switch(view.getMode()) {
-			case Volume: 
+			case Volume:
 				if (sample.getVolume() != value)
 					sample.getGain().set(Gain.VOLUME, value);
 				break;
-			case Attack: 
+			case Attack:
 				if (sample.getAttackTime() != (int)(value * ATK_SCALE))
-					sample.setAttackTime((int)(value * ATK_SCALE)); 
+					sample.setAttackTime((int)(value * ATK_SCALE));
 				break;
-			case Decay: 
+			case Decay:
 				if (sample.getDecayTime() != value)
 					sample.setDecayTime(value);
 				break;
-			case pArTy: 
-				if (sample.getFilter().get(Filter.Settings.Frequency.ordinal()) != value) {
-					sample.getFilter().set(Filter.Settings.Frequency.ordinal(), value);
-					sample.getFilter().setActive(value < 97);
-				}
-				break;
-			case Dist: 
-				if (sample.getOverdrive().get(0) != value) {
-					sample.getOverdrive().set(0, value);
-					sample.getOverdrive().setActive(value > 3);
-				}
-				break;
-			case Pan: 
+//			case pArTy:
+//				if (sample.getFilter().get(Filter.Settings.Frequency.ordinal()) != value) {
+//					sample.getFilter().set(Filter.Settings.Frequency.ordinal(), value);
+//					sample.getFilter().setActive(value < 97);
+//				}
+//				break;
+//			case Dist:
+//				if (sample.getOverdrive().get(0) != value) {
+//					sample.getOverdrive().set(0, value);
+//					sample.getOverdrive().setActive(value > 3);
+//				}
+//				break;
+			case Pan:
 				if (sample.getPan() != value)
 					sample.getGain().set(Gain.PAN, value);
 				break;
 		}
 	}
-	
-		
+
+
 	void background(Actives a) {
-		top.setBackground( a.find(type.getData1()) == null ? null : PAD_COLOR); 
+		top.setBackground( a.find(type.getData1()) == null ? null : PAD_COLOR);
 	}
-	
+
 	private DrumSample findSample() {
 		return view.getKit().getSamples()[type.ordinal()];
 	}

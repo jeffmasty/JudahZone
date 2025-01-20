@@ -21,10 +21,10 @@ import net.judah.sampler.Sample;
 
 public class SamplePad extends JPanel {
 	public final Sample sample;
-	private final JPanel btns; 
+	private final JPanel btns;
 	private final JLabel name;
 	private final Knob vol = new Knob(Pastels.ORANGE);
-	
+
 	public SamplePad(Sample s, JPanel parent) {
 		this.sample = s;
 		Color color = s.getType() == Type.ONE_SHOT ? Pastels.MY_GRAY : Pastels.BLUE;
@@ -37,7 +37,7 @@ public class SamplePad extends JPanel {
 		setLayout(new GridLayout(0, 1));
 		setOpaque(true);
 		btns = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-		name = new JLabel(s.getName(), JLabel.CENTER);
+		name = new JLabel(s.toString(), JLabel.CENTER);
 		name.setOpaque(true);
 		update();
 		vol.addListener(e->sample.getGain().set(Gain.VOLUME, vol.getValue()));
@@ -53,7 +53,7 @@ public class SamplePad extends JPanel {
 		setBackground(sample.isPlaying() ? Pastels.GREEN : null);
 		name.setBackground(getBackground());
 		btns.setBackground(getBackground());
-		vol.setValue(sample.getVolume());
+		vol.setValue(sample.getGain().get(Gain.VOLUME));
 	}
-	
+
 }

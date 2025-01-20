@@ -11,7 +11,15 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JToggleButton;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
 
 import net.judah.JudahZone;
 import net.judah.gui.Gui;
@@ -28,17 +36,17 @@ public class ChordSheet extends JPanel {
 	private static final int LBLS = 70;
 	private static final int PAD = 4;
 	private static final Dimension COLUMN = new Dimension( (WIDTH - LBLS - PAD - 30) / 4, 43);
-	
+
 	private int measure;
 	private final ChordTrack chords;
 	private JScrollPane scroll = new JScrollPane();
 	private JPanel content;
-	
+
 	private final ArrayList<Crd> parts = new ArrayList<>();
 	private final ArrayList<Group> groups = new ArrayList<>();
 	private final JLabel directives = new JLabel();
 	private final JToggleButton loop = new JToggleButton(" 🔁 ");
-	
+
 	public ChordSheet(ChordTrack chrds) {
 		this.chords = chrds;
 		setName("Chords");
@@ -47,7 +55,9 @@ public class ChordSheet extends JPanel {
 		scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		scroll.setAutoscrolls(true);
 		scroll.getVerticalScrollBar().setUnitIncrement(20);
-		Gui.resize(scroll, new Dimension(WIDTH, Size.HEIGHT_TAB - 80));
+
+
+Gui.resize(scroll, new Dimension(WIDTH, Size.HEIGHT_TAB - 80));
 
 		JPanel top = new JPanel();
 		top.setLayout(new BoxLayout(top, BoxLayout.LINE_AXIS));
@@ -55,14 +65,14 @@ public class ChordSheet extends JPanel {
 		top.add(new ChordPlay("▶️ Chords", chords));
 		top.add(Gui.resize(new ChordProCombo(), Size.WIDE_SIZE));
 		top.add(new Btn("Edit", e->edit()));
-		
+
 		top.add(Gui.resize(new SectionCombo(chords), Size.COMBO_SIZE));
 		top.add(loop);
 		top.add(directives);
 		loop.setSelected(chords.getDirectives().contains(Directive.LOOP));
 		loop.addActionListener(e->chords.toggle(Directive.LOOP));
 		top.add(Box.createHorizontalGlue());
-		
+
 		add(top);
 		add(Box.createVerticalStrut(5));
 		add(scroll);
@@ -71,14 +81,14 @@ public class ChordSheet extends JPanel {
 	}
 
 	void edit() {
-		Song song = JudahZone.getOverview().getSong(); 
+		Song song = JudahZone.getOverview().getSong();
 		if (song == null || song.getChordpro() == null || song.getChordpro().isBlank())
 			return;
 		try {
 			Desktop.getDesktop().open(ChordTrack.fromSong(song));
 		} catch (IOException e) { RTLogger.warn(this, e.getMessage()); }
 	}
-	
+
 	public void update(Chord chord) {
 		for (int i = 0; i < parts.size(); i++) {
 			Crd crd = parts.get(i);
@@ -86,17 +96,17 @@ public class ChordSheet extends JPanel {
 				if (crd.chord != chord)
 					crd.setBackground(Color.WHITE);
 			if (crd.chord == chord) {
-				crd.scrollRectToVisible(crd.getBounds());			
+				crd.scrollRectToVisible(crd.getBounds());
 				crd.setBackground(Pastels.BLUE);
 			}
 		}
-		for (int i = 0; i < groups.size(); i++) 
+		for (int i = 0; i < groups.size(); i++)
 			if (groups.get(i).section == chords.getSection())
 				groups.get(i).update();
-		
+
 		scroll.repaint();
 	}
-	
+
 	public void refresh() {
 		parts.clear();
 		scroll.getViewport().removeAll();
@@ -105,7 +115,7 @@ public class ChordSheet extends JPanel {
 		content.setOpaque(true);
 		measure = chords.getSig().steps;
 		groups.clear();
-		for (int i = 0 ; i < chords.getSections().size(); i++) 
+		for (int i = 0 ; i < chords.getSections().size(); i++)
 			new Group(chords.getSections().get(i));
 		scroll.setViewportView(content);
 		updateDirectives();
@@ -115,7 +125,7 @@ public class ChordSheet extends JPanel {
 		for (int i = 0; i < groups.size(); i++)
 			groups.get(i).highlight(part);
 	}
-	
+
 
 	private void length() {
 		if (chords.getSection() == null) return;
@@ -127,26 +137,26 @@ public class ChordSheet extends JPanel {
 			this.chord = chord;
 			String text ="<html><b>" + chord.getChord(); // TODO TimeSig
 			text += "</b><BR/>";
-			text += chord.getLyrics() == null || chord.getLyrics().isBlank() ? "&nbsp;" : chord.getLyrics();  
+			text += chord.getLyrics() == null || chord.getLyrics().isBlank() ? "&nbsp;" : chord.getLyrics();
 			text += "</html>";
 			setText(text);
 			setOpaque(true);
 			setBackground(Color.white);
 			parts.add(this);
-			addMouseListener(new MouseAdapter() { 
+			addMouseListener(new MouseAdapter() {
 				@Override public void mouseClicked(MouseEvent me) {
 					if (SwingUtilities.isRightMouseButton(me)) {
 						chord.build();
 						RTLogger.log(this, chord.toString());
 					}
-					else 
+					else
 						chords.click(chord);
 				}});
 		}
 	}
-	
+
 	private class Group extends JPanel {
-		
+
 		final Section section;
 		JToggleButton loop = new JToggleButton("🔁");
 		JLabel bar = new JLabel("1", JLabel.CENTER);
@@ -158,21 +168,21 @@ public class ChordSheet extends JPanel {
 		Group(Section s) {
 			groups.add(this);
 			section = s;
-			
+
 			int measures = chords.bars(section.getCount());
 			total.setText(" / " + measures);
 			loop.setSelected(section.isOnLoop());
 			loop.addActionListener(e->section.toggle(Directive.LOOP));
 			loop.setAlignmentX(0);
-			
-			lbls.add(bar); 
+
+			lbls.add(bar);
 			lbls.add(total);
 
 			left.setLayout(new BoxLayout(left, BoxLayout.PAGE_AXIS));
 			left.add(lbls);
 			btns.add(loop);
 			left.add(btns);
-						
+
 			setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 			add(left);
 			add(Box.createHorizontalStrut(PAD));
@@ -207,14 +217,14 @@ public class ChordSheet extends JPanel {
 			if (onDeck != null)
 				result.add(onDeck);
 			for (int i = 0; i < result.getComponentCount(); i++)
-				Gui.resize((JComponent)result.getComponent(i), COLUMN);
+				Gui.resize(result.getComponent(i), COLUMN);
 			return result;
 		}
-		
+
 		void update() {
 			bar.setText("" + (chords.getBar() + 1));
 		}
-		
+
 		void highlight(Section s) {
 			Color bg = s == section ? BUTTONS : null;
 			setBackground(bg);
@@ -232,5 +242,5 @@ public class ChordSheet extends JPanel {
 				dir += d.name() + " ";
 		directives.setText(dir);
 	}
-	
+
 }

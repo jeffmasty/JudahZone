@@ -4,14 +4,17 @@ import static net.judah.gui.Gui.font;
 
 import java.awt.Color;
 
+import net.judah.JudahZone;
+import net.judah.drumkit.DrumMachine;
 import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
+import net.judah.seq.track.DrumTrack;
 
 public class LineMix extends MixWidget {
 
 	private final LineIn in;
 	private final SoloTrack soloTrack;
-	
+
 	public LineMix(LineIn channel, Looper looper) {
 		super(channel, looper);
 		this.in = channel;
@@ -22,9 +25,9 @@ public class LineMix extends MixWidget {
 		mute.setText("tape");
 		sync.setText("solo");
 		sync.addActionListener(e->solo());
-		if (channel.getIcon() == null) 
+		if (channel.getIcon() == null)
 			title.setText(channel.getName());
-		else 
+		else
             title.setIcon(channel.getIcon());
 		mute.addActionListener(e->mute());
 	}
@@ -36,26 +39,38 @@ public class LineMix extends MixWidget {
 	@Override
 	public void updateVolume() {
 		super.updateVolume();
-		if (!in.isMuteRecord())
+		if (!in.isMuteRecord() && in != JudahZone.getDrumMachine())
 			fader.setBackground(ONTAPE);
 	}
-	
+
 	@Override
 	protected Color thisUpdate() {
 		Color bg = MY_GRAY;
-		
-		if (channel.isOnMute())  // line in/master track 
+
+		if (channel.isOnMute())  // line in/master track
 			bg = Color.BLACK;
 		else if (quiet())
 			bg = Color.GRAY;
-		
+
 		if (soloTrack.isSolo() && soloTrack.getSoloTrack() == in)
 			sync.setBackground(YELLOW);
-		else 
+		else
 			sync.setBackground(null);
 
 		sync.setSelected(in == soloTrack.getSoloTrack());
-		mute.setBackground(in.isMuteRecord() ? null : ONTAPE);
+		if (in instanceof DrumMachine drumz) {
+			if (drumz.isMuteRecord())
+				mute.setBackground(null);
+			else for (DrumTrack t : drumz.getTracks())
+				if (!t.getKit().isMuteRecord()) {
+					mute.setBackground(RED);
+					return bg;
+				}
+			mute.setBackground(null);
+		}
+		else
+			mute.setBackground(in.isMuteRecord() ? null : ONTAPE);
+
 		return bg;
 	}
 
@@ -64,5 +79,5 @@ public class LineMix extends MixWidget {
 			soloTrack.setSoloTrack(in);
 		}
 	}
-	
+
 }

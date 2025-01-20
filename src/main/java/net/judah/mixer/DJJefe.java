@@ -16,14 +16,12 @@ import net.judah.drumkit.DrumMachine;
 import net.judah.fx.Fader;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
-import net.judah.gui.knobs.LFOKnobs;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.sampler.Sampler;
 import net.judah.seq.Trax;
 import net.judah.seq.track.DrumTrack;
-import net.judah.seq.track.MidiTrack;
 import net.judah.song.FxData;
 import net.judah.song.cmd.Cmdr;
 import net.judah.song.cmd.Param;
@@ -39,7 +37,7 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 	@Getter private final String[] keys;
 	private final ArrayList<MixWidget> faders = new ArrayList<MixWidget>();
 	private final Zone sources;
-	private final Mains mains;
+	@Getter private final Mains mains;
 	private final int size;
 	private int idx;
 
@@ -55,10 +53,9 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
     	all.add(mains);
         all.addAll(looper);
 		all.addAll(sources);
-		for (MidiTrack track : drums.getTracks())
-			all.add( ((DrumTrack)track).getKit().getFx());
-		all.addAll(sampler);
-		all.addAll(sampler.getStepSamples());
+		for (DrumTrack track : drums.getTracks())
+			all.add( track.getFx());
+		all.add(sampler);
     	for (Loop loop : looper) {
     		channels.add(loop);
     		faders.add(loop.getDisplay());
@@ -72,8 +69,6 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
         }
         channels.add(mains);
         size = channels.size();
-        for (Channel ch : channels)
-        	ch.setLfoKnobs(new LFOKnobs(ch, this));
     	setLayout(new GridLayout(1, size, 0, 0));
         MixWidget fader = new MainsMix(mains, looper);
         faders.add(fader);
@@ -153,10 +148,12 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 		return combo;
 	}
 
-
 	public void loadFx(List<FxData> data) {
 		for (FxData fx : data) {
-			Channel ch = byName(fx.getChannel());
+			String name = fx.getChannel();
+			if (name.equals("MAIN")) // Legacy
+				name = "Mains";
+			Channel ch = byName(name);
 			if (ch == null) { // Legacy
 				ch = sources.byName(TacoTruck.NAME);
 				RTLogger.warn(this, "remapped " + fx.getChannel() + " FX to " + ch.name);

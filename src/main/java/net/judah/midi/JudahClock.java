@@ -81,7 +81,7 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 			try { while (true) {
 					Notification n = notifications.take();
 					new ArrayList<TimeListener>(listeners).forEach(
-							listener -> {if (listener != null) listener.update(n.prop, n.value);});
+							listener -> {if (listener != null) listener.update(n.prop(), n.value());});
 				}
 			} catch (Exception e) { RTLogger.warn(this, e); }});
 		announce.setPriority(9);
@@ -92,6 +92,7 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 
 	@Override public void addListener(TimeListener l) 	 { if (!listeners.contains(l)) listeners.add(l); }
 	@Override public boolean removeListener(TimeListener l) { return listeners.remove(l); }
+	/** beats in the current TimeSignature */
 	@Override public int getMeasure() 	{ return timeSig.beats; }
 	public boolean isEven() 		{ return bar % 2 == 0; }
 	public int getSteps() 				{ return timeSig.steps; }

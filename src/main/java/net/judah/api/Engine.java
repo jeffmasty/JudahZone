@@ -1,20 +1,18 @@
 package net.judah.api;
 
-import java.util.Vector;
-
-import lombok.Getter;
 import net.judah.gui.knobs.Knobs;
 import net.judah.mixer.LineIn;
-import net.judah.seq.track.MidiTrack;
+import net.judah.util.Constants;
 
-/** internal Sound generators that respond to Midi (synths, drum machines) */
+/** internal Audio generators that respond to Midi (synths and drum machines) */
 public abstract class Engine extends LineIn implements ZoneMidi, Knobs {
 
-	@Getter protected final Vector<MidiTrack> tracks = new Vector<>();
-	
+	public Engine(String name, int channels) {
+		super(name, channels == Constants.STEREO);
+	}
+
 	public Engine(String name, boolean isStereo) {
 		super(name, isStereo);
 	}
-	
-	public abstract void process();
+
 }

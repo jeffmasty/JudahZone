@@ -9,6 +9,8 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -19,37 +21,39 @@ public interface Gui {
 
 	int STD_HEIGHT = 18;
 	Insets BTN_MARGIN = new Insets(1,1,1,1);
-	Insets ZERO_MARGIN = new Insets(0,0,0,0);
+	// Insets ZERO_MARGIN = new Insets(0,0,0,0);
 	Border RED = BorderFactory.createLineBorder(Color.RED, 1);
 	Border HIGHLIGHT = BorderFactory.createLineBorder(Color.BLACK, 1);
+	Border SELECTED = BorderFactory.createLineBorder(Pastels.BLUE, 1);
+	Border SUBTLE = BorderFactory.createLineBorder(Pastels.MY_GRAY, 1);
 	Border NO_BORDERS = new EmptyBorder(BTN_MARGIN);
 
-	Font BOLD10 = new Font("Arial", Font.BOLD, 10);
-	Font BOLD = new Font("Arial", Font.BOLD, 11);
-	Font BOLD12 = new Font("Arial", Font.BOLD, 12);
-	Font BOLD13 = new Font("Arial", Font.BOLD, 13);
-	Font FONT13 = new Font("Arial", Font.PLAIN, 13);
-	Font FONT12 = new Font("Arial", Font.PLAIN, 12);
-	Font FONT11 = new Font("Arial", Font.PLAIN, 11);
-	Font FONT10 = new Font("Arial", Font.PLAIN, 10);
-	Font FONT9 = new Font("Arial", Font.PLAIN, 9);
-
-
-	public static JComponent font(JComponent c, Font f) {
-		c.setFont(f);
-		return c;
-	}
+	String FACE = "Arial";
+	Font FONT9 = new Font(FACE, Font.PLAIN, 9);
+	Font FONT10 = new Font(FACE, Font.PLAIN, 10);
+	Font FONT11 = new Font(FACE, Font.PLAIN, 11);
+	Font BOLD10 = new Font(FACE, Font.BOLD, 10);
+	Font BOLD = new Font(FACE, Font.BOLD, 11);
+	Font BOLD12 = new Font(FACE, Font.BOLD, 12);
+	Font BOLD13 = new Font(FACE, Font.BOLD, 13);
 
 	public static JComponent font(JComponent c) {
-		return font(c, FONT9);
+		c.setFont(FONT9);
+		return c;
 	}
-
 
 	static JPanel duo(Component left, Component right) {
 		JPanel result = new JPanel();
 		result.setLayout(new GridLayout(1, 2));
 		result.add(left);
 		result.add(right);
+		return result;
+	}
+
+	static Box box(Component... items) {
+		Box result = new Box(BoxLayout.X_AXIS);
+		for (Component p : items)
+			result.add(p);
 		return result;
 	}
 
@@ -60,7 +64,7 @@ public interface Gui {
 		return result;
 	}
 
-	static JComponent resize(JComponent c, Dimension d) {
+	static Component resize(Component c, Dimension d) {
 		c.setMaximumSize(d);
 		c.setPreferredSize(d);
 		return c;

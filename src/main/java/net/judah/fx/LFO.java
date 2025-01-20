@@ -1,5 +1,6 @@
 package net.judah.fx;
 
+import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 
 import lombok.Getter;
@@ -9,7 +10,7 @@ import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 
 /** A calculated sin wave LFO.  Default amplitude returns queries between 0 and 85 */
-@RequiredArgsConstructor 
+@RequiredArgsConstructor
 public class LFO implements TimeEffect {
 
 	public static final int LFO_MIN = 90;
@@ -17,9 +18,9 @@ public class LFO implements TimeEffect {
 	long throttle;
 	@Setter @Getter String type = TYPE[0];
 	@Setter @Getter boolean sync;
-	
+
     public enum Settings {
-        Target, Min, Max, MSec, Type, Sync 
+        Target, Min, Max, MSec, Type, Sync
     }
 
 	public static enum Target {
@@ -31,14 +32,14 @@ public class LFO implements TimeEffect {
 	@Getter private Target target = Target.Filter;
 	private int recover = -1;
 	private boolean wasActive;
-	
+
 	@Override
 	public void setActive(boolean active) {
 		if (this.active == active)
 			return;
 		if (active)
 			setup();
-		else 
+		else
 			recover();
 		this.active = active;
 		throttle = 0;
@@ -59,12 +60,12 @@ public class LFO implements TimeEffect {
     	if (active)
     		recover();
 		this.target = target;
-		if (active) 
+		if (active)
 			setup();
 	}
 
     private void recover() {
-    	if (!active || recover < 0) 
+    	if (!active || recover < 0)
     		return;
     	switch (target) {
 			case Filter:
@@ -89,22 +90,22 @@ public class LFO implements TimeEffect {
 			case Pan:
 				ch.getGain().set(Gain.PAN, recover);
 				break;
-			case Chorus: 				
+			case Chorus:
 				ch.getChorus().set(Chorus.Settings.Feedback.ordinal(), recover);
 				ch.getChorus().setActive(wasActive);
 				break;
-			case Depth: 				
+			case Depth:
 				ch.getChorus().set(Chorus.Settings.Depth.ordinal(), recover);
 				ch.getChorus().setActive(wasActive);
 				break;
-			case Rate: 				
+			case Rate:
 				ch.getChorus().set(Chorus.Settings.Rate.ordinal(), recover);
 				ch.getChorus().setActive(wasActive);
 				break;
 
     	}
     }
-    
+
     private void setup() {
     	switch (target) {
 		case Filter:
@@ -150,7 +151,7 @@ public class LFO implements TimeEffect {
 			break;
     	}
     }
-    
+
 	public void setMax(int val) {
 	    if (val < min) return;
 	    max = val;
@@ -170,7 +171,7 @@ public class LFO implements TimeEffect {
     @Override
     public int get(int idx) {
         if (idx == Settings.Target.ordinal())
-            return target.ordinal(); 
+            return target.ordinal();
         if (idx == Settings.Min.ordinal())
             return min;
         if (idx == Settings.Max.ordinal())
@@ -182,7 +183,7 @@ public class LFO implements TimeEffect {
         	else if (result > 100) result = 100;
             return result;
         }
-        if (idx == Settings.Type.ordinal()) 
+        if (idx == Settings.Type.ordinal())
         	return TimeEffect.indexOf(type);
         if (idx == Settings.Sync.ordinal())
         	return sync ? 1 : 0;
@@ -192,13 +193,13 @@ public class LFO implements TimeEffect {
 
     @Override
     public void set(int idx, int value) {
-        if (idx == Settings.Target.ordinal()) 
+        if (idx == Settings.Target.ordinal())
         	setTarget(Target.values()[value]);
         else if (idx == Settings.Min.ordinal())
             setMin(value);
         else if (idx == Settings.Max.ordinal())
             setMax(value);
-        else if (idx == Settings.MSec.ordinal()) 
+        else if (idx == Settings.MSec.ordinal())
         	frequency = value * 19 + 90;   // 90msec to 1990msec
         else if (idx == Settings.Type.ordinal() && value < TimeEffect.TYPE.length)
         	type = TimeEffect.TYPE[value];
@@ -244,7 +245,7 @@ public class LFO implements TimeEffect {
 		}
 	}
 
-	
+
 	// TODO saw wave
 	//private final static float TWOPI = (float) (2 * Math.PI);
 	//public double querySaw() {
@@ -254,7 +255,7 @@ public class LFO implements TimeEffect {
 	//    return (2.0f * t) - 1.0f;
 	//}
 
-	
+
 //	public static class LFOTest extends Thread {
 //		final LFO lfo = new LFO(new Channel("test", false));
 //
@@ -289,7 +290,7 @@ public class LFO implements TimeEffect {
 //			}
 //			System.out.println("done. min: " + min + " max: " + max + " frequency: " + lfo.getFrequency());
 //		}
-//		
+//
 //		public static void main2(String[] args) {
 //			new LFOTest(1200).start(); // 3 second LFO
 //		}
@@ -299,7 +300,7 @@ public class LFO implements TimeEffect {
 	@Override
 	public void sync(float unit) {
 		float msec = 2 * (unit + unit * TimeEffect.indexOf(type));
-    	setFrequency(msec);		
+    	setFrequency(msec);
 	}
 
 	@Override
@@ -307,6 +308,11 @@ public class LFO implements TimeEffect {
 		sync(TimeEffect.unit());
 	}
 
-	
-	
+	@Override
+	public void process(FloatBuffer left, FloatBuffer right) {
+		// no-op, handled through MidiScheduler
+	}
+
+
+
 }

@@ -24,7 +24,7 @@ Built with Java 21, Lombok (https://projectlombok.org/) and Maven.
 ## Running
 The Jack sound system needs to be up and running.  
 This project boots "a2jmidid -e" ALSA midi bindings at startup.  
-This project uses FluidSynth (https://www.fluidsynth.org/) (with the fluid soundfount). 
+This project uses FluidSynth (https://www.fluidsynth.org/) (with the FluidR3_GM soundfont). 
 This project is hardcoded to connect to the author's instrument ports, fiddle around with JudahMidi and JudahZone.initialize() to get your particular system up and running. 
 
 ##   

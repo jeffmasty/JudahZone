@@ -59,7 +59,7 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 	private final JButton downSong = 	new Button("down", e->moveSong(false));
 	private final JButton deleteSong = 	new Button("delete", e->deleteSong());
 	private final JButton addSong = 	new Button(" add ", e->addSong());
-	@Getter private final KnobMode knobMode = KnobMode.SETLIST;
+	@Getter private final KnobMode knobMode = KnobMode.Setlist;
 
 	private void loadSong() {
 		if (jsongs.getSelectedValue() != null)

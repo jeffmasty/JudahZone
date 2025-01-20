@@ -15,6 +15,7 @@ import net.judah.drumkit.DrumMachine;
 import net.judah.drumkit.DrumType;
 import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.knobs.TrackKnobs;
+import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.sampler.Sampler;
 import net.judah.seq.chords.ChordTrack;
@@ -27,7 +28,6 @@ import net.judah.song.cmd.Cmd;
 import net.judah.song.cmd.Cmdr;
 import net.judah.song.cmd.IntProvider;
 import net.judah.song.cmd.Param;
-import net.judah.synth.fluid.FluidSynth;
 import net.judah.synth.taco.TacoTruck;
 import net.judah.util.RTLogger;
 
@@ -45,14 +45,14 @@ public class Seq implements Iterable<MidiTrack>, Cmdr {
 	private final Sampler sampler;
 	private final DrumMachine drums;
 
-	public Seq(DrumMachine drumz, ZoneMidi bass, TacoTruck tacos, FluidSynth fluid, ChordTrack chordTrack, Sampler sampler) {
+	public Seq(DrumMachine drumz, ZoneMidi bass, TacoTruck tacos, ChordTrack chordTrack, Sampler sampler) {
 		this.chords = chordTrack;
 		this.sampler = sampler;
 		this.drums = drumz;
-		drums.getTracks().forEach(t->drumTracks.add((DrumTrack)t));
+		drums.getTracks().forEach(t->drumTracks.add(t));
 		synthTracks.add((PianoTrack) bass.getTracks().getFirst());
-		tacos.tracks.forEach(taco->synthTracks.add((PianoTrack) taco.getTracks().getFirst()));
-		fluid.getTracks().forEach(t->synthTracks.add(t));
+		tacos.tracks.forEach(taco->synthTracks.add(taco.getTracks().getFirst()));
+		tacos.fluid.getTracks().forEach(t->synthTracks.add(t));
 		tracks.addAll(drumTracks);
 		tracks.addAll(synthTracks);
 		for(MidiTrack track : this)
@@ -157,7 +157,7 @@ public class Seq implements Iterable<MidiTrack>, Cmdr {
 					result = true;
 			}
 			if (!result && Midi.isNoteOn(note))
-				drums.getChannel(note.getChannel()).send(note);
+				drums.getChannel(note.getChannel()).send(note, JudahMidi.ticker());
 			return true; // all drum pads consumed here
 		}
 

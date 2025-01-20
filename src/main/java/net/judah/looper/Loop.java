@@ -9,8 +9,6 @@ import java.nio.FloatBuffer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.jaudiolibs.jnajack.JackPort;
-
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
@@ -28,7 +26,6 @@ import net.judah.omni.Icons;
 import net.judah.omni.Recording;
 import net.judah.omni.Threads;
 import net.judah.seq.track.DrumTrack;
-import net.judah.seq.track.MidiTrack;
 import net.judah.synth.taco.TacoSynth;
 import net.judah.util.Folders;
 import net.judah.util.Memory;
@@ -36,8 +33,7 @@ import net.judah.util.RTLogger;
 
 public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runnable {
 	public static final float STD_BOOST = 3;
-	public static final float DRUM_BOOST = 0.35f;
-	public static final int OFF = -1;
+	public static final float DRUM_BOOST = 0.25f;
 	protected static int INIT = 2 ^ 13; // nice chunk of preloaded blank tape
 
 	protected final Looper looper;
@@ -65,19 +61,16 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 	private final BlockingQueue<float[][]> oldQueue = new LinkedBlockingQueue<>();
 	private final BlockingQueue<Integer> locationQueue = new LinkedBlockingQueue<>();
 
-    public Loop(String name, String icon, Type init, Looper loops, Zone sources,
-    		JackPort l, JackPort r, Memory mem) {
+    public Loop(String name, String icon, Type init, Looper loops, Zone sources, Memory mem) {
     	super(name);
     	this.icon = Icons.get(icon);
     	this.looper = loops;
     	this.clock = looper.getClock();
     	this.sources = sources;
     	this.memory = mem;
-    	this.leftPort = l;
-    	this.rightPort = r;
     	this.reset = this.type = init;
     	for (int i = 0; i < INIT; i++)
-    		recording.add(new float[STEREO][bufSize]);
+    		recording.add(new float[STEREO][N_FRAMES]);
     	display = new LoopMix(this, looper);
     	new Thread(this).start(); // overdub listening
     }
@@ -312,8 +305,6 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 				current = 0;
 				rewind();
     		}
-//			else if (tapeCounter.get() != current)
-//				tapeCounter.set(current);
     	}
     	display.measureFeedback();
     }
@@ -339,12 +330,6 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 	/* clock listener */
 	@Override
 	public void update(Property prop, Object value) {
-		if (type == Type.FREE) {
-			if (prop == Property.LOOP && timer && isRecording)
-				capture(false);
-			return;
-		}
-
 		if (prop == Property.BARS)
 			updateBar((int)value);
 		else if (prop == Property.BEAT && looper.getPrimary() == null && !isRecording /* onDeck */)
@@ -380,16 +365,15 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
     }
 
 	@Override
-	public void process() {
+	public void process(FloatBuffer left, FloatBuffer right) {
 		current = tapeCounter.getAndIncrement();
 		if (isPlaying())
-			playFrame();
+			playFrame(left, right);
 		if (isRecording)
 			recordFrame();
-		playBuffer = null;
     }
 
-	private void playFrame() {
+	private void playFrame(FloatBuffer left, FloatBuffer right) {
 		if (current >= length) {
 			current = 0;
 			tapeCounter.set(current);
@@ -404,7 +388,7 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 		}
 		playBuffer = recording.get(current);
 		if (!onMute)
-			playFrame(leftPort.getFloatBuffer(), rightPort.getFloatBuffer());
+			fx(left, right);
 	}
 
 	private void recordFrame() {
@@ -425,14 +409,14 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 
             if (in instanceof Instrument)
             	recordCh(in.getLeft(), in.getRight(), newBuffer, amp);
-            else if (in instanceof TacoSynth) {
-            	TacoSynth synth = (TacoSynth)in;
+            else if (in instanceof TacoSynth synth) {
             	if (!synth.isMuteRecord() && !synth.isOnMute())
             		recordCh(synth.getLeft(), synth.getRight(), newBuffer, amp);
             }
-            else if (in instanceof DrumMachine)
-            	for (MidiTrack track : ((DrumMachine)in).getTracks())
-            		recordCh(((DrumTrack)track).getKit().getLeft(), ((DrumTrack)track).getKit().getRight(),
+            else if (in instanceof DrumMachine drumz)
+            	for (DrumTrack track : drumz.getTracks())
+            		if (!track.getKit().isMuteRecord())
+            			recordCh(track.getKit().getLeft(), track.getKit().getRight(),
             				newBuffer, DRUM_BOOST);
         }
 

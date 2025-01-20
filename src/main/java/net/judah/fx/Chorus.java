@@ -4,10 +4,8 @@ import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 import java.util.Arrays;
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.omni.WavConstants;
 
 public class Chorus implements TimeEffect {
 
@@ -20,12 +18,11 @@ public class Chorus implements TimeEffect {
     private static final float defaultDepth = 0.4f;
     private static final float defaultFeedback = 0.4f;
 
-    private final int sampleRate;
-    private final int nframes;
-
     @Getter @Setter boolean active;
+	@Setter @Getter boolean sync;
+	@Setter @Getter String type = TYPE[0];
 
-    /** times per second */
+	/** times per second */
     @Getter @Setter private float rate = defaultRate;
     /** between 0 and 1 */
     @Getter private float depth = defaultDepth;
@@ -34,25 +31,21 @@ public class Chorus implements TimeEffect {
     /** between 0 and 1 */
     @Getter @Setter private float phase = 0.42f;
 
-    private final LFODelay leftDsp;
-    private final LFODelay rightDsp;
+    private final LFODelay leftDsp = new LFODelay();
+    private final LFODelay rightDsp = new LFODelay();
     private int lfocount;
-	@Setter @Getter String type = TYPE[0];
-	@Setter @Getter boolean sync;
 
-    public Chorus(int sampleRate, int nframes) {
-        this.sampleRate = sampleRate;
-        this.nframes = nframes;
-
-        leftDsp = new LFODelay();
-        rightDsp = new LFODelay();
-
-        setDepth(defaultDepth);
+    @Override
+	public void sync() {
+    	sync(TimeEffect.unit());
     }
 
-    public Chorus() {
-        this(WavConstants.S_RATE, WavConstants.JACK_BUFFER);
-    }
+	@Override
+	public void sync(float unit) {
+		float msec = 0.001f * (unit + unit * TimeEffect.indexOf(type));
+		setRate(msec);
+	}
+
 
     @Override public String getName() {
         return Chorus.class.getSimpleName();
@@ -99,26 +92,23 @@ public class Chorus implements TimeEffect {
         this.depth = depth;
     }
 
-    public void processMono(FloatBuffer mono) {
-        leftDsp.processReplace(mono);
-    }
-
-    public void processStereo(FloatBuffer left, FloatBuffer right) {
+    @Override
+	public void process(FloatBuffer left, FloatBuffer right) {
         leftDsp.processReplace(left);
-        rightDsp.processReplace(right);
+        if (right != null)
+        	rightDsp.processReplace(right);
     }
 
-    @Data
     class LFODelay {
         float range = 0.5f;
-        float delay;
+        @Setter float delay;
         float delayTime;
         float[] workArea;
         int rovepos = 0;
         float lastdelay;
 
         LFODelay() {
-            workArea = new float[nframes];
+            workArea = new float[N_FRAMES];
             rovepos = 0;
             lastdelay = 0;
             reset();
@@ -130,8 +120,8 @@ public class Chorus implements TimeEffect {
 
         void goFigure() {
             if (rate > 0.01 && range > 0) {
-                lfocount += nframes;
-                float lfolength = sampleRate / rate;
+                lfocount += N_FRAMES;
+                float lfolength = SAMPLE_RATE / rate;
                 lfocount %= (int) (lfolength);
                 float r = lfocount / lfolength;
                 r *= PI2;
@@ -151,16 +141,16 @@ public class Chorus implements TimeEffect {
 
             goFigure();
             buf.rewind();
-            float delay = delayTime * sampleRate;
+            float delay = delayTime * SAMPLE_RATE;
             float ldelay = lastdelay;
 
             int rnlen = workArea.length;
             int pos = rovepos;
-            float delta = (delay - ldelay) / nframes;
+            float delta = (delay - ldelay) / N_FRAMES;
 
             float r, s, a, b, o;
             int ri;
-                for (int i = 0; i < nframes; i++) {
+                for (int i = 0; i < N_FRAMES; i++) {
                     r = pos - (ldelay + 2) + rnlen;
                     ri = (int) r;
                     s = r - ri;
@@ -181,16 +171,16 @@ public class Chorus implements TimeEffect {
 
             goFigure();
             buf.rewind();
-            float delay = delayTime * sampleRate;
+            float delay = delayTime * SAMPLE_RATE;
             float ldelay = lastdelay;
 
             int rnlen = workArea.length;
             int pos = rovepos;
-            float delta = (delay - ldelay) / nframes;
+            float delta = (delay - ldelay) / N_FRAMES;
 
             float r, s, a, b, o;
             int ri;
-                for (int i = 0; i < nframes; i++) {
+                for (int i = 0; i < N_FRAMES; i++) {
                     r = pos - (ldelay + 2) + rnlen;
                     ri = (int) r;
                     s = r - ri;
@@ -206,19 +196,6 @@ public class Chorus implements TimeEffect {
             lastdelay = delay;
         }
     }
-
-
-
-    @Override
-	public void sync() {
-    	sync(TimeEffect.unit());
-    }
-
-	@Override
-	public void sync(float unit) {
-		float msec = 0.001f * (unit + unit * TimeEffect.indexOf(type));
-		setRate(msec);
-	}
 
 }
 

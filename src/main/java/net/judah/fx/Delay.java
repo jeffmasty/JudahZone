@@ -85,49 +85,43 @@ public class Delay implements TimeEffect {
     public enum Settings {
         DelayTime, Feedback, Type, Sync
     }
-    
+
     // in seconds
-    public static final float MAX_DELAY = 9f; 
+    public static final float MAX_DELAY = 4.2f;
     public static final float MIN_DELAY = 0.19f;
     public static final float DIFF = MAX_DELAY - MIN_DELAY;
     public static final float DEFAULT_TIME = .28f;
-    
-    private final float sampleRate;
-    private final float nframes; 
 
     @Getter private boolean active;
 	@Setter @Getter boolean sync;
     /** in seconds */
-    @Setter private float delayTime = DEFAULT_TIME; 
+    private float delayTime;
+    private float calculated;
     @Getter private float feedback = 0.36f;
 	private final VariableDelayOp left;
     private final VariableDelayOp right;
     @Setter private boolean slapback;
 	@Setter @Getter String type = TYPE[0];
-    
+
     public Delay() {
-        this(Constants.sampleRate(), Constants.bufSize(), MAX_DELAY);
-        reset();
+        this(MAX_DELAY);
     }
 
-    public Delay(float sampleRate, int bufferSize, float maxdelay) {
-        if (sampleRate < 1) throw new IllegalArgumentException();
-
-        this.sampleRate = sampleRate;
-        this.nframes = bufferSize;
-        int delayBufSize = (int) (maxdelay * sampleRate) + 10;
+    public Delay(float maxdelay) {
+        int delayBufSize = (int) (maxdelay * SAMPLE_RATE) + 10;
         left = new VariableDelayOp(delayBufSize);
         right = new VariableDelayOp(delayBufSize);
+        setDelayTime(DEFAULT_TIME);
+        reset();
     }
 
     @Override
 	public void setActive(boolean active) {
-    	if (!active) {
+    	if (!active)
     		reset();
-    	}
     	this.active = active;
     }
-    
+
     @Override
     public int getParamCount() {
         return Settings.values().length;
@@ -149,14 +143,14 @@ public class Delay implements TimeEffect {
         }
         if (idx == Settings.Feedback.ordinal())
             return Math.round(getFeedback() * 100);
-        if (idx == Settings.Type.ordinal()) 
+        if (idx == Settings.Type.ordinal())
         	return TimeEffect.indexOf(type);
         if (idx == Settings.Sync.ordinal())
         	return sync ? 1 : 0;
-        
+
         throw new InvalidParameterException();
     }
-    
+
     @Override
     public void set(int idx, int value) {
         if (idx == Settings.DelayTime.ordinal()) {
@@ -165,7 +159,7 @@ public class Delay implements TimeEffect {
         		value = 0;
         	if (value > 99)
         		value = 99;
-        	delayTime = Constants.getReverseLog()[value] * DIFF + MIN_DELAY;
+        	setDelayTime(Constants.getReverseLog()[value] * DIFF + MIN_DELAY);
         }
         else if (idx == Settings.Feedback.ordinal())
             setFeedback(value / 100f);
@@ -176,7 +170,12 @@ public class Delay implements TimeEffect {
         else throw new InvalidParameterException();
     }
 
-    /** @return delay time in seconds */
+    public void setDelayTime(float msec) {
+		delayTime = msec;
+		calculated = delayTime * SAMPLE_RATE;
+	}
+
+	/** @return delay time in seconds */
     public float getDelay() {
         return delayTime;
     }
@@ -195,17 +194,14 @@ public class Delay implements TimeEffect {
         if (right.workArea != null)
             Arrays.fill(right.workArea, 0);
     }
-	
+
+	@Override
 	public void process(FloatBuffer inL, FloatBuffer inR) {
 		left.process(inL);
-
 		if (slapback) { // not implemented
-			right.slapback(inL); 
+			right.slapback(inL);
 			return;
 		}
-		
-		if (inR == null) 
-			return;
 		right.process(inR);
 	}
 
@@ -222,20 +218,18 @@ public class Delay implements TimeEffect {
 		}
 
 	    void process(FloatBuffer in) {
-	    	
+
         	in.rewind();
-            float srate = sampleRate;
-            float delay = delayTime * srate;
             float ldelay = lastdelay;
             float fb = feedback;
             int rnlen = workArea.length;
             int pos = rovepos;
-            float delta = (delay - ldelay) / nframes;
+            float delta = (calculated - ldelay) / N_FRAMES;
 
             float r, s, a, b, o;
             int ri;
             float scratch;
-            for (int i = 0; i < nframes; i++) {
+            for (int i = 0; i < N_FRAMES; i++) {
                 r = pos - (ldelay + 2) + rnlen;
                 ri = (int) r;
                 s = r - ri;
@@ -249,23 +243,21 @@ public class Delay implements TimeEffect {
                 ldelay += delta;
             }
             rovepos = pos;
-            lastdelay = delay;
+            lastdelay = calculated;
         }
-	    
+
 	    void slapback(FloatBuffer in) {
         	in.rewind();
-            float srate = sampleRate;
-            float delay = delayTime * srate;
             float ldelay = lastdelay;
             float fb = feedback;
             int rnlen = workArea.length;
             int pos = rovepos;
-            float delta = (delay - ldelay) / nframes;
+            float delta = (calculated - ldelay) / N_FRAMES;
 
             float r, s, a, b, o;
             int ri;
             // slapback mode:
-            for (int i = 0; i < nframes; i++) {
+            for (int i = 0; i < N_FRAMES; i++) {
                 r = pos - (ldelay + 2) + rnlen;
                 ri = (int) r;
                 s = r - ri;
@@ -279,7 +271,7 @@ public class Delay implements TimeEffect {
             }
 
             rovepos = pos;
-            lastdelay = delay;
+            lastdelay = calculated;
         }
 	}
 
@@ -287,7 +279,7 @@ public class Delay implements TimeEffect {
 	public void sync() {
 		sync(TimeEffect.unit());
 	}
-	
+
 	@Override
 	public void sync(float unit) {
 		float msec = 0.001f * (unit + unit * TimeEffect.indexOf(type));

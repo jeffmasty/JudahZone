@@ -2,14 +2,14 @@ package net.judah.gui.knobs;
 
 public enum KnobMode {
 	MIDI,
-	TRACK,
-	TACO,
+	Track,
+	Taco,
 	LFO,
-	KITS,
-	SAMPLE,
-	PRESETS,
-	SETLIST,
-	TOOLS,
-	LOG;
+	Kits,
+	Samples,
+	Presets,
+	Setlist,
+	Tools,
+	Log;
 
 }

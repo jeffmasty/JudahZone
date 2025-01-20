@@ -1,9 +1,6 @@
 package net.judah.api;
 
-import lombok.Data;
-
-@Data
-public class Notification {
+public record Notification (Property prop, Object value) {
 
 	public static enum Property {
 		/**current tempo*/
@@ -25,8 +22,5 @@ public class Notification {
 		/** current step in step sequencer */
 		STEP;
 	}
-
-	public final Property prop;
-	public final Object value;
 
 }

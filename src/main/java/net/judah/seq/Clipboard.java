@@ -10,7 +10,7 @@ import lombok.Getter;
 import net.judah.seq.track.MidiTrack;
 
 public class Clipboard {
-	
+
 	private final ArrayDeque<MidiPair> list = new ArrayDeque<>();
 	/** source track resolution */
 	@Getter private int resolution;
@@ -18,7 +18,7 @@ public class Clipboard {
 	public void copy(Notes selected, MidiTrack track) {
 		list.clear();
 		resolution = track.getResolution();
-		for (MidiPair p : selected) 
+		for (MidiPair p : selected)
 			list.add(MidiTools.zeroBase(p, track.getLeft()));
 	}
 
@@ -34,6 +34,6 @@ public class Clipboard {
 		}
 		return result;
 	}
-	
+
 
 }

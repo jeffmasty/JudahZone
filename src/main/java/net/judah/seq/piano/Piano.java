@@ -1,8 +1,8 @@
 package net.judah.seq.piano;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -12,32 +12,37 @@ import javax.sound.midi.ShortMessage;
 import javax.swing.JPanel;
 
 import lombok.Getter;
+import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiInstrument;
-import net.judah.seq.beatbox.BeatsSize;
+import net.judah.seq.MidiConstants;
 import net.judah.seq.track.MidiTrack;
 
 /** Display keys of a piano above PianoBox */
-public class Piano extends JPanel implements BeatsSize, MouseListener, MouseMotionListener {
+public class Piano extends JPanel implements MidiConstants, MouseListener, MouseMotionListener {
 
 	private final PianoView view;
 	private final MidiTrack track;
-	private final int width, height;
+	private int width, height;
 	private int highlight = -1;
 	private int pressed;
 	@Getter private int octave = 4;
 	private HashSet<Integer> actives = new HashSet<>();
 
-	public Piano(Rectangle r, MidiTrack t, PianoView view) {
+	public Piano(MidiTrack t, PianoView view) {
 		this.view = view;
 		this.track = t;
-		width = r.width;
-		height = r.height;
-		setBounds(r);
 		addMouseListener(this);
 		addMouseMotionListener(this);
+	}
+
+	public void resized(int w, int h) {
+		width = w;
+		height = h;
+		Gui.resize(this, new Dimension(w, h));
+		repaint();
 	}
 
 	/** label Octave C

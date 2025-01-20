@@ -27,18 +27,18 @@
 */
 package net.judah.fx;
 
-import static java.lang.Math.*;
+import static java.lang.Math.abs;
+import static java.lang.Math.log;
 
 import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.util.Constants;
 
 public class Compressor implements Effect {
 
-    public static enum Settings { 
+    public static enum Settings {
     	Threshold, Ratio, Boost, Attack, Release //Knee
     }
 
@@ -48,22 +48,15 @@ public class Compressor implements Effect {
     @Setter @Getter private boolean active;
 
     // private int hold = (int) (samplerate*0.0125);  //12.5ms;
-    private double cSAMPLE_RATE;
+    private final double cSAMPLE_RATE = 1.0/SAMPLE_RATE;;
 
     private float lvolume = 0.0f;
-    private float lvolume_db = 0.0f;
     private int tratio = 4;
     private int toutput = -10;
     private int tknee = 30;
-    private float boost = 1.0f;
     private float boost_old = 1.0f;
-    private float gain_t = 1.0f;
     private double ratio = 1.0;
     private float kpct = 0.0f;
-
-    private float peak = 0.0f;
-    private float rell = 1f;
-    private float attl = 1f;
 
     private float thres_db = -24;
     private float att;
@@ -71,7 +64,6 @@ public class Compressor implements Effect {
     private float rel;
     private int relStash;
 
-    private double eratio;
     private double kratio;
     private float knee;
     private double coeff_kratio;
@@ -88,10 +80,7 @@ public class Compressor implements Effect {
     }
 
 	public void reset() {
-	    boost = 1.0f;
 	    boost_old = 1.0f;
-	    peak = 0.0f;
-	    setSampleRate(Constants.sampleRate());
     	setThreshold(-20);
     	setRatio(7);
 		setBoost(-12);
@@ -107,10 +96,6 @@ public class Compressor implements Effect {
 	public static float rap2dB(float rap) {
 		return (float)((20*log(rap)/LOG_10));
 	}
-
-    public void setSampleRate(int sampleRate) {
-    	cSAMPLE_RATE = 1.0/sampleRate;
-    }
 
     @Override
     public int getParamCount() {
@@ -149,14 +134,13 @@ public class Compressor implements Effect {
 	}
     public void setAttack(int milliseconds) {
     	attStash = milliseconds;
-    	att = attl = (float) (cSAMPLE_RATE /((attStash / 1000.0f) + cSAMPLE_RATE));
+    	att = (float) (cSAMPLE_RATE /((attStash / 1000.0f) + cSAMPLE_RATE));
     	compute();
     }
 
     public void setRelease(int milliseconds) {
     	relStash = milliseconds;
     	rel = (float) (cSAMPLE_RATE /((milliseconds / 1000.0f) + cSAMPLE_RATE));
-    	rell = rel;
     	compute();
     }
 
@@ -165,7 +149,7 @@ public class Compressor implements Effect {
     	kpct = tknee/100.1f;
     	compute();
     }
-    
+
     public void setBoost(int boost) {
     	toutput = boost;
     	compute();
@@ -174,7 +158,7 @@ public class Compressor implements Effect {
     @Override
     public int get(int idx) {
         if (idx == Settings.Threshold.ordinal())
-        	return (getThreshold() * -3) + 1; 
+        	return (getThreshold() * -3) + 1;
         if (idx == Settings.Ratio.ordinal())
         	return getRatio() * 10 - 2;
         if (idx == Settings.Attack.ordinal())
@@ -190,18 +174,18 @@ public class Compressor implements Effect {
 	public void set(int idx, int value) {
 		if (idx == Settings.Threshold.ordinal())
 			setThreshold((int)(value * -0.333f) - 1) ;
-		else if (idx == Settings.Ratio.ordinal()) 
+		else if (idx == Settings.Ratio.ordinal())
 			setRatio((int)((value * 0.1f) + 2));
-		else if (idx == Settings.Boost.ordinal()) 
+		else if (idx == Settings.Boost.ordinal())
 			setBoost((int)(value * 0.3333f - 20));
 			// setBoost(value); // non-conform 1 to 100
-		else if (idx == Settings.Attack.ordinal()) 
+		else if (idx == Settings.Attack.ordinal())
 			setAttack(value + 10);
-		else if (idx == Settings.Release.ordinal()) 
+		else if (idx == Settings.Release.ordinal())
 			setRelease( (value + 20) * 2);
-//		else if (idx == Settings.Knee.ordinal()) 
+//		else if (idx == Settings.Knee.ordinal())
 //			setKnee(value); // non-conform 1 to 100
-		
+
 	}
 
 	private void compute() {
@@ -218,47 +202,52 @@ public class Compressor implements Effect {
 	    makeuplin = dB2rap(makeup);
         outlevel = dB2rap(toutput) * makeuplin;
 	}
-	
-	
-	public void process(FloatBuffer buf) {
+
+	@Override
+	public void process(FloatBuffer left, FloatBuffer right) {
+		process(left);
+		process(right);
+	}
+
+	void process(FloatBuffer buf) {
+		float val, ldelta, attl, rell, lvolume_db, gain_t, boost;
+		double eratio;
+		final float lvol = lvolume;
+		final float outl = outlevel;
+		final float threshold = thres_db;
 		buf.rewind();
-		float val;
 	    for (int z = 0; z < buf.capacity(); z++) {
 	    	val = buf.get(z);
-	        float ldelta = 0.0f;
-	        peak = val;
+	        ldelta = abs (val);
 
-  	        //Mono Channel
-	        ldelta = abs (peak);
-
-	        if(lvolume < 0.9f) {
+	        if(lvol < 0.9f) {
 	            attl = att;
 	            rell = rel;
-	        } else if (lvolume < 1.0f) {
-	            attl = att + ((1.0f - att)*(lvolume - 0.9f)*10.0f);	//dynamically change attack time for limiting mode
-	            rell = rel/(1.0f + (lvolume - 0.9f)*9.0f);  //release time gets longer when signal is above limiting
+	        } else if (lvol < 1f) {
+	            attl = att + ((1f - att) * (lvol - 0.9f) * 10.0f); //dynamically change attack time for limiting mode
+	            rell = rel / (1f + (lvol - 0.9f) * 9.0f);  //release time gets longer when signal is above limiting
 	        } else {
-	            attl = 1.0f;
-	            rell = rel*0.1f;
+	            attl = 1f;
+	            rell = rel * 0.1f;
 	        }
 
-	        if (ldelta > lvolume)
-	            lvolume = attl * ldelta + (1.0f - attl)*lvolume;
+	        if (ldelta > lvol)
+	            lvolume = attl * ldelta + (1f - attl) * lvol;
 	        else
-	            lvolume = rell*ldelta + (1.0f - rell)*lvolume;
+	            lvolume = rell * ldelta + (1f - rell) * lvol;
 
 	        lvolume_db = rap2dB (lvolume);
 
-	        if (lvolume_db < thres_db) {
-	            boost = outlevel;
-	        } else if (lvolume_db < thres_mx) { //knee region
-	            eratio = 1.0f + (kratio-1.0f)*(lvolume_db-thres_db)* coeff_knee;
-	            boost =   outlevel*dB2rap(thres_db + (lvolume_db-thres_db)/eratio - lvolume_db);
-	        } else {
-	            boost = outlevel*dB2rap(thres_db + coeff_kk + (lvolume_db-thres_mx)*coeff_ratio - lvolume_db);
-	        }
+	        if (lvolume_db < thres_db)
+	            boost = outl;
+	        else if (lvolume_db < thres_mx) { //knee region
+	            eratio = 1f + (kratio - 1f) * (lvolume_db-threshold) * coeff_knee;
+	            boost =   outl * dB2rap(threshold + (lvolume_db-threshold) / eratio - lvolume_db);
+	        } else
+	            boost = outl * dB2rap(threshold + coeff_kk + (lvolume_db-thres_mx) * coeff_ratio - lvolume_db);
+	        if (boost < MIN_GAIN)
+	        	boost = MIN_GAIN;
 
-	        if ( boost < MIN_GAIN) boost = MIN_GAIN;
 	        gain_t = .4f * boost + .6f * boost_old;
             buf.put(val * gain_t);
             boost_old = boost;

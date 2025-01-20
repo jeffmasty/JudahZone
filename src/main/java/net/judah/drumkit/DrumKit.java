@@ -3,11 +3,14 @@ package net.judah.drumkit;
 import java.io.File;
 import java.nio.FloatBuffer;
 
-import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiMessage;
+import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.JudahZone;
+import net.judah.api.ZoneMidi;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KitKnobs;
 import net.judah.gui.knobs.KnobMode;
@@ -22,52 +25,42 @@ import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 @Getter
-public class DrumKit extends Actives {
+public class DrumKit extends LineIn implements Receiver {
 	public static final int SAMPLES = DrumType.values().length;
-
-	private final DrumMachine machine;
+	private final KnobMode knobMode = KnobMode.Kits;
+	private final Actives actives;
+	private final Trax type;
 	private final DrumSample[] samples = new DrumSample[SAMPLES];
-	private final Trax kitMode;
-	private final KnobMode knobMode = KnobMode.KITS;
-	protected final FloatBuffer left;
-    protected final FloatBuffer right;
-	private final KitKnobs gui;
+	private final KitKnobs knobs;
 	private final ShortMessage CHOKE = Midi.create(Midi.NOTE_OFF, DrumType.OHat.getData1(), 1);
 
 	/** true if OHat shuts off when CHat plays */
 	@Setter private boolean choked = true;
-	private DrumPreset preset;
-	private final LineIn fx;
+	private DrumPreset program;
 
-	public DrumKit(DrumMachine drums, Trax mode) throws InvalidMidiDataException {
-		super(drums, mode.getCh(), SAMPLES);
+	public DrumKit(ZoneMidi engine, Trax type) throws Exception {
 
-		fx = new LineIn(mode.name(), true) ;
-		left = fx.getLeft();
-		right = fx.getRight();
-		machine = drums;
-		kitMode = mode;
+		super(type.name(), Constants.STEREO);
+		this.type = type;
+		actives = new Actives(engine, type.getCh(), SAMPLES);
 		for (int i = 0; i < SAMPLES; i++)
-			samples[i] = new DrumSample(DrumType.values()[i], this);
-		gui = new KitKnobs(this);
-	}
-
-	public DrumKit(DrumMachine drums, Trax mode, String kit) throws Exception {
-		this(drums, mode);
-
+			samples[i] = new DrumSample(DrumType.values()[i], actives);
+		String progChange = type.getProgram();
 		for (File folder : Folders.getKits().listFiles()) {
-			if (folder.isDirectory()  && folder.getName().equals(kit)) {
-				this.preset = new DrumPreset(folder);
+			if (folder.isDirectory()  && folder.getName().equals(progChange)) {
+				this.program = new DrumPreset(folder);
 				for (int i = 0; i < samples.length; i++)
-					if (this.preset.get(i) != null)
-						samples[i].setRecording(this.preset.get(i));
-				return;
+					if (this.program.get(i) != null)
+						samples[i].setRecording(this.program.get(i));
+				break;
 			}
 		}
-		RTLogger.warn(this, mode.name() + " missing " + kit);
+		knobs = new KitKnobs(this);
 	}
 
-	public void send(ShortMessage midi) {
+	@Override
+	public void send(MidiMessage msg, long timeStamp) {
+		ShortMessage midi = (ShortMessage)msg;
 		int data1 = midi.getData1();
 		for (DrumSample sample : samples) {
 			if (sample.getDrumType().getData1() != data1) continue;
@@ -76,17 +69,19 @@ public class DrumKit extends Actives {
 			sample.getEnvelope().reset();
 			sample.play(true);
 			if (sample.getDrumType() == DrumType.CHat && choked) {// TODO multi
-				if (samples[DrumType.OHat.ordinal()].isPlaying())
-					noteOff(CHOKE);
+
+				if (actives.indexOf(CHOKE.getData1()) >= 0 || samples[DrumType.OHat.ordinal()].isPlaying()) {
+					samples[DrumType.OHat.ordinal()].off();
+				}
 			}
 
-			int idx = indexOf(data1);
+			int idx = actives.indexOf(data1);
 			if (idx < 0)
-				add(midi);
+				actives.add(midi);
 			else
-				set(idx, midi);
+				actives.set(idx, midi);
 		}
-		MainFrame.update(this);
+		MainFrame.update(actives);
 
 	}
 
@@ -96,6 +91,7 @@ public class DrumKit extends Actives {
 		return false;
 	}
 
+	@Override
 	public void close() {
 		for (DrumSample s : samples)
 			s.off();
@@ -110,11 +106,11 @@ public class DrumKit extends Actives {
 				continue;
 			if (folder.getName().equals(name)) {
 				try {
-					preset = new DrumPreset(folder);
+					program = new DrumPreset(folder);
 					for (int i = 0; i < samples.length; i++)
-						if (preset.get(i) != null)
-							samples[i].setRecording(preset.get(i));
-					MainFrame.update(Program.first(machine, channel));
+						if (program.get(i) != null)
+							samples[i].setRecording(program.get(i));
+					MainFrame.update(Program.first(JudahZone.getDrumMachine(), actives.getChannel()));
 				} catch (Exception e) {
 					RTLogger.warn(this, e);
 				}
@@ -124,12 +120,22 @@ public class DrumKit extends Actives {
 		return false;
 	}
 
+	public int getChannel() {
+		return actives.getChannel();
+	}
+
+	@Override
+	public void process(FloatBuffer left, FloatBuffer right) {
+		// TODO Auto-generated method stub
+
+	}
+
 	public void process() {
 		AudioTools.silence(left);
 		AudioTools.silence(right);
 		for (DrumSample drum: samples)
 			drum.process(left, right);
-		fx.processStereoFx(1f);
+		fx();
 	}
 
 	public DrumSample getSample(DrumType type) {
@@ -138,6 +144,7 @@ public class DrumKit extends Actives {
 				return s;
 		return null;
 	}
+
 
 
 }

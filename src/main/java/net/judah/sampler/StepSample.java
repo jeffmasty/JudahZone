@@ -2,7 +2,6 @@ package net.judah.sampler;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.JudahZone;
 
 public class StepSample extends Sample {
 	private static final float STEP_BOOST = 0.125f;
@@ -11,9 +10,14 @@ public class StepSample extends Sample {
 	private final int[] steps;
 
 	public StepSample(String wavName, Sampler sampler, int... steps) throws Exception {
-		super(JudahZone.getOutL(), JudahZone.getOutR(), wavName, Type.ONE_SHOT, sampler);
+		super(wavName, Type.ONE_SHOT, sampler);
 		this.steps = steps;
 		env = STEP_BOOST;
+	}
+
+	@Override
+	public void play(boolean onOrOff) {
+		playing = onOrOff;
 	}
 
 	public void step(int step) {
@@ -31,14 +35,6 @@ public class StepSample extends Sample {
 				return;
 			}
 	}
-
-	@Override
-	public void process() {
-		if (!playing) return;
-		env = STEP_BOOST * sampler.stepMix;
-		readSampleBuffer();
-		playFrame(leftPort.getFloatBuffer(), rightPort.getFloatBuffer());
-    }
 
 
 }

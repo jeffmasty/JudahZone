@@ -2,13 +2,12 @@ package net.judah.synth.taco;
 
 import static net.judah.JudahZone.getBass;
 import static net.judah.JudahZone.getFluid;
-import static net.judah.JudahZone.getTacos;
 
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Vector;
 
-import org.jaudiolibs.jnajack.JackPort;
-
+import net.judah.api.Engine;
 import net.judah.api.ZoneMidi;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock;
@@ -16,7 +15,6 @@ import net.judah.midi.MidiInstrument;
 import net.judah.omni.Icons;
 import net.judah.omni.Threads;
 import net.judah.seq.Trax;
-import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.synth.fluid.FluidSynth;
 
@@ -28,17 +26,17 @@ public class TacoTruck {
 	public final ArrayList<TacoSynth> tracks = new ArrayList<TacoSynth>();
 	private TacoSynth current;
 
-	public TacoTruck(FluidSynth fluid, MidiInstrument bass, JackPort outL, JackPort outR, JudahClock clock) {
+	public TacoTruck(FluidSynth fluid, MidiInstrument bass, JudahClock clock) {
 		this.fluid = fluid;
-		this.taco = new TacoSynth(NAME, Icons.get("taco.png"), outL, outR, null);
+		this.taco = new TacoSynth(NAME, Icons.get("taco.png"), clock);
 		mpkRoutes = new ZoneMidi[] {taco, fluid, bass};
-		tracks.add(new TacoSynth(Trax.TK1.toString(), Icons.get("Synth.png"), outL, outR, clock)); // pianoroll1
-		tracks.add(new TacoSynth(Trax.TK2.toString(), Icons.get("Waveform.png"),outL, outR, clock)); // pianoroll2
+		tracks.add(new TacoSynth(Trax.TK1, Icons.get("Waveform.png"), clock)); // pianoroll1
+		tracks.add(new TacoSynth(Trax.TK2, Icons.get("Synth.png"), clock)); // pianoroll2
 	}
 
-	public void process() {
-		taco.process();
-		tracks.forEach(track-> track.process());
+	public void process(FloatBuffer hot1, FloatBuffer hot2) {
+		taco.process(hot1, hot2);
+		tracks.forEach(track-> track.process(hot1, hot2));
 	}
 
 	public void rotate() {
@@ -62,23 +60,27 @@ public class TacoTruck {
 	public void init() {
 		taco.progChange("FeelGood");
 
-		for(TacoSynth zco : getTacos().tracks) {
-			zco.progChange("Drops1");
-			zco.getTracks().getFirst().load("8ths");
-		}
-		getBass().getTracks().getFirst().load("Bass2");
+		Engine it = tracks.get(0);
+		Trax type = Trax.TK1;
+		it.progChange(type.getProgram());
+		it.getTracks().getFirst().load(type.getFile());
+
+		it = tracks.get(1);
+		type = Trax.TK2;
+		it.progChange(type.getProgram());
+		it.getTracks().getFirst().load(type.getFile());
+
+		getBass().getTracks().getFirst().load(Trax.B.getFile());
+
 		while (getFluid().getChannels().isEmpty())
 			Threads.sleep(50); // allow time for FluidSynth to sync
-		Vector<PianoTrack> tracks = fluid.getTracks();
-		MidiTrack fluid1 = tracks.get(0);
-		fluid1.load("8ths");
-		fluid1.getMidiOut().progChange("Strings", fluid1.getCh());
-		MidiTrack fluid2 = tracks.get(1);
-		fluid2.load("CRDSKNK");
-		fluid2.getMidiOut().progChange("Palm Muted Guitar", fluid2.getCh());
-		MidiTrack fluid3 = tracks.get(2);
-		fluid3.load("Synco");
-		fluid3.getMidiOut().progChange("Harp", fluid3.getCh());
+
+		Vector<PianoTrack> fluids = fluid.getTracks();
+		for (PianoTrack f : fluids) {
+			f.progChange(f.getType().getProgram());
+			f.load(f.getType().getFile());
+		}
+
 	}
 
 }

@@ -35,6 +35,8 @@ public class Constants {
 	public static final String NL = System.lineSeparator();
 	public static final String CUTE_NOTE = "♫ ";
 	public static final String DOT_MIDI = ".mid";
+	public static final int ASCII_ONE = 49;
+
 
 	/** milliseconds between checking the update queue */
 	public static final int GUI_REFRESH = 8;

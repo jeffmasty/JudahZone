@@ -13,7 +13,6 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
-import net.judah.seq.arp.Arp;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
 
@@ -28,8 +27,8 @@ public class TrackButton extends JLabel {
 		setOpaque(true);
 		addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) {
-				if (SwingUtilities.isRightMouseButton(e) && track instanceof PianoTrack synth)
-					synth.toggle(Arp.MPK);
+				if (SwingUtilities.isRightMouseButton(e))
+					track.setCapture(!track.isCapture());
 				else if (SwingUtilities.isMiddleMouseButton(e))
 					JudahZone.getSeq().getTracks().setCurrent(track);
 				else
