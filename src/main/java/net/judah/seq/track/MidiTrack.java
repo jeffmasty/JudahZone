@@ -33,7 +33,6 @@ import net.judah.midi.Actives;
 import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
-import net.judah.mixer.LineIn;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiTools;
 import net.judah.seq.Trax;
@@ -52,7 +51,7 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
     /** parent midi port */
     protected final ZoneMidi midiOut;
 	protected final int ch;
-	protected final LineIn fx;
+	//protected final LineIn fx;
     protected final Actives actives;
 
 	private File file;
@@ -65,7 +64,7 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 	private float gain = 0.9f;
 
 	// PianoTrack
-    public MidiTrack(Trax type, ZoneMidi out, int rez, JudahClock clock, int polyphony, LineIn channel) throws InvalidMidiDataException {
+    public MidiTrack(Trax type, ZoneMidi out, int rez, JudahClock clock, int polyphony) throws InvalidMidiDataException {
     	super(clock);
 		this.type = type;
 		this.ch = type.getCh();
@@ -78,15 +77,14 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 		if (type.name().equals(Trax.H2.name()))
 			cue = Cue.Hot;
 		clock.addListener(this);
-		fx = channel;
     }
 
-	public MidiTrack(Trax type, ZoneMidi out, JudahClock clock, int polyphony, LineIn channel) throws InvalidMidiDataException {
-		this(type, out, MidiClock.MIDI_24, clock, polyphony, channel);
+	public MidiTrack(Trax type, ZoneMidi out, JudahClock clock, int polyphony) throws InvalidMidiDataException {
+		this(type, out, MidiClock.MIDI_24, clock, polyphony);
 	}
 
     // DrumTrack
-	public MidiTrack(Trax type, Actives actives, JudahClock clock, LineIn fx) throws InvalidMidiDataException {
+	public MidiTrack(Trax type, Actives actives, JudahClock clock) throws InvalidMidiDataException {
 		super(clock);
 		this.ch = actives.getChannel();
 		this.type = type;
@@ -97,7 +95,6 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 		t = s.createTrack();
 		this.actives = actives;
 		clock.addListener(this);
-		this.fx = fx;
 	}
 
 	public void send(ShortMessage midi, long ticker) {

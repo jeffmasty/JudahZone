@@ -17,7 +17,7 @@ import net.judah.drumkit.DrumDB;
 import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
-import net.judah.gui.Qwerty;
+import net.judah.gui.TabZone;
 import net.judah.gui.widgets.CenteredCombo;
 import net.judah.midi.Actives;
 import net.judah.seq.Trax;
@@ -29,7 +29,7 @@ public class KitKnobs extends KnobPanel {
 	}
 
 	@Getter private final DrumKit kit;
-	@Getter private final KnobMode knobMode = KnobMode.Kits;
+	@Getter private final KnobMode knobMode = KnobMode.Kitz;
 	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 	private final JComboBox<String> preset = new CenteredCombo<>();
 	private final ArrayList<KitPad> pads = new ArrayList<>(DrumKit.SAMPLES);
@@ -89,7 +89,7 @@ public class KitKnobs extends KnobPanel {
 	}
 
 	@Override public void pad1() {
-		Qwerty.edit(JudahZone.getSeq().byName(kit.getType().name()));
+		TabZone.edit(JudahZone.getSeq().byName(kit.getType().name()));
 	}
 
 	@Override public void pad2() {

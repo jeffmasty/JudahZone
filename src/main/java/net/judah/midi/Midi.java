@@ -25,7 +25,7 @@ import net.judah.util.RTLogger;
 
 /** Utilities added to javax ShortMessage*/
 @JsonDeserialize(using = Midi.Deserialization.class)
-@JsonSerialize(using = Midi.Serialization.class) 
+@JsonSerialize(using = Midi.Serialization.class)
 public class Midi extends ShortMessage {
 
 	public static final String PARAM_COMMAND = "command";
@@ -40,7 +40,7 @@ public class Midi extends ShortMessage {
 	/** @return null on internally handled exception */
 	public static Midi create(int command, int channel, int data1, int data2) {
 		try { return new Midi(command, channel, data1, data2);
-		} catch(Throwable t) { 
+		} catch(Throwable t) {
 			RTLogger.warn("Midi.create(" + data1 + ", " + data2 + ")", t); }
 		return null;
 	}
@@ -72,7 +72,7 @@ public class Midi extends ShortMessage {
 	public Midi(int command, int channel, int data1, String port) throws InvalidMidiDataException {
 	    this(command, channel, data1);
 	}
-	
+
 	public static String toString(MidiMessage m) {
 		if (m instanceof Midi) return ((Midi)m).toString();
 		return new Midi(m.getMessage()).toString();
@@ -87,11 +87,16 @@ public class Midi extends ShortMessage {
         	b.append(GMDrum.lookup(getData1()).name());
         else if (isNote())
         	b.append(Key.key(getData1())).append(getData1() / 12);
-        else 
+        else
         	b.append(getData1());
         b.append("/").append(getData2());
         return b.toString();
 	}
+
+	// semitone to semitone = 1.059 = 2 ^ (1/12)
+	public static float midiToHz(int data1) {
+        return (float)(Math.pow(2, (data1 - 57d) / 12d)) * Key.TUNING;   // some have 69 instead of 57
+    }
 
 	@Override
 	public int hashCode() {
@@ -124,7 +129,7 @@ public class Midi extends ShortMessage {
 	public static boolean isPitchBend(ShortMessage msg) {
 		return msg.getStatus() - msg.getChannel() == ShortMessage.PITCH_BEND;
 	}
-	
+
 	public static boolean isCC(ShortMessage msg) {
 		 return msg.getStatus() - msg.getChannel() == ShortMessage.CONTROL_CHANGE;
 	}
@@ -140,13 +145,13 @@ public class Midi extends ShortMessage {
 			return false;
 		return msg != null && msg.getStatus() - ((ShortMessage)msg).getChannel() == NOTE_ON;
 	}
-	
+
 	public static boolean isNoteOff(MidiMessage msg) {
 		if (msg instanceof ShortMessage )
 			return msg != null && msg.getStatus() - ((ShortMessage)msg).getChannel() == NOTE_OFF;
 		return msg != null && msg.getStatus() == NOTE_OFF;
 	}
-	
+
 	public static boolean isNote(MidiMessage msg) {
 		int stat = msg instanceof ShortMessage ? msg.getStatus() - ((ShortMessage)msg).getChannel() : msg.getStatus();
 		return stat == Midi.NOTE_OFF || stat == NOTE_ON;

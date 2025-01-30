@@ -21,7 +21,7 @@ public class Detached extends JFrame {
 		void resized(int w, int h);
 	}
 
-	public Detached(Component content, Qwerty tabs) {
+	public Detached(Component content, TabZone tabs) {
 		super(content.getName());
 
 		setIconImage(Icons.get("icon.png").getImage());
@@ -39,7 +39,7 @@ public class Detached extends JFrame {
 		getContentPane().setLayout(new GridLayout(1, 1, 0, 0));
         content.setSize(getContentPane().getSize());
 		getContentPane().add(content);
-		validate(); // pack();
+		validate();
 		setVisible(true);
 
 		tabs.getFrames().add(content);

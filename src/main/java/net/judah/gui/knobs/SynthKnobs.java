@@ -22,7 +22,7 @@ import net.judah.fx.Filter;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
-import net.judah.gui.Qwerty;
+import net.judah.gui.TabZone;
 import net.judah.gui.settable.Program;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.CenteredCombo;
@@ -134,7 +134,7 @@ public class SynthKnobs extends KnobPanel {
 		title.add(new Btn(" next ", e->JudahZone.getTacos().rotate()));
 		if (!synth.getTracks().isEmpty())
 			title.add(new Btn(Icons.DETAILS_VEW,
-					e->Qwerty.edit(synth.getTracks().getFirst())));
+					e->TabZone.edit(synth.getTracks().getFirst())));
 		validate();
 	}
 

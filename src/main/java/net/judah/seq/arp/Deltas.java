@@ -21,6 +21,14 @@ public class Deltas {
 		deltas.put(on, work.list()); // malloc
 	}
 
+	public Set<ShortMessage> keys() {
+		return deltas.keySet();
+	}
+
+	public List<Integer> get(ShortMessage key) {
+		return deltas.get(key);
+	}
+
 	public List<Integer> remove(ShortMessage off) {
 		ShortMessage key = key(off.getData1());
 		if (key == null)

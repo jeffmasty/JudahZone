@@ -35,11 +35,12 @@ public class BasicPlayer implements PlayAudio {
 	public void play(boolean onOrOff) {
 		this.playing = onOrOff;
 	}
-	@Override public final void clear() {
-        setRecording(null);
-        playing = false;
-        file = null;
-    }
+
+//	public final void clear() {
+//        setRecording(null);
+//        playing = false;
+//        file = null;
+//    }
 
 	@Override
 	public final String toString() {

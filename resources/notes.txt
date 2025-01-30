@@ -1,19 +1,31 @@
 TODO:
 
-MusicBox ratio can change if Track resolution changes...MusicBox.recalc();
+JudahScope Sampler Player Detached, Resizable... ComponentListener
+reverse sample, chop sample left, right, stretch, scratch
+Play Menus  data          [x]
+  [  _-^-_  Wave _-^-_    ]
+  |          |            |
+  |  FFT     |     OSC    |
+  |          |            |
+->Scope, Meters [hz, osc]
+DSP Course: https://www.youtube.com/watch?v=hVOA8VtKLgk&list=PLuh62Q4Sv7BUSzx5Jr8Wrxxn-U10qG1et
+FFT Algo https://www.youtube.com/watch?v=iTMn0Kt18tg
+Maximize unicde: 🔼 ⛶ 🔲   Detach: 🔗 ❌ 🔓
+How to display/manipulate Phase?
+FFM instead of JNA? https://jdk.java.net/jextract/
+Mouse Dnd on WaveZone
+zone omni -> omni   Recording
+FxPanel.timeFx() lfo2
+MusicBox ratio can change if Track resolution changes...see MusicBox.recalc();
 Free Trigger Flooding, ChordSheet.Floating
 Drum drag'n'drop wiggle left-right causes up-down motion
-duplicated free doesn't sync
-Omni*
 New Song save, update drop-downs, setlist. seq.loadSong(Unknown File) feedback
-Scope, Meters [log  vol  tune  hz]
 chorus time sync off (1/x)
 LoopToDisk recording length off
 Drum decay based on sample length (Kit Knobs & Distortion scratchy) + feedback
 Fluid attack, decay, filter
 MidiSongFile? meta messages, tracks [0], 1, 2, 3, 4, 5, 6,  9, 10, 11, 12 
 sustain note offs drag-n-drop, Record progchange, CC, pitchbend, vol
-drag'n'drop bug
 PianoEditor: drag-n-drop/transpose across frame, falling water, REL/Modal
 upgrade Fluid ver. to multi-channel (re-compile)
    -p, --portname=[label] Set  MIDI  port  name  (alsa_seq,  coremidi) --portname=[track.getName()]
@@ -30,7 +42,7 @@ MidiTrack Tests		PianoTrack synth =(PianoTrack) seq.getSynthTracks().getFirst();
 Hot Mic 2.0, pattern navigation 
 Probability, Ritardando, microsteps
 Scene REL OnDeck Cmd2.0, step cmd, jamstik cmd
-Fifths arppegiator, gate, Swing Pt.II
+Fifths arpeggiator, gate, Swing Pt.II
 sample packs, toggle one-shot/loop/hot
 Synth: envelope to filter, LFO, glide, PWM, mono-synth, env off
 walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
@@ -46,6 +58,7 @@ support JavaSound/non-Jack, make accessible setup and settings
 Subwoofer library, Fluid drums
 convert Songs to single Midi file
 add tracks/synths
+IIR filter https://www.youtube.com/watch?v=JCIxD6ep1rM
 
 
 --etc-----------------------
@@ -179,6 +192,8 @@ Delay + LFO sync to Tempo
 note-on/off tracker per channel
 dB indicator
 Multi-Document Interface
+Waveforms
+
 
 REFERENCE------------------------------------------------------------
 [Mixer]                [FX]

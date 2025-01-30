@@ -117,13 +117,9 @@ public class DrumSample extends FxChain implements AtkDec, PlayAudio {
     }
 
 	protected void playFrame(FloatBuffer outLeft, FloatBuffer outRight) {
-
 		AudioTools.replace(playBuffer[LEFT], left, env * gain.getLeft());
 		AudioTools.replace(playBuffer[RIGHT], right, env * gain.getRight());
-
-		// no FX stream().filter(fx->fx.isActive()).forEach(fx->fx.process(left, right));
-
-		// gain & stereo pan to provided buffer
+		// No FX stream().filter(fx->fx.isActive()).forEach(fx->fx.process(left, right));
 		AudioTools.mix(left, outLeft);
 		AudioTools.mix(right, outRight);
 	}
@@ -134,7 +130,4 @@ public class DrumSample extends FxChain implements AtkDec, PlayAudio {
 //protected final Overdrive overdrive = new Overdrive();
 //add(filter);
 //add(overdrive);
-//// reset()
-//overdrive.setActive(false);
-//filter.setActive(false);
 

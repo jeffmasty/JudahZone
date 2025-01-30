@@ -69,7 +69,7 @@ public final class FluidSynth extends MidiInstrument {
 			syncInstruments();
 			syncChannels();
 			for (Trax create : Trax.fluids)
-				tracks.add(new PianoTrack(create, this, clock, this));
+				tracks.add(new PianoTrack(create, this, clock));
 		} catch (Throwable e) {
 			RTLogger.warn(this, e);
 		}

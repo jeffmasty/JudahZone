@@ -40,7 +40,7 @@ public class ChordTrack implements TimeListener, Cmdr {
 	private Signature sig = Signature.FOURFOUR;
 	private final ChordView view = new ChordView(this);
 	private final ChordSheet chordSheet = new ChordSheet(this);
-	private final Cmdr player = new PlayCmdr();
+	private final Cmdr player = new ChordsCmdr();
 	private boolean loading;
 	private ArrayList<ChordListener> listeners = new ArrayList<>();
 	private final JudahClock clock;
@@ -69,6 +69,10 @@ public class ChordTrack implements TimeListener, Cmdr {
 			}
     	}
     }
+
+	public boolean isEmpty() {
+		return sections.isEmpty();
+	}
 
 	private void setChord(Chord next) {
 		if (chord == next) return;
@@ -363,7 +367,7 @@ public class ChordTrack implements TimeListener, Cmdr {
 			}
 	}
 
-	class PlayCmdr implements Cmdr {
+	class ChordsCmdr implements Cmdr {
 		@Getter private final String[] keys = {"play", "stop"};
 		@Override public Object resolve(String key) {
 			return key.equals(keys[0]);

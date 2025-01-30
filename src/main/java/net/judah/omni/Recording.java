@@ -5,9 +5,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Vector;
 
+import lombok.Getter;
+import net.judah.util.RTLogger;
+
 /**	------------WavFile------------<br/>
- * Audio data for a Loop or Sample, blank for recording or load .wav file from disk. <br/>
- * <br/><br/><pre>
+ * Stereo Audio data of .wav File, a Loop or a (Drum)Sample, organized by Jack buffer. <br/>
+ * Not lightweight, an RMS cache is also stored for add() and set() procedures.
+ * <br/>
+ * <br/><pre>
 	Wav file IO class
  	A.Greensted
 	http://www.labbookpages.co.uk/audio/javaWavFiles.html
@@ -16,14 +21,15 @@ import java.util.Vector;
 	http://www.sonicspot.com/guide/wavefiles.html
 	http://www.blitter.com/~russtopia/MIDI/~jglatt/tech/wave.htm </pre>*/
 public class Recording extends Vector<float[][]> implements WavConstants {
-	public static final float BOOST = 5f;
 
-	private File file; 					// can be null (looper)
+	/* Unless specified otherwise, bring the incoming audio up to "line-level" */
+	public static final float BOOST = 2.5f;
+
+	@Getter private File file; 					// can be null (looper)
 	private FileInputStream iStream;	// Input stream used for reading data
 	private final byte[] buffer = new byte[DISK_BUFFER]; // local buffer for disk IO
 	private int numFrames;				// Number of frames within the data section
 	int numChannels = 2;				// 2 bytes unsigned, 0x0001 (1) to 0xFFFF (65,535)
-	boolean stereo = true;
 	long blockAlign;					// 2 bytes unsigned, 0x0001 (1) to 0xFFFF (65,535)
 	private int bufferPointer;			// Points to the current position in local buffer
 	private int bytesRead;				// Bytes read after last read into local buffer
@@ -44,23 +50,27 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 		}
 	}
 
-	public Recording (File file, float factor) throws Exception {
+	public Recording (File file, float factor) throws IOException {
 		load(file, factor);
 	}
 
-	public Recording (File file) throws Exception {
+	public Recording (File file) throws IOException {
 		load(file, BOOST);
 	}
 
+	public int load(File file) throws IOException {
+		return load(file, 1f);
+	}
+
 	/**@return size of file in frames */
-	public int load(File file, float factor) throws Exception {
+	public int load(File file, float factor) throws IOException {
 		final int size = size();
 		this.file = file;
 		iStream = new FileInputStream(file);
 
 		// Read the first 12 bytes of the file
 		int bytesRead = iStream.read(buffer, 0, 12);
-		if (bytesRead != 12) throw new Exception("Not enough wav file bytes for header");
+		if (bytesRead != 12) throw new IOException("Not enough wav file bytes for header");
 
 		// Extract parts from the header
 		long riffChunkID = getLE(buffer, 0, 4);
@@ -68,8 +78,8 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 		long riffTypeID = getLE(buffer, 8, 4);
 
 		// Check the header bytes contains the correct signature
-		if (riffChunkID != RIFF_CHUNK_ID) throw new Exception("Invalid Wav Header data, incorrect riff chunk ID");
-		if (riffTypeID != RIFF_TYPE_ID) throw new Exception("Invalid Wav Header data, incorrect riff type ID");
+		if (riffChunkID != RIFF_CHUNK_ID) throw new IOException("Invalid Wav Header data, incorrect riff chunk ID");
+		if (riffTypeID != RIFF_TYPE_ID) throw new IOException("Invalid Wav Header data, incorrect riff type ID");
 
 // TODO	// Check that the file size matches the number of bytes listed in header
 //		if (file.length() != chunkSize+8)
@@ -83,8 +93,8 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 		while (true) {
 			// Read the first 8 bytes of the chunk (ID and chunk size)
 			bytesRead = iStream.read(buffer, 0, 8);
-			if (bytesRead == -1) throw new Exception("Reached end of file without finding format chunk");
-			if (bytesRead != 8) throw new Exception("Could not read chunk header");
+			if (bytesRead == -1) throw new IOException("Reached end of file without finding format chunk");
+			if (bytesRead != 8) throw new IOException("Could not read chunk header");
 
 			// Extract the chunk ID and Size
 			long chunkID = getLE(buffer, 0, 4);
@@ -107,11 +117,11 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 				if (numChunkBytes > 0) iStream.skip(numChunkBytes);
 			}
 			else if (chunkID == DATA_CHUNK_ID) {
-				if (!foundFormat) throw new Exception("Data chunk found before Format chunk");
+				if (!foundFormat) throw new IOException("Data chunk found before Format chunk");
 
 				// Check that the chunkSize (wav data length) is a multiple of the
 				// block align (bytes per frame)
-				if (chunkSize % blockAlign != 0) throw new Exception("Data Chunk size is not multiple of Block Align");
+				if (chunkSize % blockAlign != 0) throw new IOException("Data Chunk size is not multiple of Block Align");
 
 				// Calculate the number of frames
 				numFrames = (int) (chunkSize / blockAlign);
@@ -127,12 +137,11 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 			}
 		}
 
-		if (foundData == false) throw new Exception("Did not find a data chunk");
+		if (foundData == false) throw new IOException("Did not find a data chunk");
 		bufferPointer = 0;
 		frameCounter = 0;
 		bytesRead = 0;
 		int jackFrame = 0;
-		stereo = numChannels == 2;
 		// Create a buffer of jack frame size
 		float[] buffer = new float[JACK_BUFFER * STEREO];
 		int framesRead;
@@ -141,7 +150,7 @@ public class Recording extends Vector<float[][]> implements WavConstants {
             framesRead = readFrames(buffer, 0, JACK_BUFFER);
 
             float[][] frame = new float[2][JACK_BUFFER];
-            if (stereo)
+            if (numChannels == 2)
 	            // cycle through frames and put them in loop Recording format
 	            for (int i = 0 ; i < framesRead * STEREO; i += 2) {
 	            	int jack = i / 2;
@@ -167,7 +176,7 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 		return jackFrame;
 	}
 
-	private int readFrames(float[] sampleBuffer, int offset, int numFramesToRead) throws IOException, Exception {
+	private int readFrames(float[] sampleBuffer, int offset, int numFramesToRead) throws IOException {
 		for (int f = 0 ; f < numFramesToRead ; f++) {
 			if (frameCounter == numFrames) return f;
 			for (int c=0 ; c<numChannels ; c++) {
@@ -179,12 +188,12 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 		return numFramesToRead;
 	}
 
-	private long readSample() throws Exception {
+	private long readSample() throws IOException {
 		long val = 0;
 		for (int b=0 ; b<SAMPLE_BYTES ; b++) {
 			if (bufferPointer == bytesRead)  {
 				int read = iStream.read(buffer, 0, DISK_BUFFER);
-				if (read == -1) throw new Exception("Not enough data available");
+				if (read == -1) throw new IOException("Not enough data available");
 				bytesRead = read;
 				bufferPointer = 0;
 			}
@@ -237,12 +246,42 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 		return size() / FPS;
 	}
 
+	/** copy from a channel into destination from startSample
+	 * @param destination array of desired size to copy
+	 * @param startSample index of the initial sample to copy, ignoring buffer size.
+	 * @throws ArrayIndexOutOfBoundsException */
+	public void getSamples(long startSample, float[] destination, int ch) {
+	    int startBuf = (int) (startSample / JACK_BUFFER);
+	    int offset = (int) (startSample % JACK_BUFFER);
+	    int total = destination.length;
+	    int destIndex = 0;
+
+	    while (destIndex < total) {
+	        // Get the current buffer from the source
+	        float[] buffer = get(startBuf)[ch];
+	        // Calculate the number of samples to copy from the current buffer
+	        int samplesToCopy = Math.min(JACK_BUFFER - offset, total - destIndex);
+
+	        System.arraycopy(buffer, offset, destination, destIndex, samplesToCopy);
+	        // Update the destination index and offset for the next iteration
+	        destIndex += samplesToCopy;
+	        offset = 0; // Reset offset for the next buffer
+	        startBuf++; // Move to the next buffer in the source
+	    }
+	}
+
+	/** copy from left channel into destination from startSample
+	 * @param destination array of desired size to copy
+	 * @throws ArrayIndexOutOfBoundsException */
+	public void getSamples(int startSample, float[] destination) {
+		getSamples(startSample, destination, LEFT);
+	}
+
+	/** copy an entire channel into a new 1-D array, erasing buffer boundaries */
 	public float[] getLeft() {
 		return getChannel(LEFT);
 	}
-	public float[] getRight() {
-		return getChannel(RIGHT);
-	}
+	/** copy an entire channel into a new 1-D array, erasing buffer boundaries */
 	float[] getChannel(int ch) {
 		int buffer = JACK_BUFFER;
 		float[] result = new float[size() * buffer];
@@ -282,45 +321,26 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 		return size() * WavConstants.JACK_BUFFER;
 	}
 
-	/**from stored frames to a flat array
-	 * @param startByte
-	 * @param samplesPerPixel
-	 * @return raw audio
-	 */
-	public float[][] range(int startByte, int samplesPerPixel) {
 
-		int frame = startByte / JACK_BUFFER; // bug?
-		int offset = startByte % JACK_BUFFER;
-		int countUp = 0;
+	// copy from start of size frames to destination
+	public void duplicate(int frames) {
 
-		float[] left = new float[samplesPerPixel];
-		float[] right = new float[samplesPerPixel];
-		float [][] result = new float[STEREO][];
-		result[LEFT] = left;
-		result[RIGHT] = right;
+		for (int deficit = (2 * frames) - size(); deficit > 0; deficit--)
+			add(new float[2][JACK_BUFFER]); // usually padded with Memory.java
 
-		while (countUp < samplesPerPixel) {
-			if (offset == 0) { // normal op, copy frame
+		for (int i = 0; i < frames; i++) {
+			AudioTools.copy(get(i), get(i + frames));
 
-				// TODO check tail (offset?)
-//				System.arraycopy(get(frame)[LEFT], 0, left, countUp, samplesPerPixel);
-//				System.arraycopy(get(frame)[RIGHT], 0, right, countUp, samplesPerPixel);
-				countUp += JACK_BUFFER;
-			}
-			else { // first time, copy from offset
-				// TODO
-//				System.arraycopy(get(frame)[LEFT], offset, left, 0, JACK_BUFFER - offset); // samplesPerPixel);
-//				System.arraycopy(get(frame)[RIGHT], offset, right, 0, JACK_BUFFER - offset); // samplesPerPixel);
-				countUp = offset;
-				offset = 0;
-			}
-			//frame++;
 		}
 
-// TODO frames to flat array
-		// audio.arrayCopy(start, samplesPerPixel, result);
-		// Recording.float[][] pixel = audio.range(start, samplesPerPixel);
-		return result;
+		RTLogger.log(this, frames + "frames Duplicated (" + size() + ")");
 	}
+
+
+   public void catchUp(final int newSize) {
+    	Threads.execute(() -> {
+    		for (int i = size(); i < newSize; i++)
+    			add(new float[STEREO][JACK_BUFFER]);});
+    }
 
 }

@@ -22,8 +22,8 @@ import net.judah.api.TimeListener;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
-import net.judah.gui.Qwerty;
 import net.judah.gui.Size;
+import net.judah.gui.TabZone;
 import net.judah.gui.settable.SongCombo;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
@@ -173,13 +173,6 @@ public class Overview extends JPanel implements TimeListener {
 		songView.getLauncher().update();
 	}
 
-
-//	public void update(MidiTrack t) {
-//		for (SongTrack track : tracks)
-//			if (track.getTrack() == t)
-//				track.update();
-//	}
-//
     public void setScene(Scene s) {
     	Scene old = scene;
     	scene = s;
@@ -254,8 +247,8 @@ public class Overview extends JPanel implements TimeListener {
     	setScene(song.getScenes().get(0));
 
     	// load sheet music if song name matches an available sheet music file
-    	Qwerty.instance.sheetMusic(song);
-    	Qwerty.instance.title(this);
+    	TabZone.instance.sheetMusic(song);
+    	TabZone.instance.title(this);
     	SongCombo.refresh();
     }
 
@@ -311,7 +304,7 @@ public class Overview extends JPanel implements TimeListener {
     			return;
     	}
     	song.saveSong(mixer, seq, scene, chords);
-    	getFrame().getTabs().title(this);
+    	TabZone.instance.title(this);
     }
 
 }

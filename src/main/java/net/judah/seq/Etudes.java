@@ -41,7 +41,7 @@ public class Etudes {
 		midi.push(add);
 		midi.selectFrame();
 
-		Edit drag = new Edit(Type.TRANS, new ArrayList(midi.getSelected()));
+		Edit drag = new Edit(Type.TRANS, new ArrayList<MidiPair>(midi.getSelected()));
 		drag.setDestination(new Prototype(47, track.timecode(0, 0)));
 		midi.push(drag);
 	}

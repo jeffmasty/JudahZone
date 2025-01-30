@@ -1,4 +1,4 @@
-package net.judah.scope.waveform;
+package net.judah.util.fft_temp;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +17,6 @@ public class WaveLabels {
                 break;
             }
         }
-
         return labels;
     }
 

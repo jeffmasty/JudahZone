@@ -21,12 +21,14 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
+import net.judah.gui.Size;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
 
 @Log4j
 /** LinkedBlockingQueue to capture log statements and post them off the real-time thread */
 public class RTLogger extends KnobPanel {
+
     public static interface Participant { void process(String[] input); }
     @Getter @Setter private static Level level = Level.DEBUG;
     private record Log(String clazz, String msg, boolean warn) { }
@@ -35,8 +37,9 @@ public class RTLogger extends KnobPanel {
     @Getter private static final ArrayList<Participant> participants = new ArrayList<>();
     private static final JScrollPane scroller = new JScrollPane();
     private static final JTextArea textarea = new JTextArea(3, 28);
+
     private static final BlockingQueue<Log> debugQueue = new LinkedBlockingQueue<>(1024);
-    public static final RTLogger instance = new RTLogger();
+	public static final RTLogger instance = new RTLogger(Size.KNOB_PANEL);
 
     public static void log(Object o, String msg) {
         debugQueue.offer(new Log(o instanceof String
@@ -63,13 +66,13 @@ public class RTLogger extends KnobPanel {
     @Getter private final KnobMode knobMode = KnobMode.Log;
     @Getter private final JComponent title = Gui.wrap(new JLabel(""));
 
-    private RTLogger() {
-    	Gui.resize(ticker, new Dimension(WIDTH_KNOBS - 6, STD_HEIGHT - 4));
-		Gui.resize(scroller, KNOB_PANEL);
+    private RTLogger(Dimension size) {
     	textarea.setEditable(false);
         scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        scroller.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scroller.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     	EventQueue.invokeLater(() -> {
+        	Gui.resize(scroller, size);
+        	Gui.resize(ticker, new Dimension(WIDTH_KNOBS - 6, STD_HEIGHT - 4));
 			textarea.setForeground(Color.BLUE.darker());
 			ticker.setOpaque(true);
 			ticker.setForeground(Color.BLUE.darker());
@@ -113,11 +116,11 @@ public class RTLogger extends KnobPanel {
             in += NL;
 
         textarea.append(new String(in));
-        textarea.setCaretPosition(textarea.getDocument().getLength() - 1);
-
-        scroller.getVerticalScrollBar().setValue(scroller.getVerticalScrollBar().getMaximum() - 1 );
+        textarea.setCaretPosition(textarea.getDocument().getLength());
         scroller.getHorizontalScrollBar().setValue(0);
+        scroller.getVerticalScrollBar().setValue(scroller.getVerticalScrollBar().getMaximum());
         instance.invalidate();
+        scroller.repaint();
     }
 
     public static void newLine() {

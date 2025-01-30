@@ -3,7 +3,6 @@ package net.judah.gui.fx;
 import java.awt.Dimension;
 import java.util.List;
 
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -19,7 +18,6 @@ import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
-import net.judah.omni.Icons;
 
 public class ChannelTitle extends JPanel {
 
@@ -37,19 +35,20 @@ public class ChannelTitle extends JPanel {
 		mute = (channel instanceof LineIn) ? new Btn("tape", e->((LineIn)channel).setMuteRecord(!((LineIn)channel).isMuteRecord())) :
 			new Btn("mute", e->channel.setOnMute(!channel.isOnMute()));
 		lfo = new Btn("lfo", e->{
-			if (MainFrame.getKnobMode() == KnobMode.LFO)
+			if (MainFrame.getKnobMode() == KnobMode.LFOz)
 				channel.getLfo().setActive(!channel.getLfo().isActive());
-			else MainFrame.setFocus(KnobMode.LFO);});
+			else MainFrame.setFocus(KnobMode.LFOz);});
+		Btn wav = new Btn("wav", e->MainFrame.setFocus(KnobMode.Wavez));
 		mute.setFont(Gui.FONT10);
 		lfo.setFont(Gui.FONT10);
+		wav.setFont(Gui.FONT10);
 
-		add(Box.createHorizontalGlue());
-		add(Gui.resize(name, new Dimension(Size.WIDTH_KNOBS - 3 * Size.TINY.width, Size.TINY.height)));
-		add(Box.createHorizontalGlue());
+		Gui.resize(name, new Dimension(Size.WIDTH_KNOBS - 3 * Size.TINY.width, Size.STD_HEIGHT));
 
+		add(name);
 		add(Gui.resize(mute, Size.TINY));
 		add(Gui.resize(lfo, Size.TINY));
-		add(new Btn(Icons.DETAILS_VEW, e->MainFrame.setFocus(KnobMode.Tools)));
+		add(Gui.resize(wav, Size.TINY));
 		update();
 	}
 

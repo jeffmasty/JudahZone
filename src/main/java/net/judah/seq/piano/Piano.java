@@ -7,6 +7,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.HashSet;
+import java.util.List;
 
 import javax.sound.midi.ShortMessage;
 import javax.swing.JPanel;
@@ -14,14 +15,15 @@ import javax.swing.JPanel;
 import lombok.Getter;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
+import net.judah.gui.Size;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiInstrument;
-import net.judah.seq.MidiConstants;
 import net.judah.seq.track.MidiTrack;
 
 /** Display keys of a piano above PianoBox */
-public class Piano extends JPanel implements MidiConstants, MouseListener, MouseMotionListener {
+public class Piano extends JPanel implements MouseListener, MouseMotionListener, Size {
+	public static final List<Integer> BLACK_KEYS = List.of(1, 3, 6, 8, 10);
 
 	private final PianoView view;
 	private final MidiTrack track;

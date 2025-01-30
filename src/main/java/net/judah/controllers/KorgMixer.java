@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import net.judah.drumkit.DrumKit;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Qwerty;
+import net.judah.gui.TabZone;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
@@ -112,10 +112,10 @@ public class KorgMixer implements Controller {
 			seq.getCurrent().next(true);
 		}
 		else if (data1 == RWND.getVal() && data2 != 0) { // prev Tab
-			Qwerty.instance.changeTab(false);
+			TabZone.instance.changeTab(false);
 		}
 		else if (data1 == FWRD.getVal() && data2 != 0) { // next Tab
-			Qwerty.instance.changeTab(true);
+			TabZone.instance.changeTab(true);
 		}
 		if (data1 == STOP.getVal() && data2 != 0 && seq.getCurrent() != null) { // Track Active/Inactive
 			seq.getCurrent().toggle();

@@ -1,22 +1,45 @@
 package net.judah.omni;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.awt.event.ActionListener;
 import java.nio.FloatBuffer;
 import java.util.Vector;
 
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.Mixer.Info;
+import javax.swing.ButtonGroup;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.border.TitledBorder;
+
+import net.judah.util.Constants;
 
 public class AudioTools  {
 
-    /** approx. Acoustic impedance of air at room temperature in Pa·s/m */
-	public static final float ACOUSTIC_IMPEDANCE = 415;
-
 	public static void silence(FloatBuffer a) {
-		a.rewind();
-		while(a.hasRemaining())
-			a.put(0f);
-		a.rewind();
+        a.rewind();
+        int limit = a.limit();
+        for (int i = 0; i < limit; i++)
+            a.put(0f);
+	}
+
+	/** MIX in and out */
+	public static void mix(FloatBuffer in, FloatBuffer out) {
+		out.rewind();
+		in.rewind();
+	    int capacity = out.capacity();
+	    for (int i = 0; i < capacity; i++)
+	        out.put(i, out.get() + in.get());
+	}
+
+	public static void mix(FloatBuffer in, float[] out) {
+		in.rewind();
+		for (int i = 0; i < out.length; i++)
+			out[i] += in.get();
 	}
 
 	/** MIX
@@ -31,20 +54,6 @@ public class AudioTools  {
 				out[x] = in[x] + out[x];
 		}
 		return oldLoop;
-	}
-
-	/** MIX in and out */
-	public static void mix(FloatBuffer in, FloatBuffer out) {
-		in.rewind();
-		out.rewind();
-		for (int z = 0; z < out.capacity(); z++)
-			out.put(out.get(z) + in.get(z));
-	}
-
-	public static void mix(FloatBuffer in, float[] out) {
-		in.rewind();
-		for (int i = 0; i < out.length; i++)
-			out[i] += in.get();
 	}
 
 	/** MIX */
@@ -92,32 +101,38 @@ public class AudioTools  {
 		return out;
 	}
 
+	/** Calculates and returns the root mean square of the signal. Please
+	 * cache the result since it is calculated every time.
+	 * @param buffer The audio buffer to calculate the RMS for.
+	 * @return The <a href="http://en.wikipedia.org/wiki/Root_mean_square">RMS</a> of
+	 *         the signal present in the current buffer. */
+	public static float rms(float[] buffer) {
+		float result = 0f;
+		for (int i = 0; i < buffer.length; i++)
+			result += buffer[i] * buffer[i];
+
+		result = result / buffer.length;
+		return (float)Math.sqrt(result);
+	}
+
+	/** Source: be.tarsos.dsp.AudioEvent
+	 * Converts a linear (rms) to a dB value. */
+	public static double linearToDecibel(final double value) {
+		return 20.0 * Math.log10(value);
+	}
+
 	/**@param sr sampleRate  in Hz
 	 * @return the frequency above which aliasing artifacts are found */
 	public static float nyquistFreq(float sampleRate) {
 		return sampleRate / 2f;
 	}
-
-	/**
-	 * Calculates and returns the root mean square of the signal. Please
-	 * cache the result since it is calculated every time.
-	 * @param buffer The audio buffer to calculate the RMS for.
-	 * @return The <a
-	 *         href="http://en.wikipedia.org/wiki/Root_mean_square">RMS</a> of
-	 *         the signal present in the current buffer.
-	 */
-	public static double rms(float[] buffer) {
-		double result = 0.0;
-		for (int i = 0; i < buffer.length; i++)
-			result += buffer[i] * buffer[i];
-
-		result = result / Double.valueOf(buffer.length);
-		return Math.sqrt(result);
+	/** @return nyquist for the system's sample rate */
+	public static float nyquistFreq() {
+		return nyquistFreq(Constants.sampleRate());
 	}
 
-	public static double intensity(float[] buffer) {
-		double rms = rms(buffer);
-		return (rms * rms) / ACOUSTIC_IMPEDANCE;
+	public static String sampleToSeconds(long sampleNum) {
+		return String.format("%.2f", (sampleNum / (Constants.fps() * Constants.bufSize())));
 	}
 
 	/** @return seconds.## */
@@ -175,6 +190,26 @@ public class AudioTools  {
 		}
 		return infos;
 	}
+
+	public static class InputPanel extends JPanel {
+	public InputPanel(ActionListener e){
+		super(new BorderLayout());
+		this.setBorder(new TitledBorder("Choose a microphone input"));
+		JPanel buttonPanel = new JPanel(new GridLayout(0,1));
+		ButtonGroup group = new ButtonGroup();
+		for(Mixer.Info info : AudioTools.getMixerInfo(false, true)){
+			JRadioButton button = new JRadioButton();
+			button.setText(info.toString());
+			buttonPanel.add(button);
+			group.add(button);
+			button.setActionCommand(info.toString());
+			button.addActionListener(e);
+		}
+		this.add(new JScrollPane(buttonPanel,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER),BorderLayout.CENTER);
+		this.setMaximumSize(new Dimension(300,150));
+		this.setPreferredSize(new Dimension(300,150));
+	}}
+
 
 }
 

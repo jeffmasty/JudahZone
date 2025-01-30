@@ -26,9 +26,9 @@ import net.judah.util.RTLogger;
 
 public class JudahMenu extends JMenuBar {
 	static String[] TYPE = {"1/8", "1/4", "3/8", "1/2"};
-	private final Qwerty tabs;
+	private final TabZone tabs;
 
-	public JudahMenu(int width, Overview overview, Qwerty tabz) {
+	public JudahMenu(int width, Overview overview, TabZone tabz) {
 		this.tabs = tabz;
 	    JMenu song = new JMenu("Song");
 	    JMenu loops = new JMenu("Looper");
@@ -131,13 +131,16 @@ public class JudahMenu extends JMenuBar {
         views.add(track);
 
         views.add(new Actionable("ChordPro..", e-> {
-        	if (getChords().load() != null)
-        		tabs.chordSheet();
+        	if (getChords().isEmpty()) {
+	        	if (getChords().load() != null)
+	        		tabs.chordSheet();
+        	} else tabs.chordSheet();
+
         }));
         views.add(new Actionable("SheetMusic..", e->{
         	tabs.sheetMusic(Folders.choose(Folders.getSheetMusic()), true);
         }));
-        views.add(new Actionable("Detach", e->Qwerty.instance.detach()));
+        views.add(new Actionable("Detach", e->TabZone.instance.detach()));
         return views;
 	}
 

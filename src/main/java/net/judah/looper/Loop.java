@@ -34,7 +34,7 @@ import net.judah.util.RTLogger;
 public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runnable {
 	public static final float STD_BOOST = 3;
 	public static final float DRUM_BOOST = 0.25f;
-	protected static int INIT = 2 ^ 13; // nice chunk of preloaded blank tape
+	protected static int INIT = 8192; // nice chunk of preloaded blank tape
 
 	protected final Looper looper;
 	protected final JudahClock clock;
@@ -112,23 +112,16 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
     void boundary() {
     	if (!isPlaying())
     		return;
-
     	boundary ++;
     	if (factor() / boundary == 1) {
     		boundary = 0;
-        	if (tapeCounter.get() != 0) { // triggered
+        	if (tapeCounter.get() != 0)  // triggered
         		rewind();
-        	}
         	if (type == Type.FREE) {  // TODO factorize
         		if (isRecording && timer)
         			capture(false);
         	}
     	}
-    }
-
-    void catchUp(final int size) {
-    	for (int i = recording.size(); i < size; i++)
-    		recording.add(memory.getFrame());
     }
 
     public void save() {
@@ -137,10 +130,10 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 		} catch (Throwable t) { RTLogger.warn(this, t); }
 	}
 
-    public void load(File f, boolean primary) {
+    public void load(File dotWav, boolean primary) {
 		clear();
 		try {
-			length = recording.load(f, 1);
+			length = recording.load(dotWav);
 			dirty = true;
 			if (primary) {
 				rewind();
@@ -164,6 +157,11 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 		load(file, primary);
 	}
 
+	@Override public void setType(Type type) {
+		this.type = type;
+		MainFrame.update(display);
+	}
+
 	public void duplicate() {
 
 		if (length == 0) { // create blank tape that is twice primary's length
@@ -171,7 +169,7 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 			if (length == 0) return; // no primary
 			measures *= 2;
 			current = 0;
-			Threads.execute(()->catchUp(length));
+			recording.catchUp(length);
 			RTLogger.log(name, "Doubled Tape: " + length);
 			return;
 		}
@@ -183,20 +181,12 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 			if (type != Type.FREE)
 				JudahZone.getClock().setLength(measures);
 		}
-		Threads.execute(()->{ // duplicate current recording
+		Threads.execute(()-> {// duplicate current recording
 			if (length >= recording.size())
-				catchUp(length);
-			final int half = length / 2;
-			for (int i = 0; i < half; i++)
-				AudioTools.copy(recording.get(i), recording.get(i + half));
-			RTLogger.log(name, "Audio Duplicated: " + length);
+				recording.catchUp(length);
+			int half = length / 2;
+			recording.duplicate(half);
 		});
-		MainFrame.update(display);
-	}
-
-	@Override
-	public void setType(Type type) {
-		this.type = type;
 		MainFrame.update(display);
 	}
 
@@ -204,7 +194,7 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 	public void conform(Loop primary) {
 		setType(primary.getType() == Type.FREE ? Type.FREE :
 					type == Type.SOLO ?  Type.SOLO : Type.SYNC);
-		catchUp(primary.length);
+		recording.catchUp(primary.length);
 		if (isRecording)
 			capture(false);
 		measures = primary.measures;
@@ -277,7 +267,6 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
         MainFrame.update(display);
     }
 
-
     // TODO flooding of Free Primary
     private void startCapture() {
 
@@ -298,7 +287,7 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 
     		length = primary.getLength();
     		if (length >= recording.size()) // live larger than pre-allocated blank tape
-    			catchUp(length);
+    			recording.catchUp(length);
 
     		current = primary.getTapeCounter().get();
     		if (current >= recording.size()) {
@@ -379,6 +368,8 @@ public class Loop extends AudioTrack implements RecordAudio, TimeListener, Runna
 			tapeCounter.set(current);
 			if (this == looper.getPrimary())
 				clock.loopCount(looper.increment());
+			if (type == Type.FREE && timer && isRecording)
+				capture(false); // duplicated Free
 		}
 
 		if (current >= recording.size()) {

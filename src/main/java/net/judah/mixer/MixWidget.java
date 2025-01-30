@@ -36,7 +36,7 @@ public abstract class MixWidget extends JPanel implements Pastels {
 	protected final JPanel banner = new JPanel();
 	protected final JPanel sidecar = new JPanel(new GridLayout(3, 1, 0, 0));
 	protected final FxLEDs indicators;
-	protected final VolLED gain;
+	protected final RMSIndicator gain;
 	protected RainbowFader fader;
 	
 	public MixWidget(Channel channel, Looper looper) {
@@ -51,7 +51,7 @@ public abstract class MixWidget extends JPanel implements Pastels {
 			channel.getGain().set(Gain.VOLUME, fader.getValue());
 			MainFrame.update(channel);
 		});
-		gain = new VolLED(channel);
+		gain = new RMSIndicator(channel);
 		banner.setLayout(new BoxLayout(banner, BoxLayout.LINE_AXIS));
 		banner.setOpaque(true);
 		title.setFont(Gui.BOLD13);

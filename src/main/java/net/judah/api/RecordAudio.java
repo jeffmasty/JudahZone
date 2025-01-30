@@ -7,4 +7,5 @@ public interface RecordAudio extends PlayAudio {
 
 	boolean isRecording();
 
+	void clear();
 }

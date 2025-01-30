@@ -17,6 +17,8 @@ import net.judah.util.RTLogger;
  * A master track initializes in a muted state.*/
 public class Mains extends Channel {
 
+	public static final float PREAMP = 13f;
+
 	@Getter private ToDisk tape;
 	@Getter private boolean hotMic;
 	@Setter private boolean copy;

@@ -61,18 +61,18 @@ public class Bindings {
 		bind(getKeyStroke("F10"), new Act(()->MainFrame.setFocus(mixer.getMains())));
 
 		TrackList<DrumTrack> drums = seq.getDrumTracks();
-		bind(getKeyStroke(VK_1, ALT_DOWN_MASK), new Act(()->Qwerty.edit(drums.get(0))));
-		bind(getKeyStroke(VK_2, ALT_DOWN_MASK), new Act(()->Qwerty.edit(drums.get(1))));
-		bind(getKeyStroke(VK_3, ALT_DOWN_MASK), new Act(()->Qwerty.edit(drums.get(2))));
-		bind(getKeyStroke(VK_4, ALT_DOWN_MASK), new Act(()->Qwerty.edit(drums.get(3))));
+		bind(getKeyStroke(VK_1, ALT_DOWN_MASK), new Act(()->TabZone.edit(drums.get(0))));
+		bind(getKeyStroke(VK_2, ALT_DOWN_MASK), new Act(()->TabZone.edit(drums.get(1))));
+		bind(getKeyStroke(VK_3, ALT_DOWN_MASK), new Act(()->TabZone.edit(drums.get(2))));
+		bind(getKeyStroke(VK_4, ALT_DOWN_MASK), new Act(()->TabZone.edit(drums.get(3))));
 
 		TrackList<PianoTrack> synths = seq.getSynthTracks();
-		bind(getKeyStroke(VK_5, ALT_DOWN_MASK), new Act(()->Qwerty.edit(synths.get(0))));
-		bind(getKeyStroke(VK_6, ALT_DOWN_MASK), new Act(()->Qwerty.edit(synths.get(1))));
-		bind(getKeyStroke(VK_7, ALT_DOWN_MASK), new Act(()->Qwerty.edit(synths.get(2))));
-		bind(getKeyStroke(VK_8, ALT_DOWN_MASK), new Act(()->Qwerty.edit(synths.get(3))));
-		bind(getKeyStroke(VK_9, ALT_DOWN_MASK), new Act(()->Qwerty.edit(synths.get(4))));
-		bind(getKeyStroke(VK_0, ALT_DOWN_MASK), new Act(()->Qwerty.edit(synths.get(5))));
+		bind(getKeyStroke(VK_5, ALT_DOWN_MASK), new Act(()->TabZone.edit(synths.get(0))));
+		bind(getKeyStroke(VK_6, ALT_DOWN_MASK), new Act(()->TabZone.edit(synths.get(1))));
+		bind(getKeyStroke(VK_7, ALT_DOWN_MASK), new Act(()->TabZone.edit(synths.get(2))));
+		bind(getKeyStroke(VK_8, ALT_DOWN_MASK), new Act(()->TabZone.edit(synths.get(3))));
+		bind(getKeyStroke(VK_9, ALT_DOWN_MASK), new Act(()->TabZone.edit(synths.get(4))));
+		bind(getKeyStroke(VK_0, ALT_DOWN_MASK), new Act(()->TabZone.edit(synths.get(5))));
 		bind(getKeyStroke(VK_BACK_SPACE, 0), new Act(()->mains.toggleMute()));
 		bind(getKeyStroke(VK_UP, CTRL_DOWN_MASK), new Act(()->volume(true)));
 		bind(getKeyStroke(VK_DOWN, CTRL_DOWN_MASK), new Act(()->volume(false)));

@@ -4,6 +4,7 @@ package net.judah.omni;
 // http://www.labbookpages.co.uk
 
 public interface WavConstants {
+
 	int S_RATE = 48000; // TODO generalize
 	/** Samples in a process call */ //TODO upgrade latency to 256!
 	int JACK_BUFFER = 512;

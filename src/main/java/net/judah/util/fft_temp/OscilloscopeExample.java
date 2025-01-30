@@ -1,4 +1,4 @@
-package net.judah.scope;
+package net.judah.util.fft_temp;
 
 /*
 *
@@ -36,6 +36,7 @@ import be.tarsos.dsp.Oscilloscope;
 import be.tarsos.dsp.Oscilloscope.OscilloscopeEventHandler;
 import be.tarsos.dsp.io.TarsosDSPAudioInputStream;
 import be.tarsos.dsp.io.jvm.JVMAudioInputStream;
+import net.judah.omni.AudioTools;
 import net.judah.util.Constants;
 
 public class OscilloscopeExample extends JFrame implements OscilloscopeEventHandler {
@@ -55,7 +56,7 @@ public class OscilloscopeExample extends JFrame implements OscilloscopeEventHand
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setTitle("Osciloscope Example");
 
-		JPanel inputPanel = new InputPanel();
+		JPanel inputPanel = new AudioTools.InputPanel(null);
 		//add(inputPanel);
 		inputPanel.addPropertyChangeListener("mixer",
 				arg0 -> {
@@ -66,8 +67,6 @@ public class OscilloscopeExample extends JFrame implements OscilloscopeEventHand
 						e.printStackTrace();
 					}
 				});
-
-
 		panel = new GaphPanel();
 		this.add(inputPanel,BorderLayout.NORTH);
 		this.add(panel,BorderLayout.CENTER);

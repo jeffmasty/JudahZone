@@ -4,8 +4,6 @@ import java.awt.Color;
 
 public interface Pastels {
 
-	int GRADIENTS = 32;
-
     Color RED = new Color(0xff6e8d);
     Color GREEN = new Color(0x90da6a);
     Color BLUE = new Color(189, 230, 250); //  98dafd // a4b9cb
@@ -20,7 +18,7 @@ public interface Pastels {
 	Color MY_GRAY = new Color(220, 220, 210);
 	Color ONTAPE = GREEN;
 
-	Color DOWNBEAT = alpha(BLUE, 90);// BLUE faded
+	Color DOWNBEAT = alpha(BLUE, 90);
 	Color SHADE = BUTTONS;
 	Color GRID = MY_GRAY;
 	Color SELECTED = ORANGE;
@@ -28,14 +26,5 @@ public interface Pastels {
 	public static Color alpha(Color input, int alpha) {
 		return new Color(input.getRed(), input.getGreen(), input.getBlue(), alpha);
 	}
-
-//	public static Color velocityColor(int data2) {
-//    	return new Color(0, 112, 60, data2 * 2); // Dartmouth Green
-//	}
-//
-//    public static Color highlightColor(int data2) {
-//    	return new Color(0xFF, 0xA5, 0x00, data2 * 2); // Orange
-//    }
-
 }
 

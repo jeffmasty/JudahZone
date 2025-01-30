@@ -20,7 +20,9 @@ public record Notification (Property prop, Object value) {
 		/** current loop count */
 		LOOP,
 		/** current step in step sequencer */
-		STEP;
+		STEP,
+		/** Scene change */
+		SCENE;
 	}
 
 }

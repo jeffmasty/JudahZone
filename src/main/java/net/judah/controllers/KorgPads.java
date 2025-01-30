@@ -22,27 +22,27 @@ import net.judah.util.Constants;
 public class KorgPads extends ArrayList<Runnable> implements Controller {
 
 	public static final String NAME = "nanoPAD2";
-	
+
 	private long lastPress;
 	private Object tapTarget;
-	
+
 	private final int JOYSTICK_ON = 75;
 	private final int JOYSTICK_X = 73;
 	private final int JOYSTICK_Y = 74;
 	private final int LEFT = 55;
 	private final int RIGHT = 74;
-	
+
 	@Override public boolean midiProcessed(Midi midi) {
 		int data1 = midi.getData1();
 		int data2 = midi.getData2();
 		// only trigger commands on pad press, not on pad release, but stop processing release midi bytes
 		if (data2 == 0) {
-			if (JOYSTICK_ON == data1) 
+			if (JOYSTICK_ON == data1)
 				joystick(false);
 			return true;
 		}
 		Looper looper = getLooper();
-		
+
 		switch (data1) {
 		// Loops top row
 		case 1: // toggle loop records
@@ -55,7 +55,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			return true;
 		case 5: // toggle FX
 			getFxRack().getChannel().toggleFx();
-			return true; 
+			return true;
 		case 6: // latch guitar EFX to looper
 			looper.syncFx(getGuitar());
 			// getGuitar().getLatchEfx().latch();
@@ -69,43 +69,43 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 					clock.offSync();
 				else clock.syncToLoop();
 			}
-			else 
+			else
 				getClock().begin();
 			return true;
-		case 8: // Crickets step sequencer 			
+		case 8: // Crickets step sequencer
 			Sampler sampler = getSampler();
 			if (doubleTap(sampler)) // increment sample
 				sampler.nextStepSample();
 			sampler.setStepping(!sampler.isStepping());
- 
+
 			return true;
-			
+
 		// Loops bottom row
 		case 9:  // latch loop
-		case 10:  
+		case 10:
 		case 11:
 		case 12:
 			Loop onDeck = looper.get(data1 - 9);
-			if (doubleTap(onDeck)) 
+			if (doubleTap(onDeck))
 				return true;
 			looper.onDeck(onDeck);
 			return true;
-			
+
 		case 13: // toggle Verse/Chorus mutes
 			looper.verseChorus();
-			return true; 
-			
-		case 14: // next scene 
-			getOverview().trigger();
-			return true;
-		case 15: 
-			getFrame().getKnobs().pad1();
-			return true;
-		case 16:
-			getFrame().getKnobs().pad2();
 			return true;
 
-		case JOYSTICK_ON: 
+		case 14: // next scene
+			getOverview().trigger();
+			return true;
+		case 15:
+			MainFrame.getKnobs().pad1();
+			return true;
+		case 16:
+			MainFrame.getKnobs().pad2();
+			return true;
+
+		case JOYSTICK_ON:
 			joystick(true);
 			return true;
 		case JOYSTICK_X:
@@ -116,7 +116,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			boolean left = data2 < 50;
 			boolean right = data2 > RIGHT;
 			if (left) {
-				if (delay.getDelay() < Delay.DEFAULT_TIME) 
+				if (delay.getDelay() < Delay.DEFAULT_TIME)
 					delay.setDelayTime(Delay.DEFAULT_TIME);
 				// cc 50 to 0 = 0 to max delay
 				delay.setFeedback(.02f * (50 - data2));
@@ -134,7 +134,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			}
 			MainFrame.update(fx);
 			return true;
-		case JOYSTICK_Y: 
+		case JOYSTICK_Y:
 			Channel ch = getFxRack().getChannel();
 			Filter party = ch.getFilter1();
 			boolean down = data2 < LEFT - 10;
@@ -160,17 +160,17 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 	private boolean doubleTap(Object o) {
 		if (tapTarget == o && System.currentTimeMillis() - lastPress < Constants.DOUBLE_CLICK) {
 			lastPress = 0;
-			if (o instanceof Integer) 
+			if (o instanceof Integer)
 				getLooper().clear(getLooper().get((Integer)o));
-			
+
 			else if (o instanceof Loop) {
 				Loop loop = (Loop)o;
-				Looper loops = getLooper(); 
-				if (loop == loops.getLoopA()) 
+				Looper loops = getLooper();
+				if (loop == loops.getLoopA())
 					loops.clear();
-				else if (loop.isPlaying()) 
+				else if (loop.isPlaying())
 					loop.duplicate();
-				else if (loop == loops.getSoloTrack()) 
+				else if (loop == loops.getSoloTrack())
 					((SoloTrack)loop).toggle();
 			}
 			return true;
@@ -192,15 +192,15 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		}
 		MainFrame.update(ch);
 	}
-	
+
 }
 
 //	private boolean context1( ) {
 //		switch (MainFrame.getKnobMode()) {
 //// CLOCK/KIT? : start Clock/drums on next loop
 ////			if (looper.getRecordedLength() > 0)
-////				getClock().listen(looper.getLoopA());	
-//		case Midi: 
+////				getClock().listen(looper.getLoopA());
+//		case Midi:
 //			getMidiGui().getZoneBtn().setSelected(!getMidiGui().getZoneBtn().isSelected());
 //		case Synth:
 //			SynthKnobs.setFreqMode(!SynthKnobs.isFreqMode());
@@ -266,8 +266,8 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
  2nd Byte = 42 : KORG
  3rd Byte = 4g : g : Global MIDI Channel
  4th Byte = 00 : Software Project (nanoPAD2: 000112H)
- 5th Byte = 01 : 
- 6th Byte = 12 : 
+ 5th Byte = 01 :
+ 6th Byte = 12 :
  7th Byte = 00 : Sub ID
  8th Byte = cd : 0dvmmmmm  d     (1: Controller->Host)
                            v     (0: 2 Bytes Data Format, 1: Variable)
@@ -364,8 +364,8 @@ Transmitted when
  2nd Byte = 42 : KORG
  3rd Byte = 4g : g : Global MIDI Channel
  4th Byte = 00 : Software Project (nanoPAD2: 000112H)
- 5th Byte = 01 : 
- 6th Byte = 12 : 
+ 5th Byte = 01 :
+ 6th Byte = 12 :
  7th Byte = 00 : Sub ID
  8th Byte = cd : 0dvmmmmm  d     (0: Host->Controller)
                            v     (0: 2 Bytes Data Format, 1: Variable)
@@ -805,7 +805,7 @@ Total 47 bytes
 
 
  *T-1 Gate Speed List
- 
+
    0: 0.062
    1: 0.125
    2: 0.25

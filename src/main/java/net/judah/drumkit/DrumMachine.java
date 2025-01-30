@@ -28,7 +28,7 @@ public final class DrumMachine extends Engine {
 
 	/** current midi controller input and view */
 	private KitKnobs focus;
-	private final KnobMode knobMode = KnobMode.Kits;
+	private final KnobMode knobMode = KnobMode.Kitz;
 
 	@Getter TrackList<DrumTrack> tracks = new TrackList<DrumTrack>();
 
@@ -143,13 +143,8 @@ public final class DrumMachine extends Engine {
 	public void process(FloatBuffer outLeft, FloatBuffer outRight) {
 		AudioTools.silence(left);
 		AudioTools.silence(right);
-		for (DrumTrack track : tracks) {
-			track.getKit().process();
-			if (onMute)
-				continue;
-			AudioTools.mix(track.getFx().getLeft(), left);
-			AudioTools.mix(track.getFx().getRight(), right);
-		}
+		for (DrumTrack track : tracks)
+			track.getKit().process(left, right);
 		fx();
 		AudioTools.mix(left, outLeft);
 		AudioTools.mix(right, outRight);

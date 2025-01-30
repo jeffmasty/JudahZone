@@ -15,13 +15,12 @@ import net.judah.api.Key;
 import net.judah.api.TimeListener;
 import net.judah.api.ZoneMidi;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Qwerty;
+import net.judah.gui.TabZone;
 import net.judah.gui.settable.ModeCombo;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
-import net.judah.mixer.LineIn;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiPair;
@@ -59,19 +58,19 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 	private Algo algo = new Echo();
 	private final ArrayList<MidiEvent> chads = new ArrayList<>();
 
-	public PianoTrack(Trax type, ZoneMidi out, JudahClock clock, LineIn channel) throws InvalidMidiDataException {
-		super(type, out, clock, DEFAULT_POLYPHONY, channel);
+	public PianoTrack(Trax type, ZoneMidi out, JudahClock clock) throws InvalidMidiDataException {
+		super(type, out, clock, DEFAULT_POLYPHONY);
 		chords.addListener(this);
 		info = getState().getArp();
 		this.clear();
 	}
 
-	public PianoTrack(Trax type, Polyphony notes, JudahClock clock, LineIn fx) throws InvalidMidiDataException {
-		super(type, notes, clock, fx);
+	public PianoTrack(Trax type, Polyphony notes, JudahClock clock) throws InvalidMidiDataException {
+		super(type, notes, clock);
 	}
 
-	public PianoTrack(Trax type, ZoneMidi out, JudahClock clock, int polyphony, LineIn channel) throws InvalidMidiDataException {
-		super(type, out, clock, polyphony, channel);
+	public PianoTrack(Trax type, ZoneMidi out, JudahClock clock, int polyphony) throws InvalidMidiDataException {
+		super(type, out, clock, polyphony);
 	}
 
 	@Override
@@ -108,8 +107,9 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 
 	@Override
 	protected void parse(Track incoming) {
-		silence();
-		new Panic(this);
+		silence();  	// PianoTrack subclass special handling
+		new Panic(this); // not part of parse process
+
 		for (int i = 0; i < incoming.size(); i++) {
 			MidiEvent e = incoming.get(i);
 			if (e.getMessage() instanceof ShortMessage orig)
@@ -124,9 +124,7 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 			return false;
 		long tick = quantize(recent);
 
-
 		Midi m = Midi.create(midi.getCommand(), ch, midi.getData1(), midi.getData2());
-
 
 		if (Midi.isNoteOn(m)) {
 			chads.add(new MidiEvent(m, tick));
@@ -140,7 +138,7 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 				if (((ShortMessage)on.getMessage()).getData1() != m.getData1())
 					continue;
 				used = on;
-				Qwerty.getPianist(this).push(
+				TabZone.getPianist(this).push(
 					new Edit(Type.NEW, new MidiPair(on, new MidiEvent(m, tick))));
 				break;
 			}
@@ -189,18 +187,6 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 				midiOut.send(Midi.format((ShortMessage)e.getMessage(), ch, 1), JudahMidi.ticker());
 		}
 		silence();
-	}
-
-	/** clear the Arpeggiator */
-	private void silence() {
-		if (isArpOn() == false)
-			return;
-		if (deltas.isEmpty())
-			return;
-		Midi off = Midi.create(Midi.NOTE_OFF, ch, 36, 1);
-		for (Map.Entry<ShortMessage, List<Integer>> item : deltas.list())
-			out(off, item.getValue());
-		deltas.clear();
 	}
 
 	public void setInfo(ArpInfo arp) {
@@ -289,6 +275,13 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 		} else if (Midi.isNoteOff(msg)) {
 			out(msg, deltas.remove(msg));
 		}
+	}
+
+	/** clear the Arpeggiator */
+	private void silence() {
+		for (ShortMessage midi : deltas.keys())
+			out(Midi.create(Midi.NOTE_OFF, midi.getChannel(), midi.getData1(), midi.getData2()), deltas.get(midi));
+		deltas.clear();
 	}
 
 	private void out(ShortMessage input, List<Integer> work) {

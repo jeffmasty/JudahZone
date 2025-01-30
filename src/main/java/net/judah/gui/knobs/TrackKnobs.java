@@ -19,7 +19,7 @@ import net.judah.fx.Gain;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.PlayWidget;
-import net.judah.gui.Qwerty;
+import net.judah.gui.TabZone;
 import net.judah.gui.Size;
 import net.judah.gui.settable.Folder;
 import net.judah.gui.settable.ModeCombo;
@@ -239,7 +239,7 @@ public class TrackKnobs extends KnobPanel {
 
 	@Override
 	public void pad1() {
-		Qwerty.edit(track);
+		TabZone.edit(track);
 	}
 
 	@Override // TODO handle navigate away from TrackKnobs onDeck = !onDeck;

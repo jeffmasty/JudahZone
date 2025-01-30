@@ -15,7 +15,8 @@ import net.judah.util.Constants;
 @Getter
 public abstract class FxChain extends ArrayList<Effect> {
 	protected static final int N_FRAMES = Constants.bufSize();
-    protected final FloatBuffer left = FloatBuffer.wrap(new float[N_FRAMES]);
+	protected static final int S_RATE = Constants.sampleRate();
+	protected final FloatBuffer left = FloatBuffer.wrap(new float[N_FRAMES]);
     protected final FloatBuffer right = FloatBuffer.wrap(new float[N_FRAMES]);
 
 	protected final String name;

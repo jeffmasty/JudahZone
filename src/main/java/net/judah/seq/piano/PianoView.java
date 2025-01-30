@@ -13,7 +13,6 @@ import net.judah.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.Btn;
 import net.judah.midi.Panic;
-import net.judah.seq.MidiConstants;
 import net.judah.seq.MusicBox;
 import net.judah.seq.track.HiringAgency;
 import net.judah.seq.track.MidiTrack;
@@ -21,7 +20,7 @@ import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.TrackBindings;
 
 @Getter
-public class PianoView extends HiringAgency implements TimeListener, MidiConstants, Floating, Size {
+public class PianoView extends HiringAgency implements TimeListener, Floating, Size {
 	public static final int MAX_OCTAVES = 7;
 	public static final int MAX_RANGE = MAX_OCTAVES * Key.OCTAVE;
 	public static final int DEFAULT_RANGE = 5 * Key.OCTAVE;

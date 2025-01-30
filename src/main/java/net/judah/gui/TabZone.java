@@ -15,13 +15,10 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.gui.Detached.Floating;
-import net.judah.gui.knobs.KnobMode;
 import net.judah.seq.Trax;
 import net.judah.seq.beatbox.BeatBox;
 import net.judah.seq.beatbox.DrumZone;
@@ -37,10 +34,8 @@ import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
-public class Qwerty extends JTabbedPane implements ChangeListener {
-	public static Qwerty instance;
-//	// TODO
-//	@Getter static final Clipboard clipboard = new Clipboard();
+public class TabZone extends JTabbedPane {
+	public static TabZone instance;
 
 	@Getter private final HashSet<Component> frames = new HashSet<Component>();
 
@@ -49,13 +44,10 @@ public class Qwerty extends JTabbedPane implements ChangeListener {
 	private final DrumZone drumz;
 	private final ChordSheet chords;
 
-	public Qwerty(Overview songs, DrumZone drumz, ChordSheet chordz) {
-        //setFocusable(true);
-        // addKeyListener(this);
-
+	public TabZone(Overview songs, DrumZone drumz, ChordSheet chordz) {
 		instance = this;
 		SheetMusicPnl exceptional = null;
-		try { exceptional = new SheetMusicPnl(new File(Folders.getSheetMusic(), "Four.png"), Size.TAB_SIZE); }
+		try { exceptional = new SheetMusicPnl(new File(Folders.getSheetMusic(), "Four.png"), TAB_SIZE); }
 		catch (IOException e) { RTLogger.warn(this, e); }
 		sheetMusic = exceptional;
 		this.drumz = drumz;
@@ -68,11 +60,7 @@ public class Qwerty extends JTabbedPane implements ChangeListener {
         addTab(JudahZone.JUDAHZONE, overview);
         addTab(drumz.getName(), drumz);
 		addTab(sheetMusic.getName(), sheetMusic);
-		addChangeListener(this);
 	}
-
-
-
 
 	public void update(MidiTrack t) {
 		if (t.isDrums())
@@ -82,18 +70,6 @@ public class Qwerty extends JTabbedPane implements ChangeListener {
 			if (p != null)
 				p.repaint();
 		}
-	}
-
-	@Override
-	public void stateChanged(ChangeEvent e) {
-		if (getSelectedComponent() == null) return;
-//		if (getSelectedComponent() instanceof MidiTab) {
-//			MidiTrack track = ((MidiTab)getSelectedComponent()).getCurrent();
-//			MainFrame.setFocus(track.getMidiOut());
-//		}
-// else
-		if (getSelectedComponent() == overview)
-			MainFrame.setFocus(KnobMode.MIDI);
 	}
 
 	public static void edit(MidiTrack track) {
@@ -231,8 +207,8 @@ public class Qwerty extends JTabbedPane implements ChangeListener {
     		if (focus) {
 	    		int idx = tabIndex(sheetMusic);
 	    		if (idx >= 0)
-	    			setSelectedIndex(idx);
-	    		else if (frames.contains(sheetMusic))
+	    			setSelectedComponent(sheetMusic);
+	    		else
 	    			focus(((JFrame) SwingUtilities.getWindowAncestor(sheetMusic)));
     		}
     	} catch (Throwable e) {

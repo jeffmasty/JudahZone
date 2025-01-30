@@ -2,10 +2,11 @@ package net.judah.gui.widgets;
 
 import java.util.HashSet;
 
-import net.judah.JudahZone;
 import net.judah.drumkit.DrumKit;
 import net.judah.fx.Gain;
+import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
+import net.judah.gui.Size;
 import net.judah.seq.track.DrumTrack;
 
 public class TrackGain extends Slider {
@@ -18,7 +19,7 @@ public class TrackGain extends Slider {
 		super(null);
 		this.kit = kit;
 		instances.add(this);
-		JudahZone.getDrumMachine();
+		Gui.resize(this, Size.MODE_SIZE);
 		setValue(kit.getVolume());
 		addChangeListener(e->{
 			if (kit.getVolume() != getValue()) {

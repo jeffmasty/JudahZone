@@ -5,7 +5,7 @@ import javax.sound.midi.ShortMessage;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor 
+@RequiredArgsConstructor
 public enum Key {
 
     C  (0, 0, null),
@@ -21,7 +21,15 @@ public enum Key {
     Bb (0, 2, "A#"),
     B  (0, 5, null);
 
+	public static record Note(Key key, int octave) {
+		@Override public final String toString() {
+		return (key.alt == null ? key.name() : key.alt) + " " + octave;}}
+
+	public static final String FLAT = "\u266D";
+	public static final String SHARP = "\u266F";
 	public static final int OCTAVE = 12;
+	public static final float TUNING = 440;
+
 	@Getter private final int sharps;
     @Getter private final int flats;
     private final String alt;
@@ -29,18 +37,18 @@ public enum Key {
     public static boolean isPlain(int data1) {
     	return Key.values()[data1 % 12].alt == null;
     }
-    
+
     public static Key lookup(String txt) {
     	for (Key k : values())
-    		if (k.name().equals(txt) || txt.equals(k.alt)) 
+    		if (k.name().equals(txt) || txt.equals(k.alt))
     			return k;
     	return C; // fail
     }
-    
+
     public static Key key(int data1) {
     	return Key.values()[data1 % OCTAVE];
     }
-    
+
     public static Key key(ShortMessage m) {
     	return key(m.getData1());
 	}
@@ -54,7 +62,7 @@ public enum Key {
 		target %= Key.values().length;
 		return Key.values()[target];
 	}
-    
+
 	public int interval(Key key) {
 		int mine = ordinal();
 		int other = key.ordinal();
@@ -92,4 +100,42 @@ public enum Key {
 		}
 		return count;
 	}
+
+	private static final int A4_POSITION = 9 + 4 * 12; // A4 is the 9th note in the 4th octave (0-indexed)
+
+	public static float toFrequency(Note n) {
+		return toFrequency(n.key, n.octave);
+	}
+
+	public static float toFrequency(Key note, int octave) {
+        int position = note.ordinal() + (octave + 1) * 12; // equal-tempered scale
+        int semitones = position - A4_POSITION;
+        return (float) (TUNING * Math.pow(2, semitones / 12.0));
+    }
+
+	/** @return the nearest Note for hz */
+	public static Note toNote(float hz) {
+	   Key nearestKey = null;
+	    int nearestOctave = 0;
+	    float minDifference = Float.MAX_VALUE;
+	    // Iterate through all keys and octaves to find the closest match
+	    for (int octave = 0; octave <= 8; octave++) { // Assuming the range of octaves is 0 to 8
+	        for (Key key : Key.values()) {
+	            float frequency = Key.toFrequency(key, octave);
+	            float difference = Math.abs(frequency - hz);
+
+	            if (difference < minDifference) {
+	                minDifference = difference;
+	                nearestKey = key;
+	                nearestOctave = octave;
+	            }
+	        }
+	    }
+	    return new Note(nearestKey, nearestOctave);
+	}
+
+
 }
+
+
+

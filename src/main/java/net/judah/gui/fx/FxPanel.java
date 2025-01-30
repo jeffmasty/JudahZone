@@ -18,7 +18,7 @@ public class FxPanel extends JPanel {
 
     private final MultiSelect selected;
     private JPanel placeholder = new JPanel(new GridLayout(1, 1, 0, 0));
-    
+
     public FxPanel(MultiSelect multi) {
     	selected = multi;
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -28,14 +28,14 @@ public class FxPanel extends JPanel {
     }
 
     public void addFocus(Channel ch) {
-    	if (selected.contains(ch)) 
+    	if (selected.contains(ch))
     		return;
     	selected.add(ch);
-    	getChannel().getGui().getTitle().name(selected); 
+    	getChannel().getGui().getTitle().name(selected);
     }
-    
+
     public void setFocus(Channel ch) {
-    	if (getChannel() == ch && selected.size() == 1) 
+    	if (getChannel() == ch && selected.size() == 1)
     		return;
     	selected.clear();
     	selected.add(ch);
@@ -45,24 +45,22 @@ public class FxPanel extends JPanel {
         ch.getGui().update();
         validate();
     }
-    
+
     public Channel getChannel() {
-    	if (selected.isEmpty()) 
+    	if (selected.isEmpty())
     		return null;
         return selected.get(0);
     }
-    
+
     public void timeFx(int subdiv, Class<? extends TimeEffect> type) {
-    	if (type == Delay.class) 
+    	if (type == Delay.class)
     		selected.forEach(ch->ch.getDelay().sync());
-    	else if (type == LFO.class) 
-    		selected.forEach(ch->ch.getLfo().sync());
     	else if (type == Chorus.class)
     		selected.forEach(ch->ch.getChorus().sync());
+    	else if (type == LFO.class)
+    		selected.forEach(ch->ch.getLfo().sync());
     	MainFrame.update(getChannel());
     }
-
-
 
 
 }

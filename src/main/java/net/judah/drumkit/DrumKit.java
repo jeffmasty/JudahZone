@@ -27,7 +27,7 @@ import net.judah.util.RTLogger;
 @Getter
 public class DrumKit extends LineIn implements Receiver {
 	public static final int SAMPLES = DrumType.values().length;
-	private final KnobMode knobMode = KnobMode.Kits;
+	private final KnobMode knobMode = KnobMode.Kitz;
 	private final Actives actives;
 	private final Trax type;
 	private final DrumSample[] samples = new DrumSample[SAMPLES];
@@ -68,11 +68,9 @@ public class DrumKit extends LineIn implements Receiver {
 			sample.setVelocity(Constants.midiToFloat(midi.getData2()));
 			sample.getEnvelope().reset();
 			sample.play(true);
-			if (sample.getDrumType() == DrumType.CHat && choked) {// TODO multi
-
-				if (actives.indexOf(CHOKE.getData1()) >= 0 || samples[DrumType.OHat.ordinal()].isPlaying()) {
+			if (sample.getDrumType() == DrumType.CHat && choked) {
+				if (actives.indexOf(CHOKE.getData1()) >= 0 || samples[DrumType.OHat.ordinal()].isPlaying())
 					samples[DrumType.OHat.ordinal()].off();
-				}
 			}
 
 			int idx = actives.indexOf(data1);
@@ -125,17 +123,16 @@ public class DrumKit extends LineIn implements Receiver {
 	}
 
 	@Override
-	public void process(FloatBuffer left, FloatBuffer right) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void process() {
+	public void process(FloatBuffer outLeft, FloatBuffer outRight) {
 		AudioTools.silence(left);
 		AudioTools.silence(right);
 		for (DrumSample drum: samples)
 			drum.process(left, right);
 		fx();
+		if (onMute)
+			return;
+		AudioTools.mix(left, outLeft);
+		AudioTools.mix(right, outRight);
 	}
 
 	public DrumSample getSample(DrumType type) {
@@ -144,7 +141,5 @@ public class DrumKit extends LineIn implements Receiver {
 				return s;
 		return null;
 	}
-
-
 
 }

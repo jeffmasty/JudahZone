@@ -1,4 +1,4 @@
-package net.judah.scope;
+package net.judah.util.fft_temp;
 
 import be.tarsos.dsp.util.fft.FloatFFT;
 import lombok.Setter;
@@ -34,8 +34,8 @@ public class Sinusoid {
 
 	private final float[] real; 		// cosine amplitude			W of triangle
 	private final float[] imaginary;	// sine amplitude			H of triangle
-	private float[] magnitude; 	// √(H² * W²), 				L of hypotenuse
-	private float[] computed;		// atan2(H, W)				Angle of hypotenuse
+//	private float[] magnitude; 	// √(H² * W²), 				L of hypotenuse
+//	private float[] computed;		// atan2(H, W)				Angle of hypotenuse
 
 	@Setter private float phase;
 

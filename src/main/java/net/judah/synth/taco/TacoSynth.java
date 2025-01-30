@@ -78,7 +78,7 @@ public final class TacoSynth extends Engine {
     public TacoSynth(Trax type, ImageIcon picture, JudahClock clock) {
     	this(type.name(), picture, clock);
 		try {
-			tracks.add(new PianoTrack(type, notes, clock, this));
+			tracks.add(new PianoTrack(type, notes, clock));
 		} catch (InvalidMidiDataException e) { RTLogger.warn(this, e); }
     }
 

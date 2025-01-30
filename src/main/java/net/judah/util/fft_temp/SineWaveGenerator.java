@@ -1,4 +1,4 @@
-package net.judah.scope;
+package net.judah.util.fft_temp;
 
 public class SineWaveGenerator {
 

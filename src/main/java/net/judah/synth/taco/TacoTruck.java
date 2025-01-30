@@ -18,6 +18,7 @@ import net.judah.seq.Trax;
 import net.judah.seq.track.PianoTrack;
 import net.judah.synth.fluid.FluidSynth;
 
+/** holds synthesizer instances */
 public class TacoTruck {
 	public static final String NAME = "Taco";
 	public final TacoSynth taco;

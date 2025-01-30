@@ -129,7 +129,7 @@ public class MPKmini implements Controller, Pastels {
 	}
 
 	private final KnobMode[] midiBtnSequence = new KnobMode[]
-			{ MIDI, Setlist, Samples, Presets, Tools, Log };
+			{ MIDI, Setlist, Samplez, Presets, Wavez, Log };
 
 	private void nextMidiBtn() {
 		KnobMode mode = MainFrame.getKnobMode();

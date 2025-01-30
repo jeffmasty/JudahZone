@@ -1,4 +1,4 @@
-package net.judah.scope;
+package net.judah.gui.widgets;
 
 import static be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm.MPM;
 
@@ -8,18 +8,17 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JSlider;
 
 import be.tarsos.dsp.pitch.PitchDetectionResult;
 import be.tarsos.dsp.pitch.PitchDetector;
 import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
 import net.judah.gui.Gui;
-import net.judah.gui.widgets.RainbowFader;
 import net.judah.util.Constants;
 
-
-/* see also: https://github.com/yoda-jm/pitch-detection.lv2 */
-public class GuitarTuner extends ScopeView {
+// Legacy, PitchDetetector now an Effect of Channel
+public class GuitarTuner extends JPanel {
 
     public static final float[] GUITAR_FREQUENCIES = {82, 110, 147, 196, 247, 330};
     public static final String[] GUITAR_STRINGS = new String[] {"E", "A", "D", "G", "B", "E"};
@@ -50,7 +49,6 @@ public class GuitarTuner extends ScopeView {
         Gui.resize(note, LBL);
 
         int strut = 10;
-
         tuner.add(Box.createHorizontalStrut(2 * strut));
         tuner.add(note);
         tuner.add(Box.createHorizontalStrut(strut));
@@ -58,14 +56,12 @@ public class GuitarTuner extends ScopeView {
         tuner.add(Box.createHorizontalStrut(2 * strut));
 
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-
         add(tuner);
     	// algo.addActionListener(e->setupPitch((PitchEstimationAlgorithm) algo.getSelectedItem()));
     	// algo.setSelectedItem(MPM);
         // add(Gui.wrap(algo));
         doLayout();
     }
-
 
     private void setupPitch(PitchEstimationAlgorithm model) {
     	pitchDetector = model.getDetector(Constants.sampleRate(), Constants.bufSize());
@@ -78,21 +74,17 @@ public class GuitarTuner extends ScopeView {
 
 	/** https://github.com/dylstuart/GuitarTunerAndroid/blob/master/GuitarTuner%20-%20Copy/app/src/main/java/com/example/android/guitartuner/FrequencyDetector.java */
     public static int detectString(float freq) {
-        int result = -1;
         float min = 12345;
-
         for(int i = 0; i < GUITAR_FREQUENCIES.length; i++) {
             float dFromCurrentToDesired = Math.abs(GUITAR_FREQUENCIES[i] - freq);
             if (dFromCurrentToDesired < min) {
                 min = dFromCurrentToDesired;
-                result = i;
+                return i;
             }
         }
-        return result;
+        return -1;
     }
 
-
-	@Override
 	public void process(float[][] stereo) {
 		float frequency = detectPitch(stereo[0]);
         if (frequency <= 0) {
@@ -111,15 +103,5 @@ public class GuitarTuner extends ScopeView {
         // slider shows +/- 4 hz of frequencies
         tuning.setValue(40 - Math.round((GUITAR_FREQUENCIES[idx] - frequency) * 10));
     }
-
-
-	@Override
-	public void knob(int idx, int value) {
-		switch (idx) {
-		case 4: // algo
-			break;
-		default:		}
-
-	}
 
 }

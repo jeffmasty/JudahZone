@@ -151,7 +151,7 @@ public class MidiGui extends KnobPanel implements Cmdr {
     	setOpaque(true);
         add(top);
 		add(labels);
-        add(Gui.wrap(bottom));
+        add(bottom); // TODO better wrap layout
         update();
 	}
 

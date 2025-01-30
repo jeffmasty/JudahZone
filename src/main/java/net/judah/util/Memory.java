@@ -5,7 +5,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 /** Creates a steady supply of float arrays in a background thread to be used for recording by realtime thread */
 public class Memory {
 
-	static final int PRELOAD = 4000;
+	static final int PRELOAD = 8192;
 	static final int THRESHOLD = (int)(PRELOAD * 0.9f);
 	static final int RELOAD = (int)(PRELOAD * 0.5f);
 

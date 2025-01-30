@@ -61,9 +61,7 @@ public class Zone extends Vector<LineIn> implements Cmdr {
 	}
 
 	void preamps() {
-		getDrumMachine().getGain().setPreamp(0.5f);
-		getSampler().getGain().setPreamp(0.5f);
-		getMains().getGain().setPreamp(13f);
+		getMains().getGain().setPreamp(Mains.PREAMP);
 		getMic().getGain().setGain(0.25f); // trim studio noise
 	}
 

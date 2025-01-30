@@ -95,8 +95,7 @@ public class Chorus implements TimeEffect {
     @Override
 	public void process(FloatBuffer left, FloatBuffer right) {
         leftDsp.processReplace(left);
-        if (right != null)
-        	rightDsp.processReplace(right);
+        rightDsp.processReplace(right);
     }
 
     class LFODelay {

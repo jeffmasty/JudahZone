@@ -19,7 +19,6 @@ import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
-import net.judah.sampler.Sampler;
 import net.judah.seq.Trax;
 import net.judah.seq.track.DrumTrack;
 import net.judah.song.FxData;
@@ -31,9 +30,10 @@ import net.judah.util.RTLogger;
 /** Graphical representation of the Mixer*/
 public class DJJefe extends JPanel implements Cmdr, TimeListener {
 
-	@Getter private final ArrayList<Channel> all = new ArrayList<>();
-	/** has GUI representation */
+	/** has GUI representation on the main mixer */
 	@Getter private final ArrayList<Channel> channels = new ArrayList<>();
+	/** Any channel available to LFO knobs, not necessarily a main mixer fader */
+	@Getter private final ArrayList<Channel> all = new ArrayList<>();
 	@Getter private final String[] keys;
 	private final ArrayList<MixWidget> faders = new ArrayList<MixWidget>();
 	private final Zone sources;
@@ -41,7 +41,7 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 	private final int size;
 	private int idx;
 
-    public DJJefe(JudahClock clock, Mains mains, Looper looper, Zone sources, DrumMachine drums, Sampler sampler) {
+    public DJJefe(JudahClock clock, Mains mains, Looper looper, Zone sources, DrumMachine drums, LineIn ... bonus) {
 		this.mains = mains;
     	// preload channel gui's
     	for (LineIn i : sources)
@@ -53,9 +53,10 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
     	all.add(mains);
         all.addAll(looper);
 		all.addAll(sources);
+		for (LineIn extra : bonus)
+			all.add(extra);
 		for (DrumTrack track : drums.getTracks())
-			all.add( track.getFx());
-		all.add(sampler);
+			all.add( track.getKit());
     	for (Loop loop : looper) {
     		channels.add(loop);
     		faders.add(loop.getDisplay());
@@ -67,12 +68,15 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
     		faders.add(fader);
     		add(fader);
         }
-        channels.add(mains);
-        size = channels.size();
-    	setLayout(new GridLayout(1, size, 0, 0));
+
         MixWidget fader = new MainsMix(mains, looper);
         faders.add(fader);
         add(fader);
+        channels.add(mains);
+        size = channels.size();
+
+        setLayout(new GridLayout(1, size, 0, 0));
+
         keys = new String[size];
         for (int i = 0; i < keys.length; i++)
         	keys[i] = channels.get(i).getName();
@@ -221,7 +225,8 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 		all.forEach(ch->ch.tempo(tempo));
 	}
 
-	public void process(int numChannels) { // Gain
+	/** process numChannels of RMS indicators in a daisychain*/
+	public void process(int numChannels) {
 		for (int i = 0; i < numChannels; i++)
 			process();
 	}
@@ -230,7 +235,7 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 		if (++idx == size)
 			idx = 0;
 		Channel ch = channels.get(idx);
-		if (ch == mains)
+		if (ch == mains) // mains doesn't preserve audio, manually make a copy
 			mains.setCopy(true);
 		MainFrame.update(getFader(ch).gain);
 	}

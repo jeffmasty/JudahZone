@@ -139,7 +139,7 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
 				continue;
 			if (l.isRecording())
 				continue; // solotrack
-			l.catchUp(frames);
+			l.getRecording().catchUp(frames);
 		}
 	}
 
@@ -210,8 +210,13 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
 			return;
 		if (prop == Property.LOOP && primary.getType() == Type.FREE)
 			boundary();
-		else if ( (prop == Property.STATUS || prop == Property.BOUNDARY) && primary.getType() != Type.FREE)
-			boundary();
+		else if (primary.getType() != Type.FREE) {
+			if (prop == Property.STATUS) // hard sync (scene)
+				for (Loop l : this)
+					l.rewind();
+			else if (prop == Property.BOUNDARY) // respects duplications
+				boundary();
+		}
 	}
 
 	public void clockSync() {

@@ -15,6 +15,7 @@ public class LFO implements TimeEffect {
 
 	public static final int LFO_MIN = 90;
     public static final int LFO_MAX = 1990;
+    static final float MAX_FACTOR = 39f;
 	long throttle;
 	@Setter @Getter String type = TYPE[0];
 	@Setter @Getter boolean sync;
@@ -24,12 +25,12 @@ public class LFO implements TimeEffect {
     }
 
 	public static enum Target {
-		Filter, Gain, Reverb, Room, Delay, Pan, Chorus, Rate, Depth
+		Pan, Filter, Gain, Reverb, Room, Delay, Chorus, Rate, Depth
 	};
 
 	private final Channel ch;
 	@Getter private boolean active;
-	@Getter private Target target = Target.Filter;
+	@Getter private Target target = Target.Pan;
 	private int recover = -1;
 	private boolean wasActive;
 
@@ -177,8 +178,8 @@ public class LFO implements TimeEffect {
         if (idx == Settings.Max.ordinal())
             return max;
         if (idx == Settings.MSec.ordinal()) {
-        	// map 90 to 1990 to 0 to 100
-        	int result = ((int)( (getFrequency() - 90) / 19f));
+        	// map 90 to 3990msec to 0 to 100
+        	int result = ((int)( (getFrequency() - 90) / MAX_FACTOR));
         	if (result < 0) result = 0;
         	else if (result > 100) result = 100;
             return result;
@@ -200,7 +201,7 @@ public class LFO implements TimeEffect {
         else if (idx == Settings.Max.ordinal())
             setMax(value);
         else if (idx == Settings.MSec.ordinal())
-        	frequency = value * 19 + 90;   // 90msec to 1990msec
+        	frequency = value * MAX_FACTOR + 90;   // 90msec to 3990msec
         else if (idx == Settings.Type.ordinal() && value < TimeEffect.TYPE.length)
         	type = TimeEffect.TYPE[value];
         else if (idx == Settings.Sync.ordinal())
@@ -229,7 +230,7 @@ public class LFO implements TimeEffect {
 		switch(target) {
 			case Gain: ch.getGain().set(Gain.VOLUME, val); break;
 			case Filter: ch.getFilter1().setFrequency(
-					Filter.knobToFrequency((int)ch.getLfo().query())); break;
+					Filter.knobToFrequency((int)query())); break;
 			case Reverb: ch.getReverb().set(Reverb.Settings.Wet.ordinal(), val); break;
 			case Room: ch.getReverb().set(Reverb.Settings.Room.ordinal(), val); break;
 			case Delay: ch.getDelay().setFeedback(val * 0.01f); break;
@@ -308,9 +309,13 @@ public class LFO implements TimeEffect {
 		sync(TimeEffect.unit());
 	}
 
+	/** no-op, handled through MidiScheduler */
 	@Override
-	public void process(FloatBuffer left, FloatBuffer right) {
-		// no-op, handled through MidiScheduler
+	public void process(FloatBuffer left, FloatBuffer right) { }
+
+	public LFO(Channel channel, Target filter) {
+		this(channel);
+		setTarget(target);
 	}
 
 

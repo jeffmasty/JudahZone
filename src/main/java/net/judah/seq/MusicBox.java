@@ -19,7 +19,7 @@ import javax.swing.border.Border;
 import lombok.Getter;
 import net.judah.gui.Detached.Floating;
 import net.judah.gui.Gui;
-import net.judah.gui.MainFrame;
+import net.judah.gui.TabZone;
 import net.judah.gui.Updateable;
 import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
@@ -93,7 +93,7 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 		push(new Edit(Type.NEW, notes));
 	}
 
-	@Override public final void mouseEntered(MouseEvent e) {MainFrame.qwerty();}
+	@Override public final void mouseEntered(MouseEvent e) {TabZone.instance.requestFocusInWindow();}
 	@Override public void mouseMoved(MouseEvent e) { }
 	@Override public void mouseExited(MouseEvent e) { }
 	@Override public final void mouseClicked(MouseEvent e) { }

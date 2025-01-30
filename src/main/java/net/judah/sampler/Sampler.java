@@ -11,7 +11,6 @@ import net.judah.api.PlayAudio.Type;
 import net.judah.fx.Fader;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
-import net.judah.gui.knobs.Knobs;
 import net.judah.gui.knobs.SampleKnobs;
 import net.judah.mixer.LineIn;
 import net.judah.omni.AudioTools;
@@ -19,10 +18,10 @@ import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 @Getter
-public class Sampler extends LineIn implements Knobs {
+public class Sampler extends LineIn {
 
 	private ArrayList<Sample> samples = new ArrayList<Sample>();
-	private final KnobMode knobMode = KnobMode.Samples;
+	private final KnobMode knobMode = KnobMode.Samplez;
 
 	// Fountain Creek: Fields Park, Manitou Springs, CO
 	// Rain in Cuba: https://freesound.org/people/kyles/sounds/362077/
@@ -85,8 +84,8 @@ public class Sampler extends LineIn implements Knobs {
 
 	public void play(Sample s, boolean on) {
 		if (on) {
-			if (MainFrame.getKnobMode() != KnobMode.Samples)
-				MainFrame.setFocus(KnobMode.Samples);
+			if (MainFrame.getKnobMode() != KnobMode.Samplez)
+				MainFrame.setFocus(KnobMode.Samplez);
 			if (s.getType() == Type.ONE_SHOT)
 				s.rewind();
 			else

@@ -44,8 +44,8 @@ public class Beatstep implements Controller {
 			// LOOPA, 37(loopB), 38(loopC),  LOOPD,     KITS,       RECORD,   FX,       FADER
 			if (data1 == KITS) {
 				if (!Midi.isNoteOn(midi)) return true;
-				if (MainFrame.getKnobMode() != KnobMode.Kits) {
-					MainFrame.setFocus(KnobMode.Kits);
+				if (MainFrame.getKnobMode() != KnobMode.Kitz) {
+					MainFrame.setFocus(KnobMode.Kitz);
 					getDrumMachine().setCurrent(getDrumMachine().getCurrent());
 				}
 				else
@@ -61,11 +61,11 @@ public class Beatstep implements Controller {
 			}
 			else if (data1 == LFO) {
 				if (!Midi.isNoteOn(midi)) return true;
-				if (MainFrame.getKnobMode() == KnobMode.LFO)
+				if (MainFrame.getKnobMode() == KnobMode.LFOz)
 					for (Channel current : getSelected())
 						current.getLfo().setActive(!current.getLfo().isActive());
 				else
-					MainFrame.setFocus(KnobMode.LFO);
+					MainFrame.setFocus(KnobMode.LFOz);
 			}
 
 			else if (data1 == FADER) {

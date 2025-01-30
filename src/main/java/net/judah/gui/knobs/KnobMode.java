@@ -4,12 +4,12 @@ public enum KnobMode {
 	MIDI,
 	Track,
 	Taco,
-	LFO,
-	Kits,
-	Samples,
+	LFOz,
+	Kitz,
+	Samplez,
 	Presets,
 	Setlist,
-	Tools,
+	Wavez,
 	Log;
 
 }

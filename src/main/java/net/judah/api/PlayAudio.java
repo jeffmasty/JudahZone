@@ -26,7 +26,5 @@ public interface PlayAudio {
 
 	float seconds();
 
-	void clear();
-
 	void rewind();
 }

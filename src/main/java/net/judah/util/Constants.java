@@ -9,9 +9,8 @@ public class Constants {
 
 	// TODO generalize
 	public static int sampleRate() { return WavConstants.S_RATE; }
-	public static int bufSize() { return WavConstants.JACK_BUFFER; } //TODO 256
+	public static int bufSize() { return WavConstants.JACK_BUFFER; }
 	public static float fps() { return WavConstants.FPS; }
-	public static final float TUNING = 440;
 	/** Digital Interface name */
 	@Getter static String di = "UMC1820 MIDI 1"; //di = "Komplete ";
 	public static final String LEFT_PORT = "system:playback_1";
@@ -70,11 +69,6 @@ public class Constants {
 	public static float toBPM(long delta, int beats) {
 		return 60000 / (delta / (float)beats);
 	}
-
-	// semitone to semitone = 1.059 = 2 ^ (1/12)
-	public static float midiToHz(int data1) {
-        return (float)(Math.pow(2, (data1 - 57d) / 12d)) * TUNING;   // some have 69 instead of 57
-    }
 
 	public static Object ratio(int data2, List<?> input) {
         return input.get((int) ((data2 - 1) / (100 / (float)input.size())));

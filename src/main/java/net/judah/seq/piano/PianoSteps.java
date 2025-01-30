@@ -16,6 +16,7 @@ import lombok.Getter;
 import net.judah.api.Signature;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
+import net.judah.gui.Size;
 import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
 import net.judah.seq.Edit;
@@ -25,7 +26,7 @@ import net.judah.seq.MidiPair;
 import net.judah.seq.Steps;
 import net.judah.seq.track.MidiTrack;
 
-public class PianoSteps extends Steps implements MidiConstants, MouseMotionListener, MouseListener {
+public class PianoSteps extends Steps implements MouseMotionListener, MouseListener, Size {
 
 	static final int OFFSET = STEP_WIDTH / 2 - 5;
 	private final MidiTrack track;
@@ -141,8 +142,8 @@ public class PianoSteps extends Steps implements MidiConstants, MouseMotionListe
 		ArrayList<MidiPair> notes = new ArrayList<>();
 		for (ShortMessage m : track.getActives()) {
 			notes.add(new MidiPair(
-					new MidiEvent(Midi.create(NOTE_ON, ch, m.getData1(), data2), begin),
-					new MidiEvent(Midi.create(NOTE_OFF, ch, m.getData1(), 127), end)));
+					new MidiEvent(Midi.create(MidiConstants.NOTE_ON, ch, m.getData1(), data2), begin),
+					new MidiEvent(Midi.create(MidiConstants.NOTE_OFF, ch, m.getData1(), 127), end)));
 		}
 		view.getGrid().push(new Edit(Type.NEW, notes));
 	}
