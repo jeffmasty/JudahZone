@@ -6,7 +6,6 @@ import java.awt.Color;
 
 import net.judah.JudahZone;
 import net.judah.drumkit.DrumMachine;
-import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
 import net.judah.seq.track.DrumTrack;
 
@@ -15,10 +14,10 @@ public class LineMix extends MixWidget {
 	private final LineIn in;
 	private final SoloTrack soloTrack;
 
-	public LineMix(LineIn channel, Looper looper) {
-		super(channel, looper);
+	public LineMix(LineIn channel, SoloTrack solo) {
+		super(channel);
 		this.in = channel;
-		this.soloTrack = looper.getSoloTrack();
+		this.soloTrack = solo;
 		sidecar.add(font(mute));
 		sidecar.add(font(fx));
 		sidecar.add(font(sync));

@@ -7,22 +7,25 @@ import java.util.Vector;
 
 import lombok.Getter;
 import net.judah.api.Notification.Property;
-import net.judah.api.PlayAudio.Type;
 import net.judah.api.TimeListener;
 import net.judah.gui.MainFrame;
+import net.judah.gui.Updateable;
 import net.judah.gui.widgets.LoopWidget;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.mixer.Zone;
+import net.judah.omni.Recording;
 import net.judah.omni.Threads;
+import net.judah.util.Constants;
 import net.judah.util.Memory;
 import net.judah.util.RTLogger;
 
 @Getter
-public class Looper extends ArrayList<Loop> implements TimeListener {
+public class Looper extends ArrayList<Loop> implements TimeListener, Updateable {
 
-	public static final int LOOPERS = 4;
+	static final int LOOPERS = 4;
+	static final int COUNTUP = 6; // Gui feedback
 	private static final String ZERO = "0.0s";
 
 	private final JudahClock clock;
@@ -30,19 +33,28 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
 	private final Loop loopB;
 	private final Loop loopC;
 	private final SoloTrack soloTrack;
-	private Loop primary;
-	private String recordedLength = ZERO;
+	private final Memory mem;
+
 	private final Vector<Loop> onDeck = new Vector<>();
 	private final Vector<Channel> fx = new Vector<>();
 	private final LoopWidget loopWidget = new LoopWidget(this);
+
+	private Loop primary;
+	private LoopType type;
+	private String recordedLength = ZERO;
+	private int measures;
 	private int loopCount;
+    private int countUp; // gui thread feedback
 
 	public Looper(Zone sources, LineIn solo, JudahClock clock, Memory memory) {
+
 		this.clock = clock;
-		loopA = new Loop("A", "LoopA.png", Type.SYNC, this, sources, memory);
-		loopB = new Loop("B", "LoopB.png", Type.BSYNC, this, sources, memory);
-		loopC = new Loop("C", "LoopC.png", Type.FREE, this, sources, memory);
-		soloTrack = new SoloTrack(solo, this, sources, memory);
+		this.mem = memory;
+
+		loopA = new Loop("A", "LoopA.png", this, sources);
+		loopB = new Loop("B", "LoopB.png", this, sources);
+		loopC = new Loop("C", "LoopC.png", this, sources);
+		soloTrack = new SoloTrack(solo, this, sources);
 		add(loopA);
 		add(loopB);
 		add(loopC);
@@ -54,40 +66,46 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
 	public void process(FloatBuffer left, FloatBuffer right) {
 		forEach(loop->loop.process(left, right));
 		if (hasRecording())
-			loopWidget.countUp();
+			countUp();
 	}
 
 	/** process() silently (keep sync'd while mains muted) */
 	public void silently() {
 		if (hasRecording()) {
 			forEach(loop->loop.silently());
-			loopWidget.countUp();
+			countUp();
 		}
 	}
 
+	/** @return false if looper is empty */
 	public boolean hasRecording() {
-		return primary != null && primary.getLength() != 0;
+		return primary != null;
 	}
 
+	/** @return frames used by primary loop or 0 */
 	public int getLength() {
 		return hasRecording() ? primary.getLength() : 0;
-	}
-
-	public int getMeasures() {
-		return hasRecording() ? primary.getMeasures() : 0;
 	}
 
 	@Override public synchronized Loop remove(int index) {
 		throw new InvalidParameterException("remove not implemented");
 	}
 
-	void setPrimary(Loop primary) {
-		this.primary = primary;
+	void setPrimary(Loop loop) {
+		primary = loop;
 		setRecordedLength(primary.seconds());
-		stream().filter(loop-> loop != primary).forEach(loop->loop.conform(primary));
-		clock.loopCount(loopCount);
+		catchUp(primary.getLength());
 
-		RTLogger.log("Primary", primary + " frames: " + primary.length + " bars: " + primary.getMeasures());
+		String addendum = (type == LoopType.FREE) ?
+				" " + recordedLength : " bars: " + measures;
+		RTLogger.log("Primary", primary +  addendum);
+		primary.getDisplay().setText(type == LoopType.FREE ? recordedLength : "" + measures );
+
+		if (soloTrack.isRecording())
+			soloTrack.capture(false);
+		if (type == LoopType.BSYNC)
+			type = LoopType.SYNC;
+		clock.loopCount(loopCount); // here?
 	}
 
 	void setRecordedLength(float seconds) {
@@ -95,28 +113,28 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
 		if (recordedLength.length() > 4)
 			recordedLength = recordedLength.substring(0, 4);
 		recordedLength += "s";
-		MainFrame.update(loopWidget);
-	}
-
-	public void rewind() {
-		for (Loop l : this)
-			if (l.isPlaying())
-				l.rewind();
+		MainFrame.update(this);
 	}
 
 	/** zeros-out loop recordings, ignore super.clear() */
 	@Override public void clear() {
+		throw new RuntimeException();
+	}
+
+	public void delete() {
 		primary = null;
-		loopCount = 0;
+		type = null;
+		loopCount = measures = 0;
 		for (int i = onDeck.size() - 1; i >= 0; i--) // clear onDeck
 			MainFrame.update(onDeck.remove(onDeck.size() - 1));
 		for (int i = 0; i < size(); i++)
-			get(i).clear(); // clear loops
+			get(i).delete(); // clear loops
 		recordedLength = ZERO;
-		MainFrame.update(loopWidget);
+		fx.clear();
+		MainFrame.update(this);
 	}
 
-	public void clear(Loop loop) {
+	public void delete(Loop loop) {
 		if (primary == loop) { // next primary
 			for (Loop next : this) {
 				if (next != loop && next.getLength() > 0) {
@@ -125,21 +143,25 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
 				}
 			}
 		}
-		loop.clear();
-		if (primary != null)
-			loop.setType(primary.getType());
+		loop.delete();
 	}
 
-
 	/** make sure all loops have enough blank tape */
-	void catchUp(Loop primary, int frames) {
-
-		for (Loop l : this) {
-			if (l == primary)
+	void catchUp(final int frames) {
+		for (Loop loop : this) {
+			if (loop == primary)
 				continue;
-			if (l.isRecording())
-				continue; // solotrack
-			l.getRecording().catchUp(frames);
+			if (loop.isRecording())
+				continue; // solotrack, init primary
+			if (loop.getTape().size() < frames) {
+				Recording tape = loop.getTape();
+				tape.add(mem.getFrame()); // instantly
+				if (tape.size() < frames)
+					Threads.execute(() -> {
+						for (int i = tape.size(); i < frames; i++)
+							tape.add(mem.getFrame());
+				});
+			}
 		}
 	}
 
@@ -157,11 +179,9 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
 		return -1;
 	}
 
+	// TODO flag
 	public void verseChorus() {
-		for (Loop loop : this) {
-			if (!loop.isDrumTrack())
-				loop.setOnMute(!loop.isOnMute());
-		}
+		forEach(loop->loop.verseChorus());
 	}
 
 	public void syncFx(Channel ch) {
@@ -169,7 +189,6 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
 			fx.add(ch);
 		MainFrame.update(ch);
 	}
-
 
 	public void onDeck(Loop loop) {
 		if (onDeck.contains(loop))
@@ -186,45 +205,186 @@ public class Looper extends ArrayList<Loop> implements TimeListener {
 	void checkSoloSync() {
 		if (onDeck.contains(soloTrack) && soloTrack.isSolo()) {
 			onDeck.remove(soloTrack);
-			soloTrack.trigger();
+			soloTrack.capture(true);
 		}
 	}
 
 	/** govern (synchronize) other loops */
 	void boundary() {
-		stream().filter(element -> element != primary).forEach(Loop::boundary);
-
-		// progress onDeck
-		if (!onDeck.isEmpty())
-			Threads.execute(()->onDeck.removeFirst().syncRecord());
+		if (primary != null) {
+			forEach(Loop::boundary);
+			if (!onDeck.isEmpty()) {
+				// progress onDeck
+				Loop loop = onDeck.removeFirst();
+				loop.timerOn();
+				loop.capture(true);
+			}
+		}
 
 		// trigger fx changes
 		for (int i = fx.size() - 1; i >= 0; i--)
 			fx.remove(i).toggleFx();
 	}
 
+	public void rewind() {
+		stream().filter(loop -> loop.isPlaying()).forEach(loop -> loop.rewind());
+	}
 
 	@Override
 	public void update(Property prop, Object value) {
-		if (primary == null)
-			return;
-		if (prop == Property.LOOP && primary.getType() == Type.FREE)
+		//if (primary != null) {
+
+		if (prop == Property.BOUNDARY && hasRecording())
 			boundary();
-		else if (primary.getType() != Type.FREE) {
-			if (prop == Property.STATUS) // hard sync (scene)
-				for (Loop l : this)
-					l.rewind();
-			else if (prop == Property.BOUNDARY) // respects duplications
-				boundary();
+		else if (prop == Property.STATUS) // hard sync (scene?)
+			for (Loop l : this)
+				l.rewind();
+		else if (prop == Property.BARS) {
+			for (Loop loop : this) {
+				if (!loop.isTimer())
+					continue;
+
+				if (loop.isRecording()) {
+					int stopwatch = loop.count();
+					if (type == LoopType.BSYNC) {
+						if (stopwatch == measures)
+							endCapture(loop);
+						else
+							loop.getDisplay().setText("+" + stopwatch); // measureFeedback
+					}
+					else if (type == LoopType.SYNC && stopwatch >= measures * loop.getFactor())
+						endCapture(loop);
+					// else measure feedback
+				}
+				else {
+					loop.capture(true);
+					checkSoloSync();
+				}
+			}
+		}
+
+		else if (prop == Property.BEAT) {
+			for (Loop l : this)
+				if (l.isTimer() && !l.isRecording())
+					l.display.setText("- " + (clock.getMeasure() - ((int)value))); // pre-record countdown
+		}
+
+	}
+
+	void increment() {
+		++loopCount;
+		if (!clock.isActive())
+			clock.loopCount(loopCount);
+		else if (type == LoopType.FREE)
+			boundary();
+	}
+
+	private void countUp() {
+		if (++countUp == COUNTUP) {
+			countUp = 0;
+			MainFrame.update(this); // schedule gui feedback
 		}
 	}
 
-	public void clockSync() {
-		forEach(loop -> loop.setType(loop.getType() == Type.SOLO ? Type.SOLO : Type.SYNC));
+	void endCapture(Loop l) {
+		l.capture(false);
+		if (primary == null)
+			setPrimary(l);
 	}
 
-	public int increment() {
-		return ++loopCount;
+	@Override
+	public void update() {
+		stream().filter(loop -> loop.isPlaying())
+			.forEach(loop -> loop.getDisplay().sweep());
+		loopWidget.update();
+	}
+
+	public void trigger() {
+		if (primary != null)
+			primary.capture(!primary.isRecording());
+		else
+			trigger(clock.isActive() ? loopA : loopC);
+	}
+
+	/** user engaged the record button, respond depending on loop type and current recording status */
+    public void trigger(Loop loop) {
+
+    	if (loop.isRecording()) {
+			if (type == LoopType.BSYNC) {
+				if (!hasRecording())
+					sealBSync(loop);
+			} else
+    			endCapture(loop);
+    	}
+		else if (hasRecording())
+			loop.capture(true); // everything ready for overdub
+		else
+			init(loop);
+
+	}
+
+    /** start recording, no primary yet
+     * @param loop */
+    private void init(Loop loop) {
+    	type = getType(loop);
+    	measures = (type == LoopType.SYNC ) ? JudahClock.getLength() : 0;
+    	if (type == LoopType.FREE) {
+        	loop.capture(true);
+    		checkSoloSync();
+    	}
+    	else
+    		loop.timerOn();
+    }
+
+    public void sealBSync(Loop loop) {
+		measures = loop.getStopwatch() + 1;
+		clock.setLength(measures);
+		loopB.display.setText("!" + measures);
+    }
+
+	private LoopType getType(Loop loop) {
+
+    	return loop == loopC ? LoopType.FREE : clock.isActive() ? loop == loopB ?
+    			LoopType.BSYNC : LoopType.SYNC : LoopType.FREE;
+    }
+
+	public boolean isPrimary(Loop loop) {
+		return loop == primary;
+	}
+
+	/** Check length of target loop against primary
+	 * @param loop target loop
+	 * @return the current tape counter of primary (or 0) */
+	int conform(Loop loop) {
+		if (primary == null)
+			return 0;
+		int target = (int) (loop.getFactor() * primary.getLength());
+
+		if (loop.getLength() < target) {
+			mem.catchUp(loop.getTape(), target);
+			loop.setLength(target);
+		}
+		return primary.getTapeCounter().get(); // TODO if primary's factor is duplicated?
+	}
+
+	@Override public String toString() {
+		StringBuilder sb = new StringBuilder("Looper: ");
+
+		if (hasRecording()) {
+			sb.append(getType()).append(Constants.NL).append(Constants.NL);
+
+			for (Loop l : this) {
+				if (primary == l)
+					sb.append("*");
+				sb.append(l.getName()).append(" ");
+				sb.append(l.getTapeCounter().get()).append("/").append(l.getLength());
+				sb.append(Constants.NL);
+			}
+		}
+		else {
+			sb.append("Empty");
+		}
+	return sb.toString();
 	}
 
 }

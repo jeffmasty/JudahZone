@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import net.judah.api.ZoneMidi;
 import net.judah.gui.MainFrame;
 
+/** listens to and tracks note_on and note_off going out a Midi port */
 @RequiredArgsConstructor @Getter
 public class Actives extends ArrayList<ShortMessage> {
 

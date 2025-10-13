@@ -4,12 +4,10 @@ import static net.judah.gui.Gui.font;
 
 import java.awt.Color;
 
-import net.judah.looper.Looper;
-
 public class MainsMix extends MixWidget {
 
-	public MainsMix(Mains channel, Looper looper) { // TODO HotMic2.0
-		super(channel, looper);
+	public MainsMix(Mains channel) { // TODO HotMic2.0
+		super(channel);
 		sidecar.add(font(mute));
 		sidecar.add(font(fx));
 		sidecar.add(font(sync));

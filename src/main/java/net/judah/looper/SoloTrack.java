@@ -10,43 +10,41 @@ import net.judah.song.cmd.BooleanProvider;
 import net.judah.song.cmd.Cmd;
 import net.judah.song.cmd.Cmdr;
 import net.judah.song.cmd.Param;
-import net.judah.util.Memory;
 
-@Getter @EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 public class SoloTrack extends Loop implements Cmdr {
 
     public static final String NAME = "D";
     private boolean muteStash = true;
-    private LineIn soloTrack;
+    @Getter private LineIn soloTrack;
     private boolean soloOn;
 
-    public SoloTrack(LineIn soloTrack, Looper looper, Zone sources, Memory mem) {
-        super(NAME, "LoopD.png", Type.SYNC, looper, sources, mem);
+    public SoloTrack(LineIn soloTrack, Looper looper, Zone sources) {
+        super(NAME, "LoopD.png", looper, sources);
         this.soloTrack = soloTrack;
         drumTrack = true;
     }
 
+    public boolean isSolo() {
+    	return soloOn;
+    }
+
     public void solo(boolean engage) {
     	if (engage) {
-    		type = Type.SOLO;
             muteStash = soloTrack.isMuteRecord();
             soloTrack.setMuteRecord(false);
         }
         else {
-        	type = Type.SYNC;
             soloTrack.setMuteRecord(muteStash);
         }
+    	soloOn = engage;
         MainFrame.update(this);
 
     }
 
-    public boolean isSolo() {
-    	return type == Type.SOLO;
-    }
-
     /** engage or disengage drumtrack */
     public void toggle() {
-    	solo(type != Type.SOLO);
+    	solo(!soloOn);
     }
 
     public void setSoloTrack(LineIn input) {
@@ -72,17 +70,16 @@ public class SoloTrack extends Loop implements Cmdr {
 			solo(resolve(p.val));
 	}
 
-	/**Called from drum pads, if there is no recording and loop is sync'd up
-	 * then start a FREE loop and sync clock's tempo to it */
-	public void beatboy() {
-		if (looper.getOnDeck().contains(this) == false) return;
-		if (isPlaying()) return;
-		type = Type.FREE;
-		looper.getOnDeck().remove(this);
-		capture(true);
-	}
+//	/**Called from drum pads, if there is no recording and loop is sync'd up
+//	 * then start a FREE loop and sync clock's tempo to it */
+//	public void beatboy() {
+//		if (looper.getOnDeck().contains(this) == false) return;
+//		if (isPlaying()) return;
+//		looper.getOnDeck().remove(this);
+//		capture(true);
+//	}
 
-//	@Override
+//	legacy
 //	protected void endRecord() {
 //		super.endRecord();
 //		if (type == Type.FREE) {

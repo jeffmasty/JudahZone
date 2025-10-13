@@ -49,12 +49,18 @@ public class Instrument extends LineIn {
 
 	@Override
 	public final void process(FloatBuffer outLeft, FloatBuffer outRight) {
+		if (isOnMute())
+			return;
+
+		// get raw data
 		AudioTools.copy(leftPort.getFloatBuffer(), left);
 		if (isStereo)
 			AudioTools.copy(rightPort.getFloatBuffer(), right);
 
+		// apply fx
 		fx();
 
+		// add to output
 		AudioTools.mix(left, outLeft);
 		AudioTools.mix(right, outRight);
 

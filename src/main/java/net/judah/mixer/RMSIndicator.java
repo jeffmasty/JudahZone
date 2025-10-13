@@ -20,7 +20,7 @@ public class RMSIndicator extends JPanel implements Updateable {
     private static final float MAINS = 3.5f;
     private static final float LOOP = 14;
 
-    private static final int WIDTH = 14;
+    private static final int WIDTH = 12;
 	private static final int HALF = WIDTH / 2;
 	private static final int HEIGHT = Size.FADER_SIZE.height;
 

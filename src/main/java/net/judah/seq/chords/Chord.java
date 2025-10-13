@@ -224,7 +224,14 @@ public class Chord extends ArrayList<Key> {
 
 	@Override
 	public String toString() {
-		return "[" + getChord() + "]";
+
+		StringBuilder sb = new StringBuilder("[");
+
+		sb.append(getChord());
+		sb.append(":");
+		forEach(key -> sb.append(" " + key));
+		sb.append("]");
+		return sb.toString();
 	}
 
 	// also true on diminished

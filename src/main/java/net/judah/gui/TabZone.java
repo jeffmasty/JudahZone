@@ -19,6 +19,7 @@ import javax.swing.SwingUtilities;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.gui.Detached.Floating;
+import net.judah.omni.Threads;
 import net.judah.seq.Trax;
 import net.judah.seq.beatbox.BeatBox;
 import net.judah.seq.beatbox.DrumZone;
@@ -78,7 +79,7 @@ public class TabZone extends JTabbedPane {
 	private void _edit(MidiTrack track) {
 		if (track.isDrums()) {
 			drumz.setCurrent(track);
-			int idx = tabIndex(drumz);
+			int idx = indexOfComponent(drumz);
 			if (idx >= 0)
 				setSelectedIndex(idx);
 			else if (drumz.isShowing())
@@ -119,7 +120,7 @@ public class TabZone extends JTabbedPane {
 	}
 
 	public void changeTab(boolean fwd) {
-		MainFrame.focus.execute(() -> instance.setSelectedIndex(
+		Threads.execute(() -> instance.setSelectedIndex(
 				Constants.rotary(instance.getSelectedIndex(), instance.getTabCount(), fwd)));
 	}
 
@@ -142,22 +143,6 @@ public class TabZone extends JTabbedPane {
 			if (c instanceof PianoView p)
 				if (p.getTrack() == it)
 					return p;
-		return null;
-	}
-
-	// internal
-	public int tabIndex(JComponent it) {
-		for (int i = 0; i < getTabCount(); i++)
-			if (getTabComponentAt(i) == it)
-				return i;
-		return -1;
-	}
-
-	// external
-	public PianoView getFrame(PianoTrack t) {
-		for (Component c : frames)
-			if (c instanceof PianoView v && v.getTrack() == t)
-				return v;
 		return null;
 	}
 
@@ -198,34 +183,42 @@ public class TabZone extends JTabbedPane {
 		f.requestFocusInWindow(Cause.TRAVERSAL);
 	}
 
+	// external window
+	public PianoView getFrame(PianoTrack t) {
+		for (Component c : frames)
+			if (c instanceof PianoView v && v.getTrack() == t)
+				return v;
+		return null;
+	}
 	public void sheetMusic(File file, boolean focus) {
+		if (file == null)
+			return;
     	try {
     		sheetMusic.setImage(file);
 			title(sheetMusic, sheetMusic.getName());
-    		if (tabIndex(sheetMusic) < 0 && !frames.contains(sheetMusic))
+
+    		if (indexOfComponent(sheetMusic) < 0 && !frames.contains(sheetMusic))
     			addTab(sheetMusic.getName(), sheetMusic);
-    		if (focus) {
-	    		int idx = tabIndex(sheetMusic);
-	    		if (idx >= 0)
-	    			setSelectedComponent(sheetMusic);
-	    		else
-	    			focus(((JFrame) SwingUtilities.getWindowAncestor(sheetMusic)));
-    		}
+
+    		if (focus)
+    			show(sheetMusic);
+
     	} catch (Throwable e) {
     		RTLogger.warn(this, e);
     	}
 	}
+
     public void sheetMusic(Song song) {
     	if (song.getFile() != null) {
     		String name = song.getFile().getName();
     		for (File f : Folders.getSheetMusic().listFiles())
     			if (f.getName().startsWith(name))
-    				sheetMusic(f, false);
+    				sheetMusic(f, false); // TODO focus sheetMusic toggle on/off
     	}
 	}
 
     public void show(JComponent o) {
-		int idx = tabIndex(o);
+		int idx = indexOfComponent(o);
 		if (idx >= 0)
 			setSelectedIndex(idx);
 		else if (frames.contains(o)) {

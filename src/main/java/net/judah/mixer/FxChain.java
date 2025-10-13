@@ -51,6 +51,6 @@ public abstract class FxChain extends ArrayList<Effect> {
 		return gain.get(Gain.PAN);
 	}
 
-	@Override public final String toString() { return name; }
+	@Override public String toString() { return name; }
 
 }

@@ -66,11 +66,12 @@ public class JudahMenu extends JMenuBar {
 	    JMenu save = new JMenu("Save");
 	    JMenu load = new JMenu("Load");
 	    JMenu solotrack = new JMenu("Solo Track");
-    	erase.add(new Actionable("All", e->looper.clear()));
-    	looper.forEach(loop->erase.add(new Actionable(loop.getName(), e->looper.clear(loop))));
+    	erase.add(new Actionable("All", e->looper.delete()));
+    	looper.forEach(loop->erase.add(new Actionable(loop.getName(), e->looper.delete(loop))));
     	looper.forEach(loop->duplicate.add(new Actionable(loop.getName(), e->loop.duplicate())));
     	looper.forEach(loop->save.add(new Actionable(loop.getName(), e-> loop.save())));
     	looper.forEach(loop->load.add(new Actionable(loop.getName(), e-> loop.load(true))));
+
 
     	SoloTrack solo = looper.getSoloTrack();
     	getInstruments().forEach(ch->solotrack.add(new Actionable(ch.getName(), e->solo.setSoloTrack(ch))));
@@ -82,14 +83,15 @@ public class JudahMenu extends JMenuBar {
     	loops.add(load);
     	loops.add(new Actionable("Solo on/off", e->solo.toggle()));
     	loops.add(solotrack);
+    	loops.add(new Actionable("Info..", e->Gui.infoBox(looper.toString(), "Info")));
 
 		JMenu time = new JMenu("Clock");
 		JudahClock clock = getClock();
+		time.add(new Actionable("Tempo", e->clock.inputTempo()));
 		time.add(new Actionable("Start/Stop", e->clock.toggle()));
     	time.add(new Actionable("Reset", e->clock.reset()));
     	time.add(new Actionable("Send/Rcv", e->clock.primary()));
-    	time.add(new Actionable("Sync2Loop", e->clock.syncToLoop()));
-    	time.add(new Actionable("SyncTempo", e->clock.syncTempo(looper.getPrimary())));
+    	time.add(new Actionable("Sync2Loop", e->clock.syncToLoop(looper.getPrimary())));
     	//time.add(new Actionable("Runners dial zero", e->clock.runnersDialZero()));
 
     	JMenu lfo = new JMenu("LFO");

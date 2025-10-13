@@ -35,15 +35,17 @@ public class LoopCmdr implements Cmdr {
 			return;
 		switch (p.getCmd()) {
 		case Delete:
-			looper.clear(loop);
+			looper.delete(loop);
 			break;
 		case Dup:
 			loop.duplicate();
 			break;
 		case Record:
-			if (false == looper.getClock().isActive())
-				break;
-			loop.trigger();
+			if (looper.getPrimary() != null && looper.getType() == LoopType.FREE)
+				looper.trigger(loop);
+			else if (looper.getClock().isActive()) { // clock not active = non-performance developing songs
+				looper.trigger(loop);
+			}
 			break;
 		case RecEnd:
 			loop.capture(false);

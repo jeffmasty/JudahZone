@@ -20,7 +20,6 @@ import net.judah.gui.widgets.Slider;
 import net.judah.gui.widgets.TapTempo;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
-import net.judah.util.RTLogger;
 
 public class MiniLooper extends JPanel implements TimeListener {
 	private static final int WIDTH = 84;
@@ -44,13 +43,7 @@ public class MiniLooper extends JPanel implements TimeListener {
 
 		tempoLbl.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
-                String input = Gui.inputBox("Tempo:");
-                if (input == null || input.isEmpty()) return;
-                try {
-                	clock.setTempo(Float.parseFloat(input));
-                } catch (Throwable t) {
-                	RTLogger.log(this, t.getMessage() + " -> " + input);
-                }
+            	clock.inputTempo();
             }});
 		tempoLbl.setText("####");
 		tempoLbl.setFont(Gui.BOLD);
@@ -80,5 +73,6 @@ public class MiniLooper extends JPanel implements TimeListener {
 			return;
 		}
 	}
+
 
 }

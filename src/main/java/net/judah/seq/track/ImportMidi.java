@@ -3,6 +3,8 @@ package net.judah.seq.track;
 import java.awt.Dimension;
 import java.io.File;
 
+import javax.sound.midi.MetaMessage;
+import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Sequence;
 import javax.sound.midi.Track;
@@ -15,11 +17,13 @@ import javax.swing.JPanel;
 import net.judah.gui.Gui;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.ModalDialog;
+import net.judah.seq.MidiConstants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 /** Dialog to import a single track from a standard MIDI file*/
 public class ImportMidi extends JPanel {
+
 	public static final Dimension SIZE = new Dimension(300, 200);
 
 	private final MidiTrack track;
@@ -68,11 +72,23 @@ public class ImportMidi extends JPanel {
 		// pre-select largest track
 		int focus = 0;
 		int events = 0;
-		for (int i = 0; i < tracks.length; i++)
-			if (tracks[i].size() > events) {
-				events = tracks[i].size();
+		for (int i = 0; i < tracks.length; i++) {
+			Track t = tracks[i];
+			if (t.size() > events) {
+				String trackName = "null";
+				for (int j = 0; j < t.size(); j++) {
+					MidiEvent me = t.get(j);
+					if (me.getMessage() instanceof MetaMessage meta) {
+						if (meta.getType() == MidiConstants.TRACK_NAME)
+							RTLogger.log(this, "Track " + i + " NAME: " + new String(meta.getData()));
+						else if (meta.getType() == MidiConstants.INSTRUMENT)
+							RTLogger.log(this, "INSTR: " + new String(meta.getData()));
+					}
+				}
+				events = t.size();
 				focus = i;
 			}
+		}
 		select.setSelectedIndex(focus);
 
 		JButton ok = new Btn("OK", e-> { // import track into bars

@@ -55,7 +55,7 @@ public class RMSRecording extends Recording {
 		return true;
 	}
 
-	@Override
+//	@Override
 	public void catchUp(int newSize) {
     	Threads.execute(() -> {
     		for (int i = size(); i < newSize; i++) {

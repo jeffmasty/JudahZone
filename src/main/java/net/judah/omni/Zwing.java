@@ -30,15 +30,17 @@ public interface Zwing {
 	Border HIGHLIGHT = BorderFactory.createLineBorder(Color.BLACK, 1);
 	Border NO_BORDERS = new EmptyBorder(BTN_MARGIN);
 
-	Font FONT9 = new Font("Arial", Font.PLAIN, 9);
-	Font FONT10 = new Font("Arial", Font.PLAIN, 10);
-	Font FONT11 = new Font("Arial", Font.PLAIN, 11);
-	Font FONT12 = new Font("Arial", Font.PLAIN, 12);
-	Font FONT13 = new Font("Arial", Font.PLAIN, 13);
-	Font BOLD10 = new Font("Arial", Font.BOLD, 10);
-	Font BOLD = new Font("Arial", Font.BOLD, 11);
-	Font BOLD12 = new Font("Arial", Font.BOLD, 12);
-	Font BOLD13 = new Font("Arial", Font.BOLD, 13);
+
+	String FACE = "Arial";
+	Font FONT9 = new Font(FACE, Font.PLAIN, 9);
+	Font FONT10 = new Font(FACE, Font.PLAIN, 10);
+	Font FONT11 = new Font(FACE, Font.PLAIN, 11);
+	Font FONT12 = new Font(FACE, Font.PLAIN, 12);
+	Font FONT13 = new Font(FACE, Font.PLAIN, 13);
+	Font BOLD10 = new Font(FACE, Font.BOLD, 10);
+	Font BOLD = new Font(FACE, Font.BOLD, 11);
+	Font BOLD12 = new Font(FACE, Font.BOLD, 12);
+	Font BOLD13 = new Font(FACE, Font.BOLD, 13);
 	default JComponent font(JComponent c, Font f) {
 		c.setFont(f);
 		return c;

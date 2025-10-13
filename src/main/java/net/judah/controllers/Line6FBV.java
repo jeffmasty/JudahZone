@@ -5,16 +5,21 @@ import static net.judah.JudahZone.*;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
-import net.judah.looper.SoloTrack;
 import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
-import net.judah.mixer.Instrument;
+import net.judah.mixer.LineIn;
+import net.judah.util.Debounce;
 
-public class Line6FBV implements Controller {
+public class Line6FBV extends Debounce implements Controller {
 	public static final String NAME = "FBV Shortboard Mk";
 	private int pedalMemory = 50;
 	private boolean mutes;
+	private final LineIn guitar;
+
+	public Line6FBV(LineIn guitar) {
+		this.guitar = guitar;
+	}
 
 	@Override
 	public boolean midiProcessed(Midi midi) {
@@ -32,43 +37,47 @@ public class Line6FBV implements Controller {
 
 		if (!Midi.isCC(midi)) return false;
 
-		Instrument guitar = getGuitar();
-		Loop loop;
+		if (doubleTap(this))
+			return true;
+
 		final int data2 = midi.getData2();
 		switch (midi.getData1()) {
-		case 1: // Loop A
+		case 1: // record or mute loops
+		case 2:
+		case 3:
+		case 4:
 			if (data2 == 0) return true;
-			loop = getLooper().getLoopA();
+			Loop loop = getLooper().get(midi.getData1() - 1);
 			if (mutes)
-				loop.setOnMute(!loop.isOnMute());
+				loop.toggleMute();
 			else
-				loop.trigger();
+				getLooper().trigger(loop);
 			return true;
-		case 2: // overdub B
-			if (data2 == 0) return true;
-			loop = getLooper().getLoopB();
-			if (mutes)
-				loop.setOnMute(!loop.isOnMute());
-			else {
-				loop.trigger();
-			}
-			return true;
-		case 3: // record C (free)
-			if (data2 == 0) return true;
-			loop = getLooper().getLoopC();
-			if (mutes)
-				loop.setOnMute(!loop.isOnMute());
-			else // can be free-style loop
-				loop.trigger();
-			return true;
-		case 4: // overdub D
-			if (midi.getData2() == 0) return true;
-			SoloTrack solo = getLooper().getSoloTrack();
-			if (mutes)
-				solo.setOnMute(!solo.isOnMute());
-			else
-				solo.trigger();
-			return true;
+//		case 2: // overdub B
+//			if (data2 == 0) return true;
+//			loop = getLooper().getLoopB();
+//			if (mutes)
+//				loop.setOnMute(!loop.isOnMute());
+//			else {
+//				loop.trigger();
+//			}
+//			return true;
+//		case 3: // record C (free)
+//			if (data2 == 0) return true;
+//			loop = getLooper().getLoopC();
+//			if (mutes)
+//				loop.setOnMute(!loop.isOnMute());
+//			else // can be free-style loop
+//				loop.trigger();
+//			return true;
+//		case 4: // overdub D
+//			if (midi.getData2() == 0) return true;
+//			SoloTrack solo = getLooper().getSoloTrack();
+//			if (mutes)
+//				solo.setOnMute(!solo.isOnMute());
+//			else
+//				solo.trigger();
+//			return true;
 		case 5: // Func(1) start/stop drum machine
 			JudahClock clock = getClock();
 			if (clock.isActive())
@@ -104,6 +113,7 @@ public class Line6FBV implements Controller {
 
 		// 12 : toe switch ?
 		// 13 : pedal wah
+
 		case 14: // pedal vol of focus channel
 			int percent = (int)(data2 / 1.27f);
 			if (Math.abs(pedalMemory - percent) < 2)

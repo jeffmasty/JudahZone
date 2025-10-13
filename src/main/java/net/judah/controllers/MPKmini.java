@@ -10,7 +10,6 @@ import lombok.Setter;
 import net.judah.api.ZoneMidi;
 import net.judah.fx.Delay;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Pastels;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
@@ -20,10 +19,11 @@ import net.judah.sampler.Sample;
 import net.judah.seq.arp.Arp;
 import net.judah.seq.track.PianoTrack;
 import net.judah.util.Constants;
+import net.judah.util.Debounce;
 
 
 /** Akai MPKmini, not the new one */
-public class MPKmini implements Controller, Pastels {
+public class MPKmini implements Controller {
 
 	public static final MPKmini instance = new MPKmini();
 	private MPKmini() {}
@@ -119,7 +119,7 @@ public class MPKmini implements Controller, Pastels {
 	}
 
 	// replacing knobs panel sometimes freezes Swing/AWT
-	private static final long FLOODING = Constants.DOUBLE_CLICK / 3;
+	private static final long FLOODING = Debounce.DOUBLE_CLICK / 3;
 	private long doubleClick = System.currentTimeMillis();
 	private boolean flooding() {
 		if (System.currentTimeMillis() < FLOODING + doubleClick)

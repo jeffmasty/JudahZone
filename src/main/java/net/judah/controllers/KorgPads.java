@@ -2,8 +2,6 @@ package net.judah.controllers;
 
 import static net.judah.JudahZone.*;
 
-import java.util.ArrayList;
-
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
 import net.judah.fx.Filter;
@@ -16,15 +14,12 @@ import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.sampler.Sampler;
-import net.judah.util.Constants;
+import net.judah.util.Debounce;
 
 /** CC 1 - 16 on channel 13 */
-public class KorgPads extends ArrayList<Runnable> implements Controller {
+public class KorgPads extends Debounce implements Controller {
 
 	public static final String NAME = "nanoPAD2";
-
-	private long lastPress;
-	private Object tapTarget;
 
 	private final int JOYSTICK_ON = 75;
 	private final int JOYSTICK_X = 73;
@@ -48,11 +43,15 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		case 1: // toggle loop records
 		case 2:
 		case 3:
-		case 4:
-			if (doubleTap(data1 - 1))
+		case 4: {
+			Loop target = looper.get(data1 - 1);
+			if (doubleTap(target)) {
+				looper.delete(target);
 				return true;
-			looper.get(data1 - 1).trigger();
+			}
+			looper.trigger(target);
 			return true;
+		}
 		case 5: // toggle FX
 			getFxRack().getChannel().toggleFx();
 			return true;
@@ -67,7 +66,7 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			else if (looper.hasRecording()) {
 				if (clock.isOnDeck())
 					clock.offSync();
-				else clock.syncToLoop();
+				else clock.syncToLoop(looper.getPrimary());
 			}
 			else
 				getClock().begin();
@@ -77,21 +76,29 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 			if (doubleTap(sampler)) // increment sample
 				sampler.nextStepSample();
 			sampler.setStepping(!sampler.isStepping());
-
 			return true;
 
 		// Loops bottom row
 		case 9:  // latch loop
 		case 10:
 		case 11:
-		case 12:
-			Loop onDeck = looper.get(data1 - 9);
-			if (doubleTap(onDeck))
-				return true;
-			looper.onDeck(onDeck);
+		case 12: {
+			Integer loopNum = data1 - 9;
+			Loop target = looper.get(loopNum);
+			if (doubleTap(loopNum)) {
+				if (target == looper.getLoopA()) {
+					looper.delete();
+					return true;
+				}
+				else if (looper.hasRecording())
+					target.duplicate();
+				else if (target == looper.getSoloTrack())
+					((SoloTrack)target).toggle();
+			}
+			looper.onDeck(target); // undo on double tap
 			return true;
-
-		case 13: // toggle Verse/Chorus mutes
+		}
+		case 13: // toggle A vs. B mutes
 			looper.verseChorus();
 			return true;
 
@@ -156,30 +163,6 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 		return false;
 	}
 
-	/** on double tap */
-	private boolean doubleTap(Object o) {
-		if (tapTarget == o && System.currentTimeMillis() - lastPress < Constants.DOUBLE_CLICK) {
-			lastPress = 0;
-			if (o instanceof Integer)
-				getLooper().clear(getLooper().get((Integer)o));
-
-			else if (o instanceof Loop) {
-				Loop loop = (Loop)o;
-				Looper loops = getLooper();
-				if (loop == loops.getLoopA())
-					loops.clear();
-				else if (loop.isPlaying())
-					loop.duplicate();
-				else if (loop == loops.getSoloTrack())
-					((SoloTrack)loop).toggle();
-			}
-			return true;
-		}
-		lastPress = System.currentTimeMillis();
-		tapTarget = o;
-		return false;
-	}
-
 	private void joystick(boolean active) {
 		Channel ch = getFxRack().getChannel();
 		if (active) {
@@ -198,16 +181,10 @@ public class KorgPads extends ArrayList<Runnable> implements Controller {
 //	private boolean context1( ) {
 //		switch (MainFrame.getKnobMode()) {
 //// CLOCK/KIT? : start Clock/drums on next loop
-////			if (looper.getRecordedLength() > 0)
-////				getClock().listen(looper.getLoopA());
-//		case Midi:
-//			getMidiGui().getZoneBtn().setSelected(!getMidiGui().getZoneBtn().isSelected());
-//		case Synth:
-//			SynthKnobs.setFreqMode(!SynthKnobs.isFreqMode());
-//			break;
-//		}
-//		return true;
-//	}
+////			if (looper.getRecordedLength() > 0) getClock().listen(looper.getLoopA());
+//		case Midi: getMidiGui().getZoneBtn().setSelected(!getMidiGui().getZoneBtn().isSelected());
+//		case Synth: SynthKnobs.setFreqMode(!SynthKnobs.isFreqMode());
+
 /*
 
         nanoPAD2   MIDI Implementation               Revision 1.01 (2011.10.19)

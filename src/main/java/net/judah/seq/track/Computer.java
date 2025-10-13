@@ -41,7 +41,7 @@ public abstract class Computer {
 
 	protected void reset() {
 		count = clock.isEven() ? 0 : 1;
-		flush();
+//		flush();
 		setCurrent(state.launch + 2 * offset + count);
 	}
 
@@ -140,7 +140,7 @@ public abstract class Computer {
 	}
 
 	public void next(boolean fwd) {
-		flush();
+//		flush();
 		offset += fwd ? 1 : -1;
 		int next = fwd ? after(after(current)) : before(before(current));
 		if (next % 2 == 0 != clock.isEven())
@@ -157,7 +157,7 @@ public abstract class Computer {
 	public void toFrame(int frame) {
 		if (current / 2 == frame)
 			return;
-		flush();
+//		flush();
 		offset = frame - count / 2 - state.launch / 2;
 		if (offset >= frames())
 			offset -= frames();

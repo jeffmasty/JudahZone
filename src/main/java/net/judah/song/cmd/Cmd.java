@@ -78,7 +78,7 @@ public enum Cmd {
 
 		@Override public void execute(Param p) {
 			if (resolve(p.val) == null && p.cmd == Cmd.Sync)
-				JudahZone.getClock().syncTempo(looper.getPrimary());
+				JudahZone.getClock().syncToLoop(looper.getPrimary());
 			else
 				getLoops().execute(p);
 		}

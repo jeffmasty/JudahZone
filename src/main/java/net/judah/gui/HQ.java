@@ -12,7 +12,6 @@ import net.judah.gui.settable.SetCombo;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.LengthCombo;
 import net.judah.gui.widgets.StartBtn;
-import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.omni.Icons;
@@ -26,9 +25,7 @@ public class HQ extends JPanel implements TimeListener {
 	private final Looper looper;
 	private final Overview songs;
 	private final Btn scene = new Btn("", e->trigger());
-	private final Btn record = new Btn(" Rec ", e->record());
     private final LengthCombo sync;
-	private Loop recording;
 	private final JButton metro;
 
     public HQ(JudahClock clock, Looper loops, Overview songs, ChordTrack chords) {
@@ -43,9 +40,9 @@ public class HQ extends JPanel implements TimeListener {
     	add(new StartBtn(clock));
     	add(Gui.resize(scene, Size.SMALLER_COMBO));
     	add(Gui.resize(new ChordPlay(chords).makeFancy(), new Dimension(54, Size.STD_HEIGHT)));
-    	add(record);
+    	add(new Btn(" Rec ", e->loops.trigger()));
     	add(sync);
-    	add(new Btn("Del", e->looper.clear()));
+    	add(new Btn("Del", e->looper.delete(), "Clear Looper"));
 		add(metro);
     	clock.addListener(this);
     }
@@ -66,16 +63,15 @@ public class HQ extends JPanel implements TimeListener {
 		sceneText();
 	}
 
-	void record() {
-		if (recording == null) {
-			recording = clock.isActive() ? looper.getLoopA() : looper.getLoopC();
-			recording.trigger();
-		}
-		else {
-			recording.capture(false);
-			recording = null;
-		}
-	}
+//	void capture() {
+//		if (recording == null) {
+//			looper.trigger(clock.isActive() ? looper.getLoopA() : looper.getLoopC());
+//		}
+//		else {
+//			recording.capture(false);
+//			recording = null;
+//		}
+//	}
 
 	public void length() {
 		if (sync.getSelectedItem() != (Integer)JudahClock.getLength())

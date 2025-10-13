@@ -17,8 +17,8 @@ public record Notification (Property prop, Object value) {
 		BARS,
 		/** when bars / length == 0 */
 		BOUNDARY,
-		/** current loop count */
-		LOOP,
+//		/** current loop count */
+//		LOOP,
 		/** current step in step sequencer */
 		STEP,
 		/** Scene change */

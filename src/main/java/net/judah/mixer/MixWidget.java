@@ -8,7 +8,13 @@ import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 
 import net.judah.fx.Gain;
 import net.judah.gui.Gui;
@@ -16,15 +22,14 @@ import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.widgets.RainbowFader;
 import net.judah.gui.widgets.TogglePreset;
-import net.judah.looper.Looper;
 
 /**Mixer view <br/>
  * Each mixer channel has:
-<pre>		
+<pre>
 Icon/Btns
 FX LEDs
 Vol Fader/Gain</pre>
- * @author judah */
+*/
 public abstract class MixWidget extends JPanel implements Pastels {
 	private static final Dimension SIDECAR = new Dimension(50, 60);
 
@@ -38,14 +43,16 @@ public abstract class MixWidget extends JPanel implements Pastels {
 	protected final FxLEDs indicators;
 	protected final RMSIndicator gain;
 	protected RainbowFader fader;
-	
-	public MixWidget(Channel channel, Looper looper) {
+	protected final JComponent bottom;
+
+	public MixWidget(Channel channel) {
 		this.channel = channel;
-		
-		fx = new TogglePreset(channel, looper);
+
+		fx = new TogglePreset(channel);
+
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBackground(BUTTONS);
-		
+
 		indicators = new FxLEDs(channel);
 		fader = new RainbowFader(vol -> {
 			channel.getGain().set(Gain.VOLUME, fader.getValue());
@@ -60,43 +67,43 @@ public abstract class MixWidget extends JPanel implements Pastels {
 		sidecar.setOpaque(false);
 		Gui.resize(sidecar, SIDECAR);
 		Gui.resize(title, SIDECAR);
-		
+
 		add(banner);
 		add(indicators);
 		add(Box.createVerticalStrut(1));
-		
-		add(Gui.wrap(gain, fader));
-		
+
+		bottom = Gui.wrap(gain, fader);
+		add(bottom);
 		add(Box.createVerticalStrut(1));
-		
+
 		addMouseListener(new MouseAdapter() {
 		// TODO right/double click menu
 		@Override public void mouseClicked(MouseEvent e) {
 			MainFrame.setFocus(channel);}});
 	}
-	
-	protected abstract Color thisUpdate(); 
-	
+
+	protected abstract Color thisUpdate();
+
 	protected boolean quiet() {
 		return channel.getGain().getGain() < 0.05f;
 	}
-	
+
 	public final void update() {
 		Color bg = thisUpdate();
-		if (false == banner.getBackground().equals(bg)) 
+		if (false == banner.getBackground().equals(bg))
 			banner.setBackground(bg);
-		indicators.sync();		
+		indicators.sync();
 		updateVolume();
 		fx.update();
 	}
-	
+
 	public void updateVolume() {
-		if (channel.getVolume() != fader.getValue()) 
+		if (channel.getVolume() != fader.getValue())
 			fader.setValue(channel.getVolume());
 		if (channel.isOnMute())
 			fader.setBackground(PURPLE);
-		else 
+		else
 			fader.setBackground(null);
 	}
-	
+
 }

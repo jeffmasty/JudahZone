@@ -21,6 +21,7 @@ import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
+import net.judah.omni.Threads;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiPair;
@@ -86,9 +87,11 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 	public void setActive(boolean on) {
 		super.setActive(on);
 		if (!state.active) { // TODO actives
-			if (isArpOn())
-				silence();
+//			flush();
+//			if (isArpOn())
+//				silence();
 			new Panic(this);
+			deltas.clear();
 		}
 	}
 
@@ -100,15 +103,16 @@ public class PianoTrack extends MidiTrack implements ChordListener {
     		arpeggiate(msg);
 	}
 
-	@Override public void next(boolean fwd) {
-		silence();
-		super.next(fwd);
-	}
+//	@Override public void next(boolean fwd) {
+//		silence();
+//		super.next(fwd);
+//	}
 
 	@Override
 	protected void parse(Track incoming) {
-		silence();  	// PianoTrack subclass special handling
+		// flush();  	// PianoTrack subclass special handling
 		new Panic(this); // not part of parse process
+		deltas.clear();
 
 		for (int i = 0; i < incoming.size(); i++) {
 			MidiEvent e = incoming.get(i);
@@ -168,12 +172,16 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 			return;
 		if (algo != null)
 			algo.change();
+
 		for (Map.Entry<ShortMessage, List<Integer>> item : deltas.list()) {
 			ShortMessage midi = item.getKey();
 			Midi off = Midi.create(Midi.NOTE_OFF, midi.getChannel(), midi.getData1(), midi.getData2());
 			process(off, from);
-			process(midi, to);
 		}
+		for (Map.Entry<ShortMessage, List<Integer>> item : deltas.list()) {
+			process(item.getKey(), to);
+		}
+
 	}
 
 	@Override
@@ -183,10 +191,17 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 			MidiEvent e = t.get(i);
 			if (e.getTick() <= recent) continue;
 			if (e.getTick() > end) break;
-			if (e.getMessage() instanceof ShortMessage && Midi.isNoteOff(e.getMessage()))
-				midiOut.send(Midi.format((ShortMessage)e.getMessage(), ch, 1), JudahMidi.ticker());
+			if (e.getMessage() instanceof ShortMessage m && Midi.isNoteOff(e.getMessage()))
+				midiOut.send(Midi.format(m, ch, 1), JudahMidi.ticker());
 		}
 		silence();
+	}
+
+	/** clear the Arpeggiator */
+	private void silence() {
+		for (ShortMessage midi : deltas.keys())
+			out(Midi.create(Midi.NOTE_OFF, midi.getChannel(), midi.getData1(), midi.getData2()), deltas.get(midi));
+		deltas.clear();
 	}
 
 	public void setInfo(ArpInfo arp) {
@@ -241,7 +256,7 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 		}
 		algo.setRange(info.range);
 
-		MainFrame.focus.execute(() -> {
+		Threads.execute(() -> {
 			ModeCombo.update(this);
 			MainFrame.miniSeq().update(this);
 			TrackMenu.updateCue(PianoTrack.this);
@@ -275,13 +290,6 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 		} else if (Midi.isNoteOff(msg)) {
 			out(msg, deltas.remove(msg));
 		}
-	}
-
-	/** clear the Arpeggiator */
-	private void silence() {
-		for (ShortMessage midi : deltas.keys())
-			out(Midi.create(Midi.NOTE_OFF, midi.getChannel(), midi.getData1(), midi.getData2()), deltas.get(midi));
-		deltas.clear();
 	}
 
 	private void out(ShortMessage input, List<Integer> work) {

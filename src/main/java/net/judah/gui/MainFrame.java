@@ -10,8 +10,6 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.event.WindowEvent;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.Box;
@@ -21,7 +19,6 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
-import javax.swing.border.LineBorder;
 
 import lombok.Getter;
 import net.judah.JudahZone;
@@ -82,7 +79,7 @@ public class MainFrame extends JFrame implements Runnable {
 	public static record FxChange(Channel ch, Effect fx) {}
 	private static MainFrame instance;
     private static final BlockingQueue<Object> updates = new LinkedBlockingQueue<>();
-	public static final ExecutorService focus = Executors.newVirtualThreadPerTaskExecutor();
+	//public static final ExecutorService focus = Executors.newVirtualThreadPerTaskExecutor();
 	@Getter private static KnobMode knobMode = KnobMode.MIDI;
 	@Getter private static KnobPanel knobs;
 
@@ -136,7 +133,7 @@ public class MainFrame extends JFrame implements Runnable {
         Gui.resize(knobHolder, KNOB_PANEL);
         Gui.resize(mode, new Dimension(COMBO_SIZE.width, STD_HEIGHT + 2));
         Gui.resize(mixer, MIXER_SIZE);
-        knobHolder.setBorder(new LineBorder(Pastels.MY_GRAY, 1));
+        knobHolder.setBorder(Gui.SUBTLE);
 
         // clock, midi panel, fx controls
         JComponent left = Box.createVerticalBox();
@@ -154,7 +151,7 @@ public class MainFrame extends JFrame implements Runnable {
         right.add(tabs);
         right.add(mixer);
         right.add(Box.createVerticalGlue());
-        Gui.resize(right, new Dimension(WIDTH_TAB, HEIGHT_TAB + HEIGHT_MIXER));
+        Gui.resize(right, new Dimension(WIDTH_TAB, HEIGHT_FRAME));
 
     	setLocationByPlatform(true);
     	setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -192,7 +189,7 @@ public class MainFrame extends JFrame implements Runnable {
     }
 
     public static void setFocus(Object o) {
-    	focus.execute(()->instance.focus(o));
+    	Threads.execute(()->instance.focus(o));
     }
 
     private void focus(Object o) {
@@ -427,8 +424,10 @@ public class MainFrame extends JFrame implements Runnable {
             UIManager.put("nimbusBase", Pastels.EGGSHELL);
             UIManager.put("control", Pastels.EGGSHELL);
             UIManager.put("nimbusBlueGrey", Pastels.MY_GRAY);
+
             UIManager.getLookAndFeel().getDefaults().put("Button.contentMargins", new Insets(5, 5, 5, 5));
             UIManager.getLookAndFeel().getDefaults().put("JToggleButton.contentMargins", new Insets(1, 1, 1, 1));
+
             Thread.sleep(10); // let nimbus start up
 		} catch (Exception e) { RTLogger.log(MainFrame.class, e.getMessage()); }
 	}

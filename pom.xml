@@ -6,9 +6,7 @@
   <artifactId>JudahZone</artifactId>
   <version>0.1</version>
   <packaging>jar</packaging>
-
   <name>JudahZone</name>
-  <url>http://maven.apache.org</url>
 
  <properties>
     <maven.compiler.source>1.21</maven.compiler.source>
@@ -35,36 +33,18 @@
         <version>1.16.6</version>
         <scope>provided</scope>
     </dependency>
-
-<!--	<dependency>
-		<groupId>net.judah</groupId>
-		<artifactId>omni</artifactId>
-		<version>0.1</version>
-	</dependency>
-	<dependency>
-		<groupId>net.judah</groupId>
-		<artifactId>oscilloscope</artifactId>
-		<version>0.1</version>
-	</dependency>
--->
-	<dependency> <!-- oscilliscope -->
-	    <groupId>org.knowm.xchart</groupId>
-	    <artifactId>xchart</artifactId>
-	    <version>3.8.0</version>
-	</dependency>
-
-    <dependency>
+    <dependency>  <!-- JSON -->
 	    <groupId>org.apache.jena</groupId>
 	    <artifactId>apache-jena-libs</artifactId>
 	    <type>pom</type>
 	    <version>3.9.0</version>
     </dependency>
-	<dependency>
+	<dependency> <!-- Open Sound Control (OSC) protocol -->
 	    <groupId>com.illposed.osc</groupId>
 	    <artifactId>javaosc-core</artifactId>
 	    <version>0.6</version>
 	</dependency>
-	<dependency>
+	<dependency>  <!-- Digital Sound Processing -->
 	  <groupId>be.tarsos.dsp</groupId>
 	  <artifactId>core</artifactId>
 	  <version>2.5</version>
@@ -94,6 +74,18 @@
        	<version>2.0.0</version>
         <scope>provided</scope>
     </dependency>
+
+<!--	<dependency>
+		<groupId>net.judah</groupId>
+		<artifactId>omni</artifactId>
+		<version>0.1</version>
+	</dependency>
+	<dependency>
+		<groupId>net.judah</groupId>
+		<artifactId>oscilloscope</artifactId>
+		<version>0.1</version>
+	</dependency>
+-->
 
 </dependencies>
   

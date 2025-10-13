@@ -135,7 +135,10 @@ public class Beatstep implements Controller {
 		else {
 			if (data1 == MAINS)
 				return getMains();
+			if (data1 == MAINS -1)
+				return getTacos().tracks.getFirst();
 			else if (data1 >= GUITAR)
+
 				return getInstruments().get(data1 - GUITAR);
 			else
 				return getLooper().get(data1 - LOOPA);

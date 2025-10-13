@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.Vector;
 
 import lombok.Getter;
-import net.judah.util.RTLogger;
 
 /**	------------WavFile------------<br/>
  * Stereo Audio data of .wav File, a Loop or a (Drum)Sample, organized by Jack buffer. <br/>
@@ -303,7 +302,7 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 
 	private void zero(float[] channel) {
 		for (int i = 0; i < channel.length; i++)
-			channel[i] = 0;
+			channel[i] = 0f;
 	}
 
 	/** @return total bytes of one channel */
@@ -322,7 +321,7 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 	}
 
 
-	// copy from start of size frames to destination
+	// copy from start of size frames
 	public void duplicate(int frames) {
 
 		for (int deficit = (2 * frames) - size(); deficit > 0; deficit--)
@@ -330,17 +329,7 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 
 		for (int i = 0; i < frames; i++) {
 			AudioTools.copy(get(i), get(i + frames));
-
 		}
-
-		RTLogger.log(this, frames + "frames Duplicated (" + size() + ")");
 	}
-
-
-   public void catchUp(final int newSize) {
-    	Threads.execute(() -> {
-    		for (int i = size(); i < newSize; i++)
-    			add(new float[STEREO][JACK_BUFFER]);});
-    }
 
 }

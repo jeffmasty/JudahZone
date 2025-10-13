@@ -5,7 +5,6 @@ import static net.judah.JudahZone.*;
 import static net.judah.api.Notification.Property.STEP;
 import static net.judah.api.Notification.Property.TRANSPORT;
 import static net.judah.util.Constants.bpmPerBeat;
-import static net.judah.util.Constants.computeTempo;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -28,6 +27,7 @@ import net.judah.api.Notification.Property;
 import net.judah.api.Signature;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeProvider;
+import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.settable.Folder;
 import net.judah.looper.Loop;
@@ -38,6 +38,8 @@ import net.judah.song.cmd.Cmd;
 import net.judah.song.cmd.Cmdr;
 import net.judah.song.cmd.IntProvider;
 import net.judah.song.cmd.Param;
+import net.judah.util.Constants;
+import net.judah.util.Debounce;
 import net.judah.util.RTLogger;
 
 public class JudahClock implements MidiClock, TimeProvider, Cmdr {
@@ -72,6 +74,7 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
     private float callCounter = 0;
     private OSCPortOut osc;
 	private final ArrayList<Object> oscData = new ArrayList<>();
+	private Debounce debounce = new Debounce();
 
     /** sync to external Midi24 pulse */
 	public JudahClock(JudahMidi parent) {
@@ -94,9 +97,9 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 	@Override public boolean removeListener(TimeListener l) { return listeners.remove(l); }
 	/** beats in the current TimeSignature */
 	@Override public int getMeasure() 	{ return timeSig.beats; }
-	public boolean isEven() 		{ return bar % 2 == 0; }
 	public int getSteps() 				{ return timeSig.steps; }
 	public int getSubdivision() 		{ return timeSig.div; }
+	public boolean isEven() 		{ return bar % 2 == 0; }
 
 	public void jackFrame() {
 		if (!internal)
@@ -156,7 +159,7 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 
 		if (midiPulseCount % unit == 0) {
 			step = beat * timeSig.div + midiPulseCount / unit;
-			letItBeKnown(STEP, step);
+			passItOn(STEP, step);
 			if (active) {
 				getSeq().step(step);
 			}
@@ -165,31 +168,6 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 			return;
 		float percent = beat + midiPulseCount / (float)MIDI_24; //  + (isEven() ? 0 : 1);
 		getSeq().percent(percent);
-	}
-
-	private void newBar() {
-		bar++; // new Bar
-		beat = 0;
-		announce(Property.BARS, bar);
-		if (bar % length == 0)
-			announce(Property.BOUNDARY, bar / length);
-	}
-
-	public void syncToLoop() {
-		Looper looper = getLooper();
-		Loop primary =  looper.getPrimary();
-		looper.clockSync(); // off FREE
-		if (primary == null)
-			return;
-		onDeck = !onDeck;
-		if (!onDeck)
-			return;
-		float tempo = computeTempo((long) (1000 * primary.seconds()), length * getMeasure());
-		setTempo(tempo);
-		// Reset Chord Track
-		ChordTrack chords = getChords();
-		if (chords.isActive() && chords.getSection() != null)
-			chords.click(chords.getSection().get(0));
 	}
 
 	@Override
@@ -209,7 +187,7 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
     public void end() {
 	    active = false;
 	    midi.synchronize(MIDI_STOP);
-	    letItBeKnown(TRANSPORT, JackTransportState.JackTransportStopped);
+	    passItOn(TRANSPORT, JackTransportState.JackTransportStopped);
 	}
 
 	@Override
@@ -256,7 +234,7 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 			return;
 		timeSig = time;
 		unit = MIDI_24 / timeSig.div;
-		letItBeKnown(Property.SIGNATURE, timeSig);
+		passItOn(Property.SIGNATURE, timeSig);
 		Folder.refillAll();
 		MainFrame.update(this); // both update and announce?
 	}
@@ -274,38 +252,13 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 
 	}
 
-	public void loopCount(int count) {
-		if (count == 0)
-			bar = 0;
-		announce(Property.LOOP, count);
-		if (onDeck && !active)
-			begin();
-		onDeck = false;
-	}
-
 	public void skipBar() {
 		bar++;
-		letItBeKnown(Property.BARS, bar);
+		passItOn(Property.BARS, bar);
 	}
 
 	public int countdown() {
 		return beat % timeSig.beats - timeSig.beats;
-	}
-
-	/** send to background thread */
-	private void letItBeKnown(Property prop, Object value) {
-		notifications.offer(new Notification(prop, value));
-	}
-
-	/** in real-time */
-	private void announce(Property prop, Object value) {
-		for (int i = listeners.size() - 1; i >= 0; i--)
-			listeners.get(i).update(prop, value);
-	}
-
-	public void offSync() {
-		onDeck = false;
-		MainFrame.update(this);
 	}
 
 	@Override
@@ -319,7 +272,17 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 			oscData.add(Math.round(tempo));
 			send("/tempo");
 		}
-		letItBeKnown(Property.TEMPO, tempo);
+		passItOn(Property.TEMPO, tempo);
+	}
+
+	public void inputTempo() {
+        String input = Gui.inputBox("Tempo:");
+        if (input == null || input.isEmpty()) return;
+        try {
+        	setTempo(Float.parseFloat(input));
+        } catch (Throwable t) {
+        	RTLogger.log(this, t.getMessage() + " -> " + input);
+        }
 	}
 
 	@Override
@@ -334,6 +297,7 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 		}
 	}
 
+	// External Midi interface
 	@Override
 	public void start() {
 		if (internal)
@@ -370,30 +334,78 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 		}
 	}
 
-	public void syncTempo(Loop primary) {
-		if (primary == null || !primary.isPlaying()) return;
-		long millis = (long) (1000 * primary.seconds());
-		tempo = computeTempo(millis, JudahClock.getLength() * timeSig.beats);
-		setTempo(tempo);
-		RTLogger.log(this, "loop tempo: " + tempo + " bpm");
+	private void newBar() {
+		bar++; // new Bar
+		beat = 0;
+		announce(Property.BARS, bar);
+		if (bar % length == 0 && !debounce.doubleTap())
+			announce(Property.BOUNDARY, bar / length);
 	}
 
-	@Override
-	public String[] getKeys() {
+	// Looper Integration
+	public void loopCount(int count) {
+		if (count == 0)
+			bar = 0;
+
+		if (!active) {
+			announce(Property.BOUNDARY, count);
+			if (onDeck)
+				begin();
+		}
+		else if (!debounce.doubleTap())
+			announce(Property.BOUNDARY, count);
+	}
+
+	/** set tempo based on length of looper recording and current number of measures */
+	public void syncToLoop(Loop target) {
+		if (target == null) return;
+		onDeck = !onDeck;
+		if (!onDeck)
+			return;
+
+		Looper looper = getLooper();
+		if (!looper.hasRecording())
+			return;
+		long millis = (long)(looper.getPrimary().seconds() * 1000);
+		setTempo(Constants.computeTempo(millis, length * getMeasure()));
+		// looper.clockSync(); // off FREE
+
+		// Reset Chord Track
+		ChordTrack chords = getChords();
+		if (chords.isActive() && chords.getSection() != null)
+			chords.click(chords.getSection().get(0));
+	}
+
+	public void offSync() {
+		onDeck = false;
+		MainFrame.update(this);
+	}
+
+	/** Notification in background thread */
+	private void passItOn(Property prop, Object value) {
+		notifications.offer(new Notification(prop, value));
+	}
+
+	/**Notification in real-time */
+	private void announce(Property prop, Object value) {
+		for (int i = listeners.size() - 1; i >= 0; i--)
+			listeners.get(i).update(prop, value);
+	}
+
+	// CMD interface
+	@Override public String[] getKeys() {
 		return 	IntProvider.instance(40, 200, 2).getKeys();
 	}
 
-	@Override
-	public Integer resolve(String key) {
+	@Override public Integer resolve(String key) {
 		return Integer.parseInt(key);
 	}
 
-	@Override
-	public void execute(Param p) {
+	@Override public void execute(Param p) {
 		if (p.cmd == Cmd.Tempo)
-			try {
-				setTempo(Integer.parseInt(p.val));
+			try { setTempo(Integer.parseInt(p.val));
 			} catch (NumberFormatException e) {RTLogger.warn(this, "tempo: " + p.val);}
 	}
+
 
 }

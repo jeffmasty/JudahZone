@@ -43,12 +43,6 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 
     public DJJefe(JudahClock clock, Mains mains, Looper looper, Zone sources, DrumMachine drums, LineIn ... bonus) {
 		this.mains = mains;
-    	// preload channel gui's
-    	for (LineIn i : sources)
-        	i.getGui();
-		for (Loop l : looper)
-			l.getGui();
-
     	this.sources = sources;
     	all.add(mains);
         all.addAll(looper);
@@ -64,12 +58,12 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
     	}
         for (LineIn instrument : sources) {
         	channels.add(instrument);
-    		MixWidget fader = new LineMix(instrument, looper);
+    		MixWidget fader = new LineMix(instrument, looper.getSoloTrack());
     		faders.add(fader);
     		add(fader);
         }
 
-        MixWidget fader = new MainsMix(mains, looper);
+        MixWidget fader = new MainsMix(mains);
         faders.add(fader);
         add(fader);
         channels.add(mains);

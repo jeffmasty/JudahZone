@@ -277,7 +277,7 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 			barTicks = s.getResolution() * ((Signature)value).beats;
 			init();
 		}
-		else if (prop == Property.LOOP && onDeck && cue == Cue.Loop)
+		else if (prop == Property.BOUNDARY && onDeck && cue == Cue.Loop)
 			setActive(true);
 		else if (prop == Property.TRANSPORT) {
 			if (value == JackTransportState.JackTransportStopped && isActive())

@@ -59,6 +59,7 @@ public class Panic implements Runnable  {
 			else
 				for (int i = 0; i < 128; i++)
 					engine.send(new ShortMessage(ShortMessage.NOTE_OFF, channel, i, 0), JudahMidi.ticker());
+
 		} catch (InvalidMidiDataException e) {
 			RTLogger.warn(this, e);
 		}

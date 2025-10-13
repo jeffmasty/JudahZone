@@ -26,7 +26,7 @@ import net.judah.seq.MusicBox;
 import net.judah.seq.Prototype;
 import net.judah.seq.track.DrumTrack;
 
-public class BeatBox extends MusicBox implements Pastels{
+public class BeatBox extends MusicBox implements Pastels {
 
 	public static final int X_OFF = 5;
     private static final int PADS = DrumType.values().length;
@@ -64,9 +64,6 @@ public class BeatBox extends MusicBox implements Pastels{
 	}
 
     @Override public void paint(Graphics g) {
-    	// super.paint(g);
-
-
     	Color bg, shade;
     	if (tracks.getCurrent() == track) {
     		bg = EGGSHELL;
@@ -98,13 +95,13 @@ public class BeatBox extends MusicBox implements Pastels{
 
         // draw notes
         long offset = track.getLeft();
+        float scale = width / (float)track.getWindow();
         ShortMessage on;
         int x, y;
-        float window = track.getWindow();
         for (MidiPair p : scroll.populate()) {
         	on = (ShortMessage)p.getOn().getMessage();
 			y = DrumType.index(on.getData1());
-			x = (int) ( (  (p.getOn().getTick()-offset) / window) * width);
+			x = (int) ( (p.getOn().getTick() - offset) * scale);
 			if (y >=0 && x >= 0) {
 				if (selected.contains(p))
 					highlight(g, x, y, on.getData2());
@@ -251,7 +248,7 @@ public class BeatBox extends MusicBox implements Pastels{
 		// delete selected, create undo from start/init
 		editDel(selected);
 		Edit e = new Edit(Type.TRANS, dragging);
-		long now = track.quantize(toTick(mouse));
+		long now = toTick(mouse);
 		Prototype destination = new Prototype(toData1(mouse),
 				((now - click.tick) % track.getWindow()) / track.getStepTicks());
 		e.setDestination(destination, click);
@@ -261,13 +258,13 @@ public class BeatBox extends MusicBox implements Pastels{
 	@Override
 	public void drag(Point mouse) {
 
-		Prototype now = new Prototype(toData1(mouse), track.quantize(toTick(mouse)));
+		Prototype now = new Prototype(toData1(mouse), toTick(mouse));
 		if (now.equals(recent)) // hovering
 			return;
 		// note or step changed, move from most recent drag spot
 		long tick = ((now.tick - recent.tick) % track.getWindow()) / track.getStepTicks();
-		recent = now;
 		transpose(selected, new Prototype(now.data1, tick));
+		recent = now;
 
 	}
 
@@ -276,11 +273,11 @@ public class BeatBox extends MusicBox implements Pastels{
 		editDel(notes);
 
 		ArrayList<MidiPair> replace = new ArrayList<>();
-		int delta = DrumType.index(destination.data1) - DrumType.index(click.data1);
-		long window = track.getWindow();
+		int delta = DrumType.index(destination.data1) - DrumType.index((  (ShortMessage)notes.getFirst().getOn().getMessage()).getData1());
+				//click.data1);
 		long start = track.getCurrent() * track.getBarTicks();
 		for (MidiPair note : notes)
-			replace.add(compute(note, delta, destination.tick, start, window));
+			replace.add(compute(note, delta, destination.tick, start, track.getWindow()));
 		editAdd(replace);
 	}
 
@@ -289,12 +286,11 @@ public class BeatBox extends MusicBox implements Pastels{
 		ArrayList<MidiPair> notes = e.getNotes();
 		Prototype destination = e.getDestination();
 		ArrayList<MidiPair> delete = new ArrayList<>();
-		long window = track.getWindow();
 		long start = track.getCurrent() * track.getBarTicks();
 		int delta = DrumType.index(destination.data1) - DrumType.index(
 				((ShortMessage)notes.get(e.getIdx()).getOn().getMessage()).getData1());
 		for (MidiPair note : notes)
-			delete.add(compute(note, delta, destination.tick, start, window));
+			delete.add(compute(note, delta, destination.tick, start, track.getWindow()));
 		editDel(delete);
 		editAdd(notes);
 		click = null;
@@ -320,30 +316,19 @@ public class BeatBox extends MusicBox implements Pastels{
 }
 
 
-/*MidiView
-@Override
+/*
 public void setSize(Dimension d) {
 	grid.setSize(d);
 }
-
 public static int toData1(Point p) {
 	return p.x / BEAT_WIDTH + DATA1_OFFSET;
 }
 public static int toX(int data1) {
 	return (data1 - DATA1_OFFSET) * BEAT_WIDTH;
 }
-
 public static int toY(long tick, long measure, int height) {
 	return (int) (ratioY(tick, measure) * height);
 }
-
 public static float ratioY(long tick, long measure) {
 	return tick / (float)measure;
-}
-
-public static long quantize(long tick, int resolution, Gate gate) { // TODO only does 1/16th quantization for now
-	long unit = (long) (0.25f * resolution);
-	float units = tick / unit;
-	return (long)units * unit;
-}
-*/
+}*/

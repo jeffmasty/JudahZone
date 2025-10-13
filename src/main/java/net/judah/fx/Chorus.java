@@ -2,11 +2,11 @@ package net.judah.fx;
 
 import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
-import java.util.Arrays;
 
 import lombok.Getter;
 import lombok.Setter;
 
+// JAudioLabs Source?
 public class Chorus implements TimeEffect {
 
     public enum Settings {
@@ -86,7 +86,7 @@ public class Chorus implements TimeEffect {
         else throw new InvalidParameterException();
     }
 
-    public void setDepth(float depth) {
+    void setDepth(float depth) {
         leftDsp.setDelay(depth / 1000);
         rightDsp.setDelay(depth / 1000);
         this.depth = depth;
@@ -98,24 +98,14 @@ public class Chorus implements TimeEffect {
         rightDsp.processReplace(right);
     }
 
-    class LFODelay {
+    private class LFODelay {
+
+        @Setter float delay = depth * 0.001f;
+        float[] workArea = new float[N_FRAMES];
         float range = 0.5f;
-        @Setter float delay;
         float delayTime;
-        float[] workArea;
-        int rovepos = 0;
+        int rovepos;
         float lastdelay;
-
-        LFODelay() {
-            workArea = new float[N_FRAMES];
-            rovepos = 0;
-            lastdelay = 0;
-            reset();
-        }
-
-        void reset() {
-            Arrays.fill(workArea, 0);
-        }
 
         void goFigure() {
             if (rate > 0.01 && range > 0) {
@@ -166,7 +156,8 @@ public class Chorus implements TimeEffect {
             lastdelay = delay;
         }
 
-        public void processAdd(FloatBuffer buf) {
+        @SuppressWarnings("unused")
+		public void processAdd(FloatBuffer buf) {
 
             goFigure();
             buf.rewind();

@@ -154,14 +154,14 @@ public class Overview extends JPanel implements TimeListener {
 		Scene onDeck = getOnDeck();
 		if (prop == Property.BARS && onDeck.type == Trigger.BAR)
 			go();
-		else if (prop == Property.LOOP && onDeck.type == Trigger.LOOP)
+		else if (prop == Property.BOUNDARY && onDeck.type == Trigger.LOOP)
 			go();
 		else if (onDeck.type == Trigger.ABS && prop == Property.BEAT) {
 			if ((int)value >= onDeck.getCommands().getTimeCode())
 				go();
 		}
 		else if (onDeck.type == Trigger.REL && prop == Property.BEAT) {
-			if (++count >= onDeck.getCommands().getTimeCode())
+			if (++count > onDeck.getCommands().getTimeCode())
 				go();
 			else
 				songView.updatePad(onDeck);
@@ -176,7 +176,6 @@ public class Overview extends JPanel implements TimeListener {
     public void setScene(Scene s) {
     	Scene old = scene;
     	scene = s;
-		clock.reset();
 
     	// commands
 		for (Param p : s.getCommands())
@@ -207,6 +206,7 @@ public class Overview extends JPanel implements TimeListener {
 		if (old != null)
     		MainFrame.update(old);
 		MainFrame.update(scene);
+		clock.reset(); // TODO new SCENE notification ?
 
     }
 
@@ -226,7 +226,7 @@ public class Overview extends JPanel implements TimeListener {
     public void setSong(Song smashHit) {
 
     	song = smashHit;
-    	looper.clear();
+    	looper.delete();
     	getDrumMachine().reset();
     	clock.setTimeSig(song.getTimeSig());
     	clock.reset();

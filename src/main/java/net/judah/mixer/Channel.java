@@ -26,6 +26,8 @@ import net.judah.gui.fx.EffectsRack;
 import net.judah.gui.knobs.LFOKnobs;
 import net.judah.gui.settable.Presets;
 import net.judah.gui.settable.PresetsHandler;
+import net.judah.omni.AudioTools;
+import net.judah.omni.Threads;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -136,6 +138,11 @@ public abstract class Channel extends FxChain implements Presets {
 		if (mute == onMute)
 			return;
 		onMute = mute;
+		if (onMute)
+			Threads.execute(()->{ // for gain indicators
+				AudioTools.silence(left);
+				AudioTools.silence(right);
+			});
 		MainFrame.update(this);
 	}
 

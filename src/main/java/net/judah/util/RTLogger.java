@@ -30,7 +30,7 @@ import net.judah.gui.knobs.KnobPanel;
 public class RTLogger extends KnobPanel {
 
     public static interface Participant { void process(String[] input); }
-    @Getter @Setter private static Level level = Level.DEBUG;
+    @Getter @Setter private static Level level = Level.INFO;
     private record Log(String clazz, String msg, boolean warn) { }
     /** Status bar, last line of log */
     @Getter private static final JLabel ticker = new JLabel("", JLabel.LEFT);

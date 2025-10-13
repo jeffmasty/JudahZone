@@ -6,34 +6,30 @@ import java.awt.event.MouseEvent;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 
+import net.judah.JudahZone;
 import net.judah.gui.Pastels;
-import net.judah.looper.Looper;
 import net.judah.mixer.Channel;
 
 public class TogglePreset extends JButton {
-	
+
 	private final Channel channel;
-	private final Looper looper;
-	
-	public TogglePreset(Channel channel, Looper looper) {
+
+	public TogglePreset(Channel channel) {
 		super(" fx ");
 		this.channel = channel;
-		this.looper = looper;
 		addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent me) {
-				if (SwingUtilities.isRightMouseButton(me)) 
-					looper.syncFx(channel);
-				else 
+				if (SwingUtilities.isRightMouseButton(me))
+					JudahZone.getLooper().syncFx(channel);
+				else
 					channel.toggleFx();
 			}
 		});
-		update();
 	}
-	
-	
+
 	public void update() {
-		setBackground(channel.isPresetActive() ? Pastels.BLUE : 
-			looper.getFx().contains(channel) ? Pastels.YELLOW : null);
+		setBackground(channel.isPresetActive() ? Pastels.BLUE :
+			JudahZone.getLooper().getFx().contains(channel) ? Pastels.YELLOW : null);
 	}
-	
+
 }

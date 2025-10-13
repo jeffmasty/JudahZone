@@ -242,7 +242,7 @@ public class MidiGui extends KnobPanel implements Cmdr {
 	@Override
 	public void execute(Param p) {
 		if (p.cmd == Cmd.MPK)
-			MPKmini.instance.setCaptureTrack((PianoTrack)resolve(p.val));
+			MPKmini.instance.setMidiOut(resolve(p.val));
 	}
 
 	@Override

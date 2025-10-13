@@ -12,13 +12,14 @@ public class Constants {
 	public static int bufSize() { return WavConstants.JACK_BUFFER; }
 	public static float fps() { return WavConstants.FPS; }
 	/** Digital Interface name */
-	@Getter static String di = "UMC1820 MIDI 1"; //di = "Komplete ";
-	public static final String LEFT_PORT = "system:playback_1";
-	public static final String RIGHT_PORT = "system:playback_2";
-	public static final String GUITAR_PORT = "system:capture_5";
-	public static final String MIC_PORT = "system:capture_4";
-	public static final String AUX_PORT = "system:capture_1";
-	public static final String CRAVE_PORT = "system:capture_3";
+	@Getter static String di = "Komplete ";// "UMC1820 MIDI 1";
+	public static final String LEFT_OUT = "system:playback_1";
+	public static final String RIGHT_OUT = "system:playback_2";
+
+	public static final String GUITAR_PORT = "system:capture_1";
+	public static final String MIC_PORT = "system:capture_2";
+	public static final String CRAVE_PORT = "system:capture_4";
+	public static final String AUX_PORT = "system:capture_3";
 
 	public static final String GUITAR = "Gtr";
 	public static final String MIC = "Mic";
@@ -39,7 +40,6 @@ public class Constants {
 
 	/** milliseconds between checking the update queue */
 	public static final int GUI_REFRESH = 8;
-	public static final long DOUBLE_CLICK = 400;
 	public static final float TO_100 = 0.7874f; // 127 <--> 100
 
 	@Getter static float[] reverseLog = new float[100];

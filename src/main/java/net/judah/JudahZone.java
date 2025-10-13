@@ -27,6 +27,7 @@ import net.judah.gui.fx.FxPanel;
 import net.judah.gui.fx.MultiSelect;
 import net.judah.gui.knobs.MidiGui;
 import net.judah.gui.waves.WaveKnobs;
+import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
@@ -72,7 +73,6 @@ public class JudahZone extends BasicClient {
 	@Getter private static DrumMachine drumMachine;
 	@Getter private static MidiInstrument bass;
 	@Getter private static FluidSynth fluid;
-	@Getter private static Instrument aux;
 
 	@Getter private static DJJefe mixer;
 	@Getter private static Looper looper;
@@ -132,11 +132,12 @@ public class JudahZone extends BasicClient {
 				jackclient.registerPort("crave_in", AUDIO, JackPortIsInput), "Crave.png", midi.getCraveOut());
 		bass.getTracks().add(new PianoTrack(Trax.B, bass, clock, PianoTrack.MONOPHONIC));
 		tacos = new TacoTruck(fluid, bass, clock);
-		aux = new Instrument("Aux", Constants.AUX_PORT,
-				jackclient.registerPort("aux", AUDIO, JackPortIsInput), "Key.png");
+
+		// Instrument aux = new Instrument("Aux", Constants.AUX_PORT,
+		//		jackclient.registerPort("aux", AUDIO, JackPortIsInput), "Key.png");
 
 		// sequential order for the Mixer
-		instruments = new Zone(guitar, mic, drumMachine, bass, tacos.taco, fluid, aux);
+		instruments = new Zone(guitar, mic, drumMachine, bass, tacos.taco, fluid /*, aux*/);
 		EventQueue.invokeLater(() -> gui());
 	}
 
@@ -159,13 +160,14 @@ public class JudahZone extends BasicClient {
 		}
 
 		// main output
-		jack.connect(jackclient, outL.getName(), Constants.LEFT_PORT);
-		jack.connect(jackclient, outR.getName(), Constants.RIGHT_PORT);
+		jack.connect(jackclient, outL.getName(), Constants.LEFT_OUT);
+		jack.connect(jackclient, outR.getName(), Constants.RIGHT_OUT);
 	}
 
 	private void gui() {
 		looper = new Looper(instruments, mic, clock, mem);
 		seq = new Seq(drumMachine, bass, tacos, chords, sampler);
+
 		mixer = new DJJefe(clock, mains, looper, instruments, drumMachine, sampler, tacos.tracks.getFirst(), tacos.tracks.getLast());
 		midiGui = new MidiGui(midi, sampler, tacos, seq, setlists);
 		overview = new Overview(JUDAHZONE, clock, chords, setlists, seq, looper, mixer);
@@ -178,9 +180,15 @@ public class JudahZone extends BasicClient {
 		clock.setTempo(93);
 		drumMachine.init("Drumz");
 		Threads.timer(100, ()->tacos.init());
+    	// preload channel gui's
+    	for (LineIn i : instruments)
+        	i.getGui();
+		for (Loop l : looper)
+			l.getGui();
+
 		overview.newSong();
-		Fader.execute(Fader.fadeIn());
 		System.gc();
+		Fader.execute(Fader.fadeIn());
 		initialized = true;
 		////////////////////////////
 		// now the system is live //
@@ -202,7 +210,7 @@ public class JudahZone extends BasicClient {
 				guitar.getEq(), guitar.getFilter1(), guitar.getFilter2(), guitar.getCompression() };
 		for (Effect effect : fx)
 			effect.setActive(true);
-		looper.getLoopC().trigger();
+		looper.trigger(looper.getLoopC());
 		fluid.getLfo().setActive(true);
 		int timer = 777;
 		Threads.timer(timer, () -> {
@@ -215,7 +223,7 @@ public class JudahZone extends BasicClient {
 		Threads.timer(timer * 2 + 100, () -> {
 			if (midi.getJamstik().isActive())
 				midi.getJamstik().toggle();
-			looper.clear();
+			looper.delete();
 			looper.getSoloTrack().solo(false);
 			// looper.get(0).load("Satoshi2", true); // load loop from disk
 			mains.getReverb().setActive(false);
@@ -225,10 +233,9 @@ public class JudahZone extends BasicClient {
 			mains.getGain().setGain(restore);
 			// try { Tape.toDisk(sampler.get(7).getRecording(),
 			// new File("/home/judah/djShadow.wav"), sampler.get(7).getLength());
+			//	Threads.timer(timer * 4, () -> {
+			//		looper.delete(); }); // clear loop loaded from disk
 			// } catch (Throwable t) { RTLogger.warn("JudahZone.JIT", t); }
-		});
-		Threads.timer(timer * 4, () -> {
-			looper.clear(); // clear loop loaded from disk
 		});
 	}
 
@@ -268,11 +275,8 @@ public class JudahZone extends BasicClient {
 		}
 
 		// mix the live streams
-		for (Instrument ch : instruments.getInstruments()) {
-			if (ch.isOnMute())
-				continue;
-			ch.process(left, right); // w/ internal effects
-		}
+		for (Instrument ch : instruments.getInstruments())
+			ch.process(left, right);
 
 		// internal engines
 		drumMachine.process(left, right);

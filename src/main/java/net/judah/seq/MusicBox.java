@@ -28,27 +28,27 @@ import net.judah.seq.Edit.Type;
 import net.judah.seq.track.MidiTrack;
 
 public abstract class MusicBox extends JPanel implements Musician, Updateable, Floating {
-	protected static final Composite transparent = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);
+
 	public static enum DragMode { CREATE, TRANSLATE, SELECT }
+	protected static final Composite transparent = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);
 
 	@Getter protected final MidiTrack track;
 	protected final Track t;
 	protected final JudahClock clock;
 	protected final Measure scroll;
-	/** undo/redo */
-	protected ArrayList<Edit> stack = new ArrayList<>();
-	private int caret;
+	protected final TrackList<?> tracks;
 	/** absolute notes */
 	@Getter protected final Notes selected = new Notes();
+	protected final ArrayList<MidiPair> dragging = new ArrayList<>();
+	/** undo/redo */
+	protected ArrayList<Edit> stack = new ArrayList<>();
+
+	private int caret;
 	protected Prototype click;
 	protected Point drag = null;
 	protected DragMode mode = null;
-	protected final TrackList<?> tracks;
-
 	protected Prototype recent;
-	protected ArrayList<MidiPair> dragging = new ArrayList<>();
 	protected int width, height;
-
 
 	public MusicBox(MidiTrack midiTrack, TrackList<? extends MidiTrack> tracks) {
 		this.track = midiTrack;
@@ -59,10 +59,6 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		addMouseWheelListener(this);
-	}
-
-	@Override public final Prototype translate(Point p) {
-		return new Prototype(toData1(p), toTick(p));
 	}
 
 	@Override public void mouseDragged(MouseEvent mouse) {
@@ -79,26 +75,13 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 		}
 	}
 
-	@Override public void delete() {
-		push(new Edit(Type.DEL, selected));
-	}
-
-	@Override public void copy() {
-		tracks.getClipboard().copy(selected, track);
-	}
-
-
-	@Override public void paste() { // TODO differences in track Resolution
-		List<MidiPair> notes = tracks.getClipboard().paste(track);
-		push(new Edit(Type.NEW, notes));
-	}
-
+	@Override public abstract void mouseReleased(MouseEvent e); // subclass implement
+	@Override public abstract void mousePressed(MouseEvent e); // subclass implement;
 	@Override public final void mouseEntered(MouseEvent e) {TabZone.instance.requestFocusInWindow();}
 	@Override public void mouseMoved(MouseEvent e) { }
 	@Override public void mouseExited(MouseEvent e) { }
 	@Override public final void mouseClicked(MouseEvent e) { }
-	// public void mouseReleased(MouseEvent e) { } subclass implement
-	// public void mousePressed(MouseEvent e) { } subclass implement
+
 	@Override public final void mouseWheelMoved(MouseWheelEvent wheel) {
 		boolean up = wheel.getPreciseWheelRotation() < 0;
 
@@ -129,6 +112,24 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 		}
 		editDel(selected);
 		editAdd(replace);
+	}
+
+	@Override public final Prototype translate(Point p) {
+		return new Prototype(toData1(p), toTick(p));
+	}
+
+	@Override public void delete() {
+		push(new Edit(Type.DEL, selected));
+	}
+
+	@Override public void copy() {
+		tracks.getClipboard().copy(selected, track);
+	}
+
+
+	@Override public void paste() { // TODO differences in track Resolution
+		List<MidiPair> notes = tracks.getClipboard().paste(track);
+		push(new Edit(Type.NEW, notes));
 	}
 
 	protected void length(Edit e, boolean undo) {
@@ -173,16 +174,14 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 		resized(getWidth(), getHeight());
 	}
 
-	@Override
-	public void velocity(boolean up) {
+	@Override public void velocity(boolean up) {
 		float velocity = track.getAmp() + (up ? 0.05f : -0.05f);
 		if (velocity < 0)  velocity = 0;
 		if (velocity > 1)  velocity = 1;
 		track.setAmp(velocity);
 	}
 
-	@Override
-	public boolean undo() {
+	@Override public boolean undo() {
 		if (stack.size() <= caret || caret < 0) {
 			return false;
 		}
@@ -231,8 +230,7 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 	}
 
 	/** execute edit and add to undo stack */
-	@Override
-	public void push(Edit e) {
+	@Override public void push(Edit e) {
 		stack.add(e);
 		caret = stack.size() - 1;
 		execute(e);
@@ -244,8 +242,7 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 		return stack.get(caret);
 	}
 
-	@Override
-	public boolean redo() {
+	@Override public boolean redo() {
 		if (stack.size() <= caret + 1)
 			return false;
 		caret++;
@@ -253,8 +250,7 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 		return true;
 	}
 
-	@Override
-	public void selectNone() {
+	@Override public void selectNone() {
 		selected.clear();
 		repaint();
 	}

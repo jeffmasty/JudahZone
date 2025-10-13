@@ -6,11 +6,8 @@ import net.judah.omni.Recording;
 public interface PlayAudio {
 
 	public enum Type {
-		/** a sample */ ONE_SHOT,
-		/** strict sync to clock */ SYNC,
-		/** sync to clock but unknown measures at record start*/ BSYNC,
-		/** not sync'ed to clock */ FREE,
-		/** record a specific audio channel */ SOLO
+		/** play once */ ONE_SHOT,
+		/** play on repeat */ LOOP
 		}
 
 	void setRecording(Recording r);

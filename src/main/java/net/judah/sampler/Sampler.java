@@ -57,7 +57,7 @@ public class Sampler extends LineIn {
 		super(Sampler.class.getSimpleName(), Constants.STEREO);
 		for (int i = 0; i < STANDARD.length; i++) {
 			try {
-				samples.add(new Sample(STANDARD[i], i < 4 ? Type.FREE : Type.ONE_SHOT, this));
+				samples.add(new Sample(STANDARD[i], i < 4 ? Type.LOOP : Type.ONE_SHOT, this));
 			} catch (Exception e) {
 				RTLogger.warn(this, e);
 			}
@@ -66,7 +66,7 @@ public class Sampler extends LineIn {
 			stepSamples.add(new StepSample("Crickets", this, 4, 12));
 			stepSamples.add(new StepSample("Block", this, 4, 12));
 			stepSamples.add(new StepSample("Cowbell", this, 4, 12));
-			stepSamples.add(new StepSample("Clap", this, 4, 12));
+			stepSamples.add(new StepSample("Clap", this, 4, 6, 12));
 			stepSamples.add(new StepSample("Claves", this, 4, 10, 14));
 			stepSamples.add(new StepSample("Ride", this, 0, 4, 8, 12));
 			stepSamples.add(new StepSample("Tambo", this, 0, 2, 4, 6, 8, 10, 12, 14));

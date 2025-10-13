@@ -3,13 +3,17 @@ package net.judah.mixer;
 import static net.judah.gui.Gui.font;
 
 import java.awt.Color;
+import java.awt.Dimension;
 
+import javax.swing.JSlider;
 import javax.swing.JToggleButton;
 
-import net.judah.api.PlayAudio.Type;
+import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
+import net.judah.gui.Size;
 import net.judah.gui.Updateable;
 import net.judah.looper.Loop;
+import net.judah.looper.LoopType;
 import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
 import net.judah.midi.JudahClock;
@@ -23,20 +27,23 @@ public class LoopMix extends MixWidget implements Updateable {
 	public static final Color RECORDING = RED;
 	public static final Color MUTED = Color.BLACK;
 	public static final Color QUIET = Color.GRAY;
+	static final Dimension SWEEPER = new Dimension(16, Size.FADER_SIZE.height);
 
 	/** bars until recording stops */
 	private final Loop loop;
 	private final Looper looper;
 	private final JToggleButton rec = new JToggleButton("rec");
-	private String update;
+	private String text;
+	private final JSlider sweeper = new JSlider(JSlider.VERTICAL);
 
 	public LoopMix(Loop l, Looper looper) {
-		super(l, looper);
+		super(l);
+
 		this.loop = l;
 		this.looper = looper;
-		if (loop.getType() == Type.FREE)
+		if (looper.getType() == LoopType.FREE)
 			rec.setText("free");
-		rec.addActionListener(e -> loop.trigger());
+		rec.addActionListener(e -> looper.trigger(loop));
 		mute.addActionListener(e -> channel.setOnMute(!channel.isOnMute()));
 		if (loop instanceof SoloTrack) {
 			sync.setText("solo");
@@ -47,15 +54,18 @@ public class LoopMix extends MixWidget implements Updateable {
 		sidecar.add(font(rec));
 		sidecar.add(font(mute));
 		sidecar.add(font(sync));
+
+		// custom loop feedback:
+		bottom.add(Gui.resize(sweeper, SWEEPER));
 	}
 
 	@Override protected Color thisUpdate() {
-		if (update != null && loop.getStopwatch() >= 0) {
-			if (! title.getText().equals(update))
-				title.setText(update);
+		if (text != null && loop.getStopwatch() >= 0) {
+			if (! title.getText().equals(text))
+				title.setText(text);
 		}
 		else
-			staticTitle();
+			defaultText();
 
 		if (loop == looper.getSoloTrack() && looper.getSoloTrack().isSolo() )
 			sync.setBackground(CLOCKSYNC);
@@ -68,7 +78,7 @@ public class LoopMix extends MixWidget implements Updateable {
 			rec.setSelected(true);
 		else rec.setSelected(false);
 
-		if (loop.getType() == Type.FREE) {
+		if (looper.getType() == LoopType.FREE) {
 			if (! rec.getText().equals("free")) rec.setText("free");
 		} else if (! rec.getText().equals("rec"))
 			rec.setText("rec");
@@ -83,6 +93,13 @@ public class LoopMix extends MixWidget implements Updateable {
 		mute.setBackground(loop.isOnMute() ? PURPLE : null);
 		if (mute.isSelected() != channel.isOnMute())
 			mute.setSelected(channel.isOnMute());
+
+
+
+		if (loop.isPlaying())
+			sweep();
+		else if (sweeper.isVisible())
+			sweeper.setVisible(false);
 
 		Color bg = PLAIN;
 		if (loop.isRecording())
@@ -100,32 +117,37 @@ public class LoopMix extends MixWidget implements Updateable {
 		return bg;
 	}
 
-	private void staticTitle() {
+	private void defaultText() {
 		String text;
-		if (loop == looper.getLoopA()) {
-			int countdown = JudahClock.getLength();
-			text = countdown < 10 ? "-" + countdown + "-" : "" + countdown;
+		if (loop == looper.getPrimary() && looper.getType() != LoopType.FREE) {
+			int val = looper.getMeasures();
+			text = val < 10 ? "-" + val + "-" : "" + val;
+		}
+		else if (loop == looper.getLoopA()) {
+			int val = JudahClock.getLength();
+			text = val < 10 ? "-" + val + "-" : "" + val;
 		}
 		else {
 			text = channel.getName();
-			if (looper.getPrimary() != null && loop.getType() != Type.FREE && loop.factor() > 1)
-				text = (int)loop.factor() + "x"; // duplications
+			if (looper.getPrimary() != null && looper.getType() != LoopType.FREE && loop.getFactor() > 1)
+				text = (int)loop.getFactor() + "x"; // duplications
 		}
-
 
 		if (!title.getText().equals(text))
 			title.setText(text);
 	}
 
 	public void clear() {
-		update = null;
+		text = null;
 		MainFrame.update(this);
 	}
 
+	/** display  currentBar/total */
 	public void measureFeedback() {
-		int count = loop.getStopwatch() + 1;
+		int count = loop.getStopwatch();
+		count++;
 		String txt;
-		switch (loop.getType()) {
+		switch (looper.getType()) {
 			case BSYNC:
 				txt = "+" + count;
 				break;
@@ -133,19 +155,26 @@ public class LoopMix extends MixWidget implements Updateable {
 				txt = " ⏺ ";
 				break;
 			default:
-				txt = "<html><u>" + count + "<br/></u>" + loop.getMeasures() + "</html>";
+				txt = "<html><u>" + count + "<br/></u>" + (int)(looper.getMeasures() * loop.getFactor()) + "</html>";
 		}
-		setFeedback(txt);
+		setText(txt);
 	}
 
-	public void setFeedback(String string) {
-		if (update != null && update.equals(string))
+	public void setText(String string) {
+		if (text != null && text.equals(string))
 			return;
-		if (update == null && string == null)
+		if (text == null && string == null)
 			return;
-		update = string;
+		text = string;
 		MainFrame.update(this);
 	}
 
+	public void sweep() {
+		sweeper.setValue((int)(100f - 100f * (loop.getTapeCounter().get() / (float)loop.getLength())));
+		if (!sweeper.isVisible()) {
+			sweeper.setVisible(true);
+			bottom.doLayout();
+		}
+	}
 
 }

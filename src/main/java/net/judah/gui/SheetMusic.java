@@ -10,15 +10,15 @@ import javax.swing.JLabel;
 
 public class SheetMusic extends JLabel {
 
+	public SheetMusic(ImageIcon icon) {
+		setIcon(icon);
+	}
+
 	public SheetMusic(String resourceFilename) {
 		URL image = getClass().getResource("/sheets/" + resourceFilename);
 		setIcon(new ImageIcon(image));
 	}
-	
-	public SheetMusic(ImageIcon icon) {
-		setIcon(icon);
-	}
-	
+
 	@Override
 	protected void paintComponent(Graphics g) {
         ImageIcon icon = (ImageIcon) getIcon();
@@ -26,30 +26,30 @@ public class SheetMusic extends JLabel {
             drawScaledImage(icon.getImage(), this, g);
         }
     }
-	
+
 	public static void drawScaledImage(Image image, Component canvas, Graphics g) {
         int imgWidth = image.getWidth(null);
         int imgHeight = image.getHeight(null);
-         
+
         double imgAspect = (double) imgHeight / imgWidth;
- 
+
         int canvasWidth = canvas.getWidth();
         int canvasHeight = canvas.getHeight();
-         
+
         double canvasAspect = (double) canvasHeight / canvasWidth;
- 
+
         int x1 = 0; // top left X position
         int y1 = 0; // top left Y position
         int x2 = 0; // bottom right X position
         int y2 = 0; // bottom right Y position
-         
+
         if (imgWidth < canvasWidth && imgHeight < canvasHeight) {
             // the image is smaller than the canvas
             x1 = (canvasWidth - imgWidth)  / 2;
             y1 = (canvasHeight - imgHeight) / 2;
             x2 = imgWidth + x1;
             y2 = imgHeight + y1;
-             
+
         } else {
             if (canvasAspect > imgAspect) {
                 y1 = canvasHeight;
@@ -65,7 +65,7 @@ public class SheetMusic extends JLabel {
             x2 = canvasWidth + x1;
             y2 = canvasHeight + y1;
         }
- 
+
         g.drawImage(image, x1, y1, x2, y2, 0, 0, imgWidth, imgHeight, null);
     }
 }

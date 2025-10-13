@@ -12,8 +12,8 @@ public interface WavConstants {
 
 	int DISK_BUFFER = 4096; //  read/write
 	/** 4 frames for frequency discernment */
-	int FFT_BUFFER = 4096;
-	int FFT_WINDOW = JACK_BUFFER;
+//	int FFT_BUFFER = 4096;
+//	int FFT_WINDOW = JACK_BUFFER;
 	int HALF_BUFFER = DISK_BUFFER / 2;
 	int FMT_CHUNK_ID = 0x20746D66;
 	int DATA_CHUNK_ID = 0x61746164;
