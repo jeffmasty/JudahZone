@@ -91,6 +91,11 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable 
 		throw new InvalidParameterException("remove not implemented");
 	}
 
+	/** zeros-out loop recordings, ignore super.clear() */
+	@Override public void clear() {
+		throw new RuntimeException();
+	}
+
 	void setPrimary(Loop loop) {
 		primary = loop;
 		setRecordedLength(primary.seconds());
@@ -114,11 +119,6 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable 
 			recordedLength = recordedLength.substring(0, 4);
 		recordedLength += "s";
 		MainFrame.update(this);
-	}
-
-	/** zeros-out loop recordings, ignore super.clear() */
-	@Override public void clear() {
-		throw new RuntimeException();
 	}
 
 	public void delete() {
@@ -230,8 +230,13 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable 
 		stream().filter(loop -> loop.isPlaying()).forEach(loop -> loop.rewind());
 	}
 
-	@Override
-	public void update(Property prop, Object value) {
+	@Override public void update() {
+		stream().filter(loop -> loop.isPlaying())
+			.forEach(loop -> loop.getDisplay().sweep());
+		loopWidget.update();
+	}
+
+	@Override public void update(Property prop, Object value) {
 		//if (primary != null) {
 
 		if (prop == Property.BOUNDARY && hasRecording())
@@ -290,13 +295,6 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable 
 		l.capture(false);
 		if (primary == null)
 			setPrimary(l);
-	}
-
-	@Override
-	public void update() {
-		stream().filter(loop -> loop.isPlaying())
-			.forEach(loop -> loop.getDisplay().sweep());
-		loopWidget.update();
 	}
 
 	public void trigger() {

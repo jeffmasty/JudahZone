@@ -10,6 +10,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -19,12 +21,13 @@ import javax.swing.SwingUtilities;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.gui.Detached.Floating;
+import net.judah.gui.widgets.CloseableTabbedPane;
 import net.judah.omni.Threads;
 import net.judah.seq.Trax;
 import net.judah.seq.beatbox.BeatBox;
 import net.judah.seq.beatbox.DrumZone;
 import net.judah.seq.chords.ChordSheet;
-import net.judah.seq.piano.PianoBox;
+import net.judah.seq.piano.Piano;
 import net.judah.seq.piano.PianoView;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.MidiTrack;
@@ -35,7 +38,7 @@ import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
-public class TabZone extends JTabbedPane {
+public class TabZone extends CloseableTabbedPane {
 	public static TabZone instance;
 
 	@Getter private final HashSet<Component> frames = new HashSet<Component>();
@@ -59,15 +62,15 @@ public class TabZone extends JTabbedPane {
         setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 
         addTab(JudahZone.JUDAHZONE, overview);
-        addTab(drumz.getName(), drumz);
-		addTab(sheetMusic.getName(), sheetMusic);
+        addTab(drumz.getName(), drumz, true);
+		addTab(sheetMusic.getName(), sheetMusic, true);
 	}
 
 	public void update(MidiTrack t) {
 		if (t.isDrums())
 			getDrummer((DrumTrack)t).repaint();
 		else {
-			PianoBox p = getPianist((PianoTrack)t);
+			Piano p = getPianist((PianoTrack)t);
 			if (p != null)
 				p.repaint();
 		}
@@ -77,18 +80,28 @@ public class TabZone extends JTabbedPane {
 		instance._edit(track);
 	}
 	private void _edit(MidiTrack track) {
-		if (track.isDrums()) {
-			drumz.setCurrent(track);
-			int idx = indexOfComponent(drumz);
-			if (idx >= 0)
-				setSelectedIndex(idx);
-			else if (drumz.isShowing())
-				drumz.requestFocus();
-			else {
-				addTab(drumz.getName(), drumz);
-				setSelectedComponent(drumz);
+
+		if (track instanceof DrumTrack drumTrack) {
+			if (drumz.getTracks().contains(track)) {
+				drumz.setCurrent(track);
+				int idx = indexOfComponent(drumz);
+				if (idx >= 0)
+					setSelectedIndex(idx);
+				else if (drumz.isShowing())
+					drumz.requestFocus();
+				else {
+					addTab(drumz.getName(), drumz, true);
+					setSelectedComponent(drumz);
+				}
+				MainFrame.setFocus(track);
 			}
-			MainFrame.setFocus(track);
+			else {
+				Box box = new Box(BoxLayout.Y_AXIS);
+				box.add(new BeatBox(drumTrack, null));
+
+				addTab("import",  box, true);
+			}
+
 		}
 		else {
 			pianoTrack((PianoTrack)track);
@@ -128,7 +141,7 @@ public class TabZone extends JTabbedPane {
 		return instance.drumz.getView(t).getGrid();
 	}
 
-	public static PianoBox getPianist(PianoTrack t) {
+	public static Piano getPianist(PianoTrack t) {
 		if (instance.getPiano(t) != null)
 			return instance.getPiano(t).getGrid();
 		return null;
@@ -164,18 +177,6 @@ public class TabZone extends JTabbedPane {
 		show(view);
 	}
 
-	public void detach(Component c) { // drumzone, chords, pianoview
-		if (c == null || c == overview)
-			return;
-		setSelectedIndex(0);
-		remove(c);
-		new Detached(c, this);
-	}
-
-	public void detach() {
-		detach(getSelectedComponent());
-	}
-
 	private void focus(JFrame f) {
 		f.setExtendedState(JFrame.MAXIMIZED_BOTH);
 		f.setVisible(true);
@@ -198,7 +199,7 @@ public class TabZone extends JTabbedPane {
 			title(sheetMusic, sheetMusic.getName());
 
     		if (indexOfComponent(sheetMusic) < 0 && !frames.contains(sheetMusic))
-    			addTab(sheetMusic.getName(), sheetMusic);
+    			addTab(sheetMusic.getName(), sheetMusic, true);
 
     		if (focus)
     			show(sheetMusic);
@@ -228,7 +229,7 @@ public class TabZone extends JTabbedPane {
 		else {
 			if (o instanceof Floating tab)
 				tab.resized(TAB_SIZE.width, TAB_SIZE.height);
-			addTab(o.getName(), o);
+			addTab(o.getName(), o, true);
 			setSelectedComponent(o);
 		}
     }
@@ -264,5 +265,19 @@ public class TabZone extends JTabbedPane {
 			super.setSelectedIndex(index);
 		getSelectedComponent().requestFocusInWindow();
 	}
+
+	public void detach(Component c) { // drumzone, chords, pianoview
+		if (c == null || c == overview)
+			return;
+		setSelectedIndex(0);
+		remove(c);
+		new Detached(c, this);
+	}
+
+	@Override
+	public void detach() {
+		detach(getSelectedComponent());
+	}
+
 }
 

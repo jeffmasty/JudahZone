@@ -12,7 +12,6 @@ import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 
 
-
 public class Mutes extends JPanel {
 	static final int PADS = DrumType.values().length;
 
@@ -29,9 +28,6 @@ public class Mutes extends JPanel {
 		setLayout(new GridLayout(PADS, 1, 0, 1));
 		for (DrumType t : DrumType.values())
 			add(new Lbl(t.name()));
-		//setMaximumSize(new Dimension(2 * DrumZone.MUTES_CUTOUT, 2000));
 	}
-
-
 
 }

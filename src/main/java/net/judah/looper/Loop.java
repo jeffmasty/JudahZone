@@ -32,32 +32,28 @@ import net.judah.util.RTLogger;
 
 
 public class Loop extends Channel implements RecordAudio, Runnable {
-	public static final float STD_BOOST = 3;
-	public static final float DRUM_BOOST = 0.25f;
 	public static final int INIT = 8192; // nice chunk of preloaded blank tape
+	public static final float STD_BOOST = 3;
+	public static final float DRUM_BOOST = 1f;
 
 	protected final Looper looper;
 	protected final JudahClock clock;
     protected final Zone sources;
 
-	@Getter protected Recording tape = new Recording(); // RMS Recording?
-	@Getter protected final AtomicInteger tapeCounter = new AtomicInteger(0);
-    /** current frame */
+	@Getter private Recording tape = new Recording(); // RMS Recording?
+    @Getter protected final LoopMix display;
+	@Getter private final AtomicInteger tapeCounter = new AtomicInteger(0);
+	/** current frame */
 	private float[][] playBuffer;
     private int current;
-
-    @Getter protected final LoopMix display;
     @Getter private boolean isRecording;
-
     @Getter private boolean dirty = false;
     /** used frames of AudioTrack's tape vector */
     @Getter private int length;
     @Getter private float factor = 1f;
-
     @Getter private boolean timer;
 	@Getter private int stopwatch;
 	private int boundary;
-
 	private boolean leadIn;
 	@Getter protected boolean drumTrack; // loopD not muted on verse/chorus changes // TODO setter/feedback
 

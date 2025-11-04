@@ -2,10 +2,10 @@ package net.judah.fx;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Scanner;
 
-import net.judah.JudahZone;
-import net.judah.gui.settable.Presets;
+import net.judah.mixer.Channel;
 import net.judah.omni.Threads;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
@@ -61,7 +61,7 @@ public class PresetsDB extends ArrayList<Preset> {
 		if (standard == null) {
 			standard = byName(DEFAULT);
 			if (standard == null)
-				standard = JudahZone.getMains().toPreset(DEFAULT);
+				standard = new Preset("null", new ArrayList<String>());
 		}
 		return standard;
 	}
@@ -84,7 +84,7 @@ public class PresetsDB extends ArrayList<Preset> {
 		return toArray(new Preset[size()]);
 	}
 
-	public void replace(Presets channel) {
+	public void replace(Channel channel) {
 		int idx = indexOf(channel.getPreset());
 		if (idx < 0) {
 			RTLogger.warn(this, "Unknown Preset on " + channel.getName()
@@ -94,9 +94,21 @@ public class PresetsDB extends ArrayList<Preset> {
 		Preset p = channel.toPreset(channel.getPreset().getName());
         set(idx, p);
         save();
-        RTLogger.log(this, "saved " + p.getName() + " from " + channel.getName() +
-                " with " + p.size() + " FX");
+        feedback("saved", p, channel);
 	}
 
+	public void add(Channel ch, String name) {
+		Preset p = ch.toPreset(name);
+        add(p);
+        Collections.sort(this);
+        save();
+        ch.getPresets().refill(array(), ch.getPreset());
+        feedback("created", p, ch);
+	}
+
+	private void feedback(String mode, Preset p, Channel ch) {
+        RTLogger.log(this, mode + " " + p.getName() + " from " + ch.getName() +
+                " with " + p.size() + " FX");
+	}
 }
 

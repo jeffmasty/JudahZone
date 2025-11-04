@@ -20,13 +20,12 @@ public class Setlist extends ArrayList<File> {
 
 	public Setlist(File f) throws IOException {
 		source = f;
-		if (f.isDirectory()) {
-			for (File song : Folders.sort(f))
-				add(song);
-		} else if (f.isFile()) {
+		// initial validation
+		if (f.isFile()) {
 			Setlist disk = (Setlist)JsonUtil.readJson(f, Setlist.class);
 			addAll(disk);
-		} else throw new IOException(f == null ? "null" : f.getAbsolutePath());
+		} else if (f.isDirectory() == false)
+			throw new IOException(f == null ? "null" : f.getAbsolutePath());
 	}
 
 	public boolean isCustom() {
@@ -51,11 +50,23 @@ public class Setlist extends ArrayList<File> {
 		} catch (IOException e) {RTLogger.warn(this, e.getMessage());}
 	}
 
+	public ArrayList<File> list() {
+		if (source.isDirectory()) {
+			ArrayList<File> result = new ArrayList<File>();
+			for (File song : Folders.sort(source)) // fresh updates (new songs)
+				result.add(song);
+			return result;
+		}
+		return this;
+	}
+
 	public File[] array() {
-		File[] result = new File[size()];
-		for (int i = 0; i < size(); i++)
-			result[i] = get(i);
+		ArrayList<File> list = list();
+		File[] result = new File[list.size()];
+		for (int i = 0; i < list.size(); i++)
+			result[i] = list.get(i);
 		return result;
 	}
+
 
 }

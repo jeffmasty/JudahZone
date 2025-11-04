@@ -283,7 +283,7 @@ public class Delay implements TimeEffect {
 	@Override
 	public void sync(float unit) {
 		float msec = 0.001f * (unit + unit * TimeEffect.indexOf(type));
-		setDelayTime(msec);
+		setDelayTime(2 * msec);
 	}
 
 }

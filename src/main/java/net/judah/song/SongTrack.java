@@ -23,13 +23,13 @@ import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.Programmer;
 
- // TODO MouseWheel listener -> change pattern?
+/**  show/change MidiTrack state */
 public class SongTrack extends JPanel implements Size {
 	private static final Dimension COMPUTER = new Dimension(204, 27);
 
 	@Getter private final MidiTrack track;
 
-	//  show/change MidiTrack state
+	// TODO MouseWheel listener -> change pattern?
 	public SongTrack(MidiTrack t) {
 		this.track = t;
 		Programmer computer = new Programmer(track);

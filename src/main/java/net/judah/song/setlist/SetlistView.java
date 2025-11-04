@@ -151,7 +151,7 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 
 	private void renew() {
 		DefaultListModel<File> model = new DefaultListModel<>();
-		model.addAll(setlist);
+		model.addAll(setlist.list());
 		jsongs.setModel(model);
 	}
 
@@ -177,8 +177,8 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 		int move = jsongs.getSelectedIndex() + (up ? -1 : 1);
 		if (move < 0) return;
 		File f = setlist.remove(jsongs.getSelectedIndex());
-		if (move > setlist.size())
-			move = setlist.size();
+		if (move > setlist.list().size())
+			move = setlist.list().size();
 		setlist.add(move, f);
 		renew();
 		jsongs.setSelectedIndex(move);

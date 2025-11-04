@@ -40,7 +40,7 @@ public class Beatstep implements Controller {
 
 		int data1 = midi.getData1();
 		if (Midi.isNote(midi)) { // Pads
-			// GUITAR, 45(mic), 46(drums), 47(synth1), 48(synth1), 49(bass), 50(fluid), MAINS,
+			// GUITAR, 45(mic), 46(bass), 47(synth1), 48(synth2), 49(fluid), 50(drums), MAINS,
 			// LOOPA, 37(loopB), 38(loopC),  LOOPD,     KITS,       RECORD,   FX,       FADER
 			if (data1 == KITS) {
 				if (!Midi.isNoteOn(midi)) return true;
@@ -88,7 +88,7 @@ public class Beatstep implements Controller {
 		if (Midi.isCC(midi)) {
 			int data2 = midi.getData2();
 			if (data1 == TEMPO_KNOB) {
-				float tempo = getClock().getTempo() + (data2 > 64 ? -2 : 2); // a little wonky
+				float tempo = getClock().getTempo() + (data2 > 64 ? -1 : 1); // a little wonky
 				getClock().setTempo(tempo);
 				return true;
 			}
@@ -132,17 +132,18 @@ public class Beatstep implements Controller {
 	private Channel channel(int data1) {
 		if (data1 < LOOPA || data1 > MAINS)
 			return null;
-		else {
-			if (data1 == MAINS)
-				return getMains();
-			if (data1 == MAINS -1)
-				return getTacos().tracks.getFirst();
-			else if (data1 >= GUITAR)
-
-				return getInstruments().get(data1 - GUITAR);
-			else
-				return getLooper().get(data1 - LOOPA);
-		}
+		if (data1 == MAINS)
+			return getMains();
+		if (data1 == MAINS - 1)
+			return getDrumMachine();
+		if (data1 == MAINS - 2)
+			return getFluid();
+		if (data1 == MAINS - 3)
+			return getTacos().tk2;
+		if (data1 >= GUITAR)
+			return getInstruments().get(data1 - GUITAR);
+		else
+			return getLooper().get(data1 - LOOPA);
 	}
 
 }

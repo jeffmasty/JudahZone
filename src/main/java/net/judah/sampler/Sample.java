@@ -14,7 +14,6 @@ public class Sample extends BasicPlayer {
 	@Override
 	public void play(boolean onOrOff) {
 		playing = onOrOff;
-//		MainFrame.update(this);
 	}
 
 	/** load preset by name (without .wav) */

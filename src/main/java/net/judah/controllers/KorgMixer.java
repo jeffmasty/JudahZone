@@ -6,7 +6,6 @@ import java.util.List;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.drumkit.DrumKit;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
@@ -14,7 +13,9 @@ import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.seq.Seq;
+import net.judah.seq.Trax;
 import net.judah.seq.arp.Arp;
+import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.song.Scene;
 
@@ -58,25 +59,28 @@ public class KorgMixer implements Controller {
 		Seq seq = getSeq();
 
 		if (data1 >= 0 && data1 < 8) { // Main Faders
-			Channel ch = target(data1);
+			Channel ch = fader(data1);
 			ch.getGain().set(Gain.VOLUME, data2);
 			MainFrame.update(ch);
 		}
 
 		// knobs = drumkit or synths gain
 		else if (data1 >= knoboff && data1 < knoboff + 4) {
-			DrumKit kit = getDrumMachine().getTracks().get(data1 - knoboff).getKit();
-			kit.getGain().set(Gain.VOLUME, data2);
-			MainFrame.update(kit);
+			getDrumMachine().getTracks().get(data1 - knoboff).setAmp(data2 * .01f);
 		}
 		else if (data1 >= knoboff + 4 && data1 < knoboff + 8) {
-			volKnob(data1 - (knoboff + 4), data2);
+			ampKnob(data1 - (knoboff + 4), data2);
 		}
 		else if (data2 > 0 && data1 >= soff && data1 < soff + 8) { // play/stop sequencer tracks
-			seq.get(data1 - soff).trigger();
+			if (data1 < soff + 4)
+				seq.get(data1 - soff).trigger();
+			else if (data1 == soff + 4)
+				seq.byName(Trax.TK2.toString()).trigger();
+			else
+				getFluid().getTracks().get(data1 - soff - 5).trigger();
 		}
 		else if (data2 > 0 && data1 >= moff && data1 < moff + 8) { // MUTE/RECORD
-			Channel ch = target(data1 - moff);
+			Channel ch = mutes(data1 - moff);
 			if (ch == getMic())
 				((LineIn)ch).setMuteRecord(!((LineIn)ch).isMuteRecord());
 			else if (ch == getGuitar()) // swap
@@ -84,14 +88,9 @@ public class KorgMixer implements Controller {
 			else
 				ch.setOnMute(!ch.isOnMute());
 		}
-		else if (data2 > 0 && data1 >= roff && data1 < roff + 8) { // LAUNCH SCENE
-			int idx = data1 - roff;
 
-			List<Scene> scenes = getOverview().getSong().getScenes();
-			if (scenes.size() > idx)
-				getOverview().setOnDeck(scenes.get(idx));
-			else if (idx == 6 || idx == 7) // double duty: launch Fluid+ tracks
-				seq.get(idx + 2).trigger();
+		else if (data2 > 0 && data1 >= roff && data1 < roff + 8) { // LAUNCH SCENE
+			launchScene(data1 - roff);
 		}
 
 		else if (data1 == SET.getVal() && data2 != 0) { // Run SettableCombo or hide modal dialog
@@ -132,30 +131,50 @@ public class KorgMixer implements Controller {
 		return true;
 	}
 
-	private void volKnob(int idx, int data2) {
-		Channel ch = getTacos().taco;
-		switch (idx) {
-			case 0: ch = getTacos().taco; break;
-			case 1: ch = getTacos().tracks.getFirst(); break;
-			case 2: ch = getTacos().tracks.get(1); break;
-			case 3: ch = getFluid(); break;
-			}
-		ch.getGain().set(Gain.VOLUME, data2);
-		MainFrame.update(ch);
+	private void launchScene(int idx) {
+		if (idx == 7) {
+			getSeq().byName(Trax.B.toString()).toggle();
+			return;
+		}
+		List<Scene> scenes = getOverview().getSong().getScenes();
+		getOverview().setOnDeck(scenes.size() > idx ? scenes.get(idx) : scenes.getLast());
 
 	}
 
-	private Channel target(int idx) {
+	private void ampKnob(int idx, int data2) {
+		MidiTrack track =  switch (idx) {
+			case 1 -> getFluid().getTracks().get(0);
+			case 2 -> getFluid().getTracks().get(1);
+			case 3 -> getFluid().getTracks().get(2);
+			default -> getTacos().tk2.getTrack();
+		};
+		track.setAmp(data2 * .01f);
+	}
+
+	private Channel fader(int idx) {
 		if (idx < 4)
 			return getLooper().get(idx);
 		if (idx == 5)
-			return getMic();
+			return getFluid();
 		if (idx == 6)
 			return getDrumMachine();
 		if (idx == 7) {
 			return getMains();
 		}
-		return getGuitar();
+		return getTacos().taco;
+	}
+
+	private Channel mutes(int idx) {
+		if (idx < 4)
+			return getLooper().get(idx);
+		if (idx == 5)
+			return getBass();
+		if (idx == 6)
+			return getDrumMachine();
+		if (idx == 7) {
+			return getMains();
+		}
+		return getMic();
 	}
 
 }

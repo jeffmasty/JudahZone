@@ -1,5 +1,6 @@
 package net.judah;
 
+import static net.judah.util.Constants.*;
 import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsInput;
 import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsOutput;
 import static org.jaudiolibs.jnajack.JackPortType.AUDIO;
@@ -50,7 +51,6 @@ import net.judah.song.setlist.Setlists;
 import net.judah.synth.fluid.FluidSynth;
 import net.judah.synth.taco.SynthDB;
 import net.judah.synth.taco.TacoTruck;
-import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.Memory;
 import net.judah.util.RTLogger;
@@ -89,7 +89,7 @@ public class JudahZone extends BasicClient {
 	/** midiTrack-Controlled-JudahSynth-Oscillators */
 	@Getter private static TacoTruck tacos;
 	@Getter private static Zone instruments;
-	@Getter private static final Memory mem = new Memory(Constants.STEREO, Constants.bufSize());
+	@Getter private static final Memory mem = new Memory(STEREO, bufSize());
 
 	public JudahZone() throws Exception {
 		super(JUDAHZONE);
@@ -100,6 +100,7 @@ public class JudahZone extends BasicClient {
 
 	public static void main(String[] args) {
 		DOMConfigurator.configure(Folders.getLog4j().getAbsolutePath());
+		// RTLogger.setLevel(Level.DEBUG);
 		try {
 			new JudahZone();
 		} catch (Exception e) { e.printStackTrace(); }
@@ -115,20 +116,20 @@ public class JudahZone extends BasicClient {
 		sampler = new Sampler();
 		chords = new ChordTrack(clock);
 		drumMachine = new DrumMachine(clock, mains);
-		guitar = new Instrument(Constants.GUITAR, Constants.GUITAR_PORT,
+		guitar = new Instrument(GUITAR, GUITAR_PORT,
 				jackclient.registerPort("guitar", AUDIO, JackPortIsInput), "Guitar.png");
-		mic = new Instrument(Constants.MIC, Constants.MIC_PORT,
+		mic = new Instrument(MIC, MIC_PORT,
 				jackclient.registerPort("mic", AUDIO, JackPortIsInput), "Microphone.png");
 
 		while (midi.getFluidOut() == null)
 			Threads.sleep(20); // wait while midi thread creates ports
-		fluid = new FluidSynth(Constants.sampleRate(), midi.getFluidOut(), clock,
+		fluid = new FluidSynth(sampleRate(), midi.getFluidOut(), clock,
 				jackclient.registerPort("fluidL", AUDIO, JackPortIsInput),
 				jackclient.registerPort("fluidR", AUDIO, JackPortIsInput));
 
 		while (midi.getCraveOut() == null)
 			Threads.sleep(20);
-		bass = new MidiInstrument(Constants.BASS, Constants.CRAVE_PORT,
+		bass = new MidiInstrument(BASS, CRAVE_PORT,
 				jackclient.registerPort("crave_in", AUDIO, JackPortIsInput), "Crave.png", midi.getCraveOut());
 		bass.getTracks().add(new PianoTrack(Trax.B, bass, clock, PianoTrack.MONOPHONIC));
 		tacos = new TacoTruck(fluid, bass, clock);
@@ -137,7 +138,7 @@ public class JudahZone extends BasicClient {
 		//		jackclient.registerPort("aux", AUDIO, JackPortIsInput), "Key.png");
 
 		// sequential order for the Mixer
-		instruments = new Zone(guitar, mic, drumMachine, bass, tacos.taco, fluid /*, aux*/);
+		instruments = new Zone(guitar, mic, bass, tacos.taco, fluid, drumMachine );
 		EventQueue.invokeLater(() -> gui());
 	}
 
@@ -160,16 +161,16 @@ public class JudahZone extends BasicClient {
 		}
 
 		// main output
-		jack.connect(jackclient, outL.getName(), Constants.LEFT_OUT);
-		jack.connect(jackclient, outR.getName(), Constants.RIGHT_OUT);
+		jack.connect(jackclient, outL.getName(), LEFT_OUT);
+		jack.connect(jackclient, outR.getName(), RIGHT_OUT);
 	}
 
 	private void gui() {
 		looper = new Looper(instruments, mic, clock, mem);
-		seq = new Seq(drumMachine, bass, tacos, chords, sampler);
+		seq = new Seq(drumMachine, tacos, chords, sampler);
 
-		mixer = new DJJefe(clock, mains, looper, instruments, drumMachine, sampler, tacos.tracks.getFirst(), tacos.tracks.getLast());
-		midiGui = new MidiGui(midi, sampler, tacos, seq, setlists);
+		mixer = new DJJefe(clock, mains, looper, instruments, drumMachine, sampler, tacos.tk2);
+		midiGui = new MidiGui(clock, midi.getJamstik(), sampler, tacos, setlists);
 		overview = new Overview(JUDAHZONE, clock, chords, setlists, seq, looper, mixer);
 		fxRack = new FxPanel(selected);
 		frame = new MainFrame(JUDAHZONE, clock, fxRack, mixer, seq,

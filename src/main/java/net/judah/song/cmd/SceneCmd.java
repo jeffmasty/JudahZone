@@ -3,11 +3,11 @@ package net.judah.song.cmd;
 import lombok.Getter;
 import net.judah.JudahZone;
 
-public class SceneProvider implements Cmdr {
+public class SceneCmd implements Cmdr {
 
-	@Getter public static final SceneProvider instance = new SceneProvider();
+	@Getter public static final SceneCmd instance = new SceneCmd();
 
-	private SceneProvider() { }
+	private SceneCmd() { }
 
 	private String[] keys;
 
@@ -24,7 +24,6 @@ public class SceneProvider implements Cmdr {
 		for (int i = 0; i < size; i++)
 			keys[i] = "" + i;
 		return keys;
-
 	}
 
 }

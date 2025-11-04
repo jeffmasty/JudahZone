@@ -4,15 +4,11 @@ import static net.judah.JudahZone.getSeq;
 import static net.judah.gui.Size.COMBO_SIZE;
 import static net.judah.gui.Size.MEDIUM_COMBO;
 
-import java.awt.EventQueue;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
-import javax.sound.midi.MidiEvent;
-import javax.sound.midi.ShortMessage;
-import javax.sound.midi.Track;
 import javax.swing.AbstractButton;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -21,10 +17,11 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JRadioButtonMenuItem;
+import javax.swing.SwingUtilities;
 
-import net.judah.JudahZone;
 import net.judah.gui.Actionable;
 import net.judah.gui.Gui;
+import net.judah.gui.MainFrame;
 import net.judah.gui.PlayWidget;
 import net.judah.gui.RecordWidget;
 import net.judah.gui.Updateable;
@@ -32,8 +29,11 @@ import net.judah.gui.settable.Folder;
 import net.judah.gui.settable.Program;
 import net.judah.gui.widgets.Btn;
 import net.judah.omni.Icons;
+import net.judah.seq.Edit;
+import net.judah.seq.Edit.Type;
+import net.judah.seq.MidiPair;
 import net.judah.seq.MusicBox;
-import net.judah.seq.Notes;
+import net.judah.seq.Prototype;
 import net.judah.seq.Transpose;
 import net.judah.util.RTLogger;
 
@@ -57,19 +57,27 @@ public abstract class TrackMenu extends Box implements MouseListener, Updateable
 	protected final JMenuBar menu = new JMenuBar();
 	protected final JMenu file;
 	protected final JMenu edit = new JMenu("Edit");
+	protected final JMenu tools = new JMenu("Tools");
+	private final String a;
+	private final String b;
+
 
 	public TrackMenu(MusicBox g) {
 		super(BoxLayout.X_AXIS);
-		instances.add(this);
 		grid = g;
 		track = g.getTrack();
-		addMouseListener(this);
 		file = new JMenu(track.getName());
+		a = track.isDrums() ? "Left" : "Top";
+		b = track.isDrums() ? "Right" : "Bottom";
+		addMouseListener(this);
+
+		tools();
 		if (track.isDrums())
 			file.setFont(Gui.BOLD12);
 
 		menu.add(fileMenu());
 		if (track.isSynth()) {
+			menu.add(tools);
 			barMenu(edit);
 			menu.add(edit);
 		}
@@ -85,7 +93,8 @@ public abstract class TrackMenu extends Box implements MouseListener, Updateable
 		add(Gui.resize(new Folder(track), track.isSynth()? COMBO_SIZE : MEDIUM_COMBO));
         add(new Btn(Icons.SAVE, e->track.save()));
 		add(new Programmer(track));
-		EventQueue.invokeLater(() -> update());
+		instances.add(this);
+		MainFrame.update(this);
 	}
 
 	public final void updateCue() {
@@ -132,88 +141,99 @@ public abstract class TrackMenu extends Box implements MouseListener, Updateable
 		file.add(new Actionable("Save", e->track.save()));
 		file.add(new Actionable("Save As...", e ->track.saveAs()));
 		file.add(new Actionable("Import...", e->new ImportMidi(track)));
-		file.add(new Actionable("Info/Res...", e->resolution()));
-		file.add(new SendTo(track));
 		file.add(cues);
 		file.add(quantization);
 		return file;
 	}
 
+	/** tools info/res, import, remap, condense, clean */
+	private void tools() {
+
+		JMenu trim = new JMenu("Trim");
+		trim.add(new Actionable("Frame", e->trimFrame()));
+		trim.add(new Actionable(a, e->trimBar(true)));
+		trim.add(new Actionable(b, e->trimBar(false)));
+		JMenu insert = new JMenu("Insert"); // TODO
+		insert.add(new Actionable(a, e->insertBar(true)));
+		insert.add(new Actionable(b, e->insertBar(false)));
+		insert.add(new Actionable("Frame", e->insertFrame()));
+		// insert.add(new Actionable("Custom", e->trimFrame())); // TODO
+
+		tools.add(new Actionable("Info/Res...", e->resolution()));
+		tools.add(new SendTo(track));
+		tools.add(insert);
+		tools.add(trim);
+	}
+
 	private void barMenu(JMenu menu) { // try the wings!
-		JMenu frames = new JMenu("Frame");
-		frames.add(new Actionable("New", e->track.setCurrent(track.bars() + 1)));
-		frames.add(new Actionable("Copy", e->copyFrame()));
-		frames.add(new Actionable("Paste", e->insertFrame()));
-		frames.add(new Actionable("Delete", e->deleteFrame()));
+
 		JMenu select = new JMenu("Select");
 		select.add(new Actionable("All", e->grid.selectFrame()));
+		select.add(new Actionable(a, e->grid.selectBar(true)));
+		select.add(new Actionable(b, e->grid.selectBar(false)));
 		select.add(new Actionable("None", e->grid.selectNone()));
-		JMenu notes = new JMenu("Notes");
-		notes.add(new Actionable("Copy", e-> grid.copy()));
-		notes.add(new Actionable("Paste", e->grid.paste()));
-		notes.add(new Actionable("Delete", e->grid.delete()));
 
+		menu.add(select);
+		menu.add(new Actionable("Copy", e-> grid.copy()));
+		menu.add(new Actionable("Paste", e->grid.paste()));
+		menu.add(new Actionable("Delete", e->grid.delete()));
 		menu.add(new Actionable("Undo", e->grid.undo()));
 		menu.add(new Actionable("Redo", e->grid.redo()));
-		menu.add(notes);
-		menu.add(frames);
-		menu.add(select);
+
+		if (track.isDrums())
+			menu.add(tools);
+
 		menu.add(new Actionable("Transpose...", e->new Transpose(track, grid)));
 		// result.add(new Actionable("CC", e->{ }));
 		// result.add(new Actionable("Prog", e->{ }));
 	}
 
 	private void resolution() {
-		String result = JOptionPane.showInputDialog(track.info() + "New Resolution:", track.getResolution());
+		String result = JOptionPane.showInputDialog(SwingUtilities.getWindowAncestor(this),
+				track.info() + "New Resolution:", track.getResolution());
 		if (result == null) return;
 		try { track.setResolution(Integer.parseInt(result));
 		} catch (NumberFormatException e) { RTLogger.log("Resolution", result + ": " + e.getMessage()); }
 	}
 
-	private void copyFrame() {
-		Notes selected = new Notes(grid.getSelected());
-		grid.selectFrame();
-		grid.copy();
-		grid.select(selected);
+	private void trimFrame() {
+		long start = track.getFrame() * track.getWindow();
+		long end = start + 2 * track.barTicks;
+		Edit trim = new Edit(Type.TRIM, grid.selectFrame());
+		trim.setOrigin(new Prototype(0, start));
+		trim.setDestination(new Prototype(0, end));
+		grid.push(trim);
 	}
 
-	// TODO undo/redo
-	private void deleteFrame() {
-		grid.selectFrame();
-		grid.delete();
-
-		int frame = track.getCurrent() - (JudahZone.getClock().isEven() ? 0 : 1);
-		long ref = frame * track.barTicks;
-		Track t = track.getT();
-		MidiEvent e;
-		long diff = track.getWindow();
-		for (int i = t.size() - 1; i > -1; i--) {
-			if (t.get(i).getMessage() instanceof ShortMessage == false)
-				continue;
-			e = t.get(i);
-			if (e.getTick() < ref)
-				break;
-			e.setTick(e.getTick() - diff);
-		}
-		grid.repaint();
+	private void trimBar(boolean left) {
+		long start = track.getFrame() * track.getWindow();
+		if (!left)
+			start += track.barTicks;
+		long end = start + track.barTicks;
+		Edit trim = new Edit(Type.TRIM, grid.selectBar(left));
+		trim.setOrigin(new Prototype(0, start));
+		trim.setDestination(new Prototype(0, end));
+		grid.push(trim);
 	}
 
-	// TODO undo/redo
+	private void insertBar(boolean left) {
+		long start = track.getFrame() * track.getWindow();
+		if (!left)
+			start += track.barTicks;
+		long end = start + track.barTicks;
+		Edit ins = new Edit(Type.INS, new ArrayList<MidiPair>());
+		ins.setOrigin(new Prototype(0, start));
+		ins.setDestination(new Prototype(0, end));
+		grid.push(ins);
+	}
+
 	private void insertFrame() {
-		int frame = track.getFrame();
-		long ref = frame * track.barTicks;
-		long diff = track.getWindow();
-		Track t = track.getT();
-		MidiEvent e;
-		for (int i = t.size() - 1; i > -1; i--) {
-			if (t.get(i).getMessage() instanceof ShortMessage == false)
-				continue;
-			e = t.get(i);
-			if (e.getTick() < ref)
-				break;
-			e.setTick(e.getTick() + diff);
-		}
-		grid.paste();
+		long start = track.getFrame() * track.getWindow();
+		long end = start + track.getWindow();
+		Edit ins = new Edit(Type.INS, new ArrayList<MidiPair>());
+		ins.setOrigin(new Prototype(0, start));
+		ins.setDestination(new Prototype(0, end));
+		grid.push(ins);
 	}
 
 	@Override public void mouseClicked(MouseEvent e) { }

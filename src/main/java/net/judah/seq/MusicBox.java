@@ -8,6 +8,7 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.sound.midi.MidiEvent;
@@ -17,6 +18,7 @@ import javax.swing.JPanel;
 import javax.swing.border.Border;
 
 import lombok.Getter;
+import net.judah.JudahZone;
 import net.judah.gui.Detached.Floating;
 import net.judah.gui.Gui;
 import net.judah.gui.TabZone;
@@ -26,6 +28,7 @@ import net.judah.midi.Midi;
 import net.judah.midi.Panic;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.track.MidiTrack;
+import net.judah.util.RTLogger;
 
 public abstract class MusicBox extends JPanel implements Musician, Updateable, Floating {
 
@@ -36,7 +39,6 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 	protected final Track t;
 	protected final JudahClock clock;
 	protected final Measure scroll;
-	protected final TrackList<?> tracks;
 	/** absolute notes */
 	@Getter protected final Notes selected = new Notes();
 	protected final ArrayList<MidiPair> dragging = new ArrayList<>();
@@ -49,13 +51,14 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 	protected DragMode mode = null;
 	protected Prototype recent;
 	protected int width, height;
+	protected final Clipboard clipboard;
 
-	public MusicBox(MidiTrack midiTrack, TrackList<? extends MidiTrack> tracks) {
+	public MusicBox(MidiTrack midiTrack) {
 		this.track = midiTrack;
 		this.t = track.getT();
 		this.clock = track.getClock();
+		this.clipboard = JudahZone.getSeq().getClipboard();
 		scroll = new Measure(track);
-		this.tracks = tracks;
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		addMouseWheelListener(this);
@@ -84,14 +87,31 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 
 	@Override public final void mouseWheelMoved(MouseWheelEvent wheel) {
 		boolean up = wheel.getPreciseWheelRotation() < 0;
+		if (wheel.isControlDown())
+			shiftVelocity(up);
+		else if (wheel.isShiftDown())
+			translate(up); // shift selected note timing
 
+		else if (wheel.isAltDown()) {
+			transpose(up); // shift selected note pitch
+		}
+		else
+			track.next(!up);
+	}
+
+	@Override public void velocity(boolean up) {
+		float velocity = track.getAmp() + (up ? 0.05f : -0.05f);
+		if (velocity < 0)  velocity = 0;
+		if (velocity > 1)  velocity = 1;
+		track.setAmp(velocity);
+	}
+
+	private void shiftVelocity(boolean up) {
 		if (selected.isEmpty()) {
-			float velocity = track.getAmp() + (up ? 0.05f : -0.05f);
-			if (velocity < 0)  velocity = 0;
-			if (velocity > 1)  velocity = 1;
-			track.setAmp(velocity);
+			velocity(up);
 			return;
 		}
+		// change selected notes' velocity
 		float ratio = up ? 1.1f : 0.9f;
 		ArrayList<MidiPair> replace = new ArrayList<>();
 		int data2;
@@ -114,6 +134,35 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 		editAdd(replace);
 	}
 
+	private void transpose(boolean up) {
+		if (selected.isEmpty()) return;
+		MidiPair a = selected.getFirst();
+		int src = ((ShortMessage)a.getOn().getMessage()).getData1();
+		int dest = src + (up ?  1 : -1);
+		if (dest < 0 || dest > 127)
+			return;
+		Edit e = new Edit(Type.TRANS, selected);
+		e.setDestination(new Prototype(dest, a.getOn().getTick()));
+		push(e);
+	}
+
+	private void translate(boolean up) {
+		if (selected.isEmpty()) return;
+		MidiPair a = selected.getFirst();
+		long src = a.getOn().getTick();
+		long plus = track.quantizePlus(src);
+		long dest = up ? plus : src - (plus - src);
+
+		if (dest > track.getLeft() + track.getWindow())
+			dest -= track.getWindow();
+		if (dest < track.getLeft())
+			dest += track.getWindow();
+
+		Edit e = new Edit(Type.TRANS, selected);
+		e.setDestination(new Prototype(((ShortMessage)a.getOn().getMessage()).getData1(), dest));
+		push(e);
+	}
+
 	@Override public final Prototype translate(Point p) {
 		return new Prototype(toData1(p), toTick(p));
 	}
@@ -123,12 +172,12 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 	}
 
 	@Override public void copy() {
-		tracks.getClipboard().copy(selected, track);
+		clipboard.copy(selected, track);
 	}
 
 
 	@Override public void paste() { // TODO differences in track Resolution
-		List<MidiPair> notes = tracks.getClipboard().paste(track);
+		List<MidiPair> notes = clipboard.paste(track);
 		push(new Edit(Type.NEW, notes));
 	}
 
@@ -164,26 +213,30 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 			break;
 		case LENGTH:
 			length(e, false);
-		default: // GAIN
+			break;
+		case REMAP:
+			remap(e, true);
+			break;
+		case TRIM:
+			trim(e, true);
+			break;
+		case INS:
+			insert(e, true);
+			break;
+		// default: // GAIN
 		}
 		click = null;
-
+		RTLogger.debug("exe: " + Arrays.toString(e.getNotes().toArray()) + " " + e.getDestination());
 	}
 
 	public void recalc() {
 		resized(getWidth(), getHeight());
 	}
 
-	@Override public void velocity(boolean up) {
-		float velocity = track.getAmp() + (up ? 0.05f : -0.05f);
-		if (velocity < 0)  velocity = 0;
-		if (velocity > 1)  velocity = 1;
-		track.setAmp(velocity);
-	}
-
-	@Override public boolean undo() {
+	@Override public void undo() {
 		if (stack.size() <= caret || caret < 0) {
-			return false;
+			RTLogger.debug("undo empty");
+			return;
 		}
 
 		Edit e = stack.get(caret);
@@ -203,11 +256,57 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 			break;
 		case LENGTH:
 			length(e, true);
-		default:
+			break;
+		case REMAP:
+			remap(e, false);
+			break;
+		case TRIM:
+			trim(e, false);
+			break;
+		case INS:
+			insert(e, false);
 			break;
 		}
+
 		caret--;
-		return true;
+		RTLogger.debug("undo: " + e.getType());
+	}
+
+
+	protected abstract void remap(Edit e, boolean exe);
+
+	// add blank tape by moving existing notes
+	protected void insert(Edit e, boolean exe) {
+		long start = e.getOrigin().tick;
+		long end = e.getDestination().tick;
+		long diff = end - start;
+		if (exe)
+			MidiTools.addTape(t, start, diff);
+		else  // undo
+			MidiTools.removeTape(t, end, diff);
+		repaint();
+	}
+
+	protected void trim(Edit e, boolean exe) {
+		long start = e.getOrigin().tick;
+		long end = e.getDestination().tick;
+		long diff = end - start;
+		if (exe) { // remove notes then remove tape (shift remaining notes)
+			for (MidiPair p : e.getNotes()) {
+				t.remove(p.getOn());
+				if (p.getOff() != null)
+					t.remove(p.getOff());
+			}
+			MidiTools.removeTape(t, end, diff);
+		} else { // undo: shift existing notes then paste deleted notes
+			MidiTools.addTape(t, start, diff);
+			for (MidiPair p : e.getNotes()) {
+				t.add(p.getOn());
+				if (p.getOff() != null)
+					t.add(p.getOff());
+			}
+		}
+		repaint();
 	}
 
 	protected void editAdd(ArrayList<MidiPair> replace) {
@@ -242,12 +341,11 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 		return stack.get(caret);
 	}
 
-	@Override public boolean redo() {
+	@Override public void redo() {
 		if (stack.size() <= caret + 1)
-			return false;
+			return;
 		caret++;
 		execute(stack.get(caret));
-		return true;
 	}
 
 	@Override public void selectNone() {
@@ -255,16 +353,21 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 		repaint();
 	}
 
-	public void selectArea(long start, long end) {
+	public Notes selectArea(long start, long end) {
 		selected.clear();
+		long tick;
 		if (track.isDrums()) {
 			scroll.populate();
-			for (MidiPair p : scroll)
+			for (MidiPair p : scroll) {
+				tick = p.getOn().getTick();
+				if (tick < start) continue;
+				if (tick >= end) break;
 				selected.add(p);
+			}
 		}
 		else {
 			for (int i = 0; i < t.size(); i++) {
-				long tick = t.get(i).getTick();
+				tick = t.get(i).getTick();
 				if (tick < start) continue;
 				if (tick >= end) break;
 				if (Midi.isNoteOn(t.get(i).getMessage()))
@@ -272,6 +375,7 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 			}
 		}
 		repaint();
+		return selected;
 	}
 
 	public void select(Notes notes) {
@@ -280,11 +384,19 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 		repaint();
 	}
 
+	public Notes selectBar(boolean left) {
+		long start = left ? track.getLeft() : track.getRight();
+		long end = start + track.getBarTicks();
+		selectArea(start, end);
+		return selected;
+	}
+
 	@Override
-	public void selectFrame() {
+	public Notes selectFrame() {
 		long start = track.getLeft();
 		long end = start + track.getWindow();
 		selectArea(start, end);
+		return selected;
 	}
 
 	private final Rectangle shadeRect = new Rectangle();

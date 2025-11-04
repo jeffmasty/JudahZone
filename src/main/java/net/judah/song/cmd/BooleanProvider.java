@@ -1,16 +1,14 @@
 package net.judah.song.cmd;
 
-import net.judah.JudahZone;
-
-public class BooleanProvider implements Cmdr {
+public abstract class BooleanProvider implements Cmdr {
 	public static final String TRUE = "true";
 	public static final String FALSE = "false";
 	public static final String[] keys = {FALSE, TRUE};
-	public static BooleanProvider instance = new BooleanProvider();
-	
-	private BooleanProvider() {
-	}
-	
+//	public static BooleanProvider instance = new BooleanProvider();
+
+//	public BooleanProvider() {
+//	}
+
 	@Override
 	public String[] getKeys() {
 		return keys;
@@ -23,12 +21,6 @@ public class BooleanProvider implements Cmdr {
 
 	@Override
 	public void execute(Param p) {
-		if (p.cmd == Cmd.Start) {
-			if (resolve(p.val))
-				JudahZone.getClock().begin();
-			else
-				JudahZone.getClock().end();
-		}
 	}
-	
+
 }

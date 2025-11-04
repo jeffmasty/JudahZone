@@ -44,7 +44,10 @@
 	    <artifactId>javaosc-core</artifactId>
 	    <version>0.6</version>
 	</dependency>
-	<dependency>  <!-- Digital Sound Processing -->
+	
+ <!-- Digital Sound Processing -->
+	  
+	<dependency> 
 	  <groupId>be.tarsos.dsp</groupId>
 	  <artifactId>core</artifactId>
 	  <version>2.5</version>
@@ -54,7 +57,7 @@
 	  <artifactId>jvm</artifactId>
 	  <version>2.5</version>
 	</dependency>
-	
+
 	<!-- Jack Support -->
   	<dependency>
     	<groupId>net.java.dev.jna</groupId>

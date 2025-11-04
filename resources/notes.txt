@@ -1,5 +1,16 @@
 TODO:
 
+--downsampling synth:--
+(before/after recordings)
+upsample waves
+low pass filter at 20k 
+decimate samples
+
+Midi2.0 cc, prog, pitchbend, swell, after-touch
+chords |1:[] |2:[] endings,  |bars| bug
+Redo Patterns:==>  Midi File Meta?
+Midi Scene snippets in Song File bundle w/kits?
+multi-color tracks, unified drumkit, mutes
 
 JudahScope 
 Play Menus  data          [x]
@@ -12,25 +23,16 @@ DSP Course: https://www.youtube.com/watch?v=hVOA8VtKLgk&list=PLuh62Q4Sv7BUSzx5Jr
 FFT Algo https://www.youtube.com/watch?v=iTMn0Kt18tg
 https://github.com/hedoluna/fft
 How to display/manipulate Phase?
-Mouse Dnd on WaveZone bug, Maximize 
-Tayonori fluid goin from intro to hats bug
-0 on piano cycle/compute bug
 on delete Primary, what about duplicated primary/loop?
 what if SoloTrack is active but on muteRecord?
 
-multi-color tracks, ImportMidi info table (trackname/drum re-map)
-Midi Scene snippets in Song File/ song bundle w/kits?
-ChordSheet.Floating, |1:[] |2:[] endings
-Sampler Player Detached, Resizable... ComponentListener unicde: 🔼 ⛶ 🔲   Detach: 🔗 ❌ 🔓
-reverse sample, chop sample left, right, stretch, scratch
+Sample Editor: reverse sample, chop sample left, right, stretch, scratch
 Sampler FX (granularity, pitched frequency, lofi, wet)
 IR Reverb, DrumSynth, Phasor, Shepherd, Vocoder
 FFM instead of JNA? https://jdk.java.net/jextract/
 zone omni -> omni   Recording?
 MusicBox ratio can change if Track resolution changes...see MusicBox.recalc();
-New Song save, update drop-downs, setlist. seq.loadSong(Unknown File) feedback
-chorus time sync off (1/x)
-FxPanel.timeFx() lfo2
+seq.loadSong(Unknown File) feedback
 LoopToDisk .WAV recording length off
 Drum decay based on sample length (Kit Knobs & Distortion scratchy) + feedback
 Fluid attack, decay, filter
@@ -201,7 +203,7 @@ Delay + LFO sync to Tempo
 note-on/off tracker per channel
 Waveforms, dB indicator
 Multi-Document Interface
-
+ImportMidi info table
 
 
 REFERENCE------------------------------------------------------------
@@ -279,4 +281,6 @@ TRACK
 SYNTH 
 	Preset Vol HiCut LoCut
 	A      D   S 	 R
+
+
 

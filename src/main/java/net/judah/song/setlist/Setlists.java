@@ -4,8 +4,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JComboBox;
+
 import lombok.Getter;
 import net.judah.gui.settable.SongCombo;
+import net.judah.gui.widgets.FileRender;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
@@ -15,7 +18,8 @@ public class Setlists extends ArrayList<Setlist> {
 	private final ArrayList<Setlist> scratch = new ArrayList<>();
 
 	@Getter private Setlist current;
-	
+	private JComboBox<File> combo;
+
 	public Setlists() {
 		for (File f : ROOT.listFiles()) { try {
 			add(new Setlist(f));
@@ -33,13 +37,14 @@ public class Setlists extends ArrayList<Setlist> {
 	}
 
 	public void setCurrent(File list) {
-		for (Setlist s : this) 
+		for (Setlist s : this)
 			if (s.getSource().equals(list)) {
 				if (current == s)
 					return;
 				current = s;
-				SetlistsCombo.setCurrent(list);
-				SongCombo.refill();
+				if (getCombo().getSelectedItem() != list)
+					getCombo().setSelectedItem(list);
+				SongCombo.refill(current.array());
 			}
 	}
 
@@ -57,5 +62,15 @@ public class Setlists extends ArrayList<Setlist> {
 				scratch.add(s);
 		return scratch;
 	}
-	
+
+	public JComboBox<File> getCombo() {
+		if (combo != null)
+			return combo;
+		combo = new JComboBox<File>(array());
+    	combo.setSelectedItem(current.getSource());
+    	combo.addActionListener(e->setCurrent((File)combo.getSelectedItem()));
+		combo.setRenderer(new FileRender());
+		return combo;
+	}
+
 }

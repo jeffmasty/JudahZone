@@ -59,6 +59,7 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 	private Algo algo = new Echo();
 	private final ArrayList<MidiEvent> chads = new ArrayList<>();
 
+	// FluidSynth
 	public PianoTrack(Trax type, ZoneMidi out, JudahClock clock) throws InvalidMidiDataException {
 		super(type, out, clock, DEFAULT_POLYPHONY);
 		chords.addListener(this);
@@ -66,10 +67,20 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 		this.clear();
 	}
 
+	// temporary import midi view
+	public PianoTrack(String name, MidiTrack source) throws InvalidMidiDataException {
+		super(name, source.getType(), source.getMidiOut(), source.getResolution(), source.getClock(), source.getActives().getPolyphony());
+	}
+
+	// TacoSynth
 	public PianoTrack(Trax type, Polyphony notes, JudahClock clock) throws InvalidMidiDataException {
+
+// TODO CHORD LISTENER??
+
 		super(type, notes, clock);
 	}
 
+	// monosynth Bass
 	public PianoTrack(Trax type, ZoneMidi out, JudahClock clock, int polyphony) throws InvalidMidiDataException {
 		super(type, out, clock, polyphony);
 	}
@@ -85,14 +96,11 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 
 	@Override
 	public void setActive(boolean on) {
-		super.setActive(on);
-		if (!state.active) { // TODO actives
-//			flush();
-//			if (isArpOn())
-//				silence();
+		if (!on) {
 			new Panic(this);
 			deltas.clear();
 		}
+		super.setActive(on);
 	}
 
 	@Override
@@ -103,14 +111,14 @@ public class PianoTrack extends MidiTrack implements ChordListener {
     		arpeggiate(msg);
 	}
 
-//	@Override public void next(boolean fwd) {
-//		silence();
-//		super.next(fwd);
-//	}
+	@Override public void next(boolean fwd) {
+		silence();
+		super.next(fwd);
+	}
 
 	@Override
 	protected void parse(Track incoming) {
-		// flush();  	// PianoTrack subclass special handling
+
 		new Panic(this); // not part of parse process
 		deltas.clear();
 
@@ -229,6 +237,8 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 
 	public void toggle(Arp m) {
 		setArp(info.getAlgo() == m ? Arp.Off : m);
+		if (info.getAlgo() != Arp.Off && isCapture())
+			setCapture(false);
 	}
 
 	public void setArp(Arp mode) {

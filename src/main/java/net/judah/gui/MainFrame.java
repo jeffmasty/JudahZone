@@ -1,3 +1,5 @@
+
+
 package net.judah.gui;
 
 import static net.judah.gui.Size.*;
@@ -9,6 +11,7 @@ import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.event.WindowEvent;
+import java.util.ConcurrentModificationException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -36,6 +39,7 @@ import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.knobs.LFOKnobs;
 import net.judah.gui.knobs.MidiGui;
+import net.judah.gui.midiimport.ImportView;
 import net.judah.gui.settable.Program;
 import net.judah.gui.settable.SetCombo;
 import net.judah.gui.waves.LiveWave.LiveWaveData;
@@ -56,6 +60,7 @@ import net.judah.seq.MidiConstants;
 import net.judah.seq.Seq;
 import net.judah.seq.TrackList;
 import net.judah.seq.beatbox.DrumZone;
+import net.judah.seq.beatbox.RemapView;
 import net.judah.seq.chords.Chord;
 import net.judah.seq.chords.ChordPlay;
 import net.judah.seq.chords.ChordScroll;
@@ -84,7 +89,7 @@ public class MainFrame extends JFrame implements Runnable {
 	@Getter private static KnobPanel knobs;
 
 	private final TabZone tabs;
-    private final DrumZone drumZone;
+    @Getter private final DrumZone beatBox;
     private final DJJefe mixer;
 	private final FxPanel effects;
     private final MiniSeq miniSeq;
@@ -121,8 +126,8 @@ public class MainFrame extends JFrame implements Runnable {
         loops = new MiniLooper(looper, clock);
         presets = new PresetsView(JudahZone.getPresets());
         setlists = new SetlistView(JudahZone.getSetlists(), songs);
-    	drumZone = new DrumZone(seq.getDrumTracks());
-        tabs = new TabZone(songs, drumZone, chords.getChordSheet());
+    	beatBox = new DrumZone(seq.getDrumTracks());
+        tabs = new TabZone(songs, beatBox, chords.getChordSheet());
         menu = new JudahMenu(WIDTH_KNOBS, songs, tabs);
         mode.setFont(Gui.BOLD13);
         mode.addActionListener(e->{
@@ -234,7 +239,7 @@ public class MainFrame extends JFrame implements Runnable {
 				focus(d.getKit().getGui());
 				if (knobMode == KnobMode.Kitz)
 					knobPanel(d.getKit().getKnobs());
-				drumZone.update(d);
+				beatBox.update(d);
 			}
 			else if (trax == seq.getSynthTracks()) {
 
@@ -292,10 +297,12 @@ public class MainFrame extends JFrame implements Runnable {
 			else if (o instanceof MidiTrack t) {
 				PlayWidget.update(t);
 				miniSeq.update(t);
-				seq.getKnobs(t).update();
+				KnobPanel knobs = seq.getKnobs(t);
+				if (knobs != null)
+					knobs.update();
 				tabs.update(t);
 				if (t instanceof DrumTrack d)
-					drumZone.update(d);
+					beatBox.update(d);
 				// songs.update(t);
 				Programmer.update(t);
 			}
@@ -315,7 +322,7 @@ public class MainFrame extends JFrame implements Runnable {
 			}
 			else if (o instanceof Scene) {
 				hq.sceneText();
-				songs.getSongView().update((Scene)o);
+				songs.getSongView().getLauncher().update((Scene)o);
 			}
 			else if (o == seq || o == songs)
 				songs.update();
@@ -363,8 +370,11 @@ public class MainFrame extends JFrame implements Runnable {
 				miniSeq.update(t);
 				PlayWidget.update(t);
 			}
+			else
+				RTLogger.log(this, "unknown " + o.getClass().getSimpleName() + " update: " + o.toString());
 
-			else RTLogger.log(this, "unknown " + o.getClass().getSimpleName() + " update: " + o.toString());
+			} catch (ConcurrentModificationException e) {
+				RTLogger.log(e, o + ": " + e.getMessage());
 			} catch (Throwable t) {
 				RTLogger.warn(this, t);
 			}
@@ -384,6 +394,8 @@ public class MainFrame extends JFrame implements Runnable {
 			case Presets -> presets;
 			case Setlist -> setlists;
 			case Wavez -> new WaveKnobs(JudahZone.getSelected());
+			case Import -> ImportView.getInstance();
+			case Remap -> new RemapView();
 			case Log -> RTLogger.instance;
     	});
     }

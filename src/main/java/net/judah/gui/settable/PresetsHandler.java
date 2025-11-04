@@ -17,14 +17,15 @@ import net.judah.fx.Preset;
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.gui.Updateable;
+import net.judah.mixer.Channel;
 
 /** Presets */
 public class PresetsHandler extends SetCombo<Preset> implements ListCellRenderer<Preset>, Updateable {
 
-	private final Presets ch;
+	private final Channel ch;
 	private final JLabel render = new JLabel();
 
-	public PresetsHandler(Presets channel) {
+	public PresetsHandler(Channel channel) {
 		super(JudahZone.getPresets().array(), channel.getPreset());
 		this.ch = channel;
 		((JLabel)getRenderer()).setHorizontalAlignment(SwingConstants.CENTER);

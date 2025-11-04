@@ -99,17 +99,18 @@ public class SongView extends JPanel {
 		notes.setText(s.getNotes());
 		if (sceneType.getSelectedItem() != s.getType())
 			sceneType.setSelectedItem(s.getType());
-		params.setModel(new ParamModel(s.getCommands()));
+		reload(s);
 	}
 
-	public void update(Scene s) {
-		params.setModel(new ParamModel(songs.getScene().getCommands())); //overkill?
+	private void reload(Scene s) {
+		params.setModel(new ParamModel(s.getCommands()));
 		launcher.update(s);
 	}
 
 	private void addParam() {
-		songs.getScene().getCommands().add(new Param());
-		update(songs.getScene());
+		Scene s = songs.getScene();
+		s.getCommands().add(new Param());
+		reload(s);
 	}
 
 	private void removeParam() {
@@ -119,7 +120,7 @@ public class SongView extends JPanel {
 
 		if (selected < songs.getScene().getCommands().size())
 			songs.getScene().getCommands().remove(selected);
-		update(songs.getScene());
+		reload(songs.getScene());
 	}
 
 	public void addScene(Scene add) {

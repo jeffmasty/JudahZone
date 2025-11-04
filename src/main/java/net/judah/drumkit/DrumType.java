@@ -4,16 +4,7 @@ import lombok.Getter;
 
 public enum DrumType {
 
-//	Kick(GMDrum.BassDrum, GMDrum.AcousticBassDrum),
-//	Snare(GMDrum.AcousticSnare, GMDrum.Cabasa, GMDrum.ShortWhistle, GMDrum.HiWoodBlock, GMDrum.LowTimbale, GMDrum.HiMidTom),
-//	Stick(GMDrum.SideStick, GMDrum.OpenHiConga, GMDrum.LowMidTom, GMDrum.MuteHiConga, GMDrum.Maracas, GMDrum.HighTimbale),
-//	Bongo(GMDrum.LowBongo, GMDrum.LowConga, GMDrum.LowTom, GMDrum.LowFloorTom),
-//	CHat(GMDrum.ClosedHiHat, GMDrum.PedalHiHat, GMDrum.MuteTriangle, GMDrum.MuteCuica),
-//	OHat(GMDrum.OpenHiHat, GMDrum.OpenTriangle, GMDrum.RideCymbal2),
-//	Ride(GMDrum.RideCymbal, GMDrum.CrashCymbal1, GMDrum.Vibraslap, GMDrum.CrashCymbal2, GMDrum.LongWhistle, GMDrum.ChineseCymbal),
-//	Clap(GMDrum.HandClap, GMDrum.Claves, GMDrum.HiBongo, GMDrum.HighFloorTom, GMDrum.Cowbell, GMDrum.HighTom);
 	// data1 36, 38, 37, 61, 42, 46, 51, 39
-
 	Kick(GMDrum.BassDrum, GMDrum.AcousticBassDrum),
 	Stick(GMDrum.SideStick, GMDrum.OpenHiConga, GMDrum.LowMidTom, GMDrum.MuteHiConga, GMDrum.Maracas, GMDrum.HighTimbale),
 	Snare(GMDrum.AcousticSnare, GMDrum.Cabasa, GMDrum.ShortWhistle, GMDrum.HiWoodBlock, GMDrum.LowTimbale, GMDrum.HiMidTom),
@@ -22,7 +13,6 @@ public enum DrumType {
 	OHat(GMDrum.OpenHiHat, GMDrum.OpenTriangle, GMDrum.RideCymbal2),
 	Ride(GMDrum.RideCymbal, GMDrum.CrashCymbal1, GMDrum.Vibraslap, GMDrum.CrashCymbal2, GMDrum.LongWhistle, GMDrum.ChineseCymbal),
 	Bongo(GMDrum.LowBongo, GMDrum.LowConga, GMDrum.LowTom, GMDrum.LowFloorTom);
-
 
 	@Getter private final int data1;
 	@Getter private final GMDrum primary;

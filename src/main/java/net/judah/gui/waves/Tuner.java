@@ -90,7 +90,6 @@ public class Tuner extends Box implements Updateable {
 
 		tuning.setValue(sliderValue);
         toggle.setText(eureka.toString());
-        // log frequency + " hz near " + eureka + " (" + nearest+ ") diff=" + diff + " slide " + sliderValue);
 	}
 
 	/** slider less sensitive to frequency diff as octave increases */

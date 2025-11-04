@@ -20,10 +20,6 @@ public class SongCombo extends SetCombo<File> {
 		setFont(Gui.BOLD12);
 	}
 
-	public static void refresh() {
-		instances.forEach(combo ->combo.update());
-	}
-
 	public void update() {
 		File select = (File)getSelectedItem();
 		File song = JudahZone.getOverview().getSong().getFile();
@@ -48,11 +44,17 @@ public class SongCombo extends SetCombo<File> {
 			songs.loadSong((File)getSelectedItem());
 	}
 
-	public static void refill() {
+	public static void refill(final File[] folder) {
+		instances.forEach(combo-> combo.refill(folder, null));
+		JudahZone.getMidiGui().getTitle().doLayout();
+	}
+
+	public static void refresh(final File[] setlist, final File selected) {
 		Threads.execute(()->
-			instances.forEach(combo->
-				combo.refill(JudahZone.getSetlists().getCurrent().array(),
-					JudahZone.getOverview().getSong().getFile())));
+			instances.forEach(combo-> combo.refill(setlist, selected)));
+	}
+	public static void refresh() {
+		instances.forEach(combo ->combo.update());
 	}
 
 }

@@ -22,7 +22,8 @@ import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 /** Dialog to import a single track from a standard MIDI file*/
-public class ImportMidi extends JPanel {
+
+public class ImportMidi extends JPanel implements MidiConstants {
 
 	public static final Dimension SIZE = new Dimension(300, 200);
 
@@ -75,13 +76,15 @@ public class ImportMidi extends JPanel {
 		for (int i = 0; i < tracks.length; i++) {
 			Track t = tracks[i];
 			if (t.size() > events) {
-				String trackName = "null";
 				for (int j = 0; j < t.size(); j++) {
 					MidiEvent me = t.get(j);
 					if (me.getMessage() instanceof MetaMessage meta) {
-						if (meta.getType() == MidiConstants.TRACK_NAME)
+						Meta type = Meta.getType(meta);
+						if (type == null)
+							RTLogger.log(this, "Skipping type " + meta.getType() + " payload: " + new String(meta.getData()));
+						if (Meta.TRACK_NAME == type)
 							RTLogger.log(this, "Track " + i + " NAME: " + new String(meta.getData()));
-						else if (meta.getType() == MidiConstants.INSTRUMENT)
+						else if (Meta.INSTRUMENT == type)
 							RTLogger.log(this, "INSTR: " + new String(meta.getData()));
 					}
 				}

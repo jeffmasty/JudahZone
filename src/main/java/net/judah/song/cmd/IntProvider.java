@@ -7,11 +7,11 @@ import lombok.Getter;
 public class IntProvider implements Cmdr {
 
 	private static ArrayList<IntProvider> cache = new ArrayList<>();
-	
+
 	private int start, stop, step;
 	@Getter private final String[] keys;
-	
-	IntProvider(int start, int stop, int step) {
+
+	public IntProvider(int start, int stop, int step) {
 		this.start = start;
 		this.stop = stop;
 		this.step = step;
@@ -20,11 +20,11 @@ public class IntProvider implements Cmdr {
 			keys[i] = "" + (start + i * step);
 		cache.add(this);
 	}
-	
+
 	public static IntProvider instance() {
 		return instance(0, 100, 1);
 	}
-	
+
 	public static IntProvider instance(int start, int stop, int step) {
 		for (IntProvider x : cache)
 			if (x.start == start && x.stop == stop && x.step == step)
@@ -33,13 +33,13 @@ public class IntProvider implements Cmdr {
 	}
 
 	@Override
-	public Long resolve(String key) {
-		return Long.parseLong(key);
+	public Integer resolve(String key) {
+		return Integer.parseInt(key);
 	}
 
 	@Override
 	public void execute(Param p) {
 		// no-op
 	}
-	
+
 }

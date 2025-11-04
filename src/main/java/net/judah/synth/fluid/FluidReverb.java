@@ -11,7 +11,7 @@ public class FluidReverb extends Reverb {
 
     private final FluidSynth fluid;
 
-    @Getter private boolean active;
+    @Getter private boolean active = true;
     @Getter private float roomSize;
     @Getter private float damp;
     @Getter private float wet;
@@ -19,20 +19,22 @@ public class FluidReverb extends Reverb {
 
     public FluidReverb(FluidSynth synth) {
         this.fluid = synth;
-        Threads.timer(2000, () -> setWidth(0.7f));
-        Threads.timer(1600, () -> setWet(0.1f));
-        Threads.timer(1700, () -> setActive(true));
-        Threads.timer(1800, () -> setRoomSize(0.75f));
-        Threads.timer(1900, () -> setDamp(0.6f));
+        int base = 666;
+        Threads.timer(base, () -> setWet(0.1f));
+        Threads.timer(base + 100, () -> setActive(true));
+        Threads.timer(base + 200, () -> setRoomSize(0.75f));
+        Threads.timer(base + 300, () -> setDamp(0.6f));
+        Threads.timer(base + 400, () -> setWidth(0.7f));
     }
 
     @Override public boolean isInternal() { return false; }
 
     @Override
     public void setActive(boolean active) {
-    	if (this.active == active) return;
-        this.active = active;
-        fluid.sendCommand("reverb " + (active ? "on" : "off"));
+//  ignore //
+//    	if (this.active == active) return;
+//        this.active = active;
+//        fluid.sendCommand("reverb " + (active ? "on" : "off"));
     }
 
     @Override

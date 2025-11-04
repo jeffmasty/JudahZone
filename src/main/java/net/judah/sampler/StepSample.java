@@ -15,8 +15,7 @@ public class StepSample extends Sample {
 		env = STEP_BOOST;
 	}
 
-	@Override
-	public void play(boolean onOrOff) {
+	@Override public void play(boolean onOrOff) {
 		playing = onOrOff;
 	}
 

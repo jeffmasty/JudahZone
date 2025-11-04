@@ -46,7 +46,7 @@ public abstract class SetCombo<T> extends  JComboBox<T> {
 		addItem(null);
 		for (T option : options) {
 			addItem(option);
-			if (selected == option)
+			if (option == selected)
 				setSelectedItem(option);
 		}
 		addActionListener(listener);

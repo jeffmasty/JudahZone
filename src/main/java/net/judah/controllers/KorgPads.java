@@ -180,8 +180,8 @@ public class KorgPads extends Debounce implements Controller {
 
 //	private boolean context1( ) {
 //		switch (MainFrame.getKnobMode()) {
-//// CLOCK/KIT? : start Clock/drums on next loop
-////			if (looper.getRecordedLength() > 0) getClock().listen(looper.getLoopA());
+// CLOCK/KIT? : start Clock/drums on next loop
+//			if (looper.getRecordedLength() > 0) getClock().listen(looper.getLoopA());
 //		case Midi: getMidiGui().getZoneBtn().setSelected(!getMidiGui().getZoneBtn().isSelected());
 //		case Synth: SynthKnobs.setFreqMode(!SynthKnobs.isFreqMode());
 

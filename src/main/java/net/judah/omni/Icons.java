@@ -11,7 +11,9 @@ import javax.swing.UIManager;
 public class Icons {
 
 	static ClassLoader loader = Icons.class.getClassLoader();
-	static final File ROOT = new File("/home/judah/git/JudahZone/resources/");
+
+
+	static final File ROOT = new File("/home/judah/git/JudahZone/resources/"); // TODO Folders.java
     static final File ICONS = new File(ROOT, "icons");
 
 	public static final Icon SAVE = UIManager.getIcon("FileView.floppyDriveIcon");

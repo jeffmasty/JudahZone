@@ -14,12 +14,12 @@ import net.judah.midi.Panic;
 import net.judah.mixer.LineIn;
 import net.judah.omni.Threads;
 
-/** reroute guitar midi to synths */
+/** reroute guitar midi to synths, w/ optional octaver */
 public class Jamstik implements Controller {
 
 	@Getter private boolean active;
 	private int volStash = 50;
-	public boolean octaver;
+	@Getter private boolean octaver;
 
 	public void setActive(boolean active) {
 		this.active = active;

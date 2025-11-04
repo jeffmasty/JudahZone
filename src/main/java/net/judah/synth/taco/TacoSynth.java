@@ -40,13 +40,14 @@ public final class TacoSynth extends Engine {
     private final float[] detune = new float[DCO_COUNT];
     private final Shape[] shapes = new Shape[] {Shape.SIN, Shape.TRI, Shape.SAW};
 	private final ModWheel modWheel;
+	private final Filter internalFilter = new Filter(false);
 	private final Filter loCut = new Filter(false);
 	private final Filter hiCut = new Filter(false);
 	private final SynthPresets synthPresets;
     private final SynthKnobs synthKnobs;
     /** modwheel pitchbend semitones */
     @Setter private int modSemitones = 1;
-	// private final boolean mono = false; // TODO mono-synth switch
+	// private final boolean mono = false; // TODO mono-poly switch
 	// private final int MIDI_CH = 0;  // TODO channel-aware
 
     public TacoSynth(String name, ImageIcon picture, JudahClock clock) {
@@ -59,13 +60,18 @@ public final class TacoSynth extends Engine {
 			detune[i] = 1f;
 
 		loCut.setFilterType(Filter.Type.LoCut);
-		loCut.setFrequency(60);
-		loCut.setResonance(2);
+		loCut.setFrequency(70);
+		loCut.setResonance(2.5f);
 		loCut.setActive(true);
 
+		internalFilter.setFilterType(Filter.Type.HiCut);
+		internalFilter.setFrequency(20000);
+		internalFilter.setResonance(0f);
+		internalFilter.setActive(true);
+
 		hiCut.setFilterType(Filter.Type.HiCut);
-		hiCut.set(Filter.Settings.Frequency.ordinal(), 65);
-		hiCut.setResonance(2.5f);
+		hiCut.setFrequency(2000);
+		hiCut.setResonance(3f);
 		hiCut.setActive(true);
 
 		synthPresets = new SynthPresets(this);
@@ -80,6 +86,10 @@ public final class TacoSynth extends Engine {
 		try {
 			tracks.add(new PianoTrack(type, notes, clock));
 		} catch (InvalidMidiDataException e) { RTLogger.warn(this, e); }
+    }
+
+    public PianoTrack getTrack() {
+    	return tracks.getFirst();
     }
 
 	public float computeGain(int dco) {
@@ -173,6 +183,7 @@ public final class TacoSynth extends Engine {
         for (Voice voice : notes.voices)
         	voice.process(notes, adsr, left);
 
+        internalFilter.process(left);
         loCut.process(left);
         hiCut.process(left);
         fx();

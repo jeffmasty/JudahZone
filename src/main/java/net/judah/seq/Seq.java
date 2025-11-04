@@ -9,7 +9,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import lombok.Getter;
-import net.judah.JudahZone;
 import net.judah.api.ZoneMidi;
 import net.judah.drumkit.DrumMachine;
 import net.judah.drumkit.DrumType;
@@ -24,16 +23,12 @@ import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.TrackInfo;
 import net.judah.song.Sched;
-import net.judah.song.cmd.Cmd;
-import net.judah.song.cmd.Cmdr;
-import net.judah.song.cmd.IntProvider;
-import net.judah.song.cmd.Param;
 import net.judah.synth.taco.TacoTruck;
 import net.judah.util.RTLogger;
 
 /** MidiTracks holder */
 @Getter
-public class Seq implements Iterable<MidiTrack>, Cmdr {
+public class Seq implements Iterable<MidiTrack> {
 
 	public static final int TRACKS = Trax.values().length;
 
@@ -41,17 +36,19 @@ public class Seq implements Iterable<MidiTrack>, Cmdr {
 	private final TrackList<DrumTrack> drumTracks = new TrackList<DrumTrack>();
 	private final TrackList<PianoTrack> synthTracks = new TrackList<PianoTrack>();
 	private final ArrayList<TrackKnobs> knobs = new ArrayList<>();
+	private final Clipboard clipboard = new Clipboard();
 	private final ChordTrack chords;
 	private final Sampler sampler;
 	private final DrumMachine drums;
 
-	public Seq(DrumMachine drumz, ZoneMidi bass, TacoTruck tacos, ChordTrack chordTrack, Sampler sampler) {
+	public Seq(DrumMachine drumz, TacoTruck tacos, ChordTrack chordTrack, Sampler sampler) {
 		this.chords = chordTrack;
 		this.sampler = sampler;
 		this.drums = drumz;
 		drums.getTracks().forEach(t->drumTracks.add(t));
-		synthTracks.add((PianoTrack) bass.getTracks().getFirst());
-		tacos.tracks.forEach(taco->synthTracks.add(taco.getTracks().getFirst()));
+		synthTracks.add(tacos.bass.getTracks().getFirst());
+		synthTracks.add(tacos.taco.getTracks().getFirst());
+		synthTracks.add(tacos.tk2.getTracks().getFirst());
 		tacos.fluid.getTracks().forEach(t->synthTracks.add(t));
 		tracks.addAll(drumTracks);
 		tracks.addAll(synthTracks);
@@ -120,22 +117,6 @@ public class Seq implements Iterable<MidiTrack>, Cmdr {
     	}
 	}
 
-	@Override
-	public String[] getKeys() {
-		return IntProvider.instance(1, 64, 1).getKeys();
-	}
-
-	@Override
-	public Integer resolve(String key) {
-		return Integer.parseInt(key);
-	}
-
-	@Override
-	public void execute(Param p) {
-		if (p.cmd == Cmd.Length)
-			JudahZone.getClock().setLength(Integer.parseInt(p.val));
-	}
-
 	public void step(int step) {
 		chords.step(step);
 		sampler.step(step);
@@ -175,6 +156,10 @@ public class Seq implements Iterable<MidiTrack>, Cmdr {
 	public Midi translateDrums(Midi midi) {
 		return Midi.create(midi.getCommand(), DRUM_CH + drumBank(midi.getData1()),
 				DrumType.values()[drumIndex(midi.getData1())].getData1(), midi.getData2());
+	}
+
+	public PianoTrack[] mpkRoutes() {
+		return synthTracks.toArray(new PianoTrack[synthTracks.size()]);
 	}
 
 }

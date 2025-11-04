@@ -23,7 +23,7 @@ public class Chorus implements TimeEffect {
 	@Setter @Getter String type = TYPE[0];
 
 	/** times per second */
-    @Getter @Setter private float rate = defaultRate;
+    @Getter private float rate = defaultRate;
     /** between 0 and 1 */
     @Getter private float depth = defaultDepth;
     /** between 0 and 1 */
@@ -42,8 +42,8 @@ public class Chorus implements TimeEffect {
 
 	@Override
 	public void sync(float unit) {
-		float msec = 0.001f * (unit + unit * TimeEffect.indexOf(type));
-		setRate(msec);
+		int reverseIndex = TimeEffect.TYPE.length - TimeEffect.indexOf(type);
+		rate = 0.001f * (unit + unit * reverseIndex);
 	}
 
 

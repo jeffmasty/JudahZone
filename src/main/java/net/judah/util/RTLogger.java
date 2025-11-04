@@ -147,19 +147,6 @@ public class RTLogger extends KnobPanel {
             addText("debug " + s);
     }
 
-	@Override
-	public boolean doKnob(int idx, int value) {
-		return false;
-	}
-
-	@Override
-	public void update() {
-	}
-
-	@Override
-	public void pad1() {
-	}
-
 }
 
 //public interface MidiListener {

@@ -38,7 +38,6 @@ public class Fader {
 				if (getMixer().getFader(ch) != null)
 					getMixer().getFader(ch).updateVolume();
 			};
-//		if (o instanceof Sample s)
 		return result;
 	}
 
@@ -76,12 +75,14 @@ public class Fader {
 		}
 		else if (o instanceof Sample s) {
 			startVol = s.getGain().get(Gain.VOLUME);
-			cleanup = () -> s.play(false);
+			cleanup = () -> {
+				s.play(false);
+				MainFrame.update(s);
+			};
 		}
-		Fader result = new Fader(o, DEFAULT_FADE, startVol, 0);
-		result.cleanup = cleanup;
-		return result;
+		return new Fader(o, DEFAULT_FADE, startVol, 0).setCleanup(cleanup);
 	}
+
 	/** Fade out Master track over 4 seconds */
 	public static Fader fadeOut() {
 		return fadeOut(JudahZone.getMains());

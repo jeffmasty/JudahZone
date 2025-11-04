@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -30,6 +31,7 @@ import net.judah.gui.widgets.Click;
 import net.judah.song.Song;
 import net.judah.util.RTLogger;
 
+/** Full window view */
 public class ChordSheet extends JPanel {
 	private static final int TABS = 4;
 	private static final int WIDTH = Size.WIDTH_TAB - 32;
@@ -56,24 +58,20 @@ public class ChordSheet extends JPanel {
 		scroll.setAutoscrolls(true);
 		scroll.getVerticalScrollBar().setUnitIncrement(20);
 
+		loop.setSelected(chords.getDirectives().contains(Directive.LOOP));
+		loop.addActionListener(e->chords.toggle(Directive.LOOP));
 
-Gui.resize(scroll, new Dimension(WIDTH, Size.HEIGHT_TAB - 80));
-
-		JPanel top = new JPanel();
-		top.setLayout(new BoxLayout(top, BoxLayout.LINE_AXIS));
+		JComponent top = new Box(BoxLayout.LINE_AXIS);
 		top.add(Box.createHorizontalStrut(8));
 		top.add(new ChordPlay("▶️ Chords", chords));
 		top.add(Gui.resize(new ChordProCombo(), Size.WIDE_SIZE));
 		top.add(new Btn("Edit", e->edit()));
-
 		top.add(Gui.resize(new SectionCombo(chords), Size.COMBO_SIZE));
 		top.add(loop);
 		top.add(directives);
-		loop.setSelected(chords.getDirectives().contains(Directive.LOOP));
-		loop.addActionListener(e->chords.toggle(Directive.LOOP));
 		top.add(Box.createHorizontalGlue());
 
-		add(top);
+		add(Gui.wrap(top));
 		add(Box.createVerticalStrut(5));
 		add(scroll);
 		add(Box.createVerticalGlue());

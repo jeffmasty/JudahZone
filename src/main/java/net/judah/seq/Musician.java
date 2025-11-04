@@ -17,20 +17,21 @@ public interface Musician extends MidiConstants, MouseListener, MouseWheelListen
 	int toData1(Point p);
 	Prototype translate(Point p) ;
 	void push(Edit e);
-	boolean undo();
-	boolean redo();
+	void undo();
+	void redo();
 	void delete();
 	void copy();
 	void paste();
 	void dragStart(Point p);
 	void drag(Point p);
 	void drop(Point p);
-	void selectArea(long start, long end, int low, int high);
+	Notes selectArea(long start, long end, int low, int high);
 	void selectNone();
-	void selectFrame();
+	Notes selectFrame();
 	void transpose(ArrayList<MidiPair> notes, Prototype destination);
 	void decompose(Edit e);
 	MidiTrack getTrack();
 	void velocity(boolean up);
+	Notes getSelected();
 
 }

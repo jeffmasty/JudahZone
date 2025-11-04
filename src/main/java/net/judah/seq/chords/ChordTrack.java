@@ -15,14 +15,11 @@ import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock;
 import net.judah.song.Scene;
 import net.judah.song.Song;
-import net.judah.song.cmd.Cmd;
-import net.judah.song.cmd.Cmdr;
-import net.judah.song.cmd.Param;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 @Getter
-public class ChordTrack implements TimeListener, Cmdr {
+public class ChordTrack implements TimeListener {
 
 	private boolean active = false;
 	private boolean onDeck = false;
@@ -40,7 +37,6 @@ public class ChordTrack implements TimeListener, Cmdr {
 	private Signature sig = Signature.FOURFOUR;
 	private final ChordView view = new ChordView(this);
 	private final ChordSheet chordSheet = new ChordSheet(this);
-	private final Cmdr player = new ChordsCmdr();
 	private boolean loading;
 	private ArrayList<ChordListener> listeners = new ArrayList<>();
 	private final JudahClock clock;
@@ -74,7 +70,7 @@ public class ChordTrack implements TimeListener, Cmdr {
 		return sections.isEmpty();
 	}
 
-	private void setChord(Chord next) {
+	public void setChord(Chord next) {
 		if (chord == next) return;
 		Chord previous = chord;
 
@@ -339,47 +335,6 @@ public class ChordTrack implements TimeListener, Cmdr {
 					JudahZone.getOverview().setScene(s);
 					return;
 				}
-		}
-	}
-
-	@Override
-	public String[] getKeys() {
-		String[] result = new String[sections.size()];
-		for (int i = 0; i < result.length; i++)
-			result[i] = sections.get(i).getName();
-		return result;
-	}
-	@Override
-	public Object resolve(String key) {
-		for (Section s : sections)
-			if (key.equals(s.getName()))
-				return s;
-		return null;
-	}
-	@Override
-	public void execute(Param p) {
-		if (p.getCmd() != Cmd.Part)
-			return;
-		for (Section s : sections)
-			if (p.getVal().equals(s.getName())) {
-				setSection(s, true);
-				return;
-			}
-	}
-
-	class ChordsCmdr implements Cmdr {
-		@Getter private final String[] keys = {"play", "stop"};
-		@Override public Object resolve(String key) {
-			return key.equals(keys[0]);
-		}
-
-		@Override public void execute(Param p) {
-			if (p.getCmd() != Cmd.Chords)
-				return;
-			active = p.getVal().equals(keys[0]);
-			if (active && section != null)
-				setChord(section.getChordAt(0));
-			ChordPlay.update();
 		}
 	}
 

@@ -9,7 +9,6 @@ import lombok.Getter;
 import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
-import net.judah.drumkit.GMDrum;
 import net.judah.gui.TabZone;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
@@ -18,7 +17,6 @@ import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiPair;
 import net.judah.seq.Trax;
-import net.judah.util.RTLogger;
 
 public class DrumTrack extends MidiTrack {
 
@@ -48,19 +46,18 @@ public class DrumTrack extends MidiTrack {
 			if (Midi.isNoteOn(e.getMessage())) {
 				ShortMessage orig = (ShortMessage)e.getMessage();
 				int data1 = orig.getData1();
-				if (DrumType.index(data1) >= 0)
-					t.add(new MidiEvent(Midi.create(
-							orig.getCommand(), ch, data1, orig.getData2()), e.getTick()));
-				else if (DrumType.alt(data1) < 0) {
-					int newVal = data1 % 6 + 2; // skipping bass and snare
-					t.add(new MidiEvent(Midi.create(
-							orig.getCommand(), ch, DrumType.values()[newVal].getData1(), orig.getData2()), e.getTick()));
-					RTLogger.log(this, "remap'd " + data1 + " " + GMDrum.lookup(data1) + " to " + DrumType.values()[newVal]);
-				}
-				else {
-					t.add(new MidiEvent(Midi.create(
-							orig.getCommand(), ch, DrumType.alt(data1), orig.getData2()), e.getTick()));
-				}
+				t.add(new MidiEvent(Midi.create(
+						orig.getCommand(), ch, data1, orig.getData2()), e.getTick()));
+
+//				if (DrumType.index(data1) >= 0) // crude inline Remap to 8 sample drumkits
+//					t.add(new MidiEvent(Midi.create(orig.getCommand(), ch, data1, orig.getData2()), e.getTick()));
+//				else if (DrumType.alt(data1) < 0) {
+//					int newVal = data1 % 6 + 2; // skipping bass and snare
+//					t.add(new MidiEvent(Midi.create(
+//							orig.getCommand(), ch, DrumType.values()[newVal].getData1(), orig.getData2()), e.getTick()));
+//					RTLogger.log(this, "remap'd " + data1 + " " + GMDrum.lookup(data1) + " to " + DrumType.values()[newVal]); }
+//				else  t.add(new MidiEvent(Midi.create(
+//							orig.getCommand(), ch, DrumType.alt(data1), orig.getData2()), e.getTick()));
 			}
 		}
 	}

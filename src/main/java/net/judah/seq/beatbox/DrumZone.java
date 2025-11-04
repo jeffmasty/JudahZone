@@ -10,7 +10,6 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 
 import lombok.Getter;
-import net.judah.api.ZoneMidi;
 import net.judah.gui.Detached.Floating;
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
@@ -24,7 +23,7 @@ import net.judah.seq.track.TrackBindings;
 
 /**Handles a top and bottom drum track */
 public class DrumZone extends HiringAgency implements Floating {
-	public static final String NAME = "DrumZone";
+	public static final String NAME = "BeatBox";
 
 	static final int MUTES_CUTOUT = 19;
 
@@ -32,12 +31,7 @@ public class DrumZone extends HiringAgency implements Floating {
 	@Getter private final ArrayList<DrumCage> views = new ArrayList<>();
 	private final Mutes mutes1, mutes2;
 
-//	/** ticks are zero-based */ // TODO to Qwerty?
-//	protected final Clipboard clipboard = new Clipboard();
-
 	public DrumZone(TrackList<DrumTrack> list) {
-		// TODO key bindings
-
 
 		setName(NAME);
 		this.tracks = list;
@@ -80,21 +74,10 @@ public class DrumZone extends HiringAgency implements Floating {
 
 	public void setCurrent(MidiTrack track) {
 		tracks.setCurrent(track);
-		// MainFrame.setFocus(this);
 	}
-
-//	public void changeTrack() {
-//		repaint();
-//		MainFrame.qwerty();
-//		requestFocusInWindow();
-//	}
 
 	public void update(DrumTrack t) {
 		getView(t).update();
-	}
-
-	public void midiUpdate(ZoneMidi midi) {
-// 		getView().getInstrumentPanel().repaint();
 	}
 
 	@Override
@@ -128,11 +111,5 @@ public class DrumZone extends HiringAgency implements Floating {
 	private static Dimension quadrant(Dimension full) {
 		return new Dimension(full.width / 2 - MUTES_CUTOUT, full.height / 2 - Size.KNOB_HEIGHT);
 	}
-
-//	public void update(DrumSample pad) {
-//	getView().getMutes().update(pad);
-//}
-
-
 
 }

@@ -5,11 +5,17 @@ import static net.judah.JudahZone.*;
 import static net.judah.controllers.MPKTools.*;
 import static net.judah.gui.knobs.KnobMode.*;
 
+import java.awt.Component;
+
+import javax.swing.JComboBox;
+import javax.swing.JList;
+import javax.swing.plaf.basic.BasicComboBoxRenderer;
+
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.api.ZoneMidi;
 import net.judah.fx.Delay;
 import net.judah.gui.MainFrame;
+import net.judah.gui.Updateable;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
@@ -17,13 +23,14 @@ import net.judah.midi.Panic;
 import net.judah.mixer.Channel;
 import net.judah.sampler.Sample;
 import net.judah.seq.arp.Arp;
+import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.util.Constants;
 import net.judah.util.Debounce;
 
 
 /** Akai MPKmini, not the new one */
-public class MPKmini implements Controller {
+public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Controller {
 
 	public static final MPKmini instance = new MPKmini();
 	private MPKmini() {}
@@ -33,8 +40,10 @@ public class MPKmini implements Controller {
 				"Acoustic Bass", "Vibraphone", "Rock Organ", "Rhodes EP",
 				"Tremolo", "Oboe", "Ahh Choir", "Harp"};
 
+	// Where to route live MPK keys (and Jamstik)
+	@Getter private MidiTrack midiOut;
+
 	@Setter private PianoTrack captureTrack;
-	@Getter private ZoneMidi midiOut;
 	public static boolean override;
 
 	@Override
@@ -57,6 +66,27 @@ public class MPKmini implements Controller {
     		return true;
     	}
 		return false;
+	}
+
+	public MPKmini fill(PianoTrack[] items, PianoTrack selected) {
+		setRenderer(new BasicComboBoxRenderer() {
+			@Override public Component getListCellRendererComponent(@SuppressWarnings("rawtypes") JList list,
+					Object value, int index, boolean isSelected, boolean cellHasFocus) {
+				//setHorizontalAlignment(SwingConstants.CENTER);
+				setText(value == null ? "?" : ((PianoTrack) value).getType().getName());
+				return this;
+			}
+		});
+
+		for (PianoTrack out : items) {
+			addItem(out);
+			if (out == selected) {
+				setSelectedItem(out);
+				midiOut = out;
+			}
+		}
+		addActionListener(e->setMidiOut((MidiTrack) getSelectedItem()));
+		return this;
 	}
 
 	private boolean checkCC(int data1, int data2) {
@@ -148,7 +178,8 @@ public class MPKmini implements Controller {
 	}
 
 	private boolean joystickL(int data2) { // delay
-		Delay d = ((Channel)midiOut).getDelay();
+
+		Delay d = ((Channel)midiOut.getMidiOut()).getDelay();
 		d.setActive(data2 > 4);
 		if (data2 <= 4)
 			return true;
@@ -184,13 +215,18 @@ public class MPKmini implements Controller {
 		return false;
 	}
 
-	public boolean setMidiOut(ZoneMidi out) {
-		if (midiOut == out)
-			return false;
+	public void setMidiOut(MidiTrack out) {
+		if (out == null)
+			return;
 		if (midiOut != null)
 			new Panic(midiOut);
 		midiOut = out;
-		return true;
+		MainFrame.update(this);
+	}
+
+	@Override public void update() {
+		if (midiOut != getSelectedItem())
+			setSelectedItem(midiOut);
 	}
 
 }

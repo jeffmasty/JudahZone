@@ -9,5 +9,5 @@ public class Param {
 
 	public Cmd cmd;
 	public String val = "?";
-	
+
 }

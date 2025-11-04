@@ -3,6 +3,7 @@ package net.judah.song.cmd;
 import java.util.ArrayList;
 
 import lombok.NoArgsConstructor;
+import net.judah.JudahZone;
 
 @NoArgsConstructor
 public class ParamList extends ArrayList<Param> {
@@ -11,11 +12,19 @@ public class ParamList extends ArrayList<Param> {
 		super(params);
 	}
 
-	public long getTimeCode() {
-		for (Param p : this)
-			if (p.cmd == Cmd.TimeCode)
-				return Long.parseLong(p.val);
-		return 0;
+	/**@return number of steps if Cmds contain a countdown */
+	public int getBeats() {
+		for (Param p : this) {
+			if (p.cmd == Cmd.Bars)
+				try {
+					return Integer.parseInt(p.val) * JudahZone.getClock().getMeasure();
+				} catch (NumberFormatException e) {/* nada */}
+			if (p.cmd == Cmd.Beats)
+				try {
+					return Integer.parseInt(p.val);
+				} catch (NumberFormatException e) {/* nada */}
+		}
+	return 0;
 	}
-	
+
 }

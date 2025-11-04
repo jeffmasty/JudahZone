@@ -51,14 +51,18 @@ public class ScenePad extends JPanel implements Pastels {
 		for (Param p : scene.getCommands())
 			sb.append(p.getCmd()).append(": ").append(p.getVal()).append("<br/>");
 		params.setText(sb.append("</html>").toString());
-		if (tab.getScene() == scene)
-			setBackground(GREEN);
-		else if (tab.getOnDeck() == scene) {
+		if (tab.getScene() == scene) {
+			if (scene.getCommands().getBeats() > 0) { // REL
+				int beats = tab.getCountUp();
+				int total = scene.getCommands().getBeats();
+				type.setText(beats + "/" + total + "!");
+				setBackground(BLUE);
+			}
+			else
+				setBackground(GREEN);
+		} else if (tab.getOnDeck() == scene) //
 			setBackground(scene.getType().getColor());
-			if (scene.getType() == Trigger.REL)
 
-				type.setText(tab.getCount() + "/" + scene.getCommands().getTimeCode() + "!");
-		}
 		else setBackground(Pastels.BUTTONS);
 	}
 

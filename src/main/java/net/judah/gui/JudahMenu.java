@@ -4,20 +4,18 @@ import static net.judah.JudahZone.*;
 
 import java.awt.Dimension;
 import java.awt.event.KeyEvent;
-import java.io.File;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JOptionPane;
 
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
 import net.judah.fx.LFO;
 import net.judah.gui.knobs.KnobMode;
-import net.judah.gui.settable.SongCombo;
 import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
 import net.judah.midi.JudahClock;
-import net.judah.omni.Threads;
 import net.judah.seq.Trax;
 import net.judah.song.Overview;
 import net.judah.song.setlist.Setlist;
@@ -41,15 +39,7 @@ public class JudahMenu extends JMenuBar {
 
     	song.add(new Actionable("Next", e->overview.nextSong()));
 		song.add(new Actionable("Save", e->overview.save()));
-        song.add(new Actionable("Save As..", e->{
-        		File f = Folders.choose(getSetlists().getDefault());
-        		if (f == null) return;
-        		overview.save(f);
-        		Threads.timer(200, () -> {
-        			SongCombo.refill();
-        			SongCombo.refresh();
-        		});;
-        	}));
+        song.add(new Actionable("Save As..", e->overview.saveAs()));
     	song.add(new Actionable("Reload", e->overview.reload()));
         song.add(new Actionable("Load..", e -> overview.loadSong(Folders.choose(getSetlists().getDefault()))));
     	song.add(new Actionable("New", e -> overview.newSong()));
@@ -85,13 +75,14 @@ public class JudahMenu extends JMenuBar {
     	loops.add(solotrack);
     	loops.add(new Actionable("Info..", e->Gui.infoBox(looper.toString(), "Info")));
 
-		JMenu time = new JMenu("Clock");
 		JudahClock clock = getClock();
+    	JMenu time = new JMenu("Clock");
 		time.add(new Actionable("Tempo", e->clock.inputTempo()));
 		time.add(new Actionable("Start/Stop", e->clock.toggle()));
     	time.add(new Actionable("Reset", e->clock.reset()));
     	time.add(new Actionable("Send/Rcv", e->clock.primary()));
     	time.add(new Actionable("Sync2Loop", e->clock.syncToLoop(looper.getPrimary())));
+    	time.add(new Actionable("Swing...", e->swing()));
     	//time.add(new Actionable("Runners dial zero", e->clock.runnersDialZero()));
 
     	JMenu lfo = new JMenu("LFO");
@@ -154,6 +145,20 @@ public class JudahMenu extends JMenuBar {
 		} catch (Throwable t) {
 			RTLogger.log(this, "Length not changed.");
 		}
+	}
+
+	private void swing() {
+
+    	String change = JOptionPane.showInputDialog("Swing", (int)(getClock().getSwing() * 100));
+    	if (change == null)
+    		return;
+    	try {
+    		int swing = Integer.parseInt(change);
+    		getClock().setSwing(swing * 0.01f);
+    	} catch (NumberFormatException ne) {
+    		RTLogger.log(ne, change + ": " + ne);
+    	}
+
 	}
 
 }

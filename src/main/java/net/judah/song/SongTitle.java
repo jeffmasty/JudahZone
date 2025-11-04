@@ -6,6 +6,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import lombok.Getter;
 import net.judah.api.Key;
 import net.judah.api.Signature;
 import net.judah.api.TimeProvider;
@@ -20,7 +21,6 @@ import net.judah.omni.Icons;
 import net.judah.omni.Threads;
 import net.judah.seq.chords.Scale;
 import net.judah.song.setlist.Setlists;
-import net.judah.song.setlist.SetlistsCombo;
 
 public class SongTitle extends JPanel {
 
@@ -30,6 +30,7 @@ public class SongTitle extends JPanel {
 	private final JComboBox<Key> key = new JComboBox<>(Key.values());
 	private final JComboBox<Scale> scale = new JComboBox<>(Scale.values());
 	private final JLabel bar = new JLabel("0", JLabel.CENTER);
+	@Getter private final SongCombo songs = new SongCombo();
 
 	public SongTitle(TimeProvider clock, Setlists setlists, Overview overview) {
 		this.clock = clock;
@@ -37,10 +38,9 @@ public class SongTitle extends JPanel {
 
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		add(Box.createHorizontalStrut(3));
-		add(Gui.resize(new SongCombo(), Size.TITLE_SIZE));
+		add(Gui.resize(songs, Size.TITLE_SIZE));
 		add(new Btn(Icons.SAVE, e->overview.save()));
 		add(new Btn(" 🔁 ", e->overview.reload(), "Reload"));
-		add(Gui.resize(new SetlistsCombo(setlists), Size.MEDIUM_COMBO));
 		add(new Btn(Icons.DETAILS_VEW, e->MainFrame.setFocus(KnobMode.Setlist)));
 		add(Box.createHorizontalGlue());
 		add(Gui.resize(timeSig, Size.SMALLER_COMBO));

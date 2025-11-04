@@ -24,7 +24,7 @@ public class MidiInstrument extends Instrument implements ZoneMidi {
 
 	@Setter protected JackPort midiPort;
 	protected String[] patches = new String[] {};
-	protected Vector<PianoTrack> tracks = new Vector<>();
+	protected final Vector<PianoTrack> tracks = new Vector<>();
 	private Polyphony notes;
 
 	public MidiInstrument(String channelName, String sourceLeft, String sourceRight,
@@ -73,6 +73,11 @@ public class MidiInstrument extends Instrument implements ZoneMidi {
 			if (t.getName().equals(name))
 				return t;
 		return null;
+	}
+
+	public PianoTrack getTrack() {
+		if (tracks.isEmpty()) return null;
+		return tracks.getFirst();
 	}
 
 }

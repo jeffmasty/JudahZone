@@ -89,6 +89,7 @@ public class KitKnobs extends KnobPanel {
 	}
 
 	@Override public void pad1() {
+
 		TabZone.edit(JudahZone.getSeq().byName(kit.getType().name()));
 	}
 

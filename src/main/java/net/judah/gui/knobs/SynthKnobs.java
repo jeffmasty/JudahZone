@@ -216,10 +216,12 @@ public class SynthKnobs extends KnobPanel {
 	}
 
 	private void save() {
-		String name = JOptionPane.showInputDialog("Synth Preset Name", synth.getSynthPresets().getCurrent());
+		String name = JOptionPane.showInputDialog(JudahZone.getFrame(), "Synth Preset Name", synth.getSynthPresets().getCurrent());
 		if (name == null || name.length() == 0)
 			return;
 		JudahZone.getSynthPresets().save(synth, name);
+		presets.refill(synth.getPatches(), name);
+		synth.progChange(name);
 	}
 
 	@Override

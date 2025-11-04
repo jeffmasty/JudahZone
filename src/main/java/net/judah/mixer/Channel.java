@@ -4,8 +4,6 @@ import static net.judah.util.Constants.STEREO;
 
 import java.util.ArrayList;
 
-import be.tarsos.dsp.pitch.PitchDetector;
-import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.fx.Chorus;
@@ -20,6 +18,7 @@ import net.judah.fx.Overdrive;
 import net.judah.fx.Preset;
 import net.judah.fx.Reverb;
 import net.judah.fx.Setting;
+import net.judah.fx.TimeEffect;
 import net.judah.gui.MainFrame;
 import net.judah.gui.MainFrame.FxChange;
 import net.judah.gui.fx.EffectsRack;
@@ -28,7 +27,6 @@ import net.judah.gui.settable.Presets;
 import net.judah.gui.settable.PresetsHandler;
 import net.judah.omni.AudioTools;
 import net.judah.omni.Threads;
-import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 /** An effects bus for input or output audio */
@@ -50,14 +48,13 @@ public abstract class Channel extends FxChain implements Presets {
     protected final LFO lfo = new LFO(this);
     protected final LFO lfo2 = new LFO(this, LFO.Target.Filter);
 
-	private PitchDetector pitchDetector = PitchEstimationAlgorithm.MPM.getDetector(S_RATE, N_FRAMES);
     protected EffectsRack gui;
     protected LFOKnobs lfoKnobs;
 
     public Channel(String name, boolean isStereo) {
     	super(name, isStereo);
         Effect[] order = new Effect[] {
-        		filter1, filter2, eq, compression, overdrive, chorus, reverb, delay};
+        		filter1, filter2, eq, compression, overdrive, chorus, reverb, delay, lfo, lfo2};
         for (Effect fx : order)
         	add(fx);
     }
@@ -162,7 +159,7 @@ public abstract class Channel extends FxChain implements Presets {
 	}
 
 	public void tempo(float tempo) {
-    	float unit = Constants.millisPerBeat(tempo) / (float)JudahZone.getClock().getSubdivision();
+    	float unit = TimeEffect.unit();
 		if (delay.isSync()) {
 			delay.sync(unit);
 			MainFrame.update(this);

@@ -21,6 +21,8 @@ import com.illposed.osc.OSCMessage;
 import com.illposed.osc.transport.udp.OSCPortOut;
 
 import lombok.Getter;
+import lombok.Setter;
+import net.judah.JudahZone;
 import net.judah.api.MidiClock;
 import net.judah.api.Notification;
 import net.judah.api.Notification.Property;
@@ -34,29 +36,24 @@ import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.omni.WavConstants;
 import net.judah.seq.chords.ChordTrack;
-import net.judah.song.cmd.Cmd;
-import net.judah.song.cmd.Cmdr;
-import net.judah.song.cmd.IntProvider;
-import net.judah.song.cmd.Param;
 import net.judah.util.Constants;
 import net.judah.util.Debounce;
 import net.judah.util.RTLogger;
 
-public class JudahClock implements MidiClock, TimeProvider, Cmdr {
+public class JudahClock implements MidiClock, TimeProvider {
 
 	public static final int MAX_TEMPO = (int)Math.floor( WavConstants.FPS / MIDI_24 * 60f );
+	public static final int MIN_TEMPO = 30;
+
 
 	public static final int OSC_PORT = 4040;
 
 	/** current number of bars to record/computeTempo */
 	@Getter private static int length = 4;
 	@Getter private boolean active;
-	@Getter private int bar;
-
-	private final JudahMidi midi;
-
 	@Getter private float tempo = 90;
 	@Getter private Signature timeSig = Signature.FOURFOUR;
+	@Getter private int bar;
     /** current beat */
 	@Getter private int beat;
 	/** current step of current beat */
@@ -65,16 +62,22 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 	@Getter private boolean internal = true;
     @Getter private boolean onDeck;
 
-	private long lastPulse = 0;
+    private float jackFramesPerTick;
+    private float onFrames, offFrames;
+    private float callCounter = 0;
+    private long lastPulse = 0;
 	private int midiPulseCount;
     private int unit = MIDI_24 / timeSig.div;
+    private boolean offBeat;
+    @Setter @Getter private boolean eighths;
+    @Getter private float swing;
+
+    private final JudahMidi midi;
     private final ArrayList<TimeListener> listeners = new ArrayList<>();
     private final BlockingQueue<Notification> notifications = new LinkedBlockingQueue<>();
-	private float jackFramesPerTick;
-    private float callCounter = 0;
     private OSCPortOut osc;
 	private final ArrayList<Object> oscData = new ArrayList<>();
-	private Debounce debounce = new Debounce();
+	private final Debounce debounce = new Debounce();
 
     /** sync to external Midi24 pulse */
 	public JudahClock(JudahMidi parent) {
@@ -105,8 +108,8 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 		if (!internal)
 			return;
         callCounter += 1;
-        if (callCounter >= jackFramesPerTick) {
-            callCounter -= jackFramesPerTick;
+        if (callCounter >= (offBeat ? offFrames : onFrames)) { // swingless = jackFramesPerTick;
+            callCounter -= (offBeat ? offFrames : onFrames); // keep remainder
 			midi24();
         }
 	}
@@ -141,6 +144,8 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
         }
 	}
 
+
+	/** Run sequencers every timing clock msg, adjust for swing, check steps/bars */
 	private void midi24() {
 		midi.queue(MIDI_TICK);
 		midiPulseCount++;
@@ -159,6 +164,12 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 
 		if (midiPulseCount % unit == 0) {
 			step = beat * timeSig.div + midiPulseCount / unit;
+
+			if (!eighths)
+				offBeat = !offBeat;
+			else if (step % 2 == 0)
+				offBeat = !offBeat;
+
 			passItOn(STEP, step);
 			if (active) {
 				getSeq().step(step);
@@ -166,15 +177,42 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 		}
 		if (!active)
 			return;
-		float percent = beat + midiPulseCount / (float)MIDI_24; //  + (isEven() ? 0 : 1);
-		getSeq().percent(percent);
+
+		getSeq().percent(beat + midiPulseCount / (float)MIDI_24);
 	}
 
-	@Override
-    public void begin() {
+	public void setSwing(float s) throws NumberFormatException {
+		if (s < -0.5f || s > .5f)
+			throw new NumberFormatException("swing and a miss: " + s);
+		swing = s;
+		updateSwing();
+		MainFrame.update(JudahZone.getMidiGui());
+	}
+
+	private void updateSwing() {
+		jackFramesPerTick = WavConstants.FPS / (tempo * 0.4f); // tempo / 60 * 24
+
+		if (timeSig.div == 3) // square triplets
+			onFrames = offFrames = jackFramesPerTick;
+		else {
+			onFrames = jackFramesPerTick + jackFramesPerTick * swing;
+			offFrames = 2 * jackFramesPerTick - onFrames;
+		}
+	}
+
+	private void newBar() {
+		bar++; // new Bar
+		beat = 0;
+		announce(Property.BARS, bar);
+		if (bar % length == 0 && !debounce.doubleTap())
+			announce(Property.BOUNDARY, bar / length);
+	}
+
+	@Override public void begin() {
 		lastPulse = 0;
 	    midiPulseCount = -1;
 	    step = 0;
+	    offBeat = false;
 		beat = -1;
 		bar = 0;
 		active = true;
@@ -183,15 +221,14 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 		offSync();
 	}
 
-	@Override
-    public void end() {
+	@Override public void end() {
 	    active = false;
 	    midi.synchronize(MIDI_STOP);
 	    passItOn(TRANSPORT, JackTransportState.JackTransportStopped);
+	    reset(); // ?
 	}
 
-	@Override
-	public void reset() {
+	@Override public void reset() {
 		step = beat = bar = 0;
         announce(Property.STATUS, "reset");
 	}
@@ -202,10 +239,9 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 			stop();
 
 		internal = !internal;
-		// TODO connect ports
 		if (!internal)
 			try {
-				osc = external(); // TODO connect Midi Port ?
+				osc = external(); // connect Midi Port ?
 			} catch (Exception e) { RTLogger.warn(this, e); }
 		setTempo(tempo);
 	}
@@ -228,12 +264,12 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 		MainFrame.update(this);
 	}
 
-	@Override
-	public void setTimeSig(Signature time) {
+	@Override public void setTimeSig(Signature time) {
 		if (timeSig == time)
 			return;
 		timeSig = time;
 		unit = MIDI_24 / timeSig.div;
+		updateSwing();
 		passItOn(Property.SIGNATURE, timeSig);
 		Folder.refillAll();
 		MainFrame.update(this); // both update and announce?
@@ -249,24 +285,19 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 		lastPulse = now;
 		if ((int)tempo2 != (int)tempo)
 			setTempo((tempo2 + avg) / 2f);
-
 	}
 
 	public void skipBar() {
 		bar++;
-		passItOn(Property.BARS, bar);
+		announce(Property.BARS, bar);
 	}
 
-	public int countdown() {
-		return beat % timeSig.beats - timeSig.beats;
-	}
-
-	@Override
-	public void setTempo(float bpm) {
-		if (bpm > MAX_TEMPO)
+	@Override public void setTempo(float bpm) {
+		if (bpm > MAX_TEMPO || bpm < MIN_TEMPO)
 			return;
+
 		tempo = bpm;
-			jackFramesPerTick = WavConstants.FPS / (tempo * 0.4f); // tempo / 60 * 24
+		updateSwing();
 		if (!internal) {
 			oscData.clear();
 			oscData.add(Math.round(tempo));
@@ -285,8 +316,7 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
         }
 	}
 
-	@Override
-	public void close() throws IOException {
+	@Override public void close() throws IOException {
 		stop();
 		if (osc != null && osc.isConnected()) {
 			try {
@@ -298,24 +328,21 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 	}
 
 	// External Midi interface
-	@Override
-	public void start() {
+	@Override public void start() {
 		if (internal)
 			return;
 		oscData.clear();
 		send("/start");
 	}
 
-	@Override
-	public void stop() {
+	@Override public void stop() {
 		if (internal)
 			return;
 		oscData.clear();
 		send("/stop");
 	}
 
-	@Override
-	public void cont() {
+	@Override public void cont() {
 		if (internal)
 			return;
 		oscData.clear();
@@ -332,14 +359,6 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 		} catch (Exception e) {
 			RTLogger.warn(this, "tempo " + e.getMessage());
 		}
-	}
-
-	private void newBar() {
-		bar++; // new Bar
-		beat = 0;
-		announce(Property.BARS, bar);
-		if (bar % length == 0 && !debounce.doubleTap())
-			announce(Property.BOUNDARY, bar / length);
 	}
 
 	// Looper Integration
@@ -391,21 +410,5 @@ public class JudahClock implements MidiClock, TimeProvider, Cmdr {
 		for (int i = listeners.size() - 1; i >= 0; i--)
 			listeners.get(i).update(prop, value);
 	}
-
-	// CMD interface
-	@Override public String[] getKeys() {
-		return 	IntProvider.instance(40, 200, 2).getKeys();
-	}
-
-	@Override public Integer resolve(String key) {
-		return Integer.parseInt(key);
-	}
-
-	@Override public void execute(Param p) {
-		if (p.cmd == Cmd.Tempo)
-			try { setTempo(Integer.parseInt(p.val));
-			} catch (NumberFormatException e) {RTLogger.warn(this, "tempo: " + p.val);}
-	}
-
 
 }

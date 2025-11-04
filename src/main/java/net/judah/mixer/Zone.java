@@ -3,23 +3,18 @@ package net.judah.mixer;
 import static net.judah.JudahZone.*;
 import static net.judah.gui.MainFrame.setFocus;
 
-import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Vector;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.JudahZone;
 import net.judah.looper.Looper;
-import net.judah.song.cmd.Cmdr;
-import net.judah.song.cmd.Param;
 
 /**Used for initialization/customization */
 @RequiredArgsConstructor
-public class Zone extends Vector<LineIn> implements Cmdr {
+public class Zone extends Vector<LineIn> {
 
 	@Getter private final ArrayList<Instrument> instruments = new ArrayList<>();
-	@Getter private String[] keys;
 
 	public Zone(LineIn... instruments) {
 		for (LineIn input : instruments)
@@ -30,12 +25,9 @@ public class Zone extends Vector<LineIn> implements Cmdr {
 	}
 
 	void prepare() {
-		keys = new String[size()];
-		for (int i = 0; i < keys.length; i++) {
-			Channel ch = get(i);
-			keys[i] = ch.getName();
-			if (ch instanceof Instrument)
-				instruments.add((Instrument)ch);
+		for (int i = 0; i < size(); i++) {
+			if (get(i) instanceof Instrument processMe)
+				instruments.add(processMe);
 		}
 	}
 
@@ -62,35 +54,8 @@ public class Zone extends Vector<LineIn> implements Cmdr {
 
 	void preamps() {
 		getMains().getGain().setPreamp(Mains.PREAMP);
+		getSampler().getGain().setPreamp(2f);
 		getMic().getGain().setGain(0.25f); // trim studio noise
-	}
-
-	@Override
-	public void execute(Param p) {
-		LineIn ch = resolve(p.val);
-		switch (p.cmd) {
-			case OffTape:
-				ch.setMuteRecord(true);
-				break;
-			case OnTape:
-				ch.setMuteRecord(false);
-				break;
-			case Latch:
-				JudahZone.getLooper().syncFx(ch);
-				break;
-			case SoloCh:
-				JudahZone.getLooper().getSoloTrack().setSoloTrack(resolve(p.val));
-				break;
-			default: throw new InvalidParameterException("" + p);
-		}
-	}
-
-	@Override
-	public LineIn resolve(String key) {
-		for (LineIn line : this)
-			if (line.getName().equals(key))
-				return line;
-		return null;
 	}
 
     public boolean nextChannel(boolean toRight) {

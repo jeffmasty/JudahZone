@@ -16,58 +16,90 @@ import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.Integers;
 import net.judah.gui.widgets.ModalDialog;
 import net.judah.seq.Edit.Type;
+import net.judah.seq.piano.Piano;
 import net.judah.seq.track.MidiTrack;
 
 /** Provides a ModalDialog to enter specific transposition amounts
  * @see net.judah.gui.widgets.ModalDialog*/
-public class Transpose {
+public class Transpose extends JPanel {
+
+	private static final Dimension SIZE = new Dimension(220, 160);
 
 	private final MidiTrack track;
 	private final MusicBox view;
-	private final Integers steps;
-	private final Integers tones = new Integers(-11, 11);
+	private Integers steps;
+	private final Integers tones = new Integers(-11, 12);
 	private final Integers octaves = new Integers(-5, 5);
 	private final JComboBox<DrumType> drum = new JComboBox<>(DrumType.values());
 	@Setter static private int delta;
 
-	public Transpose(MidiTrack t, MusicBox view) {
+	private final Btn cancel = new Btn("Cancel", e->ModalDialog.getInstance().setVisible(false));
 
+	public Transpose(Piano view) {
+		super(new GridLayout(0, 2));
+		this.view = view;
+		this.track = view.getTrack();
+
+		add(new JLabel("Octaves")); // +/- 5
+		add(octaves);
+
+		add(new JLabel("SemiTones")); // +/- 11
+		add(tones);
+
+		add(new Btn("Ok", e->remap()));
+		add(cancel);
+		setName("Remap");
+		new ModalDialog(Gui.wrap(this), SIZE);
+
+	}
+
+	public Transpose(MidiTrack t, MusicBox view) {
+		super(new GridLayout(0, 2));
 		this.track = t;
 		this.view = view;
 
 		steps = new Integers(track.getClock().getSteps() * -1, track.getClock().getSteps());
 
-		JPanel pnl = new JPanel(new GridLayout(0, 2));
 
-		pnl.add(new JLabel("Steps"));
-		pnl.add(steps);
+		add(new JLabel("Steps"));
+		add(steps);
 
 		if (t.isSynth()) {
-			pnl.add(new JLabel("Octaves")); // +/- 5
-			pnl.add(octaves);
-			pnl.add(new JLabel("SemiTones")); // +/- 11
-			pnl.add(tones);
+			add(new JLabel("Octaves")); // +/- 5
+			add(octaves);
+			add(new JLabel("SemiTones")); // +/- 11
+			add(tones);
 		}
 		else {
-			pnl.add(new JLabel("Drum "));
-			pnl.add(drum);
+			add(new JLabel("Drum "));
+			add(drum);
 		}
 
-		pnl.add(new Btn("Ok", e->ok()));
-		pnl.add(new Btn("Cancel", e->ModalDialog.getInstance().setVisible(false)));
-		pnl = Gui.wrap(pnl);
-		pnl.setName("Transpose");
-		new ModalDialog(pnl, new Dimension(220, 160));
+		add(new Btn("Ok", e->ok()));
+		add(cancel);
+		setName("Transpose");
+		new ModalDialog(Gui.wrap(this), SIZE);
 	}
 
-	private void ok() {
+	private void ok() { // TODO bug
 		ModalDialog.getInstance().setVisible(false);
-		Edit e = new Edit(Type.TRANS, new ArrayList<MidiPair>(view.selected));
-		int data1 = track.isSynth()
-				? (Integer)octaves.getSelectedItem() * 12 + (Integer)tones.getSelectedItem()
-				: ((DrumType)drum.getSelectedItem()).getData1() - ((ShortMessage)view.selected.get(0).getOn().getMessage()).getData1();
-		long tick = (Integer)steps.getSelectedItem() *  (track.getResolution() / track.getClock().getTimeSig().div) ;
-		e.setDestination(new Prototype(data1, tick));
+		Edit e = new Edit(Type.TRANS, view.selected);
+		int data1 = 0;
+		if (track.isDrums())
+			data1 = ((DrumType)drum.getSelectedItem()).getData1() -
+					((ShortMessage)view.selected.get(0).getOn().getMessage()).getData1();
+		if (track.isSynth())
+			data1 = (Integer)octaves.getSelectedItem() * 12 + (Integer)tones.getSelectedItem();
+		e.setDestination(new Prototype(data1, (Integer)steps.getSelectedItem()));
+		view.push(e);
+	}
+
+	private void remap() {
+		ModalDialog.getInstance().setVisible(false);
+		Edit e = new Edit(Type.REMAP, new ArrayList<MidiPair>());
+
+		int data1 = (Integer)tones.getSelectedItem() + 12 * (Integer)octaves.getSelectedItem();
+		e.setDestination(new Prototype(data1, -1));
 		view.push(e);
 	}
 

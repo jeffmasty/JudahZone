@@ -2,6 +2,7 @@ package net.judah.util;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
@@ -11,26 +12,27 @@ import net.judah.JudahZone;
 
 public class Folders {
 
-	// TODO user settings gui/mkdir
-	static final File _home = new File(System.getProperty("user.home"), "Setlist");
+	// TODO user settings gui/mkdir/not hardcoded
+    static final File HOME = new File(System.getProperty("user.home"));
+	static final File LIVE = new File(HOME, "Setlist");
 
-	@Getter static final File SetlistHome = new File(_home, "songs");
-	@Getter static final File Samples = new File(_home, "samples");
-	@Getter static final File Kits = new File(_home, "kits");
-	@Getter static final File Synths = new File(_home, "synths");
-	@Getter static final File Beats = new File(_home, "beats");
-	@Getter static final File Bass = new File(_home, "bass");
-	@Getter static final File SheetMusic = new File(_home, "sheets");
-	@Getter static final File ChordPro = new File(_home, "chords");
-	@Getter static final File Loops = new File(_home, "loops");
-	@Getter static final File PresetsFile = new File(_home, "presets.zone");
-	@Getter static final File SynthPresets = new File(_home, "synths.zone");
-    // TODO not hardcoded
+	@Getter static final File SetlistHome = new File(LIVE, "songs");
+	@Getter static final File Samples = new File(LIVE, "samples");
+	@Getter static final File Kits = new File(LIVE, "kits");
+	@Getter static final File Synths = new File(LIVE, "synths");
+	@Getter static final File Beats = new File(LIVE, "beats");
+	@Getter static final File Bass = new File(LIVE, "bass");
+	@Getter static final File SheetMusic = new File(LIVE, "sheets");
+	@Getter static final File ChordPro = new File(LIVE, "chords");
+	@Getter static final File Loops = new File(LIVE, "loops");
+	@Getter static final File PresetsFile = new File(LIVE, "presets.zone");
+	@Getter static final File SynthPresets = new File(LIVE, "synths.zone");
+
+	@Getter static final File ImportDrums = new File(HOME, "/tracks/beatbuddy/");
+	@Getter static final File ImportMidi = new File(HOME, "/tracks/midi/");
+
 	static final File ROOT = new File("/home/judah/git/JudahZone/resources/");
-    @Getter static final File Log4j = new File(ROOT, "log4j.xml");
-    @Getter static final File ICONS = new File(ROOT, "icons");
-	@Getter static final File ImportDrums = new File("/home/judah/tracks/beatbuddy/");
-	@Getter static final File ImportMidi= new File("/home/judah/tracks/midi/");
+	@Getter static final File Log4j = new File(ROOT, "log4j.xml");
 
     public static File midi(File parent) {
     	return new File(parent, JudahZone.getClock().getTimeSig().name());
@@ -42,19 +44,25 @@ public class Folders {
 		return result;
 	}
 
-	static File currentDir = new File(System.getProperty("user.dir"));
+	static HashMap<File, File> memory = new HashMap<File, File>();
+	// static File memory = new File(System.getProperty("user.dir"));
 
-	public static void setCurrentDir(File folder) {
-		currentDir = folder;
-	}
-	public static void setCurrentFile(File file) {
-		currentDir = file;
-	}
+//	public static void setCurrentDir(File folder) {
+//		memory = folder;
+//	}
 
 	public static File choose(int selectionMode, final String extension, final String description) {
+		return choose(selectionMode, extension, description, new File(System.getProperty("user.home")));
+	}
+
+	public static File choose(String ext, String desc, File folder) {
+		return choose(JFileChooser.FILES_AND_DIRECTORIES, ext, desc, folder);
+	}
+
+	public static File choose(int selectionMode, final String extension, final String description, File folder) {
 		JFileChooser fc = new JFileChooser();
-		if (selectionMode >= 0)
-			fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+		if (selectionMode >= 0 && selectionMode <= 2)
+			fc.setFileSelectionMode(selectionMode);
 		if (extension != null)
 			fc.setFileFilter(new FileFilter() {
 				@Override public String getDescription() {
@@ -63,15 +71,15 @@ public class Folders {
 					return f.isDirectory() || f.getName().endsWith(extension); }
 			});
 
-		fc.setCurrentDirectory(new File(System.getProperty("user.home")));
-		if (currentDir != null && currentDir.isDirectory())
-			fc.setCurrentDirectory(currentDir);
-		else if (currentDir != null && currentDir.isFile())
-			fc.setSelectedFile(currentDir);
-		int result = fc.showOpenDialog(null);
+		if (memory.containsKey(folder))
+			fc.setCurrentDirectory(memory.get(folder));
+		else
+			fc.setCurrentDirectory(folder);
+
+		int result = fc.showOpenDialog(JudahZone.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION) {
 		    File selectedFile = fc.getSelectedFile();
-		    currentDir = fc.getCurrentDirectory();
+		    memory.put(folder, fc.getCurrentDirectory());
 		    return selectedFile == null ? null :
 		    	new File(selectedFile.getAbsolutePath()); // JSON doesn't like File subclass
 		}
@@ -82,8 +90,7 @@ public class Folders {
 		return choose(0, null, null);
 	}
 	public static File choose(File folder) {
-		setCurrentDir(folder);
-		return choose();
+		return choose(0, null, null, folder);
 	}
 
 

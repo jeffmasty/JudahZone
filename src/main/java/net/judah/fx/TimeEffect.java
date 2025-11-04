@@ -5,6 +5,10 @@ import static net.judah.util.Constants.millisPerBeat;
 
 public interface TimeEffect extends Effect {
 
+	static float unit() {
+		return millisPerBeat(getClock().getTempo()) / (float)getClock().getSubdivision(); // * 2
+	}
+
 	static String[] TYPE = {"1/8", "1/4", "3/8", "1/2"};
 
 	static int indexOf(String type) {
@@ -12,10 +16,6 @@ public interface TimeEffect extends Effect {
 			if (TYPE[i].equals(type))
 				return i;
 		return 0; // fail
-	}
-
-	static float unit() {
-		return 2 * millisPerBeat(getClock().getTempo()) / (float)getClock().getSubdivision();
 	}
 
 	void setType(String type);

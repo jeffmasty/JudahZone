@@ -13,11 +13,11 @@ public enum Trax {
 	H2("Fills", DRUM_CH + 3, "VCO", "Fills1"),
 
 	B("Bass", 0, "", "Bass2"),
-	TK1("S.One", 0, "Drops1", "8ths"),
-	TK2("S.Two", 0, "FeelGood", "16ths"),
-	F1("Fluid1", 1, "Strings", "0s"),
-	F2("Fluid2", 2, "Palm Muted Guitar", "CRDSKNK"),
-	F3("Fluid3", 3, "Harp", "8ths")
+	TK1("Taco", 0, "Drops1", "8ths"),
+	TK2("Tk2", 0, "FeelGood", "16ths"),
+	F1("Fluid1", 0, "Strings", "0s"),
+	F2("Fluid2", 1, "Palm Muted Guitar", "CRDSKNK"),
+	F3("Fluid3", 2, "Harp", "8ths")
 	;
 
 	private final String name;

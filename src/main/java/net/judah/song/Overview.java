@@ -1,6 +1,8 @@
 package net.judah.song;
 
-import static net.judah.JudahZone.*;
+import static net.judah.JudahZone.getDrumMachine;
+import static net.judah.JudahZone.getInstruments;
+import static net.judah.JudahZone.getSetlists;
 import static net.judah.gui.Size.TAB_SIZE;
 
 import java.awt.Dimension;
@@ -35,6 +37,7 @@ import net.judah.seq.Seq;
 import net.judah.seq.chords.ChordTrack;
 import net.judah.song.cmd.Cmd;
 import net.judah.song.cmd.Param;
+import net.judah.song.setlist.Setlist;
 import net.judah.song.setlist.Setlists;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
@@ -47,7 +50,7 @@ public class Overview extends JPanel implements TimeListener {
 	private static final Dimension props = new Dimension((int)(Size.WIDTH_TAB * 0.275), (int)(SCENE_SZ.height * 0.21));
 	private static final Dimension BTNS = new Dimension((int)(Size.WIDTH_TAB * 0.365), (int)(SCENE_SZ.height * 0.66));
 
-	private final JudahClock clock;
+	@Getter private final JudahClock clock;
 	private final Seq seq;
 	private final Looper looper;
 	private final DJJefe mixer;
@@ -58,7 +61,8 @@ public class Overview extends JPanel implements TimeListener {
 	@Getter private Scene scene;
 	/** scene to goto */
 	@Getter private Scene onDeck;
-	@Getter private int count;
+	@Getter private int steps;
+	@Getter private int countUp;
 	@Getter private SongView songView;
 	private final ArrayList<SongTrack> tracks = new ArrayList<>();
 	private final SongTitle songTitle;
@@ -113,7 +117,6 @@ public class Overview extends JPanel implements TimeListener {
 			if (song.getScenes().size() > idx && clock.isActive()) {
 				Scene next = song.getScenes().get(idx);
 				setScene(next);
-				peek(next);
 			}
 			return true;
 		}
@@ -122,50 +125,31 @@ public class Overview extends JPanel implements TimeListener {
 	}
 
 	private void go() {
-		Scene next = onDeck;
 		setScene(onDeck);
-		if (clock.isActive())
-			peek(next);
 	}
 
-	private void peek(Scene current) {
-		int next = 1 + song.getScenes().indexOf(current);
-		if (next >= song.getScenes().size()) {
-			onDeck = null;
-			return;
-		}
-		Scene peek = song.getScenes().get(next);
-		if (peek.getType() == Trigger.REL) {
-			count = 0;
-			setOnDeck(peek);
-			// MainFrame.update(peek);
-		}
-		else if (peek.getType() == Trigger.ABS)
-			setOnDeck(peek);
-		else onDeck = null;
-	}
 
 	@Override public void update(Property prop, Object value) {
 		if (prop == Property.BARS)
 			songTitle.updateBar((int)value);
 
-		if (getOnDeck() == null)
+		if (prop== Property.BEAT) {
+			if (steps > 0 && clock.isActive())
+				countUp++;
+			if (countUp > steps) {
+				trigger();
+				go();
+			} else
+				MainFrame.update(scene);
 			return;
-		Scene onDeck = getOnDeck();
+		}
+
+		if (onDeck == null)
+			return;
 		if (prop == Property.BARS && onDeck.type == Trigger.BAR)
 			go();
 		else if (prop == Property.BOUNDARY && onDeck.type == Trigger.LOOP)
 			go();
-		else if (onDeck.type == Trigger.ABS && prop == Property.BEAT) {
-			if ((int)value >= onDeck.getCommands().getTimeCode())
-				go();
-		}
-		else if (onDeck.type == Trigger.REL && prop == Property.BEAT) {
-			if (++count > onDeck.getCommands().getTimeCode())
-				go();
-			else
-				songView.updatePad(onDeck);
-		}
 	}
 
 	public void update() {
@@ -176,19 +160,20 @@ public class Overview extends JPanel implements TimeListener {
     public void setScene(Scene s) {
     	Scene old = scene;
     	scene = s;
+		countUp = 0;
 
     	// commands
 		for (Param p : s.getCommands())
 			if (runParam(p) && clock.isActive()) // true = Jump Cmd
 				return;
 
+		steps = scene.getCommands().getBeats();
+
 		// track state (bar, progChange, arp)
 		List<Sched> schedule = scene.getTracks();
 
 		for (int idx = 0; idx < schedule.size(); idx++)
 			seq.get(idx).setState(schedule.get(idx));
-
-		count = 0;
 
 		Threads.execute(()->{
 			List<String> fx = scene.getFx();
@@ -201,13 +186,13 @@ public class Overview extends JPanel implements TimeListener {
 					ch.setPresetActive(false);
 			}
 		});
-		count = 0;
     	onDeck = null;
 		if (old != null)
     		MainFrame.update(old);
-		MainFrame.update(scene);
-		clock.reset(); // TODO new SCENE notification ?
 
+		MainFrame.setFocus(scene);
+		if (clock.isActive())
+			clock.reset(); // TODO new SCENE notification ?
     }
 
     public void setOnDeck(Scene scene) {
@@ -223,6 +208,12 @@ public class Overview extends JPanel implements TimeListener {
 		}
 	}
 
+    private void setName() {
+		setName(song.getFile() == null ? getName() : song.getFile().getName());
+    	TabZone.instance.title(this);
+    }
+
+
     public void setSong(Song smashHit) {
 
     	song = smashHit;
@@ -235,7 +226,6 @@ public class Overview extends JPanel implements TimeListener {
     	mixer.mutes(song.getCapture());
     	chords.load(song);
 
-		setName(song.getFile() == null ? getName() : song.getFile().getName());
 		songTitle.update();
 
 		holder.removeAll();
@@ -245,11 +235,11 @@ public class Overview extends JPanel implements TimeListener {
 			song.getScenes().add(new Scene(seq));
 
     	setScene(song.getScenes().get(0));
+    	setName();
+    	SongCombo.refresh();
 
     	// load sheet music if song name matches an available sheet music file
     	TabZone.instance.sheetMusic(song);
-    	TabZone.instance.title(this);
-    	SongCombo.refresh();
     }
 
     public Song loadSong(final File input) {
@@ -283,7 +273,7 @@ public class Overview extends JPanel implements TimeListener {
     }
 
     public void nextSong() {
-    	JComboBox<?> setlist = getMidiGui().getSongsCombo();
+    	JComboBox<?> setlist = songTitle.getSongs();
     	int i = setlist.getSelectedIndex() + 1;
     	if (i == setlist.getItemCount())
     		i = 0;
@@ -298,14 +288,22 @@ public class Overview extends JPanel implements TimeListener {
 
     public void save() {
     	if (song.getFile() == null) {
-    		song.setFile(Folders.choose(getSetlists().getDefault()));
-    		if (song.getFile() == null)
-    			SongCombo.refill();
-    			return;
+    		saveAs();
+    		return;
     	}
     	song.saveSong(mixer, seq, scene, chords);
-    	TabZone.instance.title(this);
+    	setName();
     }
+
+	public void saveAs() {
+		Setlist current = getSetlists().getCurrent();
+		File f = Folders.choose(current.getSource());
+		if (f == null)
+			return;
+		save(f);
+		SongCombo.refresh(current.array(), f);
+
+	}
 
 }
 

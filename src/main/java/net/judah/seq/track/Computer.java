@@ -11,7 +11,7 @@ import net.judah.song.Sched;
 @RequiredArgsConstructor @Getter
 public abstract class Computer {
 
-	protected final JudahClock clock;
+	@Getter protected final JudahClock clock;
 	@Setter protected long barTicks; // ticks in resolution of timeSig
 	protected Sched state = new Sched(); // assigned when Song Scene changes
 	protected int current; 	// current measure/bar (not frame)
@@ -41,7 +41,6 @@ public abstract class Computer {
 
 	protected void reset() {
 		count = clock.isEven() ? 0 : 1;
-//		flush();
 		setCurrent(state.launch + 2 * offset + count);
 	}
 
@@ -140,7 +139,6 @@ public abstract class Computer {
 	}
 
 	public void next(boolean fwd) {
-//		flush();
 		offset += fwd ? 1 : -1;
 		int next = fwd ? after(after(current)) : before(before(current));
 		if (next % 2 == 0 != clock.isEven())

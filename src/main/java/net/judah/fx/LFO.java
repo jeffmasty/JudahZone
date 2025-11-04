@@ -43,7 +43,6 @@ public class LFO implements TimeEffect {
 		else
 			recover();
 		this.active = active;
-		throttle = 0;
 		MainFrame.update(ch);
 	}
 	/** in kilohertz (msec per cycle). default: oscillates over a 1.2 seconds. */
@@ -108,6 +107,7 @@ public class LFO implements TimeEffect {
     }
 
     private void setup() {
+		throttle = 0;
     	switch (target) {
 		case Filter:
 			recover = Filter.frequencyToKnob(ch.getFilter1().getFrequency());
@@ -246,58 +246,6 @@ public class LFO implements TimeEffect {
 		}
 	}
 
-
-	// TODO saw wave
-	//private final static float TWOPI = (float) (2 * Math.PI);
-	//public double querySaw() {
-	//	long time = System.currentTimeMillis() + shift;
-	//	double phase = (time % frequency) / frequency;
-	//    double t = phase / TWOPI;
-	//    return (2.0f * t) - 1.0f;
-	//}
-
-
-//	public static class LFOTest extends Thread {
-//		final LFO lfo = new LFO(new Channel("test", false));
-//
-//		long sleep = 80;
-//		final long spells = 50;
-//		int count;
-//
-//		double min = Double.MAX_VALUE;
-//		double max = Double.MIN_VALUE;
-//
-//		public LFOTest(int freq) {
-//			lfo.frequency = freq;
-//		}
-//
-//		@Override
-//		public void run() {
-//			while(count <= spells) {
-//				double query = lfo.query();
-//				if (query > max) max = query;
-//				if (query < min) min = query;
-//
-//				long spaces = Math.round(query / 5);
-//				String display = "";
-//				for (int i = 0; i< spaces; i++)
-//					display += " ";
-//				display += "*";
-//				System.out.println(display + "       " + query);
-//
-//				count++;
-//				try { Thread.sleep(sleep);
-//				} catch (Throwable t) { }
-//			}
-//			System.out.println("done. min: " + min + " max: " + max + " frequency: " + lfo.getFrequency());
-//		}
-//
-//		public static void main2(String[] args) {
-//			new LFOTest(1200).start(); // 3 second LFO
-//		}
-//	}
-
-
 	@Override
 	public void sync(float unit) {
 		float msec = 2 * (unit + unit * TimeEffect.indexOf(type));
@@ -318,6 +266,55 @@ public class LFO implements TimeEffect {
 		setTarget(target);
 	}
 
-
-
 }
+
+// TODO saw wave
+//private final static float TWOPI = (float) (2 * Math.PI);
+//public double querySaw() {
+//	long time = System.currentTimeMillis() + shift;
+//	double phase = (time % frequency) / frequency;
+//    double t = phase / TWOPI;
+//    return (2.0f * t) - 1.0f;
+//}
+
+
+//public static class LFOTest extends Thread {
+//	final LFO lfo = new LFO(new Channel("test", false));
+//
+//	long sleep = 80;
+//	final long spells = 50;
+//	int count;
+//
+//	double min = Double.MAX_VALUE;
+//	double max = Double.MIN_VALUE;
+//
+//	public LFOTest(int freq) {
+//		lfo.frequency = freq;
+//	}
+//
+//	@Override
+//	public void run() {
+//		while(count <= spells) {
+//			double query = lfo.query();
+//			if (query > max) max = query;
+//			if (query < min) min = query;
+//
+//			long spaces = Math.round(query / 5);
+//			String display = "";
+//			for (int i = 0; i< spaces; i++)
+//				display += " ";
+//			display += "*";
+//			System.out.println(display + "       " + query);
+//
+//			count++;
+//			try { Thread.sleep(sleep);
+//			} catch (Throwable t) { }
+//		}
+//		System.out.println("done. min: " + min + " max: " + max + " frequency: " + lfo.getFrequency());
+//	}
+//
+//	public static void main2(String[] args) {
+//		new LFOTest(1200).start(); // 3 second LFO
+//	}
+//}
+

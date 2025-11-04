@@ -10,6 +10,8 @@ public enum KnobMode {
 	Presets,
 	Setlist,
 	Wavez,
+	Import,
+	Remap,
 	Log;
 
 }

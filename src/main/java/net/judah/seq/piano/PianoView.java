@@ -3,7 +3,6 @@ package net.judah.seq.piano;
 import java.awt.Dimension;
 
 import lombok.Getter;
-import net.judah.JudahZone;
 import net.judah.api.Key;
 import net.judah.api.Notification.Property;
 import net.judah.api.Signature;
@@ -27,9 +26,10 @@ public class PianoView extends HiringAgency implements TimeListener, Floating, S
 	public static final int DEFAULT_TONIC = 24;
 	private static final Dimension PANIC = new Dimension(STEP_WIDTH, KEY_HEIGHT);
 
-	final MidiTrack track;
-	protected PianoMenu menu;
-	protected PianoBox grid;
+	protected final MidiTrack track;
+	protected final PianoMenu menu;
+	protected final Piano grid;
+	protected final PianoKeys keyboard;
 
 	int range = DEFAULT_RANGE;
 	int tonic = DEFAULT_TONIC;
@@ -37,23 +37,20 @@ public class PianoView extends HiringAgency implements TimeListener, Floating, S
 	private final PianoSteps steps;
 
 	float scaledWidth;
-	protected Piano keyboard;
 	private int pianoWidth;
 	Btn panic;
 
 	public PianoView(PianoTrack t) {
-
 		this.track = t;
-		setName(t.getType().getName());
+		setName(t.getName());
 
-		keyboard = new Piano(track, this);
+		keyboard = new PianoKeys(track, this);
 		steps = new PianoSteps(this);
-		grid = new PianoBox(this, steps, keyboard, JudahZone.getSeq().getSynthTracks()); // kludge
+		grid = new Piano(this, steps, keyboard);
 		menu = new PianoMenu(this, grid);
 		panic = (Btn) Gui.resize(new Btn(" ! ", e->new Panic(t), t.getName() + " Panic"), PANIC);
 		panic.setFont(Gui.BOLD);
 		track.getClock().addListener(this);
-
 
 		menu.setLocation(0, 0);
 		panic.setLocation(0, MENU_HEIGHT);
@@ -124,7 +121,6 @@ public class PianoView extends HiringAgency implements TimeListener, Floating, S
 	private void refresh() {
 		grid.repaint();
 		keyboard.repaint();
-		//RTLogger.log(this, "bass " + Key.key(tonic) + tonic/12 + " range " + range + " width " + scaledWidth);
 	}
 
 	public void update() {

@@ -11,20 +11,26 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
 import javax.sound.midi.MidiEvent;
+import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
 import net.judah.api.Signature;
 import net.judah.drumkit.DrumType;
 import net.judah.gui.Gui;
+import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.TabZone;
+import net.judah.gui.knobs.KnobMode;
 import net.judah.midi.Midi;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiPair;
+import net.judah.seq.MidiTools;
 import net.judah.seq.MusicBox;
+import net.judah.seq.Notes;
 import net.judah.seq.Prototype;
 import net.judah.seq.track.DrumTrack;
+import net.judah.util.RTLogger;
 
 public class BeatBox extends MusicBox implements Pastels {
 
@@ -37,7 +43,7 @@ public class BeatBox extends MusicBox implements Pastels {
 	private final DrumZone tab;
 
     public BeatBox(DrumTrack t, DrumZone tab) {
-    	super(t, tab.getTracks());
+    	super(t);
     	this.tab = tab;
         setLayout(null);
         update();
@@ -65,7 +71,7 @@ public class BeatBox extends MusicBox implements Pastels {
 
     @Override public void paint(Graphics g) {
     	Color bg, shade;
-    	if (tracks.getCurrent() == track) {
+    	if (tab == null || tab.getCurrent() == track) {
     		bg = EGGSHELL;
     		shade = SHADE;
     	}
@@ -162,7 +168,7 @@ public class BeatBox extends MusicBox implements Pastels {
     @Override public void mousePressed(MouseEvent mouse) {
 		tab.setCurrent(track); // drums only
     	click = translate(mouse.getPoint());
-		MidiEvent existing = track.get(NOTE_ON, click.data1, click.tick);
+		MidiEvent existing = MidiTools.lookup(NOTE_ON, click.data1, click.tick, t);
 		if (mouse.isShiftDown()) { // drag-n-select;
 			drag = mouse.getPoint();
 			mode = DragMode.SELECT;
@@ -218,7 +224,7 @@ public class BeatBox extends MusicBox implements Pastels {
 	}
 
 	@Override
-	public void selectArea(long start, long end, int low, int high) {
+	public Notes selectArea(long start, long end, int low, int high) {
 		selected.clear();
 		for (int i = 0; i < t.size(); i++) {
 			long tick = t.get(i).getTick();
@@ -232,6 +238,7 @@ public class BeatBox extends MusicBox implements Pastels {
 			}
 		}
 		repaint();
+		return selected;
 	}
 
 	//////// Drag and Drop /////////
@@ -312,6 +319,47 @@ public class BeatBox extends MusicBox implements Pastels {
 		super.update();
 		repaint();
 	}
+
+
+	/** remove any note-offs */
+	public void clean() {
+		for (int i = t.size() - 1; i > -1; i--)
+			if (Midi.isNoteOff(t.get(i).getMessage()))
+				t.remove(t.get(i));
+	}
+
+	/** remove any notes that don't fit inside DrumTypes */
+	public void condense() {
+		clean();
+		ShortMessage m;
+		for (int i = t.size() - 1; i > -1; i--) {
+			if (Midi.isNoteOn(t.get(i).getMessage())) {
+				m = (ShortMessage) t.get(i).getMessage();
+				if (DrumType.index(m.getData1()) < 0)
+					t.remove(t.get(i));
+			}
+		}
+	}
+
+	/** change or undo e.getNotes() to  e.getDestination().data1;
+	 * @param exe false if undo */
+	@Override
+	protected void remap(Edit e, boolean exe) {
+		int target = exe ? e.getDestination().data1 : e.getOrigin().data1;
+		MidiMessage on;
+		try {
+			for (MidiPair p : e.getNotes()) {
+				on = p.getOn().getMessage();
+				if (on instanceof ShortMessage midi)
+					midi.setMessage(midi.getCommand(), midi.getChannel(), target, midi.getData2());
+			}
+		} catch (Exception ex) { RTLogger.warn(this, ex); }
+		if (MainFrame.getKnobMode() == KnobMode.Remap)
+			MainFrame.setFocus(new RemapView(this));
+		repaint();
+	}
+
+
 
 }
 

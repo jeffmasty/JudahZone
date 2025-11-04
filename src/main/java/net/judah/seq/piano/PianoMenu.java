@@ -23,6 +23,7 @@ import net.judah.gui.widgets.Arrow;
 import net.judah.gui.widgets.GateCombo;
 import net.judah.gui.widgets.TrackVol;
 import net.judah.seq.Duration;
+import net.judah.seq.Transpose;
 import net.judah.seq.arp.Arp;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.TrackMenu;
@@ -31,14 +32,16 @@ public class PianoMenu extends TrackMenu implements Floating {
 
 	private final ButtonGroup mode = new ButtonGroup();
 
-	public PianoMenu(PianoView view, PianoBox grid) {
+	public PianoMenu(PianoView view, Piano grid) {
 		super(grid);
 		PianoTrack t = (PianoTrack) track;
 		// additional non-drum stuff
 		add(new ModeCombo(t));
 		zoomMenu(view);
 		arpMenu(file, t);
+		tools.add(new Actionable("Remap...", e->new Transpose(grid)));
 		edit.add(new Actionable("Duration...", e->new Duration(view.getGrid())));
+
 		add(Box.createHorizontalGlue());
 		add(new JLabel("Velocity "));
 		add(new TrackVol(track));
@@ -92,7 +95,7 @@ public class PianoMenu extends TrackMenu implements Floating {
 	@Override
 	public void mousePressed(MouseEvent e) {
 		JudahZone.getSeq().getSynthTracks().setCurrent(track);
-		// update();
+		//update();
 	}
 
 	@Override public void mouseClicked(MouseEvent e) { }

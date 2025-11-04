@@ -18,8 +18,8 @@ public class Constants {
 
 	public static final String GUITAR_PORT = "system:capture_1";
 	public static final String MIC_PORT = "system:capture_2";
-	public static final String CRAVE_PORT = "system:capture_4";
-	public static final String AUX_PORT = "system:capture_3";
+	public static final String CRAVE_PORT = "system:capture_3";
+	public static final String AUX_PORT = "system:capture_4";
 
 	public static final String GUITAR = "Gtr";
 	public static final String MIC = "Mic";
@@ -63,7 +63,7 @@ public class Constants {
     }
 
 	public static long millisPerBeat(float beatsPerMinute) {
-		return (long) (beatsPerMinute * 1.66666667e-5f); // 60000/BPM
+		return (long) (60_000.0 / beatsPerMinute);
 	}
 
 	public static float toBPM(long delta, int beats) {

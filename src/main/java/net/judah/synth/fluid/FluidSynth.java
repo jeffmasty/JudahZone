@@ -13,7 +13,6 @@ import javax.sound.midi.ShortMessage;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import net.judah.gui.MainFrame;
 import net.judah.gui.settable.Program;
 import net.judah.midi.JudahClock;
@@ -41,7 +40,6 @@ public final class FluidSynth extends MidiInstrument {
 	/** General-Midi presets */
 	@Getter private final FluidChannels channels = new FluidChannels();
 	@Getter private final ArrayList<Drum> drums = new ArrayList<>();
-	private final FluidConsole console;
 	private FluidListener listener;
 	private float gain = 1f; // max 5f
 	private final String[] changes = new String[CHANNELS];
@@ -49,19 +47,16 @@ public final class FluidSynth extends MidiInstrument {
 	@SuppressWarnings("deprecation")
 	public FluidSynth(int sampleRate, JackPort midi, JudahClock clock, JackPort left, JackPort right) throws IOException {
 		super(Constants.FLUID, LEFT_PORT, RIGHT_PORT, left, right, "Fluid.png", midi);
-		replace(new FluidReverb(this)); // use external reverb
 
 		shellCommand = "fluidsynth --midi-driver=jack --audio-driver=jack -o synth.ladspa.active=0  --sample-rate "
 				+ sampleRate + " " + SOUND_FONT.getAbsolutePath();
 
-		console = new FluidConsole(this);
 		process = Runtime.getRuntime().exec(shellCommand); // IOException
-
 		new FluidListener(process.getErrorStream(), true).start();
 		listener = new FluidListener(process.getInputStream(), false);
 		listener.start();
 
-		int delay = 200;
+		int delay = 222;
 		Threads.sleep(delay);
 		outStream = process.getOutputStream();
 		Threads.sleep(2 * delay);
@@ -73,9 +68,10 @@ public final class FluidSynth extends MidiInstrument {
 		} catch (Throwable e) {
 			RTLogger.warn(this, e);
 		}
+		replace(new FluidReverb(this)); // use external reverb
 		sendCommand("chorus off");
 		gain(gain);
-		RTLogger.getParticipants().add(console);
+		RTLogger.getParticipants().add(new FluidConsole(this));
 	}
 
 	public void syncChannels() {
@@ -193,12 +189,22 @@ public final class FluidSynth extends MidiInstrument {
 
 	@Override public boolean progChange(String preset, int ch) {
 
+		try {
+			int idx = Integer.parseInt(preset);
+			if (idx > 0 && idx < 128)
+				JudahMidi.queue(Midi.create(ShortMessage.PROGRAM_CHANGE, ch, idx, 0), midiPort);
+			if (ch < changes.length)
+				changes[ch] = preset;
+			MainFrame.update(Program.first(this, ch));
+			return true;
+		} catch (NumberFormatException e) { /* ignore */ }
+
 		for (int i = 0; i < patches.length; i++)
 			if (patches[i].equals(preset)) {
-				final int val = i;
+//				final int val = i;
 				// flooding: Constants.execute(() -> {
 				//sendCommand(FluidCommand.PROG_CHANGE, ch + " " + val);
-				JudahMidi.queue(Midi.create(ShortMessage.PROGRAM_CHANGE, ch, val, 0), midiPort);
+				JudahMidi.queue(Midi.create(ShortMessage.PROGRAM_CHANGE, ch, i, 0), midiPort);
 				if (ch < changes.length)
 					changes[ch] = preset;
 				MainFrame.update(Program.first(this, ch));
@@ -207,11 +213,7 @@ public final class FluidSynth extends MidiInstrument {
 		return false;
 	}
 
-	@RequiredArgsConstructor
-	public static class Drum {
-		public final String name;
-		public final int prog;
-	}
+	record Drum(String name, int prog) {};
 }
 
 //public void mute() {

@@ -134,7 +134,6 @@ public enum Key {
 	    return new Note(nearestKey, nearestOctave);
 	}
 
-
 }
 
 

@@ -2,7 +2,6 @@ package net.judah.mixer;
 
 import java.awt.Component;
 import java.awt.GridLayout;
-import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,31 +9,26 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
 import lombok.Getter;
+import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
 import net.judah.drumkit.DrumMachine;
-import net.judah.fx.Fader;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
-import net.judah.seq.Trax;
 import net.judah.seq.track.DrumTrack;
 import net.judah.song.FxData;
-import net.judah.song.cmd.Cmdr;
-import net.judah.song.cmd.Param;
-import net.judah.synth.taco.TacoTruck;
 import net.judah.util.RTLogger;
 
 /** Graphical representation of the Mixer*/
-public class DJJefe extends JPanel implements Cmdr, TimeListener {
+public class DJJefe extends JPanel implements TimeListener {
 
 	/** has GUI representation on the main mixer */
 	@Getter private final ArrayList<Channel> channels = new ArrayList<>();
 	/** Any channel available to LFO knobs, not necessarily a main mixer fader */
 	@Getter private final ArrayList<Channel> all = new ArrayList<>();
-	@Getter private final String[] keys;
 	private final ArrayList<MixWidget> faders = new ArrayList<MixWidget>();
 	private final Zone sources;
 	@Getter private final Mains mains;
@@ -68,12 +62,7 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
         add(fader);
         channels.add(mains);
         size = channels.size();
-
         setLayout(new GridLayout(1, size, 0, 0));
-
-        keys = new String[size];
-        for (int i = 0; i < keys.length; i++)
-        	keys[i] = channels.get(i).getName();
         clock.addListener(this);
     }
 
@@ -153,47 +142,20 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 				name = "Mains";
 			Channel ch = byName(name);
 			if (ch == null) { // Legacy
-				ch = sources.byName(TacoTruck.NAME);
-				RTLogger.warn(this, "remapped " + fx.getChannel() + " FX to " + ch.name);
+				for (Channel c : all) {
+					if (c.name == name) {
+						ch = c;
+						RTLogger.warn(this, "remapped " + fx.getChannel() + " FX to " + ch.name);
+						break;
+					}
+				}
+				if (ch == null) {
+					ch = JudahZone.getTacos().taco;
+					RTLogger.warn(this, "forced " + fx.getChannel() + " FX to " + ch.name);
+				}
 				continue;
 			}
 			ch.setPreset(fx.getPreset());
-		}
-	}
-
-	@Override
-	public Channel resolve(String key) {
-		for (Channel ch : channels)
-			if (ch.getName().equals(key))
-				return ch;
-		for (Trax legacy : Trax.values())
-			if (legacy.getName().equals(key))
-				return resolve(legacy.toString());
-		return null;
-	}
-
-	@Override
-	public void execute(Param p) {
-		Channel ch = resolve(p.val);
-		if (ch == null)
-			return;
-		switch (p.cmd) {
-			case FadeOut:
-				Fader.execute(new Fader(ch, Fader.DEFAULT_FADE, ch.getVolume(), 0));
-				break;
-			case FadeIn:
-				Fader.execute(new Fader(ch, Fader.DEFAULT_FADE, 0, 51));
-				break;
-			case FX:
-				ch.toggleFx();
-				break;
-			case Mute:
-				ch.setOnMute(true);
-				break;
-			case Unmute:
-				ch.setOnMute(false);
-				break;
-			default: throw new InvalidParameterException("" + p);
 		}
 	}
 
@@ -206,7 +168,8 @@ public class DJJefe extends JPanel implements Cmdr, TimeListener {
 		for (String name : record) {
 			LineIn ch = sources.byName(name);
 			if (ch == null) {
-				RTLogger.log(this, "Unknown channel: " + name);
+				ch = JudahZone.getTacos().taco;
+				RTLogger.log(this, "Unknown channel: " + name + " sub to " + ch.name);
 				continue;
 			}
 			ch.setMuteRecord(false);
