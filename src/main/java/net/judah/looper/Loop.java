@@ -34,7 +34,7 @@ import net.judah.util.RTLogger;
 public class Loop extends Channel implements RecordAudio, Runnable {
 	public static final int INIT = 8192; // nice chunk of preloaded blank tape
 	public static final float STD_BOOST = 3;
-	public static final float DRUM_BOOST = 1f;
+	public static final float DRUM_BOOST = 0.85f;
 
 	protected final Looper looper;
 	protected final JudahClock clock;
@@ -71,18 +71,6 @@ public class Loop extends Channel implements RecordAudio, Runnable {
     		tape.add(new float[STEREO][N_FRAMES]);
     	display = new LoopMix(this, looper);
     	new Thread(this).start(); // overdub listening
-    }
-
-    @Override
-    public String toString() {
-    	StringBuilder sb = new StringBuilder(name).append(" ");
-    	sb.append(tapeCounter.get()).append(":").append(length);
-    	if (isRecording) {
-    		sb.append(" rec");
-    		if (timer)
-    			sb.append(" ").append(stopwatch).append("/");
-    	}
-    	return sb.toString();
     }
 
     public boolean isPlaying() {

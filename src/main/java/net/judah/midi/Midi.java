@@ -83,8 +83,11 @@ public class Midi extends ShortMessage {
         StringBuilder b = new StringBuilder();
         b.append(getCommand()).append("/");
         b.append(getChannel()).append("/");
-        if (getChannel() == 9)
-        	b.append(GMDrum.lookup(getData1()).name());
+        if (getChannel() == 9) {
+        	if (GMDrum.lookup(getData1()) != null)
+        		b.append(GMDrum.lookup(getData1()).name());
+        	else b.append(getData1()).append("?");
+        }
         else if (isNote())
         	b.append(Key.key(getData1())).append(getData1() / 12);
         else
@@ -126,34 +129,31 @@ public class Midi extends ShortMessage {
 		setMessage(getCommand(), getChannel(), getData1(), velocity);
 	}
 
+	public static boolean isCC(MidiMessage msg) {
+		return msg instanceof ShortMessage midi
+				&& msg.getStatus() - midi.getChannel() == ShortMessage.CONTROL_CHANGE;
+	}
 	public static boolean isPitchBend(ShortMessage msg) {
 		return msg.getStatus() - msg.getChannel() == ShortMessage.PITCH_BEND;
 	}
 
-	public static boolean isCC(ShortMessage msg) {
-		 return msg.getStatus() - msg.getChannel() == ShortMessage.CONTROL_CHANGE;
+	public static boolean isProgChange(MidiMessage midi) {
+		return midi instanceof ShortMessage msg &&
+			msg.getStatus() - msg.getChannel() == ShortMessage.PROGRAM_CHANGE;
 	}
-	public boolean isCC() { return isCC(this); }
-
-	public static boolean isProgChange(ShortMessage msg) {
-		return msg.getStatus() - msg.getChannel() == ShortMessage.PROGRAM_CHANGE;
-	}
-	public boolean isProgChange() { return isProgChange(this); }
-
-	public static boolean isNoteOn(MidiMessage msg) {
-		if (msg instanceof ShortMessage == false)
-			return false;
-		return msg != null && msg.getStatus() - ((ShortMessage)msg).getChannel() == NOTE_ON;
+	public static boolean isNoteOn(MidiMessage midi) {
+		return midi instanceof ShortMessage msg &&
+			msg.getStatus() - msg.getChannel() == NOTE_ON;
 	}
 
 	public static boolean isNoteOff(MidiMessage msg) {
-		if (msg instanceof ShortMessage )
-			return msg != null && msg.getStatus() - ((ShortMessage)msg).getChannel() == NOTE_OFF;
-		return msg != null && msg.getStatus() == NOTE_OFF;
+		if (msg instanceof ShortMessage m)
+			return msg != null && m.getStatus() - m.getChannel() == NOTE_OFF;
+		return false;
 	}
 
 	public static boolean isNote(MidiMessage msg) {
-		int stat = msg instanceof ShortMessage ? msg.getStatus() - ((ShortMessage)msg).getChannel() : msg.getStatus();
+		int stat = msg instanceof ShortMessage m ? msg.getStatus() - m.getChannel() : msg.getStatus();
 		return stat == Midi.NOTE_OFF || stat == NOTE_ON;
 	}
 	public boolean isNote() { return isNote(this); }
@@ -226,10 +226,6 @@ public class Midi extends ShortMessage {
             return Midi.deserialize(node.asText());
         }
     }
-
-    public int octave() {
-		return getData1() / 12 - 2;
-	}
 
 	public static ShortMessage format(ShortMessage midi, int ch, float gain) {
 		if (midi.getChannel() == ch && gain == 1)

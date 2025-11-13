@@ -36,7 +36,7 @@ public abstract class FxChain extends ArrayList<Effect> {
 
 	abstract public void process(FloatBuffer left, FloatBuffer right);
 
-	public void reset() {
+	public final void reset() {
 		forEach(fx->fx.setActive(false));
 		MainFrame.update(this);
 	}
@@ -51,6 +51,6 @@ public abstract class FxChain extends ArrayList<Effect> {
 		return gain.get(Gain.PAN);
 	}
 
-	@Override public String toString() { return name; }
+	@Override public final String toString() { return name; }
 
 }

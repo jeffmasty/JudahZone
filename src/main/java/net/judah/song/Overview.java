@@ -1,8 +1,6 @@
 package net.judah.song;
 
-import static net.judah.JudahZone.getDrumMachine;
-import static net.judah.JudahZone.getInstruments;
-import static net.judah.JudahZone.getSetlists;
+import static net.judah.JudahZone.*;
 import static net.judah.gui.Size.TAB_SIZE;
 
 import java.awt.Dimension;
@@ -21,6 +19,7 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
+import net.judah.drumkit.DrumMachine;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
@@ -50,12 +49,15 @@ public class Overview extends JPanel implements TimeListener {
 	private static final Dimension props = new Dimension((int)(Size.WIDTH_TAB * 0.275), (int)(SCENE_SZ.height * 0.21));
 	private static final Dimension BTNS = new Dimension((int)(Size.WIDTH_TAB * 0.365), (int)(SCENE_SZ.height * 0.66));
 
-	@Getter private final JudahClock clock;
-	private final Seq seq;
-	private final Looper looper;
-	private final DJJefe mixer;
-	private final ChordTrack chords;
+	private final JudahClock clock = getClock();
+	private final Seq seq = getSeq();
+	private final Looper looper = getLooper();
+	private final DJJefe mixer = getMixer();
+	private final ChordTrack chords = getChords();
+	private final Setlists setlists = getSetlists();
+	private final DrumMachine drums = getDrumMachine();
 
+	/** The Current SmashHit */
 	@Getter private Song song;
 	/** current scene */
 	@Getter private Scene scene;
@@ -67,16 +69,10 @@ public class Overview extends JPanel implements TimeListener {
 	private final ArrayList<SongTrack> tracks = new ArrayList<>();
 	private final SongTitle songTitle;
 	private final JPanel holder = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-	private final JPanel trackPnl = new JPanel();
+	private final JPanel trackPnl = new Gui.Opaque();
 
-	public Overview(String title, JudahClock clock, ChordTrack chords, Setlists setlists, Seq seq, Looper looper, DJJefe mixer) {
-		this.clock = clock;
-		this.seq = seq;
-		this.looper = looper;
-		this.mixer = mixer;
-		this.chords = chords;
+	public Overview(String title) {
 		songTitle = new SongTitle(clock, setlists, this);
-		trackPnl.setOpaque(true);
 		seq.getTracks().forEach(track-> tracks.add(new SongTrack(track)));
 		trackPnl.setLayout(new GridLayout(tracks.size() + 2, 1, 1, 1)); // +2 = title and chordTrack
 
@@ -218,7 +214,7 @@ public class Overview extends JPanel implements TimeListener {
 
     	song = smashHit;
     	looper.delete();
-    	getDrumMachine().reset();
+    	drums.reset();
     	clock.setTimeSig(song.getTimeSig());
     	clock.reset();
     	seq.loadSong(song.getTracks());
@@ -233,6 +229,10 @@ public class Overview extends JPanel implements TimeListener {
 		holder.add(songView);
 		if (song.getScenes().isEmpty())
 			song.getScenes().add(new Scene(seq));
+		if (song.getKit() != null)
+			drums.getSettings().clone(song.getKit());
+		else
+			drums.getSettings().reset();
 
     	setScene(song.getScenes().get(0));
     	setName();
@@ -245,7 +245,7 @@ public class Overview extends JPanel implements TimeListener {
     public Song loadSong(final File input) {
 		File choose = input;
     	if (choose == null)
-    		choose = Folders.choose(getSetlists().getDefault());
+    		choose = Folders.choose(setlists.getDefault());
     	if (choose == null)
     		return null;
     	Song result = null;
@@ -296,7 +296,7 @@ public class Overview extends JPanel implements TimeListener {
     }
 
 	public void saveAs() {
-		Setlist current = getSetlists().getCurrent();
+		Setlist current = setlists.getCurrent();
 		File f = Folders.choose(current.getSource());
 		if (f == null)
 			return;

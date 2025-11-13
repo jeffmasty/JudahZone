@@ -23,6 +23,7 @@ import net.judah.JudahZone;
 import net.judah.gui.Detached.Floating;
 import net.judah.gui.widgets.CloseableTabbedPane;
 import net.judah.omni.Threads;
+import net.judah.seq.Musician;
 import net.judah.seq.Trax;
 import net.judah.seq.beatbox.BeatBox;
 import net.judah.seq.beatbox.DrumZone;
@@ -70,9 +71,11 @@ public class TabZone extends CloseableTabbedPane {
 		if (t.isDrums())
 			getDrummer((DrumTrack)t).repaint();
 		else {
-			Piano p = getPianist((PianoTrack)t);
-			if (p != null)
-				p.repaint();
+			PianoView view = getPiano((PianoTrack)t);
+			if (view != null) {
+				view.getGrid().repaint();
+				view.getSteps().repaint();
+			}
 		}
 	}
 
@@ -135,6 +138,10 @@ public class TabZone extends CloseableTabbedPane {
 	public void changeTab(boolean fwd) {
 		Threads.execute(() -> instance.setSelectedIndex(
 				Constants.rotary(instance.getSelectedIndex(), instance.getTabCount(), fwd)));
+	}
+
+	public static Musician getMusician(MidiTrack track) {
+		return track instanceof PianoTrack piano ? getPianist(piano) : getDrummer((DrumTrack)track);
 	}
 
 	public static BeatBox getDrummer(DrumTrack t) {

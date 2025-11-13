@@ -36,9 +36,8 @@ public class RemapView extends KnobPanel {
 		install(table);
 	}
 
-	@Override
-	public void pad2() {
-		table.pad2();
+	@Override public void pad2() {
+		table.remap();
 	}
 
 

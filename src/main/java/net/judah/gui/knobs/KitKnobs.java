@@ -1,7 +1,5 @@
 package net.judah.gui.knobs;
 
-import static net.judah.JudahZone.getDrumMachine;
-
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.util.ArrayList;
@@ -13,54 +11,50 @@ import javax.swing.JPanel;
 
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.drumkit.DrumDB;
 import net.judah.drumkit.DrumKit;
+import net.judah.drumkit.DrumMachine;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
+import net.judah.gui.Gui;
 import net.judah.gui.TabZone;
-import net.judah.gui.widgets.CenteredCombo;
+import net.judah.gui.knobs.KitPad.Modes;
+import net.judah.gui.widgets.Btn;
 import net.judah.midi.Actives;
+import net.judah.omni.Icons;
 import net.judah.seq.Trax;
 
 public class KitKnobs extends KnobPanel {
 
-	public static enum Modes {
-		Volume, Pan, Attack, Decay; // Dist, pArTy;
-	}
-
-	@Getter private final DrumKit kit;
 	@Getter private final KnobMode knobMode = KnobMode.Kitz;
-	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-	private final JComboBox<String> preset = new CenteredCombo<>();
+	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+
+	private  final DrumMachine drums;
+	private final ArrayList<DrumKit> kits;
 	private final ArrayList<KitPad> pads = new ArrayList<>(DrumKit.SAMPLES);
-	private final JComboBox<Trax> kits = new JComboBox<>(Trax.drums);
+	private final JComboBox<Trax> trax = new JComboBox<>(Trax.drums);
 	private final JComboBox<Modes> modes = new JComboBox<>(Modes.values());
 
-	public Modes getMode() {
-		return (Modes) modes.getSelectedItem();
-	}
+	public KitKnobs(final DrumMachine drumz) {
 
-	public KitKnobs(DrumKit k) {
-		kit = k;
-
+		drums = drumz;
+		kits = drums.getKits();
     	JPanel wrap = new JPanel(new GridLayout(0, 4, 1, 1));
     	for (DrumType t : DrumType.values()) {
-    		KitPad pad = new KitPad(this, t);
+    		KitPad pad = new KitPad(drums, t, modes);
     		pads.add(pad);
     		wrap.add(pad);
     	}
-    	for (String s : DrumDB.getKits())
-    		preset.addItem(s);
+    	trax.setSelectedItem(Trax.D1);
+    	trax.addActionListener(e-> drums.setCurrent((Trax)trax.getSelectedItem()));
 
-    	preset.addActionListener(e->kit.progChange("" + preset.getSelectedItem()));
-    	kits.setSelectedItem(kit.getType());
-    	kits.addActionListener(e-> getDrumMachine().setCurrent((Trax)kits.getSelectedItem()));
-
+    	modes.addActionListener(e-> pads.forEach(p->p.updateMode((Modes)modes.getSelectedItem())));
     	modes.setSelectedItem(Modes.Volume);
-    	modes.addActionListener(e-> update());
-    	title.add(kits);
+
     	title.add(modes);
-    	title.add(preset);
+    	title.add(Gui.wrap(new Btn(Icons.NEW_FILE, e->reset(), "Reset Settings"),
+    			new Btn(Icons.SAVE, e->	drums.getSettings().serialize(JudahZone.getOverview()), "Save Settings in Song")));
+    	title.add(trax);
+
     	setOpaque(true);
     	setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
     	add(Box.createGlue());
@@ -69,17 +63,24 @@ public class KitKnobs extends KnobPanel {
 
 	}
 
-	@Override
-	public void update() {
-		if (preset.getSelectedItem() != kit.getProgram().getFolder().getName())
-			preset.setSelectedItem(kit.getProgram().getFolder().getName());
-		pads.forEach(p->p.update());
+	private void reset() {
+		drums.getSettings().reset();
+		JudahZone.getOverview().getSong().setKit(null);
+		JudahZone.getOverview().save();
 	}
 
 	public void update(DrumSample o) {
-		for (int i = 0; i < DrumKit.SAMPLES; i++)
-			if (kit.getSamples()[i] == o)
-				pads.get(i).update();
+		for (DrumKit kit : kits)
+			for (int i = 0; i < DrumKit.SAMPLES; i++)
+				if (kit.getSamples()[i] == o)
+					pads.get(i).update();
+	}
+
+	@Override
+	public void update() {
+		if (trax.getSelectedItem() != drums.getCurrent().getType())
+			trax.setSelectedItem(drums.getCurrent().getType());
+		pads.forEach(p->p.update());
 	}
 
 	@Override
@@ -89,8 +90,7 @@ public class KitKnobs extends KnobPanel {
 	}
 
 	@Override public void pad1() {
-
-		TabZone.edit(JudahZone.getSeq().byName(kit.getType().name()));
+		TabZone.edit(JudahZone.getSeq().byName(drums.getTracks().getCurrent().getName()));
 	}
 
 	@Override public void pad2() {

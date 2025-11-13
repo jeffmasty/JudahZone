@@ -57,6 +57,7 @@ public class MidiTools {
 		return a.equals(b);
 	}
 
+
 	/**Piano lookup */
 	public static MidiPair lookup(long tick, int data1, Track t) {
 		MidiEvent found = null;
@@ -198,6 +199,7 @@ public class MidiTools {
 
 }
 
+// public static int octave(ShortMessage m) { return m.getData1() / 12 - 2; }
 //  private static final Pattern work = new Pattern();
 //	/** loads one bar from measure of track into the supplied result, zero-basing the ticks*/
 //	public static AbstractCollection<MidiEvent> loadMeasure(int measure, MidiTrack track, AbstractCollection<MidiEvent> result) {

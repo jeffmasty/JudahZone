@@ -1,19 +1,25 @@
 package net.judah.gui.knobs;
 
-import static net.judah.fx.Filter.Settings.Frequency;
 import static net.judah.fx.Filter.Settings.Resonance;
+import static net.judah.synth.taco.TacoSynth.DCO_COUNT;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.SwingUtilities;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -22,10 +28,11 @@ import net.judah.fx.Filter;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
-import net.judah.gui.TabZone;
+import net.judah.gui.Size;
 import net.judah.gui.settable.Program;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.CenteredCombo;
+import net.judah.gui.widgets.DoubleSlider;
 import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.Slider;
 import net.judah.omni.Icons;
@@ -37,37 +44,37 @@ import net.judah.util.Constants;
 
 public class SynthKnobs extends KnobPanel {
 	private static final int OCTAVE = 12;
+	private static final int rFactor = 10;
 
-	@Getter private final KnobMode knobMode = KnobMode.Taco;
 	private static final Dimension COMBO = new Dimension(55, STD_HEIGHT);
 	public static final String[] DETUNE_OPTIONS = new String[] {
 			"OCT", "5th", "+3", "+2", "+1", "+/-0", "-5th", "SUB"};
 	public static final float[] DETUNE_AMOUNT = new float[] {
 			2f, 1.5f, 1.015f, 1.01f, 1.005f, 1f, 0.75f ,0.5f};
 	public static final int DETUNE_NONE = 5;
+	private static final Color KNOB_C = Pastels.BLUE;
 
-	@Getter private final TacoSynth synth;
-	@Setter @Getter private static boolean freqMode = true; //. vs resonance mode
-	@Getter private final Program presets;
-
-	private final Btn save = new Btn("Save", e->save());
-
-	private static final Color C = Pastels.PURPLE;
-	private final Knob hcFreq = new Knob(C);
-	private final Knob hcReso = new Knob(C);//0, 20
-	private final Knob lcFreq = new Knob(C);//0, 50
-	private final Knob lcReso = new Knob(C);//0, 20
+	@Setter private static boolean freqMode = true; //. vs resonance mode
+	private final TacoSynth synth;
+	@Getter private final KnobMode knobMode = KnobMode.Taco;
+	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.CENTER, 1, 1));
+	private final Program presets;
+	private final DoubleSlider filter;
+	private final Knob hcReso = new Knob(KNOB_C);
+	private final Knob lcReso = new Knob(KNOB_C);
 	private final Adsr adsr;
-	@Getter private final Knob a = new Knob(C);//0, 200
-	@Getter private final Knob d = new Knob(C);
-	@Getter private final Knob s = new Knob(C);
-	@Getter private final Knob r = new Knob(C);//0, 500
+	private final Knob a = new Knob(KNOB_C);//0, 200
+	private final Knob d = new Knob(KNOB_C);
+	private final Knob s = new Knob(KNOB_C);
+	private final Knob r = new Knob(KNOB_C);//0, 500
 	private final ArrayList<Slider> gains = new ArrayList<>();
 	private final ArrayList<JComboBox<Shape>> shapes = new ArrayList<>();
-	private final ArrayList<JComboBox<String>> detune = new ArrayList<>();
 	private final JComboBox<Integer> mod = new JComboBox<>();
 
-	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 1));
+	private final JSlider detune0 = new JSlider(-100, 100);
+	private final JComboBox<String> detune1 = new JComboBox<String>(DETUNE_OPTIONS);
+	private final JComboBox<String> detune2 = new JComboBox<String>(DETUNE_OPTIONS);
+	private final Component[] detune;
 
 	public SynthKnobs(TacoSynth zynth) {
 		synth = zynth;
@@ -75,7 +82,7 @@ public class SynthKnobs extends KnobPanel {
 		presets = synth.getTracks().isEmpty() ? new Program(synth)
 				: new Program(synth.getTracks().get(0));
 
-		for (int i = 0; i < synth.getShapes().length; i++) {
+		for (int i = 0; i < DCO_COUNT; i++) {
 			JComboBox<Shape> combo = new CenteredCombo<>();
 			for(Shape val : Shape.values())
 				combo.addItem(val);
@@ -83,14 +90,14 @@ public class SynthKnobs extends KnobPanel {
 			shapes.add(combo);
 		}
 
-		for (int i = 0; i < synth.getDetune().length; i++) {
-			JComboBox<String> tune = new CenteredCombo<>();
-			for (String s : DETUNE_OPTIONS)
-				tune.addItem(s);
-			tune.setSelectedIndex(DETUNE_NONE);
-			tune.setToolTipText("Detuning");
-			detune.add(tune);
-		}
+		detune0.setValue(0);
+		detune0.setToolTipText("Detune Osc 0");
+		detune1.setSelectedIndex(DETUNE_NONE);
+		detune1.setToolTipText("Detune Osc 1");
+		detune2.setSelectedIndex(DETUNE_NONE);
+		detune2.setToolTipText("Detune Osc 2");
+		detune = new Component[] {detune0, detune1, detune2};
+
 		mod.setToolTipText("Pitchbend Semitones");
 		Gui.resize(mod, MICRO);
 		for (int i = 1; i <= OCTAVE; i++)
@@ -98,68 +105,112 @@ public class SynthKnobs extends KnobPanel {
 		mod.addActionListener(e->{
 			if (synth.getModSemitones() != (int)mod.getSelectedItem())
 				synth.setModSemitones((Integer)mod.getSelectedItem());});
-		for (int i = 0; i < synth.getDcoGain().length; i++) {
-			Slider slider = new Slider(null);
-			gains.add(slider);
-		}
-		JPanel row = new JPanel();
-		row.add(presets);
-		row.add(save);
-		row.add(new JLabel(" Bend "));
-		row.add(mod);
- 		add(row);
+		for (int i = 0; i < DCO_COUNT; i++)
+			gains.add(new Slider(null));
 
-		JPanel knobs = new JPanel(new GridLayout(2, 4, 4, 4));
-		knobs.add(Gui.duo(a, new JLabel(" Atk")));
-		knobs.add(Gui.duo(d, new JLabel(" Dec")));
-		knobs.add(Gui.duo(s, new JLabel(" Sus")));
-		knobs.add(Gui.duo(r, new JLabel(" Rel")));
-		knobs.add(Gui.duo(lcFreq, new JLabel("LoCut")));
-		knobs.add(Gui.duo(lcReso, new JLabel("Res")));
-		knobs.add(Gui.duo(hcFreq, new JLabel("HiCut")));
-		knobs.add(Gui.duo(hcReso, new JLabel("Res")));
-		add(Gui.wrap(knobs));
-
-		JPanel dco = new JPanel();
-		dco.setLayout(new BoxLayout(dco, BoxLayout.PAGE_AXIS));
-		for (int i = 0; i < synth.getDcoGain().length; i++)
-			dco.add(Gui.wrap(new JLabel("DCO " + i + " "), shapes.get(i), gains.get(i), detune.get(i)));
-		add(dco);
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+		add(Box.createVerticalStrut(12));
+
+		Box me = new Box(BoxLayout.PAGE_AXIS);
+		me.add(new JLabel(synth.getIcon()));
+		me.add(new JLabel(synth.getName(), JLabel.CENTER));
+		me.setBorder(Gui.SUBTLE);
+		JPanel env = new JPanel(new GridLayout(1, 4, 6, 8));
+		env.add(Gui.duo(a, new JLabel(" Atk")));
+		env.add(Gui.duo(d, new JLabel(" Dk ")));
+		env.add(Gui.duo(s, new JLabel(" Sus")));
+		env.add(Gui.duo(r, new JLabel(" Rel")));
+		Box wrap = new Box(BoxLayout.LINE_AXIS);
+		wrap.add(Box.createHorizontalStrut(Size.STD_HEIGHT));
+		wrap.add(me);
+		wrap.add(Box.createHorizontalStrut(Size.STD_HEIGHT));
+		wrap.add(env);
+		add(wrap);
+
+		JPanel dco = new JPanel(new GridLayout(shapes.size(), 4, 5, 1));
+		Dimension sz = Size.SMALLER_COMBO;
+		for (int i = 0; i < DCO_COUNT; i++) {
+			dco.add(new JLabel("DCO " + i + " ", JLabel.RIGHT));
+			dco.add(shapes.get(i));
+			dco.add(Gui.resize(gains.get(i), Size.MEDIUM_COMBO));
+			dco.add(Gui.resize(detune[i], sz));
+		}
+		wrap = new Box(BoxLayout.LINE_AXIS);
+		wrap.add(Box.createHorizontalGlue());
+		wrap.add(dco);
+		wrap.add(Box.createHorizontalStrut(25));
+		wrap.add(Box.createHorizontalGlue());
+		add(wrap);
+
+
+		int ordinal = Filter.Settings.Frequency.ordinal();
+		filter = new DoubleSlider(synth.getLoCut(), ordinal, synth.getHiCut(), ordinal);
+		JPanel res = new JPanel();
+		res.setLayout(new BoxLayout(res, BoxLayout.LINE_AXIS));
+		res.add(Box.createHorizontalStrut(10));
+		res.add(lcReso);
+		res.add(Box.createHorizontalStrut(5));
+		res.add(new JLabel("<html>Lo<br>Res</html>"));
+		res.add(Box.createHorizontalStrut(25));
+		res.add(new JLabel("Filter"));
+		res.add(Box.createHorizontalStrut(25));
+		res.add(new JLabel("<html>Hi<br>Res</html>"));
+		res.add(Box.createHorizontalStrut(5));
+		res.add(hcReso);
+		res.add(Box.createHorizontalStrut(10));
+
+		JPanel filters = new JPanel();
+		filters.setLayout(new BoxLayout(filters, BoxLayout.PAGE_AXIS));
+		filters.add(Gui.resize(filter, new Dimension(Size.WIDTH_KNOBS - 100, 30)));
+		filters.add(Gui.wrap(res));
+
+		add(Box.createVerticalStrut(8));
+		add(filters);
+
+		title.add(presets);
+		title.add(new Btn(Icons.SAVE, e->save()));
+		title.add(mod);
+		title.add(new JLabel("Bend"));
+
+		validate();
 		update();
 		listeners();
-
-		title.add(new JLabel(synth.getIcon()));
-		title.add(new JLabel(" "  + synth.getName() + "    " ));
-		title.add(new Btn(" next ", e->JudahZone.getTacos().rotate()));
-		if (!synth.getTracks().isEmpty())
-			title.add(new Btn(Icons.DETAILS_VEW,
-					e->TabZone.edit(synth.getTracks().getFirst())));
-		validate();
 	}
 
 	private void listeners() {
-		for (int i = 0; i < gains.size(); i++) {
+		for (int i = 0; i < DCO_COUNT; i++) {
 			final int idx = i;
 			gains.get(i).addChangeListener(e->synth.setGain(idx, gains.get(idx).getValue() * 0.01f));
 		}
-		for (int i = 0; i < shapes.size(); i++) {
+		for (int i = 0; i < DCO_COUNT; i++) {
 			final int idx = i;
 			shapes.get(i).addActionListener(e->synth.setShape(idx, (Shape)shapes.get(idx).getSelectedItem()));
 		}
-		for (int i = 0; i < detune.size(); i++) {
-			final int idx = i;
-			detune.get(i).addActionListener(e->synth.getDetune()[idx] = DETUNE_AMOUNT[detune.get(idx).getSelectedIndex()]);
-		}
+
+		detune0.addMouseListener(new MouseAdapter() {
+			@Override public void mouseClicked(MouseEvent e) {
+				if (SwingUtilities.isRightMouseButton(e)) {
+					synth.setDetune(50);
+					conformDetune();
+				}
+			}});
+		detune0.addChangeListener(l-> { // setDetune0() {
+			float existing = synth.getDetune()[0];
+			int translated = cents(existing);
+			int knob = detune0.getValue();
+			if (translated != knob)
+				synth.setDetune(knob);
+		});
+
+		detune1.addActionListener(e->synth.getDetune()[1] = DETUNE_AMOUNT[detune1.getSelectedIndex()]);
+		detune2.addActionListener(e->synth.getDetune()[2] = DETUNE_AMOUNT[detune2.getSelectedIndex()]);
 
 		a.addListener(e->adsr.setAttackTime(a.getValue()));
 		d.addListener(e->adsr.setDecayTime(d.getValue()));
 		s.addListener(e-> adsr.setSustainGain(s.getValue() * 0.01f));
-		r.addListener(e->adsr.setReleaseTime(r.getValue()));
+		r.addListener(e->adsr.setReleaseTime(rFactor * r.getValue()));
 
-		hcFreq.addListener(data2 -> synth.getHiCut().set(Frequency.ordinal(), data2));
 		hcReso.addListener(data2 ->  synth.getHiCut().set(Resonance.ordinal(), data2));
-		lcFreq.addListener(data2 -> synth.getLoCut().set(Frequency.ordinal(), data2));
 		lcReso.addListener(data2 ->  synth.getLoCut().set(Resonance.ordinal(), data2));
 		if (synth.getModSemitones() != (int)mod.getSelectedItem())
 				mod.setSelectedItem(synth.getModSemitones());
@@ -167,17 +218,14 @@ public class SynthKnobs extends KnobPanel {
 
 	@Override
 	public void update() {
-		if (hcReso.getValue() != synth.getHiCut().getResonance())
-			hcReso.setValue((int)(synth.getHiCut().getResonance()));
-		if (lcReso.getValue() != synth.getLoCut().getResonance())
-			lcReso.setValue((int)(synth.getLoCut().getResonance()));
-		if (Filter.knobToFrequency(hcFreq.getValue()) != synth.getHiCut().getFrequency())
-			hcFreq.setValue((int)Math.ceil(Filter.frequencyToKnob(synth.getHiCut().getFrequency())));
-		if (Filter.knobToFrequency(lcFreq.getValue()) != synth.getLoCut().getFrequency())
-			lcFreq.setValue((int)Math.ceil(Filter.frequencyToKnob(synth.getLoCut().getFrequency())));
-		for (int i = 0; i < gains.size(); i++)
+		if (hcReso.getValue() != synth.getHiCut().get(Resonance.ordinal()))
+			hcReso.setValue(synth.getHiCut().get(Resonance.ordinal()));
+		if (lcReso.getValue() != synth.getLoCut().get(Resonance.ordinal()))
+			lcReso.setValue((synth.getLoCut().get(Resonance.ordinal())));
+		filter.update();
+		for (int i = 0; i < DCO_COUNT; i++)
 			checkGain(gains.get(i), i);
-		for (int i = 0; i < shapes.size(); i++)
+		for (int i = 0; i < DCO_COUNT; i++)
 			checkShape(shapes.get(i), i);
 
 		// adsr update
@@ -187,22 +235,37 @@ public class SynthKnobs extends KnobPanel {
 			d.setValue(adsr.getDecayTime());
 		if (s.getValue() * 0.01f != adsr.getSustainGain())
 			s.setValue((int)(adsr.getSustainGain() * 100));
-		if (r.getValue() != adsr.getReleaseTime())
-			r.setValue(adsr.getReleaseTime());
+		if (r.getValue() != adsr.getReleaseTime() / rFactor)
+			r.setValue(adsr.getReleaseTime() / rFactor);
 
 		conformDetune();
 	}
 
+	public static int cents(float detune) {
+		return (int) ((detune - 1f) * 1000f);
+	}
+
 	private void conformDetune() {
-		for (int i = 0; i < detune.size(); i++) {
-			String target = DETUNE_OPTIONS[DETUNE_NONE];
-			for (int x = 0; x < DETUNE_AMOUNT.length; x++)
-				if (synth.getDetune()[i] == DETUNE_AMOUNT[x]) {
-					target = DETUNE_OPTIONS[x];
-					break;
-				}
-			detune.get(i).setSelectedItem(target);
-		}
+		int cents = cents(synth.getDetune()[0]);
+		if (detune0.getValue() != cents)
+			detune0.setValue(cents);
+
+		String target = DETUNE_OPTIONS[DETUNE_NONE];
+		for (int x = 0; x < DETUNE_AMOUNT.length; x++)
+			if (synth.getDetune()[1] == DETUNE_AMOUNT[x]) {
+				target = DETUNE_OPTIONS[x];
+				break;
+			}
+		if (detune1.getSelectedItem() != target)
+			detune1.setSelectedItem(target);
+		target = DETUNE_OPTIONS[DETUNE_NONE];
+		for (int x = 0; x < DETUNE_AMOUNT.length; x++)
+			if (synth.getDetune()[2] == DETUNE_AMOUNT[x]) {
+				target = DETUNE_OPTIONS[x];
+				break;
+			}
+		if (detune2.getSelectedItem() != target)
+			detune2.setSelectedItem(target);
 	}
 
 	private void checkShape(JComboBox<Shape> shape, int i) {
@@ -239,24 +302,31 @@ public class SynthKnobs extends KnobPanel {
 				adsr.setSustainGain(data2 * 0.01f);
 				break;
 			case 3:
-				adsr.setReleaseTime(data2);
+				adsr.setReleaseTime(rFactor * data2);
 				break;
-			case 4: Threads.execute(() -> presets.setSelectedIndex(
-						Constants.ratio(data2, presets.getItemCount() - 1)));
+			case 4:
+				int focus = Constants.ratio(data2, presets.getItemCount() - 1);
+				presets.midiShow(synth.getPatches()[focus]);
+				//	Threads.execute(() -> presets.setSelectedIndex(
+				//			Constants.ratio(data2, presets.getItemCount() - 1)));
 				break;
-			case 5: Threads.execute(() -> mod.setSelectedItem(Constants.ratio(data2, OCTAVE)));
+			case 5:
+				if (freqMode)
+					Threads.execute(() -> mod.setSelectedItem(Constants.ratio(data2, OCTAVE)));
+				else
+					detune0.setValue(data2);
 				break;
 			case 6:
 				if (freqMode)
 					synth.getLoCut().setFrequency(Filter.knobToFrequency(data2));
 				else
-					synth.getLoCut().setResonance(data2);
+					synth.getLoCut().set(Filter.Settings.Resonance.ordinal(), data2);
 				break;
 			case 7:
 				if (freqMode)
 					synth.getHiCut().setFrequency(Filter.knobToFrequency(data2));
 				else
-					synth.getHiCut().setResonance(data2);
+					synth.getHiCut().set(Filter.Settings.Resonance.ordinal(), data2);
 				break;
 			default:
 				return false;
@@ -266,8 +336,7 @@ public class SynthKnobs extends KnobPanel {
 
 	@Override
 	public void pad1() {
-//		JudahSynth target = (synth == JudahZone.getSynth1()) ? JudahZone.getSynth2() : JudahZone.getSynth1();
-//		MainFrame.setFocus(target.getSynthKnobs());
+
 	}
 
 	@Override

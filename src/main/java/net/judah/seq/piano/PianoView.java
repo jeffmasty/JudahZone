@@ -10,15 +10,12 @@ import net.judah.api.TimeListener;
 import net.judah.gui.Detached.Floating;
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
-import net.judah.gui.widgets.Btn;
-import net.judah.midi.Panic;
 import net.judah.seq.MusicBox;
 import net.judah.seq.track.HiringAgency;
-import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.TrackBindings;
 
-@Getter
+
 public class PianoView extends HiringAgency implements TimeListener, Floating, Size {
 	public static final int MAX_OCTAVES = 7;
 	public static final int MAX_RANGE = MAX_OCTAVES * Key.OCTAVE;
@@ -26,19 +23,17 @@ public class PianoView extends HiringAgency implements TimeListener, Floating, S
 	public static final int DEFAULT_TONIC = 24;
 	private static final Dimension PANIC = new Dimension(STEP_WIDTH, KEY_HEIGHT);
 
-	protected final MidiTrack track;
-	protected final PianoMenu menu;
-	protected final Piano grid;
-	protected final PianoKeys keyboard;
+	@Getter final PianoTrack track;
+	@Getter final Piano grid;
+	private final PianoMenu menu;
+	private final PianoKeys keyboard;
+	@Getter private final PianoSteps steps;
 
 	int range = DEFAULT_RANGE;
 	int tonic = DEFAULT_TONIC;
-
-	private final PianoSteps steps;
-
 	float scaledWidth;
 	private int pianoWidth;
-	Btn panic;
+	private final Pedal pedal;
 
 	public PianoView(PianoTrack t) {
 		this.track = t;
@@ -48,19 +43,19 @@ public class PianoView extends HiringAgency implements TimeListener, Floating, S
 		steps = new PianoSteps(this);
 		grid = new Piano(this, steps, keyboard);
 		menu = new PianoMenu(this, grid);
-		panic = (Btn) Gui.resize(new Btn(" ! ", e->new Panic(t), t.getName() + " Panic"), PANIC);
-		panic.setFont(Gui.BOLD);
+		pedal = t.getPedal();
+		Gui.resize(pedal, PANIC);
 		track.getClock().addListener(this);
 
 		menu.setLocation(0, 0);
-		panic.setLocation(0, MENU_HEIGHT);
+		pedal.setLocation(0, MENU_HEIGHT);
 		keyboard.setLocation(STEP_WIDTH, MENU_HEIGHT);
 		steps.setLocation(0, MENU_HEIGHT + KEY_HEIGHT);
 		grid.setLocation(STEP_WIDTH, MENU_HEIGHT + KEY_HEIGHT);
 
 		setLayout(null);
 		add(menu);
-		add(panic);
+		add(pedal);
 		add(keyboard);
 		add(steps);
 		add(grid);
@@ -85,7 +80,7 @@ public class PianoView extends HiringAgency implements TimeListener, Floating, S
 		keyboard.setBounds(keyboard.getLocation().x, keyboard.getLocation().y, w - (STEP_WIDTH + 1), KEY_HEIGHT);
 		steps.setBounds(0, MENU_HEIGHT + KEY_HEIGHT, STEP_WIDTH, gridHeight);
 		grid.setBounds(STEP_WIDTH, MENU_HEIGHT + KEY_HEIGHT, pianoWidth, gridHeight);
-		panic.setBounds(0, MENU_HEIGHT, STEP_WIDTH, KEY_HEIGHT);
+		pedal.setBounds(0, MENU_HEIGHT, STEP_WIDTH, KEY_HEIGHT);
 		doLayout();
 	}
 

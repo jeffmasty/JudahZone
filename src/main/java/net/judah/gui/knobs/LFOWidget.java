@@ -1,6 +1,12 @@
 package net.judah.gui.knobs;
 
+import static net.judah.fx.LFO.Settings.*;
+
+import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 
@@ -11,30 +17,36 @@ import javax.swing.JPanel;
 import lombok.Getter;
 import net.judah.fx.EffectColor;
 import net.judah.fx.LFO;
-import net.judah.fx.LFO.Target;
+import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.MainFrame.FxChange;
 import net.judah.gui.Pastels;
+import net.judah.gui.Size;
 import net.judah.gui.fx.FxTrigger;
 import net.judah.gui.fx.Row;
 import net.judah.gui.fx.TimePanel;
 import net.judah.gui.settable.LfoCombo;
+import net.judah.gui.widgets.DoubleSlider;
 import net.judah.gui.widgets.FxKnob;
+import net.judah.gui.widgets.RangeSlider.Colors;
 import net.judah.mixer.Channel;
 import net.judah.util.Constants;
 
 public class LFOWidget extends Box {
+    private static final Color KNOB_C = Pastels.EGGSHELL;
+    private static final Colors RANGE = new Colors(Pastels.EGGSHELL, Pastels.EGGSHELL, Pastels.ORANGE);
 
 	@Getter private final LFO lfo;
 	private final Channel ch;
 
 	private final Row row;
 	private final LfoCombo lfoCombo;
+	private final DoubleSlider slider;
+	private final FxKnob msec;
 	private final JPanel wrap = new JPanel();
-    private final JPanel lfoLbls =  new JPanel(new GridLayout(1, 4, 0, 1));
-    private final JPanel lfoPanel = new JPanel(new GridLayout(1, 4, 0, 0));
-
-    private final ArrayList<Row> labels = new ArrayList<>();
+    final JPanel lfoLbls =  new JPanel(new GridLayout(1, 4, 0, 1));
+    GridBagLayout layout = new GridBagLayout();
+    JPanel grid = new JPanel(layout);
 
 	public LFOWidget(Channel channel, LFO lowFrequencyOscillator, int index) {
 		super(BoxLayout.PAGE_AXIS);
@@ -42,55 +54,66 @@ public class LFOWidget extends Box {
 		this.ch = channel;
 		this.row = new Row(channel);
 		lfoCombo = new LfoCombo(lfo);
-		setOpaque(true);
-    	Row lfoLbl = new Row(channel);
+		slider = new DoubleSlider(lfo, Min.ordinal(), lfo, Max.ordinal());
+		slider.setColors(RANGE);
+		slider.setOpaque(true);
 
-    	ArrayList<Component> components = lfoLbl.getControls();
+		msec = new FxKnob(channel, lfo, MSec.ordinal(), "Time", KNOB_C);
+		Gui.resize(slider, new Dimension(Size.WIDTH_KNOBS / 2 - 20, Size.STD_HEIGHT));
+    	ArrayList<Component> components = row.getControls();
     	components.add(new FxTrigger("Target", lfo, channel));
     	components.add(new FxTrigger("LFO" + index, lfo, channel));
-    	components.add(new FxTrigger(" ", lfo, channel));
+    	components.add(new FxTrigger("min/max", lfo, channel));
     	components.add(new TimePanel(lfo, channel));
 
-    	ArrayList<Component> knobs = row.getControls();
-    	knobs.add(lfoCombo);
-    	knobs.add(new FxKnob(channel, lfo, LFO.Settings.Min.ordinal(), "Min", Pastels.EGGSHELL));
-    	knobs.add(new FxKnob(channel, lfo, LFO.Settings.Max.ordinal(), "Max", Pastels.EGGSHELL));
-    	knobs.add(new FxKnob(channel, lfo, LFO.Settings.MSec.ordinal(), "Time", Pastels.EGGSHELL));
-
-    	for (Component c : lfoLbl.getControls())
+    	for (Component c : row.getControls())
 			lfoLbls.add(c);
-    	for (int i = 0; i < 4; i++)
-    		lfoPanel.add(knobs.get(i));
-    	labels.add(lfoLbl);
-
     	add(lfoLbls);
-		add(lfoPanel);
 
+    	GridBagConstraints c = layout.getConstraints(grid);
+    	grid.setOpaque(true);
+    	grid.add(lfoCombo, c);
+    	c.gridx = 1;
+    	c.gridwidth = 2;
+    	grid.add(slider, c);
+    	c.gridx = 3;
+    	c.gridwidth = 1;
+    	grid.add(msec, c);
+		add(grid);
 	}
 
 	public final void update() {
-		for (Row lbl : labels)
-        	lbl.update();
-		wrap.setBackground(lfo.isActive() ? EffectColor.get(lfo.getClass()) : null);
+		Color c = lfo.isActive() ? EffectColor.get(lfo.getClass()) : null;
+		wrap.setBackground(c);
 		row.update(); // TODO
 		lfoCombo.update();
+		slider.update();
+		msec.update();
+		grid.setBackground(c);
+		slider.setBackground(c);
+
 	}
 
 	public boolean doKnob(int idx, int data2) {
 		switch(idx) {
 		case 0 -> {
-			Target target = (Target)Constants.ratio(data2, Target.values());
+			LFO.Target target = (LFO.Target)Constants.ratio(data2, LFO.Target.values());
 				if (lfo.isActive())
 					lfoCombo.midiShow(target);
 				else
-					lfo.set(LFO.Settings.Target.ordinal(), target.ordinal());
+					lfo.set(Target.ordinal(), target.ordinal());
 			}
-		case 1 ->  lfo.set(LFO.Settings.Min.ordinal(), data2);
-		case 2 -> lfo.set(LFO.Settings.Max.ordinal(), data2);
-		case 3 -> lfo.set(LFO.Settings.MSec.ordinal(), data2);
+		case 1 -> lfo.set(Min.ordinal(), data2);
+		case 2 -> lfo.set(Max.ordinal(), data2);
+		case 3 -> lfo.set(MSec.ordinal(), data2);
 		default -> { return false; }
 		}
 		MainFrame.update(new FxChange(ch, lfo));
 		return true;
+	}
+
+	public void bold(boolean yes) {
+		for (Component c : row.getControls())
+			c.setFont(yes ? Gui.BOLD12 : Gui.FONT11);
 	}
 }

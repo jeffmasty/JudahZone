@@ -5,6 +5,7 @@ import javax.swing.JPanel;
 
 import lombok.Getter;
 import net.judah.fx.Effect;
+import net.judah.fx.LFO;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.widgets.FxButton;
@@ -18,6 +19,7 @@ public class LFOKnobs extends KnobPanel {
     @Getter private final Channel channel;
     @Getter private final LFOWidget lfo1, lfo2;
     @Getter private final CompressorWidget compressor;
+    private boolean upperKnobs = true;
 
     public LFOKnobs(final Channel ch, DJJefe mixer) {
     	this.channel = ch;
@@ -35,14 +37,13 @@ public class LFOKnobs extends KnobPanel {
     }
 
 	@Override public void pad1() {
-		lfo2.getLfo().setActive(!lfo2.getLfo().isActive());
+		LFO lfo = upperKnobs ? channel.getLfo() : channel.getLfo2();
+			lfo.setActive(!lfo.isActive());
 	}
 
 	@Override public void pad2() {
-		//channel.getTuner().setActive(!channel.getTuner().isActive());
 		channel.getCompression().setActive(!channel.getCompression().isActive());
 		MainFrame.update(channel);
-		// MainFrame.update(this);
 	}
 
 	@Override
@@ -50,12 +51,19 @@ public class LFOKnobs extends KnobPanel {
 		lfo1.update();
 		lfo2.update();
 		compressor.update();
+		lfo1.bold(upperKnobs);
+		lfo2.bold(!upperKnobs);
 	}
 
 	@Override
 	public boolean doKnob(int idx, int data2) {
-		if (lfo1.doKnob(idx, data2))
-			return false;
+		if (upperKnobs) {
+			if (lfo1.doKnob(idx, data2))
+				return false;
+		}
+		else
+			if (!upperKnobs && lfo2.doKnob(idx, data2))
+				return false;
 		compressor.doKnob(idx, data2);
 		return false;
 	}
@@ -65,6 +73,17 @@ public class LFOKnobs extends KnobPanel {
 			lfo2.update();
 		else
 			lfo1.update();
+	}
+
+	public void upperLower() {
+		upperKnobs = !upperKnobs;
+		MainFrame.update(this);
+	}
+
+	/** toggle on/off LFO that has knob focus */
+	public void toggle() {
+		LFO target = upperKnobs ? channel.getLfo() : channel.getLfo2();
+		target.setActive(!target.isActive());
 	}
 
 }

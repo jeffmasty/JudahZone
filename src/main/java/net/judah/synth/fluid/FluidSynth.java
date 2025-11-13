@@ -33,6 +33,7 @@ public final class FluidSynth extends MidiInstrument {
 	public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // "/usr/share/sounds/sf2/JJazzLab-SoundFont.sf2"
 	private static final int CHANNELS = 4;
 
+	public record Drum(String name, int prog) {};
 	private final String shellCommand;
 	private Process process;
 	/** talks to FluidSynth on stdin */
@@ -178,6 +179,13 @@ public final class FluidSynth extends MidiInstrument {
 		}
 	}
 
+	private void sendProg(int idx, int ch, String name) {
+		JudahMidi.queue(Midi.create(ShortMessage.PROGRAM_CHANGE, ch, idx, 0), midiPort);
+		if (ch < changes.length)
+			changes[ch] = name;
+		MainFrame.update(Program.first(this, ch));
+	}
+
 	@Override
 	public String getProg(int ch) {
 		return changes[ch];
@@ -187,33 +195,33 @@ public final class FluidSynth extends MidiInstrument {
 		return progChange(preset, 0);
 	}
 
-	@Override public boolean progChange(String preset, int ch) {
+	@Override public String progChange(int data2, int ch) {
+		if (data2 < 0 || data2 > 127)
+			return null;
+		String name = data2 < patches.length ? patches[data2] : "?";
+		sendProg(data2, ch, name);
+		RTLogger.debug(this.name + ch + ": progChange " + data2 + "(" + name + ")");
+		return name;
+	}
 
+	@Override public boolean progChange(String preset, int ch) {
 		try {
 			int idx = Integer.parseInt(preset);
 			if (idx > 0 && idx < 128)
-				JudahMidi.queue(Midi.create(ShortMessage.PROGRAM_CHANGE, ch, idx, 0), midiPort);
-			if (ch < changes.length)
-				changes[ch] = preset;
-			MainFrame.update(Program.first(this, ch));
+				progChange(idx, ch);
 			return true;
 		} catch (NumberFormatException e) { /* ignore */ }
 
 		for (int i = 0; i < patches.length; i++)
 			if (patches[i].equals(preset)) {
-//				final int val = i;
 				// flooding: Constants.execute(() -> {
-				//sendCommand(FluidCommand.PROG_CHANGE, ch + " " + val);
-				JudahMidi.queue(Midi.create(ShortMessage.PROGRAM_CHANGE, ch, i, 0), midiPort);
-				if (ch < changes.length)
-					changes[ch] = preset;
-				MainFrame.update(Program.first(this, ch));
+				sendProg(i, ch, preset);
 				return true;
 			}
 		return false;
 	}
 
-	record Drum(String name, int prog) {};
+
 }
 
 //public void mute() {

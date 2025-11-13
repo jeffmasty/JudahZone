@@ -1,4 +1,4 @@
-package net.judah.gui;
+package net.judah.gui.widgets;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -8,6 +8,8 @@ import javax.swing.JButton;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
+import net.judah.gui.Actionable;
+import net.judah.gui.Pastels;
 import net.judah.seq.arp.Arp;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;

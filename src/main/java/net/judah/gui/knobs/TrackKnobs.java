@@ -12,15 +12,13 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import net.judah.controllers.MPKmini;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
 import net.judah.fx.Gain;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
-import net.judah.gui.PlayWidget;
-import net.judah.gui.TabZone;
 import net.judah.gui.Size;
+import net.judah.gui.TabZone;
 import net.judah.gui.settable.Folder;
 import net.judah.gui.settable.ModeCombo;
 import net.judah.gui.settable.Program;
@@ -29,6 +27,7 @@ import net.judah.gui.widgets.CueCombo;
 import net.judah.gui.widgets.FxButton;
 import net.judah.gui.widgets.GateCombo;
 import net.judah.gui.widgets.Integers;
+import net.judah.gui.widgets.PlayWidget;
 import net.judah.gui.widgets.Slider;
 import net.judah.gui.widgets.TrackAmp;
 import net.judah.omni.Icons;
@@ -129,7 +128,7 @@ public class TrackKnobs extends KnobPanel {
 		btns.add(new Btn("Rec", e->track.setCapture(!track.isCapture())));
 		btns.add(new Btn(track.isDrums() ? "Kit" : "MPK", e->pad2()));
         if (track.getMidiOut() instanceof TacoSynth)
-        	btns.add(new Btn("DCO", e->MainFrame.setFocus(((TacoSynth)track.getMidiOut()).getSynthKnobs())));
+        	btns.add(new Btn("DCO", e->MainFrame.setFocus(((TacoSynth)track.getMidiOut()).getKnobs())));
 
 		column.add(btns);
 		settings.add(column);
@@ -181,7 +180,7 @@ public class TrackKnobs extends KnobPanel {
 		title.add(tracks);
 		title.add(new Btn(Icons.SAVE, e->track.save()));
 		title.add(new Btn(Icons.HOME, e->track.toFrame(0)));
-		title.add(new Btn(Icons.NEW_FILE, e->track.toFrame(track.frames() + 1)));
+		title.add(new Btn(Icons.NEW_FILE, e->track.toFrame(track.getFrames() + 1)));
 	}
 
 
@@ -206,7 +205,7 @@ public class TrackKnobs extends KnobPanel {
 				seq.getTracks().setCurrent((MidiTrack)Constants.ratio(data2, seq.getTracks()));
 				return true;
 			case 1: // current pattern
-				track.toFrame(Constants.ratio(data2, track.frames()));
+				track.toFrame(Constants.ratio(data2, track.getFrames()));
 				return true;
 			case 2: // file (settable)
 						File x = (File)Constants.ratio(data2, Folders.sort(track.getFolder()));
@@ -244,10 +243,10 @@ public class TrackKnobs extends KnobPanel {
 
 	@Override // TODO handle navigate away from TrackKnobs onDeck = !onDeck;
 	public void pad2() {
-		if (track.isDrums())
-			MainFrame.setFocus(((DrumTrack)track).getKit().getGui());
-		else
-			MPKmini.instance.setCaptureTrack((PianoTrack)track);
+//		if (track.isDrums())
+//			MainFrame.setFocus(((DrumTrack)track).getKit().getGui());
+//		else
+//			// MPKmini.instance.setMpkTrack((PianoTrack)track);
 	}
 
 }

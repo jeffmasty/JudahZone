@@ -1,9 +1,11 @@
 package net.judah.synth.taco;
+
 import java.nio.FloatBuffer;
 import java.util.List;
 import java.util.Vector;
 
 import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 import javax.swing.ImageIcon;
@@ -17,36 +19,41 @@ import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.SynthKnobs;
 import net.judah.gui.settable.Program;
+import net.judah.midi.ChannelCC;
 import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
+import net.judah.midi.Panic;
 import net.judah.omni.AudioTools;
+import net.judah.seq.MidiConstants.CC;
 import net.judah.seq.Trax;
 import net.judah.seq.track.PianoTrack;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
-@Getter // TODO: portamento/glide, LFOs, PWM, mono-synth, true stereo, envelope to filter
-public final class TacoSynth extends Engine {
+// TODO: up/down sample, portamento/glide, LFOs, PWM, mono- vs. polysynth, true stereo, envelope to filter
+/** Taco stands for Track-Controlled Oscillator */
+@Getter public final class TacoSynth extends Engine {
 
 	public static final int POLYPHONY = 24;
 	public static final int DCO_COUNT = 3;
 	public static final int ZERO_BEND = 8192;
 
-	@Getter private final Vector<PianoTrack> tracks = new Vector<PianoTrack>();
+	private final Vector<PianoTrack> tracks = new Vector<PianoTrack>();
 	private final KnobMode knobMode = KnobMode.Taco;
 	private final Adsr adsr = new Adsr();
     private final Polyphony notes;
     private final float[] dcoGain = new float[DCO_COUNT];
     private final float[] detune = new float[DCO_COUNT];
     private final Shape[] shapes = new Shape[] {Shape.SIN, Shape.TRI, Shape.SAW};
-	private final ModWheel modWheel;
-	private final Filter internalFilter = new Filter(false);
-	private final Filter loCut = new Filter(false);
-	private final Filter hiCut = new Filter(false);
-	private final SynthPresets synthPresets;
-    private final SynthKnobs synthKnobs;
+	private ChannelCC cc = new ChannelCC(this);
+    private final ModWheel modWheel;
     /** modwheel pitchbend semitones */
     @Setter private int modSemitones = 1;
+    private final Filter internalFilter = new Filter(false);
+	private final Filter loCut = new Filter(false);
+	private final Filter hiCut = new Filter(false);
+	private final SynthPresets synthPresets = new SynthPresets(this);
+    private final SynthKnobs knobs;
 	// private final boolean mono = false; // TODO mono-poly switch
 	// private final int MIDI_CH = 0;  // TODO channel-aware
 
@@ -59,26 +66,24 @@ public final class TacoSynth extends Engine {
 		for (int i = 0; i < detune.length; i++)
 			detune[i] = 1f;
 
-		loCut.setFilterType(Filter.Type.LoCut);
-		loCut.setFrequency(70);
-		loCut.setResonance(2.5f);
-		loCut.setActive(true);
-
 		internalFilter.setFilterType(Filter.Type.HiCut);
-		internalFilter.setFrequency(20000);
+		internalFilter.setFrequency(15500);
 		internalFilter.setResonance(0f);
 		internalFilter.setActive(true);
 
 		hiCut.setFilterType(Filter.Type.HiCut);
-		hiCut.setFrequency(2000);
-		hiCut.setResonance(3f);
+		hiCut.setFrequency(3600);
+		hiCut.setResonance(2f);
 		hiCut.setActive(true);
 
-		synthPresets = new SynthPresets(this);
-		modWheel = new ModWheel(hiCut, loCut);
-		notes = new Polyphony(this, 0, POLYPHONY);
-		synthKnobs = new SynthKnobs(this);
+		loCut.setFilterType(Filter.Type.LoCut);
+		loCut.setFrequency(50);
+		loCut.setResonance(1f);
+		loCut.setActive(true);
 
+		notes = new Polyphony(this, 0, POLYPHONY);
+		knobs = new SynthKnobs(this);
+		modWheel = new ModWheel(knobs, hiCut, loCut);
     }
 
     public TacoSynth(Trax type, ImageIcon picture, JudahClock clock) {
@@ -107,32 +112,12 @@ public final class TacoSynth extends Engine {
 	}
 
 	/** Receiver interface, this method serves as panic() */
-	@Override
-	public void close() {
-		notes.panic();
-	}
-
-	@Override
-	public void send(MidiMessage midi, long timeStamp) {
-		ShortMessage m = (ShortMessage)midi;
-		if (Midi.isNote(midi))
-			notes.receive(m);
-		else if (Midi.isProgChange(m)) {
-			RTLogger.log(this, "TODO ProgChange " + new Midi(m.getMessage()).toString());
-		}
-		else if (Midi.isCC(m)) {
-			if (m.getData1() == 1)  // modWheel
-				modWheel.mod(m.getData2());
-		}
-		else if (Midi.isPitchBend(m)) {
-			float factor = bendFactor(m, modSemitones);
-			for (Voice v : notes.voices)
-				v.bend(factor);
-		}
+	@Override public void close() {
+		new Panic(getTrack());
 	}
 
 	@Override public boolean progChange(String preset) {
-		if (getSynthPresets().load(preset)) {
+		if (synthPresets.load(preset)) {
 			MainFrame.update(Program.first(this, 0));
 			return true;
 		}
@@ -142,6 +127,17 @@ public final class TacoSynth extends Engine {
 	@Override public boolean progChange(String preset, int bank) {
 		return progChange(preset); // banks/channels not implemented
 	}
+
+	@Override
+	public String progChange(int data2, int ch) {
+		if (data2 < 0 || data2 >= JudahZone.getSynthPresets().size())
+			return null;
+
+		String result = JudahZone.getSynthPresets().keys().get(data2);
+		progChange(result, ch);
+		return result;
+	}
+
 
 	@Override public String[] getPatches() {
 		List<String> result = JudahZone.getSynthPresets().keys();
@@ -154,8 +150,78 @@ public final class TacoSynth extends Engine {
 		return synthPresets.getCurrent();
 	}
 
+	@Override public void send(MidiMessage midi, long timeStamp) {
+		if (midi instanceof MetaMessage)
+			return; // TODO
+		ShortMessage m = (ShortMessage)midi;
+		if (Midi.isProgChange(m)) { // should have been filtered by MidiTrack
+			progChange(m.getData1(), m.getChannel());
+			return;
+		}
+		if (cc.process(m))
+			return; // channel cc filter
+		if (ccEnv(m))
+			return; // envelope cc filter
+
+		if (Midi.isNote(midi))
+			notes.receive(m);
+		else if (CC.MODWHEEL.matches(m))
+			modWheel.dragged(m.getData2());
+		else if (Midi.isPitchBend(m)) {
+			float factor = bendFactor(m, modSemitones);
+			for (Voice v : notes.voices)
+				v.bend(factor);
+		}
+		else RTLogger.debug("TacoSynth skip " + Midi.toString(m));
+
+	}
+
+	private boolean ccEnv(ShortMessage msg) {
+		if (!Midi.isCC(msg))
+			return false;
+		// Envelope
+		CC type = CC.find(msg.getData1());
+		if (type == null)
+			return false;
+		int val = (int) (msg.getData2() * Constants.TO_100);
+
+		switch(type) {
+		// TODO fine-tune
+			case ATTACK:
+				adsr.setAttackTime(val);
+				break;
+			case DECAY:
+				adsr.setDecayTime(val);
+				break;
+			case SUSTAIN:
+				adsr.setSustainGain(val * Constants.TO_1);
+			case RELEASE:
+				adsr.setReleaseTime(val);
+				break;
+			case DETUNE:
+				setDetune(val);
+				break;
+			case GLIDE: // wowser
+				break;
+				//case PORTAMENTO: ????
+			default:
+				return false;
+
+		}
+		MainFrame.update(knobs);
+		return true;
+	}
+
 	public float detune(int dco, float hz) {
 		return detune[dco] * hz;
+	}
+
+	/**Convert knob/CC input to floating point on DCO-0
+	 * @param val 0 to 100 based around 50*/
+	public void setDetune(int val) {
+		detune[0] = (val - 50f) * 0.001f + 1f;
+		for (Voice voice : notes.voices)
+			voice.detune();
 	}
 
 	/**Pitch Bend message  https://sites.uci.edu/camp2014/2014/04/30/managing-midi-pitchbend-messages/ <pre>

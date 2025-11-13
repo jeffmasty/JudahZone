@@ -6,24 +6,27 @@ import static net.judah.controllers.MPKTools.*;
 import static net.judah.gui.knobs.KnobMode.*;
 
 import java.awt.Component;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import javax.swing.JComboBox;
 import javax.swing.JList;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 import lombok.Getter;
-import lombok.Setter;
 import net.judah.fx.Delay;
 import net.judah.gui.MainFrame;
+import net.judah.gui.TabZone;
 import net.judah.gui.Updateable;
 import net.judah.gui.knobs.KnobMode;
+import net.judah.gui.knobs.LFOKnobs;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
 import net.judah.mixer.Channel;
 import net.judah.sampler.Sample;
-import net.judah.seq.arp.Arp;
-import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.util.Constants;
 import net.judah.util.Debounce;
@@ -41,10 +44,7 @@ public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Contro
 				"Tremolo", "Oboe", "Ahh Choir", "Harp"};
 
 	// Where to route live MPK keys (and Jamstik)
-	@Getter private MidiTrack midiOut;
-
-	@Setter private PianoTrack captureTrack;
-	public static boolean override;
+	@Getter private PianoTrack midiOut;
 
 	@Override
 	public boolean midiProcessed(Midi midi) {
@@ -59,10 +59,7 @@ public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Contro
 			return true;
 
     	if (Midi.isNote(midi) || Midi.isPitchBend(midi)) {
-    		if (override)
-    			getSeq().getSynthTracks().getCurrent().send(midi, JudahMidi.ticker());
-    		else
-    			midiOut.send(midi, JudahMidi.ticker());
+    		midiOut.send(midi, JudahMidi.ticker());
     		return true;
     	}
 		return false;
@@ -72,8 +69,16 @@ public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Contro
 		setRenderer(new BasicComboBoxRenderer() {
 			@Override public Component getListCellRendererComponent(@SuppressWarnings("rawtypes") JList list,
 					Object value, int index, boolean isSelected, boolean cellHasFocus) {
-				//setHorizontalAlignment(SwingConstants.CENTER);
-				setText(value == null ? "?" : ((PianoTrack) value).getType().getName());
+				setHorizontalAlignment(SwingConstants.CENTER);
+
+				if (value instanceof PianoTrack p) {
+					if (p == items[0])
+						setText("Taco");
+					else
+						setText(p.getMidiOut().getName());
+				}
+				else
+					setText("?");
 				return this;
 			}
 		});
@@ -85,7 +90,13 @@ public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Contro
 				midiOut = out;
 			}
 		}
-		addActionListener(e->setMidiOut((MidiTrack) getSelectedItem()));
+		addMouseListener(new MouseAdapter() {
+			@Override public void mouseClicked(MouseEvent e) {
+				if (SwingUtilities.isRightMouseButton(e))
+					TabZone.edit((PianoTrack)getSelectedItem());
+			}
+		});
+		addActionListener(e->setMidiOut((PianoTrack)getSelectedItem()));
 		return this;
 	}
 
@@ -109,18 +120,21 @@ public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Contro
 	}
 
 	private boolean cc_pad(int data1, int data2) {
+		//1   rec   mpk  midiGui  track
+		//2   pdl  chords  lfo     set
+
 		///////// ROW 1 /////////////////
-		if (data1 == PRIMARY_CC.get(0))  { // Chords, formerly Jamstik
-			getChords().toggle();
+		if (data1 == PRIMARY_CC.get(0))  {
+			getMidiGui().getToggler().capture(midiOut, data2 > 0);
 		}
-		else if (data1 == PRIMARY_CC.get(1)) { // sync Crave's internal sequencer
-			getMidi().synchronize(getBass());
+		else if (data1 == PRIMARY_CC.get(1)) {
+			getMidiGui().getToggler().mpk(midiOut, data2 > 0);
 		}
 
-		else if (data1 == PRIMARY_CC.get(2) && data2 > 0 && !flooding()) // focus MidiGui or LFO
-			nextMidiBtn();
-		else if (data1 == PRIMARY_CC.get(3) && data2 > 0 && !flooding()) {// focus TRACKS
-			if (MainFrame.getKnobMode() == Track)
+		else if (data1 == PRIMARY_CC.get(2) && data2 > 0 && !flooding())
+			nextMidiBtn(); // focus MidiGui or...
+		else if (data1 == PRIMARY_CC.get(3) && data2 > 0 && !flooding()) {
+			if (MainFrame.getKnobMode() == Track) // focus TRACKS
 				getSeq().getTracks().next(true);
 			else
 				MainFrame.setFocus(Track);
@@ -128,17 +142,18 @@ public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Contro
 
 		///////// ROW 2 /////////////////
 		else if (data1 == PRIMARY_CC.get(4)) {
-			if (captureTrack != null)
-				captureTrack.setCapture(!captureTrack.isCapture());
+			midiOut.getPedal().setPressed(data2 > 0);
 		}
-
 		else if (data1 == PRIMARY_CC.get(5)) {
-			if (captureTrack != null)
-				captureTrack.toggle(Arp.MPK);
+			getChords().toggle();
 		}
 
-		else if (data1 == PRIMARY_CC.get(6) && data2 > 0 && !flooding()) // focus Synth1 or Synth2 or Sampler
-			getTacos().rotate();
+		else if (data1 == PRIMARY_CC.get(6) && data2 > 0 ) {
+			if (MainFrame.getKnobMode() == KnobMode.LFOz)
+				((LFOKnobs)MainFrame.getKnobs()).upperLower();
+			else
+				MainFrame.setFocus(KnobMode.LFOz);
+		}
 		else if (data1 == PRIMARY_CC.get(7) && data2 > 0) { // SET SettableCombo
 			MainFrame.set();
 		}
@@ -215,7 +230,7 @@ public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Contro
 		return false;
 	}
 
-	public void setMidiOut(MidiTrack out) {
+	public void setMidiOut(PianoTrack out) {
 		if (out == null)
 			return;
 		if (midiOut != null)

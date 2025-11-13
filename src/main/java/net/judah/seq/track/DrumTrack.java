@@ -28,7 +28,7 @@ public class DrumTrack extends MidiTrack {
 	}
 
 	@Override
-	protected void playNote(ShortMessage formatted) {
+	protected void processNote(ShortMessage formatted) {
 		midiOut.send(formatted, JudahMidi.ticker());
 	}
 
@@ -76,6 +76,5 @@ public class DrumTrack extends MidiTrack {
 		}
 		return false;
 	}
-
 
 }

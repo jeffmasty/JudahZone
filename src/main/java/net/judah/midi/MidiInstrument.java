@@ -2,6 +2,7 @@ package net.judah.midi;
 
 import java.util.Vector;
 
+import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
@@ -13,19 +14,19 @@ import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.api.ZoneMidi;
 import net.judah.mixer.Instrument;
+import net.judah.seq.MidiConstants;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
-import net.judah.synth.taco.Polyphony;
 import net.judah.util.RTLogger;
 
-/** base function for an external synth */
+/** base function for an external synth, subclasses handle midi-channel awareness*/
 @Getter
 public class MidiInstrument extends Instrument implements ZoneMidi {
 
+	protected ChannelCC cc = new ChannelCC(this);
 	@Setter protected JackPort midiPort;
 	protected String[] patches = new String[] {};
 	protected final Vector<PianoTrack> tracks = new Vector<>();
-	private Polyphony notes;
 
 	public MidiInstrument(String channelName, String sourceLeft, String sourceRight,
 			JackPort left, JackPort right, String icon, JackPort midi) {
@@ -43,17 +44,42 @@ public class MidiInstrument extends Instrument implements ZoneMidi {
 		midiPort = midi;
 	}
 
-	@Override public final void send(MidiMessage message, long timeStamp) {
-		try {
-			JackMidi.eventWrite(midiPort, (int)timeStamp,
-					message.getMessage(), message.getLength());
-			if (message instanceof ShortMessage)
-				for (MidiTrack t : getTracks())
-					if (t.getCh() == ((ShortMessage)message).getChannel())
-						t.getActives().receive((ShortMessage)message);
-		} catch (Exception e) {RTLogger.warn(this, e);}
+	@Override public final void send(MidiMessage midi, long timeStamp) {
+		if (midi instanceof MetaMessage)
+			return; // TODO
+		ShortMessage msg = (ShortMessage)midi;
+		if (cc.process(msg))
+			return; // channel filtered
+
+		if (Midi.isProgChange(midi)) { // Should have been filtered by MidiTrack
+			progChange(msg.getData1(), msg.getChannel());
+			return;
+		}
+		ShortMessage shrt = (ShortMessage)midi;
+		PianoTrack out = null;
+		for (PianoTrack t : getTracks())
+			if (t.getCh() == msg.getChannel()) {
+				out = t;
+				break;
+			}
+		if (out == null)
+			out = tracks.getFirst();
+		if (MidiConstants.CC.PEDAL.matches(shrt)) { // Pedal listening
+			out.getPedal().setPressed(msg.getData2() > MidiConstants.CUTOFF);
+			return; // if (!fwd)
+		}
+		shrt = Midi.copy(shrt);
+		if (out.getActives().receive(shrt) == false) // Pedal handling
+			return;
+		write(shrt);
 	}
 
+	void write(ShortMessage msg) {
+		try {
+			JackMidi.eventWrite(midiPort, JudahMidi.ticker(),
+					msg.getMessage(), msg.getLength()); // copy?
+		} catch (Exception e) {RTLogger.warn(this, e);}
+	}
 	@Override public void close() {
 		new Panic(midiPort, 0); // ?
 	}
@@ -62,11 +88,10 @@ public class MidiInstrument extends Instrument implements ZoneMidi {
 	@Override public boolean progChange(String preset, int ch) { return false; }
 	/** no-op, subclass override */
 	@Override public boolean progChange(String preset) { return false; }
+	/** no-op, subclass override */
+	@Override public String progChange(int data2, int ch) { return null; }
 
-	@Override
-	public String getProg(int ch) {
-		return "none";
-	}
+	@Override public String getProg(int ch) { return ""; }
 
 	public final MidiTrack trackByName(String name) {
 		for (MidiTrack t : tracks)
@@ -79,5 +104,8 @@ public class MidiInstrument extends Instrument implements ZoneMidi {
 		if (tracks.isEmpty()) return null;
 		return tracks.getFirst();
 	}
+
+
+
 
 }

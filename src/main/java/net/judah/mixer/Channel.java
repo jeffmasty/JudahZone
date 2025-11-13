@@ -24,7 +24,6 @@ import net.judah.gui.MainFrame.FxChange;
 import net.judah.gui.fx.EffectsRack;
 import net.judah.gui.knobs.LFOKnobs;
 import net.judah.gui.settable.Presets;
-import net.judah.gui.settable.PresetsHandler;
 import net.judah.omni.AudioTools;
 import net.judah.omni.Threads;
 import net.judah.util.RTLogger;
@@ -32,10 +31,6 @@ import net.judah.util.RTLogger;
 /** An effects bus for input or output audio */
 @Getter
 public abstract class Channel extends FxChain implements Presets {
-
-	protected final PresetsHandler presets = new PresetsHandler(this);
-	protected Preset preset = JudahZone.getPresets().getDefault();
-	protected boolean presetActive;
 
     protected final Filter filter1 = new Filter(STEREO, Filter.Type.pArTy, 700);
     protected final Filter filter2 = new Filter(STEREO, Filter.Type.HiCut, 16000);
@@ -47,6 +42,8 @@ public abstract class Channel extends FxChain implements Presets {
 	protected final Delay delay = new Delay();
     protected final LFO lfo = new LFO(this);
     protected final LFO lfo2 = new LFO(this, LFO.Target.Filter);
+	protected Preset preset = JudahZone.getPresets().getDefault();
+	protected boolean presetActive;
 
     protected EffectsRack gui;
     protected LFOKnobs lfoKnobs;
@@ -59,7 +56,7 @@ public abstract class Channel extends FxChain implements Presets {
         	add(fx);
     }
 
-	public void replace(Reverb r) {
+	public final void replace(Reverb r) {
 		set(indexOf(reverb), r);
 		reverb = r;
 	}
@@ -158,6 +155,7 @@ public abstract class Channel extends FxChain implements Presets {
 		setPresetActive(!isPresetActive());
 	}
 
+	// update time-sync'd fx
 	public void tempo(float tempo) {
     	float unit = TimeEffect.unit();
 		if (delay.isSync()) {

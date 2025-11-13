@@ -1,5 +1,7 @@
 package net.judah.seq.beatbox;
 
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -12,6 +14,8 @@ import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
+import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 
@@ -25,7 +29,6 @@ import net.judah.seq.Musician;
 import net.judah.seq.Notes;
 import net.judah.seq.Prototype;
 import net.judah.seq.track.DrumTrack;
-import net.judah.util.RTLogger;
 
 public class RemapTable extends JTable {
 
@@ -48,11 +51,9 @@ public class RemapTable extends JTable {
 	private final Track t;
 	private final HashMap<Integer, Vector<MidiEvent>> map = new HashMap<Integer, Vector<MidiEvent>>();
 	private final ArrayList<Integer> sorted = new ArrayList<Integer>();
-	private final JComboBox<DrumType> combo = new JComboBox<DrumType>(DrumType.values());
-
-	private int row;
 
 	public RemapTable(DrumTrack stub, Musician view) {
+		model.addTableModelListener(l->{});
 		track = stub;
 		t = track.getT();
 		drummer = view;
@@ -75,21 +76,13 @@ public class RemapTable extends JTable {
 			int idx = DrumType.index(data1);
 			model.addRow(new Object[] {nombre(data1), map.get(data1).size(), (idx >= 0 ? values[idx] : null)});
 		}
-
 		setModel(model);
-
-		combo.addActionListener(e-> {
-			try {
-				model.setValueAt(combo.getSelectedItem(), row, KIT_COL);
-				if (combo.getSelectedItem() == null)
+		addMouseListener(new MouseAdapter() {
+			@Override public void mouseClicked(MouseEvent e) {
+				if (SwingUtilities.isRightMouseButton(e) == false)
 					return;
-				int origin = sorted.get(row);
-				DrumType target = (DrumType)combo.getSelectedItem();
-				Edit edit = new Edit(Type.REMAP, map.get(origin));
-				edit.setOrigin(new Prototype(origin, 0l));
-				edit.setDestination(new Prototype(target.getData1(), 0l));
-				view.push(edit);
-			} catch (Exception ex) {RTLogger.warn(RemapTable.this, ex);}
+				remap();
+			}
 		});
 	}
 
@@ -99,15 +92,33 @@ public class RemapTable extends JTable {
 		return name;
 	}
 
+	@Override public void tableChanged(TableModelEvent e) {
+		super.tableChanged(e);
+		if (e.getColumn() != KIT_COL)
+			return;
+		int row = e.getFirstRow();
+		if (model.getValueAt(row, KIT_COL) == null)
+			return;
+		DrumType target = (DrumType)model.getValueAt(row, KIT_COL);
+		int origin = sorted.get(row);
+		if (origin == target.getData1())
+			return;
+		Edit remap = new Edit(Type.REMAP, map.get(origin));
+		remap.setOrigin(new Prototype(origin, 0l));
+		remap.setDestination(new Prototype(target.getData1(), 0l));
+		drummer.push(remap);
+	}
+
 	@Override public TableCellEditor getCellEditor(int row, int column) {
-        this.row = row;
 		if (KIT_COL == convertColumnIndexToModel(column))
-        	return new DefaultCellEditor(combo);
+        	return new DefaultCellEditor(new JComboBox<DrumType>(DrumType.values()));
         return super.getCellEditor(row, column);
     }
 
-	public void pad2() {
+	public void remap() {
 		int row = getSelectedRow();
+		if (row < 0)
+			return;
 		int data1 = sorted.get(row);
 		String msg = "Really delete  " + getModel().getValueAt(row, 0) + "?";
 		int result = JOptionPane.showConfirmDialog(JudahZone.getFrame(), msg);
@@ -116,7 +127,6 @@ public class RemapTable extends JTable {
 		Notes selected = drummer.selectArea(0, t.ticks(), data1, data1);
 		Edit e = new Edit(Type.DEL, selected);
 		drummer.push(e);
-		// model.removeRow(row);
 		MainFrame.setFocus(new RemapView(drummer)); // No undo on Remap View
 	}
 

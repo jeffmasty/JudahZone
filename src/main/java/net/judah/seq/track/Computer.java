@@ -22,7 +22,7 @@ public abstract class Computer {
 
 	/** end of the last note */
 	public abstract int bars();
-	public final int frames() { return (int) Math.ceil(bars() / 2f); }
+	public final int getFrames() { return (int) Math.ceil(bars() / 2f); }
 	public final boolean isActive() { return state.active; }
     public Cycle getCycle() { return state.cycle; }
     public int getLaunch() { return state.launch; }
@@ -157,10 +157,10 @@ public abstract class Computer {
 			return;
 //		flush();
 		offset = frame - count / 2 - state.launch / 2;
-		if (offset >= frames())
-			offset -= frames();
-		if (offset <= frames() * -1)
-			offset += frames();
+		if (offset >= getFrames())
+			offset -= getFrames();
+		if (offset <= getFrames() * -1)
+			offset += getFrames();
 		setCurrent(frame * 2);
 	}
 

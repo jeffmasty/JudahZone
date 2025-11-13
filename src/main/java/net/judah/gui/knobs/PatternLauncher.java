@@ -29,7 +29,7 @@ public class PatternLauncher extends JPanel {
 	}
 
 	public void update() {
-		if (track.frames() != patterns.size())
+		if (track.getFrames() != patterns.size())
 			fill();
 		for (int i = 0; i < patterns.size(); i++)
 			patterns.get(i).update();
@@ -38,7 +38,7 @@ public class PatternLauncher extends JPanel {
 	public void fill() {
 		removeAll();
 		patterns.clear();
-		for (int i = 0; i < track.frames(); i++) {
+		for (int i = 0; i < track.getFrames(); i++) {
 			TrackPattern p = new TrackPattern(track, i); 
 			patterns.add(p);
 			add(p);

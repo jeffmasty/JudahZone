@@ -1,11 +1,16 @@
-package net.judah.gui;
+package net.judah.gui.widgets;
 
 import java.util.ArrayDeque;
 
 import javax.swing.JButton;
 
+import net.judah.JudahZone;
+import net.judah.gui.MainFrame;
+import net.judah.gui.Pastels;
+import net.judah.gui.Updateable;
 import net.judah.omni.Threads;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.PianoTrack;
 
 public class RecordWidget extends JButton implements Updateable {
 
@@ -37,6 +42,8 @@ public class RecordWidget extends JButton implements Updateable {
 					widget.update();
 			MainFrame.miniSeq().update(track);
 			PlayWidget.update(track);
+			if (track instanceof PianoTrack p)
+				JudahZone.getMidiGui().update(p);
 		});
 	}
 

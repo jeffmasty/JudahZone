@@ -134,7 +134,6 @@ public class Delay implements TimeEffect {
     @Override
     public int get(int idx) {
         if (idx == Settings.DelayTime.ordinal()) {
-        	// pre-logarithmic: return Math.round(100 * getDelay() / getMaxDelay());
         	float ratio = (delayTime - MIN_DELAY) / DIFF;
         	for (int i = 0; i < Constants.getReverseLog().length; i++)
         		if (ratio < Constants.getReverseLog()[i])

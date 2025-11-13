@@ -63,7 +63,7 @@ public class JudahClock implements MidiClock, TimeProvider {
     @Getter private boolean onDeck;
 
     private float jackFramesPerTick;
-    private float onFrames, offFrames;
+    private float offFrames, onFrames;
     private float callCounter = 0;
     private long lastPulse = 0;
 	private int midiPulseCount;
@@ -92,7 +92,6 @@ public class JudahClock implements MidiClock, TimeProvider {
 			} catch (Exception e) { RTLogger.warn(this, e); }});
 		announce.setPriority(9);
 		announce.start();
-
 		getServices().add(this);
 	}
 
@@ -108,8 +107,8 @@ public class JudahClock implements MidiClock, TimeProvider {
 		if (!internal)
 			return;
         callCounter += 1;
-        if (callCounter >= (offBeat ? offFrames : onFrames)) { // swingless = jackFramesPerTick;
-            callCounter -= (offBeat ? offFrames : onFrames); // keep remainder
+        if (callCounter >= (offBeat ? onFrames : offFrames)) { // swingless = jackFramesPerTick;
+            callCounter -= (offBeat ? onFrames : offFrames); // keep remainder
 			midi24();
         }
 	}
@@ -193,10 +192,10 @@ public class JudahClock implements MidiClock, TimeProvider {
 		jackFramesPerTick = WavConstants.FPS / (tempo * 0.4f); // tempo / 60 * 24
 
 		if (timeSig.div == 3) // square triplets
-			onFrames = offFrames = jackFramesPerTick;
+			offFrames = onFrames = jackFramesPerTick;
 		else {
-			onFrames = jackFramesPerTick + jackFramesPerTick * swing;
-			offFrames = 2 * jackFramesPerTick - onFrames;
+			offFrames = jackFramesPerTick + jackFramesPerTick * swing;
+			onFrames = 2 * jackFramesPerTick - offFrames;
 		}
 	}
 
@@ -225,7 +224,6 @@ public class JudahClock implements MidiClock, TimeProvider {
 	    active = false;
 	    midi.synchronize(MIDI_STOP);
 	    passItOn(TRANSPORT, JackTransportState.JackTransportStopped);
-	    reset(); // ?
 	}
 
 	@Override public void reset() {

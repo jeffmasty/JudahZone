@@ -39,7 +39,7 @@ import lombok.Setter;
 public class Compressor implements Effect {
 
     public static enum Settings {
-    	Threshold, Ratio, Boost, Attack, Release //Knee
+    	Threshold, Ratio, Boost, Attack, Release, Knee
     }
 
     static final float LOG_10 = 2.302585f;
@@ -81,9 +81,9 @@ public class Compressor implements Effect {
 
 	public void reset() {
 	    boost_old = 1.0f;
-    	setThreshold(-20);
+    	setThreshold(-16);
     	setRatio(7);
-		setBoost(-12);
+		setBoost(-14);
 		setKnee(20);
 		setRelease(90);
 		set(Settings.Attack.ordinal(), get(Settings.Release.ordinal()));
@@ -140,7 +140,7 @@ public class Compressor implements Effect {
 
     public void setRelease(int milliseconds) {
     	relStash = milliseconds;
-    	rel = (float) (cSAMPLE_RATE /((milliseconds / 1000.0f) + cSAMPLE_RATE));
+    	rel = (float) (cSAMPLE_RATE /((relStash / 1000.0f) + cSAMPLE_RATE));
     	compute();
     }
 
@@ -158,33 +158,36 @@ public class Compressor implements Effect {
     @Override
     public int get(int idx) {
         if (idx == Settings.Threshold.ordinal())
-        	return (getThreshold() * -3) + 1;
+        	return (getThreshold() * -3) - 1;
         if (idx == Settings.Ratio.ordinal())
-        	return getRatio() * 10 - 2;
+        	return (getRatio() - 2) * 10;
+        	// return getRatio() * 10 - 2;
         if (idx == Settings.Attack.ordinal())
-        	return getAttack() + 10;
+        	return getAttack() - 10;
         if (idx == Settings.Release.ordinal())
-        	return (int)( (getRelease() - 20) * 0.5f);
+        	return (int) ((getRelease() -5) * 0.5f);
         if (idx == Settings.Boost.ordinal())
-        	return ((toutput + 20) * 3);
+        	return (toutput + 20) * 3;
+        if (idx == Settings.Knee.ordinal())
+        	return tknee;
         throw new InvalidParameterException("idx: " + idx);
     }
-
 	@Override
 	public void set(int idx, int value) {
 		if (idx == Settings.Threshold.ordinal())
 			setThreshold((int)(value * -0.333f) - 1) ;
 		else if (idx == Settings.Ratio.ordinal())
-			setRatio((int)((value * 0.1f) + 2));
+			setRatio(2 + (int)(value * 0.1f));
 		else if (idx == Settings.Boost.ordinal())
-			setBoost((int)(value * 0.3333f - 20));
+			setBoost((int) Math.floor(value  * 0.333334f - 20));
 			// setBoost(value); // non-conform 1 to 100
 		else if (idx == Settings.Attack.ordinal())
 			setAttack(value + 10);
 		else if (idx == Settings.Release.ordinal())
-			setRelease( (value + 20) * 2);
-//		else if (idx == Settings.Knee.ordinal())
-//			setKnee(value); // non-conform 1 to 100
+			setRelease( (value * 2) + 5);
+		else if (idx == Settings.Knee.ordinal())
+			setKnee(value);
+		else throw new InvalidParameterException("Compressor set " + idx + "? val: " + value);
 
 	}
 

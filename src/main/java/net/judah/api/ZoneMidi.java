@@ -29,4 +29,8 @@ public interface ZoneMidi extends Receiver, Closeable {
 	/** current Program name loaded into a managed channel or -1 */
 	String getProg(int ch);
 
+	/**@param data2 progChange usually embedded in Midi File
+	 * @return name of prog change on success or null */
+	String progChange(int data2, int ch);
+
 }

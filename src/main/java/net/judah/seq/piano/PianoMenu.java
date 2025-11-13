@@ -40,14 +40,12 @@ public class PianoMenu extends TrackMenu implements Floating {
 		zoomMenu(view);
 		arpMenu(file, t);
 		tools.add(new Actionable("Remap...", e->new Transpose(grid)));
-		edit.add(new Actionable("Duration...", e->new Duration(view.getGrid())));
-
-		add(Box.createHorizontalGlue());
+		edit.add(new Actionable("Duration...", e->new Duration(grid)));
+		add(Box.createHorizontalStrut(4));
 		add(new JLabel("Velocity "));
 		add(new TrackVol(track));
 		add(new JLabel(" Gate"));
 		add(Gui.resize(new GateCombo(track), Size.SMALLER_COMBO));
-		add(Box.createHorizontalGlue());
 	}
 
 	private void zoomMenu(PianoView view) {

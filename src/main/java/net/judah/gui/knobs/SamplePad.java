@@ -14,12 +14,13 @@ import javax.swing.border.BevelBorder;
 import net.judah.JudahZone;
 import net.judah.api.PlayAudio.Type;
 import net.judah.fx.Gain;
+import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 import net.judah.gui.widgets.FxButton;
 import net.judah.gui.widgets.Knob;
 import net.judah.sampler.Sample;
 
-public class SamplePad extends JPanel {
+public class SamplePad extends Gui.Opaque {
 	public final Sample sample;
 	private final JPanel btns;
 	private final JLabel name;
@@ -35,7 +36,6 @@ public class SamplePad extends JPanel {
 			}});
 		setBorder(BorderFactory.createSoftBevelBorder(BevelBorder.RAISED, color, color.darker()));
 		setLayout(new GridLayout(0, 1));
-		setOpaque(true);
 		btns = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
 		name = new JLabel(s.toString(), JLabel.CENTER);
 		name.setOpaque(true);

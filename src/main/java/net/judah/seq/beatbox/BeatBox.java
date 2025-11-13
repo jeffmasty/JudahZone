@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
+import javax.swing.SwingUtilities;
 
 import net.judah.api.Signature;
 import net.judah.drumkit.DrumType;
@@ -29,6 +30,7 @@ import net.judah.seq.MidiTools;
 import net.judah.seq.MusicBox;
 import net.judah.seq.Notes;
 import net.judah.seq.Prototype;
+import net.judah.seq.track.CCHandler;
 import net.judah.seq.track.DrumTrack;
 import net.judah.util.RTLogger;
 
@@ -41,10 +43,13 @@ public class BeatBox extends MusicBox implements Pastels {
 	private float unitX, unitY;
 	private int minusX, minusY;
 	private final DrumZone tab;
+	private final CCHandler cc;
+	private DrumType ccType = DrumType.Bongo;
 
     public BeatBox(DrumTrack t, DrumZone tab) {
     	super(t);
     	this.tab = tab;
+    	cc = new CCHandler(t, this, true);
         setLayout(null);
         update();
     }
@@ -115,7 +120,17 @@ public class BeatBox extends MusicBox implements Pastels {
 					drumpad(g, x, y, on.getData2());
 			}
         }
-        if (mode == DragMode.SELECT) {
+
+        // draw CCs
+		int[] ccSteps = cc.populate();
+		for (int step = 0; step < ccSteps.length; step++) {
+			if (cc.getProg(step) != null)
+				ccPad(g, step, 1, Pastels.PROGCHANGE);
+			if (ccSteps[step] > 0)
+				ccPad(g, step, ccSteps[step], Pastels.CC);
+		}
+
+		if (mode == DragMode.SELECT) {
 			// highlight drag region
 			Graphics2D g2d = (Graphics2D)g;
 			Composite original = g2d.getComposite();
@@ -128,6 +143,17 @@ public class BeatBox extends MusicBox implements Pastels {
 		}
 
     }
+
+	private void ccPad(Graphics g, int step, int count, Color c) {
+        g.setColor(c);
+        int x = (int)(step * unitX);
+        int y = ccType.ordinal() * rowHeight;
+    	g.fillRect(x, y, (int)unitX, minusY);
+    	if (count > 1) {
+			g.setColor(Color.BLACK);
+			g.drawString("" + count, x + (int)(unitX / 2f) - 4, y + (int) (unitY / 2f) + 1);
+    	}
+	}
 
     private void drumpad(Graphics g, int x, int y, Color c) {
     	g.setColor(c);
@@ -167,7 +193,13 @@ public class BeatBox extends MusicBox implements Pastels {
 
     @Override public void mousePressed(MouseEvent mouse) {
 		tab.setCurrent(track); // drums only
-    	click = translate(mouse.getPoint());
+		click = translate(mouse.getPoint());
+		if (SwingUtilities.isRightMouseButton(mouse)) {
+			int step = (int) (click.tick % track.getWindow() / track.getStepTicks());
+			cc.popup(mouse, step);
+			return;
+		}
+
 		MidiEvent existing = MidiTools.lookup(NOTE_ON, click.data1, click.tick, t);
 		if (mouse.isShiftDown()) { // drag-n-select;
 			drag = mouse.getPoint();
@@ -280,7 +312,7 @@ public class BeatBox extends MusicBox implements Pastels {
 		editDel(notes);
 
 		ArrayList<MidiPair> replace = new ArrayList<>();
-		int delta = DrumType.index(destination.data1) - DrumType.index((  (ShortMessage)notes.getFirst().getOn().getMessage()).getData1());
+		int delta = DrumType.index(destination.data1) - DrumType.index(((ShortMessage)notes.getFirst().getOn().getMessage()).getData1());
 				//click.data1);
 		long start = track.getCurrent() * track.getBarTicks();
 		for (MidiPair note : notes)
@@ -359,6 +391,10 @@ public class BeatBox extends MusicBox implements Pastels {
 		repaint();
 	}
 
+	public void setCCType(DrumType t) {
+		ccType = t;
+		repaint();
+	}
 
 
 }

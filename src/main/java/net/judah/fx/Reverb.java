@@ -1,7 +1,5 @@
 package net.judah.fx;
 
-import java.security.InvalidParameterException;
-
 public abstract class Reverb implements Effect {
 
     public enum Settings {
@@ -29,19 +27,9 @@ public abstract class Reverb implements Effect {
 
     /** if true, process() must be implemented */
     public abstract boolean isInternal();
-    //public void process(FloatBuffer buf) {}
-//    @Override
-//	public void process(FloatBuffer left, FloatBuffer right) {}
 
-    // NO-OPs, overwrite in subclass
-    @Override
-    public void set(int ordinal, int value) {
-        throw new InvalidParameterException();
-    }
-
-    @Override
-    public int getParamCount() {
-        return 0;
+    @Override public int getParamCount() {
+        return Settings.values().length;
     }
 
 

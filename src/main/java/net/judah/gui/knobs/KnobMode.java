@@ -5,13 +5,14 @@ public enum KnobMode {
 	Track,
 	Taco,
 	LFOz,
-	Kitz,
 	Samplez,
+	Kitz,
 	Presets,
 	Setlist,
-	Wavez,
+	Auto,
 	Import,
 	Remap,
-	Log;
+	Log,
+	Wavez;
 
 }

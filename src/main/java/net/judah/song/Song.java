@@ -14,6 +14,7 @@ import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.api.Key;
 import net.judah.api.Signature;
+import net.judah.drumkit.KitSetup;
 import net.judah.fx.PresetsDB;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
@@ -40,6 +41,9 @@ public class Song {
 	private Key key;
 	@JsonInclude(Include.NON_NULL)
 	private Scale scale;
+	@JsonInclude(Include.NON_NULL)
+	private KitSetup kit;
+
 	private List<TrackInfo> tracks = new ArrayList<>();
 	private List<Scene> scenes = new ArrayList<>();
 	private List<FxData> fx = new ArrayList<>();

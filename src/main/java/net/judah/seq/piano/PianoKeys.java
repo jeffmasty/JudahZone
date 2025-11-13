@@ -33,9 +33,9 @@ public class PianoKeys extends JPanel implements MouseListener, MouseMotionListe
 	@Getter private int octave = 4;
 	private HashSet<Integer> actives = new HashSet<>();
 
-	public PianoKeys(MidiTrack t, PianoView view) {
-		this.view = view;
-		this.track = t;
+	public PianoKeys(MidiTrack t, PianoView v) {
+		view = v;
+		track = t;
 		addMouseListener(this);
 		addMouseMotionListener(this);
 	}
@@ -121,7 +121,7 @@ public class PianoKeys extends JPanel implements MouseListener, MouseMotionListe
 
 	@Override public void mousePressed(MouseEvent e) {
 		sound(false);
-		pressed = view.getGrid().toData1(e.getPoint());
+		pressed = view.grid.toData1(e.getPoint());
 		sound(true);
 	}
 
@@ -132,7 +132,7 @@ public class PianoKeys extends JPanel implements MouseListener, MouseMotionListe
 	}
 
 	@Override public void mouseDragged(MouseEvent e) {
-		int next = view.getGrid().toData1(e.getPoint());
+		int next = view.grid.toData1(e.getPoint());
 		if (next == pressed) return;
 		mouseMoved(e);
 		sound(false);

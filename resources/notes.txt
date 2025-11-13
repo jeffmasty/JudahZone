@@ -1,16 +1,28 @@
 TODO:
 
---downsampling synth:--
-(before/after recordings)
-upsample waves
-low pass filter at 20k 
-decimate samples
-
-Midi2.0 cc, prog, pitchbend, swell, after-touch
+Automation deep frames off 1!-99
+Autmation ListView, PitchBend Edit
+TacoSynth GLIDE (Crave <3)
+Enable Automation on Line-In (non-Midi) channels (guitar, mic, looper)
+redo track capture (atomic undo/redo)
+get all fluid patches
+drumkit mutes
+Drum decay based on sample length 
+Channel Pressure or Breath = Crave 303 Accent (w/ Crave Assign)
+Remap MPK Joystick left
 chords |1:[] |2:[] endings,  |bars| bug
-Redo Patterns:==>  Midi File Meta?
-Midi Scene snippets in Song File bundle w/kits?
-multi-color tracks, unified drumkit, mutes
+Song Bundle: Redo Patterns:==>  Midi MetaMessages?
+MidiSongFile? tracks [Main], [1, 2, 3, 4, 5, 6], {7,8} [9, 10, 11, 12] 13,14,15 
+PianoEditor: drag-n-drop/transpose across frame, falling water, REL/Modal
+taco release bug? Synth LFO: detune, reso, filter
+Fine Tune Midi Envelope
+Jamstik Midi/Cmd?
+
+--downsampling synth:--
+(take before/after recordings)
+upsample waves
+low pass filter at 18k 
+decimate samples
 
 JudahScope 
 Play Menus  data          [x]
@@ -31,15 +43,8 @@ Sampler FX (granularity, pitched frequency, lofi, wet)
 IR Reverb, DrumSynth, Phasor, Shepherd, Vocoder
 FFM instead of JNA? https://jdk.java.net/jextract/
 zone omni -> omni   Recording?
-MusicBox ratio can change if Track resolution changes...see MusicBox.recalc();
 seq.loadSong(Unknown File) feedback
 LoopToDisk .WAV recording length off
-Drum decay based on sample length (Kit Knobs & Distortion scratchy) + feedback
-Fluid attack, decay, filter
-MidiSongFile? meta messages, tracks [0], 1, 2, 3, 4, 5, 6,  9, 10, 11, 12 
-sustain note offs drag-n-drop, Record progchange, CC, pitchbend, vol
-PianoEditor: drag-n-drop/transpose across frame, falling water, REL/Modal
-Drum drag'n'drop multi-select, source select confused
 upgrade Fluid ver. to multi-channel (re-compile)
    -p, --portname=[track.getName()] Set  MIDI  port  name
 Directives.BREAKS ChordPro.@ ChordPro.%   Cycle breaks: A3_ ABC_ TOF_?
@@ -199,12 +204,13 @@ MidiEditor undo/redo/copy/paste/transpose/translate/drag-n-drop/velocity/record 
 ERRNOBUF - recover Jack MIDI when ALSA bridge fails
 Arpeggiator, ChordPro parser, Synth tracks follow ChordPro/MPK/ABS/Racman
 Setlists, save/load loops to/from disk, record session audio
-Delay + LFO sync to Tempo
+Delay/Chorus/LFO sync to Tempo
+Chorus Phaser
 note-on/off tracker per channel
 Waveforms, dB indicator
 Multi-Document Interface
-ImportMidi info table
-
+ImportMidi table/remap
+Midi CC Automation
 
 REFERENCE------------------------------------------------------------
 [Mixer]                [FX]

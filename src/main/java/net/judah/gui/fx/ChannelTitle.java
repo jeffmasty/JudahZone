@@ -7,7 +7,9 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 
+import net.judah.JudahZone;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
@@ -16,6 +18,7 @@ import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.widgets.Btn;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
+import net.judah.midi.MidiInstrument;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 
@@ -46,6 +49,8 @@ public class ChannelTitle extends JPanel {
 		Gui.resize(name, new Dimension(Size.WIDTH_KNOBS - 3 * Size.TINY.width, Size.STD_HEIGHT));
 
 		add(name);
+		if (channel == JudahZone.getBass())
+			add(sync(JudahZone.getBass()));
 		add(Gui.resize(mute, Size.TINY));
 		add(Gui.resize(lfo, Size.TINY));
 		add(Gui.resize(wav, Size.TINY));
@@ -79,5 +84,12 @@ public class ChannelTitle extends JPanel {
 			mute.setBackground(((LineIn)channel).isMuteRecord() ? null : Pastels.ONTAPE);
 		else mute.setBackground(channel.isOnMute() ? Pastels.PURPLE : null);
 		lfo.setBackground(channel.getLfo().isActive() ? Pastels.BLUE : null);
+	}
+
+	private JToggleButton sync(MidiInstrument i) {
+		JToggleButton sync = new JToggleButton("sync");
+		sync.setFont(Gui.FONT10);
+		sync.addActionListener(l->JudahZone.getMidi().synchronize(i));
+		return sync;
 	}
 }

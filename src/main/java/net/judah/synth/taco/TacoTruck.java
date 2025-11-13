@@ -1,13 +1,14 @@
 package net.judah.synth.taco;
 
-import static net.judah.JudahZone.getBass;
 import static net.judah.JudahZone.getFluid;
 
 import java.nio.FloatBuffer;
 import java.util.Vector;
 
 import net.judah.gui.MainFrame;
+import net.judah.gui.knobs.KnobMode;
 import net.judah.midi.JudahClock;
+import net.judah.midi.Midi;
 import net.judah.midi.MidiInstrument;
 import net.judah.omni.Icons;
 import net.judah.omni.Threads;
@@ -49,7 +50,7 @@ public class TacoTruck {
 		if (current == it)
 			return false;
 		current = it;
-		MainFrame.setFocus(current.getSynthKnobs());
+		MainFrame.setFocus(current.getKnobs());
 		MainFrame.setFocus(current);
 		return true;
 	}
@@ -61,12 +62,14 @@ public class TacoTruck {
 		tk2.progChange(Trax.TK2.getProgram());
 		tk2.getTracks().getFirst().load(Trax.TK2.getFile());
 
-		getBass().getTracks().getFirst().load(Trax.B.getFile());
+		bass.getTracks().getFirst().load(Trax.B.getFile());
+		bass.send(new Midi(JudahClock.MIDI_STOP), 0);
 
 		while (getFluid().getChannels().isEmpty())
 			Threads.sleep(50); // allow time for FluidSynth to sync
 
 		Threads.timer(666, ()-> {
+			MainFrame.setFocus(KnobMode.MIDI);
 			Vector<PianoTrack> fluids = fluid.getTracks();
 			for (PianoTrack f : fluids) {
 				f.progChange(f.getType().getProgram());

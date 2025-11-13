@@ -7,8 +7,8 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Getter
 public enum Trax {
-	D1("Drum1", DRUM_CH, "Pearl", "Rock1"),
-	D2("Drum2", DRUM_CH + 1, "808", "Bossa1"),
+	D1("Drum1", DRUM_CH, "808", "Rock1"),
+	D2("Drum2", DRUM_CH + 1, "Pearl", "Bossa1"),
 	H1("Hats", DRUM_CH + 2, "Hats", "Hats1"),
 	H2("Fills", DRUM_CH + 3, "VCO", "Fills1"),
 

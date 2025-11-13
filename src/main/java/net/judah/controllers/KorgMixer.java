@@ -99,10 +99,12 @@ public class KorgMixer implements Controller {
 		else if (data1 == CYCLE.getVal()) {
 			getLooper().verseChorus();
 		}
-		else if (data1 == PREV.getVal() && data2 != 0)
+		else if (data1 == PREV.getVal() && data2 != 0) {
 			seq.getTracks().next(false);
-		else if (data1 == NEXT.getVal() && data2 != 0)
+		}
+		else if (data1 == NEXT.getVal() && data2 != 0) {
 			seq.getTracks().next(true);
+		}
 
 		else if (data1 == PREV2.getVal() && data2 != 0) { // change pattern
 			seq.getCurrent().next(false);

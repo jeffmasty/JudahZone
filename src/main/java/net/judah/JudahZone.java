@@ -32,7 +32,6 @@ import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
-import net.judah.midi.Midi;
 import net.judah.midi.MidiInstrument;
 import net.judah.mixer.DJJefe;
 import net.judah.mixer.Instrument;
@@ -131,7 +130,7 @@ public class JudahZone extends BasicClient {
 			Threads.sleep(20);
 		bass = new MidiInstrument(BASS, CRAVE_PORT,
 				jackclient.registerPort("crave_in", AUDIO, JackPortIsInput), "Crave.png", midi.getCraveOut());
-		bass.getTracks().add(new PianoTrack(Trax.B, bass, clock, PianoTrack.MONOPHONIC));
+		bass.getTracks().add(new PianoTrack(Trax.B, bass, clock));
 		tacos = new TacoTruck(fluid, bass, clock);
 
 		// Instrument aux = new Instrument("Aux", Constants.AUX_PORT,
@@ -171,19 +170,17 @@ public class JudahZone extends BasicClient {
 
 		mixer = new DJJefe(clock, mains, looper, instruments, drumMachine, sampler, tacos.tk2);
 		midiGui = new MidiGui(clock, midi.getJamstik(), sampler, tacos, setlists);
-		overview = new Overview(JUDAHZONE, clock, chords, setlists, seq, looper, mixer);
+		overview = new Overview(JUDAHZONE);
 		fxRack = new FxPanel(selected);
 		frame = new MainFrame(JUDAHZONE, clock, fxRack, mixer, seq,
 				looper, overview, midiGui, drumMachine, guitar);
 
 		// housekeeping
-		bass.send(new Midi(JudahClock.MIDI_STOP), 0);
 		clock.setTempo(93);
-		drumMachine.init("Drumz");
 		Threads.timer(100, ()->tacos.init());
-    	// preload channel gui's
+		drumMachine.init("Drumz");
     	for (LineIn i : instruments)
-        	i.getGui();
+        	i.getGui(); // preload channel gui's
 		for (Loop l : looper)
 			l.getGui();
 

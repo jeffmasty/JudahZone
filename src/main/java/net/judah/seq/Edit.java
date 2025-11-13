@@ -14,7 +14,7 @@ import lombok.Setter;
 @Getter @EqualsAndHashCode
 public class Edit {
 	public static enum Type {
-		NEW, DEL, TRANS, LENGTH, REMAP, TRIM, INS
+		NEW, DEL, TRANS, LENGTH, REMAP, TRIM, INS, MOD
 	}
 
 	private final Type type;

@@ -40,6 +40,8 @@ public class MidiScheduler implements Runnable {
 	}
 
 	void pulseLFOs() {
+		if (JudahZone.getMains().isOnMute())
+			return;
 		for (Channel ch : JudahZone.getMixer().getAll()) {
 			ch.getLfo().pulse();
 			ch.getLfo2().pulse();

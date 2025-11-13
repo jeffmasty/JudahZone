@@ -10,14 +10,13 @@ import net.judah.gui.Size;
 import net.judah.gui.Updateable;
 
 public class LfoCombo extends SetCombo<Target> implements Updateable {
-
 	private final LFO lfo;
 
 	public LfoCombo(LFO lfo) {
 		super(LFO.Target.values(), lfo.getTarget());
 		this.lfo = lfo;
 		setSelectedItem(lfo.getTarget());
-		Gui.resize(this, Size.SMALLER_COMBO);
+		Gui.resize(this, Size.MEDIUM_COMBO);
 		((JLabel)getRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
 	}
 

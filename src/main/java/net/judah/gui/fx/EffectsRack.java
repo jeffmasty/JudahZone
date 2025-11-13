@@ -7,6 +7,7 @@ import java.awt.Insets;
 import java.util.ArrayList;
 
 import javax.swing.BoxLayout;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
@@ -18,11 +19,14 @@ import net.judah.fx.Filter;
 import net.judah.fx.Gain;
 import net.judah.fx.Overdrive;
 import net.judah.fx.Reverb;
+import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
+import net.judah.gui.Size;
+import net.judah.gui.settable.PresetsHandler;
 import net.judah.gui.widgets.FilterType;
+import net.judah.gui.widgets.Slider;
 import net.judah.looper.Looper;
 import net.judah.mixer.Channel;
-import net.judah.omni.Pair;
 
 public class EffectsRack extends JPanel implements MPKTools {
 
@@ -30,18 +34,32 @@ public class EffectsRack extends JPanel implements MPKTools {
 
     @Getter private final Channel channel;
     @Getter private final ChannelTitle title;
+    @Getter private final PresetsHandler presets;
+
     private final ArrayList<Row> labels = new ArrayList<>();
     private final ArrayList<Row> knobs = new ArrayList<>();
+    private final Slider.FxSlider phase;
+    private final Slider.FxSlider dampness;
+    private final Slider.FxSlider clipping;
+    private final FilterType filter1;
+    private final FilterType filter2;
 
     public EffectsRack(Channel channel, Looper looper) {
         this.channel = channel;
+        presets = new PresetsHandler(channel);
         title = new ChannelTitle(channel, looper);
+        phase = new Slider.FxSlider(channel.getChorus(), Chorus.Settings.Phase.ordinal(), "Phase");
+        dampness = new Slider.FxSlider(channel.getReverb(), Reverb.Settings.Damp.ordinal(), "Dampness");
+        clipping = new Slider.FxSlider(channel.getOverdrive(), Overdrive.Settings.Clipping.ordinal(), "Clipping");
+        filter1 = new FilterType(channel.getFilter1(), channel);
+        filter2 = new FilterType(channel.getFilter2(), channel);
+
 		// wet  room   d.time  d.fb
 		// cho1 cho2   cho3    O/D
         Row lbls = new Row(channel);
         ArrayList<Component> components = lbls.getControls();
         components.add(new FxTrigger("Reverb", channel.getReverb(), channel));
-        components.add(new FxTrigger("   ", channel.getReverb(), channel));
+        components.add(Gui.resize(dampness, Size.TINY));
         components.add(new FxTrigger("Delay", channel.getDelay(), channel));
         components.add(new TimePanel(channel.getDelay(), channel));
         labels.add(lbls);
@@ -49,24 +67,26 @@ public class EffectsRack extends JPanel implements MPKTools {
         lbls = new Row(channel);
         components = lbls.getControls();
         components.add(new FxTrigger("Dist.", channel.getOverdrive(), channel));
-        components.add(new FxTrigger("  ", channel.getChorus(), channel));
+        components.add(Gui.resize(phase, Size.TINY));
         components.add(new FxTrigger("Chorus", channel.getChorus(), channel));
         components.add(new TimePanel(channel.getChorus(), channel));
         labels.add(lbls);
 
 		// EQ L/M/H  Vol
 		// Preset pArTy hiCut pan
-        labels.add(new RowLabels(channel, new Pair[]{
-        		new Pair("     ", channel.getEq()),
-        		new Pair("EQ     ", channel.getEq()),
-	    		new Pair("     ", channel.getEq()),
-	    		new Pair(" Pan ", channel.getGain())}));
+        lbls = new Row(channel);
+        components = lbls.getControls();
+        components.add(Gui.wrap(Gui.resize(clipping, Size.MICRO)));
+        components.add(new FxTrigger("   EQ   ", channel.getEq(), channel));
+        components.add(new FxTrigger("     ", channel.getEq(), channel));
+        components.add(new JLabel("Pan", JLabel.CENTER));
+        labels.add(lbls);
 
         lbls = new Row(channel);
         components = lbls.getControls();
-        components.add(channel.getPresets());
-        components.add(new FilterType(channel.getFilter1(), channel));
-        components.add(new FilterType(channel.getFilter2(), channel));
+        components.add(presets);
+        components.add(filter1);
+        components.add(filter2);
         components.add(new FxTrigger("Volume", channel.getGain(), channel));
         labels.add(lbls);
 
@@ -104,6 +124,11 @@ public class EffectsRack extends JPanel implements MPKTools {
         	lbl.update();
         for (Row knob : knobs)
         	knob.update();
+        phase.update();
+        dampness.update();
+        clipping.update();
+        filter1.update();
+        filter2.update();
         repaint();
     }
 
@@ -174,7 +199,7 @@ public class EffectsRack extends JPanel implements MPKTools {
         	channel.getChorus().setActive(rate < thresholdHi);
 			break;
         case 12:
-        	channel.getPresets().increment(up);
+        	presets.increment(up);
         	break;
         case 13:
         	Filter filter = channel.getFilter1();

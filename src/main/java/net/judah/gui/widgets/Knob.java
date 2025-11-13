@@ -7,8 +7,6 @@ import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -247,7 +245,7 @@ public class Knob extends JComponent{
 		this();
 		setKnobColor(handle);
 	}
-	
+
 	public Knob() {
 		ImageIcon knobIcon = Icons.get("knob.png");
 		ImageIcon knobHandle = Icons.get("knobhandle.png");
@@ -268,24 +266,22 @@ public class Knob extends JComponent{
 				 moveHandles(e);
 			 }
 		});
-		addMouseWheelListener(new MouseWheelListener() {
-			@Override public void mouseWheelMoved(MouseWheelEvent e) {
-				int notches = e.getWheelRotation();
-				int target = 0;
-				if (notches < 0) {
-					target = getValue() + 5; // responsive
-					if (target > getMaxVal()) target = getMaxVal();
-				}
-				else {
-					target = getValue() - 2;
-					if (target < getMinVal()) target = getMinVal();
-				}
-				listener.knobChanged(target);
+		addMouseWheelListener(e -> {
+			int notches = e.getWheelRotation();
+			int target = 0;
+			if (notches < 0) {
+				target = getValue() + 5; // responsive
+				if (target > getMaxVal()) target = getMaxVal();
 			}
+			else {
+				target = getValue() - 2;
+				if (target < getMinVal()) target = getMinVal();
+			}
+			listener.knobChanged(target);
 		});
-		
+
 	}
-	
+
 	/**
 	 * No initial location constructor that initializes the position
 	 * of the knob to 0 degrees (right).
@@ -530,7 +526,7 @@ public class Knob extends JComponent{
 
 			if (knobColor == null) {
 				ImageIcon thisIcon = thisHandle.getIcon();
-				g.drawImage(thisIcon.getImage(), xc-thisIcon.getIconWidth()/2, yc-thisIcon.getIconHeight()/2, 
+				g.drawImage(thisIcon.getImage(), xc-thisIcon.getIconWidth()/2, yc-thisIcon.getIconHeight()/2,
 					thisIcon.getIconWidth(), thisIcon.getIconHeight(), this);
 			}
 			else {
@@ -548,7 +544,7 @@ public class Knob extends JComponent{
 		 return new Dimension(backgroundIcon.getIconWidth(), backgroundIcon.getIconHeight()); }
 	 @Override public Dimension getMaximumSize() {
 		 return getPreferredSize(); }
-	
+
 	/**
 	 * @return the minimum value a knob handle may have
 	 * 		(note: this is different than angular position)
@@ -644,3 +640,4 @@ public class Knob extends JComponent{
 		this.cwDirection = cwDirection;
 	}
 }
+

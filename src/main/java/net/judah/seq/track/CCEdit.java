@@ -1,0 +1,328 @@
+package net.judah.seq.track;
+
+import java.awt.FlowLayout;
+
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiEvent;
+import javax.sound.midi.ShortMessage;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+
+import net.judah.gui.Gui;
+import net.judah.gui.Size;
+import net.judah.gui.TabZone;
+import net.judah.gui.widgets.Btn;
+import net.judah.midi.Midi;
+import net.judah.seq.Edit;
+import net.judah.seq.Edit.Type;
+import net.judah.seq.MidiConstants;
+import net.judah.seq.MidiPair;
+import net.judah.seq.Prototype;
+import net.judah.seq.track.Automation.AutoBox;
+import net.judah.seq.track.CCHandler.CCData;
+import net.judah.util.Constants;
+import net.judah.util.RTLogger;
+
+class CCEdit extends AutoBox implements MidiConstants {
+
+	private static CCEdit instance;
+	public static CCEdit getInstance() {
+		if (instance == null)
+			instance = new CCEdit();
+		return instance;
+	}
+
+	private MidiTrack track;
+	private CCData existing;
+	private Edit undo;
+
+	private final JComboBox<CC> cc = new JComboBox<CC>(CC.ORDERED);
+	private final Btn create = new Btn("New", e->create());
+	private final Btn change = new Btn("Change", e->change());
+	private final Btn delete = new Btn("Delete", e->delete());
+	private final Btn exe = new Btn("Exe", e->exe());
+
+	private final Box top = new Box(BoxLayout.PAGE_AXIS);
+	private final Box algo = new Box(BoxLayout.PAGE_AXIS);
+	private final JPanel checkbox = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+	private final Val val = new Val(false, cc);
+	private final Val val2 = new Val(true, cc);
+	private final Tick steps = new Tick();
+	private final Tick steps2 = new Tick();
+	private final JCheckBox automation = new JCheckBox("Enabled");
+	private final JTextField messages = new JTextField("5", 3);
+
+	protected CCEdit() {
+		super(BoxLayout.LINE_AXIS);
+
+		Box btns = new Box(BoxLayout.LINE_AXIS);
+		btns.add(cc);
+		btns.add(create);
+		btns.add(change);
+		btns.add(delete);
+		btns.add(exe);
+
+		top.add(btns);
+		top.add(val);
+		top.add(steps);
+
+		JLabel auto = new JLabel("Automation");
+		auto.setFont(Gui.BOLD12);
+		checkbox.add(auto);
+		checkbox.add(automation);
+
+		checkbox.add(new JLabel(" "));
+		checkbox.add(Gui.resize(messages, Size.COMBO_SIZE));
+		checkbox.add(new JLabel(" Steps"));
+
+		algo.setBorder(Gui.SUBTLE);
+		algo.add(checkbox);
+		algo.add(val2);
+		algo.add(steps2);
+
+		automation.addChangeListener(l->enableAutomation(automation.isSelected()));
+		cc.setFont(Gui.BOLD12);
+		cc.addActionListener(e->ccChange());
+		((JLabel)cc.getRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
+
+
+		Box inner = new Box(BoxLayout.PAGE_AXIS);
+		inner.add(Gui.wrap(top));
+		inner.add(Gui.wrap(algo));
+
+		add(Box.createHorizontalStrut(12));
+		add(inner);
+		add(Box.createHorizontalStrut(12));
+		enableAutomation(false);
+	}
+
+	private void ccChange() {
+		cc.setToolTipText(((CC)cc.getSelectedItem()).description);
+		val.text(val.get()); // potentially CC switched to bool
+	}
+
+	public CCEdit edit(MidiTrack t, CCData data) {
+ 		setTrack(t);
+ 		existing = data;
+ 		cc.setSelectedItem(data.type());
+ 		steps.quantizable(data.e().getTick());
+ 		val.set(((ShortMessage)data.e().getMessage()).getData2());
+ 		change.setEnabled(true);
+ 		delete.setEnabled(true);
+ 		return this;
+ 	}
+
+	@Override
+	public CCEdit init(MidiTrack t, long tick) {
+		setTrack(t);
+		existing = null;
+		change.setEnabled(false);
+		delete.setEnabled(false);
+		cc.setSelectedItem(CC.VOLUME);
+		steps.quantizable(tick);
+		return this;
+	}
+
+	void setTrack(MidiTrack t) {
+ 		track = t;
+ 		steps.setTrack(track);
+ 		steps2.setTrack(track);
+	}
+
+ 	private void enableAutomation(boolean enable) {
+ 		steps2.setEnabled(enable);
+ 		val2.setEnabled(enable);
+ 		messages.setEnabled(enable);
+ 		checkbox.setBackground(enable ? ENABLED : DISABLED);
+ 		algo.setBackground(enable ? ENABLED : DISABLED);
+	}
+
+	void create() {
+		try {
+			ShortMessage msg = build();
+			MidiEvent evt = new MidiEvent(msg, steps.getTick());
+			CC type = (CC)cc.getSelectedItem();
+			existing = new CCData(evt, type);
+	 		undo = new Edit(Type.NEW, new MidiPair(evt, null));
+	 		if (automation.isSelected()) {
+	 			// generate and add messages
+	 			int count;
+	 			try {
+	 				count = Integer.parseInt(messages.getText());
+	 			} catch (NumberFormatException nfe) {
+	 				RTLogger.warn(this, messages.getText() + ": " + nfe.getMessage());
+					return;
+				}
+	 			double interval = (steps2.getTick() - steps.getTick()) / (double)(count - 1);
+	 			float mod = (val2.get() - val.get()) / (float) (count - 1);
+	 			for (int step = 1; step < count; step++) {
+	 				int data2 = val.get() + Math.round(step * mod);
+	 				long ticker = steps.getTick() + Math.round(step * interval);
+	 				ShortMessage unit = new ShortMessage(Midi.CONTROL_CHANGE, track.getCh(), type.data1, data2);
+	 				undo.getNotes().add(new MidiPair(new MidiEvent(unit, ticker), null));
+	 			}
+			}
+	 		TabZone.getMusician(track).push(undo);
+			change.setEnabled(true);
+	 		delete.setEnabled(true);
+		} catch (Throwable t) {
+			RTLogger.warn(this, t);
+		}
+	}
+
+	void change() {
+		if (existing == null) {
+			create();
+			return;
+		}
+		try {
+			ShortMessage target = build();
+			Edit mod = new Edit(Type.MOD, new MidiPair(existing.e(), new MidiEvent(target, steps.getTick())));
+			if (automation.isSelected()) {
+				mod.setDestination(new Prototype(val2.get(), steps2.getTick()));
+				if (undo != null)
+					; // TODO
+
+			}
+			TabZone.getMusician(track).push(mod);
+		}
+		catch (InvalidMidiDataException ie) {
+			RTLogger.warn(this, ie);
+		}
+	}
+
+	void delete() {
+		if (undo != null) {
+			Edit del = new Edit(Type.DEL, undo.getNotes());
+			TabZone.getMusician(track).push(del);
+			undo = null;
+			return;
+		}
+		if (existing == null)
+			return;
+		Edit edit = new Edit(Type.DEL, new MidiPair(existing.e(), null));
+		if (automation.isSelected()) {
+			// TODO
+		}
+		delete.setEnabled(false);
+		TabZone.getMusician(track).push(edit);
+	}
+
+	void exe() {
+		try {
+			track.send(build(), 0);
+		} catch (InvalidMidiDataException e) {
+			RTLogger.warn(this, e);
+		}
+	}
+
+	private ShortMessage build() throws InvalidMidiDataException {
+		return new ShortMessage(Midi.CONTROL_CHANGE, track.getCh(), ((CC)cc.getSelectedItem()).data1, val.get());
+	}
+
+	@Override protected void pad1() {
+		if (change.isEnabled())
+			change();
+		else
+			create();
+	}
+
+	@Override protected void pad2() {
+		delete();
+	}
+
+	@Override protected boolean doKnob(int idx, int value) {
+		switch (idx) {
+		case 0: // cc/msgs val/ beat step
+			cc.setSelectedIndex(Constants.ratio(value, CC.ORDERED.length - 1));
+			break;
+		case 1:
+			val.knob(value);
+			break;
+		case 2:
+			steps.beatKnob(value);
+			break;
+		case 3:
+			steps.stepKnob(value);
+			break;
+		case 4:
+			messages.setText("" + Constants.ratio(value, 33));
+			automation.setSelected(true);
+			break;
+		case 5:
+			val2.knob(value);
+			automation.setSelected(true);
+			break;
+		case 6:
+			steps2.beatKnob(value);
+			automation.setSelected(true);
+			break;
+		case 7:
+			steps2.stepKnob(value);
+			automation.setSelected(true);
+			break;
+		default: return false;
+		}
+		return true;
+	}
+
+	protected class Val extends JPanel {
+
+		private JLabel display = new JLabel("  0");
+		private final JSlider data2 = new JSlider(0, 127);
+		private final JComboBox<CC> sourceCC;
+
+		Val(boolean automation) {
+			this(automation, null);
+		}
+
+		Val(boolean automation, JComboBox<CC> ccCombo) {
+			super(new FlowLayout(FlowLayout.CENTER, 3, 3));
+			this.sourceCC = ccCombo;
+			Gui.resize(data2, WIDE);
+			add(new JLabel(automation ? "End Value: " : "Value: "));
+			add(data2);
+			add(display);
+			setEnabled(!automation);
+			data2.addChangeListener(l->text(data2.getValue()));
+			data2.setValue(MidiConstants.CUTOFF + 1);
+		}
+
+		public void knob(int value) {
+			set(Constants.ratio(value, 127));
+		}
+
+		@Override public void setEnabled(boolean enabled) {
+			super.setEnabled(enabled);
+			setBackground(enabled ? ENABLED: DISABLED);
+		}
+
+		void set(int val) {
+			data2.setValue(val);
+			text(val);
+		}
+		int get() {
+			return data2.getValue();
+		}
+		public void text(int val) {
+			if (sourceCC != null && ((CC)sourceCC.getSelectedItem()).toggle)
+				display.setText(val > MidiConstants.CUTOFF ? "  On " : " Off ");
+			else {
+				String out = " ";
+				if (val < 100) out += " ";
+				if (val < 10) out += " ";
+				out += val;
+				display.setText(out);
+			}
+		}
+	}
+
+
+}

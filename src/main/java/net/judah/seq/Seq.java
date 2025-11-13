@@ -33,8 +33,8 @@ public class Seq implements Iterable<MidiTrack> {
 	public static final int TRACKS = Trax.values().length;
 
 	private final TrackList<MidiTrack> tracks = new TrackList<MidiTrack>();
-	private final TrackList<DrumTrack> drumTracks = new TrackList<DrumTrack>();
 	private final TrackList<PianoTrack> synthTracks = new TrackList<PianoTrack>();
+	private final TrackList<DrumTrack> drumTracks;
 	private final ArrayList<TrackKnobs> knobs = new ArrayList<>();
 	private final Clipboard clipboard = new Clipboard();
 	private final ChordTrack chords;
@@ -45,7 +45,7 @@ public class Seq implements Iterable<MidiTrack> {
 		this.chords = chordTrack;
 		this.sampler = sampler;
 		this.drums = drumz;
-		drums.getTracks().forEach(t->drumTracks.add(t));
+		drumTracks = drums.getTracks();
 		synthTracks.add(tacos.bass.getTracks().getFirst());
 		synthTracks.add(tacos.taco.getTracks().getFirst());
 		synthTracks.add(tacos.tk2.getTracks().getFirst());

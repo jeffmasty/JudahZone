@@ -3,12 +3,14 @@ package net.judah.midi;
 import java.util.ArrayList;
 import java.util.Set;
 
+import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.api.ZoneMidi;
 import net.judah.gui.MainFrame;
+import net.judah.util.RTLogger;
 
 /** listens to and tracks note_on and note_off going out a Midi port */
 @RequiredArgsConstructor @Getter
@@ -16,18 +18,28 @@ public class Actives extends ArrayList<ShortMessage> {
 
 	protected final ZoneMidi midiOut;
 	protected final int channel;
-	/** max number of notes per channel */
-	protected final int polyphony;
+	protected boolean pedal;
+	protected final ArrayList<ShortMessage> sustained = new ArrayList<ShortMessage>();
 
-	// Polyphony class overrides for JudahSynth
-	public void receive(ShortMessage msg) {
-		if (Midi.isNoteOn(msg))
-			add(msg);
-		else if (Midi.isNoteOff(msg))
-			noteOff(msg);
-		if (!midiOut.getTracks().isEmpty())
-			MainFrame.update(this);
+	/** @return true if Pedal provides a veto */
+	public boolean receive(ShortMessage msg) {
+		if (Midi.isNoteOn(msg)) {
+			if (pedal && indexOf(msg.getData1()) >= 0) {// re-trigger
+				retrigger(msg);
+				return true;
+			}
+			return add(msg);
+		}
+		if (Midi.isNoteOff(msg))
+			return noteOff(msg);
+		return true;
 	}
+
+    protected void retrigger(ShortMessage msg) {
+		((MidiInstrument)midiOut).write(Midi.create(
+				Midi.NOTE_OFF, channel, msg.getData1(), msg.getData2()));
+
+    }
 
 	/**@param ref  fill ref with data1 midi values of current voices */
 	public void data1(Set<Integer> ref) {
@@ -44,26 +56,51 @@ public class Actives extends ArrayList<ShortMessage> {
 		return null;
 	}
 
-	@Override
-	public void clear() {
+	@Override public void clear() {
 		super.clear();
 		MainFrame.update(this);
 	}
 
-	public void noteOff(ShortMessage msg) {
-		ShortMessage found = find(msg.getData1());
-		while (found != null) {
-			remove(found);
-			MainFrame.update(this);
-			found = find(msg.getData1());
-		}
+	protected int susOf(int data1) {
+		for (int i= 0; i < sustained.size(); i++)
+			if (sustained.get(i).getData1() == data1)
+				return i;
+		return -1;
 	}
-
 	public int indexOf(int data1) {
 		for (int i = 0; i < size(); i++)
 			if (get(i) != null && get(i).getData1() == data1)
 				return i;
 		return -1;
 	}
+
+	// Polyphony class overrides for JudahSynth
+	protected boolean noteOff(ShortMessage msg) {
+		if (pedal) {
+			if (susOf(msg.getData1()) < 0)
+				sustained.add(Midi.create(Midi.NOTE_OFF, channel, msg.getData1(), msg.getData2()));
+			return false;
+		}
+		int idx = indexOf(msg.getData1());
+		if (idx > 0) {
+			remove(idx);
+			MainFrame.update(this);
+		}
+		return true;
+	}
+
+	/** engage or release the foot pedal (CC64) */
+	public void setPedal(boolean pressed) {
+		pedal = pressed;
+		if (pedal) // engaged
+			return;
+		try {
+		for (ShortMessage sus : sustained)
+			JudahMidi.queue(new ShortMessage(ShortMessage.NOTE_OFF, channel, sus.getData1(), 0), ((MidiInstrument)midiOut).getMidiPort());
+			sustained.clear();
+		} catch (InvalidMidiDataException e) {RTLogger.warn(this, e);}
+	}
+
+
 
 }

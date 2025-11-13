@@ -7,7 +7,6 @@ import javax.sound.midi.ShortMessage;
 import net.judah.fx.Fader;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.MultiSelect;
-import net.judah.gui.knobs.KnobMode;
 import net.judah.looper.Loop;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
@@ -25,9 +24,9 @@ public class Beatstep implements Controller {
 	private static final int GUITAR = 44;
 	private static final int LOOPA = 36;
 	private static final int MAINS = 51;
-	private static final int KITS = 40;
+	private static final int TODO = 40;
 	private static final int RECORD = 41;
-	private static final int LFO = 42;
+	private static final int KITS = 42;
 	private static final int FADER = 43;
 
 	private final MultiSelect channels = new MultiSelect();
@@ -40,16 +39,10 @@ public class Beatstep implements Controller {
 
 		int data1 = midi.getData1();
 		if (Midi.isNote(midi)) { // Pads
-			// GUITAR, 45(mic), 46(bass), 47(synth1), 48(synth2), 49(fluid), 50(drums), MAINS,
-			// LOOPA, 37(loopB), 38(loopC),  LOOPD,     KITS,       RECORD,   FX,       FADER
 			if (data1 == KITS) {
-				if (!Midi.isNoteOn(midi)) return true;
-				if (MainFrame.getKnobMode() != KnobMode.Kitz) {
-					MainFrame.setFocus(KnobMode.Kitz);
-					getDrumMachine().setCurrent(getDrumMachine().getCurrent());
-				}
-				else
-					getDrumMachine().increment();
+				if (!Midi.isNoteOn(midi))
+					return true;
+				MainFrame.kit();
 			}
 			else if (data1 == RECORD) {
 				if (!Midi.isNoteOn(midi)) return true;
@@ -59,13 +52,8 @@ public class Beatstep implements Controller {
 					else
 						current.setOnMute(!current.isOnMute());
 			}
-			else if (data1 == LFO) {
+			else if (data1 == TODO) {
 				if (!Midi.isNoteOn(midi)) return true;
-				if (MainFrame.getKnobMode() == KnobMode.LFOz)
-					for (Channel current : getSelected())
-						current.getLfo().setActive(!current.getLfo().isActive());
-				else
-					MainFrame.setFocus(KnobMode.LFOz);
 			}
 
 			else if (data1 == FADER) {

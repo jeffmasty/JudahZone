@@ -11,6 +11,7 @@ import java.util.ArrayList;
 
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
+import javax.swing.SwingUtilities;
 
 import lombok.Getter;
 import net.judah.api.Signature;
@@ -24,6 +25,7 @@ import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiPair;
 import net.judah.seq.Steps;
+import net.judah.seq.track.CCHandler;
 import net.judah.seq.track.MidiTrack;
 
 public class PianoSteps extends Steps implements MouseMotionListener, MouseListener, Size {
@@ -35,16 +37,18 @@ public class PianoSteps extends Steps implements MouseMotionListener, MouseListe
 	private int width, height;
 	private int highlight = -1;
 
-	@Getter private int start = 0;
 	@Getter private float total;
 	@Getter private float unit;
 
 	private Integer on, off;
+	private final CCHandler cc;
+
 
 	public PianoSteps(PianoView view) {
 		this.view = view;
-		this.track = view.getTrack();
+		this.track = view.track;
 		this.clock = track.getClock();
+		this.cc = new CCHandler(track, this, false);
 
 		addMouseMotionListener(this);
 		addMouseListener(this);
@@ -53,11 +57,12 @@ public class PianoSteps extends Steps implements MouseMotionListener, MouseListe
 	@Override
 	public void paint(Graphics g) {
 		super.paint(g);
+		int[] ccs = cc.populate();
 		g.drawRect(0, 0, width, height);
 		int beats = clock.getTimeSig().beats;
 		int steps = clock.getSteps();
 		int div = clock.getSubdivision();
-		int count = start;
+		int count = 0;
 
 		int y;
 		for (int i = 0; i < 2 * steps; i++) {
@@ -69,7 +74,19 @@ public class PianoSteps extends Steps implements MouseMotionListener, MouseListe
 				g.setColor(Color.BLACK);
 			}
 
-			if (isBeat(i)) {
+			if (cc.getProg(i) != null) {
+				g.setColor(Pastels.PROGCHANGE);
+				g.fillRect(0, y, width, (int)unit);
+			}
+
+			if (ccs[i] > 0) {
+				g.setColor(Pastels.CC);
+				g.fillRect(1, y + 1, width - 2, (int)unit - 2);
+				g.setColor(Color.BLACK);
+				if (ccs[i] > 1)
+					g.drawString("" + ccs[i], OFFSET, y + (int)unit - 3);
+			}
+			else if (isBeat(i)) {
 				int beat = (1 + count / div);
 				if (beat > beats) beat -= beats;
 				if (i != highlight) {
@@ -90,22 +107,11 @@ public class PianoSteps extends Steps implements MouseMotionListener, MouseListe
 		}
 	}
 
-//	not used
-	public void setStart(int start) {
-		this.start = start;
-		repaint();
-	}
-
 	public boolean isBeat(int row) {
-		return (row + start) % clock.getSteps() % clock.getSubdivision() == 0;
+		return row % clock.getSteps() % clock.getSubdivision() == 0;
 	}
 
-	public boolean isBar(int row) {
-		return (row + start) % clock.getSteps() == 0;
-	}
-
-	@Override
-	public void highlight(Point p) {
+	@Override public void highlight(Point p) {
 		int replace = p == null ? -1 : (int) ( p.y / (float)height * clock.getSteps() * 2);
 		if (replace == highlight)
 			return;
@@ -119,18 +125,26 @@ public class PianoSteps extends Steps implements MouseMotionListener, MouseListe
 
 	/** play notes for given step */
 	@Override public void mousePressed(MouseEvent e) {
+		if (SwingUtilities.isRightMouseButton(e)) {
+			cc.popup(e, toStep(e.getPoint().y));
+			return;
+		}
 		on = toStep(e.getPoint().y);
 	}
 
 	/** play notes for new given step */
 	@Override public void mouseDragged(MouseEvent e) {
+		if (SwingUtilities.isRightMouseButton(e))
+			return;
 		 off = toStep(e.getPoint().y) + 1;
 	}
 
 	/** add actives to track*/
 	@Override public void mouseReleased(MouseEvent e) {
+		if (SwingUtilities.isRightMouseButton(e))
+			return;
 		off = toStep(e.getPoint().y) + 1;
-		if (track.getActives().size() == 0)
+		if (track.getActives().isEmpty())
 			return;
 
 		int step = track.getResolution() / clock.getSubdivision();
@@ -145,7 +159,7 @@ public class PianoSteps extends Steps implements MouseMotionListener, MouseListe
 					new MidiEvent(Midi.create(MidiConstants.NOTE_ON, ch, m.getData1(), data2), begin),
 					new MidiEvent(Midi.create(MidiConstants.NOTE_OFF, ch, m.getData1(), 127), end)));
 		}
-		view.getGrid().push(new Edit(Type.NEW, notes));
+		view.grid.push(new Edit(Type.NEW, notes));
 	}
 
 	@Override public void mouseExited(MouseEvent e) {
@@ -156,7 +170,8 @@ public class PianoSteps extends Steps implements MouseMotionListener, MouseListe
 		if (on != null)
 			highlight(e.getPoint());
 	}
-	@Override public void mouseClicked(MouseEvent e) { }
+	@Override public void mouseClicked(MouseEvent e) {
+	}
 	@Override public void mouseEntered(MouseEvent e) { }
 
 	public void resized(int w, int h) {
@@ -167,12 +182,12 @@ public class PianoSteps extends Steps implements MouseMotionListener, MouseListe
 		timeSig(clock.getTimeSig());
 	}
 
-
-	@Override
-	public void timeSig(Signature sig) {
+	@Override public void timeSig(Signature sig) {
 		total = 2 * sig.steps;
 		unit = height / total;
 		repaint();
 	}
+
+
 
 }

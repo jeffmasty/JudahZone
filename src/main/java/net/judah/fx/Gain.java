@@ -120,4 +120,8 @@ public class Gain implements Effect {
 	        right.put(right.position(), right.get() * fader);
 	}
 
+	public void reset() {
+		gain = 0.5f;
+		stereo = 0.5f;
+	}
 }

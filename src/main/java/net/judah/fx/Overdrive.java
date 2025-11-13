@@ -27,32 +27,38 @@ import net.judah.util.Constants;
 public final class Overdrive implements Effect {
     private static final double LOG2 = 1.0 / Math.log(2);
 
+    public enum Settings {
+        Drive, Clipping
+    }
+
     @Getter @Setter boolean active;
-    @Getter private float drive = 0.06f;
-    private float makeupGain = 0.85f;
-
-    @Override public String getName() {
-        return Overdrive.class.getSimpleName();
-    }
-
-    @Override public int getParamCount() {
-        return 1;
-    }
+    private float drive = 0.2f;
+    private float makeupGain = 0.65f;
+    private float clipping;
+    @Getter String name = Overdrive.class.getSimpleName();
+    @Getter int paramCount = Settings.values().length;
 
     @Override public int get(int idx) {
-    	for (int i = 0; i < Constants.getReverseLog().length; i++)
-    		if (drive < Constants.getReverseLog()[i])
-    			return i;
-    	return 0;
+    	if (idx == 0) {
+    		if (drive == 0)
+    			return 0;
+    		if (drive < 0.00002f)
+    			return 1;
+    		return Constants.reverseLog(drive, 0.2f, 0.7f);
+    	} else if (idx == 1)
+	    	return (int) (clipping * 100f);
+
+	    return 0;
     }
 
     @Override public void set(int idx, int value) {
-    	if (value < 2)
-    		drive = 0.00001f;
-    	else if (value >= 95)
-    		drive = 0.666f;
-    	else
-    		drive = Constants.logarithmic(value, 0, 1);
+    	if (idx == 0) {
+	    	if (value < 2)
+	    		drive = 0.00001f;
+	    	else
+	    		drive = Constants.logarithmic(value, 0.2f, 0.7f);
+    	} else
+    		clipping = value * 0.01f;
     }
 
     @Override
@@ -62,17 +68,32 @@ public final class Overdrive implements Effect {
     }
 
     private void processAdd(FloatBuffer buf) {
-        buf.rewind();
 
         double preMul = drive * 99 + 1;
         double postMul = 1 / (Math.log(preMul * 2) * LOG2);
         float gain = makeupGain;
+        // as clipping goes to zero, limit goes to 2
+        // as clipping goes to 1, limit goes to 1
 
-        while (buf.hasRemaining()) {
-            float value = buf.get();
-            float processedValue = gain * (float) (Math.atan(value * preMul) * postMul);
-            buf.put(buf.position() - 1, processedValue);
+        buf.rewind();
+        if (clipping == 0)
+	        while (buf.hasRemaining()) {
+	            float processedValue = gain * (float) (Math.atan(buf.get() * preMul) * postMul);
+	            buf.put(buf.position() - 1, processedValue);
+	        }
+        else {
+            float diode = 1.5f + (1 - clipping);
+	        while (buf.hasRemaining()) {
+	            float value = buf.get();
+	            float processedValue = gain * (float) (Math.atan(value * preMul) * postMul);
+	            float max = value * diode;
+	            buf.put(buf.position() - 1, Math.abs(processedValue) > Math.abs(max) ? max : processedValue);
+
+	        }
         }
     }
+
 }
+
+
 

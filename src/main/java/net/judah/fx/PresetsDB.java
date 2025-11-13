@@ -102,7 +102,7 @@ public class PresetsDB extends ArrayList<Preset> {
         add(p);
         Collections.sort(this);
         save();
-        ch.getPresets().refill(array(), ch.getPreset());
+        ch.getGui().getPresets().refill(array(), ch.getPreset());
         feedback("created", p, ch);
 	}
 

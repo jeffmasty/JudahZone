@@ -10,7 +10,7 @@ import lombok.Setter;
 public class Chorus implements TimeEffect {
 
     public enum Settings {
-        Rate, Depth, Feedback, Type, Sync
+        Rate, Depth, Feedback, Type, Sync, Phase
     }
 
     private static final float PI2 = (float) Math.PI * 2;
@@ -68,6 +68,8 @@ public class Chorus implements TimeEffect {
         	return TimeEffect.indexOf(type);
         if (idx == Settings.Sync.ordinal())
         	return sync ? 1 : 0;
+        if (idx == Settings.Phase.ordinal())
+        	return Math.round(phase * 100);
         throw new InvalidParameterException();
     }
 
@@ -83,7 +85,11 @@ public class Chorus implements TimeEffect {
         	type = TimeEffect.TYPE[value];
         else if (idx == Settings.Sync.ordinal())
         	sync = value > 0;
+        else if (idx == Settings.Phase.ordinal()) {
+        	phase = value/100f;
+        }
         else throw new InvalidParameterException();
+
     }
 
     void setDepth(float depth) {

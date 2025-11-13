@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
+import net.judah.util.Constants;
 
 /** A calculated sin wave LFO.  Default amplitude returns queries between 0 and 85 */
 @RequiredArgsConstructor
@@ -25,17 +26,42 @@ public class LFO implements TimeEffect {
     }
 
 	public static enum Target {
-		Pan, Filter, Gain, Reverb, Room, Delay, Chorus, Rate, Depth
+		Pan, Filter, Gain, Reverb, Room, Delay, Chorus, Rate, Depth, Phase
 	};
 
 	private final Channel ch;
 	@Getter private boolean active;
 	@Getter private Target target = Target.Pan;
+	/** in kilohertz (msec per cycle). default: oscillates over a 1.2 seconds. */
+	@Getter private double frequency = 1200;
+	/** align the wave on the jack frame buffer by millisecond (not implemented)*/
+	private long shift;
+	/** set maximum output level of queries. default: 90. */
+	private int max = 90;
+	/** set minimum level of queries. default 10. */
+	private int min = 10;
 	private int recover = -1;
 	private boolean wasActive;
 
-	@Override
-	public void setActive(boolean active) {
+    @Override public int getParamCount() {
+        return Settings.values().length; }
+
+    @Override public String getName() {
+        return LFO.class.getSimpleName(); }
+
+	public void setMax(int val) {
+		if (val > 100) val = 100;
+	    if (val < min) return;
+	    max = val;
+	}
+
+	public void setMin(int val) {
+		if (val < 0) val = 0;
+	    if (val > max) return;
+	    min = val;
+	}
+
+	@Override public void setActive(boolean active) {
 		if (this.active == active)
 			return;
 		if (active)
@@ -45,14 +71,6 @@ public class LFO implements TimeEffect {
 		this.active = active;
 		MainFrame.update(ch);
 	}
-	/** in kilohertz (msec per cycle). default: oscillates over a 1.2 seconds. */
-	@Setter @Getter private double frequency = 1200;
-	/** align the wave on the jack frame buffer by millisecond (not implemented)*/
-	private long shift;
-	/** set maximum output level of queries. default: 90. */
-	private int max = 90;
-	/** set minimum level of queries. default 10. */
-	private int min = 10;
 
     public void setTarget(Target target) {
     	if (this.target == target)
@@ -102,7 +120,10 @@ public class LFO implements TimeEffect {
 				ch.getChorus().set(Chorus.Settings.Rate.ordinal(), recover);
 				ch.getChorus().setActive(wasActive);
 				break;
-
+			case Phase:
+				ch.getChorus().set(Chorus.Settings.Phase.ordinal(), recover);
+				ch.getChorus().setActive(wasActive);
+				break;
     	}
     }
 
@@ -150,27 +171,14 @@ public class LFO implements TimeEffect {
 			wasActive = ch.getChorus().isActive();
     		ch.getChorus().setActive(true);
 			break;
+    	case Phase:
+    		recover = ch.getChorus().get(Chorus.Settings.Phase.ordinal());
+    		wasActive = ch.getChorus().isActive();
+    		ch.getChorus().setActive(true);
+    		break;
     	}
     }
-
-	public void setMax(int val) {
-	    if (val < min) return;
-	    max = val;
-	}
-
-	public void setMin(int val) {
-	    if (val > max) return;
-	    min = val;
-	}
-
-    @Override public int getParamCount() {
-        return Settings.values().length; }
-
-    @Override public String getName() {
-        return LFO.class.getSimpleName(); }
-
-    @Override
-    public int get(int idx) {
+    @Override public int get(int idx) {
         if (idx == Settings.Target.ordinal())
             return target.ordinal();
         if (idx == Settings.Min.ordinal())
@@ -192,8 +200,7 @@ public class LFO implements TimeEffect {
         throw new InvalidParameterException();
     }
 
-    @Override
-    public void set(int idx, int value) {
+    @Override public void set(int idx, int value) {
         if (idx == Settings.Target.ordinal())
         	setTarget(Target.values()[value]);
         else if (idx == Settings.Min.ordinal())
@@ -238,6 +245,7 @@ public class LFO implements TimeEffect {
 			case Chorus: ch.getChorus().set(Chorus.Settings.Feedback.ordinal(), val); break;
 			case Depth: ch.getChorus().set(Chorus.Settings.Depth.ordinal(), val); break;
 			case Rate: ch.getChorus().set(Chorus.Settings.Rate.ordinal(), val); break;
+			case Phase: ch.getChorus().set(Chorus.Settings.Phase.ordinal(), val); break;
 
 		}
 		if (++throttle > 4) {// throttle gui updates
@@ -246,75 +254,51 @@ public class LFO implements TimeEffect {
 		}
 	}
 
-	@Override
-	public void sync(float unit) {
-		float msec = 2 * (unit + unit * TimeEffect.indexOf(type));
-    	setFrequency(msec);
+	@Override public void sync(float unit) {
+		frequency = 2 * (unit + unit * TimeEffect.indexOf(type));
 	}
 
-	@Override
-	public void sync() {
+	@Override public void sync() {
 		sync(TimeEffect.unit());
 	}
 
 	/** no-op, handled through MidiScheduler */
-	@Override
-	public void process(FloatBuffer left, FloatBuffer right) { }
+	@Override public void process(FloatBuffer left, FloatBuffer right) { }
 
 	public LFO(Channel channel, Target filter) {
 		this(channel);
 		setTarget(target);
 	}
 
+    public void tremelo(int data2) {
+		int center = ch.getVolume();
+		int ratio = (int) (data2 * 0.01f * 50); // if center is zero, max tremelo is 0 to 100
+		setMin(center - ratio);
+		setMax(center + ratio);
+		setActive(data2 > 0);
+    }
+
+    /** Set an LFO preset on Chorus Phase, min/max based off val */
+	public void phaser(int data2) {
+		// Preset:	LFO(9/?Min/?Max/45/0/0)
+		set(Settings.Target.ordinal(), Target.Phase.ordinal());
+		set(Settings.MSec.ordinal(), 45);
+		set(Settings.Type.ordinal(), 0);
+		set(Settings.Sync.ordinal(), 0);
+
+		int offset = (int) (data2 * 0.5f * Constants.TO_100);
+		set(Settings.Min.ordinal(), 50 - offset);
+		set(Settings.Max.ordinal(), 50 + offset);
+		setActive(data2 > 0);
+	}
+
 }
 
-// TODO saw wave
+
+// saw wave
 //private final static float TWOPI = (float) (2 * Math.PI);
 //public double querySaw() {
 //	long time = System.currentTimeMillis() + shift;
 //	double phase = (time % frequency) / frequency;
 //    double t = phase / TWOPI;
 //    return (2.0f * t) - 1.0f;
-//}
-
-
-//public static class LFOTest extends Thread {
-//	final LFO lfo = new LFO(new Channel("test", false));
-//
-//	long sleep = 80;
-//	final long spells = 50;
-//	int count;
-//
-//	double min = Double.MAX_VALUE;
-//	double max = Double.MIN_VALUE;
-//
-//	public LFOTest(int freq) {
-//		lfo.frequency = freq;
-//	}
-//
-//	@Override
-//	public void run() {
-//		while(count <= spells) {
-//			double query = lfo.query();
-//			if (query > max) max = query;
-//			if (query < min) min = query;
-//
-//			long spaces = Math.round(query / 5);
-//			String display = "";
-//			for (int i = 0; i< spaces; i++)
-//				display += " ";
-//			display += "*";
-//			System.out.println(display + "       " + query);
-//
-//			count++;
-//			try { Thread.sleep(sleep);
-//			} catch (Throwable t) { }
-//		}
-//		System.out.println("done. min: " + min + " max: " + max + " frequency: " + lfo.getFrequency());
-//	}
-//
-//	public static void main2(String[] args) {
-//		new LFOTest(1200).start(); // 3 second LFO
-//	}
-//}
-

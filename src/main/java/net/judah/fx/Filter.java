@@ -129,7 +129,7 @@ public class Filter implements Effect {
         if (idx == Settings.Frequency.ordinal())
             return frequencyToKnob(getFrequency());
         if (idx == Settings.Resonance.ordinal())
-            return (int)(getResonance() * 20);
+            return (int)(resonancedB * 4);
         throw new InvalidParameterException();
     }
 
@@ -140,7 +140,7 @@ public class Filter implements Effect {
         else if (idx == Settings.Frequency.ordinal())
             setFrequency(knobToFrequency(value));
         else if (idx == Settings.Resonance.ordinal())
-        	setResonance(value * 0.05f);
+        	setResonance(value * 0.25f);
         else throw new InvalidParameterException();
     }
 
@@ -194,7 +194,6 @@ public class Filter implements Effect {
         filter.dirty = true;
         if (filterType == Type.pArTy)
         	oldParty = frequency <= PARTY_FREQUENCY ? Type.HiCut: Type.LoCut;
-        // RTLogger.log(this, "filter type: " + filterType);
     }
 
 

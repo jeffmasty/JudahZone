@@ -5,47 +5,50 @@ import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+import javax.sound.midi.ShortMessage;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 
 import net.judah.drumkit.DrumKit;
+import net.judah.drumkit.DrumMachine;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
-import net.judah.fx.Gain;
+import net.judah.drumkit.KitSetup;
+import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.Knob.KnobListener;
 import net.judah.midi.Actives;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
+import net.judah.seq.MidiConstants;
 
-public class KitPad extends JPanel implements KnobListener {
+public class KitPad extends Gui.Opaque implements KnobListener {
+
+	public static enum Modes {
+		Volume, Pan, Attack, Decay; // Dist, pArTy;
+	}
+
 	private static final Color borderColor = Pastels.PURPLE;
-	private static final float ATK_SCALE = 0.2f;
-	public static final Color PAD_COLOR = Pastels.MY_GRAY;
 
 	private final DrumType type;
-	private final KitKnobs view;
+	private final int idx;
+	private final JComboBox<Modes> mode;
 	private final Knob knob;
-	private JCheckBox choke;
-	private final JPanel top = new JPanel();
-	private final JPanel bottom = new JPanel();
+	private final JPanel top = new Gui.Opaque();
+	private final JPanel bottom = new Gui.Opaque();
+	private JCheckBox choke; // ohats only
+	private final DrumMachine beatBox;
 
-	public KitPad(KitKnobs view, DrumType t) {
+	public KitPad(DrumMachine drums, DrumType t, JComboBox<Modes> modes) {
+
+		this.beatBox = drums;
 		this.type = t;
-		this.view = view;
-
-		setBorder(new LineBorder(borderColor, 1));
-		setLayout(new GridLayout(0, 1, 0, 0));
-		JLabel nombre = new JLabel(type.name());
-		top.add(nombre);
-		top.setOpaque(true);
-		bottom.setOpaque(true);
-		add(top);
-		add(bottom);
-		setOpaque(true);
+		this.idx = t.ordinal();
+		this.mode = modes;
 
 		knob = new Knob(this);
 		knob.setKnobColor(Pastels.RED);
@@ -53,96 +56,91 @@ public class KitPad extends JPanel implements KnobListener {
 			choke = new JCheckBox();
 			choke.setToolTipText("Stop OHat when CHat plays");
 			top.add(choke);
-			choke.addItemListener(e->view.getKit().setChoked(choke.isSelected()));
+			choke.addItemListener(e->drums.getCurrent().getKit().setChoked(choke.isSelected()));
 		}
 		addMouseListener(new MouseAdapter() {
 			@Override public void mousePressed(MouseEvent e) {
-				DrumKit kit = view.getKit();
-				DrumSample s = findSample();
+				DrumKit kit = drums.getCurrent().getKit();
+				DrumSample s = kit.getSamples()[idx];
 				Midi click = Midi.create(Midi.NOTE_ON, kit.getChannel(), s.getDrumType().getData1(), 100);
 				kit.send(click, JudahMidi.ticker());
 			}
 		});
+
+		setBorder(new LineBorder(borderColor, 1));
+		setLayout(new GridLayout(0, 1, 0, 0));
+		top.add(new JLabel(type.name()));
 		bottom.add(knob);
+		add(top);
+		add(bottom);
+	}
+
+	void background(Actives a) {
+		ShortMessage msg = a.find(type.getData1());
+		top.setBackground(msg == null ? null : padColor(msg));
+	}
+
+	private static final int _CH = MidiConstants.DRUM_CH;
+	private Color padColor(ShortMessage msg) {
+		switch(msg.getChannel()) {
+			case _CH: return Pastels.GREEN;
+			case _CH + 1: return Pastels.BLUE;
+			case _CH + 2 : return Pastels.PURPLE;
+			default: return Pastels.RED;
+		}
+	}
+
+	@Override public void knobChanged(int value) {
+		KitSetup settings = beatBox.getSettings();
+		switch((Modes)mode.getSelectedItem()) {
+			case Volume:
+				if (settings.getVol(idx) != value)
+					settings.setVol(idx, value);
+				break;
+			case Pan:
+				if (settings.getPan(idx) != value)
+					settings.setPan(idx, value);
+				break;
+			case Attack:
+				if (settings.getAtk(idx) != value)
+					settings.setAtk(idx, value);
+				break;
+			case Decay:
+				if (settings.getDk(idx) != value)
+					settings.setDk(idx, value);
+				break;
+		}
 	}
 
 	public void update() {
 		if (choke != null)
-			if (view.getKit().isChoked() != choke.isSelected())
-				choke.setSelected(view.getKit().isChoked());
-		DrumSample sample = findSample();
+			if (beatBox.getCurrent().getKit().isChoked() != choke.isSelected())
+				choke.setSelected(beatBox.getCurrent().getKit().isChoked());
+		updateMode((Modes)mode.getSelectedItem());
+	}
+
+	public void updateMode(Modes mode) {
 		int current = knob.getValue();
-		switch(view.getMode()) {
+		KitSetup settings = beatBox.getSettings();
+		switch(mode) {
 			case Volume:
-				if (sample.getVolume() != current)
-					knob.setValue(sample.getVolume());
+				if (settings.getVol(idx) != current)
+					knob.setValue(settings.getVol(idx));
+				break;
+			case Pan:
+				if (settings.getPan(idx) != current)
+					knob.setValue(settings.getPan(idx));
 				break;
 			case Attack:
-				if (sample.getAttackTime() != current * ATK_SCALE)
-					knob.setValue((int) (sample.getAttackTime() / ATK_SCALE));
+				if (settings.getAtk(idx) != current)
+					knob.setValue(settings.getAtk(idx));
 				break;
 			case Decay:
-				if (sample.getDecayTime() != current)
-					knob.setValue(sample.getDecayTime());
-				break;
-//			case pArTy:
-//				if (sample.getFilter().get(Filter.Settings.Frequency.ordinal()) != current)
-//					knob.setValue(sample.getFilter().get(Filter.Settings.Frequency.ordinal()));
-//				break;
-//			case Dist:
-//				if (sample.getOverdrive().get(0) != current)
-//					knob.setValue(sample.getOverdrive().get(0));
-//				break;
-			case Pan:
-				if (sample.getPan() != current)
-					knob.setValue(sample.getPan());
+				if (settings.getDk(idx) != current)
+					knob.setValue(settings.getDk(idx));
 				break;
 		}
 	}
 
-
-	@Override
-	public void knobChanged(int value) {
-		DrumSample sample = findSample();
-		switch(view.getMode()) {
-			case Volume:
-				if (sample.getVolume() != value)
-					sample.getGain().set(Gain.VOLUME, value);
-				break;
-			case Attack:
-				if (sample.getAttackTime() != (int)(value * ATK_SCALE))
-					sample.setAttackTime((int)(value * ATK_SCALE));
-				break;
-			case Decay:
-				if (sample.getDecayTime() != value)
-					sample.setDecayTime(value);
-				break;
-//			case pArTy:
-//				if (sample.getFilter().get(Filter.Settings.Frequency.ordinal()) != value) {
-//					sample.getFilter().set(Filter.Settings.Frequency.ordinal(), value);
-//					sample.getFilter().setActive(value < 97);
-//				}
-//				break;
-//			case Dist:
-//				if (sample.getOverdrive().get(0) != value) {
-//					sample.getOverdrive().set(0, value);
-//					sample.getOverdrive().setActive(value > 3);
-//				}
-//				break;
-			case Pan:
-				if (sample.getPan() != value)
-					sample.getGain().set(Gain.PAN, value);
-				break;
-		}
-	}
-
-
-	void background(Actives a) {
-		top.setBackground( a.find(type.getData1()) == null ? null : PAD_COLOR);
-	}
-
-	private DrumSample findSample() {
-		return view.getKit().getSamples()[type.ordinal()];
-	}
 
 }

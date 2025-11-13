@@ -35,14 +35,14 @@ public class Piano extends MusicBox {
 
 	private final PianoKeys piano;
 	private final PianoSteps steps;
-	private float unit;
 	private final PianoView zoom;
 
 	private float ratio;
+	private float unit;
 
 	public Piano(PianoView view, PianoSteps currentBeat, PianoKeys roll) {
-		super(view.getTrack());
-		zoom = view;
+		super(view.track);
+		this.zoom = view;
 		this.steps = currentBeat;
 		this.piano = roll;
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -55,6 +55,11 @@ public class Piano extends MusicBox {
 	@Override public int toData1(Point p) {
 		return (int) (p.x / zoom.scaledWidth) + zoom.tonic;
 	}
+
+	public boolean isBar(int row) {
+		return row % clock.getSteps() == 0;
+	}
+
 
 	@Override public void paint(Graphics g) {
 		super.paint(g);
@@ -83,7 +88,7 @@ public class Piano extends MusicBox {
 				g.fillRect(0, y, width, (int) unit);
 			else
 				g.drawLine(0, (int)(y + unit), width, (int)(y + unit));
-			if (steps.isBar(i)) {
+			if (isBar(i)) {
 				g.setColor(Color.GRAY);
 				g.drawLine(0, y, width, y);
 				g.setColor(Pastels.FADED);
@@ -333,8 +338,7 @@ public class Piano extends MusicBox {
 		return new MidiEvent(Midi.create(source.getCommand(), source.getChannel(), data1, source.getData2()), tick);
 	}
 
-	@Override
-	protected void remap(Edit e, boolean exe) {
+	@Override protected void remap(Edit e, boolean exe) {
 		int diff = e.getDestination().data1;
 		if (!exe)
 			diff *= -1;

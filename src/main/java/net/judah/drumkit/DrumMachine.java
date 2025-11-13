@@ -1,14 +1,15 @@
 package net.judah.drumkit;
 
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
 
+import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
 import lombok.Getter;
 import net.judah.api.Engine;
 import net.judah.gui.knobs.KitKnobs;
-import net.judah.gui.knobs.KnobMode;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
@@ -24,13 +25,11 @@ import net.judah.seq.track.MidiTrack;
 @Getter
 public final class DrumMachine extends Engine {
 
+	private final TrackList<DrumTrack> tracks = new TrackList<DrumTrack>();
+	private final ArrayList<DrumKit> kits = new ArrayList<DrumKit>();
+	private final KitKnobs knobs;
 	private final Channel mains;
-
-	/** current midi controller input and view */
-	private KitKnobs focus;
-	private final KnobMode knobMode = KnobMode.Kitz;
-
-	@Getter TrackList<DrumTrack> tracks = new TrackList<DrumTrack>();
+	private KitSetup settings = new KitSetup();
 
 	public DrumMachine(JudahClock clock, Channel mains) throws Exception {
 		super("Drums", true);
@@ -39,9 +38,10 @@ public final class DrumMachine extends Engine {
 
 		for (Trax type : Trax.drums) {
 			DrumKit kit = new DrumKit(this, type);
+			kits.add(kit);
 			tracks.add(new DrumTrack(type, kit, clock));
 		}
-		focus = tracks.getFirst().getKit().getKnobs();
+		knobs = new KitKnobs(this);
 	}
 
 	public void init(String preset) {
@@ -55,64 +55,44 @@ public final class DrumMachine extends Engine {
 		return (DrumTrack)tracks.getCurrent();
 	}
 
-	public KitKnobs getKnobs() {
-		return getCurrent().getKit().getKnobs();
-	}
-
-	public KitKnobs getKnobs(Trax mode) {
-		for (int i = 0; i < tracks.size(); i++) {
-			if (tracks.get(i).getType() == mode)
-				return tracks.get(i).getKit().getKnobs();
-		}
-		return tracks.getFirst().getKit().getKnobs(); // error
-	}
-
-	@Override
-	public void reset() {
-		super.reset();
-		for(MidiTrack t : tracks)
-			for (DrumSample s : ((DrumTrack)t).getKit().getSamples())
-				s.reset();
-	}
-
-	public void increment() {
-		int idx = tracks.indexOf(getCurrent()) + 1;
-		if (idx >= tracks.size())
-			idx = 0;
-		tracks.setCurrent(tracks.get(idx));
-	}
-
-	@Override
-	public boolean progChange(String preset, int channel) {
+	@Override public boolean progChange(String preset, int channel) {
 		return getChannel(channel).progChange(preset);
 	}
 
-	@Override
-	public String[] getPatches() {
+	@Override public String[] getPatches() {
 		return DrumDB.getKits().toArray(new String[DrumDB.getKits().size()]);
 	}
 
-	@Override
-	public String getProg(int ch) {
+	@Override public String getProg(int ch) {
 		for (int i = 0; i < tracks.size(); i++)
 			if (tracks.get(i).getCh() == ch)
 				return tracks.get(i).getKit().getProgram().getFolder().getName();
 			return "?";
 	}
 
-	@Override
-	public boolean progChange(String preset) {
+	@Override public boolean progChange(String preset) {
 		return tracks.getFirst().getKit().progChange(preset);
 	}
 
-	@Override
-	public void send(MidiMessage message, long timeStamp) {
-		if (onMute || mains.isOnMute())
+	@Override public String progChange(int data2, int ch) {
+		if (data2 < 0 || data2 >= DrumDB.getKits().size())
+			return null;
+		String result = DrumDB.getKits().get(data2);
+		progChange(result, ch);
+		return result;
+	}
+
+	@Override public void send(MidiMessage midi, long timeStamp) {
+		if (midi instanceof MetaMessage)
+			return; // TODO
+		ShortMessage m = Midi.copy((ShortMessage)midi);
+		if (settings.cc(m))
+			return; // filtered envelope cc
+		if (Midi.isCC(m)) // bypass mutes to filter channel cc
+			getChannel(m.getChannel()).send(m, JudahMidi.ticker());
+		else if (onMute || mains.isOnMute())
 			return; // discard
-		if (false == Midi.isNoteOn(message))
-			return;
-		ShortMessage midi = Midi.copy((ShortMessage)message);
-		getChannel(midi.getChannel()).send(midi, JudahMidi.ticker());
+		getChannel(m.getChannel()).send(m, JudahMidi.ticker());
 	}
 
 	public DrumKit getChannel(int channel) {
@@ -132,10 +112,10 @@ public final class DrumMachine extends Engine {
 				tracks.setCurrent(t);
 	}
 
-	@Override
-	public void close() {
+	@Override public void close() {
 		reset();
 	}
+
 
 	///////////////////////////////////////////////
 	// process + mix each drumkit, process this channel's fx, place on mains
@@ -149,5 +129,6 @@ public final class DrumMachine extends Engine {
 		AudioTools.mix(left, outLeft);
 		AudioTools.mix(right, outRight);
 	}
+
 
 }

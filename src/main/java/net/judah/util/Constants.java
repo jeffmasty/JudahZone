@@ -41,12 +41,7 @@ public class Constants {
 	/** milliseconds between checking the update queue */
 	public static final int GUI_REFRESH = 8;
 	public static final float TO_100 = 0.7874f; // 127 <--> 100
-
-	@Getter static float[] reverseLog = new float[100];
-	static {
-		for (int i = 0; i < reverseLog.length; i++)
-			reverseLog[i] = logarithmic(i, 0, 1);
-	}
+	public static final float TO_1 = TO_100 * 0.01f;
 
     /**@param data2 0 to 127
      * @return data2 / 127 */
@@ -106,5 +101,28 @@ public class Constants {
 		double scale = (maxv-minv) / (maxp-minp);
 		return (float)Math.exp(minv + scale * (percent - minp));
 	}
+	public static int reverseLog(float ratio) {
+		return reverseLog(ratio, 0, 1);
+	}
+
+	public static int reverseLog(float var, float min, float max) {
+	    final int minp = 1;
+	    final int maxp = 100;
+
+	    if (min <= 0) min = 0.0001f;
+	    double minv = Math.log(min);
+	    double maxv = Math.log(max);
+	    double scale = (maxv - minv) / (maxp - minp);
+
+	    int percent = (int)Math.round(minp + (Math.log(var) - minv) / scale);
+	    return percent;
+	}
+
+	@Getter static float[] reverseLog = new float[100];
+	static {
+		for (int i = 0; i < reverseLog.length; i++)
+			reverseLog[i] = logarithmic(i, 0, 1);
+	}
+
 
 }

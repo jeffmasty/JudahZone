@@ -40,4 +40,8 @@ public class Voice {
 			osc.setBend(factor);
 	}
 
+	public void detune() {
+		oscillators[0].detune();
+	}
+
 }

@@ -7,6 +7,7 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.LayoutManager;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -32,6 +33,7 @@ public interface Gui {
 	Font FONT9 = new Font(FACE, Font.PLAIN, 9);
 	Font FONT10 = new Font(FACE, Font.PLAIN, 10);
 	Font FONT11 = new Font(FACE, Font.PLAIN, 11);
+	Font FONT12 = new Font(FACE, Font.PLAIN, 12);
 	Font BOLD10 = new Font(FACE, Font.BOLD, 10);
 	Font BOLD = new Font(FACE, Font.BOLD, 11);
 	Font BOLD12 = new Font(FACE, Font.BOLD, 12);
@@ -76,6 +78,17 @@ public interface Gui {
 
 	static String inputBox(String infoMessage) {
 	    return JOptionPane.showInputDialog(infoMessage);
+	}
+
+	static class Opaque extends JPanel {
+		public Opaque(LayoutManager mgr) {
+			this();
+			setLayout(mgr);
+		}
+
+		public Opaque() {
+			setOpaque(true);
+		}
 	}
 
 }

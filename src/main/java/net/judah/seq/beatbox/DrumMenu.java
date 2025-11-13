@@ -3,6 +3,11 @@ package net.judah.seq.beatbox;
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 
+import javax.swing.ButtonGroup;
+import javax.swing.JMenu;
+import javax.swing.JRadioButtonMenuItem;
+
+import net.judah.drumkit.DrumType;
 import net.judah.gui.Actionable;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
@@ -26,6 +31,18 @@ public class DrumMenu extends TrackMenu {
 		tools.add(new Actionable("Remap", e->MainFrame.setFocus(new RemapView(drumz))));
 		tools.add(new Actionable("Clean", e->drumz.clean()));
 		tools.add(new Actionable("Condense", e->drumz.condense()));
+
+		JMenu cc = new JMenu("CC on");
+		ButtonGroup ccMap = new ButtonGroup();
+		for (DrumType t : DrumType.values()) {
+			JRadioButtonMenuItem item = new JRadioButtonMenuItem(t.name());
+			ccMap.add(item);
+			cc.add(item);
+			if (t == DrumType.Bongo)
+				item.setSelected(true);
+			item.addActionListener(e->drumz.setCCType(t));
+		}
+		tools.add(cc);
 	}
 
 	@Override public void update() {

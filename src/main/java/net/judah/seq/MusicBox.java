@@ -21,6 +21,7 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.gui.Detached.Floating;
 import net.judah.gui.Gui;
+import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
 import net.judah.gui.Updateable;
 import net.judah.midi.JudahClock;
@@ -175,8 +176,7 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 		clipboard.copy(selected, track);
 	}
 
-
-	@Override public void paste() { // TODO differences in track Resolution
+	@Override public void paste() {
 		List<MidiPair> notes = clipboard.paste(track);
 		push(new Edit(Type.NEW, notes));
 	}
@@ -194,14 +194,14 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 			editDel(e.getNotes());
 			editAdd(replace);
 		}
+		MainFrame.update(this);
 	}
 
 	private void execute(Edit e) {
 		switch (e.getType()) {
 		case DEL:
 			editDel(e.getNotes());
-			selected.clear();
-			repaint();
+			selectNone();
 			break;
 		case NEW:
 			editAdd(e.getNotes());
@@ -223,14 +223,12 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 		case INS:
 			insert(e, true);
 			break;
-		// default: // GAIN
+		case MOD:
+			mod(e, true);
+			break;
 		}
 		click = null;
-		RTLogger.debug("exe: " + Arrays.toString(e.getNotes().toArray()) + " " + e.getDestination());
-	}
-
-	public void recalc() {
-		resized(getWidth(), getHeight());
+		RTLogger.debug("exe: " + e.getType() + " to " + e.getDestination() + ": " + Arrays.toString(e.getNotes().toArray()));
 	}
 
 	@Override public void undo() {
@@ -246,8 +244,7 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 			break;
 		case NEW:
 			editDel(e.getNotes());
-			selected.clear();
-			repaint();
+			selectNone();
 			break;
 		case TRANS:
 			if (track.isActive())
@@ -265,6 +262,9 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 			break;
 		case INS:
 			insert(e, false);
+			break;
+		case MOD:
+			mod(e, false);
 			break;
 		}
 
@@ -284,7 +284,7 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 			MidiTools.addTape(t, start, diff);
 		else  // undo
 			MidiTools.removeTape(t, end, diff);
-		repaint();
+		MainFrame.update(this);
 	}
 
 	protected void trim(Edit e, boolean exe) {
@@ -306,18 +306,33 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 					t.add(p.getOff());
 			}
 		}
-		repaint();
+		MainFrame.update(this);
+	}
+
+	protected final void mod(Edit e, boolean exe) {
+		if (exe) { // remove original cc (on), add changed cc (off)
+			MidiTools.delete(e.getNotes().getFirst().getOn(), t);
+//			if (false == t.remove(e.getNotes().getFirst().getOn()))
+//				RTLogger.log(this, "Missing: " + Midi.toString(e.getNotes().getFirst().getOn().getMessage()));
+			t.add(e.getNotes().getFirst().getOff());
+		} else { // undo, restore original cc (on)
+			MidiTools.delete(e.getNotes().getFirst().getOff(), t);
+			t.remove(e.getNotes().getFirst().getOff());
+			t.add(e.getNotes().getFirst().getOn());
+		}
+		MainFrame.update(this);
 	}
 
 	protected void editAdd(ArrayList<MidiPair> replace) {
-		selected.clear(); // add zero-based selection
+		selected.clear();
 		for (MidiPair p : replace) {
-			selected.add(p);
+			if (Midi.isNoteOn(p.getOn().getMessage()))
+				selected.add(p); // ignore CCs
 			track.getT().add(p.getOn());
 			if (p.getOff() != null)
 				track.getT().add(p.getOff());
 		}
-		repaint();
+		MainFrame.update(this);
 	}
 
 	protected void editDel(ArrayList<MidiPair> notes) {
@@ -350,7 +365,7 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 
 	@Override public void selectNone() {
 		selected.clear();
-		repaint();
+		MainFrame.update(this);
 	}
 
 	public Notes selectArea(long start, long end) {

@@ -182,9 +182,10 @@ public final class Freeverb extends Reverb {
         if (idx == Settings.Room.ordinal())
             return Math.round(getRoomSize() * 100);
         if (idx == Settings.Damp.ordinal())
-            return Math.round(getDamp() * 100);
+            return Math.round(getDamp() * 50);
         if (idx == Settings.Wet.ordinal())
             return Math.round(getWet() * 100);
+
         throw new InvalidParameterException();
     }
 
@@ -193,7 +194,7 @@ public final class Freeverb extends Reverb {
         if (idx == Settings.Room.ordinal())
             setRoomSize(value * 0.01f);
         else if (idx == Settings.Damp.ordinal())
-            setDamp(value * 0.01f);
+            setDamp(value * 0.02f);
         else if (idx == Settings.Wet.ordinal())
             setWet(value * 0.01f);
         else throw new InvalidParameterException();

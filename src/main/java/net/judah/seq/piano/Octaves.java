@@ -23,7 +23,7 @@ public class Octaves extends CenteredCombo<Integer> {
 		this.view = v;
 		for (int i = 1; i <= MAX_OCTAVES; i++)
 			addItem(i);
-		setSelectedItem(view.getRange() / Key.OCTAVE);
+		setSelectedItem(view.range / Key.OCTAVE);
 		Gui.resize(this, Size.MICRO);
 
 		addMouseListener(new MouseAdapter() {
@@ -35,8 +35,8 @@ public class Octaves extends CenteredCombo<Integer> {
 			        String input = Gui.inputBox("Range:");
 					try {
 						view.setRange(Integer.parseInt(input));
-						if (view.getRange() % Key.OCTAVE == 0)
-							setSelectedItem(view.getRange() / Key.OCTAVE);
+						if (view.range % Key.OCTAVE == 0)
+							setSelectedItem(view.range / Key.OCTAVE);
 					} catch (Throwable t) {RTLogger.log(this, input + ": " + t.getMessage());}
 		        });
 			}

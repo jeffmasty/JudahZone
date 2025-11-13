@@ -47,7 +47,7 @@ public class Programmer extends JPanel {
 	}
 	
 	private String launchCode() {
-		String code = (1 + track.getLaunch() / 2) + "/" + track.frames();
+		String code = (1 + track.getLaunch() / 2) + "/" + track.getFrames();
 		if (code.length() < 5)
 			code = " " + code;
 		if (code.length() < 5)

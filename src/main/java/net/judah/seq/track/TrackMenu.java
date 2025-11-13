@@ -22,12 +22,12 @@ import javax.swing.SwingUtilities;
 import net.judah.gui.Actionable;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
-import net.judah.gui.PlayWidget;
-import net.judah.gui.RecordWidget;
 import net.judah.gui.Updateable;
 import net.judah.gui.settable.Folder;
 import net.judah.gui.settable.Program;
 import net.judah.gui.widgets.Btn;
+import net.judah.gui.widgets.PlayWidget;
+import net.judah.gui.widgets.RecordWidget;
 import net.judah.omni.Icons;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
@@ -251,12 +251,5 @@ public abstract class TrackMenu extends Box implements MouseListener, Updateable
 			if (m.track == track)
 				m.updateCue();
 	}
-
-//	private void detach(final PianoTrack piano) {
-//		TrackList<PianoTrack> temp = new TrackList<PianoTrack>();
-//		temp.add(piano);
-//		PianoTab frame = new PianoTab(temp);
-//		frame.setName(temp.getCurrent().getName());
-//		new Detach(frame, Size.TAB_SIZE);
 
 }

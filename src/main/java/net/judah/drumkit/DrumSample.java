@@ -15,19 +15,20 @@ import net.judah.api.PlayAudio;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.midi.Actives;
-import net.judah.mixer.FxChain;
 import net.judah.omni.AudioTools;
 import net.judah.omni.Recording;
 import net.judah.util.Constants;
 
 @Getter
-public class DrumSample extends FxChain implements AtkDec, PlayAudio {
+public class DrumSample implements PlayAudio {
+
+	protected final FloatBuffer left = FloatBuffer.wrap(new float[Constants.bufSize()]);
+    protected final FloatBuffer right = FloatBuffer.wrap(new float[Constants.bufSize()]);
 
 	private final DrumEnvelope envelope;
 	private final DrumType drumType;
+	private final Gain gain;
 	private final Actives actives;
-	@Setter private int attackTime = 1;
-	@Setter private int decayTime = Integer.MAX_VALUE;
 	@Setter protected float velocity = 1f;
 	@Setter protected boolean onMute;
 
@@ -39,13 +40,11 @@ public class DrumSample extends FxChain implements AtkDec, PlayAudio {
 	protected float[][] playBuffer;
 	protected float env = 1f; // envelope/boost
 
-    protected final Gain gain = new Gain();
-
-	public DrumSample(DrumType type, Actives actives) {
-		super(type.name(), Constants.STEREO);
+	public DrumSample(DrumType type, Actives actives, KitSetup setup) {
 		this.drumType = type;
 		this.actives = actives;
-		envelope = new DrumEnvelope(this);
+		this.gain = setup.gain[type.ordinal()];
+		this.envelope = new DrumEnvelope(setup, type.ordinal());
 	}
 
 	public void setFile(File f) throws Exception {
@@ -68,7 +67,6 @@ public class DrumSample extends FxChain implements AtkDec, PlayAudio {
 		this.playing = play;
 	}
 
-	@Override
 	public void process(FloatBuffer outLeft, FloatBuffer outRight) {
 		if (!playing) return;
 		readRecordedBuffer();
@@ -78,11 +76,9 @@ public class DrumSample extends FxChain implements AtkDec, PlayAudio {
 		playFrame(outLeft, outRight);
 	}
 
-	@Override
 	public void reset() { // not used
         tapeCounter.set(0);
         playing = false;
-        gain.setPan(0.5f);
     }
 
 	public void off() {
@@ -110,7 +106,7 @@ public class DrumSample extends FxChain implements AtkDec, PlayAudio {
 		return getLength() / Constants.fps();
 	}
 
-	@Override public void clear() {
+	public void clear() {
         setRecording(null);
         playing = false;
         file = null;
