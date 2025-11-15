@@ -1,6 +1,7 @@
 TODO:
 
-Automation deep frames off 1!-99
+Hi/Lo filter CC
+Automation deep frames off 1!-99, new
 Autmation ListView, PitchBend Edit
 TacoSynth GLIDE (Crave <3)
 Enable Automation on Line-In (non-Midi) channels (guitar, mic, looper)
@@ -97,6 +98,11 @@ https://github.com/YuMuuu/SynthesizerRemastered/blob/master/src/main/java/Oscill
 https://github.com/mmitch/apsynth
 https://github.com/orsjb/beads
 https://evanxmerz.com/soundsynthjava/Sound_Synth_Java.html#getting_started
+Filters
+// https://github.com/adiblol/jackiir (implemented as class EQ, Filter, DJFilter)
+// https://github.com/T-5dotEU/ladspa-t5-plugins
+// https://github.com/Dragerus/parametricEQ-jack
+// https://github.com/hathagat/Equalizer
 java analyse and sequence music https://github.com/arnaudh/elusive-sound
 Java music visualization: https://github.com/trungd/acoustic-signal-processing
 ffmpeg wrapper https://github.com/a-schild/jave2

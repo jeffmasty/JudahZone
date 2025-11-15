@@ -84,12 +84,16 @@ public class Constants {
     	return input;
 	}
 
+	public static float logarithmic(int percent) {
+		return logarithmic(percent, 0, 1);
+	}
+
     /** see https://stackoverflow.com/a/846249 */
+	private static final int minp = 1;
+	private static final int maxp = 100;
 	public static float logarithmic(int percent, float min, float max) {
 
 		// percent will be between 0 and 100
-		final int minp = 1;
-		final int maxp = 100;
 		assert percent <= max && percent >= min;
 
 		// The result should be between min and max
@@ -106,16 +110,17 @@ public class Constants {
 	}
 
 	public static int reverseLog(float var, float min, float max) {
-	    final int minp = 1;
-	    final int maxp = 100;
+	    if (var > max)
+	    	var = max;
+	    if (var < min)
+	    	var = min;
 
 	    if (min <= 0) min = 0.0001f;
 	    double minv = Math.log(min);
 	    double maxv = Math.log(max);
 	    double scale = (maxv - minv) / (maxp - minp);
 
-	    int percent = (int)Math.round(minp + (Math.log(var) - minv) / scale);
-	    return percent;
+	    return (int)Math.round(minp + (Math.log(var) - minv) / scale);
 	}
 
 	@Getter static float[] reverseLog = new float[100];

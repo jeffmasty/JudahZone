@@ -1,4 +1,4 @@
-package net.judah.seq.track;
+package net.judah.seq.automation;
 
 import java.awt.FlowLayout;
 
@@ -17,7 +17,6 @@ import javax.swing.SwingConstants;
 
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
-import net.judah.gui.TabZone;
 import net.judah.gui.widgets.Btn;
 import net.judah.midi.Midi;
 import net.judah.seq.Edit;
@@ -25,8 +24,8 @@ import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiPair;
 import net.judah.seq.Prototype;
-import net.judah.seq.track.Automation.AutoBox;
-import net.judah.seq.track.CCHandler.CCData;
+import net.judah.seq.automation.Automation.AutoBox;
+import net.judah.seq.track.MidiTrack;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -39,7 +38,6 @@ class CCEdit extends AutoBox implements MidiConstants {
 		return instance;
 	}
 
-	private MidiTrack track;
 	private CCData existing;
 	private Edit undo;
 
@@ -96,6 +94,7 @@ class CCEdit extends AutoBox implements MidiConstants {
 		Box inner = new Box(BoxLayout.PAGE_AXIS);
 		inner.add(Gui.wrap(top));
 		inner.add(Gui.wrap(algo));
+		inner.add(Box.createVerticalStrut(4));
 
 		add(Box.createHorizontalStrut(12));
 		add(inner);
@@ -108,8 +107,7 @@ class CCEdit extends AutoBox implements MidiConstants {
 		val.text(val.get()); // potentially CC switched to bool
 	}
 
-	public CCEdit edit(MidiTrack t, CCData data) {
- 		setTrack(t);
+	public CCEdit edit(CCData data) {
  		existing = data;
  		cc.setSelectedItem(data.type());
  		steps.quantizable(data.e().getTick());
@@ -119,9 +117,7 @@ class CCEdit extends AutoBox implements MidiConstants {
  		return this;
  	}
 
-	@Override
-	public CCEdit init(MidiTrack t, long tick) {
-		setTrack(t);
+	@Override public CCEdit init(long tick) {
 		existing = null;
 		change.setEnabled(false);
 		delete.setEnabled(false);
@@ -130,7 +126,7 @@ class CCEdit extends AutoBox implements MidiConstants {
 		return this;
 	}
 
-	void setTrack(MidiTrack t) {
+	@Override protected void setTrack(MidiTrack t) {
  		track = t;
  		steps.setTrack(track);
  		steps2.setTrack(track);
@@ -169,7 +165,7 @@ class CCEdit extends AutoBox implements MidiConstants {
 	 				undo.getNotes().add(new MidiPair(new MidiEvent(unit, ticker), null));
 	 			}
 			}
-	 		TabZone.getMusician(track).push(undo);
+	 		getMusician(track).push(undo);
 			change.setEnabled(true);
 	 		delete.setEnabled(true);
 		} catch (Throwable t) {
@@ -191,7 +187,7 @@ class CCEdit extends AutoBox implements MidiConstants {
 					; // TODO
 
 			}
-			TabZone.getMusician(track).push(mod);
+			getMusician(track).push(mod);
 		}
 		catch (InvalidMidiDataException ie) {
 			RTLogger.warn(this, ie);
@@ -201,7 +197,7 @@ class CCEdit extends AutoBox implements MidiConstants {
 	void delete() {
 		if (undo != null) {
 			Edit del = new Edit(Type.DEL, undo.getNotes());
-			TabZone.getMusician(track).push(del);
+			getMusician(track).push(del);
 			undo = null;
 			return;
 		}
@@ -212,7 +208,7 @@ class CCEdit extends AutoBox implements MidiConstants {
 			// TODO
 		}
 		delete.setEnabled(false);
-		TabZone.getMusician(track).push(edit);
+		getMusician(track).push(edit);
 	}
 
 	void exe() {

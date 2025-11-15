@@ -1,4 +1,4 @@
-package net.judah.seq.track;
+package net.judah.seq.automation;
 
 import java.awt.Point;
 import java.awt.event.MouseEvent;
@@ -6,34 +6,24 @@ import java.util.ArrayList;
 
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
-import javax.sound.midi.Track;
 import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
 
-import lombok.Getter;
 import net.judah.gui.Actionable;
-import net.judah.midi.Midi;
-import net.judah.seq.MidiConstants.CC;
-import net.judah.seq.MidiTools;
-import net.judah.seq.track.Automation.AutoMode;
+import net.judah.seq.automation.Automation.AutoMode;
+import net.judah.seq.track.MidiTrack;
 
 /** lists out CCs for current frame and right-click menu */
-public class CCHandler extends JPopupMenu {
+public class CCPopup extends JPopupMenu {
 
-	public record CCData(MidiEvent e, CC type) {};
-
-	private final ArrayList<CCData> data = new ArrayList<CCData>();
-	private final ArrayList<MidiEvent> prog = new ArrayList<MidiEvent>();
-	private final ArrayList<MidiEvent> unhandled = new ArrayList<MidiEvent>();
-	private final MidiTrack track;
-	private final Track t;
+	private final AllModel dat;
 	private final JComponent view;
 	private final boolean lineAxis;
-	@Getter private int[] roster; // length = steps value = # of CCs in that step
+	private final MidiTrack track;
 
-	public CCHandler(MidiTrack midi, JComponent parent, boolean horizontal) {
+	public CCPopup(MidiTrack midi, JComponent parent, boolean horizontal) {
 		track = midi;
-		t = track.getT();
+		dat = new AllModel(midi);
 		view = parent;
 		lineAxis = horizontal;
 	}
@@ -43,8 +33,8 @@ public class CCHandler extends JPopupMenu {
 		// CCs
 	    add(new Actionable("New CC", e->create(me.getPoint())));
 	    for (CCData d : getStep(step)) {
-	    	add(new Actionable(d.type.toString() + ": " + ((ShortMessage)d.e.getMessage()).getData2(),
-	    			e->Automation.getInstance().edit(track, d)));
+	    	add(new Actionable(d.type().toString() + ": " + ((ShortMessage)d.e().getMessage()).getData2(),
+	    			e->Automation.getInstance().edit(dat.track, d)));
 	    }
 	    // TODO PitchBend
 	    // ProgChange
@@ -66,51 +56,15 @@ public class CCHandler extends JPopupMenu {
 	    show(view, me.getX(), me.getY());
 	}
 
-	public int[] populate() {
-		data.clear();
-		unhandled.clear();
-		prog.clear();
-
-		long start = track.getLeft();
-		long end = start + track.getWindow();
-
-		for (int i = MidiTools.fastFind(t, start); i < t.size() && i >= 0; i++) {
-			MidiEvent e = t.get(i);
-			if (e.getTick() < start) continue;
-			if (e.getTick() >= end) break;
-			if (e.getMessage() instanceof ShortMessage msg) {
-				if (Midi.isCC(msg)) {
-					CC type = CC.find(msg);
-					if (type == null)
-						unhandled.add(e);
-					else
-						data.add(new CCData(e, type));
-				} else if (Midi.isProgChange(msg))
-					prog.add(e);
-			}
-
-		}
-
-		int steps = track.getClock().getTimeSig().steps * 2;
-		if (roster == null || roster.length != steps)
-			roster = new int[steps];
-		else
-			for (int i = 0; i < steps; i++)
-				roster[i] = 0;
-		long left = track.getLeft(); // step 1
-		long step = track.getStepTicks();
-		for (CCData d : data)
-			roster[(int) ((d.e.getTick() - left) / step)]++;
-		return roster;
-	}
 
 	public ArrayList<CCData> getStep(int step) {
-		ArrayList<CCData> result = new ArrayList<CCData>(roster[step]);
+		ArrayList<CCData> result = new ArrayList<CCData>(dat.
+				roster[step]);
 		long start = track.getLeft() + step * track.getStepTicks();
 		long end = start + track.getStepTicks();
-		for (CCData cc : data) {
-			if (cc.e.getTick() < start) continue;
-			if (cc.e.getTick() > end) break;
+		for (CCData cc : dat.cc) {
+			if (cc.e().getTick() < start) continue;
+			if (cc.e().getTick() > end) break;
 			result.add(cc);
 		}
 		return result;
@@ -119,7 +73,7 @@ public class CCHandler extends JPopupMenu {
 	public MidiEvent getProg(int step) {
 		long start = track.getLeft() + step * track.getStepTicks();
 		long end = start + track.getStepTicks();
-		for (MidiEvent e : prog) {
+		for (MidiEvent e : dat.prog) {
 			if (e.getTick() < start) continue;
 			if (e.getTick() >= end) break;
 			return e;
@@ -134,6 +88,10 @@ public class CCHandler extends JPopupMenu {
 		long zeroBased = click * track.getWindow() / length;
 		long tick = track.getLeft() + zeroBased;
 		Automation.getInstance().init(track, tick, AutoMode.CC);
+	}
+
+	public int[] populate(long start, long end) {
+		return dat.populate(start, end);
 	}
 
 

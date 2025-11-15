@@ -14,28 +14,23 @@ import net.judah.util.Constants;
 @RequiredArgsConstructor
 public class LFO implements TimeEffect {
 
-	public static final int LFO_MIN = 90;
-    public static final int LFO_MAX = 1990;
+	public static final int LFO_MIN = 100;
+    public static final int LFO_MAX = 3000;
     static final float MAX_FACTOR = 39f;
 	long throttle;
 	@Setter @Getter String type = TYPE[0];
 	@Setter @Getter boolean sync;
 
-    public enum Settings {
-        Target, Min, Max, MSec, Type, Sync
-    }
+    public enum Settings { Target, Min, Max, MSec, Type, Sync }
 
 	public static enum Target {
-		Pan, Filter, Gain, Reverb, Room, Delay, Chorus, Rate, Depth, Phase
-	};
+		Pan, pArTy, Gain, Echo, Room, Delay, Chorus, Rate, Depth, Phase }
 
 	private final Channel ch;
 	@Getter private boolean active;
 	@Getter private Target target = Target.Pan;
-	/** in kilohertz (msec per cycle). default: oscillates over a 1.2 seconds. */
+	/** in kiloHertz (msec per cycle). default: oscillates over a 1.2 seconds. */
 	@Getter private double frequency = 1200;
-	/** align the wave on the jack frame buffer by millisecond (not implemented)*/
-	private long shift;
 	/** set maximum output level of queries. default: 90. */
 	private int max = 90;
 	/** set minimum level of queries. default 10. */
@@ -86,15 +81,14 @@ public class LFO implements TimeEffect {
     	if (!active || recover < 0)
     		return;
     	switch (target) {
-			case Filter:
-				ch.getFilter1().setFrequency(Filter.knobToFrequency(recover));
-				ch.getFilter1().setActive(wasActive);
+			case pArTy:
+				ch.getDjFilter().joystick(50);
 				break;
 			case Delay:
 				ch.getDelay().set(Delay.Settings.DelayTime.ordinal(), recover);
 				ch.getDelay().setActive(wasActive);
 				break;
-			case Reverb:
+			case Echo:
 				ch.getReverb().set(Reverb.Settings.Wet.ordinal(), recover);
 				ch.getReverb().setActive(wasActive);
 				break;
@@ -130,17 +124,17 @@ public class LFO implements TimeEffect {
     private void setup() {
 		throttle = 0;
     	switch (target) {
-		case Filter:
-			recover = Filter.frequencyToKnob(ch.getFilter1().getFrequency());
-			wasActive = ch.getFilter1().isActive();
-			ch.getFilter1().setActive(true);
+		case pArTy:
+			recover = 50;
+			wasActive = ch.getHiCut().isActive();
+			ch.getHiCut().setActive(true);
 			break;
 		case Delay:
 			recover = ch.getDelay().get(Delay.Settings.DelayTime.ordinal());
 			wasActive = ch.getDelay().isActive();
 			ch.getDelay().setActive(true);
 			break;
-		case Reverb:
+		case Echo:
 			recover = ch.getReverb().get(Reverb.Settings.Wet.ordinal());
 			wasActive = ch.getReverb().isActive();
 			ch.getReverb().setActive(true);
@@ -218,9 +212,8 @@ public class LFO implements TimeEffect {
 
 	/** query the oscillator at a specific time, System.currentTimeMillis(), for example. */
 	public double query(long millis) {
-		// divide current millis + offset by frequency and apply sin wave, multiply by amplitude
-		long time = millis + shift;
-		double phase = (time % frequency) / frequency;
+		// divide current millis (+ offset?) by frequency and apply sin wave, multiply by amplitude
+		double phase = (millis % frequency) / frequency;
 		double wave = 1 + Math.sin(Math.toRadians(phase * 360));
 		return (wave * ( (max - min) / 2)) + min;
 	}
@@ -236,9 +229,8 @@ public class LFO implements TimeEffect {
 		int val = (int)query();
 		switch(target) {
 			case Gain: ch.getGain().set(Gain.VOLUME, val); break;
-			case Filter: ch.getFilter1().setFrequency(
-					Filter.knobToFrequency((int)query())); break;
-			case Reverb: ch.getReverb().set(Reverb.Settings.Wet.ordinal(), val); break;
+			case pArTy: ch.getDjFilter().joystick(val); break;
+			case Echo: ch.getReverb().set(Reverb.Settings.Wet.ordinal(), val); break;
 			case Room: ch.getReverb().set(Reverb.Settings.Room.ordinal(), val); break;
 			case Delay: ch.getDelay().setFeedback(val * 0.01f); break;
 			case Pan: ch.getGain().set(Gain.PAN, val); break;

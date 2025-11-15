@@ -40,6 +40,7 @@ import net.judah.midi.Panic;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiTools;
 import net.judah.seq.Trax;
+import net.judah.seq.automation.CC;
 import net.judah.song.Sched;
 import net.judah.util.Constants;
 import net.judah.util.Folders;

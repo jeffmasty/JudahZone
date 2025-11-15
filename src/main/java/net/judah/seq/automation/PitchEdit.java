@@ -1,4 +1,4 @@
-package net.judah.seq.track;
+package net.judah.seq.automation;
 
 import java.awt.FlowLayout;
 
@@ -15,7 +15,6 @@ import javax.swing.JTextField;
 
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
-import net.judah.gui.TabZone;
 import net.judah.gui.widgets.Btn;
 import net.judah.midi.Midi;
 import net.judah.seq.Edit;
@@ -23,7 +22,8 @@ import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiPair;
 import net.judah.seq.Prototype;
-import net.judah.seq.track.Automation.AutoBox;
+import net.judah.seq.automation.Automation.AutoBox;
+import net.judah.seq.track.MidiTrack;
 import net.judah.synth.taco.TacoSynth;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
@@ -38,7 +38,6 @@ class PitchEdit extends AutoBox {
 		return instance;
 	}
 
-	private MidiTrack track;
 	MidiEvent existing;
 	private Edit undo;
 
@@ -106,15 +105,20 @@ class PitchEdit extends AutoBox {
 	}
 
 
-	public PitchEdit edit(MidiTrack t, MidiEvent e) {
-
+	public PitchEdit edit(MidiEvent e) {
+		existing = e;
+		// TODO populate
 		enableAutomation(false);
 		return this;
 	}
 
+	@Override protected void setTrack(MidiTrack t) {
+		track = t;
+	}
 
-	@Override public PitchEdit init(MidiTrack t, long tick) {
-
+	@Override public PitchEdit init(long tick) {
+		existing = null;
+		// TODO populate
 		enableAutomation(true);
 		return this;
 	}
@@ -157,7 +161,7 @@ class PitchEdit extends AutoBox {
 	 				undo.getNotes().add(new MidiPair(new MidiEvent(unit, ticker), null));
 	 			}
 			}
-	 		TabZone.getMusician(track).push(undo);
+	 		getMusician(track).push(undo);
 			change.setEnabled(true);
 	 		delete.setEnabled(true);
 		} catch (Throwable t) {
@@ -193,7 +197,7 @@ class PitchEdit extends AutoBox {
 				if (undo != null)
 					; // TODO
 			}
-			TabZone.getMusician(track).push(mod);
+			getMusician(track).push(mod);
 		}
 		catch (InvalidMidiDataException ie) {
 			RTLogger.warn(this, ie);
@@ -203,7 +207,7 @@ class PitchEdit extends AutoBox {
 	void delete() {
 		if (undo != null) {
 			Edit del = new Edit(Type.DEL, undo.getNotes());
-			TabZone.getMusician(track).push(del);
+			getMusician(track).push(del);
 			undo = null;
 			return;
 		}
@@ -214,7 +218,7 @@ class PitchEdit extends AutoBox {
 			// TODO
 		}
 		delete.setEnabled(false);
-		TabZone.getMusician(track).push(edit);
+		getMusician(track).push(edit);
 	}
 
 	void exe() {

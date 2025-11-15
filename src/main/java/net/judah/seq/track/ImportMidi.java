@@ -18,6 +18,7 @@ import net.judah.gui.Gui;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.ModalDialog;
 import net.judah.seq.MidiConstants;
+import net.judah.seq.automation.Meta;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 

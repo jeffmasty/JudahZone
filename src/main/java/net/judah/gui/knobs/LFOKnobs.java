@@ -14,7 +14,7 @@ import net.judah.mixer.DJJefe;
 
 public class LFOKnobs extends KnobPanel {
 
-	@Getter private final KnobMode knobMode = KnobMode.LFOz;
+	@Getter private final KnobMode knobMode = KnobMode.LFO;
     @Getter private final JPanel title;
     @Getter private final Channel channel;
     @Getter private final LFOWidget lfo1, lfo2;

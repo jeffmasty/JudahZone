@@ -4,7 +4,6 @@ import static net.judah.JudahZone.*;
 
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
-import net.judah.fx.Filter;
 import net.judah.fx.Overdrive;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
@@ -21,11 +20,11 @@ public class KorgPads extends Debounce implements Controller {
 
 	public static final String NAME = "nanoPAD2";
 
-	private final int JOYSTICK_ON = 75;
-	private final int JOYSTICK_X = 73;
-	private final int JOYSTICK_Y = 74;
-	private final int LEFT = 55;
-	private final int RIGHT = 74;
+	public static final int JOYSTICK_ON = 75;
+	public static final int JOYSTICK_X = 73;
+	public static final int JOYSTICK_Y = 74;
+	public static final int LEFT = 50;
+	public static final int RIGHT = 77;
 
 	@Override public boolean midiProcessed(Midi midi) {
 		int data1 = midi.getData1();
@@ -57,7 +56,6 @@ public class KorgPads extends Debounce implements Controller {
 			return true;
 		case 6: // latch guitar EFX to looper
 			looper.syncFx(getGuitar());
-			// getGuitar().getLatchEfx().latch();
 			return true;
 		case 7: // Clock off/sync
 			JudahClock clock = getClock();
@@ -120,7 +118,7 @@ public class KorgPads extends Debounce implements Controller {
 			Delay delay = fx.getDelay();
 			Chorus chorus = fx.getChorus();
 			Overdrive od = fx.getOverdrive();
-			boolean left = data2 < 50;
+			boolean left = data2 < LEFT;
 			boolean right = data2 > RIGHT;
 			if (left) {
 				if (delay.getDelay() < Delay.DEFAULT_TIME)
@@ -141,23 +139,8 @@ public class KorgPads extends Debounce implements Controller {
 			}
 			MainFrame.update(fx);
 			return true;
-		case JOYSTICK_Y:
-			Channel ch = getFxRack().getChannel();
-			Filter party = ch.getFilter1();
-			boolean down = data2 < LEFT - 10;
-			boolean up = data2 > RIGHT + 10;
-			if (up) {
-				party.setFrequency(Filter.knobToFrequency(data2 - 60));
-				party.setActive(true);
-			}
-			else if (down) {
-				party.setFrequency(Filter.knobToFrequency(data2));
-				party.setActive(true);
-			}
-			else {
-				party.setActive(false);
-			}
-			MainFrame.update(ch);
+		case JOYSTICK_Y: // TODO multi-select
+			getFxRack().getChannel().getDjFilter().joystick(midi);
 			return true;
 		}
 		return false;
@@ -167,7 +150,7 @@ public class KorgPads extends Debounce implements Controller {
 		Channel ch = getFxRack().getChannel();
 		if (active) {
 			// TODO stash preset
-			ch.reset();
+			// ch.reset();
 		}
 		else {
 			ch.reset();
@@ -177,13 +160,6 @@ public class KorgPads extends Debounce implements Controller {
 	}
 
 }
-
-//	private boolean context1( ) {
-//		switch (MainFrame.getKnobMode()) {
-// CLOCK/KIT? : start Clock/drums on next loop
-//			if (looper.getRecordedLength() > 0) getClock().listen(looper.getLoopA());
-//		case Midi: getMidiGui().getZoneBtn().setSelected(!getMidiGui().getZoneBtn().isSelected());
-//		case Synth: SynthKnobs.setFreqMode(!SynthKnobs.isFreqMode());
 
 /*
 

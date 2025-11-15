@@ -82,11 +82,11 @@ public final class Overdrive implements Effect {
 	            buf.put(buf.position() - 1, processedValue);
 	        }
         else {
-            float diode = 1.5f + (1 - clipping);
+            float diode = 1 + (3 - 2 * clipping);
 	        while (buf.hasRemaining()) {
 	            float value = buf.get();
 	            float processedValue = gain * (float) (Math.atan(value * preMul) * postMul);
-	            float max = value * diode;
+	            float max = diode * value;
 	            buf.put(buf.position() - 1, Math.abs(processedValue) > Math.abs(max) ? max : processedValue);
 
 	        }

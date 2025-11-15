@@ -20,7 +20,7 @@ public class SampleKnobs extends KnobPanel {
 
 	private final Sampler sampler;
 	private final ArrayList<Sample> samples;
-	@Getter private final KnobMode knobMode = KnobMode.Samplez;
+	@Getter private final KnobMode knobMode = KnobMode.Sample;
 	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 	private final Slider vol;
 	private final ArrayList<SamplePad> updates = new ArrayList<>();

@@ -21,7 +21,7 @@ import net.judah.util.RTLogger;
 public class Sampler extends LineIn {
 
 	private ArrayList<Sample> samples = new ArrayList<Sample>();
-	private final KnobMode knobMode = KnobMode.Samplez;
+	private final KnobMode knobMode = KnobMode.Sample;
 
 	// Fountain Creek: Fields Park, Manitou Springs, CO
 	// Rain in Cuba: https://freesound.org/people/kyles/sounds/362077/
@@ -84,8 +84,8 @@ public class Sampler extends LineIn {
 
 	public void play(Sample s, boolean on) {
 		if (on) {
-			if (MainFrame.getKnobMode() != KnobMode.Samplez)
-				MainFrame.setFocus(KnobMode.Samplez);
+			if (MainFrame.getKnobMode() != KnobMode.Sample)
+				MainFrame.setFocus(KnobMode.Sample);
 			if (s.getType() == Type.ONE_SHOT)
 				s.rewind();
 			else

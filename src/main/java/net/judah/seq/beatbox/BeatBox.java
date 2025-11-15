@@ -30,7 +30,7 @@ import net.judah.seq.MidiTools;
 import net.judah.seq.MusicBox;
 import net.judah.seq.Notes;
 import net.judah.seq.Prototype;
-import net.judah.seq.track.CCHandler;
+import net.judah.seq.automation.CCPopup;
 import net.judah.seq.track.DrumTrack;
 import net.judah.util.RTLogger;
 
@@ -43,13 +43,13 @@ public class BeatBox extends MusicBox implements Pastels {
 	private float unitX, unitY;
 	private int minusX, minusY;
 	private final DrumZone tab;
-	private final CCHandler cc;
+	private final CCPopup cc;
 	private DrumType ccType = DrumType.Bongo;
 
     public BeatBox(DrumTrack t, DrumZone tab) {
     	super(t);
     	this.tab = tab;
-    	cc = new CCHandler(t, this, true);
+    	cc = new CCPopup(t, this, true);
         setLayout(null);
         update();
     }
@@ -121,8 +121,9 @@ public class BeatBox extends MusicBox implements Pastels {
 			}
         }
 
-        // draw CCs
-		int[] ccSteps = cc.populate();
+        // draw CCs/Progs/Pitch
+		int[] ccSteps = cc.populate(track.getLeft(), track.getWindow());
+
 		for (int step = 0; step < ccSteps.length; step++) {
 			if (cc.getProg(step) != null)
 				ccPad(g, step, 1, Pastels.PROGCHANGE);

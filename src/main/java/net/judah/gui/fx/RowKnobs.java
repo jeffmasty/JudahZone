@@ -4,11 +4,11 @@ import net.judah.JudahZone;
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
 import net.judah.fx.EQ;
-import net.judah.fx.Filter;
 import net.judah.fx.Gain;
 import net.judah.fx.Reverb;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.mixer.Channel;
+import net.judah.synth.taco.MonoFilter;
 import net.judah.util.RTLogger;
 
 public class RowKnobs extends Row {
@@ -36,8 +36,8 @@ public class RowKnobs extends Row {
 			break;
 		case 3:
 			controls.add(new PresetsBtns(ch, JudahZone.getLooper()));
-			controls.add(new FxKnob(ch, ch.getFilter1(), Filter.Settings.Frequency.ordinal(), "Hz."));
-			controls.add(new FxKnob(ch, ch.getFilter2(), Filter.Settings.Frequency.ordinal(), "Hz."));
+			controls.add(new FxKnob(ch, ch.getHiCut(), MonoFilter.Settings.Frequency.ordinal(), "Hz."));
+			controls.add(new FxKnob(ch, ch.getLoCut(), MonoFilter.Settings.Frequency.ordinal(), "Hz."));
 			controls.add(new FxKnob(ch, ch.getGain(), Gain.VOLUME, ""));
 			break;
 		default:

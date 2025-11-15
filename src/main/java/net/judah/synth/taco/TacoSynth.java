@@ -14,7 +14,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.api.Engine;
-import net.judah.fx.Filter;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.SynthKnobs;
@@ -24,9 +23,10 @@ import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
 import net.judah.omni.AudioTools;
-import net.judah.seq.MidiConstants.CC;
 import net.judah.seq.Trax;
+import net.judah.seq.automation.CC;
 import net.judah.seq.track.PianoTrack;
+import net.judah.synth.taco.MonoFilter.Type;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -49,9 +49,9 @@ import net.judah.util.RTLogger;
     private final ModWheel modWheel;
     /** modwheel pitchbend semitones */
     @Setter private int modSemitones = 1;
-    private final Filter internalFilter = new Filter(false);
-	private final Filter loCut = new Filter(false);
-	private final Filter hiCut = new Filter(false);
+    private final MonoFilter internalFilter = new MonoFilter(Type.HiCut, 15500);
+	private final MonoFilter highPass = new MonoFilter(Type.LoCut, 50);
+	private final MonoFilter lowPass = new MonoFilter(Type.HiCut, 3600);
 	private final SynthPresets synthPresets = new SynthPresets(this);
     private final SynthKnobs knobs;
 	// private final boolean mono = false; // TODO mono-poly switch
@@ -65,25 +65,14 @@ import net.judah.util.RTLogger;
 			dcoGain[i] = 0.50f;
 		for (int i = 0; i < detune.length; i++)
 			detune[i] = 1f;
-
-		internalFilter.setFilterType(Filter.Type.HiCut);
-		internalFilter.setFrequency(15500);
-		internalFilter.setResonance(0f);
-		internalFilter.setActive(true);
-
-		hiCut.setFilterType(Filter.Type.HiCut);
-		hiCut.setFrequency(3600);
-		hiCut.setResonance(2f);
-		hiCut.setActive(true);
-
-		loCut.setFilterType(Filter.Type.LoCut);
-		loCut.setFrequency(50);
-		loCut.setResonance(1f);
-		loCut.setActive(true);
-
 		notes = new Polyphony(this, 0, POLYPHONY);
 		knobs = new SynthKnobs(this);
-		modWheel = new ModWheel(knobs, hiCut, loCut);
+		modWheel = new ModWheel(knobs, lowPass, highPass);
+
+		internalFilter.setActive(true);
+		lowPass.setActive(true);
+		highPass.setActive(true);
+
     }
 
     public TacoSynth(Trax type, ImageIcon picture, JudahClock clock) {
@@ -250,8 +239,8 @@ import net.judah.util.RTLogger;
         	voice.process(notes, adsr, left);
 
         internalFilter.process(left);
-        loCut.process(left);
-        hiCut.process(left);
+        highPass.process(left);
+        lowPass.process(left);
         fx();
         AudioTools.mix(left, outLeft);
         AudioTools.mix(right, outRight);

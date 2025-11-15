@@ -25,7 +25,7 @@ import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiPair;
 import net.judah.seq.Steps;
-import net.judah.seq.track.CCHandler;
+import net.judah.seq.automation.CCPopup;
 import net.judah.seq.track.MidiTrack;
 
 public class PianoSteps extends Steps implements MouseMotionListener, MouseListener, Size {
@@ -41,14 +41,14 @@ public class PianoSteps extends Steps implements MouseMotionListener, MouseListe
 	@Getter private float unit;
 
 	private Integer on, off;
-	private final CCHandler cc;
+	private final CCPopup cc;
 
 
 	public PianoSteps(PianoView view) {
 		this.view = view;
 		this.track = view.track;
 		this.clock = track.getClock();
-		this.cc = new CCHandler(track, this, false);
+		this.cc = new CCPopup(track, this, false);
 
 		addMouseMotionListener(this);
 		addMouseListener(this);
@@ -57,7 +57,7 @@ public class PianoSteps extends Steps implements MouseMotionListener, MouseListe
 	@Override
 	public void paint(Graphics g) {
 		super.paint(g);
-		int[] ccs = cc.populate();
+		int[] ccs = cc.populate(track.getLeft(), track.getWindow());
 		g.drawRect(0, 0, width, height);
 		int beats = clock.getTimeSig().beats;
 		int steps = clock.getSteps();

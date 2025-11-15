@@ -17,7 +17,7 @@ public class SynthPresets {
 		this.synth = synth;
 		this.adsr = synth.getAdsr();
 	}
-	
+
 	public boolean load(String name) {
 		try {
 			if (JudahZone.getSynthPresets().apply(name, this)) {
@@ -27,11 +27,11 @@ public class SynthPresets {
 		} catch (Throwable t) { RTLogger.warn(this, t); }
 		return false;
 	}
-	
+
 	public int getProg() {
 		return JudahZone.getSynthPresets().getProg(current);
 	}
-	
+
 	public void adsr(String[] dat) {
 		adsr.setAttackTime(Integer.parseInt(dat[0]));
 		adsr.setDecayTime(Integer.parseInt(dat[1]));
@@ -39,10 +39,10 @@ public class SynthPresets {
 		adsr.setReleaseTime(Integer.parseInt(dat[3]));
 	}
 	public void filter(String[] dat) {
-		synth.getHiCut().setFrequency(Float.parseFloat(dat[0]));
-		synth.getHiCut().setResonance(Float.parseFloat(dat[1]));
-		synth.getLoCut().setFrequency(Float.parseFloat(dat[2]));
-		synth.getLoCut().setResonance(Float.parseFloat(dat[3]));
+		synth.getLowPass().setFrequency(Float.parseFloat(dat[0]));
+		synth.getLowPass().setResonance(Float.parseFloat(dat[1]));
+		synth.getHighPass().setFrequency(Float.parseFloat(dat[2]));
+		synth.getHighPass().setResonance(Float.parseFloat(dat[3]));
 	}
 	public void dco(String name, String[] dat) {
 		int idx = Integer.parseInt(name.split(DASH)[1]);

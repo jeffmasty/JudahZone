@@ -39,6 +39,7 @@ import net.judah.seq.arp.RND;
 import net.judah.seq.arp.Racman;
 import net.judah.seq.arp.Up;
 import net.judah.seq.arp.UpDown;
+import net.judah.seq.automation.CC;
 import net.judah.seq.chords.Chord;
 import net.judah.seq.chords.ChordListener;
 import net.judah.seq.chords.ChordTrack;
@@ -153,7 +154,7 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 				if (((ShortMessage)on.getMessage()).getData1() != m.getData1())
 					continue;
 				used = on;
-				TabZone.getPianist(this).push(
+				TabZone.getPianist(this).push( // TODO atomic
 					new Edit(Type.NEW, new MidiPair(on, new MidiEvent(m, tick))));
 				break;
 			}

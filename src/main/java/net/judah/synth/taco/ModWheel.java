@@ -1,7 +1,6 @@
 package net.judah.synth.taco;
 
 import lombok.RequiredArgsConstructor;
-import net.judah.fx.Filter;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.SynthKnobs;
 import net.judah.util.Constants;
@@ -10,11 +9,11 @@ import net.judah.util.Constants;
 @RequiredArgsConstructor
 public class ModWheel {
 
-	private static final int RESONANCE = Filter.Settings.Resonance.ordinal();
+	private static final int RESONANCE = MonoFilter.Settings.Resonance.ordinal();
 
 	private final SynthKnobs knobs;
-	private final Filter lo;
-	private final Filter hi;
+	private final MonoFilter lo;
+	private final MonoFilter hi;
 
 	private Integer oldHi;
 	private Integer oldLo;

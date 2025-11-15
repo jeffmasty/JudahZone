@@ -10,15 +10,15 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.judah.fx.Chorus;
-import net.judah.fx.Delay;
 import net.judah.fx.Filter;
+import net.judah.fx.Delay;
 import net.judah.fx.Gain;
 import net.judah.fx.LFO;
 import net.judah.fx.Reverb;
 import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
-import net.judah.seq.MidiConstants;
-import net.judah.seq.MidiConstants.CC;
+import net.judah.seq.automation.CC;
+import net.judah.synth.taco.MonoFilter;
 import net.judah.util.Constants;
 
 @RequiredArgsConstructor
@@ -35,7 +35,7 @@ public class ChannelCC {
 				return false;
 			int val = (int) (msg.getData2() * Constants.TO_100);
 			LFO lfo = ch.getLfo2();
-			Filter filter = ch.getFilter2();
+			Filter filter = ch.getLoCut();
 
 			switch(type) {
 			case BALANCE:
@@ -43,7 +43,7 @@ public class ChannelCC {
 				ch.getGain().set(Gain.PAN, val);
 				break;
 			case BRIGHT:
-	        	filter.set(Filter.Settings.Resonance.ordinal(), val);
+	        	filter.set(MonoFilter.Settings.Resonance.ordinal(), val);
 	        	filter.setActive(val < thresholdHi);
 				break;
 			case CHORUS:
@@ -67,14 +67,14 @@ public class ChannelCC {
 				ch.getOverdrive().setActive(val > thresholdLo);
 				break;
 			case HZ:
-	        	filter.set(Filter.Settings.Frequency.ordinal(), val);
+	        	filter.set(MonoFilter.Settings.Frequency.ordinal(), val);
 	        	filter.setActive(val < thresholdHi);
 				break;
 			case LFO:
 				lfo.set(LFO.Settings.MSec.ordinal(), val);
 				break;
 			case LOCUT:
-				filter.setFilterType(msg.getData2() > MidiConstants.CUTOFF ? Filter.Type.LoCut : Filter.Type.HiCut);
+				filter.set(Filter.Settings.Type.ordinal(), val);
 				break;
 			case PHASER:
 				phaser(); // chorus preset

@@ -8,7 +8,7 @@ import lombok.Data;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.midi.Midi;
-import net.judah.seq.MidiConstants.CC;
+import net.judah.seq.automation.CC;
 import net.judah.song.Overview;
 import net.judah.util.Constants;
 

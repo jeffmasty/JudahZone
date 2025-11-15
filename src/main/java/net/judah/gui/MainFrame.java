@@ -63,6 +63,7 @@ import net.judah.seq.MidiConstants;
 import net.judah.seq.Musician;
 import net.judah.seq.Seq;
 import net.judah.seq.TrackList;
+import net.judah.seq.automation.Automation;
 import net.judah.seq.beatbox.DrumZone;
 import net.judah.seq.beatbox.RemapView;
 import net.judah.seq.chords.Chord;
@@ -71,7 +72,6 @@ import net.judah.seq.chords.ChordScroll;
 import net.judah.seq.chords.ChordTrack;
 import net.judah.seq.chords.Section;
 import net.judah.seq.chords.SectionCombo;
-import net.judah.seq.track.Automation;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
@@ -217,7 +217,7 @@ public class MainFrame extends JFrame implements Runnable {
     		effects.setFocus(ch);
     		mixer.highlight(ch);
     		update(o);
-    		if (knobMode == KnobMode.LFOz)
+    		if (knobMode == KnobMode.LFO)
     			knobPanel(ch.getLfoKnobs());
     		if (ch == drums)
     			knobPanel(drums.getKnobs());
@@ -311,7 +311,7 @@ public class MainFrame extends JFrame implements Runnable {
 				}
 			}
 			else if (o instanceof Sample samp) {
-				if (knobMode == KnobMode.Samplez)
+				if (knobMode == KnobMode.Sample)
 					sampler.getView().update(samp);
 			}
 			else if (o instanceof JudahClock) {
@@ -389,16 +389,16 @@ public class MainFrame extends JFrame implements Runnable {
     		case MIDI -> midiGui;
 			case Kitz -> drums.getKnobs();
 			case Track -> seq.getKnobs(seq.getCurrent());
-			case LFOz -> effects.getChannel().getLfoKnobs();
+			case LFO -> effects.getChannel().getLfoKnobs();
 			case Taco -> JudahZone.getTacos().taco.getKnobs();
-			case Samplez -> {focus(sampler); yield sampler.getView();}
+			case Sample -> {focus(sampler); yield sampler.getView();}
 			case Presets -> presets;
 			case Setlist -> setlists;
 			case Wavez -> new WaveKnobs(JudahZone.getSelected());
 			case Import -> ImportView.getInstance();
 			case Remap -> new RemapView();
 			case Log -> RTLogger.instance;
-			case Auto -> Automation.getInstance();
+			case Autom8 -> Automation.getInstance();
     	});
     }
 

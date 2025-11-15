@@ -87,10 +87,9 @@ public class Delay implements TimeEffect {
     }
 
     // in seconds
-    public static final float MAX_DELAY = 4.2f;
-    public static final float MIN_DELAY = 0.19f;
-    public static final float DIFF = MAX_DELAY - MIN_DELAY;
-    public static final float DEFAULT_TIME = .28f;
+    public static final float MAX_DELAY = 3.75f;
+    public static final float MIN_DELAY = 0.2f;
+    public static final float DEFAULT_TIME = .25f;
 
     @Getter private boolean active;
 	@Setter @Getter boolean sync;
@@ -133,33 +132,21 @@ public class Delay implements TimeEffect {
 
     @Override
     public int get(int idx) {
-        if (idx == Settings.DelayTime.ordinal()) {
-        	float ratio = (delayTime - MIN_DELAY) / DIFF;
-        	for (int i = 0; i < Constants.getReverseLog().length; i++)
-        		if (ratio < Constants.getReverseLog()[i])
-        			return i;
-        	return 0;
-        }
+        if (idx == Settings.DelayTime.ordinal())
+        	return Constants.reverseLog(delayTime, MIN_DELAY, MAX_DELAY);
         if (idx == Settings.Feedback.ordinal())
             return Math.round(getFeedback() * 100);
         if (idx == Settings.Type.ordinal())
         	return TimeEffect.indexOf(type);
         if (idx == Settings.Sync.ordinal())
         	return sync ? 1 : 0;
-
         throw new InvalidParameterException();
     }
 
     @Override
     public void set(int idx, int value) {
-        if (idx == Settings.DelayTime.ordinal()) {
-        	value -= 2;
-        	if (value < 0)
-        		value = 0;
-        	if (value > 99)
-        		value = 99;
-        	setDelayTime(Constants.getReverseLog()[value] * DIFF + MIN_DELAY);
-        }
+        if (idx == Settings.DelayTime.ordinal())
+        	setDelayTime(Constants.logarithmic(value, MIN_DELAY, MAX_DELAY));
         else if (idx == Settings.Feedback.ordinal())
             setFeedback(value / 100f);
         else if (idx == Settings.Type.ordinal() && value < TimeEffect.TYPE.length)

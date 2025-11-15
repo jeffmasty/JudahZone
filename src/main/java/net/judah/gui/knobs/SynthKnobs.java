@@ -1,6 +1,6 @@
 package net.judah.gui.knobs;
 
-import static net.judah.fx.Filter.Settings.Resonance;
+import static net.judah.synth.taco.MonoFilter.Settings.Resonance;
 import static net.judah.synth.taco.TacoSynth.DCO_COUNT;
 
 import java.awt.Color;
@@ -24,7 +24,6 @@ import javax.swing.SwingUtilities;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
-import net.judah.fx.Filter;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
@@ -38,6 +37,7 @@ import net.judah.gui.widgets.Slider;
 import net.judah.omni.Icons;
 import net.judah.omni.Threads;
 import net.judah.synth.taco.Adsr;
+import net.judah.synth.taco.MonoFilter;
 import net.judah.synth.taco.Shape;
 import net.judah.synth.taco.TacoSynth;
 import net.judah.util.Constants;
@@ -143,8 +143,8 @@ public class SynthKnobs extends KnobPanel {
 		add(wrap);
 
 
-		int ordinal = Filter.Settings.Frequency.ordinal();
-		filter = new DoubleSlider(synth.getLoCut(), ordinal, synth.getHiCut(), ordinal);
+		int ordinal = MonoFilter.Settings.Frequency.ordinal();
+		filter = new DoubleSlider(synth.getHighPass(), ordinal, synth.getLowPass(), ordinal);
 		JPanel res = new JPanel();
 		res.setLayout(new BoxLayout(res, BoxLayout.LINE_AXIS));
 		res.add(Box.createHorizontalStrut(10));
@@ -210,18 +210,18 @@ public class SynthKnobs extends KnobPanel {
 		s.addListener(e-> adsr.setSustainGain(s.getValue() * 0.01f));
 		r.addListener(e->adsr.setReleaseTime(rFactor * r.getValue()));
 
-		hcReso.addListener(data2 ->  synth.getHiCut().set(Resonance.ordinal(), data2));
-		lcReso.addListener(data2 ->  synth.getLoCut().set(Resonance.ordinal(), data2));
+		hcReso.addListener(data2 ->  synth.getLowPass().set(Resonance.ordinal(), data2));
+		lcReso.addListener(data2 ->  synth.getHighPass().set(Resonance.ordinal(), data2));
 		if (synth.getModSemitones() != (int)mod.getSelectedItem())
 				mod.setSelectedItem(synth.getModSemitones());
 	}
 
 	@Override
 	public void update() {
-		if (hcReso.getValue() != synth.getHiCut().get(Resonance.ordinal()))
-			hcReso.setValue(synth.getHiCut().get(Resonance.ordinal()));
-		if (lcReso.getValue() != synth.getLoCut().get(Resonance.ordinal()))
-			lcReso.setValue((synth.getLoCut().get(Resonance.ordinal())));
+		if (hcReso.getValue() != synth.getLowPass().get(Resonance.ordinal()))
+			hcReso.setValue(synth.getLowPass().get(Resonance.ordinal()));
+		if (lcReso.getValue() != synth.getHighPass().get(Resonance.ordinal()))
+			lcReso.setValue((synth.getHighPass().get(Resonance.ordinal())));
 		filter.update();
 		for (int i = 0; i < DCO_COUNT; i++)
 			checkGain(gains.get(i), i);
@@ -318,15 +318,15 @@ public class SynthKnobs extends KnobPanel {
 				break;
 			case 6:
 				if (freqMode)
-					synth.getLoCut().setFrequency(Filter.knobToFrequency(data2));
+					synth.getHighPass().setFrequency(MonoFilter.knobToFrequency(data2));
 				else
-					synth.getLoCut().set(Filter.Settings.Resonance.ordinal(), data2);
+					synth.getHighPass().set(MonoFilter.Settings.Resonance.ordinal(), data2);
 				break;
 			case 7:
 				if (freqMode)
-					synth.getHiCut().setFrequency(Filter.knobToFrequency(data2));
+					synth.getLowPass().setFrequency(MonoFilter.knobToFrequency(data2));
 				else
-					synth.getHiCut().set(Filter.Settings.Resonance.ordinal(), data2);
+					synth.getLowPass().set(MonoFilter.Settings.Resonance.ordinal(), data2);
 				break;
 			default:
 				return false;

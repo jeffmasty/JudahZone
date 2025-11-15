@@ -1,17 +1,15 @@
 package net.judah.mixer;
 
-import static net.judah.util.Constants.STEREO;
-
 import java.util.ArrayList;
 
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.fx.Chorus;
 import net.judah.fx.Compressor;
+import net.judah.fx.Filter;
 import net.judah.fx.Delay;
 import net.judah.fx.EQ;
 import net.judah.fx.Effect;
-import net.judah.fx.Filter;
 import net.judah.fx.Freeverb;
 import net.judah.fx.LFO;
 import net.judah.fx.Overdrive;
@@ -32,8 +30,9 @@ import net.judah.util.RTLogger;
 @Getter
 public abstract class Channel extends FxChain implements Presets {
 
-    protected final Filter filter1 = new Filter(STEREO, Filter.Type.pArTy, 700);
-    protected final Filter filter2 = new Filter(STEREO, Filter.Type.HiCut, 16000);
+	protected final Filter hiCut = new Filter(true);
+	protected final Filter loCut = new Filter(false);
+	protected final DJFilter djFilter = new DJFilter(this, hiCut, loCut);
     protected final EQ eq = new EQ();
     protected final Compressor compression = new Compressor();
     protected final Overdrive overdrive = new Overdrive();
@@ -41,7 +40,7 @@ public abstract class Channel extends FxChain implements Presets {
     protected Reverb reverb = new Freeverb();
 	protected final Delay delay = new Delay();
     protected final LFO lfo = new LFO(this);
-    protected final LFO lfo2 = new LFO(this, LFO.Target.Filter);
+    protected final LFO lfo2 = new LFO(this, LFO.Target.pArTy);
 	protected Preset preset = JudahZone.getPresets().getDefault();
 	protected boolean presetActive;
 
@@ -51,7 +50,7 @@ public abstract class Channel extends FxChain implements Presets {
     public Channel(String name, boolean isStereo) {
     	super(name, isStereo);
         Effect[] order = new Effect[] {
-        		filter1, filter2, eq, compression, overdrive, chorus, reverb, delay, lfo, lfo2};
+        		hiCut, loCut, eq, compression, delay, overdrive, chorus, reverb, lfo, lfo2};
         for (Effect fx : order)
         	add(fx);
     }

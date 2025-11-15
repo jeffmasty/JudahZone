@@ -192,7 +192,19 @@ public class JudahZone extends BasicClient {
 		// now the system is live //
 		////////////////////////////
 		RTLogger.log(this, "Greetings Prof. Falken.");
+
+//		test();
+
 	}
+
+//	private void test() {
+//		CutFilter fx = guitar.getHiCut();
+//		for (int i = 0; i <= 100; i++) {
+//			fx.set(0, i);
+//
+//			RTLogger.log(this, i + " " + fx.getdB() + " " + fx.get(i));
+//		}
+//	}
 
 	/** put algorithms through their paces */
 	public static void justInTimeCompiler() {
@@ -205,7 +217,7 @@ public class JudahZone extends BasicClient {
 		mains.setOnMute(false);
 		mic.getReverb().setActive(true);
 		final Effect[] fx = { guitar.getReverb(), guitar.getDelay(), guitar.getChorus(), guitar.getLfo(),
-				guitar.getEq(), guitar.getFilter1(), guitar.getFilter2(), guitar.getCompression() };
+				guitar.getEq(), guitar.getHiCut(), guitar.getLoCut(), guitar.getCompression() };
 		for (Effect effect : fx)
 			effect.setActive(true);
 		looper.trigger(looper.getLoopC());

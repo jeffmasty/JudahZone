@@ -38,9 +38,9 @@ public class ChannelTitle extends JPanel {
 		mute = (channel instanceof LineIn) ? new Btn("tape", e->((LineIn)channel).setMuteRecord(!((LineIn)channel).isMuteRecord())) :
 			new Btn("mute", e->channel.setOnMute(!channel.isOnMute()));
 		lfo = new Btn("lfo", e->{
-			if (MainFrame.getKnobMode() == KnobMode.LFOz)
+			if (MainFrame.getKnobMode() == KnobMode.LFO)
 				channel.getLfo().setActive(!channel.getLfo().isActive());
-			else MainFrame.setFocus(KnobMode.LFOz);});
+			else MainFrame.setFocus(KnobMode.LFO);});
 		Btn wav = new Btn("wav", e->MainFrame.setFocus(KnobMode.Wavez));
 		mute.setFont(Gui.FONT10);
 		lfo.setFont(Gui.FONT10);

@@ -13,9 +13,9 @@ import javax.swing.JPanel;
 import lombok.Getter;
 import net.judah.controllers.MPKTools;
 import net.judah.fx.Chorus;
+import net.judah.fx.Filter;
 import net.judah.fx.Delay;
 import net.judah.fx.EQ;
-import net.judah.fx.Filter;
 import net.judah.fx.Gain;
 import net.judah.fx.Overdrive;
 import net.judah.fx.Reverb;
@@ -23,7 +23,6 @@ import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.settable.PresetsHandler;
-import net.judah.gui.widgets.FilterType;
 import net.judah.gui.widgets.Slider;
 import net.judah.looper.Looper;
 import net.judah.mixer.Channel;
@@ -41,8 +40,6 @@ public class EffectsRack extends JPanel implements MPKTools {
     private final Slider.FxSlider phase;
     private final Slider.FxSlider dampness;
     private final Slider.FxSlider clipping;
-    private final FilterType filter1;
-    private final FilterType filter2;
 
     public EffectsRack(Channel channel, Looper looper) {
         this.channel = channel;
@@ -51,8 +48,6 @@ public class EffectsRack extends JPanel implements MPKTools {
         phase = new Slider.FxSlider(channel.getChorus(), Chorus.Settings.Phase.ordinal(), "Phase");
         dampness = new Slider.FxSlider(channel.getReverb(), Reverb.Settings.Damp.ordinal(), "Dampness");
         clipping = new Slider.FxSlider(channel.getOverdrive(), Overdrive.Settings.Clipping.ordinal(), "Clipping");
-        filter1 = new FilterType(channel.getFilter1(), channel);
-        filter2 = new FilterType(channel.getFilter2(), channel);
 
 		// wet  room   d.time  d.fb
 		// cho1 cho2   cho3    O/D
@@ -85,8 +80,8 @@ public class EffectsRack extends JPanel implements MPKTools {
         lbls = new Row(channel);
         components = lbls.getControls();
         components.add(presets);
-        components.add(filter1);
-        components.add(filter2);
+        components.add(new FxTrigger("HiCut", channel.getHiCut(), channel));
+        components.add(new FxTrigger("LoCut", channel.getLoCut(), channel));
         components.add(new FxTrigger("Volume", channel.getGain(), channel));
         labels.add(lbls);
 
@@ -127,8 +122,6 @@ public class EffectsRack extends JPanel implements MPKTools {
         phase.update();
         dampness.update();
         clipping.update();
-        filter1.update();
-        filter2.update();
         repaint();
     }
 
@@ -202,17 +195,21 @@ public class EffectsRack extends JPanel implements MPKTools {
         	presets.increment(up);
         	break;
         case 13:
-        	Filter filter = channel.getFilter1();
-        	int freak = Filter.frequencyToKnob(filter.getFrequency());
-        	freak = offset(freak, up);
-        	filter.setFrequency(Filter.knobToFrequency(freak));
-        	filter.setActive(freak < thresholdHi);
-			break;
+        	Filter hiCut = channel.getHiCut();
+        	int hiNext = offset(hiCut.get(Filter.Settings.Hz.ordinal()), up);
+//        	int joystick = offset(hiCut.get(DJFilter.Settings.Joystick.ordinal()), up);
+        	hiCut.set(Filter.Settings.Hz.ordinal(), hiNext);
+        	hiCut.setActive(hiNext < 100);
+        	break;
         case 14:
-        	Filter filter2 = channel.getFilter2();
-        	int hz = offset(Filter.frequencyToKnob(filter2.getFrequency()), up);
-        	filter2.setFrequency(Filter.knobToFrequency(hz));
-        	filter2.setActive(hz < thresholdHi);
+        	Filter loCut = channel.getLoCut();
+        	int loNext = offset(loCut.get(Filter.Settings.Hz.ordinal()), up);
+        	loCut.set(Filter.Settings.Hz.ordinal(), loNext);
+//        	FilterType type = loCut.get(CutFilter.Settings.Type.ordinal()) > 0 ? FilterType.HighPass : FilterType.LowPass;
+//        	if (type == FilterType.HighPass)
+        		loCut.setActive(loNext > 0);
+//        	else
+//        		loCut.setActive(loNext < 100);
         	break;
         case 15:
         	channel.getGain().set(Gain.VOLUME, offset(channel.getVolume(), up));

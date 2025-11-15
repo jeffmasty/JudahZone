@@ -1,4 +1,4 @@
-package net.judah.seq.track;
+package net.judah.seq.automation;
 
 import java.awt.Dimension;
 
@@ -15,14 +15,14 @@ import javax.swing.ListSelectionModel;
 
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
-import net.judah.gui.TabZone;
 import net.judah.gui.widgets.Btn;
 import net.judah.midi.Midi;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiPair;
-import net.judah.seq.track.Automation.AutoBox;
+import net.judah.seq.automation.Automation.AutoBox;
+import net.judah.seq.track.MidiTrack;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -33,7 +33,6 @@ class ProgramEdit extends AutoBox implements MidiConstants {
 			instance = new ProgramEdit();
 		return instance;
 	}
-	private MidiTrack track;
 	private MidiEvent existing;
 
 	private final Btn update = new Btn("Publish", e->publish());
@@ -41,8 +40,6 @@ class ProgramEdit extends AutoBox implements MidiConstants {
 	private final Btn exe = new Btn("Exe", e->exe());
 	private final JList<String> list = new JList<String>();
 	private final Tick tick = new Tick();
-
-
 
 	private ProgramEdit() {
 		super(BoxLayout.PAGE_AXIS);
@@ -73,8 +70,7 @@ class ProgramEdit extends AutoBox implements MidiConstants {
 
 	}
 
-	protected ProgramEdit edit(MidiTrack t, MidiEvent e) {
-		setTrack(t);
+	protected ProgramEdit edit(MidiEvent e) {
 		existing = e;
 		list.setSelectedIndex(((ShortMessage)e.getMessage()).getData1());
 		tick.quantizable(e.getTick());
@@ -82,9 +78,7 @@ class ProgramEdit extends AutoBox implements MidiConstants {
 		return this;
 	}
 
-	@Override
-	protected ProgramEdit init(MidiTrack t, long time) {
-		setTrack(t);
+	@Override protected ProgramEdit init(long time) {
 		existing = null;
 		list.setSelectedIndex(0);
 		tick.quantizable(time);
@@ -92,7 +86,7 @@ class ProgramEdit extends AutoBox implements MidiConstants {
 		return this;
 	}
 
-	private void setTrack(MidiTrack t) {
+	@Override protected void setTrack(MidiTrack t) {
 		track = t;
 		tick.setTrack(t);
 		String[] source = t.getMidiOut().getPatches();
@@ -109,12 +103,12 @@ class ProgramEdit extends AutoBox implements MidiConstants {
 			if (existing == null) {
 				target = new MidiEvent(build(), tick.getTick());
 				Edit create = new Edit(Type.NEW, new MidiPair(target, null));
-				TabZone.getMusician(track).push(create);
+				getMusician(track).push(create);
 				delete.setEnabled(true);
 			} else {
 				target = new MidiEvent(build(), tick.getTick());
 				Edit mod = new Edit(Type.MOD, new MidiPair(existing, target));
-				TabZone.getMusician(track).push(mod);
+				getMusician(track).push(mod);
 			}
 			existing = target;
 
@@ -134,7 +128,7 @@ class ProgramEdit extends AutoBox implements MidiConstants {
 	private void delete() {
 		if (existing == null) return;
 		Edit edit = new Edit(Type.DEL, new MidiPair(existing, null));
-		TabZone.getMusician(track).push(edit);
+		getMusician(track).push(edit);
 		delete.setEnabled(false);
 	}
 	private ShortMessage build() throws InvalidMidiDataException {

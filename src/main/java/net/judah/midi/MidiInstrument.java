@@ -15,6 +15,7 @@ import net.judah.JudahZone;
 import net.judah.api.ZoneMidi;
 import net.judah.mixer.Instrument;
 import net.judah.seq.MidiConstants;
+import net.judah.seq.automation.CC;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.util.RTLogger;
@@ -64,7 +65,7 @@ public class MidiInstrument extends Instrument implements ZoneMidi {
 			}
 		if (out == null)
 			out = tracks.getFirst();
-		if (MidiConstants.CC.PEDAL.matches(shrt)) { // Pedal listening
+		if (CC.PEDAL.matches(shrt)) { // Pedal listening
 			out.getPedal().setPressed(msg.getData2() > MidiConstants.CUTOFF);
 			return; // if (!fwd)
 		}

@@ -22,15 +22,29 @@ public class MidiFile extends Sequence {
 			resolution = rez;
 	}
 
-	int biggest() {
-		int events = 0;
-		int idx = 0;
-		for (int i = 0; i < getTracks().length; i++)
-			if (getTracks()[i].size() > events) {
-				idx = i;
-				events = getTracks()[i].size();
-			}
-		return idx;
-	}
 
+	// Add Track (Name, Instrument(MidiOut) or Line(Auto-Only)
+	// Remove Track
+	// Rename Track
+	// Copy
+	//
+	// 0 Mains
+	// // // //
+	// 1 Bass
+	// 2 Taco
+	// 3 Tk2
+	// 4 F1
+	// 5 F2
+	// 6 F3
+
+	// 7 L/T/F
+	// 8 L/T/F
+	// 9 D1		//
+	// 10 D2	//
+	// 11 H1	//
+	// 12 H2	//
+	// 13 L/T/F
+	// 14 L/T/F
+	// 15 L/T/F
+	// Chords
 }

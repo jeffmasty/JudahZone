@@ -149,10 +149,10 @@ public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Contro
 		}
 
 		else if (data1 == PRIMARY_CC.get(6) && data2 > 0 ) {
-			if (MainFrame.getKnobMode() == KnobMode.LFOz)
+			if (MainFrame.getKnobMode() == KnobMode.LFO)
 				((LFOKnobs)MainFrame.getKnobs()).upperLower();
 			else
-				MainFrame.setFocus(KnobMode.LFOz);
+				MainFrame.setFocus(KnobMode.LFO);
 		}
 		else if (data1 == PRIMARY_CC.get(7) && data2 > 0) { // SET SettableCombo
 			MainFrame.set();
@@ -174,7 +174,7 @@ public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Contro
 	}
 
 	private final KnobMode[] midiBtnSequence = new KnobMode[]
-			{ MIDI, Setlist, Samplez, Presets, Wavez, Log };
+			{ MIDI, Setlist, Sample, Presets, Wavez, Log };
 
 	private void nextMidiBtn() {
 		KnobMode mode = MainFrame.getKnobMode();
@@ -193,7 +193,6 @@ public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Contro
 	}
 
 	private boolean joystickL(int data2) { // delay
-
 		Delay d = ((Channel)midiOut.getMidiOut()).getDelay();
 		d.setActive(data2 > 4);
 		if (data2 <= 4)
@@ -209,7 +208,6 @@ public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Contro
 		MainFrame.update(midiOut);
 		midiOut.send( Midi.create(Midi.CONTROL_CHANGE, 0, 1,
 				data2 > 4 ? data2 : 0), JudahMidi.ticker());
-
 		return true;
 	}
 

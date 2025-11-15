@@ -149,9 +149,9 @@ public class TabZone extends CloseableTabbedPane {
 	}
 
 	public static Piano getPianist(PianoTrack t) {
-		if (instance.getPiano(t) != null)
-			return instance.getPiano(t).getGrid();
-		return null;
+		if (instance.getPiano(t) == null)
+			return null;
+		return instance.getPiano(t).getGrid();
 	}
 
 	public PianoView getPiano(PianoTrack it) {

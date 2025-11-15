@@ -12,7 +12,7 @@ import net.judah.omni.Pair;
 
 public class FxTrigger extends JLabel {
 
-		final Effect fx;
+		protected final Effect fx;
 		FxTrigger(Pair p, Channel ch) {
 			this(p.key(), p.value() instanceof Effect ? (Effect)p.value() : null, ch);
 		}

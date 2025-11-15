@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Scanner;
 
 import lombok.Getter;
-import net.judah.fx.Filter;
 import net.judah.gui.MainFrame;
 import net.judah.omni.Threads;
 import net.judah.util.Constants;
@@ -124,8 +123,8 @@ public class SynthDB extends HashMap<String, String> {
 		buf.append(env.getAttackTime()).append(SPLIT).append(env.getDecayTime()).append(SPLIT);
 		buf.append(env.getSustainGain()).append(SPLIT).append(env.getReleaseTime()).append(Constants.NL);
 		buf.append(OPEN).append(FILTER).append(CLOSE);
-		Filter hi = synth.getHiCut();
-		Filter lo = synth.getLoCut();
+		MonoFilter hi = synth.getLowPass();
+		MonoFilter lo = synth.getHighPass();
 		buf.append(hi.getFrequency()).append(SPLIT).append(hi.getResonance()).append(SPLIT);
 		buf.append(lo.getFrequency()).append(SPLIT).append(lo.getResonance()).append(Constants.NL);
 

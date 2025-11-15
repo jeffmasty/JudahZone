@@ -10,6 +10,7 @@ import javax.swing.table.DefaultTableModel;
 import net.judah.JudahZone;
 import net.judah.midi.Midi;
 import net.judah.seq.MidiConstants;
+import net.judah.seq.automation.Meta;
 import net.judah.seq.track.MidiTrack;
 
 /* MidiFile Import Table

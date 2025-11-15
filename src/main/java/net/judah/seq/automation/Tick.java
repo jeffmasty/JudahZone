@@ -1,4 +1,4 @@
-package net.judah.seq.track;
+package net.judah.seq.automation;
 
 import java.awt.GridLayout;
 import java.awt.event.ActionListener;
@@ -14,13 +14,17 @@ import javax.swing.border.Border;
 
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
+import net.judah.gui.widgets.Integers;
+import net.judah.seq.track.MidiTrack;
 import net.judah.util.Constants;
 
 public class Tick extends JPanel {
+
+	private static final Integer[] FRAMES = Integers.generate(1, 99);
 	private static final Border GREEN = BorderFactory.createEtchedBorder(Pastels.GREEN, Pastels.MY_GRAY);
 
 	private MidiTrack track;
-	JComboBox<Integer> frame = new JComboBox<Integer>();
+	JComboBox<Integer> frame = new JComboBox<Integer>(FRAMES);
 	JComboBox<Integer> beat = new JComboBox<Integer>();
 	JComboBox<Integer> step = new JComboBox<Integer>();
 	JTextField ticks = new JTextField(6);
@@ -119,8 +123,8 @@ public class Tick extends JPanel {
 
 	void setTrack(MidiTrack t) {
 		track = t;
-		if (frame.getItemCount() != track.getFrames())
-			reload(frame, 0, track.getFrames(), track.getFrame());
+
+		frame.setSelectedItem(t.getFrame());
 
 		int beats = 2 * track.getClock().getTimeSig().beats;
 		if (beat.getItemCount() != beats)
@@ -140,7 +144,7 @@ public class Tick extends JPanel {
 	}
 
 	public void frameKnob(int value) {
-		frame.setSelectedIndex(Constants.ratio(value, track.getFrames() - 1));
+		frame.setSelectedIndex(Constants.ratio(value, 99) + 1);
 	}
 
 }
