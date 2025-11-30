@@ -9,8 +9,8 @@ import net.judah.util.Constants;
 
 @RequiredArgsConstructor
 public class Dco {
-	private final int SAMPLE_RATE = Constants.sampleRate();
-	private final int BUF_SIZE = Constants.bufSize();
+	private final int SAMPLE_RATE = Constants.sampleRate() * TacoSynth.OVERSAMPLE;
+	private final int BUF_SIZE = Constants.bufSize() * TacoSynth.OVERSAMPLE;
 	private final int idx;
 	private final TacoSynth synth;
 

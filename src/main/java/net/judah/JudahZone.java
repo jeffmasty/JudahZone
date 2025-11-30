@@ -10,7 +10,6 @@ import java.io.Closeable;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
@@ -104,7 +103,7 @@ public class JudahZone extends BasicClient {
 
 	public static void main(String[] args) {
 		DOMConfigurator.configure(Folders.getLog4j().getAbsolutePath());
-		 RTLogger.setLevel(Level.DEBUG);
+		// RTLogger.setLevel(Level.DEBUG);
 		try {
 			new JudahZone();
 		} catch (Exception e) { e.printStackTrace(); }

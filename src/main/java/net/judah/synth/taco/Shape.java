@@ -69,7 +69,7 @@ public enum Shape { // TODO Amp/Duty/PULSE_MOD
 		public static float[] rnd(float[] wave) {
 			Random random = new Random(System.currentTimeMillis());
 			for (int i = 0; i < wave.length; i++)
-				wave[i] = random.nextFloat() * 2 * DUTY_FACTOR - DUTY_FACTOR;
+				wave[i] = random.nextFloat() * 2 * DUTY_FACTOR - DUTY_FACTOR; // ??
 			return wave;
 		}
 	}

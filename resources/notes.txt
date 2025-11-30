@@ -32,12 +32,6 @@ sidechain
 Setup Modules: Channels, Controllers  Jamstik, Fluid  MidiMapper?
 Beatstep taco tracks
 
---downsampling synth:--
-(take before/after recordings)
-upsample waves
-low pass filter at 18k 
-decimate samples
-
 JudahScope 
 Play Menus  data          [x]
   [  _-^-_  Wave _-^-_    ]
@@ -219,6 +213,7 @@ Multi-Document Interface
 ImportMidi table/remap
 Midi CC Automation
 Add/Remove/Rename Midi Tracks
+TacoSynth anti-aliasing
 
 
 REFERENCE------------------------------------------------------------

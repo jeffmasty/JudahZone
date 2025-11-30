@@ -18,24 +18,22 @@ import net.judah.midi.ChannelCC;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
 import net.judah.omni.AudioTools;
-import net.judah.seq.Meta;
-import net.judah.seq.SynthRack.RegisteredSynths;
 import net.judah.seq.automation.CC;
 import net.judah.seq.track.PianoTrack;
 import net.judah.synth.taco.MonoFilter.Type;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
-
 public class TacoSynth extends PianoTrack {
 
+	public static final int OVERSAMPLE = 4; // anti-aliasing
 	public static final int POLYPHONY = 24;
 	public static final int DCO_COUNT = 3;
 	public static final int ZERO_BEND = 8192;
 
 	protected final FloatBuffer mono = FloatBuffer.wrap(new float[Constants.bufSize()]);
-    // TODO protected final FloatBuffer stereo = FloatBuffer.wrap(new float[Constants.bufSize()]);
-	// Pan DCOs
+	protected final FloatBuffer upsample = FloatBuffer.wrap(new float[Constants.bufSize() * OVERSAMPLE]);
+    // TODO Pan DCOs: protected final FloatBuffer stereo = FloatBuffer.wrap(new float[Constants.bufSize()]);
 
 	@Getter private final Adsr adsr = new Adsr();
     private final Polyphony notes;
@@ -45,14 +43,13 @@ public class TacoSynth extends PianoTrack {
     private final ModWheel modWheel;
     /** modwheel pitchbend semitones */
     @Getter @Setter private int modSemitones = 1;
-    private final MonoFilter internalFilter = new MonoFilter(Type.HiCut, 15500);
-    @Getter private final MonoFilter highPass = new MonoFilter(Type.LoCut, 50);
-	@Getter private final MonoFilter lowPass = new MonoFilter(Type.HiCut, 3600);
-//	@Getter private String synthPreset;
+    private final MonoFilter internalFilter = new MonoFilter(Type.HiCut, 16500, OVERSAMPLE);
+    @Getter private final MonoFilter highPass = new MonoFilter(Type.LoCut, 50, 1);
+	@Getter private final MonoFilter lowPass = new MonoFilter(Type.HiCut, 3600, 1);
     @Getter private SynthKnobs knobs;
     private ChannelCC cc;
 
-	// TODO: up/down sample, portamento/glide, LFOs, PWM, mono- vs. polysynth, true stereo, envelope to filter
+	// TODO: portamento/glide, LFOs, PWM, mono- vs. polysynth, true stereo, envelope to filter
 	/** Taco stands for Track-Controlled Oscillator */
 	public TacoSynth(String name, TacoTruck truck, Polyphony notes) throws InvalidMidiDataException {
 		this(name, truck, truck.getTracks().size(), notes);
@@ -61,12 +58,10 @@ public class TacoSynth extends PianoTrack {
 	public TacoSynth(String name, TacoTruck truck, int ch, Polyphony notes) throws InvalidMidiDataException {
 		super(name, notes);
 		this.notes = notes;
-		for (int i = 0; i < notes.voices.length; i++)
-			notes.voices[i] = new Voice(this);
-
-
 		cc = new ChannelCC(truck); // multiple against the truck
 
+		for (int i = 0; i < notes.voices.length; i++)
+			notes.voices[i] = new Voice(this);
 		for (int i = 0; i < dcoGain.length; i++)
 			dcoGain[i] = 0.50f;
 		for (int i = 0; i < detune.length; i++)
@@ -74,10 +69,6 @@ public class TacoSynth extends PianoTrack {
 
 		modWheel = new ModWheel(this, lowPass, highPass);
 
-		internalFilter.setActive(true);
-		lowPass.setActive(true);
-		highPass.setActive(true);
-		meta.setString(Meta.DEVICE, RegisteredSynths.Taco.name());
 		knobs = new SynthKnobs(this);
 	}
 
@@ -127,13 +118,6 @@ public class TacoSynth extends PianoTrack {
 		List<String> result = JudahZone.getSynthPresets().keys();
 		return result.toArray(new String[result.size()]);
 	}
-
-
-//	public String getProg(int ch) {
-//		if (synthPresets.getCurrent() == null)
-//			return "none";
-//		return synthPresets.getCurrent();
-//	}
 
 	@Override public void send(MidiMessage midi, long timeStamp) {
 		if (midi instanceof MetaMessage)
@@ -224,13 +208,25 @@ public class TacoSynth extends PianoTrack {
 	/////////////////////////////////
 	//     PROCESS AUDIO           //
 	/////////////////////////////////
+	///
+	///	  1. voice DCOs upsampled
+	///   2. anti-alias filter
+	///   3. decimate to mono
+	///	  4. preset filters
 	public void process() {
-        AudioTools.silence(mono);
+        AudioTools.silence(upsample);
         for (Voice voice : notes.voices)
-        	voice.process(notes, adsr, mono);
-        internalFilter.process(mono);
+        	voice.process(notes, adsr, upsample);
+        internalFilter.process(upsample);
+        decimate();
         highPass.process(mono);
         lowPass.process(mono);
+	}
+
+	private void decimate() {
+		mono.rewind();
+		for (int i= 0; i < mono.capacity(); i++)
+			mono.put(upsample.get(i * OVERSAMPLE));
 	}
 
 }
