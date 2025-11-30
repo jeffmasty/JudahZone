@@ -23,7 +23,6 @@ import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiPair;
-import net.judah.seq.Prototype;
 import net.judah.seq.automation.Automation.AutoBox;
 import net.judah.seq.track.MidiTrack;
 import net.judah.util.Constants;
@@ -39,11 +38,9 @@ class CCEdit extends AutoBox implements MidiConstants {
 	}
 
 	private CCData existing;
-	private Edit undo;
 
 	private final JComboBox<CC> cc = new JComboBox<CC>(CC.ORDERED);
 	private final Btn create = new Btn("New", e->create());
-	private final Btn change = new Btn("Change", e->change());
 	private final Btn delete = new Btn("Delete", e->delete());
 	private final Btn exe = new Btn("Exe", e->exe());
 
@@ -63,7 +60,6 @@ class CCEdit extends AutoBox implements MidiConstants {
 		Box btns = new Box(BoxLayout.LINE_AXIS);
 		btns.add(cc);
 		btns.add(create);
-		btns.add(change);
 		btns.add(delete);
 		btns.add(exe);
 
@@ -112,14 +108,12 @@ class CCEdit extends AutoBox implements MidiConstants {
  		cc.setSelectedItem(data.type());
  		steps.quantizable(data.e().getTick());
  		val.set(((ShortMessage)data.e().getMessage()).getData2());
- 		change.setEnabled(true);
  		delete.setEnabled(true);
  		return this;
  	}
 
 	@Override public CCEdit init(long tick) {
 		existing = null;
-		change.setEnabled(false);
 		delete.setEnabled(false);
 		cc.setSelectedItem(CC.VOLUME);
 		steps.quantizable(tick);
@@ -146,7 +140,7 @@ class CCEdit extends AutoBox implements MidiConstants {
 			MidiEvent evt = new MidiEvent(msg, steps.getTick());
 			CC type = (CC)cc.getSelectedItem();
 			existing = new CCData(evt, type);
-	 		undo = new Edit(Type.NEW, new MidiPair(evt, null));
+	 		Edit edit = new Edit(Type.NEW, new MidiPair(evt, null));
 	 		if (automation.isSelected()) {
 	 			// generate and add messages
 	 			int count;
@@ -162,47 +156,22 @@ class CCEdit extends AutoBox implements MidiConstants {
 	 				int data2 = val.get() + Math.round(step * mod);
 	 				long ticker = steps.getTick() + Math.round(step * interval);
 	 				ShortMessage unit = new ShortMessage(Midi.CONTROL_CHANGE, track.getCh(), type.data1, data2);
-	 				undo.getNotes().add(new MidiPair(new MidiEvent(unit, ticker), null));
+	 				edit.getNotes().add(new MidiPair(new MidiEvent(unit, ticker), null));
 	 			}
 			}
-	 		getMusician(track).push(undo);
-			change.setEnabled(true);
+	 		getMusician(track).push(edit);
 	 		delete.setEnabled(true);
 		} catch (Throwable t) {
 			RTLogger.warn(this, t);
 		}
 	}
 
-	void change() {
-		if (existing == null) {
-			create();
-			return;
-		}
-		try {
-			ShortMessage target = build();
-			Edit mod = new Edit(Type.MOD, new MidiPair(existing.e(), new MidiEvent(target, steps.getTick())));
-			if (automation.isSelected()) {
-				mod.setDestination(new Prototype(val2.get(), steps2.getTick()));
-				if (undo != null)
-					; // TODO
-
-			}
-			getMusician(track).push(mod);
-		}
-		catch (InvalidMidiDataException ie) {
-			RTLogger.warn(this, ie);
-		}
-	}
 
 	void delete() {
-		if (undo != null) {
-			Edit del = new Edit(Type.DEL, undo.getNotes());
-			getMusician(track).push(del);
-			undo = null;
+		if (existing == null) {
+			RTLogger.warn(this, "Delete enabled but nothing to delete");
 			return;
 		}
-		if (existing == null)
-			return;
 		Edit edit = new Edit(Type.DEL, new MidiPair(existing.e(), null));
 		if (automation.isSelected()) {
 			// TODO
@@ -224,10 +193,7 @@ class CCEdit extends AutoBox implements MidiConstants {
 	}
 
 	@Override protected void pad1() {
-		if (change.isEnabled())
-			change();
-		else
-			create();
+		create();
 	}
 
 	@Override protected void pad2() {

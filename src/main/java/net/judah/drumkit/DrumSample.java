@@ -67,15 +67,6 @@ public class DrumSample implements PlayAudio {
 		this.playing = play;
 	}
 
-	public void process(FloatBuffer outLeft, FloatBuffer outRight) {
-		if (!playing) return;
-		readRecordedBuffer();
-		if (onMute)
-			return;
-		env = 2 * velocity * envelope.calcEnv();
-		playFrame(outLeft, outRight);
-	}
-
 	public void reset() { // not used
         tapeCounter.set(0);
         playing = false;
@@ -112,9 +103,14 @@ public class DrumSample implements PlayAudio {
         file = null;
     }
 
-	protected void playFrame(FloatBuffer outLeft, FloatBuffer outRight) {
-		AudioTools.replace(playBuffer[LEFT], left, env * gain.getLeft());
-		AudioTools.replace(playBuffer[RIGHT], right, env * gain.getRight());
+	public void process(FloatBuffer outLeft, FloatBuffer outRight) {
+		if (!playing) return;
+		readRecordedBuffer();
+		if (onMute)
+			return;
+		env = 2 * velocity * envelope.calcEnv();
+		AudioTools.replace(playBuffer[LEFT], left, env * gain.getLeft() * gain.getGain());
+		AudioTools.replace(playBuffer[RIGHT], right, env * gain.getRight() * gain.getGain());
 		// No FX stream().filter(fx->fx.isActive()).forEach(fx->fx.process(left, right));
 		AudioTools.mix(left, outLeft);
 		AudioTools.mix(right, outRight);

@@ -28,11 +28,12 @@ public class ChordPlay extends JButton implements ChordListener, Pastels {
 		addMouseListener(new MouseAdapter() {
         @Override public void mouseClicked(MouseEvent me) {
         	if (SwingUtilities.isRightMouseButton(me)) {
-        		if (chords.getSection() == null || chords.getSections().isEmpty()) return;
-        		if (chords.getSections().size() == 1)
-        			chords.toggle(Directive.LOOP);
-        		else
-        			chords.getSection().toggle(Directive.LOOP);
+        		// TODO JPopupMenu popup = new JPopupMenu();
+//        		if (chords.getSection() == null || chords.getSections().isEmpty()) return;
+//        		if (chords.getSections().size() == 1)
+//        			chords.toggle(Directive.LOOP);
+//        		else
+//        			chords.getSection().toggle(Directive.LOOP);
         	}
         	else {
         		chords.toggle();

@@ -6,8 +6,12 @@ import java.awt.FlowLayout;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
+import lombok.Getter;
+import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
+import net.judah.gui.knobs.KnobMode;
+import net.judah.gui.knobs.LFOKnobs;
 import net.judah.gui.settable.SetCombo;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.LengthCombo;
@@ -21,12 +25,14 @@ import net.judah.song.Overview;
 
 public class HQ extends JPanel implements TimeListener {
 
+	@Getter private static boolean shift;
 	private final JudahClock clock;
 	private final Looper looper;
 	private final Overview songs;
 	private final Btn scene = new Btn("", e->trigger());
     private final LengthCombo sync;
 	private final JButton metro;
+	private static Btn delete;
 
     public HQ(JudahClock clock, Looper loops, Overview songs, ChordTrack chords) {
     	this.clock = clock;
@@ -42,9 +48,19 @@ public class HQ extends JPanel implements TimeListener {
     	add(Gui.resize(new ChordPlay(chords).makeFancy(), new Dimension(54, Size.STD_HEIGHT)));
     	add(new Btn(" Rec ", e->loops.trigger()));
     	add(sync);
-    	add(new Btn("Del", e->looper.delete(), "Clear Looper"));
+    	delete = new Btn("Del", e->looper.delete(), "Clear Looper");
+    	add(delete);
 		add(metro);
     	clock.addListener(this);
+    }
+
+    public static void setShift(boolean on) {
+    	shift = on;
+    	delete.setText(on ? "SET" : "Del");
+    	delete.setBackground(on ? Pastels.YELLOW : null);
+    	JudahZone.getFxRack().getChannel().getGui().getEq().toggle();
+    	if (MainFrame.getKnobMode() == KnobMode.LFO)
+    		((LFOKnobs)MainFrame.getKnobs()).upperLower();
     }
 
 	@Override public void update(Property prop, Object value) {
@@ -62,16 +78,6 @@ public class HQ extends JPanel implements TimeListener {
 			songs.trigger();
 		sceneText();
 	}
-
-//	void capture() {
-//		if (recording == null) {
-//			looper.trigger(clock.isActive() ? looper.getLoopA() : looper.getLoopC());
-//		}
-//		else {
-//			recording.capture(false);
-//			recording = null;
-//		}
-//	}
 
 	public void length() {
 		if (sync.getSelectedItem() != (Integer)JudahClock.getLength())

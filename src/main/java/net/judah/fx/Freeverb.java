@@ -106,8 +106,8 @@ public final class Freeverb extends Reverb {
     private int numallpasses;
     private Allpass[] allpassL;
     //scratch buffers
-    private float[] inScratch = null;
-    private float[] outScratchL = null;
+    private float[] inScratch = new float[N_FRAMES];
+    private float[] outScratchL = new float[N_FRAMES];
 
     private final Freeverb stereoReverb;
 
@@ -124,48 +124,56 @@ public final class Freeverb extends Reverb {
 
         float freqscale = SAMPLE_RATE / 44100.0f;
 
-        /* Init Comb filters */
-        int combtuningL1 = (int) (freqscale * (1116));
-        int combtuningL2 = (int) (freqscale * (1188));
-        int combtuningL3 = (int) (freqscale * (1277));
-        int combtuningL4 = (int) (freqscale * (1356));
-        int combtuningL5 = (int) (freqscale * (1422));
-        int combtuningL6 = (int) (freqscale * (1491));
-        int combtuningL7 = (int) (freqscale * (1557));
-        int combtuningL8 = (int) (freqscale * (1617));
-
         numcombs = 8;
+        int[] sizes = {1116, 1188, 1277, 1356, 1422, 1491, 1556, 1617};
         combL = new Comb[numcombs];
-        combL[0] = new Comb(combtuningL1);
-        combL[1] = new Comb(combtuningL2);
+        for (int i= 0; i < numcombs; i++)
+        	combL[i] = new Comb((int) (sizes[i] * freqscale));
 
-        combL[2] = new Comb(combtuningL3);
-        combL[3] = new Comb(combtuningL4);
-        combL[4] = new Comb(combtuningL5);
-        combL[5] = new Comb(combtuningL6);
-        combL[6] = new Comb(combtuningL7);
-        combL[7] = new Comb(combtuningL8);
-
-        /* Init Allpass filters*/
-        int allpasstuningL1 = (int) (freqscale * (556));
-        int allpasstuningL2 = (int) (freqscale * (441));
-        int allpasstuningL3 = (int) (freqscale * (341));
-        int allpasstuningL4 = (int) (freqscale * (225));
+//        /* Init Comb filters */
+//        int combtuningL1 = (int) (freqscale * (1116));
+//        int combtuningL2 = (int) (freqscale * (1188));
+//        int combtuningL3 = (int) (freqscale * (1277));
+//        int combtuningL4 = (int) (freqscale * (1356));
+//        int combtuningL5 = (int) (freqscale * (1422));
+//        int combtuningL6 = (int) (freqscale * (1491));
+//        int combtuningL7 = (int) (freqscale * (1557));
+//        int combtuningL8 = (int) (freqscale * (1617));
+//        combL[0] = new Comb(combtuningL1);
+//        combL[1] = new Comb(combtuningL2);
+//        combL[2] = new Comb(combtuningL3);
+//        combL[3] = new Comb(combtuningL4);
+//        combL[4] = new Comb(combtuningL5);
+//        combL[5] = new Comb(combtuningL6);
+//        combL[6] = new Comb(combtuningL7);
+//        combL[7] = new Comb(combtuningL8);
 
         numallpasses = 4;
+        int[] tuning = {556, 441, 341, 225};
         allpassL = new Allpass[numallpasses];
-        allpassL[0] = new Allpass(allpasstuningL1);
-        allpassL[1] = new Allpass(allpasstuningL2);
-        allpassL[2] = new Allpass(allpasstuningL3);
-        allpassL[3] = new Allpass(allpasstuningL4);
+        for (int i = 0; i < numallpasses; i++)
+        	allpassL[i] = new Allpass((int) (tuning[i] * freqscale));
 
-        for (int i = 0; i < numallpasses; i++) {
-            allpassL[i].setFeedback(0.5f);
-        }
+//        /* Init Allpass filters*/
+//        int allpasstuningL1 = (int) (freqscale * (556));
+//        int allpasstuningL2 = (int) (freqscale * (441));
+//        int allpasstuningL3 = (int) (freqscale * (341));
+//        int allpasstuningL4 = (int) (freqscale * (225));
+//
+//        numallpasses = 4;
+//        allpassL = new Allpass[numallpasses];
+//        allpassL[0] = new Allpass(allpasstuningL1);
+//        allpassL[1] = new Allpass(allpasstuningL2);
+//        allpassL[2] = new Allpass(allpasstuningL3);
+//        allpassL[3] = new Allpass(allpasstuningL4);
 
-        /* Init scratch buffers*/
-        inScratch = new float[N_FRAMES];
-        outScratchL = new float[N_FRAMES];
+//        for (int i = 0; i < numallpasses; i++) {
+//            allpassL[i].setFeedback(0.5f);
+//        }
+
+//        /* Init scratch buffers*/
+//        inScratch = new float[N_FRAMES];
+//        outScratchL = new float[N_FRAMES];
 
         /* Prepare all buffers*/
         update();
@@ -261,6 +269,16 @@ public final class Freeverb extends Reverb {
         return width;
     }
 
+    private void update() {
+        wet1 = wet * (width / 2 + 0.5f);
+        for (int i = 0; i < numcombs; i++) {
+            combL[i].setFeedback(roomsize);
+            combL[i].setdamp(damp);
+        }
+        if (stereoReverb != null)
+        	stereoReverb.update();
+    }
+
     @Override
 	public void process(FloatBuffer left, FloatBuffer right) {
     	process(left);
@@ -289,18 +307,9 @@ public final class Freeverb extends Reverb {
             for (int i = 0; i < N_FRAMES; i++)
                 buf.put(buf.get(i) + // process add
                 		outScratchL[i] * wet1);// + outScratchR[i] * wet2);
-
     }
 
-    private void update() {
-        wet1 = wet * (width / 2 + 0.5f);
-        for (int i = 0; i < numcombs; i++) {
-            combL[i].setFeedback(roomsize);
-            combL[i].setdamp(damp);
-        }
-        if (stereoReverb != null)
-        	stereoReverb.update();
-    }
+
 
     private class Comb {
 
@@ -327,29 +336,22 @@ public final class Freeverb extends Reverb {
                 float output = buffer[bufidx];
 
                 //undenormalise(output);
-                if (output > 0.0) {
-                    if (output < 1.0E-9) {
-                        output = 0;
-                    }
-                }
-                if (output < 0.0) {
-                    if (output > -1.0E-9) {
-                        output = 0;
-                    }
-                }
+                if (output > 0.0 && output < 1.0E-9)
+                	output = 0;
+                if (output < 0.0 && output > -1.0E-9)
+                	output = 0;
 
                 filterstore = (output * damp2) + (filterstore * damp1);
                 //undenormalise(filterstore);
                 if (filterstore > 0.0 && filterstore < 1.0E-9)
                 	filterstore = 0;
                 else if (filterstore < 0.0 && filterstore > -1.0E-9)
-                        filterstore = 0;
+                	filterstore = 0;
 
                 buffer[bufidx] = inputs[i] + (filterstore * feedback);
 
                 if (++bufidx >= bufsize)
                     bufidx = 0;
-
 
                 outputs[i] += output;
 
@@ -365,7 +367,7 @@ public final class Freeverb extends Reverb {
 
     private class Allpass {
 
-        @Setter float feedback;
+        @Setter float feedback = 0.5f;
         float[] buffer;
         int bufsize;
         int bufidx = 0;

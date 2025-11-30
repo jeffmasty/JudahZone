@@ -28,7 +28,7 @@ public class RemapView extends KnobPanel {
 	public RemapView(Musician view) {
 
 		DrumTrack drumz = (DrumTrack) view.getTrack();
-		String lbl = " " + drumz.getType() + ": ";
+		String lbl = " " + drumz.getName() + ": ";
 		lbl += (drumz.getFile() == null) ? "??" : drumz.getFile().getName();
 		title.add(new JLabel(lbl));
 

@@ -9,7 +9,7 @@ import javax.swing.ListCellRenderer;
 
 public class FileRender implements ListCellRenderer<File> {
 
-	private final JLabel render = new JLabel("", JLabel.CENTER);
+	private final JLabel render = new JLabel("");
 
 	public static String defix(File value) {
 		if (value == null)

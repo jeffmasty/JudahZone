@@ -10,7 +10,6 @@ import javax.sound.midi.ShortMessage;
 import lombok.Getter;
 import net.judah.api.Engine;
 import net.judah.gui.knobs.KitKnobs;
-import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
@@ -21,6 +20,7 @@ import net.judah.seq.Trax;
 import net.judah.seq.track.Cue;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.NoteTrack;
 
 @Getter
 public final class DrumMachine extends Engine {
@@ -31,54 +31,63 @@ public final class DrumMachine extends Engine {
 	private final Channel mains;
 	private KitSetup settings = new KitSetup();
 
-	public DrumMachine(JudahClock clock, Channel mains) throws Exception {
+	public DrumMachine(Channel mains) throws Exception {
 		super("Drums", true);
 		this.mains = mains;
-		icon = Icons.get("DrumMachine.png");
-
-		for (Trax type : Trax.drums) {
+		icon = Icons.get("Drums.png");
+		for (Drumz type : Drumz.values()) {
 			DrumKit kit = new DrumKit(this, type);
 			kits.add(kit);
-			tracks.add(new DrumTrack(type, kit, clock));
+			DrumTrack trak = new DrumTrack(type, kit);
+			tracks.add(trak);
+			trak.progChange(type.program);
 		}
 		knobs = new KitKnobs(this);
+		gain.setPreamp(0.2f);
 	}
 
 	public void init(String preset) {
 		setPreset(preset);
-		for (DrumTrack t : tracks)
-			t.load(t.getType().getFile());
-		tracks.get(Trax.H2).setCue(Cue.Hot);
+		for (int i = 0; i < tracks.size(); i++)
+			tracks.get(i).load(Trax.values()[i].getFile());
+		tracks.get(Trax.H2.ordinal()).setCue(Cue.Hot);
 	}
 
 	public DrumTrack getCurrent() {
 		return (DrumTrack)tracks.getCurrent();
 	}
 
-	@Override public boolean progChange(String preset, int channel) {
-		return getChannel(channel).progChange(preset);
+	public DrumTrack getTrack(DrumKit kit) {
+		for (DrumTrack t : tracks)
+			if (t.getKit() == kit)
+				return t;
+		return null;
 	}
 
 	@Override public String[] getPatches() {
 		return DrumDB.getKits().toArray(new String[DrumDB.getKits().size()]);
 	}
 
-	@Override public String getProg(int ch) {
-		for (int i = 0; i < tracks.size(); i++)
-			if (tracks.get(i).getCh() == ch)
-				return tracks.get(i).getKit().getProgram().getFolder().getName();
-			return "?";
-	}
-
-	@Override public boolean progChange(String preset) {
-		return tracks.getFirst().getKit().progChange(preset);
-	}
-
+//	@Override public boolean progChange(String preset, int channel) {
+//		return getChannel(channel).progChange(preset);
+//	}
+//
+//	@Override public String getProg(int ch) {
+//		for (int i = 0; i < tracks.size(); i++)
+//			if (tracks.get(i).getCh() == ch)
+//				return tracks.get(i).getKit().getProgram().getFolder().getName();
+//			return "?";
+//	}
+//
+//	@Override public boolean progChange(String preset) {
+//		return tracks.getFirst().getKit().progChange(preset);
+//	}
+//
 	@Override public String progChange(int data2, int ch) {
 		if (data2 < 0 || data2 >= DrumDB.getKits().size())
 			return null;
 		String result = DrumDB.getKits().get(data2);
-		progChange(result, ch);
+		getChannel(ch).progChange(result);
 		return result;
 	}
 
@@ -106,10 +115,11 @@ public final class DrumMachine extends Engine {
 		tracks.setCurrent(t);
 	}
 
-	public void setCurrent(Trax type) {
-		for (DrumTrack t : tracks)
-			if (type == t.getType())
-				tracks.setCurrent(t);
+	public void setCurrent(int idx) {
+		if (tracks.size() < idx)
+			return;
+
+		tracks.setCurrent(tracks.get(idx));
 	}
 
 	@Override public void close() {
@@ -128,6 +138,13 @@ public final class DrumMachine extends Engine {
 		fx();
 		AudioTools.mix(left, outLeft);
 		AudioTools.mix(right, outRight);
+	}
+
+	@Override
+	public NoteTrack getTrack() {
+		if (tracks.isEmpty())
+			return null;
+		return tracks.get(0);
 	}
 
 

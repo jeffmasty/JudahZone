@@ -6,6 +6,7 @@ import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
 import net.judah.midi.Midi;
+import net.judah.seq.track.MidiTrack;
 
 public class MidiTools {
 
@@ -17,7 +18,7 @@ public class MidiTools {
 	public static int fastFind(Track t, long tick) {
 		// estimate a good place to find the first note (on or after tick)
 		int max = t.size();
-		if (max <= 1)
+		if (max <= 2)
 			return -1;
 
 		long length = t.ticks();
@@ -32,7 +33,9 @@ public class MidiTools {
 					return i;
 		}
 
+
 		int guess = (int) (ratio * max) - 1;
+
 		while (guess > max || t.get(guess).getTick() > tick)
 			guess = (int) (guess * 0.5f);
 		// from here
@@ -197,6 +200,13 @@ public class MidiTools {
 		}
 	}
 
+	public static void copy(MidiTrack source, Track destination) {
+		Track t = source.getT();
+		for (int i = 0; i < t.size(); i++)
+			destination.add(t.get(i));
+		source.getMeta().publish(destination);
+	}
+
 }
 
 // public static int octave(ShortMessage m) { return m.getData1() / 12 - 2; }
@@ -281,6 +291,20 @@ public class MidiTools {
 //			}
 //		}
 //	}
+//public static void copyMeasure(Track track, long start, long end, ArrayList<MidiEvent> result, long offset) {
+//for (int i = 0; i < track.size(); i++) {
+//	MidiEvent e = track.get(i);
+//	if (e.getMessage() instanceof ShortMessage == false)
+//		continue;
+//	long tick = e.getTick();
+//	if (tick < start)
+//		continue;
+//	if (tick < end || (tick == end && e.getMessage().getStatus() == NOTE_OFF))
+//		result.add(new MidiEvent(e.getMessage(), e.getTick() - start + offset));
+//	else
+//		return;
+//}
+//}
 
 //	/** find next CMD (i.e. note_off) starting from tick (i.e. note_on) or null*/
 //	public static MidiEvent findNext(int cmd, long tick, int data1, Track track) {
@@ -292,21 +316,6 @@ public class MidiTools {
 //				return e;
 //		}
 //		return null;
-//	}
-
-//	public static void copyMeasure(Track track, long start, long end, ArrayList<MidiEvent> result, long offset) {
-//		for (int i = 0; i < track.size(); i++) {
-//			MidiEvent e = track.get(i);
-//			if (e.getMessage() instanceof ShortMessage == false)
-//				continue;
-//			long tick = e.getTick();
-//			if (tick < start)
-//				continue;
-//			if (tick < end || (tick == end && e.getMessage().getStatus() == NOTE_OFF))
-//				result.add(new MidiEvent(e.getMessage(), e.getTick() - start + offset));
-//			else
-//				return;
-//		}
 //	}
 
 //	public static void copy(Collection<MidiEvent> source, Snippet dest, long start) {

@@ -16,6 +16,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 import lombok.Getter;
+import net.judah.api.ZoneMidi;
 import net.judah.fx.Delay;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
@@ -28,12 +29,13 @@ import net.judah.midi.Panic;
 import net.judah.mixer.Channel;
 import net.judah.sampler.Sample;
 import net.judah.seq.track.PianoTrack;
+import net.judah.synth.taco.TacoTruck;
 import net.judah.util.Constants;
 import net.judah.util.Debounce;
 
 
 /** Akai MPKmini, not the new one */
-public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Controller {
+public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controller {
 
 	public static final MPKmini instance = new MPKmini();
 	private MPKmini() {}
@@ -44,7 +46,7 @@ public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Contro
 				"Tremolo", "Oboe", "Ahh Choir", "Harp"};
 
 	// Where to route live MPK keys (and Jamstik)
-	@Getter private PianoTrack midiOut;
+	@Getter private ZoneMidi midiOut;
 
 	@Override
 	public boolean midiProcessed(Midi midi) {
@@ -65,25 +67,22 @@ public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Contro
 		return false;
 	}
 
-	public MPKmini fill(PianoTrack[] items, PianoTrack selected) {
+	public MPKmini fill(ZoneMidi[] items, ZoneMidi selected) {
 		setRenderer(new BasicComboBoxRenderer() {
-			@Override public Component getListCellRendererComponent(@SuppressWarnings("rawtypes") JList list,
+			@SuppressWarnings("rawtypes")
+			@Override public Component getListCellRendererComponent(JList list,
 					Object value, int index, boolean isSelected, boolean cellHasFocus) {
 				setHorizontalAlignment(SwingConstants.CENTER);
 
-				if (value instanceof PianoTrack p) {
-					if (p == items[0])
-						setText("Taco");
-					else
-						setText(p.getMidiOut().getName());
-				}
+				if (value instanceof TacoTruck)
+					setText("Taco");
 				else
-					setText("?");
+					setText(value.toString());
 				return this;
 			}
 		});
 
-		for (PianoTrack out : items) {
+		for (ZoneMidi out : items) {
 			addItem(out);
 			if (out == selected) {
 				setSelectedItem(out);
@@ -93,10 +92,10 @@ public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Contro
 		addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) {
 				if (SwingUtilities.isRightMouseButton(e))
-					TabZone.edit((PianoTrack)getSelectedItem());
+					TabZone.edit(((ZoneMidi)getSelectedItem()).getTrack());
 			}
 		});
-		addActionListener(e->setMidiOut((PianoTrack)getSelectedItem()));
+		addActionListener(e->setMidiOut((ZoneMidi)getSelectedItem()));
 		return this;
 	}
 
@@ -142,7 +141,7 @@ public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Contro
 
 		///////// ROW 2 /////////////////
 		else if (data1 == PRIMARY_CC.get(4)) {
-			midiOut.getPedal().setPressed(data2 > 0);
+			((PianoTrack)midiOut.getTrack()).getPedal().setPressed(data2 > 0);
 		}
 		else if (data1 == PRIMARY_CC.get(5)) {
 			getChords().toggle();
@@ -193,7 +192,7 @@ public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Contro
 	}
 
 	private boolean joystickL(int data2) { // delay
-		Delay d = ((Channel)midiOut.getMidiOut()).getDelay();
+		Delay d = ((Channel)midiOut).getDelay();
 		d.setActive(data2 > 4);
 		if (data2 <= 4)
 			return true;
@@ -228,7 +227,7 @@ public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Contro
 		return false;
 	}
 
-	public void setMidiOut(PianoTrack out) {
+	public void setMidiOut(ZoneMidi out) {
 		if (out == null)
 			return;
 		if (midiOut != null)

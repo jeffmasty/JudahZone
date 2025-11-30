@@ -21,6 +21,7 @@ public class Constants {
 	public static final String CRAVE_PORT = "system:capture_3";
 	public static final String AUX_PORT = "system:capture_4";
 
+	// hardcoded Names saved to Song's miditracks
 	public static final String GUITAR = "Gtr";
 	public static final String MIC = "Mic";
 	public static final String BASS = "Bass";

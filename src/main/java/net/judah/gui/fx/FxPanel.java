@@ -6,6 +6,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 
+import lombok.Getter;
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
 import net.judah.fx.LFO;
@@ -16,7 +17,7 @@ import net.judah.mixer.Channel;
 
 public class FxPanel extends JPanel {
 
-    private final MultiSelect selected;
+    @Getter private final MultiSelect selected;
     private JPanel placeholder = new JPanel(new GridLayout(1, 1, 0, 0));
 
     public FxPanel(MultiSelect multi) {
@@ -35,8 +36,8 @@ public class FxPanel extends JPanel {
     }
 
     public void setFocus(Channel ch) {
-    	if (getChannel() == ch && selected.size() == 1)
-    		return;
+//    	if (getChannel() == ch && selected.size() == 1)
+//    		return;
     	selected.clear();
     	selected.add(ch);
     	ch.getGui().getTitle().name(selected);

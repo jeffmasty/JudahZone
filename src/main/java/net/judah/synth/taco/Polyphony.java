@@ -2,6 +2,7 @@ package net.judah.synth.taco;
 
 import javax.sound.midi.ShortMessage;
 
+import net.judah.api.Engine;
 import net.judah.midi.Actives;
 import net.judah.midi.Midi;
 
@@ -11,14 +12,23 @@ public class Polyphony extends Actives {
 	protected final int polyphony;
 	public final Voice[] voices;
 
+	public Polyphony(Engine out, int ch) {
+		this(out, ch, TacoSynth.POLYPHONY);
+	}
 
-	public Polyphony(TacoSynth out, int ch, int polyphony) {
+	public Polyphony(Engine out, int ch, int polyphony) {
 		super(out, ch);
 		this.polyphony = polyphony;
 		voices = new Voice[polyphony];
-		for (int i = 0; i < voices.length; i++)
-			voices[i] = new Voice(out);
 	}
+
+//	public Polyphony(TacoSynth out, int ch, int polyphony) {
+//		super(out, ch);
+//		this.polyphony = polyphony;
+//		voices = new Voice[polyphony];
+////		for (int i = 0; i < voices.length; i++)
+////			voices[i] = new Voice(out);
+//	}
 
 	/** only add under certain circumstances */
 	@Override

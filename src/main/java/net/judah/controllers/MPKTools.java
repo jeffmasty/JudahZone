@@ -27,9 +27,6 @@ import net.judah.util.RTLogger;
  95 phaser */
 public interface MPKTools {
 
-	public static final int thresholdLo = 1;
-	public static final int thresholdHi = 98;
-
 	public static final int KNOB_COUNT = 8;
 	public static final int PAD_COUNT = 8;
 	public static final int KNOB_STYLES = 3;
@@ -38,8 +35,6 @@ public interface MPKTools {
 	public static final int RED_BANK = 1;
 	public static final int ABANK = 0;
 	public static final int BBANK = 1;
-	public static final byte[] SUSTAIN_ON = Midi.create(Midi.CONTROL_CHANGE, 0, 64, 127).getMessage();
-	public static final byte[] SUSTAIN_OFF = Midi.create(Midi.CONTROL_CHANGE, 0, 64, 0).getMessage();
 	public static final int JOYSTICK_L = 127;
 	public  static final int JOYSTICK_R = 0;
 

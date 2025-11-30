@@ -10,7 +10,7 @@ import net.judah.api.Engine;
 import net.judah.api.ZoneMidi;
 import net.judah.drumkit.DrumKit;
 import net.judah.omni.Threads;
-import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.NoteTrack;
 import net.judah.util.RTLogger;
 
 @RequiredArgsConstructor
@@ -21,7 +21,7 @@ public class Panic implements Runnable  {
 
 	private int channel = 0;
 
-	public Panic(MidiTrack t) {
+	public Panic(NoteTrack t) {
 		if (t.getMidiOut() instanceof DrumKit)
 			return;
 		if (t.getMidiOut() instanceof Engine)

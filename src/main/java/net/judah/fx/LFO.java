@@ -14,17 +14,17 @@ import net.judah.util.Constants;
 @RequiredArgsConstructor
 public class LFO implements TimeEffect {
 
-	public static final int LFO_MIN = 100;
-    public static final int LFO_MAX = 3000;
-    static final float MAX_FACTOR = 39f;
-	long throttle;
+	public static final int LFO_MIN = 50;
+    public static final int LFO_MAX = 4500;
+
+    long throttle;
 	@Setter @Getter String type = TYPE[0];
 	@Setter @Getter boolean sync;
 
     public enum Settings { Target, Min, Max, MSec, Type, Sync }
 
 	public static enum Target {
-		Pan, pArTy, Gain, Echo, Room, Delay, Chorus, Rate, Depth, Phase }
+		Pan, pArTy, Gain, Echo, Room, Delay, Chorus, Rate, Depth, Phase, Filtr }
 
 	private final Channel ch;
 	@Getter private boolean active;
@@ -118,6 +118,11 @@ public class LFO implements TimeEffect {
 				ch.getChorus().set(Chorus.Settings.Phase.ordinal(), recover);
 				ch.getChorus().setActive(wasActive);
 				break;
+			case Filtr:
+				ch.getHiCut().set(Filter.Settings.Hz.ordinal(), recover);
+				ch.getHiCut().setActive(wasActive);
+				break;
+
     	}
     }
 
@@ -170,6 +175,10 @@ public class LFO implements TimeEffect {
     		wasActive = ch.getChorus().isActive();
     		ch.getChorus().setActive(true);
     		break;
+    	case Filtr:
+    		recover = ch.getHiCut().get(Filter.Settings.Hz.ordinal());
+    		wasActive = ch.getHiCut().isActive();
+    		ch.getHiCut().setActive(true);
     	}
     }
     @Override public int get(int idx) {
@@ -180,11 +189,8 @@ public class LFO implements TimeEffect {
         if (idx == Settings.Max.ordinal())
             return max;
         if (idx == Settings.MSec.ordinal()) {
-        	// map 90 to 3990msec to 0 to 100
-        	int result = ((int)( (getFrequency() - 90) / MAX_FACTOR));
-        	if (result < 0) result = 0;
-        	else if (result > 100) result = 100;
-            return result;
+        	return Constants.reverseLog((float)frequency, LFO_MIN, LFO_MAX);
+			//return ((int)( (frequency - MAX_FACTOR) / MAX_FACTOR)); // linear map 39 to 3990msec to 0 to 100
         }
         if (idx == Settings.Type.ordinal())
         	return TimeEffect.indexOf(type);
@@ -202,7 +208,8 @@ public class LFO implements TimeEffect {
         else if (idx == Settings.Max.ordinal())
             setMax(value);
         else if (idx == Settings.MSec.ordinal())
-        	frequency = value * MAX_FACTOR + 90;   // 90msec to 3990msec
+        	frequency = Constants.logarithmic(value, LFO_MIN, LFO_MAX);
+        	// frequency = value * MAX_FACTOR + MAX_FACTOR;   // linear 39msec to 3990msec
         else if (idx == Settings.Type.ordinal() && value < TimeEffect.TYPE.length)
         	type = TimeEffect.TYPE[value];
         else if (idx == Settings.Sync.ordinal())
@@ -238,6 +245,7 @@ public class LFO implements TimeEffect {
 			case Depth: ch.getChorus().set(Chorus.Settings.Depth.ordinal(), val); break;
 			case Rate: ch.getChorus().set(Chorus.Settings.Rate.ordinal(), val); break;
 			case Phase: ch.getChorus().set(Chorus.Settings.Phase.ordinal(), val); break;
+			case Filtr: ch.getHiCut().set(Filter.Settings.Hz.ordinal(), val); break;
 
 		}
 		if (++throttle > 4) {// throttle gui updates

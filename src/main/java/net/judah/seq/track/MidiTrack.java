@@ -3,7 +3,6 @@ package net.judah.seq.track;
 import static net.judah.api.MidiClock.MIDI_24;
 import static net.judah.util.Constants.NL;
 import static org.jaudiolibs.jnajack.JackTransportState.JackTransportNetStarting;
-import static org.jaudiolibs.jnajack.JackTransportState.JackTransportStopped;
 
 import java.io.File;
 
@@ -17,10 +16,10 @@ import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.judah.api.Notification.Property;
 import net.judah.api.Signature;
 import net.judah.api.TimeListener;
-import net.judah.api.ZoneMidi;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
 import net.judah.gui.Updateable;
@@ -32,14 +31,12 @@ import net.judah.gui.widgets.GateCombo;
 import net.judah.gui.widgets.RecordWidget;
 import net.judah.gui.widgets.TrackAmp;
 import net.judah.gui.widgets.TrackVol;
-import net.judah.midi.Actives;
-import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
-import net.judah.midi.Panic;
+import net.judah.seq.Meta;
+import net.judah.seq.MetaMap;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiTools;
-import net.judah.seq.Trax;
 import net.judah.seq.automation.CC;
 import net.judah.song.Sched;
 import net.judah.util.Constants;
@@ -50,68 +47,33 @@ import net.judah.util.RTLogger;
 public abstract class MidiTrack extends Computer implements TimeListener, MidiConstants {
 
 	/** Sequence (for save) */
-	private final MidiFile s;
-	private final Trax type;
-	private final String name;
     protected final Track t;
-    /** parent midi port */
-    protected final ZoneMidi midiOut;
-	protected final int ch;
-    protected final Actives actives;
+    protected final int ch;
+    protected String name;
 
 	private File file;
-    protected boolean capture;
-
-	protected long recent; // sequencer sweep
-	private Cue cue = Cue.Bar;
+    private int resolution;
+    private Cue cue = Cue.Bar;
 	private Gate gate = Gate.SIXTEENTH;
 	private boolean onDeck;
-	private float gain = 0.9f;
+	protected boolean capture;
+	protected long recent; // sequencer sweep
+	protected MetaMap meta = new MetaMap();
+	@Setter protected boolean permanent;
 
-	// PianoTrack
-    public MidiTrack(Trax type, ZoneMidi out, int rez, JudahClock clock)  throws InvalidMidiDataException {
-    	this(type.name(), type, out, rez, clock);
-    }
-
-	public MidiTrack(Trax type, ZoneMidi out, JudahClock clock) throws InvalidMidiDataException {
-		this(type, out, MIDI_24, clock);
-	}
-
-    public MidiTrack(String name, Trax type, ZoneMidi out, int rez, JudahClock clock) throws InvalidMidiDataException {
-    	super(clock);
-		this.type = type;
+	public MidiTrack(String name, int ch) throws InvalidMidiDataException {
+		this.ch = ch;
 		this.name = name;
-		this.ch = type.getCh();
-		this.midiOut = out;
-		s = new MidiFile(rez);
-		setBarTicks(clock.getMeasure() * s.getResolution());
-		t = s.createTrack();
-		actives = new Actives(midiOut, ch);
-		if (type.name().equals(Trax.H2.name()))
-			cue = Cue.Hot;
-		clock.addListener(this);
-    }
-
-    // DrumTrack
-	public MidiTrack(Trax type, Actives actives, JudahClock clock) throws InvalidMidiDataException {
-		super(clock);
-		this.type = type;
-		this.name = type == null ? "Import" : type.name();
-		this.actives = actives;
-		this.midiOut = actives.getMidiOut();
-		this.ch = actives.getChannel();
-		s = new MidiFile();
-		setBarTicks(clock.getMeasure() * s.getResolution());
-		t = s.createTrack();
+		t = new MidiFile().createTrack();
+		setResolution(MIDI_24);
 		clock.addListener(this);
 	}
 
 	/** publish the note/cc */
 	public void send(MidiMessage midi, long ticker) {
-		if (midi instanceof MetaMessage) {
-			// TODO
-			return;
-		}
+		if (midi instanceof MetaMessage)
+			return; // already filtered
+
 		ShortMessage m = (ShortMessage)midi;
 		if (Midi.isProgChange(midi)) {
 			progChange(m.getData1());
@@ -127,12 +89,6 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 
 		if (m.getChannel() != ch) // conform to midi channel
 			m = Midi.format(m, ch, 1);
-		if (Midi.isNoteOn(m)) {
-			try { // apply local gain
-				m.setMessage(Midi.NOTE_ON, ch, m.getData1(), (int)(m.getData2() * gain));
-			} catch (InvalidMidiDataException e) { RTLogger.warn(midi, e); }
-		}
-		midiOut.send(m, ticker);
 	}
 
 	/** if recording currently enabled, add note to track */
@@ -140,23 +96,30 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
     protected abstract void processNote(ShortMessage m);
 	protected abstract void parse(Track incoming);
 
+	public abstract String[] getPatches();
+	public abstract String progChange(int data1);
+	public abstract boolean progChange(String name);
+
 	@Override public boolean equals(Object o) {
     	if (o instanceof MidiTrack)
-    		return name.equals(((MidiTrack)o).getName()) && midiOut == ((MidiTrack)o).getMidiOut() && ch == ((MidiTrack)o).ch;
+			return getName().equals(((MidiTrack) o).getName())
+					/* && midiOut == ((MidiTrack)o).getMidiOut() */
+					&& ch == ((MidiTrack)o).ch;
     	return false;
     }
-    @Override public int hashCode() { return name.hashCode() * ch;}
-    @Override public String toString() { return name; }
+    @Override public int hashCode() { return getName().hashCode() * ch;}
+    @Override public String toString() { return getName(); }
     public final boolean isDrums() { return this instanceof DrumTrack; }
     public final boolean isSynth() { return this instanceof PianoTrack; }
-    public void setResolution(int rez) {
+
+    public void setResolution(int rez) { // TODO
 		if (rez < 2 || rez > 2048)
 			throw new NumberFormatException("out of bounds");
 		float factor = rez / (float)getResolution();
 		for (int i = t.size() - 1; i >= 0; i--) {
 			t.get(i).setTick((long) (t.get(i).getTick() * factor));
 		}
-    	s.setResolution(rez);
+		resolution = rez;
 		setBarTicks(clock.getTimeSig().beats * rez);
 		compute();
 		MainFrame.update((Updateable) () -> {
@@ -165,8 +128,7 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 			});
     }
 
-    public int getResolution() { return s.getResolution(); }
-	public long getStepTicks() { return s.getResolution() / clock.getSubdivision(); }
+	public long getStepTicks() { return resolution / clock.getSubdivision(); }
     public long getWindow() { return 2 * barTicks; }
 	/**@return number of bars with notes recorded into them */
 	@Override public int bars() { return MidiTools.measureCount(t.ticks(), barTicks); }
@@ -178,8 +140,7 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 		}
 		setFile(null);
 		init();
-		setResolution(MIDI_24);
-		new Panic(this);
+		// setResolution(MIDI_24); // TODO
 	}
 
     void init() {
@@ -198,8 +159,6 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
     	Cycle old = state.cycle;
 		state = sched;
 		setAmp(state.amp);
-		if (state.getProgram() != null && !state.getProgram().equals(midiOut.getProg(ch)))
-			midiOut.progChange(state.getProgram(), ch);
 		if (old != state.cycle)
 			CycleCombo.update(this);
 		if (current != state.launch)
@@ -208,7 +167,6 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 			compute();
 		if (previous != state.active)
 			setActive(state.active);
-
     }
 
 	public void toggle() {
@@ -248,7 +206,6 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 
 	@Override protected void setCurrent(int change) {
 		if (current == change) return;
-		flush();
 		if (change < 0)
 			change = clock.isEven() ? 0 : 1;
 		recent = change * barTicks + (recent - current * barTicks);
@@ -273,7 +230,7 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 	}
 
     public final void playTo(float percent) {
-		long newTime = current * barTicks + (long)(percent * s.getResolution());
+		long newTime = current * barTicks + (long)(percent * resolution);
 		if (percent == 0)
 			recent = newTime - 1;
 		if (state.active)
@@ -295,8 +252,6 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 		}
     }
 
-
-
     @Override public void update(Property prop, Object value) {
 		if (prop == Property.BARS) {
 			if ((int)value == 0)
@@ -305,24 +260,24 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 				cycle();
 			else if (onDeck && cue == Cue.Bar)
 				setActive(true);
+			return;
 		}
-		else if (prop == Property.SIGNATURE) {
-			barTicks = s.getResolution() * ((Signature)value).beats;
+		if (prop == Property.SIGNATURE) {
+			barTicks = resolution * ((Signature)value).beats;
 			init();
+			return;
 		}
-		else if (prop == Property.BOUNDARY && onDeck && cue == Cue.Loop)
+
+		if (prop == Property.BOUNDARY && onDeck  && cue == Cue.Loop) {
 			setActive(true);
-		else if (prop == Property.TRANSPORT) {
-			if (value == JackTransportStopped && isActive())
-				new Panic(this);
-			else if (value == JackTransportNetStarting)
-				init();
+			return;
 		}
+		if (prop == Property.TRANSPORT && value == JackTransportNetStarting)
+			init();
 	}
 
 	public File getFolder() {
-		return Folders.midi(isDrums() ? Folders.getBeats() :
-			getType() == Trax.B ? Folders.getBass() : Folders.getSynths());
+		return Folders.midi(isDrums() ? Folders.getBeats() : Folders.getSynths()); // getType() == Trax.B ? Folders.getBass() :
 	}
 
 	public void save() {
@@ -343,8 +298,10 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 
 	void save(File f) {
 		try {
-			MidiSystem.write(s, MidiFile.TYPE_1, f);
-			RTLogger.log(this, getName() + " saved " + f.getName() + " @" + s.getResolution());
+			MidiFile export = new MidiFile(resolution);
+			MidiTools.copy(this, export.createTrack());
+			MidiSystem.write(export, MidiFile.TYPE_1, f);
+			RTLogger.log(this, getName() + " saved " + f.getName() + " @" + resolution);
 		} catch (Exception e) { RTLogger.warn(this, e); }
 	}
 
@@ -354,17 +311,17 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 			load(f);
 	}
 
-	/** current scene, not Program, not Cue */
+	/** current scene, not Program, not Cue */ // NOT Meta?
 	public void load(MidiTrack from) {
 		clear();
-		setResolution(from.getResolution());
-		parse(from.t);
+		setResolution(from.getResolution()); // TODO
+//		meta.clear();
+		parse(from.t); // TODO will overwrite DEVICE
 		Sched other = from.getState();
 		setCycle(other.getCycle());
 		setCurrent(other.getLaunch());
 		setActive(from.isActive());
 		from.setActive(false);
-
 		TabZone.edit(this);
 	}
 
@@ -373,6 +330,8 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 			load(info.getFile());
 		setGate(info.getGate());
 		setCue(info.getCue());
+		if (info.getProgram() != null)
+			progChange(info.getProgram());
 	}
 
 	/** read and parse track patterns from disk (blocks thread) */
@@ -382,7 +341,7 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 			return;
 		}
 		if (f.isFile() == false) {
-			RTLogger.log(name, "Missing midi: " + f.getAbsoluteFile());
+			RTLogger.log(getName(), "Missing midi: " + f.getAbsoluteFile());
 			return;
 		}
 		try {
@@ -406,13 +365,13 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 		count = clock.isEven() ? 0 : 1;
 		setCurrent(0);
 		setResolution(rez);
+		meta.clear();
 		parse(incoming);
 		CurrentCombo.update(this);
 		setCycle(Cycle.ALL); // updates
 	}
 
 	public long quantize(long tick) {
-		int resolution = s.getResolution();
 		if (clock.getTimeSig().div == 3 && (gate == Gate.SIXTEENTH || gate == Gate.EIGHTH))
 			return triplets(tick, resolution);
 
@@ -432,7 +391,6 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 	}
 
 	public long quantizePlus(long tick) {
-		int resolution = s.getResolution();
 		boolean swing = clock.getTimeSig().div == 3;
 		long result = switch (gate) {
 			case SIXTEENTH -> quantize(tick) + (swing ? resolution / 6 : resolution / 4);
@@ -453,19 +411,6 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 		return tick - tick % (resolution / 3);
 	}
 
-	public boolean progChange(int data1) {
-		String name = midiOut.progChange(data1, ch);
-		if (name == null)
-			return false;
-		state.setProgram(name);
-		return true;
-	}
-
-	public void progChange(String name) {
-		if (midiOut.progChange(name, ch))
-			state.setProgram(name);
-	}
-
 	public void setCapture(boolean rec) {
 		capture = rec;
 		RecordWidget.update(this); // <- runs other updates
@@ -484,9 +429,12 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 			String file = getFile().getAbsolutePath().replace(System.getProperty("user.home"), "~");
 			sb.append(file).append(NL);
 		}
+		sb.append("TrackName: ").append(meta.getString(Meta.TRACK_NAME)).append(NL);
+		sb.append("DEVICE: ").append(meta.getString(Meta.DEVICE)).append(NL);
+
 		sb.append("events: ").append(t.size()).append(NL);
-		sb.append("length: ").append(  t.ticks() / s.getResolution() ).append(" beats ").append(NL);
-		sb.append("    ").append(t.ticks()).append(" ticks @ ").append(s.getResolution()).append(" resolution").append(NL);
+		sb.append("length: ").append(  t.ticks() / resolution ).append(" beats ").append(NL);
+		sb.append("    ").append(t.ticks()).append(" ticks @ ").append(resolution).append(" resolution").append(NL);
 		return sb.toString();
 	}
 

@@ -2,7 +2,6 @@ package net.judah.fx;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Scanner;
 
 import net.judah.mixer.Channel;
@@ -11,9 +10,11 @@ import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 public class PresetsDB extends ArrayList<Preset> {
-	public static final String DEFAULT = "Freeverb";
+	public static final String DEFAULT = "Freebird";
 	private Preset standard;
 
+	// public static final Comparator<Preset> Alphabetical = (o1, o2) -> o1.name.compareTo(o2.name);
+	// public static final Comparator<Preset> ByDate = (o1, o2) -> Integer.compare(o1.index, o2.index);
 
     public PresetsDB() {
         this(Folders.getPresetsFile());
@@ -80,6 +81,14 @@ public class PresetsDB extends ArrayList<Preset> {
 		return null;
 	}
 
+	public String[] getPatches() {
+		String[] result = new String[size()];
+		for (int i = 0; i < size(); i++)
+			result[i] = get(i).getName();
+		return result;
+	}
+
+
 	public Preset[] array() {
 		return toArray(new Preset[size()]);
 	}
@@ -94,13 +103,24 @@ public class PresetsDB extends ArrayList<Preset> {
 		Preset p = channel.toPreset(channel.getPreset().getName());
         set(idx, p);
         save();
-        feedback("saved", p, channel);
+        feedback("repleaced", p, channel);
 	}
+
+
 
 	public void add(Channel ch, String name) {
 		Preset p = ch.toPreset(name);
+
+		for (Preset previous : this)
+			if (previous.getName().equals(name)) {
+				// replace
+				set(indexOf(previous), p);
+				save();
+				return;
+			}
+
         add(p);
-        Collections.sort(this);
+        // sort(Alphabetical);
         save();
         ch.getGui().getPresets().refill(array(), ch.getPreset());
         feedback("created", p, ch);
@@ -110,5 +130,6 @@ public class PresetsDB extends ArrayList<Preset> {
         RTLogger.log(this, mode + " " + p.getName() + " from " + ch.getName() +
                 " with " + p.size() + " FX");
 	}
+
 }
 

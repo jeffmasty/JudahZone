@@ -11,16 +11,15 @@ import net.judah.api.Key;
 import net.judah.api.Signature;
 import net.judah.api.TimeProvider;
 import net.judah.gui.Gui;
-import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
-import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.settable.SongCombo;
 import net.judah.gui.widgets.Btn;
 import net.judah.omni.Icons;
 import net.judah.omni.Threads;
+import net.judah.seq.NewTrack;
+import net.judah.seq.Seq;
 import net.judah.seq.chords.Scale;
-import net.judah.song.setlist.Setlists;
 
 public class SongTitle extends JPanel {
 
@@ -32,7 +31,7 @@ public class SongTitle extends JPanel {
 	private final JLabel bar = new JLabel("0", JLabel.CENTER);
 	@Getter private final SongCombo songs = new SongCombo();
 
-	public SongTitle(TimeProvider clock, Setlists setlists, Overview overview) {
+	public SongTitle(TimeProvider clock, Overview overview, Seq seq) {
 		this.clock = clock;
 		this.overview = overview;
 
@@ -41,7 +40,9 @@ public class SongTitle extends JPanel {
 		add(Gui.resize(songs, Size.TITLE_SIZE));
 		add(new Btn(Icons.SAVE, e->overview.save()));
 		add(new Btn(" 🔁 ", e->overview.reload(), "Reload"));
-		add(new Btn(Icons.DETAILS_VEW, e->MainFrame.setFocus(KnobMode.Setlist)));
+
+		add(new Btn(" + Track ", e->new NewTrack(seq)));
+
 		add(Box.createHorizontalGlue());
 		add(Gui.resize(timeSig, Size.SMALLER_COMBO));
 		add(Gui.resize(key, Size.MICRO));

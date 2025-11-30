@@ -122,7 +122,7 @@ public class BeatBox extends MusicBox implements Pastels {
         }
 
         // draw CCs/Progs/Pitch
-		int[] ccSteps = cc.populate(track.getLeft(), track.getWindow());
+		int[] ccSteps = cc.populate(track.getLeft(), track.getLeft() + track.getWindow());
 
 		for (int step = 0; step < ccSteps.length; step++) {
 			if (cc.getProg(step) != null)

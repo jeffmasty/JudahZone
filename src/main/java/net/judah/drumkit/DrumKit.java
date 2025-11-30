@@ -19,7 +19,7 @@ import net.judah.midi.ChannelCC;
 import net.judah.midi.Midi;
 import net.judah.mixer.LineIn;
 import net.judah.omni.AudioTools;
-import net.judah.seq.Trax;
+import net.judah.omni.Icons;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
@@ -28,8 +28,9 @@ import net.judah.util.RTLogger;
 public class DrumKit extends LineIn implements Receiver {
 	public static final int SAMPLES = DrumType.values().length;
 	private final KnobMode knobMode = KnobMode.Kitz;
+	private final DrumMachine drumMachine;
 	private final Actives actives;
-	private final Trax type;
+	private final Drumz type;
 	private final DrumSample[] samples = new DrumSample[SAMPLES];
 	private final ShortMessage CHOKE = Midi.create(Midi.NOTE_OFF, DrumType.OHat.getData1(), 1);
 	private ChannelCC cc = new ChannelCC(this);
@@ -38,14 +39,14 @@ public class DrumKit extends LineIn implements Receiver {
 	@Setter private boolean choked = true;
 	private DrumPreset program;
 
-	public DrumKit(DrumMachine engine, Trax type) {
-
+	public DrumKit(DrumMachine engine, Drumz type) {
 		super(type.name(), Constants.STEREO);
+		icon = Icons.get("DrumMachine.png");
 		this.type = type;
-		actives = new Actives(engine, type.getCh());
+		this.drumMachine = engine;
+		actives = new Actives(engine, type.ch);
 		for (int i = 0; i < SAMPLES; i++)
 			samples[i] = new DrumSample(DrumType.values()[i], actives, engine.getSettings());
-		progChange(type.getProgram());
 	}
 
 	@Override
@@ -104,7 +105,7 @@ public class DrumKit extends LineIn implements Receiver {
 						if (program.get(i) != null)
 							samples[i].setRecording(program.get(i));
 					if (JudahZone.isInitialized())
-						MainFrame.update(Program.first(JudahZone.getDrumMachine(), actives.getChannel()));
+						MainFrame.update(Program.first(drumMachine.getTrack(this)));
 				} catch (Exception e) {
 					RTLogger.warn(this, e);
 				}

@@ -5,7 +5,6 @@ import java.util.ArrayDeque;
 import javax.swing.JButton;
 
 import net.judah.JudahZone;
-import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.Updateable;
 import net.judah.omni.Threads;
@@ -40,7 +39,7 @@ public class RecordWidget extends JButton implements Updateable {
 			for (RecordWidget widget: instances)
 				if (widget.track == track)
 					widget.update();
-			MainFrame.miniSeq().update(track);
+			JudahZone.getSeq().update(track);
 			PlayWidget.update(track);
 			if (track instanceof PianoTrack p)
 				JudahZone.getMidiGui().update(p);

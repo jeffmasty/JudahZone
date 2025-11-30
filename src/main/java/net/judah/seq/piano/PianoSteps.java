@@ -26,12 +26,12 @@ import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiPair;
 import net.judah.seq.Steps;
 import net.judah.seq.automation.CCPopup;
-import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.NoteTrack;
 
 public class PianoSteps extends Steps implements MouseMotionListener, MouseListener, Size {
 
 	static final int OFFSET = STEP_WIDTH / 2 - 5;
-	private final MidiTrack track;
+	private final NoteTrack track;
 	private final PianoView view;
 	private final JudahClock clock;
 	private int width, height;
@@ -57,7 +57,7 @@ public class PianoSteps extends Steps implements MouseMotionListener, MouseListe
 	@Override
 	public void paint(Graphics g) {
 		super.paint(g);
-		int[] ccs = cc.populate(track.getLeft(), track.getWindow());
+		int[] ccs = cc.populate(track.getLeft(), track.getLeft() + track.getWindow());
 		g.drawRect(0, 0, width, height);
 		int beats = clock.getTimeSig().beats;
 		int steps = clock.getSteps();

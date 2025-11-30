@@ -16,7 +16,10 @@ import net.judah.gui.knobs.KnobMode;
 import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
 import net.judah.midi.JudahClock;
-import net.judah.seq.Trax;
+import net.judah.seq.NewTrack;
+import net.judah.seq.Seq;
+import net.judah.seq.SynthRack;
+import net.judah.seq.track.PianoTrack;
 import net.judah.song.Overview;
 import net.judah.song.setlist.Setlist;
 import net.judah.util.Folders;
@@ -24,11 +27,12 @@ import net.judah.util.RTLogger;
 
 public class JudahMenu extends JMenuBar {
 	static String[] TYPE = {"1/8", "1/4", "3/8", "1/2"};
-	private final TabZone tabs;
 
-	public JudahMenu(int width, Overview overview, TabZone tabz) {
-		this.tabs = tabz;
-	    JMenu song = new JMenu("Song");
+	private final JMenu synth = new JMenu("Synth");
+
+	public JudahMenu(int width, Overview overview, TabZone tabs, Seq seq) {
+
+		JMenu song = new JMenu("Song");
 	    JMenu loops = new JMenu("Looper");
 	    JMenu knobs = new JMenu("Knobs");
 
@@ -40,9 +44,13 @@ public class JudahMenu extends JMenuBar {
     	song.add(new Actionable("Next", e->overview.nextSong()));
 		song.add(new Actionable("Save", e->overview.save()));
         song.add(new Actionable("Save As..", e->overview.saveAs()));
-    	song.add(new Actionable("Reload", e->overview.reload()));
-        song.add(new Actionable("Load..", e -> overview.loadSong(Folders.choose(getSetlists().getDefault()))));
-    	song.add(new Actionable("New", e -> overview.newSong()));
+
+        song.add(new Actionable("Reload", e->overview.reload()));
+        song.add(new Actionable("Load..", e->overview.loadSong(Folders.choose(getSetlists().getDefault()))));
+    	song.add(new Actionable("New Song", e->overview.newSong()));
+    	song.add(new Actionable("New Track..", e-> new NewTrack(seq)));
+    	song.add(new Actionable("Bundle", e -> overview.bundle()));
+    	// TODO song.add(new Actionable("Resolution..", e->seq.resolutionView()));
 
 		JMenu setlist = new JMenu("Setlist");
 		for (Setlist list : getSetlists())
@@ -108,21 +116,23 @@ public class JudahMenu extends JMenuBar {
         add(loops);
         add(time);
         add(knobs);
-        add(viewMenu());
+        add(viewMenu(tabs));
 
 	}
 
-	private JMenu viewMenu() {
+	public void refillTracks() {
+		synth.removeAll();
+		for (PianoTrack t : SynthRack.getSynthTracks())
+			synth.add(new Actionable(t.getName(), e->TabZone.edit(t)));
+	}
+
+	private JMenu viewMenu(TabZone tabs) {
 		JMenu views = new JMenu("View");
         views.add(new Actionable("BeatBox", e->{
         	tabs.drumZone();
         }));
-
-        JMenu track = new JMenu("Track");
-        for (Trax p : Trax.pianos)
-        	track.add(new Actionable(p.getName(), e->tabs.pianoTrack(p)));
-        views.add(track);
-
+        views.add(synth);
+        refillTracks();
         views.add(new Actionable("ChordPro..", e-> {
         	if (getChords().isEmpty()) {
 	        	if (getChords().load() != null)
@@ -134,6 +144,7 @@ public class JudahMenu extends JMenuBar {
         	tabs.sheetMusic(Folders.choose(Folders.getSheetMusic()), true);
         }));
         views.add(new Actionable("Detach", e->TabZone.instance.detach()));
+
         return views;
 	}
 

@@ -1,17 +1,17 @@
 package net.judah.seq.track;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
 import net.judah.gui.widgets.CycleCombo;
 import net.judah.midi.JudahClock;
 import net.judah.song.Sched;
 
-@RequiredArgsConstructor @Getter
+@Getter
 public abstract class Computer {
 
-	@Getter protected final JudahClock clock;
+	protected JudahClock clock = JudahZone.getClock();
 	@Setter protected long barTicks; // ticks in resolution of timeSig
 	protected Sched state = new Sched(); // assigned when Song Scene changes
 	protected int current; 	// current measure/bar (not frame)
@@ -29,7 +29,7 @@ public abstract class Computer {
     public float getAmp() { return state.amp; }
 	public int getFrame() {return current / 2;}
 	protected abstract void setCurrent(int bar);
-	protected abstract void flush();
+//	protected void flush() {} // note-ons PianoTrack only
 
 	public void setCycle(Cycle x) {
 		state.cycle = x;
@@ -46,7 +46,6 @@ public abstract class Computer {
 
 	/** sequence to next bar */
 	protected void cycle() {
-		flush();
 		count++;
 		int change = -1;
 		switch(state.cycle) {

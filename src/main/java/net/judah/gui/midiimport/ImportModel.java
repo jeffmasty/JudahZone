@@ -7,10 +7,10 @@ import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 import javax.swing.table.DefaultTableModel;
 
-import net.judah.JudahZone;
 import net.judah.midi.Midi;
+import net.judah.seq.SynthRack;
+import net.judah.seq.Meta;
 import net.judah.seq.MidiConstants;
-import net.judah.seq.automation.Meta;
 import net.judah.seq.track.MidiTrack;
 
 /* MidiFile Import Table
@@ -26,7 +26,7 @@ public class ImportModel extends DefaultTableModel implements MidiConstants {
 	public ImportModel(final Sequence sequence) {
 		super (cols, 0);
 
-		MidiTrack basic = JudahZone.getSeq().getSynthTracks().getFirst();
+		MidiTrack basic = SynthRack.getSynthTracks().getFirst();
 
 		MidiMessage msg;
 		String name;

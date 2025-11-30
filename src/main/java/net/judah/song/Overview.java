@@ -1,22 +1,24 @@
 package net.judah.song;
 
 import static net.judah.JudahZone.*;
+import static net.judah.gui.Size.HEIGHT_TAB;
 import static net.judah.gui.Size.TAB_SIZE;
+import static net.judah.gui.Size.WIDTH_TAB;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridLayout;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
 
 import lombok.Getter;
-import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
 import net.judah.drumkit.DrumMachine;
@@ -33,7 +35,11 @@ import net.judah.mixer.DJJefe;
 import net.judah.omni.JsonUtil;
 import net.judah.omni.Threads;
 import net.judah.seq.Seq;
+import net.judah.seq.SynthRack;
 import net.judah.seq.chords.ChordTrack;
+import net.judah.seq.chords.ChordView;
+import net.judah.seq.track.DrumTrack;
+import net.judah.seq.track.PianoTrack;
 import net.judah.song.cmd.Cmd;
 import net.judah.song.cmd.Param;
 import net.judah.song.setlist.Setlist;
@@ -42,12 +48,14 @@ import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 /** left: SongView, right: midi tracks list*/
-public class Overview extends JPanel implements TimeListener {
+public class Overview extends Box implements TimeListener {
 
-	private static final Dimension SCENE_SZ = new Dimension((int) (TAB_SIZE.width * 0.379), TAB_SIZE.height - 14);
-	private static final Dimension LIST_SZ = new Dimension((int) (TAB_SIZE.width * 0.62), SCENE_SZ.height);
-	private static final Dimension props = new Dimension((int)(Size.WIDTH_TAB * 0.275), (int)(SCENE_SZ.height * 0.21));
+	public static final Dimension LIST_SZ = new Dimension(WIDTH_TAB - 388, HEIGHT_TAB - 14);
+	private static final Dimension SCENE_SZ = new Dimension(WIDTH_TAB - LIST_SZ.width - 1, LIST_SZ.height);
+	private static final Dimension PROPS = new Dimension(SCENE_SZ.width - 83, (int)(SCENE_SZ.height * 0.21));
 	private static final Dimension BTNS = new Dimension((int)(Size.WIDTH_TAB * 0.365), (int)(SCENE_SZ.height * 0.66));
+	private static final Dimension CHORDS = new Dimension(LIST_SZ.width - 8, ChordView.HEIGHT + 5);
+	private static final Dimension TRACK = new Dimension(CHORDS.width, 40);
 
 	private final JudahClock clock = getClock();
 	private final Seq seq = getSeq();
@@ -66,35 +74,46 @@ public class Overview extends JPanel implements TimeListener {
 	@Getter private int steps;
 	@Getter private int countUp;
 	@Getter private SongView songView;
-	private final ArrayList<SongTrack> tracks = new ArrayList<>();
 	private final SongTitle songTitle;
 	private final JPanel holder = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-	private final JPanel trackPnl = new Gui.Opaque();
+	private final Box trackPnl = new Box(BoxLayout.Y_AXIS);
+	private final JScrollPane scroll = new JScrollPane(trackPnl);
 
-	public Overview(String title) {
-		songTitle = new SongTitle(clock, setlists, this);
-		seq.getTracks().forEach(track-> tracks.add(new SongTrack(track)));
-		trackPnl.setLayout(new GridLayout(tracks.size() + 2, 1, 1, 1)); // +2 = title and chordTrack
-
+	public Overview(String title, Seq seq) {
+		super(BoxLayout.X_AXIS);
+		setName(title);
+		songTitle = new SongTitle(clock, this, seq);
 		Gui.resize(this, TAB_SIZE);
 		Gui.resize(trackPnl, LIST_SZ);
 		Gui.resize(holder, SCENE_SZ);
+
 		holder.setBorder(BorderFactory.createLineBorder(Pastels.FADED));
 		holder.setBackground(Pastels.BUTTONS);
-		trackPnl.add(songTitle);
-		for (int i = 0; i < tracks.size(); i++)
-			trackPnl.add(tracks.get(i));
-		trackPnl.add(chords.getView());
+		scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+		Box left = new Box(BoxLayout.Y_AXIS);
+		left.add(songTitle);
+		left.add(scroll);
 
-		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
-		add(trackPnl);
+		add(left);
 		add(holder);
-		setName(title);
 		clock.addListener(this);
+
+		refill();
 	}
 
-	public SongTrack getTrack(int idx) {
-		return tracks.get(idx);
+	public void refill() { // track has been added or removed
+		trackPnl.removeAll();
+		if (!getChords().isEmpty())
+			trackPnl.add(Gui.resize(chords.getView(), CHORDS));
+		for (DrumTrack drum : drums.getTracks()) {
+			trackPnl.add(Gui.resize(new SongTrack(drum), TRACK));
+		}
+		for (PianoTrack piano : SynthRack.getSynthTracks()) {
+			trackPnl.add(Gui.resize(new SongTrack(piano), TRACK));
+		}
+		trackPnl.invalidate();
+		repaint();
 	}
 
 	public void trigger() {
@@ -124,7 +143,6 @@ public class Overview extends JPanel implements TimeListener {
 		setScene(onDeck);
 	}
 
-
 	@Override public void update(Property prop, Object value) {
 		if (prop == Property.BARS)
 			songTitle.updateBar((int)value);
@@ -135,7 +153,7 @@ public class Overview extends JPanel implements TimeListener {
 			if (countUp > steps) {
 				trigger();
 				go();
-			} else
+			} else if (scene != null)
 				MainFrame.update(scene);
 			return;
 		}
@@ -217,15 +235,16 @@ public class Overview extends JPanel implements TimeListener {
     	drums.reset();
     	clock.setTimeSig(song.getTimeSig());
     	clock.reset();
-    	seq.loadSong(song.getTracks());
+
+    	seq.loadSong(song); // + chords
+
     	mixer.loadFx(song.getFx());
     	mixer.mutes(song.getCapture());
-    	chords.load(song);
 
 		songTitle.update();
 
 		holder.removeAll();
-		songView = new SongView(song, this, props, BTNS);
+		songView = new SongView(song, this, PROPS, BTNS);
 		holder.add(songView);
 		if (song.getScenes().isEmpty())
 			song.getScenes().add(new Scene(seq));
@@ -253,7 +272,7 @@ public class Overview extends JPanel implements TimeListener {
 			result = (Song)JsonUtil.readJson(choose, Song.class);
 			result.setFile(choose);
 			setSong(result);
-		} catch (Exception e) { RTLogger.warn(JudahZone.class, e); }
+		} catch (Exception e) { RTLogger.warn(this, e); }
 		return result;
     }
 
@@ -302,8 +321,15 @@ public class Overview extends JPanel implements TimeListener {
 			return;
 		save(f);
 		SongCombo.refresh(current.array(), f);
+	}
 
+	public void bundle() {
+		// TODO
 	}
 
 }
 
+//trackPnl.addMouseListener(new MouseAdapter() {
+//	@Override public void mouseClicked(MouseEvent e) {
+//		if (trackPnl.getComponentAt(e.getPoint()) == trackPnl)
+//			new NewTrack(seq); }});

@@ -6,10 +6,10 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.fx.Chorus;
 import net.judah.fx.Compressor;
-import net.judah.fx.Filter;
 import net.judah.fx.Delay;
 import net.judah.fx.EQ;
 import net.judah.fx.Effect;
+import net.judah.fx.Filter;
 import net.judah.fx.Freeverb;
 import net.judah.fx.LFO;
 import net.judah.fx.Overdrive;
@@ -30,15 +30,15 @@ import net.judah.util.RTLogger;
 @Getter
 public abstract class Channel extends FxChain implements Presets {
 
+    protected final EQ eq = new EQ();
 	protected final Filter hiCut = new Filter(true);
 	protected final Filter loCut = new Filter(false);
 	protected final DJFilter djFilter = new DJFilter(this, hiCut, loCut);
-    protected final EQ eq = new EQ();
     protected final Compressor compression = new Compressor();
+	protected final Delay delay = new Delay();
     protected final Overdrive overdrive = new Overdrive();
     protected final Chorus chorus = new Chorus();
     protected Reverb reverb = new Freeverb();
-	protected final Delay delay = new Delay();
     protected final LFO lfo = new LFO(this);
     protected final LFO lfo2 = new LFO(this, LFO.Target.pArTy);
 	protected Preset preset = JudahZone.getPresets().getDefault();
@@ -50,7 +50,7 @@ public abstract class Channel extends FxChain implements Presets {
     public Channel(String name, boolean isStereo) {
     	super(name, isStereo);
         Effect[] order = new Effect[] {
-        		hiCut, loCut, eq, compression, delay, overdrive, chorus, reverb, lfo, lfo2};
+        		eq, hiCut, loCut, compression, delay, overdrive, chorus, reverb};
         for (Effect fx : order)
         	add(fx);
     }
@@ -103,7 +103,18 @@ public abstract class Channel extends FxChain implements Presets {
                     continue setting;
                 }
             }
-            RTLogger.warn(this, "Preset Error. not found: " + s.getEffectName());
+            if (s.getEffectName().equals(lfo.getName())) {// better than LFOs in channel's list of RT effects
+                for (int i = 0; i < s.size(); i++)
+                    lfo.set(i, s.get(i));
+                lfo.setActive(presetActive);
+            }
+            if (s.getEffectName().equals(lfo2.getName())) {
+                for (int i = 0; i < s.size(); i++)
+                    lfo2.set(i, s.get(i));
+                lfo2.setActive(presetActive);
+            }
+            else
+            	RTLogger.warn(this, "Preset Error. not found: " + s.getEffectName());
         }
         MainFrame.update(this);
     }
@@ -146,6 +157,10 @@ public abstract class Channel extends FxChain implements Presets {
             if (!e.isActive()) continue;
             presets.add(new Setting(e));
         }
+        if (lfo.isActive()) // better than listing LFOs in RT effects
+        	presets.add(new Setting(lfo));
+        if (lfo2.isActive())
+        	presets.add(new Setting(lfo2));
         preset = new Preset(name, presets);
         return preset;
     }

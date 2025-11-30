@@ -13,15 +13,28 @@ public class Gain implements Effect {
 	public static final int PAN = 1;
 
 	private final String name = "Gain";
+	private final int paramCount = 2;
 	private float gain = 0.5f;
 	private float stereo = 0.5f;
 	@Setter private float preamp = 1f;
 
-	@Override
-	public void set(int idx, int value) {
-		if (value < 0 || value > 100)
-			throw new InvalidParameterException(
-					this.getClass().getSimpleName() + " " + idx + " " + value);
+	@Override public boolean isActive() {
+		return stereo < 0.49f || stereo > 0.51f;
+	}
+
+	@Override public void setActive(boolean active) {
+		if (!active) stereo = 0.5f;
+	}
+
+	@Override public int get(int idx) {
+		if (idx == VOLUME)
+			return (int) (gain * 100);
+		if (idx == PAN)
+			return (int) (stereo * 100);
+		throw new InvalidParameterException("idx " + idx);
+	}
+
+	@Override public void set(int idx, int value) {
 		if (idx == VOLUME)
 			setGain(value * 0.01f);
 		else if (idx == PAN)
@@ -30,49 +43,22 @@ public class Gain implements Effect {
 	}
 
 	public void setGain(float g) {
-		if (g < 0)
-			g = 0;
-		if (g > 1)
-			g = 1;
-		gain = g;
+		gain = g < 0 ? 0 : g > 1 ? 1 : g;
 	}
 	public void setPan(float p) {
-		if (p < 0)
-			p = 0;
-		if (p > 1)
-			p = 1;
-		stereo = p;
-	}
-
-	@Override
-	public boolean isActive() {
-		return stereo < 0.49f || stereo > 0.51f;
-	}
-
-	@Override
-	public void setActive(boolean active) {
-		if (!active) stereo = 0.5f;
-	}
-
-	@Override
-	public int get(int idx) {
-		if (idx == VOLUME)
-			return (int) (gain * 100);
-		if (idx == PAN)
-			return (int) (stereo * 100);
-		throw new InvalidParameterException("idx " + idx);
-	}
-
-	@Override
-	public int getParamCount() {
-		return 2;
+		stereo = p < 0 ? 0 : p > 1 ? 1 : p;
 	}
 
 	public float getLeft() {
-	    return preamp * gain * (1 - stereo);
+		if (stereo < 0.5f) // towards left, half log increase
+			return (1 + (0.5f - stereo) * 0.2f) * preamp;
+		return 2 * (1 - stereo) * preamp;
 	}
+
 	public float getRight() {
-	    return preamp * gain * stereo;
+		if (stereo > 0.5)
+			return (1 + (stereo - 0.5f) * 0.2f) * preamp;
+		return 2 * stereo * preamp;
 	}
 
 	@Override
@@ -100,8 +86,8 @@ public class Gain implements Effect {
 
 	/** preamp and panning */
 	public void preamp(FloatBuffer left, FloatBuffer right) {
-		final float l = preamp * (1 - getStereo());
-		final float r = preamp * getStereo();
+		final float l = getLeft();
+		final float r = getRight();
 		left.rewind(); right.rewind();
 	    while (left.hasRemaining())
 	        left.put(left.position(), left.get() * l);

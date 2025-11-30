@@ -15,10 +15,12 @@ import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.SwingUtilities;
 
+import net.judah.drumkit.DrumType;
 import net.judah.gui.Actionable;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
@@ -29,12 +31,15 @@ import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.PlayWidget;
 import net.judah.gui.widgets.RecordWidget;
 import net.judah.omni.Icons;
+import net.judah.seq.SynthRack;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiPair;
 import net.judah.seq.MusicBox;
 import net.judah.seq.Prototype;
 import net.judah.seq.Transpose;
+import net.judah.seq.automation.Automation;
+import net.judah.seq.automation.Automation.AutoMode;
 import net.judah.util.RTLogger;
 
 public abstract class TrackMenu extends Box implements MouseListener, Updateable {
@@ -44,13 +49,13 @@ public abstract class TrackMenu extends Box implements MouseListener, Updateable
 	public static class SendTo extends JMenu {
 		public SendTo(MidiTrack source) {
 			super("SendTo...");
-	    	for (MidiTrack t : source.isDrums() ? getSeq().getDrumTracks() : getSeq().getSynthTracks())
+	    	for (MidiTrack t : source.isDrums() ? getSeq().getDrumTracks() : SynthRack.getSynthTracks())
 	    		if (t != source)
 	    			add(new Actionable(t.getName(), evt->t.load(source)));
 		}
 	}
 
-	protected final MidiTrack track;
+	protected final NoteTrack track;
 	protected final MusicBox grid;
 	protected final ButtonGroup cue = new ButtonGroup();
 	protected final ButtonGroup gate = new ButtonGroup();
@@ -61,6 +66,7 @@ public abstract class TrackMenu extends Box implements MouseListener, Updateable
 	private final String a;
 	private final String b;
 
+	// CUE, Panic
 
 	public TrackMenu(MusicBox g) {
 		super(BoxLayout.X_AXIS);
@@ -138,7 +144,7 @@ public abstract class TrackMenu extends Box implements MouseListener, Updateable
 
 		file.add(new Actionable("New", e->track.clear()));
 		file.add(new Actionable("Open", e->track.load()));
-		file.add(new Actionable("Save", e->track.save()));
+		file.add(new Actionable("Save", e->track.save())); // if not bundle
 		file.add(new Actionable("Save As...", e ->track.saveAs()));
 		file.add(new Actionable("Import...", e->new ImportMidi(track)));
 		file.add(cues);
@@ -157,9 +163,9 @@ public abstract class TrackMenu extends Box implements MouseListener, Updateable
 		insert.add(new Actionable(a, e->insertBar(true)));
 		insert.add(new Actionable(b, e->insertBar(false)));
 		insert.add(new Actionable("Frame", e->insertFrame()));
-		// insert.add(new Actionable("Custom", e->trimFrame())); // TODO
 
-		tools.add(new Actionable("Info/Res...", e->resolution()));
+		tools.add(new Actionable("Track Info...", e->info()));
+		tools.add(new Actionable("Automation", e->Automation.getInstance().init(track, 0l, AutoMode.All)));
 		tools.add(new SendTo(track));
 		tools.add(insert);
 		tools.add(trim);
@@ -168,10 +174,11 @@ public abstract class TrackMenu extends Box implements MouseListener, Updateable
 	private void barMenu(JMenu menu) { // try the wings!
 
 		JMenu select = new JMenu("Select");
-		select.add(new Actionable("All", e->grid.selectFrame()));
+		select.add(new Actionable("None", e->grid.selectNone()));
 		select.add(new Actionable(a, e->grid.selectBar(true)));
 		select.add(new Actionable(b, e->grid.selectBar(false)));
-		select.add(new Actionable("None", e->grid.selectNone()));
+		select.add(new Actionable("Window", e->grid.selectFrame()));
+		select.add(new Actionable("Track", e->grid.selectArea(0, grid.getTrack().getT().ticks())));
 
 		menu.add(select);
 		menu.add(new Actionable("Copy", e-> grid.copy()));
@@ -180,15 +187,25 @@ public abstract class TrackMenu extends Box implements MouseListener, Updateable
 		menu.add(new Actionable("Undo", e->grid.undo()));
 		menu.add(new Actionable("Redo", e->grid.redo()));
 
-		if (track.isDrums())
+		if (track.isDrums()) {
+			JMenu type = new JMenu("Drum");
+			select.add(type);
+			for (DrumType t : DrumType.values()) {
+				JMenuItem item = new JMenuItem(t.name());
+				type.add(item);
+				item.addActionListener(e->{
+					int data1 = DrumType.valueOf( ((AbstractButton)e.getSource()).getText()).getData1();
+					grid.selectArea(0, track.getT().ticks(), data1, data1);
+				});
+			}
+
 			menu.add(tools);
+		}
 
 		menu.add(new Actionable("Transpose...", e->new Transpose(track, grid)));
-		// result.add(new Actionable("CC", e->{ }));
-		// result.add(new Actionable("Prog", e->{ }));
 	}
 
-	private void resolution() {
+	private void info() {
 		String result = JOptionPane.showInputDialog(SwingUtilities.getWindowAncestor(this),
 				track.info() + "New Resolution:", track.getResolution());
 		if (result == null) return;

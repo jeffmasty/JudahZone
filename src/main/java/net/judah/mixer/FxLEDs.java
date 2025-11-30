@@ -13,10 +13,10 @@ import net.judah.fx.Compressor;
 import net.judah.fx.Delay;
 import net.judah.fx.Effect;
 import net.judah.fx.EffectColor;
+import net.judah.fx.Filter;
 import net.judah.fx.LFO;
 import net.judah.fx.Overdrive;
 import net.judah.fx.Reverb;
-import net.judah.synth.taco.MonoFilter;
 
 
 /**effect indicator lights: red reverb, orange delay, yellow distortion, green chorus, blue LFO
@@ -36,7 +36,7 @@ public class FxLEDs extends JPanel {
 	public static final int LFO2 = 7;
 	@SuppressWarnings("unchecked")
 	private Class<Effect>[] lookup = new Class[] {Reverb.class, Delay.class, Overdrive.class,
-			Chorus.class, MonoFilter.class, Compressor.class, LFO.class};
+			Chorus.class, Filter.class, Compressor.class, LFO.class};
 
 
 	@Getter boolean[] model = new boolean[UNITS];
@@ -85,8 +85,8 @@ public class FxLEDs extends JPanel {
 			model[LFO] = channel.getLfo().isActive() || channel.getLfo2().isActive();
 			repaint = true;
 		}
-		if (channel.getHiCut().isActive() != model[CUTFILTER]) {
-			model[CUTFILTER] = channel.getHiCut().isActive();
+		if (channel.getHiCut().isActive() || channel.getLoCut().isActive() != model[CUTFILTER]) {
+			model[CUTFILTER] = channel.getHiCut().isActive() || channel.getLoCut().isActive();
 			repaint = true;
 		}
 		if (channel.getCompression().isActive() != model[COMPRESSION]) {

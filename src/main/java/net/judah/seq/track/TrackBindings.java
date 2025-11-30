@@ -10,6 +10,7 @@ import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 
+import net.judah.JudahZone;
 import net.judah.gui.Bindings.Act;
 import net.judah.seq.Duration;
 import net.judah.seq.Transpose;
@@ -46,6 +47,13 @@ public class TrackBindings {
 		bind(getKeyStroke(VK_Z, CTRL_DOWN_MASK), new Act(()->view.getMusician().undo()));
 		bind(getKeyStroke(VK_UP, 0), new Act(()->view.getMusician().velocity(true)));
 		bind(getKeyStroke(VK_DOWN, 0), new Act(()->view.getMusician().velocity(false)));
+		bind(getKeyStroke(VK_LEFT, 0), new Act(()->view.getMusician().getTrack().next(true)));
+		bind(getKeyStroke(VK_RIGHT, 0), new Act(()->view.getMusician().getTrack().next(false)));
+		if (view.getMusician().getTrack().isDrums()) {
+			bind(getKeyStroke(VK_LEFT, CTRL_DOWN_MASK), new Act(()->JudahZone.getDrumMachine().getTracks().next(false)));
+			bind(getKeyStroke(VK_RIGHT, CTRL_DOWN_MASK), new Act(()->JudahZone.getDrumMachine().getTracks().next(true)));
+		}
+
 
 	}
 

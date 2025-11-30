@@ -21,8 +21,7 @@ public class Line6FBV extends Debounce implements Controller {
 		this.guitar = guitar;
 	}
 
-	@Override
-	public boolean midiProcessed(Midi midi) {
+	@Override public boolean midiProcessed(Midi midi) {
 
 		if (Midi.isProgChange(midi)) { // "DOWN" button
 			if (midi.getData1() == 0) {
@@ -53,31 +52,6 @@ public class Line6FBV extends Debounce implements Controller {
 			else
 				getLooper().trigger(loop);
 			return true;
-//		case 2: // overdub B
-//			if (data2 == 0) return true;
-//			loop = getLooper().getLoopB();
-//			if (mutes)
-//				loop.setOnMute(!loop.isOnMute());
-//			else {
-//				loop.trigger();
-//			}
-//			return true;
-//		case 3: // record C (free)
-//			if (data2 == 0) return true;
-//			loop = getLooper().getLoopC();
-//			if (mutes)
-//				loop.setOnMute(!loop.isOnMute());
-//			else // can be free-style loop
-//				loop.trigger();
-//			return true;
-//		case 4: // overdub D
-//			if (midi.getData2() == 0) return true;
-//			SoloTrack solo = getLooper().getSoloTrack();
-//			if (mutes)
-//				solo.setOnMute(!solo.isOnMute());
-//			else
-//				solo.trigger();
-//			return true;
 		case 5: // Func(1) start/stop drum machine
 			JudahClock clock = getClock();
 			if (clock.isActive())

@@ -86,7 +86,7 @@ public class AllModel extends DefaultTableModel {
 					((ShortMessage)dat.e().getMessage()).getData2()});
 
 		for (MidiEvent dat : prog)
-			addRow(new Object[] {new Type(dat, AutoMode.Prog, null), new Time(dat),
+			addRow(new Object[] {new Type(dat, AutoMode.PC, null), new Time(dat),
 					((ShortMessage)dat.getMessage()).getData1()});
 
 		for (MidiEvent dat : pitch)
@@ -140,21 +140,22 @@ public class AllModel extends DefaultTableModel {
 				} else if (Midi.isProgChange(msg))
 					prog.add(e);
 			}
-
 		}
-
 		int steps = track.getClock().getTimeSig().steps * 2;
 		if (roster == null || roster.length != steps)
 			roster = new int[steps];
 		else
 			for (int i = 0; i < steps; i++)
 				roster[i] = 0;
-		long left = track.getLeft(); // step 1
+
+		long left = track.getLeft();
+		long right = track.getLeft() + track.getWindow();
 		long step = track.getStepTicks();
 		for (CCData d : cc)
-			roster[(int) ((d.e().getTick() - left) / step)]++;
+			if (d.e().getTick() >= left && d.e().getTick() < right)
+				roster[(int) ((d.e().getTick() - left) / step)]++;
 		return roster;
-	}
 
+	}
 
 }

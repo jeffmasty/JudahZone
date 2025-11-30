@@ -1,6 +1,5 @@
 package net.judah.gui;
 
-import static net.judah.JudahZone.getSeq;
 import static net.judah.gui.Size.TAB_SIZE;
 
 import java.awt.Component;
@@ -14,7 +13,6 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
@@ -24,7 +22,6 @@ import net.judah.gui.Detached.Floating;
 import net.judah.gui.widgets.CloseableTabbedPane;
 import net.judah.omni.Threads;
 import net.judah.seq.Musician;
-import net.judah.seq.Trax;
 import net.judah.seq.beatbox.BeatBox;
 import net.judah.seq.beatbox.DrumZone;
 import net.judah.seq.chords.ChordSheet;
@@ -119,7 +116,7 @@ public class TabZone extends CloseableTabbedPane {
 				setTitleAt(i, current.getFile().getName());
 	}
 
-	public void title(JPanel tab) {
+	public void title(JComponent tab) {
 		title(tab, tab.getName());
 	}
 
@@ -260,11 +257,11 @@ public class TabZone extends CloseableTabbedPane {
 			view.requestFocus();
 		}
 	}
-	public void pianoTrack(Trax p) {
-		for (PianoTrack t : getSeq().getSynthTracks())
-			if (t.getType() == p)
-				pianoTrack(t);
-	}
+//	public void pianoTrack(Trax p) {
+//		for (PianoTrack t : getSeq().getSynthTracks())
+//			if (t.getType() == p)
+//				pianoTrack(t);
+//	}
 
 	@Override
 	public void setSelectedIndex(int index) {

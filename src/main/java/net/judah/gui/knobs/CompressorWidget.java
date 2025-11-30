@@ -14,6 +14,7 @@ import javax.swing.JPanel;
 
 import net.judah.fx.Compressor;
 import net.judah.gui.Gui;
+import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
 import net.judah.gui.MainFrame.FxChange;
 import net.judah.gui.Pastels;
@@ -53,9 +54,9 @@ public class CompressorWidget extends JPanel {
     	ArrayList<Component> knobs = row.getControls();
 
 		knobs.add(new FxKnob(channel, comp, Threshold.ordinal(), "THold", KNOB_C));
-		knobs.add(new FxKnob(channel, comp, Boost.ordinal(), "Gain", KNOB_C));
+		knobs.add(new FxKnob(channel, comp, Boost.ordinal(), "Gain", KNOB_C, Ratio.ordinal()));
     	knobs.add(new FxKnob(channel, comp, Attack.ordinal(), "Atk", KNOB_C));
-		knobs.add(new FxKnob(channel, comp, Release.ordinal(), "Rel", KNOB_C));
+		knobs.add(new FxKnob(channel, comp, Release.ordinal(), "Rel", KNOB_C, Knee.ordinal()));
 
 		for (Component c : labels.getControls())
 			compressorLbls.add(Gui.wrap(c));
@@ -74,14 +75,24 @@ public class CompressorWidget extends JPanel {
 			comp.set(Threshold.ordinal(), data2);
 			compress(2, data2); }
 		case 5 -> {
-			comp.set(Boost.ordinal(), data2);
-			compress(2, data2); }
+			if (HQ.isShift())
+				ratio.setValue(data2);
+			else {
+				comp.set(Boost.ordinal(), data2);
+				compress(2, data2);
+			}
+		}
     	case 6 -> {
 			comp.set(Attack.ordinal(), data2);
 			compress(2, data2);}
 		case 7 -> {
-			comp.set(Release.ordinal(), data2);
-			compress(5, data2); }
+			if (HQ.isShift())
+				knee.setValue(data2);
+			else {
+				comp.set(Release.ordinal(), data2);
+				compress(5, data2);
+				}
+			}
     	default -> { return false; }
     	}
     	MainFrame.update(new FxChange(channel, comp));

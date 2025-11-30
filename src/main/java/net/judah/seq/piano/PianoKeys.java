@@ -19,21 +19,21 @@ import net.judah.gui.Size;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiInstrument;
-import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.NoteTrack;
 
 /** Display keys of a piano above PianoBox */
 public class PianoKeys extends JPanel implements MouseListener, MouseMotionListener, Size {
 	public static final List<Integer> BLACK_KEYS = List.of(1, 3, 6, 8, 10);
 
 	private final PianoView view;
-	private final MidiTrack track;
+	private final NoteTrack track;
 	private int width, height;
 	private int highlight = -1;
 	private int pressed;
 	@Getter private int octave = 4;
 	private HashSet<Integer> actives = new HashSet<>();
 
-	public PianoKeys(MidiTrack t, PianoView v) {
+	public PianoKeys(NoteTrack t, PianoView v) {
 		view = v;
 		track = t;
 		addMouseListener(this);

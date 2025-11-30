@@ -28,7 +28,7 @@ import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
 import net.judah.seq.Edit.Type;
-import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.NoteTrack;
 import net.judah.util.RTLogger;
 
 public abstract class MusicBox extends JPanel implements Musician, Updateable, Floating {
@@ -36,7 +36,7 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 	public static enum DragMode { CREATE, TRANSLATE, SELECT }
 	protected static final Composite transparent = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);
 
-	@Getter protected final MidiTrack track;
+	@Getter protected final NoteTrack track;
 	protected final Track t;
 	protected final JudahClock clock;
 	protected final Measure scroll;
@@ -54,7 +54,7 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 	protected int width, height;
 	protected final Clipboard clipboard;
 
-	public MusicBox(MidiTrack midiTrack) {
+	public MusicBox(NoteTrack midiTrack) {
 		this.track = midiTrack;
 		this.t = track.getT();
 		this.clock = track.getClock();
@@ -337,7 +337,9 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 
 	protected void editDel(ArrayList<MidiPair> notes) {
 		for (MidiPair p: notes) {
-				MidiTools.delete(p.getOn(), track.getT());
+				if (MidiTools.delete(p.getOn(), track.getT()) == false)
+					RTLogger.warn(this, "Could not delete: " +
+							Midi.toString(p.getOn().getMessage()) + " @ " + p.getOn().getTick());
 				if (p.getOff() != null)
 					MidiTools.delete(p.getOff(), track.getT());
             }

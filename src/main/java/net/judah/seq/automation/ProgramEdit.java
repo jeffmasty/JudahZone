@@ -89,7 +89,7 @@ class ProgramEdit extends AutoBox implements MidiConstants {
 	@Override protected void setTrack(MidiTrack t) {
 		track = t;
 		tick.setTrack(t);
-		String[] source = t.getMidiOut().getPatches();
+		String[] source = t.getPatches();
 		int length = source.length;
 		DefaultListModel<String> model = new DefaultListModel<>();
 		for (int i = 0; i < 128; i++)
@@ -99,17 +99,10 @@ class ProgramEdit extends AutoBox implements MidiConstants {
 
 	private void publish() {
 		try {
-			MidiEvent target;
-			if (existing == null) {
-				target = new MidiEvent(build(), tick.getTick());
-				Edit create = new Edit(Type.NEW, new MidiPair(target, null));
-				getMusician(track).push(create);
-				delete.setEnabled(true);
-			} else {
-				target = new MidiEvent(build(), tick.getTick());
-				Edit mod = new Edit(Type.MOD, new MidiPair(existing, target));
-				getMusician(track).push(mod);
-			}
+			MidiEvent target = new MidiEvent(build(), tick.getTick());
+			Edit create = new Edit(Type.NEW, new MidiPair(target, null));
+			getMusician(track).push(create);
+			delete.setEnabled(true);
 			existing = target;
 
 		} catch (InvalidMidiDataException me) {

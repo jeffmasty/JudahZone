@@ -7,16 +7,15 @@ import java.util.List;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.fx.Gain;
+import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
+import net.judah.omni.Threads;
 import net.judah.seq.Seq;
-import net.judah.seq.Trax;
-import net.judah.seq.arp.Arp;
-import net.judah.seq.track.MidiTrack;
-import net.judah.seq.track.PianoTrack;
+import net.judah.seq.SynthRack;
 import net.judah.song.Scene;
 
 /** Korg nanoKONTROL2 midi controller custom codes */
@@ -69,15 +68,10 @@ public class KorgMixer implements Controller {
 			getDrumMachine().getTracks().get(data1 - knoboff).setAmp(data2 * .01f);
 		}
 		else if (data1 >= knoboff + 4 && data1 < knoboff + 8) {
-			ampKnob(data1 - (knoboff + 4), data2);
+			Threads.execute(()->SynthRack.gain(data1 - (knoboff + 4), data2));
 		}
 		else if (data2 > 0 && data1 >= soff && data1 < soff + 8) { // play/stop sequencer tracks
-			if (data1 < soff + 4)
-				seq.get(data1 - soff).trigger();
-			else if (data1 == soff + 4)
-				seq.byName(Trax.TK2.toString()).trigger();
-			else
-				getFluid().getTracks().get(data1 - soff - 5).trigger();
+			seq.trigger(data1 - soff);
 		}
 		else if (data2 > 0 && data1 >= moff && data1 < moff + 8) { // MUTE/RECORD
 			Channel ch = mutes(data1 - moff);
@@ -93,8 +87,8 @@ public class KorgMixer implements Controller {
 			launchScene(data1 - roff);
 		}
 
-		else if (data1 == SET.getVal() && data2 != 0) { // Run SettableCombo or hide modal dialog
-			// TODO override = select track's Frame on KorgPads
+		else if (data1 == SET.getVal() /* && data2 != 0 */) { // Run SettableCombo or hide modal dialog
+			Threads.execute(()->HQ.setShift(data2 == 100));
 		}
 		else if (data1 == CYCLE.getVal()) {
 			getLooper().verseChorus();
@@ -121,11 +115,8 @@ public class KorgMixer implements Controller {
 		if (data1 == STOP.getVal() && data2 != 0 && seq.getCurrent() != null) { // Track Active/Inactive
 			seq.getCurrent().toggle();
 		}
-		else if (data1 == PLAY.getVal() && data2 > 0) { // MPK mode
-			if (seq.getCurrent() instanceof PianoTrack synth)
-				synth.toggle(Arp.MPK);
-//			else
-//				seq.getCurrent().toggle();
+		else if (data1 == PLAY.getVal() && data2 > 0) {
+			seq.getCurrent().toggle();
 		}
 		else if (data1 == RECORD.getVal())
 			seq.getCurrent().setCapture(!seq.getCurrent().isCapture());
@@ -135,22 +126,12 @@ public class KorgMixer implements Controller {
 
 	private void launchScene(int idx) {
 		if (idx == 7) {
-			getSeq().byName(Trax.B.toString()).toggle();
+			getBass().getTrack().toggle();
 			return;
 		}
 		List<Scene> scenes = getOverview().getSong().getScenes();
 		getOverview().setOnDeck(scenes.size() > idx ? scenes.get(idx) : scenes.getLast());
 
-	}
-
-	private void ampKnob(int idx, int data2) {
-		MidiTrack track =  switch (idx) {
-			case 1 -> getFluid().getTracks().get(0);
-			case 2 -> getFluid().getTracks().get(1);
-			case 3 -> getFluid().getTracks().get(2);
-			default -> getTacos().tk2.getTrack();
-		};
-		track.setAmp(data2 * .01f);
 	}
 
 	private Channel fader(int idx) {
@@ -163,7 +144,7 @@ public class KorgMixer implements Controller {
 		if (idx == 7) {
 			return getMains();
 		}
-		return getTacos().taco;
+		return getTaco();
 	}
 
 	private Channel mutes(int idx) {

@@ -48,13 +48,13 @@ public class Zone extends Vector<LineIn> {
 	/** By default, don't record drum track, microphone, sequencer */
     public void mutes() {
         getGuitar().setMuteRecord(false);
-        getTacos().taco.setMuteRecord(false);
+        getTaco().setMuteRecord(false);
         getDrumMachine().setMuteRecord(false); // individual kits can capture
 	}
 
 	void preamps() {
 		getMains().getGain().setPreamp(Mains.PREAMP);
-		getSampler().getGain().setPreamp(2f);
+		getSampler().getGain().setPreamp(2.5f);
 		getMic().getGain().setGain(0.25f); // trim studio noise
 	}
 

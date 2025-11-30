@@ -14,18 +14,18 @@ import net.judah.song.cmd.ParamList;
 
 @Data @NoArgsConstructor
 public class Scene {
-	
+
 	@JsonIgnore UUID id = UUID.randomUUID();
 	Trigger type = Trigger.BAR;
 	String notes = "";
 	ParamList commands = new ParamList();
 	List<Sched> tracks = new ArrayList<>();
 	List<String> fx = new ArrayList<>();
-	
+
 	public Scene(Seq seq) {
 		seq.init(tracks);
 	}
-	
+
 	public Scene(List<Sched> state) {
 		state.forEach(clone -> tracks.add(new Sched(clone)));
 	}
@@ -38,7 +38,7 @@ public class Scene {
 		for (Sched source : tracks)
 			trax.add(new Sched(source));
 		result.setTracks(trax);
-		for (String ch : fx) 
+		for (String ch : fx)
 			result.fx.add(ch);
 		result.notes = notes;
 		result.type = type;
@@ -50,5 +50,5 @@ public class Scene {
 		return "" + JudahZone.getOverview().getSong().getScenes().indexOf(this);
 	}
 
-	
+
 }

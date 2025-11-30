@@ -1,5 +1,26 @@
 package net.judah.fx;
 
+/*https://github.com/adiblol/jackiir*/
+/*
+jackiir
+IIR parametric equalizer for JACK without GUI
+
+Copyright (C) 2014 adiblol
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 
@@ -12,15 +33,14 @@ public class Filter implements Effect {
 
     public enum Settings { Type, Hz, Width, dB }
 
-    public static final int MIN = 40;
-    public static final int MAX = 14400;
+    public static final int MIN = 45;
+    public static final int MAX = 13500;
 
     @Getter private final String name = Filter.class.getSimpleName();
     @Getter private final int paramCount = Settings.values().length;
 
     @Setter @Getter private boolean active;
-    private final BiquadF rightCh;
-    private final BiquadF leftCh;
+    private final StereoBiquad stereo;
 
 //	 /*filter_type can be: g (gain without EQ), pk (peaking), hp/lc (highpass/lowcut), lp/hc (lowpass/highcut)
 //	 # freq is center frequency (for peaking) or cut/boost frequency
@@ -31,44 +51,39 @@ public class Filter implements Effect {
 //	float hz = type == FilterType.HighPass ? 100 : 4000;
     public Filter(boolean lowPass) {
 		float hz = lowPass ? MAX : MIN;
-		leftCh = new BiquadF(lowPass ? FilterType.LowPass : FilterType.HighPass, hz);
-		rightCh = new BiquadF(leftCh);
-
-		leftCh.update();
-		rightCh.update();
+		FilterType type = lowPass ? FilterType.LowPass : FilterType.HighPass;
+		stereo = new StereoBiquad(type, hz);
     }
 
 	@Override public void set(int idx, int value) {
 		if (idx == Settings.dB.ordinal())
-			leftCh.gain_db = rightCh.gain_db = BiquadF.gainDb(value);
+			stereo.gain_db = StereoBiquad.gainDb(value);
 		else if (idx == Settings.Hz.ordinal())
-			leftCh.frequency = rightCh.frequency = Constants.logarithmic(value, MIN, MAX);
+			stereo.frequency = Constants.logarithmic(value, MIN, MAX);
 		else if (idx == Settings.Width.ordinal())
-			leftCh.bandwidth = rightCh.bandwidth = BiquadF.MAX_WIDTH * value * 0.01f;
+			stereo.bandwidth = StereoBiquad.MAX_WIDTH * value * 0.01f;
 		else if (idx == Settings.Type.ordinal()) { // "LOCUT" CC81
 			FilterType change = value > 50 ? FilterType.HighPass : FilterType.LowPass;
-			leftCh.filter_type = rightCh.filter_type = change;
+			stereo.filter_type = change;
 		}
 		else throw new InvalidParameterException("" + idx);
-		leftCh.update();
-		rightCh.update();
+		stereo.update();
 	}
 
 	@Override public int get(int idx) {
 		if (idx == Settings.dB.ordinal())
-			return Math.round(leftCh.gain_db * 2 + 50);
+			return Math.round(stereo.gain_db * 2 + 50);
 		else if (idx == Settings.Hz.ordinal())
-			return Constants.reverseLog(leftCh.frequency, MIN, MAX);
+			return Constants.reverseLog(stereo.frequency, MIN, MAX);
 		else if (idx == Settings.Width.ordinal()) // x/MAX_WIDTH = y/100
-			return (int) (leftCh.bandwidth * 100 / BiquadF.MAX_WIDTH);
+			return (int) (stereo.bandwidth * 100 / StereoBiquad.MAX_WIDTH);
 		else if (idx == Settings.Type.ordinal())
-			return leftCh.filter_type == FilterType.HighPass ? 100 : 0;
+			return stereo.filter_type == FilterType.HighPass ? 100 : 0;
 		throw new InvalidParameterException("" + idx);
 	}
 
 	@Override public void process(FloatBuffer left, FloatBuffer right) {
-		leftCh.processBuffer(left);
-		rightCh.processBuffer(right);
+		stereo.process(left, right);
 	}
 
 }

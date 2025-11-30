@@ -41,10 +41,10 @@ public class CCPopup extends JPopupMenu {
 	    MidiEvent prog = getProg(step);
 	    if (prog == null) {
 	    	long tick = track.getFrame() * track.getWindow() + step * track.getStepTicks();
-			add(new Actionable("ProgChange", e->Automation.getInstance().init(track, tick, AutoMode.Prog)));
+			add(new Actionable("ProgChange", e->Automation.getInstance().init(track, tick, AutoMode.PC)));
 	    }
 	    else {
-	    	String[] source = track.getMidiOut().getPatches();
+	    	String[] source = track.getPatches();
 	    	int data1 = ((ShortMessage)prog.getMessage()).getData1();
 	    	String instr;
 	    	if (data1 > source.length)
@@ -90,8 +90,8 @@ public class CCPopup extends JPopupMenu {
 		Automation.getInstance().init(track, tick, AutoMode.CC);
 	}
 
-	public int[] populate(long start, long end) {
-		return dat.populate(start, end);
+	public int[] populate(long left, long right) {
+		return dat.populate(left, right);
 	}
 
 

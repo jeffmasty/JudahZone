@@ -1,12 +1,12 @@
-package net.judah.seq.automation;
+package net.judah.seq;
 
 import javax.sound.midi.MetaMessage;
 
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public
-enum Meta {
+public enum Meta {
+
 	SEQ_NUM(0),
 	TEXT(1),
 	COPYRIGHT(2),
@@ -25,6 +25,8 @@ enum Meta {
 	KEY_SIG(0x59)   //bytes:2  "C"  "F#m"
 	;
 
+	final int type;
+
 	public static Meta getType(MetaMessage m) {
 		int target = m.getType();
 		for (Meta met : Meta.values())
@@ -33,5 +35,4 @@ enum Meta {
 		return null;
 	}
 
-	final int type;
 }

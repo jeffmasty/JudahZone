@@ -2,7 +2,6 @@ package net.judah.synth.taco;
 
 import lombok.RequiredArgsConstructor;
 import net.judah.gui.MainFrame;
-import net.judah.gui.knobs.SynthKnobs;
 import net.judah.util.Constants;
 
 /** crank up Resonance on Filters */
@@ -11,7 +10,7 @@ public class ModWheel {
 
 	private static final int RESONANCE = MonoFilter.Settings.Resonance.ordinal();
 
-	private final SynthKnobs knobs;
+	private final TacoSynth synth;
 	private final MonoFilter lo;
 	private final MonoFilter hi;
 
@@ -27,10 +26,9 @@ public class ModWheel {
 				hi.set(RESONANCE, oldHi);
 			oldHi = null;
 			oldLo = null;
-			MainFrame.update(knobs);
+			MainFrame.update(synth.getKnobs());
 			return;
 		}
-
 
 		if (oldHi == null) {
 			oldHi = hi.get(RESONANCE);
@@ -38,16 +36,16 @@ public class ModWheel {
 		}
 
 		float ratio = data2 * Constants.TO_1;
-		int newLo = oldLo + (int)(100 * ratio);
-		newLo =  oldLo + Math.round((100 - oldLo) * ratio);
+		int newLo = oldLo + (int) (100 * ratio);
+		newLo = oldLo + Math.round((100 - oldLo) * ratio);
 		if (newLo > 100)
 			newLo = 100;
 		lo.set(RESONANCE, newLo);
-		int newHi = oldHi + (int)(100 * ratio);
+		int newHi = oldHi + (int) (100 * ratio);
 		if (newHi > 100)
 			newHi = 100;
 		hi.set(RESONANCE, newHi);
-		MainFrame.update(knobs);
+		MainFrame.update(synth.getKnobs());
 
 	}
 

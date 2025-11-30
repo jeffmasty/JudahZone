@@ -6,7 +6,10 @@ public interface MidiConstants {
 	int NOTE_OFF = 0x80;
 	int MIDDLE_C = 60;
 	int DRUM_CH = 9;
-	int CUTOFF = 63; // toggle CCs
+
+	int CUTOFF = 63; // toggle binary CCs
+	int THOLD_LO = 1; // toggle Fx
+	int THOLD_HI = 99; // toggle Fx
 
 
 }

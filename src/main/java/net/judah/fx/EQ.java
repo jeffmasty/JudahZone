@@ -22,28 +22,37 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import java.nio.FloatBuffer;
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.util.Constants;
 
 public class EQ implements Effect {
-	public static final int CHANNELS_MAX = 32;
-	public static final int FILTERS_MAX = 32;
-	static final float LOG_2  = 0.693147f;
 
- 	public static enum Settings		{ dB, Hz, Width}
-	public static enum EqBand 		{ Bass, Mid, High }
-
-	public static int[] FREQUENCIES = {90, 500, 5000};
-
-	@Getter private final String name;
-	private final ArrayList<BiquadF> leftCh = new ArrayList<BiquadF>();
-	private final ArrayList<BiquadF> rightCh = new ArrayList<BiquadF>();
-	@Getter @Setter private boolean active;
+	public static enum Settings{ Bass, Mid, High, LoHz, Q, HiHz }
+ 	public static enum EqBand { Bass, Mid, High }
+ 	public static enum Properties { dB, Hz, Width}
+ 	public static final int MIN_HZ = Filter.MIN;
+ 	public static final int MAX_HZ = Filter.MAX;
+ 	public static final int MID_HZ = (int)Constants.logarithmic(50, MIN_HZ, MAX_HZ);
+ 	private static final float HI_MIN = MID_HZ * 2; // less bleed-over
+ 	private static final float LOW_MAX = MID_HZ / 2; // less bleed-over
 
 	public static record Frequencies(int low, int mid, int high) {};
-	public static Frequencies DEFAULT = new Frequencies(90, 500, 5000);
+	public static Frequencies DEFAULT = new Frequencies(90, MID_HZ, 5000);
+ 	private static final int BASS = 0;
+ 	private static final int MID = 1;
+ 	private static final int HIGH = 2;
+	private static final float MIN_WIDTH = 0.5f;
+	private static final float MAX_WIDTH = 5;
+	private static final float RANGE = MAX_WIDTH - MIN_WIDTH;
+
+	@Getter private final String name = EQ.class.getSimpleName();
+	@Getter private final int paramCount = Settings.values().length;
+	@Getter @Setter private boolean active;
+	private final ArrayList<StereoBiquad> stereo = new ArrayList<StereoBiquad>();
 
 	public EQ() {
 		this(DEFAULT);
@@ -51,22 +60,12 @@ public class EQ implements Effect {
 
 	/** create 3 peak EQs of given Frequencies, each spanning more than an octave */
 	public EQ(Frequencies hz) {
-		this.name = EQ.class.getSimpleName();
-		BiquadF bass = new BiquadF(hz.low, 1.3f);
-
-		leftCh.add(bass);
-		rightCh.add(new BiquadF(bass));
-
-		BiquadF mid = new BiquadF(hz.mid, 1.5f);
-		leftCh.add(mid);
-		rightCh.add(new BiquadF(mid));
-
-		BiquadF treble = new BiquadF(hz.high, 1.75f);
-		leftCh.add(treble);
-		rightCh.add(new BiquadF(treble));
+		stereo.add(new StereoBiquad(hz.low));
+		stereo.add(new StereoBiquad(hz.mid));
+		stereo.add(new StereoBiquad(hz.high));
 	}
 
-	private void update(BiquadF filter, Settings param, float value) {
+	private void update(StereoBiquad filter, Properties param, float value) {
 		switch (param) {
 			case dB: filter.gain_db = value; break;
 			case Hz: filter.frequency = value; break;
@@ -75,42 +74,62 @@ public class EQ implements Effect {
 		filter.update();
 	}
 
-	public void update(EqBand band, Settings param, float value) {
-		update(leftCh.get(band.ordinal()), param, value);
-		update(rightCh.get(band.ordinal()), param, value);
+	private void update(EqBand band, Properties param, float value) {
+		update(stereo.get(band.ordinal()), param, value);
 	}
 
-	// TODO
-    @Override public int getParamCount() {
-        return EqBand.values().length;
-    }
-
-    // TODO support hz
     @Override public int get(int idx) {
-    	float nonNormal = leftCh.get(idx).gain_db;
-    	return Math.round(nonNormal * 2 + 50);
-    }
-    // TODO support hz
-    @Override public void set(int idx, int val) {
-    	EqBand band = EqBand.values()[idx];
-    	eqGain(band, val);
+    	if (idx < Settings.LoHz.ordinal()) {
+	    	float nonNormal = stereo.get(idx).gain_db;
+	    	return Math.round(nonNormal * 2 + 50);
+    	}
+    	if (idx == Settings.LoHz.ordinal())
+    		return Constants.reverseLog(stereo.get(BASS).frequency, MIN_HZ, LOW_MAX);
+    	if (idx == Settings.Q.ordinal()) // ratio from minW to maxW     x/range = y/100
+    		return (int) ((getWidth() - MIN_WIDTH) / RANGE * 100);
+    	if (idx == Settings.HiHz.ordinal())
+    		return Constants.reverseLog(stereo.get(HIGH).frequency, HI_MIN, MAX_HZ);
+		throw new InvalidParameterException("EQ param " + idx);
     }
 
+    @Override public void set(int idx, int val) {
+    	switch (idx) {
+    	case BASS: case MID: case HIGH:
+	    	EqBand band = EqBand.values()[idx];
+	    	eqGain(band, val);
+	    	break;
+    	case 3:
+    		update(EqBand.Bass, Properties.Hz, Constants.logarithmic(val, MIN_HZ, LOW_MAX));
+    		break;
+    	case 4:
+    		// 0.5 + val * 0.01f * range
+    		float width = MIN_WIDTH + (val * 0.01f * RANGE);
+    		for (StereoBiquad b : stereo)
+    			update(b, Properties.Width, width);
+    		break;
+    	case 5:
+    		update(EqBand.High, Properties.Hz, Constants.logarithmic(val, HI_MIN, MAX_HZ));
+    		break;
+		default:
+			throw new InvalidParameterException("EQ param " + idx);
+    	}
+    }
 
 	public void eqGain(EqBand eqBand, int val) {
-        update(eqBand, Settings.dB, BiquadF.gainDb(val));
+        update(eqBand, Properties.dB, StereoBiquad.gainDb(val));
 	}
 
     public float getGain(EqBand band) {
-	    return leftCh.get(band.ordinal()).gain_db;
+	    return stereo.get(band.ordinal()).gain_db;
 	}
 
-	@Override
-	public void process(FloatBuffer left, FloatBuffer right) {
-		for (BiquadF filter : leftCh)
-			filter.processBuffer(left);
-		for (BiquadF filter : rightCh)
-			filter.processBuffer(right);
+	@Override public void process(FloatBuffer left, FloatBuffer right) {
+		for (StereoBiquad filter : stereo)
+			filter.process(left, right);
+	}
+
+	public float getWidth() {
+		return stereo.get(MID).bandwidth;
 	}
 
 }

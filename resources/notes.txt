@@ -1,23 +1,36 @@
 TODO:
 
-Hi/Lo filter CC
-Automation deep frames off 1!-99, new
+Song Bundle mode = Import track midi files,  
+MidiSong tracks onSave [Main], [1, 2, 3, 4, 5, 6], {7,8} [D9, 10, 11, 12] 13,14,15 
+JudahMenu Song-> Resolution = Seq confirm resolution (to highest)
+Load from other Track ignore Meta Device, Program
+Song/Scene TrackInfo to Meta: Cue, Instrument Device Channel Filename & Arp
+Song Bundle: Redo Patterns:==>  Midi MetaMessages?
+Autom8 refresh(), Automation deep frames off 1!-99, new
 Autmation ListView, PitchBend Edit
-TacoSynth GLIDE (Crave <3)
+nudge notes, pianoTrack orientation
+Tempo CC : Track 0 take over SetTempo, TimeSig, KeySig?
 Enable Automation on Line-In (non-Midi) channels (guitar, mic, looper)
+ChannelTrack Presets = Program, Lyrics Track
 redo track capture (atomic undo/redo)
-get all fluid patches
+drumkv1_jack  AppImage in Tracks,    Natural, Synth or Bitcrush ProgChanges
+KnobMode.Mix2
+Shift-faders  Shift-pads
+Hi/Lo filter CC,
+TacoSynth GLIDE (Crave <3)
 drumkit mutes
-Drum decay based on sample length 
+Drum decay based on sample length (calcEnv)
 Channel Pressure or Breath = Crave 303 Accent (w/ Crave Assign)
 Remap MPK Joystick left
-chords |1:[] |2:[] endings,  |bars| bug
-Song Bundle: Redo Patterns:==>  Midi MetaMessages?
-MidiSongFile? tracks [Main], [1, 2, 3, 4, 5, 6], {7,8} [9, 10, 11, 12] 13,14,15 
+ChordTrack |1:[] |2:[] endings,  |bars| parse bug
+ChordView rightClick menu (remove track, File)
 PianoEditor: drag-n-drop/transpose across frame, falling water, REL/Modal
-taco release bug? Synth LFO: detune, reso, filter
+filter tracking, Synth LFO: detune, filter/resonance
 Fine Tune Midi Envelope
 Jamstik Midi/Cmd?
+sidechain
+Setup Modules: Channels, Controllers  Jamstik, Fluid  MidiMapper?
+Beatstep taco tracks
 
 --downsampling synth:--
 (take before/after recordings)
@@ -36,12 +49,17 @@ DSP Course: https://www.youtube.com/watch?v=hVOA8VtKLgk&list=PLuh62Q4Sv7BUSzx5Jr
 FFT Algo https://www.youtube.com/watch?v=iTMn0Kt18tg
 https://github.com/hedoluna/fft
 How to display/manipulate Phase?
-on delete Primary, what about duplicated primary/loop?
-what if SoloTrack is active but on muteRecord?
+* https://github.com/fudcom/kjdss/tree/master
+https://www.youtube.com/watch?v=2O3nm0Nvbi4
+https://github.com/takyonxxx/Oscilloscope-Java-Swing
+https://github.com/chdh/dsp-collection-java DFT
+https://github.com/eicket/mySpectrum
+https://github.com/goxr3plus/Java-Spectrum-Analyser-Tutorials/tree/master/Part%201%20-%20Stereo%20Oscilloscope/src/dsp
+Stereo Width https://github.com/eventual-recluse/stereopan.lv2/blob/main/stereopan.cpp
 
 Sample Editor: reverse sample, chop sample left, right, stretch, scratch
 Sampler FX (granularity, pitched frequency, lofi, wet)
-IR Reverb, DrumSynth, Phasor, Shepherd, Vocoder
+IR Reverb, DrumSynth, Shepherd, Vocoder
 FFM instead of JNA? https://jdk.java.net/jextract/
 zone omni -> omni   Recording?
 seq.loadSong(Unknown File) feedback
@@ -49,15 +67,8 @@ LoopToDisk .WAV recording length off
 upgrade Fluid ver. to multi-channel (re-compile)
    -p, --portname=[track.getName()] Set  MIDI  port  name
 Directives.BREAKS ChordPro.@ ChordPro.%   Cycle breaks: A3_ ABC_ TOF_?
-MidiTrack Tests		PianoTrack synth =(PianoTrack) seq.getSynthTracks().getFirst();
-			DrumTrack drums = (DrumTrack) seq.getDrumTracks().getFirst();
-			// 1. load notes
-			// 2. select notes
-			// 3. drag notes
-			// 4. confirm/delete // ± ⏺
-			Etudes test = new Etudes(synth, (MusicBox) frame.getSynthBox().getMusician());
-			synth.clear();
-
+on delete Primary, what about duplicated primary/loop?
+what if SoloTrack is active but on muteRecord?
 Hot Mic 2.0, pattern navigation 
 Probability, Ritardando, microsteps
 Scene REL OnDeck Cmd2.0, step cmd, jamstik cmd
@@ -69,7 +80,6 @@ SongEditor undo/redo, Reload setlist on new Song
 toggle Korg looper/fx pads to Scene pads
 Electronics Github Repository, credits 
 record record record youtubes - MAC - Elevation - SUG
-
 user manual, Qwerty, client-server architecture, message bus
 support JavaSound/non-Jack, make accessible setup and settings
 Subwoofer library, Fluid drums
@@ -157,20 +167,15 @@ LFO assign gain(organ volume), EQ, reverb
 keyboard handler for channels/samples
 pArTy EQ
 Main MixerBus, Input/output/gain lvl, pedal knobs
-UI: upgrade knobs 
 button icons: https://www.elharrakfonts.com/2019/04/font-bottons-music-pro.html
 display sheet music 
-BeatBuddy & Midi upgrades
 reverb on output mix, gain and reverb to fluidsynth.
-Midi router is input port aware.
 stereo pan
-make drumtrack a full-fledged 3rd loop
 "Apply to" and Presets menu options, chorus
 guitar tuner: MPM algo on github.com/JorenSix/TarsosDSP/blob/master/src/examples/be/tarsos/dsp/example/PitchDetectorExample.java
 loops on reverb not getting master effects/gain
 BeatBox pulse on JackFrame
 scales, melodic step sequencer, 
-Calf Fluid Synth reverb
 fluid reverb, track/master pan,
 Step sequencer note-off's
 multiple clocks, multiple beat grids
@@ -178,17 +183,13 @@ Arduino foot pedal: load/reload  latchB
 midi mapper by instrument - mixer, pads, keys, pedal, aux
 visual feedback from midi controllers, track select
 onDeck, eraseLoop
-migrate beatbox to 8-track
-Track KnobMode
 Sync BeatBox to external time control,	process time from Circuit, 
 route Jamstik and MPK
-route circuit midi tracks
 sync start/stop external sequencers
-synth presets on clock gui, consolidate ProgChanges to fluid/calf
+synth presets on clock gui
 joystick  (pitch bend) (left/right cc = distortion or delay)
 focus/highlight system of knobs
-fx/preset instead of compression, function 2
-transposer, fix cutfilter & freeverb stereo, calf reverb
+transposer, fix cutfilter & freeverb stereo
 solo lineIn to loop D/beatsTrack 
 step sequencer chords, arppegiator
 Midi Mixer: style/arp/pattern/song/chords/channel    
@@ -211,12 +212,14 @@ ERRNOBUF - recover Jack MIDI when ALSA bridge fails
 Arpeggiator, ChordPro parser, Synth tracks follow ChordPro/MPK/ABS/Racman
 Setlists, save/load loops to/from disk, record session audio
 Delay/Chorus/LFO sync to Tempo
-Chorus Phaser
+Chorus Phaser,  EQ adj. gain/Hz/width
 note-on/off tracker per channel
 Waveforms, dB indicator
 Multi-Document Interface
 ImportMidi table/remap
 Midi CC Automation
+Add/Remove/Rename Midi Tracks
+
 
 REFERENCE------------------------------------------------------------
 [Mixer]                [FX]
@@ -234,33 +237,34 @@ FXChain
     LineIn
        Instrument - guitar, mic
            MidiInstrument - crave, fluid
-       JudahSynth
-	   DrumKit
+       TacoTruck
+       		TacoSynth(s)
        DrumMachine
+       		DrumKits
+       			DrumSamples
        Sampler
     AudioTrack
        Loop - A/B/C
           SoloTrack - D
     Mains
    
-    DrumSamples to DrumKit to DrumMachine
-    Sample    
-    StepSample
+    Samples
   
 javax.sound.midi.Receiver:
 	ZoneMidi
-	MidiTrack-> DrumTrack  PianoTrack(Arpeggiator)
-		- MidiPort  (JackPort or Engine)
-		progChange, patchess, Actives
-		send
-
       MidiInstrument (Crave)
       	FluidSynth
       Engine
-      	JudahSynth
+      	TacoTruck
       	DrumMachine
 	  DrumKit (x4)
-		
+
+MidiTrack
+	ChannelTrack
+	NotesTrack
+		DrumTrack
+		PianoTrack
+			TacoSynth		
 
 Song JSON:
 [tracks:] trackName, file, progChange
@@ -291,8 +295,11 @@ TRACK
 	   Cue  Cycle  midiOut Preset 
 
 SYNTH 
-	Preset Vol HiCut LoCut
+	Preset Vol Bend
 	A      D   S 	 R
-
+	   DCO 0 ...
+	   DCO 1 ...
+	   DCO 2 ...
+		<--Filter-->
 
 

@@ -2,89 +2,84 @@ package net.judah.synth.taco;
 
 import java.nio.FloatBuffer;
 import java.util.List;
-import java.util.Vector;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
-import javax.swing.ImageIcon;
 
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
-import net.judah.api.Engine;
 import net.judah.gui.MainFrame;
-import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.SynthKnobs;
 import net.judah.gui.settable.Program;
 import net.judah.midi.ChannelCC;
-import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
 import net.judah.omni.AudioTools;
-import net.judah.seq.Trax;
+import net.judah.seq.Meta;
+import net.judah.seq.SynthRack.RegisteredSynths;
 import net.judah.seq.automation.CC;
 import net.judah.seq.track.PianoTrack;
 import net.judah.synth.taco.MonoFilter.Type;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
-// TODO: up/down sample, portamento/glide, LFOs, PWM, mono- vs. polysynth, true stereo, envelope to filter
-/** Taco stands for Track-Controlled Oscillator */
-@Getter public final class TacoSynth extends Engine {
+
+public class TacoSynth extends PianoTrack {
 
 	public static final int POLYPHONY = 24;
 	public static final int DCO_COUNT = 3;
 	public static final int ZERO_BEND = 8192;
 
-	private final Vector<PianoTrack> tracks = new Vector<PianoTrack>();
-	private final KnobMode knobMode = KnobMode.Taco;
-	private final Adsr adsr = new Adsr();
+	protected final FloatBuffer mono = FloatBuffer.wrap(new float[Constants.bufSize()]);
+    // TODO protected final FloatBuffer stereo = FloatBuffer.wrap(new float[Constants.bufSize()]);
+	// Pan DCOs
+
+	@Getter private final Adsr adsr = new Adsr();
     private final Polyphony notes;
-    private final float[] dcoGain = new float[DCO_COUNT];
-    private final float[] detune = new float[DCO_COUNT];
-    private final Shape[] shapes = new Shape[] {Shape.SIN, Shape.TRI, Shape.SAW};
-	private ChannelCC cc = new ChannelCC(this);
+    @Getter private final float[] dcoGain = new float[DCO_COUNT];
+    @Getter private final float[] detune = new float[DCO_COUNT];
+    @Getter private final Shape[] shapes = new Shape[] {Shape.SIN, Shape.TRI, Shape.SAW};
     private final ModWheel modWheel;
     /** modwheel pitchbend semitones */
-    @Setter private int modSemitones = 1;
+    @Getter @Setter private int modSemitones = 1;
     private final MonoFilter internalFilter = new MonoFilter(Type.HiCut, 15500);
-	private final MonoFilter highPass = new MonoFilter(Type.LoCut, 50);
-	private final MonoFilter lowPass = new MonoFilter(Type.HiCut, 3600);
-	private final SynthPresets synthPresets = new SynthPresets(this);
-    private final SynthKnobs knobs;
-	// private final boolean mono = false; // TODO mono-poly switch
-	// private final int MIDI_CH = 0;  // TODO channel-aware
+    @Getter private final MonoFilter highPass = new MonoFilter(Type.LoCut, 50);
+	@Getter private final MonoFilter lowPass = new MonoFilter(Type.HiCut, 3600);
+//	@Getter private String synthPreset;
+    @Getter private SynthKnobs knobs;
+    private ChannelCC cc;
 
-    public TacoSynth(String name, ImageIcon picture, JudahClock clock) {
-    	super(name, Constants.MONO);
-    	icon = picture;
+	// TODO: up/down sample, portamento/glide, LFOs, PWM, mono- vs. polysynth, true stereo, envelope to filter
+	/** Taco stands for Track-Controlled Oscillator */
+	public TacoSynth(String name, TacoTruck truck, Polyphony notes) throws InvalidMidiDataException {
+		this(name, truck, truck.getTracks().size(), notes);
+	}
+
+	public TacoSynth(String name, TacoTruck truck, int ch, Polyphony notes) throws InvalidMidiDataException {
+		super(name, notes);
+		this.notes = notes;
+		for (int i = 0; i < notes.voices.length; i++)
+			notes.voices[i] = new Voice(this);
+
+
+		cc = new ChannelCC(truck); // multiple against the truck
 
 		for (int i = 0; i < dcoGain.length; i++)
 			dcoGain[i] = 0.50f;
 		for (int i = 0; i < detune.length; i++)
 			detune[i] = 1f;
-		notes = new Polyphony(this, 0, POLYPHONY);
-		knobs = new SynthKnobs(this);
-		modWheel = new ModWheel(knobs, lowPass, highPass);
+
+		modWheel = new ModWheel(this, lowPass, highPass);
 
 		internalFilter.setActive(true);
 		lowPass.setActive(true);
 		highPass.setActive(true);
-
-    }
-
-    public TacoSynth(Trax type, ImageIcon picture, JudahClock clock) {
-    	this(type.name(), picture, clock);
-		try {
-			tracks.add(new PianoTrack(type, notes, clock));
-		} catch (InvalidMidiDataException e) { RTLogger.warn(this, e); }
-    }
-
-    public PianoTrack getTrack() {
-    	return tracks.getFirst();
-    }
+		meta.setString(Meta.DEVICE, RegisteredSynths.Taco.name());
+		knobs = new SynthKnobs(this);
+	}
 
 	public float computeGain(int dco) {
 		return dcoGain[dco] * 0.1f; // dampen
@@ -101,29 +96,29 @@ import net.judah.util.RTLogger;
 	}
 
 	/** Receiver interface, this method serves as panic() */
-	@Override public void close() {
-		new Panic(getTrack());
+	public void close() {
+		new Panic(this);
 	}
 
 	@Override public boolean progChange(String preset) {
-		if (synthPresets.load(preset)) {
-			MainFrame.update(Program.first(this, 0));
+		if (JudahZone.getSynthPresets().apply(preset, this)) {
+			state.setProgram(preset);
+			Program update = Program.first(this);
+			if (update != null)
+				MainFrame.update(update);
 			return true;
 		}
 		return false;
 	}
 
-	@Override public boolean progChange(String preset, int bank) {
-		return progChange(preset); // banks/channels not implemented
-	}
 
 	@Override
-	public String progChange(int data2, int ch) {
+	public String progChange(int data2) {
 		if (data2 < 0 || data2 >= JudahZone.getSynthPresets().size())
 			return null;
 
 		String result = JudahZone.getSynthPresets().keys().get(data2);
-		progChange(result, ch);
+		progChange(result);
 		return result;
 	}
 
@@ -133,18 +128,19 @@ import net.judah.util.RTLogger;
 		return result.toArray(new String[result.size()]);
 	}
 
-	@Override public String getProg(int ch) {
-		if (synthPresets.getCurrent() == null)
-			return "none";
-		return synthPresets.getCurrent();
-	}
+
+//	public String getProg(int ch) {
+//		if (synthPresets.getCurrent() == null)
+//			return "none";
+//		return synthPresets.getCurrent();
+//	}
 
 	@Override public void send(MidiMessage midi, long timeStamp) {
 		if (midi instanceof MetaMessage)
 			return; // TODO
 		ShortMessage m = (ShortMessage)midi;
 		if (Midi.isProgChange(m)) { // should have been filtered by MidiTrack
-			progChange(m.getData1(), m.getChannel());
+			progChange(m.getData1());
 			return;
 		}
 		if (cc.process(m))
@@ -197,7 +193,7 @@ import net.judah.util.RTLogger;
 				return false;
 
 		}
-		MainFrame.update(knobs);
+		MainFrame.update(getKnobs());
 		return true;
 	}
 
@@ -228,23 +224,13 @@ import net.judah.util.RTLogger;
 	/////////////////////////////////
 	//     PROCESS AUDIO           //
 	/////////////////////////////////
-	@Override
-	public void process(FloatBuffer outLeft, FloatBuffer outRight) {
-
-		if (onMute)
-			return;
-        AudioTools.silence(left);
-
+	public void process() {
+        AudioTools.silence(mono);
         for (Voice voice : notes.voices)
-        	voice.process(notes, adsr, left);
-
-        internalFilter.process(left);
-        highPass.process(left);
-        lowPass.process(left);
-        fx();
-        AudioTools.mix(left, outLeft);
-        AudioTools.mix(right, outRight);
+        	voice.process(notes, adsr, mono);
+        internalFilter.process(mono);
+        highPass.process(mono);
+        lowPass.process(mono);
 	}
 
 }
-

@@ -16,9 +16,8 @@ public class Sched {
 	public boolean active;
 	public Cycle cycle = Cycle.AB;
 	public int launch;
-	public float amp = 0.6f;
+	public float amp = 0.5f;
 	public Arp mode;
-
 	private String program;
 	@JsonInclude(Include.NON_NULL)
 	private ArpInfo arp = new ArpInfo(); // mode, octaves

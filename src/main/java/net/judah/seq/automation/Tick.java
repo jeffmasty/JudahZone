@@ -17,6 +17,7 @@ import net.judah.gui.Pastels;
 import net.judah.gui.widgets.Integers;
 import net.judah.seq.track.MidiTrack;
 import net.judah.util.Constants;
+import net.judah.util.RTLogger;
 
 public class Tick extends JPanel {
 
@@ -66,8 +67,13 @@ public class Tick extends JPanel {
 		ticks.setEnabled(enabled);
 	}
 
-	public long getTick() throws NumberFormatException {
-		return Long.parseLong(ticks.getText());
+	public long getTick() {
+		try {
+			return Long.parseLong(ticks.getText());
+		} catch (NumberFormatException e) {
+			RTLogger.warn(this, e);
+			return 0;
+		}
 	}
 
 	private void recalc() {
@@ -107,6 +113,10 @@ public class Tick extends JPanel {
 	void change(JComboBox<Integer> it, int idx) {
 		if (it.getSelectedIndex() == idx)
 			return;
+		if (idx >= it.getItemCount()) {
+			RTLogger.warn(this, idx + " of " + it.getItemCount());
+			idx = 0;
+		}
 		it.removeActionListener(listen);
 		it.setSelectedIndex(idx);
 		it.addActionListener(listen);

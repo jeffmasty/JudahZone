@@ -13,4 +13,15 @@ public class Adsr {
 	/** milliseconds   */ public int    releaseTime = 2;
 	/** 0 <= gain <= 1 */ public float  attackGain = 1;
 
+	public Adsr(Adsr copy) {
+		set(copy);
+	}
+
+	public void set(Adsr env) {
+		attackTime = env.attackTime;
+		decayTime = env.decayTime;
+		releaseTime = env.releaseTime;
+		sustainGain = env.sustainGain;
+	}
+
 }

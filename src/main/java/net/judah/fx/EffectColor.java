@@ -19,7 +19,7 @@ public class EffectColor implements Pastels {
 		if (Filter.class.equals(class1))
 			return PINK;
 		if (EQ.class.equals(class1))
-			return Color.LIGHT_GRAY;
+			return Pastels.MY_GRAY;
 		if (Delay.class.equals(class1))
 			return ORANGE;
 		if (Compressor.class.equals(class1))

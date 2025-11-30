@@ -28,6 +28,15 @@ public class AudioTools  {
 	}
 
 	/** MIX in and out */
+	public static void mix(FloatBuffer in, float gain, FloatBuffer out) {
+		out.rewind();
+		in.rewind();
+	    int capacity = out.capacity();
+	    for (int i = 0; i < capacity; i++)
+	        out.put(i, out.get() + in.get() * gain);
+	}
+
+	/** MIX in and out */
 	public static void mix(FloatBuffer in, FloatBuffer out) {
 		out.rewind();
 		in.rewind();

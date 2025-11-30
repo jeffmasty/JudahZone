@@ -40,6 +40,8 @@ public class PianoMenu extends TrackMenu implements Floating {
 		zoomMenu(view);
 		arpMenu(file, t);
 		tools.add(new Actionable("Remap...", e->new Transpose(grid)));
+		file.add(new Actionable("Rename", e->JudahZone.getSeq().rename(t)));
+		file.add(new Actionable("Delete", e->JudahZone.getSeq().confirmDelete(t)));
 		edit.add(new Actionable("Duration...", e->new Duration(grid)));
 		add(Box.createHorizontalStrut(4));
 		add(new JLabel("Velocity "));
@@ -92,7 +94,7 @@ public class PianoMenu extends TrackMenu implements Floating {
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-		JudahZone.getSeq().getSynthTracks().setCurrent(track);
+//		JudahZone.getSeq().getSynthTracks().setCurrent(track);
 		//update();
 	}
 

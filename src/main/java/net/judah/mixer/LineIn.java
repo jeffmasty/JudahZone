@@ -33,7 +33,9 @@ public abstract class LineIn extends Channel {
 		if (!isStereo) // split mono
 			AudioTools.copy(left, right);
 		gain.preamp(left, right);
-		stream().filter(Effect::isActive).forEach(fx -> fx.process(left, right));
+		for(Effect fx : this)
+			if (fx.isActive())
+				fx.process(left, right);
 		gain.post(left, right);
 	}
 

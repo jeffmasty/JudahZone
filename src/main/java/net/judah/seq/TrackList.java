@@ -54,11 +54,11 @@ public class TrackList<T extends MidiTrack> extends Vector<T> {
 		return result;
 	}
 
-	public T get(Trax id) {
-		for (T t : this)
-			if (t.getType() == id)
-				return t;
-		return null;
-	}
+//	public T get(Trax id) {
+//		for (T t : this)
+//			if (t.getType() == id)
+//				return t;
+//		return null;
+//	}
 
 }

@@ -27,7 +27,9 @@ import net.judah.seq.Musician;
 import net.judah.seq.track.MidiTrack;
 
 public class Automation extends KnobPanel implements MidiConstants {
-	public static enum AutoMode { CC, Prog, Hz, All };
+	public static enum AutoMode { CC, PC, Hz, All };
+
+	private static final Dimension TRIX = new Dimension(60, Size.STD_HEIGHT);
 
 	private static Automation instance;
 	public static Automation getInstance() {
@@ -37,20 +39,19 @@ public class Automation extends KnobPanel implements MidiConstants {
 	}
 
 	@Getter private final KnobMode knobMode = KnobMode.Autom8;
-	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 4));
+	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 1));
 
 	@Getter private MidiTrack track;
 
 	private TraxCombo trax = new TraxCombo(this);
 	private final ButtonGroup btns = new ButtonGroup();
-//	private final JLabel track = new JLabel("  ", JLabel.CENTER);
 	private final JToggleButton cc = new JToggleButton(AutoMode.CC.name());
-	private final JToggleButton prog = new JToggleButton(AutoMode.Prog.name());
+	private final JToggleButton prog = new JToggleButton(AutoMode.PC.name());
 	private final JToggleButton pitch = new JToggleButton(AutoMode.Hz.name()); // Key.SHARP + " " + Key.FLAT
 	private final JToggleButton table = new JToggleButton(AutoMode.All.name());
 
 	private Automation() {
-		title.add(Gui.resize(trax, Size.MICRO));
+		title.add(Gui.resize(trax, TRIX));
 		title.add(cc);
 		title.add(prog);
 		title.add(pitch); // TODO
@@ -100,7 +101,7 @@ public class Automation extends KnobPanel implements MidiConstants {
 		switch(mode) {
 			case CC -> install(CCEdit.getInstance().init(tick));
 			case Hz -> install(PitchEdit.getInstance().init(tick));
-			case Prog -> install(ProgramEdit.getInstance().init(tick));
+			case PC -> install(ProgramEdit.getInstance().init(tick));
 			case All -> install(AllView.getInstance().init(tick));
 		}
 		updateBtns(mode);
@@ -135,7 +136,7 @@ public class Automation extends KnobPanel implements MidiConstants {
 
 		else if (Midi.isProgChange(in)) {
 			install(ProgramEdit.getInstance().edit(e));
-			updateBtns(AutoMode.Prog);
+			updateBtns(AutoMode.PC);
 		}
  		MainFrame.setFocus(this);
 	}
@@ -144,7 +145,7 @@ public class Automation extends KnobPanel implements MidiConstants {
 		switch(mode) {
 			case CC    ->   {if (!cc.isSelected()) 	 cc.setSelected(true);}
 			case Hz -> 	{if (!pitch.isSelected()) pitch.setSelected(true);}
-			case Prog  -> 	{if (!prog.isSelected())	 prog.setSelected(true);}
+			case PC  -> 	{if (!prog.isSelected())	 prog.setSelected(true);}
 			case All   -> 	{if (!table.isSelected())   table.setSelected(true);}
 		}
 	}

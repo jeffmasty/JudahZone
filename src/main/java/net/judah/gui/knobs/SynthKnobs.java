@@ -40,6 +40,7 @@ import net.judah.synth.taco.Adsr;
 import net.judah.synth.taco.MonoFilter;
 import net.judah.synth.taco.Shape;
 import net.judah.synth.taco.TacoSynth;
+import net.judah.synth.taco.TacoTruck;
 import net.judah.util.Constants;
 
 public class SynthKnobs extends KnobPanel {
@@ -55,7 +56,7 @@ public class SynthKnobs extends KnobPanel {
 	private static final Color KNOB_C = Pastels.BLUE;
 
 	@Setter private static boolean freqMode = true; //. vs resonance mode
-	private final TacoSynth synth;
+	@Getter private final TacoSynth synth;
 	@Getter private final KnobMode knobMode = KnobMode.Taco;
 	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.CENTER, 1, 1));
 	private final Program presets;
@@ -79,8 +80,7 @@ public class SynthKnobs extends KnobPanel {
 	public SynthKnobs(TacoSynth zynth) {
 		synth = zynth;
 		adsr = synth.getAdsr();
-		presets = synth.getTracks().isEmpty() ? new Program(synth)
-				: new Program(synth.getTracks().get(0));
+		presets = new Program(synth);
 
 		for (int i = 0; i < DCO_COUNT; i++) {
 			JComboBox<Shape> combo = new CenteredCombo<>();
@@ -112,7 +112,7 @@ public class SynthKnobs extends KnobPanel {
 		add(Box.createVerticalStrut(12));
 
 		Box me = new Box(BoxLayout.PAGE_AXIS);
-		me.add(new JLabel(synth.getIcon()));
+		me.add(new JLabel(((TacoTruck)synth.getMidiOut()).getIcon()));
 		me.add(new JLabel(synth.getName(), JLabel.CENTER));
 		me.setBorder(Gui.SUBTLE);
 		JPanel env = new JPanel(new GridLayout(1, 4, 6, 8));
@@ -121,9 +121,9 @@ public class SynthKnobs extends KnobPanel {
 		env.add(Gui.duo(s, new JLabel(" Sus")));
 		env.add(Gui.duo(r, new JLabel(" Rel")));
 		Box wrap = new Box(BoxLayout.LINE_AXIS);
-		wrap.add(Box.createHorizontalStrut(Size.STD_HEIGHT));
+		wrap.add(Box.createHorizontalStrut(10));
 		wrap.add(me);
-		wrap.add(Box.createHorizontalStrut(Size.STD_HEIGHT));
+		wrap.add(Box.createHorizontalStrut(15));
 		wrap.add(env);
 		add(wrap);
 
@@ -279,7 +279,7 @@ public class SynthKnobs extends KnobPanel {
 	}
 
 	private void save() {
-		String name = JOptionPane.showInputDialog(JudahZone.getFrame(), "Synth Preset Name", synth.getSynthPresets().getCurrent());
+		String name = JOptionPane.showInputDialog(JudahZone.getFrame(), "Synth Preset Name", synth.getProgram());
 		if (name == null || name.length() == 0)
 			return;
 		JudahZone.getSynthPresets().save(synth, name);

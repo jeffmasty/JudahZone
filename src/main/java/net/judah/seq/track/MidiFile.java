@@ -18,6 +18,7 @@ public class MidiFile extends Sequence {
 	}
 
 	public void setResolution(int rez) {
+
 		if (rez > 0)
 			resolution = rez;
 	}

@@ -16,11 +16,11 @@ import net.judah.drumkit.DrumMachine;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
 import net.judah.gui.Gui;
-import net.judah.gui.TabZone;
 import net.judah.gui.knobs.KitPad.Modes;
 import net.judah.gui.widgets.Btn;
 import net.judah.midi.Actives;
 import net.judah.omni.Icons;
+import net.judah.omni.Threads;
 import net.judah.seq.Trax;
 
 public class KitKnobs extends KnobPanel {
@@ -45,7 +45,7 @@ public class KitKnobs extends KnobPanel {
     		wrap.add(pad);
     	}
     	trax.setSelectedItem(Trax.D1);
-    	trax.addActionListener(e-> drums.setCurrent((Trax)trax.getSelectedItem()));
+    	trax.addActionListener(e-> drums.setCurrent(trax.getSelectedIndex()));
 
     	modes.addActionListener(e-> pads.forEach(p->p.updateMode((Modes)modes.getSelectedItem())));
     	modes.setSelectedItem(Modes.Volume);
@@ -78,8 +78,9 @@ public class KitKnobs extends KnobPanel {
 
 	@Override
 	public void update() {
-		if (trax.getSelectedItem() != drums.getCurrent().getType())
-			trax.setSelectedItem(drums.getCurrent().getType());
+		int idx = drums.getTracks().indexOf(drums.getCurrent());
+		if (trax.getSelectedIndex() != idx)
+			trax.setSelectedIndex(idx);
 		pads.forEach(p->p.update());
 	}
 
@@ -90,14 +91,19 @@ public class KitKnobs extends KnobPanel {
 	}
 
 	@Override public void pad1() {
-		TabZone.edit(JudahZone.getSeq().byName(drums.getTracks().getCurrent().getName()));
+		Threads.execute(() -> {
+		int idx = trax.getSelectedIndex() + 1;
+		if (idx >= trax.getItemCount())
+			idx = 0;
+		trax.setSelectedItem(idx); });
 	}
 
 	@Override public void pad2() {
+		Threads.execute(() -> {
 		int i = 1 + modes.getSelectedIndex();
 		if (i == modes.getItemCount())
 			i = 0;
-		modes.setSelectedIndex(i);
+		modes.setSelectedIndex(i);});
 	}
 
 	public void update(Actives a) {

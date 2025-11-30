@@ -32,11 +32,13 @@ public class CycleCombo extends JComboBox<Cycle> {
 
 	public static void update(Computer t) {
 		Threads.execute(()->{
-			for (CycleCombo c : instances)
+			for (int i= 0; i < instances.size(); i++) {
+				CycleCombo c = instances.get(i);
 				if (c.track == t && c.getSelectedItem() != t.getCycle()) {
 					c.setSelectedItem(t.getCycle());
 					c.setToolTipText(t.getCycle().getTooltip());
 				}
+			}
 		});
 	}
 

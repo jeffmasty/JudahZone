@@ -24,7 +24,7 @@ public class DrumEnvelope {
 			if (decay > ad.getDk(pad))
 				decay = ad.getDk(pad);
 
-			if (decay > 0)
+			if (decay > 0) // TODO percentage of sample length
 				return --decay / (float)ad.getDk(pad);
 			else
 				return 0f;

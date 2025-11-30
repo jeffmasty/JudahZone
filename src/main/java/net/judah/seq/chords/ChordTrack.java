@@ -223,7 +223,7 @@ public class ChordTrack implements TimeListener {
 	}
 
 
-	private void clear() {
+	public void clear() {
 		bar = 0;
 		section = null;
 		sections.clear();

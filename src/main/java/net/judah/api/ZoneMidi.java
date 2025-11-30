@@ -1,11 +1,12 @@
 package net.judah.api;
 
 import java.io.Closeable;
+import java.nio.FloatBuffer;
 import java.util.Vector;
 
 import javax.sound.midi.Receiver;
 
-import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.NoteTrack;
 
 /** javax Receiver with channels and presets */
 public interface ZoneMidi extends Receiver, Closeable {
@@ -14,23 +15,17 @@ public interface ZoneMidi extends Receiver, Closeable {
 	String getName();
 
 	/** Midi Channels managed by this receiver */
-	Vector<? extends MidiTrack> getTracks();
+	Vector<? extends NoteTrack> getTracks();
+
+	NoteTrack getTrack();
 
 	/** list of program names */
 	String[] getPatches();
 
-	/** program change on default channel
-	 * @return true on success */
-	boolean progChange(String preset);
-
-	/** @return true if a match is found in patches */
-	boolean progChange(String preset, int channel);
-
-	/** current Program name loaded into a managed channel or -1 */
-	String getProg(int ch);
-
 	/**@param data2 progChange usually embedded in Midi File
 	 * @return name of prog change on success or null */
 	String progChange(int data2, int ch);
+
+	void process(FloatBuffer left, FloatBuffer right);
 
 }

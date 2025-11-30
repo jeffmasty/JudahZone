@@ -3,6 +3,7 @@ package net.judah.looper;
 import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Vector;
 
 import lombok.Getter;
@@ -14,7 +15,6 @@ import net.judah.gui.widgets.LoopWidget;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
-import net.judah.mixer.Zone;
 import net.judah.omni.Recording;
 import net.judah.omni.Threads;
 import net.judah.util.Constants;
@@ -46,7 +46,7 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable 
 	private int loopCount;
     private int countUp; // gui thread feedback
 
-	public Looper(Zone sources, LineIn solo, JudahClock clock, Memory memory) {
+	public Looper(Collection<LineIn> sources, LineIn solo, JudahClock clock, Memory memory) {
 
 		this.clock = clock;
 		this.mem = memory;

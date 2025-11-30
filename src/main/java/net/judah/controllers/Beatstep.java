@@ -2,15 +2,24 @@ package net.judah.controllers;
 
 import static net.judah.JudahZone.*;
 
+import java.util.ArrayList;
+
 import javax.sound.midi.ShortMessage;
 
+import net.judah.JudahZone;
 import net.judah.fx.Fader;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.MultiSelect;
+import net.judah.gui.knobs.KnobMode;
+import net.judah.gui.knobs.SynthKnobs;
 import net.judah.looper.Loop;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
+import net.judah.seq.SynthRack;
+import net.judah.synth.fluid.FluidSynth;
+import net.judah.synth.taco.TacoSynth;
+import net.judah.synth.taco.TacoTruck;
 
 public class Beatstep implements Controller {
 
@@ -22,10 +31,12 @@ public class Beatstep implements Controller {
 			114, 18, 19, 16, 17, 91, 79, 72 };
 
 	private static final int GUITAR = 44;
+	private static final int TACO = 47;
+	private static final int TACO2 = 48;
 	private static final int LOOPA = 36;
 	private static final int MAINS = 51;
-	private static final int TODO = 40;
-	private static final int RECORD = 41;
+	private static final int RECORD = 40;
+	private static final int FLUID2 = 41;
 	private static final int KITS = 42;
 	private static final int FADER = 43;
 
@@ -40,9 +51,23 @@ public class Beatstep implements Controller {
 		int data1 = midi.getData1();
 		if (Midi.isNote(midi)) { // Pads
 			if (data1 == KITS) {
-				if (!Midi.isNoteOn(midi))
-					return true;
-				MainFrame.kit();
+				if (Midi.isNoteOn(midi))
+					MainFrame.kit();
+				return true;
+
+			}
+			else if (data1 == TACO) {
+				taco1(midi.getCommand());
+				return true;
+			}
+			else if (data1 == TACO2) {
+				taco2(midi.getCommand());
+				return true;
+			}
+			else if (data1 == FLUID2) {
+				if (Midi.isNoteOn(midi))
+					fluid2();
+				return true;
 			}
 			else if (data1 == RECORD) {
 				if (!Midi.isNoteOn(midi)) return true;
@@ -51,9 +76,6 @@ public class Beatstep implements Controller {
 						((LineIn)current).setMuteRecord(!((LineIn)current).isMuteRecord());
 					else
 						current.setOnMute(!current.isOnMute());
-			}
-			else if (data1 == TODO) {
-				if (!Midi.isNoteOn(midi)) return true;
 			}
 
 			else if (data1 == FADER) {
@@ -127,11 +149,108 @@ public class Beatstep implements Controller {
 		if (data1 == MAINS - 2)
 			return getFluid();
 		if (data1 == MAINS - 3)
-			return getTacos().tk2;
+			return getTk2();
 		if (data1 >= GUITAR)
 			return getInstruments().get(data1 - GUITAR);
 		else
 			return getLooper().get(data1 - LOOPA);
+	}
+
+	private void taco1(int command) {
+		TacoTruck taco = JudahZone.getTaco();
+		if (channels.contains(taco)) {
+			if (taco.getTracks().size() < 2) {
+				multiSelect(command, TACO);
+				return;
+			}
+
+			channels.clear();
+			channels.add(taco);
+			if (MainFrame.getKnobMode() == KnobMode.Taco && command == Midi.NOTE_ON) {
+				SynthKnobs knobs = (SynthKnobs) MainFrame.getKnobs();
+				TacoSynth s = knobs.getSynth();
+				int idx = 1 + taco.getTracks().indexOf(s);
+				if (idx >= taco.getTracks().size())
+					idx = 0;
+				MainFrame.setFocus(taco.getTracks().get(idx).getKnobs());
+			}
+		}
+		else {
+			multiSelect(command, TACO);
+		}
+
+
+	}
+
+	private void taco2(int command) { // rotary focus additional synths
+		TacoTruck[] engines = SynthRack.getTacos();
+		if (engines.length < 2) {// no taco 4 u
+			multiSelect(command, TACO2);
+			return;
+		}
+		channels.clear();
+		if (command == Midi.NOTE_OFF)
+			return;
+
+		Channel current = JudahZone.getFxRack().getChannel();
+		int target = 1;
+		if (false == current instanceof TacoTruck) {
+			MainFrame.setFocus(engines[target]);
+			return;
+		}
+
+		ArrayList<TacoSynth> synths = new ArrayList<TacoSynth>();
+
+		for (int i = 1; i < engines.length; i++) {
+			synths.addAll(engines[i].getTracks());
+		}
+
+		int idx = 0;
+		if(MainFrame.getKnobMode() != KnobMode.Taco) {
+			channels.clear();
+			channels.add(engines[target]);
+			MainFrame.setFocus(engines[target]);
+			return;
+		}
+		TacoSynth knobs = ((SynthKnobs) MainFrame.getKnobs()).getSynth();
+		for (int i = 0; i < synths.size(); i++)
+			if (synths.get(i) == knobs) {
+				idx = i + 1;
+			}
+		if (idx == synths.size())
+			idx = 0;
+
+		TacoSynth next = synths.get(idx);
+		if (current != next.getMidiOut()) {
+			MainFrame.setFocus(next.getMidiOut());
+			channels.clear();
+			channels.add((TacoTruck)next.getMidiOut());
+		}
+		MainFrame.setFocus(next.getKnobs());
+	}
+
+	private void fluid2() { // synths not on mixer strip
+
+		FluidSynth[] engines = SynthRack.getFluids();
+		if (engines.length < 2) // drink something
+			return;
+		channels.clear();
+
+		int target = 1;
+		Channel current = JudahZone.getFxRack().getChannel();
+		if (false == current instanceof FluidSynth) {
+			MainFrame.setFocus(engines[target]);
+			return;
+		}
+		for (int i = 0; i < engines.length; i++) {
+			if (current == engines[i]) {
+				target = i + 1;
+				break;
+			}
+		}
+		if (target >= engines.length)
+			target = 1;
+		MainFrame.setFocus(engines[target]);
 	}
 
 }

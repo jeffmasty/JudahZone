@@ -1,6 +1,5 @@
 package net.judah.song;
 
-
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.KeyAdapter;
@@ -29,6 +28,7 @@ import net.judah.song.cmd.ParamModel;
 import net.judah.song.cmd.ParamTable;
 import net.judah.util.RTLogger;
 
+/** Holds launch buttons for Song's Scenes and Cmds/Params */
 public class SongView extends JPanel {
 
 	@Getter private final SceneLauncher launcher;

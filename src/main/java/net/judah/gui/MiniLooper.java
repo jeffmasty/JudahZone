@@ -4,10 +4,10 @@ import static net.judah.api.Notification.Property.TEMPO;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
@@ -22,11 +22,12 @@ import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 
 public class MiniLooper extends JPanel implements TimeListener {
-	private static final int WIDTH = 84;
+	private static final Dimension TEMPO_SLIDER = new Dimension(75, Size.STD_HEIGHT + 4);
+	private static final Dimension LOOP_SLIDER = new Dimension(TEMPO_SLIDER.width * 2, TEMPO_SLIDER.height);
 
 	private final JudahClock clock;
-   	private final JLabel tempoLbl = new JLabel("?", JLabel.CENTER);
-	private final Slider tempoKnob;
+   	private final JLabel tempoLbl = new JLabel("####", JLabel.CENTER);
+	private final Slider tempoKnob = new Slider(55, 155, null);
 	private final ChangeListener tempoEar = new ChangeListener() {
 			@Override public void stateChanged(ChangeEvent e) {
         	int tempo = tempoKnob.getValue();
@@ -38,26 +39,22 @@ public class MiniLooper extends JPanel implements TimeListener {
 	public MiniLooper(Looper loops, JudahClock time) {
 		this.clock = time;
 		clock.addListener(this);
-		final Dimension size = new Dimension(WIDTH, Size.STD_HEIGHT + 4);
-		tempoKnob = new Slider(55, 155, null);
-
 		tempoLbl.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
             	clock.inputTempo();
             }});
-		tempoLbl.setText("####");
 		tempoLbl.setFont(Gui.BOLD);
 
         setBorder(new LineBorder(Pastels.MY_GRAY, 1));
-        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-        Gui.resize(loops.getLoopWidget().getSlider(), size);
-        add(loops.getLoopWidget());
+        setLayout(new GridLayout(2, 1));
+        Gui.resize(loops.getLoopWidget().getSlider(), TEMPO_SLIDER);
+        add(Gui.resize(loops.getLoopWidget(), LOOP_SLIDER));
         JPanel btm = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 0));
     	TapTempo tapButton = new TapTempo("Tempo", msec -> {
             clock.setTempo(Math.round(60000 / msec));});
         btm.add(tapButton);
         btm.add(tempoLbl);
-        btm.add(Gui.resize(tempoKnob, size));
+        btm.add(Gui.resize(tempoKnob, TEMPO_SLIDER));
         add(btm);
         tempoKnob.addChangeListener(tempoEar);
 

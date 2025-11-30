@@ -1,5 +1,7 @@
 package net.judah.gui.widgets;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -9,13 +11,14 @@ import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 
 public class LoopWidget extends JPanel {
-	public static final String FRESH = "0.0s";
+	public static final String FRESH = " 0.0s";
 
 	private final Looper looper;
 	@Getter private final Slider slider;
     private final JLabel loopLbl = new JLabel(FRESH);
 
 	public LoopWidget(Looper loops) {
+		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		this.looper = loops;
 		slider = new Slider(null);
 		slider.setOrientation(JSlider.HORIZONTAL);
@@ -23,9 +26,13 @@ public class LoopWidget extends JPanel {
         slider.setPaintTicks(true);
         slider.setMajorTickSpacing(-1);
         slider.setMinorTickSpacing(25);
+
+        add(Box.createHorizontalGlue());
         add(new JLabel("Loop:"));
         add(loopLbl);
+        add(Box.createHorizontalStrut(2));
         add(slider);
+        add(Box.createHorizontalGlue());
 	}
 
 	public void update() {

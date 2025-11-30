@@ -1,28 +1,20 @@
 package net.judah.synth.taco;
 
 import java.io.File;
-import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
 import lombok.Getter;
 import net.judah.gui.MainFrame;
+import net.judah.gui.knobs.KnobMode;
 import net.judah.omni.Threads;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
-/*	-NAME-
- *  [adsr]a/d/s/r
-	[filter]vol/hihz/hirez/lohz/lorez
-	[dco-0]shape/gain(/detune)
-	[dco-1]shape/gain(/detune)
-	[dco-2]shape/gain(/detune)
-*/
-public class SynthDB extends HashMap<String, String> {
+public class SynthDB extends ArrayList<TacoSauce> {
 
 	public static final String SPLIT = "/";
 	public static final String OPEN = "[";
@@ -51,27 +43,27 @@ public class SynthDB extends HashMap<String, String> {
             RTLogger.log(this, "missing file " + file);
             return;
         }
-        ArrayList<String> preset = new ArrayList<>();
+        ArrayList<String> raw = new ArrayList<>();
         Scanner scanner = null;
         int lineNum = 0;
         try {
             scanner = new Scanner(file);
-            String name = "";
+            String header = null;
+
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 if (line.startsWith(DASH)) {
-                	if (!preset.isEmpty() && name != null)
-                		put(name, pack(preset));
-                	name = line.split("[-]")[1];
-                	preset.clear();
+                	if (!raw.isEmpty() && header != null)
+                		add(new TacoSauce(header, raw));
+                	header = line;
+                	raw.clear();
                 }
-                else {
-                	preset.add(line);
-                }
+                else
+                	raw.add(line);
             }
-            if (!preset.isEmpty() && name != null) // last in file
-            	put(name, pack(preset));
-            if (keySet().isEmpty())
+            if (!raw.isEmpty() && header != null) // last in file
+            	add(new TacoSauce(header, raw));
+            if (isEmpty())
             	throw new ExceptionInInitializerError("No Synth Presets loaded");
         } catch (Throwable e) {
             RTLogger.warn(this, file.getName() + " line:" + lineNum + " - " + e.getMessage());
@@ -79,17 +71,28 @@ public class SynthDB extends HashMap<String, String> {
         } finally {
         	if (scanner != null) scanner.close();
         }
+        RTLogger.debug(this.getClass().getSimpleName() + " loaded " + size() + " presets");
+        // reindex();
 	}
 
-	private String pack(List<String> preset) {
-		StringBuffer result = new StringBuffer();
-		for (String s : preset)
-			result.append(s).append(Constants.NL);
-		return result.toString();
+	@SuppressWarnings("unused")
+	private void reindex() {
+		for (int i = 0; i < size(); i++)
+			get(i).index = i;
+		save();
+	}
+
+	public TacoSauce get(String name) {
+		for (TacoSauce p : this)
+			if (p.name.equals(name))
+				return p;
+		return null;
 	}
 
 	public List<String> keys() {
-		ArrayList<String> result = new ArrayList<>(keySet());
+		ArrayList<String> result = new ArrayList<>();
+		for (TacoSauce p : this)
+			result.add(p.name);
 		Collections.sort(result);
 		return result;
 	}
@@ -103,30 +106,39 @@ public class SynthDB extends HashMap<String, String> {
 		return 0;
 	}
 
+	/** save new preset or replace old preset */
 	public void save(TacoSynth synth, String name) {
-		put(name, create(synth));
-		StringBuffer buf = new StringBuffer();
-		for (String key : keys()) {
-			buf.append(DASH).append(key).append(DASH).append(Constants.NL);
-			buf.append(get(key));
+		TacoSauce preset = new TacoSauce(name, synth, size());
+		if (keys().contains(name)) {
+			TacoSauce old = get(name);
+			preset.index = old.index;
+			set(indexOf(old), preset);
 		}
-        try {
-            Threads.writeToFile(file, buf.toString());
-        } catch (Exception e) {RTLogger.warn(SynthDB.class, e);}
+		else
+			add(preset);
+		save();
 		MainFrame.update(synth);
 	}
 
-	public String create(TacoSynth synth) {
+	private void save() {
+		StringBuffer buf = new StringBuffer();
+		for (String key : keys())
+			buf.append(get(key).toString());
+        try {
+            Threads.writeToFile(file, buf.toString());
+        } catch (Exception e) {RTLogger.warn(this, e);}
+	}
 
+	public String create(TacoSynth synth) {
 		StringBuffer buf = new StringBuffer(OPEN).append(ENVELOPE).append(CLOSE);
 		Adsr env = synth.getAdsr();
 		buf.append(env.getAttackTime()).append(SPLIT).append(env.getDecayTime()).append(SPLIT);
 		buf.append(env.getSustainGain()).append(SPLIT).append(env.getReleaseTime()).append(Constants.NL);
 		buf.append(OPEN).append(FILTER).append(CLOSE);
-		MonoFilter hi = synth.getLowPass();
-		MonoFilter lo = synth.getHighPass();
-		buf.append(hi.getFrequency()).append(SPLIT).append(hi.getResonance()).append(SPLIT);
-		buf.append(lo.getFrequency()).append(SPLIT).append(lo.getResonance()).append(Constants.NL);
+		MonoFilter hc = synth.getLowPass();
+		MonoFilter lc = synth.getHighPass();
+		buf.append(hc.getFrequency()).append(SPLIT).append(hc.getResonance()).append(SPLIT);
+		buf.append(lc.getFrequency()).append(SPLIT).append(lc.getResonance()).append(Constants.NL);
 
 		int length = synth.getShapes().length -1;
 		for (int i = 0; i <= length; i++) {
@@ -138,35 +150,24 @@ public class SynthDB extends HashMap<String, String> {
 		return buf.toString();
 	}
 
-	public boolean apply(String name, SynthPresets handler) {
-		String preset = get(name);
-		if (preset == null)
+	public boolean apply(String name, TacoSynth synth) {
+		TacoSauce p = get(name);
+		if (p == null)
 			return false;
-		for (String line : preset.split(Constants.NL)) {
-			if (!line.startsWith(OPEN))
-            	throw new InvalidParameterException("format: " + OPEN);
-            line = line.substring(1);
-            if (line.indexOf(CLOSE) == -1)
-            	throw new InvalidParameterException("format: " + CLOSE);
-            String[] split = line.split(CLOSE);
-            if (split.length != 2)
-            	throw new InvalidParameterException("format: [?]?");
-            String type = split[0];
-            String dat = split[1];
-            if (type.equals(ENVELOPE)) {
-            	handler.adsr(dat.split(SPLIT));
-            }
-            else if (type.equals(FILTER)) {
-            	handler.filter(dat.split(SPLIT));
-            }
-            else if (type.startsWith(DCO)) {
-            	handler.dco(type, dat.split(SPLIT));
-            } else
-            	throw new InvalidParameterException("type: " + type);
-        }
+		synth.getAdsr().set(p.env);
+		synth.getLowPass().setFrequency(p.filter[0]);
+		synth.getLowPass().setResonance(p.filter[1]);
+		synth.getHighPass().setFrequency(p.filter[2]);
+		synth.getHighPass().setResonance(p.filter[3]);
+		for (int i = 0; i < p.osc.length; i++) {
+			synth.getShapes()[i] = p.osc[i].shape;
+			synth.getDetune()[i] = p.osc[i].detune;
+			synth.getDcoGain()[i] = p.osc[i].gain;
+		}
+		if (MainFrame.getKnobMode() == KnobMode.Taco)
+			MainFrame.update(MainFrame.getKnobs());
 		return true;
 	}
-
 
 
 }

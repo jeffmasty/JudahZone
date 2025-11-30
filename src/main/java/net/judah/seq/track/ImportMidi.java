@@ -8,7 +8,6 @@ import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Sequence;
 import javax.sound.midi.Track;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -17,8 +16,8 @@ import javax.swing.JPanel;
 import net.judah.gui.Gui;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.ModalDialog;
+import net.judah.seq.Meta;
 import net.judah.seq.MidiConstants;
-import net.judah.seq.automation.Meta;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
@@ -100,7 +99,6 @@ public class ImportMidi extends JPanel implements MidiConstants {
 			ModalDialog.getInstance().dispose();});
 		JButton cancel = new Btn("Cancel", e->ModalDialog.getInstance().dispose());
 
-		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 		add(title);
 		add(rez);
 		add(Gui.wrap(select, trackData));

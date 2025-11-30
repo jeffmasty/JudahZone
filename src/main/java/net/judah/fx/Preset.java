@@ -1,6 +1,5 @@
 package net.judah.fx;
 
-import static net.judah.synth.taco.SynthDB.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,10 +7,14 @@ import java.util.List;
 import lombok.Getter;
 import net.judah.util.Constants;
 
-public class Preset extends ArrayList<Setting> implements Comparable<Preset> {
+public class Preset extends ArrayList<Setting> { // TODO date vs alphabetical
 
-    @Getter private final String name;
-    
+	private static final String OPEN = "[";
+	private static final String CLOSE = "]";
+
+	@Getter final String name;
+	@Getter int index;
+
     public Preset(String name, List<String> raw) {
         this.name = name;
         for (String s : raw) {
@@ -53,16 +56,12 @@ public class Preset extends ArrayList<Setting> implements Comparable<Preset> {
         return sb.toString();
     }
 
-	@Override
-	public int compareTo(Preset preset) {
-		return name.compareTo((preset).getName());
-	}
 
 	@Override
 	public boolean equals(Object o) {
 		return o instanceof Preset && name.equals(((Preset)o).name);
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return name.hashCode();

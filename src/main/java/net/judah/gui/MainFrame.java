@@ -32,6 +32,7 @@ import net.judah.drumkit.KitSetup;
 import net.judah.fx.Compressor;
 import net.judah.fx.Effect;
 import net.judah.fx.LFO;
+import net.judah.fx.PresetsDB;
 import net.judah.gui.fx.FxPanel;
 import net.judah.gui.fx.MultiSelect;
 import net.judah.gui.fx.PresetsView;
@@ -40,6 +41,7 @@ import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.knobs.LFOKnobs;
 import net.judah.gui.knobs.MidiGui;
+import net.judah.gui.knobs.TrackKnobs;
 import net.judah.gui.midiimport.ImportView;
 import net.judah.gui.settable.ModeCombo;
 import net.judah.gui.settable.Program;
@@ -81,7 +83,9 @@ import net.judah.song.Scene;
 import net.judah.song.SceneLauncher;
 import net.judah.song.SongView;
 import net.judah.song.setlist.SetlistView;
+import net.judah.song.setlist.Setlists;
 import net.judah.synth.taco.TacoSynth;
+import net.judah.synth.taco.TacoTruck;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -96,9 +100,9 @@ public class MainFrame extends JFrame implements Runnable {
 
 	private final TabZone tabs;
     @Getter private final DrumZone beatBox;
+	@Getter private final JudahMenu menu;
     private final DJJefe mixer;
 	private final FxPanel effects;
-    private final MiniSeq miniSeq;
 	private final Overview songs;
     private final HQ hq;
 	private final Seq seq;
@@ -108,33 +112,32 @@ public class MainFrame extends JFrame implements Runnable {
     private final ChordTrack chords;
     private final MidiGui midiGui;
     private final Sampler sampler;
-	private final JudahMenu menu;
 	private final JComboBox<KnobMode> mode = new JComboBox<>(KnobMode.values());
     private final JComponent knobHolder = Box.createVerticalBox();
     private final PresetsView presets;
     private final SetlistView setlists;
 
-    public MainFrame(String name, JudahClock clock, FxPanel controls, DJJefe djJefe, Seq sequencer, Looper loopr,
-    		Overview songz, MidiGui gui, DrumMachine drumz, Channel focus) {
+    public MainFrame(String name, JudahClock clock, FxPanel controls, DJJefe djJefe, Seq sequencer, Looper loopr, Overview songz,
+    		MidiGui gui, DrumMachine drumz, Channel focus, PresetsDB presetsDB, Setlists sets, ChordTrack chords, Sampler sampler) {
     	super(name);
         instance = this;
         this.effects = controls;
         this.mixer = djJefe;
-        this.looper = loopr;
-        this.seq = sequencer;
-        this.drums = drumz;
         this.songs = songz;
-        this.chords = seq.getChords();
         this.midiGui = gui;
-        this.sampler = seq.getSampler();
+        this.looper = loopr;
+        this.drums = drumz;
+        this.seq = sequencer;
+        this.chords = chords;
+        this.sampler = sampler;
+
         hq = new HQ(clock, looper, songs, chords);
-        miniSeq = new MiniSeq(seq.getTracks(), clock);
         loops = new MiniLooper(looper, clock);
-        presets = new PresetsView(JudahZone.getPresets());
-        setlists = new SetlistView(JudahZone.getSetlists(), songs);
+        presets = new PresetsView(presetsDB);
+        setlists = new SetlistView(sets, songs);
     	beatBox = new DrumZone(seq.getDrumTracks());
         tabs = new TabZone(songs, beatBox, chords.getChordSheet());
-        menu = new JudahMenu(WIDTH_KNOBS, songs, tabs);
+        menu = new JudahMenu(WIDTH_KNOBS, songs, tabs, seq);
         mode.setFont(Gui.BOLD13);
         mode.addActionListener(e->{
 			if (knobMode != mode.getSelectedItem())
@@ -150,7 +153,7 @@ public class MainFrame extends JFrame implements Runnable {
         JComponent left = Box.createVerticalBox();
         left.add(Gui.wrap(menu));
         left.add(Gui.wrap(hq));
-        left.add(Gui.wrap(Gui.box(miniSeq, loops)));
+        left.add(Gui.wrap(Gui.box(seq, loops)));
         left.add(knobHolder);
         left.add(Box.createVerticalStrut(1));
         left.add(effects);
@@ -221,8 +224,8 @@ public class MainFrame extends JFrame implements Runnable {
     			knobPanel(ch.getLfoKnobs());
     		if (ch == drums)
     			knobPanel(drums.getKnobs());
-    		else if (ch instanceof TacoSynth synth)
-    			focus(synth.getKnobs());
+    		else if (ch instanceof TacoTruck synth)
+    			focus(synth.getTrack().getKnobs());
 		}
 		else if (o instanceof MultiSelect multiselect) { // TODO LFO/Compressor
 			Channel next = multiselect.get(multiselect.size()-1);
@@ -238,8 +241,8 @@ public class MainFrame extends JFrame implements Runnable {
 			MidiTrack current = trax.getCurrent();
 
 			if (trax == seq.getTracks()) {
-				miniSeq.update();
-				knobPanel(seq.getKnobs(current));
+				seq.update();
+				knobPanel(new TrackKnobs(seq));
 			}
 			else if (trax == drums.getTracks()) {
 				DrumTrack d = (DrumTrack)current;
@@ -299,8 +302,9 @@ public class MainFrame extends JFrame implements Runnable {
 
 			else if (o instanceof MidiTrack t) {
 				PlayWidget.update(t);
-				miniSeq.update(t);
-				KnobPanel knobs = seq.getKnobs(t);
+				seq.update(t);
+				if (knobMode == KnobMode.Track)
+					knobs.update();
 				if (knobs != null)
 					knobs.update();
 				tabs.update(t);
@@ -321,7 +325,7 @@ public class MainFrame extends JFrame implements Runnable {
 			}
 			else if (o instanceof Program prog) {
 				Program.update(prog);
-				if (prog.getMidiOut() instanceof TacoSynth taco)
+				if (prog.getTrack() instanceof TacoSynth taco)
 					taco.getKnobs().update();
 			}
 			else if (o instanceof Scene) {
@@ -366,11 +370,13 @@ public class MainFrame extends JFrame implements Runnable {
 				if (knobs instanceof WaveKnobs waves)
 					waves.repaint();
 			}
-			else if (o instanceof Tuning tuning) {
+			else if (o instanceof Tuning tuning)
 				tuning.tuner().update(tuning.buffer());
-			}
 			else if (o instanceof KitSetup)
 				drums.getKnobs().update();
+			else if (o instanceof Seq)
+				songs.refill(); // # of Tracks has changed
+
 			else
 				RTLogger.log(this, "unknown " + o.getClass().getSimpleName() + " update: " + o.toString());
 
@@ -388,13 +394,13 @@ public class MainFrame extends JFrame implements Runnable {
 		knobPanel(switch(knobs) {
     		case MIDI -> midiGui;
 			case Kitz -> drums.getKnobs();
-			case Track -> seq.getKnobs(seq.getCurrent());
+			case Track -> new TrackKnobs(seq);
 			case LFO -> effects.getChannel().getLfoKnobs();
-			case Taco -> JudahZone.getTacos().taco.getKnobs();
+			case Taco -> JudahZone.getTaco().getTrack().getKnobs(); // TODO
 			case Sample -> {focus(sampler); yield sampler.getView();}
 			case Presets -> presets;
 			case Setlist -> setlists;
-			case Wavez -> new WaveKnobs(JudahZone.getSelected());
+			case Wavez -> new WaveKnobs(effects.getSelected());
 			case Import -> ImportView.getInstance();
 			case Remap -> new RemapView();
 			case Log -> RTLogger.instance;
@@ -438,10 +444,8 @@ public class MainFrame extends JFrame implements Runnable {
             UIManager.put("nimbusBase", Pastels.EGGSHELL);
             UIManager.put("control", Pastels.EGGSHELL);
             UIManager.put("nimbusBlueGrey", Pastels.MY_GRAY);
-
-            UIManager.getLookAndFeel().getDefaults().put("Button.contentMargins", new Insets(5, 5, 5, 5));
+            UIManager.getLookAndFeel().getDefaults().put("Button.contentMargins", new Insets(5, 4, 5, 4));
             UIManager.getLookAndFeel().getDefaults().put("JToggleButton.contentMargins", new Insets(1, 1, 1, 1));
-
             Thread.sleep(10); // let nimbus start up
 		} catch (Exception e) { RTLogger.log(MainFrame.class, e.getMessage()); }
 	}
@@ -455,7 +459,7 @@ public class MainFrame extends JFrame implements Runnable {
 			SetCombo.set();
 	}
 
-	public static MiniSeq miniSeq() { return instance.miniSeq; }
+//	public static MiniSeq miniSeq() { return instance.miniSeq; }
 
 	public static void kit() {
 		if (instance.effects.getChannel() instanceof DrumKit)
@@ -463,5 +467,6 @@ public class MainFrame extends JFrame implements Runnable {
 		else
 			setFocus(instance.drums.getTracks());
 	}
+
 
 }

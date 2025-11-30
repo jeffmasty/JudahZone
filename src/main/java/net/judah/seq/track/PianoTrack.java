@@ -1,10 +1,13 @@
 package net.judah.seq.track;
 
+import static org.jaudiolibs.jnajack.JackTransportState.JackTransportStopped;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
@@ -13,11 +16,12 @@ import javax.sound.midi.Track;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.api.Key;
+import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
 import net.judah.api.ZoneMidi;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
-import net.judah.midi.JudahClock;
+import net.judah.midi.Actives;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
@@ -25,7 +29,6 @@ import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiPair;
 import net.judah.seq.Poly;
-import net.judah.seq.Trax;
 import net.judah.seq.arp.Algo;
 import net.judah.seq.arp.Arp;
 import net.judah.seq.arp.ArpInfo;
@@ -45,10 +48,9 @@ import net.judah.seq.chords.ChordListener;
 import net.judah.seq.chords.ChordTrack;
 import net.judah.seq.piano.Pedal;
 import net.judah.song.Sched;
-import net.judah.synth.taco.Polyphony;
 
 /** A melodic MidiTrack with an Arpeggiator */
-public class PianoTrack extends MidiTrack implements ChordListener {
+public class PianoTrack extends NoteTrack implements ChordListener {
 
 	public static int DEFAULT_POLYPHONY = 24;
 	public static int MONOPHONIC = 1;
@@ -61,29 +63,27 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 	private final ArrayList<MidiEvent> chads = new ArrayList<>();
 	@Getter private final Pedal pedal = new Pedal(this);
 
-	// FluidSynth
-	public PianoTrack(Trax type, ZoneMidi out, JudahClock clock) throws InvalidMidiDataException {
-		super(type, out, clock);
+	public PianoTrack(String name, ZoneMidi midiOut, int ch) throws InvalidMidiDataException {
+		super(name, midiOut, ch);
 		chords.addListener(this);
 		info = getState().getArp();
-		this.clear();
+	}
+
+	public PianoTrack(String name, Actives actives) throws InvalidMidiDataException {
+		super(name, actives);
+		chords.addListener(this);
 	}
 
 	// temporary import midi view
-	public PianoTrack(String name, MidiTrack source) throws InvalidMidiDataException {
-		super(name, source.getType(), source.getMidiOut(), source.getResolution(), source.getClock());
+	public PianoTrack(String name, NoteTrack source) throws InvalidMidiDataException {
+		super(name, source.getMidiOut(), source.getCh()); // , source.getResolution());
 	}
 
-	// TacoSynth
-	public PianoTrack(Trax type, Polyphony notes, JudahClock clock) throws InvalidMidiDataException {
-		// TODO CHORD LISTENER??
-		super(type, notes, clock);
+	@Override
+	protected void cycle() {
+		flush();
+		super.cycle();
 	}
-
-//	// monosynth Bass
-//	public PianoTrack(Trax type, ZoneMidi out, JudahClock clock) throws InvalidMidiDataException {
-//		super(type, out, clock);
-//	}
 
 	// filter PEDAL HOLD CC
 	@Override public void send(MidiMessage m, long ticker) {
@@ -117,6 +117,14 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 		super.setActive(on);
 	}
 
+	@Override public void update(Property prop, Object value) {
+		super.update(prop, value);
+		if (prop == Property.TRANSPORT && value == JackTransportStopped && isActive()) {
+			silence(); // pedal-aware
+			// new Panic(this);
+		}
+	}
+
 	@Override public void next(boolean fwd) {
 		silence();
 		super.next(fwd);
@@ -132,6 +140,8 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 			if (e.getMessage() instanceof ShortMessage orig)
 				t.add(new MidiEvent(Midi.create(
 					orig.getCommand(), ch, orig.getData1(), orig.getData2()), e.getTick()));
+			else if (e.getMessage() instanceof MetaMessage m)
+				meta.incoming(m, e);
 		}
 	}
 
@@ -167,6 +177,13 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 		return true;
 	}
 
+	@Override
+	public void clear() {
+		silence();
+		new Panic(this);
+		super.clear();
+	}
+
 	public int getRange() {
 		return info.getRange();
 	}
@@ -178,6 +195,8 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 	}
 
 	@Override public void chordChange(Chord from, Chord to) {
+		if (to == null)
+			silence();
 		if (!isActive() || algo instanceof Ignorant)
 			return;
 		if (algo != null)
@@ -194,7 +213,7 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 
 	}
 
-	@Override protected void flush() { // mode check?
+	protected void flush() { // mode check?
 		long end = (current + 1) * barTicks;
 		for (int i = 0; i < t.size(); i++) {
 			MidiEvent e = t.get(i);
@@ -204,6 +223,14 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 				midiOut.send(Midi.format(m, ch, 1), JudahMidi.ticker());
 		}
 		silence();
+	}
+
+	@Override
+	protected void setCurrent(int change) {
+		if (current == change)
+			return;
+		flush();
+		super.setCurrent(change);
 	}
 
 	/** clear the Arpeggiator */
@@ -330,6 +357,10 @@ public class PianoTrack extends MidiTrack implements ChordListener {
 	public class ABS extends Algo implements Ignorant {
 		@Override public void process(ShortMessage m, Chord chord, Poly result) {
 			result.add(m.getData1() + chord.getRoot().ordinal()); }}
+
+	public void setName(String rename) {
+		this.name = rename;
+	}
 
 
 

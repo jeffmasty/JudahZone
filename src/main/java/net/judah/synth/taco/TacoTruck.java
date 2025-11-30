@@ -1,81 +1,87 @@
 package net.judah.synth.taco;
 
-import static net.judah.JudahZone.getFluid;
-
 import java.nio.FloatBuffer;
+import java.util.List;
 import java.util.Vector;
 
-import net.judah.gui.MainFrame;
-import net.judah.gui.knobs.KnobMode;
-import net.judah.midi.JudahClock;
-import net.judah.midi.Midi;
-import net.judah.midi.MidiInstrument;
-import net.judah.omni.Icons;
-import net.judah.omni.Threads;
-import net.judah.seq.Trax;
-import net.judah.seq.track.PianoTrack;
-import net.judah.synth.fluid.FluidSynth;
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiMessage;
+import javax.sound.midi.ShortMessage;
+import javax.swing.ImageIcon;
 
-/** container for synthesizer instances */
-public class TacoTruck {
-	public final TacoSynth taco;
-	public final TacoSynth tk2;
-	public final FluidSynth fluid;
-	public final MidiInstrument bass;
+import lombok.Getter;
+import net.judah.JudahZone;
+import net.judah.api.Engine;
+import net.judah.omni.AudioTools;
+import net.judah.util.Constants;
 
-	private TacoSynth current;
+public class TacoTruck extends Engine {
 
-	public TacoTruck(FluidSynth fluid, MidiInstrument bass, JudahClock clock) {
-		this.fluid = fluid;
-		this.bass = bass;
-		taco = new TacoSynth(Trax.TK1, Icons.get("Waveform.png"), clock);
-		tk2 = new TacoSynth(Trax.TK2, Icons.get("Synth.png"), clock);
+	@Getter private final Vector<TacoSynth> tracks = new Vector<TacoSynth>();
+
+
+    public TacoTruck(String name, ImageIcon picture) {
+    	super(name, Constants.MONO);
+    	icon = picture;
+    	gain.setPreamp(0.65f);
+    }
+
+	@Override public TacoSynth getTrack() {
+		return tracks.getFirst();
 	}
 
-	public void process(FloatBuffer hot1, FloatBuffer hot2) {
-		taco.process(hot1, hot2);
-		tk2.process(hot1, hot2);
+	public void addTrack(String name) throws InvalidMidiDataException {
+		tracks.add(new TacoSynth(name, this, new Polyphony(this, tracks.size())));
 	}
 
-	public void rotate() {
-		if (current == null)
-			setCurrent(taco);
-		else if (current == taco)
-			setCurrent(tk2);
-		else if (current == tk2)
-			setCurrent(taco);
+	@Override public String[] getPatches() {
+		List<String> result = JudahZone.getSynthPresets().keys();
+		return result.toArray(new String[result.size()]);
 	}
 
-	public boolean setCurrent(TacoSynth it) {
-		if (current == it)
-			return false;
-		current = it;
-		MainFrame.setFocus(current.getKnobs());
-		MainFrame.setFocus(current);
-		return true;
+//	@Override
+//	public boolean progChange(String preset) {
+//		return progChange(preset, 0);
+//	}
+
+//	@Override
+//	public boolean progChange(String preset, int channel) {
+//		return tracks.get(channel).progChange(preset);
+//	}
+
+//	@Override public String getProg(int ch) {
+//		if (ch >= tracks.size())
+//			return null; // initialization
+//		return tracks.get(ch).getState().getProgram();
+//	}
+
+	@Override public String progChange(int data2, int ch) {
+		return tracks.get(ch).progChange(data2);
 	}
 
-	public void init() {
-		taco.progChange("FeelGood");
-		taco.getTracks().getFirst().load(Trax.TK1.getFile());
-
-		tk2.progChange(Trax.TK2.getProgram());
-		tk2.getTracks().getFirst().load(Trax.TK2.getFile());
-
-		bass.getTracks().getFirst().load(Trax.B.getFile());
-		bass.send(new Midi(JudahClock.MIDI_STOP), 0);
-
-		while (getFluid().getChannels().isEmpty())
-			Threads.sleep(50); // allow time for FluidSynth to sync
-
-		Threads.timer(666, ()-> {
-			MainFrame.setFocus(KnobMode.MIDI);
-			Vector<PianoTrack> fluids = fluid.getTracks();
-			for (PianoTrack f : fluids) {
-				f.progChange(f.getType().getProgram());
-				f.load(f.getType().getFile());
-			}});
-
+	@Override public void send(MidiMessage message, long timeStamp) {
+		if (message instanceof ShortMessage s)
+			tracks.get(s.getChannel()).send(message, timeStamp);
 	}
+
+	@Override public void close() {
+		tracks.clear();
+	}
+
+	@Override public void process(FloatBuffer outLeft, FloatBuffer outRight) {
+		if (onMute)
+			return;
+		AudioTools.silence(left);
+		for (TacoSynth t : tracks) { // gather tracks
+			t.process();
+			AudioTools.mix(t.mono, left);
+		}
+
+		AudioTools.copy(left, right); // make stereo
+		fx();
+		AudioTools.mix(left, outLeft);
+		AudioTools.mix(right, outRight);
+	}
+
 
 }

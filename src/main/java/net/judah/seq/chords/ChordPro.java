@@ -1,10 +1,7 @@
 
 package net.judah.seq.chords;
 
-import static net.judah.seq.chords.Directive.LENGTH;
-import static net.judah.seq.chords.Directive.LOOP;
-import static net.judah.seq.chords.Directive.MUTES;
-import static net.judah.seq.chords.Directive.SCENES;
+import static net.judah.seq.chords.Directive.*;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -28,34 +25,34 @@ import net.judah.util.RTLogger;
 @Setter @Getter
 public class ChordPro {
 	public static final String SUFFIX = ".pro";
-	
+
 	@NoArgsConstructor @AllArgsConstructor @Getter
-	class Unit { 
-		String chord; 
+	class Unit {
+		String chord;
 		String lyrics = "";
 		Unit(String chord) { this.chord = chord;}
 	}
-	
+
 	private final static Pattern COMMENT_REGEX = Pattern.compile(">\\s*([^$]*)");
 	private static final String SECTION_START = "{start_of_";
 	private static final String SECTION_END = "{end_of_";
 	private static final String ABREV_START = "{so";
 	private static final String ABREV_END = "{eo";
-	private static final String TIME = "{time: ";		
+	private static final String TIME = "{time: ";
 	private static final String PIPE = "\\|"; // java escape, regex escape, vertical bar
-	
-	
+
+
 	// ChordPro.@ ChordPro.%   Cycle breaks: A3_ ABC_ TOF_?
-	
+
 	ChordProData data = new ChordProData();
 	private final List<Section> sections = new ArrayList<>();
 	private final List<Directive> directives = new ArrayList<>();
 	private final int steps;
 	private Section current;
-	
+
 	public ChordPro(File file, int steps) throws ParseException {
 		this.steps = steps;
-		if (file == null || file.isFile() == false) 
+		if (file == null || file.isFile() == false)
 			throw new ParseException(new FileNotFoundException("not file"), "" + file);
 		parse(readFile(file.getAbsolutePath()));
 	}
@@ -77,7 +74,7 @@ public class ChordPro {
 
 		for (int x = 0; x < lines.size(); x++) {
 			String text = lines.get(x);
-			try { 
+			try {
 				if (text.isBlank())
 					continue;
 				if (text.startsWith("http")) {
@@ -103,9 +100,9 @@ public class ChordPro {
 						directives.add(Directive.LOOP);
 					else
 						current.getDirectives().add(LOOP);
-				} else if (text.startsWith(TIME)) 
+				} else if (text.startsWith(TIME))
 					processSignature(text.substring(TIME.length()).replace("}", "").trim());
-				else if (text.startsWith("{")) 
+				else if (text.startsWith("{"))
 					processAttribute(text);
 				else if (COMMENT_REGEX.matcher(text).matches()) {
 					data.comment = COMMENT_REGEX.matcher(text).toMatchResult().group();
@@ -114,7 +111,7 @@ public class ChordPro {
 				}
 				else
 					processChords(text);
-				
+
 			} catch (Throwable t) { throw new ParseException(t, "line" + x + ": " + text); }
 		}
 		if (current.isEmpty())
@@ -123,7 +120,7 @@ public class ChordPro {
 	}
 
 	private void processSignature(String trim) {
-		
+
 	}
 
 	private void processAttribute(String line) {
@@ -175,7 +172,7 @@ public class ChordPro {
 			return text;
 		return text.split(":")[1];
 	}
-	
+
 	private void processAbrev(String text) {
 		String raw = text.substring(ABREV_START.length()).replace("}", "");
 		Part part = Part.parse(raw.charAt(0));
@@ -198,17 +195,17 @@ public class ChordPro {
 		if (text.isEmpty())
 			return;
 		checkCurrent();
-		
-		String[] bars = text.split(PIPE);  //  2 bars rather than 4:  [C7][Am7] | [Dm7][G7]  
-		
+
+		String[] bars = text.split(PIPE);  //  2 bars rather than 4:  [C7][Am7] | [Dm7][G7]
+
 		@SuppressWarnings("unchecked")
 		ArrayList<Unit>[] parts = new ArrayList[bars.length];
-		
+
 		for (int i = 0; i < bars.length; i++) {
 			parts[i] = subtext(bars[i]);
 			if (parts[i].size() != 2 || (
 					i == 0 && text.indexOf('|') > text.indexOf('['))) {
-				for (Unit p : parts[i]) 
+				for (Unit p : parts[i])
 					current.add(new Chord(p.chord, p.lyrics, steps));
 			}
 			else { // Only handles up to 2 chords per bar for now
@@ -222,7 +219,7 @@ public class ChordPro {
 		// line breaks in lyrics
 		Chord last = current.get(current.size() - 1);
 		last.setLyrics(last.getLyrics() + "  ");
-		
+
 	}
 	private ArrayList<Unit> subtext(String text) {
 		ArrayList<Unit> result = new ArrayList<>();
@@ -242,10 +239,10 @@ public class ChordPro {
 					part = new Unit(text.substring(idx, end));
 					idx = end;
 				}
-			} 
+			}
 			else if (c == '/' && idx + 1 < length && text.charAt(idx + 1) == '/' && part.getChord() != null) {
 				// isRepeat. duplicate chord, not lyrics
-				result.add(part); 
+				result.add(part);
 				part = new Unit(part.getChord());
 				idx++;
 			}
@@ -262,11 +259,11 @@ public class ChordPro {
 					Chord previous = current.get(current.size() - 1);
 					previous.setLyrics(previous.getLyrics() + c);
 				}
-			else 
+			else
 				part.lyrics = part.lyrics + c;
 			idx++;
 		}
-		
+
 		if (part.getChord() != null)
 			result.add(part);
 		return result;
@@ -279,16 +276,16 @@ public class ChordPro {
 			if (s.getName() == null || s.getName().isBlank())
 				s.setName("part" + count++);
 	}
-	
+
 	@Override
 	public String toString() {
 		StringBuffer buf = new StringBuffer(Constants.NL);
-		if (data.title != null) 
-			buf.append("Title: ").append(data.title).append("  ");
+		if (data.title != null)
+			buf.append("Title: ").append(data.title).append(Constants.NL);
 		if (data.artist != null)
-			buf.append("Artist: ").append(data.artist).append("  ");
+			buf.append("Artist: ").append(data.artist).append(Constants.NL);
 		buf.append(Constants.NL);
-		sections.forEach(s->buf.append(s.toString()));
+		sections.forEach(s->buf.append("    ").append(s.toString()).append(Constants.NL));
 		return buf.toString();
 	}
 

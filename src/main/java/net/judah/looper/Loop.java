@@ -6,6 +6,7 @@ import static net.judah.util.Constants.STEREO;
 
 import java.io.File;
 import java.nio.FloatBuffer;
+import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,12 +21,11 @@ import net.judah.mixer.Channel;
 import net.judah.mixer.Instrument;
 import net.judah.mixer.LineIn;
 import net.judah.mixer.LoopMix;
-import net.judah.mixer.Zone;
 import net.judah.omni.AudioTools;
 import net.judah.omni.Icons;
 import net.judah.omni.Recording;
 import net.judah.seq.track.DrumTrack;
-import net.judah.synth.taco.TacoSynth;
+import net.judah.synth.taco.TacoTruck;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
@@ -38,7 +38,7 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 
 	protected final Looper looper;
 	protected final JudahClock clock;
-    protected final Zone sources;
+    protected final Collection<LineIn> sources;
 
 	@Getter private Recording tape = new Recording(); // RMS Recording?
     @Getter protected final LoopMix display;
@@ -61,7 +61,7 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 	private final BlockingQueue<float[][]> oldQueue = new LinkedBlockingQueue<>();
 	private final BlockingQueue<Integer> locationQueue = new LinkedBlockingQueue<>();
 
-    public Loop(String name, String icon, Looper loops, Zone sources) {
+    public Loop(String name, String icon, Looper loops, Collection<LineIn> sources) {
 		super(name, true);
     	this.icon = Icons.get(icon);
     	this.looper = loops;
@@ -307,11 +307,13 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 
 	/** run active effects on the current frame being played */
 	private void fx(FloatBuffer outLeft, FloatBuffer outRight) {
+
+
 		AudioTools.replace(playBuffer[LEFT], left, gain.getLeft());
 		AudioTools.replace(playBuffer[RIGHT], right, gain.getRight());
 		stream().filter(Effect::isActive).forEach(fx -> fx.process(left, right));
-		AudioTools.mix(left, outLeft);
-		AudioTools.mix(right, outRight);
+		AudioTools.mix(left, gain.getGain(), outLeft);
+		AudioTools.mix(right, gain.getGain(), outRight);
 	}
 
 	private void recordFrame() {
@@ -334,9 +336,9 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 
             if (in instanceof Instrument)
             	recordCh(in.getLeft(), in.getRight(), newBuffer, amp);
-            else if (in instanceof TacoSynth synth) {
+            else if (in instanceof TacoTruck synth) {
             	if (!synth.isMuteRecord() && !synth.isOnMute())
-            		recordCh(synth.getLeft(), synth.getRight(), newBuffer, amp);
+            		recordCh(synth.getLeft(), synth.getRight(), newBuffer, amp * synth.getGain().getPreamp());
             }
             else if (in instanceof DrumMachine drumz)
             	for (DrumTrack track : drumz.getTracks())

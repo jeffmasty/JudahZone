@@ -35,6 +35,7 @@ public class Song {
 	@JsonIgnore private File file;
 
 	private Signature timeSig = Signature.FOURFOUR;
+	private boolean midiBundle;
 	@JsonInclude(Include.NON_NULL)
 	private String chordpro;
 	@JsonInclude(Include.NON_NULL)
@@ -50,6 +51,7 @@ public class Song {
 	private List<String> capture = new ArrayList<>();
 
 	public Song(Seq seq, int tempo) {
+		seq.newSong();
 		Scene created = new Scene(seq); // init w/ 10 midi tracks
  		created.getCommands().add(new Param(Cmd.Tempo, "" + tempo));
 		scenes.add(created);
