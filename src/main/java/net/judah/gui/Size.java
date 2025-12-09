@@ -9,15 +9,15 @@ public interface Size {
 	int KNOB_HEIGHT = 32;
 	int WIDTH_FRAME = 1368;
     int WIDTH_KNOBS = 346;
-    int WIDTH_TAB = WIDTH_FRAME - WIDTH_KNOBS - 1;
+    int WIDTH_TAB = WIDTH_FRAME - WIDTH_KNOBS - 2;
     int HEIGHT_FRAME = 734;
-    int HEIGHT_KNOBS = 287;
+    int HEIGHT_KNOBS = 290;
     int HEIGHT_MIXER = 154;
     int HEIGHT_TAB = HEIGHT_FRAME - HEIGHT_MIXER;
 
 	Dimension SCREEN_SIZE = new Dimension(WIDTH_FRAME, HEIGHT_FRAME);
     Dimension TAB_SIZE = new Dimension(WIDTH_TAB, HEIGHT_TAB);
-    Dimension KNOB_PANEL = new Dimension(WIDTH_KNOBS - 2, HEIGHT_KNOBS - 2);
+    Dimension KNOB_PANEL = new Dimension(WIDTH_KNOBS - 4, HEIGHT_KNOBS - 2);
     Dimension MIXER_SIZE = new Dimension(WIDTH_TAB, HEIGHT_MIXER);
     Dimension KNOB_TITLE = new Dimension(KNOB_PANEL.width, STD_HEIGHT + 2);
 
@@ -33,6 +33,5 @@ public interface Size {
 
 	int KEY_HEIGHT = 25;
 	int STEP_WIDTH = 27;
-
 
 }

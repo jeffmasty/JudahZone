@@ -5,7 +5,7 @@ import java.util.List;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.seq.chords.ChordPlay;
-import net.judah.seq.chords.ChordTrack;
+import net.judah.seq.chords.Chords;
 import net.judah.seq.chords.Section;
 
 public class ChordCmd implements Cmdr {
@@ -13,7 +13,7 @@ public class ChordCmd implements Cmdr {
 	@Getter public static ChordCmd instance = new ChordCmd();
 	@Getter public static Player player = new Player();
 
-	private final ChordTrack chords = JudahZone.getChords();
+	private final Chords chords = JudahZone.getChords();
 	private final List<Section> sections = JudahZone.getChords().getSections();
 
 
@@ -41,7 +41,7 @@ public class ChordCmd implements Cmdr {
 	}
 
 	static class Player implements Cmdr {
-		private final ChordTrack chords = JudahZone.getChords();
+		private final Chords chords = JudahZone.getChords();
 
 		@Getter private final String[] keys = {"play", "stop"};
 		@Override public Object resolve(String key) {

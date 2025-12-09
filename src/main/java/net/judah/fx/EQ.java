@@ -71,7 +71,7 @@ public class EQ implements Effect {
 			case Hz: filter.frequency = value; break;
 			case Width: filter.bandwidth = value; break;
 		}
-		filter.update();
+		filter.coefficients();
 	}
 
 	private void update(EqBand band, Properties param, float value) {

@@ -9,7 +9,6 @@ import net.judah.util.Folders;
 public class Sample extends BasicPlayer {
 
 	protected static final float BOOST = 0.125f;
-	protected final Sampler sampler;
 
 	@Override
 	public void play(boolean onOrOff) {
@@ -17,15 +16,15 @@ public class Sample extends BasicPlayer {
 	}
 
 	/** load preset by name (without .wav) */
-	public Sample(String wavName, Type type, Sampler sampler) throws Exception {
-		this(wavName, new File(Folders.getSamples(), wavName + ".wav"), type, sampler);
+	public Sample(String wavName, Type type) throws Exception {
+		this(wavName, new File(Folders.getSamples(), wavName + ".wav"), type);
 	}
 
-	public Sample(String name, File f, Type type, Sampler sampler) throws Exception {
-		this.sampler = sampler;
+	public Sample(String name, File f, Type type) throws Exception {
 		this.type = type;
-		this.file = f;
-		recording = new Recording(file);
+		file = f;
+		recording = new Recording(f);
+		gain.setPan(0.4999f);
 	}
 
 }

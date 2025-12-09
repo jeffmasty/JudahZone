@@ -1,4 +1,4 @@
-package net.judah.seq.chords;
+package net.judah.song;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -13,28 +13,33 @@ import javax.swing.JSeparator;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 
-import lombok.Setter;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.Btn;
-import net.judah.song.Song;
+import net.judah.seq.chords.Chord;
+import net.judah.seq.chords.ChordPlay;
+import net.judah.seq.chords.ChordProCombo;
+import net.judah.seq.chords.ChordScroll;
+import net.judah.seq.chords.Chords;
+import net.judah.seq.chords.Directive;
+import net.judah.seq.chords.Section;
+import net.judah.seq.chords.SectionCombo;
 
 /** Small window inside Overview */
-public class ChordView extends Gui.Opaque {
+public class ChordTrack extends Gui.Opaque {
 	public static final Color BG = Pastels.BUTTONS;
 
 	public static int HEIGHT = 50;
 
-	private final ChordTrack chords;
+	private final Chords chords;
 	private final JLabel bar = new JLabel(" 0 ", JLabel.CENTER);
 	private final JLabel bars = new JLabel(" 0 ", JLabel.CENTER);
 	private final Btn next;
 	private final JToggleButton loop = new JToggleButton("🔁");
-	@Setter private Song song;
 	private Section section;
 
-	public ChordView(ChordTrack trk) {
+	public ChordTrack(Chords trk) {
 		this.chords = trk;
 		next = new Btn(" ▶| ", e->chords.next());
 		loop.setSelected(trk.getSection() != null && trk.getSection().isOnLoop());

@@ -1,6 +1,5 @@
 package net.judah.seq;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,13 +9,14 @@ import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.Track;
 
-import lombok.NoArgsConstructor;
 import net.judah.util.RTLogger;
 
-@NoArgsConstructor
 public class MetaMap extends HashMap<Meta, List<MidiEvent>> {
 
+	public final Track t;
+
 	public MetaMap(Track t) {
+		this.t = t;
 		for (int i = 0; i < t.size(); i++)
 			if (t.get(i).getMessage() instanceof MetaMessage m)
 				incoming(m, t.get(i));
@@ -28,7 +28,6 @@ public class MetaMap extends HashMap<Meta, List<MidiEvent>> {
 			return; // not handled
 		List<MidiEvent> msgs = get(key);
 		if (msgs == null)
-
 			put(key, list(source));
 		else
 			msgs.add(source);
@@ -49,7 +48,7 @@ public class MetaMap extends HashMap<Meta, List<MidiEvent>> {
 
 	public String getString(Meta type) {
 		if (get(type) == null)
-			return "";
+			return null;
 		return new String(((MetaMessage)get(type).getFirst().getMessage()).getData());
 
 	}
@@ -71,9 +70,13 @@ public class MetaMap extends HashMap<Meta, List<MidiEvent>> {
 	public int getInt(Meta type) {
 		if (!containsKey(type))
 			return 0;
-		MetaMessage m = (MetaMessage)get(type).getFirst().getMessage();
-		ByteBuffer wrapped = ByteBuffer.wrap(m.getData()); // big-endian by default
-		return wrapped.getInt();
+		byte[] dat = ((MetaMessage)get(type).getFirst().getMessage()).getData();
+		if (dat.length == 0)
+			return 0;
+		if (dat.length == 1)
+			return dat[0];
+		else
+			return dat[1] * Byte.MAX_VALUE + dat[0];
 	}
 
 	public void setInt(Meta type, int val) {

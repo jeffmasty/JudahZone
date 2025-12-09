@@ -13,10 +13,9 @@ import javax.swing.table.TableCellEditor;
 import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
-import net.judah.seq.SynthRack;
-import net.judah.seq.Seq;
 import net.judah.seq.beatbox.RemapView;
 import net.judah.seq.track.DrumTrack;
+import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.util.RTLogger;
@@ -38,12 +37,9 @@ public class ImportTable extends JTable {
 		super(new ImportModel(seq));
 		model = (ImportModel) getModel();
 		sequence = seq;
-
-		Seq trax = JudahZone.getSeq();
-		for (NoteTrack t : SynthRack.getSynthTracks())
-			combo.addItem(t);
-		for (NoteTrack t :  trax.getDrumTracks())
-			combo.addItem(t);
+		for (MidiTrack t : JudahZone.getSeq().getTracks())
+			if (t instanceof NoteTrack notes)
+				combo.addItem(notes);
 		combo.addActionListener(e->model.setValueAt(combo.getSelectedItem(), row, ZONE_COL));
 
 		Action importCol = new AbstractAction() {

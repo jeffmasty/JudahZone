@@ -1,41 +1,37 @@
 package net.judah.seq.automation;
 
-import static net.judah.seq.automation.AllModel.TICK;
-
 import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
+import javax.sound.midi.MidiMessage;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.Btn;
 import net.judah.midi.JudahMidi;
+import net.judah.midi.Midi;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
-import net.judah.seq.MidiPair;
-import net.judah.seq.automation.AllModel.Time;
+import net.judah.seq.MidiTools;
+import net.judah.seq.MidiNote;
 import net.judah.seq.automation.Automation.AutoBox;
 import net.judah.seq.track.MidiTrack;
 
-public class AllView extends AutoBox{
+public class MidiView extends AutoBox {
 
-	private static AllView instance;
-	public static AllView getInstance() {
-		if (instance == null)
-			instance = new AllView();
-		return instance;
-	}
 	private static final Dimension SZ = new Dimension(Size.WIDTH_KNOBS - 40, Size.HEIGHT_KNOBS - 100);
 
-	private ArrayList<Time> clipboard = new ArrayList<Time>();
-	private final AllTable table = new AllTable();
-	private AllModel model;
+	private ArrayList<Integer> clipboard = new ArrayList<Integer>();
+	private final JTable table = new JTable();
+	private MidiModel model;
 	private final JButton edit = new Btn("Edit", l->edit()); // pad1/doubleClick
 	private final JButton delete = new Btn("Delete", l->delete()); // pad2
 	private final JButton exe = new Btn("Exe", l->exe());
@@ -43,26 +39,33 @@ public class AllView extends AutoBox{
 	private final JButton paste = new Btn("Paste", l->paste());
 	private final JButton[] btns = {edit, delete, exe, copy, paste};
 
-	AllView() {
+	MidiView() {
 		super(BoxLayout.PAGE_AXIS);
-		for (JButton btn : btns)
-			btn.setEnabled(false);
-		JScrollPane scroll = new JScrollPane(table);
-		scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-		scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
-		add(Gui.wrap(edit, delete, copy, paste));
-		add(Gui.resize(scroll, SZ));
-		add(Box.createVerticalStrut(20));
-		add(Box.createVerticalGlue());
-
+		table.setRowSelectionAllowed(true);
+		table.setColumnSelectionAllowed(false);
+		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		table.setAutoCreateRowSorter(true);
 		table.getSelectionModel().addListSelectionListener(l->selected());
 		table.addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) {
 				if (e.getClickCount() == 2)
 					edit();
-				// popup?
+				// right: popup?
+				// single: select in TabZone?
 			}});
+		JScrollPane scroll = new JScrollPane(table);
+		scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+		scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+		for (JButton btn : btns)
+			btn.setEnabled(false);
+
+		add(Gui.box(edit, delete, copy, paste));
+		add(Gui.resize(scroll, SZ));
+		add(Box.createVerticalStrut(10));
+		add(Box.createVerticalGlue());
+
 	}
 
 	private void selected() {
@@ -74,14 +77,13 @@ public class AllView extends AutoBox{
 
 	@Override protected void setTrack(MidiTrack t) {
 		track = t;
-		model = new AllModel(track);
-		table.setModel(model);
+		model = new MidiModel(track, table);
 	}
 
-	@Override
-	protected AutoBox init(long tick) {
-
-		// select tick
+	@Override protected AutoBox init(long tick) {
+		int idx = MidiTools.fastFind(track.getT(), tick);
+		if (idx > 0 && idx < table.getRowCount())
+			table.setRowSelectionInterval(idx, idx);
 		return this;
 	}
 
@@ -92,44 +94,45 @@ public class AllView extends AutoBox{
 		if (row < 0)
 			return;
 		row = table.convertRowIndexToModel(row);
-		Time tick = (Time) table.getModel().getValueAt(row, TICK);
-		Automation.getInstance().edit(track, tick.e());
+		MidiNote p = (MidiNote) model.getValueAt(row, MidiModel.EVENT);
+		MidiMessage m = p.getMessage();
+		if (Midi.isCC(m) || Midi.isProgChange(m) || Midi.isPitchBend(m))
+			Automation.getInstance().edit(track, p);
 	}
 
 	private void  exe() {
-
 		int[] selection = table.getSelectedRows();
 		for (int i = 0; i < selection.length; i++) // convert selection to underlying TableModel
 			selection[i] = table.convertRowIndexToModel(selection[i]);
 		for (int row : selection) {
-			Time tick = (Time) model.getValueAt(row, AllModel.TICK);
-			track.send(tick.e().getMessage(), JudahMidi.ticker()); // non real-time on msgs to Fluid/Crave?
+			MidiNote p = (MidiNote)table.getModel().getValueAt(row, MidiModel.EVENT);
+			if (p == null)
+				return;
+			MidiMessage m = p.getMessage();
+			if (Midi.isCC(m) || Midi.isProgChange(m) || Midi.isPitchBend(m))
+				track.send(m, JudahMidi.ticker());
 		}
-
 	}
-
 
 	/** delete all selected */
 	private void delete() {
-		ArrayList<MidiPair> notes = new ArrayList<MidiPair>();
+		ArrayList<MidiNote> notes = new ArrayList<MidiNote>();
 		int[] selection = table.getSelectedRows();
 		for (int i = 0; i < selection.length; i++) // convert selection to underlying TableModel
 			selection[i] = table.convertRowIndexToModel(selection[i]);
-		for (int row : selection)
-			notes.add(new MidiPair( ((Time) table.getModel().getValueAt(row, TICK)).e(), null));
+		for (int row : selection) {
+			MidiNote p = (MidiNote)table.getModel().getValueAt(row, MidiModel.EVENT);
+			notes.add(p);
+		}
 		Edit e = new Edit(Type.DEL, notes);
-		getMusician(track).push(e);
-		for (int row : selection)
-			model.removeRow(row);
+		track.getEditor().push(e);
 	}
 
 	private void copy() {
 		clipboard.clear();
 		int[] selection = table.getSelectedRows();
 		for (int i = 0; i < selection.length; i++) // convert selection to underlying TableModel
-			selection[i] = table.convertRowIndexToModel(selection[i]);
-		for (int row : selection)
-			clipboard.add((Time)table.getModel().getValueAt(row, TICK));
+			clipboard.add(table.convertRowIndexToModel(selection[i]));
 		paste.setEnabled(clipboard.size() > 0);
 	}
 
@@ -150,6 +153,10 @@ public class AllView extends AutoBox{
 	@Override protected boolean doKnob(int idx, int value) {
 		// scroll msgs
 		return false;
+	}
+
+	public void refill() {
+		// TODO Auto-generated method stub
 	}
 
 }

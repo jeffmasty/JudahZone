@@ -11,28 +11,24 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
 import javax.sound.midi.MidiEvent;
-import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 import javax.swing.SwingUtilities;
 
 import net.judah.api.Signature;
 import net.judah.drumkit.DrumType;
 import net.judah.gui.Gui;
-import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.TabZone;
-import net.judah.gui.knobs.KnobMode;
 import net.judah.midi.Midi;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
-import net.judah.seq.MidiPair;
+import net.judah.seq.MidiNote;
 import net.judah.seq.MidiTools;
 import net.judah.seq.MusicBox;
 import net.judah.seq.Notes;
 import net.judah.seq.Prototype;
 import net.judah.seq.automation.CCPopup;
 import net.judah.seq.track.DrumTrack;
-import net.judah.util.RTLogger;
 
 public class BeatBox extends MusicBox implements Pastels {
 
@@ -51,7 +47,7 @@ public class BeatBox extends MusicBox implements Pastels {
     	this.tab = tab;
     	cc = new CCPopup(t, this, true);
         setLayout(null);
-        update();
+        repaint();
     }
 
 	@Override public long toTick(Point p) {
@@ -109,16 +105,24 @@ public class BeatBox extends MusicBox implements Pastels {
         float scale = width / (float)track.getWindow();
         ShortMessage on;
         int x, y;
-        for (MidiPair p : scroll.populate()) {
-        	on = (ShortMessage)p.getOn().getMessage();
+        for (MidiNote p : scroll.populate()) {
+        	on = (ShortMessage)p.getMessage();
 			y = DrumType.index(on.getData1());
-			x = (int) ( (p.getOn().getTick() - offset) * scale);
-			if (y >=0 && x >= 0) {
-				if (selected.contains(p))
+			x = (int) ( (p.getTick() - offset) * scale);
+			if (selected.contains(p)) {
+				if (dragging == null)
 					highlight(g, x, y, on.getData2());
-				else
-					drumpad(g, x, y, on.getData2());
 			}
+			else
+				drumpad(g, x, y, on.getData2());
+        }
+        if (dragging != null) {
+        	for (MidiNote p : dragging) {
+            	on = (ShortMessage)p.getMessage();
+    			y = DrumType.index(on.getData1());
+    			x = (int) ( (p.getTick() - offset) * scale);
+        		highlight(g, x, y, 100);
+        	}
         }
 
         // draw CCs/Progs/Pitch
@@ -211,7 +215,7 @@ public class BeatBox extends MusicBox implements Pastels {
 			mode = DragMode.CREATE;
 		}
 		else {
-			MidiPair pair = new MidiPair(existing, null);
+			MidiNote pair = new MidiNote(existing);
 			if (mouse.isControlDown()) {
 				if (selected.contains(pair))
 					selected.remove(pair);
@@ -237,7 +241,7 @@ public class BeatBox extends MusicBox implements Pastels {
 			case CREATE:
 				MidiEvent create = new MidiEvent(Midi.create(NOTE_ON, track.getCh(), click.data1,
 						(int) (track.getAmp() * 127f)), click.tick);
-				push(new Edit(Type.NEW, new MidiPair(create, null)));
+				track.getEditor().push(new Edit(Type.NEW, create));
 				break;
 			case SELECT:
 				Prototype a = translate(drag);
@@ -267,7 +271,7 @@ public class BeatBox extends MusicBox implements Pastels {
 				MidiEvent evt = t.get(i);
 				int data1 = ((ShortMessage)evt.getMessage()).getData1();
 				if (data1 >= low && data1 <= high)
-					selected.add(new MidiPair(evt, null));
+					selected.add(new MidiNote(evt));
 			}
 		}
 		repaint();
@@ -277,8 +281,7 @@ public class BeatBox extends MusicBox implements Pastels {
 	//////// Drag and Drop /////////
 	@Override public void dragStart(Point mouse) {
 		mode = DragMode.TRANSLATE;
-		dragging.clear();
-		selected.forEach(p -> dragging.add(new MidiPair(p)));
+		dragging = new ArrayList<>(selected);
 		click = translate(mouse);
 		recent = new Prototype(toData1(mouse), click.tick);
 	}
@@ -286,73 +289,50 @@ public class BeatBox extends MusicBox implements Pastels {
 	@Override
 	public void drop(Point mouse) {
 		// delete selected, create undo from start/init
-		editDel(selected);
-		Edit e = new Edit(Type.TRANS, dragging);
+		Edit e = new Edit(Type.TRANS, selected);
 		long now = toTick(mouse);
 		Prototype destination = new Prototype(toData1(mouse),
 				((now - click.tick) % track.getWindow()) / track.getStepTicks());
 		e.setDestination(destination, click);
-		push(e);
+		editor.push(e);
+		select(dragging);
+		dragging = null;
+		click = null;
 	}
 
 	@Override
 	public void drag(Point mouse) {
-
 		Prototype now = new Prototype(toData1(mouse), toTick(mouse));
 		if (now.equals(recent)) // hovering
 			return;
 		// note or step changed, move from most recent drag spot
 		long tick = ((now.tick - recent.tick) % track.getWindow()) / track.getStepTicks();
-		transpose(selected, new Prototype(now.data1, tick));
+		Prototype dest = new Prototype(now.data1, tick);
+		transpose(dest);
 		recent = now;
-
 	}
 
-	@Override
-	public void transpose(ArrayList<MidiPair> notes, Prototype destination) {
-		editDel(notes);
-
-		ArrayList<MidiPair> replace = new ArrayList<>();
-		int delta = DrumType.index(destination.data1) - DrumType.index(((ShortMessage)notes.getFirst().getOn().getMessage()).getData1());
-				//click.data1);
+	private void transpose(Prototype destination) {
+		int delta = DrumType.index(destination.data1) - DrumType.index(((ShortMessage)dragging.getFirst().getMessage()).getData1());
 		long start = track.getCurrent() * track.getBarTicks();
-		for (MidiPair note : notes)
-			replace.add(compute(note, delta, destination.tick, start, track.getWindow()));
-		editAdd(replace);
-	}
-
-	@Override
-	public void decompose(Edit e) {
-		ArrayList<MidiPair> notes = e.getNotes();
-		Prototype destination = e.getDestination();
-		ArrayList<MidiPair> delete = new ArrayList<>();
-		long start = track.getCurrent() * track.getBarTicks();
-		int delta = DrumType.index(destination.data1) - DrumType.index(
-				((ShortMessage)notes.get(e.getIdx()).getOn().getMessage()).getData1());
-		for (MidiPair note : notes)
-			delete.add(compute(note, delta, destination.tick, start, track.getWindow()));
-		editDel(delete);
-		editAdd(notes);
-		click = null;
+		for (int i = 0; i < dragging.size(); i++) {
+			MidiNote note = dragging.get(i);
+			dragging.set(i, new MidiNote(editor.compute(note, delta, destination.tick, start, track.getWindow())));
+		}
+		repaint();
 	}
 
 	/**@param in source note (off is null for drums)
 	 * @param destination x = +/-ticks,   y = +/-data1
 	 * @return new midi */
-	public MidiPair compute(MidiPair in, int delta, long protoTick, long start, long window) {
-		ShortMessage source = (ShortMessage)in.getOn().getMessage();
-		long tick = in.getOn().getTick() + protoTick * track.getStepTicks();
+	public MidiNote compute(MidiNote in, int delta, long protoTick, long start, long window) {
+		ShortMessage source = (ShortMessage)in.getMessage();
+		long tick = in.getTick() + protoTick * track.getStepTicks();
 		if (tick < start) tick += window;
 		if (tick >= start + window) tick -= window;
 		int data1 =  DrumType.translate(source.getData1(), delta);
-		return new MidiPair(new MidiEvent(Midi.create(source.getCommand(), source.getChannel(), data1, source.getData2()), tick), null);
+		return new MidiNote(new MidiEvent(Midi.create(source.getCommand(), source.getChannel(), data1, source.getData2()), tick));
 	}
-
-	@Override public void update() {
-		super.update();
-		repaint();
-	}
-
 
 	/** remove any note-offs */
 	public void clean() {
@@ -374,24 +354,25 @@ public class BeatBox extends MusicBox implements Pastels {
 		}
 	}
 
-	/** change or undo e.getNotes() to  e.getDestination().data1;
-	 * @param exe false if undo */
-	@Override
-	protected void remap(Edit e, boolean exe) {
-		int target = exe ? e.getDestination().data1 : e.getOrigin().data1;
-		MidiMessage on;
-		try {
-			for (MidiPair p : e.getNotes()) {
-				on = p.getOn().getMessage();
-				if (on instanceof ShortMessage midi)
-					midi.setMessage(midi.getCommand(), midi.getChannel(), target, midi.getData2());
-			}
-		} catch (Exception ex) { RTLogger.warn(this, ex); }
-		if (MainFrame.getKnobMode() == KnobMode.Remap)
-			MainFrame.setFocus(new RemapView(this));
-		repaint();
-	}
-
+	// TODO repaint
+//	/** change or undo e.getNotes() to  e.getDestination().data1;
+//	 * @param exe false if undo */
+//	@Override
+//	protected void remap(Edit e, boolean exe) {
+//		int target = exe ? e.getDestination().data1 : e.getOrigin().data1;
+//		MidiMessage on;
+//		try {
+//			for (MidiPair p : e.getNotes()) {
+//				on = p.getOn().getMessage();
+//				if (on instanceof ShortMessage midi)
+//					midi.setMessage(midi.getCommand(), midi.getChannel(), target, midi.getData2());
+//			}
+//		} catch (Exception ex) { RTLogger.warn(this, ex); }
+//		if (MainFrame.getKnobMode() == KnobMode.Remap)
+//			MainFrame.setFocus(new RemapView(this));
+//		repaint();
+//	}
+//
 	public void setCCType(DrumType t) {
 		ccType = t;
 		repaint();

@@ -19,6 +19,8 @@ import net.judah.api.BasicClient.PortBack;
 import net.judah.api.BasicClient.Request;
 import net.judah.midi.JudahMidi;
 import net.judah.omni.Threads;
+import net.judah.seq.Meta;
+import net.judah.seq.MetaMap;
 import net.judah.seq.SynthRack;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
@@ -35,6 +37,7 @@ public class FluidAssistant implements PortBack {
 	private final Triumvirate con = new Triumvirate();
 	private final String engineName;
 	private final String trackName;
+	private MetaMap map;
 	private String loadFile;
 	private final int num;
 	private final String suffix;
@@ -57,7 +60,12 @@ public class FluidAssistant implements PortBack {
 	}
 
 	public FluidAssistant(String name) {
-		this(name, null);
+		this(name, "");
+	}
+
+	public FluidAssistant(String name, MetaMap map) {
+		this(name, map.getString(Meta.TRACK_NAME));
+		this.map = map;
 	}
 
 	@Override
@@ -91,7 +99,10 @@ public class FluidAssistant implements PortBack {
 			runtime = new FluidSynth(engineName, tri.midi, tri.left, tri.right);
 			SynthRack.addEngine(runtime);
 			Threads.sleep(50); // let external process create ports
-			JudahZone.getSeq().addTrack(trackName, runtime);
+			if (map == null)
+				JudahZone.getSeq().addTrack(trackName, runtime);
+			else
+				JudahZone.getSeq().addTrack(map, runtime);
 			// async port connections
 			JudahMidi.getRequests().add(new Connect(this, tri.midi, "midi" + suffix, MIDI, INS));
 			JudahZone.getRequests().add(new Connect(this, tri.left, "midi" + suffix, AUDIO, OUTS));

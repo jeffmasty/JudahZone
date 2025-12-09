@@ -33,8 +33,8 @@ import net.judah.util.RTLogger;
 
 public class Loop extends Channel implements RecordAudio, Runnable {
 	public static final int INIT = 8192; // nice chunk of preloaded blank tape
-	public static final float STD_BOOST = 3;
-	public static final float DRUM_BOOST = 0.85f;
+	private static final float STD_BOOST = 2.25f;
+	private static final float DRUM_BOOST = 0.85f;
 
 	protected final Looper looper;
 	protected final JudahClock clock;
@@ -307,8 +307,6 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 
 	/** run active effects on the current frame being played */
 	private void fx(FloatBuffer outLeft, FloatBuffer outRight) {
-
-
 		AudioTools.replace(playBuffer[LEFT], left, gain.getLeft());
 		AudioTools.replace(playBuffer[RIGHT], right, gain.getRight());
 		stream().filter(Effect::isActive).forEach(fx -> fx.process(left, right));

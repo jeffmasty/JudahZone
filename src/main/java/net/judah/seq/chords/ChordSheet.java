@@ -40,7 +40,7 @@ public class ChordSheet extends JPanel {
 	private static final Dimension COLUMN = new Dimension( (WIDTH - LBLS - PAD - 30) / 4, 43);
 
 	private int measure;
-	private final ChordTrack chords;
+	private final Chords chords;
 	private JScrollPane scroll = new JScrollPane();
 	private JPanel content;
 
@@ -49,7 +49,7 @@ public class ChordSheet extends JPanel {
 	private final JLabel directives = new JLabel();
 	private final JToggleButton loop = new JToggleButton(" 🔁 ");
 
-	public ChordSheet(ChordTrack chrds) {
+	public ChordSheet(Chords chrds) {
 		this.chords = chrds;
 		setName("Chords");
 		setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
@@ -83,7 +83,7 @@ public class ChordSheet extends JPanel {
 		if (song == null || song.getChordpro() == null || song.getChordpro().isBlank())
 			return;
 		try {
-			Desktop.getDesktop().open(ChordTrack.fromSong(song));
+			Desktop.getDesktop().open(Chords.fromSong(song));
 		} catch (IOException e) { RTLogger.warn(this, e.getMessage()); }
 	}
 

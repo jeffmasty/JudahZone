@@ -87,13 +87,14 @@ public class Gain implements Effect {
 	/** preamp and panning */
 	public void preamp(FloatBuffer left, FloatBuffer right) {
 		final float l = getLeft();
-		final float r = getRight();
-		left.rewind(); right.rewind();
+		left.rewind();
 	    while (left.hasRemaining())
 	        left.put(left.position(), left.get() * l);
+
+	    final float r = getRight();
+	    right.rewind();
 	    while (right.hasRemaining())
 	        right.put(right.position(), right.get() * r);
-
 	}
 
 	/** gain only */

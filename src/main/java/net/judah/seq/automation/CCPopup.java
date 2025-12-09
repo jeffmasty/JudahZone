@@ -7,23 +7,25 @@ import java.util.ArrayList;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.swing.JComponent;
+import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
 
 import net.judah.gui.Actionable;
-import net.judah.seq.automation.Automation.AutoMode;
+import net.judah.seq.automation.Automation.MidiMode;
+import net.judah.seq.automation.Automation.CCData;
 import net.judah.seq.track.MidiTrack;
 
 /** lists out CCs for current frame and right-click menu */
 public class CCPopup extends JPopupMenu {
 
-	private final AllModel dat;
-	private final JComponent view;
-	private final boolean lineAxis;
 	private final MidiTrack track;
+	private final boolean lineAxis;
+	private final JComponent view;
+	private final CCModel dat;
 
 	public CCPopup(MidiTrack midi, JComponent parent, boolean horizontal) {
 		track = midi;
-		dat = new AllModel(midi);
+		dat = new CCModel(midi);
 		view = parent;
 		lineAxis = horizontal;
 	}
@@ -34,25 +36,30 @@ public class CCPopup extends JPopupMenu {
 	    add(new Actionable("New CC", e->create(me.getPoint())));
 	    for (CCData d : getStep(step)) {
 	    	add(new Actionable(d.type().toString() + ": " + ((ShortMessage)d.e().getMessage()).getData2(),
-	    			e->Automation.getInstance().edit(dat.track, d)));
+	    			e->Automation.getInstance().edit((MidiTrack)dat.track, d))); // TODO
 	    }
 	    // TODO PitchBend
 	    // ProgChange
-	    MidiEvent prog = getProg(step);
-	    if (prog == null) {
-	    	long tick = track.getFrame() * track.getWindow() + step * track.getStepTicks();
-			add(new Actionable("ProgChange", e->Automation.getInstance().init(track, tick, AutoMode.PC)));
+	    if (track instanceof MidiTrack t) {
+		    MidiEvent prog = getProg(step);
+		    if (prog == null) {
+		    	long tick = track.getFrame() * track.getWindow() + step * track.getStepTicks();
+				add(new Actionable("ProgChange", e->Automation.getInstance().init(t, tick, MidiMode.Program)));
+		    }
+		    else {
+		    	String[] source = t.getPatches();
+		    	int data1 = ((ShortMessage)prog.getMessage()).getData1();
+		    	String instr;
+		    	if (data1 > source.length)
+		    		instr = "" + data1;
+		    	else
+		    		instr = source[data1];
+		    	add(new Actionable("Prog: " + instr, e->Automation.getInstance().edit(track, prog))); // edit w/ delete // TODO
+		    }
 	    }
-	    else {
-	    	String[] source = track.getPatches();
-	    	int data1 = ((ShortMessage)prog.getMessage()).getData1();
-	    	String instr;
-	    	if (data1 > source.length)
-	    		instr = "" + data1;
-	    	else
-	    		instr = source[data1];
-	    	add(new Actionable("Prog: " + instr, e->Automation.getInstance().edit(track, prog))); // edit w/ delete
-	    }
+	    JMenu tools = new JMenu("Tools");
+	    track.getEditor().tools(tools);
+	    add(tools);
 	    show(view, me.getX(), me.getY());
 	}
 
@@ -87,7 +94,7 @@ public class CCPopup extends JPopupMenu {
 		int length = lineAxis ? view.getWidth() : view.getHeight();
 		long zeroBased = click * track.getWindow() / length;
 		long tick = track.getLeft() + zeroBased;
-		Automation.getInstance().init(track, tick, AutoMode.CC);
+		Automation.getInstance().init(track, tick, MidiMode.CC); // TODO
 	}
 
 	public int[] populate(long left, long right) {

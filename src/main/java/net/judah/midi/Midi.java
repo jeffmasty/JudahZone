@@ -1,7 +1,6 @@
 package net.judah.midi;
 
 import java.io.IOException;
-import java.util.HashMap;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiEvent;
@@ -129,47 +128,20 @@ public class Midi extends ShortMessage {
 		setMessage(getCommand(), getChannel(), getData1(), velocity);
 	}
 
-	public static boolean isCC(MidiMessage msg) {
-		return msg instanceof ShortMessage midi
-				&& msg.getStatus() - midi.getChannel() == ShortMessage.CONTROL_CHANGE;
+	private static boolean is(int type, MidiMessage msg) {
+		return msg instanceof ShortMessage m && m.getStatus() - m.getChannel() == type;
 	}
-	public static boolean isPitchBend(ShortMessage msg) {
-		return msg.getStatus() - msg.getChannel() == ShortMessage.PITCH_BEND;
-	}
-
-	public static boolean isProgChange(MidiMessage midi) {
-		return midi instanceof ShortMessage msg &&
-			msg.getStatus() - msg.getChannel() == ShortMessage.PROGRAM_CHANGE;
-	}
-	public static boolean isNoteOn(MidiMessage midi) {
-		return midi instanceof ShortMessage msg &&
-			msg.getStatus() - msg.getChannel() == NOTE_ON;
-	}
-
-	public static boolean isNoteOff(MidiMessage msg) {
-		if (msg instanceof ShortMessage m)
-			return msg != null && m.getStatus() - m.getChannel() == NOTE_OFF;
-		return false;
-	}
+	public static boolean isCC(MidiMessage msg) 		{ return is(CONTROL_CHANGE, msg); }
+	public static boolean isPitchBend(MidiMessage msg) 	{ return is(PITCH_BEND, msg); }
+	public static boolean isProgChange(MidiMessage msg) { return is(PROGRAM_CHANGE, msg); }
+	public static boolean isNoteOn(MidiMessage msg) 	{ return is (NOTE_ON, msg); }
+	public static boolean isNoteOff(MidiMessage msg) 	{ return is(NOTE_OFF, msg); }
 
 	public static boolean isNote(MidiMessage msg) {
 		int stat = msg instanceof ShortMessage m ? msg.getStatus() - m.getChannel() : msg.getStatus();
 		return stat == Midi.NOTE_OFF || stat == NOTE_ON;
 	}
 	public boolean isNote() { return isNote(this); }
-
-	public static Midi fromProps(HashMap<String, Object> props) throws InvalidMidiDataException {
-		try {
-			return new Midi(
-				Integer.parseInt("" + props.get(PARAM_COMMAND)),
-				Integer.parseInt("" + props.get(PARAM_CHANNEL)),
-			    Integer.parseInt("" + props.get(PARAM_DATA1)),
-			    Integer.parseInt("" + props.get(PARAM_DATA2)));
-		} catch (Throwable t) {
-			if (t instanceof InvalidMidiDataException) throw t;
-			throw new InvalidMidiDataException(t.getMessage());
-		}
-	}
 
 	public static Midi deserialize(String raw) {
         String[] src = raw.split("[(]");
@@ -229,8 +201,8 @@ public class Midi extends ShortMessage {
 
 	public static ShortMessage format(ShortMessage midi, int ch, float gain) {
 		if (midi.getChannel() == ch && gain == 1)
-			return midi;
-		return create(midi.getCommand(), ch, midi.getData1(), (int) (midi.getData2() * gain));
+			return copy(midi);
+		return create(midi.getCommand(), ch, midi.getData1(), (int) (gain * midi.getData2()));
 	}
 
 }

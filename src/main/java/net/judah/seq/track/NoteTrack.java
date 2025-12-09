@@ -6,28 +6,24 @@ import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.judah.api.ZoneMidi;
+import net.judah.gui.MainFrame;
+import net.judah.gui.knobs.TrackKnobs;
 import net.judah.midi.Actives;
 import net.judah.midi.Midi;
-import net.judah.seq.automation.CC;
+import net.judah.seq.automation.ControlChange;
 import net.judah.song.Sched;
 import net.judah.util.Constants;
-import net.judah.util.RTLogger;
 
 @Getter
 public abstract class NoteTrack extends MidiTrack {
     protected final Actives actives;
     /** parent midi port */
     protected final ZoneMidi midiOut;
-    private float gain = 0.9f;
+	private Gate gate = Gate.SIXTEENTH;
+	@Setter protected TrackKnobs trackKnobs; // Seq manages
 
-    public NoteTrack(String name, ZoneMidi out, int ch) throws InvalidMidiDataException {
-    	super(name, ch);
-		this.midiOut = out;
-		actives = new Actives(midiOut, ch);
-    }
-
-    // DrumTrack
 	public NoteTrack(String name, Actives actives) throws InvalidMidiDataException {
 		super(name, actives.getChannel());
 		this.actives = actives;
@@ -46,26 +42,17 @@ public abstract class NoteTrack extends MidiTrack {
 			progChange(m.getData1());
 			return;
 		}
-		if (CC.VOLUME.matches(m)) {// filter VOL CC
+		if (ControlChange.VOLUME.matches(m)) {// filter VOL CC
 			setAmp(m.getData2() * Constants.TO_1);
 			return;
-		} else if (CC.STOP.matches(m)) {
+		} else if (ControlChange.STOP.matches(m)) {
 			setActive(false);
 			return;
 		}
 
 		if (m.getChannel() != ch) // conform to midi channel
 			m = Midi.format(m, ch, 1);
-		if (Midi.isNoteOn(m)) {
-			try { // apply local gain
-				m.setMessage(Midi.NOTE_ON, ch, m.getData1(), (int)(m.getData2() * gain));
-			} catch (InvalidMidiDataException e) { RTLogger.warn(midi, e); }
-		}
 		midiOut.send(m, ticker);
-	}
-
-	public String getProgram() {
-		return state.getProgram();
 	}
 
 	@Override public void setState(Sched sched) {
@@ -83,6 +70,7 @@ public abstract class NoteTrack extends MidiTrack {
 		if (name == null)
 			return null;
 		state.setProgram(name);
+		MainFrame.update(new TrackUpdate(Update.PROGRAM, this));
 		return name;
 	}
 
@@ -94,5 +82,49 @@ public abstract class NoteTrack extends MidiTrack {
 		return false;
 	}
 
+	public long quantize(long tick) {
+		if (clock.getTimeSig().div == 3 && (gate == Gate.SIXTEENTH || gate == Gate.EIGHTH))
+			return triplets(tick, resolution);
+
+		switch(gate) {
+		case SIXTEENTH: return tick - tick % (resolution / 4);
+		case EIGHTH: return tick - tick % (resolution / 2);
+		case QUARTER: return tick - tick % resolution;
+		case HALF: return tick - tick % (2 * resolution);
+		case WHOLE: return tick - tick % (4 * resolution);
+		case MICRO: return resolution > 16 ?
+				tick - tick % (resolution / 8) : tick - tick % (resolution / clock.getTimeSig().div);
+		case FILE : // approx MIDI_24
+		case NONE :
+		default:
+			return tick;
+		}
+	}
+
+	public long quantizePlus(long tick) {
+		boolean swing = clock.getTimeSig().div == 3;
+		long result = switch (gate) {
+			case SIXTEENTH -> quantize(tick) + (swing ? resolution / 6 : resolution / 4);
+			case EIGHTH -> 	quantize(tick) + (swing ? resolution / 3 : resolution / 2);
+			case QUARTER -> quantize(tick) + (resolution);
+			case HALF -> 	quantize(tick) + (2 * resolution);
+			case WHOLE -> 	quantize(tick) + (4 * resolution);
+			case MICRO -> 	quantize(tick) + (resolution / 8);
+			//case NONE: case FILE:  // :	return quantize(tick) + 1/*RATCHET*/;
+			default -> 		tick;
+		};
+		return result == tick ? result : result - 1; // hanging chads
+	}
+
+	protected long triplets(long tick, int resolution) {
+		if (gate == Gate.SIXTEENTH)
+			return tick - tick % (resolution / 6);
+		return tick - tick % (resolution / 3);
+	}
+
+	public void setGate(Gate gate2) {
+		gate = gate2;
+		MainFrame.update(new TrackUpdate(Update.GATE, this));
+	}
 
 }

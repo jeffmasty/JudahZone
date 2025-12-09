@@ -1,12 +1,11 @@
 package net.judah.seq.track;
 
-import static net.judah.JudahZone.getSeq;
+import static net.judah.JudahZone.getDrumMachine;
 import static net.judah.gui.Size.COMBO_SIZE;
 import static net.judah.gui.Size.MEDIUM_COMBO;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.ArrayList;
 import java.util.Enumeration;
 
 import javax.swing.AbstractButton;
@@ -16,40 +15,31 @@ import javax.swing.ButtonGroup;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JRadioButtonMenuItem;
-import javax.swing.SwingUtilities;
 
 import net.judah.drumkit.DrumType;
 import net.judah.gui.Actionable;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Updateable;
-import net.judah.gui.settable.Folder;
 import net.judah.gui.settable.Program;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.PlayWidget;
 import net.judah.gui.widgets.RecordWidget;
+import net.judah.gui.widgets.TrackVol;
 import net.judah.omni.Icons;
-import net.judah.seq.SynthRack;
-import net.judah.seq.Edit;
-import net.judah.seq.Edit.Type;
-import net.judah.seq.MidiPair;
 import net.judah.seq.MusicBox;
-import net.judah.seq.Prototype;
+import net.judah.seq.SynthRack;
 import net.judah.seq.Transpose;
 import net.judah.seq.automation.Automation;
-import net.judah.seq.automation.Automation.AutoMode;
-import net.judah.util.RTLogger;
+import net.judah.seq.track.Computer.Update;
 
-public abstract class TrackMenu extends Box implements MouseListener, Updateable {
+public abstract class TrackMenu extends Box implements MouseListener {
 
-	private static final ArrayList<TrackMenu> instances = new ArrayList<TrackMenu>();
 	// TODO transfer Scene/Computer
 	public static class SendTo extends JMenu {
 		public SendTo(MidiTrack source) {
 			super("SendTo...");
-	    	for (MidiTrack t : source.isDrums() ? getSeq().getDrumTracks() : SynthRack.getSynthTracks())
+	    	for (MidiTrack t : source.isDrums() ? getDrumMachine().getTracks() : SynthRack.getSynthTracks())
 	    		if (t != source)
 	    			add(new Actionable(t.getName(), evt->t.load(source)));
 		}
@@ -63,25 +53,34 @@ public abstract class TrackMenu extends Box implements MouseListener, Updateable
 	protected final JMenu file;
 	protected final JMenu edit = new JMenu("Edit");
 	protected final JMenu tools = new JMenu("Tools");
+	protected final JMenu cues = new JMenu("Cue");
+	protected final JMenu quantization = new JMenu("Quantization");
 	private final String a;
 	private final String b;
-
-	// CUE, Panic
+	protected final PlayWidget play;
+	protected RecordWidget capture;
+	protected final Program program;
+	protected final Programmer programmer;
+	protected TrackVol velocity;
 
 	public TrackMenu(MusicBox g) {
 		super(BoxLayout.X_AXIS);
-		grid = g;
 		track = g.getTrack();
+		grid = g;
 		file = new JMenu(track.getName());
 		a = track.isDrums() ? "Left" : "Top";
 		b = track.isDrums() ? "Right" : "Bottom";
 		addMouseListener(this);
+		play = new PlayWidget(track);
+		programmer = new Programmer(track);
+		velocity = new TrackVol(track);
 
-		tools();
-		if (track.isDrums())
-			file.setFont(Gui.BOLD12);
+		track.getEditor().tools(tools);
+		tools.add(new Actionable("Automation", e->Automation.getInstance().init(track)));
 
-		menu.add(fileMenu());
+		fileSetup();
+		fileMenu();
+		menu.add(file);
 		if (track.isSynth()) {
 			menu.add(tools);
 			barMenu(edit);
@@ -91,16 +90,20 @@ public abstract class TrackMenu extends Box implements MouseListener, Updateable
 			barMenu(file); // consolidate for drums (no space)
 
 		add(Box.createHorizontalStrut(2));
-		add(new PlayWidget(track));
-		if (track.isSynth())
-			add(new RecordWidget(track));
+		add(play);
+		if (track.isSynth()) {
+			capture = new RecordWidget(track);
+			add(capture);
+		}
 		add(menu);
-		add(Gui.resize(new Program(track), track.isSynth()? COMBO_SIZE : MEDIUM_COMBO));
-		add(Gui.resize(new Folder(track), track.isSynth()? COMBO_SIZE : MEDIUM_COMBO));
+		program = new Program(track);
+		add(Gui.resize(program, track.isDrums()? MEDIUM_COMBO : COMBO_SIZE));
         add(new Btn(Icons.SAVE, e->track.save()));
-		add(new Programmer(track));
-		instances.add(this);
-		MainFrame.update(this);
+		add(programmer);
+
+		if (track.isDrums())
+			file.setFont(Gui.BOLD12);
+
 	}
 
 	public final void updateCue() {
@@ -122,8 +125,7 @@ public abstract class TrackMenu extends Box implements MouseListener, Updateable
 				it.nextElement();
 	}
 
-	private JMenu fileMenu() {
-		JMenu cues = new JMenu("Cue");
+	private void fileSetup() {
 		for (Cue c : Cue.values()) {
 			JRadioButtonMenuItem item = new JRadioButtonMenuItem(c.name());
 			if (track.getCue() == c)
@@ -132,7 +134,6 @@ public abstract class TrackMenu extends Box implements MouseListener, Updateable
 			cues.add(item);
 			item.addActionListener(e-> track.setCue(c));
 		}
-		JMenu quantization = new JMenu("Quantization");
 		for (Gate g : Gate.values()) {
 			JRadioButtonMenuItem item = new JRadioButtonMenuItem(g.name());
 			if (track.getGate() == g)
@@ -141,35 +142,43 @@ public abstract class TrackMenu extends Box implements MouseListener, Updateable
 			quantization.add(item);
 			item.addActionListener(e -> track.setGate(g));
 		}
+	}
 
-		file.add(new Actionable("New", e->track.clear()));
-		file.add(new Actionable("Open", e->track.load()));
-		file.add(new Actionable("Save", e->track.save())); // if not bundle
-		file.add(new Actionable("Save As...", e ->track.saveAs()));
-		file.add(new Actionable("Import...", e->new ImportMidi(track)));
+	private void fileMenu() {
+		file.removeAll();
+
+		if (MainFrame.isBundle()) {
+			file.add(new Actionable("Clear", e->track.clear()));
+			file.add(new Actionable("Import...", e->new ImportMidi(track)));
+			file.add(new Actionable("Export...", e ->track.saveAs()));
+		} else {
+			file.add(new Actionable("New", e->track.clear()));
+			file.add(new Actionable("Open", e->track.load()));
+			file.add(new Actionable("Save", e->track.save())); // if not bundle
+			file.add(new Actionable("Save As...", e ->track.saveAs()));
+		}
 		file.add(cues);
 		file.add(quantization);
-		return file;
 	}
 
-	/** tools info/res, import, remap, condense, clean */
-	private void tools() {
-
-		JMenu trim = new JMenu("Trim");
-		trim.add(new Actionable("Frame", e->trimFrame()));
-		trim.add(new Actionable(a, e->trimBar(true)));
-		trim.add(new Actionable(b, e->trimBar(false)));
-		JMenu insert = new JMenu("Insert"); // TODO
-		insert.add(new Actionable(a, e->insertBar(true)));
-		insert.add(new Actionable(b, e->insertBar(false)));
-		insert.add(new Actionable("Frame", e->insertFrame()));
-
-		tools.add(new Actionable("Track Info...", e->info()));
-		tools.add(new Actionable("Automation", e->Automation.getInstance().init(track, 0l, AutoMode.All)));
-		tools.add(new SendTo(track));
-		tools.add(insert);
-		tools.add(trim);
-	}
+//	/** tools info/res, import, remap, condense, clean */
+//	private void tools() {
+//
+//		JMenu trim = new JMenu("Trim");
+//		trim.add(new Actionable("Frame", e->trimFrame()));
+//		trim.add(new Actionable(a, e->trimBar(true)));
+//		trim.add(new Actionable(b, e->trimBar(false)));
+//		JMenu insert = new JMenu("Insert"); // TODO
+//		insert.add(new Actionable(a, e->insertBar(true)));
+//		insert.add(new Actionable(b, e->insertBar(false)));
+//		insert.add(new Actionable("Frame", e->insertFrame()));
+//
+//		tools.add(new Actionable("Track Info...", e->info()));
+//		tools.add(new Actionable("Automation", e->Automation.getInstance().init(track, 0l, AutoMode.All)));
+//		tools.add(new SendTo(track));
+//		tools.add(insert);
+//		tools.add(trim);
+//	}
 
 	private void barMenu(JMenu menu) { // try the wings!
 
@@ -182,10 +191,10 @@ public abstract class TrackMenu extends Box implements MouseListener, Updateable
 
 		menu.add(select);
 		menu.add(new Actionable("Copy", e-> grid.copy()));
-		menu.add(new Actionable("Paste", e->grid.paste()));
+		menu.add(new Actionable("Paste", e->track.getEditor().paste()));
 		menu.add(new Actionable("Delete", e->grid.delete()));
-		menu.add(new Actionable("Undo", e->grid.undo()));
-		menu.add(new Actionable("Redo", e->grid.redo()));
+		menu.add(new Actionable("Undo", e->track.getEditor().undo()));
+		menu.add(new Actionable("Redo", e->track.getEditor().redo()));
 
 		if (track.isDrums()) {
 			JMenu type = new JMenu("Drum");
@@ -205,68 +214,88 @@ public abstract class TrackMenu extends Box implements MouseListener, Updateable
 		menu.add(new Actionable("Transpose...", e->new Transpose(track, grid)));
 	}
 
-	private void info() {
-		String result = JOptionPane.showInputDialog(SwingUtilities.getWindowAncestor(this),
-				track.info() + "New Resolution:", track.getResolution());
-		if (result == null) return;
-		try { track.setResolution(Integer.parseInt(result));
-		} catch (NumberFormatException e) { RTLogger.log("Resolution", result + ": " + e.getMessage()); }
-	}
+//	private void info() { // TODO no resolution if song bundle
+//		String result = JOptionPane.showInputDialog(SwingUtilities.getWindowAncestor(this),
+//				track.info() + "New Resolution:", track.getResolution());
+//		if (result == null) return;
+//		try { track.setResolution(Integer.parseInt(result));
+//		} catch (NumberFormatException e) { RTLogger.log("Resolution", result + ": " + e.getMessage()); }
+//	}
 
-	private void trimFrame() {
-		long start = track.getFrame() * track.getWindow();
-		long end = start + 2 * track.barTicks;
-		Edit trim = new Edit(Type.TRIM, grid.selectFrame());
-		trim.setOrigin(new Prototype(0, start));
-		trim.setDestination(new Prototype(0, end));
-		grid.push(trim);
-	}
-
-	private void trimBar(boolean left) {
-		long start = track.getFrame() * track.getWindow();
-		if (!left)
-			start += track.barTicks;
-		long end = start + track.barTicks;
-		Edit trim = new Edit(Type.TRIM, grid.selectBar(left));
-		trim.setOrigin(new Prototype(0, start));
-		trim.setDestination(new Prototype(0, end));
-		grid.push(trim);
-	}
-
-	private void insertBar(boolean left) {
-		long start = track.getFrame() * track.getWindow();
-		if (!left)
-			start += track.barTicks;
-		long end = start + track.barTicks;
-		Edit ins = new Edit(Type.INS, new ArrayList<MidiPair>());
-		ins.setOrigin(new Prototype(0, start));
-		ins.setDestination(new Prototype(0, end));
-		grid.push(ins);
-	}
-
-	private void insertFrame() {
-		long start = track.getFrame() * track.getWindow();
-		long end = start + track.getWindow();
-		Edit ins = new Edit(Type.INS, new ArrayList<MidiPair>());
-		ins.setOrigin(new Prototype(0, start));
-		ins.setDestination(new Prototype(0, end));
-		grid.push(ins);
-	}
+//	private void trimFrame() {
+//		long start = track.getFrame() * track.getWindow();
+//		long end = start + 2 * track.barTicks;
+//		Edit trim = new Edit(Type.TRIM, grid.selectFrame());
+//		trim.setOrigin(new Prototype(0, start));
+//		trim.setDestination(new Prototype(0, end));
+//		track.getEditor().push(trim);
+//	}
+//
+//	private void trimBar(boolean left) {
+//		long start = track.getFrame() * track.getWindow();
+//		if (!left)
+//			start += track.barTicks;
+//		long end = start + track.barTicks;
+//		Edit trim = new Edit(Type.TRIM, grid.selectBar(left));
+//		trim.setOrigin(new Prototype(0, start));
+//		trim.setDestination(new Prototype(0, end));
+//		track.getEditor().push(trim);
+//	}
+//
+//	private void insertBar(boolean left) {
+//		long start = track.getFrame() * track.getWindow();
+//		if (!left)
+//			start += track.barTicks;
+//		long end = start + track.barTicks;
+//		Edit ins = new Edit(Type.INS, new ArrayList<MidiPair>());
+//		ins.setOrigin(new Prototype(0, start));
+//		ins.setDestination(new Prototype(0, end));
+//		track.getEditor().push(ins);
+//	}
+//
+//	private void insertFrame() {
+//		long start = track.getFrame() * track.getWindow();
+//		long end = start + track.getWindow();
+//		Edit ins = new Edit(Type.INS, new ArrayList<MidiPair>());
+//		ins.setOrigin(new Prototype(0, start));
+//		ins.setDestination(new Prototype(0, end));
+//		track.getEditor().push(ins);
+//	}
 
 	@Override public void mouseClicked(MouseEvent e) { }
 	@Override public void mouseReleased(MouseEvent e) { }
 	@Override public void mouseEntered(MouseEvent e) { }
 	@Override public void mouseExited(MouseEvent e) { }
 
-	public static void updateGate(MidiTrack t) {
-		for (TrackMenu m : instances)
-			if (m.track == t)
-				m.updateGate();
+	public void update() {
+		updateCue();
+		program.update();
+		fileMenu();
 	}
-	public static void updateCue(MidiTrack track) {
-		for (TrackMenu m : instances)
-			if (m.track == track)
-				m.updateCue();
+
+	public void update(Update type) {
+		if (Update.PROGRAM == type)
+			program.update();
+		else if (Update.CUE == type)
+			updateCue();
+		else if (Update.GATE == type)
+			updateGate();
+		else if (Update.CYCLE == type)
+			programmer.getCycle().update();
+		else if (Update.CAPTURE == type && capture != null)
+			capture.update();
+		else if (Update.PLAY == type)
+			play.update();
+		else if (Update.CURRENT == type)
+			programmer.getCurrent().update();
+		else if (Update.LAUNCH == type)
+			programmer.liftOff();
+		else if (Update.FILE == type)
+			programmer.liftOff();
+		else if (Update.AMP == type)
+			velocity.update();
+		else if (Update.EDIT == type)
+			programmer.liftOff();
 	}
 
 }

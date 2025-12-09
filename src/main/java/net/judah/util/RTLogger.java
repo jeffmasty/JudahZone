@@ -72,11 +72,11 @@ public class RTLogger extends KnobPanel {
         scroller.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     	EventQueue.invokeLater(() -> {
         	Gui.resize(scroller, size);
-        	Gui.resize(ticker, new Dimension(WIDTH_KNOBS - 6, STD_HEIGHT - 4));
 			textarea.setForeground(Color.BLUE.darker());
 			ticker.setOpaque(true);
 			ticker.setForeground(Color.BLUE.darker());
 			ticker.setBackground(Pastels.BUTTONS);
+			ticker.setBorder(Gui.SUBTLE);
 	    	scroller.setViewportView(textarea);
 	        add(scroller);
     	});

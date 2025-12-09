@@ -10,7 +10,6 @@ import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
-import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.swing.BoxLayout;
@@ -22,7 +21,7 @@ import net.judah.gui.Pastels;
 import net.judah.midi.Midi;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
-import net.judah.seq.MidiPair;
+import net.judah.seq.MidiNote;
 import net.judah.seq.MidiTools;
 import net.judah.seq.MusicBox;
 import net.judah.seq.Notes;
@@ -60,7 +59,6 @@ public class Piano extends MusicBox {
 		return row % clock.getSteps() == 0;
 	}
 
-
 	@Override public void paint(Graphics g) {
 		super.paint(g);
 		g.setColor(Pastels.FADED);
@@ -96,23 +94,34 @@ public class Piano extends MusicBox {
 		}
 
 		int yheight, data1;
-		for (MidiPair p : scroll.populate()) {
+		for (MidiNote p : scroll.populate()) {
 
-			if (p.getOn().getMessage() instanceof ShortMessage s) {
+			if (p.getMessage() instanceof ShortMessage s) {
 				data1 = s.getData1();
 				if (data1 < tonic || data1 > top)
 					continue;
 
-				if (selected.contains(p.getOn().getTick(), data1))
-					g.setColor(highlightColor(s.getData2()));
+				if (selected.contains(p.getTick(), data1))
+					g.setColor(dragging == null ? highlightColor(s.getData2()) : Pastels.YELLOW);
+
 				else
 					g.setColor(velocityColor(s.getData2()));
 				x = (int) (noteWidth * (data1 - tonic));
-				y = (int) ((p.getOn().getTick() - track.getLeft()) * ratio);
-				yheight = (int) ((p.getOff().getTick() - p.getOn().getTick()) * ratio);
+				y = (int) ((p.getTick() - track.getLeft()) * ratio);
+				yheight = (int) ((p.getOff().getTick() - p.getTick()) * ratio);
 				g.fill3DRect(x, y, keyWidth, yheight, true);
 			}
 		}
+        if (dragging != null) {
+    		g.setColor(highlightColor(127));
+        	for (MidiNote p : dragging) {
+				x = (int) (noteWidth * (((ShortMessage)p.getMessage()).getData1() - tonic));
+				y = (int) ((p.getTick() - track.getLeft()) * ratio);
+				yheight = (int) ((p.getOff().getTick() - p.getTick()) * ratio);
+				g.fill3DRect(x, y, keyWidth, yheight, true);
+        	}
+        }
+
 		g.setColor(Pastels.FADED);
 		g.drawRect(0, 0, width-1, height - 1); // border
 
@@ -162,7 +171,7 @@ public class Piano extends MusicBox {
 
 	@Override public void mousePressed(MouseEvent mouse) {
 		Prototype dat = translate(mouse.getPoint());
-		MidiPair existing = MidiTools.lookup(dat.tick, dat.data1, t);
+		MidiNote existing = MidiTools.lookup(dat.tick, dat.data1, t);
 
 		if (mouse.isShiftDown()) { // drag-n-select;
 			drag = mouse.getPoint();
@@ -205,7 +214,7 @@ public class Piano extends MusicBox {
 				MidiEvent on = Midi.createEvent(left, NOTE_ON,
 						track.getCh(), data1, (int) (track.getAmp() * 127f));
 				MidiEvent off = Midi.createEvent(track.quantizePlus(right), NOTE_OFF, track.getCh(), data1, 1);
-				push(new Edit(Type.NEW, new MidiPair(on, off)));
+				track.getEditor().push(new Edit(Type.NEW, on, off));
 				} catch (Exception e) {
 					RTLogger.warn(this, e); }
 				break;
@@ -238,31 +247,7 @@ public class Piano extends MusicBox {
 
 	}
 
-	//////// Drag and Drop /////////
-	@Override public void dragStart(Point mouse) {
-		mode = DragMode.TRANSLATE;
-		dragging.clear();
-		selected.forEach(p -> dragging.add(new MidiPair(p)));
-		click = recent = new Prototype(toData1(mouse), track.quantize(toTick(mouse)));
-	}
-
-	@Override public void drag(Point mouse) {
-		piano.highlight(toData1(mouse));
-		steps.highlight(mouse);
-		Prototype now = new Prototype(toData1(mouse), track.quantize(toTick(mouse)));
-		if (now.equals(recent)) // hovering
-			return;
-		// note or step changed, move from most recent drag spot
-		int data1 = now.data1 - recent.data1;
-		long tick = ((now.tick - recent.tick) % track.getWindow()) / track.getStepTicks();
-		Prototype destination = new Prototype(data1, tick);
-		recent = now;
-		transpose(selected, destination);
-		repaint();
-	}
-
-	@Override
-	public Notes selectArea(long start, long end, int low, int high) {
+	@Override public Notes selectArea(long start, long end, int low, int high) {
 		selected.clear();
 		for (int i = 0; i < t.size(); i++) {
 			long tick = t.get(i).getTick();
@@ -279,48 +264,60 @@ public class Piano extends MusicBox {
 		return selected;
 	}
 
+	//////// Drag and Drop /////////
+	@Override public void dragStart(Point mouse) {
+		mode = DragMode.TRANSLATE;
+		dragging = new ArrayList<>(selected);
+		click = recent = new Prototype(toData1(mouse), track.quantize(toTick(mouse)));
+		// if (track.isActive())  new Panic(track); sounding the old notes
+	}
+
+	@Override public void drag(Point mouse) {
+		piano.highlight(toData1(mouse));
+		steps.highlight(mouse);
+		Prototype now = new Prototype(toData1(mouse), track.quantize(toTick(mouse)));
+		if (now.equals(recent)) // hovering
+			return;
+		// note or step changed, move from most recent drag spot
+		int data1 = now.data1 - recent.data1;
+		long tick = ((now.tick - recent.tick) % track.getWindow()) / track.getStepTicks();
+		Prototype destination = new Prototype(data1, tick);
+		recent = now;
+		transpose(destination);
+		repaint();
+	}
+
 	@Override public void drop(Point mouse) {
-		// delete selected, create undo from start/init
-		editDel(selected);
-		Edit e = new Edit(Type.TRANS, dragging);
+		Edit e = new Edit(Type.TRANS, selected);
 		Prototype now = new Prototype(toData1(mouse), track.quantize(toTick(mouse)));
 		Prototype destination = new Prototype(now.data1 - click.data1,
 				((now.tick - click.tick) % track.getWindow()) / track.getStepTicks());
 		e.setDestination(destination);
-		push(e);
-	}
-
-	/////////////////////////////////////////
-	@Override
-	public void transpose(ArrayList<MidiPair> notes, Prototype destination) {
-		editDel(notes);
-		ArrayList<MidiPair> replace = new ArrayList<>();
-		for (MidiPair note : notes)
-			replace.add(compute(note, destination, track));
-		editAdd(replace);
-	}
-
-	@Override
-	public void decompose(Edit e) {
-		ArrayList<MidiPair> delete = new ArrayList<>();
-		for (MidiPair note : e.getNotes())
-			delete.add(compute(note, e.getDestination(), track));
-		editDel(delete);
-		editAdd(e.getNotes());
+		editor.push(e);
+		select(dragging);
+		dragging = null;
 		click = null;
+	}
+
+	private void transpose(Prototype destination) {
+		for (int i = 0; i < dragging.size(); i++) {
+			MidiNote note = dragging.get(i);
+			MidiNote trans = compute(new MidiNote(new MidiEvent(note.getMessage(), note.getTick()), note.getOff()), destination, track);
+			dragging.set(i, new MidiNote(trans, trans.getOff()));
+		}
 	}
 
 	/**@param in source note (off is null for drums)
 	 * @param destination x = +/-ticks,   y = +/-data1
 	 * @return new midi */
-	public static MidiPair compute(MidiPair in, Prototype destination, MidiTrack t) {
-		if (in.getOn().getMessage() instanceof ShortMessage == false)
+	public static MidiNote compute(MidiNote in, Prototype destination, MidiTrack t) {
+		if (in.getMessage() instanceof ShortMessage == false)
 			return in;
-		MidiEvent on = transpose((ShortMessage)in.getOn().getMessage(), in.getOn().getTick(), destination, t);
+		MidiEvent on = transpose((ShortMessage)in.getMessage(), in.getTick(), destination, t);
 		MidiEvent off = null;
 		if (in.getOff() != null)
 			off = transpose((ShortMessage)in.getOff().getMessage(), in.getOff().getTick(), destination, t);
-		return new MidiPair(on, off);
+		return new MidiNote(on, off);
 	}
 
 	static MidiEvent transpose(ShortMessage source, long sourceTick, Prototype destination, MidiTrack t) {
@@ -338,73 +335,5 @@ public class Piano extends MusicBox {
 		return new MidiEvent(Midi.create(source.getCommand(), source.getChannel(), data1, source.getData2()), tick);
 	}
 
-	@Override protected void remap(Edit e, boolean exe) {
-		int diff = e.getDestination().data1;
-		if (!exe)
-			diff *= -1;
-		int data1;
-		try {
-			for (int i = 0; i< t.size(); i++) {
-				if (t.get(i).getMessage() instanceof ShortMessage m) {
-					data1 = m.getData1() + diff;
-					if (data1 < 0) {
-						RTLogger.warn("below MIDI range", m.toString());
-						data1 += Key.OCTAVE;
-						while (data1 < 0)
-							data1 += Key.OCTAVE;
-					}
-					if (data1 > 127) {
-						RTLogger.warn("above MIDI range", m.toString());
-						data1 -= Key.OCTAVE;
-						while (data1 > 127)
-							data1 -= Key.OCTAVE;
-					}
-				m.setMessage(m.getCommand(), m.getChannel(), data1, m.getData2());
-				}
-			}
-		} catch(InvalidMidiDataException ex) { RTLogger.warn(this, ex); }
-
-		repaint();
-	}
-
 }
-
-//	@Override public void keyTyped(KeyEvent e) {
-//		if (chromaticKeyboard(e.getKeyCode()) > 0) {
-//		} //		super.keyTyped(e);}
-//	public boolean keyPressed(final int keycode) {
-//		int note = chromaticKeyboard(keycode);
-//		if (note < 0) {
-//			if (keycode == VK_UP)
-//				return setOctave(true);
-//			else if (keycode == VK_DOWN)
-//				return setOctave(false);
-//			else  return false;		}
-//		track.getMidiOut().send(Midi.create(Midi.NOTE_ON, track.getCh(), note + (octave * 12), 99), JudahMidi.ticker());
-//		return true;	}
-//	public boolean keyReleased(int keycode) {
-//		int note = chromaticKeyboard(keycode);
-//		if (note < 0)
-//			return false;
-//		track.getMidiOut().send(Midi.create(Midi.NOTE_OFF, track.getCh(), note + (octave * 12), 99), JudahMidi.ticker());
-//		return true;	}
-//	/**@return Z to COMMA keys are white keys, and black keys, up to 12, no match = -1*/
-//	public static int chromaticKeyboard(final char key) {
-//		switch(key) {
-//			case 'z': return 0; // low C
-//			case 's': return 1;
-//			case 'x': return 2;
-//			case 'd': return 3;
-//			case 'c': return 4;
-//			case 'v': return 5; // F
-//			case 'g' : return 6;
-//			case 'b' : return 7; // G
-//			case 'h': return 8;
-//			case 'n': return 9;
-//			case 'j': return 10;
-//			case 'm': return 11;
-//			case ',': return 12;// high C
-//			default: return -1;
-//		}
-//	}
 

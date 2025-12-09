@@ -37,6 +37,7 @@ public class Tick extends JPanel {
 	}
 
 	public Tick() {
+		ticks.setText("0");
 		setLayout(new GridLayout(2, 4));
 		frame.addActionListener(listen);
 		beat.addActionListener(listen);
@@ -118,7 +119,10 @@ public class Tick extends JPanel {
 			idx = 0;
 		}
 		it.removeActionListener(listen);
-		it.setSelectedIndex(idx);
+		if (idx >= it.getItemCount())
+			RTLogger.warn(this, new Exception("Not Initialized."));
+		else
+			it.setSelectedIndex(idx);
 		it.addActionListener(listen);
 	}
 
@@ -135,7 +139,6 @@ public class Tick extends JPanel {
 		track = t;
 
 		frame.setSelectedItem(t.getFrame());
-
 		int beats = 2 * track.getClock().getTimeSig().beats;
 		if (beat.getItemCount() != beats)
 			reload(beat, 1, beats, 0);
@@ -143,6 +146,7 @@ public class Tick extends JPanel {
 		int div = track.getClock().getTimeSig().div;
 		if (step.getItemCount() != div)
 			reload(step, 1, div, 0);
+		quantizable();
 	}
 
 	public void beatKnob(int value) {

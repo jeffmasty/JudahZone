@@ -1,6 +1,5 @@
 package net.judah.gui;
 
-import static java.awt.event.InputEvent.ALT_DOWN_MASK;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.KeyEvent.*;
 import static javax.swing.KeyStroke.getKeyStroke;
@@ -22,8 +21,6 @@ import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
 import net.judah.mixer.Mains;
 import net.judah.seq.Seq;
-import net.judah.seq.TrackList;
-import net.judah.seq.track.DrumTrack;
 
 // TODO extra looper commands?
 // ctrl-enter = next song?
@@ -59,11 +56,13 @@ public class Bindings {
 		}
 		bind(getKeyStroke("F10"), new Act(()->MainFrame.setFocus(mixer.getMains())));
 
-		TrackList<DrumTrack> drums = seq.getDrumTracks();
-		bind(getKeyStroke(VK_1, ALT_DOWN_MASK), new Act(()->TabZone.edit(drums.get(0))));
-		bind(getKeyStroke(VK_2, ALT_DOWN_MASK), new Act(()->TabZone.edit(drums.get(1))));
-		bind(getKeyStroke(VK_3, ALT_DOWN_MASK), new Act(()->TabZone.edit(drums.get(2))));
-		bind(getKeyStroke(VK_4, ALT_DOWN_MASK), new Act(()->TabZone.edit(drums.get(3))));
+
+
+//		TrackList<DrumTrack> drums = seq.getDrumTracks();
+//		bind(getKeyStroke(VK_1, ALT_DOWN_MASK), new Act(()->TabZone.edit(drums.get(0))));
+//		bind(getKeyStroke(VK_2, ALT_DOWN_MASK), new Act(()->TabZone.edit(drums.get(1))));
+//		bind(getKeyStroke(VK_3, ALT_DOWN_MASK), new Act(()->TabZone.edit(drums.get(2))));
+//		bind(getKeyStroke(VK_4, ALT_DOWN_MASK), new Act(()->TabZone.edit(drums.get(3))));
 
 //		TrackList<PianoTrack> synths = seq.getSynthTracks();
 //		bind(getKeyStroke(VK_5, ALT_DOWN_MASK), new Act(()->TabZone.edit(synths.get(0))));

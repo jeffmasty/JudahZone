@@ -16,7 +16,7 @@ import net.judah.gui.knobs.KnobMode;
 import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
 import net.judah.midi.JudahClock;
-import net.judah.seq.NewTrack;
+import net.judah.seq.AddTrack;
 import net.judah.seq.Seq;
 import net.judah.seq.SynthRack;
 import net.judah.seq.track.PianoTrack;
@@ -48,7 +48,7 @@ public class JudahMenu extends JMenuBar {
         song.add(new Actionable("Reload", e->overview.reload()));
         song.add(new Actionable("Load..", e->overview.loadSong(Folders.choose(getSetlists().getDefault()))));
     	song.add(new Actionable("New Song", e->overview.newSong()));
-    	song.add(new Actionable("New Track..", e-> new NewTrack(seq)));
+    	song.add(new Actionable("New Track..", e-> new AddTrack(seq)));
     	song.add(new Actionable("Bundle", e -> overview.bundle()));
     	// TODO song.add(new Actionable("Resolution..", e->seq.resolutionView()));
 

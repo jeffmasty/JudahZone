@@ -23,16 +23,16 @@ import net.judah.midi.Midi;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiConstants;
-import net.judah.seq.MidiPair;
+import net.judah.seq.MidiNote;
 import net.judah.seq.Steps;
 import net.judah.seq.automation.CCPopup;
 import net.judah.seq.track.NoteTrack;
+import net.judah.seq.track.PianoTrack;
 
-public class PianoSteps extends Steps implements MouseMotionListener, MouseListener, Size {
+public class PianoSteps extends Steps implements MouseMotionListener, Size, MouseListener  {
 
 	static final int OFFSET = STEP_WIDTH / 2 - 5;
-	private final NoteTrack track;
-	private final PianoView view;
+	private final NoteTrack notes;
 	private final JudahClock clock;
 	private int width, height;
 	private int highlight = -1;
@@ -44,12 +44,12 @@ public class PianoSteps extends Steps implements MouseMotionListener, MouseListe
 	private final CCPopup cc;
 
 
-	public PianoSteps(PianoView view) {
-		this.view = view;
-		this.track = view.track;
-		this.clock = track.getClock();
-		this.cc = new CCPopup(track, this, false);
-
+	public PianoSteps(PianoTrack piano) {
+		super(piano);
+		this.notes = piano;
+		this.clock = notes.getClock();
+		this.cc = new CCPopup(notes, this, false);
+		setLayout(null);
 		addMouseMotionListener(this);
 		addMouseListener(this);
 	}
@@ -57,7 +57,7 @@ public class PianoSteps extends Steps implements MouseMotionListener, MouseListe
 	@Override
 	public void paint(Graphics g) {
 		super.paint(g);
-		int[] ccs = cc.populate(track.getLeft(), track.getLeft() + track.getWindow());
+		int[] ccs = cc.populate(notes.getLeft(), notes.getLeft() + notes.getWindow());
 		g.drawRect(0, 0, width, height);
 		int beats = clock.getTimeSig().beats;
 		int steps = clock.getSteps();
@@ -111,7 +111,7 @@ public class PianoSteps extends Steps implements MouseMotionListener, MouseListe
 		return row % clock.getSteps() % clock.getSubdivision() == 0;
 	}
 
-	@Override public void highlight(Point p) {
+	public void highlight(Point p) {
 		int replace = p == null ? -1 : (int) ( p.y / (float)height * clock.getSteps() * 2);
 		if (replace == highlight)
 			return;
@@ -144,22 +144,22 @@ public class PianoSteps extends Steps implements MouseMotionListener, MouseListe
 		if (SwingUtilities.isRightMouseButton(e))
 			return;
 		off = toStep(e.getPoint().y) + 1;
-		if (track.getActives().isEmpty())
+		if (notes.getActives().isEmpty())
 			return;
 
-		int step = track.getResolution() / clock.getSubdivision();
-		int ch = track.getCh();
-		int data2 = (int) (track.getAmp() * 127f);
-		long begin = track.getLeft() + on * step;
-		long end = track.getLeft() + off * step - 1;
+		int step = notes.getResolution() / clock.getSubdivision();
+		int ch = notes.getCh();
+		int data2 = (int) (notes.getAmp() * 127f);
+		long begin = notes.getLeft() + on * step;
+		long end = notes.getLeft() + off * step - 1;
 		on = off = null;
-		ArrayList<MidiPair> notes = new ArrayList<>();
-		for (ShortMessage m : track.getActives()) {
-			notes.add(new MidiPair(
+		ArrayList<MidiNote> list = new ArrayList<>();
+		for (ShortMessage m : notes.getActives()) {
+			list.add(new MidiNote(
 					new MidiEvent(Midi.create(MidiConstants.NOTE_ON, ch, m.getData1(), data2), begin),
 					new MidiEvent(Midi.create(MidiConstants.NOTE_OFF, ch, m.getData1(), 127), end)));
 		}
-		view.grid.push(new Edit(Type.NEW, notes));
+		track.getEditor().push(new Edit(Type.NEW, list));
 	}
 
 	@Override public void mouseExited(MouseEvent e) {
@@ -170,8 +170,8 @@ public class PianoSteps extends Steps implements MouseMotionListener, MouseListe
 		if (on != null)
 			highlight(e.getPoint());
 	}
-	@Override public void mouseClicked(MouseEvent e) {
-	}
+
+	@Override public void mouseClicked(MouseEvent e) { }
 	@Override public void mouseEntered(MouseEvent e) { }
 
 	public void resized(int w, int h) {
@@ -182,7 +182,8 @@ public class PianoSteps extends Steps implements MouseMotionListener, MouseListe
 		timeSig(clock.getTimeSig());
 	}
 
-	@Override public void timeSig(Signature sig) {
+	@Override
+	public void timeSig(Signature sig) {
 		total = 2 * sig.steps;
 		unit = height / total;
 		repaint();

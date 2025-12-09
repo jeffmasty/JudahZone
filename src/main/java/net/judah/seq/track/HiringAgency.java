@@ -6,4 +6,5 @@ import net.judah.seq.MusicBox;
 
 public abstract class HiringAgency extends JPanel {
 	public abstract MusicBox getMusician();
+
 }

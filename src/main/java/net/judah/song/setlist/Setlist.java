@@ -3,6 +3,7 @@ package net.judah.song.setlist;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -53,8 +54,9 @@ public class Setlist extends ArrayList<File> {
 	public ArrayList<File> list() {
 		if (source.isDirectory()) {
 			ArrayList<File> result = new ArrayList<File>();
-			for (File song : Folders.sort(source)) // fresh updates (new songs)
-				result.add(song);
+			for (File f : source.listFiles())
+				result.add(f);
+			Collections.sort(result);
 			return result;
 		}
 		return this;

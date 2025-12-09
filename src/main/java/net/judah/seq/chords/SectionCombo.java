@@ -11,10 +11,10 @@ import net.judah.gui.Size;
 public class SectionCombo extends JComboBox<Section> {
 
 	private static final ArrayList<SectionCombo> instances = new ArrayList<>();
-	private final ChordTrack chords;
+	private final Chords chords;
 	private final ActionListener sectarian;
 	
-	public SectionCombo(ChordTrack chrds) {
+	public SectionCombo(Chords chrds) {
 		this.chords = chrds;
 		sectarian = e -> {
 			if (chords.getSection() != getSelectedItem()) 

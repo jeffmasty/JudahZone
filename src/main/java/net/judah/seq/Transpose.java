@@ -4,6 +4,7 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 
+import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -87,20 +88,20 @@ public class Transpose extends JPanel {
 		int data1 = 0;
 		if (track.isDrums())
 			data1 = ((DrumType)drum.getSelectedItem()).getData1() -
-					((ShortMessage)view.selected.get(0).getOn().getMessage()).getData1();
+					((ShortMessage)view.selected.get(0).getMessage()).getData1();
 		if (track.isSynth())
 			data1 = (Integer)octaves.getSelectedItem() * 12 + (Integer)tones.getSelectedItem();
 		e.setDestination(new Prototype(data1, (Integer)steps.getSelectedItem()));
-		view.push(e);
+		track.getEditor().push(e);
 	}
 
 	private void remap() {
 		ModalDialog.getInstance().setVisible(false);
-		Edit e = new Edit(Type.REMAP, new ArrayList<MidiPair>());
+		Edit e = new Edit(Type.REMAP, new ArrayList<MidiEvent>());
 
 		int data1 = (Integer)tones.getSelectedItem() + 12 * (Integer)octaves.getSelectedItem();
 		e.setDestination(new Prototype(data1, -1));
-		view.push(e);
+		track.getEditor().push(e);
 	}
 
 }

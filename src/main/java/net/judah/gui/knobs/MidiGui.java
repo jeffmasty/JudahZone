@@ -36,6 +36,8 @@ import net.judah.midi.MidiInstrument;
 import net.judah.omni.Icons;
 import net.judah.sampler.Sampler;
 import net.judah.seq.arp.Arp;
+import net.judah.seq.track.Computer.TrackUpdate;
+import net.judah.seq.track.Computer.Update;
 import net.judah.seq.track.PianoTrack;
 import net.judah.song.cmd.Cmd;
 import net.judah.song.cmd.Cmdr;
@@ -219,7 +221,26 @@ public class MidiGui extends KnobPanel implements Cmdr {
 		int target = (int) (clock.getSwing() * 100 + 50f);
 		if (swing.getValue() != target)
 			swing.setValue(target);
+//		taco.update();
+//		fluid.update();
+	}
 
+	public void update(TrackUpdate update) {
+		if (Update.PROGRAM == update.type()) {
+			if (update.track() == taco.getTrack())
+				taco.update();
+			else if (update.track() == fluid.getTrack())
+				fluid.update();
+		}
+		else if (Update.ARP == update.type())
+			toggler.update((PianoTrack)update.track());
+		else if (Update.CAPTURE == update.type()) {
+			toggler.update((PianoTrack)update.track());
+		}
+	}
+
+	public void update(PianoTrack p) {
+		toggler.update(p);
 	}
 
 	public void updateTape() {
@@ -262,10 +283,6 @@ public class MidiGui extends KnobPanel implements Cmdr {
 
 			setBackground(jamstik.isActive() ? (jamstik.isOctaver() ? Pastels.GREEN : Pastels.BLUE) : null);
 		}
-	}
-
-	public void update(PianoTrack p) {
-		toggler.update(p);
 	}
 
 	public class RecMpk {
@@ -382,6 +399,7 @@ public class MidiGui extends KnobPanel implements Cmdr {
 		}
 
 	} // end RecMpk
+
 
 
 }

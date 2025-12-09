@@ -39,7 +39,7 @@ public class Measure extends Notes implements MidiConstants {
 			if (e.getTick() < start) continue;
 			if (e.getTick() >= end) break;
 			if (Midi.isNoteOn((e.getMessage())))
-				add(new MidiPair(e, null));
+				add(new MidiNote(e));
 		}
 	}
 
@@ -62,7 +62,7 @@ public class Measure extends Notes implements MidiConstants {
 				MidiEvent on = stash.get(s);
 				long time = on == null ? start : on.getTick();
 				int velocity = on == null ? 99 : ((ShortMessage)on.getMessage()).getData2();
-				add(new MidiPair(
+				add(new MidiNote(
 						new MidiEvent(Midi.create(NOTE_ON, ch, s.getData1(), velocity), time),
 						new MidiEvent(Midi.create(NOTE_OFF, ch, s.getData1()), e.getTick())));
 			}
@@ -72,23 +72,23 @@ public class Measure extends Notes implements MidiConstants {
 			ShortMessage on = (ShortMessage)e.getMessage();
 			int data1 = on.getData1();
 
-			// go grab a note off for this noteOn...
+			// go grab a noteOff for this noteOn...
 			int idx = MidiTools.fastFind(t, e.getTick());
 			if (idx < 0) { // hmm
 				ShortMessage off = Midi.create(NOTE_OFF, ch, on.getData1(), on.getData2());
-				add(new MidiPair(new MidiEvent(on, e.getTick()), new MidiEvent(off, end - 1)));
+				add(new MidiNote(new MidiEvent(on, e.getTick()), new MidiEvent(off, end - 1)));
 				continue;
 			}
-			MidiPair target = null;
+			MidiNote target = null;
 			for (int i = idx; i < t.size(); i++) {
 				if (t.get(i).getMessage() instanceof ShortMessage sht && Midi.isNoteOff(sht)
 						&& sht.getData1() == data1) {
-					target = new MidiPair(new MidiEvent(on, e.getTick()), new MidiEvent(sht, t.get(i).getTick()));
+					target = new MidiNote(new MidiEvent(on, e.getTick()), new MidiEvent(sht, t.get(i).getTick()));
 					break;
 				}
 			}
 			if (target == null) // hmm
-				target = new MidiPair(new MidiEvent(on, e.getTick()), new MidiEvent(
+				target = new MidiNote(new MidiEvent(on, e.getTick()), new MidiEvent(
 						Midi.create(NOTE_OFF, ch, data1, on.getData2()), end - 1));
 			add(target);
 		}

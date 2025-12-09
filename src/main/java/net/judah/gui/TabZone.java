@@ -23,12 +23,16 @@ import net.judah.gui.widgets.CloseableTabbedPane;
 import net.judah.omni.Threads;
 import net.judah.seq.Musician;
 import net.judah.seq.beatbox.BeatBox;
+import net.judah.seq.beatbox.DrumCage;
 import net.judah.seq.beatbox.DrumZone;
 import net.judah.seq.chords.ChordSheet;
 import net.judah.seq.piano.Piano;
 import net.judah.seq.piano.PianoView;
+import net.judah.seq.track.Computer.TrackUpdate;
+import net.judah.seq.track.Computer.Update;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.song.Overview;
 import net.judah.song.Song;
@@ -64,26 +68,15 @@ public class TabZone extends CloseableTabbedPane {
 		addTab(sheetMusic.getName(), sheetMusic, true);
 	}
 
-	public void update(MidiTrack t) {
-		if (t.isDrums())
-			getDrummer((DrumTrack)t).repaint();
-		else {
-			PianoView view = getPiano((PianoTrack)t);
-			if (view != null) {
-				view.getGrid().repaint();
-				view.getSteps().repaint();
-			}
-		}
-	}
-
 	public static void edit(MidiTrack track) {
 		instance._edit(track);
 	}
 	private void _edit(MidiTrack track) {
-
-		if (track instanceof DrumTrack drumTrack) {
-			if (drumz.getTracks().contains(track)) {
-				drumz.setCurrent(track);
+		if (track instanceof PianoTrack piano)
+			pianoTrack(piano);
+		else if (track instanceof DrumTrack drumTrack) {
+			if (drumz.getTracks().contains(drumTrack)) {
+				drumz.setCurrent(drumTrack);
 				int idx = indexOfComponent(drumz);
 				if (idx >= 0)
 					setSelectedIndex(idx);
@@ -95,25 +88,23 @@ public class TabZone extends CloseableTabbedPane {
 				}
 				MainFrame.setFocus(track);
 			}
-			else {
+			else { // ??
 				Box box = new Box(BoxLayout.Y_AXIS);
 				box.add(new BeatBox(drumTrack, null));
-
 				addTab("import",  box, true);
 			}
-
 		}
-		else {
-			pianoTrack((PianoTrack)track);
-		}
+		else // if (track instanceof ChannelTrack)
+			RTLogger.log(this, "No Editor for MidiTrack " + track.getName());
 	}
 
 	public void updateSongTitle(Song current) {
-		if (current == null || current.getFile() == null)
-			return;
+		String name = "";
+		if (current != null && current.getFile() != null)
+			current.getFile().getName();
 		for (int i = 0; i < getTabCount(); i++) // should always be 0
 			if (getTabComponentAt(i) instanceof Overview)
-				setTitleAt(i, current.getFile().getName());
+				setTitleAt(i, name);
 	}
 
 	public void title(JComponent tab) {
@@ -138,7 +129,11 @@ public class TabZone extends CloseableTabbedPane {
 	}
 
 	public static Musician getMusician(MidiTrack track) {
-		return track instanceof PianoTrack piano ? getPianist(piano) : getDrummer((DrumTrack)track);
+		if (track instanceof PianoTrack piano)
+			return getPianist(piano);
+		else if (track instanceof DrumTrack drums)
+			return getDrummer(drums);
+		return null; // ChannelTrack
 	}
 
 	public static BeatBox getDrummer(DrumTrack t) {
@@ -282,6 +277,65 @@ public class TabZone extends CloseableTabbedPane {
 	public void detach() {
 		detach(getSelectedComponent());
 	}
+
+	public void update(TrackUpdate update) {
+		if (update.track() instanceof NoteTrack == false)
+			return;
+		NoteTrack notes = (NoteTrack)update.track();
+		if (update.type() == Update.REZ) {
+			if (notes.isDrums()) {
+				DrumCage view = drumz.getView(notes);
+				if (view != null)
+					view.getGrid().repaint();
+			}
+			else if (notes.isSynth()) {
+				PianoView view = getPiano((PianoTrack)notes);
+				if (view != null)
+					view.refresh();
+			}
+		} else if (notes.isDrums()) {
+			DrumCage view = drumz.getView(notes);
+			if (view != null)
+				view.getMenu().update(update.type());
+		} else if (notes.isSynth()) {
+			PianoView view = getPiano((PianoTrack)notes);
+			if (view != null) {
+				view.getMenu().update(update.type());
+			}
+		} // else ChannelTrack
+
+		if (update.type() == Update.EDIT)
+			update(notes);
+		if (update.type() == Update.CURRENT)
+			update(notes);
+		if (update.type() == Update.FILE)
+			update(notes);
+	}
+
+	public void update(MidiTrack t) {
+		if (t.isDrums())
+			getDrummer((DrumTrack)t).repaint();
+		else if (t.isSynth()) {
+			PianoView view = getPiano((PianoTrack)t);
+			if (view != null) {
+				view.getGrid().repaint();
+				view.getSteps().repaint();
+			}
+		} // else ChannelTrack
+	}
+
+
+	/*	@Override
+	public void update(Property prop, Object value) {
+		// if (prop == Property.STEP && track.isActive() && isVisible()) {
+		// steps.setStart((int)value); // waterfall
+		// grid.repaint();
+		if (value instanceof Signature sig) {
+			grid.timeSig(sig);
+			steps.timeSig(sig);
+		}
+*/
+
 
 }
 

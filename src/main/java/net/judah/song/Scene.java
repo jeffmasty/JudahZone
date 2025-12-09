@@ -30,8 +30,7 @@ public class Scene {
 		state.forEach(clone -> tracks.add(new Sched(clone)));
 	}
 
-	@Override
-	public Scene clone() {
+	@Override public Scene clone() {
 		Scene result = new Scene();
 		result.setCommands(new ParamList(commands));
 		ArrayList<Sched> trax = new ArrayList<>(tracks.size());
@@ -45,8 +44,7 @@ public class Scene {
 		return result;
 	}
 
-	@Override
-	public String toString() {
+	@Override public String toString() {
 		return "" + JudahZone.getOverview().getSong().getScenes().indexOf(this);
 	}
 

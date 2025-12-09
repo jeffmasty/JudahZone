@@ -31,11 +31,10 @@ import net.judah.api.TimeListener;
 import net.judah.api.TimeProvider;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
-import net.judah.gui.settable.Folder;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.omni.WavConstants;
-import net.judah.seq.chords.ChordTrack;
+import net.judah.seq.chords.Chords;
 import net.judah.util.Constants;
 import net.judah.util.Debounce;
 import net.judah.util.RTLogger;
@@ -269,7 +268,7 @@ public class JudahClock implements MidiClock, TimeProvider {
 		unit = MIDI_24 / timeSig.div;
 		updateSwing();
 		passItOn(Property.SIGNATURE, timeSig);
-		Folder.refillAll();
+//		Folder.refillAll();
 		MainFrame.update(this); // both update and announce?
 	}
 
@@ -388,7 +387,7 @@ public class JudahClock implements MidiClock, TimeProvider {
 		// looper.clockSync(); // off FREE
 
 		// Reset Chord Track
-		ChordTrack chords = getChords();
+		Chords chords = getChords();
 		if (chords.isActive() && chords.getSection() != null)
 			chords.click(chords.getSection().get(0));
 	}

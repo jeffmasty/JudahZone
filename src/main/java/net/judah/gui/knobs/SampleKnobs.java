@@ -5,28 +5,22 @@ import java.awt.GridLayout;
 import java.util.ArrayList;
 
 import javax.swing.BoxLayout;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
 import net.judah.fx.Gain;
-import net.judah.gui.Gui;
-import net.judah.gui.widgets.Slider;
 import net.judah.sampler.Sample;
 import net.judah.sampler.Sampler;
 
 public class SampleKnobs extends KnobPanel {
 
-	private final Sampler sampler;
 	private final ArrayList<Sample> samples;
 	@Getter private final KnobMode knobMode = KnobMode.Sample;
 	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-	private final Slider vol;
 	private final ArrayList<SamplePad> updates = new ArrayList<>();
 
 	public SampleKnobs(Sampler sampler) {
-		this.sampler = sampler;
 		this.samples = sampler.getSamples();
 
 		JPanel loops = new JPanel(new GridLayout(2, 2, 3, 3));
@@ -38,21 +32,13 @@ public class SampleKnobs extends KnobPanel {
 
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		add(loops);
-		add(new JLabel(""));
 		add(oneShots);
-
-		vol = new Slider(0, 100, e -> sampler.setMix(((Slider)e.getSource()).getValue() * 0.01f), "Sampler Volume");
-		vol.setValue((int) (sampler.getMix() * 100));
-		title.add(Gui.resize(vol, SMALLER_COMBO));
-		title.add(new JLabel("Pack"));
-		title.add(new JComboBox<String>(new String[] {"Zone", "Jazz", "HipHop"})); // TODO
-
+		title.add(new JLabel(""));
 		update();
 		validate();
 	}
 
 	public void update(Sample samp) {
-		vol.setValue((int) (sampler.getMix() * 100));
 		for (SamplePad pad : updates)
 			if (pad.sample == samp)
 				pad.update();
@@ -66,14 +52,14 @@ public class SampleKnobs extends KnobPanel {
 	}
 
 	@Override public void update() {
-		updates.forEach(pad ->pad.update());
 	}
 
 	@Override public void pad1() {
+		// open granular
 	}
 
 	@Override public void pad2() {
-
+		// pan
 	}
 
 

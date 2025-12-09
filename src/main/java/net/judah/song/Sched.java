@@ -36,5 +36,4 @@ public class Sched {
 			arp = new ArpInfo();
 	}
 
-
 }

@@ -10,10 +10,8 @@ import javax.sound.midi.ShortMessage;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
-import net.judah.gui.settable.Program;
 import net.judah.midi.Actives;
 import net.judah.midi.ChannelCC;
 import net.judah.midi.Midi;
@@ -104,8 +102,9 @@ public class DrumKit extends LineIn implements Receiver {
 					for (int i = 0; i < samples.length; i++)
 						if (program.get(i) != null)
 							samples[i].setRecording(program.get(i));
-					if (JudahZone.isInitialized())
-						MainFrame.update(Program.first(drumMachine.getTrack(this)));
+					MainFrame.update(drumMachine.getTrack(this));
+//					if (JudahZone.isInitialized())
+//						MainFrame.update(Program.first(drumMachine.getTrack(this)));
 				} catch (Exception e) {
 					RTLogger.warn(this, e);
 				}

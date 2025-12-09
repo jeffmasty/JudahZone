@@ -22,17 +22,8 @@ public class Polyphony extends Actives {
 		voices = new Voice[polyphony];
 	}
 
-//	public Polyphony(TacoSynth out, int ch, int polyphony) {
-//		super(out, ch);
-//		this.polyphony = polyphony;
-//		voices = new Voice[polyphony];
-////		for (int i = 0; i < voices.length; i++)
-////			voices[i] = new Voice(out);
-//	}
-
 	/** only add under certain circumstances */
-	@Override
-	public boolean add(ShortMessage msg) {
+	@Override public boolean add(ShortMessage msg) {
 
 		int data1 = msg.getData1();
 		ShortMessage midi = find(data1);
@@ -100,7 +91,6 @@ public class Polyphony extends Actives {
 	@Override
 	protected void retrigger(ShortMessage msg) {
 		voices[indexOf(msg.getData1())].reset(msg.getData1());
-//		set(indexOf(msg.getData1()), Midi.create(Midi.NOTE_OFF, channel, msg.getData1(), msg.getData2()));
 	}
 
 	@Override protected boolean noteOff(ShortMessage m) {

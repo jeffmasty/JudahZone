@@ -40,7 +40,7 @@ public class Filter implements Effect {
     @Getter private final int paramCount = Settings.values().length;
 
     @Setter @Getter private boolean active;
-    private final StereoBiquad stereo;
+    private final StereoBiquad filter;
 
 //	 /*filter_type can be: g (gain without EQ), pk (peaking), hp/lc (highpass/lowcut), lp/hc (lowpass/highcut)
 //	 # freq is center frequency (for peaking) or cut/boost frequency
@@ -52,38 +52,38 @@ public class Filter implements Effect {
     public Filter(boolean lowPass) {
 		float hz = lowPass ? MAX : MIN;
 		FilterType type = lowPass ? FilterType.LowPass : FilterType.HighPass;
-		stereo = new StereoBiquad(type, hz);
+		filter = new StereoBiquad(type, hz);
     }
 
 	@Override public void set(int idx, int value) {
 		if (idx == Settings.dB.ordinal())
-			stereo.gain_db = StereoBiquad.gainDb(value);
+			filter.gain_db = StereoBiquad.gainDb(value);
 		else if (idx == Settings.Hz.ordinal())
-			stereo.frequency = Constants.logarithmic(value, MIN, MAX);
+			filter.frequency = Constants.logarithmic(value, MIN, MAX);
 		else if (idx == Settings.Width.ordinal())
-			stereo.bandwidth = StereoBiquad.MAX_WIDTH * value * 0.01f;
+			filter.bandwidth = StereoBiquad.MAX_WIDTH * value * 0.01f;
 		else if (idx == Settings.Type.ordinal()) { // "LOCUT" CC81
 			FilterType change = value > 50 ? FilterType.HighPass : FilterType.LowPass;
-			stereo.filter_type = change;
+			filter.filter_type = change;
 		}
 		else throw new InvalidParameterException("" + idx);
-		stereo.update();
+		filter.coefficients();
 	}
 
 	@Override public int get(int idx) {
 		if (idx == Settings.dB.ordinal())
-			return Math.round(stereo.gain_db * 2 + 50);
+			return Math.round(filter.gain_db * 2 + 50);
 		else if (idx == Settings.Hz.ordinal())
-			return Constants.reverseLog(stereo.frequency, MIN, MAX);
+			return Constants.reverseLog(filter.frequency, MIN, MAX);
 		else if (idx == Settings.Width.ordinal()) // x/MAX_WIDTH = y/100
-			return (int) (stereo.bandwidth * 100 / StereoBiquad.MAX_WIDTH);
+			return (int) (filter.bandwidth * 100 / StereoBiquad.MAX_WIDTH);
 		else if (idx == Settings.Type.ordinal())
-			return stereo.filter_type == FilterType.HighPass ? 100 : 0;
+			return filter.filter_type == FilterType.HighPass ? 100 : 0;
 		throw new InvalidParameterException("" + idx);
 	}
 
 	@Override public void process(FloatBuffer left, FloatBuffer right) {
-		stereo.process(left, right);
+		filter.process(left, right);
 	}
 
 }

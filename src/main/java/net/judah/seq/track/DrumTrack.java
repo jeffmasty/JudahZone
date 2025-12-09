@@ -1,7 +1,6 @@
 package net.judah.seq.track;
 
 import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
@@ -11,13 +10,10 @@ import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
 import net.judah.drumkit.Drumz;
-import net.judah.gui.TabZone;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
-import net.judah.seq.Meta;
-import net.judah.seq.MidiPair;
 
 public class DrumTrack extends NoteTrack {
 
@@ -27,8 +23,10 @@ public class DrumTrack extends NoteTrack {
 		super(type.name, kit.getActives());
 		this.kit = kit;
 		setCue(Cue.Hot);
-		meta.setString(Meta.DEVICE, "BeatBox");
-		meta.setInt(Meta.PORT, type.ordinal());
+	}
+
+	@Override public DrumKit getChannel() {
+		return kit;
 	}
 
 	public DrumSample getSample(DrumType t) {
@@ -36,7 +34,7 @@ public class DrumTrack extends NoteTrack {
 	}
 
 	@Override protected void processNote(ShortMessage formatted) {
-		midiOut.send(formatted, JudahMidi.ticker());
+		getMidiOut().send(formatted, JudahMidi.ticker());
 	}
 
 	/** imports outside of 8 sample kit range */
@@ -49,8 +47,6 @@ public class DrumTrack extends NoteTrack {
 				t.add(new MidiEvent(Midi.create(
 						orig.getCommand(), ch, data1, orig.getData2()), e.getTick()));
 			}
-			else if (e.getMessage() instanceof MetaMessage m)
-				meta.incoming(m, e);
 		}
 	}
 
@@ -59,8 +55,8 @@ public class DrumTrack extends NoteTrack {
 			return false;
 		if (Midi.isNoteOn(m) && m.getChannel() >= DRUM_CH) {
 			long tick = quantize(recent);
-			TabZone.getDrummer(this).push(new Edit(Type.NEW,
-					new MidiPair(Midi.createEvent(tick, NOTE_ON, ch, m.getData1(), m.getData2()), null)));
+			editor.push(new Edit(Type.NEW,
+					Midi.createEvent(tick, NOTE_ON, ch, m.getData1(), m.getData2())));
 			if (tick < recent)
 				midiOut.send(m, JudahMidi.ticker());
 			return true;

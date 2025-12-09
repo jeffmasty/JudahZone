@@ -8,7 +8,7 @@ import lombok.Data;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.midi.Midi;
-import net.judah.seq.automation.CC;
+import net.judah.seq.automation.ControlChange;
 import net.judah.song.Overview;
 import net.judah.util.Constants;
 
@@ -109,12 +109,12 @@ public class KitSetup implements AtkDec {
 			return false;
 
 		int data1 = cc.getData1();
-		if (data1 == CC.ATTACK.data1) {
+		if (data1 == ControlChange.ATTACK.data1) {
 			int val = (int) (cc.getData2() * Constants.TO_100);
 			for (int i = 0; i < LENGTH; i++)
 				atk[i] = val;
 		}
-		else if (data1 == CC.DECAY.data1 || data1 == CC.RELEASE.data1) { // DK2
+		else if (data1 == ControlChange.DECAY.data1 || data1 == ControlChange.RELEASE.data1) { // DK2
 			int val = (int) (cc.getData2() * Constants.TO_100);
 			for (int i = 0; i < LENGTH; i++)
 				dk[i] = val;

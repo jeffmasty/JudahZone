@@ -66,10 +66,10 @@ public class StereoBiquad {
 		this.gain_db = gain;
 		left = new Biquad();
 		right = new Biquad();
-		update();
+		coefficients();
 	}
 
-	public void update() {
+	public void coefficients() {
 		float a = (float)(Math.pow(10.0, gain_db/40.0));
 		float w0 = (float)(2.0*Math.PI*frequency/SAMPLE_RATE);
 		float sinw0 = (float)Math.sin(w0);
@@ -122,7 +122,7 @@ public class StereoBiquad {
 		void processBuffer(FloatBuffer buff) {
 			buff.rewind();
 			for (int i=0; i<N_FRAMES; i++) {
-				float xn = buff.get(i); // copy
+				float xn = buff.get(i);
 				float yn = (b0*xn + b1*xn1 + b2*xn2 - a1*yn1 - a2*yn2) / a0;
 	            if (Math.abs(yn) < 1.0E-8)
 	                yn = 0; // de-normalize

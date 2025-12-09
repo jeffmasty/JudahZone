@@ -8,61 +8,67 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 import javax.swing.JPanel;
-import javax.swing.border.Border;
 
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.gui.Detached.Floating;
-import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
-import net.judah.gui.Updateable;
 import net.judah.midi.JudahClock;
 import net.judah.midi.Midi;
-import net.judah.midi.Panic;
 import net.judah.seq.Edit.Type;
+import net.judah.seq.track.Editor;
 import net.judah.seq.track.NoteTrack;
-import net.judah.util.RTLogger;
 
-public abstract class MusicBox extends JPanel implements Musician, Updateable, Floating {
+public abstract class MusicBox extends JPanel implements Musician, Floating, MidiConstants {
 
 	public static enum DragMode { CREATE, TRANSLATE, SELECT }
 	protected static final Composite transparent = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);
 
 	@Getter protected final NoteTrack track;
+	protected final Editor editor;
 	protected final Track t;
 	protected final JudahClock clock;
-	protected final Measure scroll;
+
+
+
 	/** absolute notes */
 	@Getter protected final Notes selected = new Notes();
-	protected final ArrayList<MidiPair> dragging = new ArrayList<>();
-	/** undo/redo */
-	protected ArrayList<Edit> stack = new ArrayList<>();
-
-	private int caret;
+	protected final Measure scroll;
+	protected ArrayList<MidiNote> dragging = null;
 	protected Prototype click;
 	protected Point drag = null;
 	protected DragMode mode = null;
 	protected Prototype recent;
 	protected int width, height;
-	protected final Clipboard clipboard;
 
 	public MusicBox(NoteTrack midiTrack) {
 		this.track = midiTrack;
+		this.editor = midiTrack.getEditor();
 		this.t = track.getT();
 		this.clock = track.getClock();
-		this.clipboard = JudahZone.getSeq().getClipboard();
 		scroll = new Measure(track);
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		addMouseWheelListener(this);
+	}
+
+	// TODO click = null
+	//		@Override
+	//	protected void execute(Edit e) {
+
+	@Override public void delete() {
+		track.getEditor().push(new Edit(Type.DEL, selected));
+	}
+
+	@Override public void copy() {
+		JudahZone.getClipboard().copy(selected, track);
 	}
 
 	@Override public void mouseDragged(MouseEvent mouse) {
@@ -114,13 +120,13 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 		}
 		// change selected notes' velocity
 		float ratio = up ? 1.1f : 0.9f;
-		ArrayList<MidiPair> replace = new ArrayList<>();
+		ArrayList<MidiNote> replace = new ArrayList<>();
 		int data2;
 		ShortMessage source, create;
-		for (MidiPair p : selected) {
-			if (p.getOn().getMessage() instanceof ShortMessage == false)
+		for (MidiNote p : selected) {
+			if (p.getMessage() instanceof ShortMessage == false)
 				continue;
-			source = (ShortMessage) p.getOn().getMessage();
+			source = (ShortMessage) p.getMessage();
 			data2 = (int) (source.getData2() * ratio);
 			if (data2 == source.getData2())
 				data2 += up ? 1 : -1;
@@ -129,28 +135,29 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 			else if (data2 < 1) // no ghosts
 				data2 = 1;
 			create = Midi.create(source.getCommand(), source.getChannel(), source.getData1(), data2);
-			replace.add(new MidiPair(new MidiEvent(create, p.getOn().getTick()) ,p.getOff()));
+			replace.add(new MidiNote(new MidiEvent(create, p.getTick()) ,p.getOff()));
 		}
-		editDel(selected);
-		editAdd(replace);
+		// TODO
+//		editDel(selected);
+//		editAdd(replace);
 	}
 
 	private void transpose(boolean up) {
 		if (selected.isEmpty()) return;
-		MidiPair a = selected.getFirst();
-		int src = ((ShortMessage)a.getOn().getMessage()).getData1();
+		MidiNote a = selected.getFirst();
+		int src = ((ShortMessage)a.getMessage()).getData1();
 		int dest = src + (up ?  1 : -1);
 		if (dest < 0 || dest > 127)
 			return;
 		Edit e = new Edit(Type.TRANS, selected);
-		e.setDestination(new Prototype(dest, a.getOn().getTick()));
-		push(e);
+		e.setDestination(new Prototype(dest, a.getTick()));
+		editor.push(e);
 	}
 
 	private void translate(boolean up) {
 		if (selected.isEmpty()) return;
-		MidiPair a = selected.getFirst();
-		long src = a.getOn().getTick();
+		MidiNote a = selected.getFirst();
+		long src = a.getTick();
 		long plus = track.quantizePlus(src);
 		long dest = up ? plus : src - (plus - src);
 
@@ -160,214 +167,18 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 			dest += track.getWindow();
 
 		Edit e = new Edit(Type.TRANS, selected);
-		e.setDestination(new Prototype(((ShortMessage)a.getOn().getMessage()).getData1(), dest));
-		push(e);
+		e.setDestination(new Prototype(((ShortMessage)a.getMessage()).getData1(), dest));
+		editor.push(e);
 	}
 
 	@Override public final Prototype translate(Point p) {
 		return new Prototype(toData1(p), toTick(p));
 	}
 
-	@Override public void delete() {
-		push(new Edit(Type.DEL, selected));
-	}
-
-	@Override public void copy() {
-		clipboard.copy(selected, track);
-	}
-
-	@Override public void paste() {
-		List<MidiPair> notes = clipboard.paste(track);
-		push(new Edit(Type.NEW, notes));
-	}
-
-	protected void length(Edit e, boolean undo) {
-		ArrayList<MidiPair> replace = new ArrayList<MidiPair>();
-		long ticks = e.getDestination().tick;
-		e.getNotes().forEach(p-> replace.add(new MidiPair(p.getOn(),
-			new MidiEvent(p.getOff().getMessage(), p.getOn().getTick() + ticks))));
-		if (undo) {
-			editDel(replace);
-			editAdd(e.getNotes());
-		}
-		else {
-			editDel(e.getNotes());
-			editAdd(replace);
-		}
-		MainFrame.update(this);
-	}
-
-	private void execute(Edit e) {
-		switch (e.getType()) {
-		case DEL:
-			editDel(e.getNotes());
-			selectNone();
-			break;
-		case NEW:
-			editAdd(e.getNotes());
-			break;
-		case TRANS:
-			if (track.isActive())
-				new Panic(track);
-			transpose(e.getNotes(), e.getDestination());
-			break;
-		case LENGTH:
-			length(e, false);
-			break;
-		case REMAP:
-			remap(e, true);
-			break;
-		case TRIM:
-			trim(e, true);
-			break;
-		case INS:
-			insert(e, true);
-			break;
-		case MOD:
-			mod(e, true);
-			break;
-		}
-		click = null;
-		RTLogger.debug("exe: " + e.getType() + " to " + e.getDestination() + ": " + Arrays.toString(e.getNotes().toArray()));
-	}
-
-	@Override public void undo() {
-		if (stack.size() <= caret || caret < 0) {
-			RTLogger.debug("undo empty");
-			return;
-		}
-
-		Edit e = stack.get(caret);
-		switch (e.getType()) {
-		case DEL:
-			editAdd(e.getNotes());
-			break;
-		case NEW:
-			editDel(e.getNotes());
-			selectNone();
-			break;
-		case TRANS:
-			if (track.isActive())
-				new Panic(track);
-			decompose(e);
-			break;
-		case LENGTH:
-			length(e, true);
-			break;
-		case REMAP:
-			remap(e, false);
-			break;
-		case TRIM:
-			trim(e, false);
-			break;
-		case INS:
-			insert(e, false);
-			break;
-		case MOD:
-			mod(e, false);
-			break;
-		}
-
-		caret--;
-		RTLogger.debug("undo: " + e.getType());
-	}
-
-
-	protected abstract void remap(Edit e, boolean exe);
-
-	// add blank tape by moving existing notes
-	protected void insert(Edit e, boolean exe) {
-		long start = e.getOrigin().tick;
-		long end = e.getDestination().tick;
-		long diff = end - start;
-		if (exe)
-			MidiTools.addTape(t, start, diff);
-		else  // undo
-			MidiTools.removeTape(t, end, diff);
-		MainFrame.update(this);
-	}
-
-	protected void trim(Edit e, boolean exe) {
-		long start = e.getOrigin().tick;
-		long end = e.getDestination().tick;
-		long diff = end - start;
-		if (exe) { // remove notes then remove tape (shift remaining notes)
-			for (MidiPair p : e.getNotes()) {
-				t.remove(p.getOn());
-				if (p.getOff() != null)
-					t.remove(p.getOff());
-			}
-			MidiTools.removeTape(t, end, diff);
-		} else { // undo: shift existing notes then paste deleted notes
-			MidiTools.addTape(t, start, diff);
-			for (MidiPair p : e.getNotes()) {
-				t.add(p.getOn());
-				if (p.getOff() != null)
-					t.add(p.getOff());
-			}
-		}
-		MainFrame.update(this);
-	}
-
-	protected final void mod(Edit e, boolean exe) {
-		if (exe) { // remove original cc (on), add changed cc (off)
-			MidiTools.delete(e.getNotes().getFirst().getOn(), t);
-//			if (false == t.remove(e.getNotes().getFirst().getOn()))
-//				RTLogger.log(this, "Missing: " + Midi.toString(e.getNotes().getFirst().getOn().getMessage()));
-			t.add(e.getNotes().getFirst().getOff());
-		} else { // undo, restore original cc (on)
-			MidiTools.delete(e.getNotes().getFirst().getOff(), t);
-			t.remove(e.getNotes().getFirst().getOff());
-			t.add(e.getNotes().getFirst().getOn());
-		}
-		MainFrame.update(this);
-	}
-
-	protected void editAdd(ArrayList<MidiPair> replace) {
+	@Override
+	public void selectNone() {
 		selected.clear();
-		for (MidiPair p : replace) {
-			if (Midi.isNoteOn(p.getOn().getMessage()))
-				selected.add(p); // ignore CCs
-			track.getT().add(p.getOn());
-			if (p.getOff() != null)
-				track.getT().add(p.getOff());
-		}
-		MainFrame.update(this);
-	}
-
-	protected void editDel(ArrayList<MidiPair> notes) {
-		for (MidiPair p: notes) {
-				if (MidiTools.delete(p.getOn(), track.getT()) == false)
-					RTLogger.warn(this, "Could not delete: " +
-							Midi.toString(p.getOn().getMessage()) + " @ " + p.getOn().getTick());
-				if (p.getOff() != null)
-					MidiTools.delete(p.getOff(), track.getT());
-            }
-	}
-
-	/** execute edit and add to undo stack */
-	@Override public void push(Edit e) {
-		stack.add(e);
-		caret = stack.size() - 1;
-		execute(e);
-	}
-
-	public Edit peek() {
-		if (caret >= stack.size())
-			return null;
-		return stack.get(caret);
-	}
-
-	@Override public void redo() {
-		if (stack.size() <= caret + 1)
-			return;
-		caret++;
-		execute(stack.get(caret));
-	}
-
-	@Override public void selectNone() {
-		selected.clear();
-		MainFrame.update(this);
+		MainFrame.update(track);
 	}
 
 	public Notes selectArea(long start, long end) {
@@ -375,8 +186,8 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 		long tick;
 		if (track.isDrums()) {
 			scroll.populate();
-			for (MidiPair p : scroll) {
-				tick = p.getOn().getTick();
+			for (MidiNote p : scroll) {
+				tick = p.getTick();
 				if (tick < start) continue;
 				if (tick >= end) break;
 				selected.add(p);
@@ -393,6 +204,15 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 		}
 		repaint();
 		return selected;
+	}
+
+	protected void select(List<MidiNote> drug) {
+		selected.clear();
+		for (MidiNote p : drug)
+			if (p.getOff() == null)
+				selected.add(new MidiNote(p));
+			else
+				selected.add(new MidiNote(p, p.getOff()));
 	}
 
 	public void select(Notes notes) {
@@ -430,12 +250,6 @@ public abstract class MusicBox extends JPanel implements Musician, Updateable, F
 				shadeRect.setBounds(x, y, drag.x - x, drag.y - y);
 		}
 		return shadeRect;
-	}
-
-	@Override public void update() {
-		Border target = track.isCapture() ? Gui.RED : Gui.NO_BORDERS;
-		if (getBorder() != target)
-			setBorder(target);
 	}
 
 	// Color cache

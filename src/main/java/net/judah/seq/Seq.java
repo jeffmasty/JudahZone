@@ -3,15 +3,20 @@ package net.judah.seq;
 import static net.judah.controllers.MPKTools.drumBank;
 import static net.judah.controllers.MPKTools.drumIndex;
 import static net.judah.seq.MidiConstants.DRUM_CH;
+import static net.judah.seq.MidiTools.meta;
 
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.io.File;
+import java.time.Year;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
 import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.Track;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JOptionPane;
@@ -29,47 +34,59 @@ import net.judah.gui.Size;
 import net.judah.gui.Updateable;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.TrackKnobs;
-import net.judah.gui.widgets.TrackButton;
+import net.judah.midi.Actives;
+import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiInstrument;
+import net.judah.mixer.Channel;
+import net.judah.mixer.Mains;
 import net.judah.omni.Threads;
 import net.judah.sampler.Sampler;
 import net.judah.seq.SynthRack.RegisteredSynths;
-import net.judah.seq.chords.ChordTrack;
+import net.judah.seq.chords.Chords;
 import net.judah.seq.track.ChannelTrack;
+import net.judah.seq.track.Computer;
+import net.judah.seq.track.Computer.TrackUpdate;
+import net.judah.seq.track.Computer.Update;
 import net.judah.seq.track.DrumTrack;
+import net.judah.seq.track.MidiFile;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.TrackInfo;
 import net.judah.song.Sched;
 import net.judah.song.Song;
+import net.judah.synth.fluid.FluidAssistant;
+import net.judah.synth.fluid.FluidSynth;
 import net.judah.synth.taco.Polyphony;
 import net.judah.synth.taco.TacoSynth;
 import net.judah.synth.taco.TacoTruck;
 import net.judah.util.Constants;
+import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
-/** MidiTracks holder */
-
-public class Seq extends JPanel implements Updateable, Iterable<MidiTrack>{
+/** Midi Sequencer, MidiTracks container for song */
+public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
+	private static final Dimension SIZE = new Dimension(Size.WIDTH_KNOBS / 2 , 73);
 
 	@Getter private TrackList<MidiTrack> tracks = new TrackList<MidiTrack>();
-	@Getter private final TrackList<DrumTrack> drumTracks;
+	private final TrackList<DrumTrack> drumTracks;
 	private final TrackList<ChannelTrack> ccTracks = new TrackList<ChannelTrack>();
+	@Getter private final ChannelTrack mains;
+
 	private TrackList<MidiTrack> replace = null;
-	private final ChordTrack chords;
+	private final Chords chords;
 	private final Sampler sampler;
 	private final DrumMachine drums;
-	@Getter private final Clipboard clipboard = new Clipboard();
 
-	// GUI
-	private static final Dimension SIZE = new Dimension(Size.WIDTH_KNOBS / 2 , 73);
 	private final JPanel dnb = new JPanel(new GridLayout(1, 5, 1, 0));
 	private final JPanel synths = new JPanel();
 	private final MidiInstrument bass;
+	private MidiFile bundle;
+	public int getResolution() { return bundle == null ? 0 : bundle.getResolution(); }
 
-	public Seq(DrumMachine drumz, ChordTrack chordTrack, Sampler sampler, MidiInstrument bass) {
+	public Seq(DrumMachine drumz, Chords chordTrack, Sampler sampler, MidiInstrument bass, Mains outLR) {
 		this.chords = chordTrack;
 		this.sampler = sampler;
 		this.drums = drumz;
@@ -79,6 +96,14 @@ public class Seq extends JPanel implements Updateable, Iterable<MidiTrack>{
 		tracks.addAll(drumTracks);
 		tracks.addAll(SynthRack.getSynthTracks());
 		tracks.addAll(ccTracks);
+		ChannelTrack temp = null;
+		try {
+			temp = new ChannelTrack(outLR, 0, outLR.getName());
+			byte[] copyright = new String(JudahZone.JUDAHZONE + " " + Year.now().getValue()).getBytes();
+			temp.getT().add(meta(Meta.COPYRIGHT, copyright, 0l));
+			temp.setPermanent(true);
+		} catch (InvalidMidiDataException e) { RTLogger.warn(this, e); }
+		mains = temp;
 		gui();
 	}
 
@@ -100,7 +125,8 @@ public class Seq extends JPanel implements Updateable, Iterable<MidiTrack>{
 
 	/* New Song */
 	public void newSong() {
-		chords.clear();
+		ccTracks.clear();
+		mains.clear();
 		clearSynths();
 
 		SynthRack.getFluids()[0].getTrack().setName("Fluid");
@@ -124,29 +150,53 @@ public class Seq extends JPanel implements Updateable, Iterable<MidiTrack>{
 	private void clearSynths() {
 		tracks.clear();
 		tracks.addAll(drumTracks);
-		// clear previous song Tracks
+
+		// clear previous song variable Tracks
 		for (ZoneMidi engine : SynthRack.engines) {
-			Vector<? extends MidiTrack> tracks = engine.getTracks();
-			for (int i = tracks.size() - 1; i >= 0; i--)
-				if (!tracks.get(i).isPermanent())
-				tracks.remove(i);
+			Vector<? extends MidiTrack> cars = engine.getTracks();
+			for (int i = cars.size() - 1; i >= 0; i--) {
+				MidiTrack t = cars.get(i);
+				if (t.isPermanent())
+					tracks.add(t);
+				else
+					cars.remove(i);
+			}
 		}
 	}
 
-	/** load song into sequencer */
-	public void loadSong(Song song) {
+	/** load song into sequencer
+	 * @return true if the provided song is a SmashHit */
+	public boolean loadSong(Song song) {
 		newSong();
-		chords.load(song);
-		for (TrackInfo info : song.getTracks()) {
+		boolean standalone = song.getBundle() == null || song.getBundle().isBlank();
+		MainFrame.setBundle(!standalone);
+		if (standalone)
+			trackInfo(song.getTracks());
+		else
+			loadBundle(song.getBundle());
+		return !standalone;
+	}
+
+	private void trackInfo(List<TrackInfo> tracks) {
+		for (TrackInfo info : tracks) {
 			String name = info.getTrack();
     		MidiTrack t = byName(name);
     		if (t == null) {
-    			if (name.equals("B"))
+    			String ch = info.getChannel();
+    			if (ch != null) {
+    				Channel channel = JudahZone.getMixer().byName(ch);
+    				if (channel == null) {
+    					RTLogger.warn(this, "Missing ChannelTrack: " + ch);
+    					return;
+    				}
+    				t = addTrack(channel, name);
+    			}
+    			else if (name.equals("B"))
     				t = JudahZone.getBass().getTrack();
     			else if (name.startsWith("F"))
     				t = addTrack(name, RegisteredSynths.Fluid, 0);
-//    			else if (name.startsWith("T"))
-//    				t = addTrack(name, RegisteredSynths.Taco, 1);
+    			else if (name.startsWith("T"))
+    				t = addTrack(name, RegisteredSynths.Taco, 1);
     			else if (info.getFile() == null || info.getFile().isBlank())
     				continue; // ignore unassigned legacy
     			else {
@@ -154,8 +204,9 @@ public class Seq extends JPanel implements Updateable, Iterable<MidiTrack>{
     				continue;
     			}
     		}
-    		t.load(info);
-    	}
+    		if (info != null)
+    			t.load(info);
+		}
 	}
 
 	public MidiTrack byName(String track) {
@@ -176,7 +227,7 @@ public class Seq extends JPanel implements Updateable, Iterable<MidiTrack>{
 			case H1: return drums.getTracks().get(2);
 			case H2: return drums.getTracks().get(3);
 			case B: return SynthRack.getOther()[0].getTrack();
-//			case F1: return SynthRack.getFluids()[0].getTrack();
+			case F1: return SynthRack.getFluids()[0].getTrack();
 			// F2 F3
 			case TK1: return SynthRack.getTacos()[0].getTrack();
 			case TK2: return SynthRack.getTacos()[1].getTrack();
@@ -192,6 +243,7 @@ public class Seq extends JPanel implements Updateable, Iterable<MidiTrack>{
 	// JudahMidi.process() -> clock -> to here
 	public void percent(float percent) {
 		tracks.forEach(track->track.playTo(percent));
+		mains.playTo(percent);
 		if (replace != null) {
 			tracks = replace;
 			replace = null;
@@ -244,16 +296,43 @@ public class Seq extends JPanel implements Updateable, Iterable<MidiTrack>{
 		return sb.toString();
 	}
 
+	public ChannelTrack addTrack(Channel ch, String trackName) {
+		try {
+			ChannelTrack result = new ChannelTrack(ch, ccTracks.size(), trackName);
+			ccTracks.add(result);
+			refill();
+			return result;
+		} catch (InvalidMidiDataException e) {  RTLogger.warn(this, e); }
+		return null;
+	}
+
+	public void addTrack(MetaMap map, ZoneMidi engine) {
+		int ch = map.getInt(Meta.CHANNEL);
+		try {
+			PianoTrack target = null;
+			if (engine instanceof TacoTruck truck) {
+				while (truck.getTracks().size() < ch)
+					truck.addTrack("temp");
+				target = truck.getTracks().get(ch);
+			} else if (engine instanceof FluidSynth fluid) {
+				while(fluid.getTracks().size() < ch)
+					addTrack("temp", fluid);
+				target = fluid.getTracks().get(ch);
+			}
+			target.importTrack(map, getResolution());
+			if (engine instanceof FluidSynth)
+				refill();
+		} catch (InvalidMidiDataException e) { RTLogger.warn(this, e); }
+	}
+
 	public void addTrack(String name, ZoneMidi engine) {
 		try {
 			if (engine instanceof TacoTruck truck) {
 				TacoSynth taco = new TacoSynth(name, truck, new Polyphony(truck, truck.getTracks().size()));
 				truck.getTracks().add(taco);
-				taco.getMeta().setString(Meta.DEVICE, "" + RegisteredSynths.Taco.name());
 			}
 			else {
-				((MidiInstrument)engine).getTracks().add(new PianoTrack(name, engine, engine.getTracks().size()));
-				engine.getTracks().getLast().getMeta().setString(Meta.DEVICE, "" + RegisteredSynths.Fluid.name());
+				((MidiInstrument)engine).getTracks().add(new PianoTrack(name, new Actives(engine, engine.getTracks().size())));
 			}
 			refill();
 		} catch (InvalidMidiDataException e) { RTLogger.warn(this, e); }
@@ -276,12 +355,11 @@ public class Seq extends JPanel implements Updateable, Iterable<MidiTrack>{
 				result = taco;
 			}
 			else {
-				result = new PianoTrack(name, engine, engine.getTracks().size());
+				result = new PianoTrack(name, new Actives(engine, engine.getTracks().size()));
 				((MidiInstrument)engine).getTracks().add(result);
 			}
 			refill();
 		} catch (InvalidMidiDataException e) { RTLogger.warn(this, e); }
-		result.getMeta().setString(Meta.DEVICE, "" + type.name());
 		return result;
 	}
 
@@ -298,7 +376,6 @@ public class Seq extends JPanel implements Updateable, Iterable<MidiTrack>{
 	private void gui() {
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         Gui.resize(this, SIZE);
-        setOpaque(true);
         // D1 D2 D3 D4 B
         // T1 T2 F1 .. Fx
 		for (DrumTrack t : drumTracks)
@@ -329,7 +406,7 @@ public class Seq extends JPanel implements Updateable, Iterable<MidiTrack>{
  		// Other updates
  		JudahZone.getOverview().refill();
  		if (MainFrame.getKnobMode() == KnobMode.Track)
- 			((TrackKnobs)MainFrame.getKnobs()).refill();
+ 			((TrackKnobs)MainFrame.getKnobs()).refill(tracks);
  		JudahZone.getFrame().getMenu().refillTracks();
 	}
 
@@ -337,6 +414,7 @@ public class Seq extends JPanel implements Updateable, Iterable<MidiTrack>{
 		TrackList<MidiTrack> temp = new TrackList<MidiTrack>();
 		temp.addAll(drumTracks);
 		temp.addAll(SynthRack.getSynthTracks());
+		temp.addAll(ccTracks);
 		if (JudahZone.getClock().isActive()) {
 			replace = temp; // RT atomic
 			return;
@@ -346,23 +424,7 @@ public class Seq extends JPanel implements Updateable, Iterable<MidiTrack>{
 		updates();
 	}
 
-	@Override public void update() {
-		for (Component c : synths.getComponents())
-			((TrackButton)c).update();
-		for (Component c : dnb.getComponents())
-			((TrackButton)c).update();
-		repaint();
-	}
-	public void update(MidiTrack t) {
-		for (Component c : dnb.getComponents())
-			if ( ((TrackButton)c).getTrack() == t)
-				((TrackButton)c).update();
-		for (Component c : synths.getComponents())
-			if ( ((TrackButton)c).getTrack() == t)
-				((TrackButton)c).update();
-	}
-
-	public void rename(PianoTrack track) {
+	public void rename(MidiTrack track) {
 		String result = Gui.inputBox("New Name");
 		if (result == null || result.isBlank())
 			return;
@@ -382,145 +444,228 @@ public class Seq extends JPanel implements Updateable, Iterable<MidiTrack>{
 		MainFrame.update(t);
 	}
 
+	public void resolutionView() {
+		String result = JOptionPane.showInputDialog(JudahZone.getFrame(),
+				toString() + "New Resolution:", bundle.getResolution());
+		if (result == null) return;
+		try {
+			setResolution(Integer.parseInt(result));
+		} catch (NumberFormatException e) { RTLogger.log("Resolution", result + ": " + e.getMessage()); }
+	}
+
+	void setResolution(int rez) {
+		if (rez < 2 || rez > 2048)
+			throw new NumberFormatException(rez + " resolution out of bounds");
+		mains.setResolution(rez);
+		for (MidiTrack notes : tracks)
+			if (notes.getResolution() != rez)
+				notes.setResolution(rez);
+		if (bundle != null)
+			bundle.setResolution(rez);
+	}
+
+	/* for each legacy track, create a resolved midiTrack inside the returned MidiFile */
+	public MidiFile bundle(String song) throws InvalidMidiDataException {
+		int rez = JudahClock.MIDI_24;
+		for (MidiTrack t : tracks)
+			if (t.getResolution() > rez)
+				rez = t.getResolution();
+		bundle = new MidiFile(rez);
+
+		Track zero = bundle.createTrack();
+		if (mains != null)
+			MidiTools.copy(mains, zero);
+		zero.add(meta(Meta.TRACK_NAME, song.getBytes(), 0));
+
+		for (MidiTrack legacy : tracks) {
+			Track dest = bundle.createTrack();
+			if (legacy.getResolution() != rez)
+				legacy.setResolution(rez);
+			MidiTools.copy(legacy, dest);
+			// Meta
+			String engine = "Bass";
+			Byte port = 0;
+			if (legacy instanceof DrumTrack d) {
+				engine = drums.getName();
+				port = (byte) drums.getTracks().indexOf(d);
+			} else if (legacy instanceof TacoSynth t) {
+				engine = RegisteredSynths.Taco.name();
+				TacoTruck[] trucks = SynthRack.getTacos();
+				for (byte i = 0; i < trucks.length; i++)
+					if (trucks[i].getTracks().contains(t)) {
+						port = i;
+						break;
+					}
+			} else if (legacy instanceof PianoTrack p) {
+				if (p.getMidiOut() instanceof FluidSynth) {
+					engine = RegisteredSynths.Fluid.name();
+					FluidSynth[] fluids = SynthRack.getFluids();
+					for (byte i = 0; i < fluids.length; i++)
+						if (fluids[i].getTracks().contains(p)) {
+							port = i;
+							break;
+						}
+				}
+			} else if (legacy instanceof ChannelTrack ch) {
+				engine = KnobMode.Autom8.name();
+				byte[] instrument = ch.getChannel().getName().getBytes();
+				dest.add(meta(Meta.INSTRUMENT, instrument, 0));
+			}
+
+			byte[] name = legacy.getName().getBytes();
+			byte[] cue = legacy.getCue().name().getBytes();
+
+			dest.add(meta(Meta.DEVICE,  engine.getBytes(), 0l));
+			dest.add(meta(Meta.PORT, new byte[] {port}, 0l));
+			dest.add(meta(Meta.TRACK_NAME, name, 0l));
+			dest.add(meta(Meta.CHANNEL, new byte[] {(byte) legacy.getCh()}, 0l));
+			dest.add(meta(Meta.CUE, cue, 0l));
+		}
+
+		return bundle;
+	}
+
+	public void loadBundle(String uuid) {
+		File smashHit = new File(Folders.getMidi(), uuid);
+		if (smashHit.isFile() == false) {
+			RTLogger.warn(this, "Missing Bundle " + uuid);
+			return;
+		}
+		try {
+			bundle = new MidiFile(MidiSystem.getSequence(smashHit));
+			clearSynths();
+			for (Track t : bundle.getTracks()) {
+				MetaMap map = new MetaMap(t);
+				String device = map.getString(Meta.DEVICE);
+				if (device == null)
+					device = "Bass";
+				if (device.equals(drums.getName()))
+					allocateDrum(map);
+				else if (device.equals(RegisteredSynths.Taco.name()))
+					allocateTaco(map);
+				else if (device.equals(RegisteredSynths.Fluid.name()))
+					allocateFluid(map);
+				else if (device.equals("Bass"))
+					allocateBass(map);
+				else // device = Autom8
+					allocateChannel(map);
+			}
+			refill();
+		} catch (Exception e) {RTLogger.warn(this, e); }
+
+	}
+
+	void allocateDrum(MetaMap map) {
+		int ch = map.getInt(Meta.CHANNEL);
+		if (ch >= 0 && ch < drums.getTracks().size()) {
+			DrumTrack target = drums.getTrack(drums.getChannel(ch));
+			target.importTrack(map, getResolution());
+		}
+	}
+
+	void allocateTaco(MetaMap map) {
+		int port = map.getInt(Meta.PORT);
+		while (SynthRack.getTacos().length < port)
+			SynthRack.makeTaco();
+		TacoTruck truck = SynthRack.getTacos()[port];
+		addTrack(map, truck);
+ 	}
+
+	void allocateFluid(MetaMap map) {
+		int port = map.getInt(Meta.PORT);
+
+		int deficit = port - SynthRack.getFluids().length;
+		if (deficit > 0) {
+			for (int i = 1; i <= deficit; i++) {
+				String name = "F" + i;
+				if (i == deficit)
+					new FluidAssistant(name, map);
+				else
+					new FluidAssistant(name);
+			}
+		}
+	}
+
+	void allocateBass(MetaMap map) {
+		JudahZone.getBass().getTrack().importTrack(map, getResolution());
+	}
+
+	void allocateChannel(MetaMap map) {
+		String channel = map.getString(Meta.INSTRUMENT);
+		if (channel == null || channel.isBlank())
+			return;
+		Channel fx = JudahZone.getMixer().byName(channel);
+		if (fx == null) {
+			RTLogger.warn(this, "Missing ChannelTrack: " + channel);
+			return;
+		}
+		String name = map.getString(Meta.TRACK_NAME);
+		if (name == null || name.isBlank())
+			name = channel;
+		addTrack(fx, name);
+	}
+
+	public TrackKnobs getKnobs(MidiTrack track) {
+		if (track instanceof NoteTrack notes) {
+			if (notes.getTrackKnobs() == null)
+				notes.setTrackKnobs(new TrackKnobs(notes, tracks));
+			return notes.getTrackKnobs();
+		}
+		return null;
+	}
+
+
+	public TrackKnobs getKnobs() {
+		return getKnobs(tracks.getCurrent());
+	}
+
+	@Override public void update() {
+		for (Component c : synths.getComponents())
+			((TrackButton)c).update();
+		for (Component c : dnb.getComponents())
+			((TrackButton)c).update();
+		repaint();
+	}
+
+	public void update(Computer t) {
+		for (Component c : dnb.getComponents())
+			if ( ((TrackButton)c).getTrack() == t)
+				((TrackButton)c).update();
+		for (Component c : synths.getComponents())
+			if ( ((TrackButton)c).getTrack() == t)
+				((TrackButton)c).update();
+	}
+
+	public void update(TrackUpdate update) {
+
+		if (update.track() instanceof NoteTrack track) {
+			if (track.getTrackKnobs() != null)
+				track.getTrackKnobs().update(update.type());
+		}
+		if (update.type() == Update.PLAY || update.type() == Update.CAPTURE)
+			update(update.track());
+	}
+
+	public boolean confirmBundle() {
+
+		int rez = JudahClock.MIDI_24;
+		for (MidiTrack t : tracks)
+			if (t.getResolution() > rez)
+				rez = t.getResolution();
+
+		String result =  JOptionPane.showInputDialog(JudahZone.getFrame(),
+				"Song Bundle: New Resolution", "" + rez);
+		if (result == null || result.isBlank())
+			return false;
+
+		try {
+			setResolution(Integer.parseInt(result));
+			return true;
+		} catch (NumberFormatException e) {
+			RTLogger.log(this, result + " " + e.getMessage());
+			return false;
+		}
+	}
+
 }
-
-
-// Song Bundle
-//private MidiFile s;
-//private Track zero;
-//
-//public int getResolution() { return s.getResolution(); }
-// () {
-//try {
-//	s = new MidiFile();
-//	zero = s.createTrack();
-//	zero.add(new MidiEvent(new MetaMessage(
-//			Meta.COPYRIGHT.type, JUDAHZONE.getBytes(), JUDAHZONE.getBytes().length), 0l));
-//} catch (InvalidMidiDataException e) { RTLogger.warn(this, e); }
-
-//public void resolutionView() {
-//String result = JOptionPane.showInputDialog(JudahZone.getFrame(),
-//		toString() + "New Resolution:", s.getResolution());
-//if (result == null) return;
-//try { setResolution(Integer.parseInt(result));
-//} catch (NumberFormatException e) { RTLogger.log("Resolution", result + ": " + e.getMessage()); }
-//}
-
-//public void setResolution(int rez) {
-//if (rez < 2 || rez > 2048)
-//	throw new NumberFormatException("out of bounds");
-//float factor = rez / (float)getResolution();
-//for (int i = t.size() - 1; i >= 0; i--) {
-//	t.get(i).setTick((long) (t.get(i).getTick() * factor));
-//}
-//s.setResolution(rez);
-//setBarTicks(clock.getTimeSig().beats * rez);
-//compute();
-//MainFrame.update((Updateable) () -> {
-//	if (TabZone.getMusician(MidiTrack.this) != null)
-//		TabZone.getMusician(MidiTrack.this).timeSig(clock.getTimeSig());
-//	});
-//}
-
-//public void loadSong(Song song) {
-//for (TrackInfo t :song.getTracks()) {
-//	t.getFile()
-//
-//	t.getTrack()
-//}
-//
-//for (TrackInfo info : trax) {
-//	MidiTrack t = byName(info.getTrack());
-//	if (t == null) {
-//		RTLogger.warn(this, "Unknown Track: " + info.getTrack());
-//		continue;
-//	}
-//	t.load(info);
-//}
-//}
-//public void loadSong(MidiFile file) {
-//s = file;
-//Track[] in = file.getTracks();
-//int size = in.length;
-//if (size > 0) {
-//	// try to load Track zero
-//}
-//// look at meta, each track, build track
-//for (Track t : in) {
-//	String engine = null;
-////	String name = null;
-//	int port = 0;
-//	int ch = 0;
-//	MetaMap mine = new MetaMap(t);
-//	if (mine.containsKey(Meta.DEVICE) ) {
-//		engine = mine.getString(Meta.DEVICE);
-//	}
-//	if (mine.containsKey(Meta.TRACK_NAME)) {
-//		// good!
-//	}
-//	if (mine.containsKey(Meta.PORT)) {
-////		port = mine.getInt(Meta.PORT);
-//	}
-//	if (mine.containsKey(Meta.CHANNEL)) {
-////		ch = mine.getInt(Meta.CHANNEL);
-//	}
-//}
-//}
-//public void remove(MidiTrack t) {
-//	tracks.remove(t);
-//	MainFrame.update(this);
-//}
-
-//public void createTrack() {
-//	// TACO or Fluid or Automation (or Crave/Etc) (separate channel?)
-//	// 1. gather info from user
-
-//	// 2. create T
-//	// 3. post MetaInfo
-//	// 4. post TrackInfo
-//	// 5. update Gui
-//}
-//public void accept(NewTrack form) {
-//	TrackType type = TrackType.values()[form.tabs.getSelectedIndex()];
-//	switch(type) {
-//		case Drum -> createDrum(form);
-//		case Synth -> createSynth(form);
-//		case Chord -> addChords(form.chords);
-//		case FX -> createChannel(form);
-//	}
-//}
-//
-//private void createDrum(NewTrack form) {
-//	RegisteredDrums type = RegisteredDrums.values()[form.drumOut.getSelectedIndex()];
-//	RTLogger.log(this, "you want a " + type.name());
-//	//	jackclient.registerPort("left", AUDIO, JackPortIsOutput);
-//}
-//private void createSynth(NewTrack form) {
-//	SynthRack.RegisteredSynths type = SynthRack.RegisteredSynths.values()[form.synthType.getSelectedIndex()];
-//	boolean join = form.synthOut.isEnabled();
-//	ZoneMidi target = form.synthOut.getSelectedValue();
-//
-//	if (join)
-//		RTLogger.log(this, "you want to join " + target.getName());
-//	else {// TODO extern handling
-//		RTLogger.log(this, "you want a " + type.name());
-//		if (type == SynthRack.RegisteredSynths.Fluid) {
-//			new MakeItRain();
-//		}
-//	}
-//}
-//private void createChannel(NewTrack form) {
-//	Channel ch = form.fxChannel.getSelectedValue();
-//
-//	RTLogger.log(this, "you want automation on " + ch.getName());
-//
-//}
-//
-//private void addChords(File f) {
-//	if (f == null)
-//		return;
-//	chords.load(f);
-//	JudahZone.getOverview().refill();
-//}
-//
 

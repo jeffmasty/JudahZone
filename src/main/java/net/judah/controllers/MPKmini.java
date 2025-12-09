@@ -16,6 +16,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 import lombok.Getter;
+import net.judah.JudahZone;
 import net.judah.api.ZoneMidi;
 import net.judah.fx.Delay;
 import net.judah.gui.MainFrame;
@@ -28,6 +29,8 @@ import net.judah.midi.Midi;
 import net.judah.midi.Panic;
 import net.judah.mixer.Channel;
 import net.judah.sampler.Sample;
+import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.synth.taco.TacoTruck;
 import net.judah.util.Constants;
@@ -133,8 +136,11 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 		else if (data1 == PRIMARY_CC.get(2) && data2 > 0 && !flooding())
 			nextMidiBtn(); // focus MidiGui or...
 		else if (data1 == PRIMARY_CC.get(3) && data2 > 0 && !flooding()) {
-			if (MainFrame.getKnobMode() == Track) // focus TRACKS
-				getSeq().getTracks().next(true);
+			if (MainFrame.getKnobMode() == Track) {// focus TRACKS {
+				MidiTrack next = getSeq().getTracks().next(true);
+				if (next instanceof NoteTrack notes)
+					MainFrame.setFocus(JudahZone.getSeq().getKnobs(notes));
+			}
 			else
 				MainFrame.setFocus(Track);
 		}
@@ -194,11 +200,11 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 	private boolean joystickL(int data2) { // delay
 		Delay d = ((Channel)midiOut).getDelay();
 		d.setActive(data2 > 4);
-		if (data2 <= 4)
-			return true;
-		if (d.getDelay() < Delay.DEFAULT_TIME)
-			d.setDelayTime(Delay.DEFAULT_TIME);
-		d.setFeedback(Constants.midiToFloat(data2));
+		if (data2 > 4) {
+			if (d.getDelay() < Delay.DEFAULT_TIME)
+				d.setDelayTime(Delay.DEFAULT_TIME);
+			d.setFeedback(Constants.midiToFloat(data2));
+		}
 		MainFrame.update(midiOut);
 		return true;
 	}

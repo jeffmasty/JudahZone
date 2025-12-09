@@ -8,7 +8,7 @@ import net.judah.midi.Midi;
 
 @RequiredArgsConstructor
 public
-enum CC {
+enum ControlChange {
 	// BANK(0),
 	MODWHEEL(1, "Open the filter"),
 	// BREATH(2),
@@ -69,19 +69,19 @@ enum CC {
 	public final boolean toggle;
 
 
-	CC(int val, String d) {
+	ControlChange(int val, String d) {
 		this(val, d, false);
 	}
 
-	public static CC find(MidiMessage m) {
+	public static ControlChange find(MidiMessage m) {
 		if (Midi.isCC(m))
 			return find(((ShortMessage)m).getData1());
 		return null;
 	}
 
 	/** Handled by this system or null */
-	public static CC find(int data1) {
-		for (CC cc : values())
+	public static ControlChange find(int data1) {
+		for (ControlChange cc : values())
 			if (cc.data1 == data1)
 				return cc;
 		return null;
@@ -92,7 +92,7 @@ enum CC {
 	}
 
 	/** ordered by function/popularity */
-	public static final CC[] ORDERED = {VOLUME, PAN,
+	public static final ControlChange[] ORDERED = {VOLUME, PAN,
 			REVERB, ROOM, ECHO, ECHO_FB, CHORUS, RATE, DEPTH, PHASER, TREMELO, DRIVE, ZIP,
 			LFO, GLIDE, PEDAL, MODWHEEL, BRIGHT, DETUNE, LOCUT, HZ, ATTACK, DECAY, SUSTAIN, RELEASE,
 			RESET, STOP, PANIC};

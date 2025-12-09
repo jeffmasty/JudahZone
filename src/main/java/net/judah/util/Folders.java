@@ -25,9 +25,9 @@ public class Folders {
 	@Getter static final File SheetMusic = new File(LIVE, "sheets");
 	@Getter static final File ChordPro = new File(LIVE, "chords");
 	@Getter static final File Loops = new File(LIVE, "loops");
+	@Getter static final File Midi = new File(LIVE, "midi");
 	@Getter static final File PresetsFile = new File(LIVE, "presets.zone");
 	@Getter static final File SynthPresets = new File(LIVE, "synths.zone");
-
 	@Getter static final File ImportDrums = new File(HOME, "/tracks/beatbuddy/");
 	@Getter static final File ImportMidi = new File(HOME, "/tracks/midi/");
 
@@ -45,11 +45,6 @@ public class Folders {
 	}
 
 	static HashMap<File, File> memory = new HashMap<File, File>();
-	// static File memory = new File(System.getProperty("user.dir"));
-
-//	public static void setCurrentDir(File folder) {
-//		memory = folder;
-//	}
 
 	public static File choose(int selectionMode, final String extension, final String description) {
 		return choose(selectionMode, extension, description, new File(System.getProperty("user.home")));

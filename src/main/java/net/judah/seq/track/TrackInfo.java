@@ -20,14 +20,18 @@ public class TrackInfo {
 	private String program;
 	@JsonInclude(Include.NON_NULL)
 	private ArpInfo arp; // mode, octaves
+	@JsonInclude(Include.NON_NULL)
+	private String channel;
 
 	public TrackInfo(MidiTrack t) {
 		track = t.getName();
 		file = t.getFile() == null ? null : t.getFile().getName();
 		cue = t.getCue();
-		gate = t.getGate();
 		if (t instanceof NoteTrack notes)
-			 program = notes.getProgram();
+			gate = notes.getGate();
+		program = t.getProgram();
+		if (t instanceof ChannelTrack ch)
+			channel = ch.getChannel().getName();
 	}
 
 }

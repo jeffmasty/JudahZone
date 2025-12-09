@@ -33,7 +33,6 @@ public class DJJefe extends JPanel implements TimeListener {
 	/** Any channel available to LFO knobs, not necessarily a main mixer fader */
 	@Getter private final ArrayList<Channel> all = new ArrayList<>();
 	private final ArrayList<MixWidget> faders = new ArrayList<MixWidget>();
-//	private final Zone sources;
 	@Getter private final Mains mains;
 	private final int size;
 	private int idx;

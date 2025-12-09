@@ -15,13 +15,13 @@ public class ChordPlay extends JButton implements ChordListener, Pastels {
 	public static final String FANCY = " " + Key.SHARP + " " + Key.FLAT + " ";
 
 	private static final HashSet<ChordPlay> instances = new HashSet<>();
-	private static ChordTrack chords;
+	private static Chords chords;
 
-	public ChordPlay(ChordTrack track) {
+	public ChordPlay(Chords track) {
 		this(FANCY, track);
 	}
 
-	public ChordPlay(String lbl, ChordTrack track) {
+	public ChordPlay(String lbl, Chords track) {
 		super(lbl);
 		ChordPlay.chords = track;
 		setOpaque(true);

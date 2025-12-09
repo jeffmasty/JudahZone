@@ -1,43 +1,45 @@
 package net.judah.gui.widgets;
 
-import java.util.HashSet;
-
-import net.judah.drumkit.DrumKit;
 import net.judah.fx.Gain;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
-import net.judah.seq.track.DrumTrack;
+import net.judah.mixer.Channel;
+import net.judah.seq.track.MidiTrack;
 
 public class TrackGain extends Slider {
 
-	private static final HashSet<TrackGain> instances = new HashSet<TrackGain>();
+	Channel ch;
 
-	DrumKit kit;
-
-	public TrackGain(DrumKit kit) {
+	public TrackGain(MidiTrack track) {
 		super(null);
-		this.kit = kit;
-		instances.add(this);
+		this.ch = track.getChannel();
 		Gui.resize(this, Size.MODE_SIZE);
-		setValue(kit.getVolume());
+		setValue(ch.getVolume());
 		addChangeListener(e->{
-			if (kit.getVolume() != getValue()) {
-				kit.getGain().set(Gain.VOLUME, getValue());
-				MainFrame.update(kit);
-			}
-		});
+			if (ch.getVolume() != getValue()) {
+				ch.getGain().set(Gain.VOLUME, getValue());
+				MainFrame.update(ch);
+//				MainFrame.update(new TrackUpdate(Update.GAIN, track));
+			}});
 	}
 
-	public TrackGain(DrumTrack t) {
-		this(t.getKit());
+	public TrackGain(Channel ch) {
+		super(null);
+		this.ch = ch;
+		Gui.resize(this, Size.MODE_SIZE);
+		setValue(ch.getVolume());
+		addChangeListener(e->{
+			if (ch.getVolume() != getValue()) {
+				ch.getGain().set(Gain.VOLUME, getValue());
+				MainFrame.update(ch);
+//				MainFrame.update(new TrackUpdate(Update.GAIN, track));
+			}});
 	}
 
-	public static void update(DrumKit k) {
-		for (TrackGain g : instances)
-			if (g.kit == k)
-				if (g.getValue() != k.getVolume())
-					g.setValue(k.getVolume());
+	public void update() {
+		if (getValue() != ch.getVolume())
+			setValue(ch.getVolume());
 	}
 
 }

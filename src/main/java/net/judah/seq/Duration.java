@@ -5,6 +5,7 @@ import static net.judah.JudahZone.getClock;
 import java.awt.Dimension;
 import java.util.ArrayList;
 
+import javax.sound.midi.MidiEvent;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -24,7 +25,7 @@ public class Duration { // TODO TimeListener TimeSig
 	private final long on;
 	private int stpz;
 	private long durr, off;
-	private MidiPair init;
+	private MidiNote init;
 	private final int measure = getClock().getSteps();
 	private long quanta;
 
@@ -50,7 +51,7 @@ public class Duration { // TODO TimeListener TimeSig
 			return;
 		}
 		init = view.getSelected().get(0);
-		on = init.getOn().getTick();
+		on = init.getTick();
 		quanta = view.track.getStepTicks();
 		off = init.getOff() == null ? Integer.MAX_VALUE : init.getOff().getTick();
 		compute();
@@ -98,9 +99,9 @@ public class Duration { // TODO TimeListener TimeSig
 
 	private void ok() {
 		ModalDialog.getInstance().setVisible(false);
-		Edit e = new Edit(Type.LENGTH, new ArrayList<MidiPair>(view.selected));
+		Edit e = new Edit(Type.LENGTH, new ArrayList<MidiEvent>(view.selected));
 		e.setDestination(new Prototype(0, Long.parseLong(ticks.getText())));
-		view.push(e);
+		view.track.getEditor().push(e);
 	}
 
 	void update(Input type, String txt) {

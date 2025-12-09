@@ -45,6 +45,13 @@ public class AudioTools  {
 	        out.put(i, out.get() + in.get());
 	}
 
+	public static void mix(float[] in, float gain, FloatBuffer out) {
+		out.rewind();
+		int capacity = out.capacity();
+		for (int i = 0; i < capacity; i++)
+			out.put(i, out.get() + in[i] * gain);
+	}
+
 	public static void mix(FloatBuffer in, float[] out) {
 		in.rewind();
 		for (int i = 0; i < out.length; i++)
@@ -76,6 +83,12 @@ public class AudioTools  {
 		out.rewind();
 		for (int i = 0; i < in.length; i++)
 			out.put(in[i] * gain);
+	}
+
+	public static void replace(float[] in, FloatBuffer out) {
+		out.rewind();
+		for (int i = 0; i < in.length; i++)
+			out.put(in[i]);
 	}
 
 	public static void gain(FloatBuffer buffer, float gain) {

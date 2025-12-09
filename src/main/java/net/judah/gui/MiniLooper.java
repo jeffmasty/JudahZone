@@ -10,7 +10,6 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.border.LineBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -45,8 +44,8 @@ public class MiniLooper extends JPanel implements TimeListener {
             }});
 		tempoLbl.setFont(Gui.BOLD);
 
-        setBorder(new LineBorder(Pastels.MY_GRAY, 1));
-        setLayout(new GridLayout(2, 1));
+        // setBorder(new LineBorder(Pastels.MY_GRAY, 1));
+        setLayout(new GridLayout(2, 1, 0, 0));
         Gui.resize(loops.getLoopWidget().getSlider(), TEMPO_SLIDER);
         add(Gui.resize(loops.getLoopWidget(), LOOP_SLIDER));
         JPanel btm = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 0));

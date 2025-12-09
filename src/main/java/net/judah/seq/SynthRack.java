@@ -15,6 +15,7 @@ import net.judah.api.ZoneMidi;
 import net.judah.drumkit.DrumMachine;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
+import net.judah.midi.Actives;
 import net.judah.midi.MidiInstrument;
 import net.judah.mixer.LineIn;
 import net.judah.omni.Icons;
@@ -100,8 +101,9 @@ public class SynthRack {
 				truck.getTracks().add(taco);
 			}
 			else {
-				((MidiInstrument)engine).getTracks().add(new PianoTrack(engine.getName(), engine, engine.getTracks().size()));
-
+				Actives a = new Actives(engine, engine.getTracks().size());
+				((MidiInstrument)engine).getTracks().add(new PianoTrack(engine.getName(), a));
+				//((MidiInstrument)engine).getTracks().add(new PianoTrack(engine.getName(), engine, engine.getTracks().size()));
 			}
 			engine.getTracks().getLast().setPermanent(true);
 			RTLogger.debug("registered " + engine.getClass().getSimpleName() + " " + engine.getName());

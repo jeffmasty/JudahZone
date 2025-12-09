@@ -20,19 +20,13 @@ import net.judah.midi.Midi;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiConstants;
-import net.judah.seq.MidiPair;
 import net.judah.seq.automation.Automation.AutoBox;
 import net.judah.seq.track.MidiTrack;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 class ProgramEdit extends AutoBox implements MidiConstants {
-	private static ProgramEdit instance;
-	public static ProgramEdit getInstance() {
-		if (instance == null)
-			instance = new ProgramEdit();
-		return instance;
-	}
+
 	private MidiEvent existing;
 
 	private final Btn update = new Btn("Publish", e->publish());
@@ -41,7 +35,7 @@ class ProgramEdit extends AutoBox implements MidiConstants {
 	private final JList<String> list = new JList<String>();
 	private final Tick tick = new Tick();
 
-	private ProgramEdit() {
+	protected ProgramEdit() {
 		super(BoxLayout.PAGE_AXIS);
 
 		Box btns = new Box(BoxLayout.LINE_AXIS);
@@ -67,7 +61,6 @@ class ProgramEdit extends AutoBox implements MidiConstants {
 		inner.add(tick);
 		inner.add(Box.createVerticalStrut(1));
 		add(Gui.wrap(inner));
-
 	}
 
 	protected ProgramEdit edit(MidiEvent e) {
@@ -100,8 +93,8 @@ class ProgramEdit extends AutoBox implements MidiConstants {
 	private void publish() {
 		try {
 			MidiEvent target = new MidiEvent(build(), tick.getTick());
-			Edit create = new Edit(Type.NEW, new MidiPair(target, null));
-			getMusician(track).push(create);
+			Edit create = new Edit(Type.NEW, target);
+			track.getEditor().push(create);
 			delete.setEnabled(true);
 			existing = target;
 
@@ -120,8 +113,8 @@ class ProgramEdit extends AutoBox implements MidiConstants {
 
 	private void delete() {
 		if (existing == null) return;
-		Edit edit = new Edit(Type.DEL, new MidiPair(existing, null));
-		getMusician(track).push(edit);
+		Edit edit = new Edit(Type.DEL, existing);
+		track.getEditor().push(edit);
 		delete.setEnabled(false);
 	}
 	private ShortMessage build() throws InvalidMidiDataException {

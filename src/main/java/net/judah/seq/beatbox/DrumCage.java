@@ -18,7 +18,7 @@ public class DrumCage {
 
 	public void update() {
 		menu.update();
-		grid.update();
+		grid.repaint();
 	}
 
 }

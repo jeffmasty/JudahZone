@@ -34,6 +34,7 @@ import net.judah.gui.widgets.Integers;
 import net.judah.gui.widgets.ModalDialog;
 import net.judah.midi.MidiInstrument;
 import net.judah.mixer.Channel;
+import net.judah.mixer.Mains;
 import net.judah.omni.Icons;
 import net.judah.seq.SynthRack.RegisteredDrums;
 import net.judah.seq.SynthRack.RegisteredSynths;
@@ -44,12 +45,12 @@ import net.judah.synth.taco.TacoTruck;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
-public class NewTrack extends JPanel {
+public class AddTrack extends JPanel {
 	public static final Dimension SIZE = new Dimension(300, 300);
 	private static final Dimension MIDIOUT = new Dimension(150, 3 * Size.STD_HEIGHT);
 	private static final Dimension AUTOMATION = new Dimension(200, 175);
 
-	enum TrackType {Drum, Synth, Chord, FX}
+	enum TrackType {Synth, Chord, FX} // Drum,
 
 	private final Seq seq;
 	final JTabbedPane tabs = new JTabbedPane();
@@ -74,13 +75,13 @@ public class NewTrack extends JPanel {
 	final JButton cancel = new Btn(" Cancel ", e->ModalDialog.getInstance().dispose());
 	final JButton ok = new Btn("  OK  ", e-> ok()); // import track into Seq
 
-	public NewTrack(Seq seq) {
+	public AddTrack(Seq seq) {
 		this.seq = seq;
 		setName("New Track");
 
 		ArrayList<Channel> automation = new ArrayList<Channel>();
 		JudahZone.getMixer().getAll().forEach(channel-> {
-			if (channel instanceof ZoneMidi == false && channel instanceof DrumKit == false)
+			if (channel instanceof ZoneMidi == false && channel instanceof DrumKit == false && channel instanceof Mains == false)
 				automation.add(channel);});
 		fxChannel = new JList<Channel>(automation.toArray(new Channel[0]));
 
@@ -118,10 +119,11 @@ public class NewTrack extends JPanel {
 		chord.add(Gui.wrap(openFile, new JLabel("  "), chordFile));
 		chord.add(chordPreview);
 
-		// tabs.add("Effects", centered(fx)); // next release
-		// tabs.add("Drum", centered(drum)); // TODO
-		tabs.add("Chord", centered(chord));
 		tabs.add("Synth", centered(synth));
+		tabs.add("Chord", centered(chord));
+		tabs.add("Effects", centered(fx));
+		// tabs.add("Drum", centered(drum)); // TODO
+		tabs.setSelectedIndex(0);
 
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		add(tabs);
@@ -129,8 +131,6 @@ public class NewTrack extends JPanel {
 		btns.add(ok); btns.add(cancel);
 		add(btns);
 		add(Box.createVerticalStrut(Size.STD_HEIGHT));
-
-		tabs.setSelectedIndex(1);
 		new ModalDialog(this, SIZE);
 
 	}
@@ -146,14 +146,12 @@ public class NewTrack extends JPanel {
 		chordFile.setText(chords.getName());
 	}
 
-
 	private JPanel centered(Component inside) {
 		JPanel result = new JPanel(new BorderLayout());
 		result.add(new JLabel(" "), BorderLayout.PAGE_START);
 		result.add(inside, BorderLayout.CENTER);
 		return result;
 	}
-
 
 	private void refillSynth() {
 		DefaultListModel<ZoneMidi> model = new DefaultListModel<>();
@@ -195,18 +193,13 @@ public class NewTrack extends JPanel {
 	private void ok() {
 		TrackType type = TrackType.values()[tabs.getSelectedIndex()];
 		switch(type) {
-			case Drum -> createDrum();
-			case Synth -> createSynth();
-			case Chord -> addChords();
-			case FX -> createChannel();
+			case Synth : createSynth(); break;
+			case Chord : addChords(); break;
+ 			case FX : createChannel(); break;
 		}
 		ModalDialog.getInstance().dispose();
 	}
 
-	private void createDrum() {
-		// RegisteredDrums type = RegisteredDrums.values()[drumOut.getSelectedIndex()];
-		//	jackclient.registerPort("left", AUDIO, JackPortIsOutput);
-	}
 	private void createSynth() {
 		RegisteredSynths type = RegisteredSynths.values()[synthType.getSelectedIndex()];
 		boolean join = synthOut.isEnabled();
@@ -231,7 +224,8 @@ public class NewTrack extends JPanel {
 
 	private void createChannel() {
 		Channel ch = fxChannel.getSelectedValue();
-		RTLogger.log(this, "you want automation on " + ch.getName());
+		if (ch != null)
+			seq.addTrack(ch, ch.getName());
 	}
 
 	private void addChords() {
@@ -240,6 +234,11 @@ public class NewTrack extends JPanel {
 		JudahZone.getChords().load(chords);
 		JudahZone.getOverview().refill();
 	}
+
+//	private void createDrum() {
+		// RegisteredDrums type = RegisteredDrums.values()[drumOut.getSelectedIndex()];
+		//	jackclient.registerPort("left", AUDIO, JackPortIsOutput);
+//	}
 
 
 }

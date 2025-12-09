@@ -2,16 +2,12 @@ package net.judah.seq.piano;
 
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
-import java.util.Enumeration;
 
-import javax.swing.AbstractButton;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JMenu;
 import javax.swing.JPanel;
-import javax.swing.JRadioButtonMenuItem;
 
 import net.judah.JudahZone;
 import net.judah.gui.Actionable;
@@ -21,33 +17,44 @@ import net.judah.gui.Size;
 import net.judah.gui.settable.ModeCombo;
 import net.judah.gui.widgets.Arrow;
 import net.judah.gui.widgets.GateCombo;
-import net.judah.gui.widgets.TrackVol;
+import net.judah.gui.widgets.Integers;
 import net.judah.seq.Duration;
 import net.judah.seq.Transpose;
-import net.judah.seq.arp.Arp;
+import net.judah.seq.track.Computer.Update;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.TrackMenu;
 
 public class PianoMenu extends TrackMenu implements Floating {
 
-	private final ButtonGroup mode = new ButtonGroup();
+	// private final ButtonGroup mode = new ButtonGroup();
+	private final GateCombo gate;
+	private final ModeCombo mode;
+	private final JComboBox<Integer> range = new JComboBox<Integer>(Integers.generate(0, 88));
 
 	public PianoMenu(PianoView view, Piano grid) {
 		super(grid);
 		PianoTrack t = (PianoTrack) track;
+		gate = new GateCombo(t);
+		mode = new ModeCombo(t);
 		// additional non-drum stuff
-		add(new ModeCombo(t));
+		add(new JLabel(" Arp"));
+		add(mode);
+		add(new JLabel("Span"));
+
+		range.setSelectedItem(t.getRange());
+		add(Gui.resize(range, Size.MICRO));
+
 		zoomMenu(view);
-		arpMenu(file, t);
+		// arpMenu(file, t);
 		tools.add(new Actionable("Remap...", e->new Transpose(grid)));
 		file.add(new Actionable("Rename", e->JudahZone.getSeq().rename(t)));
 		file.add(new Actionable("Delete", e->JudahZone.getSeq().confirmDelete(t)));
 		edit.add(new Actionable("Duration...", e->new Duration(grid)));
 		add(Box.createHorizontalStrut(4));
-		add(new JLabel("Velocity "));
-		add(new TrackVol(track));
+		add(new JLabel("Amp "));
+		add(velocity);
 		add(new JLabel(" Gate"));
-		add(Gui.resize(new GateCombo(track), Size.SMALLER_COMBO));
+		add(Gui.resize(gate, Size.SMALLER_COMBO));
 	}
 
 	private void zoomMenu(PianoView view) {
@@ -63,33 +70,29 @@ public class PianoMenu extends TrackMenu implements Floating {
 		add(zoom);
 	}
 
-	private void arpMenu(JMenu file, PianoTrack t) {
-		JMenu modes = new JMenu("Arp");
-		for (Arp m : Arp.values()) {
-			JRadioButtonMenuItem item = new JRadioButtonMenuItem(m.name());
-			if (t.getArp() == m)
-				item.setSelected(true);
-			modes.add(item);
-			mode.add(item);
-			item.addActionListener(e-> t.setArp(m));
-		}
-		file.add(modes);
-	}
+//	private void arpMenu(JMenu file, PianoTrack t) {
+//		JMenu modes = new JMenu("Arp");
+//		for (Arp m : Arp.values()) {
+//			JRadioButtonMenuItem item = new JRadioButtonMenuItem(m.name());
+//			if (t.getArp() == m)
+//				item.setSelected(true);
+//			modes.add(item);
+//			mode.add(item);
+//			item.addActionListener(e-> t.setArp(m));
+//		}
+//		file.add(modes);
+//	}
 
-	public void updateMode() {
-		int i = 0;
-		Enumeration<AbstractButton> it = mode.getElements();
-		PianoTrack t = (PianoTrack)track;
-		while (it.hasMoreElements())
-			if (t.getArp().ordinal() == i++)
-				it.nextElement().setSelected(true);
-			else
-				it.nextElement();
-	}
-
-	@Override public void update() {
-		updateMode();
-		updateCue();
+	@Override
+	public void update(Update type) {
+		if (type == Update.ARP)
+			mode.update();
+		else if (type == Update.GATE)
+			gate.update();
+		else if (type == Update.RANGE)
+			range.setSelectedItem(((PianoTrack)track).getRange());
+		else
+			super.update(type);
 	}
 
 	@Override

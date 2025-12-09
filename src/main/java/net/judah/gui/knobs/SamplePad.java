@@ -16,7 +16,6 @@ import net.judah.api.PlayAudio.Type;
 import net.judah.fx.Gain;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
-import net.judah.gui.widgets.FxButton;
 import net.judah.gui.widgets.Knob;
 import net.judah.sampler.Sample;
 
@@ -31,20 +30,20 @@ public class SamplePad extends Gui.Opaque {
 		Color color = s.getType() == Type.ONE_SHOT ? Pastels.MY_GRAY : Pastels.BLUE;
 		addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) {
-				boolean on = !s.isPlaying();
-				JudahZone.getSampler().play(s, on);
+				boolean on = !sample.isPlaying();
+				JudahZone.getSampler().play(sample, on);
 			}});
 		setBorder(BorderFactory.createSoftBevelBorder(BevelBorder.RAISED, color, color.darker()));
 		setLayout(new GridLayout(0, 1));
 		btns = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-		name = new JLabel(s.toString(), JLabel.CENTER);
+		name = new JLabel(sample.toString(), JLabel.CENTER);
 		name.setOpaque(true);
 		update();
 		vol.addListener(e->sample.getGain().set(Gain.VOLUME, vol.getValue()));
 
 		add(name);
 		btns.add(vol);
-		btns.add(new FxButton(s));
+		//btns.add(new FxButton(s));
 		add(btns);
 		parent.add(this);
 	}

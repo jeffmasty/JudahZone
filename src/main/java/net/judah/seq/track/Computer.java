@@ -1,17 +1,32 @@
 package net.judah.seq.track;
 
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.Track;
+
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
-import net.judah.gui.widgets.CycleCombo;
 import net.judah.midi.JudahClock;
+import net.judah.seq.MidiTools;
 import net.judah.song.Sched;
 
 @Getter
-public abstract class Computer {
+public class Computer {
+
+	public static enum Update {
+		PLAY, CAPTURE, CURRENT, CYCLE, AMP, ARP, PROGRAM,
+		CUE, GATE, FILE, REFILL, RANGE, LAUNCH, REZ, EDIT
+	}
+	public static record TrackUpdate(Update type, Computer track) {}
 
 	protected JudahClock clock = JudahZone.getClock();
+
+	/** Sequence (for save) */
+    protected final Track t;
+    protected int resolution;
+	protected long recent; // sequencer sweep
+
 	@Setter protected long barTicks; // ticks in resolution of timeSig
 	protected Sched state = new Sched(); // assigned when Song Scene changes
 	protected int current; 	// current measure/bar (not frame)
@@ -20,23 +35,52 @@ public abstract class Computer {
 	protected long left; 	// left bar's computed start tick
 	protected long right; 	// right bar's computed start tick
 
+
+	public Computer() throws InvalidMidiDataException {
+		t = new MidiFile().createTrack();
+		setResolution(MidiFile.DEFAULT_RESOLUTION);
+	}
+
 	/** end of the last note */
-	public abstract int bars();
 	public final int getFrames() { return (int) Math.ceil(bars() / 2f); }
 	public final boolean isActive() { return state.active; }
     public Cycle getCycle() { return state.cycle; }
     public int getLaunch() { return state.launch; }
     public float getAmp() { return state.amp; }
 	public int getFrame() {return current / 2;}
-	protected abstract void setCurrent(int bar);
-//	protected void flush() {} // note-ons PianoTrack only
+    public long getWindow() { return 2 * barTicks; }
+	public long getStepTicks() { return resolution / clock.getSubdivision(); }
+	/**@return number of bars with notes recorded into them */
+	public final int bars() { return MidiTools.measureCount(t.ticks(), barTicks); }
+
+    public void setResolution(int rez) { // TODO
+		if (rez < 2 || rez > 2048)
+			throw new NumberFormatException("out of bounds");
+		float factor = rez / (float)getResolution();
+		for (int i = t.size() - 1; i >= 0; i--) {
+			t.get(i).setTick((long) (t.get(i).getTick() * factor));
+		}
+		resolution = rez;
+		setBarTicks(clock.getTimeSig().beats * resolution);
+		compute();
+		MainFrame.update(new TrackUpdate(Update.REZ, this));
+    }
+
+	protected void setCurrent(int change) {
+		if (current == change) return;
+		if (change < 0)
+			change = clock.isEven() ? 0 : 1;
+		recent = change * barTicks + (recent - current * barTicks);
+		current = change;
+		compute();
+		MainFrame.update(new TrackUpdate(Update.CURRENT, this));
+	}
 
 	public void setCycle(Cycle x) {
 		state.cycle = x;
 		count = clock.isEven() ? 0 : 1;
 		compute();
-		CycleCombo.update(this);
-		MainFrame.update(this);
+		MainFrame.update(new TrackUpdate(Update.CYCLE, this));
 	}
 
 	protected void reset() {
@@ -148,13 +192,12 @@ public abstract class Computer {
 	public void setLaunch(int bar) {
 		state.launch = bar;
 		offset = 0;
-		MainFrame.update(this);
+		MainFrame.update(new TrackUpdate(Update.LAUNCH, this));
 	}
 
 	public void toFrame(int frame) {
 		if (current / 2 == frame)
 			return;
-//		flush();
 		offset = frame - count / 2 - state.launch / 2;
 		if (offset >= getFrames())
 			offset -= getFrames();

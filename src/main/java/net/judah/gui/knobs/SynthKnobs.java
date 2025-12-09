@@ -36,6 +36,7 @@ import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.Slider;
 import net.judah.omni.Icons;
 import net.judah.omni.Threads;
+import net.judah.seq.track.Computer.Update;
 import net.judah.synth.taco.Adsr;
 import net.judah.synth.taco.MonoFilter;
 import net.judah.synth.taco.Shape;
@@ -59,7 +60,7 @@ public class SynthKnobs extends KnobPanel {
 	@Getter private final TacoSynth synth;
 	@Getter private final KnobMode knobMode = KnobMode.Taco;
 	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.CENTER, 1, 1));
-	private final Program presets;
+	private final Program program;
 	private final DoubleSlider filter;
 	private final Knob hcReso = new Knob(KNOB_C);
 	private final Knob lcReso = new Knob(KNOB_C);
@@ -80,7 +81,7 @@ public class SynthKnobs extends KnobPanel {
 	public SynthKnobs(TacoSynth zynth) {
 		synth = zynth;
 		adsr = synth.getAdsr();
-		presets = new Program(synth);
+		program = new Program(synth);
 
 		for (int i = 0; i < DCO_COUNT; i++) {
 			JComboBox<Shape> combo = new CenteredCombo<>();
@@ -167,7 +168,7 @@ public class SynthKnobs extends KnobPanel {
 		add(Box.createVerticalStrut(8));
 		add(filters);
 
-		title.add(presets);
+		title.add(program);
 		title.add(new Btn(Icons.SAVE, e->save()));
 		title.add(mod);
 		title.add(new JLabel("Bend"));
@@ -237,7 +238,7 @@ public class SynthKnobs extends KnobPanel {
 			s.setValue((int)(adsr.getSustainGain() * 100));
 		if (r.getValue() != adsr.getReleaseTime() / rFactor)
 			r.setValue(adsr.getReleaseTime() / rFactor);
-
+		program.update();
 		conformDetune();
 	}
 
@@ -283,7 +284,7 @@ public class SynthKnobs extends KnobPanel {
 		if (name == null || name.length() == 0)
 			return;
 		JudahZone.getSynthPresets().save(synth, name);
-		presets.refill(synth.getPatches(), name);
+		program.refill(synth.getPatches(), name);
 		synth.progChange(name);
 	}
 
@@ -305,8 +306,8 @@ public class SynthKnobs extends KnobPanel {
 				adsr.setReleaseTime(rFactor * data2);
 				break;
 			case 4:
-				int focus = Constants.ratio(data2, presets.getItemCount() - 1);
-				presets.midiShow(synth.getPatches()[focus]);
+				int focus = Constants.ratio(data2, program.getItemCount() - 1);
+				program.midiShow(synth.getPatches()[focus]);
 				//	Threads.execute(() -> presets.setSelectedIndex(
 				//			Constants.ratio(data2, presets.getItemCount() - 1)));
 				break;
@@ -344,6 +345,11 @@ public class SynthKnobs extends KnobPanel {
 		freqMode = !freqMode;
 		MainFrame.update(this); // TODO freqMode feedback in update()
 
+	}
+
+	public void update(Update type) {
+		if (Update.PROGRAM == type)
+			program.update();
 	}
 
 }

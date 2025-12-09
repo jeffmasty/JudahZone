@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
@@ -18,16 +17,15 @@ import net.judah.JudahZone;
 import net.judah.api.Key;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
-import net.judah.api.ZoneMidi;
 import net.judah.gui.MainFrame;
-import net.judah.gui.TabZone;
 import net.judah.midi.Actives;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
+import net.judah.midi.MidiInstrument;
 import net.judah.midi.Panic;
+import net.judah.mixer.Channel;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
-import net.judah.seq.MidiPair;
 import net.judah.seq.Poly;
 import net.judah.seq.arp.Algo;
 import net.judah.seq.arp.Arp;
@@ -42,10 +40,10 @@ import net.judah.seq.arp.RND;
 import net.judah.seq.arp.Racman;
 import net.judah.seq.arp.Up;
 import net.judah.seq.arp.UpDown;
-import net.judah.seq.automation.CC;
+import net.judah.seq.automation.ControlChange;
 import net.judah.seq.chords.Chord;
 import net.judah.seq.chords.ChordListener;
-import net.judah.seq.chords.ChordTrack;
+import net.judah.seq.chords.Chords;
 import net.judah.seq.piano.Pedal;
 import net.judah.song.Sched;
 
@@ -56,18 +54,18 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 	public static int MONOPHONIC = 1;
 
 	@Getter private ArpInfo info = new ArpInfo();
-	private final ChordTrack chords = JudahZone.getChords();
+	private final Chords chords = JudahZone.getChords();
 	private final Deltas deltas = new Deltas();
 	private final Poly workArea = new Poly();
 	private Algo algo = new Echo();
 	private final ArrayList<MidiEvent> chads = new ArrayList<>();
 	@Getter private final Pedal pedal = new Pedal(this);
 
-	public PianoTrack(String name, ZoneMidi midiOut, int ch) throws InvalidMidiDataException {
-		super(name, midiOut, ch);
-		chords.addListener(this);
-		info = getState().getArp();
-	}
+//	public PianoTrack(String name, ZoneMidi midiOut, int ch) throws InvalidMidiDataException {
+//		super(name, midiOut, ch);
+//		chords.addListener(this);
+//		info = getState().getArp();
+//	}
 
 	public PianoTrack(String name, Actives actives) throws InvalidMidiDataException {
 		super(name, actives);
@@ -76,28 +74,38 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 
 	// temporary import midi view
 	public PianoTrack(String name, NoteTrack source) throws InvalidMidiDataException {
-		super(name, source.getMidiOut(), source.getCh()); // , source.getResolution());
+		super(name, source.getActives()); // , source.getResolution());
 	}
 
-	@Override
-	protected void cycle() {
+	@Override public Channel getChannel() {
+		return (MidiInstrument)midiOut;
+	}
+
+	@Override protected void cycle() {
 		flush();
 		super.cycle();
 	}
 
-	// filter PEDAL HOLD CC
-	@Override public void send(MidiMessage m, long ticker) {
+
+	protected boolean filterPiano(MidiMessage m) {
 		if (m instanceof ShortMessage midi) {
-			if (CC.PEDAL.matches(midi)) {
+			if (ControlChange.PEDAL.matches(midi)) {
 				pedal.setPressed(midi.getData2() > CUTOFF);
-				return;
+				return true;
 			}
-			if (CC.PANIC.matches(midi)) {
+			if (ControlChange.PANIC.matches(midi)) {
 				pedal.setPressed(false);
 				new Panic(this);
-				return;
+				return true;
 			}
 		}
+		return false;
+	}
+
+	// filter PEDAL HOLD CC
+	@Override public void send(MidiMessage m, long ticker) {
+		if (filterPiano(m))
+			return;
 		super.send(m, ticker);
 	}
 
@@ -120,8 +128,10 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 	@Override public void update(Property prop, Object value) {
 		super.update(prop, value);
 		if (prop == Property.TRANSPORT && value == JackTransportStopped && isActive()) {
-			silence(); // pedal-aware
-			// new Panic(this);
+			if (actives.isPedal())
+				silence(); // pedal-aware
+			else
+				new Panic(this);
 		}
 	}
 
@@ -140,8 +150,6 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 			if (e.getMessage() instanceof ShortMessage orig)
 				t.add(new MidiEvent(Midi.create(
 					orig.getCommand(), ch, orig.getData1(), orig.getData2()), e.getTick()));
-			else if (e.getMessage() instanceof MetaMessage m)
-				meta.incoming(m, e);
 		}
 	}
 
@@ -164,8 +172,8 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 				if (((ShortMessage)on.getMessage()).getData1() != m.getData1())
 					continue;
 				used = on;
-				TabZone.getPianist(this).push( // TODO atomic
-					new Edit(Type.NEW, new MidiPair(on, new MidiEvent(m, tick))));
+				editor.push( // TODO atomic
+					new Edit(Type.NEW, on, new MidiEvent(m, tick)));
 				break;
 			}
 			if (used != null)
@@ -191,7 +199,7 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 	public void setRange(int range) {
 		info.setRange(range);
 		if (algo != null) algo.setRange(range);
-		MainFrame.update(this);
+		MainFrame.update(new TrackUpdate(Update.RANGE, this));
 	}
 
 	@Override public void chordChange(Chord from, Chord to) {
@@ -247,7 +255,7 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 			setArp(info.algo);
 		else
 			silence();
-		if (algo != null)
+		if (algo != null) // updates?
 			algo.setRange(arp.getRange());
 	}
 
@@ -293,7 +301,7 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 			// case UP5: case DN5:
 		}
 		algo.setRange(info.range);
-		MainFrame.update(this);
+		MainFrame.update(new TrackUpdate(Update.ARP, this));
 	}
 
 
@@ -322,7 +330,7 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 		}
 
 		if (Midi.isNoteOn(msg)) {
-				algo.process(msg, chord, workArea.empty());
+			algo.process(msg, chord, workArea.empty());
 			if (!workArea.isEmpty()) {
 				deltas.add(msg, workArea);
 				out(msg, workArea);
@@ -357,11 +365,6 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 	public class ABS extends Algo implements Ignorant {
 		@Override public void process(ShortMessage m, Chord chord, Poly result) {
 			result.add(m.getData1() + chord.getRoot().ordinal()); }}
-
-	public void setName(String rename) {
-		this.name = rename;
-	}
-
 
 
 }

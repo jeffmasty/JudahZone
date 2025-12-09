@@ -20,7 +20,7 @@ import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.omni.Icons;
 import net.judah.seq.chords.ChordPlay;
-import net.judah.seq.chords.ChordTrack;
+import net.judah.seq.chords.Chords;
 import net.judah.song.Overview;
 
 public class HQ extends JPanel implements TimeListener {
@@ -34,7 +34,7 @@ public class HQ extends JPanel implements TimeListener {
 	private final JButton metro;
 	private static Btn delete;
 
-    public HQ(JudahClock clock, Looper loops, Overview songs, ChordTrack chords) {
+    public HQ(JudahClock clock, Looper loops, Overview songs, Chords chords) {
     	this.clock = clock;
     	this.looper = loops;
     	this.songs = songs;

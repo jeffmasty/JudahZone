@@ -20,7 +20,6 @@ import net.judah.midi.Midi;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiConstants;
-import net.judah.seq.MidiPair;
 import net.judah.seq.Prototype;
 import net.judah.seq.automation.Automation.AutoBox;
 import net.judah.seq.track.MidiTrack;
@@ -30,13 +29,6 @@ import net.judah.util.RTLogger;
 
 // TODO
 class PitchEdit extends AutoBox {
-
-	private static PitchEdit instance;
-	public static PitchEdit getInstance() {
-		if (instance == null)
-			instance = new PitchEdit();
-		return instance;
-	}
 
 	MidiEvent existing;
 	private Edit undo;
@@ -57,7 +49,7 @@ class PitchEdit extends AutoBox {
 	private final JTextField messages = new JTextField("5", 3);
 
 
-	PitchEdit() {
+	protected PitchEdit() {
 		super(BoxLayout.LINE_AXIS);
 
 		Box btns = new Box(BoxLayout.LINE_AXIS);
@@ -104,7 +96,6 @@ class PitchEdit extends AutoBox {
  		algo.setBackground(enable ? ENABLED : DISABLED);
 	}
 
-
 	public PitchEdit edit(MidiEvent e) {
 		existing = e;
 		// TODO populate
@@ -142,7 +133,7 @@ class PitchEdit extends AutoBox {
 			ShortMessage msg = build();
 			MidiEvent evt = new MidiEvent(msg, steps.getTick());
 			existing = evt;
-	 		undo = new Edit(Type.NEW, new MidiPair(evt, null));
+	 		undo = new Edit(Type.NEW, evt);
 	 		if (automation.isSelected()) {
 	 			// generate and add messages
 	 			int count;
@@ -158,10 +149,10 @@ class PitchEdit extends AutoBox {
 	 				int data2 = pitch.get() + Math.round(step * mod);
 	 				long ticker = steps.getTick() + Math.round(step * interval);
 	 				ShortMessage unit = new ShortMessage(Midi.PITCH_BEND, track.getCh(), data1, data2);
-	 				undo.getNotes().add(new MidiPair(new MidiEvent(unit, ticker), null));
+	 				undo.getNotes().add(new MidiEvent(unit, ticker));
 	 			}
 			}
-	 		getMusician(track).push(undo);
+	 		track.getEditor().push(undo);
 			change.setEnabled(true);
 	 		delete.setEnabled(true);
 		} catch (Throwable t) {
@@ -191,13 +182,13 @@ class PitchEdit extends AutoBox {
 		}
 		try {
 			ShortMessage target = build();
-			Edit mod = new Edit(Type.MOD, new MidiPair(existing, new MidiEvent(target, steps.getTick())));
+			Edit mod = new Edit(Type.MOD, existing, new MidiEvent(target, steps.getTick()));
 			if (automation.isSelected()) {
 				mod.setDestination(new Prototype(pitch2.get(), steps2.getTick()));
 				if (undo != null)
 					; // TODO
 			}
-			getMusician(track).push(mod);
+			track.getEditor().push(mod);
 		}
 		catch (InvalidMidiDataException ie) {
 			RTLogger.warn(this, ie);
@@ -207,18 +198,18 @@ class PitchEdit extends AutoBox {
 	void delete() {
 		if (undo != null) {
 			Edit del = new Edit(Type.DEL, undo.getNotes());
-			getMusician(track).push(del);
+			track.getEditor().push(del);
 			undo = null;
 			return;
 		}
 		if (existing == null)
 			return;
-		Edit edit = new Edit(Type.DEL, new MidiPair(existing, null));
+		Edit edit = new Edit(Type.DEL, existing, null);
 		if (automation.isSelected()) {
 			// TODO
 		}
 		delete.setEnabled(false);
-		getMusician(track).push(edit);
+		track.getEditor().push(edit);
 	}
 
 	void exe() {

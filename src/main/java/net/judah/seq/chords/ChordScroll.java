@@ -15,7 +15,7 @@ import net.judah.gui.Pastels;
 
 public class ChordScroll extends JPanel {
 
-	private static ChordTrack chords;
+	private static Chords chords;
 	private static final Preview preview = new Preview();
 	private static ArrayDeque<ChordScroll> instances = new ArrayDeque<>();
 	private final JLabel a = new JLabel("   ", JLabel.LEFT);
@@ -28,7 +28,7 @@ public class ChordScroll extends JPanel {
 	private final JLabel[] crds;
 	
 	
-	public ChordScroll(ChordTrack t) {
+	public ChordScroll(Chords t) {
 		chords = t;
 		crds = new JLabel[] {a, b, c, d, e};
 		aLyrics.setFont(Gui.BOLD);

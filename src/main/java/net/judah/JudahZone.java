@@ -42,10 +42,11 @@ import net.judah.omni.AudioTools;
 import net.judah.omni.Icons;
 import net.judah.omni.Threads;
 import net.judah.sampler.Sampler;
+import net.judah.seq.Clipboard;
 import net.judah.seq.Seq;
 import net.judah.seq.SynthRack;
 import net.judah.seq.Trax;
-import net.judah.seq.chords.ChordTrack;
+import net.judah.seq.chords.Chords;
 import net.judah.song.Overview;
 import net.judah.song.setlist.Setlists;
 import net.judah.synth.fluid.FluidSynth;
@@ -79,7 +80,7 @@ public class JudahZone extends BasicClient {
 	@Getter private static DrumMachine drumMachine;
 	@Getter private static Looper looper;
 	@Getter private static Sampler sampler;
-	@Getter private static ChordTrack chords;
+	@Getter private static Chords chords;
 	@Getter private static MainFrame frame;
 	@Getter private static MidiGui midiGui;
 	@Getter private static FxPanel fxRack;
@@ -89,6 +90,8 @@ public class JudahZone extends BasicClient {
 	@Getter private static SynthDB synthPresets;
 	@Getter private static final Setlists setlists = new Setlists();
 	@Getter private static final MultiSelect selected = new MultiSelect();
+	@Getter private static final Clipboard clipboard = new Clipboard();
+
 
 	@Getter private static Zone instruments;
 	@Getter private static final Memory mem = new Memory(STEREO, bufSize());
@@ -119,7 +122,7 @@ public class JudahZone extends BasicClient {
 		mains = new Mains();
 		drumMachine = new DrumMachine(mains);
 		sampler = new Sampler();
-		chords = new ChordTrack(clock);
+		chords = new Chords(clock);
 		guitar = new Instrument(GUITAR, GUITAR_PORT,
 				jackclient.registerPort("guitar", AUDIO, JackPortIsInput), "Guitar.png");
 		mic = new Instrument(MIC, MIC_PORT,
@@ -176,10 +179,7 @@ public class JudahZone extends BasicClient {
 
 	private void gui() {
 		looper = new Looper(instruments, mic, clock, mem);
-		seq = new Seq(drumMachine, chords, sampler, bass); // synthRack
-
-		// new DJJefe(clock, mains, looper, faders, sampler, tk2);
-
+		seq = new Seq(drumMachine, chords, sampler, bass, mains);
 		mixer = new DJJefe(clock, mains, looper, instruments, drumMachine, fluid, sampler, tk2);
 		midiGui = new MidiGui(taco, fluid, bass, clock, midi.getJamstik(), sampler, setlists);
 		overview = new Overview(JUDAHZONE, seq);
@@ -187,25 +187,21 @@ public class JudahZone extends BasicClient {
 		frame = new MainFrame(JUDAHZONE, clock, fxRack, mixer, seq, looper, overview,
 				midiGui, drumMachine, guitar, presets, setlists, chords, sampler);
 
-		// housekeeping
-//		new SynthRack.MakeItRain();
-//		Threads.timer(100, ()->SynthRack.init());
 		clock.setTempo(93);
 		drumMachine.init("Drumz");
-    	for (LineIn i : instruments)
-        	i.getGui(); // preload channel gui's
-		for (Loop l : looper)
-			l.getGui();
-
-		overview.newSong();
-		System.gc();
-		Fader.execute(Fader.fadeIn());
-		initialized = true;
-		////////////////////////////
-		// now the system is live //
-		////////////////////////////
-		RTLogger.log(this, "Greetings Prof. Falken.");
-		test();
+		for (LineIn i : instruments) i.getGui();
+		for (Loop l : looper) l.getGui();
+		EventQueue.invokeLater(()->{
+			overview.newSong();
+			System.gc();
+			Fader.execute(Fader.fadeIn());
+			initialized = true;
+			////////////////////////////
+			// now the system is live //
+			////////////////////////////
+			RTLogger.log(this, "Greetings Prof. Falken.");
+			test();
+		});
 	}
 
 	@Override protected void registerPort(Request req) throws JackException {
@@ -214,10 +210,17 @@ public class JudahZone extends BasicClient {
 	}
 
 	private void test() {
+
+//		KJFFT fft = new KJFFT(Constants.bufSize());
+//		float[] freqs = fft.calculateFrequencyTable(Constants.sampleRate());
+//		for (float f : freqs)
+//			System.out.println(f);
+//		System.out.println("LENGTH: " + freqs.length);
+
 //		LFO fx = guitar.getLfo();
 //		int idx = LFO.Settings.MSec.ordinal();
 //		for (int i = 0; i <= 100; i++) {
-//			fx.set(idx, i);
+//			fx.set(idx, i); // logarithmic
 //			RTLogger.log(this,  fx.get(idx) + " --> " + fx.getFrequency());
 //		}
 	}

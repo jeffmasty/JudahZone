@@ -14,12 +14,14 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import net.judah.gui.MainFrame;
-import net.judah.gui.settable.Program;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Midi;
 import net.judah.midi.MidiInstrument;
 import net.judah.omni.Threads;
 import net.judah.seq.SynthRack;
+import net.judah.seq.track.Computer.TrackUpdate;
+import net.judah.seq.track.Computer.Update;
+import net.judah.seq.track.PianoTrack;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -28,7 +30,7 @@ public final class FluidSynth extends MidiInstrument {
 	public static final String LEFT_PORT = "fluidsynth-midi:left"; // "fluidsynth:l_00";
 	public static final String RIGHT_PORT = "fluidsynth-midi:right"; // "fluidsynth:r_00";
 	public static final String MIDI_PORT = "fluidsynth-midi:midi_00"; // "fluidsynth:midi";
-	public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // "/home/judah/Downloads/JJazzLab-SoundFont.sf2"
+	public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // "~/tracks/JJazzLab-SoundFont.sf2"
 
 	public record Drum(String name, int prog) {};
 	private final String shellCommand;
@@ -39,7 +41,6 @@ public final class FluidSynth extends MidiInstrument {
 	@Getter private final FluidChannels channels = new FluidChannels();
 	@Getter private final ArrayList<Drum> drums = new ArrayList<>();
 	private FluidListener listener;
-//	private final String[] changes = new String[CHANNELS];
 
 	public FluidSynth(JackPort midi, JackPort left, JackPort right) throws IOException {
 		this(Constants.FLUID, midi, left, right, "Fluid.png");
@@ -52,7 +53,7 @@ public final class FluidSynth extends MidiInstrument {
 	@SuppressWarnings("deprecation")
 	private FluidSynth(String name, JackPort midi, JackPort left, JackPort right, String image) throws IOException {
 		super(name, LEFT_PORT, RIGHT_PORT, left, right, image, midi);
-		shellCommand = "fluidsynth -m jack -a jack -g 0.4 -r " + S_RATE + " " + SOUND_FONT.getAbsolutePath();
+		shellCommand = "fluidsynth -m jack -a jack -g 0.9 -C 0 -r " + S_RATE + " " + SOUND_FONT.getAbsolutePath();
 
 		process = Runtime.getRuntime().exec(shellCommand); // IOException
 		new FluidListener(process.getErrorStream(), true).start();
@@ -76,7 +77,6 @@ public final class FluidSynth extends MidiInstrument {
 			patches = predecessors[0].getPatches();
 
 		replace(new FluidReverb(this)); // use external reverb
-		sendCommand("chorus off");
 		RTLogger.getParticipants().add(new FluidConsole(this));
 	}
 
@@ -98,9 +98,6 @@ public final class FluidSynth extends MidiInstrument {
 				for (FluidChannel c : listener.channels)
 					channels.add(c);
 			}
-//			for (int i = 0; i < changes.length; i++)
-//				if (channels.size() > i)
-//					changes[i] = channels.get(i).name;
 
 		} catch (Exception e) { RTLogger.warn(this, e);  }
 	}
@@ -181,11 +178,9 @@ public final class FluidSynth extends MidiInstrument {
 
 	private void sendProg(int idx, int ch, String name) {
 		JudahMidi.queue(Midi.create(ShortMessage.PROGRAM_CHANGE, ch, idx, 0), midiPort);
-//		if (ch < changes.length)
-//			changes[ch] = name;
-		Program p = Program.first(tracks.get(ch));
-		if (p != null) // TODO
-			MainFrame.update(p);
+		for (PianoTrack p : tracks)
+			if (p.getCh() == ch)
+				MainFrame.update(new TrackUpdate(Update.PROGRAM, p));
 	}
 
 	public String getProg(int ch) {

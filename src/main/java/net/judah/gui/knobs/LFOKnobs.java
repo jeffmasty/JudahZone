@@ -8,7 +8,6 @@ import net.judah.fx.Effect;
 import net.judah.fx.LFO;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
-import net.judah.gui.widgets.FxButton;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
 
@@ -23,7 +22,7 @@ public class LFOKnobs extends KnobPanel {
 
     public LFOKnobs(final Channel ch, DJJefe mixer) {
     	this.channel = ch;
-    	title = Gui.wrap(mixer.getCombo(ch), new FxButton(ch));
+    	title = Gui.wrap(mixer.getCombo(ch));
     	lfo1 = new LFOWidget(ch, ch.getLfo(), 1);
     	lfo2 = new LFOWidget(ch, ch.getLfo2(), 2);
     	compressor = new CompressorWidget(ch);

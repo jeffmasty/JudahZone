@@ -1,6 +1,5 @@
 package net.judah.gui.fx;
 
-import net.judah.JudahZone;
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
 import net.judah.fx.Gain;
@@ -40,7 +39,7 @@ public class RowKnobs extends Row {
 		// case 2: EQKnobs
 
 		case 3:
-			controls.add(new PresetsBtns(ch, JudahZone.getLooper()));
+			controls.add(new PresetsBtns(ch));
 			controls.add(new FxKnob(ch, ch.getLoCut(), MonoFilter.Settings.Frequency.ordinal(), "Hz."));
 			controls.add(new FxKnob(ch, ch.getHiCut(), MonoFilter.Settings.Frequency.ordinal(), "Hz.", true));
 			controls.add(new FxKnob(ch, ch.getGain(), Gain.VOLUME, ""));

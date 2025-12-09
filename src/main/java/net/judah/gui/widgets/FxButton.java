@@ -7,23 +7,24 @@ import javax.swing.Icon;
 import javax.swing.JButton;
 
 import net.judah.gui.MainFrame;
+import net.judah.mixer.Channel;
 import net.judah.omni.Icons;
 
 public class FxButton extends JButton {
 	private static final Insets ZERO = new Insets(0, 0, 0, 0);
-	
+
 	private FxButton() {
 		setIcon(icon());
 		setMargin(ZERO);
 	}
-	
+
 	public static Icon icon() {
 		return Icons.get("fx.png");
 	}
-	
-	public FxButton(Object ch) {
+
+	public FxButton(Channel ch) {
 		this();
 		addActionListener(e -> MainFrame.setFocus(ch));
 	}
-	
+
 }

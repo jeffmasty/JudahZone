@@ -106,7 +106,7 @@ public class RemapTable extends JTable {
 		Edit remap = new Edit(Type.REMAP, map.get(origin));
 		remap.setOrigin(new Prototype(origin, 0l));
 		remap.setDestination(new Prototype(target.getData1(), 0l));
-		drummer.push(remap);
+		track.getEditor().push(remap);
 	}
 
 	@Override public TableCellEditor getCellEditor(int row, int column) {
@@ -126,7 +126,7 @@ public class RemapTable extends JTable {
 			return;
 		Notes selected = drummer.selectArea(0, t.ticks(), data1, data1);
 		Edit e = new Edit(Type.DEL, selected);
-		drummer.push(e);
+		track.getEditor().push(e);
 		MainFrame.setFocus(new RemapView(drummer)); // No undo on Remap View
 	}
 

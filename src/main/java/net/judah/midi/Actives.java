@@ -67,6 +67,7 @@ public class Actives extends ArrayList<ShortMessage> {
 				return i;
 		return -1;
 	}
+
 	public int indexOf(int data1) {
 		for (int i = 0; i < size(); i++)
 			if (get(i) != null && get(i).getData1() == data1)

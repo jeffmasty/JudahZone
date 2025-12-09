@@ -1,4 +1,4 @@
-package net.judah.gui.widgets;
+package net.judah.seq;
 
 
 import java.awt.Color;
@@ -15,7 +15,6 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
-import net.judah.seq.Seq;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
 

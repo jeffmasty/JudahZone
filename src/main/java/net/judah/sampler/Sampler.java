@@ -42,9 +42,6 @@ public class Sampler extends LineIn {
 	public static final int SIZE = STANDARD.length;
 
 	private final String[] patches = new String[] {"STANDARD"};
-
-	/** gain factor for all samples */
-	@Setter @Getter float mix = 0.5f;
 	@Setter @Getter float stepMix = 0.5f;
 
 	/** selected step sample */
@@ -55,9 +52,11 @@ public class Sampler extends LineIn {
 
 	public Sampler() {
 		super(Sampler.class.getSimpleName(), Constants.STEREO);
+		gain.setPreamp(0.5f);
+
 		for (int i = 0; i < STANDARD.length; i++) {
 			try {
-				samples.add(new Sample(STANDARD[i], i < 4 ? Type.LOOP : Type.ONE_SHOT, this));
+				samples.add(new Sample(STANDARD[i], i < 4 ? Type.LOOP : Type.ONE_SHOT));
 			} catch (Exception e) {
 				RTLogger.warn(this, e);
 			}

@@ -16,7 +16,7 @@ import net.judah.fx.Reverb;
 import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 import net.judah.seq.MidiConstants;
-import net.judah.seq.automation.CC;
+import net.judah.seq.automation.ControlChange;
 import net.judah.synth.taco.MonoFilter;
 import net.judah.util.Constants;
 
@@ -29,7 +29,7 @@ public class ChannelCC {
 	public boolean process(ShortMessage msg) {
 			if (!active) return false;
 			if (!Midi.isCC(msg))return false;
-			CC type = CC.find(msg.getData1());
+			ControlChange type = ControlChange.find(msg.getData1());
 			if (type == null)
 				return false;
 			int val = (int) (msg.getData2() * Constants.TO_100);

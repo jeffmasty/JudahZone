@@ -19,7 +19,7 @@ import net.judah.util.Folders;
 import net.judah.util.RTLogger;
 
 @Getter
-public class ChordTrack implements TimeListener {
+public class Chords implements TimeListener {
 
 	private boolean active = false;
 	private boolean onDeck = false;
@@ -35,7 +35,6 @@ public class ChordTrack implements TimeListener {
 	private final List<Directive> directives = new ArrayList<>();
 	private ChordProData data;
 	private Signature sig = Signature.FOURFOUR;
-	private final ChordView view = new ChordView(this);
 	private final ChordSheet chordSheet = new ChordSheet(this);
 	private boolean loading;
 	private ArrayList<ChordListener> listeners = new ArrayList<>();
@@ -46,7 +45,7 @@ public class ChordTrack implements TimeListener {
 	public int bars(int steps) { return steps / sig.div / sig.beats; }
 	public void toggle() { setActive(!active); }
 
-	public ChordTrack(JudahClock clock) {
+	public Chords(JudahClock clock) {
 		this.clock = clock;
 		sig = clock.getTimeSig();
 		clock.addListener(this);
@@ -154,7 +153,7 @@ public class ChordTrack implements TimeListener {
 	}
 
 	public void load(Song song) {
-		view.setSong(song);
+		clear();
 		File f;
 		if (song == null || song.getChordpro() == null || song.getChordpro().isBlank())
 			f = null;
@@ -231,7 +230,6 @@ public class ChordTrack implements TimeListener {
 		data = null;
 		active = false;
 		ChordProCombo.refresh(null);
-		view.setSection(null);
 		chordSheet.refresh();
 		SectionCombo.clear();
 		ChordScroll.scroll();

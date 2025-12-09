@@ -1,36 +1,31 @@
 TODO:
 
-Song Bundle mode = Import track midi files,  
-MidiSong tracks onSave [Main], [1, 2, 3, 4, 5, 6], {7,8} [D9, 10, 11, 12] 13,14,15 
-JudahMenu Song-> Resolution = Seq confirm resolution (to highest)
-Load from other Track ignore Meta Device, Program
-Song/Scene TrackInfo to Meta: Cue, Instrument Device Channel Filename & Arp
-Song Bundle: Redo Patterns:==>  Midi MetaMessages?
-Autom8 refresh(), Automation deep frames off 1!-99, new
-Autmation ListView, PitchBend Edit
-nudge notes, pianoTrack orientation
-Tempo CC : Track 0 take over SetTempo, TimeSig, KeySig?
-Enable Automation on Line-In (non-Midi) channels (guitar, mic, looper)
-ChannelTrack Presets = Program, Lyrics Track
-redo track capture (atomic undo/redo)
+IR cabsim https://www.youtube.com/watch?v=acAw5WGtzuk
+https://github.com/djshaji/ir-cab-sim-lv2/blob/master/ir-cab-sim.c 
+nudge notes, Linked Midi Selection Model
+Autmation: PitchBend, Meta, TimeSig, KeySig, Tempo
+Piano roll orientation, TrackKnobs Program overflow
+SendTo ignore Meta Device, Program?
+ChannelUpdate(ch, fx, idx)
+Channel/System Setup  +Controllers +Jamstik +Fluid
+Lyrics Track
+Hi/Lo filter CC   Mid/Side/Chain
+Redo track capture (atomic undo/redo/AUTOMATION)
+Redo Patterns:==>  Midi MetaMessages?
 drumkv1_jack  AppImage in Tracks,    Natural, Synth or Bitcrush ProgChanges
 KnobMode.Mix2
 Shift-faders  Shift-pads
-Hi/Lo filter CC,
-TacoSynth GLIDE (Crave <3)
-drumkit mutes
-Drum decay based on sample length (calcEnv)
+TacoSynth GLIDE (Crave <3) Portamento
+drum mutes, Drum decay based on sample length (calcEnv) 
 Channel Pressure or Breath = Crave 303 Accent (w/ Crave Assign)
-Remap MPK Joystick left
 ChordTrack |1:[] |2:[] endings,  |bars| parse bug
 ChordView rightClick menu (remove track, File)
 PianoEditor: drag-n-drop/transpose across frame, falling water, REL/Modal
-filter tracking, Synth LFO: detune, filter/resonance
+Synth filter tracking, LFO: detune, filter/resonance
 Fine Tune Midi Envelope
 Jamstik Midi/Cmd?
-sidechain
-Setup Modules: Channels, Controllers  Jamstik, Fluid  MidiMapper?
-Beatstep taco tracks
+Controllers MidiMapper
+lv2 jna https://github.com/nativelibs4java/JNAerator/tree/refresh-2022
 
 JudahScope 
 Play Menus  data          [x]
@@ -39,11 +34,19 @@ Play Menus  data          [x]
   |  FFT     |     OSC    |
   |          |            |
 ->Scope, Meters [hz, osc]
+* Tarsos
+* https://www.ee.columbia.edu/~dpwe/resources/Processing/
+* https://github.com/fudcom/kjdss/tree/master
+	<dependency>
+		<groupId>com.fudcom.kjdss</groupId>
+		<artifactId>kjdss-root</artifactId>
+		<version>1.3.2-SNAPSHOT</version>
+	</dependency>
+accuracy, ease of use & efficiency
+How to display/manipulate Phase?  rainbow color
 DSP Course: https://www.youtube.com/watch?v=hVOA8VtKLgk&list=PLuh62Q4Sv7BUSzx5Jr8Wrxxn-U10qG1et
 FFT Algo https://www.youtube.com/watch?v=iTMn0Kt18tg
 https://github.com/hedoluna/fft
-How to display/manipulate Phase?
-* https://github.com/fudcom/kjdss/tree/master
 https://www.youtube.com/watch?v=2O3nm0Nvbi4
 https://github.com/takyonxxx/Oscilloscope-Java-Swing
 https://github.com/chdh/dsp-collection-java DFT
@@ -56,8 +59,7 @@ Sampler FX (granularity, pitched frequency, lofi, wet)
 IR Reverb, DrumSynth, Shepherd, Vocoder
 FFM instead of JNA? https://jdk.java.net/jextract/
 zone omni -> omni   Recording?
-seq.loadSong(Unknown File) feedback
-LoopToDisk .WAV recording length off
+Stems, LoopToDisk .WAV recording length off
 upgrade Fluid ver. to multi-channel (re-compile)
    -p, --portname=[track.getName()] Set  MIDI  port  name
 Directives.BREAKS ChordPro.@ ChordPro.%   Cycle breaks: A3_ ABC_ TOF_?
@@ -80,7 +82,6 @@ Subwoofer library, Fluid drums
 convert Songs to single Midi file
 add/remove/route tracks+synths
 IIR filter https://www.youtube.com/watch?v=JCIxD6ep1rM
-
 
 --etc-----------------------
 https://www.recordingblogs.com/wiki/midi-meta-messages
@@ -254,12 +255,13 @@ javax.sound.midi.Receiver:
       	DrumMachine
 	  DrumKit (x4)
 
-MidiTrack
+Computer: t resolution current ticks
+MidiTrack: ch  name 
 	ChannelTrack
-	NotesTrack
-		DrumTrack
-		PianoTrack
-			TacoSynth		
+	NotesTrack:  Gate Knobs
+		DrumTrack: DrumKit
+		PianoTrack: Arp
+			TacoSynth:  DCO	
 
 Song JSON:
 [tracks:] trackName, file, progChange

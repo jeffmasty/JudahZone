@@ -4,9 +4,6 @@ import java.awt.Dimension;
 
 import lombok.Getter;
 import net.judah.api.Key;
-import net.judah.api.Notification.Property;
-import net.judah.api.Signature;
-import net.judah.api.TimeListener;
 import net.judah.gui.Detached.Floating;
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
@@ -16,7 +13,7 @@ import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.TrackBindings;
 
 
-public class PianoView extends HiringAgency implements TimeListener, Floating, Size {
+public class PianoView extends HiringAgency implements Floating, Size {
 	public static final int MAX_OCTAVES = 7;
 	public static final int MAX_RANGE = MAX_OCTAVES * Key.OCTAVE;
 	public static final int DEFAULT_RANGE = 5 * Key.OCTAVE;
@@ -25,7 +22,7 @@ public class PianoView extends HiringAgency implements TimeListener, Floating, S
 
 	@Getter final PianoTrack track;
 	@Getter final Piano grid;
-	private final PianoMenu menu;
+	@Getter private final PianoMenu menu;
 	private final PianoKeys keyboard;
 	@Getter private final PianoSteps steps;
 
@@ -40,12 +37,11 @@ public class PianoView extends HiringAgency implements TimeListener, Floating, S
 		setName(t.getName());
 
 		keyboard = new PianoKeys(track, this);
-		steps = new PianoSteps(this);
+		steps = new PianoSteps(track);
 		grid = new Piano(this, steps, keyboard);
 		menu = new PianoMenu(this, grid);
 		pedal = t.getPedal();
 		Gui.resize(pedal, PANIC);
-		track.getClock().addListener(this);
 
 		menu.setLocation(0, 0);
 		pedal.setLocation(0, MENU_HEIGHT);
@@ -113,7 +109,7 @@ public class PianoView extends HiringAgency implements TimeListener, Floating, S
 		return pianoWidth / (float) (range + 1);
 	}
 
-	private void refresh() {
+	public void refresh() {
 		grid.repaint();
 		keyboard.repaint();
 	}
@@ -121,17 +117,6 @@ public class PianoView extends HiringAgency implements TimeListener, Floating, S
 	public void update() {
 		menu.update();
 		grid.repaint();
-	}
-
-	@Override
-	public void update(Property prop, Object value) {
-		// if (prop == Property.STEP && track.isActive() && isVisible()) {
-		// steps.setStart((int)value); // waterfall
-		// grid.repaint();
-		if (value instanceof Signature sig) {
-			grid.timeSig(sig);
-			steps.timeSig(sig);
-		}
 	}
 
 	@Override

@@ -13,12 +13,12 @@ import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.SynthKnobs;
-import net.judah.gui.settable.Program;
 import net.judah.midi.ChannelCC;
 import net.judah.midi.Midi;
 import net.judah.midi.Panic;
+import net.judah.mixer.Channel;
 import net.judah.omni.AudioTools;
-import net.judah.seq.automation.CC;
+import net.judah.seq.automation.ControlChange;
 import net.judah.seq.track.PianoTrack;
 import net.judah.synth.taco.MonoFilter.Type;
 import net.judah.util.Constants;
@@ -35,6 +35,7 @@ public class TacoSynth extends PianoTrack {
 	protected final FloatBuffer upsample = FloatBuffer.wrap(new float[Constants.bufSize() * OVERSAMPLE]);
     // TODO Pan DCOs: protected final FloatBuffer stereo = FloatBuffer.wrap(new float[Constants.bufSize()]);
 
+	@Getter private final Channel channel;
 	@Getter private final Adsr adsr = new Adsr();
     private final Polyphony notes;
     @Getter private final float[] dcoGain = new float[DCO_COUNT];
@@ -46,7 +47,7 @@ public class TacoSynth extends PianoTrack {
     private final MonoFilter internalFilter = new MonoFilter(Type.HiCut, 16500, OVERSAMPLE);
     @Getter private final MonoFilter highPass = new MonoFilter(Type.LoCut, 50, 1);
 	@Getter private final MonoFilter lowPass = new MonoFilter(Type.HiCut, 3600, 1);
-    @Getter private SynthKnobs knobs;
+    @Getter private final SynthKnobs knobs;
     private ChannelCC cc;
 
 	// TODO: portamento/glide, LFOs, PWM, mono- vs. polysynth, true stereo, envelope to filter
@@ -57,6 +58,7 @@ public class TacoSynth extends PianoTrack {
 
 	public TacoSynth(String name, TacoTruck truck, int ch, Polyphony notes) throws InvalidMidiDataException {
 		super(name, notes);
+		this.channel = truck;
 		this.notes = notes;
 		cc = new ChannelCC(truck); // multiple against the truck
 
@@ -68,7 +70,6 @@ public class TacoSynth extends PianoTrack {
 			detune[i] = 1f;
 
 		modWheel = new ModWheel(this, lowPass, highPass);
-
 		knobs = new SynthKnobs(this);
 	}
 
@@ -94,9 +95,7 @@ public class TacoSynth extends PianoTrack {
 	@Override public boolean progChange(String preset) {
 		if (JudahZone.getSynthPresets().apply(preset, this)) {
 			state.setProgram(preset);
-			Program update = Program.first(this);
-			if (update != null)
-				MainFrame.update(update);
+			MainFrame.update(new TrackUpdate(Update.PROGRAM, this));
 			return true;
 		}
 		return false;
@@ -127,6 +126,8 @@ public class TacoSynth extends PianoTrack {
 			progChange(m.getData1());
 			return;
 		}
+		if (filterPiano(m))
+			return; // Pedal/Panic filter
 		if (cc.process(m))
 			return; // channel cc filter
 		if (ccEnv(m))
@@ -134,7 +135,7 @@ public class TacoSynth extends PianoTrack {
 
 		if (Midi.isNote(midi))
 			notes.receive(m);
-		else if (CC.MODWHEEL.matches(m))
+		else if (ControlChange.MODWHEEL.matches(m))
 			modWheel.dragged(m.getData2());
 		else if (Midi.isPitchBend(m)) {
 			float factor = bendFactor(m, modSemitones);
@@ -149,7 +150,7 @@ public class TacoSynth extends PianoTrack {
 		if (!Midi.isCC(msg))
 			return false;
 		// Envelope
-		CC type = CC.find(msg.getData1());
+		ControlChange type = ControlChange.find(msg.getData1());
 		if (type == null)
 			return false;
 		int val = (int) (msg.getData2() * Constants.TO_100);

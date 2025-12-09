@@ -1,23 +1,33 @@
 package net.judah.seq.track;
 
 import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
+import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.fx.Preset;
 import net.judah.fx.PresetsDB;
+import net.judah.midi.ChannelCC;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
+import net.judah.util.RTLogger;
 
+@Getter
 public class ChannelTrack extends MidiTrack {
 
-	Channel channel;
-	PresetsDB presets = JudahZone.getPresets();
+	private static final PresetsDB presets = JudahZone.getPresets();
 
-	public ChannelTrack(Channel line, int midiCh) throws InvalidMidiDataException {
-		super(line.getName(), midiCh);
+	private final Channel channel;
+	private final ChannelCC cc;
+
+	public ChannelTrack(Channel line, int midiCh, String trackName) throws InvalidMidiDataException {
+		super(trackName, midiCh);
 		this.channel = line;
+		cc = new ChannelCC(channel);
+		if (presets == null)
+			RTLogger.warn(this, "null presets");
 	}
 
 	@Override public boolean capture(Midi midi) {
@@ -26,12 +36,29 @@ public class ChannelTrack extends MidiTrack {
 	}
 
 	@Override protected void processNote(ShortMessage m) {
-		// TODO Auto-generated method stub
-
+		cc.process(m);
 	}
 
 	@Override protected void parse(Track incoming) {
-		// TODO Meta && CC
+		clear();
+
+		for (int i= 0; i < incoming.size(); i++) {
+			MidiEvent e = incoming.get(i);
+			if (Midi.isCC(e.getMessage()) || Midi.isProgChange(e.getMessage())) {
+				ShortMessage orig = (ShortMessage)e.getMessage();
+				t.add(new MidiEvent(Midi.create(
+						orig.getCommand(), ch, orig.getData1(), orig.getData2()), e.getTick()));
+			}
+		}
+//			if (Midi.isNoteOn(e.getMessage())) {
+//				ShortMessage orig = (ShortMessage)e.getMessage();
+//				int data1 = orig.getData1();
+//				t.add(new MidiEvent(Midi.create(
+//						orig.getCommand(), ch, data1, orig.getData2()), e.getTick()));
+//			}
+//		}
+
+		// TODO Meta
 	}
 
 	@Override public String[] getPatches() {

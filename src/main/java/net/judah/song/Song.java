@@ -1,8 +1,13 @@
 package net.judah.song;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiSystem;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -17,11 +22,10 @@ import net.judah.api.Signature;
 import net.judah.drumkit.KitSetup;
 import net.judah.fx.PresetsDB;
 import net.judah.mixer.Channel;
-import net.judah.mixer.DJJefe;
 import net.judah.omni.JsonUtil;
 import net.judah.seq.Seq;
-import net.judah.seq.chords.ChordTrack;
 import net.judah.seq.chords.Scale;
+import net.judah.seq.track.MidiFile;
 import net.judah.seq.track.TrackInfo;
 import net.judah.song.cmd.Cmd;
 import net.judah.song.cmd.Param;
@@ -35,7 +39,7 @@ public class Song {
 	@JsonIgnore private File file;
 
 	private Signature timeSig = Signature.FOURFOUR;
-	private boolean midiBundle;
+	private String bundle;
 	@JsonInclude(Include.NON_NULL)
 	private String chordpro;
 	@JsonInclude(Include.NON_NULL)
@@ -57,19 +61,27 @@ public class Song {
 		scenes.add(created);
 	}
 
-	/** @param scene the current scene to save Efx.*/
-    public void saveSong(DJJefe mixer, Seq seq, Scene scene, ChordTrack chordTrack) {
+	/** @param scene the current scene to save Efx.
+	 * @throws IOException
+	 * @throws InvalidMidiDataException */
+    public void saveSong(Scene scene) throws IOException, InvalidMidiDataException {
+
     	if (file == null)
     		file = Folders.choose(JudahZone.getSetlists().getDefault());
     	if (file == null) return;
 
     	// populate top level track name, file(null), and progChange for each MidiTrack
     	tracks.clear();
-    	seq.forEach(track->tracks.add(new TrackInfo(track)));
+
+    	if (bundle == null || bundle.isBlank())
+    		JudahZone.getSeq().forEach(track->tracks.add(new TrackInfo(track)));
+    	else
+			MidiSystem.write(JudahZone.getSeq().bundle(file.getName()), MidiFile.TYPE_1,
+					new FileOutputStream(new File(Folders.getMidi(), bundle)));
 
 		fx.clear();
 		scene.getFx().clear();
-		for (Channel ch : mixer.getChannels()) {
+		for (Channel ch : JudahZone.getMixer().getChannels()) {
 			if (false == ch.getPreset().getName().equals(PresetsDB.DEFAULT))
 				fx.add(new FxData(ch.getName(), ch.getPreset().getName()));
 			if (ch.isPresetActive())
@@ -84,11 +96,8 @@ public class Song {
 			JudahZone.getInstruments().forEach(line ->{
 				if (!line.isMuteRecord())capture.add(line.getName());});
 		}
-
-    	try {
-			JsonUtil.writeJson(this, file);
-			RTLogger.log(this, "Saved " + file.getName() + " (" + scenes.indexOf(scene) + ")");
-    	} catch (Exception e) { RTLogger.warn(JudahZone.class, e); }
+		JsonUtil.writeJson(this, file);
+		RTLogger.log(this, "Saved " + file.getName() + " (" + scenes.indexOf(scene) + ")");
     }
 
     public void setTimeSig(Signature sig) {
