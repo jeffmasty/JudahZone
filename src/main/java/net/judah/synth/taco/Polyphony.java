@@ -102,7 +102,7 @@ public class Polyphony extends Actives {
 					if (susOf(midi.getData1()) < 0)
 						sustained.add(midi);
 				}
-				else // start release on envelope,  when release completes note switched to null and Voice ready for polyphony
+				else if (i < size())// start release on envelope,  when release completes note switched to null and Voice ready for polyphony
 					set(i, Midi.create(Midi.NOTE_OFF, m.getChannel(), target, midi.getData2()));
 				return true;
 			}

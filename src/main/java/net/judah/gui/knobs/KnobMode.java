@@ -13,6 +13,6 @@ public enum KnobMode {
 	Import,
 	Remap,
 	Log,
-	Wavez;
+	Tuner;
 
 }

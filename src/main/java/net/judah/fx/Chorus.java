@@ -139,24 +139,26 @@ public class Chorus implements TimeEffect {
             float delay = delayTime * SAMPLE_RATE;
             float ldelay = lastdelay;
 
-            int rnlen = workArea.length;
+            float[] work = workArea;
+            int rnlen = work.length;
             int pos = rovepos;
             float delta = (delay - ldelay) / N_FRAMES;
+            float fb = feedback;
 
             float r, s, a, b, o;
             int ri;
-                for (int i = 0; i < N_FRAMES; i++) {
-                    r = pos - (ldelay + 2) + rnlen;
-                    ri = (int) r;
-                    s = r - ri;
-                    a = workArea[ri % rnlen];
-                    b = workArea[(ri + 1) % rnlen];
-                    o = a * (1 - s) + b * s;
-                    workArea[pos] = buf.get(i) + o * feedback;
-                    buf.put(o);
-                    pos = (pos + 1) % rnlen;
-                    ldelay += delta;
-                }
+            for (int i = 0; i < N_FRAMES; i++) {
+                r = pos - (ldelay + 2) + rnlen;
+                ri = (int) r;
+                s = r - ri;
+                a = work[ri % rnlen];
+                b = work[(ri + 1) % rnlen];
+                o = a * (1 - s) + b * s;
+                work[pos] = buf.get(i) + o * fb;
+                buf.put(o);
+                pos = (pos + 1) % rnlen;
+                ldelay += delta;
+            }
 
             rovepos = pos;
             lastdelay = delay;

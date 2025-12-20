@@ -12,6 +12,7 @@ import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.LFOKnobs;
+import net.judah.gui.scope.JudahScope;
 import net.judah.gui.settable.SetCombo;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.LengthCombo;
@@ -27,6 +28,7 @@ public class HQ extends JPanel implements TimeListener {
 
 	@Getter private static boolean shift;
 	private final JudahClock clock;
+	private final JudahScope scope;
 	private final Looper looper;
 	private final Overview songs;
 	private final Btn scene = new Btn("", e->trigger());
@@ -34,17 +36,18 @@ public class HQ extends JPanel implements TimeListener {
 	private final JButton metro;
 	private static Btn delete;
 
-    public HQ(JudahClock clock, Looper loops, Overview songs, Chords chords) {
+    public HQ(JudahClock clock, Looper loops, Overview songs, Chords chords, JudahScope scope) {
     	this.clock = clock;
     	this.looper = loops;
     	this.songs = songs;
+    	this.scope = scope;
     	sync = new LengthCombo(clock);
     	metro = new Btn(Icons.get("left.png"), e->clock.skipBar());
     	metro.setOpaque(true);
 
     	setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
     	add(new StartBtn(clock));
-    	add(Gui.resize(scene, Size.SMALLER_COMBO));
+    	add(Gui.resize(scene, Size.SMALLER));
     	add(Gui.resize(new ChordPlay(chords).makeFancy(), new Dimension(54, Size.STD_HEIGHT)));
     	add(new Btn(" Rec ", e->loops.trigger()));
     	add(sync);
@@ -85,7 +88,11 @@ public class HQ extends JPanel implements TimeListener {
 	}
 
 	public void metronome() {
-		metro.setBackground(clock.isActive() == false && clock.isOnDeck() ? Pastels.YELLOW : null);
+		if (!clock.isActive() && clock.isOnDeck())
+			metro.setBackground(Pastels.YELLOW);
+		else if (scope.isActive())
+			metro.setBackground(Pastels.GREEN);
+		else metro.setBackground(null);
 	}
 
 	void sceneText() {

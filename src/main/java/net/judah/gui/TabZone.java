@@ -19,6 +19,7 @@ import javax.swing.SwingUtilities;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.gui.Detached.Floating;
+import net.judah.gui.scope.JudahScope;
 import net.judah.gui.widgets.CloseableTabbedPane;
 import net.judah.omni.Threads;
 import net.judah.seq.Musician;
@@ -166,8 +167,21 @@ public class TabZone extends CloseableTabbedPane {
     	}
     }
 
+
+    @Override
+    public void removeTabAt(int index) {
+    	deactivateScope(getComponentAt(index));
+    	super.removeTabAt(index);
+    }
+
+    private void deactivateScope(Component c) {
+    	if (c instanceof JudahScope scope && scope.isActive())
+    		scope.setActive(false);
+    }
+
     // Detached window listener
 	public void closed(Component content) {
+		deactivateScope(content);
 		frames.remove(content);
 	}
 
@@ -195,14 +209,7 @@ public class TabZone extends CloseableTabbedPane {
 			return;
     	try {
     		sheetMusic.setImage(file);
-			title(sheetMusic, sheetMusic.getName());
-
-    		if (indexOfComponent(sheetMusic) < 0 && !frames.contains(sheetMusic))
-    			addTab(sheetMusic.getName(), sheetMusic, true);
-
-    		if (focus)
-    			show(sheetMusic);
-
+    		install(sheetMusic);
     	} catch (Throwable e) {
     		RTLogger.warn(this, e);
     	}
@@ -252,14 +259,8 @@ public class TabZone extends CloseableTabbedPane {
 			view.requestFocus();
 		}
 	}
-//	public void pianoTrack(Trax p) {
-//		for (PianoTrack t : getSeq().getSynthTracks())
-//			if (t.getType() == p)
-//				pianoTrack(t);
-//	}
 
-	@Override
-	public void setSelectedIndex(int index) {
+	@Override public void setSelectedIndex(int index) {
 		if (getSelectedIndex() != index)
 			super.setSelectedIndex(index);
 		getSelectedComponent().requestFocusInWindow();
@@ -273,8 +274,7 @@ public class TabZone extends CloseableTabbedPane {
 		new Detached(c, this);
 	}
 
-	@Override
-	public void detach() {
+	@Override public void detach() {
 		detach(getSelectedComponent());
 	}
 
@@ -324,18 +324,18 @@ public class TabZone extends CloseableTabbedPane {
 		} // else ChannelTrack
 	}
 
+	public void install(JComponent c) {
+		title(c, c.getName());
+		if (indexOfComponent(c) < 0 && !frames.contains(c))
+			addTab(c.getName(), c, true);
+		show(c);
+	}
 
-	/*	@Override
-	public void update(Property prop, Object value) {
-		// if (prop == Property.STEP && track.isActive() && isVisible()) {
-		// steps.setStart((int)value); // waterfall
-		// grid.repaint();
-		if (value instanceof Signature sig) {
-			grid.timeSig(sig);
-			steps.timeSig(sig);
-		}
-*/
-
+	public void scope() {
+		JudahScope scope = JudahZone.getScope();
+		install(scope);
+		scope.setActive(true);
+	}
 
 }
 

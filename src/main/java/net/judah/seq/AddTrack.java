@@ -212,7 +212,7 @@ public class AddTrack extends JPanel {
 				RTLogger.warn(this, "Name was blank.");
 				return;
 			}
-			RTLogger.debug("creating " + type.name() + " engine with track " + name);
+			RTLogger.debug(this, "creating " + type.name() + " engine with track " + name);
 			if (type == RegisteredSynths.Fluid) {
 				new FluidAssistant(name);
 			} else if (type == RegisteredSynths.Taco) {

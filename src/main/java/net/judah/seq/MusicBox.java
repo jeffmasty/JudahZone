@@ -36,8 +36,6 @@ public abstract class MusicBox extends JPanel implements Musician, Floating, Mid
 	protected final Track t;
 	protected final JudahClock clock;
 
-
-
 	/** absolute notes */
 	@Getter protected final Notes selected = new Notes();
 	protected final Measure scroll;
@@ -48,6 +46,7 @@ public abstract class MusicBox extends JPanel implements Musician, Floating, Mid
 	protected Prototype recent;
 	protected int width, height;
 
+	// TODO new notes?, select them
 	public MusicBox(NoteTrack midiTrack) {
 		this.track = midiTrack;
 		this.editor = midiTrack.getEditor();
@@ -58,10 +57,6 @@ public abstract class MusicBox extends JPanel implements Musician, Floating, Mid
 		addMouseMotionListener(this);
 		addMouseWheelListener(this);
 	}
-
-	// TODO click = null
-	//		@Override
-	//	protected void execute(Edit e) {
 
 	@Override public void delete() {
 		track.getEditor().push(new Edit(Type.DEL, selected));

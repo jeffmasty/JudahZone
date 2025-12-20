@@ -2,7 +2,7 @@ package net.judah.synth.taco;
 
 import java.nio.FloatBuffer;
 
-import net.judah.midi.Midi;
+import net.judah.midi.PitchTools;
 
 /** An individual piano key press, three oscillators per voice */
 public class Voice {
@@ -22,7 +22,7 @@ public class Voice {
 	public void reset(int data1) {
 		this.data1 = data1;
 		env.reset();
-		float hz = Midi.midiToHz(data1);
+		float hz = PitchTools.midiToHz(data1);
 		for (Dco osc : oscillators)
 			osc.setHz(hz);
 	}

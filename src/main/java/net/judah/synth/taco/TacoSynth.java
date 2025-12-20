@@ -142,7 +142,7 @@ public class TacoSynth extends PianoTrack {
 			for (Voice v : notes.voices)
 				v.bend(factor);
 		}
-		else RTLogger.debug("TacoSynth skip " + Midi.toString(m));
+		else RTLogger.debug(this, "skip " + Midi.toString(m));
 
 	}
 

@@ -15,7 +15,7 @@ public class CycleCombo extends JComboBox<Cycle> {
 		super(Cycle.values());
 		this.track = track;
 		setSelectedItem(track.getCycle());
-		Gui.resize(this, Size.SMALLER_COMBO);
+		Gui.resize(this, Size.SMALLER);
 		addActionListener(e->action());
 	}
 

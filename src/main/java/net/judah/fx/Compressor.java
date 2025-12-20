@@ -223,7 +223,7 @@ public class Compressor implements Effect {
 	    	val = buf.get(z);
 	        ldelta = abs (val);
 
-	        if(lvol < 0.9f) {
+	        if (lvol < 0.9f) {
 	            attl = att;
 	            rell = rel;
 	        } else if (lvol < 1f) {
@@ -241,7 +241,7 @@ public class Compressor implements Effect {
 
 	        lvolume_db = rap2dB (lvolume);
 
-	        if (lvolume_db < thres_db)
+	        if (lvolume_db < threshold)
 	            boost = outl;
 	        else if (lvolume_db < thres_mx) { //knee region
 	            eratio = 1f + (kratio - 1f) * (lvolume_db-threshold) * coeff_knee;

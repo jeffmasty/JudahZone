@@ -1,7 +1,9 @@
+
 TODO:
 
-IR cabsim https://www.youtube.com/watch?v=acAw5WGtzuk
-https://github.com/djshaji/ir-cab-sim-lv2/blob/master/ir-cab-sim.c 
+Tarsos pull request
+RMS labels, click n scroll, zoom
+Loops too loud (onLoad save?) - Mastering
 nudge notes, Linked Midi Selection Model
 Autmation: PitchBend, Meta, TimeSig, KeySig, Tempo
 Piano roll orientation, TrackKnobs Program overflow
@@ -25,25 +27,53 @@ Synth filter tracking, LFO: detune, filter/resonance
 Fine Tune Midi Envelope
 Jamstik Midi/Cmd?
 Controllers MidiMapper
-lv2 jna https://github.com/nativelibs4java/JNAerator/tree/refresh-2022
+AOT cache
 
-JudahScope 
-Play Menus  data          [x]
-  [  _-^-_  Wave _-^-_    ]
-  |          |            |
-  |  FFT     |     OSC    |
-  |          |            |
-->Scope, Meters [hz, osc]
-* Tarsos
 * https://www.ee.columbia.edu/~dpwe/resources/Processing/
+
+
+<repository>
+	<id>ossrh</id>
+	<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+</repository>
+	
 * https://github.com/fudcom/kjdss/tree/master
 	<dependency>
 		<groupId>com.fudcom.kjdss</groupId>
 		<artifactId>kjdss-root</artifactId>
 		<version>1.3.2-SNAPSHOT</version>
 	</dependency>
-accuracy, ease of use & efficiency
-How to display/manipulate Phase?  rainbow color
+	
+    <dependency>
+      <groupId>org.bytedeco</groupId>
+      <artifactId>fftw</artifactId>
+      <version>3.3.9-1.5.6</version>
+    </dependency>
+    <dependency>
+      <groupId>org.bytedeco</groupId>
+      <artifactId>fftw-platform</artifactId>
+      <version>3.3.9-1.5.6</version>
+    </dependency>
+    <dependency>
+      <groupId>org.bytedeco</groupId>
+      <artifactId>javacpp</artifactId>
+      <version>1.5.6</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-math3</artifactId>
+      <version>3.6.1</version>
+    </dependency>
+
+Either import lv2 or internal fast convolution
+lv2 jna https://github.com/nativelibs4java/JNAerator/tree/refresh-2022
+IR cabsim https://www.youtube.com/watch?v=acAw5WGtzuk
+https://www.youtube.com/watch?v=xQMZ1ZGbDYk
+https://medium.com/@devjoemar2016/a-simple-guide-to-fast-fourier-transform-in-java-499aeeba8730
+https://github.com/mod-audio/mod-cabsim-IR-loader/blob/master/source/cabsim-IR-loader.c
+https://github.com/djshaji/ir-cab-sim-lv2/blob/master/ir-cab-sim.c 
+https://github.com/mod-audio/mod-convolution-loader/blob/main/src/OneKnobPlugin.cpp (dry/wet)
+* https://github.com/jvstinian/fftw-convolution-1d-example-java
 DSP Course: https://www.youtube.com/watch?v=hVOA8VtKLgk&list=PLuh62Q4Sv7BUSzx5Jr8Wrxxn-U10qG1et
 FFT Algo https://www.youtube.com/watch?v=iTMn0Kt18tg
 https://github.com/hedoluna/fft
@@ -53,15 +83,17 @@ https://github.com/chdh/dsp-collection-java DFT
 https://github.com/eicket/mySpectrum
 https://github.com/goxr3plus/Java-Spectrum-Analyser-Tutorials/tree/master/Part%201%20-%20Stereo%20Oscilloscope/src/dsp
 Stereo Width https://github.com/eventual-recluse/stereopan.lv2/blob/main/stereopan.cpp
+https://katjaas.nl/FFT/FFT.html
 
+Oscillator ViewWidget, Phase ViewWidget (rainbow color)
+test n benchmark:  fftw, JTransforms, alglib, Tarsos - accuracy, efficiency, ease of use
 Sample Editor: reverse sample, chop sample left, right, stretch, scratch
 Sampler FX (granularity, pitched frequency, lofi, wet)
+https://github.com/JorenSix/TarsosDSP/blob/master/examples/src/main/java/be/tarsos/dsp/example/unverified/GranulatorExample.java
 IR Reverb, DrumSynth, Shepherd, Vocoder
 FFM instead of JNA? https://jdk.java.net/jextract/
 zone omni -> omni   Recording?
-Stems, LoopToDisk .WAV recording length off
-upgrade Fluid ver. to multi-channel (re-compile)
-   -p, --portname=[track.getName()] Set  MIDI  port  name
+Stems, LoopToDisk .WAV recording length off https://github.com/JorenSix/TarsosDSP/blob/master/jvm/src/main/java/be/tarsos/dsp/io/jvm/WaveformWriter.java
 Directives.BREAKS ChordPro.@ ChordPro.%   Cycle breaks: A3_ ABC_ TOF_?
 on delete Primary, what about duplicated primary/loop?
 what if SoloTrack is active but on muteRecord?
@@ -70,18 +102,17 @@ Probability, Ritardando, microsteps
 Scene REL OnDeck Cmd2.0, step cmd, jamstik cmd
 Fifths arpeggiator, gate, Swing Pt.II
 sample packs, toggle one-shot/loop/hot
-Synth: envelope to filter, LFO, glide, PWM, mono-synth, env off
+Synth: envelope to filter, glide, PWM, mono-synth, env, LFO: cents, modwheel, filter, dco gain, pwm  
 walking bass bot https://metacpan.org/pod/MIDI::Bassline::Walk https://github.com/MaxHilsdorf/Walking-Bass-Generator
 SongEditor undo/redo, Reload setlist on new Song
 toggle Korg looper/fx pads to Scene pads
 Electronics Github Repository, credits 
 record record record youtubes - MAC - Elevation - SUG
-user manual, Qwerty, client-server architecture, message bus
+user manual, linkify ReadMe, qwerty, client-server architecture, message bus
 support JavaSound/non-Jack, make accessible setup and settings
 Subwoofer library, Fluid drums
-convert Songs to single Midi file
-add/remove/route tracks+synths
 IIR filter https://www.youtube.com/watch?v=JCIxD6ep1rM
+Lets write a reverb https://www.youtube.com/watch?v=6ZK2Goiyotk&t=1748s
 
 --etc-----------------------
 https://www.recordingblogs.com/wiki/midi-meta-messages
@@ -125,6 +156,8 @@ arpeggio this! https://github.com/ybalcanci/Sequence-Player/blob/master/RecamanS
 java sequencer https://github.com/sebastianruizva/JMidiSequencer
 java launchpad sequencer https://github.com/perkowitz/sequence/wiki/User%20Manual
 LV2 plugins
+go 24-bit
+
 ARty effects  https://github.com/openAVproductions/openAV-ArtyFX/blob/master/manual.md
 Rudolf556 drum machine http://ll-plugins.nongnu.org/lv2/rudolf556.html
 Drum machine w/ Hydrogen drums https://github.com/nicklan/drmr/wiki
@@ -146,11 +179,6 @@ javac --module-path $PATH_TO_FX --add-modules javafx.controls HelloFX.java
 SpencerPark/MellowD
 removed Steinberg's VST2 SDK:
 https://github.com/WeAreROLI/JUCE/commit/a3566b8c1edac29997490143982cd2b2eb089ffa
-midibox/mios32
-Deep-Symmetry/beat-link
-/home/matthias/java/jsresources/examples/src/DumpReceiver.java
-DerekCook/CoreMidi4J
-
 
 Done:
 Recompile Carla (modified modules/rtaudio.cpp)
@@ -215,7 +243,7 @@ ImportMidi table/remap
 Midi CC Automation
 Add/Remove/Rename Midi Tracks
 TacoSynth anti-aliasing
-
+JudahScope-Spectrometer 
 
 REFERENCE------------------------------------------------------------
 [Mixer]                [FX]
@@ -224,7 +252,6 @@ REFERENCE------------------------------------------------------------
 | | + | | | | |        
 + + | | + + + |        
 | | | + | | | +        
-
 
 Class Hierarchy:
 

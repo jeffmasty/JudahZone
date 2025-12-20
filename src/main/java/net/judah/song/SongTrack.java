@@ -86,7 +86,7 @@ import net.judah.seq.track.Programmer;
 			folder.setBorder(Gui.SUBTLE);
 			if (track.getFile() != null)
 				folder.setText(track.getFile().getName());
-			top.add(Gui.resize(folder, MEDIUM_COMBO));
+			top.add(Gui.resize(folder, MEDIUM));
 		}
 		Gui.resize(this, Overview.TRACK);
 		setBorder(Gui.SUBTLE);

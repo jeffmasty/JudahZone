@@ -179,7 +179,7 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 	}
 
 	private final KnobMode[] midiBtnSequence = new KnobMode[]
-			{ MIDI, Setlist, Sample, Presets, Wavez, Log };
+			{ MIDI, Setlist, Sample, Presets, Tuner, Log };
 
 	private void nextMidiBtn() {
 		KnobMode mode = MainFrame.getKnobMode();

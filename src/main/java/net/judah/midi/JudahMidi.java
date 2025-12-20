@@ -248,7 +248,7 @@ public class JudahMidi extends BasicClient implements Closeable {
     }
 
     private void connect(String inPort, String outPort) throws JackException {
-    	RTLogger.debug(this.getClass().getSimpleName() + ": connecting " + inPort + " to " + outPort);
+    	RTLogger.debug(this, ": connecting " + inPort + " to " + outPort);
     	jack.connect(jackclient, outPort, inPort);
     }
 

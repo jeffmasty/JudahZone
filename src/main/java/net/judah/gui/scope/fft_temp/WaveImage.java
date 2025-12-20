@@ -1,119 +1,58 @@
-package net.judah.gui.waves;
+package net.judah.gui.scope.fft_temp;
 
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
 import lombok.Getter;
-import net.judah.omni.HiLo;
-import net.judah.omni.Zwing;
+import net.judah.gui.Pastels;
+import net.judah.omni.Recording;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
+import net.judah.util.RTLogger;
 
-public abstract class WaveImage extends BufferedImage {
-	public static record Buffer(HiLo peak, HiLo amplitude) {	}
+public abstract class WaveImage extends BufferedImage implements Closeable {
 
-	protected static final int BUF_SIZE = Constants.bufSize();
+	protected static final int JACK_BUFFER = Constants.bufSize();
 	protected static final int S_RATE = Constants.sampleRate();
-	protected static final int I_FACTOR = 200; // boost RMS into color range
-	protected static final int AMPLITUDE = 400; // scale peaks into pixels
-    protected static final int I_SHIFT = 36; // shift intensity off blue
-	public static final int INSET = 4;
-	public static final int MARGIN = INSET * 2;
+	protected final Color BACKGROUND = Color.WHITE;
+	protected final Color HEAD = Pastels.PURPLE;
 
-	@Getter protected final RMSRecording recording;
     @Getter protected int samplesPerPixel, zoomCenter;
     protected int start, end, range; // user adjust audio window
-    protected float yScale = 0.5f; // user adjust amplitude 0 to 1
-    protected float iScale = 0.5f; // user adjust intensity 0 to 1
 	protected int audioLength;
 	protected final int width, height, centerY; // pixels
-    protected float[] workarea;
 
-    @Getter protected final Color PEAKS = Zwing.chaseTheRainbow(33);
-    @Getter protected boolean printabels = true;
-    @Getter protected Color labelColor = Color.RED;
-    @Getter protected Color bgColor = Color.WHITE;
-    @Getter protected File toDisk = new File("waveform.png");
+    @Getter protected boolean printabels;
+	protected final Graphics2D g2d;
 
-	public WaveImage(Dimension size, RMSRecording rmsRec) { // fixed length
+	protected Recording recording;
+
+	public WaveImage(Dimension size) {
 		super(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
-		this.recording = rmsRec;
-		audioLength = recording.size() * BUF_SIZE;
-		zoomCenter = audioLength / 2;
+		g2d = createGraphics();
 		width = size.width;
 		height = size.height;
+		g2d.setBackground(Color.WHITE);
+		g2d.clearRect(0, 0, width, height);
 		centerY = (int)(height * 0.5f);
+	}
+
+	public boolean liveProcessing() {
+		return recording == null;
+	}
+
+	public void length(int frames) {
+		audioLength = frames * JACK_BUFFER;
+		zoomCenter = audioLength / 2;
 		fullRange();
-	}
-
-	protected abstract void generateImage();
-	protected abstract void printLabels(Graphics2D g);
-
-	public boolean inWindow(long millis) {
-		return false;
-	}
-
-	//see AudioTools.peaks + avg
-	final Buffer analyze(float[] in) {
-	    float sumPositive = 0;
-	    float sumNegative = 0;
-	    int countPositive = 0;
-	    int countNegative = 0;
-	    float min = Float.MAX_VALUE;
-	    float max = Float.MIN_VALUE;
-
-	    for (float val : in) {
-	        if (val > 0) {
-	            sumPositive += val;
-	            countPositive++;
-	        } else if (val < 0) {
-	            sumNegative += val;
-	            countNegative++;
-	        }
-	        if (val < min)
-	            min = val;
-	        if (val > max)
-	            max = val;
-	    }
-
-	    float avgPositive = countPositive > 0 ? sumPositive / countPositive : 0;
-	    float avgNegative = countNegative > 0 ? sumNegative / countNegative : 0;
-	    return new Buffer(new HiLo(max, min), new HiLo(avgPositive, avgNegative));
-	}
-
-	/** shift yScale and iScale at the same time (ctrl-shift mouseWheel) */
-	public void attenuate(boolean up) {
-		float i = iScale * 0.1f;
-		float y = yScale * 0.1f;
-
-		if (up) {
-			setIntensity(iScale + i);
-			setYScale(yScale + y);
-		}
-		else {
-			setIntensity(iScale - i);
-			setYScale(yScale - y);
-		}
-	}
-
-	public void setIntensity(float val) {
-		if (val < 0 || val > 1)
-			return;
-		iScale = val;
-		if (this instanceof FileWave)
-			generateImage();
-	}
-	public void setYScale(float val) {
-		if (val < 0 || val > 1)
-			return;
-		yScale = val;
-		if (this instanceof FileWave)
-			generateImage();
+		RTLogger.log(this, "frames: " + frames);
 	}
 
 	public void scroll(boolean up) { // mouse-wheel  ratio: start to end
@@ -127,7 +66,7 @@ public abstract class WaveImage extends BufferedImage {
 	        newStart = newEnd - range;
 
 	    // Set the new range
-	    if (newEnd - newStart < BUF_SIZE)
+	    if (newEnd - newStart < JACK_BUFFER)
 	    	return;
 	    setRange((int) newStart, (int) newEnd);
 	    rezoom();
@@ -143,8 +82,8 @@ public abstract class WaveImage extends BufferedImage {
 	    int max = audioLength - 1;
 	    if (range > max)
 	    	range = max;
-	    if (range < BUF_SIZE)
-	    	range = BUF_SIZE;
+	    if (range < JACK_BUFFER)
+	    	range = JACK_BUFFER;
 		if (begin < 0) {
 	        begin = 0;
 	        stop = begin + range; // shift
@@ -160,10 +99,6 @@ public abstract class WaveImage extends BufferedImage {
 
 		samplesPerPixel = (int) ((end - start) / (float)width);
 
-		// if (samplesPerPixel == 0) throw new InvalidParameterException();
-
-		workarea = new float[samplesPerPixel];
-		generateImage();
 	}
 	protected void fullRange() {
 		setRange(0, audioLength - 1);
@@ -183,7 +118,7 @@ public abstract class WaveImage extends BufferedImage {
 
 	public void setXScale(float amount) {
 		int newSize = (int) (audioLength * amount);
-	    if (newSize < BUF_SIZE)
+	    if (newSize < JACK_BUFFER)
 	    	return; // too small
 		int half = (int) (newSize * 0.5f);
 
@@ -196,7 +131,7 @@ public abstract class WaveImage extends BufferedImage {
 	}
 
 	public void save() {
-		save(toDisk);
+		save(new File("waveform.png"));
 	}
 
 	public void saveAs() {
@@ -210,7 +145,7 @@ public abstract class WaveImage extends BufferedImage {
 	public void save(File file) {
       try {
           ImageIO.write(this, "png", file);
-          toDisk = file;
+          // toDisk = file;
       } catch (java.io.IOException e) {
           e.printStackTrace();
       }
@@ -225,20 +160,6 @@ public abstract class WaveImage extends BufferedImage {
         return zoomPercent + "%";
 	}
 
-	public void setLabelColor(Color c) {
-		labelColor = c;
-		generateImage();
-	}
-
-    public void setBgColor(Color c) {
-    	bgColor = c;
-    	generateImage();
-    }
-	public void toggleLables() {
-		printabels = !printabels;
-		generateImage();
-	}
-
 	public int pixelOf(int sampleIdx) {
 		if (sampleIdx < start)
 			return -1;
@@ -249,7 +170,39 @@ public abstract class WaveImage extends BufferedImage {
 		return (sampleIdx - start) / samplesPerPixel;
 	}
 
+	@Override public final void close() throws IOException {
+		g2d.dispose();
+	}
+
 }
+
+
+//private void drawZoomCenter(Graphics2D g) {
+//	if (!waveform.isPrintabels())
+//		return;
+//	int zoomCenter = waveform.pixelOf(waveform.getZoomCenter());
+//	if (zoomCenter < 0)
+//		return;
+//	g.setStroke(Zwing.DASHED_LINE);
+//	g.setColor(Pastels.MY_GRAY);
+//	g.drawLine(zoomCenter, INSET, zoomCenter, height - INSET);
+//}
+
+//private void drawCaret(Graphics2D g) {
+//if (!waveform.inWindow(current))
+//	return;
+//// Draw caret
+//g.setColor(caretColor);
+//g.fillOval(caret - 2, getHeight() - MARGIN, MARGIN, MARGIN);
+//g.setStroke(Zwing.DASHED_LINE);
+//g.drawLine(caret + 2, INSET, caret + 2, height);
+//// right justify now string if off right edge
+//int nowWidth = g.getFontMetrics().stringWidth(now);
+//if (caret + nowWidth + MARGIN < width)
+//	g.drawString(now, caret + MARGIN, TIMELINE);
+//else //
+//	g.drawString(now, caret - POP_LEFT, TIMELINE);
+//}
 
 //public long caretToMillis(int caret) {
 //    // Calculate the visible portion length and zoom factor
@@ -259,3 +212,4 @@ public abstract class WaveImage extends BufferedImage {
 //    long samplePosition = (long) (caret * zoomFactor);
 //    // Convert the sample position to milliseconds
 //    return (long) ((samplePosition / S_RATE) * 1000f);
+

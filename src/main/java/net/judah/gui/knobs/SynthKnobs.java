@@ -129,11 +129,11 @@ public class SynthKnobs extends KnobPanel {
 		add(wrap);
 
 		JPanel dco = new JPanel(new GridLayout(shapes.size(), 4, 5, 1));
-		Dimension sz = Size.SMALLER_COMBO;
+		Dimension sz = Size.SMALLER;
 		for (int i = 0; i < DCO_COUNT; i++) {
 			dco.add(new JLabel("DCO " + i + " ", JLabel.RIGHT));
 			dco.add(shapes.get(i));
-			dco.add(Gui.resize(gains.get(i), Size.MEDIUM_COMBO));
+			dco.add(Gui.resize(gains.get(i), Size.MEDIUM));
 			dco.add(Gui.resize(detune[i], sz));
 		}
 		wrap = new Box(BoxLayout.LINE_AXIS);

@@ -103,7 +103,7 @@ public class PresetsDB extends ArrayList<Preset> {
 		Preset p = channel.toPreset(channel.getPreset().getName());
         set(idx, p);
         save();
-        feedback("repleaced", p, channel);
+        feedback("update", p, channel);
 	}
 
 
@@ -123,11 +123,11 @@ public class PresetsDB extends ArrayList<Preset> {
         // sort(Alphabetical);
         save();
         ch.getGui().getPresets().refill(array(), ch.getPreset());
-        feedback("created", p, ch);
+        feedback("new", p, ch);
 	}
 
 	private void feedback(String mode, Preset p, Channel ch) {
-        RTLogger.log(this, mode + " " + p.getName() + " from " + ch.getName() +
+        RTLogger.debug(this, mode + " " + p.getName() + " from " + ch.getName() +
                 " with " + p.size() + " FX");
 	}
 

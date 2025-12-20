@@ -128,9 +128,7 @@ public class JudahMenu extends JMenuBar {
 
 	private JMenu viewMenu(TabZone tabs) {
 		JMenu views = new JMenu("View");
-        views.add(new Actionable("BeatBox", e->{
-        	tabs.drumZone();
-        }));
+        views.add(new Actionable("BeatBox", e->tabs.drumZone()));
         views.add(synth);
         refillTracks();
         views.add(new Actionable("ChordPro..", e-> {
@@ -138,11 +136,10 @@ public class JudahMenu extends JMenuBar {
 	        	if (getChords().load() != null)
 	        		tabs.chordSheet();
         	} else tabs.chordSheet();
-
         }));
-        views.add(new Actionable("SheetMusic..", e->{
-        	tabs.sheetMusic(Folders.choose(Folders.getSheetMusic()), true);
-        }));
+        views.add(new Actionable("SheetMusic..", e->
+        	tabs.sheetMusic(Folders.choose(Folders.getSheetMusic()), true)));
+        views.add(new Actionable("Scope", e->tabs.scope()));
         views.add(new Actionable("Detach", e->TabZone.instance.detach()));
 
         return views;

@@ -71,7 +71,7 @@ public class SynthDB extends ArrayList<TacoSauce> {
         } finally {
         	if (scanner != null) scanner.close();
         }
-        RTLogger.debug(this.getClass().getSimpleName() + " loaded " + size() + " presets");
+        RTLogger.debug(this, "loaded " + size() + " presets");
         // reindex();
 	}
 

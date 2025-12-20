@@ -88,8 +88,9 @@ public class Delay implements TimeEffect {
 
     // in seconds
     public static final float MAX_DELAY = 3.75f;
-    public static final float MIN_DELAY = 0.2f;
-    public static final float DEFAULT_TIME = .25f;
+    public static final float MIN_DELAY = 0.15f;
+    public static final float DEFAULT_TIME = .4f;
+    static final float THRESHOLD = 0.00001f; // de-normalize
 
     @Getter private boolean active;
 	@Setter @Getter boolean sync;
@@ -193,7 +194,7 @@ public class Delay implements TimeEffect {
 
 	// TODO zero out work area when delay time shrinks (ghost echoes)
 	private class VariableDelayOp {
-	    float[] workArea;
+		float[] workArea;
 	    int rovepos = 0;
 	    float lastdelay;
 
@@ -208,7 +209,8 @@ public class Delay implements TimeEffect {
         	in.rewind();
             float ldelay = lastdelay;
             float fb = feedback;
-            int rnlen = workArea.length;
+            float[] work = workArea;
+            int rnlen = work.length;
             int pos = rovepos;
             float delta = (calculated - ldelay) / N_FRAMES;
 
@@ -219,11 +221,13 @@ public class Delay implements TimeEffect {
                 r = pos - (ldelay + 2) + rnlen;
                 ri = (int) r;
                 s = r - ri;
-                a = workArea[ri % rnlen];
-                b = workArea[(ri + 1) % rnlen];
+                a = work[ri % rnlen];
+                b = work[(ri + 1) % rnlen];
                 o = a * (1 - s) + b * s;
                 scratch = in.get(i) + o;
-                workArea[pos] = scratch * fb;
+                if (Math.abs(scratch) < THRESHOLD) // nenormalize
+                	scratch = 0f;
+                work[pos] = scratch * fb;
                 in.put(scratch);
                 pos = (pos + 1) % rnlen;
                 ldelay += delta;

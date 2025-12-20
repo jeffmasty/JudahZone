@@ -1,21 +1,13 @@
 package net.judah.omni;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.GridLayout;
-import java.awt.event.ActionListener;
 import java.nio.FloatBuffer;
 import java.util.Vector;
 
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.Mixer.Info;
-import javax.swing.ButtonGroup;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JScrollPane;
-import javax.swing.border.TitledBorder;
 
+import net.judah.mixer.Channel;
 import net.judah.util.Constants;
 
 public class AudioTools  {
@@ -87,7 +79,7 @@ public class AudioTools  {
 
 	public static void replace(float[] in, FloatBuffer out) {
 		out.rewind();
-		for (int i = 0; i < in.length; i++)
+		for (int i = 0; i < out.capacity(); i++)
 			out.put(in[i]);
 	}
 
@@ -163,38 +155,6 @@ public class AudioTools  {
 				(millis / 10) % 100).append("s").toString();
 	}
 
-	public static HiLo avg(float[] in) {
-	    float sumPositive = 0;
-	    float sumNegative = 0;
-	    int countPositive = 0;
-	    int countNegative = 0;
-	    for (float val : in) {
-	        if (val > 0) {
-	            sumPositive += val;
-	            countPositive++;
-	        } else if (val < 0) {
-	            sumNegative += val;
-	            countNegative++;
-	        }
-	    }
-	    float avgPositive = countPositive > 0 ? sumPositive / countPositive : 0;
-	    float avgNegative = countNegative > 0 ? sumNegative / countNegative : 0;
-	    return new HiLo(avgPositive, avgNegative);
-	}
-
-	public static HiLo peaks(float[] in) {
-        float min = Float.MAX_VALUE;
-        float max = Float.MIN_VALUE;
-        for (float val : in) {
-        	if (val < min) {
-        		min = val;
-        	}
-        	if (val > max)
-        		max = val;
-        }
-        return new HiLo(max, min);
-	}
-
 	public static Vector<Mixer.Info> getMixerInfo(
 			final boolean supportsPlayback, final boolean supportsRecording) {
 		final Vector<Mixer.Info> infos = new Vector<Mixer.Info>();
@@ -213,25 +173,39 @@ public class AudioTools  {
 		return infos;
 	}
 
-	public static class InputPanel extends JPanel {
-	public InputPanel(ActionListener e){
-		super(new BorderLayout());
-		this.setBorder(new TitledBorder("Choose a microphone input"));
-		JPanel buttonPanel = new JPanel(new GridLayout(0,1));
-		ButtonGroup group = new ButtonGroup();
-		for(Mixer.Info info : AudioTools.getMixerInfo(false, true)){
-			JRadioButton button = new JRadioButton();
-			button.setText(info.toString());
-			buttonPanel.add(button);
-			group.add(button);
-			button.setActionCommand(info.toString());
-			button.addActionListener(e);
-		}
-		this.add(new JScrollPane(buttonPanel,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER),BorderLayout.CENTER);
-		this.setMaximumSize(new Dimension(300,150));
-		this.setPreferredSize(new Dimension(300,150));
-	}}
+	public static void copy(Channel source, float[][] dest) {
+		AudioTools.mix(source.getLeft(), dest[Constants.LEFT]);
+		AudioTools.mix(source.getRight(), dest[Constants.RIGHT]);
+	}
 
+/**
+ * Fill `buf` with a sine wave at freqHz. Returns the updated phase (radians) to use
+ * for the next call so the tone is continuous across buffers.
+ *
+ * @param buf       float[] buffer to fill (length = FFT_SIZE)
+ * @param freqHz    desired frequency in Hz
+ * @param sampleRate sample rate in Hz (e.g. 48000.0)
+ * @param amplitude amplitude (0..1)
+ * @return new phase in radians to pass to the next call
+ */
+public static double fillSine(float[] buf, double freqHz, double sampleRate, double amplitude) {
+	double phase = 0;
+	if (buf == null || buf.length == 0) return phase;
+    final double twoPi = 2.0 * Math.PI;
+    // phase increment per sample (radians)
+    final double phaseInc = twoPi * freqHz / sampleRate;
+
+    // keep amplitude safe
+    final double a = Math.max(0.0, Math.min(1.0, amplitude));
+
+    for (int i = 0; i < buf.length; i++) {
+        buf[i] = (float) (a * Math.sin(phase));
+        phase += phaseInc;
+        // wrap phase into [0, 2PI) to avoid unbounded growth
+        if (phase >= twoPi) phase -= twoPi * Math.floor(phase / twoPi);
+    }
+    return phase;
+}
 
 }
 

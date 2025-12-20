@@ -34,7 +34,8 @@ public final class Overdrive implements Effect {
     @Getter @Setter boolean active;
     private float drive = 0.2f;
     private float makeupGain = 0.65f;
-    private float clipping;
+    private float clipping = 0;
+    private float diode = 2;
     @Getter String name = Overdrive.class.getSimpleName();
     @Getter int paramCount = Settings.values().length;
 
@@ -57,8 +58,12 @@ public final class Overdrive implements Effect {
 	    		drive = 0.00001f;
 	    	else
 	    		drive = Constants.logarithmic(value, 0.2f, 0.7f);
-    	} else
+    	} else {
     		clipping = value * 0.01f;
+            // as clipping goes to zero, limit goes to 2
+            // as clipping goes to 1, limit goes to 1
+    		diode = 1 + (3 - 2 * clipping);
+    	}
     }
 
     @Override
@@ -72,22 +77,19 @@ public final class Overdrive implements Effect {
         double preMul = drive * 99 + 1;
         double postMul = 1 / (Math.log(preMul * 2) * LOG2);
         float gain = makeupGain;
-        // as clipping goes to zero, limit goes to 2
-        // as clipping goes to 1, limit goes to 1
 
         buf.rewind();
-        if (clipping == 0)
+        if (clipping < 0.01f)
 	        while (buf.hasRemaining()) {
 	            float processedValue = gain * (float) (Math.atan(buf.get() * preMul) * postMul);
 	            buf.put(buf.position() - 1, processedValue);
 	        }
         else {
-            float diode = 1 + (3 - 2 * clipping);
 	        while (buf.hasRemaining()) {
 	            float value = buf.get();
 	            float processedValue = gain * (float) (Math.atan(value * preMul) * postMul);
 	            float max = diode * value;
-	            buf.put(buf.position() - 1, Math.abs(processedValue) > Math.abs(max) ? max : processedValue);
+	            buf.put(buf.position() - 1, Math.abs(processedValue) < Math.abs(max) ? processedValue : max);
 
 	        }
         }
@@ -95,5 +97,33 @@ public final class Overdrive implements Effect {
 
 }
 
+// clipping https://www.youtube.com/watch?v=rnvEA7SOaSA
 
+/*https://github.com/martinpenberthy/JUCEGuitarAmpBasic?tab=readme-ov-file
+ Tanh
+std::tanh (x);
 
+ x/abs(x)+1
+x / (std::abs(x) + 1)
+
+Amp2
+(x * (std::abs(x) + 0.9f)) * 1.5f / (x * x + (0.3f) * (0.1f / std::abs(x)) + 1.0f) * 0.6f;
+
+Atan
+std::atan(x);
+
+HalfRect
+if(x < 0.0f)
+    return 0.0f
+else
+    return x;
+
+Amp1
+((x / (std::abs(x) + 0.9f) * 1.5f ) / (x * x + (0.0f - 1.0f) * std::abs(x) + 1.0f)) * 0.7f;
+
+Waveshaper2:
+x / (std::abs(x) + 1)
+
+Waveshaper3:
+x / (std::abs(x) + 2)
+ */

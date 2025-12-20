@@ -42,12 +42,13 @@ import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.knobs.LFOKnobs;
 import net.judah.gui.knobs.MidiGui;
+import net.judah.gui.knobs.TunerKnobs;
 import net.judah.gui.midiimport.ImportView;
+import net.judah.gui.scope.JudahScope;
+import net.judah.gui.scope.Live;
 import net.judah.gui.settable.SetCombo;
-import net.judah.gui.waves.LiveWave.LiveWaveData;
-import net.judah.gui.waves.Tuner.Tuning;
-import net.judah.gui.waves.WaveKnobs;
 import net.judah.gui.widgets.ModalDialog;
+import net.judah.gui.widgets.Tuner.Tuning;
 import net.judah.looper.Looper;
 import net.judah.midi.Actives;
 import net.judah.midi.JudahClock;
@@ -112,8 +113,9 @@ public class MainFrame extends JFrame implements Runnable {
     private final PresetsView presets;
     private final SetlistView setlists;
 
-    public MainFrame(String name, JudahClock clock, FxPanel controls, DJJefe djJefe, Seq sequencer, Looper loopr, Overview songz,
-    		MidiGui gui, DrumMachine drumz, Channel focus, PresetsDB presetsDB, Setlists sets, Chords chords, Sampler sampler) {
+    public MainFrame(String name, JudahClock clock, FxPanel controls, DJJefe djJefe, Seq sequencer, Looper loopr,
+    		Overview songz, MidiGui gui, DrumMachine drumz, Channel focus, PresetsDB presetsDB, Setlists sets,
+    		Chords chordz, Sampler sampler, JudahScope spectrum) {
     	super(name);
         instance = this;
         this.effects = controls;
@@ -123,10 +125,10 @@ public class MainFrame extends JFrame implements Runnable {
         this.looper = loopr;
         this.drums = drumz;
         this.seq = sequencer;
-        this.chords = chords;
+        this.chords = chordz;
         this.sampler = sampler;
 
-        hq = new HQ(clock, looper, overview, chords);
+        hq = new HQ(clock, looper, overview, chords, spectrum);
         loops = new MiniLooper(looper, clock);
         presets = new PresetsView(presetsDB);
         setlists = new SetlistView(sets, overview);
@@ -304,6 +306,8 @@ public class MainFrame extends JFrame implements Runnable {
 				if (knobMode == KnobMode.Sample)
 					sampler.getView().update(samp);
 			}
+			else if (o instanceof JudahScope)
+				hq.metronome();
 			else if (o instanceof JudahClock) {
 				hq.length();
 				hq.metronome();
@@ -346,9 +350,9 @@ public class MainFrame extends JFrame implements Runnable {
 				overview.getChords().updateDirectives();
 				chords.getChordSheet().updateDirectives();
 			}
-			else if (o instanceof LiveWaveData dat) {
-				dat.waveform().update(dat.buf());
-				if (knobs instanceof WaveKnobs waves)
+			else if (o instanceof Live.LiveData dat) {
+				dat.processor().analyze(dat.stereo());
+				if (knobs instanceof TunerKnobs waves)
 					waves.repaint();
 			}
 			else if (o instanceof Tuning tuning)
@@ -381,7 +385,7 @@ public class MainFrame extends JFrame implements Runnable {
 			case Sample -> {focus(sampler); yield sampler.getView();}
 			case Presets -> presets;
 			case Setlist -> setlists;
-			case Wavez -> new WaveKnobs(effects.getSelected());
+			case Tuner -> TunerKnobs.getInstance();
 			case Import -> ImportView.getInstance();
 			case Remap -> new RemapView();
 			case Log -> RTLogger.instance;

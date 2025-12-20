@@ -5,7 +5,6 @@ import net.judah.JudahZone;
 import net.judah.drumkit.DrumKit;
 import net.judah.fx.Effect;
 import net.judah.gui.MainFrame;
-import net.judah.omni.AudioTools;
 import net.judah.util.Constants;
 
 /** an live audio channel that can be recorded */
@@ -30,8 +29,6 @@ public abstract class LineIn extends Channel {
 
     /** run active effects on this input channel */
 	protected final void fx() {
-		if (!isStereo) // split mono
-			AudioTools.copy(left, right);
 		gain.preamp(left, right);
 		for(Effect fx : this)
 			if (fx.isActive())

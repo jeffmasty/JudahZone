@@ -54,7 +54,7 @@ public class PianoMenu extends TrackMenu implements Floating {
 		add(new JLabel("Amp "));
 		add(velocity);
 		add(new JLabel(" Gate"));
-		add(Gui.resize(gate, Size.SMALLER_COMBO));
+		add(Gui.resize(gate, Size.SMALLER));
 	}
 
 	private void zoomMenu(PianoView view) {

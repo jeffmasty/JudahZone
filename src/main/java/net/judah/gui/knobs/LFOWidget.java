@@ -15,7 +15,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import net.judah.fx.EffectColor;
 import net.judah.fx.LFO;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
@@ -83,7 +82,7 @@ public class LFOWidget extends Box {
 	}
 
 	public final void update() {
-		Color c = lfo.isActive() ? EffectColor.get(lfo.getClass()) : null;
+		Color c = lfo.isActive() ? Pastels.getFx(lfo.getClass()) : null;
 		wrap.setBackground(c);
 		row.update(); // TODO
 		lfoCombo.update();

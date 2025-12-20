@@ -39,8 +39,8 @@ public abstract class Channel extends FxChain implements Presets {
     protected final Overdrive overdrive = new Overdrive();
     protected final Chorus chorus = new Chorus();
     protected Reverb reverb = new Freeverb();
-    protected final LFO lfo = new LFO(this);
-    protected final LFO lfo2 = new LFO(this, LFO.Target.pArTy);
+    protected final LFO lfo = new LFO(this, LFO.class.getSimpleName());
+    protected final LFO lfo2 = new LFO(this, "LFO2");
 	protected Preset preset = JudahZone.getPresets().getDefault();
 	protected boolean presetActive;
 
@@ -103,12 +103,12 @@ public abstract class Channel extends FxChain implements Presets {
                     continue setting;
                 }
             }
-            if (s.getEffectName().equals(lfo.getName())) {// better than LFOs in channel's list of RT effects
+            if (lfo.getName().equals(s.getEffectName())) {// better than LFOs in channel's list of RT effects
                 for (int i = 0; i < s.size(); i++)
                     lfo.set(i, s.get(i));
                 lfo.setActive(presetActive);
             }
-            if (s.getEffectName().equals(lfo2.getName())) {
+            else if (s.getEffectName().equals(lfo2.getName())) {
                 for (int i = 0; i < s.size(); i++)
                     lfo2.set(i, s.get(i));
                 lfo2.setActive(presetActive);

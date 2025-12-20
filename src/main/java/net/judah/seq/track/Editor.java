@@ -69,12 +69,12 @@ public class Editor {
 			remap(e, false);
 		}
 		MainFrame.update(update);
-		RTLogger.debug("exe: " + e.getType() + " to " + e.getDestination() + ": " + Arrays.toString(e.getNotes().toArray()));
+		RTLogger.debug(this, "exe: " + e.getType() + " to " + e.getDestination() + ": " + Arrays.toString(e.getNotes().toArray()));
 	}
 
 	public void undo() {
 		if (stack.size() <= caret || caret < 0) {
-			RTLogger.debug("undo empty");
+			RTLogger.debug(this, "undo empty");
 			return;
 		}
 		Edit e = stack.get(caret);
@@ -105,7 +105,7 @@ public class Editor {
 		}
 		caret--;
 		MainFrame.update(update);
-		RTLogger.debug("undo: " + e.getType());
+		RTLogger.debug(this, "undo: " + e.getType());
 	}
 
 	private void remap(Edit e, boolean exe) {

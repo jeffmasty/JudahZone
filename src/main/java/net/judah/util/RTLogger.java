@@ -41,21 +41,30 @@ public class RTLogger extends KnobPanel {
     private static final BlockingQueue<Log> debugQueue = new LinkedBlockingQueue<>(1024);
 	public static final RTLogger instance = new RTLogger(Size.KNOB_PANEL);
 
-    public static void log(Object o, String msg) {
-        debugQueue.offer(new Log(o instanceof String
-        		? o.toString() : o.getClass().getSimpleName(), msg, false));
+    public static void log(Object caller, String msg) {
+        debugQueue.offer(new Log(caller instanceof String
+        		? caller.toString() : caller.getClass().getSimpleName(), msg, false));
     }
-    public static void log(Class<?> c, String msg) {
-    	log(c.getSimpleName(), msg);
-    }
-
-    public static void warn(Object o, String msg) {
-        debugQueue.offer(new Log(o instanceof String
-        		? o.toString() : o.getClass().getSimpleName(), msg, true));
+    public static void log(Class<?> caller, String msg) {
+    	log(caller.getSimpleName(), msg);
     }
 
-    public static void warn(Class<?> c, String msg) {
-    	warn(c.getSimpleName(), msg);
+    public static void warn(Object caller, String msg) {
+        debugQueue.offer(new Log(caller instanceof String
+        		? caller.toString() : caller.getClass().getSimpleName(), msg, true));
+    }
+
+    public static void debug(Class<?> caller, String msg) {
+        if (level == Level.DEBUG || level == Level.TRACE)
+        	log(caller, "debug " + msg);
+    }
+
+    public static void debug(Object caller, String msg) {
+    	debug(caller.getClass(), msg);
+    }
+
+    public static void warn(Class<?> caller, String msg) {
+    	warn(caller.getSimpleName(), msg);
     }
 
     public static void warn(Object o, Throwable e) {
@@ -140,11 +149,6 @@ public class RTLogger extends KnobPanel {
     static void info(String s) {
         if (level == Level.DEBUG || level == Level.INFO || level == Level.TRACE)
             addText(s);
-    }
-
-    public static void debug(String s) {
-        if (level == Level.DEBUG || level == Level.TRACE)
-            addText("debug " + s);
     }
 
 }

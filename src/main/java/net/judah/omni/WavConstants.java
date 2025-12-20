@@ -6,8 +6,11 @@ package net.judah.omni;
 public interface WavConstants {
 
 	int S_RATE = 48000; // TODO generalize
+    float NYQUIST = S_RATE / 2f;
+
 	/** Samples in a process call */ //TODO upgrade latency to 256!
 	int JACK_BUFFER = 512;
+	int FFT_SIZE = 4096;
 	float FPS = S_RATE / (float)JACK_BUFFER;
 
 	int DISK_BUFFER = 4096; //  read/write

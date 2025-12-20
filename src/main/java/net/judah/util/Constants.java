@@ -11,6 +11,7 @@ public class Constants {
 	public static int sampleRate() { return WavConstants.S_RATE; }
 	public static int bufSize() { return WavConstants.JACK_BUFFER; }
 	public static float fps() { return WavConstants.FPS; }
+	public static int fftSize() { return WavConstants.FFT_SIZE; }
 	/** Digital Interface name */
 	@Getter static String di = "Komplete ";// "UMC1820 MIDI 1";
 	public static final String LEFT_OUT = "system:playback_1";
@@ -92,7 +93,7 @@ public class Constants {
     /** see https://stackoverflow.com/a/846249 */
 	private static final int minp = 1;
 	private static final int maxp = 100;
-	public static float logarithmic(int percent, float min, float max) {
+	public static float logarithmic(float percent, float min, float max) {
 
 		// percent will be between 0 and 100
 		assert percent <= max && percent >= min;
@@ -123,12 +124,5 @@ public class Constants {
 
 	    return (int)Math.round(minp + (Math.log(var) - minv) / scale);
 	}
-
-	@Getter static float[] reverseLog = new float[100];
-	static {
-		for (int i = 0; i < reverseLog.length; i++)
-			reverseLog[i] = logarithmic(i, 0, 1);
-	}
-
 
 }

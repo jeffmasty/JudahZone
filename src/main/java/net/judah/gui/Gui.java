@@ -8,6 +8,11 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.LayoutManager;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -89,6 +94,17 @@ public interface Gui {
 		public Opaque() {
 			setOpaque(true);
 		}
+	}
+
+	public static interface Mouser extends MouseListener, MouseMotionListener, MouseWheelListener {
+		@Override default void mouseClicked(MouseEvent e) { }
+		@Override default void mousePressed(MouseEvent e) { }
+		@Override default void mouseReleased(MouseEvent e) { }
+		@Override default void mouseEntered(MouseEvent e) { }
+		@Override default void mouseExited(MouseEvent e) { }
+		@Override default void mouseDragged(MouseEvent e) { }
+	    @Override default void mouseMoved(MouseEvent e) { }
+	    @Override default void mouseWheelMoved(MouseWheelEvent e) { }
 	}
 
 }

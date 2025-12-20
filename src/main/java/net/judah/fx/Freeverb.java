@@ -277,6 +277,7 @@ public final class Freeverb extends Reverb {
         }
         if (stereoReverb != null)
         	stereoReverb.update();
+        dirty = false;
     }
 
     @Override
@@ -288,28 +289,26 @@ public final class Freeverb extends Reverb {
 
     void process(FloatBuffer buf) {
     	buf.rewind();
-        if (dirty) {
+        if (dirty)
             update();
-            dirty = false;
-        }
+
         float ourGain = fixedgain;
         for (int i = 0; i < N_FRAMES; i++)
             inScratch[i] = buf.get(i) * ourGain;
 
-        Arrays.fill(outScratchL, 0);
+        float[] work = outScratchL;
+        Arrays.fill(work, 0);
 
         for (int i = 0; i < numcombs; i++)
-            combL[i].processMix(inScratch, outScratchL, N_FRAMES);
+            combL[i].processMix(inScratch, work, N_FRAMES);
 
         for (int i = 0; i < numallpasses; i++)
-            allpassL[i].processReplace(outScratchL, outScratchL, N_FRAMES);
+            allpassL[i].processReplace(work, work, N_FRAMES);
 
             for (int i = 0; i < N_FRAMES; i++)
                 buf.put(buf.get(i) + // process add
-                		outScratchL[i] * wet1);// + outScratchR[i] * wet2);
+                		work[i] * wet1);// + outScratchR[i] * wet2);
     }
-
-
 
     private class Comb {
 

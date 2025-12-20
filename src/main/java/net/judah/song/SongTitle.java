@@ -60,9 +60,9 @@ public class SongTitle extends JPanel implements TimeListener {
 			new Btn(" 🔁 ", e->overview.reload(), "Reload"),
 			new Btn(" + Track ", e->new AddTrack(JudahZone.getSeq())),
 			mainsBtn, chordsBtn, Box.createHorizontalGlue(),
-			Gui.resize(timeSig, Size.SMALLER_COMBO),
+			Gui.resize(timeSig, Size.SMALLER),
 			Gui.resize(key, Size.MICRO),
-			Gui.resize(scale, Size.MEDIUM_COMBO),
+			Gui.resize(scale, Size.MEDIUM),
 			Gui.resize(bar, Size.MICRO));
 		top.setBackground(Pastels.BUTTONS);
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));

@@ -69,7 +69,7 @@ public abstract class BasicClient extends Thread implements JackProcessCallback,
     	}
 
     	private void connect(String source, String destination, Connect con) throws JackException {
-    		RTLogger.debug("connecting " + source + " to " + destination);
+    		RTLogger.debug(this, "connecting " + source + " to " + destination);
 			Jack.getInstance().connect(jack, source, destination);
 			Threads.execute(()->con.callback.ready(null, con.ours));
 			removeFirst();

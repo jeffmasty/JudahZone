@@ -8,7 +8,6 @@ import javax.swing.JPanel;
 import lombok.Getter;
 import net.judah.fx.EQ;
 import net.judah.fx.EQ.EqBand;
-import net.judah.fx.EffectColor;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 import net.judah.gui.Updateable;
@@ -69,7 +68,7 @@ public class EQPlus implements Updateable {
 		}
 		@Override public void update() {
 			knob.update();
-			Color bg = eq.isActive() ? EffectColor.get(eq.getClass()) : null;
+			Color bg = eq.isActive() ? Pastels.getFx(eq.getClass()) : null;
 			setBackground(bg);
 			label.setBackground(bg);
 			knob.setBackground(bg);

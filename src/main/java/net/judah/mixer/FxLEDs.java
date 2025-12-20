@@ -12,11 +12,11 @@ import net.judah.fx.Chorus;
 import net.judah.fx.Compressor;
 import net.judah.fx.Delay;
 import net.judah.fx.Effect;
-import net.judah.fx.EffectColor;
 import net.judah.fx.Filter;
 import net.judah.fx.LFO;
 import net.judah.fx.Overdrive;
 import net.judah.fx.Reverb;
+import net.judah.gui.Pastels;
 
 
 /**effect indicator lights: red reverb, orange delay, yellow distortion, green chorus, blue LFO
@@ -57,7 +57,7 @@ public class FxLEDs extends JPanel {
 
 		for (int i = 0; i < UNITS; i++) {
 			if (!model[i]) continue;
-			g.setColor(EffectColor.get(lookup[i]));
+			g.setColor(Pastels.getFx(lookup[i]));
 			int x = (int)(i * unit);
 			g.fillRect(x, 1, (int)Math.ceil(unit), d.height - 2);
 		}

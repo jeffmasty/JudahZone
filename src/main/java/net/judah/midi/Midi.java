@@ -95,10 +95,10 @@ public class Midi extends ShortMessage {
         return b.toString();
 	}
 
-	// semitone to semitone = 1.059 = 2 ^ (1/12)
-	public static float midiToHz(int data1) {
-        return (float)(Math.pow(2, (data1 - 57d) / 12d)) * Key.TUNING;   // some have 69 instead of 57
-    }
+//	// semitone to semitone = 1.059 = 2 ^ (1/12)
+//	public static float midiToHz(int data1) {
+//        return (float)(Math.pow(2, (data1 - 57d) / 12d)) * Key.TUNING;   // some have 69 instead of 57
+//    }
 
 	@Override
 	public int hashCode() {

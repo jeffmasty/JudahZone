@@ -6,7 +6,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import net.judah.fx.Effect;
-import net.judah.fx.EffectColor;
 import net.judah.fx.Gain;
 import net.judah.fx.Reverb;
 import net.judah.gui.Gui;
@@ -102,8 +101,8 @@ public class FxKnob extends JPanel implements Updateable {
 		else if (knob.getValue() != effect.get(idx))
 				knob.setValue(effect.get(idx));
 
-		Color bg = effect == null ? ch.getReverb().isActive() ? EffectColor.get(Reverb.class) : null :
-				effect.isActive() ? EffectColor.get(effect.getClass()) : null;
+		Color bg = effect == null ? ch.getReverb().isActive() ? Pastels.getFx(Reverb.class) : null :
+				effect.isActive() ? Pastels.getFx(effect.getClass()) : null;
 		setBackground(bg);
 		label.setBackground(bg);
 		knob.setBackground(bg);

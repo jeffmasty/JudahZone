@@ -1,4 +1,4 @@
-package net.judah.util.fft_temp;
+package net.judah.gui.scope.fft_temp;
 
 import be.tarsos.dsp.util.fft.FFT;
 import be.tarsos.dsp.util.fft.HammingWindow;

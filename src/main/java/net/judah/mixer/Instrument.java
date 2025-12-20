@@ -7,15 +7,21 @@ import org.jaudiolibs.jnajack.JackPort;
 import lombok.Getter;
 import net.judah.omni.AudioTools;
 import net.judah.omni.Icons;
+import net.judah.synth.taco.MonoFilter;
+import net.judah.synth.taco.MonoFilter.Type;
 import net.judah.util.Constants;
+import net.judah.util.RTLogger;
 
 @Getter
 public class Instrument extends LineIn {
 
-    protected String leftSource;
-    protected String rightSource; // for stereo
+    private String leftSource;
+    private String rightSource; // for stereo
     protected JackPort leftPort;
     protected JackPort rightPort;
+
+    private MonoFilter lp;
+    private MonoFilter hp;
 
     /** Mono channel */
 	public Instrument(String name, String sourcePort, JackPort left, String icon) {
@@ -47,6 +53,22 @@ public class Instrument extends LineIn {
 		this.rightPort = right;
 	}
 
+	public void setFilter(int lowCut, int hiCut) {
+		if (isStereo) {
+			RTLogger.warn(this, "Mono Only");
+			return;
+		}
+
+		if (lowCut <= 0)
+			hp = null;
+		else
+			hp = new MonoFilter(Type.LoCut, lowCut, 1);
+		if (hiCut <= 0)
+			lp = null;
+		else
+			lp = new MonoFilter(Type.HiCut, hiCut, 1);
+	}
+
 	@Override
 	public final void process(FloatBuffer outLeft, FloatBuffer outRight) {
 		if (isOnMute())
@@ -56,7 +78,13 @@ public class Instrument extends LineIn {
 		AudioTools.copy(leftPort.getFloatBuffer(), left);
 		if (isStereo)
 			AudioTools.copy(rightPort.getFloatBuffer(), right);
-
+		else { // Mono: apply custom filter then split to stereo
+			if (hp != null)
+				hp.process(left);
+			if (lp != null)
+				lp.process(left);
+			AudioTools.copy(left, right);
+		}
 		// apply fx
 		fx();
 

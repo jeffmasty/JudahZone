@@ -17,17 +17,20 @@ public class Folders {
 	static final File LIVE = new File(HOME, "Setlist");
 
 	@Getter static final File SetlistHome = new File(LIVE, "songs");
-	@Getter static final File Samples = new File(LIVE, "samples");
-	@Getter static final File Kits = new File(LIVE, "kits");
-	@Getter static final File Synths = new File(LIVE, "synths");
+
 	@Getter static final File Beats = new File(LIVE, "beats");
-	@Getter static final File Bass = new File(LIVE, "bass");
-	@Getter static final File SheetMusic = new File(LIVE, "sheets");
 	@Getter static final File ChordPro = new File(LIVE, "chords");
+	@Getter static final File IR = new File(LIVE, "IR");
+	@Getter static final File Kits = new File(LIVE, "kits");
 	@Getter static final File Loops = new File(LIVE, "loops");
 	@Getter static final File Midi = new File(LIVE, "midi");
 	@Getter static final File PresetsFile = new File(LIVE, "presets.zone");
+	@Getter static final File Samples = new File(LIVE, "samples");
+	@Getter static final File Synths = new File(LIVE, "synths");
+	@Getter static final File SheetMusic = new File(LIVE, "sheets");
 	@Getter static final File SynthPresets = new File(LIVE, "synths.zone");
+//	@Getter static final File Bass = new File(LIVE, "bass"); // monosynth
+
 	@Getter static final File ImportDrums = new File(HOME, "/tracks/beatbuddy/");
 	@Getter static final File ImportMidi = new File(HOME, "/tracks/midi/");
 

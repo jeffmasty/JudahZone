@@ -45,7 +45,7 @@ public class ChordTrack extends Gui.Opaque {
 		loop.setSelected(trk.getSection() != null && trk.getSection().isOnLoop());
 		loop.addActionListener(e->loop());
 		JPanel play = new JPanel(new GridLayout(2, 1, 0, 0));
-		play.add(Gui.resize(new ChordPlay("▶️ Chords", chords), Size.SMALLER_COMBO));
+		play.add(Gui.resize(new ChordPlay("▶️ Chords", chords), Size.SMALLER));
 		JPanel btns = Gui.wrap(loop, next);
 		play.add(btns);
 		JPanel top = Gui.wrap(new JLabel("File "), new ChordProCombo());

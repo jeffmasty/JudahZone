@@ -77,7 +77,7 @@ public class MonoFilter implements Effect {
 	@Getter private final String name = MonoFilter.class.getSimpleName();
 	@Getter int paramCount = Settings.values().length;
     @Getter private Type filterType;
-    @Setter @Getter private boolean active = true;
+    @Setter @Getter private boolean active = true; // default on
     @Getter private float frequency = 666;
     private double resonancedB = 1;
     private final IIRFilter filter = new IIRFilter();

@@ -16,7 +16,7 @@ public class LfoCombo extends SetCombo<Target> implements Updateable {
 		super(LFO.Target.values(), lfo.getTarget());
 		this.lfo = lfo;
 		setSelectedItem(lfo.getTarget());
-		Gui.resize(this, Size.MEDIUM_COMBO);
+		Gui.resize(this, Size.MEDIUM);
 		((JLabel)getRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
 	}
 

@@ -23,7 +23,7 @@ public enum Meta {
 	SMPTE_OFFSET(0x54),	//bytes:5	SMPTE time to denote playback offset from the beginning	beginning of a track/first track of MIDI format type 1
 	TIME_SIG(0x58),	//bytes:4	Time signature, metronome clicks, and size of a beat in 32nd notes	Anywhere
 	KEY_SIG(0x59)   //bytes:2  "C"  "F#m"
-	;
+	; // see https://www.youtube.com/watch?v=P27ml4M3V7A
 
 	final int type;
 

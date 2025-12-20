@@ -106,7 +106,7 @@ public class SynthRack {
 				//((MidiInstrument)engine).getTracks().add(new PianoTrack(engine.getName(), engine, engine.getTracks().size()));
 			}
 			engine.getTracks().getLast().setPermanent(true);
-			RTLogger.debug("registered " + engine.getClass().getSimpleName() + " " + engine.getName());
+			RTLogger.debug(SynthRack.class, "registered " + engine.getClass().getSimpleName() + " " + engine.getName());
 		} catch (InvalidMidiDataException e) { RTLogger.warn(engine, e); }
 	}
 
@@ -115,7 +115,7 @@ public class SynthRack {
 		engines.add(engine);
 		JudahZone.getMixer().addChannel((LineIn)engine);
 		JudahZone.getSeq().refill();
-		RTLogger.debug(engine.getName() + " " + engine.getClass().getSimpleName() + " instance added.");
+		RTLogger.debug(SynthRack.class, engine.getName() + " " + engine.getClass().getSimpleName() + " instance added.");
 	}
 
 	public static TacoTruck makeTaco() {

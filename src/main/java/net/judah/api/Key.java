@@ -21,10 +21,6 @@ public enum Key {
     Bb (0, 2, "A#"),
     B  (0, 5, null);
 
-	public static record Note(Key key, int octave) {
-		@Override public final String toString() {
-		return (key.alt == null ? key.name() : key.alt) + " " + octave;}}
-
 	public static final String FLAT = "\u266D";
 	public static final String SHARP = "\u266F";
 	public static final int OCTAVE = 12;
@@ -32,7 +28,7 @@ public enum Key {
 
 	@Getter private final int sharps;
     @Getter private final int flats;
-    private final String alt;
+    final String alt;
 
     public static boolean isPlain(int data1) {
     	return Key.values()[data1 % 12].alt == null;
@@ -104,7 +100,7 @@ public enum Key {
 	private static final int A4_POSITION = 9 + 4 * 12; // A4 is the 9th note in the 4th octave (0-indexed)
 
 	public static float toFrequency(Note n) {
-		return toFrequency(n.key, n.octave);
+		return toFrequency(n.key(), n.octave());
 	}
 
 	public static float toFrequency(Key note, int octave) {
@@ -117,21 +113,24 @@ public enum Key {
 	public static Note toNote(float hz) {
 	   Key nearestKey = null;
 	    int nearestOctave = 0;
-	    float minDifference = Float.MAX_VALUE;
+	    float minDifference = Float.MAX_VALUE; // absolute
+	    float difference = Float.MAX_VALUE; // actual
 	    // Iterate through all keys and octaves to find the closest match
 	    for (int octave = 0; octave <= 8; octave++) { // Assuming the range of octaves is 0 to 8
 	        for (Key key : Key.values()) {
 	            float frequency = Key.toFrequency(key, octave);
-	            float difference = Math.abs(frequency - hz);
 
-	            if (difference < minDifference) {
-	                minDifference = difference;
+	            float abs = Math.abs(frequency - hz);
+
+	            if (abs < minDifference) {
+	                minDifference = abs;
+	                difference = frequency - hz;
 	                nearestKey = key;
 	                nearestOctave = octave;
 	            }
 	        }
 	    }
-	    return new Note(nearestKey, nearestOctave);
+	    return new Note(nearestKey, nearestOctave, -1 * difference);
 	}
 
 }

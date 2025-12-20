@@ -220,7 +220,7 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 
 		int bits = getLE(buffer, 14, 2);
 		if (bits != VALID_BITS)
-			throw new IOException("Bit Depth(" + VALID_BITS + ") vs: " + bits + " " + file.getAbsolutePath());
+			throw new IOException("Bit Depth: " + bits + " (expected: " + VALID_BITS + ") " + file.getAbsolutePath());
 		if (numChannels == 0) throw new IOException("Number of channels specified in header is equal to zero");
 		if (blockAlign == 0) throw new IOException("Block Align specified in header is equal to zero");
 		if (SAMPLE_BYTES * numChannels != blockAlign)
@@ -228,11 +228,15 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 		return result;
 	}
 
+	public static long sampleToMillis(long samplePosition) {
+		return (long) ((samplePosition / (float)S_RATE) * 1000f);
+	}
+
 	/**@param supplied buffer
 	 * @param pos
 	 * @param numBytes
 	 * @return little endiean data to long from pos in the supplied buffer */
-	public static int getLE(byte[] buffer, int pos, int numBytes) {
+	static int getLE(byte[] buffer, int pos, int numBytes) {
 		numBytes --;
 		pos += numBytes;
 		int val = buffer[pos] & 0xFF;
@@ -269,6 +273,15 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 	    }
 	}
 
+	public float[][] getSamples(int idx, int length) {
+		float[] l = new float[length];
+		getSamples(idx, l, LEFT);
+		float[] r = new float[length];
+		getSamples(idx, r, RIGHT);
+		return new float[][] {l, r};
+	}
+
+
 	/** copy from left channel into destination from startSample
 	 * @param destination array of desired size to copy
 	 * @throws ArrayIndexOutOfBoundsException */
@@ -281,7 +294,7 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 		return getChannel(LEFT);
 	}
 	/** copy an entire channel into a new 1-D array, erasing buffer boundaries */
-	float[] getChannel(int ch) {
+	public float[] getChannel(int ch) {
 		int buffer = JACK_BUFFER;
 		float[] result = new float[size() * buffer];
 		for (int i = 0; i < size(); i++) {
@@ -331,5 +344,6 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 			AudioTools.copy(get(i), get(i + frames));
 		}
 	}
+
 
 }

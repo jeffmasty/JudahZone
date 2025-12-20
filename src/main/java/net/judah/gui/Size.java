@@ -8,8 +8,10 @@ public interface Size {
 	int MENU_HEIGHT = Size.STD_HEIGHT + 6;
 	int KNOB_HEIGHT = 32;
 	int WIDTH_FRAME = 1368;
-    int WIDTH_KNOBS = 346;
-    int WIDTH_TAB = WIDTH_FRAME - WIDTH_KNOBS - 2;
+//    int WIDTH_KNOBS = 345;
+    int WIDTH_TAB = 1024;
+    int WIDTH_KNOBS = WIDTH_FRAME - WIDTH_TAB - 2;
+    //int WIDTH_TAB = WIDTH_FRAME - WIDTH_KNOBS - 2;
     int HEIGHT_FRAME = 734;
     int HEIGHT_KNOBS = 290;
     int HEIGHT_MIXER = 154;
@@ -24,9 +26,9 @@ public interface Size {
     Dimension TITLE_SIZE = new Dimension(150, 33);
     Dimension WIDE_SIZE = new Dimension(120, STD_HEIGHT);
     Dimension COMBO_SIZE = new Dimension(100, STD_HEIGHT);
-    Dimension MEDIUM_COMBO = new Dimension(82, STD_HEIGHT);
+    Dimension MEDIUM = new Dimension(82, STD_HEIGHT);
 	Dimension MODE_SIZE = new Dimension(70, STD_HEIGHT);
-    Dimension SMALLER_COMBO = new Dimension(66, STD_HEIGHT);
+    Dimension SMALLER = new Dimension(66, STD_HEIGHT);
     Dimension MICRO = new Dimension(49, STD_HEIGHT);
     Dimension TINY = new Dimension(41, STD_HEIGHT);
 	Dimension FADER_SIZE = new Dimension(43, 76);

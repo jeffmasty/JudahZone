@@ -27,6 +27,8 @@ public class LFO implements TimeEffect {
 		Pan, pArTy, Gain, Echo, Room, Delay, Chorus, Rate, Depth, Phase, Filtr }
 
 	private final Channel ch;
+	@Getter private final String name;
+
 	@Getter private boolean active;
 	@Getter private Target target = Target.Pan;
 	/** in kiloHertz (msec per cycle). default: oscillates over a 1.2 seconds. */
@@ -40,9 +42,6 @@ public class LFO implements TimeEffect {
 
     @Override public int getParamCount() {
         return Settings.values().length; }
-
-    @Override public String getName() {
-        return LFO.class.getSimpleName(); }
 
 	public void setMax(int val) {
 		if (val > 100) val = 100;
@@ -264,11 +263,6 @@ public class LFO implements TimeEffect {
 
 	/** no-op, handled through MidiScheduler */
 	@Override public void process(FloatBuffer left, FloatBuffer right) { }
-
-	public LFO(Channel channel, Target filter) {
-		this(channel);
-		setTarget(target);
-	}
 
     public void tremelo(int data2) {
 		int center = ch.getVolume();

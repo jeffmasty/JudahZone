@@ -6,6 +6,7 @@ import java.util.List;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.judah.JudahZone;
 import net.judah.fx.Gain;
 import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
@@ -112,10 +113,10 @@ public class KorgMixer implements Controller {
 		else if (data1 == FWRD.getVal() && data2 != 0) { // next Tab
 			TabZone.instance.changeTab(true);
 		}
-		if (data1 == STOP.getVal() && data2 != 0 && seq.getCurrent() != null) { // Track Active/Inactive
-			seq.getCurrent().toggle();
+		if (data1 == STOP.getVal() && data2 != 0) { // test
+			JudahZone.test();
 		}
-		else if (data1 == PLAY.getVal() && data2 > 0) {
+		else if (data1 == PLAY.getVal() && data2 > 0) { // Track Active/Inactive
 			seq.getCurrent().toggle();
 		}
 		else if (data1 == RECORD.getVal())

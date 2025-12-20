@@ -8,13 +8,17 @@ import static org.jaudiolibs.jnajack.JackPortType.AUDIO;
 import java.awt.EventQueue;
 import java.io.Closeable;
 import java.nio.FloatBuffer;
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
 import org.jaudiolibs.jnajack.JackPort;
 
+import be.tarsos.dsp.util.fft.FFT;
+import be.tarsos.dsp.util.fft.HammingWindow;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.api.BasicClient;
@@ -27,7 +31,8 @@ import net.judah.gui.MainFrame;
 import net.judah.gui.fx.FxPanel;
 import net.judah.gui.fx.MultiSelect;
 import net.judah.gui.knobs.MidiGui;
-import net.judah.gui.waves.WaveKnobs;
+import net.judah.gui.knobs.TunerKnobs;
+import net.judah.gui.scope.JudahScope;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
@@ -89,9 +94,9 @@ public class JudahZone extends BasicClient {
 	@Getter private static final PresetsDB presets = new PresetsDB();
 	@Getter private static SynthDB synthPresets;
 	@Getter private static final Setlists setlists = new Setlists();
-	@Getter private static final MultiSelect selected = new MultiSelect();
 	@Getter private static final Clipboard clipboard = new Clipboard();
-
+	@Getter private static final MultiSelect selected = new MultiSelect();
+	@Getter private static JudahScope scope;
 
 	@Getter private static Zone instruments;
 	@Getter private static final Memory mem = new Memory(STEREO, bufSize());
@@ -106,7 +111,7 @@ public class JudahZone extends BasicClient {
 
 	public static void main(String[] args) {
 		DOMConfigurator.configure(Folders.getLog4j().getAbsolutePath());
-		// RTLogger.setLevel(Level.DEBUG);
+		RTLogger.setLevel(Level.DEBUG);
 		try {
 			new JudahZone();
 		} catch (Exception e) { e.printStackTrace(); }
@@ -125,8 +130,11 @@ public class JudahZone extends BasicClient {
 		chords = new Chords(clock);
 		guitar = new Instrument(GUITAR, GUITAR_PORT,
 				jackclient.registerPort("guitar", AUDIO, JackPortIsInput), "Guitar.png");
+		guitar.setFilter(85, 14000);
+
 		mic = new Instrument(MIC, MIC_PORT,
 				jackclient.registerPort("mic", AUDIO, JackPortIsInput), "Microphone.png");
+		mic.setFilter(85, 10000);
 
 		while (midi.getFluidOut() == null)
 			Threads.sleep(20); // wait while midi thread creates ports
@@ -139,6 +147,8 @@ public class JudahZone extends BasicClient {
 			Threads.sleep(20);
 		bass = new MidiInstrument(BASS, CRAVE_PORT,
 				jackclient.registerPort("crave_in", AUDIO, JackPortIsInput), "Crave.png", midi.getCraveOut());
+		bass.setFilter(40, 10000);
+
 		taco = new TacoTruck(Trax.TK1.getName(), Icons.get("taco.png"));
 		tk2 = new TacoTruck(Trax.TK2.getName(), Icons.get("Waveform.png"));
 
@@ -184,8 +194,9 @@ public class JudahZone extends BasicClient {
 		midiGui = new MidiGui(taco, fluid, bass, clock, midi.getJamstik(), sampler, setlists);
 		overview = new Overview(JUDAHZONE, seq);
 		fxRack = new FxPanel(selected);
+		scope = new JudahScope();
 		frame = new MainFrame(JUDAHZONE, clock, fxRack, mixer, seq, looper, overview,
-				midiGui, drumMachine, guitar, presets, setlists, chords, sampler);
+				midiGui, drumMachine, guitar, presets, setlists, chords, sampler, scope);
 
 		clock.setTempo(93);
 		drumMachine.init("Drumz");
@@ -209,7 +220,69 @@ public class JudahZone extends BasicClient {
 		Threads.execute(()->req.callback().ready(req, port));
 	}
 
-	private void test() {
+	public static void error() {
+		final int FFT_SIZE = 4096; // any power of 2 should work
+	    final FFT noWindow = new FFT(FFT_SIZE); // pass
+	    final FFT withWindow = new FFT(FFT_SIZE, new HammingWindow()); // cause of later error
+
+	    final float[] test1 = new float[FFT_SIZE * 2];
+	    final float[] test2 = new float[FFT_SIZE * 2];
+	    float[] magnitudes; // FFT_SIZE / 2
+	    float max; // test var
+
+		// generate a 440 Hz tone at amplitude 0.6
+		final float[] sinWave = new float[FFT_SIZE];
+		final double S_RATE = 48000.0; // any should work
+	    final double TWO_PI = 2.0 * Math.PI;
+		final double hz = 440.0;
+	    final double amplitude = 0.6;
+	    final double step = TWO_PI * hz / S_RATE;
+		double phase = 0;
+	    for (int i = 0; i < sinWave.length; i++) {
+	        sinWave[i] = (float) (amplitude * Math.sin(phase));
+	        phase += step;
+	        if (phase >= TWO_PI) // clamp
+	        	phase -= TWO_PI * Math.floor(phase / TWO_PI);
+	    }
+
+	    // copy audio into first half of test arrays  (zeros are in last half)
+		System.arraycopy(sinWave, 0, test1, 0, FFT_SIZE);
+		System.arraycopy(sinWave, 0, test2, 0, FFT_SIZE);
+
+		max = 0;
+		noWindow.forwardTransform(test1);
+		magnitudes = new float[FFT_SIZE / 2];
+		noWindow.modulus(test1, magnitudes);
+		for (int i = 0 ; i < magnitudes.length; i++) {
+		    float m = magnitudes[i];
+		    if (!Float.isFinite(m) || m < 0f)
+		    	throw new InvalidParameterException(i + ": " + m);
+		    if (m > max)
+		    	max = m;
+		}
+		assert max > 0;
+		System.out.println("no-window transform passed: " + max);
+
+		max = 0;
+		withWindow.forwardTransform(test2); // <-- window causes error
+		magnitudes = new float[FFT_SIZE / 2];
+		withWindow.modulus(test2, magnitudes);
+		for (int i = 0 ; i < magnitudes.length; i++) {
+		    float m = magnitudes[i];
+		    if (!Float.isFinite(m) || m < 0f)
+		    	throw new InvalidParameterException(i + ": " + m);
+		    if (m > max)
+		    	max = m;
+		}
+		assert max > 0;
+		System.out.println("window transform passed: " + max);
+	}
+
+	public static void test() {
+		// error();
+	}
+
+// 		ConvolutionExample.main(new String[0]);
 
 //		KJFFT fft = new KJFFT(Constants.bufSize());
 //		float[] freqs = fft.calculateFrequencyTable(Constants.sampleRate());
@@ -223,7 +296,22 @@ public class JudahZone extends BasicClient {
 //			fx.set(idx, i); // logarithmic
 //			RTLogger.log(this,  fx.get(idx) + " --> " + fx.getFrequency());
 //		}
-	}
+
+//		CabSim test = null;
+//		for (Effect fx : taco)
+//			if (fx instanceof CabSim sim)
+//				test = sim;
+//
+//		if (test == null) {
+//			test = new CabSim();
+//			test.set(CabSim.Settings.Preset.ordinal(), 0);
+//			taco.add(test);
+//			return;
+//		}
+//
+//		test.setActive(!test.isActive());
+//		RTLogger.log("TEST", "IR Active? " + test.isActive());
+//	}
 
 	/** put algorithms through their paces */
 	public static void justInTimeCompiler() {
@@ -312,8 +400,10 @@ public class JudahZone extends BasicClient {
 		sampler.process(left, right); // not recorded
 		mains.process(left, right);	  // final mix bus effects
 		mixer.monitor(2); 	// collect 2 channels of dB feedback for mixer panel per cycle
-		if (MainFrame.getKnobs() instanceof WaveKnobs waves)
+		if (MainFrame.getKnobs() instanceof TunerKnobs waves)
 			waves.process();
+		scope.process();
+
 		requests.process();
 		return true;
 	}

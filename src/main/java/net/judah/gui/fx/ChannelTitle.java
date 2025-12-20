@@ -41,7 +41,7 @@ public class ChannelTitle extends JPanel {
 			if (MainFrame.getKnobMode() == KnobMode.LFO)
 				channel.getLfo().setActive(!channel.getLfo().isActive());
 			else MainFrame.setFocus(KnobMode.LFO);});
-		Btn wav = new Btn("wav", e->MainFrame.setFocus(KnobMode.Wavez));
+		Btn wav = new Btn("wav", e->MainFrame.setFocus(KnobMode.Tuner));
 		mute.setFont(Gui.FONT10);
 		lfo.setFont(Gui.FONT10);
 		wav.setFont(Gui.FONT10);

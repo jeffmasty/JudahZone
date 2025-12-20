@@ -2,7 +2,7 @@ package net.judah.seq.track;
 
 import static net.judah.JudahZone.getDrumMachine;
 import static net.judah.gui.Size.COMBO_SIZE;
-import static net.judah.gui.Size.MEDIUM_COMBO;
+import static net.judah.gui.Size.MEDIUM;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -97,7 +97,7 @@ public abstract class TrackMenu extends Box implements MouseListener {
 		}
 		add(menu);
 		program = new Program(track);
-		add(Gui.resize(program, track.isDrums()? MEDIUM_COMBO : COMBO_SIZE));
+		add(Gui.resize(program, track.isDrums()? MEDIUM : COMBO_SIZE));
         add(new Btn(Icons.SAVE, e->track.save()));
 		add(programmer);
 
