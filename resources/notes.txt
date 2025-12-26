@@ -1,16 +1,19 @@
 
 TODO:
 
-Tarsos pull request
-RMS labels, click n scroll, zoom
-Loops too loud (onLoad save?) - Mastering
+Tarsos pull request // clean mvn
+FxChain/Channel architecture: <effects> <actives> <presets>
+Scope resize, dispatcher, mpkMini to127
+Smoothing biquad
+Leveling/mastering, Loops too loud (Save/reload/mp3)
 nudge notes, Linked Midi Selection Model
-Autmation: PitchBend, Meta, TimeSig, KeySig, Tempo
+TacoSynth detune on sus/pdl
+Automation: PitchBend, Meta, TimeSig, KeySig, Tempo
 Piano roll orientation, TrackKnobs Program overflow
 SendTo ignore Meta Device, Program?
 ChannelUpdate(ch, fx, idx)
 Channel/System Setup  +Controllers +Jamstik +Fluid
-Lyrics Track
+Lyrics Track, Fine Tune Midi Envelope(CC)
 Hi/Lo filter CC   Mid/Side/Chain
 Redo track capture (atomic undo/redo/AUTOMATION)
 Redo Patterns:==>  Midi MetaMessages?
@@ -24,26 +27,22 @@ ChordTrack |1:[] |2:[] endings,  |bars| parse bug
 ChordView rightClick menu (remove track, File)
 PianoEditor: drag-n-drop/transpose across frame, falling water, REL/Modal
 Synth filter tracking, LFO: detune, filter/resonance
-Fine Tune Midi Envelope
 Jamstik Midi/Cmd?
 Controllers MidiMapper
 AOT cache
-
-* https://www.ee.columbia.edu/~dpwe/resources/Processing/
-
 
 <repository>
 	<id>ossrh</id>
 	<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 </repository>
-	
+
+FFTW	
 * https://github.com/fudcom/kjdss/tree/master
 	<dependency>
 		<groupId>com.fudcom.kjdss</groupId>
 		<artifactId>kjdss-root</artifactId>
 		<version>1.3.2-SNAPSHOT</version>
 	</dependency>
-	
     <dependency>
       <groupId>org.bytedeco</groupId>
       <artifactId>fftw</artifactId>
@@ -65,35 +64,19 @@ AOT cache
       <version>3.6.1</version>
     </dependency>
 
-Either import lv2 or internal fast convolution
 lv2 jna https://github.com/nativelibs4java/JNAerator/tree/refresh-2022
-IR cabsim https://www.youtube.com/watch?v=acAw5WGtzuk
-https://www.youtube.com/watch?v=xQMZ1ZGbDYk
-https://medium.com/@devjoemar2016/a-simple-guide-to-fast-fourier-transform-in-java-499aeeba8730
-https://github.com/mod-audio/mod-cabsim-IR-loader/blob/master/source/cabsim-IR-loader.c
-https://github.com/djshaji/ir-cab-sim-lv2/blob/master/ir-cab-sim.c 
-https://github.com/mod-audio/mod-convolution-loader/blob/main/src/OneKnobPlugin.cpp (dry/wet)
-* https://github.com/jvstinian/fftw-convolution-1d-example-java
 DSP Course: https://www.youtube.com/watch?v=hVOA8VtKLgk&list=PLuh62Q4Sv7BUSzx5Jr8Wrxxn-U10qG1et
-FFT Algo https://www.youtube.com/watch?v=iTMn0Kt18tg
-https://github.com/hedoluna/fft
-https://www.youtube.com/watch?v=2O3nm0Nvbi4
 https://github.com/takyonxxx/Oscilloscope-Java-Swing
-https://github.com/chdh/dsp-collection-java DFT
-https://github.com/eicket/mySpectrum
-https://github.com/goxr3plus/Java-Spectrum-Analyser-Tutorials/tree/master/Part%201%20-%20Stereo%20Oscilloscope/src/dsp
 Stereo Width https://github.com/eventual-recluse/stereopan.lv2/blob/main/stereopan.cpp
 https://katjaas.nl/FFT/FFT.html
-
 Oscillator ViewWidget, Phase ViewWidget (rainbow color)
 test n benchmark:  fftw, JTransforms, alglib, Tarsos - accuracy, efficiency, ease of use
 Sample Editor: reverse sample, chop sample left, right, stretch, scratch
 Sampler FX (granularity, pitched frequency, lofi, wet)
 https://github.com/JorenSix/TarsosDSP/blob/master/examples/src/main/java/be/tarsos/dsp/example/unverified/GranulatorExample.java
-IR Reverb, DrumSynth, Shepherd, Vocoder
+DrumSynth, Shepherd, Vocoder
 FFM instead of JNA? https://jdk.java.net/jextract/
-zone omni -> omni   Recording?
-Stems, LoopToDisk .WAV recording length off https://github.com/JorenSix/TarsosDSP/blob/master/jvm/src/main/java/be/tarsos/dsp/io/jvm/WaveformWriter.java
+zone omni -> omni   Recording?  Stems, 
 Directives.BREAKS ChordPro.@ ChordPro.%   Cycle breaks: A3_ ABC_ TOF_?
 on delete Primary, what about duplicated primary/loop?
 what if SoloTrack is active but on muteRecord?
@@ -244,6 +227,8 @@ Midi CC Automation
 Add/Remove/Rename Midi Tracks
 TacoSynth anti-aliasing
 JudahScope-Spectrometer 
+Convolution
+
 
 REFERENCE------------------------------------------------------------
 [Mixer]                [FX]

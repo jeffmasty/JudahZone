@@ -29,23 +29,38 @@ public abstract class TimeWidget extends BufferedImage implements Closeable {
 		g2d.clearRect(0, 0, w, h);
 	}
 
-    abstract void generateImage(float unit);
-    abstract void analyze(int x, Transform t, int cell);
+	/**
+	 * Regenerate the offscreen image for a given viewport over db[].
+	 *
+	 * @param unit        pixels per index (can be fractional)
+	 * @param startIndex  inclusive start index in db[]
+	 * @param endIndex    inclusive end index in db[]
+	 */
+	abstract void generateImage(float unit, int startIndex, int endIndex);
+
+	/**
+	 * Render/update a single index within the current viewport.
+	 *
+	 * @param xOnScreen   pixel X coordinate (already mapped)
+	 * @param t           transform for that index
+	 * @param cellWidth   width in pixels of this cell/bar
+	 */
+	abstract void analyze(int xOnScreen, Transform t, int cellWidth);
 
 	public void clearRect(int x, int width) {
 		g2d.clearRect(x, 0, width, h);
 	}
 
-    protected void drawBorder() {
-        g2d.setColor(Color.LIGHT_GRAY);
-        g2d.drawLine(0, 0, w, 0);
-        g2d.drawLine(w - 1, 0, w - 1, h);
-        g2d.drawLine(0, h - 1, w, h - 1);
-        g2d.drawLine(0, 0, 0, h);
-    }
-
-	@Override public final void close() throws IOException {
-		g2d.dispose();
+	protected void drawBorder() {
+		g2d.setColor(Color.LIGHT_GRAY);
+		g2d.drawLine(0, 0, w, 0);
+		g2d.drawLine(w - 1, 0, w - 1, h);
+		g2d.drawLine(0, h - 1, w, h - 1);
+		g2d.drawLine(0, 0, 0, h);
 	}
 
+	@Override
+	public final void close() throws IOException {
+		g2d.dispose();
+	}
 }

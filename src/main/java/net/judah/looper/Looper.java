@@ -62,6 +62,7 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable 
 		clock.addListener(this);
 	}
 
+	// TODO  multithread on Looper's own buffer
 	/** play and/or record loops and samples in Real-Time thread */
 	public void process(FloatBuffer left, FloatBuffer right) {
 		forEach(loop->loop.process(left, right));

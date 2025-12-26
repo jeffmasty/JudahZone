@@ -7,6 +7,7 @@ import java.awt.Insets;
 import java.util.ArrayList;
 
 import javax.swing.BoxLayout;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
@@ -19,6 +20,7 @@ import net.judah.fx.Reverb;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
+import net.judah.gui.fx.ReverbPlus.UpdatePanel;
 import net.judah.gui.settable.PresetsHandler;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.gui.widgets.Slider;
@@ -40,29 +42,38 @@ public class EffectsRack extends JPanel implements MPKTools {
     private final Slider.FxSlider dampness;
     private final Slider.FxSlider clipping;
     @Getter private final EQPlus eq;
+    @Getter private final ReverbPlus reverb;
+    private final OD drive;
 
     public EffectsRack(Channel ch, Looper looper) {
     	this.channel = ch;
-        presets = new PresetsHandler(ch);
-        title = new ChannelTitle(ch, looper);
+        presets = new PresetsHandler(channel);
+        title = new ChannelTitle(channel, looper);
         phase = new Slider.FxSlider(ch.getChorus(), Chorus.Settings.Phase.ordinal(), "Phase");
-        dampness = new Slider.FxSlider(ch.getReverb(), Reverb.Settings.Damp.ordinal(), "Dampness");
+        dampness = new Slider.FxSlider(ch.getReverb(), Reverb.Settings.Width.ordinal(), "Dampness");
         clipping = new Slider.FxSlider(ch.getOverdrive(), Overdrive.Settings.Clipping.ordinal(), "Clipping");
-        eq = new EQPlus(ch);
+        eq = new EQPlus(channel);
+        drive = new OD(channel);
+        reverb = new ReverbPlus(ch.getReverb());
 
 		// wet  room   d.time  d.fb
 		// cho1 cho2   cho3    O/D
         Row lbls = new Row(ch);
         ArrayList<Component> components = lbls.getControls();
         components.add(new FxTrigger("Reverb", ch.getReverb(), ch));
-        components.add(Gui.resize(dampness, Size.TINY));
+        components.add(new FxTrigger(" ", ch.getReverb(), ch));
+
+//        components.add(Gui.resize(dampness, Size.TINY));
         components.add(new FxTrigger("Delay", ch.getDelay(), ch));
         components.add(new TimePanel(ch.getDelay(), ch));
         labels.add(lbls);
 
         lbls = new Row(ch);
         components = lbls.getControls();
-        components.add(new FxTrigger("Dist.", ch.getOverdrive(), ch));
+
+        JPanel od = Gui.wrap(new FxTrigger("O/D", ch.getOverdrive(), ch),
+        		Gui.resize(drive, Size.MODE_SIZE));
+        components.add(od);
         components.add(Gui.resize(phase, Size.TINY));
         components.add(new FxTrigger("Chorus", ch.getChorus(), ch));
         components.add(new TimePanel(ch.getChorus(), ch));
@@ -74,7 +85,7 @@ public class EffectsRack extends JPanel implements MPKTools {
         components = lbls.getControls();
         components.add(Gui.wrap(Gui.resize(clipping, Size.MICRO)));
         components.add(new FxTrigger("   EQ   ", ch.getEq(), ch));
-        components.add(eq.getToggle()); // new FxTrigger("     ", channel.getEq(), channel));
+        components.add(eq.getToggle());
         components.add(new JLabel("Pan", JLabel.CENTER));
         labels.add(lbls);
 
@@ -86,7 +97,7 @@ public class EffectsRack extends JPanel implements MPKTools {
         components.add(new FxTrigger("Volume", ch.getGain(), ch));
         labels.add(lbls);
 
-        knobs.add(new RowKnobs(ch, 0));
+        knobs.add(new RowKnobs(ch, reverb));
         knobs.add(new RowKnobs(ch, 1));
         knobs.add(new RowKnobs(ch, eq));
         knobs.add(new RowKnobs(ch, 3));
@@ -157,6 +168,8 @@ public class EffectsRack extends JPanel implements MPKTools {
     	Component c = getKnob(idx);
     	if (c instanceof FxKnob fx)
     		fx.knob(up);
+    	else if (c instanceof UpdatePanel ok)
+    		ok.getKnob().knob(up);
     	else if (idx == 4)
         	eq.knob(EQ.EqBand.Bass, up);
     	else if (idx == 5)
@@ -166,86 +179,19 @@ public class EffectsRack extends JPanel implements MPKTools {
     	else if (c instanceof PresetsBtns)
     		presets.increment(up);
     	else {
-    		RTLogger.log(c, "unknown: " + c + " " + c.getClass());
+    		RTLogger.warn(c, "unknown: " + c + " " + c.getClass());
     		return;
     	}
     	MainFrame.update(channel);
     }
 
+    private class OD extends JComboBox<Overdrive.Algo> {
+    	OD(final Channel ch) {
+    		super(Overdrive.Algo.values());
+    		setSelectedItem(Overdrive.Algo.SMITH);
+    		addActionListener(e -> ch.getOverdrive().set(
+            		Overdrive.Settings.Algo.ordinal(), getSelectedIndex()));
+    	}
+    }
+
 }
-
-
-//switch(idx) {
-//case 0:
-//	int reverb = (int)(channel.getReverb().getWet() * 100f);
-//	reverb = offset(reverb, up);
-//	channel.getReverb().set(Reverb.Settings.Wet.ordinal(), reverb);
-//	channel.getReverb().setActive(reverb > 0);
-//	break;
-//case 1:
-//		int room = (int)(channel.getReverb().getRoomSize() * 100f);
-//		room = offset(room, up);
-//		channel.getReverb().set(Reverb.Settings.Room.ordinal(), room);
-//		channel.getReverb().setActive(room > thresholdLo);
-//	break;
-//case 2:
-//	int feedback = offset(channel.getDelay().get(Delay.Settings.Feedback.ordinal()), up);
-//	channel.getDelay().set(Delay.Settings.Feedback.ordinal(), feedback);
-//	channel.getDelay().setActive(feedback > 0);
-//	break;
-//case 3:
-//	int time = offset(channel.getDelay().get(Delay.Settings.DelayTime.ordinal()), up);
-//	channel.getDelay().set(Delay.Settings.DelayTime.ordinal(), time);
-//	break;
-//case 4:
-//	eq.knob(EQ.EqBand.Bass, up);
-//	break;
-//case 5:
-//	eq.knob(EQ.EqBand.Mid, up);
-//	break;
-//case 6:
-//	eq.knob(EQ.EqBand.High, up);
-//	break;
-//case 7:
-//	channel.getGain().set(Gain.PAN, offset(channel.getGain().get(Gain.PAN), up));
-//    break;
-//case 8:
-//	Overdrive dist = channel.getOverdrive();
-//	int od = offset(dist.get(0), up);
-//	dist.set(0, od);
-//    dist.setActive(od > 3);
-//    break;
-//case 9:
-//	int depth = offset(channel.getChorus().get(Chorus.Settings.Depth.ordinal()), up);
-//	channel.getChorus().set(Chorus.Settings.Depth.ordinal(), depth);
-//	channel.getChorus().setActive(depth > thresholdLo);
-//	break;
-//case 10:
-//	int fb = offset(channel.getChorus().get(Chorus.Settings.Feedback.ordinal()), up);
-//	channel.getChorus().set(Chorus.Settings.Feedback.ordinal(), fb);
-//	channel.getChorus().setActive(fb > thresholdLo);
-//	break;
-//case 11:
-//	int rate = offset(channel.getChorus().get(Chorus.Settings.Rate.ordinal()), up);
-//	channel.getChorus().set(Chorus.Settings.Rate.ordinal(), rate);
-//	channel.getChorus().setActive(rate < thresholdHi);
-//	break;
-//case 12:
-//	presets.increment(up);
-//	break;
-//case 13:
-//	Filter hiCut = channel.getHiCut();
-//	int hiNext = offset(hiCut.get(Filter.Settings.Hz.ordinal()), up);
-//	hiCut.set(Filter.Settings.Hz.ordinal(), hiNext);
-//	hiCut.setActive(hiNext < 100);
-//	break;
-//case 14:
-//	Filter loCut = channel.getLoCut();
-//	int loNext = offset(loCut.get(Filter.Settings.Hz.ordinal()), up);
-//	loCut.set(Filter.Settings.Hz.ordinal(), loNext);
-//	loCut.setActive(loNext > 0);
-//	break;
-//case 15:
-//	channel.getGain().set(Gain.VOLUME, offset(channel.getVolume(), up));
-//	break;
-//}

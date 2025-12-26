@@ -12,12 +12,12 @@ import net.judah.fx.Delay;
 import net.judah.fx.Filter;
 import net.judah.fx.Gain;
 import net.judah.fx.LFO;
+import net.judah.fx.MonoFilter;
 import net.judah.fx.Reverb;
 import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.automation.ControlChange;
-import net.judah.synth.taco.MonoFilter;
 import net.judah.util.Constants;
 
 @RequiredArgsConstructor  // TacoSynthTruck, DrumKit, MidiInstrument

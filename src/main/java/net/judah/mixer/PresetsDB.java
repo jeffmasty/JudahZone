@@ -1,10 +1,9 @@
-package net.judah.fx;
+package net.judah.mixer;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-import net.judah.mixer.Channel;
 import net.judah.omni.Threads;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;

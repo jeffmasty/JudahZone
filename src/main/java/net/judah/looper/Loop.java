@@ -1,5 +1,6 @@
 package net.judah.looper;
 
+import static net.judah.omni.WavConstants.WAV_EXT;
 import static net.judah.util.Constants.LEFT;
 import static net.judah.util.Constants.RIGHT;
 import static net.judah.util.Constants.STEREO;
@@ -29,6 +30,7 @@ import net.judah.synth.taco.TacoTruck;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
+import net.judah.util.WavFile;
 
 
 public class Loop extends Channel implements RecordAudio, Runnable {
@@ -113,15 +115,27 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 	}
 
 	public void save() {
+		if (length == 0) {
+			RTLogger.log(this, "no recording");
+			return;
+		}
+		File f = Folders.choose(Folders.getLoops());
+		if (f == null)
+			return;
+		if (!f.getName().endsWith(WAV_EXT))
+			f = new File(f.getAbsolutePath() + WAV_EXT);
 		try {
-			ToDisk.toDisk(tape, Folders.choose(Folders.getLoops()), length);
+			WavFile.save(tape.truncate(length), f);
 		} catch (Throwable t) { RTLogger.warn(this, t); }
 	}
 
     public void load(File dotWav, boolean primary) {
 		delete();
 		try {
-			length = tape.load(dotWav);
+			rewind();
+			length = 0;
+			tape = new Recording(dotWav); // TODO buffering
+			length = tape.size();
 			dirty = true;
 			if (primary) {
 				rewind();
@@ -271,6 +285,10 @@ public class Loop extends Channel implements RecordAudio, Runnable {
     }
 
 	@Override
+	public void process() {
+		// no-op
+	}
+
 	public void process(FloatBuffer left, FloatBuffer right) {
 		if (!dirty && length == 0)
 			return;

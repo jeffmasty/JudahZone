@@ -40,7 +40,7 @@ public class MidiInstrument extends Instrument implements ZoneMidi {
 
 	/** mono-synth */
 	public MidiInstrument(String name, String sourcePort, JackPort mono, String icon, JackPort midi) {
-		super(name, sourcePort, mono, icon);
+		super(name, sourcePort, mono, icon, 45, 11000);
 		init(midi);
 	}
 

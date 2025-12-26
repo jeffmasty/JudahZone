@@ -7,11 +7,11 @@ import javax.sound.midi.Track;
 
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.fx.Preset;
-import net.judah.fx.PresetsDB;
 import net.judah.midi.ChannelCC;
 import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
+import net.judah.mixer.Preset;
+import net.judah.mixer.PresetsDB;
 import net.judah.util.RTLogger;
 
 @Getter

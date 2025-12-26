@@ -9,6 +9,7 @@ import lombok.Getter;
 import net.judah.fx.Effect;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
+import net.judah.omni.AudioTools;
 import net.judah.util.Constants;
 
 /** An input or output effects bus for mono or stereo audio */
@@ -34,7 +35,16 @@ public abstract class FxChain extends ArrayList<Effect> {
 		this.name = name;
 	}
 
-	abstract public void process(FloatBuffer left, FloatBuffer right);
+	abstract public void process();
+
+	public final void mix(FloatBuffer outLeft, FloatBuffer outRight) {
+		if (isOnMute())
+			return;
+		// add to output
+		AudioTools.mix(left, outLeft);
+		AudioTools.mix(right, outRight);
+	}
+
 
 	public final void reset() {
 		forEach(fx->fx.setActive(false));

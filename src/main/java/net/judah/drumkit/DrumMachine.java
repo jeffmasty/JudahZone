@@ -1,6 +1,5 @@
 package net.judah.drumkit;
 
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
 
 import javax.sound.midi.MetaMessage;
@@ -130,14 +129,16 @@ public final class DrumMachine extends Engine {
 	///////////////////////////////////////////////
 	// process + mix each drumkit, process this channel's fx, place on mains
 	@Override
-	public void process(FloatBuffer outLeft, FloatBuffer outRight) {
+	public void process() {
 		AudioTools.silence(left);
 		AudioTools.silence(right);
-		for (DrumTrack track : tracks)
-			track.getKit().process(left, right);
+		for (DrumTrack track : tracks) {
+			track.getKit().process();
+			AudioTools.mix(track.getKit().getLeft(), left);
+			AudioTools.mix(track.getKit().getRight(), right);
+		}
+
 		fx();
-		AudioTools.mix(left, outLeft);
-		AudioTools.mix(right, outRight);
 	}
 
 	@Override

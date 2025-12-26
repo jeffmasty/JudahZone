@@ -10,6 +10,7 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
+import net.judah.gui.fx.EffectsRack;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.LFOKnobs;
 import net.judah.gui.scope.JudahScope;
@@ -61,7 +62,10 @@ public class HQ extends JPanel implements TimeListener {
     	shift = on;
     	delete.setText(on ? "SET" : "Del");
     	delete.setBackground(on ? Pastels.YELLOW : null);
-    	JudahZone.getFxRack().getChannel().getGui().getEq().toggle();
+    	EffectsRack fx = JudahZone.getFxRack().getChannel().getGui();
+    	fx.getEq().toggle();
+    	fx.getReverb().toggle();
+
     	if (MainFrame.getKnobMode() == KnobMode.LFO)
     		((LFOKnobs)MainFrame.getKnobs()).upperLower();
     }

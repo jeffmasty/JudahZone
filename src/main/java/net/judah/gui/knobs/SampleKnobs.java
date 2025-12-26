@@ -10,6 +10,7 @@ import javax.swing.JPanel;
 
 import lombok.Getter;
 import net.judah.fx.Gain;
+import net.judah.gui.MainFrame;
 import net.judah.sampler.Sample;
 import net.judah.sampler.Sampler;
 
@@ -48,11 +49,15 @@ public class SampleKnobs extends KnobPanel {
 
 	@Override public boolean doKnob(int idx, int value) {
 		samples.get(KNOB_ORDER[idx]).getGain().set(Gain.VOLUME, value);
+		MainFrame.update(this);
 		return true;
 	}
 
 	@Override public void update() {
+		for (SamplePad s : updates)
+			s.update();
 	}
+
 
 	@Override public void pad1() {
 		// open granular

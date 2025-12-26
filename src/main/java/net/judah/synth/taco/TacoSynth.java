@@ -11,6 +11,8 @@ import javax.sound.midi.ShortMessage;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
+import net.judah.fx.MonoFilter;
+import net.judah.fx.MonoFilter.Type;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.SynthKnobs;
 import net.judah.midi.ChannelCC;
@@ -20,7 +22,6 @@ import net.judah.mixer.Channel;
 import net.judah.omni.AudioTools;
 import net.judah.seq.automation.ControlChange;
 import net.judah.seq.track.PianoTrack;
-import net.judah.synth.taco.MonoFilter.Type;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -220,8 +221,10 @@ public class TacoSynth extends PianoTrack {
         	voice.process(notes, adsr, upsample);
         internalFilter.process(upsample);
         decimate();
+
         highPass.process(mono);
         lowPass.process(mono);
+
 	}
 
 	private void decimate() {

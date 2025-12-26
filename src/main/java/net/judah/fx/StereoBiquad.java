@@ -26,6 +26,8 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.util.Constants;
 
+
+/** compute unit of and EQ and Filter */
 public class StereoBiquad {
 
 	@RequiredArgsConstructor @Getter
@@ -119,12 +121,22 @@ public class StereoBiquad {
 
 		private float xn1, xn2, yn1, yn2 = 0;
 
+
 		void processBuffer(FloatBuffer buff) {
+
+			final float lb0 = b0;
+			final float lb1 = b1;
+			final float lb2 = b2;
+			final float la0 = a0;
+			final float la1 = a1;
+			final float la2 = a2;
+
 			buff.rewind();
 			for (int i=0; i<N_FRAMES; i++) {
 				float xn = buff.get(i);
-				float yn = (b0*xn + b1*xn1 + b2*xn2 - a1*yn1 - a2*yn2) / a0;
-	            if (Math.abs(yn) < 1.0E-8)
+				float yn = (lb0 * xn + lb1 * xn1 + lb2 * xn2
+			            - la1 * yn1 - la2 * yn2) / la0;
+				if (Math.abs(yn) < 1.0E-8)
 	                yn = 0; // de-normalize
 				buff.put(yn); // yn, our target, back into the buffer
 				xn2 = xn1;

@@ -77,17 +77,21 @@ public class FluidReverb extends Reverb {
             return Math.round(getDamp() * 100);
         if (idx == Settings.Wet.ordinal())
             return Math.round(getWet() * 100);
+        if (idx == Settings.Width.ordinal())
+        	return Math.round(width * 100);
         throw new InvalidParameterException();
     }
 
     @Override
     public void set(int idx, int value) {
         if (idx == Settings.Room.ordinal())
-            setRoomSize(value / 100f);
+            setRoomSize(value * 0.01f);
         else if (idx == Settings.Damp.ordinal())
-            setDamp(value / 100f);
+            setDamp(value * 0.01f);
         else if (idx == Settings.Wet.ordinal())
-            setWet(value / 100f);
+            setWet(value * 0.01f);
+        else if (idx == Settings.Width.ordinal())
+        	setWidth(value * 0.01f);
         else throw new InvalidParameterException();
     }
 

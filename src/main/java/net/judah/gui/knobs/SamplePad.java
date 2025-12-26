@@ -11,6 +11,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.BevelBorder;
 
+import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.api.PlayAudio.Type;
 import net.judah.fx.Gain;
@@ -23,7 +24,7 @@ public class SamplePad extends Gui.Opaque {
 	public final Sample sample;
 	private final JPanel btns;
 	private final JLabel name;
-	private final Knob vol = new Knob(Pastels.ORANGE);
+	@Getter private final Knob knob = new Knob(Pastels.ORANGE);
 
 	public SamplePad(Sample s, JPanel parent) {
 		this.sample = s;
@@ -39,10 +40,10 @@ public class SamplePad extends Gui.Opaque {
 		name = new JLabel(sample.toString(), JLabel.CENTER);
 		name.setOpaque(true);
 		update();
-		vol.addListener(e->sample.getGain().set(Gain.VOLUME, vol.getValue()));
+		knob.addListener(e->sample.getGain().set(Gain.VOLUME, knob.getValue()));
 
 		add(name);
-		btns.add(vol);
+		btns.add(knob);
 		//btns.add(new FxButton(s));
 		add(btns);
 		parent.add(this);
@@ -52,7 +53,7 @@ public class SamplePad extends Gui.Opaque {
 		setBackground(sample.isPlaying() ? Pastels.GREEN : null);
 		name.setBackground(getBackground());
 		btns.setBackground(getBackground());
-		vol.setValue(sample.getGain().get(Gain.VOLUME));
+		knob.setValue(sample.getGain().get(Gain.VOLUME));
 	}
 
 }

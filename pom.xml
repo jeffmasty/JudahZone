@@ -9,8 +9,8 @@
   <name>JudahZone</name>
 
  <properties>
-    <maven.compiler.source>1.21</maven.compiler.source>
-    <maven.compiler.target>1.21</maven.compiler.target>
+    <maven.compiler.source>21</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -20,7 +20,7 @@
     <url>https://clojars.org/repo/</url>
   </repository>
   <repository>
-  <id>be.0110.repo-releases</id> <!-- -->
+  <id>be.0110.repo-releases</id> <!--Tarsos audio library-->
   <name>0110.be repository</name>
   <url>https://mvn.0110.be/releases</url>
 </repository>
@@ -28,25 +28,32 @@
 
 <dependencies>
 	<dependency>
-        <groupId>org.projectlombok</groupId>
-        <artifactId>lombok</artifactId>
-        <version>1.16.6</version>
-        <scope>provided</scope>
-    </dependency>
-    <dependency>  <!-- JSON -->
-	    <groupId>org.apache.jena</groupId>
-	    <artifactId>apache-jena-libs</artifactId>
-	    <type>pom</type>
-	    <version>3.9.0</version>
-    </dependency>
-	<dependency> <!-- Open Sound Control (OSC) protocol -->
-	    <groupId>com.illposed.osc</groupId>
-	    <artifactId>javaosc-core</artifactId>
-	    <version>0.6</version>
+	  <groupId>org.projectlombok</groupId>
+	  <artifactId>lombok</artifactId>
+	  <version>1.18.30</version>
+	  <scope>provided</scope>
+	</dependency> 
+	<dependency>
+	  <groupId>org.junit.jupiter</groupId>
+	  <artifactId>junit-jupiter</artifactId>
+	  <version>5.10.2</version>
+	  <scope>test</scope>
+	</dependency>
+	<!-- JSON -->
+	<dependency>  
+	  <groupId>org.apache.jena</groupId>
+	  <artifactId>apache-jena-libs</artifactId>
+	  <type>pom</type>
+	  <version>3.9.0</version>
+	</dependency>
+	<!-- Open Sound Control (OSC) protocol -->
+	<dependency> 
+	  <groupId>com.illposed.osc</groupId>
+	  <artifactId>javaosc-core</artifactId>
+	  <version>0.6</version>
 	</dependency>
 	
- <!-- Digital Sound Processing -->
-	  
+    <!-- Digital Sound Processing -->
 	<dependency> 
 	  <groupId>be.tarsos.dsp</groupId>
 	  <artifactId>core</artifactId>
@@ -78,18 +85,36 @@
         <scope>provided</scope>
     </dependency>
 
-<!--	<dependency>
-		<groupId>net.judah</groupId>
-		<artifactId>omni</artifactId>
-		<version>0.1</version>
-	</dependency>
-	<dependency>
-		<groupId>net.judah</groupId>
-		<artifactId>oscilloscope</artifactId>
-		<version>0.1</version>
-	</dependency>
--->
-
 </dependencies>
+
+
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-surefire-plugin</artifactId>
+      <version>3.2.5</version>
+      <configuration>
+        <useModulePath>false</useModulePath>
+      </configuration>
+    </plugin>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <version>3.13.0</version>
+      <configuration>
+        <release>21</release> 
+        <encoding>UTF-8</encoding>
+        <annotationProcessorPaths>
+          <path>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.30</version>
+          </path>
+        </annotationProcessorPaths>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
   
 </project>

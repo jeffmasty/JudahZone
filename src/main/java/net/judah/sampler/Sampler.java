@@ -1,6 +1,5 @@
 package net.judah.sampler;
 
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Stream;
@@ -14,6 +13,7 @@ import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.SampleKnobs;
 import net.judah.mixer.LineIn;
 import net.judah.omni.AudioTools;
+import net.judah.omni.Threads;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
@@ -23,22 +23,10 @@ public class Sampler extends LineIn {
 	private ArrayList<Sample> samples = new ArrayList<Sample>();
 	private final KnobMode knobMode = KnobMode.Sample;
 
-	// Fountain Creek: Fields Park, Manitou Springs, CO
-	// Rain in Cuba: https://freesound.org/people/kyles/sounds/362077/
-	// Birds: https://freesound.org/people/hargissssound/sounds/345851/
-	// Bicycle https://freesound.org/people/bojan_t95/sounds/507013/
 	public static final String[] LOOPS = {"Creek", "Rain", "Birds", "Bicycle"};
-
-	// Satoshi: Pantone Color of the Year Landr pack Coy loop
-	// Prrrrrr: https://freesound.org/people/Duisterwho/sounds/644104/
-	// DropBass: https://freesound.org/people/qubodup/sounds/218891/
-	// DJOutlaw: https://freesound.org/people/tim.kahn/sounds/94748/
 	public static final String[] ONESHOTS = {"Satoshi", "Prrrrrr", "DropBass", "DJOutlaw"};
-
 	public static final String[] STANDARD = Stream.concat(
 			Arrays.stream(LOOPS), Arrays.stream(ONESHOTS)).toArray(String[]::new);
-
-
 	public static final int SIZE = STANDARD.length;
 
 	private final String[] patches = new String[] {"STANDARD"};
@@ -48,12 +36,21 @@ public class Sampler extends LineIn {
 	@Getter private int selected;
 	private final ArrayList<StepSample> stepSamples = new ArrayList<>();
 	private StepSample stepSample;
-	private final SampleKnobs view;
+	private SampleKnobs view;
 
 	public Sampler() {
 		super(Sampler.class.getSimpleName(), Constants.STEREO);
 		gain.setPreamp(0.5f);
+		Threads.execute(()->load());
+	}
 
+	public SampleKnobs getView() {
+		if (view == null)
+			view = new SampleKnobs(this);
+		return view;
+	}
+
+	private void load() {
 		for (int i = 0; i < STANDARD.length; i++) {
 			try {
 				samples.add(new Sample(STANDARD[i], i < 4 ? Type.LOOP : Type.ONE_SHOT));
@@ -78,7 +75,6 @@ public class Sampler extends LineIn {
 		} catch (Exception e) {
 			RTLogger.warn(this, e);
 		}
-		view = new SampleKnobs(this);
 	}
 
 	public void play(Sample s, boolean on) {
@@ -151,7 +147,7 @@ public class Sampler extends LineIn {
 	}
 
 	@Override
-	public void process(FloatBuffer outLeft, FloatBuffer outRight) {
+	public void process() {
 		AudioTools.silence(left);
 		AudioTools.silence(right);
     	for (Sample sample : samples)
@@ -164,8 +160,6 @@ public class Sampler extends LineIn {
 
     	fx();
 
-		AudioTools.mix(left, outLeft);
-		AudioTools.mix(right, outRight);
 	}
 
 }

@@ -3,7 +3,7 @@ package net.judah.fx;
 public abstract class Reverb implements Effect {
 
     public enum Settings {
-        Room, Damp, Wet
+        Room, Damp, Wet, Width // Width TODO ++ !!
     }
 
     @Override public String getName() {

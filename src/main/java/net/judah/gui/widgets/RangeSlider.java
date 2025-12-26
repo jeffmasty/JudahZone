@@ -59,7 +59,7 @@ public class RangeSlider extends JSlider {
 
 	public static record Colors(Color left, Color right, Color range) {};
 
-	@Setter @Getter Colors colors = new Colors(Pastels.BLUE, Pastels.BLUE, Pastels.GREEN);
+	@Setter @Getter Colors colors = new Colors(Color.LIGHT_GRAY, Color.LIGHT_GRAY, Pastels.PURPLE);
 
     /**
      * Constructs a RangeSlider with default minimum and maximum values of 0
@@ -382,7 +382,7 @@ public class RangeSlider extends JSlider {
 
             g2d.setColor(colors.left);
             g2d.fill(thumbShape);
-            g2d.setColor(Color.BLUE);
+            g2d.setColor(Color.LIGHT_GRAY);
             g2d.draw(thumbShape);
 
             // Dispose graphics.
@@ -410,7 +410,7 @@ public class RangeSlider extends JSlider {
 
             g2d.setColor(colors.right);
             g2d.fill(thumbShape);
-            g2d.setColor(Color.BLUE);
+            g2d.setColor(Color.LIGHT_GRAY);
             g2d.draw(thumbShape);
 
             // Dispose graphics.

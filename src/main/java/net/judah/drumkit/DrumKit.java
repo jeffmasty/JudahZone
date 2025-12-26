@@ -1,7 +1,6 @@
 package net.judah.drumkit;
 
 import java.io.File;
-import java.nio.FloatBuffer;
 
 import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiMessage;
@@ -118,24 +117,23 @@ public class DrumKit extends LineIn implements Receiver {
 		return actives.getChannel();
 	}
 
-	@Override
-	public void process(FloatBuffer outLeft, FloatBuffer outRight) {
-		AudioTools.silence(left);
-		AudioTools.silence(right);
-		for (DrumSample drum: samples)
-			drum.process(left, right);
-		fx();
-		if (onMute)
-			return;
-		AudioTools.mix(left, outLeft);
-		AudioTools.mix(right, outRight);
-	}
-
 	public DrumSample getSample(DrumType type) {
 		for (DrumSample s : samples)
 			if (s.getDrumType() == type)
 				return s;
 		return null;
 	}
+
+	@Override
+	public void process() {
+		AudioTools.silence(left);
+		AudioTools.silence(right);
+		if (onMute)
+			return;
+		for (DrumSample drum: samples)
+			drum.process(left, right);
+		fx();
+	}
+
 
 }

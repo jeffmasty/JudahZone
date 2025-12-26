@@ -25,8 +25,6 @@ import javax.swing.ListSelectionModel;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.fx.Gain;
-import net.judah.fx.Preset;
-import net.judah.fx.PresetsDB;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
@@ -35,6 +33,8 @@ import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.LengthCombo;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
+import net.judah.mixer.Preset;
+import net.judah.mixer.PresetsDB;
 import net.judah.omni.Threads;
 import net.judah.util.Constants;
 

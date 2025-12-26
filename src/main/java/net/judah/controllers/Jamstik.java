@@ -61,12 +61,11 @@ public class Jamstik implements Controller, Updateable {
 	}
 
 	@Override public boolean midiProcessed(Midi midi) {
-		if (active && Midi.isNote(midi)) // TODO pitchbend
-			if (octaver)
-				MPKmini.instance.getMidiOut().send(Midi.create(midi.getCommand(), 0, midi.getData1() - Key.OCTAVE,
-						midi.getData2()), JudahMidi.ticker());
-			else
-				MPKmini.instance.getMidiOut().send(midi, JudahMidi.ticker());
+		if (active && Midi.isNote(midi)) {// TODO pitchbend
+			Midi out = Midi.create(midi.getCommand(), 0,
+					midi.getData1() - (octaver ? Key.OCTAVE : 0), midi.getData2());
+			MPKmini.instance.getMidiOut().send(out, JudahMidi.ticker());
+		}
 		return true;
 	}
 

@@ -195,7 +195,7 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 	}
 
     private void processTrack(long from, long to) {
-    	int idx = MidiTools.fastFind(t, from);
+    	int idx = MidiTools.find(t, from);
     	if (idx < 0)
     		return;
     	for (; idx < t.size(); idx++) {

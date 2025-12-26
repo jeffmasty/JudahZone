@@ -53,7 +53,7 @@ public final class FluidSynth extends MidiInstrument {
 	@SuppressWarnings("deprecation")
 	private FluidSynth(String name, JackPort midi, JackPort left, JackPort right, String image) throws IOException {
 		super(name, LEFT_PORT, RIGHT_PORT, left, right, image, midi);
-		shellCommand = "fluidsynth -m jack -a jack -g 0.9 -C 0 -r " + S_RATE + " " + SOUND_FONT.getAbsolutePath();
+		shellCommand = "fluidsynth -m jack -a jack -g 2 -C 0 -r " + S_RATE + " " + SOUND_FONT.getAbsolutePath();
 
 		process = Runtime.getRuntime().exec(shellCommand); // IOException
 		new FluidListener(process.getErrorStream(), true).start();

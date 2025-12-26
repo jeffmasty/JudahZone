@@ -1,6 +1,7 @@
 package net.judah.sampler;
 
 import java.io.File;
+import java.io.IOException;
 
 import net.judah.omni.Recording;
 import net.judah.util.Folders;
@@ -23,8 +24,13 @@ public class Sample extends BasicPlayer {
 	public Sample(String name, File f, Type type) throws Exception {
 		this.type = type;
 		file = f;
-		recording = new Recording(f);
-		gain.setPan(0.4999f);
+		recording = Recording.loadInternal(f);
+	}
+
+	public Sample(String wavName, File f, Type oneShot, float gain) throws IOException {
+		this.type = oneShot;
+		file = f;
+		recording = Recording.loadInternal(f, gain);
 	}
 
 }

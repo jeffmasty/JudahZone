@@ -6,7 +6,7 @@
  * Email  : info@fudcom.com
  * Website: http://www.fudcom.com
  */
-package net.judah.util;
+package net.judah.gui.scope.fft_temp;
 
 /**
  * @author Kris Fudalewski

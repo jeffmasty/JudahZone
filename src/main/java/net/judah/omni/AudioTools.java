@@ -106,12 +106,18 @@ public class AudioTools  {
 			out[i] = in.get();
 	}
 
-	public static float[][] copy(float[][] in, float[][] out) {
+	public static void copy(float[][] in, float[][] out) {
 		for (int i = 0; i < in.length; i++) {
 			for (int j = 0; j < out[i].length; j++) {
 				out[i][j] = in[i][j];
 			}
 		}
+	}
+
+	/** malloc */
+	public static float[][] clone(float[][] in) {
+		float[][] out = new float[in.length][in[0].length];
+		copy(in, out);
 		return out;
 	}
 
@@ -178,34 +184,54 @@ public class AudioTools  {
 		AudioTools.mix(source.getRight(), dest[Constants.RIGHT]);
 	}
 
-/**
- * Fill `buf` with a sine wave at freqHz. Returns the updated phase (radians) to use
- * for the next call so the tone is continuous across buffers.
- *
- * @param buf       float[] buffer to fill (length = FFT_SIZE)
- * @param freqHz    desired frequency in Hz
- * @param sampleRate sample rate in Hz (e.g. 48000.0)
- * @param amplitude amplitude (0..1)
- * @return new phase in radians to pass to the next call
- */
-public static double fillSine(float[] buf, double freqHz, double sampleRate, double amplitude) {
-	double phase = 0;
-	if (buf == null || buf.length == 0) return phase;
-    final double twoPi = 2.0 * Math.PI;
-    // phase increment per sample (radians)
-    final double phaseInc = twoPi * freqHz / sampleRate;
+	/**
+	 * Fill `buf` with a sine wave at freqHz. Returns the updated phase (radians) to use
+	 * for the next call so the tone is continuous across buffers.
+	 *
+	 * @param buf       float[] buffer to fill (length = FFT_SIZE)
+	 * @param freqHz    desired frequency in Hz
+	 * @param sampleRate sample rate in Hz (e.g. 48000.0)
+	 * @param amplitude amplitude (0..1)
+	 * @return new phase in radians to pass to the next call
+	 */
+	public static double fillSine(float[] buf, double freqHz, double sampleRate, double amplitude) {
+		double phase = 0;
+		if (buf == null || buf.length == 0) return phase;
+	    final double twoPi = 2.0 * Math.PI;
+	    // phase increment per sample (radians)
+	    final double phaseInc = twoPi * freqHz / sampleRate;
 
-    // keep amplitude safe
-    final double a = Math.max(0.0, Math.min(1.0, amplitude));
+	    // keep amplitude safe
+	    final double a = Math.max(0.0, Math.min(1.0, amplitude));
 
-    for (int i = 0; i < buf.length; i++) {
-        buf[i] = (float) (a * Math.sin(phase));
-        phase += phaseInc;
-        // wrap phase into [0, 2PI) to avoid unbounded growth
-        if (phase >= twoPi) phase -= twoPi * Math.floor(phase / twoPi);
+	    for (int i = 0; i < buf.length; i++) {
+	        buf[i] = (float) (a * Math.sin(phase));
+	        phase += phaseInc;
+	        // wrap phase into [0, 2PI) to avoid unbounded growth
+	        if (phase >= twoPi) phase -= twoPi * Math.floor(phase / twoPi);
+	    }
+	    return phase;
+	}
+
+    /**Estimate an RMS-like amplitude from spectral magnitudes in an absolute bin range. */
+    public static double computeFrameRms(float[] amplitudes, int absStartBin, int absEndBin) {
+        absStartBin = Math.max(0, Math.min(amplitudes.length - 1, absStartBin));
+        absEndBin = Math.max(0, Math.min(amplitudes.length - 1, absEndBin));
+        if (absEndBin < absStartBin) return 0.0;
+
+        double sumPower = 0.0;
+        int count = 0;
+        for (int i = absStartBin; i <= absEndBin; i++) {
+            float mag = amplitudes[i];
+            if (!Float.isFinite(mag) || mag <= 0f) continue;
+            double p = mag * (double) mag;
+            sumPower += p;
+            count++;
+        }
+        if (count == 0) return 0.0;
+        double meanPower = sumPower / count;
+        return Math.sqrt(meanPower); // RMS-like amplitude
     }
-    return phase;
-}
 
 }
 

@@ -1,6 +1,6 @@
 package net.judah.gui.settable;
 
-import net.judah.fx.Preset;
+import net.judah.mixer.Preset;
 
 public interface Presets {
 

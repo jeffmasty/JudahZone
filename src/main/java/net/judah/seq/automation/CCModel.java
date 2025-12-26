@@ -43,7 +43,7 @@ public class CCModel /* extends DefaultTableModel*/ {
 		pitch.clear();
 		unhandled.clear();
 
-		for (int i = MidiTools.fastFind(t, start); i < t.size() && i >= 0; i++) {
+		for (int i = MidiTools.find(t, start); i < t.size() && i >= 0; i++) {
 			MidiEvent e = t.get(i);
 			if (e.getTick() < start) continue;
 			if (e.getTick() >= end) break;

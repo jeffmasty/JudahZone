@@ -33,7 +33,7 @@ import net.judah.util.Constants;
 
 public class LFOWidget extends Box {
     private static final Color KNOB_C = Pastels.EGGSHELL;
-    private static final Colors RANGE = new Colors(Pastels.EGGSHELL, Pastels.EGGSHELL, Pastels.ORANGE);
+    public static final Colors RANGE = new Colors(KNOB_C, KNOB_C, Pastels.PURPLE);
 
 	@Getter private final LFO lfo;
 	private final Channel ch;

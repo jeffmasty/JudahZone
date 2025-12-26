@@ -13,41 +13,37 @@ import net.judah.util.RTLogger;
 
 public class MidiTools {
 
-	/**Optimized tick-based midi track look up
-	 * @param t
-	 * @param tick find first note on or after tick
-	 * @return index of first note or -1
+	/**Find the index of the first event whose tick is >= the given tick
+	 * using a classic binary search (lower_bound).
+	 * @param t    The MIDI track (assumed sorted by event tick).
+	 * @param tick The target tick.
+	 * @return The index of the first event with getTick() >= tick, or -1 if none.
 	 */
-	public static int fastFind(Track t, long tick) {
-		// estimate a good place to find the first note (on or after tick)
-		int max = t.size();
-		if (max <= 2)
-			return -1;
+	public static int find(Track t, long tick) {
+	    int n = t.size();
+	    if (n == 0) {
+	        return -1;
+	    }
 
-		long length = t.ticks();
-		if (length == 0)
-			return -1;
+	    int lo = 0;
+	    int hi = n; // half-open interval [lo, hi)
 
-		float ratio = tick / length;
+	    while (lo < hi) {
+	        int mid = (lo + hi) >>> 1; // avoid overflow
+	        long midTick = t.get(mid).getTick();
 
-		if (ratio < 0.1f) { // from beginning
-			for (int i = 0; i < max; i++)
-				if (t.get(i).getTick() >= tick)
-					return i;
-		}
+	        if (midTick < tick) {
+	            lo = mid + 1; // candidate must be right of mid
+	        } else {
+	            hi = mid;     // mid might be the answer; shrink from the right
+	        }
+	    }
 
-
-		int guess = (int) (ratio * max) - 1;
-
-		while (guess > max || t.get(guess).getTick() > tick)
-			guess = (int) (guess * 0.5f);
-		// from here
-		for (int i = guess; i < max; i++) {
-			if (t.get(i).getTick() >= tick)
-				return i;
-		}
-
-		return -1;
+	    // lo == hi is the first index where getTick() >= tick (or n if none)
+	    if (lo >= n) {
+	        return -1;
+	    }
+	    return lo;
 	}
 
 	public static boolean match(MidiMessage a, MidiMessage b) {
@@ -94,7 +90,7 @@ public class MidiTools {
 	}
 
 	public static MidiEvent lookup(int cmd, int data1, long tick, Track t) {
-		int idx = fastFind(t, tick);
+		int idx = find(t, tick);
 		if (idx < 0)
 			return null;
 		for (; idx < t.size(); idx++) {
@@ -109,7 +105,7 @@ public class MidiTools {
 	}
 
 	public static MidiEvent getOff(MidiEvent on, Track t) {
-		int idx = fastFind(t, on.getTick() + 1);
+		int idx = find(t, on.getTick() + 1);
 		int data1 = ((ShortMessage)on.getMessage()).getData1();
 		for (int i = idx; i > 0 && i < t.size(); i++) {
 			MidiEvent e = t.get(i);
@@ -159,7 +155,7 @@ public class MidiTools {
 	/** @return true if delete was matched and removed from track */
 	public static void delete(MidiEvent delete, Track t) {
 		long tick = delete.getTick();
-		int idx = fastFind(t, tick);
+		int idx = find(t, tick);
 		if (idx < 0) {
 			RTLogger.log(MidiTools.class, "Missing: " + Midi.toString(delete.getMessage()) + " @ " + delete.getTick());
 			return;

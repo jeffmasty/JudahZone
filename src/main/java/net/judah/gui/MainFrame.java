@@ -33,7 +33,6 @@ import net.judah.drumkit.KitSetup;
 import net.judah.fx.Compressor;
 import net.judah.fx.Effect;
 import net.judah.fx.LFO;
-import net.judah.fx.PresetsDB;
 import net.judah.gui.fx.FxPanel;
 import net.judah.gui.fx.MultiSelect;
 import net.judah.gui.fx.PresetsView;
@@ -54,6 +53,7 @@ import net.judah.midi.Actives;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
+import net.judah.mixer.PresetsDB;
 import net.judah.omni.Icons;
 import net.judah.omni.Threads;
 import net.judah.sampler.Sample;
@@ -361,7 +361,6 @@ public class MainFrame extends JFrame implements Runnable {
 				drums.getKnobs().update();
 			else if (o instanceof Seq)
 				overview.refill(); // # of Tracks has changed
-
 			else
 				RTLogger.log(this, "unknown " + o.getClass().getSimpleName() + " update: " + o.toString());
 

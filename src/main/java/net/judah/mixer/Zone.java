@@ -56,6 +56,7 @@ public class Zone extends Vector<LineIn> {
 		getMains().getGain().setPreamp(Mains.PREAMP);
 		getSampler().getGain().setPreamp(2.5f);
 		getMic().getGain().setGain(0.25f); // trim studio noise
+		getBass().getGain().setPreamp(0.4f);
 	}
 
     public boolean nextChannel(boolean toRight) {

@@ -50,7 +50,7 @@ public class Measure extends Notes implements MidiConstants {
 		long start = track.getLeft();
 		long end = start + track.getWindow();
 
-		for (int i = MidiTools.fastFind(t, start); i < t.size() && i >= 0; i++) {
+		for (int i = MidiTools.find(t, start); i < t.size() && i >= 0; i++) {
 			MidiEvent e = t.get(i);
 			if (e.getTick() < start) continue;
 			if (e.getTick() > end) break;
@@ -73,7 +73,7 @@ public class Measure extends Notes implements MidiConstants {
 			int data1 = on.getData1();
 
 			// go grab a noteOff for this noteOn...
-			int idx = MidiTools.fastFind(t, e.getTick());
+			int idx = MidiTools.find(t, e.getTick());
 			if (idx < 0) { // hmm
 				ShortMessage off = Midi.create(NOTE_OFF, ch, on.getData1(), on.getData2());
 				add(new MidiNote(new MidiEvent(on, e.getTick()), new MidiEvent(off, end - 1)));

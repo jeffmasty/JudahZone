@@ -10,6 +10,7 @@ import javax.swing.JPanel;
 import lombok.Getter;
 import net.judah.fx.Chorus;
 import net.judah.fx.Compressor;
+import net.judah.fx.Convolution;
 import net.judah.fx.Delay;
 import net.judah.fx.Effect;
 import net.judah.fx.Filter;
@@ -23,21 +24,21 @@ import net.judah.gui.Pastels;
  * @author judah */
 public class FxLEDs extends JPanel {
 
-	private final int UNITS = 7;
+	private final int UNITS = 8;
 	private final Channel channel;
 
 	public static final int REVERB = 0;
 	public static final int DELAY = 1;
 	public static final int OVERDRIVE = 2;
 	public static final int CHORUS = 3;
-	public static final int CUTFILTER = 4;
-	public static final int COMPRESSION = 5;
-	public static final int LFO = 6;
-	public static final int LFO2 = 7;
+	public static final int CABSIM = 4;
+	public static final int CUTFILTER = 5;
+	public static final int COMPRESSION = 6;
+	public static final int LFO = 7;
+	public static final int LFO2 = 8;
 	@SuppressWarnings("unchecked")
 	private Class<Effect>[] lookup = new Class[] {Reverb.class, Delay.class, Overdrive.class,
-			Chorus.class, Filter.class, Compressor.class, LFO.class};
-
+			Chorus.class, Convolution.class, Filter.class, Compressor.class, LFO.class};
 
 	@Getter boolean[] model = new boolean[UNITS];
 
@@ -93,6 +94,11 @@ public class FxLEDs extends JPanel {
 			model[COMPRESSION] = channel.getCompression().isActive();
 			repaint = true;
 		}
+		if (channel.getIR().isActive() != model[CABSIM]) {
+			model[CABSIM] = channel.getIR().isActive();
+			repaint = true;
+		}
+
 		if (repaint)
 			repaint();
 	}

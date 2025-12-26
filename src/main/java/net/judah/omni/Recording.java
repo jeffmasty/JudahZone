@@ -1,15 +1,17 @@
 package net.judah.omni;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Vector;
 
-import lombok.Getter;
+import be.tarsos.dsp.AudioDispatcher;
+import be.tarsos.dsp.AudioEvent;
+import be.tarsos.dsp.AudioProcessor;
+import be.tarsos.dsp.io.jvm.AudioDispatcherFactory;
+import net.judah.looper.FromDisk;
 
 /**	------------WavFile------------<br/>
  * Stereo Audio data of .wav File, a Loop or a (Drum)Sample, organized by Jack buffer. <br/>
- * Not lightweight, an RMS cache is also stored for add() and set() procedures.
  * <br/>
  * <br/><pre>
 	Wav file IO class
@@ -21,20 +23,124 @@ import lombok.Getter;
 	http://www.blitter.com/~russtopia/MIDI/~jglatt/tech/wave.htm </pre>*/
 public class Recording extends Vector<float[][]> implements WavConstants {
 
-	/* Unless specified otherwise, bring the incoming audio up to "line-level" */
-	public static final float BOOST = 2.5f;
-
-	@Getter private File file; 					// can be null (looper)
-	private FileInputStream iStream;	// Input stream used for reading data
-	private final byte[] buffer = new byte[DISK_BUFFER]; // local buffer for disk IO
-	private int numFrames;				// Number of frames within the data section
-	int numChannels = 2;				// 2 bytes unsigned, 0x0001 (1) to 0xFFFF (65,535)
-	long blockAlign;					// 2 bytes unsigned, 0x0001 (1) to 0xFFFF (65,535)
-	private int bufferPointer;			// Points to the current position in local buffer
-	private int bytesRead;				// Bytes read after last read into local buffer
-	private int frameCounter;			// Current number of frames read or written
-
 	public Recording() { /* for looper */ }
+
+	/** Convenience: use default BOOST mastering when not specified. */
+	public Recording(File f) {
+		this(f, 1);
+	}
+
+	/** Read file and chunkify while the stream is being decoded.
+	 *  This constructor will block until the file has been fully read.
+	 *
+	 *  @param f input audio file
+	 *  @param mastering positive multiplier applied to samples (clamped to [-1,1])
+	 */
+	public Recording(File f, float mastering) {
+		if (f == null) return;
+
+		try {
+			AudioDispatcher dispatcher = AudioDispatcherFactory.fromPipe(
+					f.getAbsolutePath(), S_RATE, JACK_BUFFER, 0);
+
+			final int channels = dispatcher.getFormat().getChannels();
+			// current assembling block
+			float[] leftBlock = new float[JACK_BUFFER];
+			float[] rightBlock = new float[JACK_BUFFER];
+
+			dispatcher.addAudioProcessor(new AudioProcessor() {
+				@Override public boolean process(AudioEvent audioEvent) {
+					float[] buf = audioEvent.getFloatBuffer();
+					int posInBlock = 0;
+					if (channels <= 1) {
+						// mono -> duplicate
+						for (float v : buf) {
+							float s = clamp(v * mastering);
+							leftBlock[posInBlock] = s;
+							rightBlock[posInBlock] = s;
+							posInBlock++;
+							if (posInBlock >= JACK_BUFFER) {
+								float[][] block = new float[2][JACK_BUFFER];
+								System.arraycopy(leftBlock, 0, block[0], 0, JACK_BUFFER);
+								System.arraycopy(rightBlock, 0, block[1], 0, JACK_BUFFER);
+								Recording.this.add(block);
+
+								posInBlock = 0;
+							}
+						}
+						return true;
+					}
+
+					// Heuristic: Tarsos sometimes supplies non-interleaved buffers
+					if (buf.length % 2 == 0) {
+						int half = buf.length / 2;
+						// treat as non-interleaved halves if plausible
+						if (half <= JACK_BUFFER * 8) { // cheap heuristic to avoid false positives
+							for (int i = 0; i < half; i++) {
+								float l = clamp(buf[i] * mastering);
+								float r = clamp(buf[half + i] * mastering);
+								leftBlock[posInBlock] = l;
+								rightBlock[posInBlock] = r;
+								posInBlock++;
+								if (posInBlock >= JACK_BUFFER) {
+									float[][] block = new float[2][JACK_BUFFER];
+									System.arraycopy(leftBlock, 0, block[0], 0, JACK_BUFFER);
+									System.arraycopy(rightBlock, 0, block[1], 0, JACK_BUFFER);
+									Recording.this.add(block);
+									posInBlock = 0;
+								}
+							}
+							return true;
+						}
+					}
+
+					// fallback: interleaved LRLR...
+					for (int i = 0; i + 1 < buf.length; i += 2) {
+						float l = clamp(buf[i] * mastering);
+						float r = clamp(buf[i + 1] * mastering);
+						leftBlock[posInBlock] = l;
+						rightBlock[posInBlock] = r;
+						posInBlock++;
+						if (posInBlock >= JACK_BUFFER) {
+							float[][] block = new float[2][JACK_BUFFER];
+							System.arraycopy(leftBlock, 0, block[0], 0, JACK_BUFFER);
+							System.arraycopy(rightBlock, 0, block[1], 0, JACK_BUFFER);
+							Recording.this.add(block);
+							posInBlock = 0;
+						}
+					}
+					return true;
+				}
+
+				@Override
+				public void processingFinished() { // TODO streaming
+				}
+			});
+
+			// run decoding (blocks until finished)
+			dispatcher.run();
+
+		} catch (Exception e) {
+			// On error: leave Recording empty rather than throwing from constructor.
+			e.printStackTrace();
+		}
+	}
+
+
+	public static Recording loadInternal(File f) throws IOException {
+		return loadInternal(f, 1f);
+	}
+
+
+	public static Recording loadInternal(File f, float mastering) throws IOException {
+		Recording result = new Recording();
+		new FromDisk().load(f, mastering, result);
+		return result;
+	}
+
+	private static float clamp(float s) {
+	    return Math.max(-1f, Math.min(1f, s));
+	}
 
 	public Recording(Recording recording, int duplications) {
 		int size = recording.size() * duplications;
@@ -43,208 +149,45 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 			x++;
 			if (x >= recording.size())
 				x = 0;
-			float[][] data = new float[2][JACK_BUFFER];
-			AudioTools.copy(recording.get(x), data);
-			add(data);
+			add(AudioTools.clone(recording.get(x)));
 		}
 	}
 
-	public Recording (File file, float factor) throws IOException {
-		load(file, factor);
-	}
+	/**Create a new Recording containing at most {@code maxFrames} blocks (jack buffers).  By Reference, not copy.
+     * @param maxFrames maximum number of jack-buffer blocks to include in the returned Recording
+     * @return a new Recording truncated/padded to exactly up to maxFrames blocks */
+    public Recording truncate(int maxFrames) {
+        Recording out = new Recording();
+        if (maxFrames <= 0) return out;
 
-	public Recording (File file) throws IOException {
-		load(file, BOOST);
-	}
+        int toCopy = Math.min(this.size(), maxFrames);
+        // Reuse existing blocks by reference for efficiency
+        for (int i = 0; i < toCopy; i++) {
+            out.add(this.get(i));
+        }
 
-	public int load(File file) throws IOException {
-		return load(file, 1f);
-	}
+        // If we need to pad, determine a block length to use for zero blocks.
+        if (out.size() < maxFrames) {
+            int padBlockLen = 512; // default fallback
+            if (!this.isEmpty()) {
+                float[][] first = this.get(0);
+                if (first != null && first.length >= 2) {
+                    float[] left = first[0];
+                    if (left != null) padBlockLen = left.length;
+                    else {
+                        float[] right = first[1];
+                        if (right != null) padBlockLen = right.length;
+                    }
+                }
+            }
+            // Append zero-filled blocks until we reach maxFrames
+            for (int i = out.size(); i < maxFrames; i++) {
+                out.add(new float[][] { new float[padBlockLen], new float[padBlockLen] });
+            }
+        }
 
-	/**@return size of file in frames */
-	public int load(File file, float factor) throws IOException {
-		final int size = size();
-		this.file = file;
-		iStream = new FileInputStream(file);
-
-		// Read the first 12 bytes of the file
-		int bytesRead = iStream.read(buffer, 0, 12);
-		if (bytesRead != 12) throw new IOException("Not enough wav file bytes for header");
-
-		// Extract parts from the header
-		long riffChunkID = getLE(buffer, 0, 4);
-		int chunkSize = getLE(buffer, 4, 4);
-		long riffTypeID = getLE(buffer, 8, 4);
-
-		// Check the header bytes contains the correct signature
-		if (riffChunkID != RIFF_CHUNK_ID) throw new IOException("Invalid Wav Header data, incorrect riff chunk ID");
-		if (riffTypeID != RIFF_TYPE_ID) throw new IOException("Invalid Wav Header data, incorrect riff type ID");
-
-// TODO	// Check that the file size matches the number of bytes listed in header
-//		if (file.length() != chunkSize+8)
-//			RTLogger.warn(this, "File size ( " + file.length()+ ") does not match Header chunk size " + (chunkSize + 8)
-//					 + " diff: " + (file.length() - (chunkSize+8)));
-
-		boolean foundFormat = false;
-		boolean foundData = false;
-
-		// Search for the Format and Data Chunks
-		while (true) {
-			// Read the first 8 bytes of the chunk (ID and chunk size)
-			bytesRead = iStream.read(buffer, 0, 8);
-			if (bytesRead == -1) throw new IOException("Reached end of file without finding format chunk");
-			if (bytesRead != 8) throw new IOException("Could not read chunk header");
-
-			// Extract the chunk ID and Size
-			long chunkID = getLE(buffer, 0, 4);
-			chunkSize = getLE(buffer, 4, 4);
-
-			// Word align the chunk size
-			// chunkSize specifies the number of bytes holding data. However,
-			// the data should be word aligned (2 bytes) so we need to calculate
-			// the actual number of bytes in the chunk
-			long numChunkBytes = (chunkSize%2 == 1) ? chunkSize+1 : chunkSize;
-
-			if (chunkID == FMT_CHUNK_ID) {
-				// Flag that the format chunk has been found
-				foundFormat = true;
-
-				// Read in the header info
-				bytesRead = readFormat();
-				// Account for number of format bytes and skip over any extra format bytes
-				numChunkBytes -= 16;
-				if (numChunkBytes > 0) iStream.skip(numChunkBytes);
-			}
-			else if (chunkID == DATA_CHUNK_ID) {
-				if (!foundFormat) throw new IOException("Data chunk found before Format chunk");
-
-				// Check that the chunkSize (wav data length) is a multiple of the
-				// block align (bytes per frame)
-				if (chunkSize % blockAlign != 0) throw new IOException("Data Chunk size is not multiple of Block Align");
-
-				// Calculate the number of frames
-				numFrames = (int) (chunkSize / blockAlign);
-
-				// Flag that we've found the wave data chunk
-				foundData = true;
-
-				break;
-			}
-			else {
-				// If an unknown chunk ID is found, just skip over the chunk data
-				iStream.skip(numChunkBytes);
-			}
-		}
-
-		if (foundData == false) throw new IOException("Did not find a data chunk");
-		bufferPointer = 0;
-		frameCounter = 0;
-		bytesRead = 0;
-		int jackFrame = 0;
-		// Create a buffer of jack frame size
-		float[] buffer = new float[JACK_BUFFER * STEREO];
-		int framesRead;
-		do {
-            // Read frames into buffer
-            framesRead = readFrames(buffer, 0, JACK_BUFFER);
-
-            float[][] frame = new float[2][JACK_BUFFER];
-            if (numChannels == 2)
-	            // cycle through frames and put them in loop Recording format
-	            for (int i = 0 ; i < framesRead * STEREO; i += 2) {
-	            	int jack = i / 2;
-	            	frame[LEFT][jack] = factor * buffer[i];
-	            	frame[RIGHT][jack] = factor * buffer[i + 1];
-	            }
-            else
-	            for (int i = 0 ; i < framesRead; i++) {
-	            	frame[LEFT][i] = factor * buffer[i];
-	            	frame[RIGHT][i] = frame[LEFT][i];
-	            }
-
-            if (jackFrame < size)
-            	set(jackFrame, frame);
-            else add(frame);
-            jackFrame++;
-        } while (framesRead != 0);
-
-		if (iStream != null) {
-			iStream.close();
-			iStream = null;
-		}
-		return jackFrame;
-	}
-
-	private int readFrames(float[] sampleBuffer, int offset, int numFramesToRead) throws IOException {
-		for (int f = 0 ; f < numFramesToRead ; f++) {
-			if (frameCounter == numFrames) return f;
-			for (int c=0 ; c<numChannels ; c++) {
-				sampleBuffer[offset] = readSample() / FLOAT_SCALE;
-				offset ++;
-			}
-			frameCounter ++;
-		}
-		return numFramesToRead;
-	}
-
-	private long readSample() throws IOException {
-		long val = 0;
-		for (int b=0 ; b<SAMPLE_BYTES ; b++) {
-			if (bufferPointer == bytesRead)  {
-				int read = iStream.read(buffer, 0, DISK_BUFFER);
-				if (read == -1) throw new IOException("Not enough data available");
-				bytesRead = read;
-				bufferPointer = 0;
-			}
-			int v = buffer[bufferPointer];
-			if (b < SAMPLE_BYTES - 1 || SAMPLE_BYTES == 1) v &= 0xFF;
-			val += v << (b * 8);
-			bufferPointer ++;
-		}
-		return val;
-	}
-
-	private int readFormat() throws IOException {
-		int result = iStream.read(buffer, 0, 16);
-
-		// Check this is uncompressed data
-		int compressionCode = getLE(buffer, 0, 2);
-		if (compressionCode != 1) throw new IOException("Compression Code " + compressionCode + " not supported");
-
-		// Extract the format information
-		numChannels = getLE(buffer, 2, 2);
-		long srate = getLE(buffer, 4, 4);
-		if (srate != S_RATE)
-			throw new IOException("Sample rate(" + S_RATE + ") vs: " + srate + " " + file.getAbsolutePath());
-		blockAlign = getLE(buffer, 12, 2);
-
-		int bits = getLE(buffer, 14, 2);
-		if (bits != VALID_BITS)
-			throw new IOException("Bit Depth: " + bits + " (expected: " + VALID_BITS + ") " + file.getAbsolutePath());
-		if (numChannels == 0) throw new IOException("Number of channels specified in header is equal to zero");
-		if (blockAlign == 0) throw new IOException("Block Align specified in header is equal to zero");
-		if (SAMPLE_BYTES * numChannels != blockAlign)
-			throw new IOException("Block Align does not agree with bytes required for VALID_BITS and number of channels");
-		return result;
-	}
-
-	public static long sampleToMillis(long samplePosition) {
-		return (long) ((samplePosition / (float)S_RATE) * 1000f);
-	}
-
-	/**@param supplied buffer
-	 * @param pos
-	 * @param numBytes
-	 * @return little endiean data to long from pos in the supplied buffer */
-	static int getLE(byte[] buffer, int pos, int numBytes) {
-		numBytes --;
-		pos += numBytes;
-		int val = buffer[pos] & 0xFF;
-		for (int b=0 ; b<numBytes ; b++)
-			val = (val << 8) + (buffer[--pos] & 0xFF);
-		return val;
-	}
-
+        return out;
+    }
 	public float seconds() {
 		return size() / FPS;
 	}
@@ -333,7 +276,6 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 		return size() * WavConstants.JACK_BUFFER;
 	}
 
-
 	// copy from start of size frames
 	public void duplicate(int frames) {
 
@@ -345,5 +287,48 @@ public class Recording extends Vector<float[][]> implements WavConstants {
 		}
 	}
 
-
 }
+
+
+
+///** Frame chop complete streams */
+//public Recording(float[] left, float[] right) {
+//    // Defensive lengths
+//    final int lenL = left != null ? left.length : 0;
+//    final int lenR = right != null ? right.length : 0;
+//    final int maxLen = Math.max(lenL, lenR);
+//
+//    if (maxLen == 0) {
+//        // nothing to add
+//        return;
+//    }
+//
+//    final int blocks = (maxLen + JACK_BUFFER - 1) / JACK_BUFFER;
+//    this.ensureCapacity(blocks);
+//
+//    for (int b = 0; b < blocks; b++) {
+//        int start = b * JACK_BUFFER;
+//        float[][] block = new float[2][JACK_BUFFER];
+//
+//        for (int i = 0; i < JACK_BUFFER; i++) {
+//            int idx = start + i;
+//
+//            float l = 0f;
+//            float r = 0f;
+//
+//            if (idx < lenL) l = left[idx];
+//            if (idx < lenR) r = right[idx];
+//
+//            if (lenL == 0 && lenR > 0)
+//                l = r; // left missing -> use right
+//            else if (lenR == 0 && lenL > 0)
+//                r = l; // right missing -> use left
+//
+//            block[0][i] = l;
+//            block[1][i] = r;
+//        }
+//
+//        this.add(block);
+//    }
+//}
+

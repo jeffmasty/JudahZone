@@ -6,6 +6,7 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.fx.Chorus;
 import net.judah.fx.Compressor;
+import net.judah.fx.Convolution;
 import net.judah.fx.Delay;
 import net.judah.fx.EQ;
 import net.judah.fx.Effect;
@@ -13,9 +14,7 @@ import net.judah.fx.Filter;
 import net.judah.fx.Freeverb;
 import net.judah.fx.LFO;
 import net.judah.fx.Overdrive;
-import net.judah.fx.Preset;
 import net.judah.fx.Reverb;
-import net.judah.fx.Setting;
 import net.judah.fx.TimeEffect;
 import net.judah.gui.MainFrame;
 import net.judah.gui.MainFrame.FxChange;
@@ -27,7 +26,7 @@ import net.judah.omni.Threads;
 import net.judah.util.RTLogger;
 
 /** An effects bus for input or output audio */
-@Getter
+@Getter // TODO  split <Effects> <Actives> <Presets>
 public abstract class Channel extends FxChain implements Presets {
 
     protected final EQ eq = new EQ();
@@ -42,6 +41,7 @@ public abstract class Channel extends FxChain implements Presets {
     protected final LFO lfo = new LFO(this, LFO.class.getSimpleName());
     protected final LFO lfo2 = new LFO(this, "LFO2");
 	protected Preset preset = JudahZone.getPresets().getDefault();
+	protected final Convolution IR;
 	protected boolean presetActive;
 
     protected EffectsRack gui;
@@ -49,8 +49,18 @@ public abstract class Channel extends FxChain implements Presets {
 
     public Channel(String name, boolean isStereo) {
     	super(name, isStereo);
-        Effect[] order = new Effect[] {
-        		eq, hiCut, loCut, compression, delay, overdrive, chorus, reverb};
+    	Effect[] order;
+    	if (isStereo) {
+        	IR = new Convolution.Stereo();
+	        order = new Effect[] {
+	        		eq, hiCut, loCut, compression, delay, overdrive, chorus, reverb, IR}; // cabSim here
+
+    	} else { // TODO presets
+        	IR = new Convolution.Mono();
+            order = new Effect[] {
+            		eq, hiCut, loCut, compression, delay, overdrive, chorus, reverb}; // cabSim handled in Instrument
+    	}
+
         for (Effect fx : order)
         	add(fx);
     }
@@ -87,38 +97,6 @@ public abstract class Channel extends FxChain implements Presets {
         applyPreset();
     }
 
-    private final void applyPreset() {
-    	reset();
-    	if (preset == null)
-    		preset = JudahZone.getPresets().getDefault();
-        setting:
-        for (Setting s : preset) {
-            for (Effect e : this) {
-                if (e.getName().equals(s.getEffectName())) {
-                	try {
-	                    for (int i = 0; i < s.size(); i++)
-	                        e.set(i, s.get(i));
-                	} catch (Throwable t) { RTLogger.log(name, preset.getName() + " " + t.getMessage()); }
-                    e.setActive(presetActive);
-                    continue setting;
-                }
-            }
-            if (lfo.getName().equals(s.getEffectName())) {// better than LFOs in channel's list of RT effects
-                for (int i = 0; i < s.size(); i++)
-                    lfo.set(i, s.get(i));
-                lfo.setActive(presetActive);
-            }
-            else if (s.getEffectName().equals(lfo2.getName())) {
-                for (int i = 0; i < s.size(); i++)
-                    lfo2.set(i, s.get(i));
-                lfo2.setActive(presetActive);
-            }
-            else
-            	RTLogger.warn(this, "Preset Error. not found: " + s.getEffectName());
-        }
-        MainFrame.update(this);
-    }
-
     public final void setPreset(String name, boolean active) {
     	setPreset(JudahZone.getPresets().byName(name));
     	setPresetActive(active);
@@ -150,6 +128,44 @@ public abstract class Channel extends FxChain implements Presets {
 		MainFrame.update(this);
 	}
 
+
+    private final void applyPreset() {
+    	reset();
+    	if (preset == null)
+    		preset = JudahZone.getPresets().getDefault();
+        setting:
+        for (Setting s : preset) {
+            for (Effect e : this) {
+                if (e.getName().equals(s.getEffectName())) {
+                	try {
+	                    for (int i = 0; i < s.size(); i++)
+	                        e.set(i, s.get(i));
+                	} catch (Throwable t) { RTLogger.log(name, preset.getName() + " " + t.getMessage()); }
+                    e.setActive(presetActive);
+                    continue setting;
+                }
+            }
+            if (lfo.getName().equals(s.getEffectName())) {// better than LFOs in channel's list of RT effects
+                for (int i = 0; i < s.size(); i++)
+                    lfo.set(i, s.get(i));
+                lfo.setActive(presetActive);
+            }
+            else if (s.getEffectName().equals(lfo2.getName())) {
+                for (int i = 0; i < s.size(); i++)
+                    lfo2.set(i, s.get(i));
+                lfo2.setActive(presetActive);
+            }
+            else if (s.getEffectName().equals(IR.getName()) && !isStereo) {
+                for (int i = 0; i < s.size(); i++)
+                    IR.set(i, s.get(i));
+                IR.setActive(presetActive);
+            }
+
+            else
+            	RTLogger.warn(this, "Preset Error. not found: " + s.getEffectName());
+        }
+        MainFrame.update(this);
+    }
     @Override
 	public final Preset toPreset(String name) {
         ArrayList<Setting> presets = new ArrayList<>();
@@ -161,6 +177,8 @@ public abstract class Channel extends FxChain implements Presets {
         	presets.add(new Setting(lfo));
         if (lfo2.isActive())
         	presets.add(new Setting(lfo2));
+        if (IR.isActive() && !isStereo)
+        	presets.add(new Setting(IR));
         preset = new Preset(name, presets);
         return preset;
     }

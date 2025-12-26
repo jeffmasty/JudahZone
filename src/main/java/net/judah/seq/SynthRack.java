@@ -1,6 +1,5 @@
 package net.judah.seq;
 
-import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Vector;
@@ -39,7 +38,7 @@ public class SynthRack {
 		private final Class<? extends ZoneMidi> clazz;
 	}
 
-	static final Vector<ZoneMidi> engines = new Vector<ZoneMidi>();
+	@Getter static final Vector<ZoneMidi> engines = new Vector<ZoneMidi>();
 
 	public static ZoneMidi[] getAll() {
 		return engines.toArray(new ZoneMidi[engines.size()]);
@@ -126,11 +125,6 @@ public class SynthRack {
 		TacoTruck result = new TacoTruck(name, image);
 		addEngine(result);
 		return result;
-	}
-
-	/** process() */
-	public static void process(FloatBuffer left, FloatBuffer right) {
-		engines.forEach(engine->engine.process(left, right));
 	}
 
 	public static void gain(int idx, int data2) {

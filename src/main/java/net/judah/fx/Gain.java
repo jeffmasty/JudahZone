@@ -84,31 +84,78 @@ public class Gain implements Effect {
 			mono.put(mono.get(z) * preamp * gain);
 	}
 
-	/** preamp and panning */
-	public void preamp(FloatBuffer left, FloatBuffer right) {
-		final float l = getLeft();
-		left.rewind();
-	    while (left.hasRemaining())
-	        left.put(left.position(), left.get() * l);
+	/** Last effective left/right gains used in preamp() (preamp * pan). */
+	private float preCurrentL = 1f;
+	private float preCurrentR = 1f;
 
-	    final float r = getRight();
-	    right.rewind();
-	    while (right.hasRemaining())
-	        right.put(right.position(), right.get() * r);
+	/** Last effective post-fader gain used in post(). */
+	private float postCurrent = 1f;
+
+	/** preamp and panning, with smoothing */
+	public void preamp(FloatBuffer left, FloatBuffer right) {
+		// target per-channel gains for this buffer (preamp * pan law)
+		float targetL = getLeft();
+		float targetR = getRight();
+
+		// No right buffer: treat as mono and just ramp with left's gain
+		if (right == null) {
+			ramp(left, N_FRAMES, preCurrentL, targetL);
+			preCurrentL = targetL;
+			preCurrentR = targetR; // keep in sync conceptually
+			return;
+		}
+
+		// Stereo: ramp both channels over N_FRAMES
+		ramp(left,  N_FRAMES, preCurrentL, targetL);
+		ramp(right, N_FRAMES, preCurrentR, targetR);
+
+		preCurrentL = targetL;
+		preCurrentR = targetR;
 	}
 
-	/** gain only */
+	/** gain only, with smoothing */
 	public void post(FloatBuffer left, FloatBuffer right) {
-		final float fader = this.gain;
-		left.rewind(); right.rewind();
-	    while (left.hasRemaining())
-	    	left.put(left.position(), left.get() * fader);
-	    while (right.hasRemaining())
-	        right.put(right.position(), right.get() * fader);
+		float target = gain;
+
+		ramp(left,  N_FRAMES, postCurrent, target);
+		if (right != null) {
+			ramp(right, N_FRAMES, postCurrent, target);
+		}
+
+		postCurrent = target;
+	}
+
+	// apply a linear ramp from start→end over N_FRAMES samples
+	private static void ramp(FloatBuffer buf, int frames, float startGain, float endGain) {
+		if (frames <= 0) {
+			return;
+		}
+		float step = (endGain - startGain) / frames;
+		float g = startGain;
+
+		if (buf.hasArray()) {
+			float[] arr = buf.array();
+			int base = buf.arrayOffset();
+			// Assume samples start at index 0 for this ring buffer; if not, adjust indexing as needed
+			for (int i = 0; i < frames; i++) {
+				arr[base + i] *= g;
+				g += step;
+			}
+		} else {
+			for (int i = 0; i < frames; i++) {
+				float s = buf.get(i);
+				buf.put(i, s * g);
+				g += step;
+			}
+		}
 	}
 
 	public void reset() {
 		gain = 0.5f;
 		stereo = 0.5f;
+		preamp = 1f;
+		preCurrentL = 1f;
+		preCurrentR = 1f;
+		postCurrent = 1f;
 	}
 }

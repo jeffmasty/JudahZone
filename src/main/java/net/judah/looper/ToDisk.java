@@ -5,7 +5,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.FloatBuffer;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import net.judah.JudahZone;
@@ -38,48 +39,24 @@ public class ToDisk extends LinkedBlockingQueue<float[][]> implements Closeable,
 	protected int bufferPointer;		// Points to the current position in local buffer
 	protected boolean wordAlignAdjust;	// Specify if an extra byte at the end of the data chunk is required for word alignment
 
-	@SuppressWarnings("deprecation")
+	// Track exactly how many audio bytes have been written to the data chunk
+	// This prevents mismatch between header sizes and actual audio payload.
+	private long totalDataBytes = 0L;
+
 	public ToDisk() throws IOException {
-		Date d = new Date();
-		String name = (d.getYear() + 1900) + "-" + d.getMonth() + "-" + d.getDate()
-				+ "." + d.getHours() + "h" + d.getMinutes() + "m" + d.getSeconds() + "s";
+		LocalDateTime now = LocalDateTime.now();
+		DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd.HH'h'mm'm'ss's'");
+		String name = now.format(fmt);
 		target = new File(System.getProperty("user.home"), name + ".wav");
 		init(true);
 	}
 
-	// TODO dampen?
+	// TODO mastering?
 	public ToDisk(File f) throws IOException {
 		if (!f.getName().endsWith(".wav"))
 			f = new File(f.getParent(), f.getName() + ".wav");
 		target = f;
 		init(true);
-	}
-
-	public static void toDisk(Recording rec, File f, int frameCount) throws IOException {
-		new ToDisk(rec, f, frameCount);
-	}
-	private ToDisk(Recording rec, File f, int frameCount) throws IOException {
-		if (f == null)
-			return;
-		if (rec == null || frameCount == 0) {
-			RTLogger.log(this, "no recording");
-			return;
-		}
-		if (!f.getName().endsWith(WAV_EXT))
-			f = new File(f.getAbsolutePath() + WAV_EXT);
-		target = f;
-		jackFrames = frameCount;
-		init(false);
-		for (int frame = 0; frame < rec.size(); frame++)
-			writeFrame(rec.get(frame));
-		if (bufferPointer > 0) oStream.write(buffer, 0, bufferPointer);
-		// If an extra byte is required for word alignment, add it to the end
-		if (wordAlignAdjust)
-			oStream.write(0);
-		// Close the stream and set to null
-		oStream.close();
-		oStream = null;
-		RTLogger.log(this, "saved " + target.getAbsolutePath());
 	}
 
 	private void init(boolean threaded) throws IOException {
@@ -105,12 +82,8 @@ public class ToDisk extends LinkedBlockingQueue<float[][]> implements Closeable,
 		} else
 			wordAlignAdjust = false;
 
-		mainChunkSize =	4 +	// Riff Type
-						8 +	// Format ID and size
-						16 +	// Format data
-						8 + 	// Data ID and size
-						HALF_BUFFER + // ??
-						dataChunkSize;
+		// RIFF main chunk size = 36 + dataChunkSize (4 "WAVE" + (8+16) fmt chunk + (8) data header)
+		mainChunkSize = 36 + dataChunkSize;
 	}
 
 	public void offer(FloatBuffer left, FloatBuffer right) {
@@ -127,12 +100,27 @@ public class ToDisk extends LinkedBlockingQueue<float[][]> implements Closeable,
 		active = false;
 		// Write out anything still in the local buffer
 		if (bufferPointer > 0) oStream.write(buffer, 0, bufferPointer);
-		calc();
+
+		// Recalculate data sizes using the actual bytes written
+		// totalDataBytes counts only audio payload bytes; convert to int for WAV header (WAV uses 32-bit sizes).
+		dataChunkSize = (int) totalDataBytes;
+
+		// Chunks must be word aligned
+		if (dataChunkSize % 2 == 1) {
+			dataChunkSize += 1;
+			wordAlignAdjust = true;
+		} else {
+			wordAlignAdjust = false;
+		}
+
 		// If an extra byte is required for word alignment, add it to the end
 		if (wordAlignAdjust)
 			oStream.write(0);
-		// re-write header with total audio length
+
+		// Recompute main chunk size from actual data chunk size and rewrite header
+		mainChunkSize = 36 + dataChunkSize;
 		writeHeader();
+
 		// Close the stream and set to null
 		oStream.close();
 		oStream = null;
@@ -168,6 +156,8 @@ public class ToDisk extends LinkedBlockingQueue<float[][]> implements Closeable,
 			val >>= 8;
 			bufferPointer ++;
 		}
+		// Account for the written audio bytes (each sample is SAMPLE_BYTES bytes)
+		totalDataBytes += SAMPLE_BYTES;
 	}
 
 	public void writeHeader() throws IOException {
@@ -217,8 +207,41 @@ public class ToDisk extends LinkedBlockingQueue<float[][]> implements Closeable,
 		}
 	}
 
-	public float seconds() {
-		return jackFrames / FPS;
-	}
-
 }
+
+// TODO:
+/*
+class StemWriter {
+  RandomAccessFile out;
+  byte[] buf = new byte[DISK_BUFFER];
+  int bufPtr = 0;
+  long totalDataBytes = 0;
+  int dataChunkSize, mainChunkSize;
+  boolean wordAlignAdjust;
+  boolean stereo; // false = mono, true = stereo
+  int sampleBytes; // 2 for s16, 4 for float
+
+  StemWriter(File target, boolean stereo, int sampleBytes) { ... writeHeader(); }
+
+  void writeSampleBytes(byte[] sampleLE) throws IOException {
+    // copy sampleLE to buf, flush if needed
+    System.arraycopy(sampleLE, 0, buf, bufPtr, sampleLE.length);
+    bufPtr += sampleLE.length;
+    if (bufPtr >= buf.length) { out.write(buf,0,bufPtr); bufPtr=0; }
+    totalDataBytes += sampleLE.length;
+  }
+
+  // call per-frame with floats: for mono write L value, for stereo write L then R
+  void writeFrame(float[] frame) { for(...) convert & writeSampleBytes(...); }
+
+  void close() {
+    if (bufPtr>0) out.write(buf,0,bufPtr);
+    dataChunkSize = (int)totalDataBytes;
+    if (dataChunkSize %2 ==1) { dataChunkSize++; wordAlignAdjust=true; out.write(0); }
+    mainChunkSize = 36 + dataChunkSize;
+    writeHeader(); // seek(0) rewrite header with sizes
+    out.close();
+  }
+
+  // writeHeader similar to ToDisk.writeHeader but uses this.dataChunkSize etc
+}*/

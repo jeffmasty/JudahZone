@@ -16,26 +16,25 @@ public class DrumDB {
 
 	/** drum sample cache */
 	private static HashMap<File, Recording> db = new HashMap<>();
-	
+
 	public static Recording get(File file) throws Exception {
-		if (db.containsKey(file) == false) {
-			Recording result = new Recording(file);
-			db.put(file, result);
-		}
+		if (db.containsKey(file) == false)
+			db.put(file, Recording.loadInternal(file, 2f));
 		return db.get(file);
 	}
-	
+
 	private static final int LENGTH = DrumType.values().length;
 
 	@Getter private static final ArrayList<ArrayList<File>> samples = new ArrayList<>();
 	@Getter private static final ArrayList<String> kits = new ArrayList<>();
+
 	static {
 		try {
-		for (int i = 0; i < DrumType.values().length; i++) 
+		for (int i = 0; i < DrumType.values().length; i++)
 			samples.add(new ArrayList<File>());
 		int count = 0;
 		for (File folder : Folders.getKits().listFiles()) {
-			if (folder.isDirectory() == false) 
+			if (folder.isDirectory() == false)
 				continue;
 			int oldDB = count;
 			for (String drum : folder.list()) {
@@ -72,5 +71,5 @@ public class DrumDB {
 		return 0;
 	}
 
-	
+
 }

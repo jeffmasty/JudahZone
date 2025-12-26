@@ -81,7 +81,7 @@ public class MidiView extends AutoBox {
 	}
 
 	@Override protected AutoBox init(long tick) {
-		int idx = MidiTools.fastFind(track.getT(), tick);
+		int idx = MidiTools.find(track.getT(), tick);
 		if (idx > 0 && idx < table.getRowCount())
 			table.setRowSelectionInterval(idx, idx);
 		return this;

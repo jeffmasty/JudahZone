@@ -1,71 +1,13 @@
 package net.judah.fx;
 
-/*https://github.com/jaudiolibs/audioops/blob/master/audioops-impl/src/main/java/org/jaudiolibs/audioops/impl/FreeverbOp.java*/
-/*
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- *
+/* Derived from code in JAudioLibs http://neilcsmith.net
+ * https://github.com/jaudiolibs/audioops/blob/master/audioops-impl/src/main/java/org/jaudiolibs/audioops/impl/FreeverbOp.java
  * Copyright 2010 Neil C Smith.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details.
- *
- * You should have received a copy of the GNU General Public License version 2
- * along with this work; if not, see http://www.gnu.org/licenses/
- *
- *
- * Linking this work statically or dynamically with other modules is making a
- * combined work based on this work. Thus, the terms and conditions of the GNU
- * General Public License cover the whole combination.
- *
- * As a special exception, the copyright holders of this work give you permission
- * to link this work with independent modules to produce an executable,
- * regardless of the license terms of these independent modules, and to copy and
- * distribute the resulting executable under terms of your choice, provided that
- * you also meet, for each linked independent module, the terms and conditions of
- * the license of that module. An independent module is a module which is not
- * derived from or based on this work. If you modify this work, you may extend
- * this exception to your version of the work, but you are not obligated to do so.
- * If you do not wish to do so, delete this exception statement from your version.
- *
- * Please visit http://neilcsmith.net if you need additional information or
- * have any questions.
- *
+ *  GNU2 License
  *
  * Derived from code in RasmsuDSP
  * Copyright (c) 2006, Karl Helgason
  * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- *    1. Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *    2. Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials
- *       provided with the distribution.
- *    3. The name of the author may not be used to endorse or promote
- *       products derived from this software without specific prior
- *       written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 import java.nio.FloatBuffer;
@@ -76,113 +18,80 @@ import lombok.Getter;
 import lombok.Setter;
 import net.judah.omni.Threads;
 
-/** the classic Freeverb algorithm, stereo handled as a separate internal Effect unit */
+/** The classic Freeverb algorithm, true stereo with independent L/R filter networks */
 public final class Freeverb extends Reverb {
 
-    private static final float fixedgain = 0.015f * 2;
-    private static final float scalewet = 4;
+    private static final float fixedgain = 0.01f;
+    private static final float scalewet = 1;
     private static final float scaledry = 2;
     private static final float scaledamp = 0.4f;
-    private static final float scaleroom = 0.28f;
-    private static final float offsetroom = 0.7f;
+    private static final float scaleroom = 0.49f;
+    private static final float offsetroom = 0.5f;
 
-    private static final float initialroom = 0.4f;
+    private static final float initialroom = 0.6f;
     private static final float initialdamp = 1.5f;
-    private static final float initialwet = 1 / scalewet;
+    private static final float initialwet = 0.4f;
     private static final float initialdry = 0.5f;//1;
-    private static final float initialwidth = 1.1f;
+    private static final float initialwidth = 0.9f;
 
+    @Getter private final int paramCount = Settings.values().length;
     @Getter private boolean active;
+
     private float roomsize;
     private float damp;
-    private float wet, wet1;
+    private float wet;
     private float dry;
     private float width;
     private boolean dirty;
     // Comb filters
     private int numcombs;
     private Comb[] combL;
+    private Comb[] combR;
     // Allpass filters
     private int numallpasses;
     private Allpass[] allpassL;
+    private Allpass[] allpassR;
     //scratch buffers
-    private float[] inScratch = new float[N_FRAMES];
+    private float[] inScratchL = new float[N_FRAMES];
+    private float[] inScratchR = new float[N_FRAMES];
     private float[] outScratchL = new float[N_FRAMES];
-
-    private final Freeverb stereoReverb;
+    private float[] outScratchR = new float[N_FRAMES];
 
     public Freeverb() {
-    	this(true);
-    }
-
-    private Freeverb(boolean isStereo) {
         setWet(initialwet);
         setRoomSize(initialroom);
         setDry(initialdry);
         setDamp(initialdamp);
         setWidth(initialwidth);
 
-        float freqscale = SAMPLE_RATE / 44100.0f;
-
-        numcombs = 8;
-        int[] sizes = {1116, 1188, 1277, 1356, 1422, 1491, 1556, 1617};
+        int[] delays = { 1111, 1203, 1273, 1373, 1424, 1477, 1548, 1593, 1659, 1694, 1727, 1760 };
+        numcombs = delays.length;
         combL = new Comb[numcombs];
-        for (int i= 0; i < numcombs; i++)
-        	combL[i] = new Comb((int) (sizes[i] * freqscale));
+        combR = new Comb[numcombs];
+        // create R delays slightly offset to decorrelate channels
+        final int rightOffset = 23;
+        for (int i = 0; i < numcombs; i++) {
+            combL[i] = new Comb(delays[i]);
+            combR[i] = new Comb(delays[i] + rightOffset);
+        }
 
-//        /* Init Comb filters */
-//        int combtuningL1 = (int) (freqscale * (1116));
-//        int combtuningL2 = (int) (freqscale * (1188));
-//        int combtuningL3 = (int) (freqscale * (1277));
-//        int combtuningL4 = (int) (freqscale * (1356));
-//        int combtuningL5 = (int) (freqscale * (1422));
-//        int combtuningL6 = (int) (freqscale * (1491));
-//        int combtuningL7 = (int) (freqscale * (1557));
-//        int combtuningL8 = (int) (freqscale * (1617));
-//        combL[0] = new Comb(combtuningL1);
-//        combL[1] = new Comb(combtuningL2);
-//        combL[2] = new Comb(combtuningL3);
-//        combL[3] = new Comb(combtuningL4);
-//        combL[4] = new Comb(combtuningL5);
-//        combL[5] = new Comb(combtuningL6);
-//        combL[6] = new Comb(combtuningL7);
-//        combL[7] = new Comb(combtuningL8);
-
-        numallpasses = 4;
-        int[] tuning = {556, 441, 341, 225};
+        int[] tuning = {408,  616,   550, 467, 321, 239};
+        numallpasses = tuning.length;
         allpassL = new Allpass[numallpasses];
-        for (int i = 0; i < numallpasses; i++)
-        	allpassL[i] = new Allpass((int) (tuning[i] * freqscale));
+        allpassR = new Allpass[numallpasses];
+        for (int i = 0; i < numallpasses; i++) {
+            int sizeL = tuning[i];
+            int sizeR = Math.max(1, sizeL + (i % 2 == 0 ? 11 : -7)); // small allpassR decorrelation
+            allpassL[i] = new Allpass(sizeL);
+            allpassR[i] = new Allpass(sizeR);
+        }
+        for (int i = 0; i < numallpasses; i++) {
+            allpassL[i].setFeedback(0.6f);
+            allpassR[i].setFeedback(0.6f);
+        }
 
-//        /* Init Allpass filters*/
-//        int allpasstuningL1 = (int) (freqscale * (556));
-//        int allpasstuningL2 = (int) (freqscale * (441));
-//        int allpasstuningL3 = (int) (freqscale * (341));
-//        int allpasstuningL4 = (int) (freqscale * (225));
-//
-//        numallpasses = 4;
-//        allpassL = new Allpass[numallpasses];
-//        allpassL[0] = new Allpass(allpasstuningL1);
-//        allpassL[1] = new Allpass(allpasstuningL2);
-//        allpassL[2] = new Allpass(allpasstuningL3);
-//        allpassL[3] = new Allpass(allpasstuningL4);
-
-//        for (int i = 0; i < numallpasses; i++) {
-//            allpassL[i].setFeedback(0.5f);
-//        }
-
-//        /* Init scratch buffers*/
-//        inScratch = new float[N_FRAMES];
-//        outScratchL = new float[N_FRAMES];
-
-        /* Prepare all buffers*/
+        // prepare all buffers!
         update();
-        stereoReverb = isStereo ? new Freeverb(false) : null;
-    }
-
-    @Override
-    public int getParamCount() {
-        return Settings.values().length;
     }
 
     @Override
@@ -193,7 +102,8 @@ public final class Freeverb extends Reverb {
             return Math.round(getDamp() * 50);
         if (idx == Settings.Wet.ordinal())
             return Math.round(getWet() * 100);
-
+        if (idx == Settings.Width.ordinal())
+        	return Math.round(width * 100);
         throw new InvalidParameterException();
     }
 
@@ -205,17 +115,17 @@ public final class Freeverb extends Reverb {
             setDamp(value * 0.02f);
         else if (idx == Settings.Wet.ordinal())
             setWet(value * 0.01f);
+        else if (idx == Settings.Width.ordinal())
+        	setWidth(value * 0.01f);
         else throw new InvalidParameterException();
     }
 
     @Override public boolean isInternal() { return true; }
 
-	@Override
+    @Override
     public void setRoomSize(float value) {
         roomsize = (value * scaleroom) + offsetroom;
         dirty = true;
-        if (stereoReverb != null)
-        	stereoReverb.setRoomSize(value);
     }
 
     @Override
@@ -227,8 +137,6 @@ public final class Freeverb extends Reverb {
     public void setDamp(float value) {
         damp = value * scaledamp;
         dirty = true;
-        if (stereoReverb != null)
-        	stereoReverb.setDamp(value);
     }
 
     @Override
@@ -240,8 +148,6 @@ public final class Freeverb extends Reverb {
     public void setWet(float value) {
         wet = value * scalewet;
         dirty = true;
-        if (stereoReverb != null)
-        	stereoReverb.setWet(value);
     }
 
     @Override
@@ -270,44 +176,100 @@ public final class Freeverb extends Reverb {
     }
 
     private void update() {
-        wet1 = wet * (width / 2 + 0.5f);
         for (int i = 0; i < numcombs; i++) {
             combL[i].setFeedback(roomsize);
             combL[i].setdamp(damp);
+            combR[i].setFeedback(roomsize);
+            combR[i].setdamp(damp);
         }
-        if (stereoReverb != null)
-        	stereoReverb.update();
         dirty = false;
     }
 
     @Override
-	public void process(FloatBuffer left, FloatBuffer right) {
-    	process(left);
-    	if (right != null)
-    		stereoReverb.process(right);
+    public void process(FloatBuffer left, FloatBuffer right) {
+        if (right == null) {
+            // mono: process only left, produce mono wet (no cross-channel)
+            processMono(left);
+            return;
+        }
+
+        // stereo: process both buffers together
+        left.rewind();
+        right.rewind();
+        if (dirty) update();
+
+        float ourGain = fixedgain;
+        for (int i = 0; i < N_FRAMES; i++) {
+            inScratchL[i] = left.get(i) * ourGain;
+            inScratchR[i] = right.get(i) * ourGain;
+        }
+
+        Arrays.fill(outScratchL, 0);
+        Arrays.fill(outScratchR, 0);
+
+        // ---- Run the first couple of allpass filters as pre-diffusion ----
+        final int preAllpasses = Math.min(2, numallpasses);
+        for (int i = 0; i < preAllpasses; i++) {
+            allpassL[i].processReplace(inScratchL, inScratchL);
+            allpassR[i].processReplace(inScratchR, inScratchR);
+        }
+
+        // Run combs on the diffused input
+        for (int i = 0; i < numcombs; i++) {
+            combL[i].processMix(inScratchL, outScratchL);
+            combR[i].processMix(inScratchR, outScratchR);
+        }
+
+        // ---- Run any remaining allpasses as post-diffusion (as before) ----
+        for (int i = preAllpasses; i < numallpasses; i++) {
+            allpassL[i].processReplace(outScratchL, outScratchL);
+            allpassR[i].processReplace(outScratchR, outScratchR);
+        }
+
+        // compute width mixes
+        // wet1 = wet * (width/2 + 0.5)  -> primary (same-channel) wet gain
+        // wet2 = wet * ((1 - width)/2) -> cross-channel wet gain
+        float wet1 = wet * (width / 2.0f + 0.5f);
+        float wet2 = wet * ((1.0f - width) / 2.0f);
+
+        // write back outputs with wet/dry + stereo width cross-mix
+        for (int i = 0; i < N_FRAMES; i++) {
+            float inL = left.get(i);
+            float inR = right.get(i);
+            float reverbL = outScratchL[i];
+            float reverbR = outScratchR[i];
+
+            float outL = inL + reverbL * wet1 + reverbR * wet2;
+            float outR = inR + reverbR * wet1 + reverbL * wet2;
+
+            left.put(i, outL);
+            right.put(i, outR);
+        }
     }
 
-    void process(FloatBuffer buf) {
-    	buf.rewind();
-        if (dirty)
-            update();
+    private void processMono(FloatBuffer buf) {
+        buf.rewind();
+        if (dirty) update();
 
         float ourGain = fixedgain;
         for (int i = 0; i < N_FRAMES; i++)
-            inScratch[i] = buf.get(i) * ourGain;
+            inScratchL[i] = buf.get(i) * ourGain;
 
         float[] work = outScratchL;
         Arrays.fill(work, 0);
 
+        final int preAllpasses = Math.min(2, numallpasses);
+        for (int i = 0; i < preAllpasses; i++)
+            allpassL[i].processReplace(inScratchL, inScratchL);
+
         for (int i = 0; i < numcombs; i++)
-            combL[i].processMix(inScratch, work, N_FRAMES);
+            combL[i].processMix(inScratchL, work);
 
-        for (int i = 0; i < numallpasses; i++)
-            allpassL[i].processReplace(work, work, N_FRAMES);
+        for (int i = preAllpasses; i < numallpasses; i++)
+            allpassL[i].processReplace(work, work);
 
-            for (int i = 0; i < N_FRAMES; i++)
-                buf.put(buf.get(i) + // process add
-                		work[i] * wet1);// + outScratchR[i] * wet2);
+        for (int i = 0; i < N_FRAMES; i++)
+            buf.put(i, buf.get(i) + work[i] * wet); // simple mono wet
     }
 
     private class Comb {
@@ -317,35 +279,36 @@ public final class Freeverb extends Reverb {
         float damp1;
         float damp2;
         float[] buffer;
-        int bufsize;
+        final int bufsize;
         int bufidx = 0;
 
         public Comb(int size) {
-            bufsize = size;
+            bufsize = Math.max(1, size);
             reset();
         }
 
         public void reset() {
-        	buffer = new float[bufsize];
+            buffer = new float[bufsize];
+            bufidx = 0;
+            filterstore = 0;
         }
 
-
-        public void processMix(float inputs[], float outputs[], int buffersize) {
-            for (int i = 0; i < buffersize; i++) {
+        public void processMix(float inputs[], float outputs[]) {
+            for (int i = 0; i < N_FRAMES; i++) {
                 float output = buffer[bufidx];
 
-                //undenormalise(output);
-                if (output > 0.0 && output < 1.0E-9)
-                	output = 0;
-                if (output < 0.0 && output > -1.0E-9)
-                	output = 0;
+                // undenormalise
+                if (output > 0.0f && output < 1.0E-9f)
+                    output = 0;
+                if (output < 0.0f && output > -1.0E-9f)
+                    output = 0;
 
                 filterstore = (output * damp2) + (filterstore * damp1);
-                //undenormalise(filterstore);
-                if (filterstore > 0.0 && filterstore < 1.0E-9)
-                	filterstore = 0;
-                else if (filterstore < 0.0 && filterstore > -1.0E-9)
-                	filterstore = 0;
+                // undenormalise(filterstore);
+                if (filterstore > 0.0f && filterstore < 1.0E-9f)
+                    filterstore = 0;
+                else if (filterstore < 0.0f && filterstore > -1.0E-9f)
+                    filterstore = 0;
 
                 buffer[bufidx] = inputs[i] + (filterstore * feedback);
 
@@ -353,7 +316,6 @@ public final class Freeverb extends Reverb {
                     bufidx = 0;
 
                 outputs[i] += output;
-
             }
         }
 
@@ -368,51 +330,53 @@ public final class Freeverb extends Reverb {
 
         @Setter float feedback = 0.5f;
         float[] buffer;
-        int bufsize;
         int bufidx = 0;
+        final int size;
 
         public Allpass(int size) {
-            bufsize = size;
-        	reset();
+            this.size = Math.max(1, size);
+            reset();
         }
 
         public void reset() {
-        	buffer = new float[bufsize];
+            buffer = new float[size];
+            bufidx = 0;
         }
 
-        public void processReplace(float inputs[], float outputs[], int buffersize) {
-        	float input;
-            for (int i = 0; i < buffersize; i++) {
+        public void processReplace(float inputs[], float outputs[]) {
+            float input;
+            for (int i = 0; i < N_FRAMES; i++) {
 
-                //undenormalise
-            	if (buffer[bufidx] > 0 && buffer[bufidx] < 1.0E-9)
-            		buffer[bufidx] = 0;
-            	else if (buffer[bufidx] < 0.0 && buffer[bufidx] > -1.0E-9)
-                	buffer[bufidx] = 0;
+                // undenormalise
+                if (buffer[bufidx] > 0 && buffer[bufidx] < 1.0E-9)
+                    buffer[bufidx] = 0;
+                else if (buffer[bufidx] < 0.0 && buffer[bufidx] > -1.0E-9)
+                    buffer[bufidx] = 0;
 
                 input = inputs[i];
                 outputs[i] = -input + buffer[bufidx];
                 buffer[bufidx] = input + buffer[bufidx] * feedback;
-                if (++bufidx >= bufsize) {
+                if (++bufidx >= size) {
                     bufidx = 0;
                 }
             }
         }
    }
 
-	@Override
-	public void setActive(boolean active) {
-		this.active = active;
-		if (stereoReverb != null)
-			stereoReverb.setActive(active);
-		if (active) return;
-		Threads.execute(() -> { // clear the echo
-			for (Allpass l : allpassL)
-				l.reset();
-			for (Comb l : combL)
-				l.reset();
-		});
-	}
-
+    @Override
+    public void setActive(boolean active) {
+        this.active = active;
+        if (active) return;
+        Threads.execute(() -> { // clear the echo
+            for (Allpass l : allpassL)
+                l.reset();
+            for (Comb l : combL)
+                l.reset();
+            for (Allpass r : allpassR)
+                r.reset();
+            for (Comb r : combR)
+                r.reset();
+        });
+    }
 
 }

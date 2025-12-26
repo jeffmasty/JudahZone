@@ -1,8 +1,4 @@
 package net.judah.gui.scope;
-
-import be.tarsos.dsp.util.fft.FloatFFT;
-import be.tarsos.dsp.util.fft.WindowFunction;
-
 /*
 *      _______                       _____   _____ _____
 *     |__   __|                     |  __ \ / ____|  __ \
@@ -26,24 +22,30 @@ import be.tarsos.dsp.util.fft.WindowFunction;
 *
 */
 
+import be.tarsos.dsp.util.fft.FloatFFT;
+import be.tarsos.dsp.util.fft.WindowFunction;
 
-/**Fast Fourier Zone
- *
- * Wrapper for calling Fast Fourier Transforms with an optional window functions.
+/**
+ * Wrapper for calling a hopefully Fast Fourier transform. Makes it easy to
+ * switch FFT algorithm with minimal overhead.
+ * Support for window functions is also present.
  *
  * @author Joren Six
- * @author Jeff Masty (window function fix)
  */
 public class FFZ {
 
-	/** low-level FFT.*/
+	/**
+	 * Forward FFT.
+	 */
 	private final FloatFFT fft;
 	private final WindowFunction windowFunction;
 	private final int fftSize;
 	private final float[] window;
 
-	/**Create a new fft
-	 * @param size of this size */
+	/**
+	 * Create a new fft
+	 * @param size of this size
+	 */
 	public FFZ(final int size) {
 		this(size,null);
 	}
@@ -53,22 +55,23 @@ public class FFZ {
 	 * arning: the window is not applied in reverse when a backwards transform is requested.
 	 * @param size The size of the fft.
 	 * @param windowFunction Apply the specified window on the samples before a forward transform.
-	 * Warning: the window is not applied in reverse when a backwards transform is requested.
+	 * arning: the window is not applied in reverse when a backwards transform is requested.
 	 */
 	public FFZ(final int size, final WindowFunction windowFunction){
 		fft = new FloatFFT(size);
 		fftSize = size;
 		this.windowFunction = windowFunction;
-		window = windowFunction == null ? null : windowFunction.generateCurve(size);
+		if(windowFunction==null)
+			window = null;
+		else
+		   window = windowFunction.generateCurve(size);
 	}
 
-	/**@return The buffer size this FFT is setup to handle. */
-	public int size(){
-		return fftSize;
-	}
-
-	/**Computes forward DFT, leaving the result in data.
-	 * @param data audio in the first half */
+	/**
+	 * Computes forward real DFT in-place.
+	 * The first {@code fftSize} samples of {@code data} must contain the time-domain
+	 * signal; any remaining samples (for packed real/imag formats) are left as-is.
+	 */
 	public void forwardTransform(final float[] data) {
 		if (window != null)
 			for(int i = 0 ; i < window.length; i++)
@@ -79,35 +82,52 @@ public class FFZ {
 	/**do a complex forward transform
 	 * @param data do a complex forward transform on these complex numbers */
 	public void complexForwardTransform(final float[] data) {
-		if (window != null)
-			for(int i = 0 ; i < window.length; i++)
-				data[i] = data[i] * window[i];
-
-		fft.complexForward(data);
+	    if (window != null)
+	        for (int i = 0; i < window.length; i++)
+	            data[i] = data[i] * window[i];
+	    fft.complexForward(data);
 	}
 
-	/**Computes inverse DFT.
+	/**
+	 * Computes inverse DFT.
 	 * Warning, does not reverse the window function.
-	 * @param data to transform */
+	 * @param data
+	 *            data to transform
+	 */
 	public void backwardsTransform(final float[] data) {
 		fft.realInverse(data, true);
 	}
 
-	/**Calculate the frequency of the bin.
+	/**
+	 * Calculate the frequency of the bin.
 	 * @param binIndex The index of the bin.
 	 * @param sampleRate The sample rate of the audio.
-	 * @return The frequency in Hz of the bin. */
+	 * @return The frequency in Hz of the bin.
+	 */
 	public double binToHz(final int binIndex, final float sampleRate) {
 		return binIndex * sampleRate / (double) fftSize;
 	}
 
-	/**Returns the modulus of the element at index bufferCount. The modulus,
+	/**
+	 * The size of the fft.
+	 * @return The size of the fft.
+	 */
+	public int size(){
+		return fftSize;
+	}
+
+	/**
+	 * Returns the modulus of the element at index bufferCount. The modulus,
 	 * magnitude or absolute value is (a²+b²) ^ 0.5 with a being the real part
 	 * and b the imaginary part of a complex number.
 	 *
-	 * @param data The FFT transformed data.
-	 * @param index The index of the element.
-	 * @return The modulus, magnitude or absolute value of the element at index bufferCount */
+	 * @param data
+	 *            The FFT transformed data.
+	 * @param index
+	 *            The index of the element.
+	 * @return The modulus, magnitude or absolute value of the element at index
+	 *         bufferCount
+	 */
 	public float modulus(final float[] data, final int index) {
 		final int realIndex = 2 * index;
 		final int imgIndex =  2 * index + 1;
@@ -115,10 +135,15 @@ public class FFZ {
 		return (float) Math.sqrt(modulus);
 	}
 
-	/**Calculates the the modulus for each element in data and stores the result
+	/**
+	 * Calculates the the modulus for each element in data and stores the result
 	 * in amplitudes.
-	 * @param data The input data.
-	 * @param amplitudes The output modulus info or amplitude. */
+	 *
+	 * @param data
+	 *            The input data.
+	 * @param amplitudes
+	 *            The output modulus info or amplitude.
+	 */
 	public void modulus(final float[] data, final float[] amplitudes) {
 		assert data.length / 2 == amplitudes.length;
 		for (int i = 0; i < amplitudes.length; i++) {
@@ -126,12 +151,19 @@ public class FFZ {
 		}
 	}
 
-	/**Computes an FFT and converts the results to polar coordinates (power and phase).
-	 * Both the power and phase arrays must be the same length, data should be double the length.
-	 * @param data The input audio signal.
-	 * @param power The power (modulus) of the data.
-	 * @param phase The phase of the data */
-	public void powerPhaseFFT(float[] data, float[] power, float[] phase) {
+	/**
+	 * Computes an FFT and converts the results to polar coordinates (power and
+	 * phase). Both the power and phase arrays must be the same length, data
+	 * should be double the length.
+	 *
+	 * @param data
+	 *            The input audio signal.
+	 * @param power
+	 *            The power (modulus) of the data.
+	 * @param phase
+	 *            The phase of the data
+	 */
+	public void powerPhaseFFT(float[] data,float[] power, float[] phase) {
 		assert data.length / 2 == power.length;
 		assert data.length / 2 == phase.length;
 		if(windowFunction!=null){
@@ -142,11 +174,13 @@ public class FFZ {
 	}
 
 
-	/**Returns magnitude (or power) and phase for the FFT transformed data.
+	/**
+	 * Returns magnitude (or power) and phase for the FFT transformed data.
 	 * @param data The FFT transformed data.
 	 * @param power The array where the magnitudes or powers are going to be stored. It is half the length of data (FFT size).
-	 * @param phase The array where the phases are going to be stored. It is half the length of data (FFT size). */
-	public void powerAndPhaseFromFFT(float[] data, float[] power, float[] phase){
+	 * @param phase The array where the phases are going to be stored. It is half the length of data (FFT size).
+	 */
+	public void powerAndPhaseFromFFT(float[] data,float[] power, float[] phase){
 		phase[0] = (float) Math.PI;
 		power[0] = -data[0];
 		for (int i = 1; i < power.length; i++) {
@@ -157,24 +191,29 @@ public class FFZ {
 		}
 	}
 
-	/**Beatroot expects a different first power element
+	/**
+	 * Beatroot expects a different first power element
 	 * @param data The FFT transformed data.
 	 * @param power The array where the magnitudes or powers are going to be stored. It is half the length of data (FFT size).
-	 * @param phase The array where the phases are going to be stored. It is half the length of data (FFT size). */
+	 * @param phase The array where the phases are going to be stored. It is half the length of data (FFT size).
+
+	 */
 	public void powerPhaseFFTBeatRootOnset(float[] data,float[] power, float[] phase) {
 		powerPhaseFFT(data, power, phase);
 		power[0] = (float) Math.sqrt(data[0] * data[0] + data[1] * data[1]);
 	}
 
-	/**Multiplies to arrays containing imaginary numbers. The data in the first argument
+	/**
+	 * Multiplies to arrays containing imaginary numbers. The data in the first argument
 	 * is modified! The real part is stored at <code>2*i</code>, the imaginary part <code>2*i+i</code>
 	 * @param data The array with imaginary numbers that is modified.
 	 * @param other The array with imaginary numbers that is not modified.
-	 * Data and other need to be the same length. */
+	 * Data and other need to be the same length.
+	 */
 	public void multiply(float[] data, float[] other){
 		assert data.length == other.length;
 		if(data.length!=other.length){
-			throw new IllegalArgumentException("Both arrays with imaginary numbers should be of equal length");
+			throw new IllegalArgumentException("Both arrays with imaginary numbers shouldb e of equal length");
 		}
 		for (int i = 1; i < data.length-1; i+=2) {
 			int realIndex = i;
@@ -188,25 +227,4 @@ public class FFZ {
 			//data[imgIndex] = data[realIndex] * other[imgIndex] + data[imgIndex] * other[realIndex];
 			}
 	}
-
-    /**Estimate an RMS-like amplitude from spectral magnitudes in an absolute bin range. */
-    public static double computeFrameRms(float[] amplitudes, int absStartBin, int absEndBin) {
-        absStartBin = Math.max(0, Math.min(amplitudes.length - 1, absStartBin));
-        absEndBin = Math.max(0, Math.min(amplitudes.length - 1, absEndBin));
-        if (absEndBin < absStartBin) return 0.0;
-
-        double sumPower = 0.0;
-        int count = 0;
-        for (int i = absStartBin; i <= absEndBin; i++) {
-            float mag = amplitudes[i];
-            if (!Float.isFinite(mag) || mag <= 0f) continue;
-            double p = mag * (double) mag;
-            sumPower += p;
-            count++;
-        }
-        if (count == 0) return 0.0;
-        double meanPower = sumPower / count;
-        return Math.sqrt(meanPower); // RMS-like amplitude
-    }
-
 }

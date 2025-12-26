@@ -244,11 +244,13 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 	public void percent(float percent) {
 		tracks.forEach(track->track.playTo(percent));
 		mains.playTo(percent);
-		if (replace != null) {
-			tracks = replace;
-			replace = null;
-			Threads.execute(()->updates());
-		}
+
+		TrackList<MidiTrack> pending = replace;
+	    if (pending != null) {
+	        tracks = pending;     // volatile write publishes the new list
+	        replace = null;       // clear the pending snapshot
+	        Threads.execute(this::updates);
+	    }
 	}
 
 	/**Performs recording or translate activities on tracks, drum pads are also sounded from here.
@@ -419,7 +421,6 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 			replace = temp; // RT atomic
 			return;
 		}
-
 		tracks = temp;
 		updates();
 	}

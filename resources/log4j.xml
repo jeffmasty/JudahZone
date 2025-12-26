@@ -15,6 +15,9 @@
     </layout>
   </appender>
  
+ 	<logger name="be.tarsos.dsp.io.PipeDecoder">
+ 	<level value="ERROR"/>
+ 	</logger>
     <logger name="org.jaudiolibs.jnajack">
     <level value="ERROR"/>
     </logger>

@@ -1,16 +1,14 @@
 package net.judah.mixer;
 
-import java.nio.FloatBuffer;
-
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
+import net.judah.fx.Convolution;
+import net.judah.fx.MonoFilter;
+import net.judah.fx.MonoFilter.Type;
 import net.judah.omni.AudioTools;
 import net.judah.omni.Icons;
-import net.judah.synth.taco.MonoFilter;
-import net.judah.synth.taco.MonoFilter.Type;
 import net.judah.util.Constants;
-import net.judah.util.RTLogger;
 
 @Getter
 public class Instrument extends LineIn {
@@ -23,19 +21,23 @@ public class Instrument extends LineIn {
     private MonoFilter lp;
     private MonoFilter hp;
 
-    /** Mono channel */
-	public Instrument(String name, String sourcePort, JackPort left, String icon) {
+    /** Mono channel
+     * @param j
+     * @param i */
+	public Instrument(String name, String sourcePort, JackPort left, String icon, int lowCut, int hiCut) {
 		super(name, Constants.MONO);
 		this.icon = Icons.get(icon);
 		this.leftPort = left;
 		this.leftSource = sourcePort;
 		this.rightSource = null;
+		hp = new MonoFilter(Type.LoCut, lowCut, 1);
+		lp = new MonoFilter(Type.HiCut, hiCut, 1);
 	}
 
-	public Instrument(String name, String sourcePort, String icon) {
-		this(name, sourcePort, (JackPort)null, icon);
-	}
-
+//	public Instrument(String name, String sourcePort, String icon) {
+//		this(name, sourcePort, (JackPort)null, icon);
+//	}
+//
 	public Instrument(String name, String leftSource, String rightSource, String icon) {
 		super(name, Constants.STEREO);
 		if (icon != null)
@@ -53,24 +55,8 @@ public class Instrument extends LineIn {
 		this.rightPort = right;
 	}
 
-	public void setFilter(int lowCut, int hiCut) {
-		if (isStereo) {
-			RTLogger.warn(this, "Mono Only");
-			return;
-		}
-
-		if (lowCut <= 0)
-			hp = null;
-		else
-			hp = new MonoFilter(Type.LoCut, lowCut, 1);
-		if (hiCut <= 0)
-			lp = null;
-		else
-			lp = new MonoFilter(Type.HiCut, hiCut, 1);
-	}
-
 	@Override
-	public final void process(FloatBuffer outLeft, FloatBuffer outRight) {
+	public final void process() {
 		if (isOnMute())
 			return;
 
@@ -83,14 +69,9 @@ public class Instrument extends LineIn {
 				hp.process(left);
 			if (lp != null)
 				lp.process(left);
-			AudioTools.copy(left, right);
+			((Convolution.Mono)IR).monoToStereo(left, right);  // make Stereo in CabSim
 		}
-		// apply fx
 		fx();
-
-		// add to output
-		AudioTools.mix(left, outLeft);
-		AudioTools.mix(right, outRight);
-
 	}
+
 }

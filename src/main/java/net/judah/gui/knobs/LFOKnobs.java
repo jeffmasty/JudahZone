@@ -7,6 +7,7 @@ import lombok.Getter;
 import net.judah.fx.Effect;
 import net.judah.fx.LFO;
 import net.judah.gui.Gui;
+import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
@@ -18,6 +19,7 @@ public class LFOKnobs extends KnobPanel {
     @Getter private final Channel channel;
     @Getter private final LFOWidget lfo1, lfo2;
     @Getter private final CompressorWidget compressor;
+    private final CabSim cabSim;
     private boolean upperKnobs = true;
 
     public LFOKnobs(final Channel ch, DJJefe mixer) {
@@ -26,11 +28,15 @@ public class LFOKnobs extends KnobPanel {
     	lfo1 = new LFOWidget(ch, ch.getLfo(), 1);
     	lfo2 = new LFOWidget(ch, ch.getLfo2(), 2);
     	compressor = new CompressorWidget(ch);
+    	cabSim = new CabSim(ch);
 
-    	setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+    	setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     	add(lfo1);
     	add(lfo2);
     	add(compressor);
+
+    	add(cabSim);
+
 		update();
 		validate();
     }
@@ -41,8 +47,8 @@ public class LFOKnobs extends KnobPanel {
 	}
 
 	@Override public void pad2() {
-		channel.getCompression().setActive(!channel.getCompression().isActive());
-		MainFrame.update(channel);
+		channel.getIR().setActive(!channel.getIR().isActive());
+		MainFrame.update(cabSim);
 	}
 
 	@Override
@@ -52,18 +58,21 @@ public class LFOKnobs extends KnobPanel {
 		compressor.update();
 		lfo1.bold(upperKnobs);
 		lfo2.bold(!upperKnobs);
+		cabSim.update();
 	}
 
 	@Override
 	public boolean doKnob(int idx, int data2) {
-		if (upperKnobs) {
-			if (lfo1.doKnob(idx, data2))
+		if (upperKnobs && lfo1.doKnob(idx, data2))
 				return false;
-		}
+
+		if (!upperKnobs && lfo2.doKnob(idx, data2))
+				return false;
+
+		if (HQ.isShift())
+			cabSim.doKnob(idx, data2);
 		else
-			if (!upperKnobs && lfo2.doKnob(idx, data2))
-				return false;
-		compressor.doKnob(idx, data2);
+			compressor.doKnob(idx, data2);
 		return false;
 	}
 

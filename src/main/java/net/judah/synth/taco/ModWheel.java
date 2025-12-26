@@ -1,6 +1,7 @@
 package net.judah.synth.taco;
 
 import lombok.RequiredArgsConstructor;
+import net.judah.fx.MonoFilter;
 import net.judah.gui.MainFrame;
 import net.judah.util.Constants;
 

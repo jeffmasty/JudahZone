@@ -28,7 +28,12 @@ public class Mains extends Channel {
 		icon = Icons.get("Speakers.png");
 	}
 
+
 	@Override
+	public void process() {
+		// no-op
+	}
+
 	public void process(FloatBuffer left, FloatBuffer right) {
 
 		gain.process(left, right);
@@ -36,7 +41,7 @@ public class Mains extends Channel {
 
 		if (tape != null)
 			tape.offer(left, right);
-		if (copy) {
+		if (copy) { // put out a read buffer like other channels offer (RMS meters)
 			copy = false;
 			AudioTools.copy(left, getLeft().array());
 			AudioTools.copy(right, getRight().array());

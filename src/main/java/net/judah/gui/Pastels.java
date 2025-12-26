@@ -4,14 +4,15 @@ import java.awt.Color;
 
 import net.judah.fx.Chorus;
 import net.judah.fx.Compressor;
+import net.judah.fx.Convolution;
 import net.judah.fx.Delay;
 import net.judah.fx.EQ;
 import net.judah.fx.Effect;
 import net.judah.fx.Filter;
 import net.judah.fx.LFO;
+import net.judah.fx.MonoFilter;
 import net.judah.fx.Overdrive;
 import net.judah.fx.Reverb;
-import net.judah.synth.taco.MonoFilter;
 
 public interface Pastels {
 
@@ -59,6 +60,8 @@ public interface Pastels {
 			return PURPLE;
 		if (LFO.class.equals(class1))
 			return BLUE;
+		if (Convolution.class.equals(class1))
+			return Color.BLACK;
 		return EGGSHELL;
 	}
 }

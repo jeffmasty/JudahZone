@@ -1,4 +1,4 @@
-package net.judah.fx;
+package net.judah.mixer;
 
 
 import java.util.ArrayList;

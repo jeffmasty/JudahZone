@@ -13,11 +13,11 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import net.judah.JudahZone;
-import net.judah.fx.Preset;
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.gui.Updateable;
 import net.judah.mixer.Channel;
+import net.judah.mixer.Preset;
 
 /** Presets */
 public class PresetsHandler extends SetCombo<Preset> implements ListCellRenderer<Preset>, Updateable {

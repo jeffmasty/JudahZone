@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import lombok.Getter;
+import net.judah.fx.MonoFilter;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.omni.Threads;

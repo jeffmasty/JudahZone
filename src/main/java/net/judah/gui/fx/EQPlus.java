@@ -31,7 +31,7 @@ public class EQPlus implements Updateable {
 	public EQPlus(Channel ch) {
 		this.channel = ch;
 		this.eq = channel.getEq();
-		toggle.addActionListener(l->toggle());
+		toggle.addActionListener(e->toggle());
 	}
 
 	public boolean isShift() { return toggle.getBackground() == SHIFTED; }

@@ -16,9 +16,12 @@ public class DoubleSlider extends RangeSlider implements Updateable {
 		this.lowIdx = lowIdx;
 		this.upper = upper;
 		this.upperIdx = upperIdx;
-		addChangeListener(l->fireChange());
 		update();
+		addChangeListener(e->fireChange());
+
 	}
+
+
 
 	private void fireChange() {
 		lower.set(lowIdx, getValue());

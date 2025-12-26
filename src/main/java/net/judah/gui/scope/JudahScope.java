@@ -14,7 +14,6 @@ import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSlider;
 import javax.swing.JToggleButton;
 
 import be.tarsos.dsp.util.fft.HammingWindow;
@@ -65,22 +64,20 @@ public class JudahScope extends JPanel implements Live, Floating, Closeable {
     private final JToggleButton zoneBtn = new JToggleButton("Pause", false);
     private final JToggleButton fileBtn = new JToggleButton(" File ", false);
     private final JLabel feedback = new JLabel(" (load) ", JLabel.CENTER);
-	private final JSlider rmsSlider = new JSlider(1, 100, 50);
-	private final Box gainDuo = Gui.box(new JLabel(" RMS "), Gui.resize(rmsSlider, Size.SMALLER)); // TODO move to Time
-	private final Box controls = Gui.box(gainDuo); // cellDuo: assume Scope opens Live
+
+	/** dynamic box that will hold the current TimeDomain's controls panel */
+	private final Box timeControlsBox = new Box(BoxLayout.X_AXIS);
 
 	public JudahScope() {
 		setName("JudahScope");
 		spectrum = new Spectrometer(new Dimension(w, Size.HEIGHT_TAB - SPEC_DIFF), liveBtn);
 		timeDomain.resize(w);
 
-		// listeners();
 		feedback.addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) { load(); }});
-		liveBtn.addActionListener(l->setMode(Mode.LIVE_ROLLING));
-		zoneBtn.addActionListener(l->setMode(Mode.LIVE_STOPPED));
-		fileBtn.addActionListener(l->setMode(Mode.FILE));
-		rmsSlider.addChangeListener(l -> timeDomain.setYScale(rmsSlider.getValue()));
+		liveBtn.addActionListener(l ->setMode(Mode.LIVE_ROLLING));
+		zoneBtn.addActionListener(l ->setMode(Mode.LIVE_STOPPED));
+		fileBtn.addActionListener(l ->setMode(Mode.FILE));
 		ButtonGroup gp = new ButtonGroup();
 		gp.add(liveBtn); gp.add(zoneBtn); gp.add(fileBtn);
 
@@ -89,20 +86,34 @@ public class JudahScope extends JPanel implements Live, Floating, Closeable {
 		menu.add(Gui.box(liveBtn, zoneBtn, fileBtn));
 		menu.add(Gui.resize(feedback, Size.TITLE_SIZE));
 		menu.add(spectrum.getControls());
-		menu.add(controls);
+
+		// initial TimeDomain controls
+		updateTimeControls(timeDomain);
+
+		menu.add(timeControlsBox);
 		menu.add(Box.createHorizontalGlue());
 
 		// buildLayout();
 		wrap = Gui.wrap(timeDomain);
 		Box content = new Box(BoxLayout.Y_AXIS);
 		content.add(menu, new Dimension(Size.WIDTH_TAB, 36));
-		content.add(Box.createVerticalStrut(10));
+		content.add(Box.createVerticalStrut(6));
 		content.add(Gui.resize(spectrum, new Dimension(w, spectrum.getHeight())));
-		content.add(Box.createVerticalStrut(15));
+		content.add(Box.createVerticalStrut(12));
 		content.add(wrap);
-		content.add(Box.createVerticalStrut(10));
+		content.add(Box.createVerticalStrut(1));
 		setLayout(new GridLayout(1, 1));
 		add(Gui.wrap(content));
+	}
+
+	/** Swap the controls panel to match the active TimeDomain. */
+	private void updateTimeControls(TimeDomain td) {
+		timeControlsBox.removeAll();
+		if (td != null) {
+			timeControlsBox.add(td.getControls());
+		}
+		timeControlsBox.revalidate();
+		timeControlsBox.repaint();
 	}
 
     @Override public void resized(int width, int height) {
@@ -119,28 +130,26 @@ public class JudahScope extends JPanel implements Live, Floating, Closeable {
 		if (file == null)
 			return;
 		Threads.execute(() -> {
-			try {
-				Recording recording = new Recording(file);
+			Recording recording = new Recording(file); // out-of-memory
 
-				int frames = recording.size() / CHUNKS;
-				Transform[] loaded = new Transform[frames];
-				final float[] transformBuffer = new float[TRANSFORM];
-				long start = System.currentTimeMillis();
-				for (int frame = 0; frame < frames; frame++) {
-					int idx = frame * FFT_SIZE;
-					float[][] snippet = recording.getSamples(idx, FFT_SIZE);
-					System.arraycopy(snippet[0], 0, transformBuffer, 0, FFT_SIZE); // mono
-					fft.forwardTransform(transformBuffer);
-					float[] amplitudes = new float[AMPLITUDES];
-					fft.modulus(transformBuffer, amplitudes);
-					loaded[frame] = new Transform(amplitudes, RMS.analyze(snippet));
-				}
-				// TODO tailing samples/zeropad
-				long end = System.currentTimeMillis();
-				RTLogger.debug(this, file.getName() + " frmes: " + frames + " FFT millis: " + (end - start));
-				fileDisplay = new TimeDomain(this, w, true, loaded);
-				install(fileDisplay);
-			} catch (IOException e) { RTLogger.warn(this, e); }
+			int frames = recording.size() / CHUNKS;
+			Transform[] loaded = new Transform[frames];
+			final float[] transformBuffer = new float[TRANSFORM];
+			long start = System.currentTimeMillis();
+			for (int frame = 0; frame < frames; frame++) {
+				int idx = frame * FFT_SIZE;
+				float[][] snippet = recording.getSamples(idx, FFT_SIZE);
+				System.arraycopy(snippet[0], 0, transformBuffer, 0, FFT_SIZE); // mono
+				fft.forwardTransform(transformBuffer);
+				float[] amplitudes = new float[AMPLITUDES];
+				fft.modulus(transformBuffer, amplitudes);
+				loaded[frame] = new Transform(amplitudes, RMS.analyze(snippet));
+			}
+			// TODO tailing samples/zeropad
+			long end = System.currentTimeMillis();
+			RTLogger.debug(this, file.getName() + " frames: " + frames + " FFT compute millis: " + (end - start));
+			fileDisplay = new TimeDomain(this, w, true, loaded);
+			install(fileDisplay);
 		});
 	}
 
@@ -149,6 +158,7 @@ public class JudahScope extends JPanel implements Live, Floating, Closeable {
 		timeDomain.generate();
 		wrap.removeAll();
 		wrap.add(timeDomain);
+		updateTimeControls(timeDomain);
 		revalidate();
 		repaint();
 	}
@@ -181,10 +191,8 @@ public class JudahScope extends JPanel implements Live, Floating, Closeable {
 		fft.modulus(transformBuffer, amplitudes);
 
 		Transform data = new Transform(amplitudes, rms);
-		// TODO wrap error expando
 		liveDisplay.analyze(data);
 		spectrum.analyze(data);
-
 	}
 
 	public void click(Transform t) {
@@ -206,14 +214,13 @@ public class JudahScope extends JPanel implements Live, Floating, Closeable {
         status = stat;
 
 		if (status == Mode.LIVE_ROLLING) { // goLive();
+			liveDisplay.fullRange();
 			install(liveDisplay);
 
 			if (liveBtn.isSelected() == false)
 				liveBtn.setSelected(true);
 
-			// controls.remove(player);
 		} else { // goDark();
-			// if (oldStatus == Mode.LIVE_ROLLING) // player
 
 			if (status == Mode.LIVE_STOPPED)
 				install(pausedDisplay);
@@ -231,7 +238,4 @@ public class JudahScope extends JPanel implements Live, Floating, Closeable {
     	if (status == Mode.LIVE_ROLLING)
     		setMode(Mode.LIVE_STOPPED);
     }
-
 }
-
-

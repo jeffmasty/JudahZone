@@ -1,4 +1,4 @@
-package net.judah.synth.taco;
+package net.judah.fx;
 
 //https://github.com/jaudiolibs/audioops/blob/master/audioops-impl/src/main/java/org/jaudiolibs/audioops/impl/IIRFilterOp.java
 /*
@@ -42,12 +42,12 @@ import java.security.InvalidParameterException;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.fx.Effect;
 import net.judah.util.Constants;
 
 /**
  * IIR Filter op ported from Gervill in OpenJDK.
  * This is a MONO op and requires one input and output channel.
+ * Includes Resonance, Wet/Dry, Smoothing
  */
 public class MonoFilter implements Effect {
 
@@ -314,7 +314,8 @@ public class MonoFilter implements Effect {
 	                    _y2 = _y1;
 	                    _y1 = y;
 	                }
-	            } else if (a0_delta == 0 && a1_delta == 0 && a2_delta == 0 && b1_delta == 0 && b2_delta == 0) {
+	            } else if (a0_delta == 0 && a1_delta == 0 && a2_delta == 0
+	            		&& b1_delta == 0 && b2_delta == 0) {
 	                for (int i = 0; i < BUF_SIZE; i++) {
 	                    double x = data.get(i);
 	                    double y = (_a0 * x + _a1 * _x1 + _a2 * _x2 - _b1 * _y1 - _b2 * _y2);

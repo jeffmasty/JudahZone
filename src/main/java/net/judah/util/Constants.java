@@ -93,7 +93,7 @@ public class Constants {
     /** see https://stackoverflow.com/a/846249 */
 	private static final int minp = 1;
 	private static final int maxp = 100;
-	public static float logarithmic(float percent, float min, float max) {
+	public static float logarithmic(int percent, float min, float max) {
 
 		// percent will be between 0 and 100
 		assert percent <= max && percent >= min;

@@ -73,6 +73,17 @@ public class FxKnob extends JPanel implements Updateable {
 		add(label);
 	}
 
+	public FxKnob(Channel ch, int idx, JLabel lbl, Knob knob) {
+		effect = null;
+		this.ch = ch;
+		this.idx = idx;
+		this.knob = knob;
+		this.label = lbl;
+		add(knob);
+
+		label.setFont(Gui.FONT11);
+		add(label);
+	}
 
 	// inelegant external reverb
 	public FxKnob(Channel ch, int idx, String lbl) {
