@@ -15,8 +15,8 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.KeyStroke;
 
-import net.judah.JudahZone;
 import net.judah.fx.Gain;
+import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
 import net.judah.mixer.Mains;
@@ -74,7 +74,7 @@ public class Bindings {
 		bind(getKeyStroke(VK_BACK_SPACE, 0), new Act(()->mains.toggleMute()));
 		bind(getKeyStroke(VK_UP, CTRL_DOWN_MASK), new Act(()->volume(true)));
 		bind(getKeyStroke(VK_DOWN, CTRL_DOWN_MASK), new Act(()->volume(false)));
-		bind(getKeyStroke(VK_ENTER, 0), new Act(()->JudahZone.getClock().toggle()));
+		bind(getKeyStroke(VK_ENTER, 0), new Act(()->JudahMidi.getClock().toggle()));
 	}
 
 	private void bind(KeyStroke k, Action a) {

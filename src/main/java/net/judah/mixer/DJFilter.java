@@ -38,23 +38,23 @@ public class DJFilter {
 	public void joystick(int x) {
 
 		if (x > 47 && x < 53) {
-			loCut.setActive(false);
+			ch.setActive(loCut, false);
 			loCut.set(HZ, 0);
-			hiCut.setActive(false);
+			ch.setActive(hiCut, false);
 			hiCut.set(HZ, 100);
 			return;
 		}
 		else if (x < 50) {
 			// as x approaches 0 (from 50) hiCut goes to 0 (from 100) // x50=100, x25=50, x0=0
 			hiCut.set(HZ, 2 * x);
-			if (loCut.isActive()) loCut.setActive(false);
-			if (!hiCut.isActive()) hiCut.setActive(true);
+			if (ch.isActive(loCut)) ch.setActive(loCut, false);
+			if (!ch.isActive(hiCut)) ch.setActive(hiCut, true);
 		}
 		else {
 			// as x approaches 100 (from 50) lowCut goes to 100 (from 0) // x50=0,  x75=50 x100=100
 			loCut.set(HZ, (x - 50) * 2);
-			if (hiCut.isActive()) hiCut.setActive(false);
-			if (!loCut.isActive()) loCut.setActive(true);
+			if (ch.isActive(hiCut)) ch.setActive(hiCut, false);
+			if (!ch.isActive(loCut)) ch.setActive(loCut, true);
 		}
 		MainFrame.update(ch);
 	}

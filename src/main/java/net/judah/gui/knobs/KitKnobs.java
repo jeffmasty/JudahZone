@@ -16,12 +16,13 @@ import net.judah.drumkit.DrumMachine;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
 import net.judah.gui.Gui;
+import net.judah.gui.Icons;
 import net.judah.gui.knobs.KitPad.Modes;
 import net.judah.gui.widgets.Btn;
 import net.judah.midi.Actives;
-import net.judah.omni.Icons;
-import net.judah.omni.Threads;
 import net.judah.seq.Trax;
+import net.judah.song.Overview;
+import net.judah.util.Threads;
 
 public class KitKnobs extends KnobPanel {
 
@@ -52,7 +53,7 @@ public class KitKnobs extends KnobPanel {
 
     	title.add(modes);
     	title.add(Gui.wrap(new Btn(Icons.NEW_FILE, e->reset(), "Reset Settings"),
-    			new Btn(Icons.SAVE, e->	drums.getSettings().serialize(JudahZone.getOverview()), "Save Settings in Song")));
+    			new Btn(Icons.SAVE, e->	drums.getSettings().serialize(), "Save Settings in Song")));
     	title.add(trax);
 
     	setOpaque(true);
@@ -65,8 +66,9 @@ public class KitKnobs extends KnobPanel {
 
 	private void reset() {
 		drums.getSettings().reset();
-		JudahZone.getOverview().getSong().setKit(null);
-		JudahZone.getOverview().save();
+		Overview overview = JudahZone.getInstance().getOverview();
+		overview.getSong().setKit(null);
+		overview.save();
 	}
 
 	public void update(DrumSample o) {

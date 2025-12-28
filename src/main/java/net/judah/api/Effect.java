@@ -1,4 +1,4 @@
-package net.judah.fx;
+package net.judah.api;
 
 import java.nio.FloatBuffer;
 
@@ -11,9 +11,9 @@ public interface Effect {
 
     String getName();
 
-    void setActive(boolean active);
+    default void reset() {}
 
-    boolean isActive();
+    default void activate() {}
 
     int getParamCount();
 
@@ -28,4 +28,7 @@ public interface Effect {
      * @param right null for mono effect */
     void process(FloatBuffer left, FloatBuffer right);
 
+    public interface RTEffect extends Effect { }
+
 }
+

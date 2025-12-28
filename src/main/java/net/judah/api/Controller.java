@@ -1,6 +1,4 @@
-package net.judah.controllers;
-
-import net.judah.midi.Midi;
+package net.judah.api;
 
 public interface Controller {
 

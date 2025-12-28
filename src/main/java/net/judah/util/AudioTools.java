@@ -1,4 +1,4 @@
-package net.judah.omni;
+package net.judah.util;
 
 import java.nio.FloatBuffer;
 import java.util.Vector;
@@ -8,7 +8,6 @@ import javax.sound.sampled.Mixer;
 import javax.sound.sampled.Mixer.Info;
 
 import net.judah.mixer.Channel;
-import net.judah.util.Constants;
 
 public class AudioTools  {
 

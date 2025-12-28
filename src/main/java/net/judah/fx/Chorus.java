@@ -39,9 +39,10 @@ import java.security.InvalidParameterException;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.api.TimeEffect;
 
 // https://github.com/jaudiolibs/audioops/blob/master/audioops-impl/src/main/java/org/jaudiolibs/audioops/impl/LFODelayOp.java
-public class Chorus implements TimeEffect {
+public class Chorus implements TimeEffect, net.judah.api.Effect.RTEffect {
 
     public enum Settings {
         Rate, Depth, Feedback, Type, Sync, Phase
@@ -52,7 +53,7 @@ public class Chorus implements TimeEffect {
     private static final float defaultDepth = 0.4f;
     private static final float defaultFeedback = 0.4f;
 
-    @Getter @Setter boolean active;
+//    @Getter @Setter boolean active;
 	@Setter @Getter boolean sync;
 	@Setter @Getter String type = TYPE[0];
 

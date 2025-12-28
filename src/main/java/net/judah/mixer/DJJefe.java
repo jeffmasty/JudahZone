@@ -12,15 +12,16 @@ import javax.swing.JPanel;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
+import net.judah.api.Effect;
 import net.judah.api.TimeListener;
 import net.judah.drumkit.DrumMachine;
+import net.judah.fx.Gain;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
-import net.judah.sampler.Sampler;
-import net.judah.seq.TrackList;
+import net.judah.seq.SynthRack;
 import net.judah.seq.track.DrumTrack;
 import net.judah.song.FxData;
 import net.judah.util.RTLogger;
@@ -33,40 +34,19 @@ public class DJJefe extends JPanel implements TimeListener {
 	/** Any channel available to LFO knobs, not necessarily a main mixer fader */
 	@Getter private final ArrayList<Channel> all = new ArrayList<>();
 	private final ArrayList<MixWidget> faders = new ArrayList<MixWidget>();
+	private final JudahZone zone;
 	@Getter private final Mains mains;
 	private final int size;
 	private int idx;
 
-	public DJJefe(JudahClock clock, Mains mains, Looper looper, Collection<LineIn> fades, TrackList<DrumTrack> drums, Sampler samples) {
-		this.mains = mains;
-    	all.add(mains);
-        all.addAll(looper);
-		all.addAll(fades);
-		drums.forEach(track -> all.add(track.getKit()));
-		all.add(samples);
+    public DJJefe(JudahClock clock, JudahZone judahZone, LineIn ... bonus) {
 
-    	for (Loop loop : looper) {
-    		channels.add(loop);
-    		faders.add(loop.getDisplay());
-    		add(loop.getDisplay());
-    	}
-        for (LineIn instrument : fades) {
-        	channels.add(instrument);
-    		MixWidget fader = new LineMix(instrument, looper.getSoloTrack());
-    		faders.add(fader);
-    		add(fader);
-        }
-        MixWidget fader3 = new MainsMix(mains);
-        faders.add(fader3);
-        add(fader3);
-        channels.add(mains);
-        size = channels.size();
-        setLayout(new GridLayout(1, size, 0, 0));
-        clock.addListener(this);
-	}
+    	this.zone = judahZone;
 
-    public DJJefe(JudahClock clock, Mains mains, Looper looper, Collection<LineIn> sources, DrumMachine drums, LineIn ... bonus) {
-		this.mains = mains;
+    	this.mains = zone.getMains();
+    	Looper looper = zone.getLooper();
+    	Collection<LineIn> sources = zone.getInstruments();
+    	DrumMachine drums = zone.getDrumMachine();
     	all.add(mains);
         all.addAll(looper);
 		all.addAll(sources);
@@ -109,7 +89,7 @@ public class DJJefe extends JPanel implements TimeListener {
 		comboOverride = true;
 		combo.removeAllItems();
 		all.forEach(ch -> combo.addItem(ch));
-		combo.setSelectedItem(JudahZone.getFxRack().getSelected().getFirst());
+		combo.setSelectedItem(zone.getSelected().getFirst());
 		comboOverride = false;
 	}
 
@@ -130,6 +110,17 @@ public class DJJefe extends JPanel implements TimeListener {
 			if (ch.channel.equals(channel))
 				ch.update();
 	}
+
+	public void update(Channel ch, Effect fx) {
+		MixWidget it = getFader(ch);
+		if (it == null)
+			return;
+		if (fx instanceof Gain)
+			it.updateVolume();
+		else
+			it.getIndicators().sync(fx);
+	}
+
 
 	public void updateAll() {
 		for (MixWidget ch : faders)
@@ -192,7 +183,7 @@ public class DJJefe extends JPanel implements TimeListener {
 					}
 				}
 				if (ch == null) {
-					ch = JudahZone.getTaco();
+					ch = SynthRack.getTacos()[0];
 					RTLogger.warn(this, "forced " + fx.getChannel() + " FX to " + ch.name);
 				}
 				continue;
@@ -205,8 +196,8 @@ public class DJJefe extends JPanel implements TimeListener {
 		for (Channel ch : channels)
 			if (ch instanceof LineIn in)
 				in.setMuteRecord(true);
-		JudahZone.getGuitar().setMuteRecord(false);
-		JudahZone.getTaco().setMuteRecord(false);
+		zone.getGuitar().setMuteRecord(false);
+		SynthRack.getTacos()[0].setMuteRecord(false);
 	}
 
 	@Override public void update(Property prop, Object value) {

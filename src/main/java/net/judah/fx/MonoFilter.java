@@ -41,7 +41,7 @@ import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 
 import lombok.Getter;
-import lombok.Setter;
+import net.judah.api.Effect;
 import net.judah.util.Constants;
 
 /**
@@ -77,7 +77,7 @@ public class MonoFilter implements Effect {
 	@Getter private final String name = MonoFilter.class.getSimpleName();
 	@Getter int paramCount = Settings.values().length;
     @Getter private Type filterType;
-    @Setter @Getter private boolean active = true; // default on
+//    @Setter @Getter private boolean active = true; // default on
     @Getter private float frequency = 666;
     private double resonancedB = 1;
     private final IIRFilter filter = new IIRFilter();

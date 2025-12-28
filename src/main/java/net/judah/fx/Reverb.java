@@ -1,6 +1,8 @@
 package net.judah.fx;
 
-public abstract class Reverb implements Effect {
+import net.judah.api.Effect.RTEffect;
+
+public abstract class Reverb implements RTEffect {
 
     public enum Settings {
         Room, Damp, Wet, Width // Width TODO ++ !!

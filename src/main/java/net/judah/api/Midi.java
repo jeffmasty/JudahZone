@@ -1,4 +1,4 @@
-package net.judah.midi;
+package net.judah.api;
 
 import java.io.IOException;
 
@@ -18,8 +18,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
-import net.judah.api.Key;
-import net.judah.drumkit.GMDrum;
 import net.judah.util.RTLogger;
 
 /** Utilities added to javax ShortMessage*/
@@ -94,11 +92,6 @@ public class Midi extends ShortMessage {
         b.append("/").append(getData2());
         return b.toString();
 	}
-
-//	// semitone to semitone = 1.059 = 2 ^ (1/12)
-//	public static float midiToHz(int data1) {
-//        return (float)(Math.pow(2, (data1 - 57d) / 12d)) * Key.TUNING;   // some have 69 instead of 57
-//    }
 
 	@Override
 	public int hashCode() {

@@ -22,7 +22,7 @@ public class ModalDialog extends JDialog {
         setSize(size);
         if (view.getName() != null)
         	setTitle(view.getName());
-        setLocation(JudahZone.getFrame().getSize().width / 2 - size.width / 2, 50); // multi-screen?
+        setLocation(JudahZone.getInstance().getFrame().getSize().width / 2 - size.width / 2, 50); // multi-screen?
 		add(view);
         setVisible(true);
 		addWindowListener(new WindowAdapter() {

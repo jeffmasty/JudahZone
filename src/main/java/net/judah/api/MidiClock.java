@@ -4,8 +4,6 @@ import java.io.Closeable;
 
 import javax.sound.midi.ShortMessage;
 
-import net.judah.midi.Midi;
-
 public interface MidiClock extends Closeable {
 
 	String PORT_NAME = "a2j:midiclock";

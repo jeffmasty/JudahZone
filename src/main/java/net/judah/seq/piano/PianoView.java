@@ -8,6 +8,7 @@ import net.judah.gui.Detached.Floating;
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.seq.MusicBox;
+import net.judah.seq.Seq;
 import net.judah.seq.track.HiringAgency;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.TrackBindings;
@@ -32,14 +33,14 @@ public class PianoView extends HiringAgency implements Floating, Size {
 	private int pianoWidth;
 	private final Pedal pedal;
 
-	public PianoView(PianoTrack t) {
+	public PianoView(PianoTrack t, Seq seq) {
 		this.track = t;
 		setName(t.getName());
 
 		keyboard = new PianoKeys(track, this);
-		steps = new PianoSteps(track);
+		steps = new PianoSteps(track, seq.getAutomation());
 		grid = new Piano(this, steps, keyboard);
-		menu = new PianoMenu(this, grid);
+		menu = new PianoMenu(this, grid, seq);
 		pedal = t.getPedal();
 		Gui.resize(pedal, PANIC);
 

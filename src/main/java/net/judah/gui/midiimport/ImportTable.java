@@ -37,7 +37,7 @@ public class ImportTable extends JTable {
 		super(new ImportModel(seq));
 		model = (ImportModel) getModel();
 		sequence = seq;
-		for (MidiTrack t : JudahZone.getSeq().getTracks())
+		for (MidiTrack t : JudahZone.getInstance().getSeq().getTracks())
 			if (t instanceof NoteTrack notes)
 				combo.addItem(notes);
 		combo.addActionListener(e->model.setValueAt(combo.getSelectedItem(), row, ZONE_COL));

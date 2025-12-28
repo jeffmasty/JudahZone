@@ -11,6 +11,7 @@ import net.judah.drumkit.DrumType;
 import net.judah.gui.Actionable;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
+import net.judah.seq.automation.Automation;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.TrackMenu;
 
@@ -19,9 +20,9 @@ public class DrumMenu extends TrackMenu {
 	private final DrumZone tab;
 	private final DrumTrack track;
 
-	public DrumMenu(BeatBox drumz, DrumZone tab) {
+	public DrumMenu(BeatBox drumz, DrumZone tab, Automation auto) {
 
-		super(drumz);
+		super(drumz, auto);
 		setMaximumSize(new Dimension(3000, Size.KNOB_HEIGHT));
 
 		this.tab = tab;

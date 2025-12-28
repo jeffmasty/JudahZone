@@ -1,4 +1,4 @@
-package net.judah.looper;
+package net.judah.util;
 
 import java.io.Closeable;
 import java.io.File;
@@ -10,10 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import net.judah.JudahZone;
-import net.judah.omni.Recording;
-import net.judah.omni.WavConstants;
-import net.judah.util.Memory;
-import net.judah.util.RTLogger;
+import net.judah.api.Recording;
 
 /** Save a loop or live audio to disk. <br/>
  * <br/><br/><pre>
@@ -125,12 +122,12 @@ public class ToDisk extends LinkedBlockingQueue<float[][]> implements Closeable,
 		oStream.close();
 		oStream = null;
 		JudahZone.getServices().remove(this);
-		JudahZone.getMidiGui().updateTape();
+		JudahZone.getInstance().getMidiGui().updateTape();
 		RTLogger.log(this, target.getAbsolutePath());
 	}
 
 	@Override public void run() {
-		JudahZone.getMidiGui().updateTape();
+		JudahZone.getInstance().getMidiGui().updateTape();
 		try {
 			while (active) {
 				writeFrame(take());

@@ -7,7 +7,7 @@ import org.jaudiolibs.jnajack.JackMidi;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Data;
-import net.judah.api.Engine;
+import net.judah.synth.Engine;
 import net.judah.util.RTLogger;
 
 /** Wraps a Jack midi port or an internal midi consumer */

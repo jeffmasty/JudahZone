@@ -15,7 +15,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import lombok.Getter;
-import net.judah.midi.Midi;
+import net.judah.api.Midi;
 import net.judah.seq.MidiNote;
 import net.judah.seq.MidiTools;
 import net.judah.seq.automation.Automation.MidiMode;

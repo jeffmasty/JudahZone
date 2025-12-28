@@ -10,6 +10,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import net.judah.api.Chord;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 

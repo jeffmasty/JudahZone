@@ -9,6 +9,7 @@ import javax.swing.filechooser.FileFilter;
 
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.midi.JudahMidi;
 
 public class Folders {
 
@@ -38,7 +39,7 @@ public class Folders {
 	@Getter static final File Log4j = new File(ROOT, "log4j.xml");
 
     public static File midi(File parent) {
-    	return new File(parent, JudahZone.getClock().getTimeSig().name());
+    	return new File(parent, JudahMidi.getClock().getTimeSig().name());
     }
 
 	public static File[] sort(File folder) {
@@ -74,7 +75,7 @@ public class Folders {
 		else
 			fc.setCurrentDirectory(folder);
 
-		int result = fc.showOpenDialog(JudahZone.getFrame());
+		int result = fc.showOpenDialog(JudahZone.getInstance().getFrame());
 		if (result == JFileChooser.APPROVE_OPTION) {
 		    File selectedFile = fc.getSelectedFile();
 		    memory.put(folder, fc.getCurrentDirectory());

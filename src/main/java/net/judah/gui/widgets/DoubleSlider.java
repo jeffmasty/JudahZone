@@ -1,6 +1,6 @@
 package net.judah.gui.widgets;
 
-import net.judah.fx.Effect;
+import net.judah.api.Effect;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Updateable;
 

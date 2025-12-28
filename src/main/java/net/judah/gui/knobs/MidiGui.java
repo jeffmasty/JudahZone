@@ -21,6 +21,7 @@ import net.judah.api.ZoneMidi;
 import net.judah.controllers.Jamstik;
 import net.judah.controllers.MPKmini;
 import net.judah.gui.Gui;
+import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
@@ -33,10 +34,10 @@ import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.LengthCombo;
 import net.judah.midi.JudahClock;
 import net.judah.midi.MidiInstrument;
-import net.judah.omni.Icons;
+import net.judah.mixer.Mains;
 import net.judah.sampler.Sampler;
 import net.judah.seq.arp.Arp;
-import net.judah.seq.track.Computer.TrackUpdate;
+import net.judah.seq.track.Computer;
 import net.judah.seq.track.Computer.Update;
 import net.judah.seq.track.PianoTrack;
 import net.judah.song.cmd.Cmd;
@@ -57,12 +58,14 @@ public class MidiGui extends KnobPanel implements Cmdr {
 	private final JudahClock clock;
 	private final Sampler sampler;
 	private final Setlists setlists;
+	private final Mains mains;
+	private final MPKmini mpkMini;
 
 	@Getter private final KnobMode knobMode = KnobMode.MIDI;
 	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 	@Getter private final RecMpk toggler;
-	private final SongCombo songsCombo = new SongCombo();
-	private final Btn tape = new Btn(REC, e->JudahZone.getMains().tape());
+	private final SongCombo songsCombo;
+	private final Btn tape;
 	private final JComboBox<String> stepper = new JComboBox<>();
 	private final Knob stepVol = new Knob(Pastels.MY_GRAY);
 	private final Knob swing = new Knob(Pastels.EGGSHELL);
@@ -74,20 +77,26 @@ public class MidiGui extends KnobPanel implements Cmdr {
 	private final FluidSynth fluidSynth;
 	private final TacoTruck tacoTruck;
 
-	public MidiGui(TacoTruck t1, FluidSynth f1, MidiInstrument b1, JudahClock clock, final Jamstik jamstik, Sampler sampler, Setlists setlists) {
+	public MidiGui(JudahZone zone, TacoTruck t1, FluidSynth f1, MidiInstrument b1,
+			JudahClock clock, final Jamstik jamstik) {
 
 		class Lbl extends JLabel {
 			Lbl(String txt) {super(txt, JLabel.CENTER);}}
 
 		this.clock = clock;
-		this.sampler = sampler;
-		this.setlists = setlists;
+		this.sampler = zone.getSampler();
+		this.setlists = zone.getSetlists();
+		this.mains = zone.getMains();
+		this.mpkMini = zone.getMpkMini();
 		this.fluidSynth = f1;
 		this.tacoTruck = t1;
+		tape = new Btn(REC, e->mains.tape());
 		tape.setOpaque(true);
+		songsCombo = new SongCombo(zone);
+
     	title.add(new JLabel(" Song  "));
     	title.add(Gui.resize(songsCombo, new Dimension(140, 28)));
-    	title.add(new Btn(Icons.SAVE, e->JudahZone.getOverview().save()));
+    	title.add(new Btn(Icons.SAVE, e->zone.getOverview().save()));
     	title.add(tape);
 
 		mpkRoutes = new ZoneMidi[] {t1, f1, b1};
@@ -145,7 +154,7 @@ public class MidiGui extends KnobPanel implements Cmdr {
     	labels.add(new Lbl("Setlist"));
 
     	widgets.add(crickets);
-    	widgets.add(MPKmini.instance.fill(mpkRoutes, mpkRoutes[0]));
+    	widgets.add(mpkMini.fill(mpkRoutes, mpkRoutes[0]));
     	widgets.add(taco);
     	widgets.add(fluid);
     	temp = new JPanel();
@@ -186,7 +195,7 @@ public class MidiGui extends KnobPanel implements Cmdr {
     		sampler.setStepMix(data2 * 0.01f);
     		break;
  	    case 4:
- 	    	MPKmini.instance.setMidiOut((ZoneMidi)Constants.ratio(data2 - 1, mpkRoutes));
+ 	    	mpkMini.setMidiOut((ZoneMidi)Constants.ratio(data2 - 1, mpkRoutes));
     		break;
     	case 5:
     		taco.midiShow(patch(tacoTruck, data2));
@@ -209,7 +218,7 @@ public class MidiGui extends KnobPanel implements Cmdr {
 	}
 
 	@Override public void pad2() {
-		JudahZone.getMains().hotMic();
+		mains.hotMic();
 	}
 
 	@Override public void update() {
@@ -225,17 +234,17 @@ public class MidiGui extends KnobPanel implements Cmdr {
 //		fluid.update();
 	}
 
-	public void update(TrackUpdate update) {
-		if (Update.PROGRAM == update.type()) {
-			if (update.track() == taco.getTrack())
+	public void update(Update type, Computer c) {
+		if (Update.PROGRAM == type) {
+			if (c == taco.getTrack())
 				taco.update();
-			else if (update.track() == fluid.getTrack())
+			else if (c == fluid.getTrack())
 				fluid.update();
 		}
-		else if (Update.ARP == update.type())
-			toggler.update((PianoTrack)update.track());
-		else if (Update.CAPTURE == update.type()) {
-			toggler.update((PianoTrack)update.track());
+		else if (Update.ARP == type)
+			toggler.update((PianoTrack)c);
+		else if (Update.CAPTURE == type) {
+			toggler.update((PianoTrack)c);
 		}
 	}
 
@@ -244,7 +253,7 @@ public class MidiGui extends KnobPanel implements Cmdr {
 	}
 
 	public void updateTape() {
-		tape.setBackground(JudahZone.getMains().getTape() == null ? null : Pastels.RED);
+		tape.setBackground(mains.getTape() == null ? null : Pastels.RED);
 	}
 
 	@Override public ZoneMidi resolve(String key) {
@@ -257,7 +266,7 @@ public class MidiGui extends KnobPanel implements Cmdr {
 	@Override public void execute(Param p) {
 		if (p.cmd != Cmd.MPK)
 			return;
-		MPKmini.instance.setMidiOut(resolve(p.val));
+		mpkMini.setMidiOut(resolve(p.val));
 		MainFrame.update(this);
 	}
 

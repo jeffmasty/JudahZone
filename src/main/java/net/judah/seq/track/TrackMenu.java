@@ -1,6 +1,5 @@
 package net.judah.seq.track;
 
-import static net.judah.JudahZone.getDrumMachine;
 import static net.judah.gui.Size.COMBO_SIZE;
 import static net.judah.gui.Size.MEDIUM;
 
@@ -17,16 +16,17 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JRadioButtonMenuItem;
 
+import net.judah.JudahZone;
 import net.judah.drumkit.DrumType;
 import net.judah.gui.Actionable;
 import net.judah.gui.Gui;
+import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.settable.Program;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.PlayWidget;
 import net.judah.gui.widgets.RecordWidget;
 import net.judah.gui.widgets.TrackVol;
-import net.judah.omni.Icons;
 import net.judah.seq.MusicBox;
 import net.judah.seq.SynthRack;
 import net.judah.seq.Transpose;
@@ -39,7 +39,7 @@ public abstract class TrackMenu extends Box implements MouseListener {
 	public static class SendTo extends JMenu {
 		public SendTo(MidiTrack source) {
 			super("SendTo...");
-	    	for (MidiTrack t : source.isDrums() ? getDrumMachine().getTracks() : SynthRack.getSynthTracks())
+	    	for (MidiTrack t : source.isDrums() ? JudahZone.getInstance().getDrumMachine().getTracks() : SynthRack.getSynthTracks())
 	    		if (t != source)
 	    			add(new Actionable(t.getName(), evt->t.load(source)));
 		}
@@ -63,7 +63,7 @@ public abstract class TrackMenu extends Box implements MouseListener {
 	protected final Programmer programmer;
 	protected TrackVol velocity;
 
-	public TrackMenu(MusicBox g) {
+	public TrackMenu(MusicBox g, Automation auto) {
 		super(BoxLayout.X_AXIS);
 		track = g.getTrack();
 		grid = g;
@@ -76,7 +76,7 @@ public abstract class TrackMenu extends Box implements MouseListener {
 		velocity = new TrackVol(track);
 
 		track.getEditor().tools(tools);
-		tools.add(new Actionable("Automation", e->Automation.getInstance().init(track)));
+		tools.add(new Actionable("Automation", e->auto.init(track)));
 
 		fileSetup();
 		fileMenu();

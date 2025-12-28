@@ -13,11 +13,11 @@ import javax.sound.midi.ShortMessage;
 import javax.swing.JPanel;
 
 import lombok.Getter;
+import net.judah.api.Midi;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.midi.JudahMidi;
-import net.judah.midi.Midi;
 import net.judah.midi.MidiInstrument;
 import net.judah.seq.track.NoteTrack;
 

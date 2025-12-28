@@ -4,7 +4,7 @@ import javax.sound.midi.MidiEvent;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.midi.Midi;
+import net.judah.api.Midi;
 
 public class MidiNote extends MidiEvent {
 

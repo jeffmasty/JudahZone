@@ -7,9 +7,10 @@ import java.util.HashSet;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 
+import net.judah.api.Chord;
 import net.judah.api.Key;
 import net.judah.gui.Pastels;
-import net.judah.omni.Threads;
+import net.judah.util.Threads;
 
 public class ChordPlay extends JButton implements ChordListener, Pastels {
 	public static final String FANCY = " " + Key.SHARP + " " + Key.FLAT + " ";

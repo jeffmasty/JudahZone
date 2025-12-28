@@ -35,7 +35,7 @@ public class TrackButton extends JLabel {
 				if (SwingUtilities.isRightMouseButton(e))
 					track.setCapture(!track.isCapture());
 				else if (SwingUtilities.isMiddleMouseButton(e))
-					JudahZone.getSeq().getTracks().setCurrent(track);
+					JudahZone.getInstance().getSeq().getTracks().setCurrent(track);
 				else
 					track.trigger();
 			}});

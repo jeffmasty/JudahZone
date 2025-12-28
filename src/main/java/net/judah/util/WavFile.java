@@ -19,7 +19,7 @@ import be.tarsos.dsp.AudioEvent;
 import be.tarsos.dsp.AudioProcessor;
 import be.tarsos.dsp.io.jvm.AudioDispatcherFactory;
 import be.tarsos.dsp.resample.Resampler;
-import net.judah.omni.Recording;
+import net.judah.api.Recording;
 
 // sinWave(File out, long millis, int hz, float magnitude
 

@@ -6,8 +6,8 @@ import lombok.Getter;
 import net.judah.fx.Convolution;
 import net.judah.fx.MonoFilter;
 import net.judah.fx.MonoFilter.Type;
-import net.judah.omni.AudioTools;
-import net.judah.omni.Icons;
+import net.judah.gui.Icons;
+import net.judah.util.AudioTools;
 import net.judah.util.Constants;
 
 @Getter
@@ -56,7 +56,7 @@ public class Instrument extends LineIn {
 	}
 
 	@Override
-	public final void process() {
+	public final void processImpl() {
 		if (isOnMute())
 			return;
 

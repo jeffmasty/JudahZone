@@ -20,9 +20,7 @@ import net.judah.gui.widgets.LengthCombo;
 import net.judah.gui.widgets.StartBtn;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
-import net.judah.omni.Icons;
 import net.judah.seq.chords.ChordPlay;
-import net.judah.seq.chords.Chords;
 import net.judah.song.Overview;
 
 public class HQ extends JPanel implements TimeListener {
@@ -37,11 +35,11 @@ public class HQ extends JPanel implements TimeListener {
 	private final JButton metro;
 	private static Btn delete;
 
-    public HQ(JudahClock clock, Looper loops, Overview songs, Chords chords, JudahScope scope) {
+    public HQ(JudahClock clock, JudahZone zone) {//Looper loops, Overview songs, Chords chords, JudahScope scope) {
     	this.clock = clock;
-    	this.looper = loops;
-    	this.songs = songs;
-    	this.scope = scope;
+    	this.looper = zone.getLooper();
+    	this.songs = zone.getOverview();
+    	this.scope = zone.getScope();
     	sync = new LengthCombo(clock);
     	metro = new Btn(Icons.get("left.png"), e->clock.skipBar());
     	metro.setOpaque(true);
@@ -49,8 +47,8 @@ public class HQ extends JPanel implements TimeListener {
     	setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
     	add(new StartBtn(clock));
     	add(Gui.resize(scene, Size.SMALLER));
-    	add(Gui.resize(new ChordPlay(chords).makeFancy(), new Dimension(54, Size.STD_HEIGHT)));
-    	add(new Btn(" Rec ", e->loops.trigger()));
+    	add(Gui.resize(new ChordPlay(zone.getChords()).makeFancy(), new Dimension(54, Size.STD_HEIGHT)));
+    	add(new Btn(" Rec ", e->looper.trigger()));
     	add(sync);
     	delete = new Btn("Del", e->looper.delete(), "Clear Looper");
     	add(delete);
@@ -62,7 +60,7 @@ public class HQ extends JPanel implements TimeListener {
     	shift = on;
     	delete.setText(on ? "SET" : "Del");
     	delete.setBackground(on ? Pastels.YELLOW : null);
-    	EffectsRack fx = JudahZone.getFxRack().getChannel().getGui();
+    	EffectsRack fx = JudahZone.getInstance().getFxRack().getChannel().getGui();
     	fx.getEq().toggle();
     	fx.getReverb().toggle();
 

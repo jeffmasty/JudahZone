@@ -7,7 +7,7 @@ import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
 import lombok.Getter;
-import net.judah.midi.Midi;
+import net.judah.api.Midi;
 import net.judah.seq.MidiTools;
 import net.judah.seq.automation.Automation.CCData;
 import net.judah.seq.track.Computer;

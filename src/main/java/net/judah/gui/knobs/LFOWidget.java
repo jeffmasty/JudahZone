@@ -18,7 +18,6 @@ import lombok.Getter;
 import net.judah.fx.LFO;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
-import net.judah.gui.MainFrame.FxChange;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.gui.fx.FxTrigger;
@@ -46,6 +45,7 @@ public class LFOWidget extends Box {
     final JPanel lfoLbls =  new JPanel(new GridLayout(1, 4, 0, 1));
     GridBagLayout layout = new GridBagLayout();
     JPanel grid = new JPanel(layout);
+    private final TimePanel timeSync;
 
 	public LFOWidget(Channel channel, LFO lowFrequencyOscillator, int index) {
 		super(BoxLayout.PAGE_AXIS);
@@ -56,14 +56,15 @@ public class LFOWidget extends Box {
 		slider = new DoubleSlider(lfo, Min.ordinal(), lfo, Max.ordinal());
 		slider.setColors(RANGE);
 		slider.setOpaque(true);
-
+		timeSync = new TimePanel(lfo, channel);
 		msec = new FxKnob(channel, lfo, MSec.ordinal(), "Time", KNOB_C);
+
 		Gui.resize(slider, new Dimension(Size.WIDTH_KNOBS / 2 - 20, Size.STD_HEIGHT));
     	ArrayList<Component> components = row.getControls();
     	components.add(new FxTrigger("Target", lfo, channel));
     	components.add(new FxTrigger("LFO" + index, lfo, channel));
     	components.add(new FxTrigger("min/max", lfo, channel));
-    	components.add(new TimePanel(lfo, channel));
+    	components.add(timeSync);
 
     	for (Component c : row.getControls())
 			lfoLbls.add(c);
@@ -82,22 +83,21 @@ public class LFOWidget extends Box {
 	}
 
 	public final void update() {
-		Color c = lfo.isActive() ? Pastels.getFx(lfo.getClass()) : null;
-		wrap.setBackground(c);
-		row.update(); // TODO
+		timeSync.update();
 		lfoCombo.update();
 		slider.update();
 		msec.update();
+		Color c = ch.isActive(lfo) ? Pastels.getFx(lfo.getClass()) : null;
+		wrap.setBackground(c);
 		grid.setBackground(c);
 		slider.setBackground(c);
-
 	}
 
 	public boolean doKnob(int idx, int data2) {
 		switch(idx) {
 		case 0 -> {
 			LFO.Target target = (LFO.Target)Constants.ratio(data2, LFO.Target.values());
-				if (lfo.isActive())
+				if (ch.isActive(lfo))
 					lfoCombo.midiShow(target);
 				else
 					lfo.set(Target.ordinal(), target.ordinal());
@@ -107,7 +107,7 @@ public class LFOWidget extends Box {
 		case 3 -> lfo.set(MSec.ordinal(), data2);
 		default -> { return false; }
 		}
-		MainFrame.update(new FxChange(ch, lfo));
+		MainFrame.updateChannel(ch, lfo);
 		return true;
 	}
 

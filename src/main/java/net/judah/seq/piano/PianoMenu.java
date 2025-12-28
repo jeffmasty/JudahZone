@@ -9,7 +9,6 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import net.judah.JudahZone;
 import net.judah.gui.Actionable;
 import net.judah.gui.Detached.Floating;
 import net.judah.gui.Gui;
@@ -19,6 +18,7 @@ import net.judah.gui.widgets.Arrow;
 import net.judah.gui.widgets.GateCombo;
 import net.judah.gui.widgets.Integers;
 import net.judah.seq.Duration;
+import net.judah.seq.Seq;
 import net.judah.seq.Transpose;
 import net.judah.seq.track.Computer.Update;
 import net.judah.seq.track.PianoTrack;
@@ -31,8 +31,8 @@ public class PianoMenu extends TrackMenu implements Floating {
 	private final ModeCombo mode;
 	private final JComboBox<Integer> range = new JComboBox<Integer>(Integers.generate(0, 88));
 
-	public PianoMenu(PianoView view, Piano grid) {
-		super(grid);
+	public PianoMenu(PianoView view, Piano grid, Seq seq) {
+		super(grid, seq.getAutomation());
 		PianoTrack t = (PianoTrack) track;
 		gate = new GateCombo(t);
 		mode = new ModeCombo(t);
@@ -47,8 +47,8 @@ public class PianoMenu extends TrackMenu implements Floating {
 		zoomMenu(view);
 		// arpMenu(file, t);
 		tools.add(new Actionable("Remap...", e->new Transpose(grid)));
-		file.add(new Actionable("Rename", e->JudahZone.getSeq().rename(t)));
-		file.add(new Actionable("Delete", e->JudahZone.getSeq().confirmDelete(t)));
+		file.add(new Actionable("Rename", e->seq.rename(t)));
+		file.add(new Actionable("Delete", e->seq.confirmDelete(t)));
 		edit.add(new Actionable("Duration...", e->new Duration(grid)));
 		add(Box.createHorizontalStrut(4));
 		add(new JLabel("Amp "));

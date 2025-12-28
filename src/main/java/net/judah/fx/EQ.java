@@ -26,10 +26,10 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 
 import lombok.Getter;
-import lombok.Setter;
+import net.judah.api.Effect.RTEffect;
 import net.judah.util.Constants;
 
-public class EQ implements Effect {
+public class EQ implements RTEffect {
 
 	public static enum Settings{ Bass, Mid, High, LoHz, Q, HiHz }
  	public static enum EqBand { Bass, Mid, High }
@@ -51,7 +51,7 @@ public class EQ implements Effect {
 
 	@Getter private final String name = EQ.class.getSimpleName();
 	@Getter private final int paramCount = Settings.values().length;
-	@Getter @Setter private boolean active;
+//	@Getter @Setter private boolean active;
 	private final ArrayList<StereoBiquad> stereo = new ArrayList<StereoBiquad>();
 
 	public EQ() {

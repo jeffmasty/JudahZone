@@ -46,7 +46,7 @@ public class SoloTrack extends Loop {
 
     public void setSoloTrack(LineIn input) {
     	soloTrack = input;
-    	MainFrame.update(JudahZone.getMixer());
+    	MainFrame.update(JudahZone.getInstance().getMixer());
     }
 
 

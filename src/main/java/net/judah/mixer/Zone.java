@@ -1,6 +1,5 @@
 package net.judah.mixer;
 
-import static net.judah.JudahZone.*;
 import static net.judah.gui.MainFrame.setFocus;
 
 import java.util.ArrayList;
@@ -8,6 +7,7 @@ import java.util.Vector;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.judah.JudahZone;
 import net.judah.looper.Looper;
 
 /**Used for initialization/customization */
@@ -16,11 +16,11 @@ public class Zone extends Vector<LineIn> {
 
 	@Getter private final ArrayList<Instrument> instruments = new ArrayList<>();
 
-	public Zone(LineIn... instruments) {
+	public Zone(JudahZone zone, LineIn... instruments) {
 		for (LineIn input : instruments)
 			add(input);
-		preamps();
-        mutes();
+		preamps(zone);
+        mutes(zone);
         prepare();
 	}
 
@@ -46,22 +46,21 @@ public class Zone extends Vector<LineIn> {
 	}
 
 	/** By default, don't record drum track, microphone, sequencer */
-    public void mutes() {
-        getGuitar().setMuteRecord(false);
-        getTaco().setMuteRecord(false);
-        getDrumMachine().setMuteRecord(false); // individual kits can capture
+    public void mutes(JudahZone zone) {
+        zone.getGuitar().setMuteRecord(false);
+        zone.getTaco().setMuteRecord(false);
+        zone.getDrumMachine().setMuteRecord(false); // individual kits can capture
 	}
 
-	void preamps() {
-		getMains().getGain().setPreamp(Mains.PREAMP);
-		getSampler().getGain().setPreamp(2.5f);
-		getMic().getGain().setGain(0.25f); // trim studio noise
-		getBass().getGain().setPreamp(0.4f);
+	void preamps(JudahZone zone) {
+		zone.getMains().getGain().setPreamp(Mains.PREAMP);
+		zone.getSampler().getGain().setPreamp(2.5f);
+		zone.getBass().getGain().setPreamp(0.4f);
 	}
 
     public boolean nextChannel(boolean toRight) {
-    	Looper looper = getLooper();
-        Channel bus = getFxRack().getChannel();
+    	Looper looper = JudahZone.getInstance().getLooper();
+        Channel bus = JudahZone.getInstance().getFxRack().getChannel();
         if (bus instanceof Instrument) {
             int i = indexOf(bus);
             if (toRight) {

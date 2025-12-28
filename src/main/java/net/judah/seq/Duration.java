@@ -1,7 +1,5 @@
 package net.judah.seq;
 
-import static net.judah.JudahZone.getClock;
-
 import java.awt.Dimension;
 import java.util.ArrayList;
 
@@ -15,6 +13,7 @@ import net.judah.gui.Gui;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.ModalDialog;
 import net.judah.gui.widgets.Slider;
+import net.judah.midi.JudahMidi;
 import net.judah.seq.Edit.Type;
 import net.judah.util.RTLogger;
 
@@ -26,7 +25,7 @@ public class Duration { // TODO TimeListener TimeSig
 	private int stpz;
 	private long durr, off;
 	private MidiNote init;
-	private final int measure = getClock().getSteps();
+	private final int measure = JudahMidi.getClock().getSteps();
 	private long quanta;
 
 	private Slider slider;

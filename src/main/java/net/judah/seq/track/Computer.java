@@ -5,9 +5,9 @@ import javax.sound.midi.Track;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock;
+import net.judah.midi.JudahMidi;
 import net.judah.seq.MidiTools;
 import net.judah.song.Sched;
 
@@ -18,13 +18,13 @@ public class Computer {
 		PLAY, CAPTURE, CURRENT, CYCLE, AMP, ARP, PROGRAM,
 		CUE, GATE, FILE, REFILL, RANGE, LAUNCH, REZ, EDIT
 	}
-	public static record TrackUpdate(Update type, Computer track) {}
+//	public static record Tracker(Update type, Computer track) {}
 
-	protected JudahClock clock = JudahZone.getClock();
+	protected JudahClock clock = JudahMidi.getClock();
 
 	/** Sequence (for save) */
     protected final Track t;
-    protected int resolution;
+    protected int resolution = MidiFile.DEFAULT_RESOLUTION;
 	protected long recent; // sequencer sweep
 
 	@Setter protected long barTicks; // ticks in resolution of timeSig
@@ -38,7 +38,9 @@ public class Computer {
 
 	public Computer() throws InvalidMidiDataException {
 		t = new MidiFile().createTrack();
-		setResolution(MidiFile.DEFAULT_RESOLUTION);
+		setBarTicks(clock.getTimeSig().beats * resolution);
+		compute();
+		//setResolution(MidiFile.DEFAULT_RESOLUTION);
 	}
 
 	/** end of the last note */
@@ -63,7 +65,7 @@ public class Computer {
 		resolution = rez;
 		setBarTicks(clock.getTimeSig().beats * resolution);
 		compute();
-		MainFrame.update(new TrackUpdate(Update.REZ, this));
+		MainFrame.updateTrack(Update.REZ, this);
     }
 
 	protected void setCurrent(int change) {
@@ -73,14 +75,14 @@ public class Computer {
 		recent = change * barTicks + (recent - current * barTicks);
 		current = change;
 		compute();
-		MainFrame.update(new TrackUpdate(Update.CURRENT, this));
+		MainFrame.updateTrack(Update.CURRENT, this);
 	}
 
 	public void setCycle(Cycle x) {
 		state.cycle = x;
 		count = clock.isEven() ? 0 : 1;
 		compute();
-		MainFrame.update(new TrackUpdate(Update.CYCLE, this));
+		MainFrame.updateTrack(Update.CYCLE, this);
 	}
 
 	protected void reset() {
@@ -192,7 +194,7 @@ public class Computer {
 	public void setLaunch(int bar) {
 		state.launch = bar;
 		offset = 0;
-		MainFrame.update(new TrackUpdate(Update.LAUNCH, this));
+		MainFrame.updateTrack(Update.LAUNCH, this);
 	}
 
 	public void toFrame(int frame) {

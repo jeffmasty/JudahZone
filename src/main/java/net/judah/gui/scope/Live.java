@@ -1,6 +1,6 @@
 package net.judah.gui.scope;
 
-import net.judah.omni.Recording;
+import net.judah.api.Recording;
 
 public interface Live {
 

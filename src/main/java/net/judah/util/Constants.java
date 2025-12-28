@@ -3,7 +3,6 @@ package net.judah.util;
 import java.util.List;
 
 import lombok.Getter;
-import net.judah.omni.WavConstants;
 
 public class Constants {
 

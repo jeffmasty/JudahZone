@@ -4,7 +4,7 @@ import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
 import lombok.RequiredArgsConstructor;
-import net.judah.midi.Midi;
+import net.judah.api.Midi;
 
 @RequiredArgsConstructor
 public

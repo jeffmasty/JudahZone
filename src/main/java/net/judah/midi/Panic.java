@@ -6,12 +6,12 @@ import javax.sound.midi.ShortMessage;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.RequiredArgsConstructor;
-import net.judah.api.Engine;
 import net.judah.api.ZoneMidi;
 import net.judah.drumkit.DrumKit;
-import net.judah.omni.Threads;
 import net.judah.seq.track.NoteTrack;
+import net.judah.synth.Engine;
 import net.judah.util.RTLogger;
+import net.judah.util.Threads;
 
 @RequiredArgsConstructor
 public class Panic implements Runnable  {

@@ -7,7 +7,7 @@
   Copyright (C) 2008-2010 Josep Andreu
   Author: Josep Andreu
 	Patches:
-	September 2009  Ryan Billing (a.k.a. Transmogrifox)
+	September 2009  Ryan Billing (a.k.a.  Transmogrifox)
 		--Modified DSP code to fix discontinuous gain change at threshold.
 		--Improved automatic gain adjustment function
 		--Improved handling of knee
@@ -34,9 +34,9 @@ import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 
 import lombok.Getter;
-import lombok.Setter;
+import net.judah.api.Effect.RTEffect;
 
-public class Compressor implements Effect {
+public class Compressor implements RTEffect {
 
     public static enum Settings {
     	Threshold, Ratio, Boost, Attack, Release, Knee
@@ -45,12 +45,15 @@ public class Compressor implements Effect {
     static final float LOG_10 = 2.302585f;
 	static final float LOG_2  = 0.693147f;
 	static final float MIN_GAIN  = 0.00001f; // -100dB help prevents evaluation of denormal numbers
-    @Setter @Getter private boolean active;
+	// Max GR we normalize against, in dB - useful for tuning line-level response
+	private static final float MAX_REDUCTION_DB = 30f;
 
-    // private int hold = (int) (samplerate*0.0125);  //12.5ms;
+	// dB of gain reduction on the last processed buffer.  0 to MAX_REDUCTION_DB
+    @Getter private float lastReductionDb = 0f;
+
     private final double cSAMPLE_RATE = 1.0/SAMPLE_RATE;;
 
-    private float lvolume = 0.0f;
+    private float lvolume = 00f;
     private int tratio = 4;
     private int toutput = -10;
     private int tknee = 30;
@@ -79,6 +82,7 @@ public class Compressor implements Effect {
     	reset();
     }
 
+	@Override
 	public void reset() {
 	    boost_old = 1.0f;
     	setThreshold(-16);
@@ -86,7 +90,7 @@ public class Compressor implements Effect {
 		setBoost(-14);
 		setKnee(20);
 		setRelease(90);
-		set(Settings.Attack.ordinal(), get(Settings.Release.ordinal()));
+		set(Settings.Attack. ordinal(), get(Settings.Release.ordinal()));
 	}
 
     public static float dB2rap(double dB) {
@@ -103,7 +107,7 @@ public class Compressor implements Effect {
     }
 
     @Override public String getName() {
-        return Compressor.class.getSimpleName();
+        return Compressor. class.getSimpleName();
     }
 
     /** @return attack in milliseconds */
@@ -157,9 +161,9 @@ public class Compressor implements Effect {
 
     @Override
     public int get(int idx) {
-        if (idx == Settings.Threshold.ordinal())
+        if (idx == Settings.Threshold. ordinal())
         	return (getThreshold() * -3) - 1;
-        if (idx == Settings.Ratio.ordinal())
+        if (idx == Settings.Ratio. ordinal())
         	return (getRatio() - 2) * 10;
         	// return getRatio() * 10 - 2;
         if (idx == Settings.Attack.ordinal())
@@ -168,7 +172,7 @@ public class Compressor implements Effect {
         	return (int) ((getRelease() -5) * 0.5f);
         if (idx == Settings.Boost.ordinal())
         	return (toutput + 20) * 3;
-        if (idx == Settings.Knee.ordinal())
+        if (idx == Settings.Knee. ordinal())
         	return tknee;
         throw new InvalidParameterException("idx: " + idx);
     }
@@ -178,16 +182,16 @@ public class Compressor implements Effect {
 			setThreshold((int)(value * -0.333f) - 1) ;
 		else if (idx == Settings.Ratio.ordinal())
 			setRatio(2 + (int)(value * 0.1f));
-		else if (idx == Settings.Boost.ordinal())
+		else if (idx == Settings. Boost.ordinal())
 			setBoost((int) Math.floor(value  * 0.333334f - 20));
 			// setBoost(value); // non-conform 1 to 100
-		else if (idx == Settings.Attack.ordinal())
+		else if (idx == Settings. Attack.ordinal())
 			setAttack(value + 10);
 		else if (idx == Settings.Release.ordinal())
 			setRelease( (value * 2) + 5);
 		else if (idx == Settings.Knee.ordinal())
 			setKnee(value);
-		else throw new InvalidParameterException("Compressor set " + idx + "? val: " + value);
+		else throw new InvalidParameterException("Compressor set " + idx + "?  val: " + value);
 
 	}
 
@@ -213,48 +217,64 @@ public class Compressor implements Effect {
 	}
 
 	void process(FloatBuffer buf) {
-		float val, ldelta, attl, rell, lvolume_db, gain_t, boost;
-		double eratio;
-		final float lvol = lvolume;
-		final float outl = outlevel;
-		final float threshold = thres_db;
-		buf.rewind();
-	    for (int z = 0; z < buf.capacity(); z++) {
-	    	val = buf.get(z);
-	        ldelta = abs (val);
+	    float val, ldelta, attl, rell, lvolume_db, gain_t, boost;
+	    double eratio;
+	    final float lvol = lvolume;
+	    final float outl = outlevel;
+	    final float threshold = thres_db;
+
+	    float minGain = 1.0f; // smallest applied gain in this buffer
+
+	    buf.rewind();
+	    final int n = buf.limit();
+	    for (int z = 0; z < n; z++) {
+	        val = buf.get(z);
+
+	        ldelta = abs(val);
 
 	        if (lvol < 0.9f) {
 	            attl = att;
 	            rell = rel;
 	        } else if (lvol < 1f) {
-	            attl = att + ((1f - att) * (lvol - 0.9f) * 10.0f); //dynamically change attack time for limiting mode
-	            rell = rel / (1f + (lvol - 0.9f) * 9.0f);  //release time gets longer when signal is above limiting
+	            attl = att + ((1f - att) * (lvol - 0.9f) * 10.0f); // limiting mode
+	            rell = rel / (1f + (lvol - 0.9f) * 9.0f);
 	        } else {
 	            attl = 1f;
 	            rell = rel * 0.1f;
 	        }
 
-	        if (ldelta > lvol)
-	            lvolume = attl * ldelta + (1f - attl) * lvol;
-	        else
-	            lvolume = rell * ldelta + (1f - rell) * lvol;
+	        // envelope detection
+	        float isRising = Math.max(0f, Math.signum(ldelta - lvol));
+	        lvolume = isRising * (attl * ldelta + (1f - attl) * lvol) +
+	                  (1f - isRising) * (rell * ldelta + (1f - rell) * lvol);
 
-	        lvolume_db = rap2dB (lvolume);
+	        lvolume_db = rap2dB(lvolume);
 
 	        if (lvolume_db < threshold)
 	            boost = outl;
-	        else if (lvolume_db < thres_mx) { //knee region
-	            eratio = 1f + (kratio - 1f) * (lvolume_db-threshold) * coeff_knee;
-	            boost =   outl * dB2rap(threshold + (lvolume_db-threshold) / eratio - lvolume_db);
+	        else if (lvolume_db < thres_mx) { // knee region
+	            eratio = 1f + (kratio - 1f) * (lvolume_db - threshold) * coeff_knee;
+	            boost = outl * dB2rap(threshold + (lvolume_db - threshold) / eratio - lvolume_db);
 	        } else
-	            boost = outl * dB2rap(threshold + coeff_kk + (lvolume_db-thres_mx) * coeff_ratio - lvolume_db);
-	        if (boost < MIN_GAIN)
-	        	boost = MIN_GAIN;
+	            boost = outl * dB2rap(threshold + coeff_kk + (lvolume_db - thres_mx) * coeff_ratio - lvolume_db);
 
-	        gain_t = .4f * boost + .6f * boost_old;
-            buf.put(val * gain_t);
-            boost_old = boost;
+	        // clamp
+	        boost = Math.max(boost, MIN_GAIN);
+
+	        gain_t = 0.4f * boost + 0.6f * boost_old;
+
+	        // min tracking
+	        minGain = Math.min(minGain, gain_t);
+
+	        buf.put(z, val * gain_t);
+	        boost_old = boost;
+	    }
+
+	    // Convert minGain to positive dB reduction, clamped to MAX_REDUCTION_DB for tuning
+	    if (minGain >= 1.0f) {
+	        lastReductionDb = 0f;
+	    } else {
+	        lastReductionDb = Math.min(-rap2dB(minGain), MAX_REDUCTION_DB);
 	    }
 	}
-
 }

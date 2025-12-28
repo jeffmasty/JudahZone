@@ -3,7 +3,7 @@ package net.judah.song.cmd;
 import java.util.ArrayList;
 
 import lombok.NoArgsConstructor;
-import net.judah.JudahZone;
+import net.judah.midi.JudahMidi;
 
 @NoArgsConstructor
 public class ParamList extends ArrayList<Param> {
@@ -17,7 +17,7 @@ public class ParamList extends ArrayList<Param> {
 		for (Param p : this) {
 			if (p.cmd == Cmd.Bars)
 				try {
-					return Integer.parseInt(p.val) * JudahZone.getClock().getMeasure();
+					return Integer.parseInt(p.val) * JudahMidi.getClock().getMeasure();
 				} catch (NumberFormatException e) {/* nada */}
 			if (p.cmd == Cmd.Beats)
 				try {

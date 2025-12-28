@@ -1,4 +1,4 @@
-package net.judah.omni;
+package net.judah.util;
 // Wav file IO class
 // A.Greensted
 // http://www.labbookpages.co.uk

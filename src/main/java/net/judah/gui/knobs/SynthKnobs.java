@@ -26,6 +26,7 @@ import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.fx.MonoFilter;
 import net.judah.gui.Gui;
+import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
@@ -35,14 +36,13 @@ import net.judah.gui.widgets.CenteredCombo;
 import net.judah.gui.widgets.DoubleSlider;
 import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.Slider;
-import net.judah.omni.Icons;
-import net.judah.omni.Threads;
 import net.judah.seq.track.Computer.Update;
 import net.judah.synth.taco.Adsr;
 import net.judah.synth.taco.Shape;
 import net.judah.synth.taco.TacoSynth;
 import net.judah.synth.taco.TacoTruck;
 import net.judah.util.Constants;
+import net.judah.util.Threads;
 
 public class SynthKnobs extends KnobPanel {
 	private static final int OCTAVE = 12;
@@ -280,10 +280,11 @@ public class SynthKnobs extends KnobPanel {
 	}
 
 	private void save() {
-		String name = JOptionPane.showInputDialog(JudahZone.getFrame(), "Synth Preset Name", synth.getProgram());
+		String name = JOptionPane.showInputDialog(JudahZone.getInstance().getFrame(),
+				"Synth Preset Name", synth.getProgram());
 		if (name == null || name.length() == 0)
 			return;
-		JudahZone.getSynthPresets().save(synth, name);
+		TacoSynth.getPresets().save(synth, name);
 		program.refill(synth.getPatches(), name);
 		synth.progChange(name);
 	}

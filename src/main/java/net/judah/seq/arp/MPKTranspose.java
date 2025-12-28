@@ -5,11 +5,12 @@ import javax.sound.midi.ShortMessage;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.api.Notification.Property;
+import net.judah.api.Algo;
+import net.judah.api.Chord;
+import net.judah.api.Midi;
 import net.judah.api.TimeListener;
-import net.judah.midi.Midi;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.Poly;
-import net.judah.seq.chords.Chord;
 import net.judah.seq.track.Cue;
 import net.judah.seq.track.PianoTrack;
 

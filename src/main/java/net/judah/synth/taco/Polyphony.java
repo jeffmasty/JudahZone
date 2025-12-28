@@ -2,9 +2,9 @@ package net.judah.synth.taco;
 
 import javax.sound.midi.ShortMessage;
 
-import net.judah.api.Engine;
+import net.judah.api.Midi;
 import net.judah.midi.Actives;
-import net.judah.midi.Midi;
+import net.judah.synth.Engine;
 
 public class Polyphony extends Actives {
 

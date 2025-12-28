@@ -10,10 +10,10 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 
 import lombok.Getter;
+import net.judah.gui.Icons;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.widgets.Btn;
-import net.judah.omni.Icons;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.track.MidiTrack;
 import net.judah.util.Folders;

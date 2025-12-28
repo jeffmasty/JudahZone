@@ -2,17 +2,19 @@
 
 An open source GrooveBox (mixer/effects/looper/sequencer) written in Java for the Jack realtime sound system. (https://jackaudio.org/)
 
-8 mono or stereo instrument channels are currently handled as well as 4 recording loops. All audio channels have separately controlled internal Gain, EQ, Hi/Lo Cut, Chorus, Overdrive, Reverb, Delay, Compression, Stereo panning, Automation, a Spectrometer, a pair of LFOs and an IR CabSim. Loops may be synchronized for different song lengths and structures. A MIDI sequencer and feature-rich editor is provided consisting of 4 drum tracks and unlimited piano rolls. The sequencer generates chords, arpeggios and bass lines from ChordPro files. The sample player holds 8 loops/one-shots and 32 drum samples (8 samples per drum track). Melodic tracks may be played through external gear or through TacoSynth, a built-in subtractive synthesizer with the regular gamut of wave shapes, envelopes, resonant filters, detuning/harmonics and presets. Also included: a song editor, sheet music and chord views, guitar tuner, RMS/spectrogram, lossless audio recording and MIDI routing/clock support.  The following controllers are integrated in the live system: Akai MPKmini, Korg NanoPad2 and Kontrol2, Line6 FBV Shortboard, Jamstik MIDI guitar, an old Arturia BeatStep, a Behringer Crave synth and their UMC1820 digital interface. Performance material is stored in a separate project: https://github.com/jeffmasty/Setlist  Some live looping: https://www.youtube.com/user/judahmu/videos  
+8 mono or stereo instrument channels are currently handled as well as 4 recording loops. All audio channels have separately controlled internal Gain, EQ, Hi/Lo Cut, Chorus, Overdrive, Reverb, Delay, Compression, Stereo panning, Automation, a Spectrometer, an IR CabSim and a pair of LFOs. Loops may be synchronized for different song lengths and structures. A MIDI sequencer and feature-rich editor is provided consisting of 4 drum tracks and unlimited piano rolls. The sequencer generates chords, arpeggios and bass lines from ChordPro files. The sample player holds 8 loops/one-shots and 32 drum samples (8 samples per drum track). Melodic tracks may be played through external gear or through TacoSynth, a built-in subtractive synthesizer with the regular gamut of wave shapes, envelopes, resonant filters, detuning/harmonics and presets. Also included: a song editor, sheet music and chord views, guitar tuner, RMS/spectrogram, lossless audio recording and MIDI routing/clock support.  The following controllers are integrated in the live system: Akai MPKmini, Korg NanoPad2 and Kontrol2, Line6 FBV Shortboard, Jamstik MIDI guitar, an old Arturia BeatStep, a Behringer Crave synth and their UMC1820 digital interface. Performance material is stored in a separate project: https://github.com/jeffmasty/Setlist  Some live looping: https://www.youtube.com/user/judahmu/videos  
 
 ## Build
-Built with Java 25, Lombok (https://projectlombok.org/) and Maven.
+Built with Java 21, Lombok (https://projectlombok.org/) and Maven.
+
+mvn package
+java -jar target/JudahZone.jar
 
 This project depends on [a2j](https://github.com/jackaudio/a2jmidid)
 
 This project depends on [FluidSynth](https://www.fluidsynth.org/) (with the FluidR3_GM soundfont). 
 
 This project depends on the author's [Setlist](https://github.com/jeffmasty/Setlist) maven project.
-
 
 ## Running
 The Jack sound system needs to be up and running. 

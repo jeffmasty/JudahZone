@@ -1,9 +1,9 @@
 package net.judah.looper;
 
-import static net.judah.omni.WavConstants.WAV_EXT;
 import static net.judah.util.Constants.LEFT;
 import static net.judah.util.Constants.RIGHT;
 import static net.judah.util.Constants.STEREO;
+import static net.judah.util.WavConstants.WAV_EXT;
 
 import java.io.File;
 import java.nio.FloatBuffer;
@@ -14,27 +14,28 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.Getter;
 import net.judah.api.RecordAudio;
+import net.judah.api.Recording;
 import net.judah.drumkit.DrumMachine;
-import net.judah.fx.Effect;
+import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Instrument;
 import net.judah.mixer.LineIn;
 import net.judah.mixer.LoopMix;
-import net.judah.omni.AudioTools;
-import net.judah.omni.Icons;
-import net.judah.omni.Recording;
 import net.judah.seq.track.DrumTrack;
 import net.judah.synth.taco.TacoTruck;
+import net.judah.util.AudioTools;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
+import net.judah.util.FromDisk;
+import net.judah.util.Memory;
 import net.judah.util.RTLogger;
 import net.judah.util.WavFile;
 
 
 public class Loop extends Channel implements RecordAudio, Runnable {
-	public static final int INIT = 8192; // nice chunk of preloaded blank tape
+	public static final int INIT = 4096; // nice chunk of preloaded blank tape
 	private static final float STD_BOOST = 2.25f;
 	private static final float DRUM_BOOST = 0.85f;
 
@@ -97,12 +98,7 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 		return length / Constants.fps();
 	}
 
-	@Override
-	public void clear() {
-		throw new RuntimeException();
-	}
-
-	public void delete() {
+	@Override public void delete() {
         if (dirty)
         	tape.silence(length);
         length = current = stopwatch = 0;
@@ -130,11 +126,15 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 	}
 
     public void load(File dotWav, boolean primary) {
-		delete();
 		try {
+
+		    if (!FromDisk.canLoadRecording(dotWav)) {
+		        RTLogger.warn(this, "O-o-M :( " + dotWav.getName());
+		        return;
+		    }
 			rewind();
 			length = 0;
-			tape = new Recording(dotWav); // TODO buffering
+			tape = Recording.load(dotWav); // TODO buffering
 			length = tape.size();
 			dirty = true;
 			if (primary) {
@@ -194,7 +194,7 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 			looper.setRecordedLength(seconds());
 		}
 		if (length >= tape.size())
-			looper.getMem().catchUp(tape,  length);
+			Memory.STEREO.catchUp(tape,  length);
 		int half = length / 2;
 		tape.duplicate(half);
 		RTLogger.log(name, "Doubled recorded frames: " + length);
@@ -285,7 +285,7 @@ public class Loop extends Channel implements RecordAudio, Runnable {
     }
 
 	@Override
-	public void process() {
+	public void processImpl() {
 		// no-op
 	}
 
@@ -327,14 +327,14 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 	private void fx(FloatBuffer outLeft, FloatBuffer outRight) {
 		AudioTools.replace(playBuffer[LEFT], left, gain.getLeft());
 		AudioTools.replace(playBuffer[RIGHT], right, gain.getRight());
-		stream().filter(Effect::isActive).forEach(fx -> fx.process(left, right));
+		active.forEach(fx -> fx.process(left, right));
 		AudioTools.mix(left, gain.getGain(), outLeft);
 		AudioTools.mix(right, gain.getGain(), outRight);
 	}
 
 	private void recordFrame() {
 		// merge live recording sources into newBuffer
-		float[][] newBuffer = current < tape.size() ? tape.get(current) : looper.getMem().getFrame();
+		float[][] newBuffer = current < tape.size() ? tape.get(current) : Memory.STEREO.getFrame();
 
 		float amp = STD_BOOST;
     	if (leadIn) { // scratchy if sound blasted into first frame (rough windowing)

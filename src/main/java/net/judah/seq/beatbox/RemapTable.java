@@ -20,8 +20,8 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 
 import net.judah.JudahZone;
+import net.judah.api.GMDrum;
 import net.judah.drumkit.DrumType;
-import net.judah.drumkit.GMDrum;
 import net.judah.gui.MainFrame;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
@@ -121,7 +121,7 @@ public class RemapTable extends JTable {
 			return;
 		int data1 = sorted.get(row);
 		String msg = "Really delete  " + getModel().getValueAt(row, 0) + "?";
-		int result = JOptionPane.showConfirmDialog(JudahZone.getFrame(), msg);
+		int result = JOptionPane.showConfirmDialog(JudahZone.getInstance().getFrame(), msg);
 		if (result != JOptionPane.YES_OPTION)
 			return;
 		Notes selected = drummer.selectArea(0, t.ticks(), data1, data1);

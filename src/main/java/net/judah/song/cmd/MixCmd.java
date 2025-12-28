@@ -5,26 +5,30 @@ import java.util.List;
 
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.fx.Fader;
-import net.judah.looper.Looper;
 import net.judah.mixer.Channel;
-import net.judah.mixer.DJJefe;
+import net.judah.mixer.Fader;
 import net.judah.mixer.LineIn;
 import net.judah.mixer.Zone;
 import net.judah.seq.Trax;
 
 public class MixCmd implements Cmdr {
 
-	private static final DJJefe mixer = JudahZone.getMixer();
-	private static final List<Channel> channels = mixer.getAll();
-	private static final Looper looper = JudahZone.getLooper();
 	@Getter private static final Line line = new Line();
 	@Getter private static final MixCmd instance = new MixCmd();
 
-	@Getter private final String[] keys = new String[channels.size()]; //mixer.getChannels()
+	@Getter private final String[] keys;
+
+	private final List<Channel> channels;
+	/*
+	private static final DJJefe mixer = JudahZone.getMixer();
+	private static final List<Channel> channels = mixer.getAll();
+	private static final Looper looper = JudahZone.getLooper();
+	new String[channels.size()]; //mixer.getChannels()
+	 */
 
 	MixCmd() {
-		//mixer.getChannels()
+		channels = JudahZone.getInstance().getMixer().getAll();
+		keys = new String[channels.size()];
 	    for (int i = 0; i < keys.length; i++)
 	    	keys[i] = channels.get(i).getName();
 	}
@@ -62,7 +66,7 @@ public class MixCmd implements Cmdr {
 				ch.setOnMute(false);
 				break;
 			case Latch:
-				looper.syncFx(ch);
+				JudahZone.getInstance().getLooper().syncFx(ch);
 				break;
 
 			case OffTape:
@@ -75,7 +79,7 @@ public class MixCmd implements Cmdr {
 				break;
 			case SoloCh:
 				if (ch instanceof LineIn line)
-					looper.getSoloTrack().setSoloTrack(line);
+					JudahZone.getInstance().getLooper().getSoloTrack().setSoloTrack(line);
 				break;
 
 			default: throw new InvalidParameterException("" + p);
@@ -85,7 +89,7 @@ public class MixCmd implements Cmdr {
 
 	static class Line implements Cmdr {
 
-		final Zone instruments = JudahZone.getInstruments();
+		final Zone instruments = JudahZone.getInstance().getInstruments();
 		@Getter private String[] keys = new String[instruments.size()];
 
 		Line() {
@@ -108,7 +112,7 @@ public class MixCmd implements Cmdr {
 					break;
 				case SoloCh:
 					if (ch instanceof LineIn line)
-						looper.getSoloTrack().setSoloTrack(line);
+						JudahZone.getInstance().getLooper().getSoloTrack().setSoloTrack(line);
 					break;
 
 				default: throw new InvalidParameterException("" + p);

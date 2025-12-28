@@ -12,13 +12,13 @@ import javax.swing.JPanel;
 import javax.swing.border.BevelBorder;
 
 import lombok.Getter;
-import net.judah.JudahZone;
 import net.judah.api.PlayAudio.Type;
 import net.judah.fx.Gain;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 import net.judah.gui.widgets.Knob;
 import net.judah.sampler.Sample;
+import net.judah.sampler.Sampler;
 
 public class SamplePad extends Gui.Opaque {
 	public final Sample sample;
@@ -26,13 +26,13 @@ public class SamplePad extends Gui.Opaque {
 	private final JLabel name;
 	@Getter private final Knob knob = new Knob(Pastels.ORANGE);
 
-	public SamplePad(Sample s, JPanel parent) {
+	public SamplePad(Sample s, JPanel parent, Sampler sampler) {
 		this.sample = s;
 		Color color = s.getType() == Type.ONE_SHOT ? Pastels.MY_GRAY : Pastels.BLUE;
 		addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) {
 				boolean on = !sample.isPlaying();
-				JudahZone.getSampler().play(sample, on);
+				sampler.play(sample, on);
 			}});
 		setBorder(BorderFactory.createSoftBevelBorder(BevelBorder.RAISED, color, color.darker()));
 		setLayout(new GridLayout(0, 1));

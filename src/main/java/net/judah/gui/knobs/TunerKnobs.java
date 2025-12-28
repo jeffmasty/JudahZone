@@ -7,16 +7,16 @@ import javax.swing.Box;
 
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.api.Recording;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.scope.Live.LiveData;
 import net.judah.gui.widgets.RMSWidget;
 import net.judah.gui.widgets.Tuner;
 import net.judah.gui.widgets.Tuner.Tuning;
-import net.judah.omni.AudioTools;
-import net.judah.omni.Recording;
-import net.judah.omni.Threads;
+import net.judah.util.AudioTools;
 import net.judah.util.Memory;
+import net.judah.util.Threads;
 
 
 public class TunerKnobs extends KnobPanel {
@@ -26,7 +26,6 @@ public class TunerKnobs extends KnobPanel {
 	@Getter private static TunerKnobs instance = new TunerKnobs();
 	@Getter private final KnobMode knobMode = KnobMode.Tuner;
     @Getter private final Box title = Box.createHorizontalBox();
-	private final Memory mem = JudahZone.getMem();
 
     private final RMSWidget waveform = new RMSWidget(size);
 
@@ -66,15 +65,15 @@ public class TunerKnobs extends KnobPanel {
 	}
 
 	public void process() {
-		float[][] buf = mem.getFrame();
-		JudahZone.getSelected().forEach(ch->AudioTools.copy(ch, buf));
+		float[][] buf = Memory.STEREO.getFrame();
+		JudahZone.getInstance().getSelected().forEach(ch->AudioTools.copy(ch, buf));
 		buffer.add(buf);
+		if (tuner.isActive())
+			MainFrame.update(new Tuning(tuner, buf));
 		if (buffer.size() > 1) {
 			MainFrame.update(new LiveData(waveform, buffer));
 			buffer = new Recording();
 		}
-		if (tuner.isActive())
-			MainFrame.update(new Tuning(tuner, buf));
 	}
 
 	@Override public void update() {

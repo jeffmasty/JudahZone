@@ -1,26 +1,28 @@
 package net.judah.controllers;
 
-import static net.judah.JudahZone.*;
-
 import java.util.ArrayList;
 
 import javax.sound.midi.ShortMessage;
 
+import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
-import net.judah.fx.Fader;
+import net.judah.api.Controller;
+import net.judah.api.Midi;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.MultiSelect;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.SynthKnobs;
 import net.judah.looper.Loop;
-import net.judah.midi.Midi;
+import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
+import net.judah.mixer.Fader;
 import net.judah.mixer.LineIn;
 import net.judah.seq.SynthRack;
 import net.judah.synth.fluid.FluidSynth;
 import net.judah.synth.taco.TacoSynth;
 import net.judah.synth.taco.TacoTruck;
 
+@RequiredArgsConstructor
 public class Beatstep implements Controller {
 
 	public static final String NAME = "Arturia BeatStep"; // ALSA prefix
@@ -41,6 +43,9 @@ public class Beatstep implements Controller {
 	private static final int FADER = 43;
 
 	private final MultiSelect channels = new MultiSelect();
+
+	private final JudahZone zone;
+	private final JudahClock clock;
 
 	@Override
 	public boolean midiProcessed(Midi midi) {
@@ -71,7 +76,7 @@ public class Beatstep implements Controller {
 			}
 			else if (data1 == RECORD) {
 				if (!Midi.isNoteOn(midi)) return true;
-				for (Channel current : getSelected())
+				for (Channel current : zone.getSelected())
 					if (current instanceof LineIn)
 						((LineIn)current).setMuteRecord(!((LineIn)current).isMuteRecord());
 					else
@@ -80,7 +85,7 @@ public class Beatstep implements Controller {
 
 			else if (data1 == FADER) {
 				if (!Midi.isNoteOn(midi)) return true;
-				for (Channel ch : getSelected()) {
+				for (Channel ch : zone.getSelected()) {
 					if (ch.isOnMute() || ch.getGain().getGain() <= 0.05f) {
 						ch.setOnMute(false);
 						Fader.execute(new Fader(ch, Fader.DEFAULT_FADE, 0, 51));
@@ -98,29 +103,29 @@ public class Beatstep implements Controller {
 		if (Midi.isCC(midi)) {
 			int data2 = midi.getData2();
 			if (data1 == TEMPO_KNOB) {
-				float tempo = getClock().getTempo() + (data2 > 64 ? -1 : 1); // a little wonky
-				getClock().setTempo(tempo);
+				float tempo = clock.getTempo() + (data2 > 64 ? -1 : 1); // a little wonky
+				clock.setTempo(tempo);
 				return true;
 			}
 
 			for (int i = 0; i < KNOBS.length; i++)
 				if (KNOBS[i] == data1) {
-					for (Channel ch : getSelected()) {
+					for (Channel ch : zone.getSelected()) {
 						ch.getGui().knob(i, data2 < 64);
 					}
 					return true;
 				}
 		}
 		else if (midi.getCommand() == 240 && data1 == 127) { // start/stop btns to clock
-			if (getClock().isActive()) {
-				for (Loop l : getLooper())
+			if (clock.isActive()) {
+				for (Loop l : zone.getLooper())
 					if (l.isPlaying())
 						l.setOnMute(true);
-				getClock().end();
+				clock.end();
 			}
 			else {
-				getClock().begin();
-				getLooper().rewind();
+				clock.begin();
+				zone.getLooper().rewind();
 			}
 		}
 		return true;
@@ -143,21 +148,21 @@ public class Beatstep implements Controller {
 		if (data1 < LOOPA || data1 > MAINS)
 			return null;
 		if (data1 == MAINS)
-			return getMains();
+			return zone.getMains();
 		if (data1 == MAINS - 1)
-			return getDrumMachine();
+			return zone.getDrumMachine();
 		if (data1 == MAINS - 2)
-			return getFluid();
+			return zone.getFluid();
 		if (data1 == MAINS - 3)
-			return getTk2();
+			return zone.getTk2();
 		if (data1 >= GUITAR)
-			return getInstruments().get(data1 - GUITAR);
+			return zone.getInstruments().get(data1 - GUITAR);
 		else
-			return getLooper().get(data1 - LOOPA);
+			return zone.getLooper().get(data1 - LOOPA);
 	}
 
 	private void taco1(int command) {
-		TacoTruck taco = JudahZone.getTaco();
+		TacoTruck taco = SynthRack.getTacos()[0];
 		if (channels.contains(taco)) {
 			if (taco.getTracks().size() < 2) {
 				multiSelect(command, TACO);
@@ -192,7 +197,7 @@ public class Beatstep implements Controller {
 		if (command == Midi.NOTE_OFF)
 			return;
 
-		Channel current = JudahZone.getFxRack().getChannel();
+		Channel current = JudahZone.getInstance().getFxRack().getChannel();
 		int target = 1;
 		if (false == current instanceof TacoTruck) {
 			MainFrame.setFocus(engines[target]);
@@ -237,7 +242,7 @@ public class Beatstep implements Controller {
 		channels.clear();
 
 		int target = 1;
-		Channel current = JudahZone.getFxRack().getChannel();
+		Channel current = zone.getFxRack().getChannel();
 		if (false == current instanceof FluidSynth) {
 			MainFrame.setFocus(engines[target]);
 			return;

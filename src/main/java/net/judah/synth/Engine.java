@@ -1,5 +1,6 @@
-package net.judah.api;
+package net.judah.synth;
 
+import net.judah.api.ZoneMidi;
 import net.judah.mixer.LineIn;
 import net.judah.util.Constants;
 

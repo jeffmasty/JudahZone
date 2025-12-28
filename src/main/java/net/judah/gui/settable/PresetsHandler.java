@@ -1,7 +1,5 @@
 package net.judah.gui.settable;
 
-import static net.judah.JudahZone.getPresets;
-
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -12,21 +10,24 @@ import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
-import net.judah.JudahZone;
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.gui.Updateable;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Preset;
+import net.judah.mixer.PresetsDB;
 
 /** Presets */
 public class PresetsHandler extends SetCombo<Preset> implements ListCellRenderer<Preset>, Updateable {
+
+	private static final PresetsDB presets = new PresetsDB(); // 21
+	public static final PresetsDB getPresets() { return presets; }
 
 	private final Channel ch;
 	private final JLabel render = new JLabel();
 
 	public PresetsHandler(Channel channel) {
-		super(JudahZone.getPresets().array(), channel.getPreset());
+		super(presets.array(), channel.getPreset());
 		this.ch = channel;
 		((JLabel)getRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
 		Gui.resize(this, Size.MEDIUM);
@@ -52,15 +53,15 @@ public class PresetsHandler extends SetCombo<Preset> implements ListCellRenderer
 
 	public void increment(boolean up) {
 		int next = getIdx() + (up ? 1 : -1);
-		if (next >= JudahZone.getPresets().size())
+		if (next >= presets.size())
 			next = 0;
 		if (next < 0)
-			next = JudahZone.getPresets().size() - 1;
-		midiShow(JudahZone.getPresets().get(next));
+			next = presets.size() - 1;
+		midiShow(presets.get(next));
 	}
 
 	public int getIdx() {
-		return JudahZone.getPresets().indexOf(getSelectedItem());
+		return presets.indexOf(getSelectedItem());
 	}
 
 	@Override public Component getListCellRendererComponent(JList<? extends Preset> list,

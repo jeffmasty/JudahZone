@@ -69,6 +69,7 @@ import java.util.Arrays;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.api.TimeEffect;
 import net.judah.util.Constants;
 
 /**Two Identical Mono Delays.
@@ -77,7 +78,7 @@ import net.judah.util.Constants;
  * @author Neil C Smith (derived from code by Karl Helgason)
  * @author Jeff Masty
  */
-public class Delay implements TimeEffect {
+public class Delay implements TimeEffect, net.judah.api.Effect.RTEffect {
 
     public enum Settings {
         DelayTime, Feedback, Type, Sync
@@ -89,7 +90,7 @@ public class Delay implements TimeEffect {
     public static final float DEFAULT_TIME = .4f;
     static final float THRESHOLD = 0.00001f; // de-normalize
 
-    @Getter private boolean active;
+//    @Getter private boolean active;
     @Setter @Getter boolean sync;
     /** in seconds */
     private float delayTime;
@@ -112,12 +113,12 @@ public class Delay implements TimeEffect {
         reset();
     }
 
-    @Override
-    public void setActive(boolean active) {
-        if (!active)
-            reset();
-        this.active = active;
-    }
+//    @Override
+//    public void setActive(boolean active) {
+//        if (!active)
+//            reset();
+//        this.active = active;
+//    }
 
     @Override
     public int getParamCount() {
@@ -171,8 +172,8 @@ public class Delay implements TimeEffect {
         this.feedback = feedback;
     }
 
-    public void reset() {
-        active = false;
+    @Override
+	public void reset() {
         if (left.workArea != null)
             Arrays.fill(left.workArea, 0);
         if (right.workArea != null)

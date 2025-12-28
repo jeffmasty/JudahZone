@@ -1,5 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>net.judahzone</groupId>
@@ -8,113 +9,184 @@
   <packaging>jar</packaging>
   <name>JudahZone</name>
 
- <properties>
+  <properties>
+    <lombok.version>1.18.34</lombok.version>
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
-<repositories>
-<repository>
-    <id>clojars_repo</id>
-    <url>https://clojars.org/repo/</url>
-  </repository>
-  <repository>
-  <id>be.0110.repo-releases</id> <!--Tarsos audio library-->
-  <name>0110.be repository</name>
-  <url>https://mvn.0110.be/releases</url>
-</repository>
-</repositories>
+  <repositories>
+    <repository>
+      <id>be.0110.repo-releases</id> <!-- Tarsos audio library -->
+      <name>0110.be repository</name>
+      <url>https://mvn.0110.be/releases</url>
+    </repository>
+  </repositories>
 
-<dependencies>
-	<dependency>
-	  <groupId>org.projectlombok</groupId>
-	  <artifactId>lombok</artifactId>
-	  <version>1.18.30</version>
-	  <scope>provided</scope>
-	</dependency> 
-	<dependency>
-	  <groupId>org.junit.jupiter</groupId>
-	  <artifactId>junit-jupiter</artifactId>
-	  <version>5.10.2</version>
-	  <scope>test</scope>
-	</dependency>
-	<!-- JSON -->
-	<dependency>  
-	  <groupId>org.apache.jena</groupId>
-	  <artifactId>apache-jena-libs</artifactId>
-	  <type>pom</type>
-	  <version>3.9.0</version>
-	</dependency>
-	<!-- Open Sound Control (OSC) protocol -->
-	<dependency> 
-	  <groupId>com.illposed.osc</groupId>
-	  <artifactId>javaosc-core</artifactId>
-	  <version>0.6</version>
-	</dependency>
-	
-    <!-- Digital Sound Processing -->
-	<dependency> 
-	  <groupId>be.tarsos.dsp</groupId>
-	  <artifactId>core</artifactId>
-	  <version>2.5</version>
-	</dependency>
-	<dependency>
-	  <groupId>be.tarsos.dsp</groupId>
-	  <artifactId>jvm</artifactId>
-	  <version>2.5</version>
-	</dependency>
+  <dependencies>
+    <!-- Lombok: provided, plus used as annotation processor -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${lombok.version}</version>
+      <scope>provided</scope>
+    </dependency>
 
-	<!-- Jack Support -->
-  	<dependency>
-    	<groupId>net.java.dev.jna</groupId>
-      	<artifactId>jna</artifactId>
-      	<version>[5.0.0,6.0)</version>
-      	<scope>compile</scope>
+    <!-- JUnit 5 -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.10.2</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- JSON -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.19.2</version>
+    </dependency>
+
+    <!-- OSC -->
+    <dependency>
+      <groupId>com.illposed.osc</groupId>
+      <artifactId>javaosc-core</artifactId>
+      <version>0.6</version>
+    </dependency>
+
+    <!-- Tarsos Audio Library -->
+    <dependency>
+      <groupId>be.tarsos.dsp</groupId>
+      <artifactId>core</artifactId>
+      <version>2.5</version>
     </dependency>
     <dependency>
-        <groupId>org.jaudiolibs</groupId>
-        <artifactId>jnajack</artifactId>
-        <version>1.4.0</version>
-        <scope>provided</scope>
+      <groupId>be.tarsos.dsp</groupId>
+      <artifactId>jvm</artifactId>
+      <version>2.5</version>
+    </dependency>
+
+    <!-- Jack Support -->
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna</artifactId>
+      <version>[5.0.0,6.0)</version>
+      <scope>compile</scope>
     </dependency>
     <dependency>
-        <groupId>org.jaudiolibs</groupId>
-        <artifactId>audioservers-api</artifactId>
-       	<version>2.0.0</version>
-        <scope>provided</scope>
+      <groupId>org.jaudiolibs</groupId>
+      <artifactId>jnajack</artifactId>
+      <version>1.4.0</version>
     </dependency>
+    <dependency>
+      <groupId>org.jaudiolibs</groupId>
+      <artifactId>audioservers-api</artifactId>
+      <version>2.0.0</version>
+    </dependency>
+  </dependencies>
 
-</dependencies>
+  <build>
+   	
+    <plugins>
+      <!-- JUnit 5 -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
+        <configuration>
+          <useModulePath>false</useModulePath>
+        </configuration>
+      </plugin>
 
-
-<build>
-  <plugins>
+	<!-- Fat (shaded) jar: JudahZone-0.1-shaded.jar -->
     <plugin>
       <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-surefire-plugin</artifactId>
-      <version>3.2.5</version>
-      <configuration>
-        <useModulePath>false</useModulePath>
-      </configuration>
+      <artifactId>maven-shade-plugin</artifactId>
+      <version>3.6.0</version>
+      <executions>
+        <execution>
+          <phase>package</phase>
+          <goals>
+            <goal>shade</goal>
+          </goals>
+          <configuration>
+            <!-- Keep original JudahZone-0.1.jar -->
+            <shadedArtifactAttached>true</shadedArtifactAttached>
+            <!-- Versioned fat jar: JudahZone-0.1-shaded.jar -->
+            <shadedClassifierName>shaded</shadedClassifierName>
+            <transformers>
+              <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                <mainClass>net.judah.JudahZone</mainClass>
+              </transformer>
+            </transformers>
+          </configuration>
+        </execution>
+      </executions>
     </plugin>
-    <plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-compiler-plugin</artifactId>
-      <version>3.13.0</version>
-      <configuration>
-        <release>21</release> 
-        <encoding>UTF-8</encoding>
-        <annotationProcessorPaths>
-          <path>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.30</version>
-          </path>
-        </annotationProcessorPaths>
-      </configuration>
-    </plugin>
-  </plugins>
-</build>
-  
+
+      <!-- Compiler plugin WITH Lombok annotation processing -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <configuration>
+          <!-- Stick to source/target props; drop conflicting <release> -->
+          <source>${maven.compiler.source}</source>
+          <target>${maven.compiler.target}</target>
+          <encoding>${project.build.sourceEncoding}</encoding>
+          <showWarnings>true</showWarnings>
+          <showDeprecation>true</showDeprecation>
+          <compilerArgs>
+            <arg>-parameters</arg>
+          </compilerArgs>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>${lombok.version}</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+      
+      <plugin>
+		  <groupId>org.apache.maven.plugins</groupId>
+		  <artifactId>maven-jar-plugin</artifactId>
+		  <version>3.4.2</version>
+		  <configuration>
+		    <archive>
+		      <manifest>
+		        <addClasspath>false</addClasspath>
+		        <mainClass>net.judah.JudahZone</mainClass>
+		      </manifest>
+		    </archive>
+		  </configuration>
+		</plugin>
+      
+      <plugin>
+		  <groupId>org.apache.maven.plugins</groupId>
+		  <artifactId>maven-antrun-plugin</artifactId>
+		  <version>3.1.0</version>
+		  <executions>
+		    <execution>
+		      <id>copy-shaded-to-fixed-name</id>
+		      <phase>package</phase>
+		      <goals>
+		        <goal>run</goal>
+		      </goals>
+		      <configuration>
+		        <target>
+		          <copy file="${project.build.directory}/${project.artifactId}-${project.version}-shaded.jar"
+		                tofile="${project.build.directory}/JudahZone.jar"
+		                overwrite="true" />
+		          <delete file="${project.build.directory}/${project.artifactId}-${project.version}-shaded.jar" />
+		        </target>
+		      </configuration>
+		    </execution>
+		  </executions>
+		</plugin>
+      
+    </plugins>
+  </build>
 </project>

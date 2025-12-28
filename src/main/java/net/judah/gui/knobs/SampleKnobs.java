@@ -26,10 +26,10 @@ public class SampleKnobs extends KnobPanel {
 
 		JPanel loops = new JPanel(new GridLayout(2, 2, 3, 3));
 		for (int i = 0; i < 4; i++)
-			updates.add(new SamplePad(samples.get(i), loops));
+			updates.add(new SamplePad(samples.get(i), loops, sampler));
 		JPanel oneShots = new JPanel(new GridLayout(2, 2, 3, 3));
 		for (int i = 4; i < 8; i++)
-			updates.add(new SamplePad(samples.get(i), oneShots));
+			updates.add(new SamplePad(samples.get(i), oneShots, sampler));
 
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		add(loops);

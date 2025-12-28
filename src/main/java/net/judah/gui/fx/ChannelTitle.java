@@ -17,7 +17,6 @@ import net.judah.gui.Size;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.widgets.Btn;
 import net.judah.looper.Loop;
-import net.judah.looper.Looper;
 import net.judah.midi.MidiInstrument;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
@@ -29,7 +28,7 @@ public class ChannelTitle extends JPanel {
 	private final Channel channel;
 	private final JLabel name;
 
-	public ChannelTitle(Channel ch, Looper looper) {
+	public ChannelTitle(Channel ch, MidiInstrument bass) {
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		setOpaque(true);
 		this.channel = ch;
@@ -39,7 +38,7 @@ public class ChannelTitle extends JPanel {
 			new Btn("mute", e->channel.setOnMute(!channel.isOnMute()));
 		lfo = new Btn("lfo", e->{
 			if (MainFrame.getKnobMode() == KnobMode.LFO)
-				channel.getLfo().setActive(!channel.getLfo().isActive());
+				channel.toggle(channel.getLfo());
 			else MainFrame.setFocus(KnobMode.LFO);});
 		Btn wav = new Btn("wav", e->MainFrame.setFocus(KnobMode.Tuner));
 		mute.setFont(Gui.FONT10);
@@ -49,8 +48,8 @@ public class ChannelTitle extends JPanel {
 		Gui.resize(name, new Dimension(Size.WIDTH_KNOBS - 3 * Size.TINY.width, Size.STD_HEIGHT));
 
 		add(name);
-		if (channel == JudahZone.getBass())
-			add(sync(JudahZone.getBass()));
+		if (channel == bass)
+			add(sync(bass));
 		add(Gui.resize(mute, Size.TINY));
 		add(Gui.resize(lfo, Size.TINY));
 		add(Gui.resize(wav, Size.TINY));
@@ -83,13 +82,13 @@ public class ChannelTitle extends JPanel {
 		if (channel instanceof LineIn)
 			mute.setBackground(((LineIn)channel).isMuteRecord() ? null : Pastels.ONTAPE);
 		else mute.setBackground(channel.isOnMute() ? Pastels.PURPLE : null);
-		lfo.setBackground(channel.getLfo().isActive() ? Pastels.BLUE : null);
+		lfo.setBackground(channel.isActive(channel.getLfo()) ? Pastels.BLUE : null);
 	}
 
 	private JToggleButton sync(MidiInstrument i) {
 		JToggleButton sync = new JToggleButton("sync");
 		sync.setFont(Gui.FONT10);
-		sync.addActionListener(l->JudahZone.getMidi().synchronize(i));
+		sync.addActionListener(l->JudahZone.getInstance().getMidi().synchronize(i));
 		return sync;
 	}
 }

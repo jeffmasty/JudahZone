@@ -1,15 +1,11 @@
-package net.judah.fx;
-
-import static net.judah.JudahZone.getMixer;
+package net.judah.mixer;
 
 import java.util.ArrayList;
 
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
+import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
-import net.judah.mixer.Channel;
-import net.judah.mixer.DJJefe;
-import net.judah.mixer.FxChain;
 import net.judah.sampler.Sample;
 
 @RequiredArgsConstructor
@@ -19,7 +15,6 @@ public class Fader {
 
 	final Object root;
 	final Gain gain;
-	final DJJefe mixer = JudahZone.getMixer();
 	final long msec;
 	final double startVal, endVal;
 	long startTime;
@@ -35,8 +30,9 @@ public class Fader {
 
 		if (o instanceof Channel ch)
 			result.cleanup = () -> {
-				if (getMixer().getFader(ch) != null)
-					getMixer().getFader(ch).updateVolume();
+				MixWidget fader = JudahZone.getInstance().getMixer().getFader(ch);
+				if (fader != null)
+					fader.updateVolume();
 			};
 		return result;
 	}
@@ -46,7 +42,7 @@ public class Fader {
 		this.msec = msec;
 		this.startVal = startVal;
 		this.endVal = endVal;
-		if (root instanceof FxChain ch)
+		if (root instanceof Channel ch)
 			gain = ch.getGain();
 		else if (root instanceof Sample s)
 			gain = s.getGain();
@@ -63,14 +59,14 @@ public class Fader {
 
 	/** 4 second fade-in on master bus */
 	public static Fader fadeIn() {
-		return fadeIn(JudahZone.getMains());
+		return fadeIn(JudahZone.getInstance().getMains());
 	}
 
 	public static Fader fadeOut(Object o) {
 		int startVol = 50;
 		Runnable cleanup = null;
 		if (o instanceof Channel ch) {
-			cleanup = () -> getMixer().getFader(ch).updateVolume();
+			cleanup = () -> JudahZone.getInstance().getMixer().getFader(ch).updateVolume();
 			startVol = ch.getVolume();
 		}
 		else if (o instanceof Sample s) {
@@ -85,7 +81,7 @@ public class Fader {
 
 	/** Fade out Master track over 4 seconds */
 	public static Fader fadeOut() {
-		return fadeOut(JudahZone.getMains());
+		return fadeOut(JudahZone.getInstance().getMains());
 	}
 
 

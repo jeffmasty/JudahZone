@@ -1,19 +1,18 @@
 
 TODO:
 
-Tarsos pull request // clean mvn
-FxChain/Channel architecture: <effects> <actives> <presets>
-Scope resize, dispatcher, mpkMini to127
-Smoothing biquad
-Leveling/mastering, Loops too loud (Save/reload/mp3)
-nudge notes, Linked Midi Selection Model
-TacoSynth detune on sus/pdl
-Automation: PitchBend, Meta, TimeSig, KeySig, Tempo
+Scope project/player, Tarsos pull request
 Piano roll orientation, TrackKnobs Program overflow
+Linked Midi Selection Model
+Automation: PitchBend, Meta, TimeSig, KeySig, Tempo
+Sample Library, SampleTrack
+compression meter, mpkMini to127
+Leveling/mastering, Loops too loud (Save/reload/mp3)
+nudge notes, 
+TacoSynth detune on sus/pdl
 SendTo ignore Meta Device, Program?
-ChannelUpdate(ch, fx, idx)
 Channel/System Setup  +Controllers +Jamstik +Fluid
-Lyrics Track, Fine Tune Midi Envelope(CC)
+AudioTrack, Lyrics Track, Fine Tune Midi Envelope(CC)
 Hi/Lo filter CC   Mid/Side/Chain
 Redo track capture (atomic undo/redo/AUTOMATION)
 Redo Patterns:==>  Midi MetaMessages?

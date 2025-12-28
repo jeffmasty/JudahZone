@@ -9,16 +9,14 @@ import javax.sound.midi.ShortMessage;
 import javax.swing.ImageIcon;
 
 import lombok.Getter;
-import net.judah.JudahZone;
-import net.judah.api.Engine;
 import net.judah.fx.Convolution;
-import net.judah.omni.AudioTools;
+import net.judah.synth.Engine;
+import net.judah.util.AudioTools;
 import net.judah.util.Constants;
 
 public class TacoTruck extends Engine {
 
 	@Getter private final Vector<TacoSynth> tracks = new Vector<TacoSynth>();
-
 
     public TacoTruck(String name, ImageIcon picture) {
     	super(name, Constants.MONO);
@@ -35,7 +33,7 @@ public class TacoTruck extends Engine {
 	}
 
 	@Override public String[] getPatches() {
-		List<String> result = JudahZone.getSynthPresets().keys();
+		List<String> result = TacoSynth.getPresets().keys();
 		return result.toArray(new String[result.size()]);
 	}
 
@@ -44,7 +42,7 @@ public class TacoTruck extends Engine {
 	}
 
 	@Override public void send(MidiMessage message, long timeStamp) {
-		if (message instanceof ShortMessage s && s.getChannel() < size())
+		if (message instanceof ShortMessage s && s.getChannel() < tracks.size())
 			tracks.get(s.getChannel()).send(message, timeStamp);
 	}
 
@@ -52,7 +50,7 @@ public class TacoTruck extends Engine {
 		tracks.clear();
 	}
 
-	@Override public void process() {
+	@Override public void processImpl() {
 		if (onMute)
 			return;
 		AudioTools.silence(left);

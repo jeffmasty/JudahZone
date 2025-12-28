@@ -6,34 +6,27 @@ import java.util.Arrays;
 
 import be.tarsos.dsp.util.fft.FFT;
 import lombok.Getter;
-import net.judah.JudahZone;
-import net.judah.omni.AudioTools;
+import net.judah.api.Effect;
+import net.judah.gui.knobs.CabSim;
+import net.judah.util.AudioTools;
 import net.judah.util.Constants;
+import net.judah.util.IRDB;
 import net.judah.util.RTLogger;
 
 public abstract class Convolution implements Effect {
 
     public enum Settings { Cabinet, Wet}
-    protected static final IRDB db = JudahZone.getIR();
+    protected static final IRDB db = CabSim.getDB();
 
     @Getter protected final String name = Convolution.class.getSimpleName();
     @Getter protected final int paramCount = Settings.values().length;
 
     // ======================================================================
-    /**Stereo wrapper: Double barrel, side-by-side, come to tan your hide. */
-    public static class Stereo extends Convolution {
+    /** Wrapper around 2 Mono Convolvers */
+    public static class Stereo extends Convolution implements RTEffect {
 
         private final Mono leftIR = new Mono();
         private final Mono rightIR = new Mono();
-
-        @Override public void setActive(boolean active) {
-            leftIR.setActive(active);
-            rightIR.setActive(active);
-        }
-
-		@Override public boolean isActive() {
-			return leftIR.isActive();
-		}
 
         @Override public void set(int idx, int value) {
             leftIR.set(idx, value);
@@ -63,7 +56,6 @@ public abstract class Convolution implements Effect {
 
         // pointer to currently selected IR spectrum (from DB)
         protected float[] irFreq = new float[FFT_SIZE * 2];
-        @Getter protected boolean active;
         protected float wet = 0.9f;
         protected int cabinet = 0;
 
@@ -81,15 +73,9 @@ public abstract class Convolution implements Effect {
             reset();
         }
 
-        protected void reset() {
+        @Override public void reset() {
             Arrays.fill(overlap, 0f);
         }
-
-        @Override public void setActive(boolean active) {
-    		this.active = active;
-    		if (!active)
-    			reset();
-    	}
 
         @Override public void set(int idx, int value) {
             if (idx == Settings.Cabinet.ordinal()) {
@@ -129,7 +115,7 @@ public abstract class Convolution implements Effect {
 
         /** Convolve Add and make stereo, even if dry/inactive */
         public void monoToStereo(FloatBuffer mono, FloatBuffer stereo) {
-            if (!active || wet <= 0f) {
+            if (wet <= 0f) {
             	AudioTools.copy(mono, stereo); // Instrument expects stereo out of here
             	return;
             }
@@ -199,8 +185,6 @@ public abstract class Convolution implements Effect {
         /** Realtime Audio  Convolve Add */
         public void process(FloatBuffer mono) {
             // If inactive or fully dry, preserve caller expectation of stereo output.
-            if (!active)
-                return;
 
             final float dryGain = 1.0f - wet;
             final float wetGain = wet;

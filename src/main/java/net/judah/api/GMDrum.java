@@ -1,8 +1,9 @@
-package net.judah.drumkit;
+package net.judah.api;
+
+import javax.sound.midi.ShortMessage;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.midi.Midi;
 
 @RequiredArgsConstructor @Getter
 public enum GMDrum {
@@ -61,7 +62,7 @@ public enum GMDrum {
             ClosedHiHat, PedalHiHat, OpenHiHat, RideCymbal,
             Shaker, HiBongo, LowBongo, OpenHiConga
     };
-	
+
     private final int data1;
     private final String display;
 
@@ -71,8 +72,8 @@ public enum GMDrum {
     			return x;
     	return null;
     }
-    
-	public static String format(Midi midi) {
+
+	public static String format(ShortMessage midi) {
 		if (midi == null) return "null";
 		int val = midi.getData1();
 		for (GMDrum d : values()) {
@@ -85,12 +86,12 @@ public enum GMDrum {
 	public byte toByte() {
 		return Integer.valueOf(data1).byteValue();
 	}
-	
+
 	@Override
 	public String toString() {
 	    return display;
 	}
 
-    
+
 }
 

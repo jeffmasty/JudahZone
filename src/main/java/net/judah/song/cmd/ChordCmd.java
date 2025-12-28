@@ -13,24 +13,23 @@ public class ChordCmd implements Cmdr {
 	@Getter public static ChordCmd instance = new ChordCmd();
 	@Getter public static Player player = new Player();
 
-	private final Chords chords = JudahZone.getChords();
-	private final List<Section> sections = JudahZone.getChords().getSections();
-
-
 	@Override public String[] getKeys() {
-
+		List<Section> sections = JudahZone.getInstance().getChords().getSections();
 		String[] result = new String[sections.size()];
 		for (int i = 0; i < result.length; i++)
 			result[i] = sections.get(i).getName();
 		return result;
 	}
 	@Override public Object resolve(String key) {
+		List<Section> sections = JudahZone.getInstance().getChords().getSections();
 		for (Section s : sections)
 			if (key.equals(s.getName()))
 				return s;
 		return null;
 	}
 	@Override public void execute(Param p) {
+		Chords chords = JudahZone.getInstance().getChords();
+		List<Section> sections = chords.getSections();
 		if (p.getCmd() != Cmd.Part)
 			return;
 		for (Section s : sections)
@@ -41,7 +40,7 @@ public class ChordCmd implements Cmdr {
 	}
 
 	static class Player implements Cmdr {
-		private final Chords chords = JudahZone.getChords();
+		private final Chords chords = JudahZone.getInstance().getChords();
 
 		@Getter private final String[] keys = {"play", "stop"};
 		@Override public Object resolve(String key) {

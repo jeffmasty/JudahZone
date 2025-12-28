@@ -5,10 +5,11 @@ import java.security.InvalidParameterException;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.api.Effect.RTEffect;
 import net.judah.util.Constants;
 
 @Getter
-public class Gain implements Effect {
+public class Gain implements RTEffect {
 	public static final int VOLUME = 0;
 	public static final int PAN = 1;
 
@@ -18,11 +19,13 @@ public class Gain implements Effect {
 	private float stereo = 0.5f;
 	@Setter private float preamp = 1f;
 
-	@Override public boolean isActive() {
+	/** pan/balance */
+	public boolean isActive() {
 		return stereo < 0.49f || stereo > 0.51f;
 	}
 
-	@Override public void setActive(boolean active) {
+	/** pan/balance */
+	public void setActive(boolean active) {
 		if (!active) stereo = 0.5f;
 	}
 
@@ -150,6 +153,7 @@ public class Gain implements Effect {
 		}
 	}
 
+	@Override
 	public void reset() {
 		gain = 0.5f;
 		stereo = 0.5f;

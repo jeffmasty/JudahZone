@@ -26,7 +26,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.util.Constants;
 
-
 /** compute unit of and EQ and Filter */
 public class StereoBiquad {
 
@@ -47,7 +46,13 @@ public class StereoBiquad {
 	protected FilterType filter_type;
 	protected BWQType bwq_type = BWQType.BW;
 	private final Biquad left, right;
-	private	float a0, a1, a2, b0, b1, b2;
+
+	// current coefficients
+	private float a0, a1, a2, b0, b1, b2;
+	// previous coefficients for smoothing
+	private float lastA0, lastA1, lastA2, lastB0, lastB1, lastB2;
+	private boolean coeffDirty = true;
+	private boolean haveLastCoeffs = false;
 
 	public StereoBiquad(FilterType type, float frequency) { // Hi/Lo pass
 		this(type, frequency, 2, 16f);
@@ -104,6 +109,7 @@ public class StereoBiquad {
 			a1 = -2.0f * cosw0;
 			a2 = 1.0f - alpha/a;
 		}
+		coeffDirty = true;
 	}
 
 	public static float gainDb(int val) {
@@ -113,6 +119,9 @@ public class StereoBiquad {
 	}
 
 	public void process(FloatBuffer l, FloatBuffer r) {
+		// snapshot current coeffs into Biquads with smoothing across this block
+		left.updateCoefficients();
+		right.updateCoefficients();
 		left.processBuffer(l);
 		right.processBuffer(r);
 	}
@@ -121,29 +130,95 @@ public class StereoBiquad {
 
 		private float xn1, xn2, yn1, yn2 = 0;
 
+		void updateCoefficients() {
+			// If coefficients changed since last time, set up interpolation
+			if (coeffDirty || !haveLastCoeffs) {
+				// if we have previous coefficients, keep them for smoothing
+				if (!haveLastCoeffs) {
+					lastA0 = a0;
+					lastA1 = a1;
+					lastA2 = a2;
+					lastB0 = b0;
+					lastB1 = b1;
+					lastB2 = b2;
+					haveLastCoeffs = true;
+				}
+				coeffDirty = false;
+			}
+		}
 
 		void processBuffer(FloatBuffer buff) {
-
-			final float lb0 = b0;
-			final float lb1 = b1;
-			final float lb2 = b2;
-			final float la0 = a0;
-			final float la1 = a1;
-			final float la2 = a2;
-
 			buff.rewind();
-			for (int i=0; i<N_FRAMES; i++) {
-				float xn = buff.get(i);
-				float yn = (lb0 * xn + lb1 * xn1 + lb2 * xn2
-			            - la1 * yn1 - la2 * yn2) / la0;
-				if (Math.abs(yn) < 1.0E-8)
-	                yn = 0; // de-normalize
-				buff.put(yn); // yn, our target, back into the buffer
-				xn2 = xn1;
-				xn1 = xn;
-				yn2 = yn1;
-				yn1 = yn;
+
+			// If we don't have previous coefficients yet, just use current ones, no smoothing
+			if (!haveLastCoeffs ||
+			    (lastA0 == a0 && lastA1 == a1 && lastA2 == a2 &&
+			     lastB0 == b0 && lastB1 == b1 && lastB2 == b2)) {
+
+				final float lb0 = b0;
+				final float lb1 = b1;
+				final float lb2 = b2;
+				final float la0 = a0;
+				final float la1 = a1;
+				final float la2 = a2;
+
+				for (int i = 0; i < N_FRAMES; i++) {
+					float xn = buff.get(i);
+					float yn = (lb0 * xn + lb1 * xn1 + lb2 * xn2
+					            - la1 * yn1 - la2 * yn2) / la0;
+					if (Math.abs(yn) < 1.0E-8f)
+						yn = 0f; // de-normalize
+					buff.put(i, yn);
+					xn2 = xn1;
+					xn1 = xn;
+					yn2 = yn1;
+					yn1 = yn;
+				}
+
+			} else {
+				// Smoothly interpolate coefficients from lastA* / lastB* to a* / b* over this buffer
+				float curA0 = lastA0;
+				float curA1 = lastA1;
+				float curA2 = lastA2;
+				float curB0 = lastB0;
+				float curB1 = lastB1;
+				float curB2 = lastB2;
+
+				final float dA0 = (a0 - lastA0) / N_FRAMES;
+				final float dA1 = (a1 - lastA1) / N_FRAMES;
+				final float dA2 = (a2 - lastA2) / N_FRAMES;
+				final float dB0 = (b0 - lastB0) / N_FRAMES;
+				final float dB1 = (b1 - lastB1) / N_FRAMES;
+				final float dB2 = (b2 - lastB2) / N_FRAMES;
+
+				for (int i = 0; i < N_FRAMES; i++) {
+					curA0 += dA0;
+					curA1 += dA1;
+					curA2 += dA2;
+					curB0 += dB0;
+					curB1 += dB1;
+					curB2 += dB2;
+
+					float xn = buff.get(i);
+					float yn = (curB0 * xn + curB1 * xn1 + curB2 * xn2
+					            - curA1 * yn1 - curA2 * yn2) / curA0;
+					if (Math.abs(yn) < 1.0E-8f)
+						yn = 0f;
+					buff.put(i, yn);
+					xn2 = xn1;
+					xn1 = xn;
+					yn2 = yn1;
+					yn1 = yn;
+				}
 			}
+
+			// At the end of this block, current coeffs become "last" for the next one
+			lastA0 = a0;
+			lastA1 = a1;
+			lastA2 = a2;
+			lastB0 = b0;
+			lastB1 = b1;
+			lastB2 = b2;
 		}
 	}
 }

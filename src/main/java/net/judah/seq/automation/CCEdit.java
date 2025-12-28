@@ -15,10 +15,10 @@ import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
+import net.judah.api.Midi;
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.Btn;
-import net.judah.midi.Midi;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiConstants;

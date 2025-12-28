@@ -15,17 +15,18 @@ import net.judah.api.Signature;
 import net.judah.api.TimeListener;
 import net.judah.api.TimeProvider;
 import net.judah.gui.Gui;
+import net.judah.gui.Icons;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.gui.settable.SongCombo;
 import net.judah.gui.widgets.Btn;
-import net.judah.omni.Icons;
-import net.judah.omni.Threads;
+import net.judah.midi.JudahMidi;
 import net.judah.seq.AddTrack;
 import net.judah.seq.chords.ChordPlay;
 import net.judah.seq.chords.Chords;
 import net.judah.seq.chords.Scale;
 import net.judah.seq.track.ChannelTrack;
+import net.judah.util.Threads;
 
 public class SongTitle extends JPanel implements TimeListener {
 
@@ -34,22 +35,32 @@ public class SongTitle extends JPanel implements TimeListener {
 	private final JComboBox<Key> key = new JComboBox<>(Key.values());
 	private final JComboBox<Scale> scale = new JComboBox<>(Scale.values());
 	private final JLabel bar = new JLabel("0", JLabel.CENTER);
-	@Getter private final SongCombo songs = new SongCombo();
+	@Getter private final SongCombo songs;
 
-	private final TimeProvider clock = JudahZone.getClock();
+	private final TimeProvider clock = JudahMidi.getClock();
 
-	private final Chords chords = JudahZone.getChords();
-	@Getter private final ChordTrack chordTrack = new ChordTrack(JudahZone.getChords());
+	private final ChannelTrack funTimes;
+
+	@Getter private final SongTrack mains;
+	private JToggleButton mainsBtn;
+
+	private final JudahZone zone;
+	private final Chords chords;
+	@Getter private final ChordTrack chordTrack;
 	private JToggleButton chordsBtn = new JToggleButton(ChordPlay.FANCY);
 
-	private final ChannelTrack funTimes = JudahZone.getSeq().getMains();
-	@Getter private final SongTrack mains;
-	private JToggleButton mainsBtn = new JToggleButton(JudahZone.getMains().getName());
-
-
-	public SongTitle(Overview overview) {;
+	public SongTitle(Overview overview, JudahZone judahZone) {
 		this.overview = overview;
-		mains = new SongTrack(funTimes);
+		this.zone = judahZone;
+
+		songs = new SongCombo(zone);
+		chords = zone.getChords();
+		chordTrack = new ChordTrack(chords);
+
+		funTimes = zone.getSeq().getMains();
+		mainsBtn = new JToggleButton(zone.getMains().getName());
+
+		mains = new SongTrack(funTimes, zone.getSeq().getAutomation());
 		chordsBtn.addActionListener(l->showChords());
 		mainsBtn.addActionListener (l->showMeta());
 
@@ -58,7 +69,7 @@ public class SongTitle extends JPanel implements TimeListener {
 			Gui.resize(songs, Size.TITLE_SIZE),
 			new Btn(Icons.SAVE, e->overview.save()),
 			new Btn(" 🔁 ", e->overview.reload(), "Reload"),
-			new Btn(" + Track ", e->new AddTrack(JudahZone.getSeq())),
+			new Btn(" + Track ", e->new AddTrack(zone.getSeq())),
 			mainsBtn, chordsBtn, Box.createHorizontalGlue(),
 			Gui.resize(timeSig, Size.SMALLER),
 			Gui.resize(key, Size.MICRO),

@@ -5,12 +5,13 @@ import java.security.InvalidParameterException;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.judah.api.Effect.RTEffect;
 import net.judah.util.Constants;
 
 
 /** See: https://github.com/martinpenberthy/JUCEGuitarAmpBasic
  *  See: https://github.com/jaudiolibs/pipes/blob/master/pipes-units/src/main/java/org/jaudiolibs/pipes/units/Overdrive.java */
-public final class Overdrive implements Effect {
+public final class Overdrive implements RTEffect {
     static final float MIN_DRIVE = 0.1f;
     static final float MAX_DRIVE = 0.9f;
 
@@ -40,7 +41,7 @@ public final class Overdrive implements Effect {
 
     @Getter private final String name = Overdrive.class.getSimpleName();
     @Getter private final int paramCount = Settings.values().length;
-    @Getter private boolean active;
+//    @Getter private boolean active;
 
     /** 0..1 logarithmic */ // 0.1 .. 0.8
     private float drive = 0.28f;
@@ -48,23 +49,11 @@ public final class Overdrive implements Effect {
     private int clipping = 0;
     /** clipping stage - calculated */
     private float diode = 2f;
-
     private Algo algo = Algo.SMITH;
     /** Cached per‑sample function built whenever drive or algo changes. */
     private Waveshaper shaper = x -> x; // rebuildShaper()
-
     private static final float SAFETY_OUTPUT_CLAMP = 0.995f; // clamp outputs to +/-1.0
-    // Simple per-channel DC trackers for a light DC-blocking step after shaping.
-    // keep small alpha so we don't alter audio, just remove slow DC bias.
-    // private float dcLeft = 0f;
-    // private float dcRight = 0f;
-    // private static final float DC_ALPHA = 1e-4f; // small -> slow
 
-    @Override public void setActive(boolean active) {
-        if (active)
-            configure();
-        this.active = active;
-    }
 
     @Override public int get(int idx) {
         return switch (idx) {
@@ -90,7 +79,7 @@ public final class Overdrive implements Effect {
                     drive = 0.02f;
                 else
                     drive = Constants.logarithmic(value, MIN_DRIVE, MAX_DRIVE);
-                configure();
+                activate();
             }
             case 1 -> {
                 // clipping 0..100 -> 0..1
@@ -102,7 +91,7 @@ public final class Overdrive implements Effect {
                 Algo[] algos = Algo.values();
                 int clamped = Math.max(0, Math.min(value, algos.length - 1));
                 algo = algos[clamped];
-                configure();
+                activate();
             }
             default -> throw new InvalidParameterException("Setting " + idx + " (=" + value + ")");
         }
@@ -110,7 +99,8 @@ public final class Overdrive implements Effect {
 
     /**Rebuild per‑sample waveshaper based on current drive and algorithm.
      * Attempt to tie hardness/harmonic content to the drive parameter. */
-    private void configure() {
+    @Override
+	public void activate() {
 
         // friendlier range, roughly [1 .. 30]
         final float driveGain = 1f + drive * 29f;
@@ -252,9 +242,6 @@ public final class Overdrive implements Effect {
     }
 
     @Override public void process(FloatBuffer left, FloatBuffer right) {
-        if (!active)
-            return;
-
         process(left, true);
         process(right, false);
     }
@@ -272,19 +259,8 @@ public final class Overdrive implements Effect {
         if (clipping == 0) {
             // No clipping: just shape + gain
             while (buf.hasRemaining()) {
-
             	float y = waveShaper.apply(buf.get()) * algoGain;
                 y = Math.max(-SAFETY_OUTPUT_CLAMP, Math.min(SAFETY_OUTPUT_CLAMP, y));
-
-                // light DC estimator & remove (simple leaky average)
-				//    if (isLeft) {
-				//        dcLeft += DC_ALPHA * (y - dcLeft);
-				//        y -= dcLeft;
-				//    } else {
-				//        dcRight += DC_ALPHA * (y - dcRight);
-				//        y -= dcRight;
-				//    }
-
                 buf.put(buf.position() - 1, y);
             }
         } else { // include clipping diode stage
@@ -298,21 +274,11 @@ public final class Overdrive implements Effect {
                 // if y exceeds |max|: clip
                 if (Math.abs(y) > Math.abs(max))
                     y = max;
-
-//                // light DC estimator & remove
-//                if (isLeft) {
-//                    dcLeft += DC_ALPHA * (y - dcLeft);
-//                    y -= dcLeft;
-//                } else {
-//                    dcRight += DC_ALPHA * (y - dcRight);
-//                    y -= dcRight;
-//                }
                 buf.put(buf.position() - 1, y);
             }
         }
     }
 }
-
 
 // This DC can blow up your machine
 //case RECT -> { // Half-rectifier whose effective threshold follows drive.
@@ -328,3 +294,17 @@ public final class Overdrive implements Effect {
 //        if (y < -SAFETY_OUTPUT_CLAMP) y = -SAFETY_OUTPUT_CLAMP;
 //        return y;
 //    };}
+// Simple per-channel DC trackers for a light DC-blocking step after shaping.
+// keep small alpha so we don't alter audio, just remove slow DC bias.
+// private float dcLeft = 0f;
+// private float dcRight = 0f;
+// private static final float DC_ALPHA = 1e-4f; // small -> slow
+// light DC estimator & remove (simple leaky average)
+//    if (isLeft) {
+//        dcLeft += DC_ALPHA * (y - dcLeft);
+//        y -= dcLeft;
+//    } else {
+//        dcRight += DC_ALPHA * (y - dcRight);
+//        y -= dcRight;
+//    }
+

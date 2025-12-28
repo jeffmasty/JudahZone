@@ -28,6 +28,7 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.fx.Gain;
 import net.judah.gui.Gui;
+import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.PresetsView.Button;
 import net.judah.gui.knobs.KnobMode;
@@ -36,12 +37,12 @@ import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.FileRender;
 import net.judah.gui.widgets.LengthCombo;
 import net.judah.midi.JudahClock;
-import net.judah.omni.Icons;
-import net.judah.omni.Threads;
+import net.judah.midi.JudahMidi;
 import net.judah.song.Overview;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
+import net.judah.util.Threads;
 
 public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ implements ListSelectionListener {
 	public static final String TABNAME = "Setlists";
@@ -223,7 +224,7 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 	@Override
 	public boolean doKnob(int idx, int data2) {
 		switch(idx) {
-		case 0: JudahClock clock = JudahZone.getClock();
+		case 0: JudahClock clock = JudahMidi.getClock();
 			if (data2 == 0)
 				clock.setLength(1);
 			else
@@ -236,8 +237,8 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
     		Threads.execute(()->custom.setSelectedIndex(Constants.ratio(data2, custom.getItemCount() - 1)));
     		break;
     	case 3:
-    		JudahZone.getMains().getGain().set(Gain.VOLUME, data2);
-    		MainFrame.update(JudahZone.getMains());
+    		JudahZone.getInstance().getMains().getGain().set(Gain.VOLUME, data2);
+    		MainFrame.update(JudahZone.getInstance().getMains());
     		break;
 		}
 		return true;

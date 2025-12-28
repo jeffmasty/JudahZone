@@ -23,11 +23,13 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 
 import net.judah.JudahZone;
+import net.judah.api.Chord;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.Click;
+import net.judah.midi.JudahMidi;
 import net.judah.song.Song;
 import net.judah.util.RTLogger;
 
@@ -79,7 +81,7 @@ public class ChordSheet extends JPanel {
 	}
 
 	void edit() {
-		Song song = JudahZone.getOverview().getSong();
+		Song song = JudahZone.getInstance().getOverview().getSong();
 		if (song == null || song.getChordpro() == null || song.getChordpro().isBlank())
 			return;
 		try {
@@ -127,7 +129,7 @@ public class ChordSheet extends JPanel {
 
 	private void length() {
 		if (chords.getSection() == null) return;
-		JudahZone.getClock().setLength(chords.bars(chords.getSection().getCount()));
+		JudahMidi.getClock().setLength(chords.bars(chords.getSection().getCount()));
 	}
 	class Crd extends JLabel {
 		final Chord chord;
@@ -208,7 +210,7 @@ public class ChordSheet extends JPanel {
 					result.add(duo);
 					onDeck = null;
 				}
-				else if (chord.steps < measure)
+				else if (chord.getSteps() < measure)
 					onDeck = new Crd(chord);
 				else result.add(new Crd(chord));
 			}

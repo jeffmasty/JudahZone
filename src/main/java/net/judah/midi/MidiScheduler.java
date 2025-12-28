@@ -5,14 +5,17 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.fx.Fader;
 import net.judah.mixer.Channel;
+import net.judah.mixer.Fader;
 import net.judah.util.RTLogger;
 
 /** increments any running LFOs */
 public class MidiScheduler implements Runnable {
 
-	public MidiScheduler() {
+	private final JudahZone zone;
+
+	public MidiScheduler(JudahZone zone) {
+		this.zone = zone;
 		new Thread(this).start();
 	}
 
@@ -40,9 +43,9 @@ public class MidiScheduler implements Runnable {
 	}
 
 	void pulseLFOs() {
-		if (JudahZone.getMains().isOnMute())
+		if (zone.getMains().isOnMute())
 			return;
-		for (Channel ch : JudahZone.getMixer().getAll()) {
+		for (Channel ch : zone.getMixer().getAll()) {
 			ch.getLfo().pulse();
 			ch.getLfo2().pulse();
 		}

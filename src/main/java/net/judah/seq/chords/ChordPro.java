@@ -17,6 +17,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import net.judah.api.Chord;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 

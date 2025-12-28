@@ -4,7 +4,7 @@ import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
-import net.judah.midi.Midi;
+import net.judah.api.Midi;
 import net.judah.seq.track.MidiTrack;
 
 public class Measure extends Notes implements MidiConstants {

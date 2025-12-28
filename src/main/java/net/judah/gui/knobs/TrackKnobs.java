@@ -16,6 +16,7 @@ import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
 import net.judah.fx.Gain;
 import net.judah.gui.Gui;
+import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.TabZone;
@@ -30,8 +31,6 @@ import net.judah.gui.widgets.Integers;
 import net.judah.gui.widgets.PlayWidget;
 import net.judah.gui.widgets.Slider;
 import net.judah.gui.widgets.TrackAmp;
-import net.judah.omni.Icons;
-import net.judah.omni.Threads;
 import net.judah.seq.TrackList;
 import net.judah.seq.arp.Arp;
 import net.judah.seq.track.Computer.Update;
@@ -44,6 +43,7 @@ import net.judah.seq.track.Programmer;
 import net.judah.synth.taco.TacoSynth;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
+import net.judah.util.Threads;
 
 // TODO MouseWheel listener -> change pattern
 public class TrackKnobs extends KnobPanel {

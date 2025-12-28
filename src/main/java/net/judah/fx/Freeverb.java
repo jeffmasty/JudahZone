@@ -16,7 +16,6 @@ import java.util.Arrays;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.omni.Threads;
 
 /** The classic Freeverb algorithm, true stereo with independent L/R filter networks */
 public final class Freeverb extends Reverb {
@@ -35,7 +34,7 @@ public final class Freeverb extends Reverb {
     private static final float initialwidth = 0.9f;
 
     @Getter private final int paramCount = Settings.values().length;
-    @Getter private boolean active;
+//    @Getter private boolean active;
 
     private float roomsize;
     private float damp;
@@ -91,7 +90,7 @@ public final class Freeverb extends Reverb {
         }
 
         // prepare all buffers!
-        update();
+        dirty = true;
     }
 
     @Override
@@ -173,6 +172,11 @@ public final class Freeverb extends Reverb {
     @Override
     public float getWidth() {
         return width;
+    }
+
+    @Override
+	public void activate() {
+    	dirty = true;
     }
 
     private void update() {
@@ -364,19 +368,31 @@ public final class Freeverb extends Reverb {
    }
 
     @Override
-    public void setActive(boolean active) {
-        this.active = active;
-        if (active) return;
-        Threads.execute(() -> { // clear the echo
-            for (Allpass l : allpassL)
-                l.reset();
-            for (Comb l : combL)
-                l.reset();
-            for (Allpass r : allpassR)
-                r.reset();
-            for (Comb r : combR)
-                r.reset();
-        });
+    public void reset() {
+        for (Allpass l : allpassL)
+            l.reset();
+        for (Comb l : combL)
+            l.reset();
+        for (Allpass r : allpassR)
+            r.reset();
+        for (Comb r : combR)
+            r.reset();
     }
+
+//    @Override
+//    public void setActive(boolean active) {
+//        this.active = active;
+//        if (active) return;
+//        Threads.execute(() -> { // clear the echo
+//            for (Allpass l : allpassL)
+//                l.reset();
+//            for (Comb l : combL)
+//                l.reset();
+//            for (Allpass r : allpassR)
+//                r.reset();
+//            for (Comb r : combR)
+//                r.reset();
+//        });
+//    }
 
 }

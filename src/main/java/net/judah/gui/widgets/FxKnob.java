@@ -5,7 +5,8 @@ import java.awt.Color;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import net.judah.fx.Effect;
+import lombok.Getter;
+import net.judah.api.Effect;
 import net.judah.fx.Gain;
 import net.judah.fx.Reverb;
 import net.judah.gui.Gui;
@@ -22,7 +23,7 @@ public class FxKnob extends JPanel implements Updateable {
 	public static final Color THUMB = Pastels.BLUE;
 
 	protected final Channel ch;
-	protected Effect effect;
+	@Getter protected Effect effect;
 	protected final int idx; // main knob target
 	protected int shiftIdx = -1; // alternate target
 	protected boolean tholdHi = false; // most effects activate on low threshold
@@ -112,8 +113,8 @@ public class FxKnob extends JPanel implements Updateable {
 		else if (knob.getValue() != effect.get(idx))
 				knob.setValue(effect.get(idx));
 
-		Color bg = effect == null ? ch.getReverb().isActive() ? Pastels.getFx(Reverb.class) : null :
-				effect.isActive() ? Pastels.getFx(effect.getClass()) : null;
+		Color bg = effect == null ? ch.isActive(ch.getReverb()) ? Pastels.getFx(Reverb.class) : null :
+				ch.isActive(effect) ? Pastels.getFx(effect.getClass()) : null;
 		setBackground(bg);
 		label.setBackground(bg);
 		knob.setBackground(bg);
@@ -132,7 +133,7 @@ public class FxKnob extends JPanel implements Updateable {
 			if (effect instanceof Gain)
 				return;// volume/pan always on
 			// threshold activation
-			effect.setActive(tholdHi ? criteria < MidiConstants.THOLD_HI : criteria > MidiConstants.THOLD_LO);
+			ch.setActive(effect, tholdHi ? criteria < MidiConstants.THOLD_HI : criteria > MidiConstants.THOLD_LO);
 		}
 	}
 

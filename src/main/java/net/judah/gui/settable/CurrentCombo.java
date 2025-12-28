@@ -3,8 +3,8 @@ package net.judah.gui.settable;
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.Integers;
-import net.judah.omni.Threads;
 import net.judah.seq.track.Computer;
+import net.judah.util.Threads;
 
 public class CurrentCombo extends SetCombo<Integer> {
 

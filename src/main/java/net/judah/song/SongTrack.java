@@ -10,6 +10,7 @@ import javax.swing.JPanel;
 
 import lombok.Getter;
 import net.judah.gui.Gui;
+import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.TabZone;
@@ -21,7 +22,6 @@ import net.judah.gui.widgets.PlayWidget;
 import net.judah.gui.widgets.TogglePreset;
 import net.judah.gui.widgets.TrackGain;
 import net.judah.gui.widgets.TrackVol;
-import net.judah.omni.Icons;
 import net.judah.seq.automation.Automation;
 import net.judah.seq.track.ChannelTrack;
 import net.judah.seq.track.Computer.Update;
@@ -34,6 +34,7 @@ import net.judah.seq.track.Programmer;
 	private static final Dimension COMPUTER = new Dimension(204, 27);
 
 	private final MidiTrack track;
+	private final Automation automation;
 	private final CCTrack ccTrack;
 	private final Program program;
 	private final Programmer programmer;
@@ -45,15 +46,16 @@ import net.judah.seq.track.Programmer;
 	private TogglePreset preset;
 
 	// TODO MouseWheel listener -> change pattern?
-	public SongTrack(MidiTrack t) {
+	public SongTrack(MidiTrack t, Automation auto) {
 		this.track = t;
+		this.automation = auto;
 		play = new PlayWidget(this);
 		mode = t instanceof PianoTrack p ? new ModeCombo(p) : null;
 		gain = t instanceof PianoTrack ? null : new TrackGain(t);
 		amp = new TrackVol(track);
 		program = new Program(track);
 		programmer = new Programmer(track);
-		ccTrack = new CCTrack(track);
+		ccTrack = new CCTrack(track, auto);
 
 		JPanel top = new JPanel(new FlowLayout(FlowLayout.LEADING, 2, 2));
 		top.add(Gui.resize(play, MODE_SIZE));
@@ -104,7 +106,7 @@ import net.judah.seq.track.Programmer;
 		Gui.resize(this, wasBig ? Overview.TRACK : BIG);
 
 		if (!wasBig) {
-			Automation.getInstance().init(track);
+			automation.init(track);
 			add(ccTrack);
 			ccTrack.requestFocus();
 		} else

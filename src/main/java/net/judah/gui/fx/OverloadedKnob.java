@@ -1,23 +1,26 @@
 package net.judah.gui.fx;
 
 import lombok.Getter;
-import net.judah.fx.Effect;
+import net.judah.api.Effect;
 import net.judah.gui.HQ;
 import net.judah.gui.Updateable;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.Knob.KnobListener;
+import net.judah.mixer.Channel;
 import net.judah.seq.MidiConstants;
 
 
 @Getter
 public class OverloadedKnob extends Knob implements KnobListener, Updateable {
 
+	private final Channel ch;
 	private final Effect fx;
 	private final int main;
 	private final int alt;
 
-	OverloadedKnob(Effect target, int normal, int shift) {
+	OverloadedKnob(Channel ch, Effect target, int normal, int shift) {
+		this.ch = ch;
 		this.fx = target;
 		this.main = normal;
 		this.alt = shift;
@@ -37,7 +40,8 @@ public class OverloadedKnob extends Knob implements KnobListener, Updateable {
 			fx.set(alt,  val);
 		else {
 			fx.set(main, val);
-			fx.setActive(val > MidiConstants.THOLD_LO);
+
+			ch.setActive(fx, val > MidiConstants.THOLD_LO);
 		}
 	}
 

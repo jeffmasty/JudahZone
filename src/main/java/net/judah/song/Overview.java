@@ -1,6 +1,5 @@
 package net.judah.song;
 
-import static net.judah.JudahZone.*;
 import static net.judah.gui.Size.HEIGHT_TAB;
 import static net.judah.gui.Size.TAB_SIZE;
 import static net.judah.gui.Size.WIDTH_TAB;
@@ -22,6 +21,7 @@ import javax.swing.ScrollPaneConstants;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
+import net.judah.api.Effect;
 import net.judah.api.Signature;
 import net.judah.api.TimeListener;
 import net.judah.drumkit.DrumMachine;
@@ -33,38 +33,40 @@ import net.judah.gui.TabZone;
 import net.judah.gui.settable.SongCombo;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
+import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
-import net.judah.omni.JsonUtil;
-import net.judah.omni.Threads;
 import net.judah.seq.Seq;
-import net.judah.seq.track.Computer.TrackUpdate;
+import net.judah.seq.track.Computer;
+import net.judah.seq.track.Computer.Update;
 import net.judah.seq.track.MidiTrack;
 import net.judah.song.cmd.Cmd;
 import net.judah.song.cmd.Param;
 import net.judah.song.setlist.Setlist;
 import net.judah.song.setlist.Setlists;
 import net.judah.util.Folders;
+import net.judah.util.JsonUtil;
 import net.judah.util.RTLogger;
+import net.judah.util.Threads;
 
 /** left: SongView, right: midi tracks list*/
 public class Overview extends Box implements TimeListener {
 
 	public static final int TRACK_HEIGHT = 35;
 	public static final Dimension LIST_SZ = new Dimension(WIDTH_TAB - 388, HEIGHT_TAB - 14);
-	public static final Dimension TRACK = new Dimension(LIST_SZ.width - MainFrame.SCROLL, TRACK_HEIGHT);
+	public static final Dimension TRACK = new Dimension(LIST_SZ.width - MainFrame.SCROLL_BTN, TRACK_HEIGHT);
 	public static final Dimension CHORDS = new Dimension(TRACK.width, ChordTrack.HEIGHT + 5);
 
 	private static final Dimension SCENE_SZ = new Dimension(WIDTH_TAB - LIST_SZ.width - 1, LIST_SZ.height);
 	private static final Dimension PROPS = new Dimension(SCENE_SZ.width - 83, (int)(SCENE_SZ.height * 0.21));
 	private static final Dimension BTNS = new Dimension((int)(Size.WIDTH_TAB * 0.365), (int)(SCENE_SZ.height * 0.66));
 
-	private final JudahClock clock = getClock();
-	private final Seq seq = getSeq();
-	private final Looper looper = getLooper();
-	private final DJJefe mixer = getMixer();
-	private final Setlists setlists = getSetlists();
-	private final DrumMachine drums = getDrumMachine();
+	private final JudahClock clock;
+	private final Seq seq;
+	private final Looper looper;
+	private final DJJefe mixer;
+	private final Setlists setlists;
+	private final DrumMachine drums;
 
 	/** The Current SmashHit */
 	@Getter private Song song;
@@ -77,14 +79,24 @@ public class Overview extends Box implements TimeListener {
 	@Getter private SongView songView;
 	private final SongTitle songTitle;
 	private final JPanel holder = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-	private final TrackPanel trackPnl = new TrackPanel();
-	private final JScrollPane scroll = new JScrollPane(trackPnl);
-	@Getter private final TraxCombo trax = new TraxCombo();
+	private final TrackPanel trackPnl;
+	private final JScrollPane scroll;
+	private final JudahZone zone;
 
-	public Overview(String title, Seq seq) {
+	public Overview(String title, JudahZone judahZone) {
 		super(BoxLayout.X_AXIS);
 		setName(title);
-		songTitle = new SongTitle(this);
+		this.zone = judahZone;
+		trackPnl = new TrackPanel(zone.getSeq().getAutomation());
+		scroll = new JScrollPane(trackPnl);
+		clock = JudahMidi.getClock();
+		seq = zone.getSeq();
+		looper = zone.getLooper();
+		mixer = zone.getMixer();
+		setlists = zone.getSetlists();
+		drums = zone.getDrumMachine();
+
+		songTitle = new SongTitle(this, zone);
 		Gui.resize(this, TAB_SIZE);
 		Gui.resize(trackPnl, LIST_SZ);
 		Gui.resize(holder, SCENE_SZ);
@@ -106,7 +118,6 @@ public class Overview extends Box implements TimeListener {
 	public void refill() { // track has been added or removed
 		songTitle.update();
 		trackPnl.refill(seq.getTracks());
-		trax.refill(seq.getTracks());
 		repaint();
 	}
 
@@ -205,7 +216,7 @@ public class Overview extends Box implements TimeListener {
     	clock.setTimeSig(song.getTimeSig());
     	clock.reset();
 
-		JudahZone.getChords().load(song);
+		zone.getChords().load(song);
 
     	seq.loadSong(song); // + chords
 
@@ -238,9 +249,11 @@ public class Overview extends Box implements TimeListener {
     		choose = Folders.choose(setlists.getDefault());
     	if (choose == null)
     		return null;
+
     	Song result = null;
     	try {
-			result = (Song)JsonUtil.readJson(choose, Song.class);
+			result = JsonUtil.readJson(choose, Song.class);
+			result.attachRuntime(zone);
 			result.setFile(choose);
 			setSong(result);
 		} catch (Exception e) { RTLogger.warn(this, e); }
@@ -248,8 +261,8 @@ public class Overview extends Box implements TimeListener {
     }
 
     public void newSong() {
-    	setSong(new Song(seq, (int) clock.getTempo()));
-    	getInstruments().mutes();
+    	setSong(new Song(zone, (int) clock.getTempo()));
+    	zone.getInstruments().mutes(zone);
     	setName();
     }
 
@@ -356,12 +369,12 @@ public class Overview extends Box implements TimeListener {
 		songView.getLauncher().update();
 	}
 
-	public void update(TrackUpdate update) {
-		SongTrack target = trackPnl.getTrack(update.track());
+	public void update(Update type, Computer c) {
+		SongTrack target = trackPnl.getTrack(c);
 		if (target != null)
-			target.update(update.type());
-		else if (update.track() == seq.getMains() && songTitle.isMainsShowing())
-			songTitle.getMains().update(update.type());
+			target.update(type);
+		else if (c == seq.getMains() && songTitle.isMainsShowing())
+			songTitle.getMains().update(type);
 	}
 
 	public void update(Channel ch) {
@@ -369,14 +382,21 @@ public class Overview extends Box implements TimeListener {
 			if (songTitle.isMainsShowing())
 				songTitle.getMains().update();
 		}
-		else
-			for (SongTrack s : trackPnl)
-				if (s.getTrack().getChannel() == ch)
-					s.update();
+		else {
+			SongTrack s = trackPnl.getTrack(ch);
+			if (s != null)
+				s.update();
+		}
 	}
 
 	public CCTrack getMains() {
 		return songTitle.getMains().getCcTrack();
+	}
+
+	public void update(Channel ch, Effect fx) {
+		SongTrack s = trackPnl.getTrack(ch);
+		if (s != null)
+			s.update();
 	}
 
 

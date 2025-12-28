@@ -8,6 +8,7 @@ import java.util.Vector;
 
 import lombok.Getter;
 import net.judah.api.Notification.Property;
+import net.judah.api.Recording;
 import net.judah.api.TimeListener;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Updateable;
@@ -15,11 +16,10 @@ import net.judah.gui.widgets.LoopWidget;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
-import net.judah.omni.Recording;
-import net.judah.omni.Threads;
 import net.judah.util.Constants;
 import net.judah.util.Memory;
 import net.judah.util.RTLogger;
+import net.judah.util.Threads;
 
 @Getter
 public class Looper extends ArrayList<Loop> implements TimeListener, Updateable {
@@ -33,7 +33,6 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable 
 	private final Loop loopB;
 	private final Loop loopC;
 	private final SoloTrack soloTrack;
-	private final Memory mem;
 
 	private final Vector<Loop> onDeck = new Vector<>();
 	private final Vector<Channel> fx = new Vector<>();
@@ -46,10 +45,9 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable 
 	private int loopCount;
     private int countUp; // gui thread feedback
 
-	public Looper(Collection<LineIn> sources, LineIn solo, JudahClock clock, Memory memory) {
+	public Looper(Collection<LineIn> sources, LineIn solo, JudahClock clock) {
 
 		this.clock = clock;
-		this.mem = memory;
 
 		loopA = new Loop("A", "LoopA.png", this, sources);
 		loopB = new Loop("B", "LoopB.png", this, sources);
@@ -156,11 +154,11 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable 
 				continue; // solotrack, init primary
 			if (loop.getTape().size() < frames) {
 				Recording tape = loop.getTape();
-				tape.add(mem.getFrame()); // instantly
+				tape.add(Memory.STEREO.getFrame()); // instantly
 				if (tape.size() < frames)
 					Threads.execute(() -> {
 						for (int i = tape.size(); i < frames; i++)
-							tape.add(mem.getFrame());
+							tape.add(Memory.STEREO.getFrame());
 				});
 			}
 		}
@@ -360,7 +358,7 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable 
 		int target = (int) (loop.getFactor() * primary.getLength());
 
 		if (loop.getLength() < target) {
-			mem.catchUp(loop.getTape(), target);
+			Memory.STEREO.catchUp(loop.getTape(), target);
 			loop.setLength(target);
 		}
 		return primary.getTapeCounter().get(); // TODO if primary's factor is duplicated?

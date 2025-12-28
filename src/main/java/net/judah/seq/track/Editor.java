@@ -11,29 +11,29 @@ import javax.sound.midi.Track;
 import javax.swing.JMenu;
 
 import lombok.Getter;
-import net.judah.JudahZone;
 import net.judah.api.Key;
+import net.judah.api.Midi;
 import net.judah.drumkit.DrumType;
 import net.judah.gui.Actionable;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
-import net.judah.midi.Midi;
 import net.judah.midi.Panic;
+import net.judah.seq.Clipboard;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiNote;
 import net.judah.seq.MidiTools;
 import net.judah.seq.Prototype;
 import net.judah.seq.beatbox.RemapView;
-import net.judah.seq.track.Computer.TrackUpdate;
 import net.judah.seq.track.Computer.Update;
 import net.judah.util.RTLogger;
 
 public class Editor {
 
+	public static final Clipboard clipboard = new Clipboard();
+
 	@Getter MidiTrack track;
 	protected final Track t;
-	private final TrackUpdate update;
 
 	protected final ArrayList<MidiEvent> transfer = new ArrayList<MidiEvent>();
 
@@ -44,7 +44,6 @@ public class Editor {
 	public Editor(MidiTrack midi) {
 		track = midi;
 		t = track.getT();
-		update = new TrackUpdate(Update.EDIT, track);
 	}
 
 	protected void execute(Edit e) {
@@ -68,7 +67,7 @@ public class Editor {
 		else if (type == Type.REMAP) {
 			remap(e, false);
 		}
-		MainFrame.update(update);
+		MainFrame.updateTrack(Update.EDIT, track);
 		RTLogger.debug(this, "exe: " + e.getType() + " to " + e.getDestination() + ": " + Arrays.toString(e.getNotes().toArray()));
 	}
 
@@ -104,7 +103,7 @@ public class Editor {
 			remap(e, false);
 		}
 		caret--;
-		MainFrame.update(update);
+		MainFrame.updateTrack(Update.EDIT, track);
 		RTLogger.debug(this, "undo: " + e.getType());
 	}
 
@@ -194,7 +193,7 @@ public class Editor {
 	}
 
 	public void paste() {
-		push(new Edit(Type.NEW, JudahZone.getClipboard().paste(track)));
+		push(new Edit(Type.NEW, clipboard.paste(track)));
 	}
 
 	protected final void mod(Edit e, boolean exe) {

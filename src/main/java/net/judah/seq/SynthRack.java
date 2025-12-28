@@ -13,11 +13,11 @@ import net.judah.JudahZone;
 import net.judah.api.ZoneMidi;
 import net.judah.drumkit.DrumMachine;
 import net.judah.fx.Gain;
+import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.midi.Actives;
 import net.judah.midi.MidiInstrument;
 import net.judah.mixer.LineIn;
-import net.judah.omni.Icons;
 import net.judah.seq.track.PianoTrack;
 import net.judah.synth.fluid.FluidSynth;
 import net.judah.synth.taco.Polyphony;
@@ -77,7 +77,7 @@ public class SynthRack {
 				int idx = Integer.parseInt(meta.substring(1));
 				String device = meta.substring(0, 1);
 				if (device == "D")
-					return JudahZone.getDrumMachine();
+					return JudahZone.getInstance().getDrumMachine();
 				else if (device == "T" && idx < getTacos().length)
 						return getTacos()[idx];
 				else if (device == "F" && idx < getFluids().length)
@@ -101,7 +101,8 @@ public class SynthRack {
 			}
 			else {
 				Actives a = new Actives(engine, engine.getTracks().size());
-				((MidiInstrument)engine).getTracks().add(new PianoTrack(engine.getName(), a));
+				((MidiInstrument)engine).getTracks().add(new PianoTrack(engine.getName(),
+						a, JudahZone.getInstance().getChords()));
 				//((MidiInstrument)engine).getTracks().add(new PianoTrack(engine.getName(), engine, engine.getTracks().size()));
 			}
 			engine.getTracks().getLast().setPermanent(true);
@@ -112,8 +113,8 @@ public class SynthRack {
 	// After GUI startup
 	public static void addEngine(ZoneMidi engine) {
 		engines.add(engine);
-		JudahZone.getMixer().addChannel((LineIn)engine);
-		JudahZone.getSeq().refill();
+		JudahZone.getInstance().getMixer().addChannel((LineIn)engine);
+		JudahZone.getInstance().getSeq().refill();
 		RTLogger.debug(SynthRack.class, engine.getName() + " " + engine.getClass().getSimpleName() + " instance added.");
 	}
 

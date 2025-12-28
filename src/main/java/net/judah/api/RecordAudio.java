@@ -7,5 +7,5 @@ public interface RecordAudio {
 
 	boolean isRecording();
 
-	void clear();
+	void delete();
 }

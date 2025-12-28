@@ -3,7 +3,6 @@ package net.judah.mixer;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.drumkit.DrumKit;
-import net.judah.fx.Effect;
 import net.judah.gui.MainFrame;
 import net.judah.util.Constants;
 
@@ -24,15 +23,13 @@ public abstract class LineIn extends Channel {
 		this.muteRecord = muteRecord;
 		MainFrame.update(this);
 		if (this instanceof DrumKit)
-			MainFrame.update(JudahZone.getDrumMachine());
+			MainFrame.update(JudahZone.getInstance().getDrumMachine());
 	}
 
     /** run active effects on this input channel */
 	protected final void fx() {
 		gain.preamp(left, right);
-		for(Effect fx : this)
-			if (fx.isActive())
-				fx.process(left, right);
+		active.forEach(fx -> fx.process(left, right));
 		gain.post(left, right);
 	}
 

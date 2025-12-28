@@ -7,7 +7,7 @@ import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
-import net.judah.midi.Midi;
+import net.judah.api.Midi;
 import net.judah.seq.track.MidiTrack;
 import net.judah.util.RTLogger;
 

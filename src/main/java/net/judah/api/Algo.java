@@ -1,13 +1,11 @@
-package net.judah.seq.arp;
+package net.judah.api;
 
 import javax.sound.midi.ShortMessage;
 
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.judah.seq.Poly;
-import net.judah.seq.chords.Chord;
 
-@NoArgsConstructor
+/** base for arpeggiator */
 public abstract class Algo {
 
 	@Setter protected int range;
@@ -18,10 +16,10 @@ public abstract class Algo {
 	 * @param result transformation
 	 */
 	public abstract void process(ShortMessage bass, Chord chord, Poly result);
-	
+
 	/** if needed, subclasses can reset on chord changes */
 	public void change() {
-		
+
 	}
-	
+
 }

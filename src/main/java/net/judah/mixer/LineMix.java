@@ -38,7 +38,7 @@ public class LineMix extends MixWidget {
 	@Override
 	public void updateVolume() {
 		super.updateVolume();
-		if (!in.isMuteRecord() && in != JudahZone.getDrumMachine())
+		if (!in.isMuteRecord() && in != JudahZone.getInstance().getDrumMachine())
 			fader.setBackground(ONTAPE);
 	}
 

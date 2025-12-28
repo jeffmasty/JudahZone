@@ -11,8 +11,8 @@ import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
 
 import net.judah.gui.Actionable;
-import net.judah.seq.automation.Automation.MidiMode;
 import net.judah.seq.automation.Automation.CCData;
+import net.judah.seq.automation.Automation.MidiMode;
 import net.judah.seq.track.MidiTrack;
 
 /** lists out CCs for current frame and right-click menu */
@@ -22,12 +22,14 @@ public class CCPopup extends JPopupMenu {
 	private final boolean lineAxis;
 	private final JComponent view;
 	private final CCModel dat;
+	private final Automation automation;
 
-	public CCPopup(MidiTrack midi, JComponent parent, boolean horizontal) {
+	public CCPopup(MidiTrack midi, JComponent parent, boolean horizontal, Automation auto) {
 		track = midi;
 		dat = new CCModel(midi);
 		view = parent;
 		lineAxis = horizontal;
+		automation = auto;
 	}
 
 	public void popup(MouseEvent me, int step) {
@@ -36,15 +38,22 @@ public class CCPopup extends JPopupMenu {
 	    add(new Actionable("New CC", e->create(me.getPoint())));
 	    for (CCData d : getStep(step)) {
 	    	add(new Actionable(d.type().toString() + ": " + ((ShortMessage)d.e().getMessage()).getData2(),
-	    			e->Automation.getInstance().edit((MidiTrack)dat.track, d))); // TODO
+	    			e->automation.edit((MidiTrack)dat.track, d))); // TODO
 	    }
-	    // TODO PitchBend
+	    // Pitch Bend
+	    MidiEvent bend = getPitch(step);
+	    if (bend == null) {
+	        long tick = track.getFrame() * track.getWindow() + step * track.getStepTicks();
+	        add(new Actionable("Pitch Bend", e -> automation.init(track, tick, MidiMode.Pitch)));
+	    } else {
+	        add(new Actionable("Pitch Bend", e -> automation.edit(track, bend)));
+	    }
 	    // ProgChange
 	    if (track instanceof MidiTrack t) {
 		    MidiEvent prog = getProg(step);
 		    if (prog == null) {
 		    	long tick = track.getFrame() * track.getWindow() + step * track.getStepTicks();
-				add(new Actionable("ProgChange", e->Automation.getInstance().init(t, tick, MidiMode.Program)));
+				add(new Actionable("ProgChange", e->automation.init(t, tick, MidiMode.Program)));
 		    }
 		    else {
 		    	String[] source = t.getPatches();
@@ -54,7 +63,7 @@ public class CCPopup extends JPopupMenu {
 		    		instr = "" + data1;
 		    	else
 		    		instr = source[data1];
-		    	add(new Actionable("Prog: " + instr, e->Automation.getInstance().edit(track, prog))); // edit w/ delete // TODO
+		    	add(new Actionable("Prog: " + instr, e->automation.edit(track, prog))); // edit w/ delete // TODO
 		    }
 	    }
 	    JMenu tools = new JMenu("Tools");
@@ -88,13 +97,24 @@ public class CCPopup extends JPopupMenu {
 		return null;
 	}
 
+	public MidiEvent getPitch(int step) {
+	    long start = track.getLeft() + step * track.getStepTicks();
+	    long end = start + track.getStepTicks();
+	    for (MidiEvent e : dat.pitch) {
+	        if (e.getTick() < start) continue;
+	        if (e.getTick() >= end) break;
+	        return e;
+	    }
+	    return null;
+	}
+
 	private void create(Point point) { // horizontal vs vertical
 		// click / length = tick / window;
 		int click = lineAxis ? point.x : point.y;
 		int length = lineAxis ? view.getWidth() : view.getHeight();
 		long zeroBased = click * track.getWindow() / length;
 		long tick = track.getLeft() + zeroBased;
-		Automation.getInstance().init(track, tick, MidiMode.CC); // TODO
+		automation.init(track, tick, MidiMode.CC); // TODO
 	}
 
 	public int[] populate(long left, long right) {

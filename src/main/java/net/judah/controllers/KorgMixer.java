@@ -1,25 +1,25 @@
 package net.judah.controllers;
 
-import static net.judah.JudahZone.*;
-
 import java.util.List;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
+import net.judah.api.Controller;
+import net.judah.api.Midi;
 import net.judah.fx.Gain;
 import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
-import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
-import net.judah.omni.Threads;
 import net.judah.seq.Seq;
 import net.judah.seq.SynthRack;
 import net.judah.song.Scene;
+import net.judah.util.Threads;
 
 /** Korg nanoKONTROL2 midi controller custom codes */
+@RequiredArgsConstructor
 public class KorgMixer implements Controller {
 	public static final String NAME = "nanoKONTROL2";
 
@@ -51,22 +51,23 @@ public class KorgMixer implements Controller {
 	private static final MapEntry PLAY = new MapEntry("PLAY", TYPE.TOGGLE, 41);
 	private static final MapEntry RECORD = new MapEntry("REC", TYPE.TOGGLE, 45);
 
+	private final JudahZone zone;
 
 	@Override
 	public boolean midiProcessed(Midi midi) {
 		int data1 = midi.getData1();
 		int data2 = (int)Math.floor(midi.getData2() / 1.27f);
-		Seq seq = getSeq();
+		Seq seq = zone.getSeq();
 
 		if (data1 >= 0 && data1 < 8) { // Main Faders
 			Channel ch = fader(data1);
 			ch.getGain().set(Gain.VOLUME, data2);
-			MainFrame.update(ch);
+			MainFrame.updateChannel(ch, ch.getGain());
 		}
 
 		// knobs = drumkit or synths gain
 		else if (data1 >= knoboff && data1 < knoboff + 4) {
-			getDrumMachine().getTracks().get(data1 - knoboff).setAmp(data2 * .01f);
+			zone.getDrumMachine().getTracks().get(data1 - knoboff).setAmp(data2 * .01f);
 		}
 		else if (data1 >= knoboff + 4 && data1 < knoboff + 8) {
 			Threads.execute(()->SynthRack.gain(data1 - (knoboff + 4), data2));
@@ -76,10 +77,10 @@ public class KorgMixer implements Controller {
 		}
 		else if (data2 > 0 && data1 >= moff && data1 < moff + 8) { // MUTE/RECORD
 			Channel ch = mutes(data1 - moff);
-			if (ch == getMic())
+			if (ch == JudahZone.getInstance().getMic())
 				((LineIn)ch).setMuteRecord(!((LineIn)ch).isMuteRecord());
-			else if (ch == getGuitar()) // swap
-				getBass().setOnMute(!getBass().isOnMute());
+			else if (ch == zone.getGuitar()) // swap
+				zone.getBass().setOnMute(!zone.getBass().isOnMute());
 			else
 				ch.setOnMute(!ch.isOnMute());
 		}
@@ -92,7 +93,7 @@ public class KorgMixer implements Controller {
 			Threads.execute(()->HQ.setShift(data2 == 100));
 		}
 		else if (data1 == CYCLE.getVal()) {
-			getLooper().verseChorus();
+			zone.getLooper().verseChorus();
 		}
 		else if (data1 == PREV.getVal() && data2 != 0) {
 			seq.getTracks().next(false);
@@ -127,38 +128,39 @@ public class KorgMixer implements Controller {
 
 	private void launchScene(int idx) {
 		if (idx == 7) {
-			getBass().getTrack().toggle();
+			zone.getBass().getTrack().toggle();
 			return;
 		}
-		List<Scene> scenes = getOverview().getSong().getScenes();
-		getOverview().setOnDeck(scenes.size() > idx ? scenes.get(idx) : scenes.getLast());
+		List<Scene> scenes = zone.getOverview().getSong().getScenes();
+		zone.getOverview().setOnDeck(scenes.size() > idx ? scenes.get(idx) : scenes.getLast());
 
 	}
 
 	private Channel fader(int idx) {
 		if (idx < 4)
-			return getLooper().get(idx);
+			return zone.getLooper().get(idx);
 		if (idx == 5)
-			return getFluid();
+			return zone.getFluid();
 		if (idx == 6)
-			return getDrumMachine();
+			return zone.getDrumMachine();
 		if (idx == 7) {
-			return getMains();
+			return zone.getMains();
 		}
-		return getTaco();
+		return zone.getTaco();
 	}
 
 	private Channel mutes(int idx) {
+
 		if (idx < 4)
-			return getLooper().get(idx);
+			return zone.getLooper().get(idx);
 		if (idx == 5)
-			return getBass();
+			return zone.getBass();
 		if (idx == 6)
-			return getDrumMachine();
+			return zone.getDrumMachine();
 		if (idx == 7) {
-			return getMains();
+			return zone.getMains();
 		}
-		return getMic();
+		return zone.getMic();
 	}
 
 }

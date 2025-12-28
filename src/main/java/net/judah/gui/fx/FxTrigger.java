@@ -5,10 +5,9 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.JLabel;
 
-import net.judah.fx.Effect;
-import net.judah.gui.MainFrame;
+import net.judah.api.Effect;
 import net.judah.mixer.Channel;
-import net.judah.omni.Pair;
+import net.judah.util.Pair;
 
 public class FxTrigger extends JLabel {
 
@@ -22,8 +21,7 @@ public class FxTrigger extends JLabel {
 			addMouseListener(new MouseAdapter() {
 				@Override public void mouseClicked(MouseEvent e) {
 					if (fx != null)
-						fx.setActive(!fx.isActive());
-					MainFrame.update(ch);
+						ch.toggle(fx);
 				}
 			});
 		}

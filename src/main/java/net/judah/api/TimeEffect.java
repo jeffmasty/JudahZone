@@ -1,6 +1,6 @@
-package net.judah.fx;
+package net.judah.api;
 
-import static net.judah.JudahZone.getClock;
+import static net.judah.midi.JudahMidi.getClock;
 import static net.judah.util.Constants.millisPerBeat;
 
 public interface TimeEffect extends Effect {

@@ -12,11 +12,11 @@ import javax.sound.midi.ShortMessage;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.api.PlayAudio;
+import net.judah.api.Recording;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.midi.Actives;
-import net.judah.omni.AudioTools;
-import net.judah.omni.Recording;
+import net.judah.util.AudioTools;
 import net.judah.util.Constants;
 
 @Getter

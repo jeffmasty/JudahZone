@@ -6,12 +6,12 @@ import java.nio.FloatBuffer;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
-import net.judah.looper.ToDisk;
-import net.judah.omni.AudioTools;
-import net.judah.omni.Icons;
+import net.judah.util.AudioTools;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
+import net.judah.util.ToDisk;
 
 /**The unified effects/volume track just before hitting the speakers/external effects.
  * A master track initializes in a muted state.*/
@@ -28,16 +28,14 @@ public class Mains extends Channel {
 		icon = Icons.get("Speakers.png");
 	}
 
-
 	@Override
-	public void process() {
-		// no-op
+	public void processImpl() {
 	}
 
 	public void process(FloatBuffer left, FloatBuffer right) {
-
+		hotSwap();
 		gain.process(left, right);
-	    stream().filter(fx->fx.isActive()).forEach(fx->fx.process(left, right));
+	    active.forEach(fx->fx.process(left, right));
 
 		if (tape != null)
 			tape.offer(left, right);
@@ -80,7 +78,6 @@ public class Mains extends Channel {
 	}
 
 }
-
 
 //	if (reverb.isInternal())
 //		((Freeverb)reverb).process(left, right);

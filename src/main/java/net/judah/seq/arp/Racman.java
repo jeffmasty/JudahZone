@@ -3,8 +3,9 @@ package net.judah.seq.arp;
 import javax.sound.midi.ShortMessage;
 
 import lombok.Setter;
+import net.judah.api.Algo;
+import net.judah.api.Chord;
 import net.judah.seq.Poly;
-import net.judah.seq.chords.Chord;
 
 /** Original: https://github.com/ybalcanci/Sequence-Player */
 public class Racman extends Algo implements Ignorant {

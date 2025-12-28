@@ -2,6 +2,8 @@ package net.judah.seq.chords;
 
 import java.util.ArrayList;
 
+import net.judah.api.Chord;
+
 public class Preview extends ArrayList<Chord> {
 
 	boolean middle;

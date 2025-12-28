@@ -25,11 +25,11 @@ import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 
 import lombok.Getter;
-import lombok.Setter;
+import net.judah.api.Effect.RTEffect;
 import net.judah.fx.StereoBiquad.FilterType;
 import net.judah.util.Constants;
 
-public class Filter implements Effect {
+public class Filter implements RTEffect {
 
     public enum Settings { Type, Hz, Width, dB }
 
@@ -39,7 +39,6 @@ public class Filter implements Effect {
     @Getter private final String name = Filter.class.getSimpleName();
     @Getter private final int paramCount = Settings.values().length;
 
-    @Setter @Getter private boolean active;
     private final StereoBiquad filter;
 
 //	 /*filter_type can be: g (gain without EQ), pk (peaking), hp/lc (highpass/lowcut), lp/hc (lowpass/highcut)

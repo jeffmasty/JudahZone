@@ -8,6 +8,7 @@ import java.util.List;
 
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.api.Chord;
 import net.judah.api.Notification.Property;
 import net.judah.api.Signature;
 import net.judah.api.TimeListener;
@@ -44,8 +45,10 @@ public class Chords implements TimeListener {
 	public int bars() { return beats() / sig.beats; }
 	public int bars(int steps) { return steps / sig.div / sig.beats; }
 	public void toggle() { setActive(!active); }
+	private final JudahZone zone;
 
-	public Chords(JudahClock clock) {
+	public Chords(JudahZone judahZone, JudahClock clock) {
+		this.zone = judahZone;
 		this.clock = clock;
 		sig = clock.getTimeSig();
 		clock.addListener(this);
@@ -118,7 +121,7 @@ public class Chords implements TimeListener {
 				return c;
 			if (count > step)
 				return previous;
-			count += c.steps;
+			count += c.getSteps();
 			previous = c;
 		}
 		return null;
@@ -169,7 +172,7 @@ public class Chords implements TimeListener {
 
 	public ChordPro load(File file) {
 		loading = true;
-		Song song = JudahZone.getOverview().getSong();
+		Song song = zone.getOverview().getSong();
 		clear();
 		ChordPro chordPro = null;
 		String name = null;
@@ -202,7 +205,7 @@ public class Chords implements TimeListener {
 		setSection(sections.isEmpty() ? null : sections.get(0), true);
 		for (Section s:sections)
 			if (s.getDirectives().contains(Directive.LENGTH))
-				JudahZone.getClock().setLength(bars(s.getCount()));
+				clock.setLength(bars(s.getCount()));
 		loading = false;
 		return chordPro; // not used
 	}
@@ -292,7 +295,7 @@ public class Chords implements TimeListener {
 		step = 0;
 		for (Chord c : section) {
 			if (c == chord) break;
-			step += c.steps;
+			step += c.getSteps();
 		}
 		bar = step / sig.steps;
 		step = step % sig.steps;
@@ -324,13 +327,13 @@ public class Chords implements TimeListener {
 		if (directives.contains(Directive.MUTES)) {
 			if (Part.VERSE.literal.equals(section.getName())
 					|| Part.CHORUS.literal.equals(section.getName())) {
-				JudahZone.getLooper().verseChorus();
+				zone.getLooper().verseChorus();
 			}
 		}
 		else if (active && directives.contains(Directive.SCENES)) {
-			for (Scene s : JudahZone.getOverview().getSong().getScenes())
+			for (Scene s : zone.getOverview().getSong().getScenes())
 				if (section.getName().equals(s.getNotes())) {
-					JudahZone.getOverview().setScene(s);
+					zone.getOverview().setScene(s);
 					return;
 				}
 		}

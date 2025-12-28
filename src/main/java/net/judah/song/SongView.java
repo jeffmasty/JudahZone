@@ -22,11 +22,11 @@ import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.Btn;
-import net.judah.omni.Threads;
 import net.judah.song.cmd.Param;
 import net.judah.song.cmd.ParamModel;
 import net.judah.song.cmd.ParamTable;
 import net.judah.util.RTLogger;
+import net.judah.util.Threads;
 
 /** Holds launch buttons for Song's Scenes and Cmds/Params */
 public class SongView extends JPanel {
@@ -135,7 +135,7 @@ public class SongView extends JPanel {
 	}
 
 	public void newScene() {
-		addScene(new Scene(JudahZone.getSeq()));
+		addScene(new Scene(JudahZone.getInstance().getSeq()));
 	}
 
 	public void delete() {

@@ -45,7 +45,7 @@ public class Scene {
 	}
 
 	@Override public String toString() {
-		return "" + JudahZone.getOverview().getSong().getScenes().indexOf(this);
+		return "" + JudahZone.getInstance().getOverview().getSong().getScenes().indexOf(this);
 	}
 
 

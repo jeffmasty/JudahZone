@@ -13,21 +13,21 @@ import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
 import lombok.Getter;
-import net.judah.JudahZone;
+import net.judah.api.Algo;
+import net.judah.api.Chord;
 import net.judah.api.Key;
+import net.judah.api.Midi;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
 import net.judah.gui.MainFrame;
 import net.judah.midi.Actives;
 import net.judah.midi.JudahMidi;
-import net.judah.midi.Midi;
 import net.judah.midi.MidiInstrument;
 import net.judah.midi.Panic;
 import net.judah.mixer.Channel;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.Poly;
-import net.judah.seq.arp.Algo;
 import net.judah.seq.arp.Arp;
 import net.judah.seq.arp.ArpInfo;
 import net.judah.seq.arp.Deltas;
@@ -41,7 +41,6 @@ import net.judah.seq.arp.Racman;
 import net.judah.seq.arp.Up;
 import net.judah.seq.arp.UpDown;
 import net.judah.seq.automation.ControlChange;
-import net.judah.seq.chords.Chord;
 import net.judah.seq.chords.ChordListener;
 import net.judah.seq.chords.Chords;
 import net.judah.seq.piano.Pedal;
@@ -54,7 +53,7 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 	public static int MONOPHONIC = 1;
 
 	@Getter private ArpInfo info = new ArpInfo();
-	private final Chords chords = JudahZone.getChords();
+	private final Chords chords;
 	private final Deltas deltas = new Deltas();
 	private final Poly workArea = new Poly();
 	private Algo algo = new Echo();
@@ -67,14 +66,16 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 //		info = getState().getArp();
 //	}
 
-	public PianoTrack(String name, Actives actives) throws InvalidMidiDataException {
+	public PianoTrack(String name, Actives actives, Chords chords) throws InvalidMidiDataException {
 		super(name, actives);
+		this.chords = chords;
 		chords.addListener(this);
 	}
 
 	// temporary import midi view
 	public PianoTrack(String name, NoteTrack source) throws InvalidMidiDataException {
 		super(name, source.getActives()); // , source.getResolution());
+		chords = null;
 	}
 
 	@Override public Channel getChannel() {
@@ -199,7 +200,7 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 	public void setRange(int range) {
 		info.setRange(range);
 		if (algo != null) algo.setRange(range);
-		MainFrame.update(new TrackUpdate(Update.RANGE, this));
+		MainFrame.updateTrack(Update.RANGE, this);
 	}
 
 	@Override public void chordChange(Chord from, Chord to) {
@@ -301,7 +302,7 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 			// case UP5: case DN5:
 		}
 		algo.setRange(info.range);
-		MainFrame.update(new TrackUpdate(Update.ARP, this));
+		MainFrame.updateTrack(Update.ARP, this);
 	}
 
 

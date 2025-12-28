@@ -12,6 +12,7 @@ import net.judah.gui.Actionable;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.knobs.KnobMode;
+import net.judah.seq.Seq;
 import net.judah.seq.arp.Arp;
 import net.judah.seq.track.ChannelTrack;
 import net.judah.seq.track.MidiTrack;
@@ -52,20 +53,21 @@ public class PlayWidget extends JButton {
 
 	private void popup(MouseEvent me) {
         JPopupMenu popupMenu = new JPopupMenu();
+        Seq seq = JudahZone.getInstance().getSeq();
         popupMenu.add(new SendTo(track));
         if (track instanceof ChannelTrack)
-        	popupMenu.add(new Actionable("Rename", e->JudahZone.getSeq().rename(track)));
+        	popupMenu.add(new Actionable("Rename", e->seq.rename(track)));
 
         if (track instanceof PianoTrack piano) {
-            popupMenu.add(new Actionable("Rename", e->JudahZone.getSeq().rename(piano)));
+            popupMenu.add(new Actionable("Rename", e->seq.rename(piano)));
             if (track.isPermanent())
-            	popupMenu.add(new Actionable("Clear Track", l->JudahZone.getSeq().clear(track)));
+            	popupMenu.add(new Actionable("Clear Track", l->seq.clear(track)));
             else
-            	popupMenu.add(new Actionable("Delete Track", l -> JudahZone.getSeq().confirmDelete(piano)));
+            	popupMenu.add(new Actionable("Delete Track", l -> seq.confirmDelete(piano)));
         	popupMenu.add(new Actionable("MPK", e-> piano.toggle(Arp.MPK)));
         }
         else
-        	popupMenu.add(new Actionable("Clear Track", l -> JudahZone.getSeq().clear(track)));
+        	popupMenu.add(new Actionable("Clear Track", l -> seq.clear(track)));
         popupMenu.add(new Actionable("Capture", e->track.setCapture(!track.isCapture())));
     	popupMenu.add(expander != null ? new Actionable("Automation", e->expander.expand()) :
     		new Actionable("Automation", e->MainFrame.setFocus(KnobMode.Autom8)));

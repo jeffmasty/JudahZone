@@ -16,12 +16,11 @@ import javax.sound.midi.Track;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import net.judah.JudahZone;
 import net.judah.gui.Detached.Floating;
+import net.judah.api.Midi;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
 import net.judah.midi.JudahClock;
-import net.judah.midi.Midi;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.track.Editor;
 import net.judah.seq.track.NoteTrack;
@@ -63,7 +62,7 @@ public abstract class MusicBox extends JPanel implements Musician, Floating, Mid
 	}
 
 	@Override public void copy() {
-		JudahZone.getClipboard().copy(selected, track);
+		Editor.clipboard.copy(selected, track);
 	}
 
 	@Override public void mouseDragged(MouseEvent mouse) {

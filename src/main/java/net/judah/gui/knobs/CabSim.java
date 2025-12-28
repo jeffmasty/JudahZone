@@ -11,10 +11,9 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.SwingConstants;
 
-import net.judah.JudahZone;
 import net.judah.fx.Convolution;
-import net.judah.fx.MonoFilter;
 import net.judah.fx.Convolution.Stereo;
+import net.judah.fx.MonoFilter;
 import net.judah.fx.MonoFilter.Settings;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
@@ -26,14 +25,18 @@ import net.judah.gui.widgets.DoubleSlider;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Instrument;
 import net.judah.util.Constants;
+import net.judah.util.Folders;
+import net.judah.util.IRDB;
 
 public class CabSim extends JPanel implements Updateable {
 
-	private final JComboBox<String> cabinets = new JComboBox<String>(JudahZone.getIR().getNames());
+	private static final IRDB IR = new IRDB(Folders.getIR());
+	public static IRDB getDB() { return IR; }
+
+	private final JComboBox<String> cabinets = new JComboBox<String>(IR.getNames());
 	private static final int FREQUENCY = Settings.Frequency.ordinal();
 
-
-	private final Instrument channel;
+	private final Channel channel;
 	private final Convolution ir;
 
 	private final FxTrigger lbl;
@@ -41,7 +44,7 @@ public class CabSim extends JPanel implements Updateable {
 	private DoubleSlider filter;
 
 	public CabSim(Channel ch) {
-		this.channel = ch instanceof Instrument i ? i : null;
+		this.channel = ch;
 		this.ir = ch.getIR();
 		lbl = new FxTrigger("Cabinet", ir, ch);
 		lbl.setOpaque(true);
@@ -54,8 +57,8 @@ public class CabSim extends JPanel implements Updateable {
 
 		add(lbl);
 		add(Gui.wrap(wet));
-		if (isMono) {
-			filter = new DoubleSlider( ((Instrument)ch).getHp(), FREQUENCY, ((Instrument)ch).getLp(), FREQUENCY);
+		if (ch instanceof Instrument in && !ch.isStereo()) {
+			filter = new DoubleSlider( in.getHp(), FREQUENCY, in.getLp(), FREQUENCY);
 			filter.setColors(LFOWidget.RANGE);
 			add(filter);
 		}
@@ -73,7 +76,7 @@ public class CabSim extends JPanel implements Updateable {
 	}
 
 	@Override public void update() {
-		lbl.setBackground(ir.isActive() ? Pastels.YELLOW : null);
+		lbl.setBackground(channel.isActive(ir) ? Pastels.YELLOW : null);
 		if (wet.getValue() != ir.get(Wet.ordinal()))
 			wet.setValue(ir.get(Wet.ordinal()));
 		if (cabinets.getSelectedIndex() != ir.get(Cabinet.ordinal()))
@@ -83,17 +86,26 @@ public class CabSim extends JPanel implements Updateable {
 	}
 
 	public void doKnob(int idx, int data2) {
-		if (idx == 4)
+		if (idx == 4) {
 			cabinets.setSelectedIndex(Constants.ratio(data2 - 1, cabinets.getItemCount()));
-		else if (idx == 5)
+			MainFrame.updateChannel(channel, ir);
+		}
+		else if (idx == 5) {
 			wet.setValue(data2);
+			MainFrame.updateChannel(channel, ir);
+		}
 		else if (filter != null) {
-			if (idx == 6)
-				channel.getHp().setFrequency(MonoFilter.knobToFrequency(data2));
-			else if (idx == 7)
-				channel.getLp().setFrequency(MonoFilter.knobToFrequency(data2));
+			if (idx == 6) {
+				MonoFilter fx = ((Instrument)channel).getHp();
+				fx.setFrequency(MonoFilter.knobToFrequency(data2));
+				MainFrame.updateChannel(channel, fx);
+			}
+			else if (idx == 7) {
+				MonoFilter fx = ((Instrument)channel).getLp();
+				fx.setFrequency(MonoFilter.knobToFrequency(data2));
+				MainFrame.updateChannel(channel, fx);
+			}
 
-			MainFrame.update(this);
 		}
 	}
 

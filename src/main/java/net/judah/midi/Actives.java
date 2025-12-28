@@ -8,6 +8,7 @@ import javax.sound.midi.ShortMessage;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.judah.api.Midi;
 import net.judah.api.ZoneMidi;
 import net.judah.gui.MainFrame;
 import net.judah.util.RTLogger;

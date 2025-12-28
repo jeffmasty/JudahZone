@@ -10,15 +10,15 @@ import net.judah.gui.MainFrame;
 public class ParamModel extends DefaultTableModel {
 	static final int COL_CMD = 0;
 	static final int COL_VAL = 1;
-	
+
 	private final List<Param> data;
-	
+
 	public ParamModel(List<Param> sequence) {
 		super (new Object[] { "Command", "Value"}, 0);
 		data = sequence;
 		data.forEach(p -> addRow(new Object[] {p.getCmd(), p.getVal()}));
 	}
-	
+
 	@Override
 	public Class<?> getColumnClass(int idx) {
 		switch (idx) {
@@ -31,14 +31,14 @@ public class ParamModel extends DefaultTableModel {
 	public Param getRow(int i) {
 		return data.get(i);
 	}
-	
+
 	@Override public void setValueAt(Object val, int row, int column) {
-		if (column == COL_CMD) 
+		if (column == COL_CMD)
 			data.get(row).setCmd((Cmd)val);
-		else 
+		else
 			data.get(row).setVal("" + val);
 		super.setValueAt(val, row, column);
-		MainFrame.update(JudahZone.getOverview().getScene());
+		MainFrame.update(JudahZone.getInstance().getOverview().getScene());
 	}
-	
+
 }

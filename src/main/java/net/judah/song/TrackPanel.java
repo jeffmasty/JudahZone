@@ -7,15 +7,19 @@ import java.util.Set;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
+import net.judah.mixer.Channel;
 import net.judah.seq.TrackList;
+import net.judah.seq.automation.Automation;
 import net.judah.seq.track.Computer;
 import net.judah.seq.track.MidiTrack;
 
 public class TrackPanel extends JPanel implements Iterable<SongTrack> {
 
+	private final Automation automation;
 	private final HashMap<MidiTrack, SongTrack> map = new HashMap<MidiTrack, SongTrack>();
 
-	public TrackPanel() {
+	public TrackPanel(Automation auto) {
+		this.automation = auto;
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 	}
 
@@ -32,7 +36,7 @@ public class TrackPanel extends JPanel implements Iterable<SongTrack> {
 		removeAll();
 		for (MidiTrack track : tracks) {
 			if (map.containsKey(track) == false)
-				map.put(track, new SongTrack(track));
+				map.put(track, new SongTrack(track, automation));
 			add(map.get(track));
 		}
 		invalidate();
@@ -51,6 +55,13 @@ public class TrackPanel extends JPanel implements Iterable<SongTrack> {
 
 	public SongTrack getTrack(Computer track) {
 		return map.get(track);
+	}
+
+	public SongTrack getTrack(Channel ch) {
+		for (SongTrack s : this)
+			if (s.getTrack().getChannel() == ch)
+				return s;
+		return null;
 	}
 
 }

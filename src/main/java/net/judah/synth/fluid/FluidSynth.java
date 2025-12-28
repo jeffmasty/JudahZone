@@ -13,17 +13,16 @@ import javax.sound.midi.ShortMessage;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
+import net.judah.api.Midi;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahMidi;
-import net.judah.midi.Midi;
 import net.judah.midi.MidiInstrument;
-import net.judah.omni.Threads;
 import net.judah.seq.SynthRack;
-import net.judah.seq.track.Computer.TrackUpdate;
 import net.judah.seq.track.Computer.Update;
 import net.judah.seq.track.PianoTrack;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
+import net.judah.util.Threads;
 
 /** runs fluid command line and connects to FluidSynth stdin and stdout ports */
 public final class FluidSynth extends MidiInstrument {
@@ -180,7 +179,7 @@ public final class FluidSynth extends MidiInstrument {
 		JudahMidi.queue(Midi.create(ShortMessage.PROGRAM_CHANGE, ch, idx, 0), midiPort);
 		for (PianoTrack p : tracks)
 			if (p.getCh() == ch)
-				MainFrame.update(new TrackUpdate(Update.PROGRAM, p));
+				MainFrame.updateTrack(Update.PROGRAM, p);
 	}
 
 	public String getProg(int ch) {

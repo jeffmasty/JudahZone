@@ -15,13 +15,13 @@ import net.judah.gui.Updateable;
 
 /** launch scenes */
 public class SceneLauncher extends JPanel implements Updateable {
-	private static final int ROWS = 3; 
+	private static final int ROWS = 3;
 	private static final int COLS = 4;
 	public static final int MAX = ROWS * COLS; // 12 Scenes
-	
+
 	private final Song song;
 	private Overview tab;
-	
+
 	public SceneLauncher(Song song, Overview tab) {
 		this.song = song;
 		this.tab = tab;
@@ -29,17 +29,17 @@ public class SceneLauncher extends JPanel implements Updateable {
 		fill();
 		setBackground(Color.WHITE);
 	}
-	
+
 	public void fill() {
 		removeAll();
 		int size = song.getScenes().size();
 		if (size > MAX)
 			size = MAX;
-		for (int i = 0; i < size; i++) 
+		for (int i = 0; i < size; i++)
 			add(new ScenePad(song.getScenes().get(i), tab, i));
-		
+
 		if (size >= MAX) return;
-		if (JudahZone.getMains().isRecording() == false) { 
+		if (JudahZone.getInstance().getMains().isRecording() == false) {
 			JLabel create = new JLabel("(Create)", JLabel.CENTER);
 			create.setBorder(UIManager.getBorder("TitledBorder.border"));
 			create.addMouseListener(new MouseAdapter() {
@@ -49,22 +49,22 @@ public class SceneLauncher extends JPanel implements Updateable {
 			add(create);
 			size++;
 		}
-		while (++size < MAX) 
+		while (++size < MAX)
 			add(new JLabel()); // filler
 		update();
 		doLayout();
 	}
-	
+
 	public void update(Scene s) {
 		for (int i = 0; i < getComponentCount(); i++) {
 			if (getComponent(i) instanceof ScenePad) {
 				ScenePad pad = (ScenePad)getComponent(i);
-				if (pad.getScene() == s) 
+				if (pad.getScene() == s)
 					pad.update();
 			}
 		}
 	}
-	
+
 	@Override
 	public void update() {
 		for (int i = 0; i < getComponentCount(); i++) {
@@ -72,5 +72,5 @@ public class SceneLauncher extends JPanel implements Updateable {
 				((ScenePad)getComponent(i)).update();
 		}
 	}
-	
+
 }

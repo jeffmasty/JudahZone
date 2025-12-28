@@ -7,6 +7,7 @@ import javax.sound.midi.ShortMessage;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.judah.api.Midi;
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
 import net.judah.fx.Filter;
@@ -43,31 +44,32 @@ public class ChannelCC {
 				break;
 			case BRIGHT:
 	        	filter.set(MonoFilter.Settings.Resonance.ordinal(), val);
-	        	filter.setActive(val < MidiConstants.THOLD_HI);
+	        	ch.setActive(filter, val < MidiConstants.THOLD_HI);
 				break;
 			case CHORUS:
 				ch.getChorus().set(Chorus.Settings.Feedback.ordinal(), val);
-	        	ch.getChorus().setActive(val > MidiConstants.THOLD_LO);
+
+				ch.setActive(ch.getChorus(), val > MidiConstants.THOLD_LO);
 				break;
 			case ECHO:
 				ch.getDelay().set(Delay.Settings.DelayTime.ordinal(), val);
-				ch.getDelay().setActive(val > MidiConstants.THOLD_LO);
+				ch.setActive(ch.getDelay(), val > MidiConstants.THOLD_LO);
 				break;
 			case ECHO_FB:
 				ch.getDelay().set(Delay.Settings.Feedback.ordinal(), val);
-				ch.getDelay().setActive(val > MidiConstants.THOLD_LO);
+				ch.setActive(ch.getDelay(), val > MidiConstants.THOLD_LO);
 				break;
 			case DEPTH:
 	        	ch.getChorus().set(Chorus.Settings.Depth.ordinal(), val);
-	        	ch.getChorus().setActive(val > MidiConstants.THOLD_LO);
+	        	ch.setActive(ch.getChorus(), val > MidiConstants.THOLD_LO);
 				break;
 			case DRIVE:
 				ch.getOverdrive().set(0, val);
-				ch.getOverdrive().setActive(val > MidiConstants.THOLD_LO);
+				ch.setActive(ch.getOverdrive(), val > MidiConstants.THOLD_LO);
 				break;
 			case HZ:
 	        	filter.set(MonoFilter.Settings.Frequency.ordinal(), val);
-	        	filter.setActive(val < MidiConstants.THOLD_HI);
+	        	ch.setActive(filter, val < MidiConstants.THOLD_HI);
 				break;
 			case LFO:
 				lfo.set(LFO.Settings.MSec.ordinal(), val);
@@ -84,20 +86,20 @@ public class ChannelCC {
 				break;
 			case REVERB:
 				ch.getReverb().set(Reverb.Settings.Wet.ordinal(), val);
-				ch.getReverb().setActive(val > 0);
+				ch.setActive(ch.getReverb(), val > 0);
 				break;
 			case ROOM:
 				ch.getReverb().set(Reverb.Settings.Room.ordinal(), val);
 				break;
 			case RATE:
 	        	ch.getChorus().set(Chorus.Settings.Rate.ordinal(), val);
-	        	ch.getChorus().setActive(val < MidiConstants.THOLD_HI);
+	        	ch.setActive(ch.getChorus(), val < MidiConstants.THOLD_HI);
 				break;
 			case TREMELO:
 				lfo.tremelo(val);
 				break;
 			case ZIP:
-				ch.getCompression().setActive(val > 49);
+				ch.setActive(ch.getCompression(), val > 49);
 				break;
 			default: return false;
 			}
@@ -115,7 +117,7 @@ public class ChannelCC {
 		choir.set(Feedback.ordinal(), 64);
 		choir.set(Type.ordinal(), 0);
 		choir.set(Sync.ordinal(), 1);
-		choir.setActive(true);
+		ch.setActive(choir, true);
 	}
 
 }

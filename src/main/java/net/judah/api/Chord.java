@@ -1,4 +1,4 @@
-package net.judah.seq.chords;
+package net.judah.api;
 
 import static net.judah.seq.chords.Interval.*;
 
@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import javax.sound.midi.ShortMessage;
 
 import lombok.Data;
-import net.judah.api.Key;
 import net.judah.seq.Poly;
 
 @Data
@@ -346,18 +345,5 @@ public class Chord extends ArrayList<Key> {
 			result += k.ordinal() * prime;
 		return result;
 	}
-
-//	public static void test() {
-//		Chord Cmaj7 = new Chord("Cmaj7");
-//		Chord G7 = new Chord("G7");
-//		Poly notes = new Poly();
-//		Cmaj7.wide(36, notes);
-//		StringBuffer s = new StringBuffer(Cmaj7.getChord()).append(": ");
-//		for (int data1 : notes) s.append(Key.key(data1)).append(data1/12).append(" ");
-//		RTLogger.log(Chord.class, s.toString());
-//		s = new StringBuffer(G7.getChord()).append(": ");
-//		G7.tight(36, notes);
-//		for (int data1 : notes) s.append(Key.key(data1)).append(data1/12).append(" ");
-//		RTLogger.log(Chord.class, s.toString());}
 
 }

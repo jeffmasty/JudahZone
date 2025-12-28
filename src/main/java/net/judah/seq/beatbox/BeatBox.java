@@ -14,12 +14,12 @@ import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.swing.SwingUtilities;
 
+import net.judah.api.Midi;
 import net.judah.api.Signature;
 import net.judah.drumkit.DrumType;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 import net.judah.gui.TabZone;
-import net.judah.midi.Midi;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiNote;
@@ -27,6 +27,7 @@ import net.judah.seq.MidiTools;
 import net.judah.seq.MusicBox;
 import net.judah.seq.Notes;
 import net.judah.seq.Prototype;
+import net.judah.seq.automation.Automation;
 import net.judah.seq.automation.CCPopup;
 import net.judah.seq.track.DrumTrack;
 
@@ -42,10 +43,10 @@ public class BeatBox extends MusicBox implements Pastels {
 	private final CCPopup cc;
 	private DrumType ccType = DrumType.Bongo;
 
-    public BeatBox(DrumTrack t, DrumZone tab) {
+    public BeatBox(DrumTrack t, DrumZone tab, Automation automation) {
     	super(t);
     	this.tab = tab;
-    	cc = new CCPopup(t, this, true);
+    	cc = new CCPopup(t, this, true, automation);
         setLayout(null);
         repaint();
     }

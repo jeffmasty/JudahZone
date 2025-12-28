@@ -1,6 +1,7 @@
 package net.judah.midi;
 
-import static net.judah.JudahZone.*;
+import static net.judah.JudahZone.isInitialized;
+import static net.judah.JudahZone.setInitialized;
 import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsInput;
 import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsOutput;
 import static org.jaudiolibs.jnajack.JackPortType.MIDI;
@@ -20,21 +21,23 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.api.BasicClient;
+import net.judah.JudahZone;
+import net.judah.api.Controller;
+import net.judah.api.Midi;
 import net.judah.api.MidiClock;
 import net.judah.api.ZoneMidi;
 import net.judah.controllers.Beatstep;
-import net.judah.controllers.Controller;
 import net.judah.controllers.Jamstik;
 import net.judah.controllers.KorgMixer;
 import net.judah.controllers.KorgPads;
 import net.judah.controllers.Line6FBV;
 import net.judah.controllers.MPKmini;
 import net.judah.gui.MainFrame;
-import net.judah.omni.Threads;
+import net.judah.jack.BasicClient;
 import net.judah.synth.fluid.FluidSynth;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
+import net.judah.util.Threads;
 
 
 /** Setup MIDI ports, handle MIDI integration with Jack,
@@ -68,8 +71,10 @@ public class JudahMidi extends BasicClient implements Closeable {
     protected final ArrayList<JackPort> inPorts = new ArrayList<JackPort>();
     protected final ArrayList<JackPort> outPorts = new ArrayList<JackPort>();
 
-	@Getter private final JudahClock clock;
-	@Getter private final Jamstik jamstik = new Jamstik();
+    private final JudahZone zone;
+	private static JudahClock clock;
+	public static JudahClock getClock() { return clock; }
+	@Getter private final Jamstik jamstik;
     @Getter private JackPort fluidOut;
     @Getter private JackPort craveOut;
 	@Getter private static Requests requests;
@@ -82,7 +87,7 @@ public class JudahMidi extends BasicClient implements Closeable {
     private JackPort gtrMidi;
     private JackPort clockOut;
     private final ArrayList<ZoneMidi> sync = new ArrayList<>();
-    private final MidiScheduler scheduler = new MidiScheduler();
+    private final MidiScheduler scheduler;
     private long counter;
     private final HashMap<JackPort, Controller> switchboard = new HashMap<>();
     private static final ConcurrentLinkedQueue<PortMessage> queue = new ConcurrentLinkedQueue<>();
@@ -90,15 +95,18 @@ public class JudahMidi extends BasicClient implements Closeable {
     private final byte[] DATA1 = new byte[1], DATA2 = new byte[2], DATA3 = new byte[3];
     private final Event midiEvent = new JackMidi.Event();
 
-    public JudahMidi() throws Exception {
-    	this(JACKCLIENT_NAME);
+    public JudahMidi(JudahZone judahZone) throws Exception {
+    	this(judahZone, JACKCLIENT_NAME);
     }
 
-    public JudahMidi(String name) throws Exception {
+    public JudahMidi(JudahZone judahZone, String name) throws Exception {
         super(name);
-        clock = new JudahClock(this);
+        this.zone = judahZone;
+        scheduler = new MidiScheduler(zone);
+        jamstik = new Jamstik(zone);
+        clock = new JudahClock(this, zone);
         a2j();
-        getServices().add(this);
+        JudahZone.getServices().add(this);
         start();
     }
 
@@ -134,8 +142,8 @@ public class JudahMidi extends BasicClient implements Closeable {
 			a2j();
 			initialize();
 			makeConnections();
-			getFluid().setMidiPort(fluidOut);
-			getBass().setMidiPort(craveOut);
+			zone.getFluid().setMidiPort(fluidOut);
+			zone.getBass().setMidiPort(craveOut);
 			// getMidiGui().recover(this);
 
     	} catch (JackException e) { RTLogger.warn(this, e.getMessage());}
@@ -165,7 +173,7 @@ public class JudahMidi extends BasicClient implements Closeable {
         if (sz > OUT.CRAVE_OUT.ordinal())
         	craveOut = outPorts.get(OUT.CRAVE_OUT.ordinal());
 
-        while (getSeq() == null || getLooper() == null) // sync w/ audio Thread
+        while (zone.getSeq() == null || zone.getLooper() == null) // sync w/ audio Thread
         	Threads.sleep(10);
 
         // connect midi controllers to software handlers
@@ -174,24 +182,24 @@ public class JudahMidi extends BasicClient implements Closeable {
         	clockIn = inPorts.get(IN.MIDICLOCK.ordinal());
         if (sz > IN.KEYBOARD.ordinal()) {
         	keyboard = inPorts.get(IN.KEYBOARD.ordinal());
-        	switchboard.put(keyboard, MPKmini.instance);
+        	switchboard.put(keyboard, zone.getMpkMini());
         }
         if (sz > IN.MIXER.ordinal()) {
         	mixer = inPorts.get(IN.MIXER.ordinal());
-        	KorgMixer controller = new KorgMixer();
+        	KorgMixer controller = new KorgMixer(zone);
         	switchboard.put(mixer, controller);
 	        if (sz > IN.PADS.ordinal()) {
 	        	pads = inPorts.get(IN.PADS.ordinal());
-	        	switchboard.put(pads, new KorgPads());
+	        	switchboard.put(pads, new KorgPads(zone));
 	        }
         }
         if (sz > IN.LINE6_IN.ordinal()) {
         	line6 = inPorts.get(IN.LINE6_IN.ordinal());
-        	switchboard.put(line6, new Line6FBV(getGuitar()));
+        	switchboard.put(line6, new Line6FBV(zone, this));
         }
         if (sz > IN.BEATSTEP.ordinal()) {
         	beatstep = inPorts.get(IN.BEATSTEP.ordinal());
-        	switchboard.put(beatstep, new Beatstep());
+        	switchboard.put(beatstep, new Beatstep(zone, clock));
         }
         if (sz > IN.JAMSTIK.ordinal()) {
         	gtrMidi = inPorts.get(IN.JAMSTIK.ordinal());

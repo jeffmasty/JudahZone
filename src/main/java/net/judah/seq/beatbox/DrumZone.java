@@ -16,6 +16,7 @@ import net.judah.gui.Size;
 import net.judah.seq.MusicBox;
 import net.judah.seq.TrackList;
 import net.judah.seq.Trax;
+import net.judah.seq.automation.Automation;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.HiringAgency;
 import net.judah.seq.track.MidiTrack;
@@ -31,7 +32,7 @@ public class DrumZone extends HiringAgency implements Floating {
 	@Getter private final ArrayList<DrumCage> views = new ArrayList<>();
 	private final Mutes mutes1, mutes2;
 
-	public DrumZone(TrackList<DrumTrack> list) {
+	public DrumZone(TrackList<DrumTrack> list, Automation auto) {
 
 		setName(NAME);
 		this.tracks = list;
@@ -43,10 +44,10 @@ public class DrumZone extends HiringAgency implements Floating {
 		mutes1 = new Mutes();
 		mutes2 = new Mutes();
 
-		DrumCage d1 = new DrumCage(tracks.get(Trax.D1.ordinal()), this);
-		DrumCage d2 = new DrumCage(tracks.get(Trax.D2.ordinal()), this);
-		DrumCage h1 = new DrumCage(tracks.get(Trax.H1.ordinal()), this);
-		DrumCage h2 = new DrumCage(tracks.get(Trax.H2.ordinal()), this);
+		DrumCage d1 = new DrumCage(tracks.get(Trax.D1.ordinal()), this, auto);
+		DrumCage d2 = new DrumCage(tracks.get(Trax.D2.ordinal()), this, auto);
+		DrumCage h1 = new DrumCage(tracks.get(Trax.H1.ordinal()), this, auto);
+		DrumCage h2 = new DrumCage(tracks.get(Trax.H2.ordinal()), this, auto);
 		views.add(d1);
 		views.add(d2);
 		views.add(h1);

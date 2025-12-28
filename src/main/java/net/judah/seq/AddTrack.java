@@ -28,6 +28,7 @@ import net.judah.JudahZone;
 import net.judah.api.ZoneMidi;
 import net.judah.drumkit.DrumKit;
 import net.judah.gui.Gui;
+import net.judah.gui.Icons;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.Integers;
@@ -35,7 +36,6 @@ import net.judah.gui.widgets.ModalDialog;
 import net.judah.midi.MidiInstrument;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Mains;
-import net.judah.omni.Icons;
 import net.judah.seq.SynthRack.RegisteredDrums;
 import net.judah.seq.SynthRack.RegisteredSynths;
 import net.judah.seq.chords.ChordPro;
@@ -80,7 +80,7 @@ public class AddTrack extends JPanel {
 		setName("New Track");
 
 		ArrayList<Channel> automation = new ArrayList<Channel>();
-		JudahZone.getMixer().getAll().forEach(channel-> {
+		JudahZone.getInstance().getMixer().getAll().forEach(channel-> {
 			if (channel instanceof ZoneMidi == false && channel instanceof DrumKit == false && channel instanceof Mains == false)
 				automation.add(channel);});
 		fxChannel = new JList<Channel>(automation.toArray(new Channel[0]));
@@ -139,7 +139,7 @@ public class AddTrack extends JPanel {
 		chords = Folders.choose(Folders.getChordPro());
 		if (chords == null)
 			return;
-		ChordPro result = JudahZone.getChords().load(chords);
+		ChordPro result = JudahZone.getInstance().getChords().load(chords);
 		if (result == null)
 			return;
 		chordPreview.setText(result.toString());
@@ -231,8 +231,8 @@ public class AddTrack extends JPanel {
 	private void addChords() {
 		if (chords == null)
 			return;
-		JudahZone.getChords().load(chords);
-		JudahZone.getOverview().refill();
+		JudahZone.getInstance().getChords().load(chords);
+		JudahZone.getInstance().getOverview().refill();
 	}
 
 //	private void createDrum() {

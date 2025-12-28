@@ -11,6 +11,7 @@ import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 
 import net.judah.JudahZone;
+import net.judah.drumkit.DrumMachine;
 import net.judah.gui.Bindings.Act;
 import net.judah.seq.Duration;
 import net.judah.seq.MusicBox;
@@ -52,8 +53,9 @@ public class TrackBindings {
 		bind(getKeyStroke(VK_LEFT, 0), new Act(()->track.next(true)));
 		bind(getKeyStroke(VK_RIGHT, 0), new Act(()->track.next(false)));
 		if (track.isDrums()) {
-			bind(getKeyStroke(VK_LEFT, CTRL_DOWN_MASK), new Act(()->JudahZone.getDrumMachine().getTracks().next(false)));
-			bind(getKeyStroke(VK_RIGHT, CTRL_DOWN_MASK), new Act(()->JudahZone.getDrumMachine().getTracks().next(true)));
+			DrumMachine drums= JudahZone.getInstance().getDrumMachine();
+			bind(getKeyStroke(VK_LEFT, CTRL_DOWN_MASK), new Act(()->drums.getTracks().next(false)));
+			bind(getKeyStroke(VK_RIGHT, CTRL_DOWN_MASK), new Act(()->drums.getTracks().next(true)));
 		}
 
 

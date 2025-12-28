@@ -6,9 +6,9 @@ import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
 import lombok.Getter;
-import net.judah.JudahZone;
+import net.judah.api.Midi;
+import net.judah.gui.settable.PresetsHandler;
 import net.judah.midi.ChannelCC;
-import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Preset;
 import net.judah.mixer.PresetsDB;
@@ -17,7 +17,7 @@ import net.judah.util.RTLogger;
 @Getter
 public class ChannelTrack extends MidiTrack {
 
-	private static final PresetsDB presets = JudahZone.getPresets();
+	private static final PresetsDB presets = PresetsHandler.getPresets();
 
 	private final Channel channel;
 	private final ChannelCC cc;

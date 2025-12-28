@@ -9,14 +9,14 @@ import javax.sound.midi.ShortMessage;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.api.Midi;
+import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.midi.Actives;
 import net.judah.midi.ChannelCC;
-import net.judah.midi.Midi;
 import net.judah.mixer.LineIn;
-import net.judah.omni.AudioTools;
-import net.judah.omni.Icons;
+import net.judah.util.AudioTools;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
@@ -125,7 +125,7 @@ public class DrumKit extends LineIn implements Receiver {
 	}
 
 	@Override
-	public void process() {
+	public void processImpl() {
 		AudioTools.silence(left);
 		AudioTools.silence(right);
 		if (onMute)

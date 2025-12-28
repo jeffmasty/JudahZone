@@ -16,7 +16,6 @@ import net.judah.fx.Compressor;
 import net.judah.gui.Gui;
 import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
-import net.judah.gui.MainFrame.FxChange;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.gui.fx.FxTrigger;
@@ -103,7 +102,7 @@ public class CompressorWidget extends JPanel {
 			}
     	default -> { return false; }
     	}
-    	MainFrame.update(new FxChange(channel, comp));
+    	MainFrame.updateChannel(channel, comp);
     	return true;
 	}
 
@@ -111,10 +110,7 @@ public class CompressorWidget extends JPanel {
 	 * @param threshhold
 	 * @param input */
 	private void compress(int threshhold, int input) {
-		boolean old = comp.isActive();
-		comp.setActive(input > threshhold);
-		if (old != comp.isActive())
-			MainFrame.update(channel);
+		channel.setActive(comp, input > threshhold);
 	}
 
 	public void update() {

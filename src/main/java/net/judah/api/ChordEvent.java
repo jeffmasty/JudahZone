@@ -1,4 +1,4 @@
-package net.judah.seq.chords;
+package net.judah.api;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

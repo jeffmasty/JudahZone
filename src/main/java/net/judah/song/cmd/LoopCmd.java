@@ -7,12 +7,13 @@ import net.judah.JudahZone;
 import net.judah.looper.Loop;
 import net.judah.looper.LoopType;
 import net.judah.looper.Looper;
+import net.judah.midi.JudahMidi;
 
 public class LoopCmd implements Cmdr {
 
 	@Getter private static LoopCmd instance;
 
-	private final Looper looper = JudahZone.getLooper();
+	private final Looper looper = JudahZone.getInstance().getLooper();
 	@Getter private static final Solo solo = new Solo();
 	@Getter private static final Sync sync = new Sync();
 	@Getter private final String[] keys;
@@ -38,7 +39,7 @@ public class LoopCmd implements Cmdr {
 		Loop loop = resolve(p.val);
 		if (loop == null) {
 			if (p.getCmd() == Cmd.Sync)
-				JudahZone.getClock().syncToLoop(looper.getPrimary());
+				JudahMidi.getClock().syncToLoop(looper.getPrimary());
 			return;
 		}
 		switch (p.getCmd()) {
@@ -81,7 +82,7 @@ public class LoopCmd implements Cmdr {
 
 	static class Solo extends BooleanProvider {
 		@Override public void execute(Param p) {
-			JudahZone.getLooper().getSoloTrack().solo(resolve(p.val));
+			JudahZone.getInstance().getLooper().getSoloTrack().solo(resolve(p.val));
 		}
 	}
 

@@ -4,7 +4,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import net.judah.fx.Effect;
+import net.judah.api.Effect;
 import net.judah.fx.LFO;
 import net.judah.gui.Gui;
 import net.judah.gui.HQ;
@@ -43,11 +43,11 @@ public class LFOKnobs extends KnobPanel {
 
 	@Override public void pad1() {
 		LFO lfo = upperKnobs ? channel.getLfo() : channel.getLfo2();
-			lfo.setActive(!lfo.isActive());
+			channel.toggle(lfo);
 	}
 
 	@Override public void pad2() {
-		channel.getIR().setActive(!channel.getIR().isActive());
+		channel.toggle(channel.getIR());
 		MainFrame.update(cabSim);
 	}
 
@@ -79,8 +79,12 @@ public class LFOKnobs extends KnobPanel {
 	public void update(Effect fx) {
 		if (fx == lfo2.getLfo())
 			lfo2.update();
-		else
+		else if (fx == lfo1.getLfo())
 			lfo1.update();
+		else if (fx == channel.getIR())
+			cabSim.update();
+		else if (fx == channel.getCompression())
+			compressor.update();
 	}
 
 	public void upperLower() {
@@ -91,7 +95,7 @@ public class LFOKnobs extends KnobPanel {
 	/** toggle on/off LFO that has knob focus */
 	public void toggle() {
 		LFO target = upperKnobs ? channel.getLfo() : channel.getLfo2();
-		target.setActive(!target.isActive());
+		channel.toggle(target);
 	}
 
 }

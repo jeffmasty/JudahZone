@@ -1,4 +1,4 @@
-package net.judah.omni;
+package net.judah.util;
 
 import java.io.File;
 import java.io.IOException;

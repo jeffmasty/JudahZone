@@ -14,15 +14,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.api.Key;
 import net.judah.api.Signature;
 import net.judah.drumkit.KitSetup;
+import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.PresetsDB;
-import net.judah.omni.JsonUtil;
 import net.judah.seq.Seq;
 import net.judah.seq.chords.Scale;
 import net.judah.seq.track.MidiFile;
@@ -30,11 +29,12 @@ import net.judah.seq.track.TrackInfo;
 import net.judah.song.cmd.Cmd;
 import net.judah.song.cmd.Param;
 import net.judah.util.Folders;
+import net.judah.util.JsonUtil;
 import net.judah.util.RTLogger;
 
 /* Stages of a song.
  * midi track files, fx, scenes(params, bar cycle, progChange, arp) and chordPro file*/
-@Getter @Setter @NoArgsConstructor
+@Getter @Setter
 public class Song {
 	@JsonIgnore private File file;
 
@@ -53,13 +53,26 @@ public class Song {
 	private List<Scene> scenes = new ArrayList<>();
 	private List<FxData> fx = new ArrayList<>();
 	private List<String> capture = new ArrayList<>();
+	@JsonIgnore private JudahZone zone;
+	@JsonIgnore private Seq seq;
 
-	public Song(Seq seq, int tempo) {
+	public Song() {
+
+	}
+
+
+	public Song(JudahZone judahZone, int tempo) {
+		attachRuntime(judahZone);
 		seq.newSong();
 		Scene created = new Scene(seq); // init w/ 10 midi tracks
  		created.getCommands().add(new Param(Cmd.Tempo, "" + tempo));
 		scenes.add(created);
 	}
+
+	public void attachRuntime(JudahZone judahZone) {
+        this.zone = judahZone;
+        this.seq = (judahZone != null) ? judahZone.getSeq() : null;
+    }
 
 	/** @param scene the current scene to save Efx.
 	 * @throws IOException
@@ -67,21 +80,21 @@ public class Song {
     public void saveSong(Scene scene) throws IOException, InvalidMidiDataException {
 
     	if (file == null)
-    		file = Folders.choose(JudahZone.getSetlists().getDefault());
+    		file = Folders.choose(zone.getSetlists().getDefault());
     	if (file == null) return;
 
     	// populate top level track name, file(null), and progChange for each MidiTrack
     	tracks.clear();
 
     	if (bundle == null || bundle.isBlank())
-    		JudahZone.getSeq().forEach(track->tracks.add(new TrackInfo(track)));
+    		seq.forEach(track->tracks.add(new TrackInfo(track)));
     	else
-			MidiSystem.write(JudahZone.getSeq().bundle(file.getName()), MidiFile.TYPE_1,
+			MidiSystem.write(seq.bundle(file.getName()), MidiFile.TYPE_1,
 					new FileOutputStream(new File(Folders.getMidi(), bundle)));
 
 		fx.clear();
 		scene.getFx().clear();
-		for (Channel ch : JudahZone.getMixer().getChannels()) {
+		for (Channel ch : zone.getMixer().getChannels()) {
 			if (false == ch.getPreset().getName().equals(PresetsDB.DEFAULT))
 				fx.add(new FxData(ch.getName(), ch.getPreset().getName()));
 			if (ch.isPresetActive())
@@ -93,7 +106,7 @@ public class Song {
 			RTLogger.warn(this, "Unknown scene: " + scene);
 		if (idx == 0) { // save mutes
 			capture.clear();
-			JudahZone.getInstruments().forEach(line ->{
+			zone.getInstruments().forEach(line ->{
 				if (!line.isMuteRecord())capture.add(line.getName());});
 		}
 		JsonUtil.writeJson(this, file);
@@ -102,7 +115,7 @@ public class Song {
 
     public void setTimeSig(Signature sig) {
     	this.timeSig = sig;
-    	JudahZone.getClock().setTimeSig(sig);
+    	JudahMidi.getClock().setTimeSig(sig);
     }
 
 	@Override public String toString() {

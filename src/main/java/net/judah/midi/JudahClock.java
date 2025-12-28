@@ -1,7 +1,5 @@
 package net.judah.midi;
 
-//autowire JudahMidi, chords, sampler, looper, seq
-import static net.judah.JudahZone.*;
 import static net.judah.api.Notification.Property.STEP;
 import static net.judah.api.Notification.Property.TRANSPORT;
 import static net.judah.util.Constants.bpmPerBeat;
@@ -33,11 +31,11 @@ import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
-import net.judah.omni.WavConstants;
 import net.judah.seq.chords.Chords;
 import net.judah.util.Constants;
 import net.judah.util.Debounce;
 import net.judah.util.RTLogger;
+import net.judah.util.WavConstants;
 
 public class JudahClock implements MidiClock, TimeProvider {
 
@@ -77,10 +75,12 @@ public class JudahClock implements MidiClock, TimeProvider {
     private OSCPortOut osc;
 	private final ArrayList<Object> oscData = new ArrayList<>();
 	private final Debounce debounce = new Debounce();
+	private final JudahZone zone;
 
     /** sync to external Midi24 pulse */
-	public JudahClock(JudahMidi parent) {
+	public JudahClock(JudahMidi parent, JudahZone judahZone) {
 		midi = parent;
+		zone = judahZone;
 
 		Thread announce = new Thread(()->{
 			try { while (true) {
@@ -91,7 +91,7 @@ public class JudahClock implements MidiClock, TimeProvider {
 			} catch (Exception e) { RTLogger.warn(this, e); }});
 		announce.setPriority(9);
 		announce.start();
-		getServices().add(this);
+		JudahZone.getServices().add(this);
 	}
 
 	@Override public void addListener(TimeListener l) 	 { if (!listeners.contains(l)) listeners.add(l); }
@@ -170,13 +170,13 @@ public class JudahClock implements MidiClock, TimeProvider {
 
 			passItOn(STEP, step);
 			if (active) {
-				getSeq().step(step);
+				zone.getSeq().step(step);
 			}
 		}
 		if (!active)
 			return;
 
-		getSeq().percent(beat + midiPulseCount / (float)MIDI_24);
+		zone.getSeq().percent(beat + midiPulseCount / (float)MIDI_24);
 	}
 
 	public void setSwing(float s) throws NumberFormatException {
@@ -184,7 +184,7 @@ public class JudahClock implements MidiClock, TimeProvider {
 			throw new NumberFormatException("swing and a miss: " + s);
 		swing = s;
 		updateSwing();
-		MainFrame.update(JudahZone.getMidiGui());
+		MainFrame.update(zone.getMidiGui());
 	}
 
 	private void updateSwing() {
@@ -379,7 +379,7 @@ public class JudahClock implements MidiClock, TimeProvider {
 		if (!onDeck)
 			return;
 
-		Looper looper = getLooper();
+		Looper looper = zone.getLooper();
 		if (!looper.hasRecording())
 			return;
 		long millis = (long)(looper.getPrimary().seconds() * 1000);
@@ -387,7 +387,7 @@ public class JudahClock implements MidiClock, TimeProvider {
 		// looper.clockSync(); // off FREE
 
 		// Reset Chord Track
-		Chords chords = getChords();
+		Chords chords = zone.getChords();
 		if (chords.isActive() && chords.getSection() != null)
 			chords.click(chords.getSection().get(0));
 	}

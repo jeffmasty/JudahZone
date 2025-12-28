@@ -6,12 +6,12 @@ import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
 import lombok.Getter;
+import net.judah.api.Midi;
 import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
 import net.judah.drumkit.Drumz;
 import net.judah.midi.JudahMidi;
-import net.judah.midi.Midi;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 
@@ -22,7 +22,7 @@ public class DrumTrack extends NoteTrack {
 	public DrumTrack(Drumz type, DrumKit kit) throws InvalidMidiDataException {
 		super(type.name, kit.getActives());
 		this.kit = kit;
-		setCue(Cue.Hot);
+		cue = Cue.Hot;
 	}
 
 	@Override public DrumKit getChannel() {

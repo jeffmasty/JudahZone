@@ -1,19 +1,17 @@
 package net.judah.controllers;
 
-import static net.judah.JudahZone.getFxRack;
-import static net.judah.JudahZone.getGuitar;
-import static net.judah.JudahZone.getMixer;
-
 import javax.swing.JToggleButton;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.JudahZone;
+import net.judah.api.Controller;
 import net.judah.api.Key;
+import net.judah.api.Midi;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Updateable;
 import net.judah.midi.JudahMidi;
-import net.judah.midi.Midi;
 import net.judah.midi.Panic;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
@@ -28,7 +26,12 @@ public class Jamstik implements Controller, Updateable {
 	@Getter private final JToggleButton toggleBtn = new JToggleButton("010");
 	@Getter private final JToggleButton octBtn = new JToggleButton(" ↓ ");
 
-	public Jamstik() {
+	private final JudahZone zone;
+	private final MPKmini mini;
+
+	public Jamstik(JudahZone judahZone) {
+		this.zone = judahZone;
+		this.mini = zone.getMpkMini();
 		toggleBtn.addActionListener(l->setActive(toggleBtn.isSelected()));
 		toggleBtn.setToolTipText("Jamstik Midi Guitar");
 		octBtn.addActionListener(l->setOctaver(octBtn.isSelected()));
@@ -37,13 +40,13 @@ public class Jamstik implements Controller, Updateable {
 
 	public void setActive(boolean active) {
 		this.active = active;
-		LineIn guitar = getGuitar();
+		LineIn guitar = zone.getGuitar();
 		if (active) {
 			volStash = guitar.getVolume();
 			guitar.getGain().setGain(0);
 		} else {
 			guitar.getGain().set(Gain.VOLUME, volStash);
-			new Panic(MPKmini.instance.getMidiOut());
+			new Panic(mini.getMidiOut());
 		}
 		MainFrame.update(this);
 	}
@@ -64,7 +67,7 @@ public class Jamstik implements Controller, Updateable {
 		if (active && Midi.isNote(midi)) {// TODO pitchbend
 			Midi out = Midi.create(midi.getCommand(), 0,
 					midi.getData1() - (octaver ? Key.OCTAVE : 0), midi.getData2());
-			MPKmini.instance.getMidiOut().send(out, JudahMidi.ticker());
+			mini.getMidiOut().send(out, JudahMidi.ticker());
 		}
 		return true;
 	}
@@ -74,9 +77,9 @@ public class Jamstik implements Controller, Updateable {
 			toggleBtn.setSelected(active);
 		if (octaver != octBtn.isSelected())
 			octBtn.setSelected(octaver);
-		Channel guitar = getGuitar();
-		getMixer().update(guitar);
-		if (getFxRack().getChannel() == guitar)
+		Channel guitar = zone.getGuitar();
+		zone.getMixer().update(guitar);
+		if (zone.getFxRack().getChannel() == guitar)
 			MainFrame.update(guitar);
 	}
 

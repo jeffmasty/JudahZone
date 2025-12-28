@@ -1,4 +1,4 @@
-package net.judah.omni;
+package net.judah.gui;
 
 import java.io.File;
 import java.util.HashMap;

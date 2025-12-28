@@ -3,7 +3,7 @@ package net.judah.sampler;
 import java.io.File;
 import java.io.IOException;
 
-import net.judah.omni.Recording;
+import net.judah.api.Recording;
 import net.judah.util.Folders;
 
 /** Audio from disk */

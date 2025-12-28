@@ -1,8 +1,7 @@
 package net.judah.song.cmd;
 
-import static net.judah.JudahZone.getMidiGui;
-
 import lombok.RequiredArgsConstructor;
+import net.judah.JudahZone;
 
 @RequiredArgsConstructor
 public enum Cmd {
@@ -19,7 +18,7 @@ public enum Cmd {
 	public static Cmdr getCmdr(Cmd cmd) {
 		switch (cmd) {
 
-		case MPK:		return getMidiGui();
+		case MPK:		return JudahZone.getInstance().getMidiGui();
 		case Length:	return ClockCmd.getLength();
 		case Start:		return ClockCmd.getStart();
 		case Swing: 	return ClockCmd.getSwing();

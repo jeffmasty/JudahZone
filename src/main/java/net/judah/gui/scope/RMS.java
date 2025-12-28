@@ -3,7 +3,7 @@ package net.judah.gui.scope;
 import static net.judah.util.Constants.LEFT;
 import static net.judah.util.Constants.RIGHT;
 
-import net.judah.omni.AudioTools;
+import net.judah.util.AudioTools;
 
 public record RMS(float rms, float peak, float amplitude) {
 

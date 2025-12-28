@@ -11,16 +11,15 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
 import lombok.Getter;
-import net.judah.JudahZone;
+import net.judah.api.Midi;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
-import net.judah.midi.Midi;
 import net.judah.seq.MidiConstants;
-import net.judah.seq.track.Computer.TrackUpdate;
+import net.judah.seq.track.Computer;
 import net.judah.seq.track.Computer.Update;
 import net.judah.seq.track.MidiTrack;
 import net.judah.song.TraxCombo;
@@ -31,12 +30,12 @@ public class Automation extends KnobPanel implements MidiConstants {
 
 	public static enum MidiMode { CC, Pitch, Program, Meta, All, NoteOn, NoteOff }; // TODO
 
-	private static Automation instance;
-	public static Automation getInstance() {
-		if (instance == null)
-			instance = new Automation();
-		return instance;
-	}
+//	private static Automation instance;
+//	public static Automation getInstance(TraxCombo combo, MidiTrack current) {
+//		if (instance == null)
+//			instance = new Automation(combo, current);
+//		return instance;
+//	}
 
 	@Getter private final KnobMode knobMode = KnobMode.Autom8;
 	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
@@ -47,10 +46,10 @@ public class Automation extends KnobPanel implements MidiConstants {
 	private final CCEdit cc = new CCEdit();
 	private final ProgramEdit program = new ProgramEdit();
 	private final PitchEdit pitch = new PitchEdit();
-	private final MidiView all = new MidiView();
+	private final MidiView all = new MidiView(this);
 
-	private Automation() {
-		trax = JudahZone.getOverview().getTrax();
+	public Automation(TraxCombo combo, MidiTrack current) {
+		trax = combo;
 		title.add(Gui.resize(trax, Size.WIDE_SIZE));
 
 		content.addTab(MidiMode.All.name(), all);
@@ -58,7 +57,7 @@ public class Automation extends KnobPanel implements MidiConstants {
 		content.addTab(MidiMode.Pitch.name(), pitch);
 		content.addTab(MidiMode.Program.name(), program);
 		add(content);
-		setTrack(JudahZone.getSeq().getCurrent());
+		setTrack(current);
 	}
 
 	public void setTrack(MidiTrack midi) {
@@ -153,10 +152,9 @@ public class Automation extends KnobPanel implements MidiConstants {
 		protected abstract boolean doKnob(int idx, int value);
 	}
 
-	public void update(TrackUpdate update) {
-		if (update.track() != track)
+	public void update(Update type, Computer c) {
+		if (c != track)
 			return;
-		Update type = update.type();
 		if (type == Update.EDIT || type == Update.FILE)
 			all.setTrack(track); // refill
 

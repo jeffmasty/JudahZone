@@ -21,7 +21,6 @@ import net.judah.JudahZone;
 import net.judah.gui.Detached.Floating;
 import net.judah.gui.scope.JudahScope;
 import net.judah.gui.widgets.CloseableTabbedPane;
-import net.judah.omni.Threads;
 import net.judah.seq.Musician;
 import net.judah.seq.beatbox.BeatBox;
 import net.judah.seq.beatbox.DrumCage;
@@ -29,7 +28,7 @@ import net.judah.seq.beatbox.DrumZone;
 import net.judah.seq.chords.ChordSheet;
 import net.judah.seq.piano.Piano;
 import net.judah.seq.piano.PianoView;
-import net.judah.seq.track.Computer.TrackUpdate;
+import net.judah.seq.track.Computer;
 import net.judah.seq.track.Computer.Update;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.MidiTrack;
@@ -40,26 +39,34 @@ import net.judah.song.Song;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
+import net.judah.util.Threads;
 
 public class TabZone extends CloseableTabbedPane {
 	public static TabZone instance;
 
 	@Getter private final HashSet<Component> frames = new HashSet<Component>();
 
+	private final JudahZone zone;
 	private final SheetMusicPnl sheetMusic;
 	private final Overview overview;
 	private final DrumZone drumz;
 	private final ChordSheet chords;
+	private final JudahScope scope;
 
-	public TabZone(Overview songs, DrumZone drumz, ChordSheet chordz) {
+	public TabZone(JudahZone judahZone, DrumZone drumz) {
+
+		// Overview songs, DrumZone drumz, ChordSheet chordz, JudahScope scope
+		this.zone = judahZone;
+		this.overview = zone.getOverview();
+		this.drumz = drumz;
+		this.chords = zone.getChords().getChordSheet();
+		this.scope = zone.getScope();
+
 		instance = this;
 		SheetMusicPnl exceptional = null;
 		try { exceptional = new SheetMusicPnl(new File(Folders.getSheetMusic(), "Four.png"), TAB_SIZE); }
 		catch (IOException e) { RTLogger.warn(this, e); }
 		sheetMusic = exceptional;
-		this.drumz = drumz;
-		this.chords = chordz;
-		this.overview = songs;
 
 		Gui.resize(this, TAB_SIZE);
         setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
@@ -91,7 +98,7 @@ public class TabZone extends CloseableTabbedPane {
 			}
 			else { // ??
 				Box box = new Box(BoxLayout.Y_AXIS);
-				box.add(new BeatBox(drumTrack, null));
+				box.add(new BeatBox(drumTrack, drumz, zone.getSeq().getAutomation()));
 				addTab("import",  box, true);
 			}
 		}
@@ -252,7 +259,7 @@ public class TabZone extends CloseableTabbedPane {
 	public void pianoTrack(PianoTrack p) {
 		PianoView view = getPiano(p);
 		if (view == null)
-			show(new PianoView(p));
+			show(new PianoView(p, zone.getSeq()));
 		else {
 			if (getFrame(p) == null)
 				setSelectedComponent(view);
@@ -278,11 +285,11 @@ public class TabZone extends CloseableTabbedPane {
 		detach(getSelectedComponent());
 	}
 
-	public void update(TrackUpdate update) {
-		if (update.track() instanceof NoteTrack == false)
+	public void update(Update type, Computer c) {
+		if (c instanceof NoteTrack == false)
 			return;
-		NoteTrack notes = (NoteTrack)update.track();
-		if (update.type() == Update.REZ) {
+		NoteTrack notes = (NoteTrack)c;
+		if (type == Update.REZ) {
 			if (notes.isDrums()) {
 				DrumCage view = drumz.getView(notes);
 				if (view != null)
@@ -296,19 +303,19 @@ public class TabZone extends CloseableTabbedPane {
 		} else if (notes.isDrums()) {
 			DrumCage view = drumz.getView(notes);
 			if (view != null)
-				view.getMenu().update(update.type());
+				view.getMenu().update(type);
 		} else if (notes.isSynth()) {
 			PianoView view = getPiano((PianoTrack)notes);
 			if (view != null) {
-				view.getMenu().update(update.type());
+				view.getMenu().update(type);
 			}
 		} // else ChannelTrack
 
-		if (update.type() == Update.EDIT)
+		if (type == Update.EDIT)
 			update(notes);
-		if (update.type() == Update.CURRENT)
+		if (type == Update.CURRENT)
 			update(notes);
-		if (update.type() == Update.FILE)
+		if (type == Update.FILE)
 			update(notes);
 	}
 
@@ -332,7 +339,6 @@ public class TabZone extends CloseableTabbedPane {
 	}
 
 	public void scope() {
-		JudahScope scope = JudahZone.getScope();
 		install(scope);
 		scope.setActive(true);
 	}

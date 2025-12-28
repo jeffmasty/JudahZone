@@ -4,37 +4,38 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JComboBox;
 
-import net.judah.JudahZone;
 import net.judah.gui.Gui;
+import net.judah.seq.Seq;
 import net.judah.seq.TrackList;
-import net.judah.seq.automation.Automation;
 import net.judah.seq.track.MidiTrack;
 
 public class TraxCombo extends JComboBox<MidiTrack> {
 
-	private ActionListener listener = (l) -> {
-		MidiTrack t = (MidiTrack)getSelectedItem();
-		if (t != null && t != Automation.getInstance().getTrack())
-			Automation.getInstance().setTrack(t);
-	};
+	private final Seq seq;
+	private final ActionListener listener;
 
-	TraxCombo() {
+	public TraxCombo(Seq seq) {
+		this.seq = seq;
 		setFont(Gui.BOLD);
+		listener = (l)-> {
+			MidiTrack t = (MidiTrack)getSelectedItem();
+			if (t != null && t != seq.getAutomation().getTrack())
+				seq.getAutomation().setTrack(t);};
 		addActionListener(listener);
 	}
 
-	public void update() {
-		if (Automation.getInstance().getTrack() != getSelectedItem())
-			setSelectedItem(Automation.getInstance().getTrack());
+	public void update(MidiTrack t) {
+		if (t != getSelectedItem())
+			setSelectedItem(t);
 	}
 
-	void refill(TrackList<MidiTrack> trackList) {
+	public void refill(TrackList<MidiTrack> trackList, MidiTrack selected) {
 		removeActionListener(listener);
 		removeAllItems();
-		addItem(JudahZone.getSeq().getMains());
+		addItem(seq.getMains());
 		for (MidiTrack t : trackList)
 			addItem(t);
-		update();
+		update(selected);
 		addActionListener(listener);
 	}
 

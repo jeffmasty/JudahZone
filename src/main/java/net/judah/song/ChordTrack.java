@@ -13,11 +13,11 @@ import javax.swing.JSeparator;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 
+import net.judah.api.Chord;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.Btn;
-import net.judah.seq.chords.Chord;
 import net.judah.seq.chords.ChordPlay;
 import net.judah.seq.chords.ChordProCombo;
 import net.judah.seq.chords.ChordScroll;

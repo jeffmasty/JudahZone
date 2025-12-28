@@ -1,7 +1,9 @@
 package net.judah.controllers;
 
-import static net.judah.JudahZone.*;
-
+import lombok.RequiredArgsConstructor;
+import net.judah.JudahZone;
+import net.judah.api.Controller;
+import net.judah.api.Midi;
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
 import net.judah.fx.Overdrive;
@@ -10,12 +12,13 @@ import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
 import net.judah.midi.JudahClock;
-import net.judah.midi.Midi;
+import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.sampler.Sampler;
 import net.judah.util.Debounce;
 
 /** CC 1 - 16 on channel 13 */
+@RequiredArgsConstructor
 public class KorgPads extends Debounce implements Controller {
 
 	public static final String NAME = "nanoPAD2";
@@ -26,6 +29,8 @@ public class KorgPads extends Debounce implements Controller {
 	public static final int LEFT = 50;
 	public static final int RIGHT = 77;
 
+	private final JudahZone zone;
+
 	@Override public boolean midiProcessed(Midi midi) {
 		int data1 = midi.getData1();
 		int data2 = midi.getData2();
@@ -35,7 +40,7 @@ public class KorgPads extends Debounce implements Controller {
 				joystick(false);
 			return true;
 		}
-		Looper looper = getLooper();
+		Looper looper = zone.getLooper();
 
 		switch (data1) {
 		// Loops top row
@@ -52,13 +57,13 @@ public class KorgPads extends Debounce implements Controller {
 			return true;
 		}
 		case 5: // toggle FX
-			getFxRack().getChannel().toggleFx();
+			zone.getFxRack().getChannel().toggleFx();
 			return true;
 		case 6: // latch guitar EFX to looper
-			looper.syncFx(getGuitar());
+			looper.syncFx(zone.getGuitar());
 			return true;
 		case 7: // Clock off/sync
-			JudahClock clock = getClock();
+			JudahClock clock = JudahMidi.getClock();
 			if (clock.isActive())
 				clock.end();
 			else if (looper.hasRecording()) {
@@ -67,10 +72,10 @@ public class KorgPads extends Debounce implements Controller {
 				else clock.syncToLoop(looper.getPrimary());
 			}
 			else
-				getClock().begin();
+				JudahMidi.getClock().begin();
 			return true;
 		case 8: // Crickets step sequencer
-			Sampler sampler = getSampler();
+			Sampler sampler = zone.getSampler();
 			if (doubleTap(sampler)) // increment sample
 				sampler.nextStepSample();
 			sampler.setStepping(!sampler.isStepping());
@@ -101,7 +106,7 @@ public class KorgPads extends Debounce implements Controller {
 			return true;
 
 		case 14: // next scene
-			getOverview().trigger();
+			zone.getOverview().trigger();
 			return true;
 		case 15:
 			MainFrame.getKnobs().pad1();
@@ -114,7 +119,7 @@ public class KorgPads extends Debounce implements Controller {
 			joystick(true);
 			return true;
 		case JOYSTICK_X:
-			Channel fx = getFxRack().getChannel();
+			Channel fx = zone.getFxRack().getChannel();
 			Delay delay = fx.getDelay();
 			Chorus chorus = fx.getChorus();
 			Overdrive od = fx.getOverdrive();
@@ -125,29 +130,29 @@ public class KorgPads extends Debounce implements Controller {
 					delay.setDelayTime(Delay.DEFAULT_TIME);
 				// cc 50 to 0 = 0 to max delay
 				delay.setFeedback(.02f * (50 - data2));
-				delay.setActive(true);
+				fx.setActive(delay, true);
 			}
 			else if (right) {
 				od.set(0, data2);
-				chorus.setActive(true);
-				od.setActive(true);
+				fx.setActive(chorus, true);
+				fx.setActive(od, true);
 			}
 			else { // dead zone
-				delay.setActive(false);
-				od.setActive(false);
-				chorus.setActive(false);
+				fx.setActive(delay, false);
+				fx.setActive(od, false);
+				fx.setActive(chorus, false);
 			}
 			MainFrame.update(fx);
 			return true;
 		case JOYSTICK_Y: // TODO multi-select
-			getFxRack().getChannel().getDjFilter().joystick(midi);
+			zone.getFxRack().getChannel().getDjFilter().joystick(midi);
 			return true;
 		}
 		return false;
 	}
 
 	private void joystick(boolean active) {
-		Channel ch = getFxRack().getChannel();
+		Channel ch = zone.getFxRack().getChannel();
 		if (active) {
 			// TODO stash preset
 			// ch.reset();

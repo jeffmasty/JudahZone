@@ -7,15 +7,15 @@ import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.api.PlayAudio.Type;
-import net.judah.fx.Fader;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.SampleKnobs;
+import net.judah.mixer.Fader;
 import net.judah.mixer.LineIn;
-import net.judah.omni.AudioTools;
-import net.judah.omni.Threads;
+import net.judah.util.AudioTools;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
+import net.judah.util.Threads;
 
 @Getter
 public class Sampler extends LineIn {
@@ -147,7 +147,7 @@ public class Sampler extends LineIn {
 	}
 
 	@Override
-	public void process() {
+	protected void processImpl() {
 		AudioTools.silence(left);
 		AudioTools.silence(right);
     	for (Sample sample : samples)

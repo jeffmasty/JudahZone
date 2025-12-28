@@ -1,4 +1,4 @@
-package net.judah.midi;
+package net.judah.util;
 
 /**
  * Small utility helpers for MIDI <-> Hz conversions using the common

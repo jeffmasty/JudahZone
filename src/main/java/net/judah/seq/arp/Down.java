@@ -3,9 +3,10 @@ package net.judah.seq.arp;
 import javax.sound.midi.ShortMessage;
 
 import lombok.RequiredArgsConstructor;
+import net.judah.api.Algo;
+import net.judah.api.Chord;
 import net.judah.api.Key;
 import net.judah.seq.Poly;
-import net.judah.seq.chords.Chord;
 
 @RequiredArgsConstructor
 public class Down extends Algo {

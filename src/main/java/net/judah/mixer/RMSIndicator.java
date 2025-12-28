@@ -10,7 +10,7 @@ import net.judah.gui.Size;
 import net.judah.gui.Updateable;
 import net.judah.gui.widgets.RainbowFader;
 import net.judah.looper.Loop;
-import net.judah.omni.AudioTools;
+import net.judah.util.AudioTools;
 
 /** listen to channel's audio, paint widget height/color based on RMS of the audio frame */
 public class RMSIndicator extends JPanel implements Updateable {

@@ -13,8 +13,6 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
 
-import net.judah.omni.Icons;
-
 public class Detached extends JFrame {
 
 	public static interface Floating {

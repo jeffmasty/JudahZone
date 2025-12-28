@@ -6,6 +6,7 @@ import java.security.InvalidParameterException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.judah.api.TimeEffect;
 import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 import net.judah.util.Constants;
@@ -29,7 +30,6 @@ public class LFO implements TimeEffect {
 	private final Channel ch;
 	@Getter private final String name;
 
-	@Getter private boolean active;
 	@Getter private Target target = Target.Pan;
 	/** in kiloHertz (msec per cycle). default: oscillates over a 1.2 seconds. */
 	@Getter private double frequency = 1200;
@@ -55,29 +55,32 @@ public class LFO implements TimeEffect {
 	    min = val;
 	}
 
-	@Override public void setActive(boolean active) {
-		if (this.active == active)
-			return;
-		if (active)
-			setup();
-		else
-			recover();
-		this.active = active;
-		MainFrame.update(ch);
-	}
+//	@Override public void setActive(boolean active) {
+//
+//		boolean chActive = ch.isActive(this);
+//
+//		if (chActive == active)
+//			return;
+//		if (active)
+//			activate();
+//		else
+//			reset();
+//		this.active = active;
+//	}
 
     public void setTarget(Target target) {
     	if (this.target == target)
     		return;
+    	boolean active = ch.isActive(this);
     	if (active)
-    		recover();
+    		reset();
 		this.target = target;
 		if (active)
-			setup();
+			activate();
 	}
-
-    private void recover() {
-    	if (!active || recover < 0)
+    @Override
+	public void reset() {
+    	if (recover < 0)
     		return;
     	switch (target) {
 			case pArTy:
@@ -85,15 +88,15 @@ public class LFO implements TimeEffect {
 				break;
 			case Delay:
 				ch.getDelay().set(Delay.Settings.DelayTime.ordinal(), recover);
-				ch.getDelay().setActive(wasActive);
+				ch.setActive(ch.getDelay(), wasActive);
 				break;
 			case Echo:
 				ch.getReverb().set(Reverb.Settings.Wet.ordinal(), recover);
-				ch.getReverb().setActive(wasActive);
+				ch.setActive(ch.getReverb(), wasActive);
 				break;
 			case Room:
 				ch.getReverb().set(Reverb.Settings.Room.ordinal(), recover);
-				ch.getReverb().setActive(wasActive);
+				ch.setActive(ch.getReverb(), wasActive);
 				break;
 			case Gain:
 				ch.getGain().set(Gain.VOLUME, recover);
@@ -103,50 +106,52 @@ public class LFO implements TimeEffect {
 				break;
 			case Chorus:
 				ch.getChorus().set(Chorus.Settings.Feedback.ordinal(), recover);
-				ch.getChorus().setActive(wasActive);
+				ch.setActive(ch.getChorus(), wasActive);
 				break;
 			case Depth:
 				ch.getChorus().set(Chorus.Settings.Depth.ordinal(), recover);
-				ch.getChorus().setActive(wasActive);
+				ch.setActive(ch.getChorus(), wasActive);
 				break;
 			case Rate:
 				ch.getChorus().set(Chorus.Settings.Rate.ordinal(), recover);
-				ch.getChorus().setActive(wasActive);
+				ch.setActive(ch.getChorus(), wasActive);
 				break;
 			case Phase:
 				ch.getChorus().set(Chorus.Settings.Phase.ordinal(), recover);
-				ch.getChorus().setActive(wasActive);
+				ch.setActive(ch.getChorus(), wasActive);
 				break;
 			case Filtr:
 				ch.getHiCut().set(Filter.Settings.Hz.ordinal(), recover);
-				ch.getHiCut().setActive(wasActive);
+				ch.setActive(ch.getHiCut(), wasActive);
 				break;
 
     	}
     }
 
-    private void setup() {
+    @Override
+	public void activate() {
 		throttle = 0;
     	switch (target) {
 		case pArTy:
 			recover = 50;
-			wasActive = ch.getHiCut().isActive();
-			ch.getHiCut().setActive(true);
+			wasActive = ch.isActive(ch.getHiCut());
+			ch.setActive(ch.getHiCut(), true);
 			break;
 		case Delay:
 			recover = ch.getDelay().get(Delay.Settings.DelayTime.ordinal());
-			wasActive = ch.getDelay().isActive();
-			ch.getDelay().setActive(true);
+			wasActive = ch.isActive(ch.getDelay());
+
+			ch.setActive(ch.getDelay(), true);
 			break;
 		case Echo:
 			recover = ch.getReverb().get(Reverb.Settings.Wet.ordinal());
-			wasActive = ch.getReverb().isActive();
-			ch.getReverb().setActive(true);
+			wasActive = ch.isActive(ch.getReverb());
+			ch.setActive(ch.getReverb(), true);
 			break;
 		case Room:
 			recover = ch.getReverb().get(Reverb.Settings.Room.ordinal());
-			wasActive = ch.getReverb().isActive();
-			ch.getReverb().setActive(true);
+			wasActive = ch.isActive(ch.getReverb());
+			ch.setActive(ch.getReverb(), true);
 			break;
 		case Gain:
 			recover = ch.getGain().get(Gain.VOLUME);
@@ -156,28 +161,28 @@ public class LFO implements TimeEffect {
 			break;
     	case Chorus:
     		recover = ch.getChorus().get(Chorus.Settings.Feedback.ordinal());
-			wasActive = ch.getChorus().isActive();
-    		ch.getChorus().setActive(true);
+			wasActive = ch.isActive(ch.getChorus());
+			ch.setActive(ch.getChorus(), true);
 			break;
     	case Depth:
     		recover = ch.getChorus().get(Chorus.Settings.Depth.ordinal());
-			wasActive = ch.getChorus().isActive();
-    		ch.getChorus().setActive(true);
+			wasActive = ch.isActive(ch.getChorus());
+			ch.setActive(ch.getChorus(), true);
 			break;
     	case Rate:
     		recover = ch.getChorus().get(Chorus.Settings.Rate.ordinal());
-			wasActive = ch.getChorus().isActive();
-    		ch.getChorus().setActive(true);
+			wasActive = ch.isActive(ch.getChorus());
+			ch.setActive(ch.getChorus(), true);
 			break;
     	case Phase:
     		recover = ch.getChorus().get(Chorus.Settings.Phase.ordinal());
-    		wasActive = ch.getChorus().isActive();
-    		ch.getChorus().setActive(true);
+    		wasActive = ch.isActive(ch.getChorus());
+    		ch.setActive(ch.getChorus(), true);
     		break;
     	case Filtr:
     		recover = ch.getHiCut().get(Filter.Settings.Hz.ordinal());
-    		wasActive = ch.getHiCut().isActive();
-    		ch.getHiCut().setActive(true);
+    		wasActive = ch.isActive(ch.getHiCut());
+    		ch.setActive(ch.getHiCut(), true);
     	}
     }
     @Override public int get(int idx) {
@@ -231,7 +236,8 @@ public class LFO implements TimeEffect {
 
 	/** execute the LFO on the channel's target */
 	public void pulse() {
-		if (!active) return;
+		if (!ch.isActive(this))
+			return;
 		int val = (int)query();
 		switch(target) {
 			case Gain: ch.getGain().set(Gain.VOLUME, val); break;
@@ -269,7 +275,7 @@ public class LFO implements TimeEffect {
 		int ratio = (int) (data2 * 0.01f * 50); // if center is zero, max tremelo is 0 to 100
 		setMin(center - ratio);
 		setMax(center + ratio);
-		setActive(data2 > 0);
+		ch.setActive(this, data2 > 0);
     }
 
     /** Set an LFO preset on Chorus Phase, min/max based off val */
@@ -283,7 +289,7 @@ public class LFO implements TimeEffect {
 		int offset = (int) (data2 * 0.5f * Constants.TO_100);
 		set(Settings.Min.ordinal(), 50 - offset);
 		set(Settings.Max.ordinal(), 50 + offset);
-		setActive(data2 > 0);
+		ch.setActive(this, data2 > 0);
 	}
 
 }

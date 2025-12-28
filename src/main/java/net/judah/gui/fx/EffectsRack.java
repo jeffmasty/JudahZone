@@ -12,8 +12,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
+import net.judah.api.Effect;
 import net.judah.controllers.MPKTools;
 import net.judah.fx.Chorus;
+import net.judah.fx.Delay;
 import net.judah.fx.EQ;
 import net.judah.fx.Overdrive;
 import net.judah.fx.Reverb;
@@ -24,7 +26,7 @@ import net.judah.gui.fx.ReverbPlus.UpdatePanel;
 import net.judah.gui.settable.PresetsHandler;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.gui.widgets.Slider;
-import net.judah.looper.Looper;
+import net.judah.midi.MidiInstrument;
 import net.judah.mixer.Channel;
 import net.judah.util.RTLogger;
 
@@ -44,28 +46,30 @@ public class EffectsRack extends JPanel implements MPKTools {
     @Getter private final EQPlus eq;
     @Getter private final ReverbPlus reverb;
     private final OD drive;
+    private final TimePanel chorusTime;
+    private final TimePanel delayTime;
 
-    public EffectsRack(Channel ch, Looper looper) {
+    public EffectsRack(Channel ch, MidiInstrument bass) {
     	this.channel = ch;
         presets = new PresetsHandler(channel);
-        title = new ChannelTitle(channel, looper);
+        title = new ChannelTitle(channel, bass);
         phase = new Slider.FxSlider(ch.getChorus(), Chorus.Settings.Phase.ordinal(), "Phase");
         dampness = new Slider.FxSlider(ch.getReverb(), Reverb.Settings.Width.ordinal(), "Dampness");
         clipping = new Slider.FxSlider(ch.getOverdrive(), Overdrive.Settings.Clipping.ordinal(), "Clipping");
         eq = new EQPlus(channel);
         drive = new OD(channel);
-        reverb = new ReverbPlus(ch.getReverb());
+        reverb = new ReverbPlus(ch);
+        delayTime = new TimePanel(ch.getDelay(), ch);
+        chorusTime = new TimePanel(ch.getChorus(), ch);
 
 		// wet  room   d.time  d.fb
-		// cho1 cho2   cho3    O/D
+		// O/D  cho1    cho2   cho3
         Row lbls = new Row(ch);
         ArrayList<Component> components = lbls.getControls();
         components.add(new FxTrigger("Reverb", ch.getReverb(), ch));
-        components.add(new FxTrigger(" ", ch.getReverb(), ch));
-
-//        components.add(Gui.resize(dampness, Size.TINY));
+        components.add(new FxTrigger(" ", ch.getReverb(), ch)); // TODO rev+
         components.add(new FxTrigger("Delay", ch.getDelay(), ch));
-        components.add(new TimePanel(ch.getDelay(), ch));
+        components.add(delayTime);
         labels.add(lbls);
 
         lbls = new Row(ch);
@@ -76,7 +80,7 @@ public class EffectsRack extends JPanel implements MPKTools {
         components.add(od);
         components.add(Gui.resize(phase, Size.TINY));
         components.add(new FxTrigger("Chorus", ch.getChorus(), ch));
-        components.add(new TimePanel(ch.getChorus(), ch));
+        components.add(chorusTime);
         labels.add(lbls);
 
 		// EQ L/M/H  Vol
@@ -153,6 +157,38 @@ public class EffectsRack extends JPanel implements MPKTools {
         repaint();
     }
 
+	public void update(Effect fx) {
+
+		// TODO time widget + LFO Time Widgets
+
+		if (fx instanceof Reverb) {
+			dampness.update();
+			reverb.update();
+			return;
+		}
+
+		if (fx instanceof EQ) {
+			eq.update();
+			return;
+		}
+
+		if (fx instanceof OD)
+			clipping.update();
+		else if (fx instanceof Delay) {
+			delayTime.update();
+		}
+		else if (fx instanceof Chorus) {
+			phase.update();
+			chorusTime.update();
+		}
+
+		for (Row row: knobs)
+			for (Component c : row.getControls())
+				if (c instanceof FxKnob knob && knob.getEffect() == fx)
+					knob.update();
+	}
+
+
     /** amount effect changes for each encoder change */
     private static final int OFFSET = 2;
 
@@ -193,5 +229,14 @@ public class EffectsRack extends JPanel implements MPKTools {
             		Overdrive.Settings.Algo.ordinal(), getSelectedIndex()));
     	}
     }
+
+	public void updatePreset() {
+		presets.update();
+		for (Component c : knobs.get(3).getControls()) {
+			if (c instanceof PresetsBtns btns)
+				btns.update();
+		}
+	}
+
 
 }

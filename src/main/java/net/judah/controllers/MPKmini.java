@@ -1,7 +1,6 @@
 
 package net.judah.controllers;
 
-import static net.judah.JudahZone.*;
 import static net.judah.controllers.MPKTools.*;
 import static net.judah.gui.knobs.KnobMode.*;
 
@@ -16,7 +15,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
+import net.judah.api.Controller;
+import net.judah.api.Midi;
 import net.judah.api.ZoneMidi;
 import net.judah.fx.Delay;
 import net.judah.gui.MainFrame;
@@ -25,10 +27,10 @@ import net.judah.gui.Updateable;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.LFOKnobs;
 import net.judah.midi.JudahMidi;
-import net.judah.midi.Midi;
 import net.judah.midi.Panic;
 import net.judah.mixer.Channel;
 import net.judah.sampler.Sample;
+import net.judah.seq.SynthRack;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
@@ -38,15 +40,16 @@ import net.judah.util.Debounce;
 
 
 /** Akai MPKmini, not the new one */
+@RequiredArgsConstructor
 public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controller {
-
-	public static final MPKmini instance = new MPKmini();
-	private MPKmini() {}
 
 	public static final String NAME = "MPKmini2"; // midi port
 	private static final String[] ROMPLER = new String[] {
 				"Acoustic Bass", "Vibraphone", "Rock Organ", "Rhodes EP",
 				"Tremolo", "Oboe", "Ahh Choir", "Harp"};
+
+	private final JudahZone zone;
+
 
 	// Where to route live MPK keys (and Jamstik)
 	@Getter private ZoneMidi midiOut;
@@ -60,7 +63,7 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 		if (Midi.isProgChange(midi))
 			return doProgChange(midi.getData1(), midi.getData2());
 
-		if (getSeq().captured(midi))  // recording or transposing or drums
+		if (zone.getSeq().captured(midi))  // recording or transposing or drums
 			return true;
 
     	if (Midi.isNote(midi) || Midi.isPitchBend(midi)) {
@@ -104,7 +107,7 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 
 	private boolean checkCC(int data1, int data2) {
 		if (KNOBS.contains(data1)) {
-			MainFrame.update(new KnobData(data1 - KNOBS.get(0), data2));
+			MainFrame.updateKnob(data1 - KNOBS.get(0), data2);
 			return false;
 		}
 		if (data1 == JOYSTICK_L)
@@ -114,8 +117,8 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 		if (PRIMARY_CC.contains(data1))
 			return cc_pad(data1, data2);
 		if (SAMPLES_CC.contains(data1)) {
-			Sample s = getSampler().getSamples().get(SAMPLES_CC.indexOf(data1));
-			getSampler().play(s, data2 > 0);
+			Sample s = zone.getSampler().getSamples().get(SAMPLES_CC.indexOf(data1));
+			zone.getSampler().play(s, data2 > 0);
 			return true;
 		}
 		return false;
@@ -127,19 +130,19 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 
 		///////// ROW 1 /////////////////
 		if (data1 == PRIMARY_CC.get(0))  {
-			getMidiGui().getToggler().capture(midiOut, data2 > 0);
+			zone.getMidiGui().getToggler().capture(midiOut, data2 > 0);
 		}
 		else if (data1 == PRIMARY_CC.get(1)) {
-			getMidiGui().getToggler().mpk(midiOut, data2 > 0);
+			zone.getMidiGui().getToggler().mpk(midiOut, data2 > 0);
 		}
 
 		else if (data1 == PRIMARY_CC.get(2) && data2 > 0 && !flooding())
 			nextMidiBtn(); // focus MidiGui or...
 		else if (data1 == PRIMARY_CC.get(3) && data2 > 0 && !flooding()) {
 			if (MainFrame.getKnobMode() == Track) {// focus TRACKS {
-				MidiTrack next = getSeq().getTracks().next(true);
+				MidiTrack next = zone.getSeq().getTracks().next(true);
 				if (next instanceof NoteTrack notes)
-					MainFrame.setFocus(JudahZone.getSeq().getKnobs(notes));
+					MainFrame.setFocus(zone.getSeq().getKnobs(notes));
 			}
 			else
 				MainFrame.setFocus(Track);
@@ -150,7 +153,7 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 			((PianoTrack)midiOut.getTrack()).getPedal().setPressed(data2 > 0);
 		}
 		else if (data1 == PRIMARY_CC.get(5)) {
-			getChords().toggle();
+			zone.getChords().toggle();
 		}
 
 		else if (data1 == PRIMARY_CC.get(6) && data2 > 0 ) {
@@ -199,7 +202,7 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 
 	private boolean joystickL(int data2) { // delay
 		Delay d = ((Channel)midiOut).getDelay();
-		d.setActive(data2 > 4);
+		((Channel)midiOut).setActive(d, data2 > 4);
 		if (data2 > 4) {
 			if (d.getDelay() < Delay.DEFAULT_TIME)
 				d.setDelayTime(Delay.DEFAULT_TIME);
@@ -220,13 +223,13 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 		// Bank A: Fluid presets
 		for (int i = 0; i < PRIMARY_PROG.length; i++)
 			if (data1 == PRIMARY_PROG[i]) {
-				getFluid().progChange(ROMPLER[i]);
+				SynthRack.getFluids()[0].progChange(ROMPLER[i]);
 				return true;
 			}
 		// Bank B: set current track's pattern #
 		for (int i = 0; i < B_PROG.length; i++) {
 			if (data1 == B_PROG[i]) {
-				getSeq().getCurrent().toFrame(i);
+				zone.getSeq().getCurrent().toFrame(i);
 				return true;
 			}
 		}

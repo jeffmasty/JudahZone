@@ -1,13 +1,13 @@
 package net.judah.song.cmd;
 
 import lombok.Getter;
-import net.judah.JudahZone;
 import net.judah.midi.JudahClock;
+import net.judah.midi.JudahMidi;
 import net.judah.util.RTLogger;
 
 public class ClockCmd {
 
-	static JudahClock clock = JudahZone.getClock();
+	static JudahClock clock = JudahMidi.getClock();
 	@Getter static Start start = new Start();
 	@Getter static Tempo tempo = new Tempo();
 	@Getter static Length length = new Length();

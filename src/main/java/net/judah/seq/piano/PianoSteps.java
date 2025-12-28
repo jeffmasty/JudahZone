@@ -14,17 +14,18 @@ import javax.sound.midi.ShortMessage;
 import javax.swing.SwingUtilities;
 
 import lombok.Getter;
+import net.judah.api.Midi;
 import net.judah.api.Signature;
 import net.judah.gui.Gui;
 import net.judah.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.midi.JudahClock;
-import net.judah.midi.Midi;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiNote;
 import net.judah.seq.Steps;
+import net.judah.seq.automation.Automation;
 import net.judah.seq.automation.CCPopup;
 import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
@@ -44,11 +45,11 @@ public class PianoSteps extends Steps implements MouseMotionListener, Size, Mous
 	private final CCPopup cc;
 
 
-	public PianoSteps(PianoTrack piano) {
+	public PianoSteps(PianoTrack piano, Automation auto) {
 		super(piano);
 		this.notes = piano;
 		this.clock = notes.getClock();
-		this.cc = new CCPopup(notes, this, false);
+		this.cc = new CCPopup(notes, this, false, auto);
 		setLayout(null);
 		addMouseMotionListener(this);
 		addMouseListener(this);
@@ -98,6 +99,10 @@ public class PianoSteps extends Steps implements MouseMotionListener, Size, Mous
 			}
 			else if (count % steps % div == 2) {
 				g.drawString("+", OFFSET, y + (int)unit - 3);
+			}
+
+			if (cc.getPitch(i) != null) { // backslash means pitchbend present
+				g.drawLine(0, y, width, y + (int)unit);
 			}
 
 			g.drawLine(0, y + (int)unit, width, y + (int)unit);
@@ -165,8 +170,8 @@ public class PianoSteps extends Steps implements MouseMotionListener, Size, Mous
 	@Override public void mouseExited(MouseEvent e) {
 		highlight(null);
 	}
-	@Override
-	public void mouseMoved(MouseEvent e) {
+
+	@Override public void mouseMoved(MouseEvent e) {
 		if (on != null)
 			highlight(e.getPoint());
 	}
@@ -182,13 +187,10 @@ public class PianoSteps extends Steps implements MouseMotionListener, Size, Mous
 		timeSig(clock.getTimeSig());
 	}
 
-	@Override
-	public void timeSig(Signature sig) {
+	@Override public void timeSig(Signature sig) {
 		total = 2 * sig.steps;
 		unit = height / total;
 		repaint();
 	}
-
-
 
 }

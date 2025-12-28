@@ -18,14 +18,13 @@ import javax.swing.JOptionPane;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.JudahZone;
 import net.judah.api.Notification.Property;
+import net.judah.api.Midi;
 import net.judah.api.Signature;
 import net.judah.api.TimeListener;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
 import net.judah.midi.JudahMidi;
-import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
 import net.judah.seq.Meta;
 import net.judah.seq.MetaMap;
@@ -43,7 +42,7 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
     protected final int ch;
     @Setter protected String name;
 	private File file;
-    private Cue cue = Cue.Bar;
+    protected Cue cue = Cue.Bar;
 	private boolean onDeck;
 	protected boolean capture;
 	@Setter protected boolean permanent;
@@ -132,7 +131,7 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 		state = sched;
 		setAmp(state.amp);
 		if (old != state.cycle)
-			MainFrame.update(new TrackUpdate(Update.CYCLE, this));
+			MainFrame.updateTrack(Update.CYCLE, this);
 		if (current != state.launch)
 			setCurrent(state.launch);
 		else
@@ -154,7 +153,7 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 			setActive(true);
 		else {
 			onDeck = !onDeck;
-			MainFrame.update(new TrackUpdate(Update.PLAY, this));
+			MainFrame.updateTrack(Update.PLAY, this);
 		}
 	}
 
@@ -163,7 +162,7 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 		if (state.active && clock.isEven() != (count % 2 == 0))
 			cycle();
 		onDeck = false;
-		MainFrame.update(new TrackUpdate(Update.PLAY, this));
+		MainFrame.updateTrack(Update.PLAY, this);
 	}
 
 	public void setAmp(float amp) {
@@ -172,17 +171,17 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
     		return;
     	}
     	state.amp = amp;
-    	MainFrame.update(new TrackUpdate(Update.AMP, this));
+    	MainFrame.updateTrack(Update.AMP, this);
     }
 
 	public final void setCue(Cue cue) {
 		this.cue = cue;
-		MainFrame.update(new TrackUpdate(Update.CUE, this));
+		MainFrame.updateTrack(Update.CUE, this);
 	}
 
 	private void setFile(File f) {
 		this.file = f;
-		MainFrame.update(new TrackUpdate(Update.FILE, this));
+		MainFrame.updateTrack(Update.FILE, this);
 	}
 
     public final void playTo(float percent) {
@@ -248,7 +247,7 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 		if (f != null) {
 			setFile(f);
 			save(f);
-			MainFrame.update(new TrackUpdate(Update.REFILL, this));
+			MainFrame.updateTrack(Update.REFILL, this);
 		}
 	}
 
@@ -342,7 +341,7 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 
 	public void setCapture(boolean rec) {
 		capture = rec;
-		MainFrame.update(new TrackUpdate(Update.CAPTURE, this));
+		MainFrame.updateTrack(Update.CAPTURE, this);
 	}
 
 	/** @return a step in the current midi resolution */
@@ -366,7 +365,7 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 		sb.append("events: ").append(t.size()).append(NL);
 		sb.append("length: ").append(  t.ticks() / resolution ).append(" beats ").append(NL);
 		sb.append("    ").append(t.ticks()).append(" ticks @ ").append(resolution).append(" resolution").append(NL);
-		String result = JOptionPane.showInputDialog(JudahZone.getFrame(),
+		String result = JOptionPane.showInputDialog(null,
 				sb.toString() + "New Resolution:", getResolution());
 		if (result == null)
 			return;

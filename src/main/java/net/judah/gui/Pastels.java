@@ -2,12 +2,12 @@ package net.judah.gui;
 
 import java.awt.Color;
 
+import net.judah.api.Effect;
 import net.judah.fx.Chorus;
 import net.judah.fx.Compressor;
 import net.judah.fx.Convolution;
 import net.judah.fx.Delay;
 import net.judah.fx.EQ;
-import net.judah.fx.Effect;
 import net.judah.fx.Filter;
 import net.judah.fx.LFO;
 import net.judah.fx.MonoFilter;

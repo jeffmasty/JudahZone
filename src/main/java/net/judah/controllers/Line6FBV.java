@@ -1,35 +1,45 @@
 package net.judah.controllers;
 
-import static net.judah.JudahZone.*;
-
+import lombok.RequiredArgsConstructor;
+import net.judah.JudahZone;
+import net.judah.api.Controller;
+import net.judah.api.Midi;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
+import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
-import net.judah.midi.Midi;
+import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
 import net.judah.util.Debounce;
 
+@RequiredArgsConstructor
 public class Line6FBV extends Debounce implements Controller {
 	public static final String NAME = "FBV Shortboard Mk";
 	private int pedalMemory = 50;
 	private boolean mutes;
+	private final JudahZone zone;
+	private final JudahMidi midi;
 	private final LineIn guitar;
+	private final Looper looper;
 
-	public Line6FBV(LineIn guitar) {
-		this.guitar = guitar;
+	public Line6FBV(JudahZone judahZone, JudahMidi judahMidi) {
+		this.zone = judahZone;
+		this.midi = judahMidi;
+		this.guitar = zone.getGuitar();
+		this.looper = zone.getLooper();
 	}
 
 	@Override public boolean midiProcessed(Midi midi) {
 
 		if (Midi.isProgChange(midi)) { // "DOWN" button
 			if (midi.getData1() == 0) {
-				getLooper().verseChorus(); // toggle mutes
+				looper.verseChorus(); // toggle mutes
 				return true;
 			}
 			if (midi.getData1() == 1) { // "UP" button
-				getOverview().trigger();
+				zone.getOverview().trigger();
 				return true;
 			}
 		}
@@ -46,14 +56,14 @@ public class Line6FBV extends Debounce implements Controller {
 		case 3:
 		case 4:
 			if (data2 == 0) return true;
-			Loop loop = getLooper().get(midi.getData1() - 1);
+			Loop loop = zone.getLooper().get(midi.getData1() - 1);
 			if (mutes)
 				loop.toggleMute();
 			else
-				getLooper().trigger(loop);
+				looper.trigger(loop);
 			return true;
 		case 5: // Func(1) start/stop drum machine
-			JudahClock clock = getClock();
+			JudahClock clock = JudahMidi.getClock();
 			if (clock.isActive())
 				clock.end();
 			else
@@ -61,28 +71,28 @@ public class Line6FBV extends Debounce implements Controller {
 			return true;
 		case 6: // Func(2) turn on/off Jamstik midi
 			if (mutes)
-				getMidi().getJamstik().octaver();
+				this.midi.getJamstik().octaver();
 			else
-				getMidi().getJamstik().toggle();
+				this.midi.getJamstik().toggle();
 			return true;
 		case 7: // TAP()   toggle record vs. mute controls
 			mutes = data2 > 0;
 			return true;
 		case 8: // Stomp
-			guitar.getOverdrive().setActive(data2 > 0);
+			guitar.setActive(guitar.getOverdrive(), data2 > 0);
 			MainFrame.update(guitar);
 			return true;
 		case 9: // Mod
-			guitar.getChorus().setActive(data2 > 0);
+			guitar.setActive(guitar.getChorus(), data2 > 0);
 			MainFrame.update(guitar);
 			return true;
 		case 10: // Delay
-			guitar.getDelay().setActive(data2 > 0);
+			guitar.setActive(guitar.getDelay(), data2 > 0);
 			MainFrame.update(guitar);
 			return true;
 		case 11: // Reverb
 			MainFrame.update(guitar);
-			guitar.getReverb().setActive(data2 > 0);
+			guitar.setActive(guitar.getReverb(), data2 > 0);
 			return true;
 
 		// 12 : toe switch ?
@@ -92,10 +102,10 @@ public class Line6FBV extends Debounce implements Controller {
 			int percent = (int)(data2 / 1.27f);
 			if (Math.abs(pedalMemory - percent) < 2)
 				return true; // ignore minor fluctuations of vol pedal
-			if (getFxRack() == null) // startup?
+			if (zone.getFxRack() == null) // startup?
 				return true;
 
-			Channel ch = getFxRack().getChannel();
+			Channel ch = zone.getFxRack().getChannel();
 			if (ch == null) return true;
 			if (Math.abs(ch.getVolume() - percent) > 3){
 				ch.getGain().set(Gain.VOLUME, percent);

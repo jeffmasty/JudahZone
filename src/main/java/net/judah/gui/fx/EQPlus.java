@@ -45,7 +45,7 @@ public class EQPlus implements Updateable {
 		int val = EffectsRack.offset(eq.get(idx), up);
 		eq.set(idx, val);
 		if (idx < 3)
-			eq.setActive(val > MidiConstants.THOLD_LO);
+			channel.setActive(eq, val > MidiConstants.THOLD_LO);
 	}
 
 	@Override public void update() {
@@ -68,7 +68,7 @@ public class EQPlus implements Updateable {
 		}
 		@Override public void update() {
 			knob.update();
-			Color bg = eq.isActive() ? Pastels.getFx(eq.getClass()) : null;
+			Color bg = channel.isActive(eq) ? Pastels.getFx(eq.getClass()) : null;
 			setBackground(bg);
 			label.setBackground(bg);
 			knob.setBackground(bg);

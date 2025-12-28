@@ -5,9 +5,10 @@ import javax.sound.midi.ShortMessage;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Data;
+import net.judah.JudahZone;
+import net.judah.api.Midi;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
-import net.judah.midi.Midi;
 import net.judah.seq.automation.ControlChange;
 import net.judah.song.Overview;
 import net.judah.util.Constants;
@@ -63,7 +64,8 @@ public class KitSetup implements AtkDec {
 		MainFrame.update(this);
 	}
 
-	public void serialize(Overview overview) {
+	public void serialize() {
+		Overview overview = JudahZone.getInstance().getOverview();
 		overview.getSong().setKit(new KitSetup(this));
 		overview.save();
 	}

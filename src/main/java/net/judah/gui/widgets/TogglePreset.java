@@ -20,7 +20,7 @@ public class TogglePreset extends JButton {
 		addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent me) {
 				if (SwingUtilities.isRightMouseButton(me))
-					JudahZone.getLooper().syncFx(channel);
+					JudahZone.getInstance().getLooper().syncFx(channel);
 				else
 					channel.toggleFx();
 			}
@@ -29,7 +29,7 @@ public class TogglePreset extends JButton {
 
 	public void update() {
 		setBackground(channel.isPresetActive() ? Pastels.BLUE :
-			JudahZone.getLooper().getFx().contains(channel) ? Pastels.YELLOW : null);
+			JudahZone.getInstance().getLooper().getFx().contains(channel) ? Pastels.YELLOW : null);
 	}
 
 }

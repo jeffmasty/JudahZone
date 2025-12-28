@@ -11,21 +11,24 @@ import javax.sound.midi.ShortMessage;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
+import net.judah.api.Midi;
 import net.judah.fx.MonoFilter;
 import net.judah.fx.MonoFilter.Type;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.SynthKnobs;
 import net.judah.midi.ChannelCC;
-import net.judah.midi.Midi;
 import net.judah.midi.Panic;
 import net.judah.mixer.Channel;
-import net.judah.omni.AudioTools;
 import net.judah.seq.automation.ControlChange;
 import net.judah.seq.track.PianoTrack;
+import net.judah.util.AudioTools;
 import net.judah.util.Constants;
 import net.judah.util.RTLogger;
 
 public class TacoSynth extends PianoTrack {
+
+	private static final SynthDB synthPresets = new SynthDB();
+	public static SynthDB getPresets() { return synthPresets; }
 
 	public static final int OVERSAMPLE = 4; // anti-aliasing
 	public static final int POLYPHONY = 24;
@@ -58,7 +61,7 @@ public class TacoSynth extends PianoTrack {
 	}
 
 	public TacoSynth(String name, TacoTruck truck, int ch, Polyphony notes) throws InvalidMidiDataException {
-		super(name, notes);
+		super(name, notes, JudahZone.getInstance().getChords());
 		this.channel = truck;
 		this.notes = notes;
 		cc = new ChannelCC(truck); // multiple against the truck
@@ -94,28 +97,27 @@ public class TacoSynth extends PianoTrack {
 	}
 
 	@Override public boolean progChange(String preset) {
-		if (JudahZone.getSynthPresets().apply(preset, this)) {
+		if (synthPresets.apply(preset, this)) {
 			state.setProgram(preset);
-			MainFrame.update(new TrackUpdate(Update.PROGRAM, this));
+			MainFrame.updateTrack(Update.PROGRAM, this);
 			return true;
 		}
 		return false;
 	}
 
-
 	@Override
 	public String progChange(int data2) {
-		if (data2 < 0 || data2 >= JudahZone.getSynthPresets().size())
+		if (data2 < 0 || data2 >= synthPresets.size())
 			return null;
 
-		String result = JudahZone.getSynthPresets().keys().get(data2);
+		String result = synthPresets.keys().get(data2);
 		progChange(result);
 		return result;
 	}
 
 
 	@Override public String[] getPatches() {
-		List<String> result = JudahZone.getSynthPresets().keys();
+		List<String> result = synthPresets.keys();
 		return result.toArray(new String[result.size()]);
 	}
 

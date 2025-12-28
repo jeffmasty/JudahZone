@@ -5,7 +5,7 @@ import java.security.InvalidParameterException;
 
 import lombok.Getter;
 import net.judah.fx.Reverb;
-import net.judah.omni.Threads;
+import net.judah.util.Threads;
 
 public class FluidReverb extends Reverb {
 
@@ -24,17 +24,17 @@ public class FluidReverb extends Reverb {
         Threads.timer(base + 100, () -> setRoomSize(0.75f));
         Threads.timer(base + 200, () -> setDamp(0.6f));
         Threads.timer(base + 300, () -> setWidth(0.7f));
-        Threads.timer(base + 400, () -> setActive(true));
+        //Threads.timer(base + 400, () -> setActive(true));
     }
 
     @Override public boolean isInternal() { return false; }
 
-    @Override public void setActive(boolean active) {
+//    @Override public void setActive(boolean active) {
 //  ignore //
 //    	if (this.active == active) return;
 //        this.active = active;
 //        fluid.sendCommand("reverb " + (active ? "on" : "off"));
-    }
+//    }
 
     @Override
     public void setWidth(float val) {

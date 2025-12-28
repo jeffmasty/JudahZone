@@ -18,11 +18,11 @@ public class RemapView extends KnobPanel {
 	private final RemapTable table;
 
 	public RemapView() {
-		this((DrumTrack) JudahZone.getFrame().getBeatBox().getCurrent());
+		this((DrumTrack) JudahZone.getInstance().getFrame().getBeatBox().getCurrent());
 	}
 
 	public RemapView(DrumTrack t) {
-		this(JudahZone.getFrame().getBeatBox().getView(t).grid);
+		this(JudahZone.getInstance().getFrame().getBeatBox().getView(t).grid);
 	}
 
 	public RemapView(Musician view) {

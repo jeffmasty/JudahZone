@@ -1,7 +1,5 @@
 package net.judah.gui.fx;
 
-import static net.judah.JudahZone.getPresets;
-
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -32,11 +30,12 @@ import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.LengthCombo;
 import net.judah.midi.JudahClock;
+import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Preset;
 import net.judah.mixer.PresetsDB;
-import net.judah.omni.Threads;
 import net.judah.util.Constants;
+import net.judah.util.Threads;
 
 public class PresetsView extends KnobPanel  {
 	public static final Dimension BTN_SZ = new Dimension(80, STD_HEIGHT);
@@ -46,8 +45,10 @@ public class PresetsView extends KnobPanel  {
 	private final PresetsDB presets;
 	private final JList<String> list = new JList<>();
     private final JComboBox<String> target;
+    private final JudahZone zone;
 
-	public PresetsView(PresetsDB presets) {
+	public PresetsView(PresetsDB presets, JudahZone judahZone) {
+		this.zone = judahZone;
 		this.presets = presets;
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         renew();
@@ -63,7 +64,7 @@ public class PresetsView extends KnobPanel  {
 
 	private JComboBox<String> createMixerCombo() {
 	    ArrayList<String> channels = new ArrayList<>();
-        for (Channel c : JudahZone.getMixer().getChannels())
+        for (Channel c : zone.getMixer().getChannels())
             channels.add(c.getName());
         return new JComboBox<>(channels.toArray(new String[channels.size()]));
 	}
@@ -98,7 +99,7 @@ public class PresetsView extends KnobPanel  {
 		String name = Gui.inputBox("New Name:");
 		if (name == null || name.isBlank()) return;
 
-		Preset source = getPresets().get(idx);
+		Preset source = presets.get(idx);
 		presets.add(new Preset(name, source));
 		save();
 	}
@@ -106,11 +107,11 @@ public class PresetsView extends KnobPanel  {
 	private void applyTo() {
         if (list.getSelectedIndex() < 0) return;
         String search = "" + target.getSelectedItem();
-        Channel ch = JudahZone.getInstruments().byName(search);
+        Channel ch = zone.getInstruments().byName(search);
         if (ch == null)
-        	ch = JudahZone.getLooper().byName(search);
+        	ch = zone.getLooper().byName(search);
         if (ch == null)
-        	ch = JudahZone.getMains();
+        	ch = zone.getMains();
         Preset p = presets.get(list.getSelectedIndex());
         ch.setPreset(p);
         ch.setPresetActive(true);
@@ -124,26 +125,26 @@ public class PresetsView extends KnobPanel  {
     }
 
     public void delete(int idx) {
-        if (idx < 0 || idx >= getPresets().size())
+        if (idx < 0 || idx >= presets.size())
             throw new InvalidParameterException("" + idx);
-        getPresets().remove(idx);
+        presets.remove(idx);
         renew();
     }
 
     public void create() {
         String name = Gui.inputBox("Preset Name:");
         if (name == null || name.isEmpty()) return;
-        presets.add(JudahZone.getFxRack().getChannel().toPreset(name));
+        presets.add(zone.getFxRack().getChannel().toPreset(name));
         save();
     }
 
     public void current(int idx) {
-        if (idx < 0 || idx >+ getPresets().size())
+        if (idx < 0 || idx >+ presets.size())
             throw new InvalidParameterException("" + idx);
-        Channel channel = JudahZone.getFxRack().getChannel();
+        Channel channel = zone.getFxRack().getChannel();
         Preset old = presets.get(idx);
         Preset replace = channel.toPreset(old.getName());
-        getPresets().set(idx, replace);
+        presets.set(idx, replace);
         save();
     }
 
@@ -169,7 +170,7 @@ public class PresetsView extends KnobPanel  {
 	public boolean doKnob(int idx, int data2) {
 		switch (idx) {
     	case 0: // sync loop length
-    		JudahClock clock = JudahZone.getClock();
+    		JudahClock clock = JudahMidi.getClock();
 			if (data2 == 0)
 				clock.setLength(1);
 			else
@@ -182,8 +183,8 @@ public class PresetsView extends KnobPanel  {
     		// Constants.execute(()->target.setSelectedIndex(Constants.ratio(data2, target.getItemCount() - 1)));
     		break;
     	case 3:
-    		JudahZone.getMains().getGain().set(Gain.VOLUME, data2);
-    		MainFrame.update(JudahZone.getMains());
+    		zone.getMains().getGain().set(Gain.VOLUME, data2);
+    		MainFrame.update(zone.getMains());
     		break;
 		}
 		return true;

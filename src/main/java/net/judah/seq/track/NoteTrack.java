@@ -7,11 +7,11 @@ import javax.sound.midi.ShortMessage;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.api.Midi;
 import net.judah.api.ZoneMidi;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.TrackKnobs;
 import net.judah.midi.Actives;
-import net.judah.midi.Midi;
 import net.judah.seq.automation.ControlChange;
 import net.judah.song.Sched;
 import net.judah.util.Constants;
@@ -70,7 +70,7 @@ public abstract class NoteTrack extends MidiTrack {
 		if (name == null)
 			return null;
 		state.setProgram(name);
-		MainFrame.update(new TrackUpdate(Update.PROGRAM, this));
+		MainFrame.updateTrack(Update.PROGRAM, this);
 		return name;
 	}
 
@@ -124,7 +124,7 @@ public abstract class NoteTrack extends MidiTrack {
 
 	public void setGate(Gate gate2) {
 		gate = gate2;
-		MainFrame.update(new TrackUpdate(Update.GATE, this));
+		MainFrame.updateTrack(Update.GATE, this);
 	}
 
 }

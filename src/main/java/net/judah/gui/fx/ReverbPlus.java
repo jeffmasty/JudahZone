@@ -12,10 +12,12 @@ import net.judah.gui.Gui;
 import net.judah.gui.HQ;
 import net.judah.gui.Pastels;
 import net.judah.gui.Updateable;
+import net.judah.mixer.Channel;
 
 
 public class ReverbPlus implements Updateable {
 
+	private final Channel ch;
 	private final Reverb reverb;
 	final JLabel lLbl = new JLabel(Wet.name(), JLabel.LEFT);
 	final JLabel rLbl = new JLabel(Room.name(), JLabel.LEFT);
@@ -25,10 +27,11 @@ public class ReverbPlus implements Updateable {
 	@Getter final UpdatePanel left;
 	@Getter final UpdatePanel right;
 
-	ReverbPlus(Reverb r) {
-		this.reverb = r;
-		lKnob = new OverloadedKnob(r, Wet.ordinal(), Damp.ordinal());
-		rKnob = new OverloadedKnob(r, Room.ordinal(), Width.ordinal());
+	ReverbPlus(Channel ch) {
+		this.ch = ch;
+		this.reverb = ch.getReverb();
+		lKnob = new OverloadedKnob(ch, reverb, Wet.ordinal(), Damp.ordinal());
+		rKnob = new OverloadedKnob(ch, reverb, Room.ordinal(), Width.ordinal());
 
 		rLbl.setFont(Gui.FONT11);
 		lLbl.setFont(Gui.FONT11);
@@ -62,7 +65,7 @@ public class ReverbPlus implements Updateable {
 
 		@Override public void update() {
 			knob.update();
-			Color target = reverb.isActive() ? Pastels.getFx(Reverb.class) : null;
+			Color target = ch.isActive(reverb) ? Pastels.getFx(Reverb.class) : null;
 			if (getBackground() != target)
 				setBackground(target);
 		}

@@ -7,19 +7,19 @@ import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
 import lombok.Getter;
-import net.judah.api.Engine;
+import net.judah.api.Midi;
+import net.judah.gui.Icons;
 import net.judah.gui.knobs.KitKnobs;
 import net.judah.midi.JudahMidi;
-import net.judah.midi.Midi;
 import net.judah.mixer.Channel;
-import net.judah.omni.AudioTools;
-import net.judah.omni.Icons;
 import net.judah.seq.TrackList;
 import net.judah.seq.Trax;
 import net.judah.seq.track.Cue;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.NoteTrack;
+import net.judah.synth.Engine;
+import net.judah.util.AudioTools;
 
 @Getter
 public final class DrumMachine extends Engine {
@@ -129,11 +129,11 @@ public final class DrumMachine extends Engine {
 	///////////////////////////////////////////////
 	// process + mix each drumkit, process this channel's fx, place on mains
 	@Override
-	public void process() {
+	protected void processImpl() {
 		AudioTools.silence(left);
 		AudioTools.silence(right);
 		for (DrumTrack track : tracks) {
-			track.getKit().process();
+			track.getKit().processImpl();
 			AudioTools.mix(track.getKit().getLeft(), left);
 			AudioTools.mix(track.getKit().getRight(), right);
 		}

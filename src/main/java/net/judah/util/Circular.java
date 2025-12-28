@@ -3,6 +3,7 @@ package net.judah.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Simple resizable circular buffer with overwrite-on-full semantics.
@@ -12,16 +13,25 @@ import java.util.List;
  *
  * not thread safe
  */
-public final class CircularBuffer<T> {
+public final class Circular<T> {
     private Object[] buf;
     private int head;   // index of oldest element
     private int size;   // number of stored elements
 
-    public CircularBuffer(int initialCapacity) {
+    public Circular(int initialCapacity) {
         if (initialCapacity <= 0) throw new IllegalArgumentException("capacity>0");
         buf = new Object[initialCapacity];
         head = 0;
         size = 0;
+    }
+
+    public Circular(int initialCapacity, Supplier<T> factory) {
+        if (initialCapacity <= 0) throw new IllegalArgumentException("capacity>0");
+        buf = new Object[initialCapacity];
+        head = 0;
+        size = initialCapacity; // Set size to capacity since we're filling it
+        for (int i = 0; i < initialCapacity; i++) // Changed from size to initialCapacity
+            buf[i] = factory.get();
     }
 
     public int capacity() {

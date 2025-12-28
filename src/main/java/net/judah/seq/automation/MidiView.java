@@ -13,15 +13,15 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 
+import net.judah.api.Midi;
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.Btn;
 import net.judah.midi.JudahMidi;
-import net.judah.midi.Midi;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
-import net.judah.seq.MidiTools;
 import net.judah.seq.MidiNote;
+import net.judah.seq.MidiTools;
 import net.judah.seq.automation.Automation.AutoBox;
 import net.judah.seq.track.MidiTrack;
 
@@ -29,6 +29,7 @@ public class MidiView extends AutoBox {
 
 	private static final Dimension SZ = new Dimension(Size.WIDTH_KNOBS - 40, Size.HEIGHT_KNOBS - 100);
 
+	private final Automation automation;
 	private ArrayList<Integer> clipboard = new ArrayList<Integer>();
 	private final JTable table = new JTable();
 	private MidiModel model;
@@ -39,8 +40,9 @@ public class MidiView extends AutoBox {
 	private final JButton paste = new Btn("Paste", l->paste());
 	private final JButton[] btns = {edit, delete, exe, copy, paste};
 
-	MidiView() {
+	MidiView(Automation auto) {
 		super(BoxLayout.PAGE_AXIS);
+		this.automation = auto;
 
 		table.setRowSelectionAllowed(true);
 		table.setColumnSelectionAllowed(false);
@@ -97,7 +99,7 @@ public class MidiView extends AutoBox {
 		MidiNote p = (MidiNote) model.getValueAt(row, MidiModel.EVENT);
 		MidiMessage m = p.getMessage();
 		if (Midi.isCC(m) || Midi.isProgChange(m) || Midi.isPitchBend(m))
-			Automation.getInstance().edit(track, p);
+			automation.edit(track, p);
 	}
 
 	private void  exe() {

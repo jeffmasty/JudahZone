@@ -10,7 +10,7 @@ import javax.sound.midi.ShortMessage;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.midi.Midi;
+import net.judah.api.Midi;
 
 @Getter @EqualsAndHashCode
 public class Edit {

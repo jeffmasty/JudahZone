@@ -16,6 +16,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
+import lombok.Getter;
 import net.judah.fx.Gain;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
@@ -40,7 +41,7 @@ public abstract class MixWidget extends JPanel implements Pastels {
 	protected final JToggleButton sync = new JToggleButton("sync");
 	protected final JPanel banner = new JPanel();
 	protected final JPanel sidecar = new JPanel(new GridLayout(3, 1, 0, 0));
-	protected final FxLEDs indicators;
+	@Getter protected final FxLEDs indicators;
 	protected final RMSIndicator gain;
 	protected RainbowFader fader;
 	protected final JComponent bottom;
@@ -92,9 +93,9 @@ public abstract class MixWidget extends JPanel implements Pastels {
 		Color bg = thisUpdate();
 		if (false == banner.getBackground().equals(bg))
 			banner.setBackground(bg);
-		indicators.sync();
-		updateVolume();
-		fx.update();
+		// indicators.sync();
+		// updateVolume();
+		fx.update(); // preset
 	}
 
 	public void updateVolume() {
