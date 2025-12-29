@@ -1,9 +1,10 @@
 package net.judah.controllers;
 
+import judahzone.api.Controller;
+import judahzone.api.Midi;
+import judahzone.util.Debounce;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
-import net.judah.api.Controller;
-import net.judah.api.Midi;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
@@ -12,7 +13,6 @@ import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
-import net.judah.util.Debounce;
 
 @RequiredArgsConstructor
 public class Line6FBV extends Debounce implements Controller {

@@ -4,10 +4,10 @@ import java.util.ArrayList;
 
 import javax.sound.midi.ShortMessage;
 
+import judahzone.api.Controller;
+import judahzone.api.Midi;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
-import net.judah.api.Controller;
-import net.judah.api.Midi;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.MultiSelect;
 import net.judah.gui.knobs.KnobMode;

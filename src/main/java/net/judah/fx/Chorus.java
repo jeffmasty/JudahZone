@@ -37,12 +37,12 @@ package net.judah.fx;
 import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 
+import judahzone.api.TimeEffect;
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.api.TimeEffect;
 
 // https://github.com/jaudiolibs/audioops/blob/master/audioops-impl/src/main/java/org/jaudiolibs/audioops/impl/LFODelayOp.java
-public class Chorus implements TimeEffect, net.judah.api.Effect.RTEffect {
+public class Chorus implements TimeEffect, judahzone.api.Effect.RTEffect {
 
     public enum Settings {
         Rate, Depth, Feedback, Type, Sync, Phase

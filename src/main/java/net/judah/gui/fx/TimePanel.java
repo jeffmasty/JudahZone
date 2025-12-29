@@ -6,12 +6,12 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
-import net.judah.api.TimeEffect;
+import judahzone.api.TimeEffect;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Pastels;
-import net.judah.gui.Updateable;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
+import net.judahzone.gui.Pastels;
+import net.judahzone.gui.Updateable;
 
 public class TimePanel extends JPanel implements Updateable {
 	//⏰  U+023F0  ALARM CLOCK

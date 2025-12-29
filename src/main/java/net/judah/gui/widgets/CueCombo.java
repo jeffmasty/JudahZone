@@ -4,10 +4,10 @@ import java.awt.Dimension;
 
 import javax.swing.JComboBox;
 
-import net.judah.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.seq.track.Cue;
 import net.judah.seq.track.MidiTrack;
+import net.judahzone.gui.Gui;
 
 public class CueCombo extends JComboBox<Cue> {
 	private static final Dimension DEFAULT_SIZE = new Dimension(60, Size.STD_HEIGHT);

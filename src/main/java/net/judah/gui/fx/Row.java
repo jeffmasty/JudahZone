@@ -5,8 +5,8 @@ import java.util.ArrayList;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.gui.Updateable;
 import net.judah.mixer.Channel;
+import net.judahzone.gui.Updateable;
 
 @RequiredArgsConstructor
 public class Row implements Updateable {

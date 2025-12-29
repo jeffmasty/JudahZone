@@ -5,10 +5,10 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.JToggleButton;
 
-import net.judah.api.Notification.Property;
-import net.judah.api.TimeListener;
+import judahzone.api.TimeListener;
+import judahzone.api.Notification.Property;
+import judahzone.util.Rainbow;
 import net.judah.midi.JudahClock;
-import net.judah.util.Rainbow;
 
 public class StartBtn extends JToggleButton implements TimeListener {
 

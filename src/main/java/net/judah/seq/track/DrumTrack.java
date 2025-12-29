@@ -5,8 +5,8 @@ import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
+import judahzone.api.Midi;
 import lombok.Getter;
-import net.judah.api.Midi;
 import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;

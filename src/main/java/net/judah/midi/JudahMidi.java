@@ -17,14 +17,19 @@ import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
 import org.jaudiolibs.jnajack.JackMidi;
 import org.jaudiolibs.jnajack.JackMidi.Event;
+
+import judahzone.api.Controller;
+import judahzone.api.Midi;
+import judahzone.api.MidiClock;
+import judahzone.util.Constants;
+import judahzone.util.RTLogger;
+import judahzone.util.Threads;
+
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
-import net.judah.api.Controller;
-import net.judah.api.Midi;
-import net.judah.api.MidiClock;
 import net.judah.controllers.Beatstep;
 import net.judah.controllers.Jamstik;
 import net.judah.controllers.KorgMixer;
@@ -35,9 +40,6 @@ import net.judah.gui.MainFrame;
 import net.judah.jack.BasicClient;
 import net.judah.synth.ZoneMidi;
 import net.judah.synth.fluid.FluidSynth;
-import net.judah.util.Constants;
-import net.judah.util.RTLogger;
-import net.judah.util.Threads;
 
 
 /** Setup MIDI ports, handle MIDI integration with Jack,

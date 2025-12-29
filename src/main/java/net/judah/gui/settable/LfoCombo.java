@@ -5,9 +5,9 @@ import javax.swing.SwingConstants;
 
 import net.judah.fx.LFO;
 import net.judah.fx.LFO.Target;
-import net.judah.gui.Gui;
 import net.judah.gui.Size;
-import net.judah.gui.Updateable;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Updateable;
 
 public class LfoCombo extends SetCombo<Target> implements Updateable {
 	private final LFO lfo;

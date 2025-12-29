@@ -2,10 +2,10 @@ package net.judah.mixer;
 
 import java.util.ArrayList;
 
+import judahzone.api.Effect;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
-import net.judah.api.Effect;
 
 @Data @EqualsAndHashCode(callSuper=true) @RequiredArgsConstructor
 public class Setting extends ArrayList<Integer> {

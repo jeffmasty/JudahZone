@@ -1,5 +1,7 @@
 package net.judah.mixer;
 
+import static judahzone.util.WavConstants.FFT_SIZE;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,10 +15,10 @@ import java.util.logging.Logger;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 import be.tarsos.dsp.util.fft.FFT;
-import net.judah.util.Constants;
-import net.judah.util.Folders;
-import net.judah.util.RTLogger;
-import net.judah.util.WavFile;
+import judahzone.util.Folders;
+import judahzone.util.RTLogger;
+import judahzone.util.WavConstants;
+import judahzone.util.WavFile;
 
 /**scan a folder (Folders.getIR()), prepare and cache FFT spectra for each WAV.
  * Exceptions swallowed/logged per file.
@@ -28,7 +30,6 @@ public final class IRDB {
         @Override public String toString() { return name; }
     }
 
-    private static final int FFT_SIZE = Constants.fftSize();
     private static final int IR_SIZE  = FFT_SIZE / 2;
     public static final float MASTERING = 0.3f; // cut IR volume
 
@@ -54,7 +55,7 @@ public final class IRDB {
         for (File f : files) {
             if (!f.getName().toLowerCase().endsWith(".wav")) continue;
             try {
-                final float[] irTime = WavFile.getMono(f, Constants.fftSize() / 2);
+                final float[] irTime = WavFile.getMono(f, WavConstants.FFT_SIZE / 2);
                 if (irTime == null || irTime.length == 0) return;
 
                 // loudness, front and tail windows // TODO toggle?

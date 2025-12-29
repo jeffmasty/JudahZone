@@ -8,9 +8,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
 import net.judah.JudahZone;
-import net.judah.gui.Actionable;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Pastels;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.seq.Seq;
 import net.judah.seq.arp.Arp;
@@ -19,6 +17,8 @@ import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.TrackMenu.SendTo;
 import net.judah.song.SongTrack;
+import net.judahzone.gui.Actionable;
+import net.judahzone.gui.Pastels;
 
 public class PlayWidget extends JButton {
 	private static final String COOL = " ▶️ ";

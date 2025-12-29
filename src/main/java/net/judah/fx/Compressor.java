@@ -33,8 +33,8 @@ import static java.lang.Math.log;
 import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 
+import judahzone.api.Effect.RTEffect;
 import lombok.Getter;
-import net.judah.api.Effect.RTEffect;
 
 public class Compressor implements RTEffect {
 

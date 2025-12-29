@@ -1,11 +1,11 @@
 package net.judah.gui.widgets;
 
 import net.judah.fx.Gain;
-import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.mixer.Channel;
 import net.judah.seq.track.MidiTrack;
+import net.judahzone.gui.Gui;
 
 public class TrackGain extends Slider {
 

@@ -6,12 +6,12 @@ import java.util.Set;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
+import judahzone.api.Midi;
+import judahzone.util.RTLogger;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.api.Midi;
 import net.judah.gui.MainFrame;
 import net.judah.synth.ZoneMidi;
-import net.judah.util.RTLogger;
 
 /** listens to and tracks note_on and note_off going out a Midi port */
 @RequiredArgsConstructor @Getter

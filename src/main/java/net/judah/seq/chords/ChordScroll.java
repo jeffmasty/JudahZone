@@ -10,9 +10,9 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import net.judah.api.Chord;
-import net.judah.gui.Gui;
-import net.judah.gui.Pastels;
+import judahzone.api.Chord;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Pastels;
 
 public class ChordScroll extends JPanel {
 

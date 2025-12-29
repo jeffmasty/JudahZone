@@ -7,12 +7,12 @@ import java.util.Collections;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import judahzone.util.Folders;
+import judahzone.util.JsonUtil;
+import judahzone.util.RTLogger;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.judah.util.Folders;
-import net.judah.util.JsonUtil;
-import net.judah.util.RTLogger;
 
 /** Encapsulates a disk folder (genre) OR a list of files (mix-n-match) */
 @NoArgsConstructor

@@ -14,11 +14,10 @@ import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.swing.BoxLayout;
 
-import net.judah.api.Key;
-import net.judah.api.Midi;
-import net.judah.api.Signature;
-import net.judah.gui.Gui;
-import net.judah.gui.Pastels;
+import judahzone.api.Key;
+import judahzone.api.Midi;
+import judahzone.api.Signature;
+import judahzone.util.RTLogger;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiNote;
@@ -27,7 +26,8 @@ import net.judah.seq.MusicBox;
 import net.judah.seq.Notes;
 import net.judah.seq.Prototype;
 import net.judah.seq.track.MidiTrack;
-import net.judah.util.RTLogger;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Pastels;
 
 /** display midi music in piano grid */
 public class Piano extends MusicBox {

@@ -4,13 +4,13 @@ import java.util.List;
 
 import javax.sound.midi.ShortMessage;
 
+import judahzone.api.Algo;
+import judahzone.api.Chord;
+import judahzone.api.Midi;
+import judahzone.api.TimeListener;
+import judahzone.api.Notification.Property;
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.api.Algo;
-import net.judah.api.Chord;
-import net.judah.api.Midi;
-import net.judah.api.Notification.Property;
-import net.judah.api.TimeListener;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.track.Cue;
 import net.judah.seq.track.PianoTrack;

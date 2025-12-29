@@ -5,17 +5,18 @@ import java.awt.Color;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import judahzone.api.Effect;
 import lombok.Getter;
-import net.judah.api.Effect;
 import net.judah.fx.Gain;
 import net.judah.fx.Reverb;
-import net.judah.gui.Gui;
+import net.judah.gui.Bindings;
 import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Pastels;
-import net.judah.gui.Updateable;
 import net.judah.mixer.Channel;
 import net.judah.seq.MidiConstants;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Pastels;
+import net.judahzone.gui.Updateable;
 
 /** a knob and label, paints itself on update when effect is active */
 public class FxKnob extends JPanel implements Updateable {
@@ -113,8 +114,8 @@ public class FxKnob extends JPanel implements Updateable {
 		else if (knob.getValue() != effect.get(idx))
 				knob.setValue(effect.get(idx));
 
-		Color bg = effect == null ? ch.isActive(ch.getReverb()) ? Pastels.getFx(Reverb.class) : null :
-				ch.isActive(effect) ? Pastels.getFx(effect.getClass()) : null;
+		Color bg = effect == null ? ch.isActive(ch.getReverb()) ? Bindings.getFx(Reverb.class) : null :
+				ch.isActive(effect) ? Bindings.getFx(effect.getClass()) : null;
 		setBackground(bg);
 		label.setBackground(bg);
 		knob.setBackground(bg);

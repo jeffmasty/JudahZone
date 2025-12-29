@@ -3,13 +3,13 @@ package net.judah.midi;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import judahzone.api.Effect;
+import judahzone.util.RTLogger;
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.api.Effect;
 import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Fader;
-import net.judah.util.RTLogger;
 
 /** increments any running LFOs */
 public class MidiScheduler implements Runnable {

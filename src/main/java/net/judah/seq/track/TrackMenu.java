@@ -18,9 +18,6 @@ import javax.swing.JRadioButtonMenuItem;
 
 import net.judah.JudahZone;
 import net.judah.drumkit.DrumType;
-import net.judah.gui.Actionable;
-import net.judah.gui.Gui;
-import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.settable.Program;
 import net.judah.gui.widgets.Btn;
@@ -32,6 +29,9 @@ import net.judah.seq.SynthRack;
 import net.judah.seq.Transpose;
 import net.judah.seq.automation.Automation;
 import net.judah.seq.track.Computer.Update;
+import net.judahzone.gui.Actionable;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Icons;
 
 public abstract class TrackMenu extends Box implements MouseListener {
 

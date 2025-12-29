@@ -6,7 +6,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.plaf.basic.BasicArrowButton;
 
-import net.judah.gui.Pastels;
+import net.judahzone.gui.Pastels;
 
 public class Arrow extends BasicArrowButton {
 	public static final Dimension SIZE = new Dimension(23, 22);

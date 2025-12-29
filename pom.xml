@@ -31,6 +31,26 @@
   </repositories>
 
   <dependencies>
+  
+  	<dependency>
+  		<groupId>net.judahzone</groupId>
+  		<artifactId>zone-core</artifactId>
+  		<version>1.0</version>
+  		<scope>provided</scope>
+  	</dependency>
+  	<dependency>
+  		<groupId>net.judahzone</groupId>
+  		<artifactId>zone-gui</artifactId>
+  		<version>0.0.1-SNAPSHOT</version>
+  		<scope>provided</scope>
+  	</dependency>
+  	<dependency>
+  		<groupId>net.judahzone</groupId>
+  		<artifactId>zone-scope</artifactId>
+  		<version>1.0</version>
+  		<scope>provided</scope>
+  	</dependency>
+  
     <!-- Lombok annotation processor -->
     <dependency>
       <groupId>org.projectlombok</groupId>

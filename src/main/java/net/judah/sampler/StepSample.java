@@ -2,9 +2,9 @@ package net.judah.sampler;
 
 import java.io.File;
 
+import judahzone.util.Folders;
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.util.Folders;
 
 public class StepSample extends Sample {
 	private static final float STEP_BOOST = 0.125f;

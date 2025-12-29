@@ -2,7 +2,7 @@ package net.judah.seq.chords;
 
 import java.util.ArrayList;
 
-import net.judah.api.Chord;
+import judahzone.api.Chord;
 
 public class Preview extends ArrayList<Chord> {
 

@@ -1,7 +1,7 @@
 package net.judah.drumkit;
 
-import static net.judah.util.Constants.LEFT;
-import static net.judah.util.Constants.RIGHT;
+import static judahzone.util.Constants.LEFT;
+import static judahzone.util.Constants.RIGHT;
 
 import java.io.File;
 import java.nio.FloatBuffer;
@@ -9,15 +9,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.sound.midi.ShortMessage;
 
+import judahzone.api.PlayAudio;
+import judahzone.util.AudioTools;
+import judahzone.util.Constants;
+import judahzone.util.Recording;
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.api.PlayAudio;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.midi.Actives;
-import net.judah.util.AudioTools;
-import net.judah.util.Constants;
-import net.judah.util.Recording;
 
 @Getter
 public class DrumSample implements PlayAudio {

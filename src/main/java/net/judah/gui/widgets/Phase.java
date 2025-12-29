@@ -3,7 +3,7 @@ package net.judah.gui.widgets;
 import javax.swing.JSlider;
 
 import net.judah.fx.Chorus;
-import net.judah.gui.Updateable;
+import net.judahzone.gui.Updateable;
 
 public class Phase extends JSlider implements Updateable {
 

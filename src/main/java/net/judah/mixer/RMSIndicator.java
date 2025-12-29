@@ -5,12 +5,12 @@ import java.awt.Graphics;
 
 import javax.swing.JPanel;
 
-import net.judah.gui.Gui;
+import judahzone.util.AudioTools;
+import judahzone.util.Rainbow;
 import net.judah.gui.Size;
-import net.judah.gui.Updateable;
 import net.judah.looper.Loop;
-import net.judah.util.AudioTools;
-import net.judah.util.Rainbow;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Updateable;
 
 /** listen to channel's audio, paint widget height/color based on RMS of the audio frame */
 public class RMSIndicator extends JPanel implements Updateable {

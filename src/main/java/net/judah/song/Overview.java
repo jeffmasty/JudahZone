@@ -18,16 +18,18 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 
+import judahzone.api.Effect;
+import judahzone.api.Notification.Property;
+import judahzone.api.Signature;
+import judahzone.api.TimeListener;
+import judahzone.util.Folders;
+import judahzone.util.JsonUtil;
+import judahzone.util.RTLogger;
+import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.api.Notification.Property;
-import net.judah.api.Effect;
-import net.judah.api.Signature;
-import net.judah.api.TimeListener;
 import net.judah.drumkit.DrumMachine;
-import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.gui.TabZone;
 import net.judah.gui.settable.SongCombo;
@@ -44,17 +46,16 @@ import net.judah.song.cmd.Cmd;
 import net.judah.song.cmd.Param;
 import net.judah.song.setlist.Setlist;
 import net.judah.song.setlist.Setlists;
-import net.judah.util.Folders;
-import net.judah.util.JsonUtil;
-import net.judah.util.RTLogger;
-import net.judah.util.Threads;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Nimbus;
+import net.judahzone.gui.Pastels;
 
 /** left: SongView, right: midi tracks list*/
 public class Overview extends Box implements TimeListener {
 
 	public static final int TRACK_HEIGHT = 35;
 	public static final Dimension LIST_SZ = new Dimension(WIDTH_TAB - 388, HEIGHT_TAB - 14);
-	public static final Dimension TRACK = new Dimension(LIST_SZ.width - MainFrame.SCROLL_BTN, TRACK_HEIGHT);
+	public static final Dimension TRACK = new Dimension(LIST_SZ.width - Nimbus.SCROLL_BTN, TRACK_HEIGHT);
 	public static final Dimension CHORDS = new Dimension(TRACK.width, ChordTrack.HEIGHT + 5);
 
 	private static final Dimension SCENE_SZ = new Dimension(WIDTH_TAB - LIST_SZ.width - 1, LIST_SZ.height);

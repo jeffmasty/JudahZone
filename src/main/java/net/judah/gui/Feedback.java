@@ -1,6 +1,6 @@
 package net.judah.gui;
 
-import static net.judah.util.Constants.NL;
+import static judahzone.util.Constants.NL;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -13,11 +13,13 @@ import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+import judahzone.util.RTLogger;
+import judahzone.util.RTLogger.Participant;
 import lombok.Getter;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
-import net.judah.util.RTLogger;
-import net.judah.util.RTLogger.Participant;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Pastels;
 
 /** GUI wrapper for LogService; registers/unregisters itself as a listener */
 public class Feedback extends KnobPanel {

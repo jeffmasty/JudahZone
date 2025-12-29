@@ -1,6 +1,6 @@
 package net.judah.mixer;
 
-import static net.judah.gui.Gui.font;
+import static net.judahzone.gui.Gui.font;
 
 import java.awt.Color;
 

@@ -7,8 +7,8 @@ import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 
 import net.judah.JudahZone;
-import net.judah.gui.Pastels;
 import net.judah.mixer.Channel;
+import net.judahzone.gui.Pastels;
 
 public class TogglePreset extends JButton {
 

@@ -2,7 +2,7 @@ package net.judah.synth.taco;
 
 import javax.sound.midi.ShortMessage;
 
-import net.judah.api.Midi;
+import judahzone.api.Midi;
 import net.judah.midi.Actives;
 import net.judah.synth.Engine;
 

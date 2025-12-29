@@ -13,13 +13,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import judahzone.api.Chord;
+import judahzone.util.Constants;
+import judahzone.util.RTLogger;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.judah.api.Chord;
-import net.judah.util.Constants;
-import net.judah.util.RTLogger;
 
 /**.pro file parser ref: https://www.chordpro.org/chordpro/chordpro-directives/ <br/><br/>
  *  original source: https://github.com/SongProOrg/songpro-java  (MIT license) */

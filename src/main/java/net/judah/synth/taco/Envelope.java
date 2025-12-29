@@ -2,10 +2,10 @@ package net.judah.synth.taco;
 
 import javax.sound.midi.ShortMessage;
 
+import judahzone.util.Constants;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import net.judah.util.Constants;
 
 /**Performs an envelope's life cycle based on supplied Adsr settings.
  * 

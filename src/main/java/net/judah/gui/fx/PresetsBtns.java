@@ -4,12 +4,12 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import net.judah.JudahZone;
-import net.judah.gui.Icons;
-import net.judah.gui.Updateable;
 import net.judah.gui.settable.PresetsHandler;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.TogglePreset;
 import net.judah.mixer.Channel;
+import net.judahzone.gui.Icons;
+import net.judahzone.gui.Updateable;
 
 public class PresetsBtns extends JPanel implements Updateable {
 

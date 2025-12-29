@@ -67,10 +67,10 @@ import java.security.InvalidParameterException;
 
 import java.util.Arrays;
 
+import judahzone.api.TimeEffect;
+import judahzone.util.Constants;
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.api.TimeEffect;
-import net.judah.util.Constants;
 
 /**Two Identical Mono Delays.
  * Delay time and feedback are interpolated over the period of one buffer.
@@ -78,7 +78,7 @@ import net.judah.util.Constants;
  * @author Neil C Smith (derived from code by Karl Helgason)
  * @author Jeff Masty
  */
-public class Delay implements TimeEffect, net.judah.api.Effect.RTEffect {
+public class Delay implements TimeEffect, judahzone.api.Effect.RTEffect {
 
     public enum Settings {
         DelayTime, Feedback, Type, Sync

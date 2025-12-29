@@ -1,10 +1,10 @@
 package net.judah.mixer;
 
+import judahzone.util.Constants;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.drumkit.DrumKit;
 import net.judah.gui.MainFrame;
-import net.judah.util.Constants;
 
 /** an live audio channel that can be recorded */
 @Getter

@@ -6,20 +6,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Vector;
 
+import judahzone.api.TimeListener;
+import judahzone.api.Notification.Property;
+import judahzone.util.Constants;
+import judahzone.util.Memory;
+import judahzone.util.RTLogger;
+import judahzone.util.Recording;
+import judahzone.util.Threads;
 import lombok.Getter;
-import net.judah.api.Notification.Property;
-import net.judah.api.TimeListener;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Updateable;
 import net.judah.gui.widgets.LoopWidget;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
-import net.judah.util.Constants;
-import net.judah.util.Memory;
-import net.judah.util.RTLogger;
-import net.judah.util.Recording;
-import net.judah.util.Threads;
+import net.judahzone.gui.Updateable;
 
 @Getter
 public class Looper extends ArrayList<Loop> implements TimeListener, Updateable {

@@ -4,10 +4,10 @@ import java.util.List;
 
 import javax.sound.midi.ShortMessage;
 
+import judahzone.api.Algo;
+import judahzone.api.Chord;
+import judahzone.api.Key;
 import lombok.RequiredArgsConstructor;
-import net.judah.api.Algo;
-import net.judah.api.Chord;
-import net.judah.api.Key;
 
 @RequiredArgsConstructor
 public class Down extends Algo {

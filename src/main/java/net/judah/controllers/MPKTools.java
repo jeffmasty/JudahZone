@@ -7,8 +7,8 @@ import java.util.List;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.ShortMessage;
 
-import net.judah.api.Midi;
-import net.judah.util.RTLogger;
+import judahzone.api.Midi;
+import judahzone.util.RTLogger;
 
 /* cc codes 14-63,75-83, 85-90, 96-127
            31-63            90,96-127

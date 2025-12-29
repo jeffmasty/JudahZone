@@ -13,11 +13,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
+import judahzone.api.Key;
+import judahzone.api.Signature;
+import judahzone.util.Folders;
+import judahzone.util.JsonUtil;
+import judahzone.util.RTLogger;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
-import net.judah.api.Key;
-import net.judah.api.Signature;
 import net.judah.drumkit.KitSetup;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
@@ -28,9 +31,6 @@ import net.judah.seq.track.MidiFile;
 import net.judah.seq.track.TrackInfo;
 import net.judah.song.cmd.Cmd;
 import net.judah.song.cmd.Param;
-import net.judah.util.Folders;
-import net.judah.util.JsonUtil;
-import net.judah.util.RTLogger;
 
 /* Stages of a song.
  * midi track files, fx, scenes(params, bar cycle, progChange, arp) and chordPro file*/

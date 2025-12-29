@@ -14,15 +14,16 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
+import judahzone.api.Controller;
+import judahzone.api.Midi;
+import judahzone.util.Constants;
+import judahzone.util.Debounce;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
-import net.judah.api.Controller;
-import net.judah.api.Midi;
 import net.judah.fx.Delay;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
-import net.judah.gui.Updateable;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.LFOKnobs;
 import net.judah.midi.JudahMidi;
@@ -35,8 +36,7 @@ import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.synth.ZoneMidi;
 import net.judah.synth.taco.TacoTruck;
-import net.judah.util.Constants;
-import net.judah.util.Debounce;
+import net.judahzone.gui.Updateable;
 
 
 /** Akai MPKmini, not the new one */

@@ -9,12 +9,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import lombok.Getter;
-import net.judah.gui.Gui;
-import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.TabZone;
-import net.judah.gui.Updateable;
 import net.judah.gui.settable.ModeCombo;
 import net.judah.gui.settable.Program;
 import net.judah.gui.widgets.Btn;
@@ -25,6 +22,9 @@ import net.judah.gui.widgets.TrackVol;
 import net.judah.seq.automation.Automation;
 import net.judah.seq.track.ChannelTrack;
 import net.judah.seq.track.Computer.Update;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Icons;
+import net.judahzone.gui.Updateable;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.Programmer;
@@ -74,9 +74,9 @@ import net.judah.seq.track.Programmer;
 		top.add(Gui.resize(programmer, COMPUTER));
 
 		if (t instanceof ChannelTrack)
-			top.add(new Btn(Icons.DETAILS_VEW, e->MainFrame.setFocus(t.getChannel())));
+			top.add(new Btn(Icons.DETAILS_VIEW, e->MainFrame.setFocus(t.getChannel())));
 		else
-			top.add(new Btn(Icons.DETAILS_VEW, e->TabZone.edit(track)));
+			top.add(new Btn(Icons.DETAILS_VIEW, e->TabZone.edit(track)));
 
 		if (MainFrame.isBundle())
 			top.add(new Btn(" ⏲ ", l->expand()));

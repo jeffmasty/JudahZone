@@ -2,8 +2,8 @@ package net.judah.gui.fx;
 
 import java.security.InvalidParameterException;
 
+import judahzone.util.Pair;
 import net.judah.mixer.Channel;
-import net.judah.util.Pair;
 
 public class RowLabels extends Row {
 	public static final int KNOBS = 4;

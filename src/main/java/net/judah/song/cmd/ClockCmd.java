@@ -1,9 +1,9 @@
 package net.judah.song.cmd;
 
+import judahzone.util.RTLogger;
 import lombok.Getter;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
-import net.judah.util.RTLogger;
 
 public class ClockCmd {
 

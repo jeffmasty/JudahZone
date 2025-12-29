@@ -15,8 +15,9 @@ import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
-import net.judah.api.Midi;
-import net.judah.gui.Gui;
+import judahzone.api.Midi;
+import judahzone.util.Constants;
+import judahzone.util.RTLogger;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.Btn;
 import net.judah.seq.Edit;
@@ -25,8 +26,7 @@ import net.judah.seq.MidiConstants;
 import net.judah.seq.automation.Automation.AutoBox;
 import net.judah.seq.automation.Automation.CCData;
 import net.judah.seq.track.MidiTrack;
-import net.judah.util.Constants;
-import net.judah.util.RTLogger;
+import net.judahzone.gui.Gui;
 
 class CCEdit extends AutoBox implements MidiConstants {
 

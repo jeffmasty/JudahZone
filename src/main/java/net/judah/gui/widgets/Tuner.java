@@ -12,15 +12,15 @@ import javax.swing.SwingUtilities;
 import be.tarsos.dsp.pitch.PitchDetectionResult;
 import be.tarsos.dsp.pitch.PitchDetector;
 import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
+import judahzone.api.Key;
+import judahzone.api.Note;
+import judahzone.util.Constants;
 import lombok.Getter;
-import net.judah.api.Key;
-import net.judah.api.Note;
-import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Pastels;
 import net.judah.gui.Size;
-import net.judah.gui.Updateable;
-import net.judah.util.Constants;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Pastels;
+import net.judahzone.gui.Updateable;
 
 public class Tuner extends Box implements Updateable {
 	public static record Tuning(Tuner tuner, float[][] buffer) {}

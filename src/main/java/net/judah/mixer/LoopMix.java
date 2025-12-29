@@ -1,6 +1,6 @@
 package net.judah.mixer;
 
-import static net.judah.gui.Gui.font;
+import static net.judahzone.gui.Gui.font;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -8,15 +8,15 @@ import java.awt.Dimension;
 import javax.swing.JSlider;
 import javax.swing.JToggleButton;
 
-import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
-import net.judah.gui.Updateable;
 import net.judah.looper.Loop;
 import net.judah.looper.LoopType;
 import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
 import net.judah.midi.JudahClock;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Updateable;
 
 /** displays Loop's label and btns and synchronizes recording by listening to the Clock */
 public class LoopMix extends MixWidget implements Updateable {

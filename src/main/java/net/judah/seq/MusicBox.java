@@ -15,15 +15,15 @@ import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 import javax.swing.JPanel;
 
+import judahzone.api.Midi;
 import lombok.Getter;
-import net.judah.gui.Detached.Floating;
-import net.judah.api.Midi;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
 import net.judah.midi.JudahClock;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.track.Editor;
 import net.judah.seq.track.NoteTrack;
+import net.judahzone.gui.Floating;
 
 public abstract class MusicBox extends JPanel implements Musician, Floating, MidiConstants {
 

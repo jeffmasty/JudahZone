@@ -6,18 +6,18 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import judahzone.api.Chord;
+import judahzone.api.Signature;
+import judahzone.api.TimeListener;
+import judahzone.api.Notification.Property;
+import judahzone.util.Folders;
+import judahzone.util.RTLogger;
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.api.Chord;
-import net.judah.api.Notification.Property;
-import net.judah.api.Signature;
-import net.judah.api.TimeListener;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock;
 import net.judah.song.Scene;
 import net.judah.song.Song;
-import net.judah.util.Folders;
-import net.judah.util.RTLogger;
 
 @Getter
 public class Chords implements TimeListener {

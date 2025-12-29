@@ -5,9 +5,9 @@ import java.util.List;
 
 import javax.sound.midi.ShortMessage;
 
-import net.judah.api.Algo;
-import net.judah.api.Chord;
-import net.judah.api.Key;
+import judahzone.api.Algo;
+import judahzone.api.Chord;
+import judahzone.api.Key;
 
 /** 1 5 9 chord */
 public class Ethereal extends Algo {

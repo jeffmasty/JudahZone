@@ -8,15 +8,16 @@ import javax.swing.JPanel;
 import lombok.Getter;
 import net.judah.fx.EQ;
 import net.judah.fx.EQ.EqBand;
-import net.judah.gui.Gui;
-import net.judah.gui.Pastels;
-import net.judah.gui.Updateable;
+import net.judah.gui.Bindings;
 import net.judah.gui.widgets.Click;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.Knob.KnobListener;
 import net.judah.mixer.Channel;
 import net.judah.seq.MidiConstants;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Pastels;
+import net.judahzone.gui.Updateable;
 
 public class EQPlus implements Updateable {
 	private static final Color SHIFTED = Pastels.MY_GRAY;
@@ -68,7 +69,7 @@ public class EQPlus implements Updateable {
 		}
 		@Override public void update() {
 			knob.update();
-			Color bg = channel.isActive(eq) ? Pastels.getFx(eq.getClass()) : null;
+			Color bg = channel.isActive(eq) ? Bindings.getFx(eq.getClass()) : null;
 			setBackground(bg);
 			label.setBackground(bg);
 			knob.setBackground(bg);

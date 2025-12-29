@@ -2,8 +2,8 @@ package net.judah.synth.taco;
 
 import java.nio.FloatBuffer;
 
+import judahzone.util.Constants;
 import lombok.RequiredArgsConstructor;
-import net.judah.util.Constants;
 /** inspired by: https://github.com/johncch/MusicSynthesizer/blob/master/src/com/fifthrevision/sound/Osc.java
  *  Under the MIT license. Copyright (c) 2010, Chong Han Chua, Veronica Borges */
 

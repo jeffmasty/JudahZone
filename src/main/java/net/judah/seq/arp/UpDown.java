@@ -4,9 +4,9 @@ import java.util.List;
 
 import javax.sound.midi.ShortMessage;
 
-import net.judah.api.Algo;
-import net.judah.api.Chord;
-import net.judah.api.Key;
+import judahzone.api.Algo;
+import judahzone.api.Chord;
+import judahzone.api.Key;
 
 public class UpDown extends Algo {
 	public static final int SIZE = 4;

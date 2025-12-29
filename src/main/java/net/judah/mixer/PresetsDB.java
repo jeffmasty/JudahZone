@@ -4,9 +4,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-import net.judah.util.Folders;
-import net.judah.util.RTLogger;
-import net.judah.util.Threads;
+import judahzone.util.Folders;
+import judahzone.util.RTLogger;
+import judahzone.util.Threads;
 
 public class PresetsDB extends ArrayList<Preset> {
 	public static final String DEFAULT = "Freebird";

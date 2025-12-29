@@ -82,8 +82,8 @@ import be.tarsos.dsp.AudioProcessor;
  */
 
 import be.tarsos.dsp.util.fft.FFT;
+import judahzone.util.Constants;
 import lombok.Getter;
-import net.judah.util.Constants;
 
 /**
  * Implementation of the Constant Q Transform.<br> References:

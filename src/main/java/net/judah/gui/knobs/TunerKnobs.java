@@ -5,15 +5,15 @@ import java.awt.Graphics;
 
 import javax.swing.Box;
 
+import judahzone.util.Recording;
+import judahzone.util.Threads;
 import lombok.Getter;
-import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
-import net.judah.gui.scope.Live.LiveData;
 import net.judah.gui.widgets.RMSWidget;
 import net.judah.gui.widgets.Tuner;
 import net.judah.gui.widgets.Tuner.Tuning;
-import net.judah.util.Recording;
-import net.judah.util.Threads;
+import net.judahzone.gui.Gui;
+import net.judahzone.scope.Live.LiveData;
 
 
 public class TunerKnobs extends KnobPanel {

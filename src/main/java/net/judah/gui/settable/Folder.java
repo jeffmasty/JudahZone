@@ -2,9 +2,9 @@ package net.judah.gui.settable;
 
 import java.io.File;
 
+import judahzone.util.Folders;
 import net.judah.gui.widgets.FileRender;
 import net.judah.seq.track.MidiTrack;
-import net.judah.util.Folders;
 
 public class Folder extends SetCombo<File> {
 

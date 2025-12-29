@@ -14,11 +14,11 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
+import judahzone.util.Constants;
 import lombok.Getter;
 import net.judah.fx.LFO;
-import net.judah.gui.Gui;
+import net.judah.gui.Bindings;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.gui.fx.FxTrigger;
 import net.judah.gui.fx.Row;
@@ -29,7 +29,8 @@ import net.judah.gui.widgets.FxKnob;
 import net.judah.gui.widgets.RangeSlider.Colors;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
-import net.judah.util.Constants;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Pastels;
 
 public class LFOWidget extends Box {
     private static final Color KNOB_C = Pastels.EGGSHELL;
@@ -88,7 +89,7 @@ public class LFOWidget extends Box {
 		lfoCombo.update();
 		slider.update();
 		msec.update();
-		Color c = ch.isActive(lfo) ? Pastels.getFx(lfo.getClass()) : null;
+		Color c = ch.isActive(lfo) ? Bindings.getFx(lfo.getClass()) : null;
 		wrap.setBackground(c);
 		grid.setBackground(c);
 		slider.setBackground(c);

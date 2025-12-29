@@ -2,7 +2,7 @@ package net.judah.synth.taco;
 
 import java.nio.FloatBuffer;
 
-import net.judah.util.PitchTools;
+import judahzone.util.PitchTools;
 
 /** An individual piano key press, three oscillators per voice */
 public class Voice {

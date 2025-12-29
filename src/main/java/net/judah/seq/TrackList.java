@@ -4,11 +4,11 @@ import java.util.Vector;
 
 import javax.swing.JComboBox;
 
+import judahzone.util.Constants;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
 import net.judah.seq.track.MidiTrack;
-import net.judah.util.Constants;
 
 /** MidiTrack bounded Vector that has a Current Track and increments on the GUI thread */
 public class TrackList<T extends MidiTrack> extends Vector<T> {

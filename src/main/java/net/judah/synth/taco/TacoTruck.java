@@ -8,11 +8,11 @@ import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 import javax.swing.ImageIcon;
 
+import judahzone.util.AudioTools;
+import judahzone.util.Constants;
 import lombok.Getter;
 import net.judah.fx.Convolution;
 import net.judah.synth.Engine;
-import net.judah.util.AudioTools;
-import net.judah.util.Constants;
 
 public class TacoTruck extends Engine {
 

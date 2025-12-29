@@ -3,14 +3,14 @@ package net.judah.fx;
 import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 
+import judahzone.api.Effect;
+import judahzone.api.TimeEffect;
+import judahzone.util.Constants;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import net.judah.api.Effect;
-import net.judah.api.TimeEffect;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DJFilter;
-import net.judah.util.Constants;
 
 /** A calculated sin wave LFO.  Default amplitude returns queries between 0 and 85 */
 @RequiredArgsConstructor

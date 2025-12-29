@@ -25,9 +25,9 @@ import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 
+import judahzone.api.Effect.RTEffect;
+import judahzone.util.Constants;
 import lombok.Getter;
-import net.judah.api.Effect.RTEffect;
-import net.judah.util.Constants;
 
 public class EQ implements RTEffect {
 

@@ -7,16 +7,14 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
+import judahzone.api.Key;
+import judahzone.api.Signature;
+import judahzone.api.TimeListener;
+import judahzone.api.TimeProvider;
+import judahzone.api.Notification.Property;
+import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.api.Key;
-import net.judah.api.Notification.Property;
-import net.judah.api.Signature;
-import net.judah.api.TimeListener;
-import net.judah.api.TimeProvider;
-import net.judah.gui.Gui;
-import net.judah.gui.Icons;
-import net.judah.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.gui.settable.SongCombo;
 import net.judah.gui.widgets.Btn;
@@ -26,7 +24,9 @@ import net.judah.seq.chords.ChordPlay;
 import net.judah.seq.chords.Chords;
 import net.judah.seq.chords.Scale;
 import net.judah.seq.track.ChannelTrack;
-import net.judah.util.Threads;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Icons;
+import net.judahzone.gui.Pastels;
 
 public class SongTitle extends JPanel implements TimeListener {
 

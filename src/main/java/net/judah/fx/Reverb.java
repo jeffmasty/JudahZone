@@ -1,6 +1,6 @@
 package net.judah.fx;
 
-import net.judah.api.Effect.RTEffect;
+import judahzone.api.Effect.RTEffect;
 
 public abstract class Reverb implements RTEffect {
 

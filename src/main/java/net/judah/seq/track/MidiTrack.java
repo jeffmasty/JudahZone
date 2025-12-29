@@ -1,7 +1,7 @@
 package net.judah.seq.track;
 
-import static net.judah.api.MidiClock.MIDI_24;
-import static net.judah.util.Constants.NL;
+import static judahzone.api.MidiClock.MIDI_24;
+import static judahzone.util.Constants.NL;
 import static org.jaudiolibs.jnajack.JackTransportState.JackTransportNetStarting;
 
 import java.io.File;
@@ -16,12 +16,15 @@ import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 import javax.swing.JOptionPane;
 
+import judahzone.api.Midi;
+import judahzone.api.Signature;
+import judahzone.api.TimeListener;
+import judahzone.api.Notification.Property;
+import judahzone.util.Constants;
+import judahzone.util.Folders;
+import judahzone.util.RTLogger;
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.api.Midi;
-import net.judah.api.Notification.Property;
-import net.judah.api.Signature;
-import net.judah.api.TimeListener;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
 import net.judah.midi.JudahMidi;
@@ -32,9 +35,6 @@ import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiTools;
 import net.judah.seq.automation.ControlChange;
 import net.judah.song.Sched;
-import net.judah.util.Constants;
-import net.judah.util.Folders;
-import net.judah.util.RTLogger;
 
 @Getter
 public abstract class MidiTrack extends Computer implements TimeListener, MidiConstants {

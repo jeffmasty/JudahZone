@@ -1,6 +1,6 @@
 package net.judah.gui;
 
-import static net.judah.api.Notification.Property.TEMPO;
+import static judahzone.api.Notification.Property.TEMPO;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -13,12 +13,13 @@ import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import net.judah.api.Notification.Property;
-import net.judah.api.TimeListener;
+import judahzone.api.TimeListener;
+import judahzone.api.Notification.Property;
 import net.judah.gui.widgets.Slider;
 import net.judah.gui.widgets.TapTempo;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
+import net.judahzone.gui.Gui;
 
 public class MiniLooper extends JPanel implements TimeListener {
 	private static final Dimension TEMPO_SLIDER = new Dimension(75, Size.STD_HEIGHT + 4);

@@ -13,13 +13,13 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import lombok.Getter;
-import net.judah.util.Constants;
+import judahzone.util.Constants;
+import net.judahzone.gui.Gui;
 
 public class SheetMusicPnl extends JPanel {
         Image image;
         JLabel labelImage;
-        @Getter File file;
+        File file;
 
         public SheetMusicPnl(File musicImage, Dimension sz) throws IOException {
         	this.file = musicImage;

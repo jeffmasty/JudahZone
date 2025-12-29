@@ -11,12 +11,13 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import judahzone.util.Constants;
+import judahzone.util.Folders;
+import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
 import net.judah.fx.Gain;
-import net.judah.gui.Gui;
-import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.TabZone;
@@ -41,9 +42,8 @@ import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.Programmer;
 import net.judah.synth.taco.TacoSynth;
-import net.judah.util.Constants;
-import net.judah.util.Folders;
-import net.judah.util.Threads;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Icons;
 
 // TODO MouseWheel listener -> change pattern
 public class TrackKnobs extends KnobPanel {

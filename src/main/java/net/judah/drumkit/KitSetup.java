@@ -4,14 +4,14 @@ import javax.sound.midi.ShortMessage;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import judahzone.api.Midi;
+import judahzone.util.Constants;
 import lombok.Data;
 import net.judah.JudahZone;
-import net.judah.api.Midi;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.seq.automation.ControlChange;
 import net.judah.song.Overview;
-import net.judah.util.Constants;
 
 @Data
 public class KitSetup implements AtkDec {

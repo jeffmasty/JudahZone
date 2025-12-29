@@ -1,6 +1,6 @@
 package net.judah.synth.fluid;
 
-import static net.judah.util.Constants.NL;
+import static judahzone.util.Constants.NL;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,17 +12,17 @@ import javax.sound.midi.ShortMessage;
 
 import org.jaudiolibs.jnajack.JackPort;
 
+import judahzone.api.Midi;
+import judahzone.util.Constants;
+import judahzone.util.RTLogger;
+import judahzone.util.Threads;
 import lombok.Getter;
-import net.judah.api.Midi;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiInstrument;
 import net.judah.seq.SynthRack;
 import net.judah.seq.track.Computer.Update;
 import net.judah.seq.track.PianoTrack;
-import net.judah.util.Constants;
-import net.judah.util.RTLogger;
-import net.judah.util.Threads;
 
 /** runs fluid command line and connects to FluidSynth stdin and stdout ports */
 public final class FluidSynth extends MidiInstrument {

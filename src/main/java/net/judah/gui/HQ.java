@@ -6,14 +6,13 @@ import java.awt.FlowLayout;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
+import judahzone.api.Notification.Property;
+import judahzone.api.TimeListener;
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.api.Notification.Property;
-import net.judah.api.TimeListener;
 import net.judah.gui.fx.EffectsRack;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.LFOKnobs;
-import net.judah.gui.scope.JudahScope;
 import net.judah.gui.settable.SetCombo;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.LengthCombo;
@@ -22,6 +21,10 @@ import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.seq.chords.ChordPlay;
 import net.judah.song.Overview;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Icons;
+import net.judahzone.gui.Pastels;
+import net.judahzone.scope.JudahScope;
 
 public class HQ extends JPanel implements TimeListener {
 
@@ -97,7 +100,7 @@ public class HQ extends JPanel implements TimeListener {
 		else metro.setBackground(null);
 	}
 
-	void sceneText() {
+	public void sceneText() {
 		StringBuffer sb = new StringBuffer();
 		int idx = songs.getSong().getScenes().indexOf(songs.getScene());
 		boolean onDeck = songs.getOnDeck() != null;

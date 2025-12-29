@@ -24,10 +24,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 
+import judahzone.api.Effect.RTEffect;
+import judahzone.util.Constants;
 import lombok.Getter;
-import net.judah.api.Effect.RTEffect;
 import net.judah.fx.StereoBiquad.FilterType;
-import net.judah.util.Constants;
 
 public class Filter implements RTEffect {
 

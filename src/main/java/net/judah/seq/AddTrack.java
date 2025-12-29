@@ -24,10 +24,10 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
 
+import judahzone.util.Folders;
+import judahzone.util.RTLogger;
 import net.judah.JudahZone;
 import net.judah.drumkit.DrumKit;
-import net.judah.gui.Gui;
-import net.judah.gui.Icons;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.Integers;
@@ -42,8 +42,8 @@ import net.judah.synth.ZoneMidi;
 import net.judah.synth.fluid.FluidAssistant;
 import net.judah.synth.fluid.FluidSynth;
 import net.judah.synth.taco.TacoTruck;
-import net.judah.util.Folders;
-import net.judah.util.RTLogger;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Icons;
 
 public class AddTrack extends JPanel {
 	public static final Dimension SIZE = new Dimension(300, 300);

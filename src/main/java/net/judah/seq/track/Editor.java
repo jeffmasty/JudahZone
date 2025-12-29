@@ -10,11 +10,11 @@ import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 import javax.swing.JMenu;
 
+import judahzone.api.Key;
+import judahzone.api.Midi;
+import judahzone.util.RTLogger;
 import lombok.Getter;
-import net.judah.api.Key;
-import net.judah.api.Midi;
 import net.judah.drumkit.DrumType;
-import net.judah.gui.Actionable;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.midi.Panic;
@@ -26,7 +26,7 @@ import net.judah.seq.MidiTools;
 import net.judah.seq.Prototype;
 import net.judah.seq.beatbox.RemapView;
 import net.judah.seq.track.Computer.Update;
-import net.judah.util.RTLogger;
+import net.judahzone.gui.Actionable;
 
 public class Editor {
 

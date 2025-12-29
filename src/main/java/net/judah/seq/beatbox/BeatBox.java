@@ -14,11 +14,9 @@ import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.swing.SwingUtilities;
 
-import net.judah.api.Midi;
-import net.judah.api.Signature;
+import judahzone.api.Midi;
+import judahzone.api.Signature;
 import net.judah.drumkit.DrumType;
-import net.judah.gui.Gui;
-import net.judah.gui.Pastels;
 import net.judah.gui.TabZone;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
@@ -30,6 +28,8 @@ import net.judah.seq.Prototype;
 import net.judah.seq.automation.Automation;
 import net.judah.seq.automation.CCPopup;
 import net.judah.seq.track.DrumTrack;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Pastels;
 
 public class BeatBox extends MusicBox implements Pastels {
 

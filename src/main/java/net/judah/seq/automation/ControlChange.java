@@ -3,8 +3,8 @@ package net.judah.seq.automation;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
+import judahzone.api.Midi;
 import lombok.RequiredArgsConstructor;
-import net.judah.api.Midi;
 
 @RequiredArgsConstructor
 public

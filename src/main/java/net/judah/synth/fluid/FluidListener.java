@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
-import net.judah.util.RTLogger;
+import judahzone.util.RTLogger;
 
 class FluidListener extends Thread {
 	final static String PREFIX = ">";

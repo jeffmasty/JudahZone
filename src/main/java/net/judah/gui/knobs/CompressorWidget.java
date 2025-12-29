@@ -12,18 +12,18 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
+import judahzone.util.RTLogger;
 import net.judah.fx.Compressor;
-import net.judah.gui.Gui;
 import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.gui.fx.FxTrigger;
 import net.judah.gui.fx.Row;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.gui.widgets.Slider.FxSlider;
 import net.judah.mixer.Channel;
-import net.judah.util.RTLogger;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Pastels;
 
 public class CompressorWidget extends JPanel {
 	private static final Color KNOB_C = Pastels.EGGSHELL;

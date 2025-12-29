@@ -11,15 +11,15 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import judahzone.api.Effect;
+import judahzone.util.RTLogger;
 import lombok.Getter;
-import net.judah.api.Effect;
 import net.judah.controllers.MPKTools;
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
 import net.judah.fx.EQ;
 import net.judah.fx.Overdrive;
 import net.judah.fx.Reverb;
-import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.fx.ReverbPlus.UpdatePanel;
@@ -30,7 +30,7 @@ import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiInstrument;
 import net.judah.mixer.Channel;
-import net.judah.util.RTLogger;
+import net.judahzone.gui.Gui;
 
 public class EffectsRack extends JPanel implements MPKTools {
 

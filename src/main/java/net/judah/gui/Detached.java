@@ -13,11 +13,10 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
 
-public class Detached extends JFrame {
+import net.judahzone.gui.Floating;
+import net.judahzone.gui.Icons;
 
-	public static interface Floating {
-		void resized(int w, int h);
-	}
+public class Detached extends JFrame {
 
 	public Detached(Component content, TabZone tabs) {
 		super(content.getName());

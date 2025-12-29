@@ -2,9 +2,9 @@ package net.judah.seq;
 
 import javax.sound.midi.MidiEvent;
 
+import judahzone.api.Midi;
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.api.Midi;
 
 public class MidiNote extends MidiEvent {
 

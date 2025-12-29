@@ -3,11 +3,11 @@ package net.judah.gui.settable;
 import java.io.File;
 import java.util.ArrayList;
 
+import judahzone.util.Threads;
 import net.judah.JudahZone;
-import net.judah.gui.Gui;
 import net.judah.gui.widgets.FileRender;
 import net.judah.song.Overview;
-import net.judah.util.Threads;
+import net.judahzone.gui.Gui;
 
 public class SongCombo extends SetCombo<File> {
 

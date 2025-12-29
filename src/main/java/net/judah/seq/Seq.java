@@ -22,16 +22,17 @@ import javax.swing.BoxLayout;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
+import judahzone.api.Midi;
+import judahzone.util.Constants;
+import judahzone.util.Folders;
+import judahzone.util.RTLogger;
+import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.api.Midi;
 import net.judah.drumkit.DrumMachine;
 import net.judah.drumkit.DrumType;
-import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Pastels;
 import net.judah.gui.Size;
-import net.judah.gui.Updateable;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.TrackKnobs;
 import net.judah.midi.Actives;
@@ -61,10 +62,9 @@ import net.judah.synth.fluid.FluidSynth;
 import net.judah.synth.taco.Polyphony;
 import net.judah.synth.taco.TacoSynth;
 import net.judah.synth.taco.TacoTruck;
-import net.judah.util.Constants;
-import net.judah.util.Folders;
-import net.judah.util.RTLogger;
-import net.judah.util.Threads;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Pastels;
+import net.judahzone.gui.Updateable;
 
 /** Midi Sequencer, MidiTracks container for song */
 public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{

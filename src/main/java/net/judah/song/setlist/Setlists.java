@@ -6,11 +6,11 @@ import java.util.List;
 
 import javax.swing.JComboBox;
 
+import judahzone.util.Folders;
+import judahzone.util.RTLogger;
 import lombok.Getter;
 import net.judah.gui.settable.SongCombo;
 import net.judah.gui.widgets.FileRender;
-import net.judah.util.Folders;
-import net.judah.util.RTLogger;
 
 public class Setlists extends ArrayList<Setlist> {
 	public static final File ROOT = Folders.getSetlistHome();

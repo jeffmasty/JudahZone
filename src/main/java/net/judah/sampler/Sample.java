@@ -3,8 +3,8 @@ package net.judah.sampler;
 import java.io.File;
 import java.io.IOException;
 
-import net.judah.util.Folders;
-import net.judah.util.Recording;
+import judahzone.util.Folders;
+import judahzone.util.Recording;
 
 /** Audio from disk */
 public class Sample extends BasicPlayer {

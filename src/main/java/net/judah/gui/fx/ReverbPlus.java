@@ -8,11 +8,11 @@ import javax.swing.JLabel;
 
 import lombok.Getter;
 import net.judah.fx.Reverb;
-import net.judah.gui.Gui;
+import net.judah.gui.Bindings;
 import net.judah.gui.HQ;
-import net.judah.gui.Pastels;
-import net.judah.gui.Updateable;
 import net.judah.mixer.Channel;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Updateable;
 
 
 public class ReverbPlus implements Updateable {
@@ -65,7 +65,7 @@ public class ReverbPlus implements Updateable {
 
 		@Override public void update() {
 			knob.update();
-			Color target = ch.isActive(reverb) ? Pastels.getFx(Reverb.class) : null;
+			Color target = ch.isActive(reverb) ? Bindings.getFx(Reverb.class) : null;
 			if (getBackground() != target)
 				setBackground(target);
 		}

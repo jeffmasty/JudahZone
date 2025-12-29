@@ -9,13 +9,13 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import net.judah.gui.Gui;
+import judahzone.util.RTLogger;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.ModalDialog;
 import net.judah.gui.widgets.Slider;
 import net.judah.midi.JudahMidi;
 import net.judah.seq.Edit.Type;
-import net.judah.util.RTLogger;
+import net.judahzone.gui.Gui;
 
 public class Duration { // TODO TimeListener TimeSig
 	private static final int WIDTH = 500;

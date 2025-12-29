@@ -1,7 +1,7 @@
 package net.judah.drumkit;
 
+import judahzone.api.GMDrum;
 import lombok.Getter;
-import net.judah.api.GMDrum;
 
 public enum DrumType {
 

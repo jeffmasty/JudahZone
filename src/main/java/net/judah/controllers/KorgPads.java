@@ -1,9 +1,10 @@
 package net.judah.controllers;
 
+import judahzone.api.Controller;
+import judahzone.api.Midi;
+import judahzone.util.Debounce;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
-import net.judah.api.Controller;
-import net.judah.api.Midi;
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
 import net.judah.fx.Overdrive;
@@ -15,7 +16,6 @@ import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.sampler.Sampler;
-import net.judah.util.Debounce;
 
 /** CC 1 - 16 on channel 13 */
 @RequiredArgsConstructor

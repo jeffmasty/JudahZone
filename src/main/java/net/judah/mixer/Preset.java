@@ -4,8 +4,8 @@ package net.judah.mixer;
 import java.util.ArrayList;
 import java.util.List;
 
+import judahzone.util.Constants;
 import lombok.Getter;
-import net.judah.util.Constants;
 
 public class Preset extends ArrayList<Setting> { // TODO date vs alphabetical
 

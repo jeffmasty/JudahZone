@@ -2,11 +2,12 @@ package net.judah.controllers;
 
 import java.util.List;
 
+import judahzone.api.Controller;
+import judahzone.api.Midi;
+import judahzone.util.Threads;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
-import net.judah.api.Controller;
-import net.judah.api.Midi;
 import net.judah.fx.Gain;
 import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
@@ -16,7 +17,6 @@ import net.judah.mixer.LineIn;
 import net.judah.seq.Seq;
 import net.judah.seq.SynthRack;
 import net.judah.song.Scene;
-import net.judah.util.Threads;
 
 /** Korg nanoKONTROL2 midi controller custom codes */
 @RequiredArgsConstructor

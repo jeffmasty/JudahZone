@@ -6,15 +6,15 @@ import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 
+import judahzone.api.TimeEffect;
 import lombok.Getter;
-import net.judah.api.TimeEffect;
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
 import net.judah.fx.LFO;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Pastels;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
+import net.judahzone.gui.Pastels;
 
 public class FxPanel extends JPanel {
 

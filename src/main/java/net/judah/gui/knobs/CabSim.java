@@ -11,22 +11,22 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.SwingConstants;
 
+import judahzone.util.Constants;
+import judahzone.util.Folders;
 import net.judah.fx.Convolution;
 import net.judah.fx.Convolution.Stereo;
 import net.judah.fx.MonoFilter;
 import net.judah.fx.MonoFilter.Settings;
-import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Pastels;
 import net.judah.gui.Size;
-import net.judah.gui.Updateable;
 import net.judah.gui.fx.FxTrigger;
 import net.judah.gui.widgets.DoubleSlider;
 import net.judah.mixer.Channel;
 import net.judah.mixer.IRDB;
 import net.judah.mixer.Instrument;
-import net.judah.util.Constants;
-import net.judah.util.Folders;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Pastels;
+import net.judahzone.gui.Updateable;
 
 public class CabSim extends JPanel implements Updateable {
 

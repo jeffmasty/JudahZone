@@ -9,7 +9,7 @@ import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.Track;
 
-import net.judah.util.RTLogger;
+import judahzone.util.RTLogger;
 
 public class MetaMap extends HashMap<Meta, List<MidiEvent>> {
 

@@ -8,7 +8,6 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
-import java.awt.Insets;
 import java.awt.event.WindowEvent;
 import java.util.ConcurrentModificationException;
 import java.util.concurrent.BlockingQueue;
@@ -20,12 +19,15 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.UIManager;
 
+import judahzone.api.Chord;
+import judahzone.api.Effect;
+import judahzone.util.Circular;
+import judahzone.util.Constants;
+import judahzone.util.RTLogger;
+import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.api.Chord;
-import net.judah.api.Effect;
 import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumMachine;
 import net.judah.drumkit.KitSetup;
@@ -41,8 +43,6 @@ import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.knobs.MidiGui;
 import net.judah.gui.knobs.TunerKnobs;
 import net.judah.gui.midiimport.ImportView;
-import net.judah.gui.scope.JudahScope;
-import net.judah.gui.scope.Live;
 import net.judah.gui.settable.PresetsHandler;
 import net.judah.gui.settable.SetCombo;
 import net.judah.gui.widgets.ModalDialog;
@@ -77,10 +77,11 @@ import net.judah.song.SongView;
 import net.judah.song.setlist.SetlistView;
 import net.judah.synth.taco.TacoSynth;
 import net.judah.synth.taco.TacoTruck;
-import net.judah.util.Circular;
-import net.judah.util.Constants;
-import net.judah.util.RTLogger;
-import net.judah.util.Threads;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Icons;
+import net.judahzone.gui.Updateable;
+import net.judahzone.scope.JudahScope;
+import net.judahzone.scope.Live;
 
 /** over-all layout and background updates thread */
 public class MainFrame extends JFrame implements Runnable {
@@ -462,20 +463,6 @@ public class MainFrame extends JFrame implements Runnable {
 	private void doKnob(int idx, int data2) {
 		if (knobs != null && knobs.doKnob(idx, data2))
 			update(knobs);
-	}
-
-	public static final int SCROLL_BTN = 8;
-	public static void startNimbus() {
-		try {
-			UIManager.setLookAndFeel ("javax.swing.plaf.nimbus.NimbusLookAndFeel");
-            UIManager.put("ScrollBar.buttonSize", new Dimension(SCROLL_BTN, SCROLL_BTN));
-            UIManager.put("nimbusBase", Pastels.EGGSHELL);
-            UIManager.put("control", Pastels.EGGSHELL);
-            UIManager.put("nimbusBlueGrey", Pastels.MY_GRAY);
-            UIManager.getLookAndFeel().getDefaults().put("Button.contentMargins", new Insets(5, 5, 5, 5));
-            UIManager.getLookAndFeel().getDefaults().put("JToggleButton.contentMargins", new Insets(1, 1, 1, 1));
-            Thread.sleep(10); // let nimbus start up
-		} catch (Exception e) { RTLogger.log(MainFrame.class, e.getMessage()); }
 	}
 
 	public static void set() {

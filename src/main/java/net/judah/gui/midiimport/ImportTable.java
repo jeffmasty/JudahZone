@@ -10,6 +10,7 @@ import javax.swing.JComboBox;
 import javax.swing.JTable;
 import javax.swing.table.TableCellEditor;
 
+import judahzone.util.RTLogger;
 import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
@@ -18,7 +19,6 @@ import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
-import net.judah.util.RTLogger;
 
 public class ImportTable extends JTable {
 

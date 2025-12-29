@@ -1,9 +1,9 @@
 package net.judah.midi;
 
-import static net.judah.api.Notification.Property.STEP;
-import static net.judah.api.Notification.Property.TRANSPORT;
-import static net.judah.util.Constants.bpmPerBeat;
-import static net.judah.util.Constants.millisPerBeat;
+import static judahzone.api.Notification.Property.STEP;
+import static judahzone.api.Notification.Property.TRANSPORT;
+import static judahzone.util.Constants.bpmPerBeat;
+import static judahzone.util.Constants.millisPerBeat;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -19,24 +19,24 @@ import org.jaudiolibs.jnajack.JackTransportState;
 import com.illposed.osc.OSCMessage;
 import com.illposed.osc.transport.udp.OSCPortOut;
 
+import judahzone.api.MidiClock;
+import judahzone.api.Notification;
+import judahzone.api.Signature;
+import judahzone.api.TimeListener;
+import judahzone.api.TimeProvider;
+import judahzone.api.Notification.Property;
+import judahzone.util.Constants;
+import judahzone.util.Debounce;
+import judahzone.util.RTLogger;
+import judahzone.util.WavConstants;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
-import net.judah.api.MidiClock;
-import net.judah.api.Notification;
-import net.judah.api.Notification.Property;
-import net.judah.api.Signature;
-import net.judah.api.TimeListener;
-import net.judah.api.TimeProvider;
-import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 import net.judah.seq.chords.Chords;
-import net.judah.util.Constants;
-import net.judah.util.Debounce;
-import net.judah.util.RTLogger;
-import net.judah.util.WavConstants;
+import net.judahzone.gui.Gui;
 
 public class JudahClock implements MidiClock, TimeProvider {
 

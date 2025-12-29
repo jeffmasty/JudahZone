@@ -10,12 +10,12 @@ import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
-import net.judah.gui.Gui;
 import net.judah.gui.Size;
-import net.judah.gui.Updateable;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Preset;
 import net.judah.mixer.PresetsDB;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Updateable;
 
 /** Presets */
 public class PresetsHandler extends SetCombo<Preset> implements ListCellRenderer<Preset>, Updateable {

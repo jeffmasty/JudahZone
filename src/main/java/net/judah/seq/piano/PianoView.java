@@ -2,16 +2,16 @@ package net.judah.seq.piano;
 
 import java.awt.Dimension;
 
+import judahzone.api.Key;
 import lombok.Getter;
-import net.judah.api.Key;
-import net.judah.gui.Detached.Floating;
-import net.judah.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.seq.MusicBox;
 import net.judah.seq.Seq;
 import net.judah.seq.track.HiringAgency;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.TrackBindings;
+import net.judahzone.gui.Floating;
+import net.judahzone.gui.Gui;
 
 
 public class PianoView extends HiringAgency implements Floating, Size {

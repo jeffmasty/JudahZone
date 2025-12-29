@@ -1,10 +1,10 @@
 package net.judah.gui.settable;
 
-import net.judah.gui.Gui;
+import judahzone.util.Threads;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.Integers;
 import net.judah.seq.track.Computer;
-import net.judah.util.Threads;
+import net.judahzone.gui.Gui;
 
 public class CurrentCombo extends SetCombo<Integer> {
 

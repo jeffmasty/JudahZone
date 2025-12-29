@@ -1,6 +1,6 @@
 package net.judah.gui.widgets;
 
-import static net.judah.gui.scope.RMSMeter.*;
+import static net.judahzone.scope.RMSMeter.*;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -8,12 +8,12 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
-import net.judah.gui.Pastels;
-import net.judah.gui.scope.Live;
-import net.judah.gui.scope.RMS;
-import net.judah.util.Constants;
-import net.judah.util.Rainbow;
-import net.judah.util.Recording;
+import judahzone.util.Constants;
+import judahzone.util.Rainbow;
+import judahzone.util.Recording;
+import net.judahzone.gui.Pastels;
+import net.judahzone.scope.Live;
+import net.judahzone.scope.RMS;
 
 // Live display starts at right edge, older frames move left
 public class RMSWidget extends BufferedImage implements Live {

@@ -4,8 +4,8 @@ import java.util.List;
 
 import javax.sound.midi.ShortMessage;
 
-import net.judah.api.Algo;
-import net.judah.api.Chord;
+import judahzone.api.Algo;
+import judahzone.api.Chord;
 
 public class Chopin extends Algo {
 

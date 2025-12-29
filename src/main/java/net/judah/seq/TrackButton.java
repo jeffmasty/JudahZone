@@ -13,10 +13,10 @@ import javax.swing.border.Border;
 
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.gui.Gui;
-import net.judah.gui.Pastels;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Pastels;
 
 public class TrackButton extends JLabel {
 	private static final Border highlight = BorderFactory.createRaisedSoftBevelBorder();

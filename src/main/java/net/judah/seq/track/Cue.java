@@ -4,7 +4,7 @@ import java.awt.Color;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.gui.Pastels;
+import net.judahzone.gui.Pastels;
 
 @RequiredArgsConstructor 
 public enum Cue implements Pastels {

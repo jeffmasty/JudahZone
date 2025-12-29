@@ -1,5 +1,6 @@
 package net.judah.gui.fx;
 
+import judahzone.util.RTLogger;
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
 import net.judah.fx.Gain;
@@ -8,7 +9,6 @@ import net.judah.fx.Overdrive;
 import net.judah.fx.Reverb;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.mixer.Channel;
-import net.judah.util.RTLogger;
 
 
 // EffectsRack construction helper

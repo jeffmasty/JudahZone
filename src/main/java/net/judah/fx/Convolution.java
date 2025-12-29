@@ -1,17 +1,18 @@
 package net.judah.fx;
 
+import static judahzone.util.WavConstants.FFT_SIZE;
+
 import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 import java.util.Arrays;
 
 import be.tarsos.dsp.util.fft.FFT;
+import judahzone.api.Effect;
+import judahzone.util.AudioTools;
+import judahzone.util.RTLogger;
 import lombok.Getter;
-import net.judah.api.Effect;
 import net.judah.gui.knobs.CabSim;
 import net.judah.mixer.IRDB;
-import net.judah.util.AudioTools;
-import net.judah.util.Constants;
-import net.judah.util.RTLogger;
 
 public abstract class Convolution implements Effect {
 
@@ -48,7 +49,6 @@ public abstract class Convolution implements Effect {
     /** MONO: Convolute a selected IR against live audio */
     public static class Mono extends Convolution {
 
-        protected static final int FFT_SIZE = Constants.fftSize();
         protected final FFT fft = new FFT(FFT_SIZE);
         protected final FFT ifft = new FFT(FFT_SIZE);
 

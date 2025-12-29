@@ -5,16 +5,16 @@ import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
+import judahzone.api.Midi;
+import judahzone.util.Constants;
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.api.Midi;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.TrackKnobs;
 import net.judah.midi.Actives;
 import net.judah.seq.automation.ControlChange;
 import net.judah.song.Sched;
 import net.judah.synth.ZoneMidi;
-import net.judah.util.Constants;
 
 @Getter
 public abstract class NoteTrack extends MidiTrack {

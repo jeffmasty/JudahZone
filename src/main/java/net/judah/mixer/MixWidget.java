@@ -18,11 +18,11 @@ import javax.swing.JToggleButton;
 
 import lombok.Getter;
 import net.judah.fx.Gain;
-import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Pastels;
 import net.judah.gui.widgets.RainbowFader;
 import net.judah.gui.widgets.TogglePreset;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Pastels;
 
 /**Mixer view <br/>
  * Each mixer channel has:

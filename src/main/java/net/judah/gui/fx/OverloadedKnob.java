@@ -1,14 +1,14 @@
 package net.judah.gui.fx;
 
+import judahzone.api.Effect;
 import lombok.Getter;
-import net.judah.api.Effect;
 import net.judah.gui.HQ;
-import net.judah.gui.Updateable;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.Knob.KnobListener;
 import net.judah.mixer.Channel;
 import net.judah.seq.MidiConstants;
+import net.judahzone.gui.Updateable;
 
 
 @Getter

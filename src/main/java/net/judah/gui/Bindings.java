@@ -4,6 +4,7 @@ import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.KeyEvent.*;
 import static javax.swing.KeyStroke.getKeyStroke;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
@@ -15,12 +16,24 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.KeyStroke;
 
+import judahzone.api.Effect;
+import net.judah.fx.Chorus;
+import net.judah.fx.Compressor;
+import net.judah.fx.Convolution;
+import net.judah.fx.Delay;
+import net.judah.fx.EQ;
+import net.judah.fx.Filter;
 import net.judah.fx.Gain;
+import net.judah.fx.LFO;
+import net.judah.fx.MonoFilter;
+import net.judah.fx.Overdrive;
+import net.judah.fx.Reverb;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
 import net.judah.mixer.Mains;
 import net.judah.seq.Seq;
+import net.judahzone.gui.Pastels;
 
 // TODO extra looper commands?
 // ctrl-enter = next song?
@@ -41,7 +54,7 @@ public class Bindings {
 		}
 	}
 
-	Bindings(JFrame view, Seq seq, DJJefe mixer) {
+	public Bindings(JFrame view, Seq seq, DJJefe mixer) {
 		JComponent jc = (JComponent)view.getContentPane();
 		inputs = jc.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
 		actions = jc.getActionMap();
@@ -55,8 +68,6 @@ public class Bindings {
 			bind(getKeyStroke("F" + (i+1)), new Act(()->MainFrame.setFocus(focus)));
 		}
 		bind(getKeyStroke("F10"), new Act(()->MainFrame.setFocus(mixer.getMains())));
-
-
 
 //		TrackList<DrumTrack> drums = seq.getDrumTracks();
 //		bind(getKeyStroke(VK_1, ALT_DOWN_MASK), new Act(()->TabZone.edit(drums.get(0))));
@@ -89,6 +100,30 @@ public class Bindings {
 		  if (vol < 0) vol = 0;
 		  mains.getGain().set(Gain.VOLUME, vol);
 		  MainFrame.update(mains);
+	}
+
+	public static Color getFx(Class<? extends Effect> class1) {
+		if (Reverb.class.isAssignableFrom(class1))
+			return Pastels.RED;
+		if (Overdrive.class.equals(class1))
+			return Pastels.YELLOW;
+		if (Chorus.class.equals(class1))
+			return Pastels.GREEN;
+		if (MonoFilter.class.equals(class1))
+			return Pastels.PINK;
+		if (Filter.class.equals(class1))
+			return Pastels.PINK;
+		if (EQ.class.equals(class1))
+			return Pastels.MY_GRAY;
+		if (Delay.class.equals(class1))
+			return Pastels.ORANGE;
+		if (Compressor.class.equals(class1))
+			return Pastels.PURPLE;
+		if (LFO.class.equals(class1))
+			return Pastels.BLUE;
+		if (Convolution.class.equals(class1))
+			return Color.BLACK;
+		return Pastels.EGGSHELL;
 	}
 }
 /*           case VK_R:

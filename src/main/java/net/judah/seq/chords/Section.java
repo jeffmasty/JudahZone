@@ -8,14 +8,14 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import judahzone.api.Chord;
+import judahzone.util.Constants;
+import judahzone.util.RTLogger;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import net.judah.api.Chord;
 import net.judah.gui.MainFrame;
-import net.judah.util.Constants;
-import net.judah.util.RTLogger;
 
 @Data @AllArgsConstructor @NoArgsConstructor @EqualsAndHashCode(callSuper = true)
 public class Section extends ArrayList<Chord> {

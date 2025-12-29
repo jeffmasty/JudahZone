@@ -1,10 +1,10 @@
 package net.judah.synth.fluid;
 
-import static net.judah.util.Constants.NL;
+import static judahzone.util.Constants.NL;
 
+import judahzone.util.RTLogger;
+import judahzone.util.RTLogger.Participant;
 import net.judah.gui.MainFrame;
-import net.judah.util.RTLogger;
-import net.judah.util.RTLogger.Participant;
 
 class FluidConsole implements Participant {
 	public static final String PREFIX = "fluid";

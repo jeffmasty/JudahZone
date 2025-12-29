@@ -2,14 +2,14 @@ package net.judah.seq.piano;
 
 import java.awt.event.ActionEvent;
 
-import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Pastels;
-import net.judah.gui.Updateable;
 import net.judah.gui.widgets.Click;
 import net.judah.midi.Actives;
 import net.judah.midi.Panic;
 import net.judah.seq.track.PianoTrack;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Pastels;
+import net.judahzone.gui.Updateable;
 
 public class Pedal extends Click implements Updateable {
 

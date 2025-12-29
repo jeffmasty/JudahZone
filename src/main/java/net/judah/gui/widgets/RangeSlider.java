@@ -19,7 +19,7 @@ import javax.swing.plaf.basic.BasicSliderUI;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.gui.Pastels;
+import net.judahzone.gui.Pastels;
 
 /* Source: https://github.com/ernieyu/Swing-range-slider
  *

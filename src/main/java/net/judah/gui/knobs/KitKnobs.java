@@ -9,20 +9,20 @@ import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
+import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumMachine;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
-import net.judah.gui.Gui;
-import net.judah.gui.Icons;
 import net.judah.gui.knobs.KitPad.Modes;
 import net.judah.gui.widgets.Btn;
 import net.judah.midi.Actives;
 import net.judah.seq.Trax;
 import net.judah.song.Overview;
-import net.judah.util.Threads;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Icons;
 
 public class KitKnobs extends KnobPanel {
 

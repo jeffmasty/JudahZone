@@ -22,9 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import java.nio.FloatBuffer;
 
+import judahzone.util.Constants;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.util.Constants;
 
 /** compute unit of and EQ and Filter */
 public class StereoBiquad {

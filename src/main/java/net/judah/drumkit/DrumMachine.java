@@ -6,9 +6,9 @@ import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
+import judahzone.api.Midi;
+import judahzone.util.AudioTools;
 import lombok.Getter;
-import net.judah.api.Midi;
-import net.judah.gui.Icons;
 import net.judah.gui.knobs.KitKnobs;
 import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
@@ -19,7 +19,7 @@ import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.NoteTrack;
 import net.judah.synth.Engine;
-import net.judah.util.AudioTools;
+import net.judahzone.gui.Icons;
 
 @Getter
 public final class DrumMachine extends Engine {

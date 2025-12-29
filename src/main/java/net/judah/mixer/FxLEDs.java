@@ -9,7 +9,7 @@ import java.util.Map;
 
 import javax.swing.JPanel;
 
-import net.judah.api.Effect;
+import judahzone.api.Effect;
 import net.judah.fx.Chorus;
 import net.judah.fx.Compressor;
 import net.judah.fx.Convolution;
@@ -18,7 +18,7 @@ import net.judah.fx.Filter;
 import net.judah.fx.LFO;
 import net.judah.fx.Overdrive;
 import net.judah.fx.Reverb;
-import net.judah.gui.Pastels;
+import net.judah.gui.Bindings;
 
 /**
  * effect indicator lights: red reverb, orange delay, yellow distortion, green chorus,
@@ -76,7 +76,7 @@ public class FxLEDs extends JPanel {
 			Class<? extends Effect> fxClass = colorBySlot.get(slot);
 			if (fxClass == null) continue;
 
-			g.setColor(Pastels.getFx(fxClass));
+			g.setColor(Bindings.getFx(fxClass));
 			int x = (int) (idx * unit);
 			g.fillRect(x, 1, (int) Math.ceil(unit), d.height - 2);
 		}

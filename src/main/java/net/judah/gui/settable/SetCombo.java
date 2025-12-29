@@ -8,9 +8,9 @@ import javax.swing.JComboBox;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 
+import judahzone.util.Threads;
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.util.Threads;
 
 // Combos: MidiGui: song, file, *6 synths, Track: *prog, file, pattern? LFO: type Synth: prog?
 public abstract class SetCombo<T> extends  JComboBox<T> {

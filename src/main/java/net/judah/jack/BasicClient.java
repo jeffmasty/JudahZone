@@ -18,9 +18,9 @@ import org.jaudiolibs.jnajack.JackProcessCallback;
 import org.jaudiolibs.jnajack.JackShutdownCallback;
 import org.jaudiolibs.jnajack.JackStatus;
 
+import judahzone.util.RTLogger;
+import judahzone.util.Threads;
 import lombok.RequiredArgsConstructor;
-import net.judah.util.RTLogger;
-import net.judah.util.Threads;
 
 /**Creators of Jack clients must manually {@link #start()} the client.  Once started the client will
  * connect to Jack and call lifecycle events: {@link #initialize()} and {@link #makeConnections()} */

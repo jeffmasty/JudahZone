@@ -4,9 +4,9 @@ import java.util.List;
 
 import javax.sound.midi.ShortMessage;
 
+import judahzone.api.Algo;
+import judahzone.api.Chord;
 import lombok.Setter;
-import net.judah.api.Algo;
-import net.judah.api.Chord;
 
 /** Original: https://github.com/ybalcanci/Sequence-Player */
 public class Racman extends Algo implements Ignorant {

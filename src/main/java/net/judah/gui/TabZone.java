@@ -16,10 +16,12 @@ import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
+import judahzone.util.Constants;
+import judahzone.util.Folders;
+import judahzone.util.RTLogger;
+import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.gui.Detached.Floating;
-import net.judah.gui.scope.JudahScope;
 import net.judah.gui.widgets.CloseableTabbedPane;
 import net.judah.seq.Musician;
 import net.judah.seq.beatbox.BeatBox;
@@ -36,10 +38,9 @@ import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.song.Overview;
 import net.judah.song.Song;
-import net.judah.util.Constants;
-import net.judah.util.Folders;
-import net.judah.util.RTLogger;
-import net.judah.util.Threads;
+import net.judahzone.gui.Floating;
+import net.judahzone.gui.Gui;
+import net.judahzone.scope.JudahScope;
 
 public class TabZone extends CloseableTabbedPane {
 	public static TabZone instance;

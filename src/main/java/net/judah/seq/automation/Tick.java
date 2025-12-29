@@ -12,12 +12,12 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.Border;
 
-import net.judah.gui.Gui;
-import net.judah.gui.Pastels;
+import judahzone.util.Constants;
+import judahzone.util.RTLogger;
 import net.judah.gui.widgets.Integers;
 import net.judah.seq.track.MidiTrack;
-import net.judah.util.Constants;
-import net.judah.util.RTLogger;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Pastels;
 
 public class Tick extends JPanel {
 

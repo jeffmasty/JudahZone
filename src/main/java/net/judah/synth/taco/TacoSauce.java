@@ -3,9 +3,9 @@ package net.judah.synth.taco;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 
+import judahzone.util.Constants;
+import judahzone.util.RTLogger;
 import lombok.AllArgsConstructor;
-import net.judah.util.Constants;
-import net.judah.util.RTLogger;
 
 /** Synth Preset */
 public class TacoSauce {

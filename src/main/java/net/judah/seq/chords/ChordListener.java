@@ -1,6 +1,6 @@
 package net.judah.seq.chords;
 
-import net.judah.api.Chord;
+import judahzone.api.Chord;
 
 public interface ChordListener {
 

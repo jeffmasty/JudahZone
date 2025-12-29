@@ -5,9 +5,9 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.JLabel;
 
-import net.judah.api.Effect;
+import judahzone.api.Effect;
+import judahzone.util.Pair;
 import net.judah.mixer.Channel;
-import net.judah.util.Pair;
 
 public class FxTrigger extends JLabel {
 

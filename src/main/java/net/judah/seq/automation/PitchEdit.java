@@ -13,8 +13,9 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
 
-import net.judah.api.Midi;
-import net.judah.gui.Gui;
+import judahzone.api.Midi;
+import judahzone.util.Constants;
+import judahzone.util.RTLogger;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.Btn;
 import net.judah.seq.Edit;
@@ -23,8 +24,7 @@ import net.judah.seq.MidiConstants;
 import net.judah.seq.Prototype;
 import net.judah.seq.automation.Automation.AutoBox;
 import net.judah.seq.track.MidiTrack;
-import net.judah.util.Constants;
-import net.judah.util.RTLogger;
+import net.judahzone.gui.Gui;
 
 class PitchEdit extends AutoBox {
 

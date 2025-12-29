@@ -1,6 +1,6 @@
 package net.judah.synth.taco;
 
-import static net.judah.util.Constants.midiToFloat;
+import static judahzone.util.Constants.midiToFloat;
 
 import javax.sound.midi.ShortMessage;
 

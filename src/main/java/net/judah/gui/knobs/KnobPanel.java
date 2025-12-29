@@ -9,7 +9,7 @@ import javax.swing.ScrollPaneConstants;
 
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
-import net.judah.gui.Updateable;
+import net.judahzone.gui.Updateable;
 
 
 public abstract class KnobPanel extends JPanel implements Updateable, Size {

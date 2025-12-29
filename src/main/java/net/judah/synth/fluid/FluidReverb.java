@@ -3,9 +3,9 @@ package net.judah.synth.fluid;
 import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 
+import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.fx.Reverb;
-import net.judah.util.Threads;
 
 public class FluidReverb extends Reverb {
 

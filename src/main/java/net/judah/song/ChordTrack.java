@@ -13,9 +13,7 @@ import javax.swing.JSeparator;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 
-import net.judah.api.Chord;
-import net.judah.gui.Gui;
-import net.judah.gui.Pastels;
+import judahzone.api.Chord;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.Btn;
 import net.judah.seq.chords.ChordPlay;
@@ -25,6 +23,8 @@ import net.judah.seq.chords.Chords;
 import net.judah.seq.chords.Directive;
 import net.judah.seq.chords.Section;
 import net.judah.seq.chords.SectionCombo;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Pastels;
 
 /** Small window inside Overview */
 public class ChordTrack extends Gui.Opaque {

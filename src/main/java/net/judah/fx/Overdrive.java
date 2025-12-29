@@ -3,10 +3,10 @@ package net.judah.fx;
 import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 
+import judahzone.api.Effect.RTEffect;
+import judahzone.util.Constants;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judah.api.Effect.RTEffect;
-import net.judah.util.Constants;
 
 
 /** See: https://github.com/martinpenberthy/JUCEGuitarAmpBasic

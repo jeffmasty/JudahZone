@@ -9,9 +9,9 @@ import javax.swing.JPanel;
 import javax.swing.UIManager;
 
 import lombok.Getter;
-import net.judah.gui.Gui;
-import net.judah.gui.Pastels;
 import net.judah.song.cmd.Param;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Pastels;
 
 public class ScenePad extends JPanel implements Pastels {
 

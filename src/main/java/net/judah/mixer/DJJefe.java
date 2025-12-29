@@ -9,14 +9,14 @@ import java.util.List;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
+import judahzone.api.Effect;
+import judahzone.api.TimeListener;
+import judahzone.api.Notification.Property;
+import judahzone.util.RTLogger;
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.api.Effect;
-import net.judah.api.Notification.Property;
-import net.judah.api.TimeListener;
 import net.judah.drumkit.DrumMachine;
 import net.judah.fx.Gain;
-import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
@@ -24,7 +24,7 @@ import net.judah.midi.JudahClock;
 import net.judah.seq.SynthRack;
 import net.judah.seq.track.DrumTrack;
 import net.judah.song.FxData;
-import net.judah.util.RTLogger;
+import net.judahzone.gui.Gui;
 
 /** Graphical representation of the Mixer*/
 public class DJJefe extends JPanel implements TimeListener {

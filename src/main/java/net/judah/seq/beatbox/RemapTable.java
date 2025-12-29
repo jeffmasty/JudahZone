@@ -19,8 +19,8 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 
+import judahzone.api.GMDrum;
 import net.judah.JudahZone;
-import net.judah.api.GMDrum;
 import net.judah.drumkit.DrumType;
 import net.judah.gui.MainFrame;
 import net.judah.seq.Edit;

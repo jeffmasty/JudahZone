@@ -12,7 +12,7 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
 import lombok.Getter;
-import net.judah.gui.Pastels;
+import net.judahzone.gui.Pastels;
 
 public class Click extends JLabel {
 	static Border border = new LineBorder(Pastels.BLUE, 1, true);

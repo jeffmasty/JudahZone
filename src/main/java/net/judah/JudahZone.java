@@ -1,6 +1,6 @@
 package net.judah;
 
-import static net.judah.util.Constants.*;
+import static judahzone.util.Constants.*;
 import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsInput;
 import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsOutput;
 import static org.jaudiolibs.jnajack.JackPortType.AUDIO;
@@ -19,17 +19,21 @@ import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
 import org.jaudiolibs.jnajack.JackPort;
 
+import judahzone.util.AudioTools;
+import judahzone.util.Constants;
+import judahzone.util.Folders;
+import judahzone.util.Memory;
+import judahzone.util.RTLogger;
+import judahzone.util.Recording;
+import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.controllers.MPKmini;
 import net.judah.drumkit.DrumMachine;
-import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.FxPanel;
 import net.judah.gui.fx.MultiSelect;
 import net.judah.gui.knobs.MidiGui;
 import net.judah.gui.knobs.TunerKnobs;
-import net.judah.gui.scope.JudahScope;
-import net.judah.gui.scope.Live.LiveData;
 import net.judah.jack.BasicClient;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
@@ -50,13 +54,10 @@ import net.judah.song.Overview;
 import net.judah.song.setlist.Setlists;
 import net.judah.synth.fluid.FluidSynth;
 import net.judah.synth.taco.TacoTruck;
-import net.judah.util.AudioTools;
-import net.judah.util.Constants;
-import net.judah.util.Folders;
-import net.judah.util.Memory;
-import net.judah.util.RTLogger;
-import net.judah.util.Recording;
-import net.judah.util.Threads;
+import net.judahzone.gui.Icons;
+import net.judahzone.gui.Nimbus;
+import net.judahzone.scope.JudahScope;
+import net.judahzone.scope.Live.LiveData;
 
 /* my jack sound system settings:
  * jackd -P99 -dalsa -dhw:UMC1820 -r48000 -p512 -n2
@@ -116,7 +117,7 @@ public class JudahZone extends BasicClient {
 
 	private JudahZone() throws Exception {
 		super(JUDAHZONE);
-		MainFrame.startNimbus();
+		Nimbus.start();
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
 		start(); // super calls initialize(), makeConnections()
 		instance = this;

@@ -8,10 +8,13 @@ import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
+import judahzone.api.Midi;
+import judahzone.util.AudioTools;
+import judahzone.util.Constants;
+import judahzone.util.RTLogger;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
-import net.judah.api.Midi;
 import net.judah.fx.MonoFilter;
 import net.judah.fx.MonoFilter.Type;
 import net.judah.gui.MainFrame;
@@ -21,9 +24,6 @@ import net.judah.midi.Panic;
 import net.judah.mixer.Channel;
 import net.judah.seq.automation.ControlChange;
 import net.judah.seq.track.PianoTrack;
-import net.judah.util.AudioTools;
-import net.judah.util.Constants;
-import net.judah.util.RTLogger;
 
 public class TacoSynth extends PianoTrack {
 

@@ -13,10 +13,10 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.ChangeListener;
 
-import net.judah.gui.Gui;
-import net.judah.gui.Pastels;
+import judahzone.util.Rainbow;
 import net.judah.gui.Size;
-import net.judah.util.Rainbow;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Pastels;
 
 /**An extended JSlider that paints the Thumb chromatically based on the slider position.
  * <br/><br/>

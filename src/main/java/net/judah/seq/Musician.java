@@ -5,7 +5,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
 
-import net.judah.api.Signature;
+import judahzone.api.Signature;
 import net.judah.seq.track.MidiTrack;
 
 /** User interaction with a Notes Track */

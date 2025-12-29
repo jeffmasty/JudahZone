@@ -2,10 +2,10 @@ package net.judah.gui.widgets;
 
 import javax.swing.JComboBox;
 
-import net.judah.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.seq.track.Computer;
 import net.judah.seq.track.Cycle;
+import net.judahzone.gui.Gui;
 
 public class CycleCombo extends JComboBox<Cycle> {
 

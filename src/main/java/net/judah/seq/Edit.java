@@ -7,10 +7,10 @@ import java.util.List;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 
+import judahzone.api.Midi;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.api.Midi;
 
 @Getter @EqualsAndHashCode
 public class Edit {

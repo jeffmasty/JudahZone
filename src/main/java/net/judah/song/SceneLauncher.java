@@ -10,8 +10,8 @@ import javax.swing.JPanel;
 import javax.swing.UIManager;
 
 import net.judah.JudahZone;
-import net.judah.gui.Pastels;
-import net.judah.gui.Updateable;
+import net.judahzone.gui.Pastels;
+import net.judahzone.gui.Updateable;
 
 /** launch scenes */
 public class SceneLauncher extends JPanel implements Updateable {

@@ -4,14 +4,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.FloatBuffer;
 
+import judahzone.util.AudioTools;
+import judahzone.util.Folders;
+import judahzone.util.RTLogger;
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.looper.ToDisk;
-import net.judah.util.AudioTools;
-import net.judah.util.Folders;
-import net.judah.util.RTLogger;
+import net.judahzone.gui.Icons;
 
 /**The unified effects/volume track just before hitting the speakers/external effects.
  * A master track initializes in a muted state.*/

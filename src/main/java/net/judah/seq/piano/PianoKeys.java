@@ -12,14 +12,14 @@ import java.util.List;
 import javax.sound.midi.ShortMessage;
 import javax.swing.JPanel;
 
+import judahzone.api.Midi;
 import lombok.Getter;
-import net.judah.api.Midi;
-import net.judah.gui.Gui;
-import net.judah.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiInstrument;
 import net.judah.seq.track.NoteTrack;
+import net.judahzone.gui.Gui;
+import net.judahzone.gui.Pastels;
 
 /** Display keys of a piano above PianoBox */
 public class PianoKeys extends JPanel implements MouseListener, MouseMotionListener, Size {

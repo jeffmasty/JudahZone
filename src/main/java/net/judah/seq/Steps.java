@@ -6,8 +6,8 @@ import java.awt.event.MouseListener;
 import javax.sound.midi.Track;
 import javax.swing.JPanel;
 
+import judahzone.api.Signature;
 import lombok.Getter;
-import net.judah.api.Signature;
 import net.judah.seq.track.MidiTrack;
 
 // base edit/undo a Track, particularly CCs

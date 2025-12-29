@@ -40,9 +40,9 @@ package net.judah.fx;
 import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 
+import judahzone.api.Effect;
+import judahzone.util.Constants;
 import lombok.Getter;
-import net.judah.api.Effect;
-import net.judah.util.Constants;
 
 /**
  * IIR Filter op ported from Gervill in OpenJDK.

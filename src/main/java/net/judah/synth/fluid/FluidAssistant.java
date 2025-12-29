@@ -12,6 +12,9 @@ import java.security.InvalidParameterException;
 
 import org.jaudiolibs.jnajack.JackPort;
 
+import judahzone.util.Constants;
+import judahzone.util.RTLogger;
+import judahzone.util.Threads;
 import lombok.ToString;
 import net.judah.JudahZone;
 import net.judah.jack.BasicClient.Connect;
@@ -22,9 +25,6 @@ import net.judah.midi.JudahMidi;
 import net.judah.seq.Meta;
 import net.judah.seq.MetaMap;
 import net.judah.seq.SynthRack;
-import net.judah.util.Constants;
-import net.judah.util.RTLogger;
-import net.judah.util.Threads;
 
 /** Creates (async) a new FluidSynth instance with associated ports connected */
 public class FluidAssistant implements PortBack {

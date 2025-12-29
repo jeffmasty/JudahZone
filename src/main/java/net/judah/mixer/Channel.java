@@ -7,10 +7,14 @@ import java.util.List;
 
 import javax.swing.ImageIcon;
 
+import judahzone.api.Effect;
+import judahzone.api.Effect.RTEffect;
+import judahzone.util.AudioTools;
+import judahzone.util.Constants;
+import judahzone.util.RTLogger;
+import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.api.Effect;
-import net.judah.api.Effect.RTEffect;
 import net.judah.fx.Chorus;
 import net.judah.fx.Compressor;
 import net.judah.fx.Convolution;
@@ -27,10 +31,6 @@ import net.judah.gui.fx.EffectsRack;
 import net.judah.gui.knobs.LFOKnobs;
 import net.judah.gui.settable.Presets;
 import net.judah.gui.settable.PresetsHandler;
-import net.judah.util.AudioTools;
-import net.judah.util.Constants;
-import net.judah.util.RTLogger;
-import net.judah.util.Threads;
 
 /** An effects bus for input or output audio */
 @Getter

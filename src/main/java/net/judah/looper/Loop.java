@@ -1,9 +1,9 @@
 package net.judah.looper;
 
-import static net.judah.util.Constants.LEFT;
-import static net.judah.util.Constants.RIGHT;
-import static net.judah.util.Constants.STEREO;
-import static net.judah.util.WavConstants.WAV_EXT;
+import static judahzone.util.Constants.LEFT;
+import static judahzone.util.Constants.RIGHT;
+import static judahzone.util.Constants.STEREO;
+import static judahzone.util.WavConstants.WAV_EXT;
 
 import java.io.File;
 import java.nio.FloatBuffer;
@@ -12,10 +12,17 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import judahzone.api.RecordAudio;
+import judahzone.util.AudioTools;
+import judahzone.util.Constants;
+import judahzone.util.Folders;
+import judahzone.util.FromDisk;
+import judahzone.util.Memory;
+import judahzone.util.RTLogger;
+import judahzone.util.Recording;
+import judahzone.util.WavFile;
 import lombok.Getter;
-import net.judah.api.RecordAudio;
 import net.judah.drumkit.DrumMachine;
-import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
@@ -24,14 +31,7 @@ import net.judah.mixer.LineIn;
 import net.judah.mixer.LoopMix;
 import net.judah.seq.track.DrumTrack;
 import net.judah.synth.taco.TacoTruck;
-import net.judah.util.AudioTools;
-import net.judah.util.Constants;
-import net.judah.util.Folders;
-import net.judah.util.FromDisk;
-import net.judah.util.Memory;
-import net.judah.util.RTLogger;
-import net.judah.util.Recording;
-import net.judah.util.WavFile;
+import net.judahzone.gui.Icons;
 
 
 public class Loop extends Channel implements RecordAudio, Runnable {

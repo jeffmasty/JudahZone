@@ -2,19 +2,19 @@ package net.judah.controllers;
 
 import javax.swing.JToggleButton;
 
+import judahzone.api.Controller;
+import judahzone.api.Key;
+import judahzone.api.Midi;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
-import net.judah.api.Controller;
-import net.judah.api.Key;
-import net.judah.api.Midi;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Updateable;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Panic;
 import net.judah.mixer.Channel;
 import net.judah.mixer.LineIn;
+import net.judahzone.gui.Updateable;
 
 /** reroute guitar midi to synths, w/ optional octaver */
 public class Jamstik implements Controller, Updateable {

@@ -4,10 +4,11 @@ import static net.judah.fx.Chorus.Settings.*;
 
 import javax.sound.midi.ShortMessage;
 
+import judahzone.api.Midi;
+import judahzone.util.Constants;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import net.judah.api.Midi;
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
 import net.judah.fx.Filter;
@@ -19,7 +20,6 @@ import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.automation.ControlChange;
-import net.judah.util.Constants;
 
 @RequiredArgsConstructor  // TacoSynthTruck, DrumKit, MidiInstrument
 public class ChannelCC {

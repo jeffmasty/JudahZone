@@ -12,13 +12,13 @@ import javax.swing.JPanel;
 
 import lombok.Setter;
 import net.judah.drumkit.DrumType;
-import net.judah.gui.Gui;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.Integers;
 import net.judah.gui.widgets.ModalDialog;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.piano.Piano;
 import net.judah.seq.track.MidiTrack;
+import net.judahzone.gui.Gui;
 
 /** Provides a ModalDialog to enter specific transposition amounts
  * @see net.judah.gui.widgets.ModalDialog*/

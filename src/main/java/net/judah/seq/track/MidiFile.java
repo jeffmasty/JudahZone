@@ -4,7 +4,7 @@ import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.Sequence;
 import javax.sound.midi.Track;
 
-import net.judah.api.MidiClock;
+import judahzone.api.MidiClock;
 import net.judah.seq.MidiTools;
 
 public class MidiFile extends Sequence {

@@ -14,8 +14,8 @@ import javax.swing.JSlider;
 import be.tarsos.dsp.pitch.PitchDetectionResult;
 import be.tarsos.dsp.pitch.PitchDetector;
 import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
-import net.judah.gui.Gui;
-import net.judah.util.Constants;
+import judahzone.util.Constants;
+import net.judahzone.gui.Gui;
 
 // Legacy, PitchDetetector now an Effect of Channel
 public class GuitarTuner extends JPanel {

@@ -1,9 +1,9 @@
 package net.judah.synth.taco;
 
+import judahzone.util.Constants;
 import lombok.RequiredArgsConstructor;
 import net.judah.fx.MonoFilter;
 import net.judah.gui.MainFrame;
-import net.judah.util.Constants;
 
 /** crank up Resonance on Filters */
 @RequiredArgsConstructor

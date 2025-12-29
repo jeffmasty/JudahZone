@@ -2,8 +2,8 @@ package net.judah.gui.scope.fft_temp;
 
 import java.util.Vector;
 
+import judahzone.util.Constants;
 import lombok.RequiredArgsConstructor;
-import net.judah.util.Constants;
 
 /** A stereo buffer of float[]'s */
 @RequiredArgsConstructor

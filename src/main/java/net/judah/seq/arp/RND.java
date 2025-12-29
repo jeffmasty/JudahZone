@@ -5,9 +5,9 @@ import java.util.Random;
 
 import javax.sound.midi.ShortMessage;
 
-import net.judah.api.Algo;
-import net.judah.api.Chord;
-import net.judah.api.Key;
+import judahzone.api.Algo;
+import judahzone.api.Chord;
+import judahzone.api.Key;
 
 public class RND extends Algo implements Ignorant {
 

@@ -4,10 +4,10 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JComboBox;
 
-import net.judah.gui.Gui;
 import net.judah.seq.Seq;
 import net.judah.seq.TrackList;
 import net.judah.seq.track.MidiTrack;
+import net.judahzone.gui.Gui;
 
 public class TraxCombo extends JComboBox<MidiTrack> {
 
