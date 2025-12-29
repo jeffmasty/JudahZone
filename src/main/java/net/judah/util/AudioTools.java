@@ -7,8 +7,6 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.Mixer.Info;
 
-import net.judah.mixer.Channel;
-
 public class AudioTools  {
 
 	public static void silence(FloatBuffer a) {
@@ -176,11 +174,6 @@ public class AudioTools  {
 			}
 		}
 		return infos;
-	}
-
-	public static void copy(Channel source, float[][] dest) {
-		AudioTools.mix(source.getLeft(), dest[Constants.LEFT]);
-		AudioTools.mix(source.getRight(), dest[Constants.RIGHT]);
 	}
 
 	/**

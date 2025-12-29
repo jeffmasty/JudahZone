@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.Getter;
 import net.judah.api.RecordAudio;
-import net.judah.api.Recording;
 import net.judah.drumkit.DrumMachine;
 import net.judah.gui.Icons;
 import net.judah.gui.MainFrame;
@@ -31,6 +30,7 @@ import net.judah.util.Folders;
 import net.judah.util.FromDisk;
 import net.judah.util.Memory;
 import net.judah.util.RTLogger;
+import net.judah.util.Recording;
 import net.judah.util.WavFile;
 
 

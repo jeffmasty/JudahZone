@@ -8,12 +8,12 @@ import javax.sound.midi.ShortMessage;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.api.Midi;
-import net.judah.api.ZoneMidi;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.TrackKnobs;
 import net.judah.midi.Actives;
 import net.judah.seq.automation.ControlChange;
 import net.judah.song.Sched;
+import net.judah.synth.ZoneMidi;
 import net.judah.util.Constants;
 
 @Getter

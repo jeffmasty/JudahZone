@@ -21,23 +21,23 @@ public class Instrument extends LineIn {
     private MonoFilter lp;
     private MonoFilter hp;
 
-    /** Mono channel
-     * @param j
-     * @param i */
+    /** Mono channel with additional/default HiCut/LoCut */
 	public Instrument(String name, String sourcePort, JackPort left, String icon, int lowCut, int hiCut) {
 		super(name, Constants.MONO);
 		this.icon = Icons.get(icon);
 		this.leftPort = left;
 		this.leftSource = sourcePort;
 		this.rightSource = null;
+
 		hp = new MonoFilter(Type.LoCut, lowCut, 1);
 		lp = new MonoFilter(Type.HiCut, hiCut, 1);
+		effects.add(hp);
+		effects.add(lp);
+		setActive(hp, true);
+		setActive(lp, true);
 	}
 
-//	public Instrument(String name, String sourcePort, String icon) {
-//		this(name, sourcePort, (JackPort)null, icon);
-//	}
-//
+	/** Stereo channel */
 	public Instrument(String name, String leftSource, String rightSource, String icon) {
 		super(name, Constants.STEREO);
 		if (icon != null)
@@ -46,17 +46,7 @@ public class Instrument extends LineIn {
 		this.rightSource = rightSource;
 	}
 
-	/** Stereo channel */
-	public Instrument(String name, JackPort left, JackPort right, String icon) {
-		super(name, true);
-		if (icon != null)
-			this.icon = Icons.get(icon);
-		this.leftPort = left;
-		this.rightPort = right;
-	}
-
-	@Override
-	public final void processImpl() {
+	@Override public final void processImpl() {
 		if (isOnMute())
 			return;
 
@@ -64,12 +54,12 @@ public class Instrument extends LineIn {
 		AudioTools.copy(leftPort.getFloatBuffer(), left);
 		if (isStereo)
 			AudioTools.copy(rightPort.getFloatBuffer(), right);
-		else { // Mono: apply custom filter then split to stereo
+		else { // Mono: apply custom filter then Convolution (on or off) splits to stereo
 			if (hp != null)
 				hp.process(left);
 			if (lp != null)
 				lp.process(left);
-			((Convolution.Mono)IR).monoToStereo(left, right);  // make Stereo in CabSim
+			((Convolution.Mono)IR).monoToStereo(left, right);
 		}
 		fx();
 	}

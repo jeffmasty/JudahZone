@@ -2,7 +2,7 @@ package net.judah.gui.scope;
 
 import java.awt.Dimension;
 
-import net.judah.gui.widgets.RainbowFader;
+import net.judah.util.Rainbow;
 
 public class RMSMeter extends TimeWidget {
 
@@ -41,7 +41,7 @@ public class RMSMeter extends TimeWidget {
 			colorIndex = 0; // defensive
 
 		// draw the RMS-driven bar using the rainbow color (color intensity is independent of height)
-		g2d.setColor(RainbowFader.chaseTheRainbow(colorIndex));
+		g2d.setColor(Rainbow.get(colorIndex));
 		g2d.fillRect(xOnScreen, y, cellWidth, height);
 	}
 

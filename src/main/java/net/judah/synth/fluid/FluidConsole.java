@@ -2,9 +2,11 @@ package net.judah.synth.fluid;
 
 import static net.judah.util.Constants.NL;
 
+import net.judah.gui.MainFrame;
 import net.judah.util.RTLogger;
+import net.judah.util.RTLogger.Participant;
 
-class FluidConsole implements RTLogger.Participant {
+class FluidConsole implements Participant {
 	public static final String PREFIX = "fluid";
 	private final FluidSynth fluid;
 
@@ -14,6 +16,17 @@ class FluidConsole implements RTLogger.Participant {
 
 	public String getPrefix() {
 		return PREFIX;
+	}
+
+
+	private void doHelp() {
+		MainFrame.feedback("Fluid help, commands use 'fluid' prefix.");
+		fluid.sendCommand("help");
+		try { Thread.sleep(20); } catch (InterruptedException e) { }
+		MainFrame.feedback("fluid sync");
+		MainFrame.feedback("fluid instruments");
+		MainFrame.feedback("fluid current");
+		MainFrame.feedback("fluid GM_NAMES");
 	}
 
 	@Override
@@ -34,9 +47,9 @@ class FluidConsole implements RTLogger.Participant {
 		}
 
 		if (text.equals("channels")) {
-			RTLogger.addText("channels: " + fluid.getChannels().size() + NL);
+			MainFrame.feedback("channels: " + fluid.getChannels().size() + NL);
 			for (FluidChannel channel : fluid.getChannels()) {
-				RTLogger.addText(channel.toString() + NL);
+				MainFrame.feedback(channel.toString() + NL);
 			}
 		}
 //		if (text.equals("inst") || text.equals("instruments")) {
@@ -57,16 +70,6 @@ class FluidConsole implements RTLogger.Participant {
 			fluid.sendCommand(text);
 		}
 
-	}
-
-	private void doHelp() {
-		RTLogger.addText("Fluid help, commands use 'fluid' prefix.");
-		fluid.sendCommand("help");
-		try { Thread.sleep(20); } catch (InterruptedException e) { }
-		RTLogger.addText("fluid sync");
-		RTLogger.addText("fluid instruments");
-		RTLogger.addText("fluid current");
-		RTLogger.addText("fluid GM_NAMES");
 	}
 
 

@@ -76,7 +76,7 @@ public final class FluidSynth extends MidiInstrument {
 			patches = predecessors[0].getPatches();
 
 		replace(new FluidReverb(this)); // use external reverb
-		RTLogger.getParticipants().add(new FluidConsole(this));
+		RTLogger.registerParticipant(new FluidConsole(this));
 	}
 
 

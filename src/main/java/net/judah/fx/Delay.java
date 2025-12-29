@@ -317,11 +317,6 @@ public class Delay implements TimeEffect, net.judah.api.Effect.RTEffect {
     }
 
     @Override
-    public void sync() {
-        sync(TimeEffect.unit());
-    }
-
-    @Override
     public void sync(float unit) {
         float msec = 0.001f * (unit + unit * TimeEffect.indexOf(type));
         setDelayTime(2 * msec);

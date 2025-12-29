@@ -13,10 +13,10 @@ import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.api.Midi;
-import net.judah.api.ZoneMidi;
 import net.judah.mixer.Instrument;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
+import net.judah.synth.ZoneMidi;
 import net.judah.util.RTLogger;
 
 /** base function for an external synth, subclasses handle midi-channel awareness*/

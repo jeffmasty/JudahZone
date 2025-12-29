@@ -17,7 +17,6 @@ import javax.swing.SwingConstants;
 
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.api.ZoneMidi;
 import net.judah.controllers.Jamstik;
 import net.judah.controllers.MPKmini;
 import net.judah.gui.Gui;
@@ -44,6 +43,7 @@ import net.judah.song.cmd.Cmd;
 import net.judah.song.cmd.Cmdr;
 import net.judah.song.cmd.Param;
 import net.judah.song.setlist.Setlists;
+import net.judah.synth.ZoneMidi;
 import net.judah.synth.fluid.FluidSynth;
 import net.judah.synth.taco.TacoTruck;
 import net.judah.util.Constants;

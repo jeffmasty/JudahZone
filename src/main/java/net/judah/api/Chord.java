@@ -1,19 +1,40 @@
 package net.judah.api;
 
-import static net.judah.seq.chords.Interval.*;
+import static net.judah.api.Interval.*;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.sound.midi.ShortMessage;
 
-import lombok.Data;
-import net.judah.seq.Poly;
-
-@Data
 public class Chord extends ArrayList<Key> {
 
 	// major, minor, maj7, dom7, aug, dim, root/isInversion, add9  TODO 11,13 b13
 	String chord;
+	public int getSteps() {
+		return steps;
+	}
+
+	public void setSteps(int steps) {
+		this.steps = steps;
+	}
+
+	public String getLyrics() {
+		return lyrics;
+	}
+
+	public void setLyrics(String lyrics) {
+		this.lyrics = lyrics;
+	}
+
+	public void setChord(String chord) {
+		this.chord = chord;
+	}
+
+	public void setBass(Key bass) {
+		this.bass = bass;
+	}
+
 	Key bass;
 	int steps;
 	String lyrics = "";
@@ -283,39 +304,49 @@ public class Chord extends ArrayList<Key> {
 		return false;
 	}
 
-	public void tight(int low, Poly result) {
+	public void tight(int low, List<Integer> result) {
 		outer:
 		for (int counter = low; counter < 127; counter++) {
-			if (contains(Key.key(counter)) && result.has(Key.key(counter)) == false) {
+			if (contains(Key.key(counter)) && has(result, Key.key(counter)) == false) {
 				result.add(counter);
 			}
 			for (Key k : this)
-				if (result.has(k) == false) continue outer;
+				if (has(result, k) == false) continue outer;
 			return; // chord complete
 		}
 		return; // error
 	}
-	public void wide(int data1, Poly result) {
+	public void wide(int data1, List<Integer> result) {
 		boolean skip = true;
 		outer:
 		for (int counter = data1; counter < 127; counter++) {
-			if (contains(Key.key(counter)) && result.has(Key.key(counter)) == false) {
+			if (contains(Key.key(counter)) && has(result, Key.key(counter)) == false) {
 					if (!skip)
 						result.add(counter);
 					skip = !skip;
 			}
 			for (Key k : this)
-				if (result.has(k) == false) continue outer;
+				if (has(result, k) == false) continue outer;
 			return; // chord complete
 		}
 		return; // error
 	}
 
+	public static boolean has(List<Integer> list, Key key) {
+		for (Integer i : list)
+			if (Key.key(i) == key)
+				return true;
+		return false;
+	}
+
+
+
+
 	/** at least a minor third between notes in result */
-	public void consonant(int data1, int minInterval, Poly result) {
+	public void consonant(int data1, int minInterval, List<Integer> result) {
 		for (int counter = data1; counter < 127; counter++) {
 			Key note = Key.key(counter);
-			if (contains(note) && !result.has(note)) {
+			if (contains(note) && !has(result, note)) {
 
 			}
 		}

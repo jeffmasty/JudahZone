@@ -7,8 +7,6 @@ import java.awt. event.MouseEvent;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -18,18 +16,14 @@ import javax.swing.JPanel;
 import javax.swing. JToggleButton;
 
 import be.tarsos.dsp.util.fft.HammingWindow;
-import net.judah.gui.Detached. Floating;
-import net.judah.api.Recording;
-import net.judah. gui.Gui;
-import net.judah. gui.MainFrame;
+import net.judah.gui.Detached.Floating;
+import net.judah.gui.Gui;
 import net.judah.gui.Size;
-import net.judah.mixer.Channel;
-import net.judah.util.AudioTools;
-import net.judah. util.Constants;
-import net.judah. util. Folders;
+import net.judah.util.Constants;
+import net.judah.util.Folders;
 import net.judah.util.FromDisk;
-import net.judah.util.Memory;
-import net.judah. util.RTLogger;
+import net.judah.util.RTLogger;
+import net.judah.util.Recording;
 import net.judah.util.Threads;
 
 /** Provides a Spectrometer, a Spectrogram and RMSmeter, listening to mixer's selected channels
@@ -42,8 +36,8 @@ public class JudahScope extends JPanel implements Live, Floating, Closeable {
 	/** our transformer */
 	public static final FFZ fft = new FFZ(FFT_SIZE, new HammingWindow());
 	static final int JACK_BUFFER = Constants.bufSize();
+	public static final int CHUNKS = FFT_SIZE / JACK_BUFFER;
 	static final int S_RATE = Constants.sampleRate();
-	static final int CHUNKS = FFT_SIZE / JACK_BUFFER;
 	static final int TRANSFORM = FFT_SIZE * 2;
 	static final int AMPLITUDES = FFT_SIZE / 2;
     private static final int MENU_HEIGHT = 36;
@@ -57,8 +51,6 @@ public class JudahScope extends JPanel implements Live, Floating, Closeable {
 	private TimeDomain fileDisplay;
 	private TimeDomain timeDomain;
 	private final float[] transformBuffer = new float[TRANSFORM];
-	// short recording buffer (4 jack_frames = 1 fft_frame)
-	private Recording realtime = new Recording();
 	private File file;
 
     // Controls
@@ -73,11 +65,9 @@ public class JudahScope extends JPanel implements Live, Floating, Closeable {
 
 	/** Main content container */
 	private final Box content = new Box(BoxLayout.Y_AXIS);
-	private final ArrayList<Channel> selected;
 
-	public JudahScope(ArrayList<Channel> selected) {
+	public JudahScope() {
 		setName("JudahScope");
-		this.selected = selected;
 
 		// Initialize displays with initial width
 		pausedDisplay = new TimeDomain(this, w);
@@ -195,21 +185,9 @@ public class JudahScope extends JPanel implements Live, Floating, Closeable {
 
 	void setFeedback() {
 		switch (status) {
-		 	case LIVE_ROLLING -> feedback.setText(Arrays.toString(selected.toArray()));
+		 	case LIVE_ROLLING -> feedback.setText(" ");
 		 	case LIVE_STOPPED -> feedback. setText(" ");
 		 	case FILE -> feedback.setText(file == null ? " (load) " : file.getName());
-		}
-	}
-
-	public void process() {
-		if (status != Mode.LIVE_ROLLING)
-			return;
-		float[][] buf = Memory.STEREO.getFrame();
-		selected.forEach(ch -> AudioTools.copy(ch, buf));
-		realtime.add(buf);
-		if (realtime.size() == CHUNKS) {
-			MainFrame.update(new LiveData(this, realtime));
-			realtime = new Recording();
 		}
 	}
 
@@ -262,7 +240,6 @@ public class JudahScope extends JPanel implements Live, Floating, Closeable {
     	}
 		setFeedback();
 		repaint();
-		MainFrame.update(this);
     }
 
     @Override

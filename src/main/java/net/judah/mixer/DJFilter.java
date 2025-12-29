@@ -37,26 +37,40 @@ public class DJFilter {
 
 	public void joystick(int x) {
 
-		if (x > 47 && x < 53) {
-			ch.setActive(loCut, false);
+		if (x > 48 && x < 52) {
 			loCut.set(HZ, 0);
-			ch.setActive(hiCut, false);
 			hiCut.set(HZ, 100);
+			if (ch.isActive(loCut))
+				ch.setActive(loCut, false);
+			else
+				MainFrame.updateChannel(ch, loCut);
+			if (ch.isActive(hiCut))
+				ch.setActive(hiCut, false);
+			else
+				MainFrame.updateChannel(ch, hiCut);
 			return;
 		}
 		else if (x < 50) {
 			// as x approaches 0 (from 50) hiCut goes to 0 (from 100) // x50=100, x25=50, x0=0
 			hiCut.set(HZ, 2 * x);
-			if (ch.isActive(loCut)) ch.setActive(loCut, false);
-			if (!ch.isActive(hiCut)) ch.setActive(hiCut, true);
+			if (ch.isActive(loCut))
+				ch.setActive(loCut, false);
+			else
+				MainFrame.updateChannel(ch, hiCut);
+			if (!ch.isActive(hiCut))
+				ch.setActive(hiCut, true);
 		}
 		else {
 			// as x approaches 100 (from 50) lowCut goes to 100 (from 0) // x50=0,  x75=50 x100=100
 			loCut.set(HZ, (x - 50) * 2);
-			if (ch.isActive(hiCut)) ch.setActive(hiCut, false);
-			if (!ch.isActive(loCut)) ch.setActive(loCut, true);
+			if (!ch.isActive(loCut))
+				ch.setActive(loCut, true);
+			else MainFrame.updateChannel(ch, loCut);
+
+			if (ch.isActive(hiCut))
+				ch.setActive(hiCut, false);
+
 		}
-		MainFrame.update(ch);
 	}
 
 }

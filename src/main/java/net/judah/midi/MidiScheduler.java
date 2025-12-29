@@ -5,6 +5,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.api.Effect;
+import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
 import net.judah.mixer.Fader;
 import net.judah.util.RTLogger;
@@ -46,8 +48,13 @@ public class MidiScheduler implements Runnable {
 		if (zone.getMains().isOnMute())
 			return;
 		for (Channel ch : zone.getMixer().getAll()) {
-			ch.getLfo().pulse();
-			ch.getLfo2().pulse();
+
+			Effect fx1 = ch.isActive(ch.getLfo()) ? ch.getLfo().pulse() : null;
+			Effect fx2 = ch.isActive(ch.getLfo2()) ? ch.getLfo2().pulse() : null;
+			if (fx1 != null)
+				MainFrame.updateChannel(ch, fx1);
+			if (fx2 != null)
+				MainFrame.updateChannel(ch, fx1);
 		}
 	}
 

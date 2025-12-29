@@ -8,6 +8,7 @@ import javax.swing.JToggleButton;
 import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
 import net.judah.midi.JudahClock;
+import net.judah.util.Rainbow;
 
 public class StartBtn extends JToggleButton implements TimeListener {
 
@@ -30,7 +31,7 @@ public class StartBtn extends JToggleButton implements TimeListener {
 	public void update(Property prop, Object value) {
 		if (prop == Property.STEP) {
 			int step = 100 * (int)value / clock.getSteps();
-			setBackground(RainbowFader.chaseTheRainbow(step));
+			setBackground(Rainbow.get(step));
 		}
 		else if (prop == Property.TRANSPORT)
 			setText();

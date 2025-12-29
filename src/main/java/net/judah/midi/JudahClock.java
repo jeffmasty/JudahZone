@@ -3,6 +3,7 @@ package net.judah.midi;
 import static net.judah.api.Notification.Property.STEP;
 import static net.judah.api.Notification.Property.TRANSPORT;
 import static net.judah.util.Constants.bpmPerBeat;
+import static net.judah.util.Constants.millisPerBeat;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -230,24 +231,6 @@ public class JudahClock implements MidiClock, TimeProvider {
         announce(Property.STATUS, "reset");
 	}
 
-	public void primary() {
-
-		if (!internal)
-			stop();
-
-		internal = !internal;
-		if (!internal)
-			try {
-				osc = external(); // connect Midi Port ?
-			} catch (Exception e) { RTLogger.warn(this, e); }
-		setTempo(tempo);
-	}
-
-	/** @return external comm port to control clock */
-	private OSCPortOut external() throws UnknownHostException, IOException {
-		return new OSCPortOut(InetAddress.getLocalHost(), OSC_PORT);
-	}
-
 	public void toggle() {
 		if (active)
 			end();
@@ -313,17 +296,6 @@ public class JudahClock implements MidiClock, TimeProvider {
         }
 	}
 
-	@Override public void close() throws IOException {
-		stop();
-		if (osc != null && osc.isConnected()) {
-			try {
-				osc.disconnect();
-			} catch (IOException e) {
-				RTLogger.warn(this, e);
-			}
-		}
-	}
-
 	// External Midi interface
 	@Override public void start() {
 		if (internal)
@@ -346,6 +318,23 @@ public class JudahClock implements MidiClock, TimeProvider {
 		send("/continue");
 	}
 
+	public void primary() {
+		if (!internal)
+			stop();
+
+		internal = !internal;
+		if (!internal)
+			try {
+				osc = external(); // connect Midi Port ?
+			} catch (Exception e) { RTLogger.warn(this, e); }
+		setTempo(tempo);
+	}
+
+	/** @return external comm port to control clock */
+	private OSCPortOut external() throws UnknownHostException, IOException {
+		return new OSCPortOut(InetAddress.getLocalHost(), OSC_PORT);
+	}
+
 	private void send(String address) {
 		if (osc == null)
 			return; // error state
@@ -357,6 +346,18 @@ public class JudahClock implements MidiClock, TimeProvider {
 			RTLogger.warn(this, "tempo " + e.getMessage());
 		}
 	}
+
+	@Override public void close() throws IOException {
+		stop();
+		if (osc != null && osc.isConnected()) {
+			try {
+				osc.disconnect();
+			} catch (IOException e) {
+				RTLogger.warn(this, e);
+			}
+		}
+	}
+
 
 	// Looper Integration
 	public void loopCount(int count) {
@@ -406,6 +407,10 @@ public class JudahClock implements MidiClock, TimeProvider {
 	private void announce(Property prop, Object value) {
 		for (int i = listeners.size() - 1; i >= 0; i--)
 			listeners.get(i).update(prop, value);
+	}
+
+	public float syncUnit() {
+		return millisPerBeat(getTempo()) / (float)getSubdivision(); // * 2
 	}
 
 }

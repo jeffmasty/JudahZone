@@ -11,7 +11,6 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.api.Effect;
 import net.judah.api.Effect.RTEffect;
-import net.judah.api.TimeEffect;
 import net.judah.fx.Chorus;
 import net.judah.fx.Compressor;
 import net.judah.fx.Convolution;
@@ -77,7 +76,7 @@ public abstract class Channel implements Presets {
     private final List<Effect> offline = new ArrayList<>();
 
     // All effects known to this channel (RT + offline + LFOs etc.)
-    private final List<Effect> effects = new ArrayList<>();
+    protected final List<Effect> effects = new ArrayList<>();
 
     // fx activate/deactivate flag
     private volatile boolean activeDirty = false;
@@ -276,22 +275,21 @@ public abstract class Channel implements Presets {
 	}
 
 	// update time-sync'd fx
-	public void tempo(float tempo) {
-    	float unit = TimeEffect.unit();
+	public void tempo(float tempo, float syncUnit) {
 		if (delay.isSync()) {
-			delay.sync(unit);
+			delay.sync(syncUnit);
 			MainFrame.updateChannel(this, delay);
 		}
 		if (lfo.isSync()) {
-			lfo.sync(unit);
+			lfo.sync(syncUnit);
 			MainFrame.updateChannel(this, lfo);
 		}
 		if (lfo2.isSync()) {
-			lfo2.sync(unit);
+			lfo2.sync(syncUnit);
 			MainFrame.updateChannel(this, lfo2);
 		}
 		if (chorus.isSync()) {
-			chorus.sync(unit);
+			chorus.sync(syncUnit);
 			MainFrame.updateChannel(this, chorus);
 		}
 	}

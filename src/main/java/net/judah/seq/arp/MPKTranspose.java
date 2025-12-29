@@ -1,16 +1,17 @@
 package net.judah.seq.arp;
 
+import java.util.List;
+
 import javax.sound.midi.ShortMessage;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.api.Notification.Property;
 import net.judah.api.Algo;
 import net.judah.api.Chord;
 import net.judah.api.Midi;
+import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
 import net.judah.seq.MidiConstants;
-import net.judah.seq.Poly;
 import net.judah.seq.track.Cue;
 import net.judah.seq.track.PianoTrack;
 
@@ -45,7 +46,7 @@ public class MPKTranspose extends Algo implements TimeListener, Feed, Ignorant {
 			onDeck = midi.getData1() - MidiConstants.MIDDLE_C;
 	}
 
-	@Override public void process(ShortMessage m, Chord chord, Poly result) {
+	@Override public void process(ShortMessage m, Chord chord, List<Integer> result) {
 		result.add(m.getData1() + amount);
 	}
 

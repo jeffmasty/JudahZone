@@ -1,12 +1,13 @@
 package net.judah.seq.arp;
 
+import java.util.List;
+
 import javax.sound.midi.ShortMessage;
 
 import lombok.RequiredArgsConstructor;
 import net.judah.api.Algo;
 import net.judah.api.Chord;
 import net.judah.api.Key;
-import net.judah.seq.Poly;
 
 @RequiredArgsConstructor
 public class Down extends Algo {
@@ -14,9 +15,9 @@ public class Down extends Algo {
 
 	private int idx;
 	private int interval = 0;
-	
+
 	@Override
-	public void process(ShortMessage m, Chord chord, Poly result) {
+	public void process(ShortMessage m, Chord chord, List<Integer> result) {
 
 		Key target = target(chord, idx++);
 		if (target == null) {
@@ -25,20 +26,20 @@ public class Down extends Algo {
 		}
 
 		int down = Key.key(m.getData1()).down(target);
-		while (down < interval) 
+		while (down < interval)
 			down += 12;
 		interval = down >= range ? 0 : down;
 		int data1 = m.getData1() + range - down;
-		while (data1 < m.getData1()) 
+		while (data1 < m.getData1())
 			data1 += 12;
-		
+
 		result.add(data1);
 		idx %= SIZE;
 	}
-	
+
 	@Override public void change() { // latch to keyChange
 		interval = idx = 0;
-		
+
 	}
 
 	public static Key target(Chord chord, int idx) {
@@ -48,7 +49,7 @@ public class Down extends Algo {
 			case 2: return chord.getRoot();
 			case 3: return chord.get7th();
 		}
-		
+
 		return null;
 	}
 

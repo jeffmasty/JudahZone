@@ -2,10 +2,7 @@ package net.judah.api;
 
 import javax.sound.midi.ShortMessage;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor @Getter
 public enum GMDrum {
 
     AcousticBassDrum(35, "Acoustic Bass Drum"),
@@ -63,8 +60,14 @@ public enum GMDrum {
             Shaker, HiBongo, LowBongo, OpenHiConga
     };
 
+	private GMDrum(int d1, String d2) {
+		data1 = d1; display = d2;
+	}
     private final int data1;
     private final String display;
+
+    public int getData1() { return data1; }
+    public String getDisplay() { return display; }
 
     public static GMDrum lookup(int data1) {
     	for (GMDrum x : GMDrum.values())

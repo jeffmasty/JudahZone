@@ -11,8 +11,8 @@ import javax.swing.JPanel;
 
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.api.Notification.Property;
 import net.judah.api.Effect;
+import net.judah.api.Notification.Property;
 import net.judah.api.TimeListener;
 import net.judah.drumkit.DrumMachine;
 import net.judah.fx.Gain;
@@ -35,6 +35,7 @@ public class DJJefe extends JPanel implements TimeListener {
 	@Getter private final ArrayList<Channel> all = new ArrayList<>();
 	private final ArrayList<MixWidget> faders = new ArrayList<MixWidget>();
 	private final JudahZone zone;
+	private final JudahClock clock;
 	@Getter private final Mains mains;
 	private final int size;
 	private int idx;
@@ -42,7 +43,7 @@ public class DJJefe extends JPanel implements TimeListener {
     public DJJefe(JudahClock clock, JudahZone judahZone, LineIn ... bonus) {
 
     	this.zone = judahZone;
-
+    	this.clock = clock;
     	this.mains = zone.getMains();
     	Looper looper = zone.getLooper();
     	Collection<LineIn> sources = zone.getInstruments();
@@ -203,7 +204,7 @@ public class DJJefe extends JPanel implements TimeListener {
 	@Override public void update(Property prop, Object value) {
 		if (prop != Property.TEMPO) return;
 		float tempo = (float)value;
-		all.forEach(ch->ch.tempo(tempo));
+		all.forEach(ch->ch.tempo(tempo, clock.syncUnit()));
 	}
 
 	/** process numChannels of RMS indicators in a daisychain*/

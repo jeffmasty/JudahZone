@@ -1,173 +1,168 @@
 package net.judah.util;
 
-import static net.judah.util.Constants.NL;
-
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.EventQueue;
-import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import java.util.function.Consumer;
 
 import org.apache.log4j.Level;
 
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.log4j.Log4j;
-import net.judah.gui.Gui;
-import net.judah.gui.Pastels;
-import net.judah.gui.Size;
-import net.judah.gui.knobs.KnobMode;
-import net.judah.gui.knobs.KnobPanel;
 
+/**
+ * Headless logging service with a static API.
+ *
+ * - Queue and dispatcher are private/static.
+ * - GUI or other components can register as Participants to receive notifications.
+ * - Non-blocking offer() is used so callers (including real-time threads) don't block.
+ *
+ * This is a replacement for the previous LogService but exposes the original style
+ * of static methods so you can call RTLogger.log(...), RTLogger.warn(...), etc.
+ */
 @Log4j
-/** LinkedBlockingQueue to capture log statements and post them off the real-time thread */
-public class RTLogger extends KnobPanel {
+public final class RTLogger {
 
-    public static interface Participant { void process(String[] input); }
-    @Getter @Setter private static Level level = Level.INFO;
-    private record Log(String clazz, String msg, boolean warn) { }
-    /** Status bar, last line of log */
-    @Getter private static final JLabel ticker = new JLabel("", JLabel.LEFT);
-    @Getter private static final ArrayList<Participant> participants = new ArrayList<>();
-    private static final JScrollPane scroller = new JScrollPane();
-    private static final JTextArea textarea = new JTextArea(3, 28);
+    public static interface Participant {
+        /**
+         * Receive a log event as a String array:
+         *   [0] = source (class or caller name)
+         *   [1] = message
+         *   [2] = "WARN" or "INFO" (or other flag)
+         */
+        void process(String[] input);
+    }
 
-    private static final BlockingQueue<Log> debugQueue = new LinkedBlockingQueue<>(1024);
-	public static final RTLogger instance = new RTLogger(Size.KNOB_PANEL);
+    public record LogEvent(String source, String message, boolean warn) { }
+
+    // bounded queue to avoid unbounded memory growth; offer() used to avoid blocking callers
+    private static final BlockingQueue<LogEvent> queue = new LinkedBlockingQueue<>(1024);
+
+    // participants (GUI, file writer, tests, etc.)
+    private static final CopyOnWriteArrayList<Participant> participants = new CopyOnWriteArrayList<>();
+
+    // convenience: allow functional registration
+    private static final CopyOnWriteArrayList<Consumer<LogEvent>> consumers = new CopyOnWriteArrayList<>();
+
+    // logging level (defaults to INFO)
+    private static volatile Level level = Level.INFO;
+
+    // start dispatcher thread once
+    static {
+        Thread.startVirtualThread(() -> {
+            try {
+                while (true) {
+                    LogEvent ev = queue.take(); // blocking consumer
+                    // notify registered participants (old-style) with String[] payload
+                    String[] payload = new String[] {
+                        ev.source(),
+                        ev.message(),
+                        ev.warn() ? "WARN" : "INFO"
+                    };
+                    for (Participant p : participants) {
+                        try {
+                            p.process(payload);
+                        } catch (Exception ex) {
+                            log.error("RTLogger participant failed", ex);
+                        }
+                    }
+                    // notify functional consumers with the record
+                    for (Consumer<LogEvent> c : consumers) {
+                        try {
+                            c.accept(ev);
+                        } catch (Exception ex) {
+                            log.error("RTLogger consumer failed", ex);
+                        }
+                    }
+                    // write to log4j/backing logger as well
+                    if (ev.warn()) {
+                        log.warn(ev.source() + " WARN: " + ev.message());
+                    } else {
+                        log.info(ev.source() + ": " + ev.message());
+                    }
+                }
+            } catch (Throwable t) {
+                // catastrophic failure — fallback to stderr
+                System.err.println("RTLogger dispatcher died: " + t);
+                t.printStackTrace(System.err);
+            }
+        });
+    }
+
+    // ======== Public static API (convenience / compatibility) ========
+
+    public static Level getLevel() {
+        return level;
+    }
+
+    public static void setLevel(Level newLevel) {
+        level = newLevel;
+    }
+
+    public static void registerParticipant(Participant p) {
+        if (p != null) participants.addIfAbsent(p);
+    }
+
+    public static void unregisterParticipant(Participant p) {
+        if (p != null) participants.remove(p);
+    }
+
+    /**
+     * Register a Consumer-style listener (preferred for modern code).
+     */
+    public static void registerConsumer(Consumer<LogEvent> consumer) {
+        if (consumer != null) consumers.addIfAbsent(consumer);
+    }
+
+    public static void unregisterConsumer(Consumer<LogEvent> consumer) {
+        if (consumer != null) consumers.remove(consumer);
+    }
 
     public static void log(Object caller, String msg) {
-        debugQueue.offer(new Log(caller instanceof String
-        		? caller.toString() : caller.getClass().getSimpleName(), msg, false));
+        offer(new LogEvent(caller instanceof String ? caller.toString() : caller.getClass().getSimpleName(), msg, false));
     }
+
     public static void log(Class<?> caller, String msg) {
-    	log(caller.getSimpleName(), msg);
+        log(caller.getSimpleName(), msg);
     }
 
     public static void warn(Object caller, String msg) {
-        debugQueue.offer(new Log(caller instanceof String
-        		? caller.toString() : caller.getClass().getSimpleName(), msg, true));
-    }
-
-    public static void debug(Class<?> caller, String msg) {
-        if (level == Level.DEBUG || level == Level.TRACE)
-        	log(caller, "debug " + msg);
-    }
-
-    public static void debug(Object caller, String msg) {
-    	debug(caller.getClass(), msg);
+        offer(new LogEvent(caller instanceof String ? caller.toString() : caller.getClass().getSimpleName(), msg, true));
     }
 
     public static void warn(Class<?> caller, String msg) {
-    	warn(caller.getSimpleName(), msg);
+        warn(caller.getSimpleName(), msg);
     }
 
     public static void warn(Object o, Throwable e) {
-        warn(o, e.getLocalizedMessage());
-        e.printStackTrace();
+        warn(o, e == null ? "<null>" : e.getLocalizedMessage());
+        if (e != null) e.printStackTrace();
     }
 
-    @Getter private final KnobMode knobMode = KnobMode.Log;
-    @Getter private final JComponent title = Gui.wrap(new JLabel(""));
-
-    private RTLogger(Dimension size) {
-    	textarea.setEditable(false);
-        scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        scroller.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    	EventQueue.invokeLater(() -> {
-        	Gui.resize(scroller, size);
-			textarea.setForeground(Color.BLUE.darker());
-			ticker.setOpaque(true);
-			ticker.setForeground(Color.BLUE.darker());
-			ticker.setBackground(Pastels.BUTTONS);
-			ticker.setBorder(Gui.SUBTLE);
-	    	scroller.setViewportView(textarea);
-	        add(scroller);
-    	});
-        /* Sleep between checking the debugQueue for messages */
-		Thread.startVirtualThread(()->{
-			try {
-				Log dat;
-				final int refresh = 2 * Constants.GUI_REFRESH;
-				while (true) {
-
-		            dat = debugQueue.poll();
-		            if (dat == null) {
-		            	Thread.sleep(refresh);
-		            	continue;
-		            }
-
-		            if (dat.warn)
-		                info(dat.clazz + " WARN: " + dat.msg);
-		            else
-		                info(dat.clazz + ": " + dat.msg);
-
-				}
-			} catch (Exception e) {
-				System.err.println(e);
-			}
-		});
-
+    public static void warn(Throwable t) {
+        warn("RTLogger", t == null ? "<null>" : t.getMessage());
+        if (t != null) t.printStackTrace();
     }
 
-    /** output to console (not for realtime) */
-    public static void addText(String in) {
-        log.debug(in);
-        ticker.setText(in);
-        if (in == null)
-            in = "null" + NL;
-        if (false == in.endsWith(NL))
-            in += NL;
-
-        textarea.append(new String(in));
-        textarea.setCaretPosition(textarea.getDocument().getLength());
-        scroller.getHorizontalScrollBar().setValue(0);
-        scroller.getVerticalScrollBar().setValue(scroller.getVerticalScrollBar().getMaximum());
-        instance.invalidate();
-        scroller.repaint();
+    public static void debug(Object caller, String msg) {
+        if (level == Level.DEBUG || level == Level.TRACE) {
+            log(caller, "debug " + msg);
+        }
     }
 
-    public static void newLine() {
-        addText("" + NL);
+    public static void debug(Class<?> caller, String msg) {
+        debug((Object) caller, msg);
     }
 
-    static void warn(Throwable t) {
-        addText("WARN " + t.getMessage());
-        log.warn(t.getMessage(), t);
+    // ======== Internal helper ========
+
+    private static void offer(LogEvent ev) {
+        boolean ok = queue.offer(ev);
+        if (!ok) {
+            // queue full; avoid blocking caller — drop and warn the logging backend
+            log.warn("RTLogger queue full; dropping event: " + ev);
+        }
     }
 
-    static void warn(String s, Throwable t) {
-        addText("WARN " + s);
-        if (t != null) log.warn(s, t);
-    }
-
-    static void info(String s) {
-        if (level == Level.DEBUG || level == Level.INFO || level == Level.TRACE)
-            addText(s);
-    }
-
+    // Prevent instantiation
+    private RTLogger() { /* no-op */ }
 }
-
-//public interface MidiListener {
-//	enum PassThrough {ALL, NONE, NOTES, NOT_NOTES}
-//	void feed(Midi midi);
-//	PassThrough getPassThroughMode();}
-//  @Override public PassThrough getPassThroughMode() {
-//      return PassThrough.ALL; }
-//  @Override public void feed(Midi midi) {
-//      addText("midilisten: " + midi); }
-//  private void midiListen() {
-//      midiListen = !midiListen;
-//      ArrayList<MidiListener> listeners = Sequencer.getCurrent().getListeners();
-//      if (midiListen)
-//          listeners.add(this);
-//      else
-//          listeners.remove(this);
-//  }
-
-

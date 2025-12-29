@@ -1,11 +1,14 @@
 package net.judah.gui.widgets;
 
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
 
 import javax.swing.ImageIcon;
@@ -15,6 +18,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.judah.gui.Icons;
 import net.judah.gui.Pastels;
+import net.judah.util.Rainbow;
 
 /**<a href="https://github.com/mploof/JKnobFancy">From Michael Ploof on Github</a><br/><br/>
 * JFancyKnob.java -
@@ -55,7 +59,7 @@ public class RainbowKnob extends JComponent{
 	public static final Dimension SIZE = new Dimension(WIDTH, WIDTH);
 
 	protected static final int RADIUS = 14;
-	
+
 	//~~~~~~~~ Knob Value Vars ~~~~~~~~//
 	/** Minimum value the knob can report*/
 	@Setter @Getter protected int minVal = 0;
@@ -68,8 +72,8 @@ public class RainbowKnob extends JComponent{
 
 	/** if true, a stronger border is painted*/
 	@Setter @Getter protected boolean onMode;
-	
-	
+
+
 	//~~~~~~~~ Background Image Vars ~~~~~~~~//
 	/** Icon used for the knob background */
 	protected final ImageIcon knobIcon = Icons.get("knob.png");
@@ -87,7 +91,7 @@ public class RainbowKnob extends JComponent{
 	 * for subsequently added handles, but this icon will be used if none is specified. */
 	/** knob's main indicator */
 	JKnobHandle handle;
-	
+
 	//~~~~~~~~ Handle Class~~~~~~~~//
 	/** This class describes handle objects that may be positioned
 	 * on the JKnobFancy object. */
@@ -232,20 +236,18 @@ public class RainbowKnob extends JComponent{
 				 moveHandles(e);
 			 }
 		});
-		addMouseWheelListener(new MouseWheelListener() {
-			@Override public void mouseWheelMoved(MouseWheelEvent e) {
-				int notches = e.getWheelRotation();
-				int target = 0;
-				if (notches < 0) {
-					target = getValue() + 5; // responsive
-					if (target > getMaxVal()) target = getMaxVal();
-				}
-				else {
-					target = getValue() - 2;
-					if (target < getMinVal()) target = getMinVal();
-				}
-				listener.knobChanged(target);
+		addMouseWheelListener(e -> {
+			int notches = e.getWheelRotation();
+			int target = 0;
+			if (notches < 0) {
+				target = getValue() + 5; // responsive
+				if (target > getMaxVal()) target = getMaxVal();
 			}
+			else {
+				target = getValue() - 2;
+				if (target < getMinVal()) target = getMinVal();
+			}
+			listener.knobChanged(target);
 		});
 
 	}
@@ -383,7 +385,7 @@ public class RainbowKnob extends JComponent{
 		 this.trackRadius = (int)(this.relTrackRadius * SIZE.getWidth());
 	 }
 
-	 
+
 	 private BasicStroke highlight = new BasicStroke(2.5f);
 	 private BasicStroke basic = new BasicStroke(1.1f);
 	 /**
@@ -396,10 +398,10 @@ public class RainbowKnob extends JComponent{
 	  */
 	 @Override
 	public void paint(Graphics g) {
-		 
+
 		// Draw background
 		g.drawImage(knobIcon.getImage(), 0, 0, width, height, this);
-		
+
 		if (onMode) { // draw a highlight knob border
 			g.setColor(BORDER);
 			g.drawOval(0, 0, WIDTH - 1, WIDTH - 1);
@@ -409,16 +411,16 @@ public class RainbowKnob extends JComponent{
 			g.drawOval(2, 2, WIDTH-4, WIDTH-4);
 			((Graphics2D)g).setStroke(basic);
 		}
-		
+
 		// Find the center of the handle
 		Point pt = handle.getSpotCenter();
 		int handleX = (int)pt.getX() - halfRadius;
 		int handleY = (int)pt.getY() - halfRadius;
-		g.setColor(RainbowFader.chaseTheRainbow(handle.getVal()));
+		g.setColor(Rainbow.get(handle.getVal()));
 		g.fillOval(handleX, handleY, RADIUS, RADIUS);
 		g.setColor(BORDER);
 		g.drawOval(handleX, handleY, RADIUS, RADIUS);
-			
+
 	 }
 
 

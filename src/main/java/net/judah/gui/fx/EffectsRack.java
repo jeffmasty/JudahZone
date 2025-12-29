@@ -26,6 +26,8 @@ import net.judah.gui.fx.ReverbPlus.UpdatePanel;
 import net.judah.gui.settable.PresetsHandler;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.gui.widgets.Slider;
+import net.judah.midi.JudahClock;
+import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiInstrument;
 import net.judah.mixer.Channel;
 import net.judah.util.RTLogger;
@@ -59,8 +61,11 @@ public class EffectsRack extends JPanel implements MPKTools {
         eq = new EQPlus(channel);
         drive = new OD(channel);
         reverb = new ReverbPlus(ch);
-        delayTime = new TimePanel(ch.getDelay(), ch);
-        chorusTime = new TimePanel(ch.getChorus(), ch);
+
+        JudahClock clock = JudahMidi.getClock();
+
+        delayTime = new TimePanel(ch.getDelay(), ch, clock);
+        chorusTime = new TimePanel(ch.getChorus(), ch, clock);
 
 		// wet  room   d.time  d.fb
 		// O/D  cho1    cho2   cho3

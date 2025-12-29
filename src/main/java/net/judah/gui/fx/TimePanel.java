@@ -10,6 +10,7 @@ import net.judah.api.TimeEffect;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
 import net.judah.gui.Updateable;
+import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
 
 public class TimePanel extends JPanel implements Updateable {
@@ -21,23 +22,22 @@ public class TimePanel extends JPanel implements Updateable {
 	private final JButton sync = new JButton("⏲");
 	private final JComboBox<String> type = new JComboBox<>(TimeEffect.TYPE);
 
-	public TimePanel(TimeEffect effect, Channel ch) {
+	public TimePanel(TimeEffect effect, Channel ch, JudahClock clock) {
 		super(new FlowLayout(FlowLayout.CENTER, 0, 1));
 		this.channel = ch;
 
 		fx = effect;
-		type.addActionListener(e->{
+		type.addActionListener(e-> {
 			if (!type.getSelectedItem().equals(fx.getType())) {
 				fx.setType(type.getSelectedItem().toString());
-				fx.sync();
+				fx.sync(clock.syncUnit());
 				MainFrame.update(channel);
 			}
-
 		});
-		sync.addActionListener(e->{
+		sync.addActionListener(e-> {
 			fx.setSync(!fx.isSync());
 			if (fx.isSync())
-				fx.sync();
+				fx.sync(clock.syncUnit());
 			update();
 			MainFrame.update(channel);
 		});
@@ -46,8 +46,7 @@ public class TimePanel extends JPanel implements Updateable {
 		add(sync);
 	}
 
-	@Override
-	public void update() {
+	@Override public void update() {
 		type.setSelectedItem(fx.getType());
 		sync.setBackground(fx.isSync() ? Pastels.GREEN : null);
 

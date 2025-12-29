@@ -1,4 +1,4 @@
-package net.judah.util;
+package net.judah.mixer;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,6 +13,10 @@ import java.util.logging.Logger;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 import be.tarsos.dsp.util.fft.FFT;
+import net.judah.util.Constants;
+import net.judah.util.Folders;
+import net.judah.util.RTLogger;
+import net.judah.util.WavFile;
 
 /**scan a folder (Folders.getIR()), prepare and cache FFT spectra for each WAV.
  * Exceptions swallowed/logged per file.

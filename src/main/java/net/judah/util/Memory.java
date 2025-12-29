@@ -3,8 +3,6 @@ package net.judah.util;
 import java.util.concurrent.LinkedBlockingQueue;
 import java. util.concurrent.atomic.AtomicBoolean;
 
-import net.judah.api.Recording;
-
 public class Memory {
 
     public static final Memory STEREO = new Memory(WavConstants.STEREO, Constants.bufSize());

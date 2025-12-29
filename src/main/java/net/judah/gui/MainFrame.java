@@ -3,6 +3,7 @@ package net.judah.gui;
 import static net.judah.gui.Size.*;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.GraphicsDevice;
@@ -107,12 +108,12 @@ public class MainFrame extends JFrame implements Runnable {
     private final Chords chords;
     private final MidiGui midiGui;
     private final Sampler sampler;
-	private final JComboBox<KnobMode> mode = new JComboBox<>(KnobMode.values());
-    private final JComponent knobHolder = Box.createVerticalBox();
+	private final JComboBox<KnobMode> mode;
+    private final JComponent knobHolder;
     private final PresetsView presets;
     private final SetlistView setlists;
     private final JudahZone zone;
-
+    private final Feedback feedback;
 
     public static void updateChannel(Channel ch, Effect fx) {
     	FxUpdate send = channelUpdates.get();
@@ -149,6 +150,7 @@ public class MainFrame extends JFrame implements Runnable {
         this.chords = zone.getChords();
         this.sampler = zone.getSampler();
 
+        this.feedback = new Feedback(Size.KNOB_PANEL);
         JudahClock clock = JudahMidi.getClock();
 
 
@@ -159,11 +161,14 @@ public class MainFrame extends JFrame implements Runnable {
     	beatBox = new DrumZone(drums.getTracks(), seq.getAutomation());
         tabs = new TabZone(zone, beatBox);
         menu = new JudahMenu(WIDTH_KNOBS, zone, tabs, zone.getMidi());
+        mode = new JComboBox<>(KnobMode.values());
         mode.setFont(Gui.BOLD13);
         mode.addActionListener(e->{
 			if (knobMode != mode.getSelectedItem())
 				setFocus(mode.getSelectedItem());});
         mixer.updateAll();
+        knobHolder = Box.createVerticalBox();
+
         Gui.resize(knobHolder, KNOB_PANEL);
         Gui.resize(mode, new Dimension(COMBO_SIZE.width, STD_HEIGHT + 2));
         Gui.resize(mixer, MIXER_SIZE);
@@ -176,8 +181,9 @@ public class MainFrame extends JFrame implements Runnable {
         left.add(effects);
         left.add(Box.createVerticalStrut(1));
         left.add(knobHolder);
-        Dimension TICKER = new Dimension(WIDTH_KNOBS - 10, STD_HEIGHT - 3);
-        left.add(Gui.box( Box.createHorizontalStrut(5), Gui.resize(RTLogger.getTicker(), TICKER)));
+
+        Component ticker = Gui.resize(feedback.getTicker(), new Dimension(WIDTH_KNOBS - 10, STD_HEIGHT - 3));
+        left.add(Gui.box( Box.createHorizontalStrut(5), ticker));
 
         // mixer & main view
         JComponent right = Box.createVerticalBox();
@@ -424,7 +430,7 @@ public class MainFrame extends JFrame implements Runnable {
 			case Tuner -> TunerKnobs.getInstance();
 			case Import -> ImportView.getInstance();
 			case Remap -> new RemapView();
-			case Log -> RTLogger.instance;
+			case Log -> feedback;
 			case Autom8 -> seq.getAutomation();
     	});
     }
@@ -513,6 +519,8 @@ public class MainFrame extends JFrame implements Runnable {
     	int data2;
     }
 
-
+    public static void feedback(String s) {
+    	instance.feedback.addText(s);
+    }
 
 }

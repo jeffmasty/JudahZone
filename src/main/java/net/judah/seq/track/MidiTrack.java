@@ -18,8 +18,8 @@ import javax.swing.JOptionPane;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.api.Notification.Property;
 import net.judah.api.Midi;
+import net.judah.api.Notification.Property;
 import net.judah.api.Signature;
 import net.judah.api.TimeListener;
 import net.judah.gui.MainFrame;
@@ -232,7 +232,8 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 	}
 
 	public File getFolder() {
-		return Folders.midi(isDrums() ? Folders.getBeats() : Folders.getSynths()); // getType() == Trax.B ? Folders.getBass() :
+		return Folders.midi(isDrums() ? Folders.getBeats() : Folders.getSynths(), clock.getTimeSig());
+		// getType() == Trax.B ? Folders.getBass() :
 	}
 
 	public void save() {

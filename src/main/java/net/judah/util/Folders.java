@@ -8,12 +8,10 @@ import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 
 import lombok.Getter;
-import net.judah.JudahZone;
-import net.judah.midi.JudahMidi;
+import net.judah.api.Signature;
 
-public class Folders {
+public class Folders { // TODO Folder/Settings Service not hardcoded
 
-	// TODO user settings gui/mkdir/not hardcoded
     static final File HOME = new File(System.getProperty("user.home"));
 	static final File LIVE = new File(HOME, "Setlist");
 
@@ -38,8 +36,8 @@ public class Folders {
 	static final File ROOT = new File("/home/judah/git/JudahZone/resources/");
 	@Getter static final File Log4j = new File(ROOT, "log4j.xml");
 
-    public static File midi(File parent) {
-    	return new File(parent, JudahMidi.getClock().getTimeSig().name());
+    public static File midi(File parent, Signature time) {
+    	return new File(parent, time.name());
     }
 
 	public static File[] sort(File folder) {
@@ -75,7 +73,7 @@ public class Folders {
 		else
 			fc.setCurrentDirectory(folder);
 
-		int result = fc.showOpenDialog(JudahZone.getInstance().getFrame());
+		int result = fc.showOpenDialog(null);
 		if (result == JFileChooser.APPROVE_OPTION) {
 		    File selectedFile = fc.getSelectedFile();
 		    memory.put(folder, fc.getCurrentDirectory());

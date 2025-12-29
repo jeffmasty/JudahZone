@@ -8,9 +8,9 @@ import javax.swing.JPanel;
 import net.judah.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.gui.Updateable;
-import net.judah.gui.widgets.RainbowFader;
 import net.judah.looper.Loop;
 import net.judah.util.AudioTools;
+import net.judah.util.Rainbow;
 
 /** listen to channel's audio, paint widget height/color based on RMS of the audio frame */
 public class RMSIndicator extends JPanel implements Updateable {
@@ -37,10 +37,10 @@ public class RMSIndicator extends JPanel implements Updateable {
 	public void paint(Graphics g) {
 		super.paint(g);
 		int h = (int)(HEIGHT * left);
-		g.setColor(RainbowFader.chaseTheRainbow(left));
+		g.setColor(Rainbow.get(left));
 		g.fillRect(1, HEIGHT - h, HALF, h);
 		h = (int)(HEIGHT * right);
-		g.setColor(RainbowFader.chaseTheRainbow(right));
+		g.setColor(Rainbow.get(right));
 		g.fillRect(HALF, HEIGHT - h, WIDTH - 1, h);
 	}
 

@@ -1,5 +1,12 @@
 
+zone-core + meta-zone
+
 TODO:
+
+
+
+LFO->ChannelModel, activate MonoFilters
+
 
 Scope project/player, Tarsos pull request
 Piano roll orientation, TrackKnobs Program overflow

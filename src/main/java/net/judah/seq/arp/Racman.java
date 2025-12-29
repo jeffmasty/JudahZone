@@ -1,11 +1,12 @@
 package net.judah.seq.arp;
 
+import java.util.List;
+
 import javax.sound.midi.ShortMessage;
 
 import lombok.Setter;
 import net.judah.api.Algo;
 import net.judah.api.Chord;
-import net.judah.seq.Poly;
 
 /** Original: https://github.com/ybalcanci/Sequence-Player */
 public class Racman extends Algo implements Ignorant {
@@ -17,15 +18,15 @@ public class Racman extends Algo implements Ignorant {
 	@Setter private int modulus = 48;
 
 	public Racman() {
-		this(104, 60); 
+		this(104, 60);
 	}
-	
+
 	public Racman(int numOfElements) {
 		this(numOfElements, numOfElements);
 	}
-	
+
 	/**@param numOfElementsToCalculate number of elements to calculate in the sequence.
-	 * @param modulusOfElementsConvertingToNote modulus value for each element in the 
+	 * @param modulusOfElementsConvertingToNote modulus value for each element in the
 	 * noteSequence will be modulo of the corresponding value in sequnce.*/
 	public Racman(int numOfElementsToCalculate, int modulusOfElementsConvertingToNote){
 		this.numElements = numOfElementsToCalculate;
@@ -54,9 +55,9 @@ public class Racman extends Algo implements Ignorant {
 				return true;
 		return false;
 	}
-	
+
 	@Override
-	public void process(ShortMessage m, Chord chord, Poly result) {
+	public void process(ShortMessage m, Chord chord, List<Integer> result) {
 		int note = noteSequence[idx] + m.getData1();
 		if (++idx == numElements)
 			idx = 0;

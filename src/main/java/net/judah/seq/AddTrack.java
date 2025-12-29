@@ -25,7 +25,6 @@ import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
 
 import net.judah.JudahZone;
-import net.judah.api.ZoneMidi;
 import net.judah.drumkit.DrumKit;
 import net.judah.gui.Gui;
 import net.judah.gui.Icons;
@@ -39,6 +38,7 @@ import net.judah.mixer.Mains;
 import net.judah.seq.SynthRack.RegisteredDrums;
 import net.judah.seq.SynthRack.RegisteredSynths;
 import net.judah.seq.chords.ChordPro;
+import net.judah.synth.ZoneMidi;
 import net.judah.synth.fluid.FluidAssistant;
 import net.judah.synth.fluid.FluidSynth;
 import net.judah.synth.taco.TacoTruck;

@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import net.judah.api.Recording;
-
 /**	------------WavFile------------<br/>
  * load uncompressed Stereo Audio data of .wav File (Loop or a (Drum)Sample) organized by Jack buffer. <br/>
  * No memory or safety checks are performed here, unless using canLoadSafely().

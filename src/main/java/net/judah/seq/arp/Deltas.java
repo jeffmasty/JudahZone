@@ -1,5 +1,6 @@
 package net.judah.seq.arp;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -8,17 +9,15 @@ import java.util.Set;
 
 import javax.sound.midi.ShortMessage;
 
-import net.judah.seq.Poly;
-
 
 public class Deltas {
 
 	private HashMap<ShortMessage, List<Integer>> deltas = new HashMap<>();
 
-	public void add(ShortMessage on, Poly work) {
+	public void add(ShortMessage on, List<Integer> work) {
 		if (contains(on.getData1()))
 			return; // re-trigger
-		deltas.put(on, work.list()); // malloc
+		deltas.put(on, new ArrayList<Integer>(work)); // malloc
 	}
 
 	public Set<ShortMessage> keys() {

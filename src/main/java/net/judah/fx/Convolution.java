@@ -8,9 +8,9 @@ import be.tarsos.dsp.util.fft.FFT;
 import lombok.Getter;
 import net.judah.api.Effect;
 import net.judah.gui.knobs.CabSim;
+import net.judah.mixer.IRDB;
 import net.judah.util.AudioTools;
 import net.judah.util.Constants;
-import net.judah.util.IRDB;
 import net.judah.util.RTLogger;
 
 public abstract class Convolution implements Effect {

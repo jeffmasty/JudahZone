@@ -2,10 +2,6 @@ package net.judah.api;
 
 import javax.sound.midi.ShortMessage;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
-@RequiredArgsConstructor
 public enum Key {
 
     C  (0, 0, null),
@@ -26,9 +22,16 @@ public enum Key {
 	public static final int OCTAVE = 12;
 	public static final float TUNING = 440;
 
-	@Getter private final int sharps;
-    @Getter private final int flats;
+	private Key(int sharps, int flats, String alt) {
+		this.sharps = sharps; this.flats = flats; this.alt = alt;
+	}
+	private final int sharps;
+    private final int flats;
     final String alt;
+
+    public int getSharps() { return sharps; }
+    public int getFlats() { return flats; }
+    public String getAlt() { return alt; }
 
     public static boolean isPlain(int data1) {
     	return Key.values()[data1 % 12].alt == null;

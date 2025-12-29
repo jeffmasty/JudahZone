@@ -11,11 +11,11 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 import lombok.Getter;
-import net.judah.api.Recording;
 import net.judah.gui.Pastels;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
 import net.judah.util.RTLogger;
+import net.judah.util.Recording;
 
 public abstract class WaveImage extends BufferedImage implements Closeable {
 

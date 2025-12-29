@@ -10,10 +10,16 @@
   <name>JudahZone</name>
 
   <properties>
-    <lombok.version>1.18.34</lombok.version>
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    
+    <lombok.version>1.18.34</lombok.version>
+    <log4j2.version>2.20.0</log4j2.version>
+    <jackson.version>2.19.2</jackson.version>
+    <junit.version>5.10.2</junit.version>
+    <tarsos.version>2.5</tarsos.version>
+
   </properties>
 
   <repositories>
@@ -25,7 +31,7 @@
   </repositories>
 
   <dependencies>
-    <!-- Lombok: provided, plus used as annotation processor -->
+    <!-- Lombok annotation processor -->
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
@@ -37,7 +43,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
-      <version>5.10.2</version>
+      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -45,26 +51,42 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.19.2</version>
+      <version>${jackson.version}</version>
     </dependency>
 
+    <dependency>
+	  <groupId>org.apache.logging.log4j</groupId>
+	  <artifactId>log4j-1.2-api</artifactId>
+	  <version>${log4j2.version}</version>
+	</dependency>
+    <dependency>
+  <groupId>org.apache.logging.log4j</groupId>
+  <artifactId>log4j-api</artifactId>
+  <version>${log4j2.version}</version>
+</dependency>
+<dependency>
+  <groupId>org.apache.logging.log4j</groupId>
+  <artifactId>log4j-core</artifactId>
+  <version>${log4j2.version}</version>
+  <scope>runtime</scope>
+</dependency>  
     <!-- OSC -->
     <dependency>
       <groupId>com.illposed.osc</groupId>
       <artifactId>javaosc-core</artifactId>
-      <version>0.6</version>
+      <version>0.7</version>
     </dependency>
 
     <!-- Tarsos Audio Library -->
     <dependency>
       <groupId>be.tarsos.dsp</groupId>
       <artifactId>core</artifactId>
-      <version>2.5</version>
+      <version>${tarsos.version}</version>
     </dependency>
     <dependency>
       <groupId>be.tarsos.dsp</groupId>
       <artifactId>jvm</artifactId>
-      <version>2.5</version>
+      <version>${tarsos.version}</version>
     </dependency>
 
     <!-- Jack Support -->
@@ -169,21 +191,31 @@
 		  <artifactId>maven-antrun-plugin</artifactId>
 		  <version>3.1.0</version>
 		  <executions>
-		    <execution>
-		      <id>copy-shaded-to-fixed-name</id>
-		      <phase>package</phase>
-		      <goals>
-		        <goal>run</goal>
-		      </goals>
-		      <configuration>
-		        <target>
-		          <copy file="${project.build.directory}/${project.artifactId}-${project.version}-shaded.jar"
-		                tofile="${project.build.directory}/JudahZone.jar"
-		                overwrite="true" />
-		          <delete file="${project.build.directory}/${project.artifactId}-${project.version}-shaded.jar" />
-		        </target>
-		      </configuration>
-		    </execution>
+		    <!-- copy shaded to project root -->
+			<execution>
+			  <id>copy-shaded-to-root</id>
+			  <phase>package</phase>
+			  <goals><goal>run</goal></goals>
+			  <configuration>
+			    <target>
+			      <copy file="${project.build.directory}/${project.build.finalName}-shaded.jar"
+			            tofile="${project.basedir}/JudahZone.jar"
+			            overwrite="true"/>
+			    </target>
+			  </configuration>
+			</execution>
+			
+			<!-- remove copied file on clean -->
+			<execution>
+			  <id>delete-copied-jar-on-clean</id>
+			  <phase>clean</phase>
+			  <goals><goal>run</goal></goals>
+			  <configuration>
+			    <target>
+			      <delete file="${project.basedir}/JudahZone.jar" failonerror="false"/>
+			    </target>
+			  </configuration>
+			</execution>
 		  </executions>
 		</plugin>
       

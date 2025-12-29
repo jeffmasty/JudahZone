@@ -23,10 +23,10 @@ import net.judah.gui.Updateable;
 import net.judah.gui.fx.FxTrigger;
 import net.judah.gui.widgets.DoubleSlider;
 import net.judah.mixer.Channel;
+import net.judah.mixer.IRDB;
 import net.judah.mixer.Instrument;
 import net.judah.util.Constants;
 import net.judah.util.Folders;
-import net.judah.util.IRDB;
 
 public class CabSim extends JPanel implements Updateable {
 

@@ -8,11 +8,12 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
-import net.judah.api.Recording;
 import net.judah.gui.Pastels;
 import net.judah.gui.scope.Live;
 import net.judah.gui.scope.RMS;
 import net.judah.util.Constants;
+import net.judah.util.Rainbow;
+import net.judah.util.Recording;
 
 // Live display starts at right edge, older frames move left
 public class RMSWidget extends BufferedImage implements Live {
@@ -83,7 +84,7 @@ public class RMSWidget extends BufferedImage implements Live {
         g2d.drawLine(x, centerY + (int)(data.peak() * yFactor),
         			 x, centerY - (int)(data.peak() * yFactor));
 
-        g2d.setColor(RainbowFader.chaseTheRainbow(rms));
+        g2d.setColor(Rainbow.get(rms));
     	g2d.drawLine(x, centerY + (int)(data.amplitude() * iLength),
         			 x, centerY - (int)(data.amplitude() * iLength));
 	}

@@ -8,7 +8,6 @@ import java.util.Vector;
 
 import lombok.Getter;
 import net.judah.api.Notification.Property;
-import net.judah.api.Recording;
 import net.judah.api.TimeListener;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Updateable;
@@ -19,6 +18,7 @@ import net.judah.mixer.LineIn;
 import net.judah.util.Constants;
 import net.judah.util.Memory;
 import net.judah.util.RTLogger;
+import net.judah.util.Recording;
 import net.judah.util.Threads;
 
 @Getter

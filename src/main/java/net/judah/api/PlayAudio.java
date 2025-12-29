@@ -1,5 +1,7 @@
 package net.judah.api;
 
+import net.judah.util.Recording;
+
 /**Participates in real time audio processing, can respond to some commands*/
 public interface PlayAudio {
 

@@ -27,6 +27,7 @@ import net.judah.gui.settable.LfoCombo;
 import net.judah.gui.widgets.DoubleSlider;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.gui.widgets.RangeSlider.Colors;
+import net.judah.midi.JudahMidi;
 import net.judah.mixer.Channel;
 import net.judah.util.Constants;
 
@@ -56,7 +57,7 @@ public class LFOWidget extends Box {
 		slider = new DoubleSlider(lfo, Min.ordinal(), lfo, Max.ordinal());
 		slider.setColors(RANGE);
 		slider.setOpaque(true);
-		timeSync = new TimePanel(lfo, channel);
+		timeSync = new TimePanel(lfo, channel, JudahMidi.getClock());
 		msec = new FxKnob(channel, lfo, MSec.ordinal(), "Time", KNOB_C);
 
 		Gui.resize(slider, new Dimension(Size.WIDTH_KNOBS / 2 - 20, Size.STD_HEIGHT));

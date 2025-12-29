@@ -27,7 +27,6 @@ import net.judah.midi.Panic;
 import net.judah.mixer.Channel;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
-import net.judah.seq.Poly;
 import net.judah.seq.arp.Arp;
 import net.judah.seq.arp.ArpInfo;
 import net.judah.seq.arp.Deltas;
@@ -55,7 +54,7 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 	@Getter private ArpInfo info = new ArpInfo();
 	private final Chords chords;
 	private final Deltas deltas = new Deltas();
-	private final Poly workArea = new Poly();
+	private final List<Integer> workArea = new ArrayList<Integer>();
 	private Algo algo = new Echo();
 	private final ArrayList<MidiEvent> chads = new ArrayList<>();
 	@Getter private final Pedal pedal = new Pedal(this);
@@ -331,7 +330,8 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 		}
 
 		if (Midi.isNoteOn(msg)) {
-			algo.process(msg, chord, workArea.empty());
+			workArea.clear();
+			algo.process(msg, chord, workArea);
 			if (!workArea.isEmpty()) {
 				deltas.add(msg, workArea);
 				out(msg, workArea);
@@ -350,21 +350,21 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 	}
 
 	public class Echo extends Algo implements Ignorant {
-	@Override public void process(ShortMessage m, Chord chord, Poly result) {
+	@Override public void process(ShortMessage m, Chord chord, List<Integer> result) {
 		result.add(m.getData1()); }}
 
 	public class Gen extends Algo {
-		@Override public void process(ShortMessage m, Chord chord, Poly result) {
+		@Override public void process(ShortMessage m, Chord chord, List<Integer> result) {
 			if (range < 13)  chord.tight(m.getData1(), result);
 			else chord.wide(m.getData1(), result); }}
 
 	public class Bass extends Algo {
-		@Override public void process(ShortMessage m, Chord chord, Poly result) {
+		@Override public void process(ShortMessage m, Chord chord, List<Integer> result) {
 			result.add(m.getData1() + Key.key(m.getData1()).interval(chord.getBass())); }}
 
 	/** translate root of chord by off from middle C of m.getData1() */
 	public class ABS extends Algo implements Ignorant {
-		@Override public void process(ShortMessage m, Chord chord, Poly result) {
+		@Override public void process(ShortMessage m, Chord chord, List<Integer> result) {
 			result.add(m.getData1() + chord.getRoot().ordinal()); }}
 
 

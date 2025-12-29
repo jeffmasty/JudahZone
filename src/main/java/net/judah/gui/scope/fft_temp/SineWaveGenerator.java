@@ -14,7 +14,7 @@ public class SineWaveGenerator {
         return sineWave;
     }
 
-    public static void main(String[] args) {
+    public static void test() {
         double amplitude = 1.0; // Amplitude of the sine wave
         double frequency = 220.0; // Frequency of the sine wave in Hz
         double samplingRate = 48000.0; // Sampling rate in Hz

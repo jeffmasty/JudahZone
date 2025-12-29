@@ -13,15 +13,18 @@ import net.judah.fx.Delay;
 import net.judah.fx.LFO;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Pastels;
+import net.judah.midi.JudahClock;
 import net.judah.mixer.Channel;
 
 public class FxPanel extends JPanel {
 
     @Getter private final MultiSelect selected;
+    private final JudahClock clock;
     private JPanel placeholder = new JPanel(new GridLayout(1, 1, 0, 0));
 
-    public FxPanel(MultiSelect multi) {
+    public FxPanel(MultiSelect multi, JudahClock clock) {
     	selected = multi;
+    	this.clock = clock;
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         placeholder.setBorder(new LineBorder(Pastels.MY_GRAY, 2));
         add(placeholder);
@@ -54,12 +57,13 @@ public class FxPanel extends JPanel {
     }
 
     public void timeFx(int subdiv, Class<? extends TimeEffect> type) {
+    	float syncUnit = clock.syncUnit();
     	if (type == Delay.class)
-    		selected.forEach(ch->ch.getDelay().sync());
+    		selected.forEach(ch->ch.getDelay().sync(syncUnit));
     	else if (type == Chorus.class)
-    		selected.forEach(ch->ch.getChorus().sync());
+    		selected.forEach(ch->ch.getChorus().sync(syncUnit));
     	else if (type == LFO.class)
-    		selected.forEach(ch->ch.getLfo().sync());
+    		selected.forEach(ch->ch.getLfo().sync(syncUnit));
     	MainFrame.update(getChannel());
     }
 

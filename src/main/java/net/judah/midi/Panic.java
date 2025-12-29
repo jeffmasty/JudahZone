@@ -6,10 +6,10 @@ import javax.sound.midi.ShortMessage;
 import org.jaudiolibs.jnajack.JackPort;
 
 import lombok.RequiredArgsConstructor;
-import net.judah.api.ZoneMidi;
 import net.judah.drumkit.DrumKit;
 import net.judah.seq.track.NoteTrack;
 import net.judah.synth.Engine;
+import net.judah.synth.ZoneMidi;
 import net.judah.util.RTLogger;
 import net.judah.util.Threads;
 

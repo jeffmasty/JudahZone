@@ -1,4 +1,4 @@
-package net.judah.api;
+package net.judah.synth;
 
 import java.io.Closeable;
 import java.nio.FloatBuffer;

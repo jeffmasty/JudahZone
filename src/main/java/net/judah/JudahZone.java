@@ -14,7 +14,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
@@ -30,6 +29,7 @@ import net.judah.gui.fx.MultiSelect;
 import net.judah.gui.knobs.MidiGui;
 import net.judah.gui.knobs.TunerKnobs;
 import net.judah.gui.scope.JudahScope;
+import net.judah.gui.scope.Live.LiveData;
 import net.judah.jack.BasicClient;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
@@ -51,8 +51,11 @@ import net.judah.song.setlist.Setlists;
 import net.judah.synth.fluid.FluidSynth;
 import net.judah.synth.taco.TacoTruck;
 import net.judah.util.AudioTools;
+import net.judah.util.Constants;
 import net.judah.util.Folders;
+import net.judah.util.Memory;
 import net.judah.util.RTLogger;
+import net.judah.util.Recording;
 import net.judah.util.Threads;
 
 /* my jack sound system settings:
@@ -101,6 +104,9 @@ public class JudahZone extends BasicClient {
 	@Getter private MPKmini mpkMini;
 
 	@Getter private JudahScope scope;
+	// short recording buffer (4 jack_frames = 1 fft_frame)
+	private Recording realtime = new Recording();
+
 	private final ExecutorService dspExec = Executors.newFixedThreadPool(
 	            Runtime.getRuntime().availableProcessors(),
 	            r -> {	Thread t = new Thread(r, "DSP-Worker");
@@ -118,7 +124,7 @@ public class JudahZone extends BasicClient {
 
 	public static void main(String[] args) {
 		DOMConfigurator.configure(Folders.getLog4j().getAbsolutePath());
-		RTLogger.setLevel(Level.DEBUG);
+		// RTLogger.setLevel(Level.DEBUG);
 		try {
 			new JudahZone();
 		} catch (Exception e) { e.printStackTrace(); }
@@ -199,8 +205,8 @@ public class JudahZone extends BasicClient {
 		mixer = new DJJefe(clock, this, sampler, tk2);
 		midiGui = new MidiGui(this, taco, fluid, bass, clock, midi.getJamstik());
 		overview = new Overview(JUDAHZONE, this);
-		fxRack = new FxPanel(selected);
-		scope = new JudahScope(selected);
+		fxRack = new FxPanel(selected, clock);
+		scope = new JudahScope();
 		frame = new MainFrame(JUDAHZONE, this);
 
 		clock.setTempo(93);
@@ -298,10 +304,29 @@ public class JudahZone extends BasicClient {
 
 		// recording/ monitoring
 		mixer.monitor(2); 	// collect 2 channels of dB feedback for mixer panel per cycle
-		if (MainFrame.getKnobs() instanceof TunerKnobs waves)
-			waves.process();
-		scope.process();
 		requests.process();
+
+		// analysis
+		TunerKnobs tuner = MainFrame.getKnobs() instanceof TunerKnobs tune ? tune : null;
+		boolean scopeLive = scope.isActive();
+		if (tuner != null || scopeLive) {
+			float[][] buf = Memory.STEREO.getFrame();
+			selected.forEach(ch -> { // TODO generalize
+				AudioTools.mix(ch.getLeft(), buf[Constants.LEFT]);
+				AudioTools.mix(ch.getRight(), buf[Constants.RIGHT]);
+			});
+			if (tuner != null)
+				tuner.process(buf);
+			if (scopeLive) { // build FFT sized chunks for Scope
+				realtime.add(buf);
+				if (realtime.size() == JudahScope.CHUNKS) {
+					MainFrame.update(new LiveData(scope
+							, realtime));
+					realtime = new Recording();
+				}
+			}
+		}
+
 		return true;
 	}
 

@@ -10,11 +10,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.api.PlayAudio;
-import net.judah.api.Recording;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.util.AudioTools;
 import net.judah.util.Constants;
+import net.judah.util.Recording;
 
 @Getter
 public class BasicPlayer implements PlayAudio {

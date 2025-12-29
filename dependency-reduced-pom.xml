@@ -57,11 +57,23 @@
         </configuration>
       </plugin>
       <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.4.2</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>false</addClasspath>
+              <mainClass>net.judah.JudahZone</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
         <artifactId>maven-antrun-plugin</artifactId>
         <version>3.1.0</version>
         <executions>
           <execution>
-            <id>copy-shaded-to-fixed-name</id>
+            <id>copy-shaded-to-root</id>
             <phase>package</phase>
             <goals>
               <goal>run</goal>
@@ -69,6 +81,17 @@
             <configuration>
               <target>
                 <copy />
+              </target>
+            </configuration>
+          </execution>
+          <execution>
+            <id>delete-copied-jar-on-clean</id>
+            <phase>clean</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
                 <delete />
               </target>
             </configuration>

@@ -69,11 +69,6 @@ public class Chorus implements TimeEffect, net.judah.api.Effect.RTEffect {
     private final LFODelay leftDsp = new LFODelay();
     private final LFODelay rightDsp = new LFODelay();
 
-    @Override
-	public void sync() {
-    	sync(TimeEffect.unit());
-    }
-
 	@Override
 	public void sync(float unit) {
 		int reverseIndex = TimeEffect.TYPE.length - TimeEffect.indexOf(type);

@@ -1,12 +1,8 @@
-package net.judah.api;
+package net.judah.util;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Vector;
-
-import net.judah.util.AudioTools;
-import net.judah.util.FromDisk;
-import net.judah.util.WavConstants;
 
 /**Uncompressed Stereo Audio (.wav File, Loop, Sample) organized by Jack buffer.*/
 public class Recording extends Vector<float[][]> implements WavConstants {

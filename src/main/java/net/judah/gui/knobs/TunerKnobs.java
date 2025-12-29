@@ -6,16 +6,13 @@ import java.awt.Graphics;
 import javax.swing.Box;
 
 import lombok.Getter;
-import net.judah.JudahZone;
-import net.judah.api.Recording;
 import net.judah.gui.Gui;
 import net.judah.gui.MainFrame;
 import net.judah.gui.scope.Live.LiveData;
 import net.judah.gui.widgets.RMSWidget;
 import net.judah.gui.widgets.Tuner;
 import net.judah.gui.widgets.Tuner.Tuning;
-import net.judah.util.AudioTools;
-import net.judah.util.Memory;
+import net.judah.util.Recording;
 import net.judah.util.Threads;
 
 
@@ -64,9 +61,7 @@ public class TunerKnobs extends KnobPanel {
         g.drawImage(waveform, 0, Tuner.TUNER_HEIGHT, null);
 	}
 
-	public void process() {
-		float[][] buf = Memory.STEREO.getFrame();
-		JudahZone.getInstance().getSelected().forEach(ch->AudioTools.copy(ch, buf));
+	public void process(float[][] buf) {
 		buffer.add(buf);
 		if (tuner.isActive())
 			MainFrame.update(new Tuning(tuner, buf));

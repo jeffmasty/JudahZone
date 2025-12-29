@@ -6,30 +6,33 @@ import java.security.InvalidParameterException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.judah.api.Effect;
 import net.judah.api.TimeEffect;
-import net.judah.gui.MainFrame;
 import net.judah.mixer.Channel;
+import net.judah.mixer.DJFilter;
 import net.judah.util.Constants;
 
 /** A calculated sin wave LFO.  Default amplitude returns queries between 0 and 85 */
 @RequiredArgsConstructor
 public class LFO implements TimeEffect {
 
-	public static final int LFO_MIN = 50;
-    public static final int LFO_MAX = 4500;
-
-    long throttle;
-	@Setter @Getter String type = TYPE[0];
-	@Setter @Getter boolean sync;
-
     public enum Settings { Target, Min, Max, MSec, Type, Sync }
 
 	public static enum Target {
 		Pan, pArTy, Gain, Echo, Room, Delay, Chorus, Rate, Depth, Phase, Filtr }
 
+	public static final int LFO_MIN = 50;
+    public static final int LFO_MAX = 4500;
+
+    private static int guiThrottle = 4;
+	public static void setGuiThrottle(int count) { guiThrottle = count; }
+	public static int getGuiThrottle() { return guiThrottle; }
+    private long throttle; // count-up before presenting delta back to gui
+
 	private final Channel ch;
 	@Getter private final String name;
-
+	@Setter @Getter String type = TYPE[0];
+	@Setter @Getter boolean sync;
 	@Getter private Target target = Target.Pan;
 	/** in kiloHertz (msec per cycle). default: oscillates over a 1.2 seconds. */
 	@Getter private double frequency = 1200;
@@ -54,19 +57,6 @@ public class LFO implements TimeEffect {
 	    if (val > max) return;
 	    min = val;
 	}
-
-//	@Override public void setActive(boolean active) {
-//
-//		boolean chActive = ch.isActive(this);
-//
-//		if (chActive == active)
-//			return;
-//		if (active)
-//			activate();
-//		else
-//			reset();
-//		this.active = active;
-//	}
 
     public void setTarget(Target target) {
     	if (this.target == target)
@@ -124,13 +114,12 @@ public class LFO implements TimeEffect {
 				ch.getHiCut().set(Filter.Settings.Hz.ordinal(), recover);
 				ch.setActive(ch.getHiCut(), wasActive);
 				break;
-
     	}
     }
 
     @Override
 	public void activate() {
-		throttle = 0;
+    	throttle = 0;
     	switch (target) {
 		case pArTy:
 			recover = 50;
@@ -185,6 +174,7 @@ public class LFO implements TimeEffect {
     		ch.setActive(ch.getHiCut(), true);
     	}
     }
+
     @Override public int get(int idx) {
         if (idx == Settings.Target.ordinal())
             return target.ordinal();
@@ -194,7 +184,6 @@ public class LFO implements TimeEffect {
             return max;
         if (idx == Settings.MSec.ordinal()) {
         	return Constants.reverseLog((float)frequency, LFO_MIN, LFO_MAX);
-			//return ((int)( (frequency - MAX_FACTOR) / MAX_FACTOR)); // linear map 39 to 3990msec to 0 to 100
         }
         if (idx == Settings.Type.ordinal())
         	return TimeEffect.indexOf(type);
@@ -213,7 +202,6 @@ public class LFO implements TimeEffect {
             setMax(value);
         else if (idx == Settings.MSec.ordinal())
         	frequency = Constants.logarithmic(value, LFO_MIN, LFO_MAX);
-        	// frequency = value * MAX_FACTOR + MAX_FACTOR;   // linear 39msec to 3990msec
         else if (idx == Settings.Type.ordinal() && value < TimeEffect.TYPE.length)
         	type = TimeEffect.TYPE[value];
         else if (idx == Settings.Sync.ordinal())
@@ -235,36 +223,79 @@ public class LFO implements TimeEffect {
 	}
 
 	/** execute the LFO on the channel's target */
-	public void pulse() {
+	public Effect pulse() {
 		if (!ch.isActive(this))
-			return;
+			return null;
 		int val = (int)query();
-		switch(target) {
-			case Gain: ch.getGain().set(Gain.VOLUME, val); break;
-			case pArTy: ch.getDjFilter().joystick(val); break;
-			case Echo: ch.getReverb().set(Reverb.Settings.Wet.ordinal(), val); break;
-			case Room: ch.getReverb().set(Reverb.Settings.Room.ordinal(), val); break;
-			case Delay: ch.getDelay().setFeedback(val * 0.01f); break;
-			case Pan: ch.getGain().set(Gain.PAN, val); break;
-			case Chorus: ch.getChorus().set(Chorus.Settings.Feedback.ordinal(), val); break;
-			case Depth: ch.getChorus().set(Chorus.Settings.Depth.ordinal(), val); break;
-			case Rate: ch.getChorus().set(Chorus.Settings.Rate.ordinal(), val); break;
-			case Phase: ch.getChorus().set(Chorus.Settings.Phase.ordinal(), val); break;
-			case Filtr: ch.getHiCut().set(Filter.Settings.Hz.ordinal(), val); break;
 
-		}
-		if (++throttle > 4) {// throttle gui updates
+		Effect fx = switch (target) {
+	    case Gain -> {
+	        Gain g = ch.getGain();
+	        g.set(Gain.VOLUME, val);
+	        yield g;
+	    }
+	    case pArTy -> {
+	        DJFilter f = ch.getDjFilter();
+	        f.joystick(val);
+	        yield null;
+	    }
+	    case Echo -> {
+	        Reverb r = ch.getReverb();
+	        r.set(Reverb.Settings.Wet.ordinal(), val);
+	        yield r;
+	    }
+	    case Room -> {
+	        Reverb r = ch.getReverb();
+	        r.set(Reverb.Settings.Room.ordinal(), val);
+	        yield r;
+	    }
+	    case Delay -> {
+	        Delay d = ch.getDelay();
+	        d.setFeedback(val * 0.01f);
+	        yield d;
+	    }
+	    case Pan -> {
+	        Gain g = ch.getGain();
+	        g.set(Gain.PAN, val);
+	        yield g;
+	    }
+	    case Chorus -> {
+	        Chorus c = ch.getChorus();
+	        c.set(Chorus.Settings.Feedback.ordinal(), val);
+	        yield c;
+	    }
+	    case Depth -> {
+	        Chorus c = ch.getChorus();
+	        c.set(Chorus.Settings.Depth.ordinal(), val);
+	        yield c;
+	    }
+	    case Rate -> {
+	        Chorus c = ch.getChorus();
+	        c.set(Chorus.Settings.Rate.ordinal(), val);
+	        yield c;
+	    }
+	    case Phase -> {
+	        Chorus c = ch.getChorus();
+	        c.set(Chorus.Settings.Phase.ordinal(), val);
+	        yield c;
+	    }
+	    case Filtr -> {
+	        Filter h = ch.getHiCut();
+	        h.set(Filter.Settings.Hz.ordinal(), val);
+	        yield h;
+	    }
+	    default -> null;
+	    };
+
+		if (++throttle > guiThrottle) {
 			throttle = 0;
-			MainFrame.update(ch);
+			return fx;
 		}
+	    return null;
 	}
 
 	@Override public void sync(float unit) {
 		frequency = 2 * (unit + unit * TimeEffect.indexOf(type));
-	}
-
-	@Override public void sync() {
-		sync(TimeEffect.unit());
 	}
 
 	/** no-op, handled through MidiScheduler */
