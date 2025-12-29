@@ -15,7 +15,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     
     <lombok.version>1.18.34</lombok.version>
-    <log4j2.version>2.20.0</log4j2.version>
+    <log4j2.version>2.25.3</log4j2.version>
     <jackson.version>2.19.2</jackson.version>
     <junit.version>5.10.2</junit.version>
     <tarsos.version>2.5</tarsos.version>
