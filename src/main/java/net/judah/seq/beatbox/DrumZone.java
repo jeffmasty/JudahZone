@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 
+import judahzone.gui.Floating;
+import judahzone.gui.Gui;
 import lombok.Getter;
 import net.judah.gui.Size;
 import net.judah.seq.MusicBox;
@@ -19,8 +21,6 @@ import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.HiringAgency;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.TrackBindings;
-import net.judahzone.gui.Floating;
-import net.judahzone.gui.Gui;
 
 /**Handles a top and bottom drum track */
 public class DrumZone extends HiringAgency implements Floating {

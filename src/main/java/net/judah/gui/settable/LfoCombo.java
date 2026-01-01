@@ -3,11 +3,11 @@ package net.judah.gui.settable;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 
-import net.judah.fx.LFO;
-import net.judah.fx.LFO.Target;
+import judahzone.gui.Gui;
+import judahzone.gui.Updateable;
 import net.judah.gui.Size;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Updateable;
+import net.judah.midi.LFO;
+import net.judah.midi.LFO.Target;
 
 public class LfoCombo extends SetCombo<Target> implements Updateable {
 	private final LFO lfo;

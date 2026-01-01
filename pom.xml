@@ -19,7 +19,7 @@
     <jackson.version>2.19.2</jackson.version>
     <junit.version>5.10.2</junit.version>
     <tarsos.version>2.5</tarsos.version>
-
+	<zone.ver>0.2-SNAPSHOT</zone.ver>
   </properties>
 
   <repositories>
@@ -35,19 +35,39 @@
   	<dependency>
   		<groupId>net.judahzone</groupId>
   		<artifactId>zone-core</artifactId>
-  		<version>1.0</version>
+  		<version>${zone.ver}</version>
   		<scope>provided</scope>
   	</dependency>
   	<dependency>
   		<groupId>net.judahzone</groupId>
   		<artifactId>zone-gui</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<version>${zone.ver}</version>
   		<scope>provided</scope>
   	</dependency>
   	<dependency>
   		<groupId>net.judahzone</groupId>
   		<artifactId>zone-scope</artifactId>
-  		<version>1.0</version>
+  		<version>${zone.ver}</version>
+  		<scope>provided</scope>
+  	</dependency>
+  	<dependency>
+  		<groupId>net.judahzone</groupId>
+  		<artifactId>zone-javax</artifactId>
+  		<version>${zone.ver}</version>
+  		<scope>provided</scope>
+  	</dependency>
+  	
+  	<dependency>
+  		<groupId>net.judahzone</groupId>
+  		<artifactId>zone-jnajack</artifactId>
+  		<version>${zone.ver}</version>
+  		<scope>provided</scope>
+  	</dependency>
+
+  	<dependency>
+  		<groupId>net.judahzone</groupId>
+  		<artifactId>zone-fx</artifactId>
+  		<version>${zone.ver}</version>
   		<scope>provided</scope>
   	</dependency>
   

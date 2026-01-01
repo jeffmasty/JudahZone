@@ -11,8 +11,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
+import judahzone.gui.Pastels;
 import lombok.Getter;
-import net.judahzone.gui.Pastels;
 
 public class Click extends JLabel {
 	static Border border = new LineBorder(Pastels.BLUE, 1, true);

@@ -4,12 +4,12 @@ import java.awt.Dimension;
 
 import javax.swing.JButton;
 
+import judahzone.gui.Pastels;
 import lombok.Getter;
 import net.judah.gui.Size;
 import net.judah.midi.JudahClock;
 import net.judah.seq.track.Cycle;
 import net.judah.seq.track.MidiTrack;
-import net.judahzone.gui.Pastels;
 
 public class TrackPattern extends JButton {
 	private static Dimension d = new Dimension(Size.STD_HEIGHT, Size.STD_HEIGHT);

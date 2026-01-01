@@ -1,4 +1,4 @@
-package net.judah.mixer;
+package net.judah.channel;
 
 import judahzone.util.Constants;
 import lombok.Getter;
@@ -26,7 +26,7 @@ public abstract class LineIn extends Channel {
 			MainFrame.update(JudahZone.getInstance().getDrumMachine());
 	}
 
-    /** run active effects on this input channel */
+    /** run active stereo effects on this input channel*/
 	protected final void fx() {
 		gain.preamp(left, right);
 		active.forEach(fx -> fx.process(left, right));

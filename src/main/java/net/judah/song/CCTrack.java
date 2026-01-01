@@ -6,14 +6,14 @@ import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 
 import judahzone.api.Signature;
+import judahzone.gui.Gui;
+import judahzone.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.midi.JudahClock;
 import net.judah.seq.Steps;
 import net.judah.seq.automation.Automation;
 import net.judah.seq.automation.CCPopup;
 import net.judah.seq.track.MidiTrack;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Pastels;
 
 public class CCTrack extends Steps {
 

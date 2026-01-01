@@ -8,10 +8,8 @@ public interface Size {
 	int MENU_HEIGHT = Size.STD_HEIGHT + 6;
 	int KNOB_HEIGHT = 32;
 	int WIDTH_FRAME = 1368;
-//    int WIDTH_KNOBS = 345;
     int WIDTH_TAB = 1024;
     int WIDTH_KNOBS = WIDTH_FRAME - WIDTH_TAB - 2;
-    //int WIDTH_TAB = WIDTH_FRAME - WIDTH_KNOBS - 2;
     int HEIGHT_FRAME = 734;
     int HEIGHT_KNOBS = 290;
     int HEIGHT_MIXER = 154;

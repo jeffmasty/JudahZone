@@ -24,6 +24,8 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import judahzone.gui.Gui;
+import judahzone.gui.Icons;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
@@ -41,8 +43,6 @@ import net.judah.gui.widgets.LengthCombo;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.song.Overview;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Icons;
 
 public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ implements ListSelectionListener {
 	public static final String TABNAME = "Setlists";

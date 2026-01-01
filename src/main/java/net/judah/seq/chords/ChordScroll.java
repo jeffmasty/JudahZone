@@ -11,8 +11,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import judahzone.api.Chord;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Pastels;
+import judahzone.gui.Gui;
+import judahzone.gui.Pastels;
 
 public class ChordScroll extends JPanel {
 

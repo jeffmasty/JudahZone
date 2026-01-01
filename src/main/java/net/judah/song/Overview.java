@@ -20,6 +20,9 @@ import javax.swing.ScrollPaneConstants;
 
 import judahzone.api.Effect;
 import judahzone.api.Notification.Property;
+import judahzone.gui.Gui;
+import judahzone.gui.Nimbus;
+import judahzone.gui.Pastels;
 import judahzone.api.Signature;
 import judahzone.api.TimeListener;
 import judahzone.util.Folders;
@@ -28,6 +31,7 @@ import judahzone.util.RTLogger;
 import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.channel.Channel;
 import net.judah.drumkit.DrumMachine;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
@@ -36,7 +40,6 @@ import net.judah.gui.settable.SongCombo;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
-import net.judah.mixer.Channel;
 import net.judah.mixer.DJJefe;
 import net.judah.seq.Seq;
 import net.judah.seq.track.Computer;
@@ -46,9 +49,6 @@ import net.judah.song.cmd.Cmd;
 import net.judah.song.cmd.Param;
 import net.judah.song.setlist.Setlist;
 import net.judah.song.setlist.Setlists;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Nimbus;
-import net.judahzone.gui.Pastels;
 
 /** left: SongView, right: midi tracks list*/
 public class Overview extends Box implements TimeListener {

@@ -7,6 +7,8 @@ import javax.swing.JButton;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
+import judahzone.gui.Actionable;
+import judahzone.gui.Pastels;
 import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
@@ -17,26 +19,24 @@ import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.TrackMenu.SendTo;
 import net.judah.song.SongTrack;
-import net.judahzone.gui.Actionable;
-import net.judahzone.gui.Pastels;
 
-public class PlayWidget extends JButton {
+public class PlayBtn extends JButton {
 	private static final String COOL = " ▶️ ";
 
 	private final MidiTrack track;
 	private SongTrack expander;
 
-	public PlayWidget(SongTrack s) {
+	public PlayBtn(SongTrack s) {
 		this(s.getTrack(), s.getTrack().getName());
 		expander = s;
 	}
 
-	public PlayWidget(MidiTrack t) {
+	public PlayBtn(MidiTrack t) {
 		this(t, "");
 		update();
 	}
 
-	public PlayWidget(MidiTrack t, String lbl) {
+	public PlayBtn(MidiTrack t, String lbl) {
 		super(COOL + lbl);
 		if (lbl.length() > 5)
 			setToolTipText(lbl);
@@ -72,7 +72,7 @@ public class PlayWidget extends JButton {
     	popupMenu.add(expander != null ? new Actionable("Automation", e->expander.expand()) :
     		new Actionable("Automation", e->MainFrame.setFocus(KnobMode.Autom8)));
 
-    	popupMenu.show(PlayWidget.this, me.getX(), me.getY());
+    	popupMenu.show(PlayBtn.this, me.getX(), me.getY());
 	}
 
 	public void update() {

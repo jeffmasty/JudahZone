@@ -14,11 +14,11 @@ import java.awt.geom.Point2D;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 
+import judahzone.gui.Icons;
+import judahzone.gui.Pastels;
 import judahzone.util.Rainbow;
 import lombok.Getter;
 import lombok.Setter;
-import net.judahzone.gui.Icons;
-import net.judahzone.gui.Pastels;
 
 /**<a href="https://github.com/mploof/JKnobFancy">From Michael Ploof on Github</a><br/><br/>
 * JFancyKnob.java -

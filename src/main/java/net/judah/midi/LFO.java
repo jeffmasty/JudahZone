@@ -1,4 +1,4 @@
-package net.judah.fx;
+package net.judah.midi;
 
 import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
@@ -9,7 +9,12 @@ import judahzone.util.Constants;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import net.judah.mixer.Channel;
+import net.judah.channel.Channel;
+import net.judah.fx.Chorus;
+import net.judah.fx.Delay;
+import net.judah.fx.Filter;
+import net.judah.fx.Gain;
+import net.judah.fx.Reverb;
 import net.judah.mixer.DJFilter;
 
 /** A calculated sin wave LFO.  Default amplitude returns queries between 0 and 85 */

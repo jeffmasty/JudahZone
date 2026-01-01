@@ -2,9 +2,9 @@ package net.judah.gui.widgets;
 
 import javax.swing.JButton;
 
+import judahzone.gui.Pastels;
+import judahzone.gui.Updateable;
 import net.judah.seq.track.MidiTrack;
-import net.judahzone.gui.Pastels;
-import net.judahzone.gui.Updateable;
 
 public class RecordWidget extends JButton implements Updateable {
 

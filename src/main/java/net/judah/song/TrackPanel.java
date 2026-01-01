@@ -7,7 +7,7 @@ import java.util.Set;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
-import net.judah.mixer.Channel;
+import net.judah.channel.Channel;
 import net.judah.seq.TrackList;
 import net.judah.seq.automation.Automation;
 import net.judah.seq.track.Computer;

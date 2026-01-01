@@ -15,6 +15,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
+import judahzone.gui.Gui;
+import judahzone.gui.Pastels;
 import judahzone.util.RTLogger;
 import judahzone.util.Threads;
 import lombok.Getter;
@@ -25,8 +27,6 @@ import net.judah.gui.widgets.Btn;
 import net.judah.song.cmd.Param;
 import net.judah.song.cmd.ParamModel;
 import net.judah.song.cmd.ParamTable;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Pastels;
 
 /** Holds launch buttons for Song's Scenes and Cmds/Params */
 public class SongView extends JPanel {

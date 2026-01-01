@@ -1,8 +1,10 @@
 package net.judah.mixer;
 
-import static net.judahzone.gui.Gui.font;
+import static judahzone.gui.Gui.font;
 
 import java.awt.Color;
+
+import net.judah.channel.Mains;
 
 public class MainsMix extends MixWidget {
 

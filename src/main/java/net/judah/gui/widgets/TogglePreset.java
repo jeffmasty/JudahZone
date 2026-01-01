@@ -6,9 +6,9 @@ import java.awt.event.MouseEvent;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 
+import judahzone.gui.Pastels;
 import net.judah.JudahZone;
-import net.judah.mixer.Channel;
-import net.judahzone.gui.Pastels;
+import net.judah.channel.Channel;
 
 public class TogglePreset extends JButton {
 

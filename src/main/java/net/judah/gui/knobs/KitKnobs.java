@@ -9,6 +9,8 @@ import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
+import judahzone.gui.Gui;
+import judahzone.gui.Icons;
 import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
@@ -21,8 +23,6 @@ import net.judah.gui.widgets.Btn;
 import net.judah.midi.Actives;
 import net.judah.seq.Trax;
 import net.judah.song.Overview;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Icons;
 
 public class KitKnobs extends KnobPanel {
 

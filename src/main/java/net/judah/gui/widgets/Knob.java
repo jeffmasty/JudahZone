@@ -14,9 +14,9 @@ import java.util.List;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 
+import judahzone.gui.Icons;
 import lombok.Getter;
 import lombok.Setter;
-import net.judahzone.gui.Icons;
 
 /**<a href="https://github.com/mploof/JKnobFancy">From Michael Ploof on Github</a><br/><br/>
 * JFancyKnob.java -

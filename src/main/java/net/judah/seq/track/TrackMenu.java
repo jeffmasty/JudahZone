@@ -16,12 +16,15 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JRadioButtonMenuItem;
 
+import judahzone.gui.Actionable;
+import judahzone.gui.Gui;
+import judahzone.gui.Icons;
 import net.judah.JudahZone;
 import net.judah.drumkit.DrumType;
 import net.judah.gui.MainFrame;
 import net.judah.gui.settable.Program;
 import net.judah.gui.widgets.Btn;
-import net.judah.gui.widgets.PlayWidget;
+import net.judah.gui.widgets.PlayBtn;
 import net.judah.gui.widgets.RecordWidget;
 import net.judah.gui.widgets.TrackVol;
 import net.judah.seq.MusicBox;
@@ -29,9 +32,6 @@ import net.judah.seq.SynthRack;
 import net.judah.seq.Transpose;
 import net.judah.seq.automation.Automation;
 import net.judah.seq.track.Computer.Update;
-import net.judahzone.gui.Actionable;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Icons;
 
 public abstract class TrackMenu extends Box implements MouseListener {
 
@@ -57,7 +57,7 @@ public abstract class TrackMenu extends Box implements MouseListener {
 	protected final JMenu quantization = new JMenu("Quantization");
 	private final String a;
 	private final String b;
-	protected final PlayWidget play;
+	protected final PlayBtn play;
 	protected RecordWidget capture;
 	protected final Program program;
 	protected final Programmer programmer;
@@ -71,7 +71,7 @@ public abstract class TrackMenu extends Box implements MouseListener {
 		a = track.isDrums() ? "Left" : "Top";
 		b = track.isDrums() ? "Right" : "Bottom";
 		addMouseListener(this);
-		play = new PlayWidget(track);
+		play = new PlayBtn(track);
 		programmer = new Programmer(track);
 		velocity = new TrackVol(track);
 

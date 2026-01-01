@@ -12,6 +12,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import judahzone.util.Memory;
 import judahzone.util.RTLogger;
 import judahzone.util.Recording;
+import judahzone.util.Services;
 import judahzone.util.WavConstants;
 import net.judah.JudahZone;
 
@@ -64,7 +65,7 @@ public class ToDisk extends LinkedBlockingQueue<float[][]> implements Closeable,
 		calc();
 		writeHeader();
 		if (threaded) {
-			JudahZone.getServices().add(this);
+			Services.add(this);
 			active = true;
 			new Thread(this).start();
 		}
@@ -124,7 +125,7 @@ public class ToDisk extends LinkedBlockingQueue<float[][]> implements Closeable,
 		// Close the stream and set to null
 		oStream.close();
 		oStream = null;
-		JudahZone.getServices().remove(this);
+		Services.remove(this);
 		JudahZone.getInstance().getMidiGui().updateTape();
 		RTLogger.log(this, target.getAbsolutePath());
 	}

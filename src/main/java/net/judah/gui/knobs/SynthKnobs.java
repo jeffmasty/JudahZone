@@ -21,6 +21,9 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
 
+import judahzone.gui.Gui;
+import judahzone.gui.Icons;
+import judahzone.gui.Pastels;
 import judahzone.util.Constants;
 import judahzone.util.Threads;
 import lombok.Getter;
@@ -40,9 +43,6 @@ import net.judah.synth.taco.Adsr;
 import net.judah.synth.taco.Shape;
 import net.judah.synth.taco.TacoSynth;
 import net.judah.synth.taco.TacoTruck;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Icons;
-import net.judahzone.gui.Pastels;
 
 public class SynthKnobs extends KnobPanel {
 	private static final int OCTAVE = 12;

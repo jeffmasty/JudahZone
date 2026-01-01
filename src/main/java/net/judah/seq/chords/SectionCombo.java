@@ -5,8 +5,8 @@ import java.util.ArrayList;
 
 import javax.swing.JComboBox;
 
+import judahzone.gui.Gui;
 import net.judah.gui.Size;
-import net.judahzone.gui.Gui;
 
 public class SectionCombo extends JComboBox<Section> {
 

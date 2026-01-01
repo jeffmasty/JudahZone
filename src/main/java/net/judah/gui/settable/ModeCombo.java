@@ -1,9 +1,9 @@
 package net.judah.gui.settable;
 
+import judahzone.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.seq.arp.Arp;
 import net.judah.seq.track.PianoTrack;
-import net.judahzone.gui.Gui;
 
 public class ModeCombo extends SetCombo<Arp> {
 

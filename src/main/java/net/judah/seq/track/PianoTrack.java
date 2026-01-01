@@ -16,15 +16,16 @@ import judahzone.api.Algo;
 import judahzone.api.Chord;
 import judahzone.api.Key;
 import judahzone.api.Midi;
-import judahzone.api.TimeListener;
 import judahzone.api.Notification.Property;
+import judahzone.api.TimeListener;
+import judahzone.util.Threads;
 import lombok.Getter;
+import net.judah.channel.Channel;
 import net.judah.gui.MainFrame;
 import net.judah.midi.Actives;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiInstrument;
 import net.judah.midi.Panic;
-import net.judah.mixer.Channel;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.arp.Arp;
@@ -59,12 +60,6 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 	private final ArrayList<MidiEvent> chads = new ArrayList<>();
 	@Getter private final Pedal pedal = new Pedal(this);
 
-//	public PianoTrack(String name, ZoneMidi midiOut, int ch) throws InvalidMidiDataException {
-//		super(name, midiOut, ch);
-//		chords.addListener(this);
-//		info = getState().getArp();
-//	}
-
 	public PianoTrack(String name, Actives actives, Chords chords) throws InvalidMidiDataException {
 		super(name, actives);
 		this.chords = chords;
@@ -86,6 +81,14 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 		super.cycle();
 	}
 
+	private void panic() {
+	    try {
+	        for (int note = 0; note < 128; note++) {
+	            ShortMessage m = new ShortMessage(ShortMessage.NOTE_OFF, ch, note, 0);
+	            midiOut.send(m, JudahMidi.ticker());
+	        }
+	    } catch (InvalidMidiDataException ignored) {}
+	}
 
 	protected boolean filterPiano(MidiMessage m) {
 		if (m instanceof ShortMessage midi) {
@@ -95,7 +98,7 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 			}
 			if (ControlChange.PANIC.matches(midi)) {
 				pedal.setPressed(false);
-				new Panic(this);
+				Threads.execute(() -> panic()); // no loops on Panic(), the class
 				return true;
 			}
 		}

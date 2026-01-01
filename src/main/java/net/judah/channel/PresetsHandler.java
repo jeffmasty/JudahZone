@@ -1,4 +1,4 @@
-package net.judah.gui.settable;
+package net.judah.channel;
 
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
@@ -10,12 +10,12 @@ import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
+import judahzone.gui.Gui;
+import judahzone.gui.Updateable;
 import net.judah.gui.Size;
-import net.judah.mixer.Channel;
+import net.judah.gui.settable.SetCombo;
 import net.judah.mixer.Preset;
 import net.judah.mixer.PresetsDB;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Updateable;
 
 /** Presets */
 public class PresetsHandler extends SetCombo<Preset> implements ListCellRenderer<Preset>, Updateable {

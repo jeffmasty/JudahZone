@@ -6,13 +6,14 @@ import java.awt.Color;
 
 import javax.swing.JLabel;
 
+import judahzone.api.Effect;
+import judahzone.gui.Gui;
+import judahzone.gui.Updateable;
 import lombok.Getter;
+import net.judah.channel.Channel;
 import net.judah.fx.Reverb;
 import net.judah.gui.Bindings;
 import net.judah.gui.HQ;
-import net.judah.mixer.Channel;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Updateable;
 
 
 public class ReverbPlus implements Updateable {
@@ -36,8 +37,8 @@ public class ReverbPlus implements Updateable {
 		rLbl.setFont(Gui.FONT11);
 		lLbl.setFont(Gui.FONT11);
 
-		left = new UpdatePanel(lKnob, lLbl);
-		right = new UpdatePanel(rKnob, rLbl);
+		left = new UpdatePanel(lKnob, lLbl, reverb);
+		right = new UpdatePanel(rKnob, rLbl, reverb);
 	}
 
 	public void toggle() {
@@ -53,12 +54,14 @@ public class ReverbPlus implements Updateable {
 		right.update();
 	}
 
-	public class UpdatePanel extends Gui.Opaque implements Updateable {
+	public class UpdatePanel extends Gui.Opaque implements Updateable, FXAware {
 
 		@Getter private final OverloadedKnob knob;
+		@Getter private final Effect fx;
 
-		public UpdatePanel(OverloadedKnob knob, JLabel label) {
+		public UpdatePanel(OverloadedKnob knob, JLabel label, Effect fx) {
 			this.knob = knob;
+			this.fx = fx;
 			add(knob);
 			add(label);
 		}

@@ -5,9 +5,9 @@ import java.util.List;
 
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.mixer.Channel;
+import net.judah.channel.Channel;
+import net.judah.channel.LineIn;
 import net.judah.mixer.Fader;
-import net.judah.mixer.LineIn;
 import net.judah.mixer.Zone;
 import net.judah.seq.Trax;
 

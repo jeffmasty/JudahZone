@@ -10,10 +10,10 @@ import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
 
+import judahzone.gui.Actionable;
 import net.judah.seq.automation.Automation.CCData;
 import net.judah.seq.automation.Automation.MidiMode;
 import net.judah.seq.track.MidiTrack;
-import net.judahzone.gui.Actionable;
 
 /** lists out CCs for current frame and right-click menu */
 public class CCPopup extends JPopupMenu {

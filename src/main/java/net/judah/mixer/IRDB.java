@@ -19,31 +19,25 @@ import judahzone.util.Folders;
 import judahzone.util.RTLogger;
 import judahzone.util.WavConstants;
 import judahzone.util.WavFile;
+import net.judah.fx.IRProvider;
 
 /**scan a folder (Folders.getIR()), prepare and cache FFT spectra for each WAV.
  * Exceptions swallowed/logged per file.
  * A Nice Collection of IRs:  https://github.com/orodamaral/Speaker-Cabinets-IRs/
  */
-public final class IRDB {
+public final class IRDB implements IRProvider {
 
-    public static record IrEntry(String name, float[] irFreq) {
-        @Override public String toString() { return name; }
-    }
+	public static final IRDB instance = new IRDB(Folders.getIR());
 
     private static final int IR_SIZE  = FFT_SIZE / 2;
     public static final float MASTERING = 0.3f; // cut IR volume
 
-    private static final FFT FFT_FOR_IR = new FFT(FFT_SIZE);
-
-    private final List<IrEntry> entries = new ArrayList<>();
+    private final List<IR> entries = new ArrayList<>();
+    private final FFT fft = new FFT(FFT_SIZE);
 
     public IRDB(File folder) {
         // Tarsos too verbose
         Logger.getLogger("be.tarsos.dsp.io.PipeDecoder").setLevel(Level.SEVERE);
-    	load(Folders.getIR());
-    }
-
-    private void load(File folder) {
 
         File[] files = Folders.sort(folder);
         if (files == null || files.length == 0) {
@@ -61,7 +55,7 @@ public final class IRDB {
                 // loudness, front and tail windows // TODO toggle?
                 mastering(irTime, 32, irTime.length);
 
-                float[] irFreq = prepareIrSpectrum(irTime);
+                float[] irFreq = prepareIrSpectrum(irTime, fft);
                 String name = f.getName().replaceFirst("(?i)\\.wav$", "");
                 nameToFreq.put(name, irFreq);
                 RTLogger.debug(IRDB.class, "Loaded IR: " + name + " (" + irTime.length + " samples)");
@@ -73,7 +67,7 @@ public final class IRDB {
         }
 
         for (Map.Entry<String, float[]> e : nameToFreq.entrySet()) {
-            entries.add(new IrEntry(e.getKey(), e.getValue()));
+            entries.add(new IR(e.getKey(), e.getValue()));
         }
 
         if (entries.isEmpty()) {
@@ -81,14 +75,14 @@ public final class IRDB {
         }
     }
 
-    private static float[] prepareIrSpectrum(float[] irTime) {
-        float[] fftInOut = new float[FFT_SIZE * 2];
+    public static float[] prepareIrSpectrum(float[] irTime, FFT fft) {
+        float[] fftInOut = new float[FFT_SIZE * 2]; // malloc
         Arrays.fill(fftInOut, 0f);
 
         int copyLen = Math.min(irTime.length, IR_SIZE);
         System.arraycopy(irTime, 0, fftInOut, 0, copyLen);
 
-        FFT_FOR_IR.forwardTransform(fftInOut); // in-place realForward -> complex
+        fft.forwardTransform(fftInOut); // in-place realForward -> complex
 
         float[] irFreq = new float[FFT_SIZE * 2];
         System.arraycopy(fftInOut, 0, irFreq, 0, irFreq.length);
@@ -111,16 +105,16 @@ public final class IRDB {
         // tail
         for (int i = 100; i <= 0; i++)
         	irTime[len - i] *= i * 0.01f;
-
     }
 
-
-    public int size() { return entries.size(); }
-    public List<IrEntry> getEntries() { return entries; }
+    @Override
+	public int size() { return entries.size(); }
+    public List<IR> getEntries() { return entries; }
     public String[] getNames() {
         String[] n = new String[entries.size()];
-        for (int i = 0; i < n.length; i++) n[i] = entries.get(i).name;
+        for (int i = 0; i < n.length; i++) n[i] = entries.get(i).name();
         return n;
     }
-    public IrEntry get(int idx) { return entries.get(idx); }
+    @Override
+	public IR get(int idx) { return entries.get(idx); }
 }

@@ -2,6 +2,7 @@ package net.judah.mixer;
 
 import javax.sound.midi.ShortMessage;
 
+import net.judah.channel.Channel;
 import net.judah.controllers.KorgPads;
 import net.judah.fx.Filter;
 import net.judah.gui.MainFrame;
@@ -43,11 +44,11 @@ public class DJFilter {
 			if (ch.isActive(loCut))
 				ch.setActive(loCut, false);
 			else
-				MainFrame.updateChannel(ch, loCut);
+				MainFrame.updateFx(ch, loCut);
 			if (ch.isActive(hiCut))
 				ch.setActive(hiCut, false);
 			else
-				MainFrame.updateChannel(ch, hiCut);
+				MainFrame.updateFx(ch, hiCut);
 			return;
 		}
 		else if (x < 50) {
@@ -56,7 +57,7 @@ public class DJFilter {
 			if (ch.isActive(loCut))
 				ch.setActive(loCut, false);
 			else
-				MainFrame.updateChannel(ch, hiCut);
+				MainFrame.updateFx(ch, hiCut);
 			if (!ch.isActive(hiCut))
 				ch.setActive(hiCut, true);
 		}
@@ -65,7 +66,7 @@ public class DJFilter {
 			loCut.set(HZ, (x - 50) * 2);
 			if (!ch.isActive(loCut))
 				ch.setActive(loCut, true);
-			else MainFrame.updateChannel(ch, loCut);
+			else MainFrame.updateFx(ch, loCut);
 
 			if (ch.isActive(hiCut))
 				ch.setActive(hiCut, false);

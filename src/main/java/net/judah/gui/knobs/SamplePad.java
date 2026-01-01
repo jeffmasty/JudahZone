@@ -12,13 +12,13 @@ import javax.swing.JPanel;
 import javax.swing.border.BevelBorder;
 
 import judahzone.api.PlayAudio.Type;
+import judahzone.gui.Gui;
+import judahzone.gui.Pastels;
 import lombok.Getter;
 import net.judah.fx.Gain;
 import net.judah.gui.widgets.Knob;
 import net.judah.sampler.Sample;
 import net.judah.sampler.Sampler;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Pastels;
 
 public class SamplePad extends Gui.Opaque {
 	public final Sample sample;

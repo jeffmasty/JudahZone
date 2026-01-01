@@ -10,11 +10,15 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
 import judahzone.api.Effect;
-import judahzone.api.TimeListener;
 import judahzone.api.Notification.Property;
+import judahzone.gui.Gui;
+import judahzone.api.TimeListener;
 import judahzone.util.RTLogger;
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.channel.Channel;
+import net.judah.channel.LineIn;
+import net.judah.channel.Mains;
 import net.judah.drumkit.DrumMachine;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
@@ -24,7 +28,6 @@ import net.judah.midi.JudahClock;
 import net.judah.seq.SynthRack;
 import net.judah.seq.track.DrumTrack;
 import net.judah.song.FxData;
-import net.judahzone.gui.Gui;
 
 /** Graphical representation of the Mixer*/
 public class DJJefe extends JPanel implements TimeListener {
@@ -90,7 +93,7 @@ public class DJJefe extends JPanel implements TimeListener {
 		comboOverride = true;
 		combo.removeAllItems();
 		all.forEach(ch -> combo.addItem(ch));
-		combo.setSelectedItem(zone.getSelected().getFirst());
+		combo.setSelectedItem(zone.getFxRack().getSelected().getFirst());
 		comboOverride = false;
 	}
 
@@ -177,15 +180,16 @@ public class DJJefe extends JPanel implements TimeListener {
 			Channel ch = byName(name);
 			if (ch == null) { // Legacy
 				for (Channel c : all) {
-					if (c.name == name) {
+					String nombre = c.getName();
+					if (nombre == name) {
 						ch = c;
-						RTLogger.warn(this, "remapped " + fx.getChannel() + " FX to " + ch.name);
+						RTLogger.warn(this, "remapped " + fx.getChannel() + " FX to " + nombre);
 						break;
 					}
 				}
 				if (ch == null) {
 					ch = SynthRack.getTacos()[0];
-					RTLogger.warn(this, "forced " + fx.getChannel() + " FX to " + ch.name);
+					RTLogger.warn(this, "forced " + fx.getChannel() + " FX to " + ch.getName());
 				}
 				continue;
 			}

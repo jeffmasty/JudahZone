@@ -1,20 +1,31 @@
 
-zone-core + meta-zone
-
 TODO:
 
+ScopePlaya/ScopeEffect 
+Leveling/mastering, Loops too loud (Save/reload/mp3)
+onTape slider track
+float[]s
+Tarsos pull request
 
+After Next: Piano roll orientation, TrackKnobs Program overflow
+I want Piano and PianoSteps to do a 90degree on their orientation.  I want the notes axis up and down and time-axis on the x-axis.  Initally center the view around Middle C with 16 semitones in either direction up/down while remaining responsive to changes in octaves/centering. Make sure the user can see the full range using the provided controls.  The system is geared for 2 bars visible in the Time-dimension.  Keep that for now. BeatBox has the orientation I am looking for.
+Piano PianoSteps PianoKeys BeatBox Musician MusicBox
 
-LFO->ChannelModel, activate MonoFilters
+zone-rack
+taco-synth
+zone-song
+drum-synth
+zone-loops
+zone-edit
+zone-seq
+zone-knobs
+zone-osc
+JudahZone
 
-
-Scope project/player, Tarsos pull request
-Piano roll orientation, TrackKnobs Program overflow
 Linked Midi Selection Model
 Automation: PitchBend, Meta, TimeSig, KeySig, Tempo
 Sample Library, SampleTrack
 compression meter, mpkMini to127
-Leveling/mastering, Loops too loud (Save/reload/mp3)
 nudge notes, 
 TacoSynth detune on sus/pdl
 SendTo ignore Meta Device, Program?
@@ -104,6 +115,19 @@ IIR filter https://www.youtube.com/watch?v=JCIxD6ep1rM
 Lets write a reverb https://www.youtube.com/watch?v=6ZK2Goiyotk&t=1748s
 
 --etc-----------------------
+MiniMeter PhaseMeter   stereo width and balance.
+Display Mode:
+Scaled: View lower volume samples with ease.
+Linear: A 1-to-1 mapping of the incoming audio, rotated for stereo monitoring. (Visible in the screenshot)
+Lissajous
+Color Mode:
+Static: Shows a solid color for each 'dot' in the display.
+RGB: The color for each 'dot' is chosen based on the overall frequency balance.
+Multi-Band: 3 overlaid view for the Low, Mid, & High bands.
+New! Correlation Meter:
+Single-Band: Shows the overall correlation.
+Multi-Band: Shows the correlation of the Low, Mid, & High bands separately. As well as the overall correlation. 
+
 https://www.recordingblogs.com/wiki/midi-meta-messages
 sudo systemctl disable docker
 https://melanchall.github.io/drywetmidi/articles/tools/Quantizer.html

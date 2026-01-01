@@ -9,9 +9,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
 
+import judahzone.gui.Pastels;
+import judahzone.gui.Updateable;
 import net.judah.JudahZone;
-import net.judahzone.gui.Pastels;
-import net.judahzone.gui.Updateable;
 
 /** launch scenes */
 public class SceneLauncher extends JPanel implements Updateable {

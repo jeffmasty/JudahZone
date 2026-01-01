@@ -11,10 +11,10 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import judahzone.api.Midi;
 import judahzone.util.RTLogger;
+import judahzone.util.Services;
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.JudahZone;
-import net.judah.mixer.Instrument;
+import net.judah.channel.Instrument;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.synth.ZoneMidi;
@@ -47,7 +47,7 @@ public class MidiInstrument extends Instrument implements ZoneMidi {
 
 	private void init(JackPort midi) {
 		midiPort = midi;
-		JudahZone.getServices().add(this);
+		Services.add(this);
 	}
 
 	@Override public final void send(MidiMessage midi, long timeStamp) {
@@ -81,7 +81,7 @@ public class MidiInstrument extends Instrument implements ZoneMidi {
 		} catch (Exception e) {RTLogger.warn(this, e);}
 	}
 	@Override public void close() {
-		new Panic(midiPort, 0); // ?
+		Panic.panicNow(midiPort, 0);
 	}
 
 //	/** no-op, subclass override */

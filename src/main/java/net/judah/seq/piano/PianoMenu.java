@@ -9,6 +9,9 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import judahzone.gui.Actionable;
+import judahzone.gui.Floating;
+import judahzone.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.gui.settable.ModeCombo;
 import net.judah.gui.widgets.Arrow;
@@ -18,9 +21,6 @@ import net.judah.seq.Duration;
 import net.judah.seq.Seq;
 import net.judah.seq.Transpose;
 import net.judah.seq.track.Computer.Update;
-import net.judahzone.gui.Actionable;
-import net.judahzone.gui.Floating;
-import net.judahzone.gui.Gui;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.TrackMenu;
 

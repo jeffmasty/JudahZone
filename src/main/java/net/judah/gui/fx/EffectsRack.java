@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Point;
 import java.util.ArrayList;
 
 import javax.swing.BoxLayout;
@@ -12,25 +13,28 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import judahzone.api.Effect;
+import judahzone.gui.Gui;
+import judahzone.gui.Updateable;
 import judahzone.util.RTLogger;
 import lombok.Getter;
+import net.judah.channel.Channel;
+import net.judah.channel.PresetsHandler;
 import net.judah.controllers.MPKTools;
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
 import net.judah.fx.EQ;
+import net.judah.fx.Gain;
+import net.judah.fx.MonoFilter;
 import net.judah.fx.Overdrive;
 import net.judah.fx.Reverb;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.fx.ReverbPlus.UpdatePanel;
-import net.judah.gui.settable.PresetsHandler;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.gui.widgets.Slider;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiInstrument;
-import net.judah.mixer.Channel;
-import net.judahzone.gui.Gui;
 
 public class EffectsRack extends JPanel implements MPKTools {
 
@@ -39,17 +43,17 @@ public class EffectsRack extends JPanel implements MPKTools {
     private final Channel channel;
     @Getter private final ChannelTitle title;
     @Getter private final PresetsHandler presets;
-
-    private final ArrayList<Row> labels = new ArrayList<>();
-    private final ArrayList<Row> knobs = new ArrayList<>();
+    @Getter private final EQPlus eq;
+    @Getter private final ReverbPlus reverb;
     private final Slider.FxSlider phase;
     private final Slider.FxSlider dampness;
     private final Slider.FxSlider clipping;
-    @Getter private final EQPlus eq;
-    @Getter private final ReverbPlus reverb;
     private final OD drive;
     private final TimePanel chorusTime;
     private final TimePanel delayTime;
+
+    private final ArrayList<ArrayList<Component>> labels = new ArrayList<>();
+    private final ArrayList<Row> knobs = new ArrayList<>();
 
     public EffectsRack(Channel ch, MidiInstrument bass) {
     	this.channel = ch;
@@ -61,55 +65,15 @@ public class EffectsRack extends JPanel implements MPKTools {
         eq = new EQPlus(channel);
         drive = new OD(channel);
         reverb = new ReverbPlus(ch);
-
         JudahClock clock = JudahMidi.getClock();
-
         delayTime = new TimePanel(ch.getDelay(), ch, clock);
         chorusTime = new TimePanel(ch.getChorus(), ch, clock);
 
-		// wet  room   d.time  d.fb
-		// O/D  cho1    cho2   cho3
-        Row lbls = new Row(ch);
-        ArrayList<Component> components = lbls.getControls();
-        components.add(new FxTrigger("Reverb", ch.getReverb(), ch));
-        components.add(new FxTrigger(" ", ch.getReverb(), ch)); // TODO rev+
-        components.add(new FxTrigger("Delay", ch.getDelay(), ch));
-        components.add(delayTime);
-        labels.add(lbls);
-
-        lbls = new Row(ch);
-        components = lbls.getControls();
-
-        JPanel od = Gui.wrap(new FxTrigger("O/D", ch.getOverdrive(), ch),
-        		Gui.resize(drive, Size.MODE_SIZE));
-        components.add(od);
-        components.add(Gui.resize(phase, Size.TINY));
-        components.add(new FxTrigger("Chorus", ch.getChorus(), ch));
-        components.add(chorusTime);
-        labels.add(lbls);
-
-		// EQ L/M/H  Vol
-		// Preset pArTy hiCut pan
-        lbls = new Row(ch);
-        components = lbls.getControls();
-        components.add(Gui.wrap(Gui.resize(clipping, Size.MICRO)));
-        components.add(new FxTrigger("   EQ   ", ch.getEq(), ch));
-        components.add(eq.getToggle());
-        components.add(new JLabel("Pan", JLabel.CENTER));
-        labels.add(lbls);
-
-        lbls = new Row(ch);
-        components = lbls.getControls();
-        components.add(presets);
-        components.add(new FxTrigger("LoCut", ch.getLoCut(), ch));
-        components.add(new FxTrigger("HiCut", ch.getHiCut(), ch));
-        components.add(new FxTrigger("Volume", ch.getGain(), ch));
-        labels.add(lbls);
-
-        knobs.add(new RowKnobs(ch, reverb));
-        knobs.add(new RowKnobs(ch, 1));
-        knobs.add(new RowKnobs(ch, eq));
-        knobs.add(new RowKnobs(ch, 3));
+        labels();
+        knobs.add(row0());
+        knobs.add(row1());
+        knobs.add(row2());
+        knobs.add(row3());
 
         GridBagLayout layout = new GridBagLayout();
         JPanel rows = new JPanel(layout);
@@ -122,8 +86,8 @@ public class EffectsRack extends JPanel implements MPKTools {
     			c.gridx = x;
     			c.gridy = y;
     			Component widget = (y % 2 == 0) ?
-    					labels.get(y / 2).getControls().get(x) :
-    					knobs.get(y / 2).getControls().get(x);
+    					labels.get(y / 2).get(x) :
+    					knobs.get(y / 2).get(x);
     			layout.setConstraints(widget, c);
     			rows.add(widget);
         	}
@@ -132,29 +96,37 @@ public class EffectsRack extends JPanel implements MPKTools {
         add(rows);
     }
 
-    Component getKnob(int row, int col) {
-    	return knobs.get(row).getControls().get(col);
-    }
-
-    Component getKnob(int idx) {
-    	int col = idx % 4;
+    Point refactor(int idx) {
     	// 0-3   row 0, col 0-3
     	// 4-7   row 2, col 0-3
     	// 8-11  row 1, col 0-3
     	// 12-15 row 3, col 0-3
+    	int col = idx % 4;
     	int firstOrder = idx / 8;
     	int compute = idx >= 8 ? idx - 8 : idx;
     	int secondOrder = (compute / 4) * 2;
     	int row = firstOrder + secondOrder;
-    	return getKnob(row, col);
+    	return new Point(row, col);
+    }
+
+    Effect getEffect(int idx) {
+    	Point p = refactor(idx);
+    	return knobs.get(p.x).getFx(p.y);
+    }
+
+    Component getKnob(int row, int col) {
+    	return knobs.get(row).get(col);
+    }
+
+    Component getKnob(int idx) {
+    	Point p = refactor(idx);
+    	return getKnob(p.x, p.y);
     }
 
 	public void update() {
         title.update();
-        for (Row lbl : labels)
-        	lbl.update();
-        for (Row knob : knobs)
-        	knob.update();
+        for (Row row : knobs)
+        	row.update();
         phase.update();
         dampness.update();
         clipping.update();
@@ -164,7 +136,8 @@ public class EffectsRack extends JPanel implements MPKTools {
 
 	public void update(Effect fx) {
 
-		// TODO time widget + LFO Time Widgets
+		if (fx == null)
+			updatePreset();
 
 		if (fx instanceof Reverb) {
 			dampness.update();
@@ -188,9 +161,10 @@ public class EffectsRack extends JPanel implements MPKTools {
 		}
 
 		for (Row row: knobs)
-			for (Component c : row.getControls())
-				if (c instanceof FxKnob knob && knob.getEffect() == fx)
-					knob.update();
+			for (Component c : row.list())
+				if (c instanceof FXAware knob && knob.getFx() == fx)
+					if (c instanceof Updateable up)
+						up.update();
 	}
 
 
@@ -223,7 +197,11 @@ public class EffectsRack extends JPanel implements MPKTools {
     		RTLogger.warn(c, "unknown: " + c + " " + c.getClass());
     		return;
     	}
-    	MainFrame.update(channel);
+
+    	if (c instanceof FXAware aware)
+    		MainFrame.updateFx(channel, aware.getFx());
+    	else // ?
+    		MainFrame.update(channel);
     }
 
     private class OD extends JComboBox<Overdrive.Algo> {
@@ -237,10 +215,90 @@ public class EffectsRack extends JPanel implements MPKTools {
 
 	public void updatePreset() {
 		presets.update();
-		for (Component c : knobs.get(3).getControls()) {
+		for (Component c : knobs.get(3).list()) {
 			if (c instanceof PresetsBtns btns)
 				btns.update();
 		}
+	}
+
+	private void labels() {
+		Channel ch = channel;
+		// wet  room   d.time  d.fb
+		// O/D  cho1    cho2   cho3
+        ArrayList<Component> lbls0 = new ArrayList<>();
+        lbls0.add(new FxTrigger("Reverb", ch.getReverb(), ch));
+        lbls0.add(new FxTrigger(" ", ch.getReverb(), ch)); // TODO rev+
+        lbls0.add(new FxTrigger("Delay", ch.getDelay(), ch));
+        lbls0.add(delayTime);
+        labels.add(lbls0);
+
+        JPanel od = Gui.wrap(new FxTrigger("O/D", ch.getOverdrive(), ch),
+        		Gui.resize(drive, Size.MODE_SIZE));
+
+        ArrayList<Component> lbls1 = new ArrayList<>();
+        lbls1.add(od);
+        lbls1.add(Gui.resize(phase, Size.TINY));
+        lbls1.add(new FxTrigger("Chorus", ch.getChorus(), ch));
+        lbls1.add(chorusTime);
+        labels.add(lbls1);
+
+		// EQ L/M/H  Vol
+		// Preset pArTy hiCut pan
+        ArrayList<Component> lbls2 = new ArrayList<>();
+        lbls2.add(Gui.wrap(Gui.resize(clipping, Size.MICRO)));
+        lbls2.add(new FxTrigger("   EQ   ", ch.getEq(), ch));
+        lbls2.add(eq.getToggle());
+        lbls2.add(new JLabel("Pan", JLabel.CENTER));
+        labels.add(lbls2);
+
+        ArrayList<Component> lbls3 = new ArrayList<>();
+        lbls3.add(presets);
+        lbls3.add(new FxTrigger("LoCut", ch.getLoCut(), ch));
+        lbls3.add(new FxTrigger("HiCut", ch.getHiCut(), ch));
+        lbls3.add(new FxTrigger("Volume", ch.getGain(), ch));
+        labels.add(lbls3);
+	}
+
+	private Row row0() {
+		Row row = new Row(channel);
+		row.add(reverb.getLeft());
+		row.add(reverb.getRight());
+		row.add(new FxKnob(channel, channel.getDelay(), Delay.Settings.Feedback.ordinal(),
+				"F/B", Delay.Settings.Type.ordinal()));
+		row.add(new FxKnob(channel, channel.getDelay(), Delay.Settings.DelayTime.ordinal(),
+				"Time", Delay.Settings.Sync.ordinal()));
+		return row;
+	}
+
+	private Row row1() {
+		Row row = new Row(channel);
+		row.add(new FxKnob(channel, channel.getOverdrive(), Overdrive.Settings.Drive.ordinal(),
+				"Gain", Overdrive.Settings.Clipping.ordinal()));
+		row.add(new FxKnob(channel, channel.getChorus(), Chorus.Settings.Depth.ordinal(),
+				Chorus.Settings.Depth.name(), Chorus.Settings.Phase.ordinal()));
+		row.add(new FxKnob(channel, channel.getChorus(), Chorus.Settings.Feedback.ordinal(),
+				"F/B", Chorus.Settings.Type.ordinal()));
+		row.add(new FxKnob(channel, channel.getChorus(), Chorus.Settings.Rate.ordinal(),
+				Chorus.Settings.Rate.name(), Chorus.Settings.Sync.ordinal(), true));
+		return row;
+	}
+
+	private Row row2() {
+		Row row = new Row(channel);
+		row.add(eq.getLeft());
+		row.add(eq.getCenter());
+		row.add(eq.getRight());
+		row.add(new FxKnob(channel, channel.getGain(), Gain.PAN, ""));
+		return row;
+	}
+
+	private Row row3() {
+		Row row = new Row(channel);
+		row.add(new PresetsBtns(channel));
+		row.add(new FxKnob(channel, channel.getLoCut(), MonoFilter.Settings.Frequency.ordinal(), "Hz."));
+		row.add(new FxKnob(channel, channel.getHiCut(), MonoFilter.Settings.Frequency.ordinal(), "Hz.", true));
+		row.add(new FxKnob(channel, channel.getGain(), Gain.VOLUME, ""));
+		return row;
 	}
 
 

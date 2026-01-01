@@ -9,8 +9,8 @@ import javax.swing.SwingUtilities;
 
 import judahzone.api.Chord;
 import judahzone.api.Key;
+import judahzone.gui.Pastels;
 import judahzone.util.Threads;
-import net.judahzone.gui.Pastels;
 
 public class ChordPlay extends JButton implements ChordListener, Pastels {
 	public static final String FANCY = " " + Key.SHARP + " " + Key.FLAT + " ";

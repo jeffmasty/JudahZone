@@ -17,16 +17,16 @@ import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
 import org.jaudiolibs.jnajack.JackMidi;
 import org.jaudiolibs.jnajack.JackMidi.Event;
+import org.jaudiolibs.jnajack.JackPort;
 
 import judahzone.api.Controller;
 import judahzone.api.Midi;
 import judahzone.api.MidiClock;
+import judahzone.jnajack.ZoneJackClient;
 import judahzone.util.Constants;
 import judahzone.util.RTLogger;
+import judahzone.util.Services;
 import judahzone.util.Threads;
-
-import org.jaudiolibs.jnajack.JackPort;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
@@ -37,14 +37,13 @@ import net.judah.controllers.KorgPads;
 import net.judah.controllers.Line6FBV;
 import net.judah.controllers.MPKmini;
 import net.judah.gui.MainFrame;
-import net.judah.jack.BasicClient;
 import net.judah.synth.ZoneMidi;
 import net.judah.synth.fluid.FluidSynth;
 
 
 /** Setup MIDI ports, handle MIDI integration with Jack,
  *  route midi from physical controllers */
-public class JudahMidi extends BasicClient implements Closeable {
+public class JudahMidi extends ZoneJackClient implements Closeable {
 	public static final String JACKCLIENT_NAME = "JudahMidi";
 
 	/** Hard-coded Line-In MidiPorts */ @RequiredArgsConstructor
@@ -79,7 +78,6 @@ public class JudahMidi extends BasicClient implements Closeable {
 	@Getter private final Jamstik jamstik;
     @Getter private JackPort fluidOut;
     @Getter private JackPort craveOut;
-	@Getter private static Requests requests;
     private JackPort clockIn;
     private JackPort keyboard;
     private JackPort pads;
@@ -108,7 +106,7 @@ public class JudahMidi extends BasicClient implements Closeable {
         jamstik = new Jamstik(zone);
         clock = new JudahClock(this, zone);
         a2j();
-        JudahZone.getServices().add(this);
+        Services.add(this);
         start();
     }
 
@@ -161,7 +159,6 @@ public class JudahMidi extends BasicClient implements Closeable {
     	inPorts.clear();
     	outPorts.clear();
 
-		requests = new Requests(jackclient);
     	for (OUT port : OUT.values())
             outPorts.add(jackclient.registerPort(port.port, MIDI, JackPortIsOutput));
         for (IN port : IN.values())
@@ -273,7 +270,7 @@ public class JudahMidi extends BasicClient implements Closeable {
             for (JackPort port : outPorts)
                 JackMidi.clearBuffer(port);
             // check to send midi_24 clock pulse
-            clock.jackFrame();
+            clock.pulse();
 
             // check for incoming midi
         	int eventCount;

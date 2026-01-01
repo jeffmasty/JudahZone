@@ -14,6 +14,7 @@ import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 
 import judahzone.api.Midi;
+import judahzone.gui.Gui;
 import judahzone.util.Constants;
 import judahzone.util.RTLogger;
 import net.judah.gui.Size;
@@ -23,7 +24,6 @@ import net.judah.seq.Edit.Type;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.automation.Automation.AutoBox;
 import net.judah.seq.track.MidiTrack;
-import net.judahzone.gui.Gui;
 
 class ProgramEdit extends AutoBox implements MidiConstants {
 

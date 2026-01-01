@@ -1,8 +1,8 @@
 package net.judah.song;
 
-import static net.judahzone.gui.Pastels.ORANGE;
-import static net.judahzone.gui.Pastels.PINK;
-import static net.judahzone.gui.Pastels.YELLOW;
+import static judahzone.gui.Pastels.ORANGE;
+import static judahzone.gui.Pastels.PINK;
+import static judahzone.gui.Pastels.YELLOW;
 
 import java.awt.Color;
 

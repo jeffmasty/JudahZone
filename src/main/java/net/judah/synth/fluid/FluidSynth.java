@@ -21,7 +21,7 @@ import net.judah.gui.MainFrame;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiInstrument;
 import net.judah.seq.SynthRack;
-import net.judah.seq.track.Computer.Update;
+import net.judah.seq.track.Computer;
 import net.judah.seq.track.PianoTrack;
 
 /** runs fluid command line and connects to FluidSynth stdin and stdout ports */
@@ -179,7 +179,7 @@ public final class FluidSynth extends MidiInstrument {
 		JudahMidi.queue(Midi.create(ShortMessage.PROGRAM_CHANGE, ch, idx, 0), midiPort);
 		for (PianoTrack p : tracks)
 			if (p.getCh() == ch)
-				MainFrame.updateTrack(Update.PROGRAM, p);
+				MainFrame.updateTrack(Computer.Update.PROGRAM, p);
 	}
 
 	public String getProg(int ch) {

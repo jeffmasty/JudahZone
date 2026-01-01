@@ -7,23 +7,23 @@ import java.util.Vector;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.swing.ImageIcon;
 
+import judahzone.gui.Icons;
 import judahzone.util.RTLogger;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
+import net.judah.channel.LineIn;
 import net.judah.drumkit.DrumMachine;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.midi.Actives;
 import net.judah.midi.MidiInstrument;
-import net.judah.mixer.LineIn;
 import net.judah.seq.track.PianoTrack;
 import net.judah.synth.ZoneMidi;
 import net.judah.synth.fluid.FluidSynth;
 import net.judah.synth.taco.Polyphony;
 import net.judah.synth.taco.TacoSynth;
 import net.judah.synth.taco.TacoTruck;
-import net.judahzone.gui.Icons;
 
 public class SynthRack {
 

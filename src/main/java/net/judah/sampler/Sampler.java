@@ -11,11 +11,11 @@ import judahzone.util.RTLogger;
 import judahzone.util.Threads;
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.channel.LineIn;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.SampleKnobs;
 import net.judah.mixer.Fader;
-import net.judah.mixer.LineIn;
 
 @Getter
 public class Sampler extends LineIn {

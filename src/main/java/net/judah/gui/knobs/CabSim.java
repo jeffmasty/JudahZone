@@ -11,8 +11,12 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.SwingConstants;
 
+import judahzone.gui.Gui;
+import judahzone.gui.Pastels;
+import judahzone.gui.Updateable;
 import judahzone.util.Constants;
-import judahzone.util.Folders;
+import net.judah.channel.Channel;
+import net.judah.channel.Instrument;
 import net.judah.fx.Convolution;
 import net.judah.fx.Convolution.Stereo;
 import net.judah.fx.MonoFilter;
@@ -21,19 +25,11 @@ import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.fx.FxTrigger;
 import net.judah.gui.widgets.DoubleSlider;
-import net.judah.mixer.Channel;
 import net.judah.mixer.IRDB;
-import net.judah.mixer.Instrument;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Pastels;
-import net.judahzone.gui.Updateable;
 
 public class CabSim extends JPanel implements Updateable {
 
-	private static final IRDB IR = new IRDB(Folders.getIR());
-	public static IRDB getDB() { return IR; }
-
-	private final JComboBox<String> cabinets = new JComboBox<String>(IR.getNames());
+	private final JComboBox<String> cabinets = new JComboBox<String>(IRDB.instance.getNames());
 	private static final int FREQUENCY = Settings.Frequency.ordinal();
 
 	private final Channel channel;
@@ -88,22 +84,22 @@ public class CabSim extends JPanel implements Updateable {
 	public void doKnob(int idx, int data2) {
 		if (idx == 4) {
 			cabinets.setSelectedIndex(Constants.ratio(data2 - 1, cabinets.getItemCount()));
-			MainFrame.updateChannel(channel, ir);
+			MainFrame.updateFx(channel, ir);
 		}
 		else if (idx == 5) {
 			wet.setValue(data2);
-			MainFrame.updateChannel(channel, ir);
+			MainFrame.updateFx(channel, ir);
 		}
 		else if (filter != null) {
 			if (idx == 6) {
 				MonoFilter fx = ((Instrument)channel).getHp();
 				fx.setFrequency(MonoFilter.knobToFrequency(data2));
-				MainFrame.updateChannel(channel, fx);
+				MainFrame.updateFx(channel, fx);
 			}
 			else if (idx == 7) {
 				MonoFilter fx = ((Instrument)channel).getLp();
 				fx.setFrequency(MonoFilter.knobToFrequency(data2));
-				MainFrame.updateChannel(channel, fx);
+				MainFrame.updateFx(channel, fx);
 			}
 
 		}

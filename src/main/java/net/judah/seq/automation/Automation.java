@@ -11,6 +11,8 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
 import judahzone.api.Midi;
+import judahzone.gui.Gui;
+import judahzone.gui.Pastels;
 import lombok.Getter;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
@@ -21,8 +23,6 @@ import net.judah.seq.track.Computer;
 import net.judah.seq.track.Computer.Update;
 import net.judah.seq.track.MidiTrack;
 import net.judah.song.TraxCombo;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Pastels;
 
 public class Automation extends KnobPanel implements MidiConstants {
 

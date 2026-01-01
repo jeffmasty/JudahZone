@@ -7,13 +7,13 @@ import javax.swing.ButtonGroup;
 import javax.swing.JMenu;
 import javax.swing.JRadioButtonMenuItem;
 
+import judahzone.gui.Actionable;
 import net.judah.drumkit.DrumType;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.seq.automation.Automation;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.TrackMenu;
-import net.judahzone.gui.Actionable;
 
 public class DrumMenu extends TrackMenu {
 

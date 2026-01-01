@@ -13,13 +13,13 @@ import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+import judahzone.gui.Gui;
+import judahzone.gui.Pastels;
 import judahzone.util.RTLogger;
 import judahzone.util.RTLogger.Participant;
 import lombok.Getter;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Pastels;
 
 /** GUI wrapper for LogService; registers/unregisters itself as a listener */
 public class Feedback extends KnobPanel {

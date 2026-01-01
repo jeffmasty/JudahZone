@@ -2,9 +2,9 @@ package net.judah.seq.track;
 
 import java.awt.Color;
 
+import judahzone.gui.Pastels;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.judahzone.gui.Pastels;
 
 @RequiredArgsConstructor 
 public enum Cue implements Pastels {

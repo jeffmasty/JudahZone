@@ -7,6 +7,9 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 
 import judahzone.api.Notification.Property;
+import judahzone.gui.Gui;
+import judahzone.gui.Icons;
+import judahzone.gui.Pastels;
 import judahzone.api.TimeListener;
 import lombok.Getter;
 import net.judah.JudahZone;
@@ -16,14 +19,11 @@ import net.judah.gui.knobs.LFOKnobs;
 import net.judah.gui.settable.SetCombo;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.LengthCombo;
-import net.judah.gui.widgets.StartBtn;
+import net.judah.gui.widgets.TransportBtn;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.seq.chords.ChordPlay;
 import net.judah.song.Overview;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Icons;
-import net.judahzone.gui.Pastels;
 import net.judahzone.scope.JudahScope;
 
 public class HQ extends JPanel implements TimeListener {
@@ -48,7 +48,7 @@ public class HQ extends JPanel implements TimeListener {
     	metro.setOpaque(true);
 
     	setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    	add(new StartBtn(clock));
+    	add(new TransportBtn(clock));
     	add(Gui.resize(scene, Size.SMALLER));
     	add(Gui.resize(new ChordPlay(zone.getChords()).makeFancy(), new Dimension(54, Size.STD_HEIGHT)));
     	add(new Btn(" Rec ", e->looper.trigger()));

@@ -1,7 +1,7 @@
 package net.judah.synth.fluid;
 
-import static net.judah.jack.BasicClient.INS;
-import static net.judah.jack.BasicClient.OUTS;
+import static judahzone.jnajack.ZoneJackClient.INS;
+import static judahzone.jnajack.ZoneJackClient.OUTS;
 import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsInput;
 import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsOutput;
 import static org.jaudiolibs.jnajack.JackPortType.AUDIO;
@@ -12,16 +12,15 @@ import java.security.InvalidParameterException;
 
 import org.jaudiolibs.jnajack.JackPort;
 
+import judahzone.jnajack.ZoneJackClient.Connect;
+import judahzone.jnajack.ZoneJackClient.PortBack;
+import judahzone.jnajack.ZoneJackClient.Request;
+import judahzone.jnajack.ZoneJackClient.Requests;
 import judahzone.util.Constants;
 import judahzone.util.RTLogger;
 import judahzone.util.Threads;
 import lombok.ToString;
 import net.judah.JudahZone;
-import net.judah.jack.BasicClient.Connect;
-import net.judah.jack.BasicClient.PortBack;
-import net.judah.jack.BasicClient.Request;
-import net.judah.jack.BasicClient.Requests;
-import net.judah.midi.JudahMidi;
 import net.judah.seq.Meta;
 import net.judah.seq.MetaMap;
 import net.judah.seq.SynthRack;
@@ -42,6 +41,7 @@ public class FluidAssistant implements PortBack {
 	private String loadFile;
 	private final int num;
 	private final String suffix;
+	private final JudahZone zone = JudahZone.getInstance();
 
 	// Creates new FluidSynth engines and manages the opening and connection of audio and midi ports.
 	public FluidAssistant(String trackName, String file) {
@@ -53,17 +53,19 @@ public class FluidAssistant implements PortBack {
 			throw new InvalidParameterException("Too many Fluid instances");
 		this.engineName = Constants.FLUID + num;
 		this.suffix = "-0" + num;
-		Requests audio = JudahZone.getInstance().getRequests();
 
+
+		Requests audio = zone.getRequests();
+		Requests midi = zone.getMidi().getRequests();
 		// make midi port // TODO non-static instance
-		JudahMidi.getRequests().add(new Request(this, engineName, MIDI, JackPortIsOutput));
+		midi.add(new Request(this, engineName, MIDI, JackPortIsOutput));
 		// make audio ports
 		audio.add(new Request(this, engineName + "_L", AUDIO, JackPortIsInput));
 		audio.add(new Request(this, engineName + "_R", AUDIO, JackPortIsInput));
 	}
 
 	public FluidAssistant(String name) {
-		this(name, "");
+		this(name, (String)null);
 	}
 
 	public FluidAssistant(String name, MetaMap map) {
@@ -103,13 +105,13 @@ public class FluidAssistant implements PortBack {
 			SynthRack.addEngine(runtime);
 			Threads.sleep(50); // let external process create ports
 			if (map == null)
-				JudahZone.getInstance().getSeq().addTrack(trackName, runtime);
+				zone.getSeq().addTrack(trackName, runtime);
 			else
-				JudahZone.getInstance().getSeq().addTrack(map, runtime);
+				zone.getSeq().addTrack(map, runtime);
 			// async port connections
-			JudahMidi.getRequests().add(new Connect(this, tri.midi, "midi" + suffix, MIDI, INS));
-			JudahZone.getInstance().getRequests().add(new Connect(this, tri.left, "midi" + suffix, AUDIO, OUTS));
-			JudahZone.getInstance().getRequests().add(new Connect(this, tri.right, "midi" + suffix, AUDIO, OUTS));
+			zone.getMidi().getRequests().add(new Connect(this, tri.midi, "midi" + suffix, MIDI, INS));
+			zone.getRequests().add(new Connect(this, tri.left, "midi" + suffix, AUDIO, OUTS));
+			zone.getRequests().add(new Connect(this, tri.right, "midi" + suffix, AUDIO, OUTS));
 
 			if (loadFile != null)
 				runtime.getTrack().load(loadFile);

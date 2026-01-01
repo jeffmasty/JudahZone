@@ -7,11 +7,12 @@ import javax.swing.JLabel;
 
 import judahzone.api.Effect;
 import judahzone.util.Pair;
-import net.judah.mixer.Channel;
+import lombok.Getter;
+import net.judah.channel.Channel;
 
-public class FxTrigger extends JLabel {
+public class FxTrigger extends JLabel implements FXAware {
 
-		protected final Effect fx;
+		@Getter protected final Effect fx;
 		FxTrigger(Pair p, Channel ch) {
 			this(p.key(), p.value() instanceof Effect ? (Effect)p.value() : null, ch);
 		}
@@ -25,5 +26,4 @@ public class FxTrigger extends JLabel {
 				}
 			});
 		}
-
 	}

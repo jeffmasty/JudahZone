@@ -13,25 +13,27 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import judahzone.api.RecordAudio;
+import judahzone.gui.Icons;
 import judahzone.util.AudioTools;
+import judahzone.util.Circular;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
 import judahzone.util.FromDisk;
+import judahzone.util.MP3;
 import judahzone.util.Memory;
 import judahzone.util.RTLogger;
 import judahzone.util.Recording;
 import judahzone.util.WavFile;
 import lombok.Getter;
+import net.judah.channel.Channel;
+import net.judah.channel.Instrument;
+import net.judah.channel.LineIn;
 import net.judah.drumkit.DrumMachine;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock;
-import net.judah.mixer.Channel;
-import net.judah.mixer.Instrument;
-import net.judah.mixer.LineIn;
 import net.judah.mixer.LoopMix;
 import net.judah.seq.track.DrumTrack;
 import net.judah.synth.taco.TacoTruck;
-import net.judahzone.gui.Icons;
 
 
 public class Loop extends Channel implements RecordAudio, Runnable {
@@ -39,7 +41,7 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 	private static final float STD_BOOST = 2.25f;
 	private static final float DRUM_BOOST = 0.85f;
 
-	protected final Looper looper;
+	@Getter protected final Looper looper;
 	protected final JudahClock clock;
     protected final Collection<LineIn> sources;
 
@@ -60,9 +62,17 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 	private boolean leadIn;
 	@Getter protected boolean drumTrack; // loopD not muted on verse/chorus changes // TODO setter/feedback
 
-    private final BlockingQueue<float[][]> newQueue = new LinkedBlockingQueue<>();
-	private final BlockingQueue<float[][]> oldQueue = new LinkedBlockingQueue<>();
-	private final BlockingQueue<Integer> locationQueue = new LinkedBlockingQueue<>();
+    // Pool of temporary frames used by the audio thread when creating new overdub buffers.
+    // Prefilled via factory; access is synchronized because both audio thread (producer)
+    // and overdub consumer (background) will touch it.
+    private static final int OVERDUB_QUEUE_CAPACITY = 64;
+    private final Circular<float[][]> overdubPool = new Circular<>(OVERDUB_QUEUE_CAPACITY,
+            () -> new float[STEREO][N_FRAMES]);
+    private final BlockingQueue<OverdubTask> overdubQueue = new LinkedBlockingQueue<>();
+    // concurrency helpers
+    private final AtomicInteger overdubDropped = new AtomicInteger(0);
+    private final Object tapeLock = new Object();
+    private volatile boolean deleted = false;
 
     public Loop(String name, String icon, Looper loops, Collection<LineIn> sources) {
 		super(name, true);
@@ -76,13 +86,24 @@ public class Loop extends Channel implements RecordAudio, Runnable {
     	new Thread(this).start(); // overdub listening
     }
 
-    public boolean isPlaying() {
-    	return dirty && length > 0; }
+    // Simple immutable task bundling index + old/new buffers
+    private static final class OverdubTask {
+        final int index;
+        final float[][] oldBuf;
+        final float[][] newBuf;
+        OverdubTask(int index, float[][] oldBuf, float[][] newBuf) {
+            this.index = index;
+            this.oldBuf = oldBuf;
+            this.newBuf = newBuf;
+        }
+    }
+
+    public boolean isPlaying() { return dirty && length > 0; }
 
 	public void setRecording(Recording sample) {
     	isRecording = false;
 		rewind();
-		tape = sample;
+		synchronized (tapeLock) { tape = sample; }
     	MainFrame.update(display);
 	}
 
@@ -99,15 +120,41 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 	}
 
 	@Override public void delete() {
-        if (dirty)
-        	tape.silence(length);
+        // stop any in-progress recording immediately and mark deleted
+        isRecording = false;
+        deleted = true;
+
+        // drop pending overdub tasks so they won't reference old buffers after we truncate/reset the tape.
+        overdubQueue.clear();
+
+        // Mutate the tape under tapeLock
+        synchronized (tapeLock) {
+            if (dirty) {
+                if (length > 0) {
+                    // committed recording: silence the used frames as before
+                    tape.silence(length);
+                } else {
+                    // initial/unfinished recording: discard any appended frames and reset
+                    Recording fresh = new Recording();
+                    for (int i = 0; i < INIT; i++) {
+                        fresh.add(new float[STEREO][N_FRAMES]);
+                    }
+                    tape = fresh;
+                }
+            }
+        }
+
+        // reset loop state
         length = current = stopwatch = 0;
         factor = 1f;
-		isRecording = timer = onMute = dirty = timer = false;
+		isRecording = timer = onMute = dirty = false;
 		rewind();
 		AudioTools.silence(left);
         AudioTools.silence(right);
         display.clear();
+
+        // reset deleted flag so loop can be reused safely if desired
+        deleted = false;
 	}
 
 	public void save() {
@@ -134,13 +181,12 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 		    }
 			rewind();
 			length = 0;
-			tape = Recording.load(dotWav); // TODO buffering
+			tape = MP3.load(dotWav, 0.25f); // TODO LINE_LEVEL // TODO buffering
 			length = tape.size();
 			dirty = true;
-			if (primary) {
-				rewind();
+			if (primary)
 				looper.setPrimary(this);
-			}
+
 			MainFrame.update(display);
 		} catch (Exception e) { RTLogger.warn(name, e);}
     }
@@ -289,6 +335,7 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 		// no-op
 	}
 
+	@Override
 	public void process(FloatBuffer left, FloatBuffer right) {
 		if (!dirty && length == 0)
 			return;
@@ -313,12 +360,14 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 		if (overflow(current))
 			current = 0;
 
-		if (current >= tape.size()) {
-			RTLogger.log(name, "play error " + tape.size() + " vs. " + current + " vs. " + length);
-			current = 0;
-			tapeCounter.set(current);
+		synchronized (tapeLock) {
+			if (current >= tape.size()) {
+				RTLogger.log(name, "play error " + tape.size() + " vs. " + current + " vs. " + length);
+				current = 0;
+				tapeCounter.set(current);
+			}
+			playBuffer = tape.get(current);
 		}
-		playBuffer = tape.get(current);
 		if (!onMute)
 			fx(left, right);
 	}
@@ -333,9 +382,64 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 	}
 
 	private void recordFrame() {
-		// merge live recording sources into newBuffer
-		float[][] newBuffer = current < tape.size() ? tape.get(current) : Memory.STEREO.getFrame();
+		// Decide whether to record into existing buffer or create an off-thread overdub task
+		// If the buffer currently being played (playBuffer) is the same as tape.get(current),
+		// we must not mutate it in-place — create a new buffer and enqueue an overdub task.
+		// Otherwise it's safe to write directly into the existing tape frame.
 
+		// Ensure we have a stable view of current index; current is set by caller.
+		if (current < tape.size()) {
+			// existing frame
+			float[][] existing;
+			synchronized (tapeLock) { existing = tape.get(current); }
+
+			// if existing buffer is being played, create a new buffer for overdub and enqueue task
+			if (existing == playBuffer && playBuffer != null) {
+				// try to acquire a temporary buffer from pool (audio thread must not block)
+				float[][] newBuffer = null;
+				synchronized (overdubPool) {
+					try {
+						newBuffer = overdubPool.get(); // Circular.get() returns oldest and advances
+						AudioTools.silence(newBuffer); // likely dirty
+					} catch (Exception e) {
+						// pool empty or error; fall back to Memory (still avoids allocating on audio path often)
+						newBuffer = Memory.STEREO.getFrame();
+					}
+				}
+
+				captureInto(newBuffer);
+
+				// bundle task and offer non-blocking
+				OverdubTask task = new OverdubTask(current, existing, newBuffer);
+				boolean offered = overdubQueue.offer(task);
+				if (!offered) {
+					overdubDropped.incrementAndGet();
+					RTLogger.warn(name, "Overdub queue full, dropped overdub at idx " + current);
+					// return the temp buffer to pool if possible
+					synchronized (overdubPool) {
+						try { overdubPool.add(newBuffer); } catch (Throwable ignored) {}
+					}
+				}
+			} else {
+				// safe to record directly into the existing frame
+				synchronized (tapeLock) {
+					captureInto(existing);
+				}
+			}
+		}
+		else {
+			// no existing frame: allocate new frame (from pool if possible), record into it, then append
+			float[][] newBuffer = Memory.STEREO.getFrame();
+			captureInto(newBuffer);
+        	synchronized (tapeLock) {
+        		tape.add(newBuffer);
+        	}
+        	looper.catchUp(current);
+		}
+	}
+
+	/** helper to perform the per-source adds into the provided target buffer */
+	private void captureInto(float[][] target) {
 		float amp = STD_BOOST;
     	if (leadIn) { // scratchy if sound blasted into first frame (rough windowing)
     		amp *= 0.33f;
@@ -351,30 +455,17 @@ public class Loop extends Channel implements RecordAudio, Runnable {
             if (solo != null && in != solo && this == d) continue;
 
             if (in instanceof Instrument)
-            	recordCh(in.getLeft(), in.getRight(), newBuffer, amp);
+            	recordCh(in.getLeft(), in.getRight(), target, amp);
             else if (in instanceof TacoTruck synth) {
             	if (!synth.isMuteRecord() && !synth.isOnMute())
-            		recordCh(synth.getLeft(), synth.getRight(), newBuffer, amp * synth.getGain().getPreamp());
+            		recordCh(synth.getLeft(), synth.getRight(), target, amp * synth.getGain().getPreamp());
             }
             else if (in instanceof DrumMachine drumz)
             	for (DrumTrack track : drumz.getTracks())
             		if (!track.getKit().isMuteRecord())
             			recordCh(track.getKit().getLeft(), track.getKit().getRight(),
-            				newBuffer, DRUM_BOOST);
+            				target, DRUM_BOOST);
         }
-
-    	if (current < tape.size()) {
-    		if (tape.get(current) != newBuffer) {
-				// off-thread overdub
-				oldQueue.add(playBuffer);
-				newQueue.add(newBuffer);
-				locationQueue.add(current);
-    		}
-    	}
-    	else {
-        	tape.add(newBuffer);
-        	looper.catchUp(current);
-    	}
 	}
 
     private void recordCh(FloatBuffer sourceLeft, FloatBuffer sourceRight, float[][] target, float amp) {
@@ -382,15 +473,58 @@ public class Loop extends Channel implements RecordAudio, Runnable {
     	AudioTools.add(amp, sourceRight, target[RIGHT]);
     }
 
-    /** overdub */
+    /** overdub consumer */
 	@Override public void run() {
 		try {
-			do {
-				int idx = locationQueue.take();
-				tape.set(idx, AudioTools.overdub(newQueue.take(), oldQueue.take()));
-			} while (true);
+			while (true) {
+				OverdubTask task = overdubQueue.take(); // blocks consumer thread
+
+				// If loop has been deleted, skip processing and return temp buffer to pool
+				if (deleted) {
+					synchronized (overdubPool) { try { overdubPool.add(task.newBuf); } catch (Throwable ignored) {} }
+					continue;
+				}
+
+				try {
+					// Merge new additions into existing buffer (background thread)
+					float[][] merged = AudioTools.overdub(task.newBuf, task.oldBuf);
+
+					// Ensure we don't store a buffer that is also the temporary newBuf/oldBuf.
+					// If merged aliases one of those, clone for tape store so we can safely return temp buffer to pool.
+					final float[][] toStore;
+					if (merged == task.newBuf || merged == task.oldBuf) {
+						toStore = AudioTools.clone(merged);
+					} else {
+						toStore = merged;
+					}
+
+					// protect tape mutation in case Recording is not thread-safe
+					synchronized (tapeLock) {
+						if (!deleted) {
+							tape.set(task.index, toStore);
+						}
+					}
+
+					// return the temporary newBuf to the pool for reuse
+					synchronized (overdubPool) {
+						try { overdubPool.add(task.newBuf); } catch (Throwable ignored) {}
+					}
+				} catch (Throwable t) {
+					RTLogger.warn(name, t);
+					// attempt to return temp buffer if possible
+					synchronized (overdubPool) { try { overdubPool.add(task.newBuf); } catch (Throwable ignored) {} }
+				}
+			}
+		}
+		catch (InterruptedException ie) {
+			Thread.currentThread().interrupt();
 		}
 		catch (Exception e) { RTLogger.warn(name, e);}
+	}
+
+	/** expose overdub drop metric for diagnostics */
+	public int getOverdubDropped() {
+		return overdubDropped.get();
 	}
 
 }

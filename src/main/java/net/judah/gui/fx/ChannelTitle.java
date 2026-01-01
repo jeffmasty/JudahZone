@@ -9,17 +9,17 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
+import judahzone.gui.Gui;
+import judahzone.gui.Pastels;
 import net.judah.JudahZone;
+import net.judah.channel.Channel;
+import net.judah.channel.LineIn;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.widgets.Btn;
 import net.judah.looper.Loop;
 import net.judah.midi.MidiInstrument;
-import net.judah.mixer.Channel;
-import net.judah.mixer.LineIn;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Pastels;
 
 public class ChannelTitle extends JPanel {
 

@@ -15,13 +15,13 @@ import judahzone.util.RTLogger;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
+import net.judah.channel.Channel;
 import net.judah.fx.MonoFilter;
 import net.judah.fx.MonoFilter.Type;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.SynthKnobs;
 import net.judah.midi.ChannelCC;
 import net.judah.midi.Panic;
-import net.judah.mixer.Channel;
 import net.judah.seq.automation.ControlChange;
 import net.judah.seq.track.PianoTrack;
 

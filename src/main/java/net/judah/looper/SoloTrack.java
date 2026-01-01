@@ -5,8 +5,8 @@ import java.util.Collection;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.channel.LineIn;
 import net.judah.gui.MainFrame;
-import net.judah.mixer.LineIn;
 
 @EqualsAndHashCode(callSuper = true)
 public class SoloTrack extends Loop {

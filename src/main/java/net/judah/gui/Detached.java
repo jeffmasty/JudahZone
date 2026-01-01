@@ -13,8 +13,8 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
 
-import net.judahzone.gui.Floating;
-import net.judahzone.gui.Icons;
+import judahzone.gui.Floating;
+import judahzone.gui.Icons;
 
 public class Detached extends JFrame {
 

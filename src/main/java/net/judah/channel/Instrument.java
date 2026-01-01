@@ -1,14 +1,14 @@
-package net.judah.mixer;
+package net.judah.channel;
 
 import org.jaudiolibs.jnajack.JackPort;
 
+import judahzone.gui.Icons;
 import judahzone.util.AudioTools;
 import judahzone.util.Constants;
 import lombok.Getter;
 import net.judah.fx.Convolution;
 import net.judah.fx.MonoFilter;
 import net.judah.fx.MonoFilter.Type;
-import net.judahzone.gui.Icons;
 
 @Getter
 public class Instrument extends LineIn {

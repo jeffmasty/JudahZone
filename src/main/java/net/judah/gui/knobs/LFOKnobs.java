@@ -4,13 +4,13 @@ import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
 import judahzone.api.Effect;
+import judahzone.gui.Gui;
 import lombok.Getter;
-import net.judah.fx.LFO;
+import net.judah.channel.Channel;
 import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
-import net.judah.mixer.Channel;
+import net.judah.midi.LFO;
 import net.judah.mixer.DJJefe;
-import net.judahzone.gui.Gui;
 
 public class LFOKnobs extends KnobPanel {
 

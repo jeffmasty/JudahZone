@@ -4,23 +4,35 @@ import static judahzone.util.WavConstants.FFT_SIZE;
 
 import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import be.tarsos.dsp.util.fft.FFT;
 import judahzone.api.Effect;
 import judahzone.util.AudioTools;
 import judahzone.util.RTLogger;
 import lombok.Getter;
-import net.judah.gui.knobs.CabSim;
-import net.judah.mixer.IRDB;
 
 public abstract class Convolution implements Effect {
 
     public enum Settings { Cabinet, Wet}
-    protected static final IRDB db = CabSim.getDB();
+    private static List<String> names = settingNames();
+    private static List<String> settingNames() {
+    	ArrayList<String> build = new ArrayList<String>();
+    	for (Settings s : Settings.values())
+    		build.add(s.name());
+    	return Collections.unmodifiableList(build);
+    }
+
+    protected static IRProvider db;
+	public static void setIRDB(IRProvider provider) { db = provider; }
+
 
     @Getter protected final String name = Convolution.class.getSimpleName();
     @Getter protected final int paramCount = Settings.values().length;
+    @Override public List<String> getSettingNames() { return names; }
 
     // ======================================================================
     /** Wrapper around 2 Mono Convolvers */
@@ -57,7 +69,7 @@ public abstract class Convolution implements Effect {
         // pointer to currently selected IR spectrum (from DB)
         protected float[] irFreq = new float[FFT_SIZE * 2];
         protected float wet = 0.9f;
-        protected int cabinet = 0;
+        protected int cabinet = -1; // lazy load
 
         // instance working buffers (allocated once)
         protected final float[] fftInOut = new float[FFT_SIZE * 2];
@@ -65,20 +77,16 @@ public abstract class Convolution implements Effect {
         protected final float[] work0 = new float[N_FRAMES];
         protected final float[] work1 = new float[N_FRAMES];
 
-        public Mono() {
-            if (db != null && db.size() > 0) {
-                cabinet = 0;
-                irFreq = db.get(0).irFreq();
-            }
-            reset();
-        }
-
         @Override public void reset() {
             Arrays.fill(overlap, 0f);
         }
 
         @Override public void set(int idx, int value) {
             if (idx == Settings.Cabinet.ordinal()) {
+            	if (db == null) {
+            		RTLogger.warn(this, "No IRDB set");
+            		return;
+            	}
                 if (db.size() == 0) {
                     RTLogger.warn(this, "No cabinets loaded");
                     return;
@@ -100,6 +108,13 @@ public abstract class Convolution implements Effect {
                 return;
             }
             throw new InvalidParameterException("Unknown param index: " + idx);
+        }
+
+        @Override
+        public void activate() {
+        	if (cabinet < 0)  // first time (DB allowed to load)
+        		if (db != null) // if null user gets zeros
+        			set(Settings.Cabinet.ordinal(), 0);
         }
 
         @Override public int get(int idx) {

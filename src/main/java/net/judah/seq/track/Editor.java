@@ -12,6 +12,7 @@ import javax.swing.JMenu;
 
 import judahzone.api.Key;
 import judahzone.api.Midi;
+import judahzone.gui.Actionable;
 import judahzone.util.RTLogger;
 import lombok.Getter;
 import net.judah.drumkit.DrumType;
@@ -26,7 +27,6 @@ import net.judah.seq.MidiTools;
 import net.judah.seq.Prototype;
 import net.judah.seq.beatbox.RemapView;
 import net.judah.seq.track.Computer.Update;
-import net.judahzone.gui.Actionable;
 
 public class Editor {
 

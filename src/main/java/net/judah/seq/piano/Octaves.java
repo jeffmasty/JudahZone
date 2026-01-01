@@ -8,11 +8,11 @@ import java.awt.event.MouseEvent;
 import javax.swing.SwingUtilities;
 
 import judahzone.api.Key;
+import judahzone.gui.Gui;
 import judahzone.util.RTLogger;
 import judahzone.util.Threads;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.CenteredCombo;
-import net.judahzone.gui.Gui;
 
 public class Octaves extends CenteredCombo<Integer> {
 

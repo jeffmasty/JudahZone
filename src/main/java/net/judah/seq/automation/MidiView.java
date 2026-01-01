@@ -14,6 +14,7 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 
 import judahzone.api.Midi;
+import judahzone.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.Btn;
 import net.judah.midi.JudahMidi;
@@ -23,7 +24,6 @@ import net.judah.seq.MidiNote;
 import net.judah.seq.MidiTools;
 import net.judah.seq.automation.Automation.AutoBox;
 import net.judah.seq.track.MidiTrack;
-import net.judahzone.gui.Gui;
 
 public class MidiView extends AutoBox {
 

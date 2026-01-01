@@ -7,14 +7,12 @@ package net.judah.fx;
  *
  * Derived from code in RasmsuDSP
  * Copyright (c) 2006, Karl Helgason
- * All rights reserved.
- */
+ * All rights reserved. */
 
 import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 import java.util.Arrays;
 
-import lombok.Getter;
 import lombok.Setter;
 
 /** The classic Freeverb algorithm, true stereo with independent L/R filter networks */
@@ -32,9 +30,6 @@ public final class Freeverb extends Reverb {
     private static final float initialwet = 0.4f;
     private static final float initialdry = 0.5f;//1;
     private static final float initialwidth = 0.9f;
-
-    @Getter private final int paramCount = Settings.values().length;
-//    @Getter private boolean active;
 
     private float roomsize;
     private float damp;
@@ -378,21 +373,5 @@ public final class Freeverb extends Reverb {
         for (Comb r : combR)
             r.reset();
     }
-
-//    @Override
-//    public void setActive(boolean active) {
-//        this.active = active;
-//        if (active) return;
-//        Threads.execute(() -> { // clear the echo
-//            for (Allpass l : allpassL)
-//                l.reset();
-//            for (Comb l : combL)
-//                l.reset();
-//            for (Allpass r : allpassR)
-//                r.reset();
-//            for (Comb r : combR)
-//                r.reset();
-//        });
-//    }
 
 }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
+import net.judah.channel.Channel;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.sampler.Sample;

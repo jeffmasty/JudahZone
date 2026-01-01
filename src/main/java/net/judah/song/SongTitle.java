@@ -12,6 +12,9 @@ import judahzone.api.Signature;
 import judahzone.api.TimeListener;
 import judahzone.api.TimeProvider;
 import judahzone.api.Notification.Property;
+import judahzone.gui.Gui;
+import judahzone.gui.Icons;
+import judahzone.gui.Pastels;
 import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
@@ -24,9 +27,6 @@ import net.judah.seq.chords.ChordPlay;
 import net.judah.seq.chords.Chords;
 import net.judah.seq.chords.Scale;
 import net.judah.seq.track.ChannelTrack;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Icons;
-import net.judahzone.gui.Pastels;
 
 public class SongTitle extends JPanel implements TimeListener {
 

@@ -6,11 +6,11 @@ import java.util.ArrayList;
 
 import javax.swing.JComboBox;
 
+import judahzone.gui.Gui;
 import judahzone.util.Folders;
 import net.judah.JudahZone;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.FileRender;
-import net.judahzone.gui.Gui;
 
 public class ChordProCombo extends JComboBox<File> {
 

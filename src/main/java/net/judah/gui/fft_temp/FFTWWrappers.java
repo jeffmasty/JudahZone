@@ -1,4 +1,4 @@
-package net.judah.gui.scope.fft_temp;
+package net.judah.gui.fft_temp;
 
 //import org.apache.commons.math3.complex.Complex;
 //import org.bytedeco.fftw.global.fftw3;

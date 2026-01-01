@@ -13,6 +13,8 @@ import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 
 import judahzone.api.Midi;
+import judahzone.gui.Gui;
+import judahzone.gui.Pastels;
 import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumMachine;
 import net.judah.drumkit.DrumSample;
@@ -23,8 +25,6 @@ import net.judah.gui.widgets.Knob.KnobListener;
 import net.judah.midi.Actives;
 import net.judah.midi.JudahMidi;
 import net.judah.seq.MidiConstants;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Pastels;
 
 public class KitPad extends Gui.Opaque implements KnobListener {
 

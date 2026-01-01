@@ -51,18 +51,71 @@ public class Panic implements Runnable  {
 		Threads.execute(this);
 	}
 
-	@Override public void run() {
-		try {
-			if (port != null)
-				for (int i = 0; i < 128; i++)
-					JudahMidi.queue(new ShortMessage(ShortMessage.NOTE_OFF, channel, i, 0), port);
-			else
-				for (int i = 0; i < 128; i++)
-					engine.send(new ShortMessage(ShortMessage.NOTE_OFF, channel, i, 0), JudahMidi.ticker());
+//	@Override public void run() {
+//		try {
+//			if (port != null)
+//				for (int i = 0; i < 128; i++)
+//					JudahMidi.queue(new ShortMessage(ShortMessage.NOTE_OFF, channel, i, 0), port);
+//			else
+//				for (int i = 0; i < 128; i++)
+//					engine.send(new ShortMessage(ShortMessage.NOTE_OFF, channel, i, 0), JudahMidi.ticker());
+//
+//		} catch (InvalidMidiDataException e) {
+//			RTLogger.warn(this, e);
+//		}
+//	}
 
-		} catch (InvalidMidiDataException e) {
-			RTLogger.warn(this, e);
-		}
-	}
+    @Override public void run() {
+        try {
+            sendPanicInternal(port, engine, channel);
+        } catch (InvalidMidiDataException e) {
+            RTLogger.warn(this, e);
+        }
+    }
+
+	// new synchronous helper: send panic now on calling thread
+    public static void panicNow(JackPort port, int channel) {
+        try {
+            sendPanicInternal(port, null, channel);
+        } catch (Throwable t) {
+            RTLogger.warn("Panic", t);
+        }
+    }
+
+    public static void panicNow(Engine engine, int channel) {
+        try {
+            sendPanicInternal(null, engine, channel);
+        } catch (Throwable t) {
+            RTLogger.warn("Panic", t);
+        }
+    }
+
+    private static void sendPanicInternal(JackPort port, Engine engine, int channel) throws InvalidMidiDataException {
+        try {
+            // Preferred: minimal CC panic messages
+            ShortMessage reset = new ShortMessage(ShortMessage.CONTROL_CHANGE, channel, 121, 0);
+            ShortMessage allSoundOff = new ShortMessage(ShortMessage.CONTROL_CHANGE, channel, 120, 0);
+            ShortMessage allNotesOff = new ShortMessage(ShortMessage.CONTROL_CHANGE, channel, 123, 0);
+
+            if (port != null) {
+                JudahMidi.queue(reset, port);
+                JudahMidi.queue(allSoundOff, port);
+                JudahMidi.queue(allNotesOff, port);
+            } else if (engine != null) {
+                engine.send(reset, JudahMidi.ticker());
+                engine.send(allSoundOff, JudahMidi.ticker());
+                engine.send(allNotesOff, JudahMidi.ticker());
+            }
+        } catch (InvalidMidiDataException e) {
+            // fallback to 128 NOTE_OFFs
+            if (port != null) {
+                for (int i = 0; i < 128; i++)
+                    JudahMidi.queue(new ShortMessage(ShortMessage.NOTE_OFF, channel, i, 0), port);
+            } else if (engine != null) {
+                for (int i = 0; i < 128; i++)
+                    engine.send(new ShortMessage(ShortMessage.NOTE_OFF, channel, i, 0), JudahMidi.ticker());
+            }
+        }
+    }
 
 }

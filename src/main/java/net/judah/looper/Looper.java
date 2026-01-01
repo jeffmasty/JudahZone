@@ -6,20 +6,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Vector;
 
-import judahzone.api.TimeListener;
 import judahzone.api.Notification.Property;
+import judahzone.gui.Updateable;
+import judahzone.api.TimeListener;
 import judahzone.util.Constants;
 import judahzone.util.Memory;
 import judahzone.util.RTLogger;
 import judahzone.util.Recording;
 import judahzone.util.Threads;
 import lombok.Getter;
+import net.judah.channel.Channel;
+import net.judah.channel.LineIn;
 import net.judah.gui.MainFrame;
 import net.judah.gui.widgets.LoopWidget;
 import net.judah.midi.JudahClock;
-import net.judah.mixer.Channel;
-import net.judah.mixer.LineIn;
-import net.judahzone.gui.Updateable;
 
 @Getter
 public class Looper extends ArrayList<Loop> implements TimeListener, Updateable {
@@ -382,6 +382,11 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable 
 			sb.append("Empty");
 		}
 	return sb.toString();
+	}
+
+	// testing LoopEffect
+	protected void setType(LoopType t) {
+		type = t;
 	}
 
 }

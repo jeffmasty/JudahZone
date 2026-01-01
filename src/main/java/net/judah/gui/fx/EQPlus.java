@@ -5,7 +5,11 @@ import java.awt.Color;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import judahzone.gui.Gui;
+import judahzone.gui.Pastels;
+import judahzone.gui.Updateable;
 import lombok.Getter;
+import net.judah.channel.Channel;
 import net.judah.fx.EQ;
 import net.judah.fx.EQ.EqBand;
 import net.judah.gui.Bindings;
@@ -13,18 +17,12 @@ import net.judah.gui.widgets.Click;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.Knob.KnobListener;
-import net.judah.mixer.Channel;
 import net.judah.seq.MidiConstants;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Pastels;
-import net.judahzone.gui.Updateable;
 
 public class EQPlus implements Updateable {
 	private static final Color SHIFTED = Pastels.MY_GRAY;
 
-	@Getter private final EQKnob left = new EQKnob(EqBand.Bass);
-	@Getter private final EQKnob center = new EQKnob(EqBand.Mid);
-	@Getter private final EQKnob right = new EQKnob(EqBand.High);
+	@Getter private final EQKnob left, center, right;
 	@Getter private final Click toggle = new Click("EQ+");
 	private final Channel channel;
 	private final EQ eq;
@@ -32,6 +30,9 @@ public class EQPlus implements Updateable {
 	public EQPlus(Channel ch) {
 		this.channel = ch;
 		this.eq = channel.getEq();
+		left = new EQKnob(EqBand.Bass, eq);
+		center = new EQKnob(EqBand.Mid, eq);
+		right = new EQKnob(EqBand.High, eq);
 		toggle.addActionListener(e->toggle());
 	}
 
@@ -55,18 +56,23 @@ public class EQPlus implements Updateable {
 		right.update();
 	}
 
-	class EQKnob extends JPanel implements Updateable {
-		private EQ.EqBand band;
-		private Overloaded knob;
+	class EQKnob extends JPanel implements Updateable, FXAware {
+
+		private final EQ.EqBand band;
+		@Getter private final EQ fx;
+		private final Overloaded knob;
 		private JLabel label;
-		EQKnob(EQ.EqBand band) {
+		EQKnob(EQ.EqBand band, EQ fx) {
 			this.band = band;
+			this.fx = fx;
 			knob = new Overloaded();
 			add(knob);
 			label = new JLabel(band.name(), JLabel.LEFT);
 			label.setFont(Gui.FONT11);
 			add(label);
 		}
+
+
 		@Override public void update() {
 			knob.update();
 			Color bg = channel.isActive(eq) ? Bindings.getFx(eq.getClass()) : null;

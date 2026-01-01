@@ -8,9 +8,9 @@ import java.util.ArrayList;
 import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 
+import judahzone.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.seq.track.MidiTrack;
-import net.judahzone.gui.Gui;
 
 public class PatternLauncher extends JPanel {
 	private static final int HEIGHT = Size.STD_HEIGHT * 2 + 26;

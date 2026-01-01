@@ -13,8 +13,8 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import judahzone.gui.Gui;
 import judahzone.util.Constants;
-import net.judahzone.gui.Gui;
 
 public class SheetMusicPnl extends JPanel {
         Image image;

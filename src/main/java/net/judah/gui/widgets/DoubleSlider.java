@@ -1,8 +1,8 @@
 package net.judah.gui.widgets;
 
 import judahzone.api.Effect;
+import judahzone.gui.Updateable;
 import net.judah.gui.MainFrame;
-import net.judahzone.gui.Updateable;
 
 public class DoubleSlider extends RangeSlider implements Updateable {
 

@@ -1,6 +1,8 @@
 package net.judah.gui.widgets;
 
-import static net.judahzone.scope.RMSMeter.*;
+import static judahzone.util.AudioMetrics.*;
+
+//import static net.judahzone.scope.RMSMeter.*;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -8,12 +10,12 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
+import judahzone.api.Live;
+import judahzone.gui.Pastels;
+import judahzone.util.AudioMetrics;
+import judahzone.util.AudioMetrics.RMS;
 import judahzone.util.Constants;
 import judahzone.util.Rainbow;
-import judahzone.util.Recording;
-import net.judahzone.gui.Pastels;
-import net.judahzone.scope.Live;
-import net.judahzone.scope.RMS;
 
 // Live display starts at right edge, older frames move left
 public class RMSWidget extends BufferedImage implements Live {
@@ -110,13 +112,54 @@ public class RMSWidget extends BufferedImage implements Live {
 	    lambdaLoc = width - lambdaWidth - 8 /*MARGIN*/;
 	}
 
-	@Override public void analyze(Recording buffer) {
-		amplitudes.add(RMS.analyze(new float[][] {buffer.getChannel(0), buffer.getChannel(1)}));
+	@Override public void analyze(float[] left, float[] right) {
+		amplitudes.add(analyze(new float[][] {left, right}));
 		while(amplitudes.size() > width)
 			amplitudes.removeFirst(); // roll image/data left
 		generateImage();
 	}
 
+	public static RMS analyze(float[] channel) {
+	    float sumPositive = 0;
+	    float sumNegative = 0;
+	    int countPositive = 0;
+	    int countNegative = 0;
+	    float min = Float.MAX_VALUE;
+	    float max = Float.MIN_VALUE;
+
+	    for (float val : channel) {
+	        if (val > 0) {
+	            sumPositive += val;
+	            countPositive++;
+	        } else if (val < 0) {
+	            sumNegative += val;
+	            countNegative++;
+	        }
+	        if (val < min)
+	            min = val;
+	        if (val > max)
+	            max = val;
+	    }
+
+	    float avgPositive = countPositive > 0 ? sumPositive / countPositive : 0;
+	    float avgNegative = countNegative > 0 ? sumNegative / countNegative : 0;
+	    float rms = AudioMetrics.rms(channel);
+	    float peak = hiLo(max, min);
+	    float amp = hiLo(avgPositive, avgNegative);
+	    return new RMS(rms, peak, amp);
+	}
+
+	public static RMS analyze(float[][] in) {
+		RMS left = analyze(in[0]);
+		RMS right = analyze(in[1]);
+		return left.rms() > right.rms() ? left : right;
+	}
+
+	private static float hiLo(float pos, float neg) {
+		if (pos > Math.abs(neg))
+			return pos;
+		return Math.abs(neg);
+	}
 }
 
 

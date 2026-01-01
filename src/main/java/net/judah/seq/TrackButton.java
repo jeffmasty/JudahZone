@@ -11,12 +11,12 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 
+import judahzone.gui.Gui;
+import judahzone.gui.Pastels;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.PianoTrack;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Pastels;
 
 public class TrackButton extends JLabel {
 	private static final Border highlight = BorderFactory.createRaisedSoftBevelBorder();

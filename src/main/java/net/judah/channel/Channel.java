@@ -1,0 +1,272 @@
+package net.judah.channel;
+
+import java.nio.FloatBuffer;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.ImageIcon;
+
+import judahzone.api.Effect;
+import judahzone.api.Effect.RTEffect;
+import judahzone.util.AudioMetrics;
+import judahzone.util.AudioTools;
+import judahzone.util.RTLogger;
+import judahzone.util.Threads;
+import lombok.Getter;
+import net.judah.JudahZone;
+import net.judah.fx.Chorus;
+import net.judah.fx.Compressor;
+import net.judah.fx.Convolution;
+import net.judah.fx.Delay;
+import net.judah.fx.EQ;
+import net.judah.fx.Filter;
+import net.judah.fx.Freeverb;
+import net.judah.fx.Gain;
+import net.judah.fx.Overdrive;
+import net.judah.fx.Reverb;
+import net.judah.fx.StereoBus;
+import net.judah.gui.MainFrame;
+import net.judah.gui.fx.EffectsRack;
+import net.judah.gui.knobs.LFOKnobs;
+import net.judah.midi.LFO;
+import net.judah.mixer.DJFilter;
+import net.judah.mixer.Preset;
+import net.judah.mixer.Setting;
+
+/** A Gui focussed effects bus for input or output audio
+ * Publishes per-channel RMS scalars computed on the RT thread. {@link #getLastRmsLeft()} / {@link #getLastRmsRight()}
+ */
+@Getter
+public abstract class Channel extends StereoBus implements Presets {
+
+    public enum Update {MUTE, MUTE_RECORD, PRESET, RMS, LOOP, SOLO} // TODO updateCh
+
+	protected final String name;
+    protected ImageIcon icon;
+    protected final boolean isStereo;
+    protected boolean onMute;
+    protected final Gain gain = new Gain(); // RT but handles separately
+    protected final EQ eq = new EQ();
+    protected final Filter hiCut = new Filter(true);
+    protected final Filter loCut = new Filter(false);
+    protected final DJFilter djFilter = new DJFilter(this, hiCut, loCut);
+    protected final Compressor compression = new Compressor();
+    protected final Delay delay = new Delay();
+    protected final Overdrive overdrive = new Overdrive();
+    protected final Chorus chorus = new Chorus();
+    protected Reverb reverb = new Freeverb();
+    protected final LFO lfo = new LFO(this, LFO.class.getSimpleName());
+    protected final LFO lfo2 = new LFO(this, "LFO2");
+    protected Preset preset = PresetsHandler.getPresets().getDefault();
+    protected final Convolution IR; // RT if stereo
+    protected boolean presetActive;
+
+    protected EffectsRack gui;
+    protected LFOKnobs lfoKnobs;
+    // RMS fields published by RT thread; GUI reads these (volatile provides visibility)
+    private volatile float lastRmsLeft = 0f;
+    private volatile float lastRmsRight = 0f;
+    /** Last RMS values computed on the RT thread (0..1 approximate). */
+    public float getLastRmsLeft() { return lastRmsLeft; }
+    public float getLastRmsRight() { return lastRmsRight; }
+
+
+    public Channel(String name, boolean isStereo) {
+        this.name = name;
+        this.isStereo = isStereo;
+        RTEffect[] order;
+        if (isStereo) {
+            IR = new Convolution.Stereo();
+            order = new RTEffect[] {
+                    eq, hiCut, loCut, compression, delay, overdrive, chorus, reverb, (Convolution.Stereo)IR}; // IR here
+        } else {
+            IR = new Convolution.Mono();
+            order = new RTEffect[] {
+                    eq, hiCut, loCut, compression, delay, overdrive, chorus, reverb}; // IR handled elsewhere for mono
+        }
+
+        // Add the RT effects into the parent-managed list
+        rt.addAll(List.of(order));
+        effects.addAll(rt);
+        if (!effects.contains(IR))
+            effects.add(IR);
+        effects.add(lfo);
+        effects.add(lfo2);
+    }
+
+    abstract protected void processImpl();
+
+	public final void process() {
+        hotSwap();
+        processImpl();
+        computeRMS(left.rewind(), right.rewind());
+    }
+
+    public final void mix(FloatBuffer outLeft, FloatBuffer outRight) {
+        if (isOnMute())
+            return;
+        AudioTools.mix(getLeft(), outLeft);
+        AudioTools.mix(getRight(), outRight);
+    }
+
+    public final void replace(Reverb r) {
+        boolean wasActive = isActive(reverb);
+        setActive(reverb, false);
+        rt.set(rt.indexOf(reverb), r);
+        reverb = r;
+        if (wasActive)
+            setActive(reverb, true);
+    }
+
+    @Override public boolean equals(Object obj) {
+        if (obj == null || obj instanceof Channel == false)
+            return false;
+        return gain.equals( ((Channel)obj).getGain());
+    }
+
+    @Override public int hashCode() {
+        return gain.hashCode();
+    }
+
+    public final EffectsRack getGui() {
+        if (gui == null) // lazy
+            gui = new EffectsRack(this, JudahZone.getInstance().getBass());
+        return gui;
+    }
+
+    public final LFOKnobs getLfoKnobs() { // lazy
+        if (lfoKnobs == null)
+            lfoKnobs = new LFOKnobs(this, JudahZone.getInstance().getMixer());
+        return lfoKnobs;
+    }
+
+    public final void setPresetActive(boolean active) {
+        presetActive = active;
+        applyPreset();
+        MainFrame.updateFx(this, null /* = preset */);
+    }
+
+    public final void setPreset(String name, boolean active) {
+        setPreset(PresetsHandler.getPresets().byName(name));
+        setPresetActive(active);
+    }
+
+    public final void setPreset(String name) {
+        setPreset(PresetsHandler.getPresets().byName(name));
+    }
+
+    @Override
+    public final void setPreset(Preset p) {
+        preset = p;
+        applyPreset();
+    }
+
+    public final void toggleMute() {
+        setOnMute(!isOnMute());
+    }
+
+    public final void setOnMute(boolean mute) {
+        if (mute == onMute)
+            return;
+        onMute = mute;
+        if (onMute)
+            Threads.execute(()->{ // for gain indicators
+                AudioTools.silence(getLeft());
+                AudioTools.silence(getRight());
+            });
+        MainFrame.update(this);
+    }
+
+    private final void applyPreset() {
+        reset(); // inherited reset() will clear pendingActive etc
+        if (preset == null)
+            preset = PresetsHandler.getPresets().getDefault();
+        setting:
+        for (Setting s : preset) {
+            for (Effect fx : effects) {
+                if (fx.getName().equals(s.getEffectName())) {
+                    try {
+                        for (int i = 0; i < s.size(); i++) {
+                            fx.set(i, s.get(i));
+                            MainFrame.updateFx(this, fx);
+                        }
+                    } catch (Throwable t) { RTLogger.log(name, preset.getName() + " " + t.getMessage()); }
+
+                    setActive(fx, presetActive);
+                    continue setting;
+                }
+            }
+        }
+    }
+
+    @Override
+    public final Preset toPreset(String name) {
+        ArrayList<Setting> presets = new ArrayList<>();
+        for (Effect e : effects) {
+            if (isActive(e))
+                presets.add(new Setting(e));
+        }
+        preset = new Preset(name, presets);
+        return preset;
+    }
+
+    @Override
+    public void toggle(Effect effect) {
+        super.toggle(effect);
+        MainFrame.updateFx(this, effect);
+    }
+
+    public final void toggleFx() {
+        setPresetActive(!isPresetActive());
+    }
+
+    // update time-sync'd fx
+    public void tempo(float tempo, float syncUnit) {
+        if (delay.isSync()) {
+            delay.sync(syncUnit);
+            MainFrame.updateFx(this, delay);
+        }
+        if (lfo.isSync()) {
+            lfo.sync(syncUnit);
+            MainFrame.updateFx(this, lfo);
+        }
+        if (lfo2.isSync()) {
+            lfo2.sync(syncUnit);
+            MainFrame.updateFx(this, lfo2);
+        }
+        if (chorus.isSync()) {
+            chorus.sync(syncUnit);
+            MainFrame.updateFx(this, chorus);
+        }
+    }
+
+    @Override
+    public final void reset() {
+        super.reset(); // does RT/offline clearing and effect resets
+        MainFrame.update(this);
+    }
+
+    /**@return 0 to 100*/
+    public final int getVolume() {
+        return gain.get(Gain.VOLUME);
+    }
+
+    /**@return 0 to 100*/
+    public final int getPan() {
+        return gain.get(Gain.PAN);
+    }
+
+    @Override public final String toString() { return name; }
+
+    /**
+     * Compute RMS for arbitrary buffers and publish to the channel's volatile fields.
+     * Call from the RT thread with the same buffers that were processed.
+     */
+    protected void computeRMS(FloatBuffer l, FloatBuffer r) {
+        lastRmsLeft = AudioMetrics.rms(l);
+        lastRmsRight = AudioMetrics.rms(r);
+    }
+
+
+
+}

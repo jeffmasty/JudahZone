@@ -1,6 +1,6 @@
 package net.judah.seq.chords;
 
-import static net.judahzone.gui.Pastels.BUTTONS;
+import static judahzone.gui.Pastels.BUTTONS;
 
 import java.awt.Color;
 import java.awt.Desktop;
@@ -23,6 +23,8 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 
 import judahzone.api.Chord;
+import judahzone.gui.Gui;
+import judahzone.gui.Pastels;
 import judahzone.util.RTLogger;
 import net.judah.JudahZone;
 import net.judah.gui.Size;
@@ -30,8 +32,6 @@ import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.Click;
 import net.judah.midi.JudahMidi;
 import net.judah.song.Song;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Pastels;
 
 /** Full window view */
 public class ChordSheet extends JPanel {

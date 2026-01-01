@@ -20,10 +20,12 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 
+import judahzone.gui.Gui;
 import judahzone.util.Constants;
 import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.channel.Channel;
 import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
@@ -32,10 +34,8 @@ import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.LengthCombo;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
-import net.judah.mixer.Channel;
 import net.judah.mixer.Preset;
 import net.judah.mixer.PresetsDB;
-import net.judahzone.gui.Gui;
 
 public class PresetsView extends KnobPanel  {
 	public static final Dimension BTN_SZ = new Dimension(80, STD_HEIGHT);

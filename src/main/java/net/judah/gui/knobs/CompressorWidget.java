@@ -6,13 +6,15 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridLayout;
-import java.util.ArrayList;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
+import judahzone.gui.Gui;
+import judahzone.gui.Pastels;
 import judahzone.util.RTLogger;
+import net.judah.channel.Channel;
 import net.judah.fx.Compressor;
 import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
@@ -21,9 +23,6 @@ import net.judah.gui.fx.FxTrigger;
 import net.judah.gui.fx.Row;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.gui.widgets.Slider.FxSlider;
-import net.judah.mixer.Channel;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Pastels;
 
 public class CompressorWidget extends JPanel {
 	private static final Color KNOB_C = Pastels.EGGSHELL;
@@ -43,25 +42,27 @@ public class CompressorWidget extends JPanel {
 		comp = channel.getCompression();
 		ratio = new FxSlider(comp, Ratio.ordinal(), "Ratio");
 		knee = new FxSlider(comp, Knee.ordinal(), "Knee");
+		Gui.resize(ratio, Size.MICRO);
+		Gui.resize(knee, Size.MICRO);
 
     	labels = new Row(channel);
-    	labels.getControls().add(new FxTrigger("  Compressor", comp, channel));
-    	labels.getControls().add(Gui.resize(ratio, Size.MICRO));
-    	labels.getControls().add(new FxTrigger("  R/Knee  ", comp, channel));
-    	labels.getControls().add(Gui.resize(knee, Size.MICRO));
+    	labels.add(new FxTrigger("  Compressor", comp, channel));
+    	labels.add(ratio);
+    	labels.add(new FxTrigger("  R/Knee  ", comp, channel));
+    	labels.add(knee);
 
     	row = new Row(channel);
-    	ArrayList<Component> knobs = row.getControls();
 
-		knobs.add(new FxKnob(channel, comp, Threshold.ordinal(), "THold", KNOB_C));
-		knobs.add(new FxKnob(channel, comp, Boost.ordinal(), "Gain", KNOB_C, Ratio.ordinal()));
-    	knobs.add(new FxKnob(channel, comp, Attack.ordinal(), "Atk", KNOB_C));
-		knobs.add(new FxKnob(channel, comp, Release.ordinal(), "Rel", KNOB_C, Knee.ordinal()));
+		row.add(new FxKnob(channel, comp, Threshold.ordinal(), "THold", KNOB_C));
+		row.add(new FxKnob(channel, comp, Boost.ordinal(), "Gain", KNOB_C, Ratio.ordinal()));
+    	row.add(new FxKnob(channel, comp, Attack.ordinal(), "Atk", KNOB_C));
+		row.add(new FxKnob(channel, comp, Release.ordinal(), "Rel", KNOB_C, Knee.ordinal()));
 
-		for (Component c : labels.getControls())
+		for (Component c : labels.list())
 			compressorLbls.add(Gui.wrap(c));
-		for (int i = 0; i < knobs.size(); i++)
-			compressor.add(knobs.get(i));
+
+		for (Component c : row.list())
+			compressor.add(c);
 
 		Box inner = new Box(BoxLayout.Y_AXIS);
 		inner.add(compressorLbls);
@@ -102,7 +103,7 @@ public class CompressorWidget extends JPanel {
 			}
     	default -> { return false; }
     	}
-    	MainFrame.updateChannel(channel, comp);
+    	MainFrame.updateFx(channel, comp);
     	return true;
 	}
 

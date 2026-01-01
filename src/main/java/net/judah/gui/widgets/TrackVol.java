@@ -1,7 +1,7 @@
 package net.judah.gui.widgets;
 
+import judahzone.gui.Pastels;
 import net.judah.seq.track.MidiTrack;
-import net.judahzone.gui.Pastels;
 
 public class TrackVol extends Knob {
 

@@ -7,6 +7,7 @@ import java.util.Scanner;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
 import judahzone.util.Threads;
+import net.judah.channel.Channel;
 
 public class PresetsDB extends ArrayList<Preset> {
 	public static final String DEFAULT = "Freebird";

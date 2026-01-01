@@ -8,15 +8,15 @@ import judahzone.api.Controller;
 import judahzone.api.Midi;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
+import net.judah.channel.Channel;
+import net.judah.channel.LineIn;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.MultiSelect;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.SynthKnobs;
 import net.judah.looper.Loop;
 import net.judah.midi.JudahClock;
-import net.judah.mixer.Channel;
 import net.judah.mixer.Fader;
-import net.judah.mixer.LineIn;
 import net.judah.seq.SynthRack;
 import net.judah.synth.fluid.FluidSynth;
 import net.judah.synth.taco.TacoSynth;
@@ -76,7 +76,7 @@ public class Beatstep implements Controller {
 			}
 			else if (data1 == RECORD) {
 				if (!Midi.isNoteOn(midi)) return true;
-				for (Channel current : zone.getSelected())
+				for (Channel current : zone.getFxRack().getSelected())
 					if (current instanceof LineIn)
 						((LineIn)current).setMuteRecord(!((LineIn)current).isMuteRecord());
 					else
@@ -85,7 +85,7 @@ public class Beatstep implements Controller {
 
 			else if (data1 == FADER) {
 				if (!Midi.isNoteOn(midi)) return true;
-				for (Channel ch : zone.getSelected()) {
+				for (Channel ch : zone.getFxRack().getSelected()) {
 					if (ch.isOnMute() || ch.getGain().getGain() <= 0.05f) {
 						ch.setOnMute(false);
 						Fader.execute(new Fader(ch, Fader.DEFAULT_FADE, 0, 51));
@@ -103,14 +103,14 @@ public class Beatstep implements Controller {
 		if (Midi.isCC(midi)) {
 			int data2 = midi.getData2();
 			if (data1 == TEMPO_KNOB) {
-				float tempo = clock.getTempo() + (data2 > 64 ? -1 : 1); // a little wonky
+				float tempo = clock.getTempo() + (data2 > 64 ? -1 : 1); // wonky?
 				clock.setTempo(tempo);
 				return true;
 			}
 
 			for (int i = 0; i < KNOBS.length; i++)
 				if (KNOBS[i] == data1) {
-					for (Channel ch : zone.getSelected()) {
+					for (Channel ch : zone.getFxRack().getSelected()) {
 						ch.getGui().knob(i, data2 < 64);
 					}
 					return true;

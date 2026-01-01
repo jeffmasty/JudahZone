@@ -10,11 +10,11 @@ import judahzone.api.Notification.Property;
 import judahzone.util.Rainbow;
 import net.judah.midi.JudahClock;
 
-public class StartBtn extends JToggleButton implements TimeListener {
+public class TransportBtn extends JToggleButton implements TimeListener {
 
 	private final JudahClock clock;
 
-	public StartBtn(JudahClock clock) {
+	public TransportBtn(JudahClock clock) {
 		this.clock = clock;
         setText();
         setSelected(clock.isActive());

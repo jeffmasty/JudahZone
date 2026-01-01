@@ -17,9 +17,9 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicSliderUI;
 
+import judahzone.gui.Pastels;
 import lombok.Getter;
 import lombok.Setter;
-import net.judahzone.gui.Pastels;
 
 /* Source: https://github.com/ernieyu/Swing-range-slider
  *

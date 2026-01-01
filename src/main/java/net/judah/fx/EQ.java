@@ -51,7 +51,6 @@ public class EQ implements RTEffect {
 
 	@Getter private final String name = EQ.class.getSimpleName();
 	@Getter private final int paramCount = Settings.values().length;
-//	@Getter @Setter private boolean active;
 	private final ArrayList<StereoBiquad> stereo = new ArrayList<StereoBiquad>();
 
 	public EQ() {

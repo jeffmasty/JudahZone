@@ -8,12 +8,12 @@ import judahzone.util.Threads;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
+import net.judah.channel.Channel;
+import net.judah.channel.LineIn;
 import net.judah.fx.Gain;
 import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
-import net.judah.mixer.Channel;
-import net.judah.mixer.LineIn;
 import net.judah.seq.Seq;
 import net.judah.seq.SynthRack;
 import net.judah.song.Scene;
@@ -62,7 +62,7 @@ public class KorgMixer implements Controller {
 		if (data1 >= 0 && data1 < 8) { // Main Faders
 			Channel ch = fader(data1);
 			ch.getGain().set(Gain.VOLUME, data2);
-			MainFrame.updateChannel(ch, ch.getGain());
+			MainFrame.updateFx(ch, ch.getGain());
 		}
 
 		// knobs = drumkit or synths gain

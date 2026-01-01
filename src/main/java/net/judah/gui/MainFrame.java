@@ -22,18 +22,25 @@ import javax.swing.JPanel;
 
 import judahzone.api.Chord;
 import judahzone.api.Effect;
+import judahzone.api.Live;
+import judahzone.api.Tuning;
+import judahzone.gui.Gui;
+import judahzone.gui.Icons;
+import judahzone.gui.Updateable;
 import judahzone.util.Circular;
 import judahzone.util.Constants;
 import judahzone.util.RTLogger;
 import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.channel.Channel;
+import net.judah.channel.PresetsHandler;
 import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumMachine;
 import net.judah.drumkit.KitSetup;
 import net.judah.fx.Compressor;
 import net.judah.fx.Convolution;
-import net.judah.fx.LFO;
+import net.judah.fx.Gain;
 import net.judah.gui.fx.FxPanel;
 import net.judah.gui.fx.MultiSelect;
 import net.judah.gui.fx.PresetsView;
@@ -43,15 +50,13 @@ import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.knobs.MidiGui;
 import net.judah.gui.knobs.TunerKnobs;
 import net.judah.gui.midiimport.ImportView;
-import net.judah.gui.settable.PresetsHandler;
 import net.judah.gui.settable.SetCombo;
 import net.judah.gui.widgets.ModalDialog;
-import net.judah.gui.widgets.Tuner.Tuning;
 import net.judah.looper.Looper;
 import net.judah.midi.Actives;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
-import net.judah.mixer.Channel;
+import net.judah.midi.LFO;
 import net.judah.mixer.DJJefe;
 import net.judah.sampler.Sample;
 import net.judah.sampler.Sampler;
@@ -77,11 +82,7 @@ import net.judah.song.SongView;
 import net.judah.song.setlist.SetlistView;
 import net.judah.synth.taco.TacoSynth;
 import net.judah.synth.taco.TacoTruck;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Icons;
-import net.judahzone.gui.Updateable;
 import net.judahzone.scope.JudahScope;
-import net.judahzone.scope.Live;
 
 /** over-all layout and background updates thread */
 public class MainFrame extends JFrame implements Runnable {
@@ -91,9 +92,10 @@ public class MainFrame extends JFrame implements Runnable {
 	private static KnobPanel knobs;
     private static boolean bundle;
     private static final BlockingQueue<Object> updates = new LinkedBlockingQueue<>();
-    private static final Circular<TrackUpdate> trackUpdates = new Circular<>(64, () -> new TrackUpdate());
-	private static final Circular<FxUpdate> channelUpdates = new Circular<>(192, () -> new FxUpdate());
-	private static final Circular<KnobUpdate> knobUpdates = new Circular<>(64, () -> new KnobUpdate());
+    private static final Circular<TrackUpdate> trackUpdates = new Circular<>(96, () -> new TrackUpdate());
+	private static final Circular<FxUpdate> fxUpdates = new Circular<>(192, () -> new FxUpdate());
+	private static final Circular<ChUpdate> chUpdates = new Circular<>(128, () -> new ChUpdate());
+	private static final Circular<KnobUpdate> knobUpdates = new Circular<>(96, () -> new KnobUpdate());
 
 	private final TabZone tabs;
     @Getter private final DrumZone beatBox;
@@ -113,13 +115,21 @@ public class MainFrame extends JFrame implements Runnable {
     private final JComponent knobHolder;
     private final PresetsView presets;
     private final SetlistView setlists;
+    private TunerKnobs tuner;
     private final JudahZone zone;
     private final Feedback feedback;
 
-    public static void updateChannel(Channel ch, Effect fx) {
-    	FxUpdate send = channelUpdates.get();
+    public static void updateFx(Channel ch, Effect fx) {
+    	FxUpdate send = fxUpdates.get();
     	send.ch = ch;
     	send.fx = fx; // null = preset
+    	update(send);
+    }
+
+    public static void updateChannel(Channel.Update type, Channel ch) {
+    	ChUpdate send = chUpdates.get();
+    	send.type = type;
+    	send.ch = ch;
     	update(send);
     }
 
@@ -245,13 +255,13 @@ public class MainFrame extends JFrame implements Runnable {
 		if (o instanceof Channel ch) {
     		effects.setFocus(ch);
     		mixer.highlight(ch);
-    		update(o);
     		if (knobMode == KnobMode.LFO)
     			knobPanel(ch.getLfoKnobs());
     		if (ch == drums)
     			knobPanel(drums.getKnobs());
     		else if (ch instanceof TacoTruck synth)
     			focus(synth.getTrack().getKnobs());
+    		update(o); // loopback update();
 		}
 		else if (o instanceof MultiSelect multiselect) { // TODO LFO/Compressor
 			Channel next = multiselect.get(multiselect.size()-1);
@@ -298,24 +308,24 @@ public class MainFrame extends JFrame implements Runnable {
     private void runOnEDT(Object o) {
 
         try { // to keep the GUI thread running
-            if (updates.contains(o)) // heavy? misses Circulars
-                return;
 
             if (o instanceof FxUpdate fx) {
-            	if (fx.fx == null) { // presets
-            		fx.ch.getGui().updatePreset();
+            	fx.ch.getGui().update(fx.fx); // FXRack + preset
+
+            	if (fx.fx == null || fx.fx instanceof Gain)
+            		overview.update(fx.ch, fx.fx); // preset and gain
+
+                if (fx.fx == null)   // presets
             		mixer.update(fx.ch);
-            		return;
-            	}
-                mixer.update(fx.ch, fx.fx); // LEDs
-                overview.update(fx.ch, fx.fx); // preset and gain
-                fx.ch.getGui().update(fx.fx); // FxRack
-                if (fx.fx instanceof LFO) // lfo panel
-                    fx.ch.getLfoKnobs().update(fx.fx);
-                else if (fx.fx instanceof Compressor)
-                    fx.ch.getLfoKnobs().getCompressor().update();
-                else if (fx.fx instanceof Convolution)
-                    fx.ch.getLfoKnobs().update(fx.fx);
+                else {
+                    mixer.update(fx.ch, fx.fx); // LEDs
+                    if (fx.fx instanceof LFO) // lfo panel
+                        fx.ch.getLfoKnobs().update(fx.fx);
+                    else if (fx.fx instanceof Compressor)
+                        fx.ch.getLfoKnobs().getCompressor().update();
+                    else if (fx.fx instanceof Convolution)
+                        fx.ch.getLfoKnobs().update(fx.fx);
+                }
             }
 
             else if (o instanceof Channel ch) {
@@ -369,8 +379,10 @@ public class MainFrame extends JFrame implements Runnable {
                 launcher.fill();
             else if (o instanceof Updateable updateable)
                 updateable.update();
-            else if (o instanceof KnobUpdate data)
-                doKnob(data.idx, data.data2);
+            else if (o instanceof KnobUpdate data) { // doKnob()
+        		if (knobs != null && knobs.doKnob(data.idx, data.data2))
+        			update(knobs);
+            }
             else if (o instanceof LFO) {
                 if (effects.getChannel().getLfo() == o)
                     effects.getChannel().getGui().update(); // heavy?
@@ -395,12 +407,12 @@ public class MainFrame extends JFrame implements Runnable {
                 chords.getChordSheet().updateDirectives();
             }
             else if (o instanceof Live.LiveData dat) {
-                dat.processor().analyze(dat.stereo());
+                dat.processor().analyze(dat.left(), dat.right());
                 if (knobs instanceof TunerKnobs waves)
                     waves.repaint();
             }
-            else if (o instanceof Tuning tuning)
-                tuning.tuner().update(tuning.buffer());
+            else if (o instanceof Tuning tuning && knobs instanceof TunerKnobs tuner)
+            	tuner.update(tuning);
             else if (o instanceof KitSetup)
                 drums.getKnobs().update();
             else if (o instanceof Seq)
@@ -428,7 +440,7 @@ public class MainFrame extends JFrame implements Runnable {
 			case Sample -> {focus(sampler); yield sampler.getView();}
 			case Presets -> presets;
 			case Setlist -> setlists;
-			case Tuner -> TunerKnobs.getInstance();
+			case Tuner -> tuner();
 			case Import -> ImportView.getInstance();
 			case Remap -> new RemapView();
 			case Log -> feedback;
@@ -441,7 +453,8 @@ public class MainFrame extends JFrame implements Runnable {
     		knobs.update();
     		return;
     	}
-
+    	if (knobs instanceof TunerKnobs tuner)
+    		tuner.turnOff();
     	knobs = view;
     	if (knobMode != view.getKnobMode()) {
     		knobMode = view.getKnobMode();
@@ -460,10 +473,13 @@ public class MainFrame extends JFrame implements Runnable {
     	knobHolder.repaint();
     }
 
-	private void doKnob(int idx, int data2) {
-		if (knobs != null && knobs.doKnob(idx, data2))
-			update(knobs);
-	}
+    private TunerKnobs tuner() {
+    	if (tuner == null) {
+    		tuner = new TunerKnobs(zone);
+    		tuner.turnOn();
+    	}
+    	return tuner;
+    }
 
 	public static void set() {
 		if (ModalDialog.getInstance() != null) {
@@ -501,7 +517,13 @@ public class MainFrame extends JFrame implements Runnable {
     	Effect fx;
     }
 
-    private static class KnobUpdate{
+    @SuppressWarnings("unused")
+	private static class ChUpdate {
+    	Channel.Update type;
+    	Channel ch;
+    }
+
+    private static class KnobUpdate {
     	int idx;
     	int data2;
     }

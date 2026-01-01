@@ -15,9 +15,13 @@ import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 
+import judahzone.gui.Gui;
+import judahzone.gui.Icons;
+import judahzone.gui.Pastels;
 import judahzone.util.Constants;
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.channel.Mains;
 import net.judah.controllers.Jamstik;
 import net.judah.controllers.MPKmini;
 import net.judah.gui.MainFrame;
@@ -31,7 +35,6 @@ import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.LengthCombo;
 import net.judah.midi.JudahClock;
 import net.judah.midi.MidiInstrument;
-import net.judah.mixer.Mains;
 import net.judah.sampler.Sampler;
 import net.judah.seq.arp.Arp;
 import net.judah.seq.track.Computer;
@@ -44,9 +47,6 @@ import net.judah.song.setlist.Setlists;
 import net.judah.synth.ZoneMidi;
 import net.judah.synth.fluid.FluidSynth;
 import net.judah.synth.taco.TacoTruck;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Icons;
-import net.judahzone.gui.Pastels;
 
 /** clock tempo, loop length, setlist, midi cables */
 public class MidiGui extends KnobPanel implements Cmdr {

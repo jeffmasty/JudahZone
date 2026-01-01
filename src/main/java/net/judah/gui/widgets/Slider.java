@@ -13,8 +13,10 @@ import javax.swing.UIDefaults;
 import javax.swing.event.ChangeListener;
 
 import judahzone.api.Effect;
-import net.judahzone.gui.Icons;
-import net.judahzone.gui.Updateable;
+import judahzone.gui.Icons;
+import judahzone.gui.Updateable;
+import lombok.Getter;
+import net.judah.gui.fx.FXAware;
 
 /**Source: ThemeDemo https://jasperpotts.com/blog/2008/08/skinning-a-slider-with-nimbus/
  * @author Created by Jasper Potts (May 7, 2008) */
@@ -57,8 +59,8 @@ public class Slider extends JSlider {
         setPreferredSize(new Dimension(100, 38));
     }
 
-    public static class FxSlider extends JSlider implements Updateable {
-    	private final Effect fx;
+    public static class FxSlider extends JSlider implements Updateable, FXAware {
+    	@Getter private final Effect fx;
     	private final int idx;
     	public FxSlider(Effect fx, int ordinal, String tooltip) {
     		this.fx = fx;

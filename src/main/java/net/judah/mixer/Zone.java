@@ -8,6 +8,10 @@ import java.util.Vector;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
+import net.judah.channel.Channel;
+import net.judah.channel.Instrument;
+import net.judah.channel.LineIn;
+import net.judah.channel.Mains;
 import net.judah.looper.Looper;
 
 /**Used for initialization/customization */

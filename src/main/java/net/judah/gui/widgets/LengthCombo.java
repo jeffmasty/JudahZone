@@ -4,9 +4,9 @@ import java.util.ArrayList;
 
 import javax.swing.JComboBox;
 
+import judahzone.gui.Gui;
 import net.judah.gui.Size;
 import net.judah.midi.JudahClock;
-import net.judahzone.gui.Gui;
 
 
 public class LengthCombo extends JComboBox<Integer> {

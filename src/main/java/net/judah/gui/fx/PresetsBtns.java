@@ -3,27 +3,33 @@ package net.judah.gui.fx;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
+import judahzone.api.Effect;
+import judahzone.gui.Icons;
+import judahzone.gui.Updateable;
 import net.judah.JudahZone;
-import net.judah.gui.settable.PresetsHandler;
+import net.judah.channel.Channel;
+import net.judah.channel.PresetsHandler;
 import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.TogglePreset;
-import net.judah.mixer.Channel;
-import net.judahzone.gui.Icons;
-import net.judahzone.gui.Updateable;
 
-public class PresetsBtns extends JPanel implements Updateable {
+public class PresetsBtns extends JPanel implements FXAware, Updateable {
 
 	private final Channel ch;
-	protected final TogglePreset fx;
+	protected final TogglePreset toggle;
 
 	public PresetsBtns(Channel ch) {
 		this.ch = ch;
-		fx = new TogglePreset(ch);
+		toggle = new TogglePreset(ch);
 
-		add(fx);
+		add(toggle);
 		add(new Btn(Icons.SAVE, e->PresetsHandler.getPresets().replace(ch)), "Save Current");
 		add(new Btn(Icons.NEW_FILE, e->create()), "New Preset");
 	}
+
+	/**@returns null = presets identifier */
+	@Override public Effect getFx() { return null; }
+
+	@Override public void update() { toggle.update(); }
 
     public void create() {
         String name = JOptionPane.showInputDialog(JudahZone.getInstance().getFrame(), "Preset Name:");
@@ -31,9 +37,5 @@ public class PresetsBtns extends JPanel implements Updateable {
         PresetsHandler.getPresets().add(ch, name);
     }
 
-	@Override
-	public void update() {
-		fx.update();
-	}
 
 }

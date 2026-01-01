@@ -1,6 +1,6 @@
 package net.judah.gui.knobs;
 
-import static net.judah.fx.LFO.Settings.*;
+import static net.judah.midi.LFO.Settings.*;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -8,15 +8,16 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.util.ArrayList;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
+import judahzone.gui.Gui;
+import judahzone.gui.Pastels;
 import judahzone.util.Constants;
 import lombok.Getter;
-import net.judah.fx.LFO;
+import net.judah.channel.Channel;
 import net.judah.gui.Bindings;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
@@ -28,9 +29,7 @@ import net.judah.gui.widgets.DoubleSlider;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.gui.widgets.RangeSlider.Colors;
 import net.judah.midi.JudahMidi;
-import net.judah.mixer.Channel;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Pastels;
+import net.judah.midi.LFO;
 
 public class LFOWidget extends Box {
     private static final Color KNOB_C = Pastels.EGGSHELL;
@@ -62,13 +61,13 @@ public class LFOWidget extends Box {
 		msec = new FxKnob(channel, lfo, MSec.ordinal(), "Time", KNOB_C);
 
 		Gui.resize(slider, new Dimension(Size.WIDTH_KNOBS / 2 - 20, Size.STD_HEIGHT));
-    	ArrayList<Component> components = row.getControls();
-    	components.add(new FxTrigger("Target", lfo, channel));
-    	components.add(new FxTrigger("LFO" + index, lfo, channel));
-    	components.add(new FxTrigger("min/max", lfo, channel));
-    	components.add(timeSync);
+    	row.add(new FxTrigger("Target", lfo, channel));
+    	row.add(new FxTrigger("LFO" + index, lfo, channel));
+    	row.add(new FxTrigger("min/max", lfo, channel));
+    	row.add(timeSync);
 
-    	for (Component c : row.getControls())
+
+    	for (Component c : row.list())
 			lfoLbls.add(c);
     	add(lfoLbls);
 
@@ -109,12 +108,12 @@ public class LFOWidget extends Box {
 		case 3 -> lfo.set(MSec.ordinal(), data2);
 		default -> { return false; }
 		}
-		MainFrame.updateChannel(ch, lfo);
+		MainFrame.updateFx(ch, lfo);
 		return true;
 	}
 
 	public void bold(boolean yes) {
-		for (Component c : row.getControls())
+		for (Component c : row.list())
 			c.setFont(yes ? Gui.BOLD12 : Gui.FONT11);
 	}
 }

@@ -1,4 +1,4 @@
-package net.judah.gui.scope.fft_temp;
+package net.judah.gui.fft_temp;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -10,12 +10,12 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import judahzone.gui.Pastels;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
 import judahzone.util.Recording;
 import lombok.Getter;
-import net.judahzone.gui.Pastels;
 
 public abstract class WaveImage extends BufferedImage implements Closeable {
 

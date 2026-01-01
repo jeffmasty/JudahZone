@@ -1,4 +1,4 @@
-package net.judah.gui.settable;
+package net.judah.channel;
 
 import net.judah.mixer.Preset;
 

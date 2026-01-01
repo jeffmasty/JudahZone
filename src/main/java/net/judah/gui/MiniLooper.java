@@ -15,11 +15,11 @@ import javax.swing.event.ChangeListener;
 
 import judahzone.api.TimeListener;
 import judahzone.api.Notification.Property;
+import judahzone.gui.Gui;
 import net.judah.gui.widgets.Slider;
 import net.judah.gui.widgets.TapTempo;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
-import net.judahzone.gui.Gui;
 
 public class MiniLooper extends JPanel implements TimeListener {
 	private static final Dimension TEMPO_SLIDER = new Dimension(75, Size.STD_HEIGHT + 4);

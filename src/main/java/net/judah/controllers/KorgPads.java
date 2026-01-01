@@ -5,6 +5,7 @@ import judahzone.api.Midi;
 import judahzone.util.Debounce;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
+import net.judah.channel.Channel;
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
 import net.judah.fx.Overdrive;
@@ -14,7 +15,6 @@ import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
-import net.judah.mixer.Channel;
 import net.judah.sampler.Sampler;
 
 /** CC 1 - 16 on channel 13 */

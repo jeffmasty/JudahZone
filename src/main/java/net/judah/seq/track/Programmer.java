@@ -4,12 +4,12 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 
+import judahzone.gui.Gui;
 import lombok.Getter;
 import net.judah.gui.Size;
 import net.judah.gui.settable.CurrentCombo;
 import net.judah.gui.widgets.Arrow;
 import net.judah.gui.widgets.CycleCombo;
-import net.judahzone.gui.Gui;
 
 /** Display track's current bar, launch and cycle <br/><br/>
  * 	[<-] [##-] [->] [Init/Total] [Cycle]  */

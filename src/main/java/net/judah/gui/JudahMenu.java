@@ -7,17 +7,19 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 
+import judahzone.gui.Actionable;
+import judahzone.gui.Gui;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
 import net.judah.JudahZone;
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
-import net.judah.fx.LFO;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
+import net.judah.midi.LFO;
 import net.judah.seq.AddTrack;
 import net.judah.seq.Seq;
 import net.judah.seq.SynthRack;
@@ -25,8 +27,7 @@ import net.judah.seq.track.PianoTrack;
 import net.judah.song.Overview;
 import net.judah.song.setlist.Setlist;
 import net.judah.song.setlist.Setlists;
-import net.judahzone.gui.Actionable;
-import net.judahzone.gui.Gui;
+import net.judahzone.scope.JudahScope;
 
 public class JudahMenu extends JMenuBar {
 	static String[] TYPE = {"1/8", "1/4", "3/8", "1/2"};
@@ -148,7 +149,8 @@ public class JudahMenu extends JMenuBar {
         }));
         views.add(new Actionable("SheetMusic..", e->
         	tabs.sheetMusic(Folders.choose(Folders.getSheetMusic()), true)));
-        views.add(new Actionable("Scope", e->tabs.scope()));
+        views.add(new Actionable("Live Scope", e->tabs.scope(JudahScope.Mode.LIVE_ROLLING)));
+        views.add(new Actionable("File Scope", e->tabs.scope(JudahScope.Mode.FILE)));
         views.add(new Actionable("Detach", e->TabZone.instance.detach()));
 
         return views;

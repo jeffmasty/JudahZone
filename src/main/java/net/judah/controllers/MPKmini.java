@@ -16,11 +16,13 @@ import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 import judahzone.api.Controller;
 import judahzone.api.Midi;
+import judahzone.gui.Updateable;
 import judahzone.util.Constants;
 import judahzone.util.Debounce;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
+import net.judah.channel.Channel;
 import net.judah.fx.Delay;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
@@ -28,7 +30,6 @@ import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.LFOKnobs;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Panic;
-import net.judah.mixer.Channel;
 import net.judah.sampler.Sample;
 import net.judah.seq.SynthRack;
 import net.judah.seq.track.MidiTrack;
@@ -36,7 +37,6 @@ import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.synth.ZoneMidi;
 import net.judah.synth.taco.TacoTruck;
-import net.judahzone.gui.Updateable;
 
 
 /** Akai MPKmini, not the new one */
@@ -107,7 +107,7 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 
 	private boolean checkCC(int data1, int data2) {
 		if (KNOBS.contains(data1)) {
-			MainFrame.updateKnob(data1 - KNOBS.get(0), data2);
+			MainFrame.updateKnob(data1 - KNOBS.getFirst(), data2);
 			return false;
 		}
 		if (data1 == JOYSTICK_L)
@@ -129,7 +129,7 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 		//2   pdl  chords  lfo     set
 
 		///////// ROW 1 /////////////////
-		if (data1 == PRIMARY_CC.get(0))  {
+		if (data1 == PRIMARY_CC.getFirst())  {
 			zone.getMidiGui().getToggler().capture(midiOut, data2 > 0);
 		}
 		else if (data1 == PRIMARY_CC.get(1)) {

@@ -16,6 +16,8 @@ import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
+import judahzone.gui.Floating;
+import judahzone.gui.Gui;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
@@ -38,8 +40,6 @@ import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.song.Overview;
 import net.judah.song.Song;
-import net.judahzone.gui.Floating;
-import net.judahzone.gui.Gui;
 import net.judahzone.scope.JudahScope;
 
 public class TabZone extends CloseableTabbedPane {
@@ -339,9 +339,9 @@ public class TabZone extends CloseableTabbedPane {
 		show(c);
 	}
 
-	public void scope() {
+	public void scope(JudahScope.Mode mode) {
 		install(scope);
-		scope.setActive(true);
+		scope.setMode(mode);
 	}
 
 }

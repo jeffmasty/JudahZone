@@ -8,18 +8,18 @@ import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
 
 import judahzone.api.Midi;
+import judahzone.gui.Icons;
 import judahzone.util.AudioTools;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.channel.LineIn;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.midi.Actives;
 import net.judah.midi.ChannelCC;
-import net.judah.mixer.LineIn;
-import net.judahzone.gui.Icons;
 
 @Getter
 public class DrumKit extends LineIn implements Receiver {

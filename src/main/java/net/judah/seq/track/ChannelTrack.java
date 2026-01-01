@@ -8,9 +8,9 @@ import javax.sound.midi.Track;
 import judahzone.api.Midi;
 import judahzone.util.RTLogger;
 import lombok.Getter;
-import net.judah.gui.settable.PresetsHandler;
+import net.judah.channel.Channel;
+import net.judah.channel.PresetsHandler;
 import net.judah.midi.ChannelCC;
-import net.judah.mixer.Channel;
 import net.judah.mixer.Preset;
 import net.judah.mixer.PresetsDB;
 

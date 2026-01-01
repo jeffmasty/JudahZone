@@ -7,14 +7,14 @@ import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 
 import judahzone.api.TimeEffect;
+import judahzone.gui.Pastels;
 import lombok.Getter;
+import net.judah.channel.Channel;
 import net.judah.fx.Chorus;
 import net.judah.fx.Delay;
-import net.judah.fx.LFO;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock;
-import net.judah.mixer.Channel;
-import net.judahzone.gui.Pastels;
+import net.judah.midi.LFO;
 
 public class FxPanel extends JPanel {
 

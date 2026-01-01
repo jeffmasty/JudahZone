@@ -17,6 +17,9 @@ import javax.swing.JFrame;
 import javax.swing.KeyStroke;
 
 import judahzone.api.Effect;
+import judahzone.gui.Pastels;
+import net.judah.channel.Channel;
+import net.judah.channel.Mains;
 import net.judah.fx.Chorus;
 import net.judah.fx.Compressor;
 import net.judah.fx.Convolution;
@@ -24,16 +27,13 @@ import net.judah.fx.Delay;
 import net.judah.fx.EQ;
 import net.judah.fx.Filter;
 import net.judah.fx.Gain;
-import net.judah.fx.LFO;
 import net.judah.fx.MonoFilter;
 import net.judah.fx.Overdrive;
 import net.judah.fx.Reverb;
 import net.judah.midi.JudahMidi;
-import net.judah.mixer.Channel;
+import net.judah.midi.LFO;
 import net.judah.mixer.DJJefe;
-import net.judah.mixer.Mains;
 import net.judah.seq.Seq;
-import net.judahzone.gui.Pastels;
 
 // TODO extra looper commands?
 // ctrl-enter = next song?

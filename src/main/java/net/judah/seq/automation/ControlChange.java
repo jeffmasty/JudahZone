@@ -55,10 +55,10 @@ enum ControlChange {
 	PHASER(95, "Chorus Phase wobble"),
 
 	// CHANNEL MODE:
-	PANIC(120, "Send Panic", true), // cut release/reverb
+	PANIC(120, "Send Panic", true), // cut release/reverb "allSoundOff"
 	RESET(121, "Reset Fx", true), // fx
 	// LOCAL(122), // enable keys
-	STOP(123, "Stop track", true), // release ok
+	STOP(123, "Stop track", true), // release ok "allNotesOff"
 	// OFF(124), // play specific channels
 	// ON(125), // play all incoming channels
 	// MONO(126), // TODO

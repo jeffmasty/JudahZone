@@ -10,15 +10,16 @@ import java.util.Map;
 import javax.swing.JPanel;
 
 import judahzone.api.Effect;
+import net.judah.channel.Channel;
 import net.judah.fx.Chorus;
 import net.judah.fx.Compressor;
 import net.judah.fx.Convolution;
 import net.judah.fx.Delay;
 import net.judah.fx.Filter;
-import net.judah.fx.LFO;
 import net.judah.fx.Overdrive;
 import net.judah.fx.Reverb;
 import net.judah.gui.Bindings;
+import net.judah.midi.LFO;
 
 /**
  * effect indicator lights: red reverb, orange delay, yellow distortion, green chorus,

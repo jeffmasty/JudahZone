@@ -1,4 +1,4 @@
-package net.judah.gui.scope.fft_temp;
+package net.judah.gui.fft_temp;
 
 
 import be.tarsos.dsp.AudioEvent;

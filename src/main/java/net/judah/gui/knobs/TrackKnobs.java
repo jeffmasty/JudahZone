@@ -11,6 +11,8 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import judahzone.gui.Gui;
+import judahzone.gui.Icons;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
 import judahzone.util.Threads;
@@ -29,7 +31,7 @@ import net.judah.gui.widgets.CueCombo;
 import net.judah.gui.widgets.FxButton;
 import net.judah.gui.widgets.GateCombo;
 import net.judah.gui.widgets.Integers;
-import net.judah.gui.widgets.PlayWidget;
+import net.judah.gui.widgets.PlayBtn;
 import net.judah.gui.widgets.Slider;
 import net.judah.gui.widgets.TrackAmp;
 import net.judah.seq.TrackList;
@@ -42,8 +44,6 @@ import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.Programmer;
 import net.judah.synth.taco.TacoSynth;
-import net.judahzone.gui.Gui;
-import net.judahzone.gui.Icons;
 
 // TODO MouseWheel listener -> change pattern
 public class TrackKnobs extends KnobPanel {
@@ -53,7 +53,7 @@ public class TrackKnobs extends KnobPanel {
 	private final MidiTrack track;
 	private final TrackList<MidiTrack> sequencerTracks;
 
-	private final PlayWidget play;
+	private final PlayBtn play;
 	private final Folder file;
 	private final Program program;
 	private final Programmer programmer;
@@ -92,7 +92,7 @@ public class TrackKnobs extends KnobPanel {
 		titleBar();
 
 		///////////////////////////
-		play = new PlayWidget(track, "  Play    ");
+		play = new PlayBtn(track, "  Play    ");
 		file = new Folder(track); // TODO
 		program = new Program(track);
 		programmer = new Programmer(track);
