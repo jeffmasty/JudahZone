@@ -16,11 +16,11 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
+import judahzone.fx.Gain;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import lombok.Getter;
 import net.judah.channel.Channel;
-import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.gui.widgets.RainbowFader;
 import net.judah.gui.widgets.TogglePreset;

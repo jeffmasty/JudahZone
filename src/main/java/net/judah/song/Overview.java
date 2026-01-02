@@ -18,7 +18,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 
-import judahzone.api.Effect;
+import judahzone.api.FX;
 import judahzone.api.Notification.Property;
 import judahzone.gui.Gui;
 import judahzone.gui.Nimbus;
@@ -394,7 +394,7 @@ public class Overview extends Box implements TimeListener {
 		return songTitle.getMains().getCcTrack();
 	}
 
-	public void update(Channel ch, Effect fx) {
+	public void update(Channel ch, FX fx) {
 		SongTrack s = trackPnl.getTrack(ch);
 		if (s != null)
 			s.update();

@@ -3,7 +3,7 @@ package net.judah.midi;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import judahzone.api.Effect;
+import judahzone.api.FX;
 import judahzone.util.RTLogger;
 import lombok.Getter;
 import net.judah.JudahZone;
@@ -49,8 +49,8 @@ public class MidiScheduler implements Runnable {
 			return;
 		for (Channel ch : zone.getMixer().getAll()) {
 
-			Effect fx1 = ch.isActive(ch.getLfo()) ? ch.getLfo().pulse() : null;
-			Effect fx2 = ch.isActive(ch.getLfo2()) ? ch.getLfo2().pulse() : null;
+			FX fx1 = ch.isActive(ch.getLfo()) ? ch.getLfo().pulse() : null;
+			FX fx2 = ch.isActive(ch.getLfo2()) ? ch.getLfo2().pulse() : null;
 			if (fx1 != null)
 				MainFrame.updateFx(ch, fx1);
 			if (fx2 != null)

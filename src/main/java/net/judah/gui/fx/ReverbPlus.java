@@ -1,17 +1,17 @@
 package net.judah.gui.fx;
 
-import static net.judah.fx.Reverb.Settings.*;
+import static judahzone.fx.Reverb.Settings.*;
 
 import java.awt.Color;
 
 import javax.swing.JLabel;
 
-import judahzone.api.Effect;
+import judahzone.api.FX;
+import judahzone.fx.Reverb;
 import judahzone.gui.Gui;
 import judahzone.gui.Updateable;
 import lombok.Getter;
 import net.judah.channel.Channel;
-import net.judah.fx.Reverb;
 import net.judah.gui.Bindings;
 import net.judah.gui.HQ;
 
@@ -57,9 +57,9 @@ public class ReverbPlus implements Updateable {
 	public class UpdatePanel extends Gui.Opaque implements Updateable, FXAware {
 
 		@Getter private final OverloadedKnob knob;
-		@Getter private final Effect fx;
+		@Getter private final FX fx;
 
-		public UpdatePanel(OverloadedKnob knob, JLabel label, Effect fx) {
+		public UpdatePanel(OverloadedKnob knob, JLabel label, FX fx) {
 			this.knob = knob;
 			this.fx = fx;
 			add(knob);

@@ -1,32 +1,31 @@
 
 TODO:
 
+JackEffects/
+
 ScopePlaya/ScopeEffect 
 Leveling/mastering, Loops too loud (Save/reload/mp3)
 onTape slider track
-float[]s
 Tarsos pull request
+Readmes
 
-After Next: Piano roll orientation, TrackKnobs Program overflow
-I want Piano and PianoSteps to do a 90degree on their orientation.  I want the notes axis up and down and time-axis on the x-axis.  Initally center the view around Middle C with 16 semitones in either direction up/down while remaining responsive to changes in octaves/centering. Make sure the user can see the full range using the provided controls.  The system is geared for 2 bars visible in the Time-dimension.  Keep that for now. BeatBox has the orientation I am looking for.
-Piano PianoSteps PianoKeys BeatBox Musician MusicBox
+Piano roll orientation, TrackKnobs Program overflow
+Linked Midi Selection Model, nudge notes
+Automation: PitchBend, Meta, TimeSig, KeySig, Tempo
 
 zone-rack
 taco-synth
-zone-song
 drum-synth
+zone-song
 zone-loops
-zone-edit
 zone-seq
-zone-knobs
+zone-edit
+zone-knobs midiMapper
 zone-osc
 JudahZone
 
-Linked Midi Selection Model
-Automation: PitchBend, Meta, TimeSig, KeySig, Tempo
 Sample Library, SampleTrack
 compression meter, mpkMini to127
-nudge notes, 
 TacoSynth detune on sus/pdl
 SendTo ignore Meta Device, Program?
 Channel/System Setup  +Controllers +Jamstik +Fluid

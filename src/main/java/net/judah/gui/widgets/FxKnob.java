@@ -5,14 +5,14 @@ import java.awt.Color;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import judahzone.api.Effect;
+import judahzone.api.FX;
+import judahzone.fx.Gain;
+import judahzone.fx.Reverb;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import judahzone.gui.Updateable;
 import lombok.Getter;
 import net.judah.channel.Channel;
-import net.judah.fx.Gain;
-import net.judah.fx.Reverb;
 import net.judah.gui.Bindings;
 import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
@@ -25,7 +25,7 @@ public class FxKnob extends JPanel implements Updateable, FXAware {
 	public static final Color THUMB = Pastels.BLUE;
 
 	protected final Channel ch;
-	@Getter protected Effect fx;
+	@Getter protected FX fx;
 	protected final int idx; // main knob target
 	protected int shiftIdx = -1; // alternate target
 	protected boolean tholdHi = false; // most effects activate on low threshold
@@ -33,16 +33,16 @@ public class FxKnob extends JPanel implements Updateable, FXAware {
 	protected final Knob knob;
 	protected final JLabel label;
 
-	public FxKnob(Channel ch, Effect fx, int idx, String lbl, int alt, boolean hi) {
+	public FxKnob(Channel ch, FX fx, int idx, String lbl, int alt, boolean hi) {
 		this(ch, fx, idx, lbl, THUMB, alt);
 		tholdHi = hi;
 	}
 
-	public FxKnob(Channel ch, Effect fx, int idx, String lbl, int alt) {
+	public FxKnob(Channel ch, FX fx, int idx, String lbl, int alt) {
 		this(ch, fx, idx, lbl, THUMB);
 		shiftIdx = alt;
 	}
-	public FxKnob(Channel ch, Effect fx, int idx, String lbl, Color highlight, int alt) {
+	public FxKnob(Channel ch, FX fx, int idx, String lbl, Color highlight, int alt) {
 		this(ch, fx, idx, lbl, highlight);
 		shiftIdx = alt;
 	}
@@ -52,16 +52,16 @@ public class FxKnob extends JPanel implements Updateable, FXAware {
 		shiftIdx = alt;
 	}
 
-	public FxKnob(Channel ch, Effect fx, int idx, String lbl, boolean hi) {
+	public FxKnob(Channel ch, FX fx, int idx, String lbl, boolean hi) {
 		this(ch, fx, idx, lbl, THUMB);
 		tholdHi = hi;
 	}
 
-	public FxKnob(Channel ch, Effect fx, int idx, String lbl) {
+	public FxKnob(Channel ch, FX fx, int idx, String lbl) {
 		this(ch, fx, idx, lbl, THUMB);
 	}
 
-	public FxKnob(Channel ch, Effect fx, int idx, String lbl, Color highlight) {
+	public FxKnob(Channel ch, FX fx, int idx, String lbl, Color highlight) {
 		this.fx = fx;
 		this.ch = ch;
 		this.idx = idx;

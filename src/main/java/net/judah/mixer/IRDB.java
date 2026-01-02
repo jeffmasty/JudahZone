@@ -15,11 +15,11 @@ import java.util.logging.Logger;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 import be.tarsos.dsp.util.fft.FFT;
+import judahzone.api.IRProvider;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
 import judahzone.util.WavConstants;
 import judahzone.util.WavFile;
-import net.judah.fx.IRProvider;
 
 /**scan a folder (Folders.getIR()), prepare and cache FFT spectra for each WAV.
  * Exceptions swallowed/logged per file.

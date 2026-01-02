@@ -1,6 +1,6 @@
 package net.judah.gui.fx;
 
-import judahzone.api.Effect;
+import judahzone.api.FX;
 import judahzone.gui.Updateable;
 import lombok.Getter;
 import net.judah.channel.Channel;
@@ -15,11 +15,11 @@ import net.judah.seq.MidiConstants;
 public class OverloadedKnob extends Knob implements KnobListener, Updateable {
 
 	private final Channel ch;
-	private final Effect fx;
+	private final FX fx;
 	private final int main;
 	private final int alt;
 
-	OverloadedKnob(Channel ch, Effect target, int normal, int shift) {
+	OverloadedKnob(Channel ch, FX target, int normal, int shift) {
 		this.ch = ch;
 		this.fx = target;
 		this.main = normal;

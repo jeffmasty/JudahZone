@@ -1,7 +1,7 @@
 package net.judah.gui.knobs;
 
-import static net.judah.fx.Convolution.Settings.Cabinet;
-import static net.judah.fx.Convolution.Settings.Wet;
+import static judahzone.fx.Convolution.Settings.Cabinet;
+import static judahzone.fx.Convolution.Settings.Wet;
 
 import java.awt.GridLayout;
 
@@ -11,16 +11,16 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.SwingConstants;
 
+import judahzone.fx.Convolution;
+import judahzone.fx.MonoFilter;
+import judahzone.fx.Convolution.Stereo;
+import judahzone.fx.MonoFilter.Settings;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import judahzone.gui.Updateable;
 import judahzone.util.Constants;
 import net.judah.channel.Channel;
 import net.judah.channel.Instrument;
-import net.judah.fx.Convolution;
-import net.judah.fx.Convolution.Stereo;
-import net.judah.fx.MonoFilter;
-import net.judah.fx.MonoFilter.Settings;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.fx.FxTrigger;

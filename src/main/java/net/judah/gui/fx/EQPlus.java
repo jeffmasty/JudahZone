@@ -5,13 +5,13 @@ import java.awt.Color;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import judahzone.fx.EQ;
+import judahzone.fx.EQ.EqBand;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import judahzone.gui.Updateable;
 import lombok.Getter;
 import net.judah.channel.Channel;
-import net.judah.fx.EQ;
-import net.judah.fx.EQ.EqBand;
 import net.judah.gui.Bindings;
 import net.judah.gui.widgets.Click;
 import net.judah.gui.widgets.FxKnob;

@@ -6,19 +6,22 @@ import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsOutput;
 import static org.jaudiolibs.jnajack.JackPortType.AUDIO;
 
 import java.awt.EventQueue;
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.log4j.xml.DOMConfigurator;
+import org.apache.logging.log4j.Level;
 import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
 import org.jaudiolibs.jnajack.JackPort;
 
 import judahzone.api.Live.LiveData;
+import judahzone.fx.Convolution;
+import judahzone.fx.analysis.Tuner;
 import judahzone.gui.Icons;
 import judahzone.gui.Nimbus;
 import judahzone.jnajack.ZoneJackClient;
@@ -39,7 +42,6 @@ import net.judah.channel.LineIn;
 import net.judah.channel.Mains;
 import net.judah.controllers.MPKmini;
 import net.judah.drumkit.DrumMachine;
-import net.judah.fx.Convolution;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.fx.FxPanel;
@@ -64,7 +66,6 @@ import net.judah.song.Overview;
 import net.judah.song.setlist.Setlists;
 import net.judah.synth.fluid.FluidSynth;
 import net.judah.synth.taco.TacoTruck;
-import net.judahzone.fx.Tuner;
 import net.judahzone.scope.JudahScope;
 
 /* my jack sound system settings:
@@ -107,9 +108,14 @@ public class JudahZone extends ZoneJackClient {
 	@Getter private JudahScope scope;
 	@Getter private final Setlists setlists = new Setlists();
 	private final MultiSelect selected = new MultiSelect();
-	// short recording buffer (1 fft_frame = 4 jack_frames)
+
+
+	/** hot buffer, The Product */
+	private final float[] left = new float[Constants.bufSize()];
+	/** hot buffer, The Product */
+	private final float[] right = new float[Constants.bufSize()];
+	/** short analysis/recording buffer (1 fft_frame = 4 jack_frames) */
 	private Recording realtime = new Recording();
-	// @Getter private Requests requests;
 	@Getter @Setter private volatile Tuner tuner;
 
 	private final ExecutorService dspExec = Executors.newFixedThreadPool(
@@ -130,7 +136,7 @@ public class JudahZone extends ZoneJackClient {
 
 	public static void main(String[] args) {
 		DOMConfigurator.configure(Folders.getLog4j().getAbsolutePath());
-		// RTLogger.setLevel(Level.DEBUG);
+		RTLogger.setLevel(Level.INFO /* DEBUG */);
 		try {
 			new JudahZone();
 		} catch (Exception e) { e.printStackTrace(); }
@@ -257,26 +263,25 @@ public class JudahZone extends ZoneJackClient {
 	//////////////////////////////
 	@Override
 	public boolean process(JackClient client, int nframes) {
-		FloatBuffer left = outL.getFloatBuffer();
-		FloatBuffer right = outR.getFloatBuffer();
-
-		// get Mains' work as merge buffer?
-
-		// channels and looper will be additive
-		AudioTools.silence(left);
-		AudioTools.silence(right);
 
 		if (!initialized)
 			return true;
 
+		// your sound will be additive
+		Arrays.fill(left, 0f);
+		Arrays.fill(right, 0f);
+
 		if (mains.isOnMute()) {
-			if (mains.isHotMic()) {
-				mic.process();
-				mic.mix(left, right);
-				mains.process(left, right);
-			}
+		//	if (mains.isHotMic()) { // TODO Revive HOT MIC functions
+		//		mic.process();
+		//		mic.mix(left, right);
+		//		mains.process(left, right);
+		//	}
 			if (clock.isActive())
 				looper.silently(); // keep looper in sync w/ clock
+			// output silence to Jack
+			AudioTools.copy(left, outL.getFloatBuffer().rewind());
+			AudioTools.copy(right, outR.getFloatBuffer().rewind());
 			return true;
 		}
 
@@ -301,19 +306,21 @@ public class JudahZone extends ZoneJackClient {
 		SynthRack.getEngines().forEach(engine->engine.mix(left, right));
 		sampler.mix(left, right);
 		drumMachine.mix(left, right);
-
 		looper.process(left, right);  // looper records and/or plays loops
+
 		mains.process(left, right);	  // final mix bus effects
+
+		// output to Jack
+		AudioTools.copy(left, outL.getFloatBuffer().rewind());
+		AudioTools.copy(right, outR.getFloatBuffer().rewind());
 
 		// recording/ monitoring
 		mixer.monitor(2); 	// collect 2 channels of dB feedback for mixer panel per cycle
 		requests.process();
 
-		// analysis
+		// analysis // TODO push to Analysis FX
 		boolean activeScope = scope.isActive();
 		boolean activeWaveform = MainFrame.getKnobMode() == KnobMode.Tuner;
-
-		// TunerKnobs tuner = MainFrame.getKnobs() instanceof TunerKnobs tune ? tune : null;
 		if (activeScope || activeWaveform) {
 			float[][] buf = Memory.STEREO.getFrame();
 			selected.forEach(ch -> { // TODO generalize
@@ -330,7 +337,6 @@ public class JudahZone extends ZoneJackClient {
 				}
 			}
 		}
-
 		if (tuner != null) {
 			Channel tune = selected.getFirst();
 			if (tune != null)

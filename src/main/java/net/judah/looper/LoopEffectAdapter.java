@@ -1,14 +1,12 @@
 package net.judah.looper;
 
-import java.nio.FloatBuffer;
-
-import judahzone.api.Effect;
+import judahzone.api.FX;
 
 /**TODO
  * Adapter that exposes a Loop as an Effect (RTEffect).
  * Delegates process(...) to the Loop instance.
  */
-public final class LoopEffectAdapter implements Effect.RTEffect {
+public final class LoopEffectAdapter implements FX.RTFX {
 
 	// public enum Settings{ CaptureState /*boolean*/ , LoopType }
 
@@ -50,7 +48,7 @@ public final class LoopEffectAdapter implements Effect.RTEffect {
     }
 
     @Override
-    public void process(FloatBuffer left, FloatBuffer right) {
+    public void process(float[] left, float[] right) {
         // Delegate to Loop's process method (Loop already matches signature)
         loop.process(left, right);
     }

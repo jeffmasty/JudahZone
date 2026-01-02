@@ -11,6 +11,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import judahzone.fx.Gain;
 import judahzone.gui.Gui;
 import judahzone.gui.Icons;
 import judahzone.util.Constants;
@@ -19,7 +20,6 @@ import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
-import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.TabZone;

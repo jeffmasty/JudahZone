@@ -1,6 +1,6 @@
 package net.judah.gui.knobs;
 
-import static net.judah.fx.Compressor.Settings.*;
+import static judahzone.fx.Compressor.Settings.*;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -11,11 +11,11 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
+import judahzone.fx.Compressor;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import judahzone.util.RTLogger;
 import net.judah.channel.Channel;
-import net.judah.fx.Compressor;
 import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;

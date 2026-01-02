@@ -3,7 +3,7 @@ package net.judah.gui.knobs;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
-import judahzone.api.Effect;
+import judahzone.api.FX;
 import judahzone.gui.Gui;
 import lombok.Getter;
 import net.judah.channel.Channel;
@@ -76,7 +76,7 @@ public class LFOKnobs extends KnobPanel {
 		return false;
 	}
 
-	public void update(Effect fx) {
+	public void update(FX fx) {
 		if (fx == lfo2.getLfo())
 			lfo2.update();
 		else if (fx == lfo1.getLfo())

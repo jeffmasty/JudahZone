@@ -2,10 +2,8 @@ package net.judah.channel;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.FloatBuffer;
 
 import judahzone.gui.Icons;
-import judahzone.util.AudioTools;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
 import lombok.Getter;
@@ -33,21 +31,21 @@ public class Mains extends Channel {
     }
 
     @Override
-	public void process(FloatBuffer left, FloatBuffer right) {
+	public void process(float[] l, float[] r) {
         hotSwap();
-        gain.process(left, right);
-        active.forEach(fx->fx.process(left, right));
+        gain.process(l, r);
+        active.forEach(fx->fx.process(l, r));
 
         if (tape != null)
-            tape.offer(left, right);
+            tape.offer(l, r);
         if (copy) { // put out a read buffer like other channels offer (RMS meters)
             copy = false;
-            AudioTools.copy(left, getLeft().array());
-            AudioTools.copy(right, getRight().array());
+            System.arraycopy(l, 0, this.left, 0, l.length);
+            System.arraycopy(r, 0, this.right, 0, r.length);
         }
 
         // publish RMS for buffers processed on-thread
-        computeRMS(left, right);
+        computeRMS(l, r);
     }
 
     public boolean isRecording() { return tape != null; }

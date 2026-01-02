@@ -6,12 +6,12 @@ import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 
-import judahzone.api.TimeEffect;
+import judahzone.api.TimeFX;
+import judahzone.fx.Chorus;
+import judahzone.fx.Delay;
 import judahzone.gui.Pastels;
 import lombok.Getter;
 import net.judah.channel.Channel;
-import net.judah.fx.Chorus;
-import net.judah.fx.Delay;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock;
 import net.judah.midi.LFO;
@@ -56,7 +56,7 @@ public class FxPanel extends JPanel {
         return selected.get(0);
     }
 
-    public void timeFx(int subdiv, Class<? extends TimeEffect> type) {
+    public void timeFx(int subdiv, Class<? extends TimeFX> type) {
     	float syncUnit = clock.syncUnit();
     	if (type == Delay.class)
     		selected.forEach(ch->ch.getDelay().sync(syncUnit));

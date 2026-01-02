@@ -1,21 +1,21 @@
 package net.judah.midi;
 
-import static net.judah.fx.Chorus.Settings.*;
+import static judahzone.fx.Chorus.Settings.*;
 
 import javax.sound.midi.ShortMessage;
 
 import judahzone.api.Midi;
+import judahzone.fx.Chorus;
+import judahzone.fx.Delay;
+import judahzone.fx.Filter;
+import judahzone.fx.Gain;
+import judahzone.fx.MonoFilter;
+import judahzone.fx.Reverb;
 import judahzone.util.Constants;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.judah.channel.Channel;
-import net.judah.fx.Chorus;
-import net.judah.fx.Delay;
-import net.judah.fx.Filter;
-import net.judah.fx.Gain;
-import net.judah.fx.MonoFilter;
-import net.judah.fx.Reverb;
 import net.judah.gui.MainFrame;
 import net.judah.seq.MidiConstants;
 import net.judah.seq.automation.ControlChange;

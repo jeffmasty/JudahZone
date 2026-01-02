@@ -2,9 +2,9 @@ package net.judah.mixer;
 
 import javax.sound.midi.ShortMessage;
 
+import judahzone.fx.Filter;
 import net.judah.channel.Channel;
 import net.judah.controllers.KorgPads;
-import net.judah.fx.Filter;
 import net.judah.gui.MainFrame;
 
 public class DJFilter {

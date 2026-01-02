@@ -16,6 +16,7 @@ import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 import judahzone.api.Controller;
 import judahzone.api.Midi;
+import judahzone.fx.Delay;
 import judahzone.gui.Updateable;
 import judahzone.util.Constants;
 import judahzone.util.Debounce;
@@ -23,7 +24,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
-import net.judah.fx.Delay;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
 import net.judah.gui.knobs.KnobMode;

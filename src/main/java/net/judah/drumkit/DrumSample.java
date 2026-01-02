@@ -10,12 +10,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.sound.midi.ShortMessage;
 
 import judahzone.api.PlayAudio;
+import judahzone.fx.Gain;
 import judahzone.util.AudioTools;
 import judahzone.util.Constants;
 import judahzone.util.Recording;
 import lombok.Getter;
 import lombok.Setter;
-import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.midi.Actives;
 
@@ -103,7 +103,7 @@ public class DrumSample implements PlayAudio {
         file = null;
     }
 
-	public void process(FloatBuffer outLeft, FloatBuffer outRight) {
+	public void process(float[] outLeft, float[] outRight) {
 		if (!playing) return;
 		readRecordedBuffer();
 		if (onMute)

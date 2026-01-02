@@ -3,7 +3,7 @@ package net.judah.gui.fx;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-import judahzone.api.Effect;
+import judahzone.api.FX;
 import judahzone.gui.Icons;
 import judahzone.gui.Updateable;
 import net.judah.JudahZone;
@@ -27,7 +27,7 @@ public class PresetsBtns extends JPanel implements FXAware, Updateable {
 	}
 
 	/**@returns null = presets identifier */
-	@Override public Effect getFx() { return null; }
+	@Override public FX getFx() { return null; }
 
 	@Override public void update() { toggle.update(); }
 

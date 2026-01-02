@@ -2,12 +2,12 @@ package net.judah.controllers;
 
 import judahzone.api.Controller;
 import judahzone.api.Midi;
+import judahzone.fx.Gain;
 import judahzone.util.Debounce;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
 import net.judah.channel.LineIn;
-import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;

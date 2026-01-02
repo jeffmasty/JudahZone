@@ -1,7 +1,5 @@
 package net.judah.synth.taco;
 
-import java.nio.FloatBuffer;
-
 import judahzone.util.PitchTools;
 
 /** An individual piano key press, three oscillators per voice */
@@ -27,7 +25,7 @@ public class Voice {
 			osc.setHz(hz);
 	}
 
-	public void process(Polyphony notes, Adsr adsr, FloatBuffer output) {
+	public void process(Polyphony notes, Adsr adsr, float[] output) {
 		if (data1 == 0)
 			return;
 		float amplify = env.calcEnv(notes, data1, adsr);

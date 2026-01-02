@@ -12,7 +12,7 @@ import javax.swing.Painter;
 import javax.swing.UIDefaults;
 import javax.swing.event.ChangeListener;
 
-import judahzone.api.Effect;
+import judahzone.api.FX;
 import judahzone.gui.Icons;
 import judahzone.gui.Updateable;
 import lombok.Getter;
@@ -60,9 +60,9 @@ public class Slider extends JSlider {
     }
 
     public static class FxSlider extends JSlider implements Updateable, FXAware {
-    	@Getter private final Effect fx;
+    	@Getter private final FX fx;
     	private final int idx;
-    	public FxSlider(Effect fx, int ordinal, String tooltip) {
+    	public FxSlider(FX fx, int ordinal, String tooltip) {
     		this.fx = fx;
     		this.idx = ordinal;
     		update();

@@ -24,6 +24,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import judahzone.fx.Gain;
 import judahzone.gui.Gui;
 import judahzone.gui.Icons;
 import judahzone.util.Constants;
@@ -32,7 +33,6 @@ import judahzone.util.RTLogger;
 import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.PresetsView.Button;
 import net.judah.gui.knobs.KnobMode;

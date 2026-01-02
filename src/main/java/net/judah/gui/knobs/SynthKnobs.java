@@ -1,6 +1,6 @@
 package net.judah.gui.knobs;
 
-import static net.judah.fx.MonoFilter.Settings.Resonance;
+import static judahzone.fx.MonoFilter.Settings.Resonance;
 import static net.judah.synth.taco.TacoSynth.DCO_COUNT;
 
 import java.awt.Color;
@@ -21,6 +21,7 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
 
+import judahzone.fx.MonoFilter;
 import judahzone.gui.Gui;
 import judahzone.gui.Icons;
 import judahzone.gui.Pastels;
@@ -29,7 +30,6 @@ import judahzone.util.Threads;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
-import net.judah.fx.MonoFilter;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.settable.Program;

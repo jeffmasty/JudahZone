@@ -9,15 +9,15 @@ import java.util.Map;
 
 import javax.swing.JPanel;
 
-import judahzone.api.Effect;
+import judahzone.api.FX;
+import judahzone.fx.Chorus;
+import judahzone.fx.Compressor;
+import judahzone.fx.Convolution;
+import judahzone.fx.Delay;
+import judahzone.fx.Filter;
+import judahzone.fx.Overdrive;
+import judahzone.fx.Reverb;
 import net.judah.channel.Channel;
-import net.judah.fx.Chorus;
-import net.judah.fx.Compressor;
-import net.judah.fx.Convolution;
-import net.judah.fx.Delay;
-import net.judah.fx.Filter;
-import net.judah.fx.Overdrive;
-import net.judah.fx.Reverb;
 import net.judah.gui.Bindings;
 import net.judah.midi.LFO;
 
@@ -34,10 +34,10 @@ public class FxLEDs extends JPanel {
 	}
 	private final static int UNITS = FxSlot.values().length;
 	/**Map each slot to the effect class it represents (for color lookup). */
-	private static final EnumMap<FxSlot, Class<? extends Effect>> colorBySlot = new EnumMap<>(FxSlot.class);
+	private static final EnumMap<FxSlot, Class<? extends FX>> colorBySlot = new EnumMap<>(FxSlot.class);
 	/**Map concrete effect instances (or their runtime class) to a slot index. */
-	private static final Map<Class<? extends Effect>, FxSlot> slotByEffectClass = new HashMap<>();
-	private static void bind(FxSlot slot, Class<? extends Effect> effectClass) {
+	private static final Map<Class<? extends FX>, FxSlot> slotByEffectClass = new HashMap<>();
+	private static void bind(FxSlot slot, Class<? extends FX> effectClass) {
 		colorBySlot.put(slot, effectClass);
 		slotByEffectClass.put(effectClass, slot);
 	}
@@ -74,7 +74,7 @@ public class FxLEDs extends JPanel {
 			int idx = slot.ordinal();
 			if (!model[idx]) continue;
 
-			Class<? extends Effect> fxClass = colorBySlot.get(slot);
+			Class<? extends FX> fxClass = colorBySlot.get(slot);
 			if (fxClass == null) continue;
 
 			g.setColor(Bindings.getFx(fxClass));
@@ -84,7 +84,7 @@ public class FxLEDs extends JPanel {
 	}
 
 	/* @return true if the model changed (needs repaint) */
-	private boolean check(FxSlot slot, Effect fx) {
+	private boolean check(FxSlot slot, FX fx) {
 		boolean isActive = active(fx);
 		int idx = slot.ordinal();
 		if (isActive != model[idx]) {
@@ -97,7 +97,7 @@ public class FxLEDs extends JPanel {
 	/**For "duo" effects where a single LED represents multiple effects.
 	 * LED lights if either is active.
 	 * @return true if the model changed */
-	private boolean checkDuo(FxSlot slot, Effect fx1, Effect fx2) {
+	private boolean checkDuo(FxSlot slot, FX fx1, FX fx2) {
 		boolean isActive = active(fx1) || active(fx2);
 		int idx = slot.ordinal();
 		if (isActive != model[idx]) {
@@ -107,7 +107,7 @@ public class FxLEDs extends JPanel {
 		return false;
 	}
 
-	private boolean active(Effect fx) {
+	private boolean active(FX fx) {
 		return channel.isActive(fx);
 	}
 
@@ -115,16 +115,16 @@ public class FxLEDs extends JPanel {
 	 * Sync a single effect instance; resolves the correct slot via its class.
 	 * If we know which slot that effect maps to, we update just that one LED.
 	 */
-	public void sync(Effect fx) {
+	public void sync(FX fx) {
 		if (fx == null) return;
 
 		FxSlot slot = slotByEffectClass.get(fx.getClass());
 		if (slot == null) {
 			// Walk superclasses until we find a mapped one (e.g. Reverb, Convolution)
 			Class<?> c = fx.getClass().getSuperclass();
-			while (c != null && Effect.class.isAssignableFrom(c)) {
+			while (c != null && FX.class.isAssignableFrom(c)) {
 				@SuppressWarnings("unchecked")
-				Class<? extends Effect> ec = (Class<? extends Effect>) c;
+				Class<? extends FX> ec = (Class<? extends FX>) c;
 				slot = slotByEffectClass.get(ec);
 				if (slot != null) break;
 				c = c.getSuperclass();

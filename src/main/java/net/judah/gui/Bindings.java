@@ -16,20 +16,20 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.KeyStroke;
 
-import judahzone.api.Effect;
+import judahzone.api.FX;
+import judahzone.fx.Chorus;
+import judahzone.fx.Compressor;
+import judahzone.fx.Convolution;
+import judahzone.fx.Delay;
+import judahzone.fx.EQ;
+import judahzone.fx.Filter;
+import judahzone.fx.Gain;
+import judahzone.fx.MonoFilter;
+import judahzone.fx.Overdrive;
+import judahzone.fx.Reverb;
 import judahzone.gui.Pastels;
 import net.judah.channel.Channel;
 import net.judah.channel.Mains;
-import net.judah.fx.Chorus;
-import net.judah.fx.Compressor;
-import net.judah.fx.Convolution;
-import net.judah.fx.Delay;
-import net.judah.fx.EQ;
-import net.judah.fx.Filter;
-import net.judah.fx.Gain;
-import net.judah.fx.MonoFilter;
-import net.judah.fx.Overdrive;
-import net.judah.fx.Reverb;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.LFO;
 import net.judah.mixer.DJJefe;
@@ -102,7 +102,7 @@ public class Bindings {
 		  MainFrame.update(mains);
 	}
 
-	public static Color getFx(Class<? extends Effect> class1) {
+	public static Color getFx(Class<? extends FX> class1) {
 		if (Reverb.class.isAssignableFrom(class1))
 			return Pastels.RED;
 		if (Overdrive.class.equals(class1))

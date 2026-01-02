@@ -1,11 +1,10 @@
 package net.judah.synth.fluid;
 
-import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 
+import judahzone.fx.Reverb;
 import judahzone.util.Threads;
 import lombok.Getter;
-import net.judah.fx.Reverb;
 
 public class FluidReverb extends Reverb {
 
@@ -96,7 +95,7 @@ public class FluidReverb extends Reverb {
     }
 
 	@Override
-	public void process(FloatBuffer left, FloatBuffer right) {
+	public void process(float[] left, float[] right) {
 		// No-op, external
 	}
 

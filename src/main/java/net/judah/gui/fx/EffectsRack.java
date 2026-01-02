@@ -12,7 +12,14 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import judahzone.api.Effect;
+import judahzone.api.FX;
+import judahzone.fx.Chorus;
+import judahzone.fx.Delay;
+import judahzone.fx.EQ;
+import judahzone.fx.Gain;
+import judahzone.fx.MonoFilter;
+import judahzone.fx.Overdrive;
+import judahzone.fx.Reverb;
 import judahzone.gui.Gui;
 import judahzone.gui.Updateable;
 import judahzone.util.RTLogger;
@@ -20,13 +27,6 @@ import lombok.Getter;
 import net.judah.channel.Channel;
 import net.judah.channel.PresetsHandler;
 import net.judah.controllers.MPKTools;
-import net.judah.fx.Chorus;
-import net.judah.fx.Delay;
-import net.judah.fx.EQ;
-import net.judah.fx.Gain;
-import net.judah.fx.MonoFilter;
-import net.judah.fx.Overdrive;
-import net.judah.fx.Reverb;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.fx.ReverbPlus.UpdatePanel;
@@ -109,7 +109,7 @@ public class EffectsRack extends JPanel implements MPKTools {
     	return new Point(row, col);
     }
 
-    Effect getEffect(int idx) {
+    FX getEffect(int idx) {
     	Point p = refactor(idx);
     	return knobs.get(p.x).getFx(p.y);
     }
@@ -134,7 +134,7 @@ public class EffectsRack extends JPanel implements MPKTools {
         repaint();
     }
 
-	public void update(Effect fx) {
+	public void update(FX fx) {
 
 		if (fx == null)
 			updatePreset();

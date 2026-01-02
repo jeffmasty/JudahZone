@@ -1,8 +1,8 @@
 package net.judah.gui.widgets;
 
+import judahzone.fx.Gain;
 import judahzone.gui.Gui;
 import net.judah.channel.Channel;
-import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.seq.track.MidiTrack;

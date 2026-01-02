@@ -1,7 +1,7 @@
 package net.judah.gui.fx;
 
-import judahzone.api.Effect;
+import judahzone.api.FX;
 
 public interface FXAware {
-	Effect getFx();
+	FX getFx();
 }

@@ -11,6 +11,7 @@ import javax.swing.SwingUtilities;
 
 import judahzone.api.Note;
 import judahzone.api.Tuning;
+import judahzone.fx.analysis.Tuner;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import judahzone.gui.Updateable;
@@ -18,7 +19,6 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
-import net.judahzone.fx.Tuner;
 
 /**
  * GUI-only tuner widget. All pitch detection / analysis has been moved into

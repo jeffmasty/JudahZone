@@ -5,7 +5,7 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 
-import judahzone.api.Effect;
+import judahzone.api.FX;
 import judahzone.gui.Updateable;
 import lombok.RequiredArgsConstructor;
 import net.judah.channel.Channel;
@@ -26,7 +26,7 @@ public class Row implements Updateable {
 
 	public List<Component> list() { return new ArrayList<>(controls); }
 
-	public Effect getFx(int idx) {
+	public FX getFx(int idx) {
 		return ((FXAware)controls.get(idx)).getFx();
 	}
 

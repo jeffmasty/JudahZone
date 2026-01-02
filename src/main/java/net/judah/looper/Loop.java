@@ -6,7 +6,6 @@ import static judahzone.util.Constants.STEREO;
 import static judahzone.util.WavConstants.WAV_EXT;
 
 import java.io.File;
-import java.nio.FloatBuffer;
 import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -336,7 +335,7 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 	}
 
 	@Override
-	public void process(FloatBuffer left, FloatBuffer right) {
+	public void process(float[] left, float[] right) {
 		if (!dirty && length == 0)
 			return;
 		current = tapeCounter.getAndIncrement();
@@ -356,7 +355,7 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 		return true;
 	}
 
-	private void playFrame(FloatBuffer left, FloatBuffer right) {
+	private void playFrame(float[] left, float[] right) {
 		if (overflow(current))
 			current = 0;
 
@@ -373,7 +372,7 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 	}
 
 	/** run active effects on the current frame being played */
-	private void fx(FloatBuffer outLeft, FloatBuffer outRight) {
+	private void fx(float[] outLeft, float[] outRight) {
 		AudioTools.replace(playBuffer[LEFT], left, gain.getLeft());
 		AudioTools.replace(playBuffer[RIGHT], right, gain.getRight());
 		active.forEach(fx -> fx.process(left, right));
@@ -468,9 +467,9 @@ public class Loop extends Channel implements RecordAudio, Runnable {
         }
 	}
 
-    private void recordCh(FloatBuffer sourceLeft, FloatBuffer sourceRight, float[][] target, float amp) {
-    	AudioTools.add(amp, sourceLeft, target[LEFT]);
-    	AudioTools.add(amp, sourceRight, target[RIGHT]);
+    private void recordCh(float[] sourceLeft, float[] sourceRight, float[][] target, float amp) {
+    	AudioTools.mix(sourceLeft, amp, target[LEFT]);
+    	AudioTools.mix(sourceRight, amp, target[RIGHT]);
     }
 
     /** overdub consumer */

@@ -1,7 +1,6 @@
 package net.judah.synth;
 
 import java.io.Closeable;
-import java.nio.FloatBuffer;
 import java.util.Vector;
 
 import javax.sound.midi.Receiver;
@@ -27,6 +26,6 @@ public interface ZoneMidi extends Receiver, Closeable {
 	String progChange(int data2, int ch);
 
 	void process(); // tied to FxChain/Channel.process()
-	void mix(FloatBuffer left, FloatBuffer right); // tied to FxChain/Channel.process()
+	void mix(float[] left, float[] right); // tied to FxChain/Channel.process()
 
 }

@@ -2,13 +2,13 @@ package net.judah.controllers;
 
 import judahzone.api.Controller;
 import judahzone.api.Midi;
+import judahzone.fx.Chorus;
+import judahzone.fx.Delay;
+import judahzone.fx.Overdrive;
 import judahzone.util.Debounce;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
-import net.judah.fx.Chorus;
-import net.judah.fx.Delay;
-import net.judah.fx.Overdrive;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;

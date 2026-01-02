@@ -1,30 +1,29 @@
 package net.judah.channel;
 
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.ImageIcon;
 
-import judahzone.api.Effect;
-import judahzone.api.Effect.RTEffect;
+import judahzone.api.FX;
+import judahzone.api.FX.RTFX;
+import judahzone.fx.Chorus;
+import judahzone.fx.Compressor;
+import judahzone.fx.Convolution;
+import judahzone.fx.Delay;
+import judahzone.fx.EQ;
+import judahzone.fx.Filter;
+import judahzone.fx.Freeverb;
+import judahzone.fx.Gain;
+import judahzone.fx.Overdrive;
+import judahzone.fx.Reverb;
+import judahzone.fx.StereoBus;
 import judahzone.util.AudioMetrics;
 import judahzone.util.AudioTools;
 import judahzone.util.RTLogger;
 import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.fx.Chorus;
-import net.judah.fx.Compressor;
-import net.judah.fx.Convolution;
-import net.judah.fx.Delay;
-import net.judah.fx.EQ;
-import net.judah.fx.Filter;
-import net.judah.fx.Freeverb;
-import net.judah.fx.Gain;
-import net.judah.fx.Overdrive;
-import net.judah.fx.Reverb;
-import net.judah.fx.StereoBus;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.EffectsRack;
 import net.judah.gui.knobs.LFOKnobs;
@@ -74,14 +73,14 @@ public abstract class Channel extends StereoBus implements Presets {
     public Channel(String name, boolean isStereo) {
         this.name = name;
         this.isStereo = isStereo;
-        RTEffect[] order;
+        RTFX[] order;
         if (isStereo) {
             IR = new Convolution.Stereo();
-            order = new RTEffect[] {
+            order = new RTFX[] {
                     eq, hiCut, loCut, compression, delay, overdrive, chorus, reverb, (Convolution.Stereo)IR}; // IR here
         } else {
             IR = new Convolution.Mono();
-            order = new RTEffect[] {
+            order = new RTFX[] {
                     eq, hiCut, loCut, compression, delay, overdrive, chorus, reverb}; // IR handled elsewhere for mono
         }
 
@@ -99,14 +98,14 @@ public abstract class Channel extends StereoBus implements Presets {
 	public final void process() {
         hotSwap();
         processImpl();
-        computeRMS(left.rewind(), right.rewind());
+        computeRMS(left, right);
     }
 
-    public final void mix(FloatBuffer outLeft, FloatBuffer outRight) {
+    public final void mix(float[] outLeft, float[] outRight) {
         if (isOnMute())
             return;
-        AudioTools.mix(getLeft(), outLeft);
-        AudioTools.mix(getRight(), outRight);
+        AudioTools.mix(left, outLeft);
+        AudioTools.mix(right, outRight);
     }
 
     public final void replace(Reverb r) {
@@ -183,7 +182,7 @@ public abstract class Channel extends StereoBus implements Presets {
             preset = PresetsHandler.getPresets().getDefault();
         setting:
         for (Setting s : preset) {
-            for (Effect fx : effects) {
+            for (FX fx : effects) {
                 if (fx.getName().equals(s.getEffectName())) {
                     try {
                         for (int i = 0; i < s.size(); i++) {
@@ -202,7 +201,7 @@ public abstract class Channel extends StereoBus implements Presets {
     @Override
     public final Preset toPreset(String name) {
         ArrayList<Setting> presets = new ArrayList<>();
-        for (Effect e : effects) {
+        for (FX e : effects) {
             if (isActive(e))
                 presets.add(new Setting(e));
         }
@@ -211,7 +210,7 @@ public abstract class Channel extends StereoBus implements Presets {
     }
 
     @Override
-    public void toggle(Effect effect) {
+    public void toggle(FX effect) {
         super.toggle(effect);
         MainFrame.updateFx(this, effect);
     }
@@ -262,7 +261,7 @@ public abstract class Channel extends StereoBus implements Presets {
      * Compute RMS for arbitrary buffers and publish to the channel's volatile fields.
      * Call from the RT thread with the same buffers that were processed.
      */
-    protected void computeRMS(FloatBuffer l, FloatBuffer r) {
+    protected void computeRMS(float[] l, float[] r) {
         lastRmsLeft = AudioMetrics.rms(l);
         lastRmsRight = AudioMetrics.rms(r);
     }

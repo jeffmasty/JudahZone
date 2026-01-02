@@ -9,10 +9,11 @@ import java.util.List;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
-import judahzone.api.Effect;
+import judahzone.api.FX;
 import judahzone.api.Notification.Property;
-import judahzone.gui.Gui;
 import judahzone.api.TimeListener;
+import judahzone.fx.Gain;
+import judahzone.gui.Gui;
 import judahzone.util.RTLogger;
 import lombok.Getter;
 import net.judah.JudahZone;
@@ -20,7 +21,6 @@ import net.judah.channel.Channel;
 import net.judah.channel.LineIn;
 import net.judah.channel.Mains;
 import net.judah.drumkit.DrumMachine;
-import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
@@ -115,7 +115,7 @@ public class DJJefe extends JPanel implements TimeListener {
 				ch.update();
 	}
 
-	public void update(Channel ch, Effect fx) {
+	public void update(Channel ch, FX fx) {
 		MixWidget it = getFader(ch);
 		if (it == null)
 			return;
@@ -221,8 +221,6 @@ public class DJJefe extends JPanel implements TimeListener {
 		if (++idx == size)
 			idx = 0;
 		Channel ch = channels.get(idx);
-		if (ch == mains) // mains doesn't preserve audio, manually make a copy
-			mains.setCopy(true);
 		MainFrame.update(getFader(ch).gain);
 	}
 

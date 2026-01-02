@@ -1,14 +1,13 @@
 package net.judah.looper;
 
-import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Vector;
 
 import judahzone.api.Notification.Property;
-import judahzone.gui.Updateable;
 import judahzone.api.TimeListener;
+import judahzone.gui.Updateable;
 import judahzone.util.Constants;
 import judahzone.util.Memory;
 import judahzone.util.RTLogger;
@@ -62,7 +61,7 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable 
 
 	// TODO  multithread on Looper's own buffer
 	/** play and/or record loops and samples in Real-Time thread */
-	public void process(FloatBuffer left, FloatBuffer right) {
+	public void process(float[] left, float[] right) {
 		forEach(loop->loop.process(left, right));
 		if (hasRecording())
 			countUp();

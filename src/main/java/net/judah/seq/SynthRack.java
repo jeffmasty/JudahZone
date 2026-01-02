@@ -7,6 +7,7 @@ import java.util.Vector;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.swing.ImageIcon;
 
+import judahzone.fx.Gain;
 import judahzone.gui.Icons;
 import judahzone.util.RTLogger;
 import lombok.Getter;
@@ -14,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
 import net.judah.channel.LineIn;
 import net.judah.drumkit.DrumMachine;
-import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.midi.Actives;
 import net.judah.midi.MidiInstrument;

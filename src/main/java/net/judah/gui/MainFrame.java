@@ -21,9 +21,12 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import judahzone.api.Chord;
-import judahzone.api.Effect;
+import judahzone.api.FX;
 import judahzone.api.Live;
 import judahzone.api.Tuning;
+import judahzone.fx.Compressor;
+import judahzone.fx.Convolution;
+import judahzone.fx.Gain;
 import judahzone.gui.Gui;
 import judahzone.gui.Icons;
 import judahzone.gui.Updateable;
@@ -38,9 +41,6 @@ import net.judah.channel.PresetsHandler;
 import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumMachine;
 import net.judah.drumkit.KitSetup;
-import net.judah.fx.Compressor;
-import net.judah.fx.Convolution;
-import net.judah.fx.Gain;
 import net.judah.gui.fx.FxPanel;
 import net.judah.gui.fx.MultiSelect;
 import net.judah.gui.fx.PresetsView;
@@ -119,7 +119,7 @@ public class MainFrame extends JFrame implements Runnable {
     private final JudahZone zone;
     private final Feedback feedback;
 
-    public static void updateFx(Channel ch, Effect fx) {
+    public static void updateFx(Channel ch, FX fx) {
     	FxUpdate send = fxUpdates.get();
     	send.ch = ch;
     	send.fx = fx; // null = preset
@@ -514,7 +514,7 @@ public class MainFrame extends JFrame implements Runnable {
 
     private static class FxUpdate {
     	Channel ch;
-    	Effect fx;
+    	FX fx;
     }
 
     @SuppressWarnings("unused")

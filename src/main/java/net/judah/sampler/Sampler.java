@@ -154,7 +154,7 @@ public class Sampler extends LineIn {
     		sample.process(left, right);
     	for (StepSample s : stepSamples)
     		if (s.isOn()) {
-    			s.env = stepMix;
+    			s.setEnv(stepMix);
     			s.process(left, right);
     		}
 

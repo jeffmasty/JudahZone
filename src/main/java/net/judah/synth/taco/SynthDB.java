@@ -6,12 +6,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
+import judahzone.fx.MonoFilter;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
 import judahzone.util.Threads;
 import lombok.Getter;
-import net.judah.fx.MonoFilter;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
 

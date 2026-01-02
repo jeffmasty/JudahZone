@@ -7,13 +7,13 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 
+import judahzone.fx.Chorus;
+import judahzone.fx.Delay;
 import judahzone.gui.Actionable;
 import judahzone.gui.Gui;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
 import net.judah.JudahZone;
-import net.judah.fx.Chorus;
-import net.judah.fx.Delay;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;

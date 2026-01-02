@@ -2,7 +2,7 @@ package net.judah.mixer;
 
 import java.util.ArrayList;
 
-import judahzone.api.Effect;
+import judahzone.api.FX;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +12,7 @@ public class Setting extends ArrayList<Integer> {
 
     private final String effectName;
 
-    public Setting(Effect effect) {
+    public Setting(FX effect) {
         this.effectName = effect.getName();
         for (int i = 0; i < effect.getParamCount(); i++)
         add(effect.get(i));

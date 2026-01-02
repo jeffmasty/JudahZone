@@ -4,7 +4,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.FloatBuffer;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -87,12 +86,11 @@ public class ToDisk extends LinkedBlockingQueue<float[][]> implements Closeable,
 		mainChunkSize = 36 + dataChunkSize;
 	}
 
-	public void offer(FloatBuffer left, FloatBuffer right) {
+	public void offer(float[] left, float[] right) {
 		float[][] data = memory.getFrame();
-		left.rewind(); right.rewind();
 		for (int i = 0; i < JACK_BUFFER; i++) {
-			data[LEFT][i] = left.get();
-			data[RIGHT][i] = right.get();
+			data[LEFT][i] = left[i];
+			data[RIGHT][i] = right[i];
 		}
 		offer(data);
 	}

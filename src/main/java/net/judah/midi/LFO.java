@@ -1,25 +1,24 @@
 package net.judah.midi;
 
-import java.nio.FloatBuffer;
 import java.security.InvalidParameterException;
 
-import judahzone.api.Effect;
-import judahzone.api.TimeEffect;
+import judahzone.api.FX;
+import judahzone.api.TimeFX;
+import judahzone.fx.Chorus;
+import judahzone.fx.Delay;
+import judahzone.fx.Filter;
+import judahzone.fx.Gain;
+import judahzone.fx.Reverb;
 import judahzone.util.Constants;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.judah.channel.Channel;
-import net.judah.fx.Chorus;
-import net.judah.fx.Delay;
-import net.judah.fx.Filter;
-import net.judah.fx.Gain;
-import net.judah.fx.Reverb;
 import net.judah.mixer.DJFilter;
 
 /** A calculated sin wave LFO.  Default amplitude returns queries between 0 and 85 */
 @RequiredArgsConstructor
-public class LFO implements TimeEffect {
+public class LFO implements TimeFX {
 
     public enum Settings { Target, Min, Max, MSec, Type, Sync }
 
@@ -191,7 +190,7 @@ public class LFO implements TimeEffect {
         	return Constants.reverseLog((float)frequency, LFO_MIN, LFO_MAX);
         }
         if (idx == Settings.Type.ordinal())
-        	return TimeEffect.indexOf(type);
+        	return TimeFX.indexOf(type);
         if (idx == Settings.Sync.ordinal())
         	return sync ? 1 : 0;
         // TODO Shape <| |> ~~
@@ -207,8 +206,8 @@ public class LFO implements TimeEffect {
             setMax(value);
         else if (idx == Settings.MSec.ordinal())
         	frequency = Constants.logarithmic(value, LFO_MIN, LFO_MAX);
-        else if (idx == Settings.Type.ordinal() && value < TimeEffect.TYPE.length)
-        	type = TimeEffect.TYPE[value];
+        else if (idx == Settings.Type.ordinal() && value < TimeFX.TYPE.length)
+        	type = TimeFX.TYPE[value];
         else if (idx == Settings.Sync.ordinal())
         	sync = value > 0;
         else throw new InvalidParameterException();
@@ -228,12 +227,12 @@ public class LFO implements TimeEffect {
 	}
 
 	/** execute the LFO on the channel's target */
-	public Effect pulse() {
+	public FX pulse() {
 		if (!ch.isActive(this))
 			return null;
 		int val = (int)query();
 
-		Effect fx = switch (target) {
+		FX fx = switch (target) {
 	    case Gain -> {
 	        Gain g = ch.getGain();
 	        g.set(Gain.VOLUME, val);
@@ -300,11 +299,11 @@ public class LFO implements TimeEffect {
 	}
 
 	@Override public void sync(float unit) {
-		frequency = 2 * (unit + unit * TimeEffect.indexOf(type));
+		frequency = 2 * (unit + unit * TimeFX.indexOf(type));
 	}
 
 	/** no-op, handled through MidiScheduler */
-	@Override public void process(FloatBuffer left, FloatBuffer right) { }
+	@Override public void process(float[] left, float[] right) { }
 
     public void tremelo(int data2) {
 		int center = ch.getVolume();

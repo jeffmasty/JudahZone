@@ -2,10 +2,10 @@ package net.judah.mixer;
 
 import java.util.ArrayList;
 
+import judahzone.fx.Gain;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
-import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.sampler.Sample;
 

@@ -1,7 +1,5 @@
 package net.judah.synth.taco;
 
-import java.nio.FloatBuffer;
-
 import judahzone.util.Constants;
 import lombok.RequiredArgsConstructor;
 /** inspired by: https://github.com/johncch/MusicSynthesizer/blob/master/src/com/fifthrevision/sound/Osc.java
@@ -39,15 +37,14 @@ public class Dco {
 
 
 	/* See https://github.com/johncch/MusicSynthesizer/blob/master/src/com/fifthrevision/sound/Osc.java  #render() */
-	public void process(float amp, float[] wave, FloatBuffer output) {
+	public void process(float amp, float[] wave, float[] output) {
 		float scaled, fraction;
 		int index;
-		float[] mono = output.array();
 		for(int i = 0; i < BUF_SIZE; i++) {
 			scaled = phase * Shape.LENGTH;
 			fraction = scaled-(int)scaled;
 			index = (int)scaled;
-			mono[i] += amp * (1.0f - fraction) * wave[index & Shape.MASK] +
+			output[i] += amp * (1.0f - fraction) * wave[index & Shape.MASK] +
 					amp * + fraction * wave[(index+1) & Shape.MASK];
 			phase = phase + cyclesPerSample - (int)phase;
 		}

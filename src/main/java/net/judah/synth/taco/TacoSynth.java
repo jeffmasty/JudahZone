@@ -1,6 +1,5 @@
 package net.judah.synth.taco;
 
-import java.nio.FloatBuffer;
 import java.util.List;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -9,6 +8,8 @@ import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
 import judahzone.api.Midi;
+import judahzone.fx.MonoFilter;
+import judahzone.fx.MonoFilter.Type;
 import judahzone.util.AudioTools;
 import judahzone.util.Constants;
 import judahzone.util.RTLogger;
@@ -16,8 +17,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
-import net.judah.fx.MonoFilter;
-import net.judah.fx.MonoFilter.Type;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.SynthKnobs;
 import net.judah.midi.ChannelCC;
@@ -35,8 +34,8 @@ public class TacoSynth extends PianoTrack {
 	public static final int DCO_COUNT = 3;
 	public static final int ZERO_BEND = 8192;
 
-	protected final FloatBuffer mono = FloatBuffer.wrap(new float[Constants.bufSize()]);
-	protected final FloatBuffer upsample = FloatBuffer.wrap(new float[Constants.bufSize() * OVERSAMPLE]);
+	protected final float[] mono = new float[Constants.bufSize()];
+	protected final float[] upsample = new float[Constants.bufSize() * OVERSAMPLE];
     // TODO Pan DCOs: protected final FloatBuffer stereo = FloatBuffer.wrap(new float[Constants.bufSize()]);
 
 	@Getter private final Channel channel;
@@ -230,9 +229,8 @@ public class TacoSynth extends PianoTrack {
 	}
 
 	private void decimate() {
-		mono.rewind();
-		for (int i= 0; i < mono.capacity(); i++)
-			mono.put(upsample.get(i * OVERSAMPLE));
+		for (int i= 0; i < mono.length; i++)
+			mono[i] = upsample[i * OVERSAMPLE];
 	}
 
 }

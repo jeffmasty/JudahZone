@@ -8,8 +8,8 @@ import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import judahzone.fx.Gain;
 import lombok.Getter;
-import net.judah.fx.Gain;
 import net.judah.gui.MainFrame;
 import net.judah.sampler.Sample;
 import net.judah.sampler.Sampler;

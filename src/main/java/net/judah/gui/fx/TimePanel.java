@@ -6,7 +6,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
-import judahzone.api.TimeEffect;
+import judahzone.api.TimeFX;
 import judahzone.gui.Pastels;
 import judahzone.gui.Updateable;
 import lombok.Getter;
@@ -18,12 +18,12 @@ public class TimePanel extends JPanel implements Updateable, FXAware {
 	//⏰  U+023F0  ALARM CLOCK
 	//⏱  U+023F1  STOPWATCH
 	//⏲  U+023F2  TIMER CLOCK
-	@Getter private final TimeEffect fx;
+	@Getter private final TimeFX fx;
 	private final Channel channel;
 	private final JButton sync = new JButton("⏲");
-	private final JComboBox<String> type = new JComboBox<>(TimeEffect.TYPE);
+	private final JComboBox<String> type = new JComboBox<>(TimeFX.TYPE);
 
-	public TimePanel(TimeEffect effect, Channel ch, JudahClock clock) {
+	public TimePanel(TimeFX effect, Channel ch, JudahClock clock) {
 		super(new FlowLayout(FlowLayout.CENTER, 0, 1));
 		this.channel = ch;
 

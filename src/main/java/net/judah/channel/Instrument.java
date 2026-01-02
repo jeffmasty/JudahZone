@@ -2,13 +2,13 @@ package net.judah.channel;
 
 import org.jaudiolibs.jnajack.JackPort;
 
+import judahzone.fx.Convolution;
+import judahzone.fx.MonoFilter;
+import judahzone.fx.MonoFilter.Type;
 import judahzone.gui.Icons;
 import judahzone.util.AudioTools;
 import judahzone.util.Constants;
 import lombok.Getter;
-import net.judah.fx.Convolution;
-import net.judah.fx.MonoFilter;
-import net.judah.fx.MonoFilter.Type;
 
 @Getter
 public class Instrument extends LineIn {

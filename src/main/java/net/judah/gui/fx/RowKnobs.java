@@ -1,12 +1,12 @@
 package net.judah.gui.fx;
 
+import judahzone.fx.Chorus;
+import judahzone.fx.Delay;
+import judahzone.fx.Gain;
+import judahzone.fx.MonoFilter;
+import judahzone.fx.Overdrive;
 import judahzone.util.RTLogger;
 import net.judah.channel.Channel;
-import net.judah.fx.Chorus;
-import net.judah.fx.Delay;
-import net.judah.fx.Gain;
-import net.judah.fx.MonoFilter;
-import net.judah.fx.Overdrive;
 import net.judah.gui.widgets.FxKnob;
 
 
