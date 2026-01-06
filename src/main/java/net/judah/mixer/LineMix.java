@@ -14,9 +14,11 @@ public class LineMix extends MixWidget {
 
 	private final LineIn in;
 	private final SoloTrack soloTrack;
+	private final JudahZone zone;
 
-	public LineMix(LineIn channel, SoloTrack solo) {
+	public LineMix(LineIn channel, SoloTrack solo, JudahZone judahZone) {
 		super(channel);
+		this.zone = judahZone;
 		this.in = channel;
 		this.soloTrack = solo;
 		sidecar.add(font(mute));
@@ -34,13 +36,6 @@ public class LineMix extends MixWidget {
 
 	protected void mute() {
 		in.setMuteRecord(!in.isMuteRecord());
-	}
-
-	@Override
-	public void updateVolume() {
-		super.updateVolume();
-		if (!in.isMuteRecord() && in != JudahZone.getInstance().getDrumMachine())
-			fader.setBackground(ONTAPE);
 	}
 
 	@Override
@@ -69,8 +64,7 @@ public class LineMix extends MixWidget {
 			mute.setBackground(null);
 		}
 		else
-			mute.setBackground(in.isMuteRecord() ? null : ONTAPE);
-
+			mute.setBackground(in.isMuteRecord() ? null : zone.getLooper().isOnCapture() ? RED : ONTAPE);
 		return bg;
 	}
 

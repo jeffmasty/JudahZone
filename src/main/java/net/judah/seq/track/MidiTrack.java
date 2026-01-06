@@ -17,6 +17,7 @@ import javax.sound.midi.Track;
 import javax.swing.JOptionPane;
 
 import judahzone.api.Midi;
+import judahzone.api.MidiConstants;
 import judahzone.api.Signature;
 import judahzone.api.TimeListener;
 import judahzone.api.Notification.Property;
@@ -31,7 +32,6 @@ import net.judah.gui.TabZone;
 import net.judah.midi.JudahMidi;
 import net.judah.seq.Meta;
 import net.judah.seq.MetaMap;
-import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiTools;
 import net.judah.seq.automation.ControlChange;
 import net.judah.song.Sched;

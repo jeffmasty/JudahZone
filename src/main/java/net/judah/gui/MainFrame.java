@@ -22,7 +22,7 @@ import javax.swing.JPanel;
 
 import judahzone.api.Chord;
 import judahzone.api.FX;
-import judahzone.api.Live;
+import judahzone.api.MidiConstants;
 import judahzone.api.Tuning;
 import judahzone.fx.Compressor;
 import judahzone.fx.Convolution;
@@ -30,6 +30,7 @@ import judahzone.fx.Gain;
 import judahzone.gui.Gui;
 import judahzone.gui.Icons;
 import judahzone.gui.Updateable;
+import judahzone.util.AudioMetrics.RMS;
 import judahzone.util.Circular;
 import judahzone.util.Constants;
 import judahzone.util.RTLogger;
@@ -37,7 +38,6 @@ import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
-import net.judah.channel.PresetsHandler;
 import net.judah.drumkit.DrumKit;
 import net.judah.drumkit.DrumMachine;
 import net.judah.drumkit.KitSetup;
@@ -58,9 +58,9 @@ import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.LFO;
 import net.judah.mixer.DJJefe;
+import net.judah.mixer.LoopMix;
 import net.judah.sampler.Sample;
 import net.judah.sampler.Sampler;
-import net.judah.seq.MidiConstants;
 import net.judah.seq.Seq;
 import net.judah.seq.SynthRack;
 import net.judah.seq.TrackList;
@@ -167,7 +167,7 @@ public class MainFrame extends JFrame implements Runnable {
 
         hq = new HQ(clock, zone);
         loops = new MiniLooper(looper, clock);
-        presets = new PresetsView(PresetsHandler.getPresets(), zone);
+        presets = new PresetsView(zone);
         setlists = new SetlistView(zone.getSetlists(), overview);
     	beatBox = new DrumZone(drums.getTracks(), seq.getAutomation());
         tabs = new TabZone(zone, beatBox);
@@ -377,6 +377,8 @@ public class MainFrame extends JFrame implements Runnable {
                 mixer.updateAll();
             else if (o instanceof SceneLauncher launcher)
                 launcher.fill();
+            else if (o instanceof LoopMix)
+            	mixer.updateAll(); // also update onTape feedbacks
             else if (o instanceof Updateable updateable)
                 updateable.update();
             else if (o instanceof KnobUpdate data) { // doKnob()
@@ -406,20 +408,18 @@ public class MainFrame extends JFrame implements Runnable {
                 overview.getChords().updateDirectives();
                 chords.getChordSheet().updateDirectives();
             }
-            else if (o instanceof Live.LiveData dat) {
-                dat.processor().analyze(dat.left(), dat.right());
-                if (knobs instanceof TunerKnobs waves)
-                    waves.repaint();
-            }
+
             else if (o instanceof Tuning tuning && knobs instanceof TunerKnobs tuner)
             	tuner.update(tuning);
+            else if (o instanceof RMS rms && knobs instanceof TunerKnobs tuner)
+            	tuner.update(rms);
             else if (o instanceof KitSetup)
                 drums.getKnobs().update();
             else if (o instanceof Seq)
                 overview.refill(); // # of Tracks has changed
             else if (o instanceof FocusUpdate focus)
     			focus(focus.focus); // !
-            else
+            else // once mature, ignore final in-flight analysis
                 RTLogger.log(this, "unknown " + o.getClass().getSimpleName() + " update: " + o.toString());
 
         } catch (ConcurrentModificationException e) {
@@ -471,13 +471,16 @@ public class MainFrame extends JFrame implements Runnable {
     	knobHolder.add(knobs);
     	knobHolder.validate();
     	knobHolder.repaint();
+
+        // If the newly installed panel is the tuner, ensure its analyzer is active
+        if (knobs instanceof TunerKnobs tunerOn)
+            tunerOn.turnOn();
+
     }
 
     private TunerKnobs tuner() {
-    	if (tuner == null) {
+    	if (tuner == null)
     		tuner = new TunerKnobs(zone);
-    		tuner.turnOn();
-    	}
     	return tuner;
     }
 

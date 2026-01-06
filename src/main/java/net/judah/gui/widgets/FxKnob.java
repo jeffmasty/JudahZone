@@ -6,18 +6,19 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import judahzone.api.FX;
+import judahzone.api.MidiConstants;
 import judahzone.fx.Gain;
 import judahzone.fx.Reverb;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import judahzone.gui.Updateable;
+import judahzone.widgets.Knob;
 import lombok.Getter;
 import net.judah.channel.Channel;
 import net.judah.gui.Bindings;
 import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.FXAware;
-import net.judah.seq.MidiConstants;
 
 /** a knob and label, paints itself on update when effect is active */
 public class FxKnob extends JPanel implements Updateable, FXAware {
@@ -68,7 +69,7 @@ public class FxKnob extends JPanel implements Updateable, FXAware {
 		knob = new Knob(value-> {
 			fx.set(idx, value);
 			MainFrame.update(ch);});
-		knob.setKnobColor(highlight);
+//		knob.setKnobColor(highlight);
 		add(knob);
 
 		label = new JLabel(lbl, JLabel.LEFT);

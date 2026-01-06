@@ -67,12 +67,12 @@ public class DJJefe extends JPanel implements TimeListener {
     	}
         for (LineIn instrument : sources) {
         	channels.add(instrument);
-    		MixWidget fader = new LineMix(instrument, looper.getSoloTrack());
+    		MixWidget fader = new LineMix(instrument, looper.getSoloTrack(), zone);
     		faders.add(fader);
     		add(fader);
         }
     	channels.add(drums);
-		MixWidget fader2 = new LineMix(drums, looper.getSoloTrack());
+		MixWidget fader2 = new LineMix(drums, looper.getSoloTrack(), zone);
 		faders.add(fader2);
 		add(fader2);
 

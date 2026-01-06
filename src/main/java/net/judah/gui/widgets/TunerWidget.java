@@ -15,6 +15,7 @@ import judahzone.fx.analysis.Tuner;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import judahzone.gui.Updateable;
+import judahzone.widgets.RainbowFader;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
@@ -42,15 +43,17 @@ public class TunerWidget extends Box implements Updateable {
 
     @Getter private final int paramCount = 0; // GUI only
     @Getter private boolean active;
-    private final JSlider tuning = new RainbowFader(e -> {/* no-op */});
+    private final JSlider tuning = new RainbowFader(18, 82, e -> {/* no-op */}, ""); // 10...90 hack for fuller range
     private final JButton toggle = new JButton("Tuner");
     boolean hertz = false; // display Midi Label
 
     private final JudahZone zone;
+    private final Tuner tuner;
 
     public TunerWidget(JudahZone zone) {
         super(BoxLayout.X_AXIS);
         this.zone = zone;
+        this.tuner = new Tuner(tuning -> MainFrame.update(tuning));
 
         toggle.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -65,8 +68,8 @@ public class TunerWidget extends Box implements Updateable {
         toggle.setOpaque(true);
 
         tuning.setOrientation(JSlider.HORIZONTAL);
-        tuning.setMajorTickSpacing(50);
-        tuning.setMinorTickSpacing(20);
+        tuning.setMajorTickSpacing(32);
+        tuning.setMinorTickSpacing(8);
         tuning.setPaintTicks(true);
         tuning.setOpaque(true);
         tuning.setEnabled(false);
@@ -114,17 +117,17 @@ public class TunerWidget extends Box implements Updateable {
     }
 
     /**Activate or deactivate the RT tuner analyzer from EDT */
-    public void setActive(boolean active) {
+    public void setActive(boolean on) {
 
-        if (this.active == active)
+        if (this.active == on)
             return;
-        this.active = active;
-        if (active) {
-            // create analyzer and register listener that posts updates via MainFrame.update(...)
-            zone.setTuner(new Tuner(tuning -> MainFrame.update(tuning)));
-        } else {
-            zone.setTuner(null);
-        }
+        this.active = on;
+
+        if (active) // register analyzer/listener that posts updates via MainFrame.update(...)
+            zone.registerAnalyzer(tuner);
+        else
+            zone.unregisterAnalyzer(tuner);
+
 		MainFrame.update(this);
     }
 

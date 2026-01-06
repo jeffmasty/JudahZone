@@ -16,19 +16,28 @@ public class DrumDB {
 
 	/** drum sample cache */
 	private static HashMap<File, Recording> db = new HashMap<>();
+	@Getter private static final ArrayList<String> kits = new ArrayList<>();
+	@Getter private static boolean initialized = false;
+	private static final int LENGTH = DrumType.values().length;
 
 	public static Recording get(File file) throws Exception {
-		if (db.containsKey(file) == false)
-			db.put(file, Recording.loadInternal(file, 2f));
+		if (db.containsKey(file) == false) {
+			try {
+				db.put(file, Recording.loadInternal(file)); // TODO internal?
+				RTLogger.warn(DrumDB.class, "Lazy Load drum sample? " + file.getAbsolutePath());
+			} catch (Throwable t) {
+				RTLogger.warn(DrumDB.class, "Failed to lazy load drum sample: " + t.getMessage());
+			}
+
+		}
 		return db.get(file);
 	}
 
-	private static final int LENGTH = DrumType.values().length;
 
-	@Getter private static final ArrayList<ArrayList<File>> samples = new ArrayList<>();
-	@Getter private static final ArrayList<String> kits = new ArrayList<>();
+	public static void init() {
+		final long startTime = System.currentTimeMillis();
+		final ArrayList<ArrayList<File>> samples = new ArrayList<>();
 
-	static {
 		try {
 		for (int i = 0; i < DrumType.values().length; i++)
 			samples.add(new ArrayList<File>());
@@ -57,11 +66,23 @@ public class DrumDB {
 
 		}
 		Collections.sort(kits);
-		RTLogger.log(DrumDB.class, count + " samples in DB. " + Arrays.toString(kits.toArray()));
+		// PRE-CACHE
+		for (ArrayList<File> list : samples)
+			for (File f : list)
+				try {
+					db.put(f, Recording.loadInternal(f));
+				} catch (Throwable t) {
+					RTLogger.warn(DrumDB.class, "Pre-cache failed: " + t.getMessage());
+				}
+		RTLogger.debug(DrumDB.class, "Loaded " + count + " samples in " + (System.currentTimeMillis() - startTime)
+				+ " msec. " + Arrays.toString(kits.toArray()));
+		initialized = true;
 		} catch (Throwable t) {
 			RTLogger.warn(DrumDB.class, t);
 		}
 	}
+
+	/** return index of kit in DB, or 0 */
 	public static int indexOf(DrumPreset kit) {
 		if (kit == null)
 			return 0;

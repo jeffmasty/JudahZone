@@ -11,6 +11,7 @@ import javax.swing.ImageIcon;
 import judahzone.fx.Convolution;
 import judahzone.util.AudioTools;
 import judahzone.util.Constants;
+import judahzone.util.WavConstants;
 import lombok.Getter;
 import net.judah.synth.Engine;
 
@@ -21,7 +22,7 @@ public class TacoTruck extends Engine {
     public TacoTruck(String name, ImageIcon picture) {
     	super(name, Constants.MONO);
     	icon = picture;
-    	gain.setPreamp(0.65f);
+    	getGain().setPreamp(WavConstants.TO_LINE);
     }
 
 	@Override public TacoSynth getTrack() {
@@ -33,7 +34,7 @@ public class TacoTruck extends Engine {
 	}
 
 	@Override public String[] getPatches() {
-		List<String> result = TacoSynth.getPresets().keys();
+		List<String> result = SynthDB.keys();
 		return result.toArray(new String[result.size()]);
 	}
 

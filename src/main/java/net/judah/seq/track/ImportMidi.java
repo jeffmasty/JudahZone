@@ -13,13 +13,13 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import judahzone.api.MidiConstants;
 import judahzone.gui.Gui;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
-import net.judah.gui.widgets.Btn;
+import judahzone.widgets.Btn;
 import net.judah.gui.widgets.ModalDialog;
 import net.judah.seq.Meta;
-import net.judah.seq.MidiConstants;
 
 /** Dialog to import a single track from a standard MIDI file*/
 

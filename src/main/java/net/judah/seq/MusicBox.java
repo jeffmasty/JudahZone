@@ -16,6 +16,7 @@ import javax.sound.midi.Track;
 import javax.swing.JPanel;
 
 import judahzone.api.Midi;
+import judahzone.api.MidiConstants;
 import judahzone.gui.Floating;
 import lombok.Getter;
 import net.judah.gui.MainFrame;

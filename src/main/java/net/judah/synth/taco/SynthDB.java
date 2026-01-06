@@ -15,8 +15,10 @@ import lombok.Getter;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
 
-public class SynthDB extends ArrayList<TacoSauce> {
+public class SynthDB {
 
+
+	private static final ArrayList<TacoSauce> db = new ArrayList<>();
 	public static final String SPLIT = "/";
 	public static final String OPEN = "[";
 	public static final String CLOSE = "]";
@@ -26,24 +28,30 @@ public class SynthDB extends ArrayList<TacoSauce> {
 	public static final String FILTER = "Filter";
 	public static final String DCO = "Dco";
 
-	@Getter private File loaded;
-	private File file;
+	@Getter static private File loaded;
+	private static File file;
 
-	public SynthDB() {
-		this(Folders.getSynthPresets());
+
+	@Getter public static boolean initialized = false;
+
+	private SynthDB() {
+		if (!initialized)
+			init(Folders.getSynthPresets());
 	}
 
-	public SynthDB(File file) {
-		this.file = file;
-		loadFile();
-	}
+//	public SynthDB(File file) {
+//		this.file = file;
+//		loadFile();
+//	}
 
-	public void loadFile() {
-		clear();
+	public static void init(File file) {
+		initialized = false;
+		db.clear();
         if (file == null || !file.isFile()) {
-            RTLogger.log(this, "missing file " + file);
+            RTLogger.log(SynthDB.class, "missing file " + file);
             return;
         }
+        SynthDB.file = file;
         ArrayList<String> raw = new ArrayList<>();
         Scanner scanner = null;
         int lineNum = 0;
@@ -55,7 +63,7 @@ public class SynthDB extends ArrayList<TacoSauce> {
                 String line = scanner.nextLine();
                 if (line.startsWith(DASH)) {
                 	if (!raw.isEmpty() && header != null)
-                		add(new TacoSauce(header, raw));
+                		db.add(new TacoSauce(header, raw));
                 	header = line;
                 	raw.clear();
                 }
@@ -63,42 +71,43 @@ public class SynthDB extends ArrayList<TacoSauce> {
                 	raw.add(line);
             }
             if (!raw.isEmpty() && header != null) // last in file
-            	add(new TacoSauce(header, raw));
-            if (isEmpty())
+            	db.add(new TacoSauce(header, raw));
+            if (db.isEmpty())
             	throw new ExceptionInInitializerError("No Synth Presets loaded");
         } catch (Throwable e) {
-            RTLogger.warn(this, file.getName() + " line:" + lineNum + " - " + e.getMessage());
+            RTLogger.warn(SynthDB.class, file.getName() + " line:" + lineNum + " - " + e.getMessage());
             return;
         } finally {
         	if (scanner != null) scanner.close();
         }
-        RTLogger.debug(this, "loaded " + size() + " presets");
+        RTLogger.debug(SynthDB.class, "loaded " + db.size() + " presets");
+        initialized = true;
         // reindex();
 	}
 
 	@SuppressWarnings("unused")
 	private void reindex() {
-		for (int i = 0; i < size(); i++)
-			get(i).index = i;
+		for (int i = 0; i < db.size(); i++)
+			db.get(i).index = i;
 		save();
 	}
 
-	public TacoSauce get(String name) {
-		for (TacoSauce p : this)
+	public static TacoSauce get(String name) {
+		for (TacoSauce p : db)
 			if (p.name.equals(name))
 				return p;
 		return null;
 	}
 
-	public List<String> keys() {
+	public static List<String> keys() {
 		ArrayList<String> result = new ArrayList<>();
-		for (TacoSauce p : this)
+		for (TacoSauce p : db)
 			result.add(p.name);
 		Collections.sort(result);
 		return result;
 	}
 
-	public int getProg(String s) {
+	public static int getProg(String s) {
 		if (s == null) return 0;
 		List<String> names = keys();
 		for (int i = 0; i < names.size(); i++)
@@ -108,29 +117,29 @@ public class SynthDB extends ArrayList<TacoSauce> {
 	}
 
 	/** save new preset or replace old preset */
-	public void save(TacoSynth synth, String name) {
-		TacoSauce preset = new TacoSauce(name, synth, size());
+	public static void save(TacoSynth synth, String name) {
+		TacoSauce preset = new TacoSauce(name, synth, db.size());
 		if (keys().contains(name)) {
 			TacoSauce old = get(name);
 			preset.index = old.index;
-			set(indexOf(old), preset);
+			db.set(db.indexOf(old), preset);
 		}
 		else
-			add(preset);
+			db.add(preset);
 		save();
 		MainFrame.update(synth);
 	}
 
-	private void save() {
+	private static void save() {
 		StringBuffer buf = new StringBuffer();
 		for (String key : keys())
 			buf.append(get(key).toString());
         try {
             Threads.writeToFile(file, buf.toString());
-        } catch (Exception e) {RTLogger.warn(this, e);}
+        } catch (Exception e) {RTLogger.warn(SynthDB.class, e);}
 	}
 
-	public String create(TacoSynth synth) {
+	public static String create(TacoSynth synth) {
 		StringBuffer buf = new StringBuffer(OPEN).append(ENVELOPE).append(CLOSE);
 		Adsr env = synth.getAdsr();
 		buf.append(env.getAttackTime()).append(SPLIT).append(env.getDecayTime()).append(SPLIT);
@@ -151,7 +160,7 @@ public class SynthDB extends ArrayList<TacoSauce> {
 		return buf.toString();
 	}
 
-	public boolean apply(String name, TacoSynth synth) {
+	public static boolean apply(String name, TacoSynth synth) {
 		TacoSauce p = get(name);
 		if (p == null)
 			return false;
@@ -168,6 +177,10 @@ public class SynthDB extends ArrayList<TacoSauce> {
 		if (MainFrame.getKnobMode() == KnobMode.Taco)
 			MainFrame.update(MainFrame.getKnobs());
 		return true;
+	}
+
+	public static int size() {
+		return db.size();
 	}
 
 

@@ -5,6 +5,7 @@ import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
 import judahzone.api.Midi;
+import judahzone.api.MidiConstants;
 import net.judah.seq.track.MidiTrack;
 
 public class Measure extends Notes implements MidiConstants {

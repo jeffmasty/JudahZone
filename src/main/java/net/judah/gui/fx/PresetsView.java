@@ -24,13 +24,13 @@ import judahzone.fx.Gain;
 import judahzone.gui.Gui;
 import judahzone.util.Constants;
 import judahzone.util.Threads;
+import judahzone.widgets.Btn;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
-import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.LengthCombo;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
@@ -42,14 +42,12 @@ public class PresetsView extends KnobPanel  {
 
 	@Getter private final KnobMode knobMode = KnobMode.Presets;
 	@Getter private final JPanel title = new JPanel();
-	private final PresetsDB presets;
 	private final JList<String> list = new JList<>();
     private final JComboBox<String> target;
     private final JudahZone zone;
 
-	public PresetsView(PresetsDB presets, JudahZone judahZone) {
+	public PresetsView(JudahZone judahZone) {
 		this.zone = judahZone;
-		this.presets = presets;
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         renew();
         target = createMixerCombo();
@@ -99,8 +97,8 @@ public class PresetsView extends KnobPanel  {
 		String name = Gui.inputBox("New Name:");
 		if (name == null || name.isBlank()) return;
 
-		Preset source = presets.get(idx);
-		presets.add(new Preset(name, source));
+		Preset source = PresetsDB.get(idx);
+		PresetsDB.add(new Preset(name, source));
 		save();
 	}
 
@@ -112,7 +110,7 @@ public class PresetsView extends KnobPanel  {
         	ch = zone.getLooper().byName(search);
         if (ch == null)
         	ch = zone.getMains();
-        Preset p = presets.get(list.getSelectedIndex());
+        Preset p = PresetsDB.get(list.getSelectedIndex());
         ch.setPreset(p);
         ch.setPresetActive(true);
     }
@@ -125,38 +123,38 @@ public class PresetsView extends KnobPanel  {
     }
 
     public void delete(int idx) {
-        if (idx < 0 || idx >= presets.size())
+        if (idx < 0 || idx >= PresetsDB.size())
             throw new InvalidParameterException("" + idx);
-        presets.remove(idx);
+        PresetsDB.remove(idx);
         renew();
     }
 
     public void create() {
         String name = Gui.inputBox("Preset Name:");
         if (name == null || name.isEmpty()) return;
-        presets.add(zone.getFxRack().getChannel().toPreset(name));
+        PresetsDB.add(zone.getFxRack().getChannel().toPreset(name));
         save();
     }
 
     public void current(int idx) {
-        if (idx < 0 || idx >+ presets.size())
+        if (idx < 0 || idx >+ PresetsDB.size())
             throw new InvalidParameterException("" + idx);
         Channel channel = zone.getFxRack().getChannel();
-        Preset old = presets.get(idx);
+        Preset old = PresetsDB.get(idx);
         Preset replace = channel.toPreset(old.getName());
-        presets.set(idx, replace);
+        PresetsDB.set(idx, replace);
         save();
     }
 
     public void save() {
-    	presets.save();
+    	PresetsDB.save();
     	renew();
     }
 
     private void renew() {
         DefaultListModel<String> model = new DefaultListModel<>();
-        presets.sort((o1, o2) -> o1.getName().compareTo(o2.getName()));
-        for(Preset p : presets)
+        PresetsDB.getDb().sort((o1, o2) -> o1.getName().compareTo(o2.getName()));
+        for(Preset p : PresetsDB.getDb())
             model.addElement(p.getName() + p.condenseEffects());
         list.setModel(model);
     }

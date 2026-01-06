@@ -19,10 +19,10 @@ import javax.swing.JToggleButton;
 import judahzone.fx.Gain;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
+import judahzone.widgets.RainbowFader;
 import lombok.Getter;
 import net.judah.channel.Channel;
 import net.judah.gui.MainFrame;
-import net.judah.gui.widgets.RainbowFader;
 import net.judah.gui.widgets.TogglePreset;
 
 /**Mixer view <br/>
@@ -94,8 +94,6 @@ public abstract class MixWidget extends JPanel implements Pastels {
 		Color bg = thisUpdate();
 		if (false == banner.getBackground().equals(bg))
 			banner.setBackground(bg);
-		// indicators.sync();
-		// updateVolume();
 		fx.update(); // preset
 	}
 
@@ -103,7 +101,7 @@ public abstract class MixWidget extends JPanel implements Pastels {
 		if (channel.getVolume() != fader.getValue())
 			fader.setValue(channel.getVolume());
 		if (channel.isOnMute())
-			fader.setBackground(PURPLE);
+			fader.setBackground(Color.DARK_GRAY);
 		else
 			fader.setBackground(null);
 	}

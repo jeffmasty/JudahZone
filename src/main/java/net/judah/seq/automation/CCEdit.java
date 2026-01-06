@@ -16,14 +16,14 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 import judahzone.api.Midi;
+import judahzone.api.MidiConstants;
 import judahzone.gui.Gui;
 import judahzone.util.Constants;
 import judahzone.util.RTLogger;
+import judahzone.widgets.Btn;
 import net.judah.gui.Size;
-import net.judah.gui.widgets.Btn;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
-import net.judah.seq.MidiConstants;
 import net.judah.seq.automation.Automation.AutoBox;
 import net.judah.seq.automation.Automation.CCData;
 import net.judah.seq.track.MidiTrack;

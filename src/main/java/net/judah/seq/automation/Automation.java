@@ -11,6 +11,7 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
 import judahzone.api.Midi;
+import judahzone.api.MidiConstants;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import lombok.Getter;
@@ -18,7 +19,6 @@ import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
-import net.judah.seq.MidiConstants;
 import net.judah.seq.track.Computer;
 import net.judah.seq.track.Computer.Update;
 import net.judah.seq.track.MidiTrack;
@@ -29,13 +29,6 @@ public class Automation extends KnobPanel implements MidiConstants {
 	public static record CCData(MidiEvent e, ControlChange type) {}
 
 	public static enum MidiMode { CC, Pitch, Program, Meta, All, NoteOn, NoteOff }; // TODO
-
-//	private static Automation instance;
-//	public static Automation getInstance(TraxCombo combo, MidiTrack current) {
-//		if (instance == null)
-//			instance = new Automation(combo, current);
-//		return instance;
-//	}
 
 	@Getter private final KnobMode knobMode = KnobMode.Autom8;
 	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));

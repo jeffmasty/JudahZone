@@ -11,8 +11,8 @@ import judahzone.api.Key;
 import judahzone.gui.Gui;
 import judahzone.util.RTLogger;
 import judahzone.util.Threads;
+import judahzone.widgets.CenteredCombo;
 import net.judah.gui.Size;
-import net.judah.gui.widgets.CenteredCombo;
 
 public class Octaves extends CenteredCombo<Integer> {
 

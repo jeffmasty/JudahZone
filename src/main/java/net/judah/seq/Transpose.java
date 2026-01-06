@@ -11,10 +11,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import judahzone.gui.Gui;
+import judahzone.widgets.Btn;
+import judahzone.widgets.Integers;
 import lombok.Setter;
 import net.judah.drumkit.DrumType;
-import net.judah.gui.widgets.Btn;
-import net.judah.gui.widgets.Integers;
 import net.judah.gui.widgets.ModalDialog;
 import net.judah.seq.Edit.Type;
 import net.judah.seq.piano.Piano;

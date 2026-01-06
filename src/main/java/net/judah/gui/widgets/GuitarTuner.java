@@ -16,6 +16,7 @@ import be.tarsos.dsp.pitch.PitchDetector;
 import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
 import judahzone.gui.Gui;
 import judahzone.util.Constants;
+import judahzone.widgets.RainbowFader;
 
 // Legacy, PitchDetetector now an Effect of Channel
 public class GuitarTuner extends JPanel {

@@ -5,19 +5,18 @@ import java.awt.Color;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import judahzone.api.MidiConstants;
 import judahzone.fx.EQ;
 import judahzone.fx.EQ.EqBand;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import judahzone.gui.Updateable;
+import judahzone.widgets.Click;
+import judahzone.widgets.Knob;
+import judahzone.widgets.Knob.KnobListener;
 import lombok.Getter;
 import net.judah.channel.Channel;
 import net.judah.gui.Bindings;
-import net.judah.gui.widgets.Click;
-import net.judah.gui.widgets.FxKnob;
-import net.judah.gui.widgets.Knob;
-import net.judah.gui.widgets.Knob.KnobListener;
-import net.judah.seq.MidiConstants;
 
 public class EQPlus implements Updateable {
 	private static final Color SHIFTED = Pastels.MY_GRAY;
@@ -89,7 +88,7 @@ public class EQPlus implements Updateable {
 
 		class Overloaded extends Knob implements KnobListener, Updateable {
 			Overloaded() {
-				setKnobColor(FxKnob.THUMB);
+				// setKnobColor(FxKnob.THUMB);
 				addListener(this);
 			}
 

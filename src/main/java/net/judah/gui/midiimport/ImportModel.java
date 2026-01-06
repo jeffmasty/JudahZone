@@ -8,9 +8,9 @@ import javax.sound.midi.Track;
 import javax.swing.table.DefaultTableModel;
 
 import judahzone.api.Midi;
+import judahzone.api.MidiConstants;
 import net.judah.seq.SynthRack;
 import net.judah.seq.Meta;
-import net.judah.seq.MidiConstants;
 import net.judah.seq.track.MidiTrack;
 
 /* MidiFile Import Table

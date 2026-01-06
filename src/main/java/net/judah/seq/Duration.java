@@ -11,7 +11,7 @@ import javax.swing.JTextField;
 
 import judahzone.gui.Gui;
 import judahzone.util.RTLogger;
-import net.judah.gui.widgets.Btn;
+import judahzone.widgets.Btn;
 import net.judah.gui.widgets.ModalDialog;
 import net.judah.gui.widgets.Slider;
 import net.judah.midi.JudahMidi;

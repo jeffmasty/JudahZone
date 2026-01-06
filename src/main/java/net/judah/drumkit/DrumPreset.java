@@ -16,12 +16,10 @@ public class DrumPreset {
 	private final File folder;
 
 	public DrumPreset(File folder) throws Exception {
-		for (File file : folder.listFiles()) {
+		for (File file : folder.listFiles())
 			for (DrumType d : DrumType.values())
-			if (file.getName().startsWith(d.name())) {
-				samples[d.ordinal()] = Recording.loadInternal(file);
-			}
-		}
+				if (file.getName().startsWith(d.name()))
+					samples[d.ordinal()] = DrumDB.get(file);
 		this.folder = folder;
 	}
 

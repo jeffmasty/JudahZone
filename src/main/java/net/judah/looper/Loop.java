@@ -17,7 +17,6 @@ import judahzone.util.AudioTools;
 import judahzone.util.Circular;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
-import judahzone.util.FromDisk;
 import judahzone.util.MP3;
 import judahzone.util.Memory;
 import judahzone.util.RTLogger;
@@ -37,9 +36,9 @@ import net.judah.synth.taco.TacoTruck;
 
 public class Loop extends Channel implements RecordAudio, Runnable {
 	public static final int INIT = 4096; // nice chunk of preloaded blank tape
-	private static final float STD_BOOST = 2.25f;
-	private static final float DRUM_BOOST = 0.85f;
-
+//	private static final float STD_BOOST = 1f;
+//	private static final float DRUM_BOOST = 1f;
+	private static final float UNITY = 1f;
 	@Getter protected final Looper looper;
 	protected final JudahClock clock;
     protected final Collection<LineIn> sources;
@@ -174,13 +173,13 @@ public class Loop extends Channel implements RecordAudio, Runnable {
     public void load(File dotWav, boolean primary) {
 		try {
 
-		    if (!FromDisk.canLoadRecording(dotWav)) {
+		    if (!Memory.check(dotWav)) {
 		        RTLogger.warn(this, "O-o-M :( " + dotWav.getName());
 		        return;
 		    }
 			rewind();
 			length = 0;
-			tape = MP3.load(dotWav, 0.25f); // TODO LINE_LEVEL // TODO buffering
+			tape = MP3.load(dotWav); // RUN_LEVEL // TODO buffering
 			length = tape.size();
 			dirty = true;
 			if (primary)
@@ -365,23 +364,26 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 				current = 0;
 				tapeCounter.set(current);
 			}
+			if (onMute)
+				return;
 			playBuffer = tape.get(current);
 		}
-		if (!onMute)
-			fx(left, right);
+		fx(left, right);
+        // AudioMetrics.normalizeStereoToRms(left, right, normalizeTargetRms, normalizeMaxGain);
+		computeRMS(left, right);
 	}
 
 	/** run active effects on the current frame being played */
 	private void fx(float[] outLeft, float[] outRight) {
 		AudioTools.replace(playBuffer[LEFT], left, gain.getLeft());
 		AudioTools.replace(playBuffer[RIGHT], right, gain.getRight());
-		active.forEach(fx -> fx.process(left, right));
+		for (int i = 0, n = active.size(); i < n; i++)
+			active.get(i).process(left, right);
 		AudioTools.mix(left, gain.getGain(), outLeft);
 		AudioTools.mix(right, gain.getGain(), outRight);
 	}
 
 	private void recordFrame() {
-		// Decide whether to record into existing buffer or create an off-thread overdub task
 		// If the buffer currently being played (playBuffer) is the same as tape.get(current),
 		// we must not mutate it in-place — create a new buffer and enqueue an overdub task.
 		// Otherwise it's safe to write directly into the existing tape frame.
@@ -439,7 +441,7 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 
 	/** helper to perform the per-source adds into the provided target buffer */
 	private void captureInto(float[][] target) {
-		float amp = STD_BOOST;
+		float amp = UNITY;
     	if (leadIn) { // scratchy if sound blasted into first frame (rough windowing)
     		amp *= 0.33f;
     		leadIn = false;
@@ -457,13 +459,13 @@ public class Loop extends Channel implements RecordAudio, Runnable {
             	recordCh(in.getLeft(), in.getRight(), target, amp);
             else if (in instanceof TacoTruck synth) {
             	if (!synth.isMuteRecord() && !synth.isOnMute())
-            		recordCh(synth.getLeft(), synth.getRight(), target, amp * synth.getGain().getPreamp());
+            		recordCh(synth.getLeft(), synth.getRight(), target, amp * synth.getGain().getPreamp()); // <-- preamp big
             }
             else if (in instanceof DrumMachine drumz)
             	for (DrumTrack track : drumz.getTracks())
             		if (!track.getKit().isMuteRecord())
             			recordCh(track.getKit().getLeft(), track.getKit().getRight(),
-            				target, DRUM_BOOST);
+            				target, UNITY);
         }
 	}
 

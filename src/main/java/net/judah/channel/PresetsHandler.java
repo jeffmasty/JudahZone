@@ -20,21 +20,18 @@ import net.judah.mixer.PresetsDB;
 /** Presets */
 public class PresetsHandler extends SetCombo<Preset> implements ListCellRenderer<Preset>, Updateable {
 
-	private static final PresetsDB presets = new PresetsDB(); // 21
-	public static final PresetsDB getPresets() { return presets; }
-
 	private final Channel ch;
 	private final JLabel render = new JLabel();
 
 	public PresetsHandler(Channel channel) {
-		super(presets.array(), channel.getPreset());
+		super(PresetsDB.array(), channel.getPreset());
 		this.ch = channel;
 		((JLabel)getRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
 		Gui.resize(this, Size.MEDIUM);
 		addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) {
 				if (SwingUtilities.isRightMouseButton(e))
-					getPresets().replace(ch);}});
+					PresetsDB.replace(ch);}});
 	}
 
 	@Override
@@ -53,15 +50,15 @@ public class PresetsHandler extends SetCombo<Preset> implements ListCellRenderer
 
 	public void increment(boolean up) {
 		int next = getIdx() + (up ? 1 : -1);
-		if (next >= presets.size())
+		if (next >= PresetsDB.size())
 			next = 0;
 		if (next < 0)
-			next = presets.size() - 1;
-		midiShow(presets.get(next));
+			next = PresetsDB.size() - 1;
+		midiShow(PresetsDB.get(next));
 	}
 
 	public int getIdx() {
-		return presets.indexOf(getSelectedItem());
+		return PresetsDB.indexOf(getSelectedItem());
 	}
 
 	@Override public Component getListCellRendererComponent(JList<? extends Preset> list,

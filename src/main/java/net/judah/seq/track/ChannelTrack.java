@@ -6,10 +6,8 @@ import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
 import judahzone.api.Midi;
-import judahzone.util.RTLogger;
 import lombok.Getter;
 import net.judah.channel.Channel;
-import net.judah.channel.PresetsHandler;
 import net.judah.midi.ChannelCC;
 import net.judah.mixer.Preset;
 import net.judah.mixer.PresetsDB;
@@ -17,7 +15,6 @@ import net.judah.mixer.PresetsDB;
 @Getter
 public class ChannelTrack extends MidiTrack {
 
-	private static final PresetsDB presets = PresetsHandler.getPresets();
 
 	private final Channel channel;
 	private final ChannelCC cc;
@@ -26,8 +23,6 @@ public class ChannelTrack extends MidiTrack {
 		super(trackName, midiCh);
 		this.channel = line;
 		cc = new ChannelCC(channel);
-		if (presets == null)
-			RTLogger.warn(this, "null presets");
 	}
 
 	@Override public boolean capture(Midi midi) {
@@ -62,17 +57,17 @@ public class ChannelTrack extends MidiTrack {
 	}
 
 	@Override public String[] getPatches() {
-		return presets.getPatches();
+		return PresetsDB.getPatches();
 	}
 
 	@Override public String progChange(int data1) {
-		if (presets.size() > data1)
-			channel.setPreset(presets.get(data1));
+		if (PresetsDB.size() > data1)
+			channel.setPreset(PresetsDB.get(data1));
 		return channel.getPreset().getName();
 	}
 
 	@Override public boolean progChange(String name) {
-		Preset p = presets.byName(name);
+		Preset p = PresetsDB.byName(name);
 		if (p == null)
 			return false;
 		channel.setPreset(p);

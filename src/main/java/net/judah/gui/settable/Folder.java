@@ -3,7 +3,7 @@ package net.judah.gui.settable;
 import java.io.File;
 
 import judahzone.util.Folders;
-import net.judah.gui.widgets.FileRender;
+import judahzone.widgets.FileRender;
 import net.judah.seq.track.MidiTrack;
 
 public class Folder extends SetCombo<File> {

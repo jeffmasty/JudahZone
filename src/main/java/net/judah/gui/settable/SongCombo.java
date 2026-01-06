@@ -5,8 +5,8 @@ import java.util.ArrayList;
 
 import judahzone.gui.Gui;
 import judahzone.util.Threads;
+import judahzone.widgets.FileRender;
 import net.judah.JudahZone;
-import net.judah.gui.widgets.FileRender;
 import net.judah.song.Overview;
 
 public class SongCombo extends SetCombo<File> {

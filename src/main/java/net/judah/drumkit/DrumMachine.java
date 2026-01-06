@@ -42,7 +42,6 @@ public final class DrumMachine extends Engine {
 			trak.progChange(type.program);
 		}
 		knobs = new KitKnobs(this);
-		gain.setPreamp(0.2f);
 	}
 
 	public void init(String preset) {

@@ -7,10 +7,9 @@ import net.judah.drumkit.DrumKit;
 import net.judah.gui.MainFrame;
 
 /** an live audio channel that can be recorded */
-@Getter
 public abstract class LineIn extends Channel {
 
-	protected boolean muteRecord = true;
+	@Getter protected boolean muteRecord = true;
 
 	public LineIn(String name, int channels) {
 		this(name, channels == Constants.STEREO);
@@ -29,7 +28,8 @@ public abstract class LineIn extends Channel {
     /** run active stereo effects on this input channel*/
 	protected final void fx() {
 		gain.preamp(left, right);
-		active.forEach(fx -> fx.process(left, right));
+		for (int i = 0, n = active.size(); i < n; i++)
+			active.get(i).process(left, right);
 		gain.post(left, right);
 	}
 

@@ -80,7 +80,7 @@ public class CCPopup extends JPopupMenu {
 		long end = start + track.getStepTicks();
 		for (CCData cc : dat.cc) {
 			if (cc.e().getTick() < start) continue;
-			if (cc.e().getTick() > end) break;
+			if (cc.e().getTick() >= end) break; // fixed: exclude events exactly at end
 			result.add(cc);
 		}
 		return result;
@@ -120,6 +120,5 @@ public class CCPopup extends JPopupMenu {
 	public int[] populate(long left, long right) {
 		return dat.populate(left, right);
 	}
-
 
 }

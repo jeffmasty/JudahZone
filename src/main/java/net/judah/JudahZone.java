@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -19,9 +20,9 @@ import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
 import org.jaudiolibs.jnajack.JackPort;
 
-import judahzone.api.Live.LiveData;
+import judahzone.api.FX.Calc;
+import judahzone.api.Registrar;
 import judahzone.fx.Convolution;
-import judahzone.fx.analysis.Tuner;
 import judahzone.gui.Icons;
 import judahzone.gui.Nimbus;
 import judahzone.jnajack.ZoneJackClient;
@@ -30,25 +31,19 @@ import judahzone.util.Constants;
 import judahzone.util.Folders;
 import judahzone.util.Memory;
 import judahzone.util.RTLogger;
-import judahzone.util.Recording;
 import judahzone.util.Services;
 import judahzone.util.Threads;
-import judahzone.util.WavConstants;
 import lombok.Getter;
-import lombok.Setter;
-import net.judah.channel.Channel;
 import net.judah.channel.Instrument;
 import net.judah.channel.LineIn;
 import net.judah.channel.Mains;
 import net.judah.controllers.MPKmini;
+import net.judah.drumkit.DrumDB;
 import net.judah.drumkit.DrumMachine;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Size;
 import net.judah.gui.fx.FxPanel;
 import net.judah.gui.fx.MultiSelect;
-import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.MidiGui;
-import net.judah.gui.knobs.TunerKnobs;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
@@ -56,7 +51,9 @@ import net.judah.midi.MidiInstrument;
 import net.judah.mixer.DJJefe;
 import net.judah.mixer.Fader;
 import net.judah.mixer.IRDB;
+import net.judah.mixer.PresetsDB;
 import net.judah.mixer.Zone;
+import net.judah.sampler.SampleDB;
 import net.judah.sampler.Sampler;
 import net.judah.seq.Seq;
 import net.judah.seq.SynthRack;
@@ -65,13 +62,13 @@ import net.judah.seq.chords.Chords;
 import net.judah.song.Overview;
 import net.judah.song.setlist.Setlists;
 import net.judah.synth.fluid.FluidSynth;
+import net.judah.synth.taco.SynthDB;
 import net.judah.synth.taco.TacoTruck;
-import net.judahzone.scope.JudahScope;
 
 /* my jack sound system settings:
  * jackd -P99 -dalsa -dhw:UMC1820 -r48000 -p512 -n2
  * (samples are 48khz) */
-public class JudahZone extends ZoneJackClient {
+public class JudahZone extends ZoneJackClient implements Registrar {
 	public static final String JUDAHZONE = JudahZone.class.getSimpleName();
 	public static JudahZone getInstance() { return instance; }
 	private static JudahZone instance;
@@ -81,42 +78,47 @@ public class JudahZone extends ZoneJackClient {
 
 	private JackPort outL, outR;
 	@Getter private Mains mains;
-	@Getter private Instrument guitar;
-	@Getter private Instrument mic;
-	@Getter private MidiInstrument bass;
-	@Getter private FluidSynth fluid;
-	/** midiTrack-Controlled-digital-Oscillators */
-	@Getter private TacoTruck taco;
-	@Getter private TacoTruck tk2;
 
 	@Getter private JudahMidi midi;
 	private JudahClock clock;
 	@Getter private Seq seq;
-	@Getter private DJJefe mixer;
 	@Getter private DrumMachine drumMachine;
 	@Getter private Looper looper;
 	@Getter private Sampler sampler;
 	@Getter private Chords chords;
 
 	@Getter private MainFrame frame;
+	@Getter private DJJefe mixer;
 	@Getter private MidiGui midiGui;
 	@Getter private FxPanel fxRack;
 	@Getter private Overview overview;
-
 	@Getter private MPKmini mpkMini;
 	@Getter private Zone instruments;
-	@Getter private JudahScope scope;
 	@Getter private final Setlists setlists = new Setlists();
 	private final MultiSelect selected = new MultiSelect();
 
+	/** midiTrack-Controlled-digital-Oscillators */
+	@Getter private TacoTruck taco;
+	@Getter private TacoTruck tk2;
+
+	// custom
+	@Getter private Instrument guitar;
+	@Getter private Instrument mic;
+	@Getter private MidiInstrument bass;
+	@Getter private FluidSynth fluid;
 
 	/** hot buffer, The Product */
 	private final float[] left = new float[Constants.bufSize()];
 	/** hot buffer, The Product */
 	private final float[] right = new float[Constants.bufSize()];
-	/** short analysis/recording buffer (1 fft_frame = 4 jack_frames) */
-	private Recording realtime = new Recording();
-	@Getter @Setter private volatile Tuner tuner;
+
+	/** Thread-safe list of analyzers; each consumes left/right float[] frames. */
+	private final CopyOnWriteArrayList<Calc<?>> analyzers = new CopyOnWriteArrayList<>();
+	/** Register/unregister analyzers (e.g. tuner::process or transformer::process). */
+	@Override
+	public void registerAnalyzer(Calc<?> a) { analyzers.addIfAbsent(a); }
+	@Override
+	public void unregisterAnalyzer(Calc<?> a) { analyzers.remove(a); }
 
 	private final ExecutorService dspExec = Executors.newFixedThreadPool(
 	            Runtime.getRuntime().availableProcessors(),
@@ -128,15 +130,20 @@ public class JudahZone extends ZoneJackClient {
 	private JudahZone() throws Exception {
 		super(JUDAHZONE);
 		Nimbus.start();
-		Threads.execute(() -> Convolution.setIRDB(IRDB.instance) );
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
+		Threads.execute(() -> SynthDB.init(Folders.getSynthPresets()));
+		Threads.execute(() -> PresetsDB.init(Folders.getPresetsFile()));
+		Threads.execute(() -> DrumDB.init());
+		Threads.execute(() -> SampleDB.init());
+		Threads.execute(() -> Convolution.setIRDB(IRDB.instance) );
+
 		start(); // super calls initialize(), makeConnections()
 		instance = this;
 	}
 
 	public static void main(String[] args) {
 		DOMConfigurator.configure(Folders.getLog4j().getAbsolutePath());
-		RTLogger.setLevel(Level.INFO /* DEBUG */);
+		RTLogger.setLevel(Level.DEBUG /* INFO */);
 		try {
 			new JudahZone();
 		} catch (Exception e) { e.printStackTrace(); }
@@ -152,14 +159,17 @@ public class JudahZone extends ZoneJackClient {
 
 		mains = new Mains();
 		drumMachine = new DrumMachine(mains);
-		sampler = new Sampler();
 		chords = new Chords(this, clock);
+		taco = new TacoTruck(Trax.TK1.getName(), Icons.get("taco.png"));
+		tk2 = new TacoTruck(Trax.TK2.getName(), Icons.get("Waveform.png"));
+
+// custom defines
 		guitar = new Instrument(GUITAR, GUITAR_PORT, jackclient.registerPort(
 				"guitar", AUDIO, JackPortIsInput), "Guitar.png", 85, 12000);
 
 		mic = new Instrument(MIC, MIC_PORT, jackclient.registerPort(
 				"mic", AUDIO, JackPortIsInput), "Microphone.png", 85, 11000);
-		mic.getGain().setGain(0.25f); // trim studio noise
+//		mic.getGain().setGain(0.25f); // trim studio noise
 
 		while (midi.getFluidOut() == null)
 			Threads.sleep(10); // wait while midi thread creates ports
@@ -172,15 +182,14 @@ public class JudahZone extends ZoneJackClient {
 			Threads.sleep(10);
 		bass = new MidiInstrument(BASS, CRAVE_PORT,
 				jackclient.registerPort("crave_in", AUDIO, JackPortIsInput), "Crave.png", midi.getCraveOut());
+// end custom defines
 
-		taco = new TacoTruck(Trax.TK1.getName(), Icons.get("taco.png"));
-		tk2 = new TacoTruck(Trax.TK2.getName(), Icons.get("Waveform.png"));
-
-		SynthRack.register(bass);
+		SynthRack.register(bass); // custom
 		SynthRack.register(taco);
 		SynthRack.register(tk2);
-		SynthRack.register(fluid);
+		SynthRack.register(fluid); // custom
 
+		sampler = new Sampler();
 		// recordable instruments, sequential order for the Mixer
 		instruments = new Zone(this, guitar, mic, bass, taco, fluid);
 
@@ -216,8 +225,7 @@ public class JudahZone extends ZoneJackClient {
 		mixer = new DJJefe(clock, this, sampler, tk2);
 		midiGui = new MidiGui(this, taco, fluid, bass, clock, midi.getJamstik());
 		overview = new Overview(JUDAHZONE, this);
-		fxRack = new FxPanel(selected, clock);
-		scope = new JudahScope(Size.WIDTH_TAB);
+		fxRack = new FxPanel(selected, clock, mains);
 		frame = new MainFrame(JUDAHZONE, this);
 
 		clock.setTempo(93);
@@ -304,9 +312,9 @@ public class JudahZone extends ZoneJackClient {
 		guitar.mix(left, right);
 		mic.mix(left, right);
 		SynthRack.getEngines().forEach(engine->engine.mix(left, right));
-		sampler.mix(left, right);
 		drumMachine.mix(left, right);
-		looper.process(left, right);  // looper records and/or plays loops
+		sampler.mix(left, right);
+		looper.process(left, right);  // looper records previous and/or plays loops
 
 		mains.process(left, right);	  // final mix bus effects
 
@@ -318,29 +326,28 @@ public class JudahZone extends ZoneJackClient {
 		mixer.monitor(2); 	// collect 2 channels of dB feedback for mixer panel per cycle
 		requests.process();
 
-		// analysis // TODO push to Analysis FX
-		boolean activeScope = scope.isActive();
-		boolean activeWaveform = MainFrame.getKnobMode() == KnobMode.Tuner;
-		if (activeScope || activeWaveform) {
-			float[][] buf = Memory.STEREO.getFrame();
-			selected.forEach(ch -> { // TODO generalize
-				AudioTools.mix(ch.getLeft(), buf[Constants.LEFT]);
-				AudioTools.mix(ch.getRight(), buf[Constants.RIGHT]);
-			});
-			if (activeWaveform && MainFrame.getKnobs() instanceof TunerKnobs knobs)
-				knobs.process(buf);
-			if (activeScope) {
-				realtime.add(buf);
-				if (realtime.size() == WavConstants.CHUNKS) {
-					MainFrame.update(new LiveData(scope, realtime.getLeft(), realtime.getChannel(1)));
-					realtime = new Recording();
-				}
-			}
-		}
-		if (tuner != null) {
-			Channel tune = selected.getFirst();
-			if (tune != null)
-				tuner.process(tune.getLeft(), tune.getRight());
+	    // run registered analyzers on the mixed buffer (thread-safe iteration)
+		// Reuse pooled stereo frame and return it to the pool after use.
+		if (!analyzers.isEmpty()) {
+		    final float[][] buf = Memory.STEREO.getFrame();
+		    try {
+		        final float[] l = buf[0];
+		        final float[] r = buf[1];
+		        selected.forEach(ch -> {
+		            AudioTools.mix(ch.getLeft(), l);
+		            AudioTools.mix(ch.getRight(), r);
+		        });
+
+		        try {
+		            for (Calc<?> analyzer : analyzers)
+		                analyzer.process(l, r);
+		        } catch (Throwable t) {
+		            RTLogger.warn(this, t);
+		        }
+		    } finally {
+		        // Return frame to pool instead of letting it be GC'd.
+		        Memory.STEREO.release(buf);
+		    }
 		}
 		return true;
 	}

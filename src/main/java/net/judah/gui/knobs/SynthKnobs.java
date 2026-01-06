@@ -3,7 +3,6 @@ package net.judah.gui.knobs;
 import static judahzone.fx.MonoFilter.Settings.Resonance;
 import static net.judah.synth.taco.TacoSynth.DCO_COUNT;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -24,23 +23,23 @@ import javax.swing.SwingUtilities;
 import judahzone.fx.MonoFilter;
 import judahzone.gui.Gui;
 import judahzone.gui.Icons;
-import judahzone.gui.Pastels;
 import judahzone.util.Constants;
 import judahzone.util.Threads;
+import judahzone.widgets.Btn;
+import judahzone.widgets.CenteredCombo;
+import judahzone.widgets.Knob;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.settable.Program;
-import net.judah.gui.widgets.Btn;
-import net.judah.gui.widgets.CenteredCombo;
 import net.judah.gui.widgets.DoubleSlider;
-import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.Slider;
 import net.judah.seq.track.Computer.Update;
 import net.judah.synth.taco.Adsr;
 import net.judah.synth.taco.Shape;
+import net.judah.synth.taco.SynthDB;
 import net.judah.synth.taco.TacoSynth;
 import net.judah.synth.taco.TacoTruck;
 
@@ -54,7 +53,6 @@ public class SynthKnobs extends KnobPanel {
 	public static final float[] DETUNE_AMOUNT = new float[] {
 			2f, 1.5f, 1.015f, 1.01f, 1.005f, 1f, 0.75f ,0.5f};
 	public static final int DETUNE_NONE = 5;
-	private static final Color KNOB_C = Pastels.BLUE;
 
 	@Setter private static boolean freqMode = true; //. vs resonance mode
 	@Getter private final TacoSynth synth;
@@ -62,13 +60,13 @@ public class SynthKnobs extends KnobPanel {
 	@Getter private final JPanel title = new JPanel(new FlowLayout(FlowLayout.CENTER, 1, 1));
 	private final Program program;
 	private final DoubleSlider filter;
-	private final Knob hcReso = new Knob(KNOB_C);
-	private final Knob lcReso = new Knob(KNOB_C);
+	private final Knob hcReso = new Knob();
+	private final Knob lcReso = new Knob();
 	private final Adsr adsr;
-	private final Knob a = new Knob(KNOB_C);//0, 200
-	private final Knob d = new Knob(KNOB_C);
-	private final Knob s = new Knob(KNOB_C);
-	private final Knob r = new Knob(KNOB_C);//0, 500
+	private final Knob a = new Knob();//0, 200
+	private final Knob d = new Knob();
+	private final Knob s = new Knob();
+	private final Knob r = new Knob();//0, 500
 	private final ArrayList<Slider> gains = new ArrayList<>();
 	private final ArrayList<JComboBox<Shape>> shapes = new ArrayList<>();
 	private final JComboBox<Integer> mod = new JComboBox<>();
@@ -284,7 +282,7 @@ public class SynthKnobs extends KnobPanel {
 				"Synth Preset Name", synth.getProgram());
 		if (name == null || name.length() == 0)
 			return;
-		TacoSynth.getPresets().save(synth, name);
+		SynthDB.save(synth, name);
 		program.refill(synth.getPatches(), name);
 		synth.progChange(name);
 	}

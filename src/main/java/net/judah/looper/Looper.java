@@ -59,20 +59,22 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable 
 		clock.addListener(this);
 	}
 
-	// TODO  multithread on Looper's own buffer
-	/** play and/or record loops and samples in Real-Time thread */
+
 	public void process(float[] left, float[] right) {
-		forEach(loop->loop.process(left, right));
-		if (hasRecording())
-			countUp();
+	    for (int i = 0, n = size(); i < n; i++)
+	        get(i).process(left, right);
+
+	    if (hasRecording())
+	        countUp();
 	}
 
-	/** process() silently (keep sync'd while mains muted) */
 	public void silently() {
-		if (hasRecording()) {
-			forEach(loop->loop.silently());
-			countUp();
-		}
+	    if (hasRecording()) {
+	        for (int i = 0, n = size(); i < n; i++)
+	            get(i).silently();
+
+	        countUp();
+	    }
 	}
 
 	/** @return false if looper is empty */
@@ -386,6 +388,14 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable 
 	// testing LoopEffect
 	protected void setType(LoopType t) {
 		type = t;
+	}
+
+
+	public boolean isOnCapture() {
+		for (Loop l : this)
+			if (l.isRecording())
+				return true;
+		return false;
 	}
 
 }

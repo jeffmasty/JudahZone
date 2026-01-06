@@ -5,8 +5,8 @@ import java.awt.event.ActionEvent;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import judahzone.gui.Updateable;
+import judahzone.widgets.Click;
 import net.judah.gui.MainFrame;
-import net.judah.gui.widgets.Click;
 import net.judah.midi.Actives;
 import net.judah.midi.Panic;
 import net.judah.seq.track.PianoTrack;
@@ -26,7 +26,7 @@ public class Pedal extends Click implements Updateable {
 	}
 
 	private void click(ActionEvent e) {
-		if (right) {
+		if (rightClick) {
 			setPressed(false);
 			new Panic(track);
 		}

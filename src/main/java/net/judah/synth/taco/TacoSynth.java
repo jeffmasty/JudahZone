@@ -26,9 +26,6 @@ import net.judah.seq.track.PianoTrack;
 
 public class TacoSynth extends PianoTrack {
 
-	private static final SynthDB synthPresets = new SynthDB();
-	public static SynthDB getPresets() { return synthPresets; }
-
 	public static final int OVERSAMPLE = 4; // anti-aliasing
 	public static final int POLYPHONY = 24;
 	public static final int DCO_COUNT = 3;
@@ -96,7 +93,7 @@ public class TacoSynth extends PianoTrack {
 	}
 
 	@Override public boolean progChange(String preset) {
-		if (synthPresets.apply(preset, this)) {
+		if (SynthDB.apply(preset, this)) {
 			state.setProgram(preset);
 			MainFrame.updateTrack(Update.PROGRAM, this);
 			return true;
@@ -106,17 +103,17 @@ public class TacoSynth extends PianoTrack {
 
 	@Override
 	public String progChange(int data2) {
-		if (data2 < 0 || data2 >= synthPresets.size())
+		if (data2 < 0 || data2 >= SynthDB.size())
 			return null;
 
-		String result = synthPresets.keys().get(data2);
+		String result = SynthDB.keys().get(data2);
 		progChange(result);
 		return result;
 	}
 
 
 	@Override public String[] getPatches() {
-		List<String> result = synthPresets.keys();
+		List<String> result = SynthDB.keys();
 		return result.toArray(new String[result.size()]);
 	}
 

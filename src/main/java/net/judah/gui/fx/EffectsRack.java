@@ -24,6 +24,7 @@ import judahzone.gui.Gui;
 import judahzone.gui.Updateable;
 import judahzone.util.RTLogger;
 import lombok.Getter;
+import net.judah.JudahZone;
 import net.judah.channel.Channel;
 import net.judah.channel.PresetsHandler;
 import net.judah.controllers.MPKTools;
@@ -34,7 +35,6 @@ import net.judah.gui.widgets.FxKnob;
 import net.judah.gui.widgets.Slider;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
-import net.judah.midi.MidiInstrument;
 
 public class EffectsRack extends JPanel implements MPKTools {
 
@@ -55,10 +55,10 @@ public class EffectsRack extends JPanel implements MPKTools {
     private final ArrayList<ArrayList<Component>> labels = new ArrayList<>();
     private final ArrayList<Row> knobs = new ArrayList<>();
 
-    public EffectsRack(Channel ch, MidiInstrument bass) {
+    public EffectsRack(Channel ch, JudahZone judahZone) {
     	this.channel = ch;
         presets = new PresetsHandler(channel);
-        title = new ChannelTitle(channel, bass);
+        title = new ChannelTitle(channel, judahZone);
         phase = new Slider.FxSlider(ch.getChorus(), Chorus.Settings.Phase.ordinal(), "Phase");
         dampness = new Slider.FxSlider(ch.getReverb(), Reverb.Settings.Width.ordinal(), "Dampness");
         clipping = new Slider.FxSlider(ch.getOverdrive(), Overdrive.Settings.Clipping.ordinal(), "Clipping");

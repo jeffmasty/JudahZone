@@ -16,6 +16,7 @@ import javax.swing.JPanel;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import judahzone.util.Constants;
+import judahzone.widgets.RangeSlider.Colors;
 import lombok.Getter;
 import net.judah.channel.Channel;
 import net.judah.gui.Bindings;
@@ -27,7 +28,6 @@ import net.judah.gui.fx.TimePanel;
 import net.judah.gui.settable.LfoCombo;
 import net.judah.gui.widgets.DoubleSlider;
 import net.judah.gui.widgets.FxKnob;
-import net.judah.gui.widgets.RangeSlider.Colors;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.LFO;
 

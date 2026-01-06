@@ -1,33 +1,18 @@
 
-TODO:
 
-JackEffects/
+TODO:  
 
-ScopePlaya/ScopeEffect 
-Leveling/mastering, Loops too loud (Save/reload/mp3)
-onTape slider track
 Tarsos pull request
-Readmes
 
-Piano roll orientation, TrackKnobs Program overflow
 Linked Midi Selection Model, nudge notes
+Piano roll orientation, TrackKnobs Program overflow
 Automation: PitchBend, Meta, TimeSig, KeySig, Tempo
 
-zone-rack
-taco-synth
-drum-synth
-zone-song
-zone-loops
-zone-seq
-zone-edit
-zone-knobs midiMapper
-zone-osc
-JudahZone
-
-Sample Library, SampleTrack
-compression meter, mpkMini to127
-TacoSynth detune on sus/pdl
-SendTo ignore Meta Device, Program?
+scope link rolling to head 
+SampleTrack,  mpkMini to127, EQ++/Visualizer
+compression meter, normalization
+TacoSynth detune on sus/pdl, onTape channel Title
+Import anonymous seq broken?./SendTo ignore Meta Device, Program?
 Channel/System Setup  +Controllers +Jamstik +Fluid
 AudioTrack, Lyrics Track, Fine Tune Midi Envelope(CC)
 Hi/Lo filter CC   Mid/Side/Chain
@@ -340,4 +325,15 @@ SYNTH
 	   DCO 2 ...
 		<--Filter-->
 
+
+
+---Recording normalization checklist---
+AudioMetrics.LIVE_FACTOR = 8;
+FILE FACTOR = RUN_LEVEL
+MP3/internal/Loop from disk to disk RUN-LEVEL = 1/4 LINE-LEVEL
+DrumDB/SampleDB DEFAULT_GAIN;
+preamps, 
+disk/loop mastering, StepSample.STEP_BOOST del  DrumSample(2*env) del
+BasicPlayer @Setter protected float env = 0.5f? 0.125f?;  
+RMSWidget/Indicator/Meter ScopeFILE/LIVE
 

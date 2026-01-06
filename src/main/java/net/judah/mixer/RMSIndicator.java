@@ -8,9 +8,9 @@ import javax.swing.JPanel;
 import judahzone.gui.Gui;
 import judahzone.gui.Updateable;
 import judahzone.util.Rainbow;
+import judahzone.widgets.RainbowFader;
 import net.judah.channel.Channel;
 import net.judah.channel.Mains;
-import net.judah.gui.Size;
 import net.judah.looper.Loop;
 
 /** listen to channel's audio, paint widget height/color based on RMS of the audio frame */
@@ -23,7 +23,7 @@ public class RMSIndicator extends JPanel implements Updateable {
 
     private static final int WIDTH = 12;
     private static final int HALF = WIDTH / 2;
-    private static final int HEIGHT = Size.FADER_SIZE.height;
+    private static final int HEIGHT = RainbowFader.FADER_SIZE.height;
 
     private final Channel ch;
     private float left, right; // computed gain

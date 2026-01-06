@@ -19,6 +19,9 @@ import judahzone.gui.Gui;
 import judahzone.gui.Icons;
 import judahzone.gui.Pastels;
 import judahzone.util.Constants;
+import judahzone.widgets.Btn;
+import judahzone.widgets.Click;
+import judahzone.widgets.Knob;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.channel.Mains;
@@ -29,9 +32,6 @@ import net.judah.gui.Size;
 import net.judah.gui.TabZone;
 import net.judah.gui.settable.Program;
 import net.judah.gui.settable.SongCombo;
-import net.judah.gui.widgets.Btn;
-import net.judah.gui.widgets.Click;
-import net.judah.gui.widgets.Knob;
 import net.judah.gui.widgets.LengthCombo;
 import net.judah.midi.JudahClock;
 import net.judah.midi.MidiInstrument;
@@ -67,8 +67,8 @@ public class MidiGui extends KnobPanel implements Cmdr {
 	private final SongCombo songsCombo;
 	private final Btn tape;
 	private final JComboBox<String> stepper = new JComboBox<>();
-	private final Knob stepVol = new Knob(Pastels.MY_GRAY);
-	private final Knob swing = new Knob(Pastels.EGGSHELL);
+	private final Knob stepVol = new Knob();
+	private final Knob swing = new Knob();
 	private final String SWING = " Swing ";
 	private final JButton stepPlay = new JButton(PLAY);
 	private final Program taco, fluid;
@@ -285,7 +285,7 @@ public class MidiGui extends KnobPanel implements Cmdr {
 			addActionListener(this);
 		}
 		@Override public void actionPerformed(ActionEvent e) {
-			if (right)
+			if (rightClick)
 				jamstik.octaver();
 			else
 				jamstik.toggle();

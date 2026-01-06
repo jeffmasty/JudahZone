@@ -5,6 +5,7 @@ import static judahzone.fx.Chorus.Settings.*;
 import javax.sound.midi.ShortMessage;
 
 import judahzone.api.Midi;
+import judahzone.api.MidiConstants;
 import judahzone.fx.Chorus;
 import judahzone.fx.Delay;
 import judahzone.fx.Filter;
@@ -17,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.judah.channel.Channel;
 import net.judah.gui.MainFrame;
-import net.judah.seq.MidiConstants;
 import net.judah.seq.automation.ControlChange;
 
 @RequiredArgsConstructor  // TacoSynthTruck, DrumKit, MidiInstrument

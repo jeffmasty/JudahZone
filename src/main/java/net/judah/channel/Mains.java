@@ -15,8 +15,6 @@ import net.judah.looper.ToDisk;
  * A master track initializes in a muted state.*/
 public class Mains extends Channel {
 
-    public static final float PREAMP = 13f;
-
     @Getter private ToDisk tape;
     @Getter private boolean hotMic;
     @Setter private boolean copy;
@@ -34,17 +32,16 @@ public class Mains extends Channel {
 	public void process(float[] l, float[] r) {
         hotSwap();
         gain.process(l, r);
-        active.forEach(fx->fx.process(l, r));
-
-        if (tape != null)
+		for (int i = 0, n = active.size(); i < n; i++)
+			active.get(i).process(l, r);
+		if (tape != null)
             tape.offer(l, r);
-        if (copy) { // put out a read buffer like other channels offer (RMS meters)
-            copy = false;
-            System.arraycopy(l, 0, this.left, 0, l.length);
-            System.arraycopy(r, 0, this.right, 0, r.length);
-        }
-
-        // publish RMS for buffers processed on-thread
+	     if (copy) { // put out a read buffer like other channels offer (RMS meters)
+	            // TODO inverse preamp
+	            System.arraycopy(l, 0, this.left, 0, l.length);
+	            System.arraycopy(r, 0, this.right, 0, r.length);
+	        }
+        // publish RMS on-thread
         computeRMS(l, r);
     }
 

@@ -10,8 +10,8 @@ import javax.swing.JToggleButton;
 
 import judahzone.gui.Gui;
 import judahzone.gui.Updateable;
+import judahzone.widgets.RainbowFader;
 import net.judah.gui.MainFrame;
-import net.judah.gui.Size;
 import net.judah.looper.Loop;
 import net.judah.looper.LoopType;
 import net.judah.looper.Looper;
@@ -27,7 +27,7 @@ public class LoopMix extends MixWidget implements Updateable {
 	public static final Color RECORDING = RED;
 	public static final Color MUTED = Color.BLACK;
 	public static final Color QUIET = Color.GRAY;
-	static final Dimension SWEEPER = new Dimension(16, Size.FADER_SIZE.height);
+	static final Dimension SWEEPER = new Dimension(16, RainbowFader.FADER_SIZE.height);
 
 	/** bars until recording stops */
 	private final Loop loop;

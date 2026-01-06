@@ -15,8 +15,8 @@ import judahzone.api.PlayAudio.Type;
 import judahzone.fx.Gain;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
+import judahzone.widgets.Knob;
 import lombok.Getter;
-import net.judah.gui.widgets.Knob;
 import net.judah.sampler.Sample;
 import net.judah.sampler.Sampler;
 

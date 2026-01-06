@@ -18,6 +18,7 @@ import javax.swing.SwingUtilities;
 
 import judahzone.gui.Floating;
 import judahzone.gui.Gui;
+import judahzone.jnajack.BasicPlayer;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
@@ -52,7 +53,7 @@ public class TabZone extends CloseableTabbedPane {
 	private final Overview overview;
 	private final DrumZone drumz;
 	private final ChordSheet chords;
-	private final JudahScope scope;
+	private JudahScope scope;
 
 	public TabZone(JudahZone judahZone, DrumZone drumz) {
 
@@ -61,7 +62,6 @@ public class TabZone extends CloseableTabbedPane {
 		this.overview = zone.getOverview();
 		this.drumz = drumz;
 		this.chords = zone.getChords().getChordSheet();
-		this.scope = zone.getScope();
 
 		instance = this;
 		SheetMusicPnl exceptional = null;
@@ -339,9 +339,12 @@ public class TabZone extends CloseableTabbedPane {
 		show(c);
 	}
 
-	public void scope(JudahScope.Mode mode) {
+	public void scope() {
+		if (scope == null) {// lazyload
+			BasicPlayer playa = zone.getSampler().add(new BasicPlayer());
+			scope = new JudahScope(Size.WIDTH_TAB, playa, zone);
+		}
 		install(scope);
-		scope.setMode(mode);
 	}
 
 }

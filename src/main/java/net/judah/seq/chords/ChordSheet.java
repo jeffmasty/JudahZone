@@ -26,10 +26,10 @@ import judahzone.api.Chord;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import judahzone.util.RTLogger;
+import judahzone.widgets.Btn;
+import judahzone.widgets.Click;
 import net.judah.JudahZone;
 import net.judah.gui.Size;
-import net.judah.gui.widgets.Btn;
-import net.judah.gui.widgets.Click;
 import net.judah.midi.JudahMidi;
 import net.judah.song.Song;
 

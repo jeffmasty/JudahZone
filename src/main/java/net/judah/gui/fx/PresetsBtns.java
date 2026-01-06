@@ -6,11 +6,11 @@ import javax.swing.JPanel;
 import judahzone.api.FX;
 import judahzone.gui.Icons;
 import judahzone.gui.Updateable;
+import judahzone.widgets.Btn;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
-import net.judah.channel.PresetsHandler;
-import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.TogglePreset;
+import net.judah.mixer.PresetsDB;
 
 public class PresetsBtns extends JPanel implements FXAware, Updateable {
 
@@ -22,7 +22,7 @@ public class PresetsBtns extends JPanel implements FXAware, Updateable {
 		toggle = new TogglePreset(ch);
 
 		add(toggle);
-		add(new Btn(Icons.SAVE, e->PresetsHandler.getPresets().replace(ch)), "Save Current");
+		add(new Btn(Icons.SAVE, e->PresetsDB.replace(ch)), "Save Current");
 		add(new Btn(Icons.NEW_FILE, e->create()), "New Preset");
 	}
 
@@ -34,7 +34,7 @@ public class PresetsBtns extends JPanel implements FXAware, Updateable {
     public void create() {
         String name = JOptionPane.showInputDialog(JudahZone.getInstance().getFrame(), "Preset Name:");
         if (name == null || name.isEmpty()) return;
-        PresetsHandler.getPresets().add(ch, name);
+        PresetsDB.add(ch, name);
     }
 
 

@@ -1,8 +1,8 @@
 package net.judah.seq;
 
+import static judahzone.api.MidiConstants.DRUM_CH;
 import static net.judah.controllers.MPKTools.drumBank;
 import static net.judah.controllers.MPKTools.drumIndex;
-import static net.judah.seq.MidiConstants.DRUM_CH;
 import static net.judah.seq.MidiTools.meta;
 
 import java.awt.Component;

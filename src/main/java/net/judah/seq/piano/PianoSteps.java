@@ -14,6 +14,7 @@ import javax.sound.midi.ShortMessage;
 import javax.swing.SwingUtilities;
 
 import judahzone.api.Midi;
+import judahzone.api.MidiConstants;
 import judahzone.api.Signature;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
@@ -22,7 +23,6 @@ import net.judah.gui.Size;
 import net.judah.midi.JudahClock;
 import net.judah.seq.Edit;
 import net.judah.seq.Edit.Type;
-import net.judah.seq.MidiConstants;
 import net.judah.seq.MidiNote;
 import net.judah.seq.Steps;
 import net.judah.seq.automation.Automation;

@@ -27,7 +27,6 @@ import net.judah.seq.track.PianoTrack;
 import net.judah.song.Overview;
 import net.judah.song.setlist.Setlist;
 import net.judah.song.setlist.Setlists;
-import net.judahzone.scope.JudahScope;
 
 public class JudahMenu extends JMenuBar {
 	static String[] TYPE = {"1/8", "1/4", "3/8", "1/2"};
@@ -149,8 +148,7 @@ public class JudahMenu extends JMenuBar {
         }));
         views.add(new Actionable("SheetMusic..", e->
         	tabs.sheetMusic(Folders.choose(Folders.getSheetMusic()), true)));
-        views.add(new Actionable("Live Scope", e->tabs.scope(JudahScope.Mode.LIVE_ROLLING)));
-        views.add(new Actionable("File Scope", e->tabs.scope(JudahScope.Mode.FILE)));
+        views.add(new Actionable("Spectroscope", e->tabs.scope()));
         views.add(new Actionable("Detach", e->TabZone.instance.detach()));
 
         return views;

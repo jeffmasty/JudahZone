@@ -5,13 +5,13 @@ import static net.judah.gui.MainFrame.setFocus;
 import java.util.ArrayList;
 import java.util.Vector;
 
+import judahzone.util.WavConstants;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
 import net.judah.channel.Instrument;
 import net.judah.channel.LineIn;
-import net.judah.channel.Mains;
 import net.judah.looper.Looper;
 
 /**Used for initialization/customization */
@@ -57,10 +57,13 @@ public class Zone extends Vector<LineIn> {
 	}
 
 	void preamps(JudahZone zone) {
-		zone.getMains().getGain().setPreamp(Mains.PREAMP);
-		zone.getSampler().getGain().setPreamp(2.5f);
-		zone.getBass().getGain().setPreamp(0.4f);
-	}
+		zone.getMains().getGain().setPreamp(WavConstants.TO_LINE);
+		zone.getDrumMachine().getGain().setPreamp((WavConstants.RUN_LEVEL + WavConstants.FILE_LEVEL) / 2);
+		zone.getSampler().getGain().setPreamp(WavConstants.FILE_LEVEL);
+		// zone.getBass().getGain().setPreamp(WavConstants.RUN_LEVEL);
+		// TacoTruck gain.setPreamp(3f);
+		// BasicPlayer.env 0.5f (unity?)
+ 	}
 
     public boolean nextChannel(boolean toRight) {
     	Looper looper = JudahZone.getInstance().getLooper();

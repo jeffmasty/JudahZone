@@ -29,7 +29,7 @@ public interface Size {
     Dimension SMALLER = new Dimension(66, STD_HEIGHT);
     Dimension MICRO = new Dimension(49, STD_HEIGHT);
     Dimension TINY = new Dimension(41, STD_HEIGHT);
-	Dimension FADER_SIZE = new Dimension(43, 76);
+//	Dimension FADER_SIZE = new Dimension(43, 76);
 
 	int KEY_HEIGHT = 25;
 	int STEP_WIDTH = 27;

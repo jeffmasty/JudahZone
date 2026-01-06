@@ -11,13 +11,13 @@ import javax.swing.JToggleButton;
 
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
+import judahzone.widgets.Btn;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
 import net.judah.channel.LineIn;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.knobs.KnobMode;
-import net.judah.gui.widgets.Btn;
 import net.judah.looper.Loop;
 import net.judah.midi.MidiInstrument;
 
@@ -27,15 +27,22 @@ public class ChannelTitle extends JPanel {
 	protected final JButton lfo;
 	private final Channel channel;
 	private final JLabel name;
+	private final JudahZone zone;
 
-	public ChannelTitle(Channel ch, MidiInstrument bass) {
+	// TODO mute when LineIn change to Red when looper is rec
+	public ChannelTitle(Channel ch, JudahZone judahZone) {
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 		setOpaque(true);
 		this.channel = ch;
+		this.zone = judahZone;
 		name = new JLabel(standard(), JLabel.CENTER);
 		name.setFont(Gui.BOLD13);
-		mute = (channel instanceof LineIn) ? new Btn("tape", e->((LineIn)channel).setMuteRecord(!((LineIn)channel).isMuteRecord())) :
-			new Btn("mute", e->channel.setOnMute(!channel.isOnMute()));
+
+		if (channel instanceof LineIn in)
+			mute = new Btn("tape", e->in.setMuteRecord(!in.isMuteRecord()));
+		else
+			mute = new Btn("mute", e->channel.setOnMute(!channel.isOnMute()));
+
 		lfo = new Btn("lfo", e->{
 			if (MainFrame.getKnobMode() == KnobMode.LFO)
 				channel.toggle(channel.getLfo());
@@ -48,8 +55,8 @@ public class ChannelTitle extends JPanel {
 		Gui.resize(name, new Dimension(Size.WIDTH_KNOBS - 3 * Size.TINY.width, Size.STD_HEIGHT));
 
 		add(name);
-		if (channel == bass)
-			add(sync(bass));
+		if (channel == judahZone.getBass())
+			add(sync(judahZone.getBass()));
 		add(Gui.resize(mute, Size.TINY));
 		add(Gui.resize(lfo, Size.TINY));
 		add(Gui.resize(wav, Size.TINY));
@@ -79,16 +86,23 @@ public class ChannelTitle extends JPanel {
 	}
 
 	public void update() {
-		if (channel instanceof LineIn)
-			mute.setBackground(((LineIn)channel).isMuteRecord() ? null : Pastels.ONTAPE);
-		else mute.setBackground(channel.isOnMute() ? Pastels.PURPLE : null);
+		if (channel instanceof LineIn in) {
+			if (in.isMuteRecord())
+				mute.setBackground(null);
+			else if (zone.getLooper().isOnCapture())
+				mute.setBackground(Pastels.RED);
+			else
+				mute.setBackground(Pastels.ONTAPE);
+		}
+		else
+			mute.setBackground(channel.isOnMute() ? Pastels.PURPLE : null);
 		lfo.setBackground(channel.isActive(channel.getLfo()) ? Pastels.BLUE : null);
 	}
 
 	private JToggleButton sync(MidiInstrument i) {
 		JToggleButton sync = new JToggleButton("sync");
 		sync.setFont(Gui.FONT10);
-		sync.addActionListener(l->JudahZone.getInstance().getMidi().synchronize(i));
+		sync.addActionListener(l->zone.getMidi().synchronize(i));
 		return sync;
 	}
 }

@@ -16,7 +16,7 @@ import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import judahzone.util.Constants;
 import judahzone.util.RTLogger;
-import net.judah.gui.widgets.Integers;
+import judahzone.widgets.Integers;
 import net.judah.seq.track.MidiTrack;
 
 public class Tick extends JPanel {
@@ -158,7 +158,7 @@ public class Tick extends JPanel {
 	}
 
 	public void frameKnob(int value) {
-		frame.setSelectedIndex(Constants.ratio(value, 99) + 1);
+		frame.setSelectedIndex(Constants.ratio(value, frame.getItemCount() - 1)); // Constants.ratio(value, 99) + 1
 	}
 
 }

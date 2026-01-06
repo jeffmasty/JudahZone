@@ -7,30 +7,28 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 
 import judahzone.api.Notification.Property;
+import judahzone.api.TimeListener;
 import judahzone.gui.Gui;
 import judahzone.gui.Icons;
 import judahzone.gui.Pastels;
-import judahzone.api.TimeListener;
+import judahzone.widgets.Btn;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.gui.fx.EffectsRack;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.LFOKnobs;
 import net.judah.gui.settable.SetCombo;
-import net.judah.gui.widgets.Btn;
 import net.judah.gui.widgets.LengthCombo;
 import net.judah.gui.widgets.TransportBtn;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.seq.chords.ChordPlay;
 import net.judah.song.Overview;
-import net.judahzone.scope.JudahScope;
 
 public class HQ extends JPanel implements TimeListener {
 
 	@Getter private static boolean shift;
 	private final JudahClock clock;
-	private final JudahScope scope;
 	private final Looper looper;
 	private final Overview songs;
 	private final Btn scene = new Btn("", e->trigger());
@@ -42,7 +40,6 @@ public class HQ extends JPanel implements TimeListener {
     	this.clock = clock;
     	this.looper = zone.getLooper();
     	this.songs = zone.getOverview();
-    	this.scope = zone.getScope();
     	sync = new LengthCombo(clock);
     	metro = new Btn(Icons.get("left.png"), e->clock.skipBar());
     	metro.setOpaque(true);
@@ -95,8 +92,6 @@ public class HQ extends JPanel implements TimeListener {
 	public void metronome() {
 		if (!clock.isActive() && clock.isOnDeck())
 			metro.setBackground(Pastels.YELLOW);
-		else if (scope.isActive())
-			metro.setBackground(Pastels.GREEN);
 		else metro.setBackground(null);
 	}
 

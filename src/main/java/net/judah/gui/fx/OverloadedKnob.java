@@ -1,14 +1,14 @@
 package net.judah.gui.fx;
 
 import judahzone.api.FX;
+import judahzone.api.MidiConstants;
 import judahzone.gui.Updateable;
+import judahzone.widgets.Knob;
+import judahzone.widgets.Knob.KnobListener;
 import lombok.Getter;
 import net.judah.channel.Channel;
 import net.judah.gui.HQ;
 import net.judah.gui.widgets.FxKnob;
-import net.judah.gui.widgets.Knob;
-import net.judah.gui.widgets.Knob.KnobListener;
-import net.judah.seq.MidiConstants;
 
 
 @Getter
@@ -24,7 +24,7 @@ public class OverloadedKnob extends Knob implements KnobListener, Updateable {
 		this.fx = target;
 		this.main = normal;
 		this.alt = shift;
-		setKnobColor(FxKnob.THUMB);
+		// setKnobColor(FxKnob.THUMB);
 		addListener(this);
 		setOpaque(true);
 	}

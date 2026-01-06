@@ -12,3 +12,4 @@ pom.properties
 old/**
 log4j.out.xml
 .factorypath
+.github/

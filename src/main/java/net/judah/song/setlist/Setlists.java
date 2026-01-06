@@ -8,9 +8,9 @@ import javax.swing.JComboBox;
 
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
+import judahzone.widgets.FileRender;
 import lombok.Getter;
 import net.judah.gui.settable.SongCombo;
-import net.judah.gui.widgets.FileRender;
 
 public class Setlists extends ArrayList<Setlist> {
 	public static final File ROOT = Folders.getSetlistHome();

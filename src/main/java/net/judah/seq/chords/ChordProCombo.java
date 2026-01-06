@@ -8,9 +8,9 @@ import javax.swing.JComboBox;
 
 import judahzone.gui.Gui;
 import judahzone.util.Folders;
+import judahzone.widgets.FileRender;
 import net.judah.JudahZone;
 import net.judah.gui.Size;
-import net.judah.gui.widgets.FileRender;
 
 public class ChordProCombo extends JComboBox<File> {
 

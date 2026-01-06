@@ -9,14 +9,14 @@ import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
+import judahzone.api.MidiConstants;
 import judahzone.gui.Icons;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
+import judahzone.widgets.Btn;
 import lombok.Getter;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
-import net.judah.gui.widgets.Btn;
-import net.judah.seq.MidiConstants;
 import net.judah.seq.track.MidiTrack;
 
 public class ImportView extends KnobPanel implements MidiConstants {

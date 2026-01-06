@@ -30,6 +30,7 @@ import net.judah.gui.knobs.LFOKnobs;
 import net.judah.midi.LFO;
 import net.judah.mixer.DJFilter;
 import net.judah.mixer.Preset;
+import net.judah.mixer.PresetsDB;
 import net.judah.mixer.Setting;
 
 /** A Gui focussed effects bus for input or output audio
@@ -56,19 +57,22 @@ public abstract class Channel extends StereoBus implements Presets {
     protected Reverb reverb = new Freeverb();
     protected final LFO lfo = new LFO(this, LFO.class.getSimpleName());
     protected final LFO lfo2 = new LFO(this, "LFO2");
-    protected Preset preset = PresetsHandler.getPresets().getDefault();
+    protected Preset preset = PresetsDB.getDefault();
     protected final Convolution IR; // RT if stereo
     protected boolean presetActive;
 
     protected EffectsRack gui;
     protected LFOKnobs lfoKnobs;
-    // RMS fields published by RT thread; GUI reads these (volatile provides visibility)
+    /** Last RMS values computed on the RT thread (0..1 approximate). */
     private volatile float lastRmsLeft = 0f;
     private volatile float lastRmsRight = 0f;
-    /** Last RMS values computed on the RT thread (0..1 approximate). */
-    public float getLastRmsLeft() { return lastRmsLeft; }
-    public float getLastRmsRight() { return lastRmsRight; }
 
+//    /** GUI helper: set target directly as linear RMS (0..1). 0 disables normalization. */
+//    @Setter protected volatile float normalizeTargetRms = 0.0f;      // linear RMS target (0..1)
+//    /** GUI helper: cap for applied gain (e.g. 2f = +6dB). <= 0 means no cap. */
+//    @Setter protected volatile float normalizeMaxGain = 4f;       // cap applied gain (<=0 means "no cap")
+//    public void setNormalizeTargetDb(float db) {
+//    this.normalizeTargetRms = AudioMetrics.dbToLinearRms(db); }
 
     public Channel(String name, boolean isStereo) {
         this.name = name;
@@ -98,7 +102,9 @@ public abstract class Channel extends StereoBus implements Presets {
 	public final void process() {
         hotSwap();
         processImpl();
-        computeRMS(left, right);
+        // apply normalization if requested (if target > 0)
+        // AudioMetrics.normalizeToRms(left, right, normalizeTargetRms, normalizeMaxGain);
+        computeRMS(left, right); // meters now see normalized level
     }
 
     public final void mix(float[] outLeft, float[] outRight) {
@@ -129,7 +135,7 @@ public abstract class Channel extends StereoBus implements Presets {
 
     public final EffectsRack getGui() {
         if (gui == null) // lazy
-            gui = new EffectsRack(this, JudahZone.getInstance().getBass());
+            gui = new EffectsRack(this, JudahZone.getInstance());
         return gui;
     }
 
@@ -146,12 +152,12 @@ public abstract class Channel extends StereoBus implements Presets {
     }
 
     public final void setPreset(String name, boolean active) {
-        setPreset(PresetsHandler.getPresets().byName(name));
+        setPreset(PresetsDB.byName(name));
         setPresetActive(active);
     }
 
     public final void setPreset(String name) {
-        setPreset(PresetsHandler.getPresets().byName(name));
+        setPreset(PresetsDB.byName(name));
     }
 
     @Override
@@ -179,7 +185,7 @@ public abstract class Channel extends StereoBus implements Presets {
     private final void applyPreset() {
         reset(); // inherited reset() will clear pendingActive etc
         if (preset == null)
-            preset = PresetsHandler.getPresets().getDefault();
+            preset = PresetsDB.getDefault();
         setting:
         for (Setting s : preset) {
             for (FX fx : effects) {
