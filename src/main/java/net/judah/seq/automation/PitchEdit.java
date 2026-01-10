@@ -1,6 +1,8 @@
 package net.judah.seq.automation;
 
 import java.awt.FlowLayout;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiEvent;
@@ -12,6 +14,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 import judahzone.api.Midi;
 import judahzone.api.MidiConstants;
@@ -20,11 +23,12 @@ import judahzone.util.Constants;
 import judahzone.util.RTLogger;
 import judahzone.widgets.Btn;
 import net.judah.gui.Size;
-import net.judah.seq.Edit;
-import net.judah.seq.Edit.Type;
-import net.judah.seq.Prototype;
 import net.judah.seq.automation.Automation.AutoBox;
+import net.judah.seq.track.Editor.Selection;
+import net.judah.seq.track.Edit;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.Prototype;
+import net.judah.seq.track.Edit.Type;
 
 class PitchEdit extends AutoBox {
 
@@ -37,6 +41,7 @@ class PitchEdit extends AutoBox {
     private final Btn change = new Btn("Change", e -> change());
     private final Btn delete = new Btn("Delete", e -> delete());
     private final Btn exe    = new Btn("Exe", e -> exe());
+    private final Btn select = new Btn("Select", e -> publishSelection());
 
     private final Box top  = new Box(BoxLayout.PAGE_AXIS);
     private final Box algo = new Box(BoxLayout.PAGE_AXIS);
@@ -44,14 +49,16 @@ class PitchEdit extends AutoBox {
     private final JPanel checkbox = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
     private final Pitch pitch  = new Pitch(false); // start
     private final Pitch pitch2 = new Pitch(true);  // end
-    private final Tick  steps  = new Tick();
-    private final Tick  steps2 = new Tick();
+    private final Tick  steps;
+    private final Tick  steps2;
     private final JCheckBox automation = new JCheckBox("Enabled");
     private final JTextField messages  = new JTextField("5", 3);
 
-    protected PitchEdit() {
-        super(BoxLayout.LINE_AXIS);
+    protected PitchEdit(MidiTrack owner) {
+        super(BoxLayout.LINE_AXIS, owner);
 
+        steps = new Tick(track);
+        steps2 = new Tick(track);
         Box btns = new Box(BoxLayout.LINE_AXIS);
         btns.add(Box.createHorizontalStrut(15));
         btns.add(new JLabel("Pitch Bend"));
@@ -59,6 +66,7 @@ class PitchEdit extends AutoBox {
         btns.add(create);
         btns.add(change);
         btns.add(delete);
+        btns.add(select);
         btns.add(exe);
 
         top.add(btns);
@@ -91,6 +99,8 @@ class PitchEdit extends AutoBox {
         enableAutomation(false);
         delete.setEnabled(false);
         change.setEnabled(false);
+        select.setEnabled(false);
+
     }
 
     private void enableAutomation(boolean enable) {
@@ -112,23 +122,20 @@ class PitchEdit extends AutoBox {
             int uiVal = extractUiFromMessage(msg);
             pitch.set(uiVal);
             steps.quantizable(e.getTick());
+            delete.setEnabled(true);
+            change.setEnabled(true);
+            select.setEnabled(true);
         } else {
             pitch.set(MidiConstants.CUTOFF + 1);
             steps.quantizable(0L);
+            delete.setEnabled(false);
+            change.setEnabled(false);
+            select.setEnabled(false);
         }
 
         // For now, don't auto-enable automation when editing a single point
         enableAutomation(false);
-        delete.setEnabled(true);
-        change.setEnabled(true);
         return this;
-    }
-
-    @Override
-    protected void setTrack(MidiTrack t) {
-        track = t;
-        steps.setTrack(t);
-        steps2.setTrack(t);
     }
 
     @Override
@@ -144,6 +151,7 @@ class PitchEdit extends AutoBox {
         enableAutomation(true);
         delete.setEnabled(false);
         change.setEnabled(false);
+        select.setEnabled(false);
         return this;
     }
 
@@ -195,7 +203,6 @@ class PitchEdit extends AutoBox {
             ShortMessage msg = build(pitch.get());
             long startTick = steps.getTick();
             MidiEvent evt = new MidiEvent(msg, startTick);
-            existing = evt;
 
             Edit edit = new Edit(Type.NEW, evt);
             undoCurve = edit; // capture for possible curve delete
@@ -225,8 +232,7 @@ class PitchEdit extends AutoBox {
             }
 
             track.getEditor().push(edit);
-            delete.setEnabled(true);
-            change.setEnabled(true);
+            track.getEditor().publish(this, new ArrayList<>(edit.getNotes()));
         } catch (Throwable t) {
             RTLogger.warn(this, t);
         }
@@ -239,16 +245,16 @@ class PitchEdit extends AutoBox {
         }
         try {
             long targetTick = steps.getTick();
-            ShortMessage target = build(pitch.get());
-            Edit mod = new Edit(Type.MOD, existing, new MidiEvent(target, targetTick));
+            ShortMessage targetMsg = build(pitch.get());
+            MidiEvent targetEvent = new MidiEvent(targetMsg, targetTick);
+            Edit mod = new Edit(Type.MOD, existing, targetEvent);
 
             if (automation.isSelected()) {
-                // "Prototype" here could convey intended end state
                 mod.setDestination(new Prototype(pitch2.get(), steps2.getTick()));
-                // You could also inspect undoCurve if you want to rebuild the whole ramp.
             }
 
             track.getEditor().push(mod);
+            track.getEditor().publish(this, Collections.singletonList(targetEvent));
         } catch (InvalidMidiDataException ie) {
             RTLogger.warn(this, ie);
         }
@@ -259,10 +265,12 @@ class PitchEdit extends AutoBox {
             // Delete the entire curve (all generated points)
             Edit del = new Edit(Type.DEL, undoCurve.getNotes());
             track.getEditor().push(del);
-            undoCurve = null;
-            existing = null;
-            delete.setEnabled(false);
-            change.setEnabled(false);
+			undoCurve = null; // clear after use
+			existing = null;
+			track.getEditor().publish(this, Collections.emptyList());
+			delete.setEnabled(false);
+			change.setEnabled(false);
+			select.setEnabled(false);
             return;
         }
         if (existing == null)
@@ -270,9 +278,11 @@ class PitchEdit extends AutoBox {
 
         Edit edit = new Edit(Type.DEL, existing, null);
         track.getEditor().push(edit);
-        existing = null;
-        delete.setEnabled(false);
-        change.setEnabled(false);
+		existing = null;
+		track.getEditor().publish(this, Collections.emptyList());
+		delete.setEnabled(false);
+		change.setEnabled(false);
+		select.setEnabled(false);
     }
 
     void exe() {
@@ -281,6 +291,36 @@ class PitchEdit extends AutoBox {
         } catch (InvalidMidiDataException e) {
             RTLogger.warn(this, e);
         }
+    }
+
+    void publishSelection() {
+        if (existing != null) {
+            track.getEditor().publish(this, Collections.singletonList(existing));
+        }
+    }
+
+    @Override
+    protected void updateSelection(Selection selection) {
+        SwingUtilities.invokeLater(() -> {
+            if (selection == null || selection.events().isEmpty()) {
+                init(track != null ? track.getLeft() : 0);
+                return;
+            }
+
+            MidiEvent firstPitchBend = null;
+            for (MidiEvent event : selection.events()) {
+                if (event.getMessage() instanceof ShortMessage sm && Midi.isPitchBend(sm)) {
+                    firstPitchBend = event;
+                    break;
+                }
+            }
+
+            if (firstPitchBend != null) {
+                edit(firstPitchBend);
+            } else {
+                init(track != null ? track.getLeft() : 0);
+            }
+        });
     }
 
     // ---- pitch bend mapping helpers ----

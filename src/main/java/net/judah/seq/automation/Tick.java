@@ -24,7 +24,7 @@ public class Tick extends JPanel {
 	private static final Integer[] FRAMES = Integers.generate(1, 99);
 	private static final Border GREEN = BorderFactory.createEtchedBorder(Pastels.GREEN, Pastels.MY_GRAY);
 
-	private MidiTrack track;
+	private final MidiTrack track;
 	JComboBox<Integer> frame = new JComboBox<Integer>(FRAMES);
 	JComboBox<Integer> beat = new JComboBox<Integer>();
 	JComboBox<Integer> step = new JComboBox<Integer>();
@@ -32,11 +32,8 @@ public class Tick extends JPanel {
 	private ActionListener listen = e->recalc();
 
 	public Tick(MidiTrack t) {
-		this();
-		setTrack(t);
-	}
-
-	public Tick() {
+		track = t;
+		updates();
 		ticks.setText("0");
 		setLayout(new GridLayout(2, 4));
 		frame.addActionListener(listen);
@@ -135,10 +132,8 @@ public class Tick extends JPanel {
 		it.addActionListener(listen);
 	}
 
-	void setTrack(MidiTrack t) {
-		track = t;
-
-		frame.setSelectedItem(t.getFrame());
+	void updates() {
+		frame.setSelectedItem(track.getFrame());
 		int beats = 2 * track.getClock().getTimeSig().beats;
 		if (beat.getItemCount() != beats)
 			reload(beat, 1, beats, 0);

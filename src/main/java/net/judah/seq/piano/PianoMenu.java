@@ -17,22 +17,28 @@ import net.judah.gui.Size;
 import net.judah.gui.settable.ModeCombo;
 import net.judah.gui.widgets.Arrow;
 import net.judah.gui.widgets.GateCombo;
-import net.judah.seq.Duration;
 import net.judah.seq.Seq;
-import net.judah.seq.Transpose;
 import net.judah.seq.track.Computer.Update;
+import net.judah.seq.track.Duration;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.TrackMenu;
+import net.judah.seq.track.Transpose;
 
 public class PianoMenu extends TrackMenu implements Floating {
 
-	// private final ButtonGroup mode = new ButtonGroup();
+//	private static final String[] VERT = { "Top", "Bottom"};
+//	private static final String[] HORZ = { "Left", "Right" };
+//	private final String a;
+//	private final String b;
+//	a = track.isDrums() ? HORZ[0] : VERT[0];
+//	b = track.isDrums() ? HORZ[1] : VERT[1];
+
 	private final GateCombo gate;
 	private final ModeCombo mode;
 	private final JComboBox<Integer> range = new JComboBox<Integer>(Integers.generate(0, 88));
 
 	public PianoMenu(PianoView view, Piano grid, Seq seq) {
-		super(grid, seq.getAutomation());
+		super(grid);
 		PianoTrack t = (PianoTrack) track;
 		gate = new GateCombo(t);
 		mode = new ModeCombo(t);

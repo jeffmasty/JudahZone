@@ -8,9 +8,9 @@ import javax.sound.midi.Track;
 
 import judahzone.api.Midi;
 import lombok.Getter;
-import net.judah.seq.MidiTools;
 import net.judah.seq.automation.Automation.CCData;
 import net.judah.seq.track.Computer;
+import net.judah.seq.track.MidiTools;
 
 @Getter
 public class CCModel /* extends DefaultTableModel*/ {

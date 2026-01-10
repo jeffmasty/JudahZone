@@ -1,8 +1,7 @@
-package net.judah.seq;
+package net.judah.seq.track;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
@@ -32,14 +31,15 @@ public class Edit {
 			notes.add(evt);
 	}
 
-	public Edit(Type t, List<MidiNote> list) {
-		type = t;
-		for (MidiNote p : list) {
-			notes.add(new MidiEvent(p.getMessage(), p.getTick()));
-			if (p.getOff() != null)
-				notes.add(new MidiEvent(p.getOff().getMessage(), p.getOff().getTick()));
-		}
-	}
+//	@Deprecated
+//	public Edit(Type t, List<MidiNote> list) {
+//		type = t;
+//		for (MidiNote p : list) {
+//			notes.add(new MidiEvent(p.getMessage(), p.getTick()));
+//			if (p.getOff() != null)
+//				notes.add(new MidiEvent(p.getOff().getMessage(), p.getOff().getTick()));
+//		}
+//	}
 
 	public Edit(Type t, Collection<MidiEvent> remap) { // drums
 		type = t;

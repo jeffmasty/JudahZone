@@ -11,15 +11,15 @@ import javax.swing.BoxLayout;
 
 import judahzone.gui.Floating;
 import judahzone.gui.Gui;
+import judahzone.util.RTLogger;
 import lombok.Getter;
 import net.judah.gui.Size;
-import net.judah.seq.MusicBox;
 import net.judah.seq.TrackList;
 import net.judah.seq.Trax;
-import net.judah.seq.automation.Automation;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.HiringAgency;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.MusicBox;
 import net.judah.seq.track.TrackBindings;
 
 /**Handles a top and bottom drum track */
@@ -32,7 +32,7 @@ public class DrumZone extends HiringAgency implements Floating {
 	@Getter private final ArrayList<DrumCage> views = new ArrayList<>();
 	private final Mutes mutes1, mutes2;
 
-	public DrumZone(TrackList<DrumTrack> list, Automation auto) {
+	public DrumZone(TrackList<DrumTrack> list) {
 
 		setName(NAME);
 		this.tracks = list;
@@ -44,10 +44,10 @@ public class DrumZone extends HiringAgency implements Floating {
 		mutes1 = new Mutes();
 		mutes2 = new Mutes();
 
-		DrumCage d1 = new DrumCage(tracks.get(Trax.D1.ordinal()), this, auto);
-		DrumCage d2 = new DrumCage(tracks.get(Trax.D2.ordinal()), this, auto);
-		DrumCage h1 = new DrumCage(tracks.get(Trax.H1.ordinal()), this, auto);
-		DrumCage h2 = new DrumCage(tracks.get(Trax.H2.ordinal()), this, auto);
+		DrumCage d1 = new DrumCage(tracks.get(Trax.D1.ordinal()), this);
+		DrumCage d2 = new DrumCage(tracks.get(Trax.D2.ordinal()), this);
+		DrumCage h1 = new DrumCage(tracks.get(Trax.H1.ordinal()), this);
+		DrumCage h2 = new DrumCage(tracks.get(Trax.H2.ordinal()), this);
 		views.add(d1);
 		views.add(d2);
 		views.add(h1);
@@ -111,6 +111,12 @@ public class DrumZone extends HiringAgency implements Floating {
 
 	private static Dimension quadrant(Dimension full) {
 		return new Dimension(full.width / 2 - MUTES_CUTOUT, full.height / 2 - Size.KNOB_HEIGHT);
+	}
+
+	@Override
+	public void unregister() {
+		RTLogger.debug(this, "Unregsitered");
+		views.forEach(DrumCage::unregister);
 	}
 
 }

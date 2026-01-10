@@ -5,6 +5,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Vector;
 
 import javax.sound.midi.MidiEvent;
@@ -23,12 +24,11 @@ import judahzone.api.GMDrum;
 import net.judah.JudahZone;
 import net.judah.drumkit.DrumType;
 import net.judah.gui.MainFrame;
-import net.judah.seq.Edit;
-import net.judah.seq.Edit.Type;
-import net.judah.seq.Musician;
-import net.judah.seq.Notes;
-import net.judah.seq.Prototype;
 import net.judah.seq.track.DrumTrack;
+import net.judah.seq.track.Edit;
+import net.judah.seq.track.Musician;
+import net.judah.seq.track.Prototype;
+import net.judah.seq.track.Edit.Type;
 
 public class RemapTable extends JTable {
 
@@ -124,7 +124,7 @@ public class RemapTable extends JTable {
 		int result = JOptionPane.showConfirmDialog(JudahZone.getInstance().getFrame(), msg);
 		if (result != JOptionPane.YES_OPTION)
 			return;
-		Notes selected = drummer.selectArea(0, t.ticks(), data1, data1);
+		List<MidiEvent> selected = drummer.getEditor().selectArea(0, t.ticks(), data1, data1);
 		Edit e = new Edit(Type.DEL, selected);
 		track.getEditor().push(e);
 		MainFrame.setFocus(new RemapView(drummer)); // No undo on Remap View

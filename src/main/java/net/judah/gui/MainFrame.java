@@ -30,6 +30,7 @@ import judahzone.fx.Gain;
 import judahzone.gui.Gui;
 import judahzone.gui.Icons;
 import judahzone.gui.Updateable;
+import judahzone.scope.JudahScope;
 import judahzone.util.AudioMetrics.RMS;
 import judahzone.util.Circular;
 import judahzone.util.Constants;
@@ -64,6 +65,7 @@ import net.judah.sampler.Sampler;
 import net.judah.seq.Seq;
 import net.judah.seq.SynthRack;
 import net.judah.seq.TrackList;
+import net.judah.seq.automation.Automation;
 import net.judah.seq.beatbox.DrumZone;
 import net.judah.seq.beatbox.RemapView;
 import net.judah.seq.chords.ChordPlay;
@@ -82,7 +84,6 @@ import net.judah.song.SongView;
 import net.judah.song.setlist.SetlistView;
 import net.judah.synth.taco.TacoSynth;
 import net.judah.synth.taco.TacoTruck;
-import net.judahzone.scope.JudahScope;
 
 /** over-all layout and background updates thread */
 public class MainFrame extends JFrame implements Runnable {
@@ -169,7 +170,7 @@ public class MainFrame extends JFrame implements Runnable {
         loops = new MiniLooper(looper, clock);
         presets = new PresetsView(zone);
         setlists = new SetlistView(zone.getSetlists(), overview);
-    	beatBox = new DrumZone(drums.getTracks(), seq.getAutomation());
+    	beatBox = new DrumZone(drums.getTracks());
         tabs = new TabZone(zone, beatBox);
         menu = new JudahMenu(WIDTH_KNOBS, zone, tabs, zone.getMidi());
         mode = new JComboBox<>(KnobMode.values());
@@ -283,7 +284,9 @@ public class MainFrame extends JFrame implements Runnable {
 				beatBox.update(d);
 			}
 		}
-
+		else if (o instanceof Automation a) {
+			knobPanel(a);
+		}
     }
 
     public static void update(Object o) {
@@ -350,8 +353,6 @@ public class MainFrame extends JFrame implements Runnable {
                 overview.update(t.type, t.update);
                 tabs.update(t.type, t.update);
                 midiGui.update(t.type, t.update);
-                if (JudahZone.isInitialized())
-                    seq.getAutomation().update(t.type, t.update);
                 if (t.update instanceof TacoSynth taco && taco.getKnobs() != null)
                     taco.getKnobs().update(t.type);
             }

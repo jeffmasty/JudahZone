@@ -25,7 +25,7 @@ public enum Meta {
 	KEY_SIG(0x59)   //bytes:2  "C"  "F#m"
 	; // see https://www.youtube.com/watch?v=P27ml4M3V7A
 
-	final int type;
+	public final int type;
 
 	public static Meta getType(MetaMessage m) {
 		int target = m.getType();

@@ -1,4 +1,4 @@
-package net.judah.seq;
+package net.judah.seq.track;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -16,9 +16,8 @@ import judahzone.widgets.Integers;
 import lombok.Setter;
 import net.judah.drumkit.DrumType;
 import net.judah.gui.widgets.ModalDialog;
-import net.judah.seq.Edit.Type;
 import net.judah.seq.piano.Piano;
-import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.Edit.Type;
 
 /** Provides a ModalDialog to enter specific transposition amounts
  * @see net.judah.gui.widgets.ModalDialog*/

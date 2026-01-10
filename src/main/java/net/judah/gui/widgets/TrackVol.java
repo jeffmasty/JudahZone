@@ -1,6 +1,5 @@
 package net.judah.gui.widgets;
 
-import judahzone.gui.Pastels;
 import judahzone.widgets.Knob;
 import net.judah.seq.track.MidiTrack;
 
@@ -9,7 +8,6 @@ public class TrackVol extends Knob {
 	private final MidiTrack track;
 
 	public TrackVol(MidiTrack t) {
-		super(Pastels.EGGSHELL);
 		this.track = t;
 		setValue((int) (track.getAmp() * 100));
 		addListener(val->{

@@ -8,7 +8,6 @@ import lombok.Setter;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
-import net.judah.seq.MidiTools;
 import net.judah.song.Sched;
 
 @Getter
@@ -16,7 +15,7 @@ public class Computer {
 
 	public static enum Update {
 		PLAY, CAPTURE, CURRENT, CYCLE, AMP, ARP, PROGRAM,
-		CUE, GATE, FILE, REFILL, RANGE, LAUNCH, REZ, EDIT
+		CUE, GATE, FILE, REFILL, RANGE, LAUNCH, REZ
 	}
 //	public static record Tracker(Update type, Computer track) {}
 

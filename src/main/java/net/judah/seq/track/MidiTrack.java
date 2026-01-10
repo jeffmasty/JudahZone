@@ -18,9 +18,9 @@ import javax.swing.JOptionPane;
 
 import judahzone.api.Midi;
 import judahzone.api.MidiConstants;
+import judahzone.api.Notification.Property;
 import judahzone.api.Signature;
 import judahzone.api.TimeListener;
-import judahzone.api.Notification.Property;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
@@ -32,7 +32,7 @@ import net.judah.gui.TabZone;
 import net.judah.midi.JudahMidi;
 import net.judah.seq.Meta;
 import net.judah.seq.MetaMap;
-import net.judah.seq.MidiTools;
+import net.judah.seq.automation.Automation;
 import net.judah.seq.automation.ControlChange;
 import net.judah.song.Sched;
 
@@ -47,6 +47,7 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 	protected boolean capture;
 	@Setter protected boolean permanent;
 	@Getter protected final Editor editor;
+	protected Automation automation;
 
 	public MidiTrack(String name, int ch) throws InvalidMidiDataException {
 		this.ch = ch;
@@ -101,6 +102,12 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
     @Override public String toString() { return getName(); }
     public final boolean isDrums() { return this instanceof DrumTrack; }
     public final boolean isSynth() { return this instanceof PianoTrack; }
+
+    public Automation getAutomation () { // lazy load
+		if (automation == null)
+			automation = new Automation(this);
+		return automation;
+    }
 
 	public void clear() {
 		init();

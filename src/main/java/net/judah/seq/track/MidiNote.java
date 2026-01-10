@@ -1,4 +1,4 @@
-package net.judah.seq;
+package net.judah.seq.track;
 
 import javax.sound.midi.MidiEvent;
 
@@ -6,6 +6,7 @@ import judahzone.api.Midi;
 import lombok.Getter;
 import lombok.Setter;
 
+/** Use only in special circumstances, normal method is to interleave note-off midievents with their note-ons */
 public class MidiNote extends MidiEvent {
 
 	@Getter @Setter private MidiEvent off;

@@ -1,6 +1,8 @@
 package net.judah.seq.automation;
 
 import java.awt.FlowLayout;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiEvent;
@@ -14,6 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
 import judahzone.api.Midi;
 import judahzone.api.MidiConstants;
@@ -22,19 +25,24 @@ import judahzone.util.Constants;
 import judahzone.util.RTLogger;
 import judahzone.widgets.Btn;
 import net.judah.gui.Size;
-import net.judah.seq.Edit;
-import net.judah.seq.Edit.Type;
 import net.judah.seq.automation.Automation.AutoBox;
 import net.judah.seq.automation.Automation.CCData;
+import net.judah.seq.track.Edit;
+import net.judah.seq.track.Editor;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.Prototype;
+import net.judah.seq.track.Edit.Type;
 
 class CCEdit extends AutoBox implements MidiConstants {
 
 	private CCData existing;
+	private Edit undoCurve;
 
-	private final JComboBox<ControlChange> cc = new JComboBox<ControlChange>(ControlChange.ORDERED);
+	private final JComboBox<ControlChange> cc = new JComboBox<>(ControlChange.ORDERED);
 	private final Btn create = new Btn("New", e->create());
+	private final Btn change = new Btn("Change", e -> change());
 	private final Btn delete = new Btn("Delete", e->delete());
+	private final Btn select = new Btn("Select", e -> publishSelection());
 	private final Btn exe = new Btn("Exe", e->exe());
 
 	private final Box top = new Box(BoxLayout.PAGE_AXIS);
@@ -42,19 +50,25 @@ class CCEdit extends AutoBox implements MidiConstants {
 	private final JPanel checkbox = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
 	private final Val val = new Val(false, cc);
 	private final Val val2 = new Val(true, cc);
-	private final Tick steps = new Tick();
-	private final Tick steps2 = new Tick();
+	private final Tick steps;
+	private final Tick steps2;
 	private final JCheckBox automation = new JCheckBox("Enabled");
 	private final JTextField messages = new JTextField("5", 3);
 
-	protected CCEdit() {
-		super(BoxLayout.LINE_AXIS);
+	protected CCEdit(MidiTrack owner) {
+
+		super(BoxLayout.LINE_AXIS, owner);
+
+		steps = new Tick(track);
+		steps2 = new Tick(track);
 
 		Box btns = new Box(BoxLayout.LINE_AXIS);
 		btns.add(Gui.resize(cc, Size.WIDE_SIZE));
 		btns.add(Box.createHorizontalStrut(12));
 		btns.add(create);
+		btns.add(change);
 		btns.add(delete);
+		btns.add(select);
 		btns.add(exe);
 
 		top.add(btns);
@@ -88,7 +102,8 @@ class CCEdit extends AutoBox implements MidiConstants {
 		add(Box.createHorizontalStrut(12));
 		add(inner);
 		add(Box.createHorizontalStrut(12));
-		enableAutomation(false);
+
+		init(0L);
 	}
 
 	private void ccChange() {
@@ -97,26 +112,33 @@ class CCEdit extends AutoBox implements MidiConstants {
 	}
 
 	public CCEdit edit(CCData data) {
- 		existing = data;
- 		cc.setSelectedItem(data.type());
- 		steps.quantizable(data.e().getTick());
- 		val.set(((ShortMessage)data.e().getMessage()).getData2());
- 		delete.setEnabled(true);
- 		return this;
- 	}
-
-	@Override public CCEdit init(long tick) {
-		existing = null;
-		delete.setEnabled(false);
-		cc.setSelectedItem(ControlChange.VOLUME);
-		steps.quantizable(tick);
+		existing = data;
+		undoCurve = null;
+		if (data != null && data.e() != null && data.e().getMessage() instanceof ShortMessage msg) {
+			cc.setSelectedItem(data.type());
+			steps.quantizable(data.e().getTick());
+			val.set(msg.getData2());
+			delete.setEnabled(true);
+			change.setEnabled(true);
+			select.setEnabled(true);
+		} else {
+			init(track != null ? track.getLeft() : 0);
+		}
+		enableAutomation(false);
 		return this;
 	}
 
-	@Override protected void setTrack(MidiTrack t) {
- 		track = t;
- 		steps.setTrack(track);
- 		steps2.setTrack(track);
+	@Override public CCEdit init(long tick) {
+		existing = null;
+		undoCurve = null;
+		delete.setEnabled(false);
+		change.setEnabled(false);
+		select.setEnabled(false);
+		cc.setSelectedItem(ControlChange.VOLUME);
+		val.set(CUTOFF +1);
+		steps.quantizable(tick);
+		enableAutomation(true);
+		return this;
 	}
 
  	private void enableAutomation(boolean enable) {
@@ -131,11 +153,10 @@ class CCEdit extends AutoBox implements MidiConstants {
 		try {
 			ShortMessage msg = build();
 			MidiEvent evt = new MidiEvent(msg, steps.getTick());
-			ControlChange type = (ControlChange)cc.getSelectedItem();
-			existing = new CCData(evt, type);
 	 		Edit edit = new Edit(Type.NEW, evt);
+			undoCurve = edit;
+
 	 		if (automation.isSelected()) {
-	 			// generate and add messages
 	 			int count;
 	 			try {
 	 				count = Integer.parseInt(messages.getText());
@@ -143,34 +164,61 @@ class CCEdit extends AutoBox implements MidiConstants {
 	 				RTLogger.warn(this, messages.getText() + ": " + nfe.getMessage());
 					return;
 				}
+				if (count < 2) count = 2;
 	 			double interval = (steps2.getTick() - steps.getTick()) / (double)(count - 1);
-	 			float mod = (val2.get() - val.get()) / (float) (count - 1);
+				float startVal = val.get();
+				float endVal = val2.get();
+	 			float delta = (endVal - startVal) / (count - 1);
 	 			for (int step = 1; step < count; step++) {
-	 				int data2 = val.get() + Math.round(step * mod);
+	 				int data2 = Math.round(startVal + step * delta);
 	 				long ticker = steps.getTick() + Math.round(step * interval);
+					ControlChange type = (ControlChange)cc.getSelectedItem();
 	 				ShortMessage unit = new ShortMessage(Midi.CONTROL_CHANGE, track.getCh(), type.data1, data2);
 	 				edit.getNotes().add(new MidiEvent(unit, ticker));
 	 			}
 			}
 	 		track.getEditor().push(edit);
-	 		delete.setEnabled(true);
+			track.getEditor().publish(this, new ArrayList<>(edit.getNotes()));
 		} catch (Throwable t) {
 			RTLogger.warn(this, t);
 		}
 	}
 
-
-	void delete() {
+	void change() {
 		if (existing == null) {
-			RTLogger.warn(this, "Delete enabled but nothing to delete");
+			create();
 			return;
 		}
-		Edit edit = new Edit(Type.DEL, existing.e());
-		if (automation.isSelected()) {
-			// TODO
+		try {
+			long targetTick = steps.getTick();
+			ShortMessage targetMsg = build();
+			MidiEvent targetEvent = new MidiEvent(targetMsg, targetTick);
+			Edit mod = new Edit(Type.MOD, existing.e(), targetEvent);
+
+			if (automation.isSelected()) {
+				mod.setDestination(new Prototype(val2.get(), steps2.getTick()));
+			}
+
+			track.getEditor().push(mod);
+			track.getEditor().publish(this, Collections.singletonList(targetEvent));
+		} catch (InvalidMidiDataException ie) {
+			RTLogger.warn(this, ie);
 		}
-		delete.setEnabled(false);
+	}
+
+	void delete() {
+		if (undoCurve != null && !undoCurve.getNotes().isEmpty()) {
+			Edit del = new Edit(Type.DEL, undoCurve.getNotes());
+			track.getEditor().push(del);
+			track.getEditor().publish(this, Collections.emptyList());
+			return;
+		}
+		if (existing == null)
+			return;
+
+		Edit edit = new Edit(Type.DEL, existing.e());
 		track.getEditor().push(edit);
+		track.getEditor().publish(this, Collections.emptyList());
 	}
 
 	void exe() {
@@ -179,6 +227,40 @@ class CCEdit extends AutoBox implements MidiConstants {
 		} catch (InvalidMidiDataException e) {
 			RTLogger.warn(this, e);
 		}
+	}
+
+	void publishSelection() {
+		if (existing != null) {
+			track.getEditor().publish(this, Collections.singletonList(existing.e()));
+		}
+	}
+
+	@Override
+	protected void updateSelection(Editor.Selection selection) {
+		// if (selection.originId() == originId
+		SwingUtilities.invokeLater(() -> {
+			if (selection == null || selection.events().isEmpty()) {
+				init(track != null ? track.getLeft() : 0);
+				return;
+			}
+
+			CCData firstCC = null;
+			for (MidiEvent event : selection.events()) {
+				if (event.getMessage() instanceof ShortMessage sm && Midi.isCC(sm)) {
+					ControlChange type = ControlChange.find(sm);
+					if (type != null) {
+						firstCC = new CCData(event, type);
+						break;
+					}
+				}
+			}
+
+			if (firstCC != null) {
+				edit(firstCC);
+			} else {
+				init(track != null ? track.getLeft() : 0);
+			}
+		});
 	}
 
 	private ShortMessage build() throws InvalidMidiDataException {
@@ -256,7 +338,7 @@ class CCEdit extends AutoBox implements MidiConstants {
 
 		@Override public void setEnabled(boolean enabled) {
 			super.setEnabled(enabled);
-			setBackground(enabled ? null: DISABLED);
+			setBackground(enabled ? ENABLED: DISABLED);
 		}
 
 		void set(int val) {
@@ -278,6 +360,4 @@ class CCEdit extends AutoBox implements MidiConstants {
 			}
 		}
 	}
-
-
 }

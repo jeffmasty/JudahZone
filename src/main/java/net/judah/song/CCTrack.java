@@ -11,7 +11,6 @@ import judahzone.gui.Pastels;
 import net.judah.gui.Size;
 import net.judah.midi.JudahClock;
 import net.judah.seq.Steps;
-import net.judah.seq.automation.Automation;
 import net.judah.seq.automation.CCPopup;
 import net.judah.seq.track.MidiTrack;
 
@@ -33,10 +32,10 @@ public class CCTrack extends Steps {
 	private float unit;
 	private int xunit;
 
-	public CCTrack(MidiTrack t, Automation auto) {
+	public CCTrack(MidiTrack t) {
 		super(t);
 		this.clock = track.getClock();
-		this.cc = new CCPopup(track, this, true, auto);
+		this.cc = new CCPopup(track, this, true);
 		Gui.resize(this, SIZE);
 		addMouseListener(this);
 		setLayout(null);

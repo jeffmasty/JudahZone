@@ -12,8 +12,7 @@ import net.judah.drumkit.DrumSample;
 import net.judah.drumkit.DrumType;
 import net.judah.drumkit.Drumz;
 import net.judah.midi.JudahMidi;
-import net.judah.seq.Edit;
-import net.judah.seq.Edit.Type;
+import net.judah.seq.track.Edit.Type;
 
 public class DrumTrack extends NoteTrack {
 

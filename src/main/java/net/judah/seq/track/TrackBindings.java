@@ -13,9 +13,6 @@ import javax.swing.KeyStroke;
 import net.judah.JudahZone;
 import net.judah.drumkit.DrumMachine;
 import net.judah.gui.Bindings.Act;
-import net.judah.seq.Duration;
-import net.judah.seq.MusicBox;
-import net.judah.seq.Transpose;
 
 public class TrackBindings {
 
@@ -35,12 +32,12 @@ public class TrackBindings {
 		Editor ed = track.getEditor();
 
 
-		bind(getKeyStroke(VK_DELETE, 0), new Act(()->view.delete()));
-		bind(getKeyStroke(VK_ESCAPE, 0), new Act(()->view.selectNone()));
+		bind(getKeyStroke(VK_DELETE, 0), new Act(()->ed.delete()));
+		bind(getKeyStroke(VK_ESCAPE, 0), new Act(()->ed.selectNone()));
 		bind(getKeyStroke(VK_SPACE, 0), new Act(()->track.toggle()));
-		bind(getKeyStroke(VK_A, CTRL_DOWN_MASK), new Act(()->view.selectFrame()));
-		bind(getKeyStroke(VK_C, CTRL_DOWN_MASK), new Act(()->view.copy()));
-		bind(getKeyStroke(VK_D, CTRL_DOWN_MASK), new Act(()->view.selectNone()));
+		bind(getKeyStroke(VK_A, CTRL_DOWN_MASK), new Act(()->ed.selectFrame()));
+		bind(getKeyStroke(VK_C, CTRL_DOWN_MASK), new Act(()->ed.copy()));
+		bind(getKeyStroke(VK_D, CTRL_DOWN_MASK), new Act(()->ed.selectNone()));
 		bind(getKeyStroke(VK_L, CTRL_DOWN_MASK), new Act(()->new Duration(view)));
 		bind(getKeyStroke(VK_R, CTRL_DOWN_MASK), new Act(()->track.setCapture(!track.isCapture())));
 		bind(getKeyStroke(VK_S, CTRL_DOWN_MASK), new Act(()->track.save()));

@@ -5,6 +5,8 @@ import java.awt.event.ActionListener;
 import javax.swing.JComboBox;
 
 import judahzone.gui.Gui;
+import net.judah.gui.MainFrame;
+import net.judah.gui.knobs.KnobMode;
 import net.judah.seq.Seq;
 import net.judah.seq.TrackList;
 import net.judah.seq.track.MidiTrack;
@@ -17,10 +19,18 @@ public class TraxCombo extends JComboBox<MidiTrack> {
 	public TraxCombo(Seq seq) {
 		this.seq = seq;
 		setFont(Gui.BOLD);
+
+		for (MidiTrack t : seq.getTracks())
+			addItem(t);
+
+
+
+
 		listener = (l)-> {
-			MidiTrack t = (MidiTrack)getSelectedItem();
-			if (t != null && t != seq.getAutomation().getTrack())
-				seq.getAutomation().setTrack(t);};
+			MidiTrack t = (MidiTrack) getSelectedItem();
+			if (MainFrame.getKnobMode() == KnobMode.Autom8)
+				MainFrame.setFocus(t.getAutomation());
+		};
 		addActionListener(listener);
 	}
 

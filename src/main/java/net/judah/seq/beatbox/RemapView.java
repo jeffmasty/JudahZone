@@ -8,8 +8,8 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
-import net.judah.seq.Musician;
 import net.judah.seq.track.DrumTrack;
+import net.judah.seq.track.Musician;
 
 public class RemapView extends KnobPanel {
 

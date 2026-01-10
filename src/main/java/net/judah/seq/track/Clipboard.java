@@ -1,13 +1,13 @@
-package net.judah.seq;
+package net.judah.seq.track;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import javax.sound.midi.MidiEvent;
 
 import lombok.Getter;
-import net.judah.seq.track.MidiTrack;
 
 public class Clipboard {
 
@@ -15,22 +15,22 @@ public class Clipboard {
 	/** source track resolution */
 	@Getter private int resolution;
 
-	public void copy(Notes selected, MidiTrack track) {
-		list.clear();
-		resolution = track.getResolution();
-		long left = track.getLeft();
-		for (MidiNote p : selected) {
-			p = MidiTools.zeroBase(p, left);
-			list.add(p);
-		}
-	}
-
-//	public void copy(Collection<MidiEvent> selected, MidiTrack track) {
+//	public void copy(Notes selected, MidiTrack track) {
 //		list.clear();
 //		resolution = track.getResolution();
 //		long left = track.getLeft();
-//		selected.forEach(e -> list.add(MidiTools.zeroBase(e, left)));
+//		for (MidiNote p : selected) {
+//			p = MidiTools.zeroBase(p, left);
+//			list.add(p);
+//		}
 //	}
+
+	public void copy(Collection<MidiEvent> selected, MidiTrack track) {
+		list.clear();
+		resolution = track.getResolution();
+		long left = track.getLeft();
+		selected.forEach(e -> list.add(MidiTools.zeroBase(left, e)));
+	}
 
 	public List<MidiEvent> paste(MidiTrack track) {
 		ArrayList<MidiEvent> result = new ArrayList<>();

@@ -17,7 +17,7 @@ import net.judah.sampler.Sampler;
 	•  This approach expects Sample.getName() to exist (common pattern where Sample constructed with a name). If the method name differs, adapt accordingly.
 	•  Base CC mapping gives a compact way to bind CCs to samples; change baseController when constructing SampleTrack.
 	•  Keep CC-to-sample mapping small and deterministic to avoid runtime allocations. */
-@Getter public class SampleTrack extends MidiTrack {
+@Getter public class TODOSampleTrack extends MidiTrack {
 
 private final Sampler sampler;
 private final int baseController;
@@ -28,7 +28,7 @@ private final int baseController;
  * @param sampler sampler instance to control (must be created elsewhere)
  * @param baseController first CC controller used for mapping (e.g. 20)
  */
-public SampleTrack(String name, int ch, Sampler sampler, int baseController) throws InvalidMidiDataException {
+public TODOSampleTrack(String name, int ch, Sampler sampler, int baseController) throws InvalidMidiDataException {
     super(name, ch);
     this.sampler = sampler;
     this.baseController = baseController;

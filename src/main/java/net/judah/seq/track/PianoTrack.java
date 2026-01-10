@@ -26,8 +26,6 @@ import net.judah.midi.Actives;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiInstrument;
 import net.judah.midi.Panic;
-import net.judah.seq.Edit;
-import net.judah.seq.Edit.Type;
 import net.judah.seq.arp.Arp;
 import net.judah.seq.arp.ArpInfo;
 import net.judah.seq.arp.Deltas;
@@ -44,6 +42,7 @@ import net.judah.seq.automation.ControlChange;
 import net.judah.seq.chords.ChordListener;
 import net.judah.seq.chords.Chords;
 import net.judah.seq.piano.Pedal;
+import net.judah.seq.track.Edit.Type;
 import net.judah.song.Sched;
 
 /** A melodic MidiTrack with an Arpeggiator */

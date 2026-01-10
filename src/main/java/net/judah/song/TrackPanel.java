@@ -9,17 +9,14 @@ import javax.swing.JPanel;
 
 import net.judah.channel.Channel;
 import net.judah.seq.TrackList;
-import net.judah.seq.automation.Automation;
 import net.judah.seq.track.Computer;
 import net.judah.seq.track.MidiTrack;
 
 public class TrackPanel extends JPanel implements Iterable<SongTrack> {
 
-	private final Automation automation;
 	private final HashMap<MidiTrack, SongTrack> map = new HashMap<MidiTrack, SongTrack>();
 
-	public TrackPanel(Automation auto) {
-		this.automation = auto;
+	public TrackPanel() {
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 	}
 
@@ -36,7 +33,7 @@ public class TrackPanel extends JPanel implements Iterable<SongTrack> {
 		removeAll();
 		for (MidiTrack track : tracks) {
 			if (map.containsKey(track) == false)
-				map.put(track, new SongTrack(track, automation));
+				map.put(track, new SongTrack(track));
 			add(map.get(track));
 		}
 		invalidate();

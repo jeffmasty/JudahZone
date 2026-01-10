@@ -230,8 +230,6 @@ public class MidiGui extends KnobPanel implements Cmdr {
 		int target = (int) (clock.getSwing() * 100 + 50f);
 		if (swing.getValue() != target)
 			swing.setValue(target);
-//		taco.update();
-//		fluid.update();
 	}
 
 	public void update(Update type, Computer c) {
@@ -244,7 +242,8 @@ public class MidiGui extends KnobPanel implements Cmdr {
 		else if (Update.ARP == type)
 			toggler.update((PianoTrack)c);
 		else if (Update.CAPTURE == type) {
-			toggler.update((PianoTrack)c);
+			if (c instanceof PianoTrack p)
+			toggler.update(p);
 		}
 	}
 

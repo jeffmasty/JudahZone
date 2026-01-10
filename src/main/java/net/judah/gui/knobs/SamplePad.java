@@ -24,7 +24,7 @@ public class SamplePad extends Gui.Opaque {
 	public final Sample sample;
 	private final JPanel btns;
 	private final JLabel name;
-	@Getter private final Knob knob = new Knob(Pastels.ORANGE);
+	@Getter private final Knob knob;
 
 	public SamplePad(Sample s, JPanel parent, Sampler sampler) {
 		this.sample = s;
@@ -40,6 +40,7 @@ public class SamplePad extends Gui.Opaque {
 		name = new JLabel(sample.toString(), JLabel.CENTER);
 		name.setOpaque(true);
 		update();
+		knob = new Knob(Pastels.ORANGE);
 		knob.addListener(e->sample.getGain().set(Gain.VOLUME, knob.getValue()));
 
 		add(name);

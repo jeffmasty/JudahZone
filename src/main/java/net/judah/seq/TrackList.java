@@ -8,6 +8,7 @@ import judahzone.util.Constants;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
+import net.judah.seq.track.Clipboard;
 import net.judah.seq.track.MidiTrack;
 
 /** MidiTrack bounded Vector that has a Current Track and increments on the GUI thread */
@@ -15,7 +16,7 @@ public class TrackList<T extends MidiTrack> extends Vector<T> {
 	private static final long INTERVAL = 10 * Constants.GUI_REFRESH;
 
 	@Getter final Clipboard clipboard = new Clipboard();
-	private MidiTrack current;
+	private volatile MidiTrack current;
 	@Getter private String[] keys;
 	private long flooding;
 

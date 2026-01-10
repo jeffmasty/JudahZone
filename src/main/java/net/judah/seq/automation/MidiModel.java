@@ -3,7 +3,9 @@ package net.judah.seq.automation;
 import static net.judah.seq.automation.Automation.MidiMode.*;
 
 import java.awt.Component;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.sound.midi.MidiEvent;
@@ -16,11 +18,12 @@ import javax.swing.table.DefaultTableModel;
 
 import judahzone.api.Midi;
 import lombok.Getter;
-import net.judah.seq.MidiNote;
-import net.judah.seq.MidiTools;
+import net.judah.drumkit.DrumType;
 import net.judah.seq.automation.Automation.MidiMode;
 import net.judah.seq.track.DrumTrack;
+import net.judah.seq.track.MidiNote;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.NotePairer;
 import net.judah.seq.track.PianoTrack;
 
 @Getter
@@ -35,30 +38,35 @@ public class MidiModel extends DefaultTableModel {
 
 	final MidiTrack track;
 	final Track t;
+	private final List<MidiNote> rows = new ArrayList<>();
 
 	MidiModel(MidiTrack midi, JTable target) {
 		super(COL_NAMES, 0);
 		this.track = midi;
 		this.t = track.getT();
 
-		Set<MidiEvent> handled = new HashSet<MidiEvent>();
+		Set<MidiEvent> handled = new HashSet<>();
+		List<Object[]> rowData = new ArrayList<>();
 
 		for (int i = 0; i < t.size(); i++) {
 			MidiEvent e = t.get(i);
+			if (handled.contains(e)) continue;
+
 			MidiMode mode = All;
-			MidiNote row = new MidiNote(e, null);
+			MidiNote rowNote;
 
 			if (e.getMessage() instanceof ShortMessage msg) {
 				if (Midi.isNoteOn(msg)) {
-					mode = NoteOn; // TODO pair NoteOff
+					mode = NoteOn;
+					rowNote = new MidiNote(e, null);
 					if (track instanceof PianoTrack) {
-						row.setOff(MidiTools.getOff(e, t));
-						if (row.getOff() != null)
-							handled.add(row.getOff());
+						MidiEvent offEvent = NotePairer.getOff(e, t);
+						rowNote.setOff(offEvent);
+						if (offEvent != null)
+							handled.add(offEvent);
 					}
-				}
-				else {
-					row = new MidiNote(e, null);
+				} else {
+					rowNote = new MidiNote(e, null);
 					if (Midi.isPitchBend(msg))
 						mode = Pitch;
 					else if (Midi.isCC(msg))
@@ -66,16 +74,18 @@ public class MidiModel extends DefaultTableModel {
 					else if (Midi.isProgChange(msg))
 						mode = Program;
 					else if (Midi.isNoteOff(msg)) {
-						if (handled.contains(e))
-							continue;
-						mode = NoteOff;
+						mode = ERROR; // noteOff error mode
 					}
 				}
-				addRow(new Object[] {e.getTick(), mode, row, mode == Program ? msg.getData1() : msg.getData2()});
+				rows.add(rowNote);
+				rowData.add(new Object[] {e.getTick(), mode, rowNote, mode == Program ? msg.getData1() : msg.getData2()});
 			}
-//TODO			else if (e.getMessage() instanceof MetaMessage)
-//				mode = Meta;
 		}
+
+		for (Object[] r : rowData) {
+			addRow(r);
+		}
+
 		target.setModel(this);
 
 		CustomRender custom = new CustomRender();
@@ -84,12 +94,64 @@ public class MidiModel extends DefaultTableModel {
 		target.getColumnModel().getColumn(VALUE).setCellRenderer(custom);
 	}
 
+
+	public MidiEvent getEventAt(int modelRow) {
+		if (modelRow >= 0 && modelRow < rows.size()) {
+			return rows.get(modelRow);
+		}
+		return null;
+	}
+
+
+	public int getRowForEvent(MidiEvent event) {
+	    // Unwrap MidiNote if needed
+	    MidiEvent searchEvent = event;
+	    if (event instanceof MidiNote note) {
+	        searchEvent = note; // The MidiNote itself is in the rows list
+	    }
+
+	    for (int i = 0; i < rows.size(); i++) {
+	        MidiNote note = rows.get(i);
+	        // Check if the note matches (compare ticks and messages)
+	        if (eventsMatch(note, searchEvent)) {
+	            return i;
+	        }
+	        // Also check the off event for piano tracks
+	        if (note.getOff() != null && eventsMatch(note.getOff(), searchEvent)) {
+	            return i;
+	        }
+	    }
+	    return -1;
+	}
+
+	private boolean eventsMatch(MidiEvent a, MidiEvent b) {
+	    if (a == b) return true;
+	    if (a == null || b == null) return false;
+
+	    // Compare tick and message content
+	    if (a.getTick() != b.getTick()) return false;
+
+	    if (a.getMessage() instanceof ShortMessage smA &&
+	        b.getMessage() instanceof ShortMessage smB) {
+	        return smA.getCommand() == smB.getCommand() &&
+	               smA.getChannel() == smB.getChannel() &&
+	               smA.getData1() == smB.getData1() &&
+	               smA.getData2() == smB.getData2();
+	    }
+
+	    return false;
+	}
+
+	@Override public boolean isCellEditable(int row, int column) {
+		return false;
+	}
+
 	@Override public Class<?> getColumnClass(int idx) {
 		switch (idx) {
 			case TICK: return Long.class;
 			case TYPE: return MidiMode.class;
 			case EVENT: return MidiNote.class;
-			case VALUE: return Byte.class;
+			case VALUE: return Integer.class;
 		}
 		return super.getColumnClass(idx);
 	}
@@ -101,12 +163,12 @@ public class MidiModel extends DefaultTableModel {
 	            boolean isSelected, boolean hasFocus, int row, int column) {
 			Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-			if (column != EVENT)
-				return c;
+			int modelRow = table.convertRowIndexToModel(row);
+			MidiNote pair = rows.get(modelRow);
+			MidiMode mode = (MidiMode) getValueAt(modelRow, TYPE);
 
-			if (value instanceof MidiNote pair) {
+			if (column == EVENT) {
 				long tick = pair.getTick();
-				MidiMode mode = (MidiMode) getValueAt(row, TYPE);
 				MidiMessage m = pair.getMessage();
 				if (mode == CC) {
 					ControlChange cc = ControlChange.find(pair.getMessage());
@@ -122,36 +184,39 @@ public class MidiModel extends DefaultTableModel {
 				}
 				else if (mode == Pitch) {
 					ShortMessage p = (ShortMessage)m;
-					setValue(p.getData1() + " - " );
+					int bend = p.getData1() | (p.getData2() << 7);
+					setValue("Bend: " + (bend - 8192));
 				}
 				else if (mode == NoteOn) {
-					if (track instanceof DrumTrack)
-						setValue("");
+					if (track instanceof DrumTrack) {
+						int data1 = ((ShortMessage)m).getData1();
+						int idx = DrumType.index(data1);
+						if (idx >= 0)
+							setValue(DrumType.values()[idx].name());
+						else
+							setValue("? " + data1);
+					}
 					else if (pair.getOff() == null)
 						setValue("???");
 					else
 						setValue("" + (pair.getOff().getTick() - tick));
 				}
-				else if (mode == NoteOff)
+				else if (mode == MidiMode.ERROR) // NoteOff error mode
 					setValue("unpaired");
 				else if (mode == All) {
 					setValue("? " + Midi.toString(m));
 				}
+			} else if (column == VALUE) {
+				if (mode == NoteOn || mode == CC) {
+					setValue(((ShortMessage)pair.getMessage()).getData2());
+				} else if (mode == Program) {
+					setValue(((ShortMessage)pair.getMessage()).getData1());
+				} else {
+					setValue("");
+				}
 			}
-			else
-				setValue("??");
 
 	        return c;
 	    }
 	}
-
-//	@Override public void setValueAt(Object val, int row, int column) {
-//		if (column == COL_CMD)
-//			data.get(row).setCmd((Cmd)val);
-//		else
-//			data.get(row).setVal("" + val);
-//		super.setValueAt(val, row, column);
-//		MainFrame.update(JudahZone.getOverview().getScene());
-//	}
-
 }

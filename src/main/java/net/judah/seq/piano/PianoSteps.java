@@ -21,16 +21,19 @@ import judahzone.gui.Pastels;
 import lombok.Getter;
 import net.judah.gui.Size;
 import net.judah.midi.JudahClock;
-import net.judah.seq.Edit;
-import net.judah.seq.Edit.Type;
-import net.judah.seq.MidiNote;
 import net.judah.seq.Steps;
 import net.judah.seq.automation.Automation;
 import net.judah.seq.automation.CCPopup;
+import net.judah.seq.track.Edit;
+import net.judah.seq.track.Edit.Type;
+import net.judah.seq.track.Editor.Delta;
+import net.judah.seq.track.Editor.Selection;
+import net.judah.seq.track.Editor.TrackListener;
+import net.judah.seq.track.MidiTools;
 import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
 
-public class PianoSteps extends Steps implements MouseMotionListener, Size, MouseListener  {
+public class PianoSteps extends Steps implements TrackListener, MouseMotionListener, MouseListener, Size {
 
 	static final int OFFSET = STEP_WIDTH / 2 - 5;
 	private final NoteTrack notes;
@@ -44,15 +47,19 @@ public class PianoSteps extends Steps implements MouseMotionListener, Size, Mous
 	private Integer on, off;
 	private final CCPopup cc;
 
+	// selection state per-row (rows == 2 * clock.getSteps())
+	private boolean[] selectedCCs = new boolean[0];
+	private boolean[] selectedProg = new boolean[0];
 
 	public PianoSteps(PianoTrack piano, Automation auto) {
 		super(piano);
 		this.notes = piano;
 		this.clock = notes.getClock();
-		this.cc = new CCPopup(notes, this, false, auto);
+		this.cc = new CCPopup(notes, this, false);
 		setLayout(null);
 		addMouseMotionListener(this);
 		addMouseListener(this);
+		piano.getEditor().addListener(this);
 	}
 
 	@Override
@@ -76,12 +83,18 @@ public class PianoSteps extends Steps implements MouseMotionListener, Size, Mous
 			}
 
 			if (cc.getProg(i) != null) {
-				g.setColor(Pastels.PROGCHANGE);
+				if (i >= 0 && i < selectedProg.length && selectedProg[i])
+					g.setColor(Pastels.SELECTED);
+				else
+					g.setColor(Pastels.PROGCHANGE);
 				g.fillRect(0, y, width, (int)unit);
 			}
 
 			if (ccs[i] > 0) {
-				g.setColor(Pastels.CC);
+				if (i >= 0 && i < selectedCCs.length && selectedCCs[i])
+					g.setColor(Pastels.SELECTED);
+				else
+					g.setColor(Pastels.CC);
 				g.fillRect(1, y + 1, width - 2, (int)unit - 2);
 				g.setColor(Color.BLACK);
 				if (ccs[i] > 1)
@@ -158,13 +171,12 @@ public class PianoSteps extends Steps implements MouseMotionListener, Size, Mous
 		long begin = notes.getLeft() + on * step;
 		long end = notes.getLeft() + off * step - 1;
 		on = off = null;
-		ArrayList<MidiNote> list = new ArrayList<>();
+		ArrayList<MidiEvent> list = new ArrayList<>();
 		for (ShortMessage m : notes.getActives()) {
-			list.add(new MidiNote(
-					new MidiEvent(Midi.create(MidiConstants.NOTE_ON, ch, m.getData1(), data2), begin),
-					new MidiEvent(Midi.create(MidiConstants.NOTE_OFF, ch, m.getData1(), 127), end)));
+			list.add(new MidiEvent(Midi.create(MidiConstants.NOTE_ON, ch, m.getData1(), data2), begin));
+			list.add(new MidiEvent(Midi.create(MidiConstants.NOTE_OFF, ch, m.getData1(), 127), end));
 		}
-		track.getEditor().push(new Edit(Type.NEW, list));
+		notes.getEditor().push(new Edit(Type.NEW, list));
 	}
 
 	@Override public void mouseExited(MouseEvent e) {
@@ -190,6 +202,58 @@ public class PianoSteps extends Steps implements MouseMotionListener, Size, Mous
 	@Override public void timeSig(Signature sig) {
 		total = 2 * sig.steps;
 		unit = height / total;
+		// allocate per-row selection arrays
+		int rows = 2 * sig.steps;
+		selectedCCs = new boolean[rows];
+		selectedProg = new boolean[rows];
+		repaint();
+	}
+
+	@Override
+	public void selectionChanged(Selection selection) {
+		// Clear previous selection flags
+		if (selectedCCs == null || selectedProg == null) {
+			// initialize defensively if timeSig not yet called
+			int rows = 2 * clock.getTimeSig().steps;
+			selectedCCs = new boolean[rows];
+			selectedProg = new boolean[rows];
+		}
+		for (int i = 0; i < selectedCCs.length; i++) {
+			selectedCCs[i] = false;
+			selectedProg[i] = false;
+		}
+		if (selection == null || selection.events() == null || selection.events().isEmpty()) {
+			repaint();
+			return;
+		}
+
+		long windowStart = notes.getCurrent() * notes.getBarTicks();
+		long left = notes.getLeft();
+		int stepTicks = notes.getResolution() / clock.getSubdivision();
+		int rows = selectedCCs.length;
+
+		for (MidiEvent e : selection.events()) {
+			if (!(e.getMessage() instanceof ShortMessage sm)) continue;
+			int cmd = sm.getCommand();
+
+			// Map the event tick into current window then into a row index
+			long wrapped = MidiTools.wrapTickInWindow(e.getTick(), windowStart, notes.getWindow());
+			long rel = wrapped - left;
+			if (rel < 0) continue;
+			int idx = (int)(rel / stepTicks);
+			if (idx < 0 || idx >= rows) continue;
+
+			if (cmd == Midi.CONTROL_CHANGE) {
+				selectedCCs[idx] = true;
+			} else if (cmd == Midi.PROGRAM_CHANGE) {
+				selectedProg[idx] = true;
+			}
+		}
+		repaint();
+	}
+
+	@Override
+	public void dataChanged(Delta time) {
 		repaint();
 	}
 

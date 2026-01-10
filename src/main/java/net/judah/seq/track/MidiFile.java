@@ -5,7 +5,6 @@ import javax.sound.midi.Sequence;
 import javax.sound.midi.Track;
 
 import judahzone.api.MidiClock;
-import net.judah.seq.MidiTools;
 
 public class MidiFile extends Sequence {
 

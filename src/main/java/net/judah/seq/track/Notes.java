@@ -1,4 +1,4 @@
-package net.judah.seq;
+package net.judah.seq.track;
 
 import java.util.ArrayList;
 
@@ -7,13 +7,16 @@ import javax.sound.midi.ShortMessage;
 
 import lombok.NoArgsConstructor;
 
+/** removing from API, move towards note-off interleaved with it's note-on */
 @NoArgsConstructor
 public class Notes extends ArrayList<MidiNote> {
 
+	@Deprecated
 	public Notes(Notes copy) {
 		addAll(copy);
 	}
 
+	@Deprecated
 	@Override public boolean contains(Object o) {
 		if (o instanceof MidiEvent evt) {
 			for (MidiNote note : this)
@@ -21,13 +24,9 @@ public class Notes extends ArrayList<MidiNote> {
 					return true;
 		}
 		return false;
-//		if (o instanceof MidiPair note)
-//			for (MidiPair p : this)
-//				if (MidiTools.match(note, p))
-//					return true;
-//		return false;
 	}
 
+	@Deprecated
 	public boolean contains(long tick, int data1) {
 		for (MidiNote note : this)
 			if (note.getTick() <= tick)
@@ -38,16 +37,5 @@ public class Notes extends ArrayList<MidiNote> {
 				}
 		return false;
 	}
-
-//	public ArrayList<MidiEvent> list() {
-//		ArrayList<MidiEvent> result = new ArrayList<MidiEvent>();
-//		for (MidiNote note : this) {
-//			result.add(p.getOn());
-//			if (p.getOff() != null)
-//				result.add(p.getOff());
-//		}
-//		return result;
-//	}
-
 
 }

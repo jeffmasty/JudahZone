@@ -20,11 +20,11 @@ import javax.swing.ScrollPaneConstants;
 
 import judahzone.api.FX;
 import judahzone.api.Notification.Property;
+import judahzone.api.Signature;
+import judahzone.api.TimeListener;
 import judahzone.gui.Gui;
 import judahzone.gui.Nimbus;
 import judahzone.gui.Pastels;
-import judahzone.api.Signature;
-import judahzone.api.TimeListener;
 import judahzone.util.Folders;
 import judahzone.util.JsonUtil;
 import judahzone.util.RTLogger;
@@ -88,7 +88,7 @@ public class Overview extends Box implements TimeListener {
 		super(BoxLayout.X_AXIS);
 		setName(title);
 		this.zone = judahZone;
-		trackPnl = new TrackPanel(zone.getSeq().getAutomation());
+		trackPnl = new TrackPanel();
 		scroll = new JScrollPane(trackPnl);
 		clock = JudahMidi.getClock();
 		seq = zone.getSeq();

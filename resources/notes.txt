@@ -1,24 +1,28 @@
 
-
-TODO:  
-
+TODO: 
 Tarsos pull request
 
-Linked Midi Selection Model, nudge notes
-Piano roll orientation, TrackKnobs Program overflow
-Automation: PitchBend, Meta, TimeSig, KeySig, Tempo
-
-scope link rolling to head 
-SampleTrack,  mpkMini to127, EQ++/Visualizer
+MidiThumbnail vis-a-vis Spectrogram
+Piano roll orientation, 
+Piano and PianoSteps to do a 90degree on their orientation.  Notes on the Y-axis, time-domain on the X-axis.  
+Initally center the view around Middle C with 16 semitones in either direction up/down while remaining 
+responsive to changes in octaves/centering. Make sure the user can see the full range using the provided controls.  
+nudge notes
+register Overview SongTracks/ChannelTracks?: CC
+shift-clipping/shift algo?
+TrackKnobs: what are we doing with this view? (program overflow)
+Automation: PitchBend.release, Meta, TimeSig, KeySig, Tempo
+standalone backup IRDB inside Convolution
+SampleTrack,  Lyrics Track, mpkMini to127, EQ++/Visualizer
 compression meter, normalization
 TacoSynth detune on sus/pdl, onTape channel Title
 Import anonymous seq broken?./SendTo ignore Meta Device, Program?
 Channel/System Setup  +Controllers +Jamstik +Fluid
-AudioTrack, Lyrics Track, Fine Tune Midi Envelope(CC)
+Fine Tune Midi Envelope(CC)
 Hi/Lo filter CC   Mid/Side/Chain
 Redo track capture (atomic undo/redo/AUTOMATION)
 Redo Patterns:==>  Midi MetaMessages?
-drumkv1_jack  AppImage in Tracks,    Natural, Synth or Bitcrush ProgChanges
+drumkv1_jack  AppImage in /tracks,    Natural, Synth or Bitcrush ProgChanges
 KnobMode.Mix2
 Shift-faders  Shift-pads
 TacoSynth GLIDE (Crave <3) Portamento
@@ -32,39 +36,6 @@ Jamstik Midi/Cmd?
 Controllers MidiMapper
 AOT cache
 
-<repository>
-	<id>ossrh</id>
-	<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-</repository>
-
-FFTW	
-* https://github.com/fudcom/kjdss/tree/master
-	<dependency>
-		<groupId>com.fudcom.kjdss</groupId>
-		<artifactId>kjdss-root</artifactId>
-		<version>1.3.2-SNAPSHOT</version>
-	</dependency>
-    <dependency>
-      <groupId>org.bytedeco</groupId>
-      <artifactId>fftw</artifactId>
-      <version>3.3.9-1.5.6</version>
-    </dependency>
-    <dependency>
-      <groupId>org.bytedeco</groupId>
-      <artifactId>fftw-platform</artifactId>
-      <version>3.3.9-1.5.6</version>
-    </dependency>
-    <dependency>
-      <groupId>org.bytedeco</groupId>
-      <artifactId>javacpp</artifactId>
-      <version>1.5.6</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-math3</artifactId>
-      <version>3.6.1</version>
-    </dependency>
-
 lv2 jna https://github.com/nativelibs4java/JNAerator/tree/refresh-2022
 DSP Course: https://www.youtube.com/watch?v=hVOA8VtKLgk&list=PLuh62Q4Sv7BUSzx5Jr8Wrxxn-U10qG1et
 https://github.com/takyonxxx/Oscilloscope-Java-Swing
@@ -75,7 +46,7 @@ test n benchmark:  fftw, JTransforms, alglib, Tarsos - accuracy, efficiency, eas
 Sample Editor: reverse sample, chop sample left, right, stretch, scratch
 Sampler FX (granularity, pitched frequency, lofi, wet)
 https://github.com/JorenSix/TarsosDSP/blob/master/examples/src/main/java/be/tarsos/dsp/example/unverified/GranulatorExample.java
-DrumSynth, Shepherd, Vocoder
+DrumSynth (jsyn?), Shepherd, Vocoder
 FFM instead of JNA? https://jdk.java.net/jextract/
 zone omni -> omni   Recording?  Stems, 
 Directives.BREAKS ChordPro.@ ChordPro.%   Cycle breaks: A3_ ABC_ TOF_?
@@ -96,7 +67,8 @@ user manual, linkify ReadMe, qwerty, client-server architecture, message bus
 support JavaSound/non-Jack, make accessible setup and settings
 Subwoofer library, Fluid drums
 IIR filter https://www.youtube.com/watch?v=JCIxD6ep1rM
-Lets write a reverb https://www.youtube.com/watch?v=6ZK2Goiyotk&t=1748s
+reverb builder https://www.youtube.com/watch?v=6ZK2Goiyotk&t=1748s
+https://github.com/jatinchowdhury18/WaveDigitalFilters
 
 --etc-----------------------
 MiniMeter PhaseMeter   stereo width and balance.
@@ -113,7 +85,7 @@ Single-Band: Shows the overall correlation.
 Multi-Band: Shows the correlation of the Low, Mid, & High bands separately. As well as the overall correlation. 
 
 https://www.recordingblogs.com/wiki/midi-meta-messages
-sudo systemctl disable docker
+
 https://melanchall.github.io/drywetmidi/articles/tools/Quantizer.html
 samples: https://freesound.org/people/laffik/packs/38658/
 Latency + bleeding edge

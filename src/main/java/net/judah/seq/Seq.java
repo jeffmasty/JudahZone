@@ -3,7 +3,7 @@ package net.judah.seq;
 import static judahzone.api.MidiConstants.DRUM_CH;
 import static net.judah.controllers.MPKTools.drumBank;
 import static net.judah.controllers.MPKTools.drumIndex;
-import static net.judah.seq.MidiTools.meta;
+import static net.judah.seq.track.MidiTools.meta;
 
 import java.awt.Component;
 import java.awt.Dimension;
@@ -21,6 +21,7 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import judahzone.api.Midi;
 import judahzone.gui.Gui;
@@ -29,7 +30,6 @@ import judahzone.gui.Updateable;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
-import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
@@ -52,6 +52,7 @@ import net.judah.seq.track.Computer;
 import net.judah.seq.track.Computer.Update;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.MidiFile;
+import net.judah.seq.track.MidiTools;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
@@ -70,12 +71,11 @@ import net.judah.synth.taco.TacoTruck;
 public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 	private static final Dimension SIZE = new Dimension(Size.WIDTH_KNOBS / 2 , 73);
 
-	@Getter private TrackList<MidiTrack> tracks = new TrackList<MidiTrack>();
+	@Getter private volatile TrackList<MidiTrack> tracks = new TrackList<>();
 	private final TrackList<DrumTrack> drumTracks;
 	private final TrackList<ChannelTrack> ccTracks = new TrackList<ChannelTrack>();
 	@Getter private final ChannelTrack mains;
 
-	private TrackList<MidiTrack> replace = null;
 	private final JudahZone zone;
 	private final Chords chords;
 	private final Sampler sampler;
@@ -87,21 +87,17 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 	private MidiFile bundle;
 	public int getResolution() { return bundle == null ? 0 : bundle.getResolution(); }
 
-	@Getter private final TraxCombo trax;
-	@Getter private final Automation automation;
+	private TraxCombo trax;
 
-	public Seq(JudahZone judahZone) {// DrumMachine drumz, Chords chordTrack, Sampler sampler, MidiInstrument bass, Mains outLR) {
+	public Seq(JudahZone judahZone) {
 		this.zone = judahZone;
 		this.chords = zone.getChords();
 		this.sampler = zone.getSampler();
 		this.drums = zone.getDrumMachine();
 		this.bass = zone.getBass();
 
-
 		drumTracks = drums.getTracks();
-		tracks.addAll(drumTracks);
-		tracks.addAll(SynthRack.getSynthTracks());
-		tracks.addAll(ccTracks);
+
 		ChannelTrack temp = null;
 		try {
 			temp = new ChannelTrack(zone.getMains(), 0, zone.getMains().getName());
@@ -110,9 +106,19 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 			temp.setPermanent(true);
 		} catch (InvalidMidiDataException e) { RTLogger.warn(this, e); }
 		mains = temp;
+
+		refill();
 		gui();
-		trax = new TraxCombo(this);
-		automation = new Automation(trax, getCurrent());
+	}
+
+	public TraxCombo getTrax() {
+		if (trax == null)
+			trax = new TraxCombo(this);
+		return trax;
+	}
+
+	public Automation getAutomation() {
+		return tracks.getCurrent().getAutomation();
 	}
 
 	public MidiTrack getCurrent() {
@@ -131,7 +137,6 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 		return tracks.size();
 	}
 
-	/* New Song */
 	public void newSong() {
 		ccTracks.clear();
 		mains.clear();
@@ -145,10 +150,9 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 		SynthRack.getOther()[0].getTrack().setState(new Sched());
 		SynthRack.getTacos()[0].getTrack().setState(new Sched());
 		SynthRack.getTacos()[1].getTrack().setState(new Sched());
-		updates();
+		refill();
 	}
 
-	// New scene legacy
 	public void init(List<Sched> tracks) {
 		tracks.clear();
 		for (int i = 0; i < numTracks(); i++)
@@ -156,24 +160,17 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 	}
 
 	private void clearSynths() {
-		tracks.clear();
-		tracks.addAll(drumTracks);
-
-		// clear previous song variable Tracks
 		for (ZoneMidi engine : SynthRack.engines) {
 			Vector<? extends MidiTrack> cars = engine.getTracks();
 			for (int i = cars.size() - 1; i >= 0; i--) {
 				MidiTrack t = cars.get(i);
-				if (t.isPermanent())
-					tracks.add(t);
-				else
+				if (!t.isPermanent())
 					cars.remove(i);
 			}
 		}
 	}
 
-	/** load song into sequencer
-	 * @return true if the provided song is a SmashHit */
+	/** Load song into sequencer. @return true if SmashHit bundle format */
 	public boolean loadSong(Song song) {
 		newSong();
 		boolean standalone = song.getBundle() == null || song.getBundle().isBlank();
@@ -190,31 +187,35 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 			String name = info.getTrack();
     		MidiTrack t = byName(name);
     		if (t == null) {
-    			String ch = info.getChannel();
-    			if (ch != null) {
-    				Channel channel = zone.getMixer().byName(ch);
-    				if (channel == null) {
-    					RTLogger.warn(this, "Missing ChannelTrack: " + ch);
-    					return;
-    				}
-    				t = addTrack(channel, name);
-    			}
-    			else if (name.equals("B"))
-    				t = bass.getTrack();
-    			else if (name.startsWith("F"))
-    				t = addTrack(name, RegisteredSynths.Fluid, 0);
-    			else if (name.startsWith("T"))
-    				t = addTrack(name, RegisteredSynths.Taco, 1);
-    			else if (info.getFile() == null || info.getFile().isBlank())
-    				continue; // ignore unassigned legacy
-    			else {
-    				RTLogger.warn(this, name + " - Unknown Track: " + info);
-    				continue;
-    			}
+    			t = allocateTrack(info);
+    			if (t == null) continue;
     		}
-    		if (info != null)
-    			t.load(info);
+    		t.load(info);
 		}
+	}
+
+	/** Allocate a new track from TrackInfo metadata */
+	private MidiTrack allocateTrack(TrackInfo info) {
+		String name = info.getTrack();
+		String ch = info.getChannel();
+		if (ch != null) {
+			Channel channel = zone.getMixer().byName(ch);
+			if (channel == null) {
+				RTLogger.warn(this, "Missing ChannelTrack: " + ch);
+				return null;
+			}
+			return addTrack(channel, name);
+		}
+		if (name.equals("B"))
+			return bass.getTrack();
+		if (name.startsWith("F"))
+			return addTrack(name, RegisteredSynths.Fluid, 0);
+		if (name.startsWith("T"))
+			return addTrack(name, RegisteredSynths.Taco, 1);
+		if (info.getFile() == null || info.getFile().isBlank())
+			return null;
+		RTLogger.warn(this, name + " - Unknown Track: " + info);
+		return null;
 	}
 
 	public MidiTrack byName(String track) {
@@ -222,25 +223,25 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 			if (t.getName().equals(track))
 				return t;
 
-		for (Trax legacy :Trax.values()) // Legacy Trax format
+		for (Trax legacy : Trax.values())
 			if (legacy.name().equals(track) || legacy.getName().equals(track))
 				return legacy(legacy);
 
 		return null;
 	}
+
 	private MidiTrack legacy(Trax type) {
-		switch (type) {
-			case D1: return drums.getTrack();
-			case D2: return drums.getTracks().get(1);
-			case H1: return drums.getTracks().get(2);
-			case H2: return drums.getTracks().get(3);
-			case B: return SynthRack.getOther()[0].getTrack();
-			case F1: return SynthRack.getFluids()[0].getTrack();
-			// F2 F3
-			case TK1: return SynthRack.getTacos()[0].getTrack();
-			case TK2: return SynthRack.getTacos()[1].getTrack();
-			default: return null;
-		}
+		return switch(type) {
+			case D1 -> drums.getTrack();
+			case D2 -> drums.getTracks().get(1);
+			case H1 -> drums.getTracks().get(2);
+			case H2 -> drums.getTracks().get(3);
+			case B -> SynthRack.getOther()[0].getTrack();
+			case F1 -> SynthRack.getFluids()[0].getTrack();
+			case TK1 -> SynthRack.getTacos()[0].getTrack();
+			case TK2 -> SynthRack.getTacos()[1].getTrack();
+			default -> null;
+		};
 	}
 
 	public void step(int step) {
@@ -248,33 +249,36 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 		sampler.step(step);
 	}
 
-	// JudahMidi.process() -> clock -> to here
+	/** Real-time audio callback:  JudahMidi -> JudahClock -> here
+	 * snapshot tracks before iteration */
 	public void percent(float percent) {
-		tracks.forEach(track->track.playTo(percent));
+		TrackList<MidiTrack> snap = tracks;
+		for (int i = 0; i < snap.size(); i++)
+			snap.get(i).playTo(percent);
 		mains.playTo(percent);
-
-		TrackList<MidiTrack> pending = replace;
-	    if (pending != null) {
-	        tracks = pending;     // volatile write publishes the new list
-	        replace = null;       // clear the pending snapshot
-	        Threads.execute(this::updates);
-	    }
 	}
 
-	/**Performs recording or translate activities on tracks, drum pads are also sounded from here.
-	 * @param midi user note press
-	 * @return true if drums or a track is recording or transposing (consuming) the note*/
+	/** Atomically rebuild track list and trigger UI update */
+	void refill() {
+		TrackList<MidiTrack> newTracks = new TrackList<>();
+		newTracks.addAll(drumTracks);
+		newTracks.addAll(SynthRack.getSynthTracks());
+		newTracks.addAll(ccTracks);
+		this.tracks = newTracks;
+		SwingUtilities.invokeLater(this::updates);
+	}
+
+	/** Recording/transposing handler. Drum pads sounded from here */
 	public boolean captured(Midi midi) {
 		boolean result = false;
 		if (midi.getChannel() == DRUM_CH) {
-			Midi note = translateDrums(midi); // translate from MPK midi to DrumKit midi
+			Midi note = translateDrums(midi);
 			for (DrumTrack t : drumTracks)
 				if (t.capture(note))
 					result = true;
-
 			if (!result && Midi.isNoteOn(note))
 				drums.getChannel(note.getChannel()).send(note, JudahMidi.ticker());
-			return true; // all drum pads consumed here
+			return true;
 		}
 
 		for (PianoTrack t: SynthRack.getSynthTracks()) {
@@ -293,15 +297,15 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 				DrumType.values()[drumIndex(midi.getData1())].getData1(), midi.getData2());
 	}
 
-
 	public void trigger(int trackNum) {
 		if (numTracks() > trackNum)
 			get(trackNum).trigger();
 	}
+
 	@Override public String toString() {
 		StringBuffer sb = new StringBuffer(this.getClass().getSimpleName()).append(" Tracks: ").append(Constants.NL);
 		sb.append(drumTracks.size()).append(" drums ");
-		sb.append(SynthRack.getSynthTracks().size()).append(" synths");
+		sb.append(SynthRack.getSynthTracks().size()).append(" synths ");
 		sb.append(ccTracks.size()).append(" channels.").append(Constants.NL).append(Constants.NL);
 		return sb.toString();
 	}
@@ -312,7 +316,7 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 			ccTracks.add(result);
 			refill();
 			return result;
-		} catch (InvalidMidiDataException e) {  RTLogger.warn(this, e); }
+		} catch (InvalidMidiDataException e) { RTLogger.warn(this, e); }
 		return null;
 	}
 
@@ -340,8 +344,7 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 			if (engine instanceof TacoTruck truck) {
 				TacoSynth taco = new TacoSynth(name, truck, new Polyphony(truck, truck.getTracks().size()));
 				truck.getTracks().add(taco);
-			}
-			else {
+			} else {
 				((MidiInstrument)engine).getTracks().add(
 						new PianoTrack(name, new Actives(engine, engine.getTracks().size()), chords));
 			}
@@ -350,9 +353,7 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 	}
 
 	public PianoTrack addTrack(String name, RegisteredSynths type, int engineIdx) {
-
 		PianoTrack result = null;
-
 		ZoneMidi engine = switch(type) {
 			case Taco -> SynthRack.getTacos()[engineIdx];
 			case Fluid -> SynthRack.getFluids()[engineIdx];
@@ -364,10 +365,8 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 				TacoSynth taco = new TacoSynth(name, zynth, new Polyphony(zynth, zynth.getTracks().size()));
 				zynth.getTracks().add(taco);
 				result = taco;
-			}
-			else {
-				result = new PianoTrack(name,
-						new Actives(engine, engine.getTracks().size()), chords);
+			} else {
+				result = new PianoTrack(name, new Actives(engine, engine.getTracks().size()), chords);
 				((MidiInstrument)engine).getTracks().add(result);
 			}
 			refill();
@@ -376,20 +375,18 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 	}
 
 	public void removeTrack(MidiTrack track) {
-		for (ZoneMidi zone : SynthRack.getAll())
+		for (ZoneMidi zone : SynthRack.getAll()) {
 			if (zone.getTracks().contains(track)) {
 				zone.getTracks().remove(track);
-				tracks.removeElement(track);
-				updates();
+				refill();
 				return;
 			}
+		}
 	}
 
 	private void gui() {
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         Gui.resize(this, SIZE);
-        // D1 D2 D3 D4 B
-        // T1 T2 F1 .. Fx
 		for (DrumTrack t : drumTracks)
     		dnb.add(new TrackButton(t, this));
         add(dnb);
@@ -399,42 +396,29 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 	}
 
 	private void updates() {
-		// MiniSeq
  		PianoTrack bassTrack = bass.getTrack();
- 		if (dnb.getComponents().length == 5) { // 4 drums, 1 bass
- 			if ( ((TrackButton)dnb.getComponent(4)).getTrack() != bassTrack) {
- 				dnb.remove(4);
- 				if (bassTrack != null)
- 					dnb.add(new TrackButton(bassTrack, this));
- 			}
- 		} else if (bassTrack != null)
+ 		if (dnb.getComponentCount() == 5 && ((TrackButton)dnb.getComponent(4)).getTrack() != bassTrack) {
+ 			dnb.remove(4);
+ 			if (bassTrack != null)
+ 				dnb.add(new TrackButton(bassTrack, this));
+ 		} else if (dnb.getComponentCount() < 5 && bassTrack != null) {
  			dnb.add(new TrackButton(bassTrack, this));
+ 		}
+
  		synths.removeAll();
  		for (PianoTrack t : SynthRack.getSynthTracks())
  			if (t != bassTrack)
  				synths.add(new TrackButton(t, this));
  		synths.setLayout(new GridLayout(1, synths.getComponentCount()));
 
-		trax.refill(getTracks(), getCurrent());
+ 		if (trax != null)
+ 			trax.refill(getTracks(), getCurrent());
 
- 		// Other updates
  		zone.getOverview().refill();
  		if (MainFrame.getKnobMode() == KnobMode.Track)
  			((TrackKnobs)MainFrame.getKnobs()).refill(tracks);
- 		zone.getFrame().getMenu().refillTracks();
-	}
-
-	void refill() {
-		TrackList<MidiTrack> temp = new TrackList<MidiTrack>();
-		temp.addAll(drumTracks);
-		temp.addAll(SynthRack.getSynthTracks());
-		temp.addAll(ccTracks);
-		if (JudahMidi.getClock().isActive()) {
-			replace = temp; // RT atomic
-			return;
-		}
-		tracks = temp;
-		updates();
+ 		if (zone.getFrame() != null)
+ 			zone.getFrame().getMenu().refillTracks();
 	}
 
 	public void rename(MidiTrack track) {
@@ -451,7 +435,7 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 			removeTrack(track);
 	}
 
-	public void clear(MidiTrack t) { // TODO
+	public void clear(MidiTrack t) {
 		t.clear();
 		t.setState(new Sched());
 		MainFrame.update(t);
@@ -477,7 +461,7 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 			bundle.setResolution(rez);
 	}
 
-	/* for each legacy track, create a resolved midiTrack inside the returned MidiFile */
+	/** Bundle legacy tracks into MidiFile with metadata */
 	public MidiFile bundle(String song) throws InvalidMidiDataException {
 		int rez = JudahClock.MIDI_24;
 		for (MidiTrack t : tracks)
@@ -495,9 +479,9 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 			if (legacy.getResolution() != rez)
 				legacy.setResolution(rez);
 			MidiTools.copy(legacy, dest);
-			// Meta
+
 			String engine = "Bass";
-			Byte port = 0;
+			byte port = 0;
 			if (legacy instanceof DrumTrack d) {
 				engine = drums.getName();
 				port = (byte) drums.getTracks().indexOf(d);
@@ -527,7 +511,6 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 
 			byte[] name = legacy.getName().getBytes();
 			byte[] cue = legacy.getCue().name().getBytes();
-
 			dest.add(meta(Meta.DEVICE,  engine.getBytes(), 0l));
 			dest.add(meta(Meta.PORT, new byte[] {port}, 0l));
 			dest.add(meta(Meta.TRACK_NAME, name, 0l));
@@ -540,7 +523,7 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 
 	public void loadBundle(String uuid) {
 		File smashHit = new File(Folders.getMidi(), uuid);
-		if (smashHit.isFile() == false) {
+		if (!smashHit.isFile()) {
 			RTLogger.warn(this, "Missing Bundle " + uuid);
 			return;
 		}
@@ -552,55 +535,41 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 				String device = map.getString(Meta.DEVICE);
 				if (device == null)
 					device = "Bass";
-				if (device.equals(drums.getName()))
-					allocateDrum(map);
-				else if (device.equals(RegisteredSynths.Taco.name()))
-					allocateTaco(map);
-				else if (device.equals(RegisteredSynths.Fluid.name()))
-					allocateFluid(map);
-				else if (device.equals("Bass"))
-					allocateBass(map);
-				else // device = Autom8
-					allocateChannel(map);
+				switch(device) {
+					case "Drums" -> allocateDrum(map);
+					case "Taco" -> allocateTaco(map);
+					case "Fluid" -> allocateFluid(map);
+					case "Bass" -> bass.getTrack().importTrack(map, getResolution());
+					default -> allocateChannel(map);
+				}
 			}
 			refill();
-		} catch (Exception e) {RTLogger.warn(this, e); }
-
+		} catch (Exception e) { RTLogger.warn(this, e); }
 	}
 
 	void allocateDrum(MetaMap map) {
 		int ch = map.getInt(Meta.CHANNEL);
-		if (ch >= 0 && ch < drums.getTracks().size()) {
-			DrumTrack target = drums.getTrack(drums.getChannel(ch));
-			target.importTrack(map, getResolution());
-		}
+		if (ch >= 0 && ch < drums.getTracks().size())
+			drums.getTrack(drums.getChannel(ch)).importTrack(map, getResolution());
 	}
 
 	void allocateTaco(MetaMap map) {
 		int port = map.getInt(Meta.PORT);
 		while (SynthRack.getTacos().length < port)
 			SynthRack.makeTaco();
-		TacoTruck truck = SynthRack.getTacos()[port];
-		addTrack(map, truck);
+		addTrack(map, SynthRack.getTacos()[port]);
  	}
 
 	void allocateFluid(MetaMap map) {
 		int port = map.getInt(Meta.PORT);
-
 		int deficit = port - SynthRack.getFluids().length;
-		if (deficit > 0) {
-			for (int i = 1; i <= deficit; i++) {
-				String name = "F" + i;
-				if (i == deficit)
-					new FluidAssistant(name, map);
-				else
-					new FluidAssistant(name);
-			}
+		for (int i = 1; i <= deficit; i++) {
+			String name = "F" + i;
+			if (i == deficit)
+				new FluidAssistant(name, map);
+			else
+				new FluidAssistant(name);
 		}
-	}
-
-	void allocateBass(MetaMap map) {
-		bass.getTrack().importTrack(map, getResolution());
 	}
 
 	void allocateChannel(MetaMap map) {
@@ -627,7 +596,6 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 		return null;
 	}
 
-
 	public TrackKnobs getKnobs() {
 		return getKnobs(tracks.getCurrent());
 	}
@@ -637,36 +605,34 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 			((TrackButton)c).update();
 		for (Component c : dnb.getComponents())
 			((TrackButton)c).update();
+		if (trax != null && trax.getSelectedItem() != getCurrent())
+			trax.setSelectedItem(getCurrent());
 		repaint();
 	}
 
 	public void update(Computer t) {
 		for (Component c : dnb.getComponents())
-			if ( ((TrackButton)c).getTrack() == t)
+			if (((TrackButton)c).getTrack() == t)
 				((TrackButton)c).update();
 		for (Component c : synths.getComponents())
-			if ( ((TrackButton)c).getTrack() == t)
+			if (((TrackButton)c).getTrack() == t)
 				((TrackButton)c).update();
 	}
 
 	public void update(Update type, Computer c) {
-
-		if (c instanceof NoteTrack track) {
-			if (track.getTrackKnobs() != null)
-				track.getTrackKnobs().update(type);
-		}
+		if (c instanceof NoteTrack track && track.getTrackKnobs() != null)
+			track.getTrackKnobs().update(type);
 		if (type == Update.PLAY || type == Update.CAPTURE)
 			update(c);
 	}
 
 	public boolean confirmBundle() {
-
 		int rez = JudahClock.MIDI_24;
 		for (MidiTrack t : tracks)
 			if (t.getResolution() > rez)
 				rez = t.getResolution();
 
-		String result =  JOptionPane.showInputDialog(zone.getFrame(),
+		String result = JOptionPane.showInputDialog(zone.getFrame(),
 				"Song Bundle: New Resolution", "" + rez);
 		if (result == null || result.isBlank())
 			return false;
@@ -679,6 +645,4 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>{
 			return false;
 		}
 	}
-
 }
-

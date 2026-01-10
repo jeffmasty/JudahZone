@@ -19,6 +19,7 @@ import javax.swing.SwingUtilities;
 import judahzone.gui.Floating;
 import judahzone.gui.Gui;
 import judahzone.jnajack.BasicPlayer;
+import judahzone.scope.JudahScope;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
@@ -26,7 +27,6 @@ import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.gui.widgets.CloseableTabbedPane;
-import net.judah.seq.Musician;
 import net.judah.seq.beatbox.BeatBox;
 import net.judah.seq.beatbox.DrumCage;
 import net.judah.seq.beatbox.DrumZone;
@@ -37,11 +37,11 @@ import net.judah.seq.track.Computer;
 import net.judah.seq.track.Computer.Update;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.Musician;
 import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.song.Overview;
 import net.judah.song.Song;
-import net.judahzone.scope.JudahScope;
 
 public class TabZone extends CloseableTabbedPane {
 	public static TabZone instance;
@@ -99,12 +99,14 @@ public class TabZone extends CloseableTabbedPane {
 			}
 			else { // ??
 				Box box = new Box(BoxLayout.Y_AXIS);
-				box.add(new BeatBox(drumTrack, drumz, zone.getSeq().getAutomation()));
+				box.add(new BeatBox(drumTrack, drumz));
 				addTab("import",  box, true);
 			}
 		}
 		else // if (track instanceof ChannelTrack)
 			RTLogger.log(this, "No Editor for MidiTrack " + track.getName());
+		zone.getSeq().getTracks().setCurrent(track);
+
 	}
 
 	public void updateSongTitle(Song current) {
@@ -175,10 +177,29 @@ public class TabZone extends CloseableTabbedPane {
     	}
     }
 
+	private void focus(JFrame f) {
+		f.setExtendedState(JFrame.MAXIMIZED_BOTH);
+		f.setVisible(true);
+		f.toFront();
+		f.requestFocusInWindow(Cause.TRAVERSAL);
+	}
 
-    @Override
-    public void removeTabAt(int index) {
-    	deactivateScope(getComponentAt(index));
+	public void attach(JComponent view) {
+		closeFrame(view);
+		show(view);
+	}
+
+    // Detached window's listeners
+	public void closed(Component content) {
+		deactivateScope(content);
+		unregisterTrack(content);
+		frames.remove(content);
+	}
+
+    @Override public void removeTabAt(int index) {
+    	Component goner = getComponentAt(index);
+    	deactivateScope(goner);
+    	unregisterTrack(goner);
     	super.removeTabAt(index);
     }
 
@@ -187,22 +208,11 @@ public class TabZone extends CloseableTabbedPane {
     		scope.setActive(false);
     }
 
-    // Detached window listener
-	public void closed(Component content) {
-		deactivateScope(content);
-		frames.remove(content);
-	}
-
-	public void attach(JComponent view) {
-		closeFrame(view);
-		show(view);
-	}
-
-	private void focus(JFrame f) {
-		f.setExtendedState(JFrame.MAXIMIZED_BOTH);
-		f.setVisible(true);
-		f.toFront();
-		f.requestFocusInWindow(Cause.TRAVERSAL);
+    private void unregisterTrack(Component c) {
+    	if (c instanceof PianoView box)
+    		box.unregister();
+    	else if (c instanceof DrumZone cage)
+    		cage.unregister();
 	}
 
 	// external window
@@ -259,8 +269,10 @@ public class TabZone extends CloseableTabbedPane {
 	/** show PianoTrack, creating if necessary */
 	public void pianoTrack(PianoTrack p) {
 		PianoView view = getPiano(p);
-		if (view == null)
-			show(new PianoView(p, zone.getSeq()));
+		if (view == null) {
+			PianoView instance = new PianoView(p, zone.getSeq());
+			show(instance);
+		}
 		else {
 			if (getFrame(p) == null)
 				setSelectedComponent(view);
@@ -312,8 +324,8 @@ public class TabZone extends CloseableTabbedPane {
 			}
 		} // else ChannelTrack
 
-		if (type == Update.EDIT)
-			update(notes);
+//		if (type == Update.EDIT)
+//			update(notes);
 		if (type == Update.CURRENT)
 			update(notes);
 		if (type == Update.FILE)

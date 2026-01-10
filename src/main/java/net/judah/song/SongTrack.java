@@ -22,7 +22,6 @@ import net.judah.gui.widgets.PlayBtn;
 import net.judah.gui.widgets.TogglePreset;
 import net.judah.gui.widgets.TrackGain;
 import net.judah.gui.widgets.TrackVol;
-import net.judah.seq.automation.Automation;
 import net.judah.seq.track.ChannelTrack;
 import net.judah.seq.track.Computer.Update;
 import net.judah.seq.track.MidiTrack;
@@ -34,7 +33,6 @@ import net.judah.seq.track.Programmer;
 	private static final Dimension COMPUTER = new Dimension(204, 27);
 
 	private final MidiTrack track;
-	private final Automation automation;
 	private final CCTrack ccTrack;
 	private final Program program;
 	private final Programmer programmer;
@@ -46,16 +44,15 @@ import net.judah.seq.track.Programmer;
 	private TogglePreset preset;
 
 	// TODO MouseWheel listener -> change pattern?
-	public SongTrack(MidiTrack t, Automation auto) {
+	public SongTrack(MidiTrack t) {
 		this.track = t;
-		this.automation = auto;
 		play = new PlayBtn(this);
 		mode = t instanceof PianoTrack p ? new ModeCombo(p) : null;
 		gain = t instanceof PianoTrack ? null : new TrackGain(t);
 		amp = new TrackVol(track);
 		program = new Program(track);
 		programmer = new Programmer(track);
-		ccTrack = new CCTrack(track, auto);
+		ccTrack = new CCTrack(track);
 
 		JPanel top = new JPanel(new FlowLayout(FlowLayout.LEADING, 2, 2));
 		top.add(Gui.resize(play, MODE_SIZE));
@@ -106,7 +103,7 @@ import net.judah.seq.track.Programmer;
 		Gui.resize(this, wasBig ? Overview.TRACK : BIG);
 
 		if (!wasBig) {
-			automation.init(track);
+			// track.getAutomation();
 			add(ccTrack);
 			ccTrack.requestFocus();
 		} else
@@ -162,11 +159,11 @@ import net.judah.seq.track.Programmer;
 			if (isExpanded())
 				ccTrack.repaint();
 		}
-		else if (Update.EDIT == type) {
-			programmer.liftOff();
-			if (isExpanded())
-				ccTrack.repaint();
-		}
+//		else if (Update.EDIT == type) {
+//			programmer.liftOff();
+//			if (isExpanded())
+//				ccTrack.repaint();
+//		}
 
 	}
 

@@ -11,7 +11,6 @@ import judahzone.gui.Actionable;
 import net.judah.drumkit.DrumType;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
-import net.judah.seq.automation.Automation;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.TrackMenu;
 
@@ -20,15 +19,16 @@ public class DrumMenu extends TrackMenu {
 	private final DrumZone tab;
 	private final DrumTrack track;
 
-	public DrumMenu(BeatBox drumz, DrumZone tab, Automation auto) {
+	public DrumMenu(BeatBox drumz, DrumZone tab) {
 
-		super(drumz, auto);
+		super(drumz);
 		setMaximumSize(new Dimension(3000, Size.KNOB_HEIGHT));
 
 		this.tab = tab;
 		this.track = (DrumTrack)drumz.getTrack();
 		add(velocity);
 		file.add(new Actionable("Record On/Off", e->track.setCapture(!track.isCapture())));
+
 		tools.add(new Actionable("Remap", e->MainFrame.setFocus(new RemapView(drumz))));
 		tools.add(new Actionable("Clean", e->drumz.clean()));
 		tools.add(new Actionable("Condense", e->drumz.condense()));

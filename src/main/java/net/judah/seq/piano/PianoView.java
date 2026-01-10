@@ -5,11 +5,12 @@ import java.awt.Dimension;
 import judahzone.api.Key;
 import judahzone.gui.Floating;
 import judahzone.gui.Gui;
+import judahzone.util.RTLogger;
 import lombok.Getter;
 import net.judah.gui.Size;
-import net.judah.seq.MusicBox;
 import net.judah.seq.Seq;
 import net.judah.seq.track.HiringAgency;
+import net.judah.seq.track.MusicBox;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.TrackBindings;
 
@@ -123,6 +124,13 @@ public class PianoView extends HiringAgency implements Floating, Size {
 	@Override
 	public MusicBox getMusician() {
 		return grid;
+	}
+
+	@Override
+	public void unregister() {
+		RTLogger.debug(this, "Unregsitered");
+		track.getEditor().removeListener(grid);
+		track.getEditor().removeListener(steps);
 	}
 
 

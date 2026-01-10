@@ -1,7 +1,8 @@
-package net.judah.seq;
+package net.judah.seq.track;
 
 import java.awt.Dimension;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.sound.midi.MidiEvent;
 import javax.swing.BoxLayout;
@@ -15,7 +16,7 @@ import judahzone.widgets.Btn;
 import net.judah.gui.widgets.ModalDialog;
 import net.judah.gui.widgets.Slider;
 import net.judah.midi.JudahMidi;
-import net.judah.seq.Edit.Type;
+import net.judah.seq.track.Edit.Type;
 
 public class Duration { // TODO TimeListener TimeSig
 	private static final int WIDTH = 500;
@@ -24,7 +25,7 @@ public class Duration { // TODO TimeListener TimeSig
 	private final long on;
 	private int stpz;
 	private long durr, off;
-	private MidiNote init;
+	private List<MidiEvent> init;
 	private final int measure = JudahMidi.getClock().getSteps();
 	private long quanta;
 
@@ -49,10 +50,11 @@ public class Duration { // TODO TimeListener TimeSig
 			on = -1;
 			return;
 		}
-		init = view.getSelected().get(0);
-		on = init.getTick();
+		init = view.getSelected();// interleaved
+		on = init.getFirst().getTick();
 		quanta = view.track.getStepTicks();
-		off = init.getOff() == null ? Integer.MAX_VALUE : init.getOff().getTick();
+
+		off = init.get(1) == null ? Integer.MAX_VALUE : init.get(1).getTick();
 		compute();
 
 		ticks = new Durr(durr, Input.TICKS);

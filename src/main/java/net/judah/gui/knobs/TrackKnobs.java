@@ -302,10 +302,10 @@ public class TrackKnobs extends KnobPanel {
 			file.refill();
 		else if (type == Update.RANGE && track instanceof PianoTrack p)
 			octaves.setSelectedItem((int) (p.getRange() / 12f));
-		else if (type == Update.EDIT) {
-			patterns.update();
-			programmer.liftOff();
-		}
+//		else if (type == Update.EDIT) { // TODO dataListiner? on patterns?
+//			patterns.update();
+//			programmer.liftOff();
+//		}
 
 	}
 

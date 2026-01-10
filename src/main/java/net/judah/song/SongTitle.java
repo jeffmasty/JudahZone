@@ -8,10 +8,10 @@ import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
 import judahzone.api.Key;
+import judahzone.api.Notification.Property;
 import judahzone.api.Signature;
 import judahzone.api.TimeListener;
 import judahzone.api.TimeProvider;
-import judahzone.api.Notification.Property;
 import judahzone.gui.Gui;
 import judahzone.gui.Icons;
 import judahzone.gui.Pastels;
@@ -58,9 +58,8 @@ public class SongTitle extends JPanel implements TimeListener {
 		chordTrack = new ChordTrack(chords);
 
 		funTimes = zone.getSeq().getMains();
+		mains = new SongTrack(funTimes);
 		mainsBtn = new JToggleButton(zone.getMains().getName());
-
-		mains = new SongTrack(funTimes, zone.getSeq().getAutomation());
 		chordsBtn.addActionListener(l->showChords());
 		mainsBtn.addActionListener (l->showMeta());
 
