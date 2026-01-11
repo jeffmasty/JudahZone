@@ -5,8 +5,6 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 
 import javax.sound.midi.MidiEvent;
@@ -24,6 +22,7 @@ import net.judah.midi.JudahClock;
 import net.judah.seq.Steps;
 import net.judah.seq.automation.Automation;
 import net.judah.seq.automation.CCPopup;
+import net.judah.seq.piano.PianoView.Orientation;
 import net.judah.seq.track.Edit;
 import net.judah.seq.track.Edit.Type;
 import net.judah.seq.track.Editor.Delta;
@@ -33,9 +32,9 @@ import net.judah.seq.track.MidiTools;
 import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
 
-public class PianoSteps extends Steps implements TrackListener, MouseMotionListener, MouseListener, Size {
+public class PianoSteps extends Steps implements TrackListener, Gui.Mouser, Size {
 
-	static final int OFFSET = STEP_WIDTH / 2 - 5;
+	static final int OFFSET = UNIT / 2 - 5;
 	private final NoteTrack notes;
 	private final JudahClock clock;
 	private int width, height;
@@ -47,9 +46,11 @@ public class PianoSteps extends Steps implements TrackListener, MouseMotionListe
 	private Integer on, off;
 	private final CCPopup cc;
 
-	// selection state per-row (rows == 2 * clock.getSteps())
+	/* selection state per-row (rows == 2 * clock.getSteps()) */
 	private boolean[] selectedCCs = new boolean[0];
 	private boolean[] selectedProg = new boolean[0];
+
+	private Orientation orientation = Orientation.NOTES_X;
 
 	public PianoSteps(PianoTrack piano, Automation auto) {
 		super(piano);
@@ -67,62 +68,133 @@ public class PianoSteps extends Steps implements TrackListener, MouseMotionListe
 		super.paint(g);
 		int[] ccs = cc.populate(notes.getLeft(), notes.getLeft() + notes.getWindow());
 		g.drawRect(0, 0, width, height);
+
 		int beats = clock.getTimeSig().beats;
 		int steps = clock.getSteps();
 		int div = clock.getSubdivision();
 		int count = 0;
 
-		int y;
+		if (orientation == Orientation.NOTES_X) {
+			paintNotesX(g, ccs, beats, steps, div, count);
+		} else {
+			paintNotesY(g, ccs, beats, steps, div, count);
+		}
+	}
+
+	/** Paint for NOTES_X: time progresses vertically (Y-axis) */
+	private void paintNotesX(Graphics g, int[] ccs, int beats, int steps, int div, int count) {
 		for (int i = 0; i < 2 * steps; i++) {
-			y = (int)(i * unit);
-
-			if (highlight == i) {
-				g.setColor(isBeat(i) ? Pastels.YELLOW.darker() : Pastels.YELLOW);
-				g.fillRect(1, y + 1, width - 2, (int) unit - 3);
-				g.setColor(Color.BLACK);
-			}
-
-			if (cc.getProg(i) != null) {
-				if (i >= 0 && i < selectedProg.length && selectedProg[i])
-					g.setColor(Pastels.SELECTED);
-				else
-					g.setColor(Pastels.PROGCHANGE);
-				g.fillRect(0, y, width, (int)unit);
-			}
-
-			if (ccs[i] > 0) {
-				if (i >= 0 && i < selectedCCs.length && selectedCCs[i])
-					g.setColor(Pastels.SELECTED);
-				else
-					g.setColor(Pastels.CC);
-				g.fillRect(1, y + 1, width - 2, (int)unit - 2);
-				g.setColor(Color.BLACK);
-				if (ccs[i] > 1)
-					g.drawString("" + ccs[i], OFFSET, y + (int)unit - 3);
-			}
-			else if (isBeat(i)) {
-				int beat = (1 + count / div);
-				if (beat > beats) beat -= beats;
-				if (i != highlight) {
-					g.setColor(Pastels.FADED);
-					g.fillRect(0, y, width, (int)unit);
-				}
-				g.setColor(Color.BLACK);
-				g.drawString("" + beat, OFFSET, y + (int)unit - 3);
-			}
-			else if (count % steps % div == 2) {
-				g.drawString("+", OFFSET, y + (int)unit - 3);
-			}
-
-			if (cc.getPitch(i) != null) { // backslash means pitchbend present
-				g.drawLine(0, y, width, y + (int)unit);
-			}
-
-			g.drawLine(0, y + (int)unit, width, y + (int)unit);
-
+			int y = (int)(i * unit);
+			paintStepRow(g, i, 0, y, width, (int) unit, ccs, beats, steps, div, count);
 			if (++count == steps)
 				count = 0;
 		}
+	}
+
+	/** Paint for NOTES_Y: time progresses horizontally (X-axis) */
+	private void paintNotesY(Graphics g, int[] ccs, int beats, int steps, int div, int count) {
+		for (int i = 0; i < 2 * steps; i++) {
+			int x = (int)(i * unit);
+			paintStepColumn(g, i, x, 0, (int) unit, height, ccs, beats, steps, div, count);
+			if (++count == steps)
+				count = 0;
+		}
+	}
+
+	/** Render a single step row (NOTES_X orientation) */
+	private void paintStepRow(Graphics g, int idx, int x, int y, int w, int h,
+			int[] ccs, int beats, int steps, int div, int count) {
+		if (highlight == idx) {
+			g.setColor(isBeat(idx) ? Pastels.YELLOW.darker() : Pastels.YELLOW);
+			g.fillRect(1, y + 1, w - 2, h - 3);
+			g.setColor(Color.BLACK);
+		}
+
+		if (cc.getProg(idx) != null) {
+			if (idx >= 0 && idx < selectedProg.length && selectedProg[idx])
+				g.setColor(Pastels.SELECTED);
+			else
+				g.setColor(Pastels.PROGCHANGE);
+			g.fillRect(0, y, w, h);
+		}
+
+		if (ccs[idx] > 0) {
+			if (idx >= 0 && idx < selectedCCs.length && selectedCCs[idx])
+				g.setColor(Pastels.SELECTED);
+			else
+				g.setColor(Pastels.CC);
+			g.fillRect(1, y + 1, w - 2, h - 2);
+			g.setColor(Color.BLACK);
+			if (ccs[idx] > 1)
+				g.drawString("" + ccs[idx], OFFSET, y + h - 3);
+		}
+		else if (isBeat(idx)) {
+			int beat = (1 + count / div);
+			if (beat > beats) beat -= beats;
+			if (idx != highlight) {
+				g.setColor(Pastels.FADED);
+				g.fillRect(0, y, w, h);
+			}
+			g.setColor(Color.BLACK);
+			g.drawString("" + beat, OFFSET, y + h - 3);
+		}
+		else if (count % steps % div == 2) {
+			g.drawString("+", OFFSET, y + h - 3);
+		}
+
+		if (cc.getPitch(idx) != null) {
+			g.drawLine(0, y, w, y + h);
+		}
+
+		g.drawLine(0, y + h, w, y + h);
+	}
+
+	/** Render a single step column (NOTES_Y orientation) */
+	private void paintStepColumn(Graphics g, int idx, int x, int y, int w, int h,
+			int[] ccs, int beats, int steps, int div, int count) {
+		if (highlight == idx) {
+			g.setColor(isBeat(idx) ? Pastels.YELLOW.darker() : Pastels.YELLOW);
+			g.fillRect(x + 1, 1, w - 3, h - 2);
+			g.setColor(Color.BLACK);
+		}
+
+		if (cc.getProg(idx) != null) {
+			if (idx >= 0 && idx < selectedProg.length && selectedProg[idx])
+				g.setColor(Pastels.SELECTED);
+			else
+				g.setColor(Pastels.PROGCHANGE);
+			g.fillRect(x, 0, w, h);
+		}
+
+		if (ccs[idx] > 0) {
+			if (idx >= 0 && idx < selectedCCs.length && selectedCCs[idx])
+				g.setColor(Pastels.SELECTED);
+			else
+				g.setColor(Pastels.CC);
+			g.fillRect(x + 1, 1, w - 2, h - 2);
+			g.setColor(Color.BLACK);
+			if (ccs[idx] > 1)
+				g.drawString("" + ccs[idx], x + (int)(w / 2f) - 4, y + (int)(h / 2f) + 1);
+		}
+		else if (isBeat(idx)) {
+			int beat = (1 + count / div);
+			if (beat > beats) beat -= beats;
+			if (idx != highlight) {
+				g.setColor(Pastels.FADED);
+				g.fillRect(x, 0, w, h);
+			}
+			g.setColor(Color.BLACK);
+			g.drawString("" + beat, x + (int)(w / 2f) - 4, y + h - 3);
+		}
+		else if (count % steps % div == 2) {
+			g.drawString("+", x + (int)(w / 2f) - 4, y + h - 3);
+		}
+
+		if (cc.getPitch(idx) != null) {
+			g.drawLine(x, y, x + w, y + h);
+		}
+
+		g.drawLine(x + w, 0, x + w, h);
 	}
 
 	public boolean isBeat(int row) {
@@ -130,38 +202,59 @@ public class PianoSteps extends Steps implements TrackListener, MouseMotionListe
 	}
 
 	public void highlight(Point p) {
-		int replace = p == null ? -1 : (int) ( p.y / (float)height * clock.getSteps() * 2);
+		if (p == null) {
+			highlight = -1;
+			repaint();
+			return;
+		}
+
+		int replace;
+		if (orientation == Orientation.NOTES_X) {
+			replace = (int) (p.y / (float)height * clock.getSteps() * 2);
+		} else {
+			replace = (int) (p.x / (float)width * clock.getSteps() * 2);
+		}
+
 		if (replace == highlight)
 			return;
 		highlight = replace;
 		repaint();
 	}
 
-	public int toStep(int y) {
-		return (int) (total * (y / (float)height));
+	public int toStep(int coord) {
+		if (orientation == Orientation.NOTES_X) {
+			return (int) (total * (coord / (float)height));
+		} else {
+			return (int) (total * (coord / (float)width));
+		}
 	}
 
 	/** play notes for given step */
 	@Override public void mousePressed(MouseEvent e) {
 		if (SwingUtilities.isRightMouseButton(e)) {
-			cc.popup(e, toStep(e.getPoint().y));
+			Point p = e.getPoint();
+			int coord = (orientation == Orientation.NOTES_X) ? p.y : p.x;
+			cc.popup(e, toStep(coord));
 			return;
 		}
-		on = toStep(e.getPoint().y);
+		int coord = (orientation == Orientation.NOTES_X) ? e.getPoint().y : e.getPoint().x;
+		on = toStep(coord);
 	}
 
 	/** play notes for new given step */
 	@Override public void mouseDragged(MouseEvent e) {
 		if (SwingUtilities.isRightMouseButton(e))
 			return;
-		 off = toStep(e.getPoint().y) + 1;
+		int coord = (orientation == Orientation.NOTES_X) ? e.getPoint().y : e.getPoint().x;
+		off = toStep(coord) + 1;
 	}
 
-	/** add actives to track*/
+	/** add actives to track */
 	@Override public void mouseReleased(MouseEvent e) {
 		if (SwingUtilities.isRightMouseButton(e))
 			return;
-		off = toStep(e.getPoint().y) + 1;
+		int coord = (orientation == Orientation.NOTES_X) ? e.getPoint().y : e.getPoint().x;
+		off = toStep(coord) + 1;
 		if (notes.getActives().isEmpty())
 			return;
 
@@ -188,9 +281,6 @@ public class PianoSteps extends Steps implements TrackListener, MouseMotionListe
 			highlight(e.getPoint());
 	}
 
-	@Override public void mouseClicked(MouseEvent e) { }
-	@Override public void mouseEntered(MouseEvent e) { }
-
 	public void resized(int w, int h) {
 		this.width = w;
 		this.height = h;
@@ -201,8 +291,12 @@ public class PianoSteps extends Steps implements TrackListener, MouseMotionListe
 
 	@Override public void timeSig(Signature sig) {
 		total = 2 * sig.steps;
-		unit = height / total;
-		// allocate per-row selection arrays
+		if (orientation == Orientation.NOTES_X) {
+			unit = height / total;
+		} else {
+			unit = width / total;
+		}
+		/* allocate per-row selection arrays */
 		int rows = 2 * sig.steps;
 		selectedCCs = new boolean[rows];
 		selectedProg = new boolean[rows];
@@ -211,9 +305,8 @@ public class PianoSteps extends Steps implements TrackListener, MouseMotionListe
 
 	@Override
 	public void selectionChanged(Selection selection) {
-		// Clear previous selection flags
+		/* Clear previous selection flags */
 		if (selectedCCs == null || selectedProg == null) {
-			// initialize defensively if timeSig not yet called
 			int rows = 2 * clock.getTimeSig().steps;
 			selectedCCs = new boolean[rows];
 			selectedProg = new boolean[rows];
@@ -236,7 +329,6 @@ public class PianoSteps extends Steps implements TrackListener, MouseMotionListe
 			if (!(e.getMessage() instanceof ShortMessage sm)) continue;
 			int cmd = sm.getCommand();
 
-			// Map the event tick into current window then into a row index
 			long wrapped = MidiTools.wrapTickInWindow(e.getTick(), windowStart, notes.getWindow());
 			long rel = wrapped - left;
 			if (rel < 0) continue;
@@ -254,6 +346,19 @@ public class PianoSteps extends Steps implements TrackListener, MouseMotionListe
 
 	@Override
 	public void dataChanged(Delta time) {
+		repaint();
+	}
+
+	public void setOrientation(Orientation o, int w, int h) {
+		height = h;
+		width = w;
+		this.orientation = o;
+		/* recalculate unit based on new time axis dimension */
+		if (orientation == Orientation.NOTES_X) {
+			unit = height / total;
+		} else {
+			unit = width / total;
+		}
 		repaint();
 	}
 

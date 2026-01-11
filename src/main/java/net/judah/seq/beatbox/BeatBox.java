@@ -24,12 +24,13 @@ import net.judah.gui.TabZone;
 import net.judah.seq.automation.CCPopup;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.Edit;
+import net.judah.seq.track.Edit.Type;
+import net.judah.seq.track.Editor.Delta;
+import net.judah.seq.track.Editor.Selection;
 import net.judah.seq.track.MidiNote;
 import net.judah.seq.track.MidiTools;
 import net.judah.seq.track.MusicBox;
 import net.judah.seq.track.Prototype;
-import net.judah.seq.track.Edit.Type;
-import net.judah.seq.track.Editor.Selection;
 
 public class BeatBox extends MusicBox implements Pastels {
 
@@ -54,21 +55,14 @@ public class BeatBox extends MusicBox implements Pastels {
 
 	@Override
 	public void selectionChanged(Selection selection) {
-	    // Don't call super - we handle everything here
-	    if (selection == null || selection.originId() == this) {
-	        return; // Ignore our own events
-	    }
-
-	    // Update internal selection WITHOUT re-publishing
-	    selected.clear();
-	    if (selection.events() != null) {
-	        for (MidiEvent e : selection.events()) {
-	            selected.add(new MidiNote(e));
-	        }
-	    }
-	    repaint();
+		selected.clear();
+		if (selection != null && selection.events() != null) {
+			for (MidiEvent e : selection.events()) {
+				selected.add(e);
+			}
+		}
+		repaint();
 	}
-
 
 	@Override
 	public long toTick(Point p) {
@@ -168,7 +162,6 @@ public class BeatBox extends MusicBox implements Pastels {
 			g2d.fill(shadeRect(mouse.x - origin.x, mouse.y - origin.y));
 			g2d.setComposite(original);
 		}
-
 	}
 
 	private void ccPad(Graphics g, int step, int count, Color c) {
@@ -221,103 +214,87 @@ public class BeatBox extends MusicBox implements Pastels {
 
 	@Override
 	public void mousePressed(MouseEvent mouse) {
-	    tab.setCurrent(track); // drums only
-	    click = translate(mouse.getPoint());
-	    pressOnSelected = false; // reset
+		tab.setCurrent(track);
+		click = translate(mouse.getPoint());
+		pressOnSelected = false;
 
-	    if (SwingUtilities.isRightMouseButton(mouse)) {
-	        int step = (int) (click.tick % track.getWindow() / track.getStepTicks());
-	        cc.popup(mouse, step);
-	        return;
-	    }
+		if (SwingUtilities.isRightMouseButton(mouse)) {
+			int step = (int) (click.tick % track.getWindow() / track.getStepTicks());
+			cc.popup(mouse, step);
+			return;
+		}
 
-	    MidiEvent existing = MidiTools.lookup(NOTE_ON, click.data1, click.tick, t);
-	    if (mouse.isShiftDown()) { // drag-n-select;
-	        drag = mouse.getPoint();
-	        mode = DragMode.SELECT;
-	        pressOnSelected = false;
-	    } else if (existing == null) {
-	        // prepare for create
-	        drag = mouse.getPoint();
-	        mode = DragMode.CREATE;
-	        pressOnSelected = false;
-	    } else {
-	        MidiNote pair = new MidiNote(existing);
-	        if (mouse.isControlDown()) {
-	            // toggle selection but do not arm drag
-	            if (selected.contains(pair))
-	                selected.remove(pair);
-	            else
-	                selected.add(pair);
-	            pressOnSelected = false;
-	        } else {
-	            // Select the clicked note. Arm a pending-drag so movement starts a translate.
-	            if (!selected.contains(pair)) {
-	                selected.clear();
-	                selected.add(pair);
-	            }
-	            pressOnSelected = true;
-	            // Do NOT call dragStart here; actual drag begins on mouse movement (drag).
-	        }
-	    }
-	    repaint();
+		MidiEvent existing = MidiTools.lookup(NOTE_ON, click.data1, click.tick, t);
+		if (mouse.isShiftDown()) {
+			drag = mouse.getPoint();
+			mode = DragMode.SELECT;
+			pressOnSelected = false;
+		} else if (existing == null) {
+			drag = mouse.getPoint();
+			mode = DragMode.CREATE;
+			pressOnSelected = false;
+		} else {
+			if (mouse.isControlDown()) {
+				if (selected.contains(existing))
+					selected.remove(existing);
+				else
+					selected.add(existing);
+				pressOnSelected = false;
+			} else {
+				if (!selected.contains(existing)) {
+					selected.clear();
+					selected.add(existing);
+				}
+				pressOnSelected = true;
+			}
+		}
+		repaint();
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent mouse) {
-	    if (mode != null) {
-	        switch (mode) {
-	        case CREATE:
-	            MidiEvent create = new MidiEvent(
-	                    Midi.create(NOTE_ON, track.getCh(), click.data1, (int) (track.getAmp() * 127f)), click.tick);
+		if (mode != null) {
+			switch (mode) {
+			case CREATE:
+				MidiEvent create = new MidiEvent(
+						Midi.create(NOTE_ON, track.getCh(), click.data1, (int) (track.getAmp() * 127f)), click.tick);
+				ArrayList<MidiEvent> added = new ArrayList<>();
+				added.add(create);
+				select(added);
+				track.getEditor().push(new Edit(Type.NEW, added));
+				break;
 
-	            // Create a list for the new event
-	            ArrayList<MidiEvent> added = new ArrayList<>();
-	            added.add(create);
+			case SELECT:
+				Prototype a = translate(drag);
+				Prototype b = translate(mouse.getPoint());
+				drag = null;
+				List<MidiEvent> sel = editor.selectArea(a.tick, b.tick, a.data1, b.data1);
+				select(sel);
+				break;
 
-	            // Publish the selection to the Editor with this BeatBox as the origin
-	            select(added);
-
-	            // Push the actual edit using the same list
-	            track.getEditor().push(new Edit(Type.NEW, added));
-	            break;
-
-	        case SELECT:
-	            Prototype a = translate(drag);
-	            Prototype b = translate(mouse.getPoint());
-	            drag = null;
-	            // Query the editor for events in the area and publish that as the new selection
-	            List<MidiEvent> sel = editor.selectArea(a.tick, b.tick, a.data1, b.data1);
-	            select(sel);
-	            break;
-
-	        case TRANSLATE:
-	            drop(mouse.getPoint());
-	            break;
-	        }
-	        mode = null;
-	        repaint();
-	        click = null;
-	    }
-	    // Always clear the pending-drag flag on release
-	    pressOnSelected = false;
-	    TabZone.instance.requestFocusInWindow();
+			case TRANSLATE:
+				drop(mouse.getPoint());
+				break;
+			}
+			mode = null;
+			repaint();
+			click = null;
+		}
+		pressOnSelected = false;
+		TabZone.instance.requestFocusInWindow();
 	}
-
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
-	    // If a press on a selected note is pending, start the drag now.
-	    if (pressOnSelected && mode == null) {
-	        dragStart(e.getPoint());
-	        pressOnSelected = false; // Consume the flag
-	    }
-	    // Continue with drag processing if in a drag mode
-	    if (mode == DragMode.TRANSLATE) {
-	        drag(e.getPoint());
-	    } else if (mode == DragMode.SELECT) {
-	        repaint(); // Repaint to show selection rectangle
-	    }
+		if (pressOnSelected && mode == null) {
+			dragStart(e.getPoint());
+			pressOnSelected = false;
+		}
+		if (mode == DragMode.TRANSLATE) {
+			drag(e.getPoint());
+		} else if (mode == DragMode.SELECT) {
+			repaint();
+		}
 	}
 
 	//////// Drag and Drop /////////
@@ -331,7 +308,6 @@ public class BeatBox extends MusicBox implements Pastels {
 
 	@Override
 	public void drop(Point mouse) {
-		// delete selected, create undo from start/init
 		Edit e = new Edit(Type.TRANS, selected);
 		long now = toTick(mouse);
 		Prototype destination = new Prototype(toData1(mouse),
@@ -346,9 +322,8 @@ public class BeatBox extends MusicBox implements Pastels {
 	@Override
 	public void drag(Point mouse) {
 		Prototype now = new Prototype(toData1(mouse), toTick(mouse));
-		if (now.equals(recent)) // hovering
+		if (now.equals(recent))
 			return;
-		// note or step changed, move from most recent drag spot
 		long tick = ((now.tick - recent.tick) % track.getWindow()) / track.getStepTicks();
 		Prototype dest = new Prototype(now.data1, tick);
 		transpose(dest);
@@ -361,26 +336,9 @@ public class BeatBox extends MusicBox implements Pastels {
 		long start = track.getCurrent() * track.getBarTicks();
 		for (int i = 0; i < dragging.size(); i++) {
 			MidiEvent note = dragging.get(i);
-			dragging.set(i, new MidiNote(editor.compute(note, delta, destination.tick, start, track.getWindow())));
+			dragging.set(i, editor.compute(note, delta, destination.tick, start, track.getWindow()));
 		}
 		repaint();
-	}
-
-	/**
-	 * @param in          source note (off is null for drums)
-	 * @param destination x = +/-ticks, y = +/-data1
-	 * @return new midi
-	 */
-	public MidiNote compute(MidiNote in, int delta, long protoTick, long start, long window) {
-		ShortMessage source = (ShortMessage) in.getMessage();
-		long tick = in.getTick() + protoTick * track.getStepTicks();
-		if (tick < start)
-			tick += window;
-		if (tick >= start + window)
-			tick -= window;
-		int data1 = DrumType.translate(source.getData1(), delta);
-		return new MidiNote(
-				new MidiEvent(Midi.create(source.getCommand(), source.getChannel(), data1, source.getData2()), tick));
 	}
 
 	/** remove any note-offs */
@@ -408,4 +366,8 @@ public class BeatBox extends MusicBox implements Pastels {
 		repaint();
 	}
 
+	@Override
+	public void dataChanged(Delta delta) {
+		repaint();
+	}
 }

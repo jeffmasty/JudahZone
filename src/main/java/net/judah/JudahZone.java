@@ -169,7 +169,7 @@ public class JudahZone extends ZoneJackClient implements Registrar {
 
 		mic = new Instrument(MIC, MIC_PORT, jackclient.registerPort(
 				"mic", AUDIO, JackPortIsInput), "Microphone.png", 85, 11000);
-//		mic.getGain().setGain(0.25f); // trim studio noise
+		// mic.getGain().setGain(0.25f); // trim studio noise
 
 		while (midi.getFluidOut() == null)
 			Threads.sleep(10); // wait while midi thread creates ports
@@ -253,7 +253,6 @@ public class JudahZone extends ZoneJackClient implements Registrar {
 		JackPort port = jackclient.registerPort(req.portName(), req.type(), req.inOut());
 		Threads.execute(()->req.callback().ready(req, port));
 	}
-
 
 	public static void test() {
 

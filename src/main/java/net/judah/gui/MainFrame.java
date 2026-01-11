@@ -165,21 +165,21 @@ public class MainFrame extends JFrame implements Runnable {
         this.feedback = new Feedback(Size.KNOB_PANEL);
         JudahClock clock = JudahMidi.getClock();
 
-
         hq = new HQ(clock, zone);
         loops = new MiniLooper(looper, clock);
         presets = new PresetsView(zone);
         setlists = new SetlistView(zone.getSetlists(), overview);
-    	beatBox = new DrumZone(drums.getTracks());
-        tabs = new TabZone(zone, beatBox);
-        menu = new JudahMenu(WIDTH_KNOBS, zone, tabs, zone.getMidi());
         mode = new JComboBox<>(KnobMode.values());
         mode.setFont(Gui.BOLD13);
         mode.addActionListener(e->{
 			if (knobMode != mode.getSelectedItem())
 				setFocus(mode.getSelectedItem());});
-        mixer.updateAll();
         knobHolder = Box.createVerticalBox();
+        mixer.updateAll();
+
+        beatBox = new DrumZone(drums.getTracks());
+        tabs = new TabZone(zone, beatBox);
+        menu = new JudahMenu(WIDTH_KNOBS, zone, tabs, zone.getMidi());
 
         Gui.resize(knobHolder, KNOB_PANEL);
         Gui.resize(mode, new Dimension(COMBO_SIZE.width, STD_HEIGHT + 2));

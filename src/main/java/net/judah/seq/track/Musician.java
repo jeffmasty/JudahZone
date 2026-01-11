@@ -1,19 +1,17 @@
 package net.judah.seq.track;
 
 import java.awt.Point;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelListener;
 
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 
 import judahzone.api.Midi;
 import judahzone.api.Signature;
+import judahzone.gui.Gui;
 import net.judah.seq.track.Editor.TrackListener;
 
 /** User interaction with a Notes Track */
-public interface Musician extends TrackListener, MouseListener, MouseWheelListener, MouseMotionListener {
+public interface Musician extends TrackListener, Gui.Mouser {
 
 	NoteTrack getTrack();
 

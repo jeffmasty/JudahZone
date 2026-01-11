@@ -337,14 +337,14 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 		parse(map.t);
 	}
 
+
 	/** see parse() method in subclasses*/
 	public void importTrack(Track incoming, int rez) {
 		clear();
-		resolution = rez;
-		setBarTicks(clock.getTimeSig().beats * resolution);
+		setResolution(rez);
 		parse(incoming);
-		compute();
 		setCycle(Cycle.ALL); // updates
+		MainFrame.updateTrack(Update.FILE, this);
 	}
 
 	public void setCapture(boolean rec) {

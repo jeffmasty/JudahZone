@@ -3,8 +3,7 @@ package net.judah.seq.track;
 import static net.judah.gui.Size.COMBO_SIZE;
 import static net.judah.gui.Size.MEDIUM;
 
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.Dimension;
 import java.util.Enumeration;
 
 import javax.swing.AbstractButton;
@@ -14,13 +13,16 @@ import javax.swing.ButtonGroup;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JRadioButtonMenuItem;
+import javax.swing.SwingUtilities;
 
 import judahzone.gui.Actionable;
 import judahzone.gui.Gui;
 import judahzone.gui.Icons;
+import judahzone.util.Threads;
 import judahzone.widgets.Btn;
 import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
+import net.judah.gui.Size;
 import net.judah.gui.settable.Program;
 import net.judah.gui.widgets.PlayBtn;
 import net.judah.gui.widgets.RecordWidget;
@@ -28,7 +30,87 @@ import net.judah.gui.widgets.TrackVol;
 import net.judah.seq.SynthRack;
 import net.judah.seq.track.Computer.Update;
 
-public abstract class TrackMenu extends Box implements MouseListener {
+
+/** •  TrackMenu: Common file, edit, tools menus (condensed for drums), velocity
+    •  PianoMenu: Range, octave navigation, gate, arpeggiator mode, duration, transpose
+	•  DrumMenu: CC mapping, recording toggle, remap/clean/condense tools 	*/
+public abstract class TrackMenu extends Box { // to update Programmer (length) implement TrackListener
+
+	protected final JMenu file = new JMenu("File");
+	protected final JMenu edit = new JMenu("Edit");
+	protected final JMenu tools = new JMenu("Tools");
+	private final TrackVol velocity;
+	protected final NoteTrack track;
+    protected final MusicBox grid;
+
+    protected final MenuActions menuActions;
+    protected final ButtonGroup cue = new ButtonGroup();
+    protected final ButtonGroup gate = new ButtonGroup();
+    protected final JMenuBar menu = new JMenuBar();
+    protected final JMenu cues = new JMenu("Cue");
+    protected final JMenu quantization = new JMenu("Quantization");
+    protected final PlayBtn play;
+    protected RecordWidget capture;
+    protected final Program program;
+    protected final Programmer programmer;
+
+	public TrackMenu(MusicBox grid) {
+		super(BoxLayout.X_AXIS);
+	    this.track = grid.getTrack();
+	    this.grid = grid;
+	    setMaximumSize(new Dimension(3000, Size.KNOB_HEIGHT));
+	    menuActions = new MenuActions(track.getEditor(), grid);
+	    play = new PlayBtn(track);
+	    programmer = new Programmer(track);
+	    velocity = new TrackVol(track);
+	    program = new Program(track);
+	    capture = new RecordWidget(track);
+
+	    buildLocal();
+
+	    menu.add(file);
+
+	    // add standard issue
+	    add(Box.createHorizontalStrut(2));
+	    add(play);
+	    add(capture);
+	    add(menu);
+	    add(Gui.resize(program, track.isDrums() ? MEDIUM : COMBO_SIZE));
+	    add(new Btn(Icons.SAVE, e -> track.save()));
+	    add(programmer);
+	    Threads.execute(() ->
+		    SwingUtilities.invokeLater(()-> {
+		    	childMenus();
+		    	add(velocity);
+		    	revalidate();
+	    }));
+	}
+
+	private void buildLocal() {
+        for (Cue c : Cue.values()) {
+            JRadioButtonMenuItem item = new JRadioButtonMenuItem(c.name());
+            if (track.getCue() == c)
+                item.setSelected(true);
+            cue.add(item);
+            cues.add(item);
+            item.addActionListener(e -> track.setCue(c));
+        }
+        for (Gate g : Gate.values()) {
+            JRadioButtonMenuItem item = new JRadioButtonMenuItem(g.name());
+            if (track.getGate() == g)
+                item.setSelected(true);
+            gate.add(item);
+            quantization.add(item);
+            item.addActionListener(e -> track.setGate(g));
+        }
+        fileMenu();
+	    menuActions.buildToolsMenu(tools);
+	    menuActions.buildEditMenu(track.isDrums() ? file : edit);
+	}
+
+	/** Override to add instrument-specific menus (call super())*/
+	protected abstract void childMenus();
+
 
     public static class SendTo extends JMenu {
         public SendTo(MidiTrack source) {
@@ -40,76 +122,6 @@ public abstract class TrackMenu extends Box implements MouseListener {
                     add(new Actionable(t.getName(), evt -> t.load(source)));
             }
         }
-    }
-
-    protected final NoteTrack track;
-    protected final MusicBox grid;
-    protected final MenuActions menuActions;
-    protected final ButtonGroup cue = new ButtonGroup();
-    protected final ButtonGroup gate = new ButtonGroup();
-    protected final JMenuBar menu = new JMenuBar();
-    protected final JMenu file;
-    protected final JMenu edit = new JMenu("Edit");
-    protected final JMenu tools = new JMenu("Tools");
-    protected final JMenu cues = new JMenu("Cue");
-    protected final JMenu quantization = new JMenu("Quantization");
-    protected final PlayBtn play;
-    protected RecordWidget capture;
-    protected final Program program;
-    protected final Programmer programmer;
-    protected TrackVol velocity;
-
-    public TrackMenu(MusicBox g) {
-        super(BoxLayout.X_AXIS);
-        track = g.getTrack();
-        grid = g;
-        menuActions = new MenuActions(track.getEditor(), grid);
-        file = new JMenu(track.getName());
-        addMouseListener(this);
-        play = new PlayBtn(track);
-        programmer = new Programmer(track);
-        velocity = new TrackVol(track);
-        program = new Program(track);
-
-        initializeMenus();
-    }
-
-    private void initializeMenus() {
-        fileSetup();
-        fileMenu();
-
-        // Build tools menu using MenuActions
-        menuActions.buildToolsMenu(tools);
-
-        menu.add(file);
-        menuActions.buildEditMenu(edit);
-        if (track.isSynth()) {
-            menu.add(tools);
-            menu.add(edit);
-        } else {
-            // Consolidate for drums (no space)
-            file.add(tools);
-            file.add(edit);
-            menu.add(file);
-        }
-
-        add(Box.createHorizontalStrut(2));
-        add(play);
-        if (track.isSynth()) {
-            capture = new RecordWidget(track);
-            add(capture);
-        }
-        add(menu);
-        add(Gui.resize(program, track.isDrums() ? MEDIUM : COMBO_SIZE));
-        add(new Btn(Icons.SAVE, e -> track.save()));
-        add(programmer);
-
-        if (track.isDrums())
-            file.setFont(Gui.BOLD12);
-
-        // Force menu to validate after all items are added
-        revalidate();
-        repaint();
     }
 
     public final void updateCue() {
@@ -134,28 +146,8 @@ public abstract class TrackMenu extends Box implements MouseListener {
         }
     }
 
-    private void fileSetup() {
-        for (Cue c : Cue.values()) {
-            JRadioButtonMenuItem item = new JRadioButtonMenuItem(c.name());
-            if (track.getCue() == c)
-                item.setSelected(true);
-            cue.add(item);
-            cues.add(item);
-            item.addActionListener(e -> track.setCue(c));
-        }
-        for (Gate g : Gate.values()) {
-            JRadioButtonMenuItem item = new JRadioButtonMenuItem(g.name());
-            if (track.getGate() == g)
-                item.setSelected(true);
-            gate.add(item);
-            quantization.add(item);
-            item.addActionListener(e -> track.setGate(g));
-        }
-    }
-
-    private void fileMenu() {
+    private void fileMenu() {  // weird case switching to Bundle, drums will miss tools/edit?
         file.removeAll();
-
         if (MainFrame.isBundle()) {
             file.add(new Actionable("Clear", e -> track.clear()));
             file.add(new Actionable("Import...", e -> new ImportMidi(track)));
@@ -169,12 +161,6 @@ public abstract class TrackMenu extends Box implements MouseListener {
         file.add(cues);
         file.add(quantization);
     }
-
-    @Override public void mouseClicked(MouseEvent e) { }
-    @Override public void mouseReleased(MouseEvent e) { }
-    @Override public void mouseEntered(MouseEvent e) { }
-    @Override public void mouseExited(MouseEvent e) { }
-    @Override public void mousePressed(MouseEvent e) { }
 
     public void update() {
         updateCue();
@@ -191,7 +177,7 @@ public abstract class TrackMenu extends Box implements MouseListener {
             updateGate();
         else if (Update.CYCLE == type)
             programmer.getCycle().update();
-        else if (Update.CAPTURE == type && capture != null)
+        else if (Update.CAPTURE == type && capture != null) // legacy null
             capture.update();
         else if (Update.PLAY == type)
             play.update();
@@ -203,7 +189,7 @@ public abstract class TrackMenu extends Box implements MouseListener {
             programmer.liftOff();
         else if (Update.AMP == type)
             velocity.update();
-//        else if (Update.EDIT == type)
+//        else if (Update.EDIT == type) // TODO TrackListener.data changes affect length
 //            programmer.liftOff();
     }
 }

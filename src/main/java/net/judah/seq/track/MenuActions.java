@@ -4,18 +4,17 @@ import java.util.ArrayList;
 
 import javax.sound.midi.MidiEvent;
 import javax.swing.JMenu;
-import javax.swing.SwingUtilities;
 
 import judahzone.gui.Actionable;
 import net.judah.drumkit.DrumType;
+import net.judah.gui.MainFrame;
 import net.judah.seq.track.Edit.Type;
-import net.judah.seq.track.Editor.Delta;
 
 /**
  * Central menu action handler for track editing operations.
  * Provides a single origin ID for all menu-initiated editor actions.
  */
-public class MenuActions implements Editor.TrackListener {
+public class MenuActions {
 
     private final Editor editor;
     private final MusicBox grid;
@@ -25,19 +24,7 @@ public class MenuActions implements Editor.TrackListener {
         this.editor = editor;
         this.grid = grid;
         this.track = grid.getTrack();
-        // Register as listener to prevent feedback loops
-        editor.addListener(this);
     }
-
-    // SelectionListener implementation - no-op to avoid feedback
-    @Override
-    public void selectionChanged(Editor.Selection selection) {
-        // Menu actions don't need to react to selection changes
-        if (selection.originId() == this) {
-            return; // Ignore our own selections
-        }
-    }
-
     // ========== Selection Operations ==========
 
     public void selectNone() {
@@ -139,9 +126,7 @@ public class MenuActions implements Editor.TrackListener {
      * Builds the Edit menu with proper action bindings.
      * Should be called on EDT during menu initialization.
      */
-    public void buildEditMenu(JMenu editMenu) {
-        editMenu.removeAll();
-
+    public void buildEditMenu(JMenu menu) {
         JMenu select = new JMenu("Select");
         select.add(new Actionable("None", e -> selectNone()));
         select.add(new Actionable("A", e -> selectBarLeft()));
@@ -158,43 +143,35 @@ public class MenuActions implements Editor.TrackListener {
             select.add(drumTypes);
         }
 
-        editMenu.add(select);
-        editMenu.add(new Actionable("Copy", e -> copy()));
-        editMenu.add(new Actionable("Paste", e -> paste()));
-        editMenu.add(new Actionable("Delete", e -> delete()));
-        editMenu.add(new Actionable("Undo", e -> undo()));
-        editMenu.add(new Actionable("Redo", e -> redo()));
-        editMenu.add(new Actionable("Transpose...", e -> showTranspose()));
-    }
+        menu.add(select);
+        menu.add(new Actionable("Copy", e -> copy()));
+        menu.add(new Actionable("Paste", e -> paste()));
+        menu.add(new Actionable("Delete", e -> delete()));
+        menu.add(new Actionable("Undo", e -> undo()));
+        menu.add(new Actionable("Redo", e -> redo()));
+        menu.add(new Actionable("Automation",
+                e -> MainFrame.setFocus(track.getAutomation())));
+	}
 
     /**
      * Builds the Tools menu with proper action bindings.
      * Should be called on EDT during menu initialization.
      */
-    public void buildToolsMenu(JMenu toolsMenu) {
-        SwingUtilities.invokeLater(() -> {
-            toolsMenu.removeAll();
+    public void buildToolsMenu(JMenu menu) {
+        JMenu trim = new JMenu("Trim");
+        trim.add(new Actionable("Frame", e -> trimFrame()));
+        trim.add(new Actionable("Left", e -> trimBar(true)));
+        trim.add(new Actionable("Right", e -> trimBar(false)));
 
-            JMenu trim = new JMenu("Trim");
-            trim.add(new Actionable("Frame", e -> trimFrame()));
-            trim.add(new Actionable("Left", e -> trimBar(true)));
-            trim.add(new Actionable("Right", e -> trimBar(false)));
+        JMenu insert = new JMenu("Insert");
+        insert.add(new Actionable("Left", e -> insertBar(true)));
+        insert.add(new Actionable("Right", e -> insertBar(false)));
+        insert.add(new Actionable("Frame", e -> insertFrame()));
 
-            JMenu insert = new JMenu("Insert");
-            insert.add(new Actionable("Left", e -> insertBar(true)));
-            insert.add(new Actionable("Right", e -> insertBar(false)));
-            insert.add(new Actionable("Frame", e -> insertFrame()));
-
-            toolsMenu.add(new Actionable("Track Info...", e -> track.info()));
-            toolsMenu.add(trim);
-            toolsMenu.add(insert);
-            toolsMenu.add(new Actionable("Automation",
-                e -> net.judah.gui.MainFrame.setFocus(track.getAutomation())));
-        });
+        menu.add(new Actionable("Track Info...", e -> track.info()));
+        menu.add(trim);
+        menu.add(insert);
+        menu.add(new Actionable("Transpose...", e -> showTranspose()));
     }
 
-	@Override
-	public void dataChanged(Delta time) {
-		// no - op  // recalc frames?
-	}
 }

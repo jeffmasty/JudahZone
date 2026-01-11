@@ -27,6 +27,7 @@ import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.gui.widgets.CloseableTabbedPane;
+import net.judah.midi.JudahMidi;
 import net.judah.seq.beatbox.BeatBox;
 import net.judah.seq.beatbox.DrumCage;
 import net.judah.seq.beatbox.DrumZone;
@@ -324,12 +325,25 @@ public class TabZone extends CloseableTabbedPane {
 			}
 		} // else ChannelTrack
 
-//		if (type == Update.EDIT)
-//			update(notes);
 		if (type == Update.CURRENT)
 			update(notes);
-		if (type == Update.FILE)
+		if (type == Update.FILE) {
+			// resolution
+			if (notes.isSynth()) {
+				PianoView view = getPiano((PianoTrack)notes);
+				if (view == null)
+					return;
+				view.getGrid().timeSig(JudahMidi.getClock().getTimeSig());
+				view.getSteps().timeSig(JudahMidi.getClock().getTimeSig());
+			}
+			else if (notes.isDrums()) {
+				BeatBox b = getDrummer((DrumTrack)notes);
+				if (b == null)
+					return;
+				b.timeSig(JudahMidi.getClock().getTimeSig());
+			}
 			update(notes);
+		}
 	}
 
 	public void update(MidiTrack t) {

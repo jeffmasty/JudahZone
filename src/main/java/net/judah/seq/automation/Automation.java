@@ -61,6 +61,7 @@ public class Automation extends KnobPanel implements MidiConstants, TrackListene
 		content.addTab(MidiMode.CC.name(), cc);
 		content.addTab(MidiMode.Pitch.name(), pitch);
 		content.addTab(MidiMode.Program.name(), program);
+		Gui.resize(content, new Dimension(Size.WIDTH_KNOBS, Size.HEIGHT_KNOBS - Size.KNOB_TITLE.height));
 		add(content);
 
 		this.track.getEditor().addListener(this);
@@ -95,6 +96,8 @@ public class Automation extends KnobPanel implements MidiConstants, TrackListene
 			content.setSelectedComponent(program.init(tick));
 		else
 			content.setSelectedComponent(all.init(tick));
+		if (JudahZone.getInstance().getSeq().getCurrent() != track)
+			JudahZone.getInstance().getSeq().getTracks().setCurrent(track);
  		MainFrame.setFocus(this);
 	}
 

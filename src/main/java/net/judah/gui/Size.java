@@ -31,7 +31,7 @@ public interface Size {
     Dimension TINY = new Dimension(41, STD_HEIGHT);
 //	Dimension FADER_SIZE = new Dimension(43, 76);
 
-	int KEY_HEIGHT = 25;
-	int STEP_WIDTH = 27;
+	int UNIT = 24;
+
 
 }

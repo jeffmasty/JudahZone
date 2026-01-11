@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.sound.midi.MidiEvent;
-import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 import javax.swing.JPanel;
 
@@ -22,7 +21,7 @@ import judahzone.gui.Floating;
 import lombok.Getter;
 import net.judah.gui.TabZone;
 import net.judah.midi.JudahClock;
-import net.judah.seq.track.Edit.Type;
+import net.judah.seq.piano.Piano;
 import net.judah.seq.track.Editor.Delta;
 import net.judah.seq.track.Editor.Selection;
 
@@ -84,26 +83,6 @@ public abstract class MusicBox extends JPanel implements Musician, Floating, Mid
 		repaint();
 	}
 
-
-//    @Override
-//    public void copySelection() {
-//        Editor.Selection currentSelection = editor.getSelection();
-//        if (currentSelection == null || currentSelection.events().isEmpty()) {
-//            return;
-//        }
-//        // The editor's clipboard can directly take the list of events.
-//        Editor.clipboard.copy(currentSelection.events(), track);
-//    }
-//
-//    @Override
-//    public void deleteSelection() {
-//        Editor.Selection currentSelection = editor.getSelection();
-//        if (currentSelection == null || currentSelection.events().isEmpty()) {
-//            return;
-//        }
-//        editor.push(new Edit(Type.DEL, new ArrayList<>(currentSelection.events())));
-//    }
-
     @Override
     public void mouseDragged(MouseEvent mouse) {
         if (mode == null)
@@ -121,19 +100,18 @@ public abstract class MusicBox extends JPanel implements Musician, Floating, Mid
 
     @Override public abstract void mouseReleased(MouseEvent e); // subclass implement
     @Override public abstract void mousePressed(MouseEvent e); // subclass implement;
-    @Override public final void mouseEntered(MouseEvent e) {TabZone.instance.requestFocusInWindow();}
-    @Override public void mouseMoved(MouseEvent e) { }
-    @Override public void mouseExited(MouseEvent e) { }
-    @Override public final void mouseClicked(MouseEvent e) { }
 
+    @Override public final void mouseEntered(MouseEvent e) {TabZone.instance.requestFocusInWindow();}
     @Override public final void mouseWheelMoved(MouseWheelEvent wheel) {
         boolean up = wheel.getPreciseWheelRotation() < 0;
-        if (wheel.isControlDown())
+        if (wheel.isShiftDown())
             shiftVelocity(up);
-        else if (wheel.isShiftDown())
-            translate(up); // shift selected note timing
+        else if (wheel.isControlDown() && this instanceof Piano piano) {
+        	// adjust PianoMenu viewport value + extent (grow on up, shrink on down)
+        	piano.getView().getMenu().adjustViewport(up);
+        }
         else if (wheel.isAltDown()) {
-            transpose(up); // shift selected note pitch
+            // TODO
         }
         else
             track.next(!up);
@@ -152,70 +130,11 @@ public abstract class MusicBox extends JPanel implements Musician, Floating, Mid
             velocity(up);
             return;
         }
-        // TODO: This should create and push a MOD or VELOCITY Edit to the editor
-    }
-
-    private void transpose(boolean up) {
-        Editor.Selection currentSelection = editor.getSelection();
-        if (currentSelection == null || currentSelection.events().isEmpty()) return;
-
-        MidiEvent firstOn = currentSelection.events().stream()
-            .filter(e -> Midi.isNoteOn(e.getMessage())).findFirst().orElse(null);
-        if (firstOn == null) return;
-
-        int srcData1 = ((ShortMessage)firstOn.getMessage()).getData1();
-        int destData1 = srcData1 + (up ?  1 : -1);
-        if (destData1 < 0 || destData1 > 127) return;
-
-        Edit e = new Edit(Type.TRANS, new ArrayList<>(currentSelection.events()));
-        e.setDestination(new Prototype(destData1, 0)); // Tick delta is 0 for pitch-only transpose
-        editor.push(e);
-    }
-
-    private void translate(boolean up) {
-        Editor.Selection currentSelection = editor.getSelection();
-        if (currentSelection == null || currentSelection.events().isEmpty()) return;
-
-        MidiEvent firstOn = currentSelection.events().stream()
-            .filter(e -> Midi.isNoteOn(e.getMessage())).findFirst().orElse(null);
-        if (firstOn == null) return;
-
-        long tickDelta = up ? track.getStepTicks() : -track.getStepTicks();
-
-        Edit e = new Edit(Type.TRANS, new ArrayList<>(currentSelection.events()));
-        // Data1 delta is 0, tick delta is one step
-        e.setDestination(new Prototype(0, tickDelta));
-        editor.push(e);
     }
 
     @Override public final Prototype translate(Point p) {
         return new Prototype(toData1(p), toTick(p));
     }
-
-//    @Override
-//    public void selectNone() {
-//        publishSelection(Collections.emptyList());
-//        MainFrame.update(track);
-//    }
-//
-//    @Override
-//    public List<MidiEvent> getEventsInArea(long startTick, long endTick, int lowData1, int highData1) {
-//        List<MidiEvent> eventsInArea = new ArrayList<>();
-//        for (int i = 0; i < t.size(); i++) {
-//            MidiEvent e = t.get(i);
-//            long tick = e.getTick();
-//            if (tick < startTick) continue;
-//            if (tick >= endTick) break;
-//
-//            if (e.getMessage() instanceof ShortMessage sm) {
-//                int data1 = sm.getData1();
-//                if (data1 >= lowData1 && data1 <= highData1) {
-//                    eventsInArea.add(e);
-//                }
-//            }
-//        }
-//        return eventsInArea;
-//    }
 
     protected void select(List<MidiEvent> events) {
         selected.clear();
@@ -224,17 +143,9 @@ public abstract class MusicBox extends JPanel implements Musician, Floating, Mid
                 selected.add(new MidiNote(e));
             }
         }
-
-        // Always publish to editor so other views update
         editor.publish(this, events);
         repaint();
     }
-//    @Override
-//    public List<MidiEvent> selectFrame() {
-//        long start = track.getLeft();
-//        long end = start + track.getWindow();
-//        return getEventsInArea(start, end, 0, 127);
-//    }
 
     private final Rectangle shadeRect = new Rectangle();
     protected Rectangle shadeRect(int x, int y) {
@@ -269,15 +180,42 @@ public abstract class MusicBox extends JPanel implements Musician, Floating, Mid
         return HIGHLIGHTS[data2 / 4];
     }
 
-//    // Deprecated methods from Musician that are no longer used or have been replaced
-//    @Deprecated @Override public void copy() { copySelection(); }
-//    @Deprecated @Override public List<MidiEvent> selectArea(long start, long end, int low, int high) {
-//        return getEventsInArea(start, end, low, high);
-//    }
-
     @Override
     public void dataChanged(Delta time) {
     	repaint();
-    	// legit()?
     }
+
 }
+
+//private void transpose(boolean up) {
+//Editor.Selection currentSelection = editor.getSelection();
+//if (currentSelection == null || currentSelection.events().isEmpty()) return;
+//
+//MidiEvent firstOn = currentSelection.events().stream()
+//  .filter(e -> Midi.isNoteOn(e.getMessage())).findFirst().orElse(null);
+//if (firstOn == null) return;
+//
+//int srcData1 = ((ShortMessage)firstOn.getMessage()).getData1();
+//int destData1 = srcData1 + (up ?  1 : -1);
+//if (destData1 < 0 || destData1 > 127) return;
+//
+//Edit e = new Edit(Type.TRANS, new ArrayList<>(currentSelection.events()));
+//e.setDestination(new Prototype(destData1, 0)); // Tick delta is 0 for pitch-only transpose
+//editor.push(e);
+//}
+//
+//private void translate(boolean up) {
+//Editor.Selection currentSelection = editor.getSelection();
+//if (currentSelection == null || currentSelection.events().isEmpty()) return;
+//
+//MidiEvent firstOn = currentSelection.events().stream()
+//  .filter(e -> Midi.isNoteOn(e.getMessage())).findFirst().orElse(null);
+//if (firstOn == null) return;
+//
+//long tickDelta = up ? track.getStepTicks() : -track.getStepTicks();
+//
+//Edit e = new Edit(Type.TRANS, new ArrayList<>(currentSelection.events()));
+//// Data1 delta is 0, tick delta is one step
+//e.setDestination(new Prototype(0, tickDelta));
+//editor.push(e);
+//}

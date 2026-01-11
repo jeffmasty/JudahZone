@@ -1,6 +1,5 @@
 package net.judah.seq.automation;
 
-import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -20,17 +19,14 @@ import javax.swing.SwingUtilities;
 import judahzone.api.Midi;
 import judahzone.gui.Gui;
 import judahzone.widgets.Btn;
-import net.judah.gui.Size;
 import net.judah.midi.JudahMidi;
 import net.judah.seq.automation.Automation.AutoBox;
 import net.judah.seq.track.Edit;
-import net.judah.seq.track.MidiTools;
 import net.judah.seq.track.Edit.Type;
 import net.judah.seq.track.Editor.Selection;
+import net.judah.seq.track.MidiTools;
 
 public class MidiView extends AutoBox {
-	private static final Dimension SZ = new Dimension(Size.WIDTH_KNOBS - 40, Size.HEIGHT_KNOBS - 100);
-
 	private final Automation automation;
 	private final JTable table = new JTable();
 	private MidiModel model;
@@ -69,8 +65,8 @@ public class MidiView extends AutoBox {
 	        btn.setEnabled(false);
 
 	    add(Gui.box(edit, delete, copy, exe));
-	    add(Gui.resize(scroll, SZ));
-	    add(Box.createVerticalStrut(10));
+	    add(scroll);
+	    add(Box.createVerticalStrut(12));
 	    add(Box.createVerticalGlue());
 
 	    model = new MidiModel(track, table);
@@ -160,46 +156,6 @@ public class MidiView extends AutoBox {
 	@Override protected void pad2() { delete(); }
 	@Override protected boolean doKnob(int idx, int value) { return false; }
 
-//	@Override
-//	protected void updateSelection(Selection selection) {
-//		if (selection.originId() == this) {
-//			return; // Do not react to own events
-//		}
-//
-//		SwingUtilities.invokeLater(() -> {
-//			isUpdatingSelection = true;
-//			try {
-//				table.clearSelection();
-//				if (model == null) return;
-//
-//				List<MidiEvent> events = selection.events();
-//				if (events.isEmpty()) return;
-//
-//				ListSelectionModel selModel = table.getSelectionModel();
-//				for (MidiEvent event : events) {
-//					int modelRow = model.getRowForEvent(event);
-//					if (modelRow != -1) {
-//						int viewRow = table.convertRowIndexToView(modelRow);
-//						if (viewRow != -1) {
-//							selModel.addSelectionInterval(viewRow, viewRow);
-//						}
-//					}
-//				}
-//				// Scroll to the first selected item
-//				if (table.getSelectedRowCount() > 0) {
-//					int firstSelected = table.getSelectedRows()[0];
-//					table.scrollRectToVisible(table.getCellRect(firstSelected, 0, true));
-//				}
-//			} finally {
-//				isUpdatingSelection = false;
-//				// Manually update button state after programmatic selection
-//				boolean hasSelection = table.getSelectedRowCount() > 0;
-//				for (JButton btn : btns) {
-//					btn.setEnabled(hasSelection);
-//				}
-//			}
-//		});
-//	}
 	@Override
 	protected void updateSelection(Selection selection) {
 	    if (selection.originId() == Automation.ORIGIN_ID) {
