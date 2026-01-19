@@ -6,7 +6,7 @@ import static judahzone.util.Constants.STEREO;
 import static judahzone.util.WavConstants.WAV_EXT;
 
 import java.io.File;
-import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,7 +41,6 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 	private static final float UNITY = 1f;
 	@Getter protected final Looper looper;
 	protected final JudahClock clock;
-    protected final Collection<LineIn> sources;
 
 	@Getter private Recording tape = new Recording(); // RMS Recording?
     @Getter protected final LoopMix display;
@@ -72,12 +71,12 @@ public class Loop extends Channel implements RecordAudio, Runnable {
     private final Object tapeLock = new Object();
     private volatile boolean deleted = false;
 
-    public Loop(String name, String icon, Looper loops, Collection<LineIn> sources) {
+    public Loop(String name, String icon, Looper loops, JudahClock clock) {
 		super(name, true);
+    	setOnMixer(true);
     	this.icon = Icons.get(icon);
     	this.looper = loops;
-    	this.clock = looper.getClock();
-    	this.sources = sources;
+    	this.clock = clock;
     	for (int i = 0; i < INIT; i++)
     		tape.add(new float[STEREO][N_FRAMES]);
     	display = new LoopMix(this, looper);
@@ -358,18 +357,16 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 		if (overflow(current))
 			current = 0;
 
-		synchronized (tapeLock) {
-			if (current >= tape.size()) {
-				RTLogger.log(name, "play error " + tape.size() + " vs. " + current + " vs. " + length);
-				current = 0;
-				tapeCounter.set(current);
-			}
-			if (onMute)
-				return;
-			playBuffer = tape.get(current);
+		if (current >= tape.size()) {
+			RTLogger.log(name, "play error " + tape.size() + " vs. " + current + " vs. " + length);
+			current = 0;
+			tapeCounter.set(current);
 		}
+		if (onMute)
+			return;
+		playBuffer = tape.get(current);
+
 		fx(left, right);
-        // AudioMetrics.normalizeStereoToRms(left, right, normalizeTargetRms, normalizeMaxGain);
 		computeRMS(left, right);
 	}
 
@@ -377,7 +374,8 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 	private void fx(float[] outLeft, float[] outRight) {
 		AudioTools.replace(playBuffer[LEFT], left, gain.getLeft());
 		AudioTools.replace(playBuffer[RIGHT], right, gain.getRight());
-		for (int i = 0, n = active.size(); i < n; i++)
+		hotSwap();
+		for (int i = 0; i < active.size(); i++)
 			active.get(i).process(left, right);
 		AudioTools.mix(left, gain.getGain(), outLeft);
 		AudioTools.mix(right, gain.getGain(), outRight);
@@ -439,6 +437,8 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 		}
 	}
 
+
+
 	/** helper to perform the per-source adds into the provided target buffer */
 	private void captureInto(float[][] target) {
 		float amp = UNITY;
@@ -450,7 +450,10 @@ public class Loop extends Channel implements RecordAudio, Runnable {
     	SoloTrack d = looper.getSoloTrack();
     	LineIn solo = d.isSolo() ? d.getSoloTrack() : null;
 
-    	for (LineIn in : sources) {
+    	List<LineIn> processing = looper.candidates; // avoid concurrent modification
+
+    	for (int i = 0; i < processing.size(); i++) {
+    		LineIn in = processing.get(i);
         	if (in.isOnMute() || in.isMuteRecord()) continue;
             if (in == solo && this != d) continue;
             if (solo != null && in != solo && this == d) continue;

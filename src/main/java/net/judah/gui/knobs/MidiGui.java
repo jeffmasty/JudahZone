@@ -99,7 +99,10 @@ public class MidiGui extends KnobPanel implements Cmdr {
     	title.add(new Btn(Icons.SAVE, e->zone.getOverview().save()));
     	title.add(tape);
 
-		mpkRoutes = new ZoneMidi[] {t1, f1, b1};
+    	mpkRoutes = (b1 == null ?
+    			new ZoneMidi[] {t1, f1} :
+			new ZoneMidi[] {t1, f1, b1});
+
 		toggler = new RecMpk(t1, f1, b1);
 
 		taco = new Program(t1.getTrack());

@@ -17,7 +17,6 @@ import net.judah.gui.knobs.SynthKnobs;
 import net.judah.looper.Loop;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.Fader;
-import net.judah.seq.SynthRack;
 import net.judah.synth.fluid.FluidSynth;
 import net.judah.synth.taco.TacoSynth;
 import net.judah.synth.taco.TacoTruck;
@@ -32,7 +31,7 @@ public class Beatstep implements Controller {
 			10, 74, 71, 76, 77, 93, 73, 75,
 			114, 18, 19, 16, 17, 91, 79, 72 };
 
-	private static final int GUITAR = 44;
+	private static final int CH_ZERO = 44;
 	private static final int TACO = 47;
 	private static final int TACO2 = 48;
 	private static final int LOOPA = 36;
@@ -153,16 +152,19 @@ public class Beatstep implements Controller {
 			return zone.getDrumMachine();
 		if (data1 == MAINS - 2)
 			return zone.getFluid();
-		if (data1 == MAINS - 3)
-			return zone.getTk2();
-		if (data1 >= GUITAR)
-			return zone.getInstruments().get(data1 - GUITAR);
+		if (data1 == MAINS - 3) {
+			TacoTruck[] trucks = zone.getSeq().getTacos();
+			if (trucks.length > 1)
+				return trucks[1];
+		}
+		if (data1 >= CH_ZERO)
+			return zone.getChannels().getInputs().get(data1 - CH_ZERO);
 		else
 			return zone.getLooper().get(data1 - LOOPA);
 	}
 
 	private void taco1(int command) {
-		TacoTruck taco = SynthRack.getTacos()[0];
+		TacoTruck taco = zone.getTaco();
 		if (channels.contains(taco)) {
 			if (taco.getTracks().size() < 2) {
 				multiSelect(command, TACO);
@@ -188,7 +190,7 @@ public class Beatstep implements Controller {
 	}
 
 	private void taco2(int command) { // rotary focus additional synths
-		TacoTruck[] engines = SynthRack.getTacos();
+		TacoTruck[] engines = zone.getSeq().getTacos();
 		if (engines.length < 2) {// no taco 4 u
 			multiSelect(command, TACO2);
 			return;
@@ -236,7 +238,7 @@ public class Beatstep implements Controller {
 
 	private void fluid2() { // synths not on mixer strip
 
-		FluidSynth[] engines = SynthRack.getFluids();
+		FluidSynth[] engines = zone.getSeq().getFluids();
 		if (engines.length < 2) // drink something
 			return;
 		channels.clear();

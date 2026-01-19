@@ -44,6 +44,7 @@ public class Sampler extends LineIn {
 
     public Sampler() {
         super(Sampler.class.getSimpleName(), Constants.STEREO);
+    	onMixer = false;
 
         if (!SampleDB.isInitialized()) {
             SampleDB.init();

@@ -10,7 +10,6 @@ import judahzone.api.Midi;
 import judahzone.gui.Icons;
 import judahzone.util.AudioTools;
 import lombok.Getter;
-import net.judah.channel.Channel;
 import net.judah.gui.knobs.KitKnobs;
 import net.judah.midi.JudahMidi;
 import net.judah.seq.TrackList;
@@ -26,29 +25,37 @@ public final class DrumMachine extends Engine {
 
 	private final TrackList<DrumTrack> tracks = new TrackList<DrumTrack>();
 	private final ArrayList<DrumKit> kits = new ArrayList<DrumKit>();
-	private final KitKnobs knobs;
-	private final Channel mains;
+	private KitKnobs knobs;
 	private KitSetup settings = new KitSetup();
 
-	public DrumMachine(Channel mains) throws Exception {
+	public DrumMachine() throws Exception {
 		super("Drums", true);
-		this.mains = mains;
 		icon = Icons.get("Drums.png");
 		for (Drumz type : Drumz.values()) {
 			DrumKit kit = new DrumKit(this, type);
 			kits.add(kit);
 			DrumTrack trak = new DrumTrack(type, kit);
 			tracks.add(trak);
-			trak.progChange(type.program);
 		}
-		knobs = new KitKnobs(this);
+		setOnMixer(true);
 	}
 
 	public void init(String preset) {
 		setPreset(preset);
-		for (int i = 0; i < tracks.size(); i++)
-			tracks.get(i).load(Trax.values()[i].getFile());
+
+		for (int i = 0; i < tracks.size(); i++) {
+			Trax type = Trax.values()[i];
+			DrumTrack d = tracks.get(i);
+			d.load(type.getFile());
+			d.progChange(type.getProgram());
+		}
 		tracks.get(Trax.H2.ordinal()).setCue(Cue.Hot);
+	}
+
+	public KitKnobs getKnobs() {
+		if (knobs == null)
+			knobs = new KitKnobs(this);
+		return knobs;
 	}
 
 	public DrumTrack getCurrent() {
@@ -66,21 +73,6 @@ public final class DrumMachine extends Engine {
 		return DrumDB.getKits().toArray(new String[DrumDB.getKits().size()]);
 	}
 
-//	@Override public boolean progChange(String preset, int channel) {
-//		return getChannel(channel).progChange(preset);
-//	}
-//
-//	@Override public String getProg(int ch) {
-//		for (int i = 0; i < tracks.size(); i++)
-//			if (tracks.get(i).getCh() == ch)
-//				return tracks.get(i).getKit().getProgram().getFolder().getName();
-//			return "?";
-//	}
-//
-//	@Override public boolean progChange(String preset) {
-//		return tracks.getFirst().getKit().progChange(preset);
-//	}
-//
 	@Override public String progChange(int data2, int ch) {
 		if (data2 < 0 || data2 >= DrumDB.getKits().size())
 			return null;
@@ -97,7 +89,7 @@ public final class DrumMachine extends Engine {
 			return; // filtered envelope cc
 		if (Midi.isCC(m)) // bypass mutes to filter channel cc
 			getChannel(m.getChannel()).send(m, JudahMidi.ticker());
-		else if (onMute || mains.isOnMute())
+		else if (onMute) /*  || mains.isOnMute() */
 			return; // discard
 		getChannel(m.getChannel()).send(m, JudahMidi.ticker());
 	}

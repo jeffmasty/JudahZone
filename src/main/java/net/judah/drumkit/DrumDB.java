@@ -9,6 +9,7 @@ import java.util.HashMap;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
 import judahzone.util.Recording;
+import judahzone.util.WavConstants;
 import lombok.Getter;
 
 
@@ -23,12 +24,11 @@ public class DrumDB {
 	public static Recording get(File file) throws Exception {
 		if (db.containsKey(file) == false) {
 			try {
-				db.put(file, Recording.loadInternal(file)); // TODO internal?
+				db.put(file, Recording.loadInternal(file, WavConstants.FILE_LEVEL));
 				RTLogger.warn(DrumDB.class, "Lazy Load drum sample? " + file.getAbsolutePath());
 			} catch (Throwable t) {
 				RTLogger.warn(DrumDB.class, "Failed to lazy load drum sample: " + t.getMessage());
 			}
-
 		}
 		return db.get(file);
 	}
@@ -70,7 +70,7 @@ public class DrumDB {
 		for (ArrayList<File> list : samples)
 			for (File f : list)
 				try {
-					db.put(f, Recording.loadInternal(f));
+					db.put(f, Recording.loadInternal(f, WavConstants.FILE_LEVEL));
 				} catch (Throwable t) {
 					RTLogger.warn(DrumDB.class, "Pre-cache failed: " + t.getMessage());
 				}

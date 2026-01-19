@@ -32,7 +32,7 @@ import net.judah.seq.track.MidiTools;
 import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
 
-public class PianoSteps extends Steps implements TrackListener, Gui.Mouser, Size {
+public class PianoSteps extends Steps implements TrackListener, Gui.Mouse, Size {
 
 	static final int OFFSET = UNIT / 2 - 5;
 	private final NoteTrack notes;

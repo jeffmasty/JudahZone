@@ -40,7 +40,7 @@ import net.judah.gui.settable.SongCombo;
 import net.judah.looper.Looper;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
-import net.judah.mixer.DJJefe;
+import net.judah.mixer.Channels;
 import net.judah.seq.Seq;
 import net.judah.seq.track.Computer;
 import net.judah.seq.track.Computer.Update;
@@ -65,7 +65,7 @@ public class Overview extends Box implements TimeListener {
 	private final JudahClock clock;
 	private final Seq seq;
 	private final Looper looper;
-	private final DJJefe mixer;
+	private final Channels channels;
 	private final Setlists setlists;
 	private final DrumMachine drums;
 
@@ -93,7 +93,7 @@ public class Overview extends Box implements TimeListener {
 		clock = JudahMidi.getClock();
 		seq = zone.getSeq();
 		looper = zone.getLooper();
-		mixer = zone.getMixer();
+		channels = zone.getChannels();
 		setlists = zone.getSetlists();
 		drums = zone.getDrumMachine();
 
@@ -172,7 +172,7 @@ public class Overview extends Box implements TimeListener {
 		}
 		Threads.execute(()->{
 			List<String> fx = scene.getFx();
-			for (Channel ch : mixer.getChannels()) {
+			for (Channel ch : channels.getAll()) {
 				if (fx.contains(ch.getName())) {
 					if (!ch.isPresetActive())
 						ch.setPresetActive(true);
@@ -221,8 +221,7 @@ public class Overview extends Box implements TimeListener {
 
     	seq.loadSong(song); // + chords
 
-    	mixer.loadFx(song.getFx());
-    	mixer.mutes(song.getCapture());
+    	channels.loadFx(song.getFx()); // TODO mutes
 
 		songTitle.update();
 
@@ -263,7 +262,7 @@ public class Overview extends Box implements TimeListener {
 
     public void newSong() {
     	setSong(new Song(zone, (int) clock.getTempo()));
-    	zone.getInstruments().mutes(zone);
+    	zone.getChannels().mutes(); // duplicate (fx)?
     	setName();
     }
 

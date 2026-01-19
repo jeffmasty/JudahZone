@@ -39,7 +39,6 @@ public class SamplePad extends Gui.Opaque {
 		btns = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
 		name = new JLabel(sample.toString(), JLabel.CENTER);
 		name.setOpaque(true);
-		update();
 		knob = new Knob(Pastels.ORANGE);
 		knob.addListener(e->sample.getGain().set(Gain.VOLUME, knob.getValue()));
 
@@ -48,6 +47,8 @@ public class SamplePad extends Gui.Opaque {
 		//btns.add(new FxButton(s));
 		add(btns);
 		parent.add(this);
+		update();
+
 	}
 
 	public void update() {

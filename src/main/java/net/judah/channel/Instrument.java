@@ -2,6 +2,7 @@ package net.judah.channel;
 
 import org.jaudiolibs.jnajack.JackPort;
 
+import judahzone.api.Custom;
 import judahzone.fx.Convolution;
 import judahzone.fx.MonoFilter;
 import judahzone.fx.MonoFilter.Type;
@@ -9,25 +10,44 @@ import judahzone.gui.Icons;
 import judahzone.util.AudioTools;
 import judahzone.util.Constants;
 import lombok.Getter;
+import lombok.Setter;
 
+/** An Instrument is a specific Jack input source with pass filters if mono */
 @Getter
 public class Instrument extends LineIn {
 
-    private String leftSource;
-    private String rightSource; // for stereo
-    protected JackPort leftPort;
-    protected JackPort rightPort;
+    @Setter protected JackPort leftPort;
+    @Setter protected JackPort rightPort;
 
     private MonoFilter lp;
     private MonoFilter hp;
 
+    public Instrument(Custom user) {
+    	super(user.name(), user.stereo());
+    	setUser(user);
+    	if (user.iconName() == null	)
+			icon = Icons.get("Gear.png");
+		else
+			icon = Icons.get(user.iconName());
+    	if (user.highCutHz() != null) {
+    		lp = new MonoFilter(Type.HiCut, user.highCutHz(), 1);
+    		effects.add(lp);
+			setActive(lp, true);
+				}
+		if (user.lowCutHz() != null) {
+			hp = new MonoFilter(Type.LoCut, user.lowCutHz(), 1);
+			effects.add(hp);
+			setActive(hp, true);
+		}
+    }
+
     /** Mono channel with additional/default HiCut/LoCut */
-	public Instrument(String name, String sourcePort, JackPort left, String icon, int lowCut, int hiCut) {
+	@Deprecated public Instrument(String name, String sourcePort, JackPort left, String icon, int lowCut, int hiCut) {
 		super(name, Constants.MONO);
+		if (icon == null)
+			icon = "Gear.png";
 		this.icon = Icons.get(icon);
 		this.leftPort = left;
-		this.leftSource = sourcePort;
-		this.rightSource = null;
 
 		hp = new MonoFilter(Type.LoCut, lowCut, 1);
 		lp = new MonoFilter(Type.HiCut, hiCut, 1);
@@ -38,12 +58,16 @@ public class Instrument extends LineIn {
 	}
 
 	/** Stereo channel */
-	public Instrument(String name, String leftSource, String rightSource, String icon) {
+	@Deprecated public Instrument(String name, String leftSource, String rightSource, String icon) {
 		super(name, Constants.STEREO);
 		if (icon != null)
 			this.icon = Icons.get(icon);
-		this.leftSource = leftSource;
-		this.rightSource = rightSource;
+	}
+
+	@Deprecated public Instrument(String name, String leftSource, String rightSource, String icon, JackPort left, JackPort right) {
+		this(name, leftSource, rightSource, icon);
+		leftPort = left;
+		rightPort = right;
 	}
 
 	@Override public final void processImpl() {

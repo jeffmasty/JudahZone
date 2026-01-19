@@ -1,6 +1,7 @@
-package net.judah.looper;
+package net.judah.bridge;
 
 import judahzone.api.FX;
+import net.judah.looper.Loop;
 
 /**TODO
  * Adapter that exposes a Loop as an Effect (RTEffect).

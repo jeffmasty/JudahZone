@@ -34,7 +34,7 @@ public class ImportTable extends JTable {
 
 	public ImportTable(Sequence seq) {
 
-		super(new ImportModel(seq));
+		super(new ImportModel(seq, JudahZone.getInstance().getSeq().getSynthTracks().getFirst()));
 		model = (ImportModel) getModel();
 		sequence = seq;
 		for (MidiTrack t : JudahZone.getInstance().getSeq().getTracks())

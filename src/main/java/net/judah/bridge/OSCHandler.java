@@ -1,4 +1,4 @@
-package net.judah.midi;
+package net.judah.bridge;
 
 import java.io.Closeable;
 import java.io.IOException;

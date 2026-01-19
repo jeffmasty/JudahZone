@@ -1,4 +1,4 @@
-package net.judah.mixer;
+package net.judah.channel;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -8,7 +8,6 @@ import judahzone.util.Folders;
 import judahzone.util.RTLogger;
 import judahzone.util.Threads;
 import lombok.Getter;
-import net.judah.channel.Channel;
 
 public class PresetsDB {
 	public static final String DEFAULT = "Freebird";

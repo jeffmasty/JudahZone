@@ -21,13 +21,13 @@ public class Line6FBV extends Debounce implements Controller {
 	private boolean mutes;
 	private final JudahZone zone;
 	private final JudahMidi midi;
-	private final LineIn guitar;
+//	private final LineIn guitar;
 	private final Looper looper;
 
 	public Line6FBV(JudahZone judahZone, JudahMidi judahMidi) {
 		this.zone = judahZone;
 		this.midi = judahMidi;
-		this.guitar = zone.getGuitar();
+//		this.guitar = zone.getGuitar();
 		this.looper = zone.getLooper();
 	}
 
@@ -78,22 +78,34 @@ public class Line6FBV extends Debounce implements Controller {
 		case 7: // TAP()   toggle record vs. mute controls
 			mutes = data2 > 0;
 			return true;
-		case 8: // Stomp
+		case 8: { // Stomp
+			LineIn guitar = zone.getChannels().getGuitar();
+			if (guitar == null)
+				return true;
 			guitar.setActive(guitar.getOverdrive(), data2 > 0);
 			MainFrame.update(guitar);
-			return true;
-		case 9: // Mod
+			return true; }
+		case 9: { // Mod
+			LineIn guitar = zone.getChannels().getGuitar();
+			if (guitar == null)
+				return true;
 			guitar.setActive(guitar.getChorus(), data2 > 0);
 			MainFrame.update(guitar);
-			return true;
-		case 10: // Delay
+			return true; }
+		case 10: { // Delay
+			LineIn guitar = zone.getChannels().getGuitar();
+			if (guitar == null)
+				return true;
 			guitar.setActive(guitar.getDelay(), data2 > 0);
 			MainFrame.update(guitar);
-			return true;
-		case 11: // Reverb
+			return true; }
+		case 11: { // Reverb
+			LineIn guitar = zone.getChannels().getGuitar();
+			if (guitar == null)
+				return true;
 			MainFrame.update(guitar);
 			guitar.setActive(guitar.getReverb(), data2 > 0);
-			return true;
+			return true; }
 
 		// 12 : toe switch ?
 		// 13 : pedal wah

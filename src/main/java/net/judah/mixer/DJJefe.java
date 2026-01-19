@@ -1,113 +1,90 @@
 package net.judah.mixer;
 
-import java.awt.Component;
 import java.awt.GridLayout;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
-import javax.swing.JComboBox;
+import javax.swing.BoxLayout;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import judahzone.api.FX;
-import judahzone.api.Notification.Property;
-import judahzone.api.TimeListener;
 import judahzone.fx.Gain;
 import judahzone.gui.Gui;
-import judahzone.util.RTLogger;
-import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
 import net.judah.channel.LineIn;
-import net.judah.channel.Mains;
-import net.judah.drumkit.DrumMachine;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
-import net.judah.looper.Looper;
-import net.judah.midi.JudahClock;
-import net.judah.seq.SynthRack;
-import net.judah.seq.track.DrumTrack;
-import net.judah.song.FxData;
+import net.judah.mixer.Channels.MixBus;
 
-/** Graphical representation of the Mixer*/
-public class DJJefe extends JPanel implements TimeListener {
+/** Graphical representation of the Mixer */
+public class DJJefe extends JPanel implements MixBus {
 
-	/** has GUI representation on the main mixer */
-	@Getter private final ArrayList<Channel> channels = new ArrayList<>();
+	static final int IDEAL_WIDTH = 55; // ?55 TODO onMixer ribbon/scroll
+
 	/** Any channel available to LFO knobs, not necessarily a main mixer fader */
-	@Getter private final ArrayList<Channel> all = new ArrayList<>();
-	private final ArrayList<MixWidget> faders = new ArrayList<MixWidget>();
+	private final ArrayList<MixWidget> faders = new ArrayList<MixWidget>(); // onMixer
+
 	private final JudahZone zone;
-	private final JudahClock clock;
-	@Getter private final Mains mains;
-	private final int size;
+	private final Channels registry;
+
+	private final int REFRESHES = 4; // process RMS of this many channels per refresh
+	private static final int COUNTUP = 3; // number of frames between gui refresh calls
 	private int idx;
+	private int countUp;
 
-    public DJJefe(JudahClock clock, JudahZone judahZone, LineIn ... bonus) {
+	private final JPanel loops = new JPanel();
+	private final JPanel sys = new JPanel();
+	private final JPanel user = new JPanel();
+	private final JPanel main = new JPanel();
 
+    public DJJefe(JudahZone judahZone) {
     	this.zone = judahZone;
-    	this.clock = clock;
-    	this.mains = zone.getMains();
-    	Looper looper = zone.getLooper();
-    	Collection<LineIn> sources = zone.getInstruments();
-    	DrumMachine drums = zone.getDrumMachine();
-    	all.add(mains);
-        all.addAll(looper);
-		all.addAll(sources);
-		all.add(drums);
-
-		for (LineIn extra : bonus)
-			all.add(extra);
-		for (DrumTrack track : drums.getTracks())
-			all.add( track.getKit());
-    	for (Loop loop : looper) {
-    		channels.add(loop);
-    		faders.add(loop.getDisplay());
-    		add(loop.getDisplay());
-    	}
-        for (LineIn instrument : sources) {
-        	channels.add(instrument);
-    		MixWidget fader = new LineMix(instrument, looper.getSoloTrack(), zone);
-    		faders.add(fader);
-    		add(fader);
-        }
-    	channels.add(drums);
-		MixWidget fader2 = new LineMix(drums, looper.getSoloTrack(), zone);
-		faders.add(fader2);
-		add(fader2);
-
-
-        MixWidget fader3 = new MainsMix(mains);
-        faders.add(fader3);
-        add(fader3);
-        channels.add(mains);
-        size = channels.size();
-        setLayout(new GridLayout(1, size, 0, 0));
-        clock.addListener(this);
+    	this.registry = zone.getChannels();
     }
 
-	public void addChannel(LineIn line) {
-		all.add(line);
-		if (combo == null)
-			return;
-		comboOverride = true;
-		combo.removeAllItems();
-		all.forEach(ch -> combo.addItem(ch));
-		combo.setSelectedItem(zone.getFxRack().getSelected().getFirst());
-		comboOverride = false;
+    public void gui() {
+
+    	int loopCount = zone.getLooper().size();
+    	loops.setLayout(new GridLayout(1, loopCount, 0, 0));
+
+    	for (Loop loop : zone.getLooper()) // have loops register themselves as onMixer/sys?
+    		addNow(loop);
+
+    	MainsMix speakers = new MainsMix(zone.getMains());
+    	main.setLayout(new GridLayout(1, 1, 0, 0));
+        main.add(speakers);
+        faders.add(speakers);
+    	registry.subscribe(this); // now?
+
+    	setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+    	add(loops);
+    	add(sys);
+    	add(user);
+    	add(main);
+    }
+
+	public void process() {
+		// count this invocation; act only on every 3rd call
+		countUp++;
+		if (countUp % COUNTUP == 0) {
+			countUp = 0;
+			for (int i = 0; i < REFRESHES; i++) {
+			    if (++idx >= faders.size())
+			        idx = 0;
+			    MainFrame.update(faders.get(idx).rms);
+			}
+		}
 	}
 
-    public void removeChannel(Channel ch) {
-	    if (!channels.contains(ch))
-		    return;
-	    MixWidget fade = getFader(ch);
-	    remove(fade);
-	    faders.remove(fade);
-	    channels.remove(ch);
-	    if (combo == null)
-	    	return;
-	    // TODO combos
-    }
+
+    private MixWidget factory(Channel ch) {
+		if (ch instanceof LineIn line)
+			return new LineMix(line, zone.getLooper().getSoloTrack(), zone);
+		if (ch instanceof Loop loop)
+			return new LoopMix(loop, zone.getLooper());
+		return null;
+	}
 
 	public void update(Channel channel) {
 		for (MixWidget ch : faders)
@@ -124,7 +101,6 @@ public class DJJefe extends JPanel implements TimeListener {
 		else
 			it.getIndicators().sync(fx);
 	}
-
 
 	public void updateAll() {
 		for (MixWidget ch : faders)
@@ -149,79 +125,98 @@ public class DJJefe extends JPanel implements TimeListener {
 		return null;
 	}
 
-	public Channel byName(String channel) {
-		for (Channel ch : all)
-			if (ch.getName().equals(channel))
-				return ch;
-		return null;
-	}
+	private void addNow(Channel ch) {
+		MixWidget widget = factory(ch);
+        faders.add(widget);
+        widget.update();
 
-	private boolean comboOverride;
-	private JComboBox<Channel> combo;
-	public Component getCombo(Channel selected) {
-		if (combo == null) {
-	    	combo = new JComboBox<>(all.toArray(new Channel[all.size()]));
-	    	combo.setFont(Gui.BOLD13);
-	    	combo.addActionListener(e-> {
-	    		if (!comboOverride)
-	    			MainFrame.setFocus(combo.getSelectedItem());});
+        if (ch instanceof Loop) {
+			loops.add(widget);
+			loops.setLayout(new GridLayout(1, loops.getComponentCount(), 0, 0));
+			loops.doLayout();
+			revalidate();
+			repaint();
+			return;
 		}
-		comboOverride = true;
-		combo.setSelectedItem(selected);
-		comboOverride = false;
-		return combo;
+
+        if (ch.isSys()) {
+        	sys.add(widget);
+        	sys.setLayout(new GridLayout(1, sys.getComponentCount(), 0, 0));
+        	sys.doLayout();
+        	revalidate();
+        	repaint();
+        	return;
+        }
+
+        reordered();
+        refresh();
 	}
 
-	public void loadFx(List<FxData> data) {
-		for (FxData fx : data) {
-			String name = fx.getChannel();
-			if (name.equals("MAIN")) // Legacy
-				name = "Mains";
-			Channel ch = byName(name);
-			if (ch == null) { // Legacy
-				for (Channel c : all) {
-					String nombre = c.getName();
-					if (nombre == name) {
-						ch = c;
-						RTLogger.warn(this, "remapped " + fx.getChannel() + " FX to " + nombre);
-						break;
-					}
-				}
-				if (ch == null) {
-					ch = SynthRack.getTacos()[0];
-					RTLogger.warn(this, "forced " + fx.getChannel() + " FX to " + ch.getName());
-				}
-				continue;
+	private void removeNow(Channel ch) {
+	    MixWidget widget = getFader(ch);
+	    if (widget == null)
+	    	return;
+	    faders.remove(widget);
+	    reordered();
+	}
+
+	@Override
+	public void reordered() {
+		user.removeAll();
+		for (Channel ch : registry.getUserChannels()) {
+			if (ch.isOnMixer()) {
+				MixWidget widget = getFader(ch);
+				if (widget != null)
+					user.add(widget);
 			}
-			ch.setPreset(fx.getPreset());
 		}
+		refresh();
+
 	}
 
-	public void mutes(List<String> record) {
-		for (Channel ch : channels)
-			if (ch instanceof LineIn in)
-				in.setMuteRecord(true);
-		zone.getGuitar().setMuteRecord(false);
-		SynthRack.getTacos()[0].setMuteRecord(false);
+	private void refresh() {
+        user.setLayout(new GridLayout(1, faders.size(), 0, 0));
+        user.invalidate();
+        user.doLayout();
+        revalidate();
+        repaint();
 	}
 
-	@Override public void update(Property prop, Object value) {
-		if (prop != Property.TEMPO) return;
-		float tempo = (float)value;
-		all.forEach(ch->ch.tempo(tempo, clock.syncUnit()));
+	@Override public void channelRemoved(final LineIn ch) {
+
+		MixWidget fader = getFader(ch);
+		if (fader == null)
+			return;
+		SwingUtilities.invokeLater(() -> removeNow(ch));
 	}
 
-	/** process numChannels of RMS indicators in a daisychain*/
-	public void monitor(int numChannels) {
-		for (int i = 0; i < numChannels; i++)
-			process();
+	@Override public void channelAdded(final LineIn ch) {
+		if (!ch.isOnMixer())
+			return;
+		SwingUtilities.invokeLater(() -> addNow(ch));
 	}
 
-	private void process() {
-		if (++idx == size)
-			idx = 0;
-		Channel ch = channels.get(idx);
-		MainFrame.update(getFader(ch).gain);
+	// ch might have become visible or hidden or it's icon may have been changed.
+	@Override public void update(LineIn ch) {
+		if (ch == null)
+			return;
+		SwingUtilities.invokeLater(() -> {
+			MixWidget widget = getFader(ch);
+			if (widget != null) {
+				widget.update();
+				widget.checkIcon();
+			}
+		});
+	}
+
+	/** DOES NOT INLUCDE LOOPS OR MAINS */
+	public ArrayList<LineIn> getVisible() {
+		ArrayList<LineIn> visible = new ArrayList<LineIn>();
+		for (MixWidget mw : faders) {
+			if (mw instanceof LineMix line)
+				visible.add((LineIn)line.channel);
+		}
+		return visible;
 	}
 
 }

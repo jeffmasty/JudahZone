@@ -9,6 +9,7 @@ import javax.sound.midi.ShortMessage;
 import org.jaudiolibs.jnajack.JackMidi;
 import org.jaudiolibs.jnajack.JackPort;
 
+import judahzone.api.Custom;
 import judahzone.api.Midi;
 import judahzone.util.RTLogger;
 import judahzone.util.Services;
@@ -25,12 +26,17 @@ public class MidiInstrument extends Instrument implements ZoneMidi {
 
 	public static enum Type { SYNTH, DRUM, BOTH }
 
-	protected ChannelCC cc = new ChannelCC(this);
 	@Setter protected JackPort midiPort;
-	protected String[] patches = new String[] {};
 	protected final Vector<PianoTrack> tracks = new Vector<>();
+	protected String[] patches = new String[] {};
+	protected ChannelCC cc = new ChannelCC(this);
 
-	// Stereo
+	public MidiInstrument(Custom user) {
+		super(user);
+	}
+
+	// FluidSynth
+	@Deprecated
 	public MidiInstrument(String channelName, String sourceLeft, String sourceRight,
 			JackPort left, JackPort right, String icon, JackPort midi) {
 		super(channelName, sourceLeft, sourceRight, icon);
@@ -39,15 +45,9 @@ public class MidiInstrument extends Instrument implements ZoneMidi {
 		init(midi);
 	}
 
-	/** mono-synth */
-	public MidiInstrument(String name, String sourcePort, JackPort mono, String icon, JackPort midi) {
-		super(name, sourcePort, mono, icon, 45, 11000);
-		init(midi);
-	}
-
 	private void init(JackPort midi) {
 		midiPort = midi;
-		Services.add(this);
+		Services.add(this); // TODO as user channel this will be closed by Channels
 	}
 
 	@Override public final void send(MidiMessage midi, long timeStamp) {

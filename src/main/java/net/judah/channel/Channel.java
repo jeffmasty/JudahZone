@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.swing.ImageIcon;
 
+import judahzone.api.Custom;
 import judahzone.api.FX;
 import judahzone.api.FX.RTFX;
 import judahzone.fx.Chorus;
@@ -23,28 +24,27 @@ import judahzone.util.AudioTools;
 import judahzone.util.RTLogger;
 import judahzone.util.Threads;
 import lombok.Getter;
+import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.EffectsRack;
 import net.judah.gui.knobs.LFOKnobs;
 import net.judah.midi.LFO;
 import net.judah.mixer.DJFilter;
-import net.judah.mixer.Preset;
-import net.judah.mixer.PresetsDB;
-import net.judah.mixer.Setting;
 
-/** A Gui focussed effects bus for input or output audio
- * Publishes per-channel RMS scalars computed on the RT thread. {@link #getLastRmsLeft()} / {@link #getLastRmsRight()}
- */
+/** A Gui focused effects bus for input or output audio.
+ * RMS scalars published from RT thread. {@link #getLastRmsLeft()} / {@link #getLastRmsRight()} */
 @Getter
 public abstract class Channel extends StereoBus implements Presets {
 
     public enum Update {MUTE, MUTE_RECORD, PRESET, RMS, LOOP, SOLO} // TODO updateCh
 
 	protected final String name;
-    protected ImageIcon icon;
     protected final boolean isStereo;
-    protected boolean onMute;
+    /** Copy of json definition, if any */
+    protected Custom user;
+    @Setter protected boolean onMixer;
+
     protected final Gain gain = new Gain(); // RT but handles separately
     protected final EQ eq = new EQ();
     protected final Filter hiCut = new Filter(true);
@@ -54,25 +54,20 @@ public abstract class Channel extends StereoBus implements Presets {
     protected final Delay delay = new Delay();
     protected final Overdrive overdrive = new Overdrive();
     protected final Chorus chorus = new Chorus();
-    protected Reverb reverb = new Freeverb();
     protected final LFO lfo = new LFO(this, LFO.class.getSimpleName());
     protected final LFO lfo2 = new LFO(this, "LFO2");
-    protected Preset preset = PresetsDB.getDefault();
     protected final Convolution IR; // RT if stereo
-    protected boolean presetActive;
+    protected Reverb reverb = new Freeverb();
 
+    protected ImageIcon icon;
+    protected boolean onMute;
+    protected Preset preset = PresetsDB.getDefault();
+    protected boolean presetActive;
     protected EffectsRack gui;
     protected LFOKnobs lfoKnobs;
     /** Last RMS values computed on the RT thread (0..1 approximate). */
-    private volatile float lastRmsLeft = 0f;
-    private volatile float lastRmsRight = 0f;
-
-//    /** GUI helper: set target directly as linear RMS (0..1). 0 disables normalization. */
-//    @Setter protected volatile float normalizeTargetRms = 0.0f;      // linear RMS target (0..1)
-//    /** GUI helper: cap for applied gain (e.g. 2f = +6dB). <= 0 means no cap. */
-//    @Setter protected volatile float normalizeMaxGain = 4f;       // cap applied gain (<=0 means "no cap")
-//    public void setNormalizeTargetDb(float db) {
-//    this.normalizeTargetRms = AudioMetrics.dbToLinearRms(db); }
+	private /* volatile */ float lastRmsLeft = 0f;
+	private /* volatile */ float lastRmsRight = 0f;
 
     public Channel(String name, boolean isStereo) {
         this.name = name;
@@ -141,7 +136,7 @@ public abstract class Channel extends StereoBus implements Presets {
 
     public final LFOKnobs getLfoKnobs() { // lazy
         if (lfoKnobs == null)
-            lfoKnobs = new LFOKnobs(this, JudahZone.getInstance().getMixer());
+            lfoKnobs = new LFOKnobs(this, JudahZone.getInstance().getChannels().getAll().getCombo(this));
         return lfoKnobs;
     }
 
@@ -262,6 +257,14 @@ public abstract class Channel extends StereoBus implements Presets {
     }
 
     @Override public final String toString() { return name; }
+
+    public void setUser(Custom json) {
+    	this.user = json;
+    	this.onMixer = json.onMixer();
+    }
+	public boolean isSys() {
+		return user == null;
+	}
 
     /**
      * Compute RMS for arbitrary buffers and publish to the channel's volatile fields.

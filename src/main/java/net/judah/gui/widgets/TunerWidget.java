@@ -124,9 +124,9 @@ public class TunerWidget extends Box implements Updateable {
         this.active = on;
 
         if (active) // register analyzer/listener that posts updates via MainFrame.update(...)
-            zone.registerAnalyzer(tuner);
+            zone.getAnalysis().register(tuner);
         else
-            zone.unregisterAnalyzer(tuner);
+            zone.getAnalysis().unregister(tuner);
 
 		MainFrame.update(this);
     }

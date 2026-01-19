@@ -34,6 +34,7 @@ import judahzone.scope.JudahScope;
 import judahzone.util.AudioMetrics.RMS;
 import judahzone.util.Circular;
 import judahzone.util.Constants;
+import judahzone.util.Folders;
 import judahzone.util.RTLogger;
 import judahzone.util.Threads;
 import lombok.Getter;
@@ -58,12 +59,12 @@ import net.judah.midi.Actives;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.LFO;
+import net.judah.mixer.AddChannel;
 import net.judah.mixer.DJJefe;
 import net.judah.mixer.LoopMix;
 import net.judah.sampler.Sample;
 import net.judah.sampler.Sampler;
 import net.judah.seq.Seq;
-import net.judah.seq.SynthRack;
 import net.judah.seq.TrackList;
 import net.judah.seq.automation.Automation;
 import net.judah.seq.beatbox.DrumZone;
@@ -235,7 +236,12 @@ public class MainFrame extends JFrame implements Runnable {
 	        seq.getTracks().setCurrent(seq.getTracks().getFirst());
 	        knobMode(KnobMode.MIDI);
 	        setVisible(true);
-	        new Bindings(this, seq, mixer);
+	        new Bindings(this, seq, mixer, zone.getMains());
+
+	        if (Folders.getUserChannels().isFile() == false) // assume first time
+	        	AddChannel.open(zone.getChannels());
+
+
         });
     }
 
@@ -258,12 +264,11 @@ public class MainFrame extends JFrame implements Runnable {
     		mixer.highlight(ch);
     		if (knobMode == KnobMode.LFO)
     			knobPanel(ch.getLfoKnobs());
-    		if (ch == drums)
-    			knobPanel(drums.getKnobs());
-    		else if (ch instanceof TacoTruck synth)
-    			focus(synth.getTrack().getKnobs());
+			if (ch instanceof TacoTruck synth)
+				focus(synth.getTrack().getKnobs());
     		update(o); // loopback update();
 		}
+
 		else if (o instanceof MultiSelect multiselect) { // TODO LFO/Compressor
 			Channel next = multiselect.get(multiselect.size()-1);
 			mixer.highlight(multiselect);
@@ -366,7 +371,7 @@ public class MainFrame extends JFrame implements Runnable {
             else if (o instanceof JudahClock) {
                 hq.length();
                 hq.metronome();
-                mixer.update(looper.getLoopA());
+                mixer.update(looper.getFirst());
             }
             else if (o instanceof Scene scene) {
                 hq.sceneText();
@@ -437,7 +442,7 @@ public class MainFrame extends JFrame implements Runnable {
 			case Kitz -> drums.getKnobs();
 			case Track -> seq.getKnobs();
 			case LFO -> effects.getChannel().getLfoKnobs();
-			case Taco -> SynthRack.getTacos()[0].getTrack().getKnobs(); // TODO
+			case Taco -> zone.getTaco().getTrack().getKnobs();
 			case Sample -> {focus(sampler); yield sampler.getView();}
 			case Presets -> presets;
 			case Setlist -> setlists;

@@ -8,7 +8,6 @@ import net.judah.JudahZone;
 import net.judah.channel.Channel;
 import net.judah.channel.LineIn;
 import net.judah.mixer.Fader;
-import net.judah.mixer.Zone;
 import net.judah.seq.Trax;
 
 public class MixCmd implements Cmdr {
@@ -18,7 +17,7 @@ public class MixCmd implements Cmdr {
 
 	@Getter private final String[] keys;
 
-	private final List<Channel> channels;
+//	private final List<Channel> channels;
 	/*
 	private static final DJJefe mixer = JudahZone.getMixer();
 	private static final List<Channel> channels = mixer.getAll();
@@ -27,7 +26,8 @@ public class MixCmd implements Cmdr {
 	 */
 
 	MixCmd() {
-		channels = JudahZone.getInstance().getMixer().getAll();
+
+		List<Channel> channels = JudahZone.getInstance().getChannels().getAll();
 		keys = new String[channels.size()];
 	    for (int i = 0; i < keys.length; i++)
 	    	keys[i] = channels.get(i).getName();
@@ -35,7 +35,7 @@ public class MixCmd implements Cmdr {
 
 	@Override
 	public Channel resolve(String key) {
-		for (Channel ch : channels)
+		for (Channel ch : JudahZone.getInstance().getChannels().getAll())
 			if (ch.getName().equals(key))
 				return ch;
 		for (Trax legacy : Trax.values())
@@ -89,7 +89,7 @@ public class MixCmd implements Cmdr {
 
 	static class Line implements Cmdr {
 
-		final Zone instruments = JudahZone.getInstance().getInstruments();
+		List<LineIn> instruments = JudahZone.getInstance().getChannels().getInputs();
 		@Getter private String[] keys = new String[instruments.size()];
 
 		Line() {
@@ -120,7 +120,7 @@ public class MixCmd implements Cmdr {
 			}
 
 			@Override public Channel resolve(String key) {
-				Channel ch = instruments.byName(key);
+				Channel ch = JudahZone.getInstance().getChannels().byName(key);
 				if (ch != null)
 					return ch;
 				for (Trax legacy : Trax.values())

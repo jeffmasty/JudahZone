@@ -1,4 +1,4 @@
-package net.judah.mixer;
+package net.judah.channel;
 
 
 import java.util.ArrayList;

@@ -31,7 +31,6 @@ import net.judah.gui.knobs.LFOKnobs;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.Panic;
 import net.judah.sampler.Sample;
-import net.judah.seq.SynthRack;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
@@ -182,7 +181,7 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 	}
 
 	private final KnobMode[] midiBtnSequence = new KnobMode[]
-			{ MIDI, Setlist, Sample, Presets, Tuner, Log };
+			{ MIDI, Setlist, Kitz, Presets, Tuner, Log, Autom8, Sample };
 
 	private void nextMidiBtn() {
 		KnobMode mode = MainFrame.getKnobMode();
@@ -223,7 +222,7 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 		// Bank A: Fluid presets
 		for (int i = 0; i < PRIMARY_PROG.length; i++)
 			if (data1 == PRIMARY_PROG[i]) {
-				SynthRack.getFluids()[0].progChange(ROMPLER[i]);
+				zone.getSeq().getFluids()[0].progChange(ROMPLER[i]);
 				return true;
 			}
 		// Bank B: set current track's pattern #

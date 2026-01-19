@@ -1,7 +1,5 @@
 package net.judah.channel;
 
-import net.judah.mixer.Preset;
-
 public interface Presets {
 
 	Preset getPreset();

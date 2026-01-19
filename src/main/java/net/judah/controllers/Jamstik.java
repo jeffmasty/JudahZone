@@ -40,7 +40,11 @@ public class Jamstik implements Controller, Updateable {
 
 	public void setActive(boolean active) {
 		this.active = active;
-		LineIn guitar = zone.getGuitar();
+		MainFrame.update(this);
+
+		LineIn guitar = zone.getChannels().getGuitar();
+		if (guitar == null)
+			return;
 		if (active) {
 			volStash = guitar.getVolume();
 			guitar.getGain().setGain(0);
@@ -48,7 +52,6 @@ public class Jamstik implements Controller, Updateable {
 			guitar.getGain().set(Gain.VOLUME, volStash);
 			new Panic(mini.getMidiOut());
 		}
-		MainFrame.update(this);
 	}
 
 	public void toggle() {
@@ -77,7 +80,9 @@ public class Jamstik implements Controller, Updateable {
 			toggleBtn.setSelected(active);
 		if (octaver != octBtn.isSelected())
 			octBtn.setSelected(octaver);
-		Channel guitar = zone.getGuitar();
+		Channel guitar = zone.getChannels().getGuitar();
+		if (guitar == null)
+			return;
 		zone.getMixer().update(guitar);
 		if (zone.getFxRack().getChannel() == guitar)
 			MainFrame.update(guitar);

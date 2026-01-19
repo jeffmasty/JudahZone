@@ -1,12 +1,11 @@
 package net.judah.looper;
 
-import java.util.Collection;
-
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.channel.LineIn;
 import net.judah.gui.MainFrame;
+import net.judah.midi.JudahClock;
 
 @EqualsAndHashCode(callSuper = true)
 public class SoloTrack extends Loop {
@@ -16,9 +15,8 @@ public class SoloTrack extends Loop {
     @Getter private LineIn soloTrack;
     private boolean soloOn;
 
-    public SoloTrack(LineIn soloTrack, Looper looper, Collection<LineIn> sources) {
-        super(NAME, "LoopD.png", looper, sources);
-        this.soloTrack = soloTrack;
+    public SoloTrack(String name, String icon, Looper looper, JudahClock clock) {
+        super(name, icon, looper, clock);
         drumTrack = true;
     }
 

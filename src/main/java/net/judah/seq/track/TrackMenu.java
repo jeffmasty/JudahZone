@@ -27,7 +27,6 @@ import net.judah.gui.settable.Program;
 import net.judah.gui.widgets.PlayBtn;
 import net.judah.gui.widgets.RecordWidget;
 import net.judah.gui.widgets.TrackVol;
-import net.judah.seq.SynthRack;
 import net.judah.seq.track.Computer.Update;
 
 
@@ -117,7 +116,7 @@ public abstract class TrackMenu extends Box { // to update Programmer (length) i
             super("SendTo...");
             for (MidiTrack t : source.isDrums() ?
                     JudahZone.getInstance().getDrumMachine().getTracks() :
-                    SynthRack.getSynthTracks()) {
+                    JudahZone.getInstance().getSeq().getSynthTracks()) {
                 if (t != source)
                     add(new Actionable(t.getName(), evt -> t.load(source)));
             }

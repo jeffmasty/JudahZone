@@ -1,3 +1,4 @@
+
 package net.judah.mixer;
 
 import static judahzone.gui.Gui.font;
@@ -17,6 +18,7 @@ import net.judah.looper.LoopType;
 import net.judah.looper.Looper;
 import net.judah.looper.SoloTrack;
 import net.judah.midi.JudahClock;
+
 
 /** displays Loop's label and btns and synchronizes recording by listening to the Clock */
 public class LoopMix extends MixWidget implements Updateable {
@@ -123,7 +125,7 @@ public class LoopMix extends MixWidget implements Updateable {
 			int val = looper.getMeasures();
 			text = val < 10 ? "-" + val + "-" : "" + val;
 		}
-		else if (loop == looper.getLoopA()) {
+		else if (loop == looper.getFirst()) {
 			int val = JudahClock.getLength();
 			text = val < 10 ? "-" + val + "-" : "" + val;
 		}

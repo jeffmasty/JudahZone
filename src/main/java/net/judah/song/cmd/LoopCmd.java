@@ -52,7 +52,7 @@ public class LoopCmd implements Cmdr {
 		case Record:
 			if (looper.getPrimary() != null && looper.getType() == LoopType.FREE)
 				looper.trigger(loop);
-			else if (looper.getClock().isActive()) { // clock not active = non-performance developing songs
+			else if (JudahMidi.getClock().isActive()) { // clock not active = non-performance developing songs
 				looper.trigger(loop);
 			}
 			break;

@@ -68,7 +68,7 @@ public class SongTitle extends JPanel implements TimeListener {
 			Gui.resize(songs, Size.TITLE_SIZE),
 			new Btn(Icons.SAVE, e->overview.save()),
 			new Btn(" 🔁 ", e->overview.reload(), "Reload"),
-			new Btn(" + Track ", e->new AddTrack(zone.getSeq())),
+			new Btn(" + Track ", e->new AddTrack(zone)),
 			mainsBtn, chordsBtn, Box.createHorizontalGlue(),
 			Gui.resize(timeSig, Size.SMALLER),
 			Gui.resize(key, Size.MICRO),

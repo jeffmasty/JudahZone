@@ -44,7 +44,7 @@ public class TunerKnobs extends KnobPanel {
         add(tuner);
 
         // turnOn:
-        zone.registerAnalyzer(analyzer);
+        zone.getAnalysis().register(analyzer);
         analyzerRegistered = true;
         tuner.setActive(true);
         repaint();
@@ -53,7 +53,7 @@ public class TunerKnobs extends KnobPanel {
     /** Ensure analyzer is registered and tuner active */
     public void turnOn() {
         if (!analyzerRegistered) {
-            zone.registerAnalyzer(analyzer);
+            zone.getAnalysis().register(analyzer);
             analyzerRegistered = true;
         }
         tuner.setActive(true);
@@ -63,7 +63,7 @@ public class TunerKnobs extends KnobPanel {
     public void turnOff() {
         tuner.setActive(false);
         if (analyzerRegistered) {
-            zone.unregisterAnalyzer(analyzer);
+            zone.getAnalysis().unregister(analyzer);
             analyzerRegistered = false;
         }
     }

@@ -14,8 +14,6 @@ import judahzone.gui.Gui;
 import judahzone.gui.Updateable;
 import net.judah.gui.Size;
 import net.judah.gui.settable.SetCombo;
-import net.judah.mixer.Preset;
-import net.judah.mixer.PresetsDB;
 
 /** Presets */
 public class PresetsHandler extends SetCombo<Preset> implements ListCellRenderer<Preset>, Updateable {

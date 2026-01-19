@@ -10,10 +10,12 @@ import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 
 import judahzone.api.Asset;
+import judahzone.api.Asset.Category;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
 import judahzone.util.Recording;
+import judahzone.util.WavConstants;
 
 /**
  * SampleDB: generic sample cache using normalized Path keys.
@@ -59,7 +61,11 @@ public final class SampleDB {
 
     private static void loadAndRegister(String name, File file, Asset.Category cat) {
         try {
-            Recording loaded = Recording.loadInternal(file);
+        	Recording loaded;
+        	if (cat == Category.STEPSAMPLE)
+        		loaded = Recording.loadInternal(file, WavConstants.FILE_LEVEL);
+        	else
+        		loaded = Recording.loadInternal(file, WavConstants.RUN_LEVEL);
             registerAsset(new Asset(name, file, loaded, loaded.size() * Constants.bufSize(), cat));
         } catch (Throwable t) {
             // conservative: register asset even if load failed so UI can show it

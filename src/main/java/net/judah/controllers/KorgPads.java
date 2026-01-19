@@ -9,6 +9,7 @@ import judahzone.util.Debounce;
 import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
+import net.judah.channel.LineIn;
 import net.judah.gui.MainFrame;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
@@ -60,7 +61,10 @@ public class KorgPads extends Debounce implements Controller {
 			zone.getFxRack().getChannel().toggleFx();
 			return true;
 		case 6: // latch guitar EFX to looper
-			looper.syncFx(zone.getGuitar());
+			LineIn guitar = zone.getChannels().getGuitar();
+			if (guitar == null)
+				return true;
+			looper.syncFx(guitar);
 			return true;
 		case 7: // Clock off/sync
 			JudahClock clock = JudahMidi.getClock();
@@ -89,7 +93,7 @@ public class KorgPads extends Debounce implements Controller {
 			Integer loopNum = data1 - 9;
 			Loop target = looper.get(loopNum);
 			if (doubleTap(loopNum)) {
-				if (target == looper.getLoopA()) {
+				if (target == looper.getFirst()) {
 					looper.delete();
 					return true;
 				}

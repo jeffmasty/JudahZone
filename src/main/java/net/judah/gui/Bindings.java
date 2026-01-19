@@ -6,7 +6,6 @@ import static javax.swing.KeyStroke.getKeyStroke;
 
 import java.awt.Color;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -28,7 +27,6 @@ import judahzone.fx.MonoFilter;
 import judahzone.fx.Overdrive;
 import judahzone.fx.Reverb;
 import judahzone.gui.Pastels;
-import net.judah.channel.Channel;
 import net.judah.channel.Mains;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.LFO;
@@ -54,20 +52,20 @@ public class Bindings {
 		}
 	}
 
-	public Bindings(JFrame view, Seq seq, DJJefe mixer) {
+	public Bindings(JFrame view, Seq seq, DJJefe mixer, Mains mains) {
+		this.mains = mains;
 		JComponent jc = (JComponent)view.getContentPane();
 		inputs = jc.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
 		actions = jc.getActionMap();
-		mains = mixer.getMains();
 
-		ArrayList<Channel> channels = mixer.getChannels();
-		int limit = channels.size() < 9 ? channels.size() : 9;
-
-		for (int i = 0; i < limit; i++) {
-			final Channel focus = channels.get(i);
-			bind(getKeyStroke("F" + (i+1)), new Act(()->MainFrame.setFocus(focus)));
-		}
-		bind(getKeyStroke("F10"), new Act(()->MainFrame.setFocus(mixer.getMains())));
+//		ArrayList<Channel> channels = mixer.getOnMixer();
+//		int limit = channels.size() < 9 ? channels.size() : 9;
+//
+//		for (int i = 0; i < limit; i++) {
+//			final Channel focus = channels.get(i);
+//			bind(getKeyStroke("F" + (i+1)), new Act(()->MainFrame.setFocus(focus)));
+//		}
+		bind(getKeyStroke("F10"), new Act(()->MainFrame.setFocus(mains)));
 
 //		TrackList<DrumTrack> drums = seq.getDrumTracks();
 //		bind(getKeyStroke(VK_1, ALT_DOWN_MASK), new Act(()->TabZone.edit(drums.get(0))));

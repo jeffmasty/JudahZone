@@ -199,7 +199,7 @@ public class JudahClock implements MidiClock, TimeProvider {
 		if (!active)
 			return;
 
-		zone.getSeq().percent(beat + midiPulseCount / (float)MIDI_24);
+		zone.getSeq().process(beat + midiPulseCount / (float)MIDI_24);
 	}
 
 	public synchronized void setSwing(float s) throws NumberFormatException {

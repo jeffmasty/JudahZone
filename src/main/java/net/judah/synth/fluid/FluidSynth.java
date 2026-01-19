@@ -17,10 +17,10 @@ import judahzone.util.Constants;
 import judahzone.util.RTLogger;
 import judahzone.util.Threads;
 import lombok.Getter;
+import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.MidiInstrument;
-import net.judah.seq.SynthRack;
 import net.judah.seq.track.Computer;
 import net.judah.seq.track.PianoTrack;
 
@@ -52,7 +52,7 @@ public final class FluidSynth extends MidiInstrument {
 	@SuppressWarnings("deprecation")
 	private FluidSynth(String name, JackPort midi, JackPort left, JackPort right, String image) throws IOException {
 		super(name, LEFT_PORT, RIGHT_PORT, left, right, image, midi);
-		shellCommand = "fluidsynth -m jack -a jack -g 2 -C 0 -r " + S_RATE + " " + SOUND_FONT.getAbsolutePath();
+		shellCommand = "fluidsynth -m jack -a jack -g 1.5 -C 0 -r " + S_RATE + " " + SOUND_FONT.getAbsolutePath();
 
 		process = Runtime.getRuntime().exec(shellCommand); // IOException
 		new FluidListener(process.getErrorStream(), true).start();
@@ -63,7 +63,7 @@ public final class FluidSynth extends MidiInstrument {
 		Threads.sleep(delay);
 		outStream = process.getOutputStream();
 
-		FluidSynth[] predecessors = SynthRack.getFluids();
+		FluidSynth[] predecessors = JudahZone.getInstance().getSeq().getFluids();
 		if (predecessors.length == 0 || predecessors[0].getPatches().length == 0)
 			try {
 				Threads.sleep(2 * delay);

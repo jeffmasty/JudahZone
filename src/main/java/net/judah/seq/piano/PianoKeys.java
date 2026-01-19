@@ -21,7 +21,7 @@ import net.judah.seq.piano.PianoView.Orientation;
 import net.judah.seq.track.NoteTrack;
 
 /** Display keys of a piano above/beside PianoBox, respecting orientation. */
-public class PianoKeys extends JPanel implements Gui.Mouser, Size {
+public class PianoKeys extends JPanel implements Gui.Mouse, Size {
 	public static final List<Integer> BLACK_KEYS = List.of(1, 3, 6, 8, 10);
 
 	private final PianoView view;

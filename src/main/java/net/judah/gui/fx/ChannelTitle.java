@@ -55,8 +55,8 @@ public class ChannelTitle extends JPanel {
 		Gui.resize(name, new Dimension(Size.WIDTH_KNOBS - 3 * Size.TINY.width, Size.STD_HEIGHT));
 
 		add(name);
-		if (channel == judahZone.getBass())
-			add(sync(judahZone.getBass()));
+//		if (channel == judahZone.getBass()) // clocked
+//			add(sync(judahZone.getBass()));
 		add(Gui.resize(mute, Size.TINY));
 		add(Gui.resize(lfo, Size.TINY));
 		add(Gui.resize(wav, Size.TINY));

@@ -7,6 +7,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -33,13 +34,11 @@ import judahzone.widgets.Btn;
 import judahzone.widgets.Integers;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
-import net.judah.channel.Mains;
 import net.judah.drumkit.DrumKit;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.ModalDialog;
 import net.judah.midi.MidiInstrument;
-import net.judah.seq.SynthRack.RegisteredDrums;
-import net.judah.seq.SynthRack.RegisteredSynths;
+import net.judah.mixer.Channels;
 import net.judah.seq.chords.ChordPro;
 import net.judah.synth.ZoneMidi;
 import net.judah.synth.fluid.FluidAssistant;
@@ -53,8 +52,10 @@ public class AddTrack extends JPanel {
 
 	enum TrackType {Synth, Chord, FX} // Drum,
 
+	private final JudahZone zone;
+	private final Channels channels;
 	private final Seq seq;
-	final JTabbedPane tabs = new JTabbedPane();
+	private final JTabbedPane tabs = new JTabbedPane();
 	private final Box drum = new Box(BoxLayout.Y_AXIS);
 	private final Box synth = new Box(BoxLayout.Y_AXIS);
 	private final Box chord = new Box(BoxLayout.Y_AXIS);
@@ -62,8 +63,8 @@ public class AddTrack extends JPanel {
 
 	final JTextField drumName = new JTextField(8);
 	final JTextField synthName = new JTextField(8);
-	final JComboBox<RegisteredDrums> drumType = new JComboBox<RegisteredDrums>(RegisteredDrums.values());
-	final JComboBox<RegisteredSynths> synthType = new JComboBox<RegisteredSynths>(RegisteredSynths.values());
+	final JComboBox<Channels.RegisteredDrums> drumType = new JComboBox<Channels.RegisteredDrums>(Channels.RegisteredDrums.values());
+	final JComboBox<Channels.RegisteredSynths> synthType = new JComboBox<Channels.RegisteredSynths>(Channels.RegisteredSynths.values());
 	final JList<ZoneMidi> drumOut = new JList<ZoneMidi>();
 	final JList<ZoneMidi> synthOut = new JList<ZoneMidi>();
 	final JComboBox<Integer> drumCh = new JComboBox<Integer>(Integers.generate(0, 16));
@@ -76,15 +77,21 @@ public class AddTrack extends JPanel {
 	final JButton cancel = new Btn(" Cancel ", e->ModalDialog.getInstance().dispose());
 	final JButton ok = new Btn("  OK  ", e-> ok()); // import track into Seq
 
-	public AddTrack(Seq seq) {
-		this.seq = seq;
+	public AddTrack(JudahZone judahZone) {
+		this.zone = judahZone;
+		this.channels = zone.getChannels();
+		this.seq = zone.getSeq();
+
 		setName("New Track");
 
+
 		ArrayList<Channel> automation = new ArrayList<Channel>();
-		JudahZone.getInstance().getMixer().getAll().forEach(channel-> {
-			if (channel instanceof ZoneMidi == false && channel instanceof DrumKit == false && channel instanceof Mains == false)
-				automation.add(channel);});
 		fxChannel = new JList<Channel>(automation.toArray(new Channel[0]));
+
+		List<Channel> all = channels.getAll();
+		all.forEach(channel-> {
+			if (channel instanceof ZoneMidi == false && channel instanceof DrumKit == false)
+				automation.add(channel);});
 
  		JToggleButton createSynth = new JToggleButton("Create");
  		ButtonGroup synths = new ButtonGroup();
@@ -140,7 +147,7 @@ public class AddTrack extends JPanel {
 		chords = Folders.choose(Folders.getChordPro());
 		if (chords == null)
 			return;
-		ChordPro result = JudahZone.getInstance().getChords().load(chords);
+		ChordPro result = zone.getChords().load(chords);
 		if (result == null)
 			return;
 		chordPreview.setText(result.toString());
@@ -156,17 +163,17 @@ public class AddTrack extends JPanel {
 
 	private void refillSynth() {
 		DefaultListModel<ZoneMidi> model = new DefaultListModel<>();
-		switch((RegisteredSynths)synthType.getSelectedItem()) {
+		switch((Channels.RegisteredSynths)synthType.getSelectedItem()) {
 			case Taco:
-				for (TacoTruck engine : SynthRack.getTacos())
+				for (TacoTruck engine : seq.getTacos())
 					model.addElement(engine);
 				break;
 			case Fluid:
-				for (FluidSynth engine: SynthRack.getFluids())
+				for (FluidSynth engine: seq.getFluids())
 					model.addElement(engine);
 				break;
 			case External:
-				for (MidiInstrument engine : SynthRack.getOther())
+				for (MidiInstrument engine : seq.getOther())
 					model.addElement(engine);
 				break;
 		}
@@ -202,7 +209,7 @@ public class AddTrack extends JPanel {
 	}
 
 	private void createSynth() {
-		RegisteredSynths type = RegisteredSynths.values()[synthType.getSelectedIndex()];
+		Channels.RegisteredSynths type = Channels.RegisteredSynths.values()[synthType.getSelectedIndex()];
 		boolean join = synthOut.isEnabled();
 
 		if (join) {
@@ -214,26 +221,26 @@ public class AddTrack extends JPanel {
 				return;
 			}
 			RTLogger.debug(this, "creating " + type.name() + " engine with track " + name);
-			if (type == RegisteredSynths.Fluid) {
-				new FluidAssistant(name);
-			} else if (type == RegisteredSynths.Taco) {
-				TacoTruck engine = SynthRack.makeTaco();
-				seq.addTrack(name, engine);
-			}
+			if (type == Channels.RegisteredSynths.Fluid) {
+				new FluidAssistant(name, zone);
+			} else if (type == Channels.RegisteredSynths.Taco) {
+				int idx = seq.getTacos().length + 1;
+				zone.getChannels().accept(new TacoTruck("T + " + idx));
+			} // else ?
 		}
 	}
 
 	private void createChannel() {
 		Channel ch = fxChannel.getSelectedValue();
 		if (ch != null)
-			seq.addTrack(ch, ch.getName());
+			seq.adaptChannel(ch, ch.getName());
 	}
 
 	private void addChords() {
 		if (chords == null)
 			return;
-		JudahZone.getInstance().getChords().load(chords);
-		JudahZone.getInstance().getOverview().refill();
+		zone.getChords().load(chords);
+		zone.getOverview().refill();
 	}
 
 //	private void createDrum() {

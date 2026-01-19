@@ -2,7 +2,6 @@ package net.judah.synth.taco;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
@@ -38,11 +37,6 @@ public class SynthDB {
 		if (!initialized)
 			init(Folders.getSynthPresets());
 	}
-
-//	public SynthDB(File file) {
-//		this.file = file;
-//		loadFile();
-//	}
 
 	public static void init(File file) {
 		initialized = false;
@@ -103,7 +97,7 @@ public class SynthDB {
 		ArrayList<String> result = new ArrayList<>();
 		for (TacoSauce p : db)
 			result.add(p.name);
-		Collections.sort(result);
+//		Collections.sort(result);
 		return result;
 	}
 

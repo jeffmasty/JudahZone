@@ -2,8 +2,9 @@ package net.judah.looper;
 
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import judahzone.api.Notification.Property;
 import judahzone.api.TimeListener;
@@ -19,46 +20,51 @@ import net.judah.channel.LineIn;
 import net.judah.gui.MainFrame;
 import net.judah.gui.widgets.LoopWidget;
 import net.judah.midi.JudahClock;
+import net.judah.mixer.Channels;
+import net.judah.mixer.Channels.MixBus;
 
-@Getter
-public class Looper extends ArrayList<Loop> implements TimeListener, Updateable {
+public class Looper extends ArrayList<Loop> implements TimeListener, Updateable, MixBus {
 
-	static final int LOOPERS = 4;
+	public static final int LOOPERS = 4;
 	static final int COUNTUP = 6; // Gui feedback
-	private static final String ZERO = "0.0s";
+	static final int aIdx = 0; // sync to clock
+	static final int bIdx = 1; // sync to foot pedal clock
+	static final int cIdx = 2; // free
+	static final int dIdx = 3; // solo
+	static final String ZERO = "0.0s";
 
 	private final JudahClock clock;
-	private final Loop loopA;
-	private final Loop loopB;
-	private final Loop loopC;
-	private final SoloTrack soloTrack;
+	@Getter private SoloTrack soloTrack;
 
-	private final Vector<Loop> onDeck = new Vector<>();
-	private final Vector<Channel> fx = new Vector<>();
-	private final LoopWidget loopWidget = new LoopWidget(this);
+	@Getter private final Vector<Loop> onDeck = new Vector<>();
+	@Getter private final Vector<Channel> fx = new Vector<>();
+	private LoopWidget loopWidget; // lazy
+	@Getter private Loop primary;
+	@Getter private LoopType type;
+	@Getter private String recordedLength = ZERO;
+	@Getter private int measures;
 
-	private Loop primary;
-	private LoopType type;
-	private String recordedLength = ZERO;
-	private int measures;
 	private int loopCount;
     private int countUp; // gui thread feedback
 
-	public Looper(Collection<LineIn> sources, LineIn solo, JudahClock clock) {
+    // Loops in package use candidates to record inputs in realtime
+    final List<LineIn> candidates = new CopyOnWriteArrayList<>();
+
+	public Looper(JudahClock clock, Channels channels) {
 
 		this.clock = clock;
-
-		loopA = new Loop("A", "LoopA.png", this, sources);
-		loopB = new Loop("B", "LoopB.png", this, sources);
-		loopC = new Loop("C", "LoopC.png", this, sources);
-		soloTrack = new SoloTrack(solo, this, sources);
-		add(loopA);
-		add(loopB);
-		add(loopC);
-		add(soloTrack);
 		clock.addListener(this);
+		channels.subscribe(this);
+
 	}
 
+	public void gui() { // these guys are DJJefe channels
+		add(new Loop("A", "LoopA.png", this, clock));
+		add(new Loop("B", "LoopB.png", this, clock));
+		add(new Loop("C", "LoopC.png", this, clock));
+		soloTrack = new SoloTrack("D", "LoopD.png", this, clock);
+		add(soloTrack);
+	}
 
 	public void process(float[] left, float[] right) {
 	    for (int i = 0, n = size(); i < n; i++)
@@ -169,7 +175,7 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable 
 		for (Loop l : this)
 			if (l.getName().equals(key))
 				return l;
-		return loopA; // fail
+		return getFirst(); // fail
 	}
 
 	public int indexOf(Channel loop) {
@@ -301,7 +307,7 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable 
 		if (primary != null)
 			primary.capture(!primary.isRecording());
 		else
-			trigger(clock.isActive() ? loopA : loopC);
+			trigger(clock.isActive() ? getFirst() : size() >= cIdx ? get(cIdx) : getFirst());
 	}
 
 	/** user engaged the record button, respond depending on loop type and current recording status */
@@ -337,12 +343,12 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable 
     public void sealBSync(Loop loop) {
 		measures = loop.getStopwatch() + 1;
 		clock.setLength(measures);
-		loopB.display.setText("!" + measures);
+		get(bIdx).display.setText("!" + measures);
     }
 
 	private LoopType getType(Loop loop) {
-
-    	return loop == loopC ? LoopType.FREE : clock.isActive() ? loop == loopB ?
+		int idx = indexOf(loop);
+    	return idx == cIdx ? LoopType.FREE : clock.isActive() ? idx == bIdx ?
     			LoopType.BSYNC : LoopType.SYNC : LoopType.FREE;
     }
 
@@ -396,6 +402,30 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable 
 			if (l.isRecording())
 				return true;
 		return false;
+	}
+
+	@Override
+	public void channelAdded(LineIn ch) {
+		candidates.add(ch);
+	}
+
+	@Override
+	public void channelRemoved(LineIn ch) {
+		candidates.remove(ch);
+	}
+
+	public LoopWidget getLoopWidget() {
+		if (loopWidget == null)
+			loopWidget = new LoopWidget(this);
+		return loopWidget;
+	}
+
+	@Override
+	public void reordered() { /* ignored : ch order doesn't really matter? yet*/	}
+
+	@Override
+	public void update(LineIn ch) {
+		// Looper is commander of children Loops, but we don't ever change filter/preamp of loops
 	}
 
 }

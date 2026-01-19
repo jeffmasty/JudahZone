@@ -9,7 +9,6 @@ import javax.swing.table.DefaultTableModel;
 
 import judahzone.api.Midi;
 import judahzone.api.MidiConstants;
-import net.judah.seq.SynthRack;
 import net.judah.seq.Meta;
 import net.judah.seq.track.MidiTrack;
 
@@ -23,10 +22,8 @@ public class ImportModel extends DefaultTableModel implements MidiConstants {
 	static final String[] cols = new String[] {"Source", "Notes", "AssignTo", "Action"};
 	static final String IMPORT = "Import";
 
-	public ImportModel(final Sequence sequence) {
+	public ImportModel(final Sequence sequence, MidiTrack basic) {
 		super (cols, 0);
-
-		MidiTrack basic = SynthRack.getSynthTracks().getFirst();
 
 		MidiMessage msg;
 		String name;

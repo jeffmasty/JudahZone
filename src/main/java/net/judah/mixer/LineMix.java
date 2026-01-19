@@ -27,10 +27,6 @@ public class LineMix extends MixWidget {
 		mute.setText("tape");
 		sync.setText("solo");
 		sync.addActionListener(e->solo());
-		if (channel.getIcon() == null)
-			title.setText(channel.getName());
-		else
-            title.setIcon(channel.getIcon());
 		mute.addActionListener(e->mute());
 	}
 
@@ -47,12 +43,14 @@ public class LineMix extends MixWidget {
 		else if (quiet())
 			bg = Color.GRAY;
 
-		if (soloTrack.isSolo() && soloTrack.getSoloTrack() == in)
+
+		if (soloTrack != null && soloTrack.isSolo() && soloTrack.getSoloTrack() == in)
 			sync.setBackground(YELLOW);
 		else
 			sync.setBackground(null);
 
-		sync.setSelected(in == soloTrack.getSoloTrack());
+		if (soloTrack != null)
+			sync.setSelected(in == soloTrack.getSoloTrack());
 		if (in instanceof DrumMachine drumz) {
 			if (drumz.isMuteRecord())
 				mute.setBackground(null);

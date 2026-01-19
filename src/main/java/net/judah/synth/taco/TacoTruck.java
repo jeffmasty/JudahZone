@@ -9,6 +9,7 @@ import javax.sound.midi.ShortMessage;
 import javax.swing.ImageIcon;
 
 import judahzone.fx.Convolution;
+import judahzone.gui.Icons;
 import judahzone.util.AudioTools;
 import judahzone.util.Constants;
 import judahzone.util.WavConstants;
@@ -24,6 +25,10 @@ public class TacoTruck extends Engine {
     	icon = picture;
     	getGain().setPreamp(WavConstants.TO_LINE);
     }
+
+	public TacoTruck(String name) {
+		this(name, Icons.get("Waveform.png"));
+	}
 
 	@Override public TacoSynth getTrack() {
 		return tracks.getFirst();

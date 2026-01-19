@@ -15,7 +15,7 @@ import net.judah.gui.Size;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.TrackMenu;
 
-public class DrumMenu extends TrackMenu implements Gui.Mouser {
+public class DrumMenu extends TrackMenu implements Gui.Mouse {
 
 	private final DrumZone tab;
 	private final BeatBox drumz;

@@ -8,9 +8,9 @@ import javax.sound.midi.Track;
 import judahzone.api.Midi;
 import lombok.Getter;
 import net.judah.channel.Channel;
+import net.judah.channel.Preset;
+import net.judah.channel.PresetsDB;
 import net.judah.midi.ChannelCC;
-import net.judah.mixer.Preset;
-import net.judah.mixer.PresetsDB;
 
 @Getter
 public class ChannelTrack extends MidiTrack {

@@ -20,15 +20,16 @@ import net.judah.looper.SoloTrack;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.LFO;
+import net.judah.mixer.AddChannel;
+import net.judah.mixer.ChannelList;
 import net.judah.seq.AddTrack;
-import net.judah.seq.Seq;
-import net.judah.seq.SynthRack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.song.Overview;
 import net.judah.song.setlist.Setlist;
 import net.judah.song.setlist.Setlists;
 
 public class JudahMenu extends JMenuBar {
+
 	static String[] TYPE = {"1/8", "1/4", "3/8", "1/2"};
 
 	private final JudahZone zone;
@@ -41,7 +42,6 @@ public class JudahMenu extends JMenuBar {
 		this.clock = midi.getClock();
 
 		Overview overview = zone.getOverview();
-		Seq seq = zone.getSeq();
 
 		JMenu song = new JMenu("Song");
 	    JMenu loops = new JMenu("Looper");
@@ -62,7 +62,7 @@ public class JudahMenu extends JMenuBar {
         song.add(new Actionable("Reload", e->overview.reload()));
         song.add(new Actionable("Load..", e->overview.loadSong(Folders.choose(setlists.getDefault()))));
     	song.add(new Actionable("New Song", e->overview.newSong()));
-    	song.add(new Actionable("New Track..", e-> new AddTrack(seq)));
+    	song.add(new Actionable("New Track..", e-> new AddTrack(zone)));
     	song.add(new Actionable("Bundle", e -> overview.bundle()));
     	// TODO song.add(new Actionable("Resolution..", e->seq.resolutionView()));
 
@@ -70,6 +70,9 @@ public class JudahMenu extends JMenuBar {
 		for (Setlist list : setlists)
 			setlist.add(new Actionable(list.toString(), e -> setlists.setCurrent(list.getSource())));
         song.add(setlist);
+        // song.add(new Actionable("Channels...", e-> new ChannelsView(zone)));
+        song.add(new Actionable("New Channel", e-> AddChannel.open(zone.getChannels())));
+        song.add(new Actionable("Channel List", e-> ChannelList.open(zone.getChannels())));
     	song.add(new Actionable("Exit", e->System.exit(0), KeyEvent.VK_E));
 
     	Looper looper = zone.getLooper();
@@ -84,7 +87,7 @@ public class JudahMenu extends JMenuBar {
     	looper.forEach(loop->save.add(new Actionable(loop.getName(), e-> loop.save())));
     	looper.forEach(loop->load.add(new Actionable(loop.getName(), e-> loop.load(true))));
     	SoloTrack solo = looper.getSoloTrack();
-    	zone.getInstruments().forEach(ch->solotrack.add(new Actionable(ch.getName(), e->solo.setSoloTrack(ch))));
+    	zone.getChannels().getInputs().forEach(ch->solotrack.add(new Actionable(ch.getName(), e->solo.setSoloTrack(ch))));
     	loops.add(new Actionable("Length..", e->setLength()));
     	loops.add(erase);
     	loops.add(duplicate);
@@ -116,7 +119,7 @@ public class JudahMenu extends JMenuBar {
     	time.add(lfo);
     	time.add(delay);
     	time.add(chorus);
-        time.add(new Actionable("A2J!", e->midi.recoverMidi()));
+        // time.add(new Actionable("A2J!", e->midi.recoverMidi()));
 
     	for (KnobMode mode : KnobMode.values())
         	knobs.add(new Actionable(mode.toString(), e->MainFrame.setFocus(mode)));
@@ -131,7 +134,7 @@ public class JudahMenu extends JMenuBar {
 
 	public void refillTracks() {
 		synth.removeAll();
-		for (PianoTrack t : SynthRack.getSynthTracks())
+		for (PianoTrack t : zone.getSeq().getSynthTracks())
 			synth.add(new Actionable(t.getName(), e->TabZone.edit(t)));
 	}
 

@@ -1,92 +1,80 @@
 package net.judah.synth.fluid;
 
-import static judahzone.jnajack.ZoneJackClient.INS;
-import static judahzone.jnajack.ZoneJackClient.OUTS;
-import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsInput;
-import static org.jaudiolibs.jnajack.JackPortFlags.JackPortIsOutput;
-import static org.jaudiolibs.jnajack.JackPortType.AUDIO;
-import static org.jaudiolibs.jnajack.JackPortType.MIDI;
-
 import java.io.IOException;
 import java.security.InvalidParameterException;
 
 import org.jaudiolibs.jnajack.JackPort;
 
-import judahzone.jnajack.ZoneJackClient.Connect;
-import judahzone.jnajack.ZoneJackClient.PortBack;
-import judahzone.jnajack.ZoneJackClient.Request;
-import judahzone.jnajack.ZoneJackClient.Requests;
+import judahzone.api.Custom;
+import judahzone.api.Ports;
+import judahzone.api.Ports.Connect;
+import judahzone.api.Ports.Request;
+import judahzone.api.Ports.Wrapper;
 import judahzone.util.Constants;
 import judahzone.util.RTLogger;
 import judahzone.util.Threads;
 import lombok.ToString;
 import net.judah.JudahZone;
-import net.judah.seq.Meta;
+import net.judah.bridge.AudioEngine;
 import net.judah.seq.MetaMap;
-import net.judah.seq.SynthRack;
 
-/** Creates (async) a new FluidSynth instance with associated ports connected */
-public class FluidAssistant implements PortBack {
+/** Creates (async) a new FluidSynth instance with associated ports
+    connected via the Ports.Provider API.   Like a JackHelper for FluidSynths*/
+public class FluidAssistant implements Ports.PortCallback {
 
-	@ToString class Triumvirate {
-		JackPort midi; JackPort left; JackPort right;
+	@ToString
+	class Triumvirate {
+		JackPort midi;
+		JackPort left;
+		JackPort right;
 	}
 
 	private FluidSynth runtime;
 	private final Triumvirate tri = new Triumvirate();
-	private final Triumvirate con = new Triumvirate();
 	private final String engineName;
 	private final String trackName;
 	private MetaMap map;
-	private String loadFile;
 	private final int num;
 	private final String suffix;
-	private final JudahZone zone = JudahZone.getInstance();
+	private final JudahZone zone;
+	private final Custom user;
 
-	// Creates new FluidSynth engines and manages the opening and connection of audio and midi ports.
-	public FluidAssistant(String trackName, String file) {
-
+	/** Creates new FluidSynth engines and manages port creation/connection. */
+	public FluidAssistant(String trackName, JudahZone judahZone) {
+		this.zone = judahZone;
 		this.trackName = trackName;
-		this.loadFile = file;
-		this.num = SynthRack.getFluids().length;
+		this.num = zone.getSeq().getFluids().length;
 		if (num > 9)
 			throw new InvalidParameterException("Too many Fluid instances");
 		this.engineName = Constants.FLUID + num;
 		this.suffix = "-0" + num;
 
+		String lPort = engineName + "-left";
+		String rPort = engineName + "-right";
+		String mPort = engineName + "-midi";
 
-		Requests audio = zone.getRequests();
-		Requests midi = zone.getMidi().getRequests();
-		// make midi port // TODO non-static instance
-		midi.add(new Request(this, engineName, MIDI, JackPortIsOutput));
-		// make audio ports
-		audio.add(new Request(this, engineName + "_L", AUDIO, JackPortIsInput));
-		audio.add(new Request(this, engineName + "_R", AUDIO, JackPortIsInput));
+		Float preamp = null; // set in commandLine
+		user = new Custom("engineName", true, false, lPort, rPort, mPort, "Waveform.png", null, null, "Fluid", false,
+				preamp);
+
+		Ports.Provider ports = AudioEngine.getPorts();
+		// Request MIDI port (output from FluidSynth perspective)
+		ports.register(new Request(user, engineName, Ports.Type.MIDI, Ports.IO.OUT, this));
+		// Request audio ports (input to FluidSynth)
+		ports.register(new Request(user, lPort, Ports.Type.AUDIO, Ports.IO.IN, this));
+		ports.register(new Request(user, rPort, Ports.Type.AUDIO, Ports.IO.IN, this));
 	}
 
-	public FluidAssistant(String name) {
-		this(name, (String)null);
-	}
-
-	public FluidAssistant(String name, MetaMap map) {
-		this(name, map.getString(Meta.TRACK_NAME));
+	public FluidAssistant(String name, JudahZone zone, MetaMap map) {
+		// this(name, map.getString(Meta.TRACK_NAME));
+		this(name, zone);
 		this.map = map;
 	}
 
 	@Override
-	public void ready(Request req, JackPort port) {
-		if (req == null) { // 2nd callback
-			if (port == tri.midi)
-				con.midi = port;
-			else if (port == tri.left)
-				con.left = port;
-			else
-				con.right = port;
-			if (con.right == null || con.left == null || con.midi == null)
-				return;
-			// connected, we're done
+	public void registered(Request req, Wrapper reply) {
+		if (!(reply.port() instanceof JackPort port))
 			return;
-		}
 
 		String nombre = port.getShortName();
 		if (nombre.endsWith("_L"))
@@ -100,24 +88,28 @@ public class FluidAssistant implements PortBack {
 			return;
 
 		try {
-			// create FluidSynth process and channel
 			runtime = new FluidSynth(engineName, tri.midi, tri.left, tri.right);
-			SynthRack.addEngine(runtime);
-			Threads.sleep(50); // let external process create ports
+			zone.getChannels().accept(runtime);
+			Threads.sleep(50);
 			if (map == null)
-				zone.getSeq().addTrack(trackName, runtime);
+				zone.getSeq().createTrack(trackName, runtime);
 			else
 				zone.getSeq().addTrack(map, runtime);
-			// async port connections
-			zone.getMidi().getRequests().add(new Connect(this, tri.midi, "midi" + suffix, MIDI, INS));
-			zone.getRequests().add(new Connect(this, tri.left, "midi" + suffix, AUDIO, OUTS));
-			zone.getRequests().add(new Connect(this, tri.right, "midi" + suffix, AUDIO, OUTS));
 
-			if (loadFile != null)
-				runtime.getTrack().load(loadFile);
+			Ports.Provider ports = AudioEngine.getPorts();
+			ports.connect(new Connect(user, new Wrapper(tri.midi.getName(), tri.midi), "midi" + suffix, Ports.Type.MIDI,
+					Ports.IO.IN, this));
+			ports.connect(new Connect(user, new Wrapper(tri.left.getName(), tri.left), "midi" + suffix,
+					Ports.Type.AUDIO, Ports.IO.OUT, this));
+			ports.connect(new Connect(user, new Wrapper(tri.right.getName(), tri.right), "midi" + suffix,
+					Ports.Type.AUDIO, Ports.IO.OUT, this));
 		} catch (IOException e) {
 			RTLogger.log(this, e.getMessage());
 		}
 	}
 
+	@Override
+	public void connected(Connect con) {
+		// no-op: connection established, FluidSynth handles routing
+	}
 }

@@ -1,36 +1,44 @@
-Piano orientation + zoom
 
 TODO: 
 Tarsos pull request
 
+test serialization preamp filter vis
+FXRack if selected channel removed (mixer TODO)
+knobs-faders-mutes
+Mains not on scope
+Loop tapeTracker not updating
+fxRack onTape backlight
+fadein/fadeout updates upgrade
+Engine: upgrade to internal/external
+- Controllers +Jamstik +Fluid
+- mixer right-click menu
+- drumkv1_jack  AppImage in /tracks,  Natural, Synth or Bitcrush ProgChanges
+Controllers MidiMapper mapRange, Jamstik Midi/Cmd?
+KnobMode.Mix2, Shift-faders Shift-pads, shift-clipping/shift-algo
+Mixer right-click
+
 MidiThumbnail vis-a-vis Spectrogram
 nudge notes, scrollTo on Automation selection (linked mode), global orientation?
 register Overview SongTracks/ChannelTracks?: CC
-shift-clipping/shift algo?
 TrackKnobs: what are we doing with this view? (program overflow)
 Automation: PitchBend.release, Meta, TimeSig, KeySig, Tempo
 standalone backup IRDB inside Convolution
 SampleTrack,  Lyrics Track, mpkMini to127, EQ++/Visualizer
 compression meter, normalization
+TacoSynth ADSR ramping
+TacoSynth GLIDE (Crave <3) Portamento
+Channel Pressure or Breath = Crave 303 Accent (w/ Crave Assign)
 TacoSynth detune on sus/pdl, onTape channel Title
 Import anonymous seq broken?./SendTo ignore Meta Device, Program?
-Channel/System Setup  +Controllers +Jamstik +Fluid
 Fine Tune Midi Envelope(CC)
 Hi/Lo filter CC   Mid/Side/Chain
 Redo track capture (atomic undo/redo/AUTOMATION)
 Redo Patterns:==>  Midi MetaMessages?
-drumkv1_jack  AppImage in /tracks,    Natural, Synth or Bitcrush ProgChanges
-KnobMode.Mix2
-Shift-faders  Shift-pads
-TacoSynth GLIDE (Crave <3) Portamento
 drum mutes, Drum decay based on sample length (calcEnv) 
-Channel Pressure or Breath = Crave 303 Accent (w/ Crave Assign)
 ChordTrack |1:[] |2:[] endings,  |bars| parse bug
 ChordView rightClick menu (remove track, File)
 PianoEditor: drag-n-drop/transpose across frame, falling water, REL/Modal
 Synth filter tracking, LFO: detune, filter/resonance
-Jamstik Midi/Cmd?
-Controllers MidiMapper
 AOT cache
 
 lv2 jna https://github.com/nativelibs4java/JNAerator/tree/refresh-2022
@@ -211,6 +219,7 @@ Add/Remove/Rename Midi Tracks
 TacoSynth anti-aliasing
 JudahScope-Spectrometer 
 Convolution
+rotate PianoView
 
 
 REFERENCE------------------------------------------------------------

@@ -22,9 +22,9 @@ import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
+import net.judah.channel.PresetsDB;
 import net.judah.drumkit.KitSetup;
 import net.judah.midi.JudahMidi;
-import net.judah.mixer.PresetsDB;
 import net.judah.seq.Seq;
 import net.judah.seq.chords.Scale;
 import net.judah.seq.track.MidiFile;
@@ -94,7 +94,7 @@ public class Song {
 
 		fx.clear();
 		scene.getFx().clear();
-		for (Channel ch : zone.getMixer().getChannels()) {
+		for (Channel ch : zone.getChannels().getAll()) {
 			if (false == ch.getPreset().getName().equals(PresetsDB.DEFAULT))
 				fx.add(new FxData(ch.getName(), ch.getPreset().getName()));
 			if (ch.isPresetActive())
@@ -106,7 +106,7 @@ public class Song {
 			RTLogger.warn(this, "Unknown scene: " + scene);
 		if (idx == 0) { // save mutes
 			capture.clear();
-			zone.getInstruments().forEach(line ->{
+			zone.getChannels().getInputs().forEach(line ->{
 				if (!line.isMuteRecord())capture.add(line.getName());});
 		}
 		JsonUtil.writeJson(this, file);

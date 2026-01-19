@@ -17,11 +17,6 @@ public class MainsMix extends MixWidget {
 		sync.setSelected(channel.isHotMic());
 		sync.setText("mic");
 		sync.addActionListener(e->channel.hotMic());
-
-		if (channel.getIcon() == null)
-			title.setText(channel.getName());
-		else
-            title.setIcon(channel.getIcon());
 		mute.addActionListener(e->channel.setOnMute(!channel.isOnMute()));
 	}
 

@@ -101,7 +101,8 @@ public class DrumKit extends LineIn implements Receiver {
 					for (int i = 0; i < samples.length; i++)
 						if (program.get(i) != null)
 							samples[i].setRecording(program.get(i));
-					MainFrame.update(drumMachine.getTrack(this));
+					MainFrame.updateTrack(net.judah.seq.track.Computer.Update.PROGRAM, drumMachine.getTrack(this));
+//					MainFrame.update(drumMachine.getTrack(this));
 //					if (JudahZone.isInitialized())
 //						MainFrame.update(Program.first(drumMachine.getTrack(this)));
 				} catch (Exception e) {

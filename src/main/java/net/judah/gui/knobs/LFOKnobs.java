@@ -1,6 +1,7 @@
 package net.judah.gui.knobs;
 
 import javax.swing.BoxLayout;
+import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
 import judahzone.api.FX;
@@ -10,7 +11,6 @@ import net.judah.channel.Channel;
 import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
 import net.judah.midi.LFO;
-import net.judah.mixer.DJJefe;
 
 public class LFOKnobs extends KnobPanel {
 
@@ -22,9 +22,9 @@ public class LFOKnobs extends KnobPanel {
     private final CabSim cabSim;
     private boolean upperKnobs = true;
 
-    public LFOKnobs(final Channel ch, DJJefe mixer) {
+    public LFOKnobs(final Channel ch, JComboBox<Channel> channels) {
     	this.channel = ch;
-    	title = Gui.wrap(mixer.getCombo(ch));
+    	title = Gui.wrap(channels);
     	lfo1 = new LFOWidget(ch, ch.getLfo(), 1);
     	lfo2 = new LFOWidget(ch, ch.getLfo2(), 2);
     	compressor = new CompressorWidget(ch);

@@ -47,7 +47,7 @@ public class MidiScheduler implements Runnable {
 	void pulseLFOs() {
 		if (zone.getMains().isOnMute())
 			return;
-		for (Channel ch : zone.getMixer().getAll()) {
+		for (Channel ch : zone.getChannels().getAll()) {
 
 			FX fx1 = ch.isActive(ch.getLfo()) ? ch.getLfo().pulse() : null;
 			FX fx2 = ch.isActive(ch.getLfo2()) ? ch.getLfo2().pulse() : null;

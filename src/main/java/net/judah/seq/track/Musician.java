@@ -11,7 +11,7 @@ import judahzone.gui.Gui;
 import net.judah.seq.track.Editor.TrackListener;
 
 /** User interaction with a Notes Track */
-public interface Musician extends TrackListener, Gui.Mouser {
+public interface Musician extends TrackListener, Gui.Mouse {
 
 	NoteTrack getTrack();
 

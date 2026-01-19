@@ -9,8 +9,8 @@ import judahzone.gui.Updateable;
 import judahzone.widgets.Btn;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
+import net.judah.channel.PresetsDB;
 import net.judah.gui.widgets.TogglePreset;
-import net.judah.mixer.PresetsDB;
 
 public class PresetsBtns extends JPanel implements FXAware, Updateable {
 

@@ -228,7 +228,10 @@ public class TabZone extends CloseableTabbedPane {
 			return;
     	try {
     		sheetMusic.setImage(file);
-    		install(sheetMusic);
+    		if (focus)
+    			install(sheetMusic);
+    		else
+    			title(sheetMusic);
     	} catch (Throwable e) {
     		RTLogger.warn(this, e);
     	}
@@ -368,7 +371,7 @@ public class TabZone extends CloseableTabbedPane {
 	public void scope() {
 		if (scope == null) {// lazyload
 			BasicPlayer playa = zone.getSampler().add(new BasicPlayer());
-			scope = new JudahScope(Size.WIDTH_TAB, playa, zone);
+			scope = new JudahScope(Size.WIDTH_TAB, playa, zone.getAnalysis());
 		}
 		install(scope);
 	}
