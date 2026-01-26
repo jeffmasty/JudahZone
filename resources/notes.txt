@@ -1,21 +1,16 @@
 
 TODO: 
-Tarsos pull request
 
-test serialization preamp filter vis
-FXRack if selected channel removed (mixer TODO)
-knobs-faders-mutes
-Mains not on scope
-Loop tapeTracker not updating
-fxRack onTape backlight
-fadein/fadeout updates upgrade
+loop widgets 
+KnobMode.Mix2, Shift-faders Shift-pads, shift-clipping/shift-algo
+Mixer right-click
+Channels serialization: preamp, filter, visibility
+		update filter/preamp effect in realtime but save to disk on autosave form close? edit vs. create
 Engine: upgrade to internal/external
 - Controllers +Jamstik +Fluid
 - mixer right-click menu
 - drumkv1_jack  AppImage in /tracks,  Natural, Synth or Bitcrush ProgChanges
 Controllers MidiMapper mapRange, Jamstik Midi/Cmd?
-KnobMode.Mix2, Shift-faders Shift-pads, shift-clipping/shift-algo
-Mixer right-click
 
 MidiThumbnail vis-a-vis Spectrogram
 nudge notes, scrollTo on Automation selection (linked mode), global orientation?
@@ -47,7 +42,6 @@ https://github.com/takyonxxx/Oscilloscope-Java-Swing
 Stereo Width https://github.com/eventual-recluse/stereopan.lv2/blob/main/stereopan.cpp
 https://katjaas.nl/FFT/FFT.html
 Oscillator ViewWidget, Phase ViewWidget (rainbow color)
-test n benchmark:  fftw, JTransforms, alglib, Tarsos - accuracy, efficiency, ease of use
 Sample Editor: reverse sample, chop sample left, right, stretch, scratch
 Sampler FX (granularity, pitched frequency, lofi, wet)
 https://github.com/JorenSix/TarsosDSP/blob/master/examples/src/main/java/be/tarsos/dsp/example/unverified/GranulatorExample.java

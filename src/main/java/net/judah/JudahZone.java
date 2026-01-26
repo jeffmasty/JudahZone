@@ -192,7 +192,7 @@ public class JudahZone extends ZoneJackClient {
 
 		midiGui = new MidiGui(this, taco, fluid, channels.getBass(), clock, midi.getJamstik());
 		overview = new Overview(JUDAHZONE, this);
-		fxRack = new FxPanel(selected, clock, mains);
+		fxRack = new FxPanel(selected, clock, mains, analysis);
 		frame = new MainFrame(JUDAHZONE, this);
 
 		EventQueue.invokeLater(()->{
@@ -284,7 +284,7 @@ public class JudahZone extends ZoneJackClient {
 		// utilities/analyzers
 		requests.process(); // register/connect ports
 		mixer.process(); 	// RMS feedback for mixer panel
-		analysis.process();
+		analysis.process(); // optional scope/tuners
 
 		return true;
 	}

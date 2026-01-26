@@ -369,12 +369,9 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>, 
 			if (engine instanceof TacoTruck truck) {
 				TacoSynth taco = new TacoSynth(name, truck, new Polyphony(truck, truck.getTracks().size()));
 				truck.getTracks().add(taco);
-
-				RTLogger.debug(this, "taco: " + truck.getTrack());
 			} else {
 				((MidiInstrument)engine).getTracks().add(
 						new PianoTrack(name, new Actives(engine, engine.getTracks().size()), chords));
-				RTLogger.debug(this, engine.getName() + ": " + engine.getTrack());
 			}
 			refill();
 		} catch (InvalidMidiDataException e) { RTLogger.warn(this, e); }

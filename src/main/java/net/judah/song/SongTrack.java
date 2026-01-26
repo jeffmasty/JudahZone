@@ -3,6 +3,7 @@ package net.judah.song;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
@@ -80,7 +81,7 @@ import net.judah.seq.track.Programmer;
 
 		else if (false == t instanceof ChannelTrack) {
 			folder.addMouseListener(new MouseAdapter() {
-				@Override public void mouseClicked(java.awt.event.MouseEvent e) {
+				@Override public void mouseClicked(MouseEvent e) {
 					track.load(); }});
 			folder.setBorder(Gui.SUBTLE);
 			if (track.getFile() != null)

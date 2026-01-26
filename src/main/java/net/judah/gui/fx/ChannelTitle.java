@@ -86,6 +86,11 @@ public class ChannelTitle extends JPanel {
 	}
 
 	public void update() {
+		updateMute();
+		lfo.setBackground(channel.isActive(channel.getLfo()) ? Pastels.BLUE : null);
+	}
+
+	public void updateMute() {
 		if (channel instanceof LineIn in) {
 			if (in.isMuteRecord())
 				mute.setBackground(null);
@@ -96,7 +101,6 @@ public class ChannelTitle extends JPanel {
 		}
 		else
 			mute.setBackground(channel.isOnMute() ? Pastels.PURPLE : null);
-		lfo.setBackground(channel.isActive(channel.getLfo()) ? Pastels.BLUE : null);
 	}
 
 	private JToggleButton sync(MidiInstrument i) {

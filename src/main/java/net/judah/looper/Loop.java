@@ -36,8 +36,6 @@ import net.judah.synth.taco.TacoTruck;
 
 public class Loop extends Channel implements RecordAudio, Runnable {
 	public static final int INIT = 4096; // nice chunk of preloaded blank tape
-//	private static final float STD_BOOST = 1f;
-//	private static final float DRUM_BOOST = 1f;
 	private static final float UNITY = 1f;
 	@Getter protected final Looper looper;
 	protected final JudahClock clock;
@@ -148,6 +146,7 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 		rewind();
 		AudioTools.silence(left);
         AudioTools.silence(right);
+        computeRMS(left, right);
         display.clear();
 
         // reset deleted flag so loop can be reused safely if desired
@@ -303,6 +302,7 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 		if (length <= 0) { // initial recording
 			length = tapeCounter.get();
 			rewind();
+			display.update();
 		}
 		timerOff();
 	}
@@ -353,32 +353,32 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 		return true;
 	}
 
-	private void playFrame(float[] left, float[] right) {
+	private void playFrame(float[] outLeft, float[] outRight) {
+
 		if (overflow(current))
 			current = 0;
 
-		if (current >= tape.size()) {
-			RTLogger.log(name, "play error " + tape.size() + " vs. " + current + " vs. " + length);
-			current = 0;
-			tapeCounter.set(current);
-		}
 		if (onMute)
 			return;
 		playBuffer = tape.get(current);
 
+		AudioTools.copy(playBuffer[LEFT], left);
+		AudioTools.copy(playBuffer[RIGHT], right);
+
+		getGain().process(left, right);
 		fx(left, right);
 		computeRMS(left, right);
+
+		AudioTools.mix(left, outLeft);
+		AudioTools.mix(right, outRight);
+
 	}
 
 	/** run active effects on the current frame being played */
 	private void fx(float[] outLeft, float[] outRight) {
-		AudioTools.replace(playBuffer[LEFT], left, gain.getLeft());
-		AudioTools.replace(playBuffer[RIGHT], right, gain.getRight());
 		hotSwap();
 		for (int i = 0; i < active.size(); i++)
 			active.get(i).process(left, right);
-		AudioTools.mix(left, gain.getGain(), outLeft);
-		AudioTools.mix(right, gain.getGain(), outRight);
 	}
 
 	private void recordFrame() {
@@ -462,7 +462,7 @@ public class Loop extends Channel implements RecordAudio, Runnable {
             	recordCh(in.getLeft(), in.getRight(), target, amp);
             else if (in instanceof TacoTruck synth) {
             	if (!synth.isMuteRecord() && !synth.isOnMute())
-            		recordCh(synth.getLeft(), synth.getRight(), target, amp * synth.getGain().getPreamp()); // <-- preamp big
+            		recordCh(synth.getLeft(), synth.getRight(), target, amp);
             }
             else if (in instanceof DrumMachine drumz)
             	for (DrumTrack track : drumz.getTracks())

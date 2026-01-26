@@ -76,7 +76,7 @@ public class SetlistView extends KnobPanel /* fwd knob input to MidiGui */ imple
 			@Override public Component getListCellRendererComponent(JList<? extends Setlist> list, Setlist setlist,
 					int index, boolean isSelected, boolean cellHasFocus) {
 			    render.setHorizontalAlignment(JLabel.CENTER);
-			    render.setFont(Gui.BOLD);
+			    render.setFont(Gui.BOLD11);
 				File file = setlist.getSource();
 				if (file == null) {
 					render.setText("?");

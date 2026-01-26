@@ -106,6 +106,7 @@ public abstract class MixWidget extends JPanel implements Pastels, Updateable {
 		if (false == banner.getBackground().equals(bg))
 			banner.setBackground(bg);
 		fx.update(); // preset
+		indicators.sync();
 	}
 
 	public void updateVolume() {

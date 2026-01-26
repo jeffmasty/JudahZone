@@ -31,7 +31,7 @@ public abstract class MusicBox extends JPanel implements Musician, Floating, Mid
     protected static final Composite transparent = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);
 
     @Getter protected final NoteTrack track;
-    protected final Editor editor;
+//    protected final Editor editor;
     protected final Track t;
     protected final JudahClock clock;
 
@@ -48,10 +48,10 @@ public abstract class MusicBox extends JPanel implements Musician, Floating, Mid
 
     public MusicBox(NoteTrack midiTrack) {
         this.track = midiTrack;
-        this.editor = midiTrack.getEditor();
+
         this.t = track.getT();
         this.clock = track.getClock();
-        this.editor.addListener(this); // Listen to the editor
+        track.getEditor().addListener(this); // Listen to the editor
         scroll = new Measure(track);
         addMouseListener(this);
         addMouseMotionListener(this);
@@ -63,7 +63,7 @@ public abstract class MusicBox extends JPanel implements Musician, Floating, Mid
      * @param events The list of events to be selected.
      */
     protected void publishSelection(List<MidiEvent> events) {
-        editor.publish(this, events == null ? Collections.emptyList() : events);
+        track.getEditor().publish(this, events == null ? Collections.emptyList() : events);
     }
 
 	@Override
@@ -101,7 +101,7 @@ public abstract class MusicBox extends JPanel implements Musician, Floating, Mid
     @Override public abstract void mouseReleased(MouseEvent e); // subclass implement
     @Override public abstract void mousePressed(MouseEvent e); // subclass implement;
 
-    @Override public final void mouseEntered(MouseEvent e) {TabZone.instance.requestFocusInWindow();}
+    @Override public final void mouseEntered(MouseEvent e) {TabZone.getInstance().requestFocusInWindow();}
     @Override public final void mouseWheelMoved(MouseWheelEvent wheel) {
         boolean up = wheel.getPreciseWheelRotation() < 0;
         if (wheel.isShiftDown())
@@ -125,7 +125,7 @@ public abstract class MusicBox extends JPanel implements Musician, Floating, Mid
     }
 
     private void shiftVelocity(boolean up) {
-        Editor.Selection currentSelection = editor.getSelection();
+        Editor.Selection currentSelection = track.getEditor().getSelection();
         if (currentSelection == null || currentSelection.events().isEmpty()) {
             velocity(up);
             return;
@@ -143,7 +143,7 @@ public abstract class MusicBox extends JPanel implements Musician, Floating, Mid
                 selected.add(new MidiNote(e));
             }
         }
-        editor.publish(this, events);
+        track.getEditor().publish(this, events);
         repaint();
     }
 

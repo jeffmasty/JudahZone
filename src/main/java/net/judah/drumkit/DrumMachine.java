@@ -121,12 +121,18 @@ public final class DrumMachine extends Engine {
 	// process + mix each drumkit, process this channel's fx, place on mains
 	@Override
 	protected void processImpl() {
+		if (onMute)
+			return;
 		AudioTools.silence(left);
 		AudioTools.silence(right);
-		for (DrumTrack track : tracks) {
-			track.getKit().processImpl();
-			AudioTools.mix(track.getKit().getLeft(), left);
-			AudioTools.mix(track.getKit().getRight(), right);
+		for (int i = 0; i < tracks.size(); i++) {
+			tracks.get(i).getKit().processImpl();
+		}
+
+		for (int i = 0; i < tracks.size(); i++) {
+			DrumKit kit = tracks.get(i).getKit();
+			AudioTools.mix(kit.getLeft(), left);
+			AudioTools.mix(kit.getRight(), right);
 		}
 
 		fx();

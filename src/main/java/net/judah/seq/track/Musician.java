@@ -27,6 +27,7 @@ public interface Musician extends TrackListener, Gui.Mouse {
 	void drop(Point p);
 
 	void velocity(boolean up);
+
 	/** @return The editor that manages state and history for this musician's track. */
 	default Editor getEditor() {
 		return getTrack().getEditor();

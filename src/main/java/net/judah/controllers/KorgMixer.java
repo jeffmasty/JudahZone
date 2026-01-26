@@ -1,6 +1,5 @@
 package net.judah.controllers;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import judahzone.api.Controller;
@@ -15,7 +14,6 @@ import net.judah.channel.LineIn;
 import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
-import net.judah.looper.Looper;
 import net.judah.seq.Seq;
 import net.judah.song.Scene;
 
@@ -35,10 +33,10 @@ public class KorgMixer implements Controller {
 		@Getter private final int val;
 	}
 
-	private static final int soff = 32;
-	private static final int moff = 48;
-	private static final int roff = 64;
-	private static final int knoboff = 16;
+	private static final int SOLO = 32;
+	private static final int MUTE = 48;
+	private static final int SCENE = 64;
+	private static final int KNOBS = 16;
 
 	private static final MapEntry PREV = new MapEntry(new String("PREV"), TYPE.MOMENTARY, 58);
  	private static final MapEntry NEXT = new MapEntry(new String("NEXT"), TYPE.MOMENTARY, 59);
@@ -61,46 +59,34 @@ public class KorgMixer implements Controller {
 		Seq seq = zone.getSeq();
 
 		if (data1 >= 0 && data1 < 8) { // Main Faders
-			Channel ch = fader(data1);
+			Channel ch = channel(data1);
 			ch.getGain().set(Gain.VOLUME, data2);
 			MainFrame.updateFx(ch, ch.getGain());
 		}
 
 		// knobs = drumkit or synths gain
-		else if (data1 >= knoboff && data1 < knoboff + 4) {
-			zone.getDrumMachine().getTracks().get(data1 - knoboff).setAmp(data2 * .01f);
+		else if (data1 >= KNOBS && data1 < KNOBS + 8) {
+			int idx = data1 - KNOBS;
+			if (seq.getTracks().size() <= idx)
+				return true;
+			seq.getTracks().get(idx).setAmp(data2 * 0.01f);
 		}
-		else if (data1 >= knoboff + 4 && data1 < knoboff + 8) {
-			Threads.execute(()->seq.gain(data1 - (knoboff + 4), data2));
+		else if (data1 >= KNOBS + 4 && data1 < KNOBS + 8) {
+			// TODo
+			Threads.execute(()->seq.gain(data1 - (KNOBS + 4), data2));
 		}
-		else if (data2 > 0 && data1 >= soff && data1 < soff + 8) { // play/stop sequencer tracks
-			seq.trigger(data1 - soff);
+		else if (data2 > 0 && data1 >= SOLO && data1 < SOLO + 8) { // play/stop sequencer tracks
+			seq.trigger(data1 - SOLO);
 		}
-		else if (data2 > 0 && data1 >= moff && data1 < moff + 8) { // MUTE/RECORD
+		else if (data2 > 0 && data1 >= MUTE && data1 < MUTE + 8) { // MUTE/RECORD
 			//Channel ch = zone.getMains();
-			int idx = data1 - moff;
-
-			if (idx < Looper.LOOPERS) {
-				Channel loop = zone.getLooper().get(idx);
-				loop.setOnMute(!loop.isOnMute());
-			}
-			else if (idx >= 7) {
-				zone.getMains().setOnMute(!zone.getMains().isOnMute());
-			}
-			else {
-				idx -= Looper.LOOPERS;
-				// get channels on Mixer 0, 1, or 2 (3 = mains)
-				ArrayList<LineIn> channels = zone.getMixer().getVisible();
-				if (idx < channels.size()) {
-					LineIn ch = channels.get(idx);
-					ch.setMuteRecord(!ch.isMuteRecord());
-				}
-				else
-					zone.getMains().setOnMute(!zone.getMains().isOnMute());
-			}
+			int idx = data1 - MUTE;
+			Channel ch = channel(idx);
+			if (ch!= null)
+				ch.setOnMute(!ch.isOnMute());
 		}
-		else if (data2 > 0 && data1 >= roff && data1 < roff + 8) { // LAUNCH SCENE
-			launchScene(data1 - roff);
+		else if (data2 > 0 && data1 >= SCENE && data1 < SCENE + 8) { // LAUNCH SCENE
+			launchScene(data1 - SCENE);
 		}
 
 		else if (data1 == SET.getVal() /* && data2 != 0 */) { // Run SettableCombo or hide modal dialog
@@ -123,10 +109,10 @@ public class KorgMixer implements Controller {
 			seq.getCurrent().next(true);
 		}
 		else if (data1 == RWND.getVal() && data2 != 0) { // prev Tab
-			TabZone.instance.changeTab(false);
+			TabZone.getInstance().changeTab(false);
 		}
 		else if (data1 == FWRD.getVal() && data2 != 0) { // next Tab
-			TabZone.instance.changeTab(true);
+			TabZone.getInstance().changeTab(true);
 		}
 		if (data1 == STOP.getVal() && data2 != 0) {
 			// JudahZone.test();
@@ -161,19 +147,21 @@ public class KorgMixer implements Controller {
 		zone.getOverview().setOnDeck(scenes.size() > idx ? scenes.get(idx) : scenes.getLast());
 	}
 
-	private Channel fader(int idx) {
+	private Channel channel(int idx) {
 		if (idx < 4)
 			return zone.getLooper().get(idx);
-		if (idx == 5)
-			return zone.getFluid();
-		if (idx == 6)
-			return zone.getDrumMachine();
 		if (idx == 7) {
-			return zone.getMains();
+			return zone.getMains(); // mains fader
 		}
-		return zone.getTaco();
-	}
+		else {
+			idx -= 4;
+		}
+		LineIn result = zone.getMixer().getVisible(idx);
+		if (result != null)
+			return result;
 
+		return zone.getMains();
+	}
 
 }
 

@@ -7,12 +7,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import judahzone.api.Asset;
 import judahzone.api.Asset.Category;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
+import judahzone.util.MP3;
 import judahzone.util.RTLogger;
 import judahzone.util.Recording;
 import judahzone.util.WavConstants;
@@ -94,6 +96,16 @@ public final class SampleDB {
         }
     }
 
+    public static Asset asset(File f) {
+    	for (Category cat : Category.values()) {
+    		List<Asset> group = SampleDB.listByCategory(cat);
+        		for (Asset a : group)
+        			if (a.file().equals(f))
+						return a;
+    	}
+    	return null;
+    }
+
     // Return the Asset registered for a category + simple name (case-insensitive match).
     public static Asset get(Asset.Category cat, String name) {
         var list = index.get(cat);
@@ -118,22 +130,51 @@ public final class SampleDB {
     }
 
     // Non-blocking: start background load and invoke callback when ready.
-    public static void loadAsync(File file, java.util.function.Consumer<Recording> cb) {
+    // Callback now receives an Asset (wrapping the Recording). If the file is not a registered Asset,
+    // the returned Asset will use Category.USER.
+    public static void loadAsync(File file, float amp, Consumer<Asset> cb) {
         Path key = keyOf(file);
-        if (db.containsKey(key)) {
-            cb.accept(db.get(key));
+
+        // If we already have a Recording cached, create an Asset wrapper and return immediately.
+        Asset registered = asset(file); // preserve name/category when possible
+        Recording cached = db.get(key);
+        if (cached != null) {
+            Asset a = new Asset(
+                registered != null ? registered.name() : stripExtension(file.getName()),
+                file,
+                cached,
+                cached == null ? 0L : cached.size() * Constants.bufSize(),
+                registered != null ? registered.category() : Asset.Category.USER
+            );
+            cb.accept(a);
             return;
         }
+
         bg.submit(() -> {
             try {
-                Recording loaded = Recording.loadInternal(file);
+            	// Recording loaded = Recording.loadInternal(file);
+            	Recording loaded = MP3.load(file, amp);
                 Recording prev = db.putIfAbsent(key, loaded);
-                cb.accept(prev == null ? loaded : prev);
+                Recording r = prev == null ? loaded : prev;
+
+                Asset a;
+                if (registered != null)
+                    a = new Asset(registered.name(), registered.file(), r, r == null ? 0L : r.size() * Constants.bufSize(), registered.category());
+                else
+                    a = new Asset(stripExtension(file.getName()), file, r, r == null ? 0L : r.size() * Constants.bufSize(), Asset.Category.USER);
+
+                cb.accept(a);
             } catch (Throwable t) {
                 RTLogger.warn(SampleDB.class, "Async load failed: " + t.getMessage());
-                cb.accept(null);
+                Asset a = new Asset(stripExtension(file.getName()), file, null, 0L, Asset.Category.USER);
+                cb.accept(a);
             }
         });
+    }
+
+    private static String stripExtension(String name) {
+        int idx = name.lastIndexOf('.');
+        return (idx > 0) ? name.substring(0, idx) : name;
     }
 
     public static void registerAsset(Asset asset) {

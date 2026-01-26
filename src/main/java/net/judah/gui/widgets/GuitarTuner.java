@@ -38,7 +38,7 @@ public class GuitarTuner extends JPanel {
 
     	setupPitch(MPM);
         note = new JLabel(" ");
-        note.setFont(Gui.BOLD);
+        note.setFont(Gui.BOLD11);
         note.setBorder(Gui.SUBTLE);
         tuning = new RainbowFader(0, 80, e ->{/*no-op*/});
         tuning.setOrientation(JSlider.HORIZONTAL);

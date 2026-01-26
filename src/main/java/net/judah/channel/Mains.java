@@ -37,11 +37,11 @@ public class Mains extends Channel {
 		if (tape != null)
             tape.offer(l, r);
 	     if (copy) { // put out a read buffer like other channels offer (RMS meters)
-	            // TODO inverse preamp
+	            // TODO inverse preamp?
 	            System.arraycopy(l, 0, this.left, 0, l.length);
 	            System.arraycopy(r, 0, this.right, 0, r.length);
 	        }
-        // publish RMS on-thread
+        // RMS on mains out
         computeRMS(l, r);
     }
 

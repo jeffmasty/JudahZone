@@ -6,11 +6,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 
+import judahzone.gui.Updateable;
 import lombok.Getter;
 import net.judah.looper.Loop;
 import net.judah.looper.Looper;
 
-public class LoopWidget extends JPanel {
+public class LoopWidget extends JPanel implements Updateable {
 	public static final String FRESH = " 0.0s";
 
 	private final Looper looper;

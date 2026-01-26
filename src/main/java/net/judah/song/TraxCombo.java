@@ -18,7 +18,7 @@ public class TraxCombo extends JComboBox<MidiTrack> {
 
 	public TraxCombo(Seq seq) {
 		this.seq = seq;
-		setFont(Gui.BOLD);
+		setFont(Gui.BOLD11);
 
 		for (MidiTrack t : seq.getTracks())
 			addItem(t);

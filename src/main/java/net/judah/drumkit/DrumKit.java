@@ -20,6 +20,7 @@ import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.midi.Actives;
 import net.judah.midi.ChannelCC;
+import net.judah.seq.track.Computer;
 
 @Getter
 public class DrumKit extends LineIn implements Receiver {
@@ -101,10 +102,7 @@ public class DrumKit extends LineIn implements Receiver {
 					for (int i = 0; i < samples.length; i++)
 						if (program.get(i) != null)
 							samples[i].setRecording(program.get(i));
-					MainFrame.updateTrack(net.judah.seq.track.Computer.Update.PROGRAM, drumMachine.getTrack(this));
-//					MainFrame.update(drumMachine.getTrack(this));
-//					if (JudahZone.isInitialized())
-//						MainFrame.update(Program.first(drumMachine.getTrack(this)));
+					MainFrame.updateTrack(Computer.Update.PROGRAM, drumMachine.getTrack(this));
 				} catch (Exception e) {
 					RTLogger.warn(this, e);
 				}
@@ -119,20 +117,21 @@ public class DrumKit extends LineIn implements Receiver {
 	}
 
 	public DrumSample getSample(DrumType type) {
-		for (DrumSample s : samples)
-			if (s.getDrumType() == type)
-				return s;
+		for (int i = 0; i < samples.length; i++)
+			if (samples[i].getDrumType() == type)
+				return samples[i];
 		return null;
 	}
 
 	@Override
 	public void processImpl() {
-		AudioTools.silence(left);
-		AudioTools.silence(right);
 		if (onMute)
 			return;
-		for (DrumSample drum: samples)
-			drum.process(left, right);
+		hotSwap(); // Kit special
+		AudioTools.silence(left);
+		AudioTools.silence(right);
+		for (int i = 0; i < samples.length; i++)
+			samples[i].process(left, right);
 		fx();
 	}
 

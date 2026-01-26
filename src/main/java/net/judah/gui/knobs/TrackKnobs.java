@@ -185,7 +185,7 @@ public class TrackKnobs extends KnobPanel {
 	private void titleBar() {
 		trax.setSelectedItem(track);
 		trax.addActionListener(tracker);
-		trax.setFont(Gui.BOLD);
+		trax.setFont(Gui.BOLD11);
 		Gui.resize(trax, Size.COMBO_SIZE);
 
 		title.add(trax);

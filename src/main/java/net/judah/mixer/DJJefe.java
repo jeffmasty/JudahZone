@@ -90,6 +90,7 @@ public class DJJefe extends JPanel implements MixBus {
 		for (MixWidget ch : faders)
 			if (ch.channel.equals(channel))
 				ch.update();
+
 	}
 
 	public void update(Channel ch, FX fx) {
@@ -187,6 +188,10 @@ public class DJJefe extends JPanel implements MixBus {
 		MixWidget fader = getFader(ch);
 		if (fader == null)
 			return;
+
+		if (zone.getFxRack().getSelected().contains(fader.channel))
+			MainFrame.setFocus(zone.getMains());
+
 		SwingUtilities.invokeLater(() -> removeNow(ch));
 	}
 
@@ -217,6 +222,18 @@ public class DJJefe extends JPanel implements MixBus {
 				visible.add((LineIn)line.channel);
 		}
 		return visible;
+	}
+
+	public LineIn getVisible(int idx) {
+		int count = 0;
+		for (MixWidget mw : faders) {
+			if (mw instanceof LineMix) {
+				if (count == idx)
+					return (LineIn)mw.channel;
+				count++;
+			}
+		}
+		return null;
 	}
 
 }

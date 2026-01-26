@@ -1,11 +1,13 @@
 package net.judah.gui.fx;
 
 import java.awt.GridLayout;
+import java.util.List;
 
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 
+import judahzone.api.FX.Calc;
 import judahzone.api.TimeFX;
 import judahzone.fx.Chorus;
 import judahzone.fx.Delay;
@@ -14,7 +16,6 @@ import lombok.Getter;
 import net.judah.channel.Channel;
 import net.judah.channel.Mains;
 import net.judah.gui.MainFrame;
-import net.judah.gui.knobs.KnobMode;
 import net.judah.midi.JudahClock;
 import net.judah.midi.LFO;
 
@@ -23,12 +24,15 @@ public class FxPanel extends JPanel {
     @Getter private final MultiSelect selected;
     private final JudahClock clock;
     private final Mains mains;
+    private final List<Calc<?>> analyzers;
     private JPanel placeholder = new JPanel(new GridLayout(1, 1, 0, 0));
 
-    public FxPanel(MultiSelect multi, JudahClock clock, Mains mains) {
+
+    public FxPanel(MultiSelect multi, JudahClock clock, Mains mains, List<Calc<?>> analyzers) {
     	selected = multi;
     	this.mains = mains;
     	this.clock = clock;
+    	this.analyzers = analyzers;
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         placeholder.setBorder(new LineBorder(Pastels.MY_GRAY, 2));
         add(placeholder);
@@ -56,12 +60,9 @@ public class FxPanel extends JPanel {
         checkMainsRMS();
     }
 
-    // Get Mains up on RMS meters if needed.
+    // Get Mains up on analysis if needed.
     private void checkMainsRMS() {
-    	if (MainFrame.getKnobMode() == KnobMode.Tuner)
-    		mains.setCopy(selected.contains(mains) && selected.size() == 1);
-    	else
-			mains.setCopy(false);
+    	mains.setCopy(selected.contains(mains) && analyzers.isEmpty() == false);
 	}
 
     public Channel getChannel() {

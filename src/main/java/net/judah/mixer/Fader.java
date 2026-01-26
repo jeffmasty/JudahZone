@@ -100,8 +100,12 @@ public class Fader {
 		    val = ratio * (endVal - startVal) + (startVal - endVal);
 
 		// set target value on channel
-		gain.set(Gain.VOLUME, (int)val);
-		MainFrame.update(root);
+		if (gain != null)
+			gain.set(Gain.VOLUME, (int)val);
+		if (root instanceof Channel ch)
+			MainFrame.updateFx(ch, ch.getGain());
+		else
+			MainFrame.update(root);
 	}
 
 	public static void execute(Fader f) {

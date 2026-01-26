@@ -43,7 +43,7 @@ public class MiniLooper extends JPanel implements TimeListener {
             @Override public void mouseClicked(MouseEvent e) {
             	clock.inputTempo();
             }});
-		tempoLbl.setFont(Gui.BOLD);
+		tempoLbl.setFont(Gui.BOLD11);
 
         // setBorder(new LineBorder(Pastels.MY_GRAY, 1));
         setLayout(new GridLayout(2, 1, 0, 0));

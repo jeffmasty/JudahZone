@@ -237,9 +237,12 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable,
 	}
 
 	@Override public void update() {
-		stream().filter(loop -> loop.isPlaying())
-			.forEach(loop -> loop.getDisplay().sweep());
+		this.forEach(loop -> loop.getDisplay().update());
 		loopWidget.update();
+//		forEach(Loop::updateDisplay);
+//		stream().filter(loop -> loop.isPlaying())
+//			.forEach(loop -> loop.getDisplay().getSweeper().update());
+// 		loopWidget.update();
 	}
 
 	@Override public void update(Property prop, Object value) {
@@ -293,7 +296,10 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable,
 	private void countUp() {
 		if (++countUp == COUNTUP) {
 			countUp = 0;
-			MainFrame.update(this); // schedule gui feedback
+			MainFrame.update(loopWidget);
+//			for (Loop l : this) // TODO
+//				if (l.isPlaying())
+//					MainFrame.update(l.getDisplay().getSweeper());
 		}
 	}
 
@@ -404,6 +410,12 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable,
 		return false;
 	}
 
+	public LoopWidget getLoopWidget() {
+		if (loopWidget == null)
+			loopWidget = new LoopWidget(this);
+		return loopWidget;
+	}
+
 	@Override
 	public void channelAdded(LineIn ch) {
 		candidates.add(ch);
@@ -412,12 +424,6 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable,
 	@Override
 	public void channelRemoved(LineIn ch) {
 		candidates.remove(ch);
-	}
-
-	public LoopWidget getLoopWidget() {
-		if (loopWidget == null)
-			loopWidget = new LoopWidget(this);
-		return loopWidget;
 	}
 
 	@Override

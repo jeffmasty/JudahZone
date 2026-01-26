@@ -152,7 +152,7 @@ public class JudahMenu extends JMenuBar {
         views.add(new Actionable("SheetMusic..", e->
         	tabs.sheetMusic(Folders.choose(Folders.getSheetMusic()), true)));
         views.add(new Actionable("Spectroscope", e->tabs.scope()));
-        views.add(new Actionable("Detach", e->TabZone.instance.detach()));
+        views.add(new Actionable("Detach", e->TabZone.getInstance().detach()));
 
         return views;
 	}

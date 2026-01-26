@@ -13,7 +13,7 @@ import net.judah.gui.MainFrame;
 /** Audio from disk */
 public class Sample extends BasicPlayer {
 
-	protected static final float BOOST = 0.125f;
+//	protected static final float BOOST = 0.125f;
 	@Getter protected final Gain gain = new Gain();
 
 	@Override

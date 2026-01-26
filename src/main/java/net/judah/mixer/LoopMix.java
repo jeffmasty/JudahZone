@@ -36,7 +36,28 @@ public class LoopMix extends MixWidget implements Updateable {
 	private final Looper looper;
 	private final JToggleButton rec = new JToggleButton("rec");
 	private String text;
-	private final JSlider sweeper = new JSlider(JSlider.VERTICAL);
+	//@Getter private final Sweeper sweeper = new Sweeper();
+
+	public class Sweeper extends JSlider implements Updateable {
+		public Sweeper() {
+			super(JSlider.VERTICAL);
+			Gui.resize(Sweeper.this, SWEEPER);
+			setEnabled(false);
+		}
+
+		@Override
+		public void update() {
+			int target = (int)(100f - 100f * (loop.getTapeCounter().get() / (float)loop.getLength()));
+			if (getValue() != target) {
+				setValue(target);
+				if (!isVisible()) {
+					setVisible(true);
+					bottom.doLayout();
+				}
+				repaint();
+			}
+		}
+	}
 
 	public LoopMix(Loop l, Looper looper) {
 		super(l);
@@ -58,7 +79,7 @@ public class LoopMix extends MixWidget implements Updateable {
 		sidecar.add(font(sync));
 
 		// custom loop feedback:
-		bottom.add(Gui.resize(sweeper, SWEEPER));
+		// bottom.add(sweeper);
 	}
 
 	@Override protected Color thisUpdate() {
@@ -96,12 +117,10 @@ public class LoopMix extends MixWidget implements Updateable {
 		if (mute.isSelected() != channel.isOnMute())
 			mute.setSelected(channel.isOnMute());
 
-
-
-		if (loop.isPlaying())
-			sweep();
-		else if (sweeper.isVisible())
-			sweeper.setVisible(false);
+//		if (loop.isPlaying())
+//			sweeper.update();
+//		else if (sweeper.isVisible())
+//			sweeper.setVisible(false);
 
 		Color bg = PLAIN;
 		if (loop.isRecording())
@@ -171,12 +190,5 @@ public class LoopMix extends MixWidget implements Updateable {
 		MainFrame.update(this);
 	}
 
-	public void sweep() {
-		sweeper.setValue((int)(100f - 100f * (loop.getTapeCounter().get() / (float)loop.getLength())));
-		if (!sweeper.isVisible()) {
-			sweeper.setVisible(true);
-			bottom.doLayout();
-		}
-	}
 
 }

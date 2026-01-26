@@ -18,7 +18,6 @@ import lombok.Setter;
 import net.judah.channel.LineIn;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
-import net.judah.gui.knobs.SampleKnobs;
 import net.judah.mixer.Fader;
 
 @Getter
@@ -41,6 +40,9 @@ public class Sampler extends LineIn {
     private final ArrayList<StepSample> stepSamples = new ArrayList<>();
     private StepSample stepSample;
     private SampleKnobs view;
+
+    private PhoneSynth phone;
+    private SirenSynth shepard;
 
     public Sampler() {
         super(Sampler.class.getSimpleName(), Constants.STEREO);
@@ -91,9 +93,23 @@ public class Sampler extends LineIn {
 
     }
 
+    public PhoneSynth getPhone() {
+		if (phone == null) {
+			phone = new PhoneSynth(S_RATE, this);
+		}
+		return phone;
+	}
+
+    public SirenSynth getShepard() {
+		if (shepard == null) {
+			shepard = new SirenSynth(S_RATE);
+		}
+		return shepard;
+	}
+
     public SampleKnobs getView() {
         if (view == null)
-            view = new SampleKnobs(this);
+            view = new SampleKnobs(this, getPhone(), getShepard());
         return view;
     }
 
@@ -109,14 +125,16 @@ public class Sampler extends LineIn {
 
 	// add a PlayAudio for hot iteration (thread-safe)
 	public BasicPlayer add(BasicPlayer player) {
-		if (player == null) return null;
+		if (player == null)
+			return null;
 		players.addIfAbsent(player);
 		return player;
 	}
 
 	// remove a PlayAudio
 	public void remove(PlayAudio player) {
-		if (player == null) return;
+		if (player == null)
+			return;
 		players.remove(player);
 	}
 
@@ -212,22 +230,31 @@ public class Sampler extends LineIn {
 
 	@Override
 	protected void processImpl() {
+		if (onMute)
+			return;
+
 		AudioTools.silence(left);
 		AudioTools.silence(right);
-    	for (Sample sample : samples)
+
+		for (Sample sample : samples)
     		sample.process(left, right);
     	for (StepSample s : stepSamples)
     		if (s.isOn()) {
-    			s.setEnv(stepMix);
+    			s.setEnv(stepMix); // not elegant
     			s.process(left, right);
     		}
 
+    	for (int i = 0; i < players.size(); i++) // on fx
+			players.get(i).process(left, right);
+
+    	if (phone != null)
+			phone.process(left, right);
+
+    	if (shepard != null)
+    		shepard.process(left, right);
+
     	fx();
 
-    	for (BasicPlayer player : players) {
-    		if (player.isPlaying())
-    			player.process(left, right);
-    	}
 	}
 
 }

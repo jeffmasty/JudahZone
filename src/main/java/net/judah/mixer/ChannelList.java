@@ -38,7 +38,7 @@ import net.judah.channel.LineIn;
 /**CRUD table for user channel registrations. Binds directly to Channels */
 public class ChannelList extends JPanel implements Channels.MixBus {
 	private static final Dimension DEFAULT_DIALOG_SIZE = new Dimension(780, 485);
-	// columns reference
+	// columns
 	private static final int ICON = 0;
 	private static final int NAME = 1;
 	private static final int ONMIXER = 2;

@@ -320,11 +320,14 @@ public class MainFrame extends JFrame implements Runnable {
             if (o instanceof FxUpdate fx) {
             	fx.ch.getGui().update(fx.fx); // FXRack + preset
 
-            	if (fx.fx == null || fx.fx instanceof Gain)
-            		overview.update(fx.ch, fx.fx); // preset and gain
-
-                if (fx.fx == null)   // presets
+            	if (fx.fx == null) {
             		mixer.update(fx.ch);
+            		overview.update(fx.ch, null); // preset and gain
+            	}
+            	else if (fx.fx instanceof Gain g) {
+            		overview.update(fx.ch, g); // preset and gain
+            		mixer.update(fx.ch, g);
+            	}
                 else {
                     mixer.update(fx.ch, fx.fx); // LEDs
                     if (fx.fx instanceof LFO) // lfo panel
@@ -337,6 +340,16 @@ public class MainFrame extends JFrame implements Runnable {
             }
 
             else if (o instanceof Channel ch) {
+            	if (effects.getChannel() == ch)
+					effects.getChannel().getGui().update(); // heavy?
+				mixer.update(ch);
+				overview.update(ch);
+				if (ch instanceof DrumKit && knobMode == KnobMode.Kitz)
+					knobs.update();
+				else if (ch instanceof Sampler)
+					midiGui.update(); // stepSampler
+            	if (effects.getChannel() == ch)
+            		effects.getChannel().getGui().update(); // heavy?
                 mixer.update(ch);
                 overview.update(ch);
                 if (ch instanceof DrumKit && knobMode == KnobMode.Kitz)

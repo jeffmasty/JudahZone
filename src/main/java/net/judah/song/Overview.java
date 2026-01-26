@@ -205,7 +205,7 @@ public class Overview extends Box implements TimeListener {
 
     private void setName() {
 		setName(song.getFile() == null ? getName() : song.getFile().getName());
-    	TabZone.instance.title(this);
+    	TabZone.getInstance().title(this);
     }
 
 
@@ -240,7 +240,7 @@ public class Overview extends Box implements TimeListener {
     	SongCombo.refresh();
 
     	// load sheet music if song name matches an available sheet music file
-    	TabZone.instance.sheetMusic(song);
+    	TabZone.getInstance().sheetMusic(song);
     }
 
     public Song loadSong(final File input) {

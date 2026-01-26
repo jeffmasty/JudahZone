@@ -18,7 +18,6 @@ import javax.swing.SwingUtilities;
 import judahzone.gui.Actionable;
 import judahzone.gui.Gui;
 import judahzone.gui.Icons;
-import judahzone.util.Threads;
 import judahzone.widgets.Btn;
 import net.judah.JudahZone;
 import net.judah.gui.MainFrame;
@@ -66,7 +65,6 @@ public abstract class TrackMenu extends Box { // to update Programmer (length) i
 	    capture = new RecordWidget(track);
 
 	    buildLocal();
-
 	    menu.add(file);
 
 	    // add standard issue
@@ -77,12 +75,11 @@ public abstract class TrackMenu extends Box { // to update Programmer (length) i
 	    add(Gui.resize(program, track.isDrums() ? MEDIUM : COMBO_SIZE));
 	    add(new Btn(Icons.SAVE, e -> track.save()));
 	    add(programmer);
-	    Threads.execute(() ->
-		    SwingUtilities.invokeLater(()-> {
-		    	childMenus();
-		    	add(velocity);
-		    	revalidate();
-	    }));
+	    SwingUtilities.invokeLater(()-> {
+	    	childMenus();
+	    	add(velocity);
+	    	revalidate();
+	    });
 	}
 
 	private void buildLocal() {

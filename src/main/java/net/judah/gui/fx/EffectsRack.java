@@ -136,8 +136,10 @@ public class EffectsRack extends JPanel implements MPKTools {
 
 	public void update(FX fx) {
 
-		if (fx == null)
+		if (fx == null) {
+			title.updateMute();
 			updatePreset();
+		}
 
 		if (fx instanceof Reverb) {
 			dampness.update();

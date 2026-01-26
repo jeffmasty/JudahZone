@@ -13,17 +13,13 @@ import net.judah.gui.MainFrame;
 public class FxButton extends JButton {
 	private static final Insets ZERO = new Insets(0, 0, 0, 0);
 
-	private FxButton() {
-		setIcon(icon());
-		setMargin(ZERO);
-	}
-
 	public static Icon icon() {
 		return Icons.get("fx.png");
 	}
 
 	public FxButton(Channel ch) {
-		this();
+		setIcon(icon());
+		setMargin(ZERO);
 		addActionListener(e -> MainFrame.setFocus(ch));
 	}
 

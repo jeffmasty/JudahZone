@@ -32,10 +32,10 @@ public class ChordScroll extends JPanel {
 	public ChordScroll(Chords t) {
 		chords = t;
 		crds = new JLabel[] {a, b, c, d, e};
-		aLyrics.setFont(Gui.BOLD);
+		aLyrics.setFont(Gui.BOLD11);
         
         JPanel top = new JPanel(new GridLayout(1, 5, 1, 1));
-		for (JLabel it : crds) it.setFont(Gui.BOLD);
+		for (JLabel it : crds) it.setFont(Gui.BOLD11);
 		for (JLabel it : crds) top.add(it);
 		a.setOpaque(true);
 		b.setOpaque(true);

@@ -45,7 +45,9 @@ import net.judah.song.Overview;
 import net.judah.song.Song;
 
 public class TabZone extends CloseableTabbedPane {
-	public static TabZone instance;
+
+
+	@Getter private static TabZone instance;
 
 	@Getter private final HashSet<Component> frames = new HashSet<Component>();
 
@@ -79,6 +81,8 @@ public class TabZone extends CloseableTabbedPane {
 	}
 
 	public static void edit(MidiTrack track) {
+		if (instance == null)
+			return;
 		instance._edit(track);
 	}
 	private void _edit(MidiTrack track) {
@@ -86,7 +90,8 @@ public class TabZone extends CloseableTabbedPane {
 			pianoTrack(piano);
 		else if (track instanceof DrumTrack drumTrack) {
 			if (drumz.getTracks().contains(drumTrack)) {
-				drumz.setCurrent(drumTrack);
+				drumz.getTracks().setCurrent(drumTrack);
+				// drumz.setCurrent(drumTrack); // fra-gee-leh
 				int idx = indexOfComponent(drumz);
 				if (idx >= 0)
 					setSelectedIndex(idx);

@@ -43,12 +43,8 @@ import net.judah.synth.taco.TacoTruck;
 public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controller {
 
 	public static final String NAME = "MPKmini2"; // midi port
-	private static final String[] ROMPLER = new String[] {
-				"Acoustic Bass", "Vibraphone", "Rock Organ", "Rhodes EP",
-				"Tremolo", "Oboe", "Ahh Choir", "Harp"};
 
 	private final JudahZone zone;
-
 
 	// Where to route live MPK keys (and Jamstik)
 	@Getter private ZoneMidi midiOut;
@@ -60,7 +56,7 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 			return checkCC(midi.getData1(), midi.getData2());
 
 		if (Midi.isProgChange(midi))
-			return doProgChange(midi.getData1(), midi.getData2());
+			return doProgChange(midi.getData1());
 
 		if (zone.getSeq().captured(midi))  // recording or transposing or drums
 			return true;
@@ -218,11 +214,11 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 		return true;
 	}
 
-	private boolean doProgChange(int data1, int data2) {
-		// Bank A: Fluid presets
+	private boolean doProgChange(int data1) {
+		// Bank A: dial PhoneSynth
 		for (int i = 0; i < PRIMARY_PROG.length; i++)
-			if (data1 == PRIMARY_PROG[i]) {
-				zone.getSeq().getFluids()[0].progChange(ROMPLER[i]);
+			if (data1 == PRIMARY_PROG[i]) { // zone.getSeq().getFluids()[0].progChange(ROMPLER[i]);
+				zone.getSampler().getPhone().dial(i);
 				return true;
 			}
 		// Bank B: set current track's pattern #
@@ -250,4 +246,8 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 	}
 
 }
+
+// 	private static final String[] ROMPLER = new String[] {
+// "Acoustic Bass", "Vibraphone", "Rock Organ", "Rhodes EP",
+// "Tremolo", "Oboe", "Ahh Choir", "Harp"};
 

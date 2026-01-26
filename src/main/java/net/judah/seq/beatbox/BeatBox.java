@@ -268,7 +268,7 @@ public class BeatBox extends MusicBox implements Pastels {
 				Prototype a = translate(drag);
 				Prototype b = translate(mouse.getPoint());
 				drag = null;
-				List<MidiEvent> sel = editor.selectArea(a.tick, b.tick, a.data1, b.data1);
+				List<MidiEvent> sel = track.getEditor().selectArea(a.tick, b.tick, a.data1, b.data1);
 				select(sel);
 				break;
 
@@ -281,7 +281,7 @@ public class BeatBox extends MusicBox implements Pastels {
 			click = null;
 		}
 		pressOnSelected = false;
-		TabZone.instance.requestFocusInWindow();
+		TabZone.getInstance().requestFocusInWindow();
 	}
 
 	@Override
@@ -313,7 +313,7 @@ public class BeatBox extends MusicBox implements Pastels {
 		Prototype destination = new Prototype(toData1(mouse),
 				((now - click.tick) % track.getWindow()) / track.getStepTicks());
 		e.setDestination(destination, click);
-		editor.push(e);
+		track.getEditor().push(e);
 		select(dragging);
 		dragging = null;
 		click = null;
@@ -336,7 +336,7 @@ public class BeatBox extends MusicBox implements Pastels {
 		long start = track.getCurrent() * track.getBarTicks();
 		for (int i = 0; i < dragging.size(); i++) {
 			MidiEvent note = dragging.get(i);
-			dragging.set(i, editor.compute(note, delta, destination.tick, start, track.getWindow()));
+			dragging.set(i, track.getEditor().compute(note, delta, destination.tick, start, track.getWindow()));
 		}
 		repaint();
 	}

@@ -413,7 +413,7 @@ public class Piano extends MusicBox {
 	                ArrayList<MidiEvent> added = new ArrayList<>();
 	                added.add(on);
 	                added.add(off);
-	                editor.push(new Edit(Type.NEW, added));
+	                track.getEditor().push(new Edit(Type.NEW, added));
 	            } catch (Exception e) {
 	                RTLogger.warn(this, e);
 	            }
@@ -428,7 +428,7 @@ public class Piano extends MusicBox {
 	            int lowData1 = Math.min(a.data1, b.data1);
 	            int highData1 = Math.max(a.data1, b.data1);
 
-	            List<MidiEvent> newSel = editor.getEventsInArea(leftTick, rightTick, lowData1, highData1);
+	            List<MidiEvent> newSel = track.getEditor().getEventsInArea(leftTick, rightTick, lowData1, highData1);
 	            if (mouse.isControlDown()) {
 	                LinkedHashSet<MidiEvent> merged = new LinkedHashSet<>(selected);
 	                merged.addAll(newSel);
@@ -482,7 +482,7 @@ public class Piano extends MusicBox {
 
 	    Prototype destination = new Prototype(now.data1 - click.data1, stepDelta);
 	    e.setDestination(destination, click);
-	    editor.push(e);
+	    track.getEditor().push(e);
 	}
 
 	private ArrayList<MidiEvent> buildInterleavedForSelected() {

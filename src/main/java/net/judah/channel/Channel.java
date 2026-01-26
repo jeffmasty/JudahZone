@@ -22,7 +22,6 @@ import judahzone.fx.StereoBus;
 import judahzone.util.AudioMetrics;
 import judahzone.util.AudioTools;
 import judahzone.util.RTLogger;
-import judahzone.util.Threads;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.JudahZone;
@@ -141,9 +140,11 @@ public abstract class Channel extends StereoBus implements Presets {
     }
 
     public final void setPresetActive(boolean active) {
+    	if (presetActive == active)
+			return;
         presetActive = active;
         applyPreset();
-        MainFrame.updateFx(this, null /* = preset */);
+        MainFrame.update(this);
     }
 
     public final void setPreset(String name, boolean active) {
@@ -170,10 +171,8 @@ public abstract class Channel extends StereoBus implements Presets {
             return;
         onMute = mute;
         if (onMute)
-            Threads.execute(()->{ // for gain indicators
-                AudioTools.silence(getLeft());
-                AudioTools.silence(getRight());
-            });
+            AudioTools.silence(left);
+            AudioTools.silence(right);
         MainFrame.update(this);
     }
 

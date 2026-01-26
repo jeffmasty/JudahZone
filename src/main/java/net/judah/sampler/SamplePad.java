@@ -1,4 +1,4 @@
-package net.judah.gui.knobs;
+package net.judah.sampler;
 
 import java.awt.Color;
 import java.awt.FlowLayout;
@@ -17,8 +17,6 @@ import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import judahzone.widgets.Knob;
 import lombok.Getter;
-import net.judah.sampler.Sample;
-import net.judah.sampler.Sampler;
 
 public class SamplePad extends Gui.Opaque {
 	public final Sample sample;
