@@ -7,8 +7,7 @@ import judahzone.api.Midi;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public
-enum ControlChange {
+public enum ControlChange {
 	// BANK(0),
 	MODWHEEL(1, "Open the filter"),
 	// BREATH(2),

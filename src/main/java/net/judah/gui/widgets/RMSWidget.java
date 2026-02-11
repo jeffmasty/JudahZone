@@ -67,7 +67,7 @@ public class RMSWidget extends BufferedImage {
             snapshot = new ArrayList<>(amplitudes);
         }
 
-        g2d.setColor(Pastels.EGGSHELL);
+        g2d.setColor(Pastels.BG);
         g2d.fillRect(0, 0, width, height);
 
         g2d.setColor(Pastels.RED);

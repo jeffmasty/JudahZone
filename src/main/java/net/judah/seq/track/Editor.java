@@ -18,7 +18,7 @@ import judahzone.api.Key;
 import judahzone.api.Midi;
 import judahzone.util.RTLogger;
 import lombok.Getter;
-import net.judah.drumkit.DrumType;
+import net.judah.drums.DrumType;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
 import net.judah.gui.knobs.KnobMode;
@@ -293,7 +293,7 @@ public class Editor {
 	        if (Midi.isNoteOn(note.getMessage())) {
 	            on = note;
 	        } else {
-	            MidiNote result = MidiTools.compute(new MidiNote(on, note), destination, track);
+	            PianoNote result = MidiTools.compute(new PianoNote(on, note), destination, track);
 	            replace.add(result);
 	            replace.add(result.getOff());
 	        }
@@ -611,7 +611,7 @@ public class Editor {
 	        if (Midi.isNoteOn(note.getMessage())) {
 	            on = note;
 	        } else {
-	            MidiNote result = MidiTools.compute(new MidiNote(on, note), e.getDestination(), track);
+	            PianoNote result = MidiTools.compute(new PianoNote(on, note), e.getDestination(), track);
 	            delete.add(result);
 	            delete.add(result.getOff());
 	        }

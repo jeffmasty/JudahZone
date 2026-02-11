@@ -15,9 +15,10 @@ import javax.swing.JSlider;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
-import judahzone.api.Asset;
 import judahzone.api.PlayAudio;
 import judahzone.api.Played;
+import judahzone.data.Asset;
+import judahzone.data.Recording;
 import judahzone.gui.Gui;
 import judahzone.jnajack.BasicPlayer;
 import judahzone.util.AudioMetrics;
@@ -26,13 +27,13 @@ import judahzone.util.Constants;
 import judahzone.util.Folders;
 import judahzone.util.MP3;
 import judahzone.util.Memory;
-import judahzone.util.Recording;
 import lombok.Getter;
 import net.judah.gui.Size;
+import net.judah.gui.knobs.Knobs;
 import net.judah.gui.widgets.RMSImage;
 
 /** Sampler's audio player UI—play/loop/gain controls + RMS meter visualization */
-public class BoomBox extends JPanel implements PlayAudio, Played {
+public class BoomBox extends Knobs implements PlayAudio, Played {
 	private static final Dimension RMSSize = new Dimension(Size.WIDTH_KNOBS - 10, (int) (Size.HEIGHT_KNOBS * (2f / 3f)));
 
 	@Getter private final BasicPlayer player = new BasicPlayer();
@@ -196,6 +197,7 @@ public class BoomBox extends JPanel implements PlayAudio, Played {
 	}
 
 	/** MIDI knob input: idx 0=volume, 1=playhead (seek), 2+=other */
+	@Override
 	public void doKnob(int idx, final int value) {
 		if (idx == 0) {
 			SwingUtilities.invokeLater(() -> volSlider.setValue(value));

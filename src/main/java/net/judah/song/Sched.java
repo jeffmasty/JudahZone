@@ -20,7 +20,7 @@ public class Sched {
 	public Arp mode;
 	private String program;
 	@JsonInclude(Include.NON_NULL)
-	private ArpInfo arp = new ArpInfo(); // mode, octaves
+	private ArpInfo arp; //  = new ArpInfo(); // mode, octaves
 
 	public Sched(Sched clone) {
 		launch = clone.launch;

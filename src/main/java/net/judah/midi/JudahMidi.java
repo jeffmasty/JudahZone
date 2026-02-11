@@ -24,7 +24,7 @@ import org.jaudiolibs.jnajack.JackPort;
 import judahzone.api.Controller;
 import judahzone.api.Midi;
 import judahzone.api.MidiClock;
-import judahzone.api.Ports.Type;
+import judahzone.api.AudioEngine.Type;
 import judahzone.jnajack.ZoneJackClient;
 import judahzone.util.Constants;
 import judahzone.util.RTLogger;

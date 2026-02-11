@@ -15,20 +15,20 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import judahzone.api.Asset;
+import judahzone.data.Asset;
 import judahzone.gui.Gui;
 import judahzone.gui.Updateable;
 import judahzone.jnajack.BasicPlayer;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
-import judahzone.util.WavConstants;
 
 
 /**DTMF tone generator with button press and visual feedback.
  * Ensures each trigger is exactly DURATION_MS long and includes an
  * attack and release window. Overlapping triggers queue the next tone
- * and wait for the current release to complete before starting the queued tone. */
+ * and wait for the current release to complete before starting the queued tone.
+ * Also includes a "ringtone" button that plays a pre-recorded Phone.wav sample.*/
 public class PhoneSynth extends JPanel implements Updateable, Consumer<Asset> {
 
 	private static final float[] LOW_FREQS = {697f, 770f, 852f, 941f};
@@ -74,7 +74,7 @@ public class PhoneSynth extends JPanel implements Updateable, Consumer<Asset> {
 
 		SwingUtilities.invokeLater(()->gui());
 		// Preload Phone.wav (ringtone)
-		SampleDB.loadAsync(RING, WavConstants.RUN_LEVEL, this);
+		SampleDB.loadAsync(RING, 0.4f, this);
 	}
 
 	private void gui() {
@@ -314,7 +314,18 @@ public class PhoneSynth extends JPanel implements Updateable, Consumer<Asset> {
 	}
 
 	public void doKnob(int idx, int value) {
-		// volume?
+		// volume? not implemented
 	}
 
 }
+
+/*
+Wikipedia: Dual-tone multi-frequency (DTMF) signaling is a telecommunication signaling system using the voice-frequency band over telephone lines between telephone equipment and other communications devices and switching centers.[1] DTMF was first developed in the Bell System in the United States,[2][3] and became known under the trademark Touch-Tone for use in push-button telephones, starting in 1963. The DTMF frequencies are standardized in ITU-T Recommendation Q.23.[4] The signaling system is also known as MF4 in the United Kingdom, as MFV in Germany, and Digitone in Canada.
+
+Touch-tone dialing with a telephone keypad gradually replaced the use of rotary dials and has become the industry standard in telephony to control equipment and signal user intent.[5] The signaling on trunks in the telephone network uses a different type of multi-frequency signaling.
+
+a mixture of two pure tone (pure sine wave) sounds.
+The DTMF system uses two sets of four frequencies in the voice frequency range transmitted in pairs to represent sixteen signals, representing the ten digits and six additional signals identified as the letters A to D, and the symbols # and *. As the signals are audible tones, they can be transmitted through line repeaters and amplifiers, and over radio and microwave links.
+
+The DTMF telephone keypad is laid out as a matrix of push buttons in which each row represents the low-frequency component and each column represents the high-frequency component of the DTMF signal. The commonly used keypad has four rows and three columns, but a fourth column is present for some applications. Pressing a key sends a combination of the row and column frequencies. For example, the 1 key produces a superimposition of a 697 Hz low tone and a 1209 Hz high tone. Initial pushbutton designs employed levers, enabling each button to activate one row and one column contact. The tones are decoded by the switching center to determine the keys pressed by the user.
+*/

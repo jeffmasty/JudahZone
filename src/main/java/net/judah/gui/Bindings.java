@@ -21,7 +21,7 @@ import judahzone.fx.Compressor;
 import judahzone.fx.Convolution;
 import judahzone.fx.Delay;
 import judahzone.fx.EQ;
-import judahzone.fx.Filter;
+import judahzone.fx.CutFilter;
 import judahzone.fx.Gain;
 import judahzone.fx.MonoFilter;
 import judahzone.fx.Overdrive;
@@ -109,7 +109,7 @@ public class Bindings {
 			return Pastels.GREEN;
 		if (MonoFilter.class.equals(class1))
 			return Pastels.PINK;
-		if (Filter.class.equals(class1))
+		if (CutFilter.class.equals(class1))
 			return Pastels.PINK;
 		if (EQ.class.equals(class1))
 			return Pastels.MY_GRAY;
@@ -121,7 +121,7 @@ public class Bindings {
 			return Pastels.BLUE;
 		if (Convolution.class.equals(class1))
 			return Color.BLACK;
-		return Pastels.EGGSHELL;
+		return Pastels.BG;
 	}
 }
 /*           case VK_R:

@@ -7,7 +7,6 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
@@ -17,11 +16,12 @@ import judahzone.gui.Pastels;
 import judahzone.util.Constants;
 import judahzone.widgets.CenteredCombo;
 import net.judah.gui.Size;
+import net.judah.gui.knobs.Knobs;
 
 /**Shepard–Risset glissando -- Continuous Risset Scale with concurrent voices.
  * 4-segment envelope: attack, sustain, release, silence. Repeats cyclically.
  * https://en.wikipedia.org/wiki/Shepard_tone#Shepard%E2%80%93Risset_glissando*/
-public class SirenSynth extends JPanel {
+public class SirenSynth extends Knobs {
 
 	public static enum Mode { SIREN, RINGMOD, SUM };
 	private static enum EnvelopeStage { ATTACK, SUSTAIN, RELEASE, SILENCE };
@@ -129,6 +129,7 @@ public class SirenSynth extends JPanel {
 	        v.updateRateScaling(rateValue / 100f);
 	}
 
+	@Override
 	public void doKnob(int idx, int value) {
 	    if (idx == 1) {
 	        int sliderValue = (value * 100 / 100) - 50;

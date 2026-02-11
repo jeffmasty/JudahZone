@@ -31,7 +31,6 @@ public abstract class MusicBox extends JPanel implements Musician, Floating, Mid
     protected static final Composite transparent = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);
 
     @Getter protected final NoteTrack track;
-//    protected final Editor editor;
     protected final Track t;
     protected final JudahClock clock;
 
@@ -76,7 +75,7 @@ public abstract class MusicBox extends JPanel implements Musician, Floating, Mid
 			for (MidiEvent event : selection.events()) {
 				// Drums use simple MidiEvent wrapping
 				if (Midi.isNoteOn(event.getMessage())) {
-					selected.add(new MidiNote(event));
+					selected.add(new PianoNote(event));
 				}
 			}
 		}
@@ -140,7 +139,7 @@ public abstract class MusicBox extends JPanel implements Musician, Floating, Mid
         selected.clear();
         if (events != null) {
             for (MidiEvent e : events) {
-                selected.add(new MidiNote(e));
+                selected.add(new PianoNote(e));
             }
         }
         track.getEditor().publish(this, events);

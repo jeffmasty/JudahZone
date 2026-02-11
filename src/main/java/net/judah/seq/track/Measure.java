@@ -1,6 +1,8 @@
 // java
 package net.judah.seq.track;
 
+import java.util.ArrayList;
+
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
@@ -8,7 +10,12 @@ import javax.sound.midi.Track;
 import judahzone.api.Midi;
 import judahzone.api.MidiConstants;
 
-public class Measure extends Notes implements MidiConstants {
+public class Measure extends ArrayList<PianoNote> implements MidiConstants {
+
+//	public Measure
+//		public Measure(Measure copy) {
+//			addAll(copy);
+
 
 	private final Accumulator stash = new Accumulator();
 	private final MidiTrack track;
@@ -44,7 +51,7 @@ public class Measure extends Notes implements MidiConstants {
 			if (tick < start) continue;
 			if (tick >= end) break;
 			if (Midi.isNoteOn(e.getMessage()))
-				add(new MidiNote(e));
+				add(new PianoNote(e));
 		}
 	}
 
@@ -72,7 +79,7 @@ public class Measure extends Notes implements MidiConstants {
 				MidiEvent on = stash.get(s);
 				long time = on == null ? start : on.getTick();
 				int velocity = on == null ? 99 : ((ShortMessage) on.getMessage()).getData2();
-				add(new MidiNote(
+				add(new PianoNote(
 						new MidiEvent(Midi.create(NOTE_ON, ch, s.getData1(), velocity), time),
 						new MidiEvent(Midi.create(NOTE_OFF, ch, s.getData1()), e.getTick())));
 			}
@@ -86,7 +93,7 @@ public class Measure extends Notes implements MidiConstants {
 			int idx = MidiTools.find(t, e.getTick());
 			if (idx < 0) idx = 0;
 
-			MidiNote target = null;
+			PianoNote target = null;
 
 			// First pass: search forward from idx
 			for (int i = idx; i < t.size(); i++) {
@@ -95,7 +102,7 @@ public class Measure extends Notes implements MidiConstants {
 				if (!Midi.isNoteOff(sht) || sht.getData1() != data1) continue;
 
 				long offTick = MidiTools.wrapTickInWindow(cand.getTick(), start, track.getWindow());
-				target = new MidiNote(new MidiEvent(on, e.getTick()), new MidiEvent(sht, offTick));
+				target = new PianoNote(new MidiEvent(on, e.getTick()), new MidiEvent(sht, offTick));
 				break;
 			}
 
@@ -107,19 +114,42 @@ public class Measure extends Notes implements MidiConstants {
 					if (!Midi.isNoteOff(sht) || sht.getData1() != data1) continue;
 
 					long offTick = MidiTools.wrapTickInWindow(cand.getTick(), start, track.getWindow());
-					target = new MidiNote(new MidiEvent(on, e.getTick()), new MidiEvent(sht, offTick));
+					target = new PianoNote(new MidiEvent(on, e.getTick()), new MidiEvent(sht, offTick));
 					break;
 				}
 			}
 
 			// If still not found, synthesize a note-off at the window end
 			if (target == null) {
-				target = new MidiNote(new MidiEvent(on, e.getTick()),
+				target = new PianoNote(new MidiEvent(on, e.getTick()),
 						new MidiEvent(Midi.create(NOTE_OFF, ch, data1, on.getData2()), end - 1));
 			}
 
 			add(target);
 		}
 	}
+
+	@Deprecated
+	@Override public boolean contains(Object o) {
+		if (o instanceof MidiEvent evt) {
+			for (PianoNote note : this)
+				if (note.equals(evt))
+					return true;
+		}
+		return false;
+	}
+
+	@Deprecated
+	public boolean contains(long tick, int data1) {
+		for (PianoNote note : this)
+			if (note.getTick() <= tick)
+				if (note.getOff() == null || note.getOff().getTick() > tick) {
+					if (note.getMessage() instanceof ShortMessage &&
+							((ShortMessage)note.getMessage()).getData1() == data1)
+					return true;
+				}
+		return false;
+	}
+
 
 }

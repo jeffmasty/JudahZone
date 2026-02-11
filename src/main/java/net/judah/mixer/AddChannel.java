@@ -35,14 +35,13 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 
 import judahzone.api.Custom;
-import judahzone.api.Ports;
+import judahzone.api.AudioEngine;
 import judahzone.gui.DialogManager;
 import judahzone.gui.Gui;
 import judahzone.gui.Icons;
 import judahzone.util.Constants;
 import judahzone.widgets.RangeSlider;
 import net.judah.JudahZone;
-import net.judah.bridge.AudioEngine;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.ModalDialog;
 
@@ -52,7 +51,7 @@ import net.judah.gui.widgets.ModalDialog;
  * external LineIn with mono/stereo UX, RangeSlider for low/high cut in mono
  * mode, and MIDI options.
  */
-public class AddChannel extends JPanel implements Ports.PortData {
+public class AddChannel extends JPanel implements AudioEngine.PortData {
 
 	private static final java.awt.Dimension DEFAULT_DIALOG_SIZE = new java.awt.Dimension(520, 420);
 
@@ -63,7 +62,7 @@ public class AddChannel extends JPanel implements Ports.PortData {
 	private static JFrame frame;
 	private final Channels channels;
 	private final Consumer<Custom> onOk;
-	private final Ports.Provider provider = AudioEngine.getPorts();
+	private final AudioEngine.Provider provider = AudioEngine.getPorts();
 
 	private final JTextField name;
 	private final JCheckBox onMixer;

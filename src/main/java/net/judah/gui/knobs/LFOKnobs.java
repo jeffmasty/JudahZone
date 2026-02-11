@@ -8,8 +8,8 @@ import judahzone.api.FX;
 import judahzone.gui.Gui;
 import lombok.Getter;
 import net.judah.channel.Channel;
-import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
+import net.judah.gui.ShiftBtn;
 import net.judah.midi.LFO;
 
 public class LFOKnobs extends KnobPanel {
@@ -69,7 +69,7 @@ public class LFOKnobs extends KnobPanel {
 		if (!upperKnobs && lfo2.doKnob(idx, data2))
 				return false;
 
-		if (HQ.isShift())
+		if (ShiftBtn.isActive())
 			cabSim.doKnob(idx, data2);
 		else
 			compressor.doKnob(idx, data2);

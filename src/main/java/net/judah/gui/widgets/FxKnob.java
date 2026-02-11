@@ -16,8 +16,8 @@ import judahzone.widgets.Knob;
 import lombok.Getter;
 import net.judah.channel.Channel;
 import net.judah.gui.Bindings;
-import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
+import net.judah.gui.ShiftBtn;
 import net.judah.gui.fx.FXAware;
 
 /** a knob and label, paints itself on update when effect is active */
@@ -149,7 +149,7 @@ public class FxKnob extends JPanel implements Updateable, FXAware {
     }
 
     boolean shiftProcessing() {
-    	return HQ.isShift() && shiftIdx >= 0;
+    	return ShiftBtn.isActive() && shiftIdx >= 0;
     }
 
 }

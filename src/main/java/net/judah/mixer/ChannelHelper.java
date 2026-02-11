@@ -5,22 +5,21 @@ import java.util.function.Consumer;
 import org.jaudiolibs.jnajack.JackPort;
 
 import judahzone.api.Custom;
-import judahzone.api.Ports;
-import judahzone.api.Ports.Connect;
-import judahzone.api.Ports.IO;
-import judahzone.api.Ports.Request;
-import judahzone.api.Ports.Type;
+import judahzone.api.AudioEngine;
+import judahzone.api.AudioEngine.Connect;
+import judahzone.api.AudioEngine.IO;
+import judahzone.api.AudioEngine.Request;
+import judahzone.api.AudioEngine.Type;
 import judahzone.util.RTLogger;
-import net.judah.bridge.AudioEngine;
 import net.judah.channel.Instrument;
 import net.judah.channel.LineIn;
 import net.judah.midi.MidiInstrument;
 
 
 /**  Monitor progression of Port registration/connection  */
-public class ChannelHelper implements Ports.PortCallback {
+public class ChannelHelper implements AudioEngine.PortCallback {
 
-	private final Ports.Provider ports = AudioEngine.getPorts();
+	private final AudioEngine.Provider ports = AudioEngine.getPorts();
 	private final LineIn target;
 	private final Consumer<LineIn> callback;
 	private final boolean midi;
@@ -39,19 +38,19 @@ public class ChannelHelper implements Ports.PortCallback {
 		// external has audioPorts: mono or stereo?
 
 		String ourLeft = name + (mono ? "-mono" : "-left");
-		Ports.Request leftReq = new Request(user, ourLeft, Type.AUDIO, IO.IN, this);
+		AudioEngine.Request leftReq = new Request(user, ourLeft, Type.AUDIO, IO.IN, this);
 		ports.register(leftReq);
 
 		if (!mono) {
 			String ourRight = mono ? null : name + "-right";
-			Ports.Request rightReq = new Request(user, ourRight, Type.AUDIO, IO.IN, this);
+			AudioEngine.Request rightReq = new Request(user, ourRight, Type.AUDIO, IO.IN, this);
 			ports.register(rightReq);
 		}
 
 		// hookup Midi? (MidiInstrument)
 		if (midi) {
 			String ourMidi = name + "-midi";
-			Ports.Request midiReq = new Request(user, ourMidi, Ports.Type.MIDI, Ports.IO.OUT, this);
+			AudioEngine.Request midiReq = new Request(user, ourMidi, AudioEngine.Type.MIDI, AudioEngine.IO.OUT, this);
 			ports.register(midiReq);
 		}
 
@@ -59,7 +58,7 @@ public class ChannelHelper implements Ports.PortCallback {
 	}
 
 	@Override
-	public void registered(Request req, Ports.Wrapper reply) {
+	public void registered(Request req, AudioEngine.Wrapper reply) {
 
 		RTLogger.debug(this, "Great, we have a port, let's connect it. " + req);
 

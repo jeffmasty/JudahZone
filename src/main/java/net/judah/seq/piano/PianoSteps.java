@@ -18,6 +18,7 @@ import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import lombok.Getter;
 import net.judah.gui.Size;
+import net.judah.midi.Actives;
 import net.judah.midi.JudahClock;
 import net.judah.seq.Steps;
 import net.judah.seq.automation.Automation;
@@ -255,7 +256,9 @@ public class PianoSteps extends Steps implements TrackListener, Gui.Mouse, Size 
 			return;
 		int coord = (orientation == Orientation.NOTES_X) ? e.getPoint().y : e.getPoint().x;
 		off = toStep(coord) + 1;
-		if (notes.getActives().isEmpty())
+
+		Actives actives = notes.getActives();
+		if (actives.isEmpty())
 			return;
 
 		int step = notes.getResolution() / clock.getSubdivision();
@@ -265,9 +268,9 @@ public class PianoSteps extends Steps implements TrackListener, Gui.Mouse, Size 
 		long end = notes.getLeft() + off * step - 1;
 		on = off = null;
 		ArrayList<MidiEvent> list = new ArrayList<>();
-		for (ShortMessage m : notes.getActives()) {
-			list.add(new MidiEvent(Midi.create(MidiConstants.NOTE_ON, ch, m.getData1(), data2), begin));
-			list.add(new MidiEvent(Midi.create(MidiConstants.NOTE_OFF, ch, m.getData1(), 127), end));
+		for (int data1 : actives.getActiveSnapshot()) {
+			list.add(new MidiEvent(Midi.create(MidiConstants.NOTE_ON, ch, data1, data2), begin));
+			list.add(new MidiEvent(Midi.create(MidiConstants.NOTE_OFF, ch, data1, 127), end));
 		}
 		notes.getEditor().push(new Edit(Type.NEW, list));
 	}

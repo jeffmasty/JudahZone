@@ -15,13 +15,14 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import judahzone.api.AudioEngine;
+import judahzone.api.AudioEngine.IO;
+import judahzone.api.AudioEngine.Provider;
+import judahzone.api.AudioEngine.Request;
+import judahzone.api.AudioEngine.Type;
+import judahzone.api.AudioEngine.Wrapper;
 import judahzone.api.Custom;
 import judahzone.api.Notification.Property;
-import judahzone.api.Ports.IO;
-import judahzone.api.Ports.Provider;
-import judahzone.api.Ports.Request;
-import judahzone.api.Ports.Type;
-import judahzone.api.Ports.Wrapper;
 import judahzone.api.TimeListener;
 import judahzone.gui.Gui;
 import judahzone.util.Folders;
@@ -32,12 +33,12 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.judah.JudahZone;
-import net.judah.bridge.AudioEngine;
 import net.judah.channel.Channel;
 import net.judah.channel.Instrument;
 import net.judah.channel.LineIn;
-import net.judah.drumkit.DrumKit;
-import net.judah.drumkit.DrumMachine;
+import net.judah.drums.DrumKit;
+import net.judah.drums.oldschool.OldSchool;
+import net.judah.drums.synth.DrumSynth;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.FxPanel;
 import net.judah.looper.Loop;
@@ -497,8 +498,8 @@ public class Channels implements Consumer<LineIn>, TimeListener, Closeable {
 
 	@RequiredArgsConstructor @Getter
 	public static enum RegisteredDrums {
-		BeatBox(DrumMachine.class), FluiD(FluidSynth.class), ExDrum(MidiInstrument.class);
-		private final Class<? extends ZoneMidi> clazz;
+		OldSkool(OldSchool.class), Synth(DrumSynth.class);
+		private final Class<? extends DrumKit> clazz;
 	}
 
 	@Override
@@ -540,6 +541,7 @@ public class Channels implements Consumer<LineIn>, TimeListener, Closeable {
 				String name = inst.getName().toLowerCase();
 				if (name.equals("mic") || name.equals("vocals")) {
 					mic = inst;
+					zone.getLooper().getSoloTrack().setSoloTrack(mic);
 					return;
 				}
 			}

@@ -23,7 +23,6 @@ import lombok.Setter;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
 import net.judah.channel.PresetsDB;
-import net.judah.drumkit.KitSetup;
 import net.judah.midi.JudahMidi;
 import net.judah.seq.Seq;
 import net.judah.seq.chords.Scale;
@@ -46,8 +45,11 @@ public class Song {
 	private Key key;
 	@JsonInclude(Include.NON_NULL)
 	private Scale scale;
-	@JsonInclude(Include.NON_NULL)
-	private KitSetup kit;
+
+
+//	@JsonInclude(Include.NON_NULL)
+//	private LegacySetup kit;
+
 
 	private List<TrackInfo> tracks = new ArrayList<>();
 	private List<Scene> scenes = new ArrayList<>();

@@ -1,4 +1,4 @@
-package net.judah.drumkit;
+package net.judah.drums;
 
 import judahzone.api.GMDrum;
 import lombok.Getter;

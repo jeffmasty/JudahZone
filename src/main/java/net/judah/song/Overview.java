@@ -32,7 +32,7 @@ import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
-import net.judah.drumkit.DrumMachine;
+import net.judah.drums.DrumMachine;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.TabZone;
@@ -230,10 +230,10 @@ public class Overview extends Box implements TimeListener {
 		holder.add(songView);
 		if (song.getScenes().isEmpty())
 			song.getScenes().add(new Scene(seq));
-		if (song.getKit() != null)
-			drums.getSettings().clone(song.getKit());
-		else
-			drums.getSettings().reset();
+//		if (song.getKit() != null)
+//			drums.getSettings().clone(song.getKit());
+//		else
+//			drums.getSettings().reset();
 
     	setScene(song.getScenes().get(0));
     	setName();

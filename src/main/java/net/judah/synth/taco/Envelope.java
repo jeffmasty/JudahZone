@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 /**Performs an envelope's life cycle based on supplied Adsr settings.
- * 
+ *
  * inspired by: https://github.com/michelesr/jack-oscillator/blob/master/src/lib/synth.c
  * Under the GNU License. Copyright (C) 2014-2015 Michele Sorcinelli */
 @RequiredArgsConstructor
@@ -19,7 +19,7 @@ public class Envelope {
 	/** reverse-amplification factor to dampen (or, I guess, amplify) all output */
 	@Getter @Setter private float dampen = 0.5f;
 	private float result; // class-level for peaceful transition from sustain to release
-	
+
 	private float attack, decay, sustain, release;
 
 	public void reset() {
@@ -36,7 +36,7 @@ public class Envelope {
 		if (pressed) { // note is down, perform either of A/D or S
 			if (attack < adsr.attackGain && adsr.attackTime > 0) {
 				attack += (adsr.attackGain / (SAMPLE_RATE * adsr.attackTime / 1000));
-				result = attack; 
+				result = attack;
 			}
 			else if ((decay > sustain) && (sustain <= adsr.attackGain) && adsr.decayTime > 0) {
 				decay -= (adsr.attackGain - adsr.sustainGain) / (SAMPLE_RATE * adsr.decayTime / 1000);
@@ -45,7 +45,7 @@ public class Envelope {
 			else {
 				result = adsr.sustainGain;
 			}
-		} 
+		}
 		else { // perform Release
 			if (adsr.releaseTime == 0) // changed during life-cycle
 				return 0f;
@@ -59,16 +59,16 @@ public class Envelope {
 				return 0f;
 			}
 		}
-		return result  * dampen; 
+		return result  * dampen;
 	}
 
 	public float calcEnv(Polyphony notes, int idx) {
 		ShortMessage voice = notes.get(idx);
-		if (voice != null && voice.getCommand() == ShortMessage.NOTE_ON) { 
+		if (voice != null && voice.getCommand() == ShortMessage.NOTE_ON) {
 			// note is pressed, perform either of A/D or S
 			if (attack < adsr.attackGain && adsr.attackTime > 0) {
 				attack += (adsr.attackGain / (SAMPLE_RATE * adsr.attackTime / 1000));
-				result = attack; 
+				result = attack;
 			}
 			else if ((decay > sustain) && (sustain <= adsr.attackGain) && adsr.decayTime > 0) {
 				decay -= (adsr.attackGain - adsr.sustainGain) / (SAMPLE_RATE * adsr.decayTime / 1000);
@@ -77,7 +77,7 @@ public class Envelope {
 			else {
 				result = adsr.sustainGain;
 			}
-		} 
+		}
 		else { // perform Release
 			if (adsr.releaseTime == 0) // changed during life-cycle
 				result = 0;
@@ -88,17 +88,17 @@ public class Envelope {
 					release -= ( (adsr.sustainGain) / (SAMPLE_RATE * adsr.releaseTime / 1000));
 					result = release;
 				}
-				else 
+				else
 					result = 0; // note complete
 			}
 		}
 		if (result <= 0)
 			return silence(notes, idx);
-		return result * dampen; 
+		return result * dampen;
 	}
 
 	private float silence(Polyphony notes, int idx) {
-		notes.set(idx, null);
+		notes.removeIndex(idx);
 		return 0f;
 	}
 }

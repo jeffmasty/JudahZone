@@ -30,7 +30,7 @@ public class CCPopup extends JPopupMenu {
 		lineAxis = horizontal;
 	}
 
-	public void popup(MouseEvent me, int step) {
+	public void popup(MouseEvent me, int step, Actionable... extra) {
 		removeAll();
 		Automation automation = track.getAutomation();
 		// CCs
@@ -39,14 +39,18 @@ public class CCPopup extends JPopupMenu {
 	    	add(new Actionable(d.type().toString() + ": " + ((ShortMessage)d.e().getMessage()).getData2(),
 	    			e->automation.edit(d)));
 	    }
-	    // Pitch Bend
-	    MidiEvent bend = getPitch(step);
-	    if (bend == null) {
-	        long tick = track.getFrame() * track.getWindow() + step * track.getStepTicks();
-	        add(new Actionable("Pitch Bend", e -> automation.init(tick, MidiMode.Pitch)));
-	    } else {
-	        add(new Actionable("Pitch Bend", e -> automation.edit(bend)));
+
+	    if (track.isSynth()) {
+		    // Pitch Bend
+		    MidiEvent bend = getPitch(step);
+		    if (bend == null) {
+		        long tick = track.getFrame() * track.getWindow() + step * track.getStepTicks();
+		        add(new Actionable("Pitch Bend", e -> automation.init(tick, MidiMode.Pitch)));
+		    } else {
+		        add(new Actionable("Pitch Bend", e -> automation.edit(bend)));
+		    }
 	    }
+
 	    // ProgChange
 	    MidiEvent prog = getProg(step);
 	    if (prog == null) {
@@ -63,6 +67,14 @@ public class CCPopup extends JPopupMenu {
 	    		instr = source[data1];
 	    	add(new Actionable("Prog: " + instr, e->automation.edit(prog)));
 	    }
+
+
+	    if (extra != null) {
+	    	for (Actionable a : extra) {
+	    		add(a);
+	    	}
+	    }
+
 	    // TODO
 //	    JMenu tools = new JMenu("Tools");
 //	    track.getEditor().tools(tools);

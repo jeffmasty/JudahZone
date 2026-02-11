@@ -2,22 +2,22 @@ package net.judah.mixer;
 
 import javax.sound.midi.ShortMessage;
 
-import judahzone.fx.Filter;
+import judahzone.fx.CutFilter;
 import net.judah.channel.Channel;
 import net.judah.controllers.KorgPads;
 import net.judah.gui.MainFrame;
 
 public class DJFilter {
 
-	private static final int HZ = Filter.Settings.Hz.ordinal();
+	private static final int HZ = CutFilter.Settings.Hz.ordinal();
 	private final int LEFT = KorgPads.LEFT;
 	private final int RIGHT = KorgPads.RIGHT;
 
 	private final Channel ch;
-	private final Filter loCut;
-	private final Filter hiCut;
+	private final CutFilter loCut;
+	private final CutFilter hiCut;
 
-	public DJFilter(Channel channel, Filter lowPass, Filter hiPass) {
+	public DJFilter(Channel channel, CutFilter lowPass, CutFilter hiPass) {
 		ch = channel;
 		loCut = hiPass;
 		hiCut = lowPass;

@@ -2,7 +2,7 @@ package net.judah.gui.fx;
 
 import java.security.InvalidParameterException;
 
-import judahzone.util.Pair;
+import judahzone.data.Pair;
 import net.judah.channel.Channel;
 
 public class RowLabels extends Row {

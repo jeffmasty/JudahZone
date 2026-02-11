@@ -8,8 +8,9 @@ import javax.swing.JPanel;
 import judahzone.fx.Gain;
 import judahzone.gui.Updateable;
 import net.judah.gui.MainFrame;
+import net.judah.gui.knobs.Knobs;
 
-public class SamplePads extends JPanel implements Updateable {
+public class SamplePads extends Knobs implements Updateable {
 
 	private final ArrayList<Sample> samples;
 	private final ArrayList<SamplePad> updates = new ArrayList<>();
@@ -39,10 +40,10 @@ public class SamplePads extends JPanel implements Updateable {
 
 	private static final int[] KNOB_ORDER = { 0, 1, 4, 5, 2, 3, 6, 7};
 
-	public boolean doKnob(int idx, int value) {
+	@Override
+	public void doKnob(int idx, int value) {
 		samples.get(KNOB_ORDER[idx]).getGain().set(Gain.VOLUME, value);
 		MainFrame.update(this);
-		return true;
 	}
 
 	@Override public void update() {

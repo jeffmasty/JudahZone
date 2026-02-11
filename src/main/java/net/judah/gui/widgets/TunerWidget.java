@@ -10,7 +10,7 @@ import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
 
 import judahzone.api.Note;
-import judahzone.api.Tuning;
+import judahzone.data.Tuning;
 import judahzone.fx.analysis.Tuner;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;

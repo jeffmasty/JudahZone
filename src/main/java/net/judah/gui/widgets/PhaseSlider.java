@@ -5,12 +5,12 @@ import javax.swing.JSlider;
 import judahzone.fx.Chorus;
 import judahzone.gui.Updateable;
 
-public class Phase extends JSlider implements Updateable {
+public class PhaseSlider extends JSlider implements Updateable {
 
 	private final Chorus ch;
 	private static final int PHASE = Chorus.Settings.Phase.ordinal();
 
-	public Phase(Chorus c) {
+	public PhaseSlider(Chorus c) {
 		ch = c;
 		setValue(ch.get(PHASE));
 		addChangeListener(e->ch.set(PHASE, getValue()));

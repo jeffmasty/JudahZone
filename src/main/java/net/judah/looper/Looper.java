@@ -7,12 +7,12 @@ import java.util.Vector;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import judahzone.api.Notification.Property;
+import judahzone.data.Recording;
 import judahzone.api.TimeListener;
 import judahzone.gui.Updateable;
 import judahzone.util.Constants;
 import judahzone.util.Memory;
 import judahzone.util.RTLogger;
-import judahzone.util.Recording;
 import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.channel.Channel;
@@ -68,7 +68,7 @@ public class Looper extends ArrayList<Loop> implements TimeListener, Updateable,
 
 	public void process(float[] left, float[] right) {
 	    for (int i = 0, n = size(); i < n; i++)
-	        get(i).process(left, right);
+	        get(i).processLoop(left, right);
 
 	    if (hasRecording())
 	        countUp();

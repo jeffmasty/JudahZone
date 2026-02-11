@@ -6,7 +6,7 @@ import java.awt.event.MouseEvent;
 import javax.swing.JLabel;
 
 import judahzone.api.FX;
-import judahzone.util.Pair;
+import judahzone.data.Pair;
 import lombok.Getter;
 import net.judah.channel.Channel;
 

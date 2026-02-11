@@ -11,14 +11,14 @@ import judahzone.api.FX.RTFX;
 import judahzone.fx.Chorus;
 import judahzone.fx.Compressor;
 import judahzone.fx.Convolution;
+import judahzone.fx.CutFilter;
 import judahzone.fx.Delay;
 import judahzone.fx.EQ;
-import judahzone.fx.Filter;
 import judahzone.fx.Freeverb;
 import judahzone.fx.Gain;
 import judahzone.fx.Overdrive;
 import judahzone.fx.Reverb;
-import judahzone.fx.StereoBus;
+import judahzone.fx.op.FXBus;
 import judahzone.util.AudioMetrics;
 import judahzone.util.AudioTools;
 import judahzone.util.RTLogger;
@@ -34,11 +34,11 @@ import net.judah.mixer.DJFilter;
 /** A Gui focused effects bus for input or output audio.
  * RMS scalars published from RT thread. {@link #getLastRmsLeft()} / {@link #getLastRmsRight()} */
 @Getter
-public abstract class Channel extends StereoBus implements Presets {
+public abstract class Channel extends FXBus implements Presets {
 
     public enum Update {MUTE, MUTE_RECORD, PRESET, RMS, LOOP, SOLO} // TODO updateCh
 
-	protected final String name;
+	protected final String name; // final?
     protected final boolean isStereo;
     /** Copy of json definition, if any */
     protected Custom user;
@@ -46,8 +46,8 @@ public abstract class Channel extends StereoBus implements Presets {
 
     protected final Gain gain = new Gain(); // RT but handles separately
     protected final EQ eq = new EQ();
-    protected final Filter hiCut = new Filter(true);
-    protected final Filter loCut = new Filter(false);
+    protected final CutFilter hiCut = new CutFilter(true);
+    protected final CutFilter loCut = new CutFilter(false);
     protected final DJFilter djFilter = new DJFilter(this, hiCut, loCut);
     protected final Compressor compression = new Compressor();
     protected final Delay delay = new Delay();
@@ -65,7 +65,7 @@ public abstract class Channel extends StereoBus implements Presets {
     protected EffectsRack gui;
     protected LFOKnobs lfoKnobs;
     /** Last RMS values computed on the RT thread (0..1 approximate). */
-	private /* volatile */ float lastRmsLeft = 0f;
+	private /* volatile */ float lastRmsLeft = 0f; // TODO atomic?
 	private /* volatile */ float lastRmsRight = 0f;
 
     public Channel(String name, boolean isStereo) {
@@ -94,11 +94,8 @@ public abstract class Channel extends StereoBus implements Presets {
     abstract protected void processImpl();
 
 	public final void process() {
-        hotSwap();
         processImpl();
-        // apply normalization if requested (if target > 0)
-        // AudioMetrics.normalizeToRms(left, right, normalizeTargetRms, normalizeMaxGain);
-        computeRMS(left, right); // meters now see normalized level
+        computeRMS(left, right);
     }
 
     public final void mix(float[] outLeft, float[] outRight) {

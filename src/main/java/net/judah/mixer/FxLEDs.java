@@ -14,7 +14,7 @@ import judahzone.fx.Chorus;
 import judahzone.fx.Compressor;
 import judahzone.fx.Convolution;
 import judahzone.fx.Delay;
-import judahzone.fx.Filter;
+import judahzone.fx.CutFilter;
 import judahzone.fx.Overdrive;
 import judahzone.fx.Reverb;
 import net.judah.channel.Channel;
@@ -48,7 +48,7 @@ public class FxLEDs extends JPanel {
 		bind(FxSlot.OVERDRIVE, Overdrive.class);
 		bind(FxSlot.CHORUS,    Chorus.class);
 		bind(FxSlot.CABSIM,    Convolution.class);
-		bind(FxSlot.CUTFILTER, Filter.class);
+		bind(FxSlot.CUTFILTER, CutFilter.class);
 		bind(FxSlot.COMPRESSION, Compressor.class);
 		bind(FxSlot.LFO,       LFO.class);
 	}

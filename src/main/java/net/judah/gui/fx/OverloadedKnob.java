@@ -7,7 +7,7 @@ import judahzone.widgets.Knob;
 import judahzone.widgets.Knob.KnobListener;
 import lombok.Getter;
 import net.judah.channel.Channel;
-import net.judah.gui.HQ;
+import net.judah.gui.ShiftBtn;
 import net.judah.gui.widgets.FxKnob;
 
 
@@ -30,13 +30,13 @@ public class OverloadedKnob extends Knob implements KnobListener, Updateable {
 	}
 
 	@Override public void update() {
-		int target = fx.get(HQ.isShift() ? alt : main);
+		int target = fx.get(ShiftBtn.isActive() ? alt : main);
 		if (getValue() != target)
 			setValue(target);
 	}
 
 	@Override public void knobChanged(int val) {
-		if (HQ.isShift())
+		if (ShiftBtn.isActive())
 			fx.set(alt,  val);
 		else {
 			fx.set(main, val);
@@ -46,7 +46,7 @@ public class OverloadedKnob extends Knob implements KnobListener, Updateable {
 	}
 
 	public void knob(boolean up) {
-		int target = FxKnob.offset(fx.get(HQ.isShift() ? alt : main), up);
+		int target = FxKnob.offset(fx.get(ShiftBtn.isActive() ? alt : main), up);
 		knobChanged(target);
 	}
 

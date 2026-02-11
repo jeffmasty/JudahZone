@@ -18,10 +18,10 @@ import javax.swing.table.DefaultTableModel;
 
 import judahzone.api.Midi;
 import lombok.Getter;
-import net.judah.drumkit.DrumType;
+import net.judah.drums.DrumType;
 import net.judah.seq.automation.Automation.MidiMode;
 import net.judah.seq.track.DrumTrack;
-import net.judah.seq.track.MidiNote;
+import net.judah.seq.track.PianoNote;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.NotePairer;
 import net.judah.seq.track.PianoTrack;
@@ -38,7 +38,7 @@ public class MidiModel extends DefaultTableModel {
 
 	final MidiTrack track;
 	final Track t;
-	private final List<MidiNote> rows = new ArrayList<>();
+	private final List<PianoNote> rows = new ArrayList<>();
 
 	MidiModel(MidiTrack midi, JTable target) {
 		super(COL_NAMES, 0);
@@ -53,12 +53,12 @@ public class MidiModel extends DefaultTableModel {
 			if (handled.contains(e)) continue;
 
 			MidiMode mode = All;
-			MidiNote rowNote;
+			PianoNote rowNote;
 
 			if (e.getMessage() instanceof ShortMessage msg) {
 				if (Midi.isNoteOn(msg)) {
 					mode = NoteOn;
-					rowNote = new MidiNote(e, null);
+					rowNote = new PianoNote(e, null);
 					if (track instanceof PianoTrack) {
 						MidiEvent offEvent = NotePairer.getOff(e, t);
 						rowNote.setOff(offEvent);
@@ -66,7 +66,7 @@ public class MidiModel extends DefaultTableModel {
 							handled.add(offEvent);
 					}
 				} else {
-					rowNote = new MidiNote(e, null);
+					rowNote = new PianoNote(e, null);
 					if (Midi.isPitchBend(msg))
 						mode = Pitch;
 					else if (Midi.isCC(msg))
@@ -106,12 +106,12 @@ public class MidiModel extends DefaultTableModel {
 	public int getRowForEvent(MidiEvent event) {
 	    // Unwrap MidiNote if needed
 	    MidiEvent searchEvent = event;
-	    if (event instanceof MidiNote note) {
+	    if (event instanceof PianoNote note) {
 	        searchEvent = note; // The MidiNote itself is in the rows list
 	    }
 
 	    for (int i = 0; i < rows.size(); i++) {
-	        MidiNote note = rows.get(i);
+	        PianoNote note = rows.get(i);
 	        // Check if the note matches (compare ticks and messages)
 	        if (eventsMatch(note, searchEvent)) {
 	            return i;
@@ -150,7 +150,7 @@ public class MidiModel extends DefaultTableModel {
 		switch (idx) {
 			case TICK: return Long.class;
 			case TYPE: return MidiMode.class;
-			case EVENT: return MidiNote.class;
+			case EVENT: return PianoNote.class;
 			case VALUE: return Integer.class;
 		}
 		return super.getColumnClass(idx);
@@ -164,7 +164,7 @@ public class MidiModel extends DefaultTableModel {
 			Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
 			int modelRow = table.convertRowIndexToModel(row);
-			MidiNote pair = rows.get(modelRow);
+			PianoNote pair = rows.get(modelRow);
 			MidiMode mode = (MidiMode) getValueAt(modelRow, TYPE);
 
 			if (column == EVENT) {

@@ -1,6 +1,6 @@
 package net.judah.sampler;
 
-import judahzone.api.Asset;
+import judahzone.data.Asset;
 import lombok.Getter;
 import lombok.Setter;
 

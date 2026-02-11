@@ -19,10 +19,12 @@ import org.apache.logging.log4j.Level;
 import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackPort;
 
-import judahzone.api.Ports.Type;
+import judahzone.api.AudioEngine;
+import judahzone.api.AudioEngine.Type;
 import judahzone.fx.Convolution;
 import judahzone.gui.Icons;
 import judahzone.gui.Nimbus;
+import judahzone.jnajack.JackHelper;
 import judahzone.jnajack.ZoneJackClient;
 import judahzone.util.AudioTools;
 import judahzone.util.Constants;
@@ -37,8 +39,8 @@ import net.judah.channel.LineIn;
 import net.judah.channel.Mains;
 import net.judah.channel.PresetsDB;
 import net.judah.controllers.MPKmini;
-import net.judah.drumkit.DrumDB;
-import net.judah.drumkit.DrumMachine;
+import net.judah.drums.DrumMachine;
+import net.judah.drums.oldschool.DrumDB;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.FxPanel;
 import net.judah.gui.fx.MultiSelect;
@@ -124,6 +126,8 @@ public class JudahZone extends ZoneJackClient {
 		channels.load(); // custom channel prototypes ready to register ports
 		mpkMini = new MPKmini(this);
 		midi = new JudahMidi(this);
+		AudioEngine.register(new JackHelper(midi, this));
+
 		clock = JudahMidi.getClock();
 		channels.setClock(clock);
 		looper = new Looper(clock, channels);
@@ -140,7 +144,8 @@ public class JudahZone extends ZoneJackClient {
 
 	public static void main(String[] args) {
 		DOMConfigurator.configure(Folders.getLog4j().getAbsolutePath());
-		RTLogger.setLevel(Level.DEBUG /* INFO */);
+		// RTLogger.setLevel(Level.DEBUG);
+		RTLogger.setLevel(Level.INFO);
 		try {
 			new JudahZone();
 		} catch (Exception e) { e.printStackTrace(); }
@@ -243,7 +248,7 @@ public class JudahZone extends ZoneJackClient {
 		Arrays.fill(right, 0f);
 
 		if (mains.isOnMute()) {
-		//	if (mains.isHotMic()) { // TODO Revive HOT MIC function
+		//	if (mains.isHotMic()) { // TODO Revive HOT MIC function, or not: Vocoder
 		//		mic.process();
 		//		mic.mix(left, right);
 		//		mains.process(left, right);

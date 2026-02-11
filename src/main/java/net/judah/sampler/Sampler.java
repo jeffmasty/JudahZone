@@ -5,9 +5,9 @@ import java.util.Arrays;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
-import judahzone.api.Asset;
 import judahzone.api.PlayAudio;
 import judahzone.api.PlayAudio.Type;
+import judahzone.data.Asset;
 import judahzone.jnajack.BasicPlayer;
 import judahzone.util.AudioTools;
 import judahzone.util.Constants;
@@ -15,16 +15,20 @@ import judahzone.util.Folders;
 import judahzone.util.RTLogger;
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.JudahZone;
 import net.judah.channel.LineIn;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.mixer.Fader;
+import net.judah.sampler.vocoder.ZoneCoder;
 
-@Getter
 public class Sampler extends LineIn {
 
-    private ArrayList<Sample> samples = new ArrayList<Sample>();
-    private final KnobMode knobMode = KnobMode.Sample;
+    @Getter private ArrayList<Sample> samples = new ArrayList<Sample>();
+    @Getter private int selected;
+    @Getter private final ArrayList<StepSample> stepSamples = new ArrayList<>();
+    @Setter @Getter float stepMix = 0.5f;
+
     private final CopyOnWriteArrayList<BasicPlayer> players = new CopyOnWriteArrayList<>();
 
     public static final String[] LOOPS = SampleDB.LOOPS;
@@ -33,16 +37,14 @@ public class Sampler extends LineIn {
             Arrays.stream(LOOPS), Arrays.stream(ONESHOTS)).toArray(String[]::new);
     public static final int SIZE = STANDARD.length;
 
-    private final String[] patches = new String[] {"STANDARD"};
-    @Setter @Getter float stepMix = 0.5f;
+    // private final String[] patches = new String[] {"STANDARD"};
 
-    @Getter private int selected;
-    private final ArrayList<StepSample> stepSamples = new ArrayList<>();
     private StepSample stepSample;
     private SampleKnobs view;
 
     private PhoneSynth phone;
     private SirenSynth shepard;
+    @Setter private ZoneCoder voiceBox; // TODO
 
     public Sampler() {
         super(Sampler.class.getSimpleName(), Constants.STEREO);
@@ -109,7 +111,7 @@ public class Sampler extends LineIn {
 
     public SampleKnobs getView() {
         if (view == null)
-            view = new SampleKnobs(this, getPhone(), getShepard());
+            view = new SampleKnobs(this, getPhone(), getShepard(), JudahZone.getInstance().getLooper().getSoloTrack());
         return view;
     }
 
@@ -249,9 +251,12 @@ public class Sampler extends LineIn {
 
     	if (phone != null)
 			phone.process(left, right);
-
     	if (shepard != null)
     		shepard.process(left, right);
+
+//    	ZoneCoder coder = voiceBox;
+//    	if (coder != null)
+//    		coder.process(left, right);
 
     	fx();
 

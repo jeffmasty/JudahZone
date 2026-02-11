@@ -12,11 +12,7 @@ import judahzone.gui.Gui;
 import judahzone.gui.Icons;
 import judahzone.gui.Pastels;
 import judahzone.widgets.Btn;
-import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.gui.fx.EffectsRack;
-import net.judah.gui.knobs.KnobMode;
-import net.judah.gui.knobs.LFOKnobs;
 import net.judah.gui.settable.SetCombo;
 import net.judah.gui.widgets.LengthCombo;
 import net.judah.gui.widgets.TransportBtn;
@@ -27,7 +23,7 @@ import net.judah.song.Overview;
 
 public class HQ extends JPanel implements TimeListener {
 
-	@Getter private static boolean shift;
+//	@Getter private static boolean shift;
 	private final JudahClock clock;
 	private final Looper looper;
 	private final Overview songs;
@@ -56,17 +52,17 @@ public class HQ extends JPanel implements TimeListener {
     	clock.addListener(this);
     }
 
-    public static void setShift(boolean on) {
-    	shift = on;
-    	delete.setText(on ? "SET" : "Del");
-    	delete.setBackground(on ? Pastels.YELLOW : null);
-    	EffectsRack fx = JudahZone.getInstance().getFxRack().getChannel().getGui();
-    	fx.getEq().toggle();
-    	fx.getReverb().toggle();
-
-    	if (MainFrame.getKnobMode() == KnobMode.LFO)
-    		((LFOKnobs)MainFrame.getKnobs()).upperLower();
-    }
+//    public static void setShift(boolean on) {
+//    	shift = on;
+//    	delete.setText(on ? "SET" : "Del");
+//    	delete.setBackground(on ? Pastels.YELLOW : null);
+//    	EffectsRack fx = JudahZone.getInstance().getFxRack().getChannel().getGui();
+//    	fx.getEq().toggle();
+//    	fx.getReverb().toggle();
+//
+//    	if (MainFrame.getKnobMode() == KnobMode.LFO)
+//    		((LFOKnobs)MainFrame.getKnobs()).upperLower();
+//    }
 
 	@Override public void update(Property prop, Object value) {
 		if (prop == Property.BARS)

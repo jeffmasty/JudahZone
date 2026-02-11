@@ -16,8 +16,8 @@ import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import judahzone.util.RTLogger;
 import net.judah.channel.Channel;
-import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
+import net.judah.gui.ShiftBtn;
 import net.judah.gui.Size;
 import net.judah.gui.fx.FxTrigger;
 import net.judah.gui.fx.Row;
@@ -25,7 +25,7 @@ import net.judah.gui.widgets.FxKnob;
 import net.judah.gui.widgets.Slider.FxSlider;
 
 public class CompressorWidget extends JPanel {
-	private static final Color KNOB_C = Pastels.EGGSHELL;
+	private static final Color KNOB_C = Pastels.BG;
 
 	private final Row row;
 	private final Row labels;
@@ -71,15 +71,16 @@ public class CompressorWidget extends JPanel {
 	}
 
 	public boolean doKnob(int idx, int data2) {
+		boolean shift = ShiftBtn.isActive();
     	switch(idx) {
 		case 4 -> { // -30 to -1
-			if (HQ.isShift()) { RTLogger.log(this, "hi there");
+			if (shift) { RTLogger.log(this, "hi there");
 				return false; // fwd to cabsim
 			}
 			comp.set(Threshold.ordinal(), data2);
 			compress(2, data2); }
 		case 5 -> {
-    		if (HQ.isShift())
+    		if (shift)
     			return false; // fwd to Cabsim
 			else {
 				comp.set(Boost.ordinal(), data2);
@@ -87,14 +88,14 @@ public class CompressorWidget extends JPanel {
 			}
 		}
     	case 6 -> {
-			if (HQ.isShift())
+			if (shift)
 				ratio.setValue(data2);
 			else {
 				comp.set(Attack.ordinal(), data2);
 				compress(2, data2);}
     	}
 		case 7 -> {
-			if (HQ.isShift())
+			if (shift)
 				knee.setValue(data2);
 			else {
 				comp.set(Release.ordinal(), data2);

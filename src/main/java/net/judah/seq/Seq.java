@@ -36,8 +36,8 @@ import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
 import net.judah.channel.LineIn;
-import net.judah.drumkit.DrumMachine;
-import net.judah.drumkit.DrumType;
+import net.judah.drums.DrumMachine;
+import net.judah.drums.DrumType;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.knobs.KnobMode;
@@ -296,6 +296,7 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>, 
 	/** Recording/transposing handler. Drum pads sounded from here */
 	public boolean captured(Midi midi) {
 		boolean result = false;
+
 		if (midi.getChannel() == DRUM_CH) {
 			Midi note = translateDrums(midi);
 			for (DrumTrack t : drumTracks)
@@ -305,6 +306,23 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>, 
 				drums.getChannel(note.getChannel()).send(note, JudahMidi.ticker());
 			return true;
 		}
+
+		for (int i = 0; i < tracks.size(); i++) {
+			MidiTrack t = tracks.get(i);
+			if (t.isSynth() == false)
+				continue;
+			PianoTrack nt = (PianoTrack) t;
+			if (t.capture(midi)) {
+				result = true;
+				break;
+			}
+			else if (nt.isMpkOn()) {
+				nt.mpk(Midi.copy(midi));
+				result = true;
+			}
+
+		}
+
 
 		for (PianoTrack t: getSynthTracks()) {
 			if (t.capture(midi))
@@ -586,13 +604,9 @@ public class Seq extends Gui.Opaque implements Updateable, Iterable<MidiTrack>, 
 
 	void allocateFluid(MetaMap map) {
 		int port = map.getInt(Meta.PORT);
-		int deficit = port - getFluids().length;
+		int deficit = port - getFluids().length; // ?
 		for (int i = 1; i <= deficit; i++) {
-			String name = "F" + i;
-			if (i == deficit)
-				new FluidAssistant(name, zone, map);
-			else
-				new FluidAssistant(name, zone);
+			new FluidAssistant(zone.getChannels(), i);
 		}
 	}
 

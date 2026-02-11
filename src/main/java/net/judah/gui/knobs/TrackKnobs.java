@@ -20,8 +20,7 @@ import judahzone.util.Threads;
 import judahzone.widgets.Btn;
 import judahzone.widgets.Integers;
 import lombok.Getter;
-import net.judah.drumkit.DrumSample;
-import net.judah.drumkit.DrumType;
+import net.judah.drums.DrumType;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.TabZone;
@@ -104,8 +103,8 @@ public class TrackKnobs extends KnobPanel {
 		if (track.isDrums()) {
 			focus.setSelectedItem(DrumType.Snare);
 			focus.addActionListener(e->update());
-			focusVol.setValue(((DrumTrack)track).getKit().getSample(
-					((DrumType)focus.getSelectedItem())).getGain().get(Gain.VOLUME));
+			focusVol.setValue(((DrumTrack)track).getKit().getGain(((DrumType)focus.getSelectedItem())).get(Gain.VOLUME));
+					// ((DrumType)focus.getSelectedItem())).getGain().get(Gain.VOLUME));
 			focusVol.addChangeListener(e->drumVol(focusVol.getValue()));
 		}
 		else if (track.isSynth()) {
@@ -176,8 +175,8 @@ public class TrackKnobs extends KnobPanel {
 	}
 
 	private void drumVol(int gain) {
-		DrumSample s = ((DrumTrack)track).getKit().getSample((DrumType)focus.getSelectedItem());
-		s.getGain().set(Gain.VOLUME, gain);
+		Gain g = ((DrumTrack)track).getKit().getGain((DrumType)focus.getSelectedItem());
+		g.set(Gain.VOLUME, gain);
 		MainFrame.update(this);
 	}
 
@@ -205,9 +204,9 @@ public class TrackKnobs extends KnobPanel {
 	@Override public void update() {
 
 		if (track.isDrums()) {
-			DrumSample s = ((DrumTrack)track).getKit().getSample((DrumType)focus.getSelectedItem());
-			if (s.getGain().get(Gain.VOLUME) != focusVol.getValue())
-				focusVol.setValue(s.getGain().get(Gain.VOLUME));
+			Gain g = ((DrumTrack)track).getKit().getGain((DrumType)focus.getSelectedItem());
+			if (g.get(Gain.VOLUME) != focusVol.getValue())
+				focusVol.setValue(g.get(Gain.VOLUME));
 		}
 		else if (/*synth*/ (Integer)octaves.getSelectedItem() * 12 != ((PianoTrack)track).getRange() )
 				octaves.setSelectedItem(((PianoTrack)track).getRange() / 12);

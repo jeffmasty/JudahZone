@@ -8,7 +8,7 @@ import org.jaudiolibs.jnajack.JackPort;
 import judahzone.util.RTLogger;
 import judahzone.util.Threads;
 import lombok.RequiredArgsConstructor;
-import net.judah.drumkit.DrumKit;
+import net.judah.drums.DrumKit;
 import net.judah.seq.track.NoteTrack;
 import net.judah.synth.Engine;
 import net.judah.synth.ZoneMidi;

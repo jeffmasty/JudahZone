@@ -15,12 +15,13 @@ import net.judah.gui.Size;
 public abstract class KnobPanel extends JPanel implements Updateable, Size {
 
 	public abstract KnobMode getKnobMode();
+	protected Component installed;
 
 	/**Called when the KnobPanel is going to be displayed.
 	 * @return an optional and separate set of title bar component(s) */
 	public abstract JComponent getTitle(); // return Gui.wrap(new JLabel(getName()));
 
-	public /* abstract */ boolean doKnob(int idx, int value) {
+	public boolean doKnob(int idx, int value) {
 		MainFrame.setFocus(KnobMode.MIDI); // revert to Main Midi
 		return true;
 	}
@@ -32,11 +33,14 @@ public abstract class KnobPanel extends JPanel implements Updateable, Size {
 
 	protected void install(Component c) {
 		removeAll();
+		if (c == null)
+			return;
         JScrollPane scroll = new JScrollPane(c);
         scroll.setPreferredSize(Size.KNOB_PANEL);
         scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         add(scroll);
 		doLayout();
+		installed = c;
 	}
 
 

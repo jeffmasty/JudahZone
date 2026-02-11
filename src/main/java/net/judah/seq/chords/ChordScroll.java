@@ -40,7 +40,7 @@ public class ChordScroll extends JPanel {
 		a.setOpaque(true);
 		b.setOpaque(true);
 		c.setOpaque(true);
-		a.setBackground(Pastels.EGGSHELL);
+		a.setBackground(Pastels.BG);
 		
 		JPanel bottom = new JPanel();
 		GridBagConstraints grid = new GridBagConstraints();

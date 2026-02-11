@@ -28,7 +28,7 @@ public class Mains extends Channel {
     public void processImpl() {
     }
 
-    @Override
+	@Override
 	public void process(float[] l, float[] r) {
         hotSwap();
         gain.process(l, r);

@@ -7,10 +7,13 @@ import javax.sound.midi.Track;
 
 import judahzone.api.Midi;
 import lombok.Getter;
-import net.judah.drumkit.DrumKit;
-import net.judah.drumkit.DrumSample;
-import net.judah.drumkit.DrumType;
-import net.judah.drumkit.Drumz;
+import net.judah.drums.DrumInit;
+import net.judah.drums.DrumKit;
+import net.judah.drums.KitDB;
+import net.judah.drums.KitDB.KitSetup;
+import net.judah.drums.oldschool.OldSchool;
+import net.judah.drums.synth.DrumSynth;
+import net.judah.gui.MainFrame;
 import net.judah.midi.JudahMidi;
 import net.judah.seq.track.Edit.Type;
 
@@ -18,18 +21,34 @@ public class DrumTrack extends NoteTrack {
 
 	@Getter private final DrumKit kit;
 
-	public DrumTrack(Drumz type, DrumKit kit) throws InvalidMidiDataException {
+	public DrumTrack(DrumInit type, DrumKit kit) throws InvalidMidiDataException {
 		super(type.name, kit.getActives());
 		this.kit = kit;
 		cue = Cue.Hot;
 	}
 
-	@Override public DrumKit getChannel() {
-		return kit;
+	@Override
+	public void load(TrackInfo info) {
+		// TODO change kit if necessary
+		if (info.getKit() != null) {
+			if (info.getKit().equals(DrumSynth.TOKEN)) {
+				if (kit instanceof DrumSynth synth)
+					return;
+			}
+			else if (kit instanceof OldSchool samples) {
+				KitSetup setup = KitDB.get(info.getKit(), false);
+				if (setup != null)
+					samples.accept(setup);
+			}
+		}
+		else {
+			// error case?
+		}
+		super.load(info);
 	}
 
-	public DrumSample getSample(DrumType t) {
-		return kit.getSamples()[t.ordinal()];
+	@Override public DrumKit getChannel() {
+		return kit;
 	}
 
 	@Override protected void processNote(ShortMessage formatted) {
@@ -63,4 +82,27 @@ public class DrumTrack extends NoteTrack {
 		return false;
 	}
 
+	@Override public String progChange(int data1) {
+		String name = kit.progChange(data1);
+		if (name == null)
+			return null;
+		progSuccess(name);
+		return name;
+	}
+
+	@Override public boolean progChange(String name) {
+		boolean result = kit.progChange(name);
+		if (!result)
+			return false;
+		progSuccess(name);
+		return result;
+	}
+
+	private void progSuccess(String name) {
+		state.setProgram(name);
+		MainFrame.updateTrack(Update.PROGRAM, this);
+	}
+	@Override public String[] getPatches() {
+		return kit.getPatches(); // oldSchool vs synth
+	}
 }

@@ -35,6 +35,7 @@ public class JudahMenu extends JMenuBar {
 	private final JudahZone zone;
 	private final JMenu synth = new JMenu("Synth");
 	private final JudahClock clock;
+	private final ShiftBtn shift;
 
 	@SuppressWarnings("static-access")
 	public JudahMenu(int width, JudahZone judahZone, TabZone tabs, JudahMidi midi) {
@@ -130,6 +131,9 @@ public class JudahMenu extends JMenuBar {
         add(knobs);
         add(viewMenu(tabs));
 
+        shift = new ShiftBtn();
+        add(shift);
+
 	}
 
 	public void refillTracks() {
@@ -179,6 +183,10 @@ public class JudahMenu extends JMenuBar {
     		RTLogger.log(ne, change + ": " + ne);
     	}
 
+	}
+
+	public void shift(boolean active) {
+		shift.updateAppearance();
 	}
 
 }

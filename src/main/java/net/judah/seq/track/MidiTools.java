@@ -104,7 +104,7 @@ public class MidiTools {
 				if (found == null) // opportunity passed
 					return null;
 				if (Midi.isNoteOff(m) && m.getData1() == data1) {
-					return new MidiNote(found, e);
+					return new PianoNote(found, e);
 				}
 			}
 		}
@@ -130,7 +130,7 @@ public class MidiTools {
 		return null;
 	}
 
-	public static MidiNote noteOff(MidiEvent on, Track t) {
+	public static PianoNote noteOff(MidiEvent on, Track t) {
 		final long fromTick = on.getTick();
 		final int data1 = ((ShortMessage)on.getMessage()).getData1();
 		for (int i = 0; i < t.size(); i++) {
@@ -143,14 +143,14 @@ public class MidiTools {
 			if (e.getTick() <= fromTick)
 				continue;
 			if (Midi.isNoteOff(m) && m.getData1() == data1)
-				return new MidiNote(on, e);
+				return new PianoNote(on, e);
 
 			}
 		}
-		return new MidiNote(on); // drums/hanging chad
+		return new PianoNote(on); // drums/hanging chad
 	}
 
-	public static boolean match(MidiNote it, MidiNote other) {
+	public static boolean match(PianoNote it, PianoNote other) {
 		return match(it, other) && match(it.getOff(), other.getOff());
 	}
 	public static boolean match(MidiEvent it, MidiEvent other) {
@@ -198,10 +198,10 @@ public class MidiTools {
 		return new MidiEvent(e.getMessage(), e.getTick() - left);
 	}
 
-	public static MidiNote zeroBase(MidiNote p, long left) {
+	public static PianoNote zeroBase(PianoNote p, long left) {
 		if (left == 0)
 			return p;
-		return new MidiNote(zeroBase(left, p), p.getOff() == null ?
+		return new PianoNote(zeroBase(left, p), p.getOff() == null ?
 				null : zeroBase(left, p.getOff()));
 	}
 
@@ -252,7 +252,7 @@ public class MidiTools {
 	 * @param destination Target pitch and tick offset
 	 * @param t Track reference
 	 * @return New MidiNote at computed position*/
-	public static MidiNote compute(MidiNote in, Prototype destination, MidiTrack t) {
+	public static PianoNote compute(PianoNote in, Prototype destination, MidiTrack t) {
 	    if (!(in.getMessage() instanceof ShortMessage))
 	        return in;
 
@@ -262,7 +262,7 @@ public class MidiTools {
 	    if (in.getOff() != null)
 	        off = transposePiano((ShortMessage)in.getOff().getMessage(),
 	            in.getOff().getTick(), destination, t);
-	    return new MidiNote(on, off);
+	    return new PianoNote(on, off);
 	}
 
 	/**Transposes a single piano MIDI event.

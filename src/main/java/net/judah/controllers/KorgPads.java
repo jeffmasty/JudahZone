@@ -1,5 +1,7 @@
 package net.judah.controllers;
 
+import javax.swing.SwingUtilities;
+
 import judahzone.api.Controller;
 import judahzone.api.Midi;
 import judahzone.fx.Chorus;
@@ -110,13 +112,19 @@ public class KorgPads extends Debounce implements Controller {
 			return true;
 
 		case 14: // next scene
-			zone.getOverview().trigger();
+			SwingUtilities.invokeLater(() -> {
+				zone.getOverview().trigger();
+			});
 			return true;
 		case 15:
-			MainFrame.getKnobs().pad1();
+			SwingUtilities.invokeLater(() -> {
+				MainFrame.getKnobs().pad1();
+			});
 			return true;
 		case 16:
-			MainFrame.getKnobs().pad2();
+			SwingUtilities.invokeLater(() -> {
+				MainFrame.getKnobs().pad2();
+			});
 			return true;
 
 		case JOYSTICK_ON:

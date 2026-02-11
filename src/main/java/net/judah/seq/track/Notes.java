@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 
 /** removing from API, move towards note-off interleaved with it's note-on */
 @NoArgsConstructor
-public class Notes extends ArrayList<MidiNote> {
+public class Notes extends ArrayList<PianoNote> {
 
 	@Deprecated
 	public Notes(Notes copy) {
@@ -19,7 +19,7 @@ public class Notes extends ArrayList<MidiNote> {
 	@Deprecated
 	@Override public boolean contains(Object o) {
 		if (o instanceof MidiEvent evt) {
-			for (MidiNote note : this)
+			for (PianoNote note : this)
 				if (note.equals(evt))
 					return true;
 		}
@@ -28,7 +28,7 @@ public class Notes extends ArrayList<MidiNote> {
 
 	@Deprecated
 	public boolean contains(long tick, int data1) {
-		for (MidiNote note : this)
+		for (PianoNote note : this)
 			if (note.getTick() <= tick)
 				if (note.getOff() == null || note.getOff().getTick() > tick) {
 					if (note.getMessage() instanceof ShortMessage &&

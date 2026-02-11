@@ -5,7 +5,7 @@ import java.awt.Graphics;
 
 import javax.swing.Box;
 
-import judahzone.api.Tuning;
+import judahzone.data.Tuning;
 import judahzone.fx.analysis.Waveform;
 import judahzone.gui.Gui;
 import judahzone.util.AudioMetrics.RMS;

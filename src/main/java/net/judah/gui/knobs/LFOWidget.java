@@ -16,6 +16,7 @@ import javax.swing.JPanel;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import judahzone.util.Constants;
+import judahzone.widgets.DoubleSlider;
 import judahzone.widgets.RangeSlider.Colors;
 import lombok.Getter;
 import net.judah.channel.Channel;
@@ -26,13 +27,12 @@ import net.judah.gui.fx.FxTrigger;
 import net.judah.gui.fx.Row;
 import net.judah.gui.fx.TimePanel;
 import net.judah.gui.settable.LfoCombo;
-import net.judah.gui.widgets.DoubleSlider;
 import net.judah.gui.widgets.FxKnob;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.LFO;
 
 public class LFOWidget extends Box {
-    private static final Color KNOB_C = Pastels.EGGSHELL;
+    private static final Color KNOB_C = Pastels.BG;
     public static final Colors RANGE = new Colors(KNOB_C, KNOB_C, Pastels.PURPLE);
 
 	@Getter private final LFO lfo;

@@ -13,7 +13,7 @@ import judahzone.gui.Updateable;
 import lombok.Getter;
 import net.judah.channel.Channel;
 import net.judah.gui.Bindings;
-import net.judah.gui.HQ;
+import net.judah.gui.ShiftBtn;
 
 
 public class ReverbPlus implements Updateable {
@@ -43,8 +43,8 @@ public class ReverbPlus implements Updateable {
 
 	public void toggle() {
 
-		lLbl.setText( HQ.isShift() ? Damp.name() : Wet.name());
-		rLbl.setText( HQ.isShift() ? Width.name() : Room.name());
+		lLbl.setText( ShiftBtn.isActive() ? Damp.name() : Wet.name());
+		rLbl.setText( ShiftBtn.isActive() ? Width.name() : Room.name());
 		update();
 	}
 

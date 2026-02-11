@@ -24,7 +24,8 @@ public class Program extends SetCombo<String> {
 			return;
 		if (getSelectedItem() != null && getSelectedItem().equals(track.getProgram()))
 			return;
-		setSelectedItem(track.getProgram());
+		override(track.getProgram()); // DataRace
+
 	}
 
 }

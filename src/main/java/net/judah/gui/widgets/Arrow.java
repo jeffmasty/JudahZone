@@ -12,7 +12,7 @@ public class Arrow extends BasicArrowButton {
 	public static final Dimension SIZE = new Dimension(23, 22);
 
 	public Arrow(int dir, ActionListener action) {
-		super(dir, Pastels.EGGSHELL, Pastels.MY_GRAY, Color.DARK_GRAY, Color.LIGHT_GRAY);
+		super(dir, Pastels.BG, Pastels.MY_GRAY, Color.DARK_GRAY, Color.LIGHT_GRAY);
 		if (action != null)
 			addActionListener(action);
 		

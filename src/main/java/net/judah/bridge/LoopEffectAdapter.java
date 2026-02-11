@@ -51,6 +51,6 @@ public final class LoopEffectAdapter implements FX.RTFX {
     @Override
     public void process(float[] left, float[] right) {
         // Delegate to Loop's process method (Loop already matches signature)
-        loop.process(left, right);
+        loop.processLoop(left, right);
     }
 }

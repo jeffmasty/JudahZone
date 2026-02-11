@@ -6,7 +6,7 @@ import judahzone.api.FX;
 import judahzone.api.TimeFX;
 import judahzone.fx.Chorus;
 import judahzone.fx.Delay;
-import judahzone.fx.Filter;
+import judahzone.fx.CutFilter;
 import judahzone.fx.Gain;
 import judahzone.fx.Reverb;
 import judahzone.util.Constants;
@@ -115,7 +115,7 @@ public class LFO implements TimeFX {
 				ch.setActive(ch.getChorus(), wasActive);
 				break;
 			case Filtr:
-				ch.getHiCut().set(Filter.Settings.Hz.ordinal(), recover);
+				ch.getHiCut().set(CutFilter.Settings.Hz.ordinal(), recover);
 				ch.setActive(ch.getHiCut(), wasActive);
 				break;
     	}
@@ -173,7 +173,7 @@ public class LFO implements TimeFX {
     		ch.setActive(ch.getChorus(), true);
     		break;
     	case Filtr:
-    		recover = ch.getHiCut().get(Filter.Settings.Hz.ordinal());
+    		recover = ch.getHiCut().get(CutFilter.Settings.Hz.ordinal());
     		wasActive = ch.isActive(ch.getHiCut());
     		ch.setActive(ch.getHiCut(), true);
     	}
@@ -284,8 +284,8 @@ public class LFO implements TimeFX {
 	        yield c;
 	    }
 	    case Filtr -> {
-	        Filter h = ch.getHiCut();
-	        h.set(Filter.Settings.Hz.ordinal(), val);
+	        CutFilter h = ch.getHiCut();
+	        h.set(CutFilter.Settings.Hz.ordinal(), val);
 	        yield h;
 	    }
 	    default -> null;

@@ -17,9 +17,15 @@ import javax.swing.SwingUtilities;
 
 import judahzone.api.Midi;
 import judahzone.api.Signature;
+import judahzone.gui.Actionable;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
-import net.judah.drumkit.DrumType;
+import net.judah.drums.DrumKit;
+import net.judah.drums.DrumType;
+import net.judah.drums.gui.OneDrumFrame;
+import net.judah.drums.gui.OneSampleFrame;
+import net.judah.drums.oldschool.OldSchool;
+import net.judah.drums.synth.DrumSynth;
 import net.judah.gui.TabZone;
 import net.judah.seq.automation.CCPopup;
 import net.judah.seq.track.DrumTrack;
@@ -27,9 +33,9 @@ import net.judah.seq.track.Edit;
 import net.judah.seq.track.Edit.Type;
 import net.judah.seq.track.Editor.Delta;
 import net.judah.seq.track.Editor.Selection;
-import net.judah.seq.track.MidiNote;
 import net.judah.seq.track.MidiTools;
 import net.judah.seq.track.MusicBox;
+import net.judah.seq.track.PianoNote;
 import net.judah.seq.track.Prototype;
 
 public class BeatBox extends MusicBox implements Pastels {
@@ -91,11 +97,11 @@ public class BeatBox extends MusicBox implements Pastels {
 	public void paint(Graphics g) {
 		Color bg, shade;
 		if (tab == null || tab.getCurrent() == track) {
-			bg = EGGSHELL;
+			bg = BG;
 			shade = SHADE;
 		} else {
 			bg = SHADE;
-			shade = EGGSHELL;
+			shade = BG;
 		}
 		g.setColor(bg);
 		g.fillRect(0, 0, width, height);
@@ -122,7 +128,7 @@ public class BeatBox extends MusicBox implements Pastels {
 		float scale = width / (float) track.getWindow();
 		ShortMessage on;
 		int x, y;
-		for (MidiNote p : scroll.populate()) {
+		for (PianoNote p : scroll.populate()) {
 			on = (ShortMessage) p.getMessage();
 			y = DrumType.index(on.getData1());
 			x = (int) ((p.getTick() - offset) * scale);
@@ -220,7 +226,20 @@ public class BeatBox extends MusicBox implements Pastels {
 
 		if (SwingUtilities.isRightMouseButton(mouse)) {
 			int step = (int) (click.tick % track.getWindow() / track.getStepTicks());
-			cc.popup(mouse, step);
+
+			DrumKit kit = ((DrumTrack) track).getKit();
+			if (kit instanceof DrumSynth synth) {
+				DrumType t = DrumType.values()[DrumType.index(click.data1)];
+				Actionable openDrum = new Actionable("Open " + t,
+						e -> OneDrumFrame.load(synth.getDrum(t), synth));
+				cc.popup(mouse, step, openDrum);
+			}
+			else if (kit instanceof OldSchool samples) {
+				DrumType t = DrumType.values()[DrumType.index(click.data1)];
+				Actionable openDrum = new Actionable("Open " + t,
+						e -> OneSampleFrame.load(samples, samples.getSample(t)));
+				cc.popup(mouse, step, openDrum);
+			}
 			return;
 		}
 
@@ -251,8 +270,7 @@ public class BeatBox extends MusicBox implements Pastels {
 		repaint();
 	}
 
-	@Override
-	public void mouseReleased(MouseEvent mouse) {
+	@Override public void mouseReleased(MouseEvent mouse) {
 		if (mode != null) {
 			switch (mode) {
 			case CREATE:
@@ -284,8 +302,7 @@ public class BeatBox extends MusicBox implements Pastels {
 		TabZone.getInstance().requestFocusInWindow();
 	}
 
-	@Override
-	public void mouseDragged(MouseEvent e) {
+	@Override public void mouseDragged(MouseEvent e) {
 		if (pressOnSelected && mode == null) {
 			dragStart(e.getPoint());
 			pressOnSelected = false;

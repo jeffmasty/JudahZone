@@ -27,7 +27,7 @@ import net.judah.seq.piano.PianoView.Orientation;
 import net.judah.seq.track.Edit;
 import net.judah.seq.track.Edit.Type;
 import net.judah.seq.track.Editor.Selection;
-import net.judah.seq.track.MidiNote;
+import net.judah.seq.track.PianoNote;
 import net.judah.seq.track.MidiTools;
 import net.judah.seq.track.MusicBox;
 import net.judah.seq.track.NotePairer;
@@ -191,7 +191,7 @@ public class Piano extends MusicBox {
 			float noteDim, int noteSize, boolean isNotesY) {
 		int x, y, width_rect, height_rect;
 
-		for (MidiNote p : scroll.populate()) {
+		for (PianoNote p : scroll.populate()) {
 			if (!(p.getMessage() instanceof ShortMessage s)) continue;
 			int data1 = s.getData1();
 			if (data1 < tonic || data1 > top) continue;
@@ -240,7 +240,7 @@ public class Piano extends MusicBox {
 				long originalTick = e.getTick();
 				long noteEnd = -1;
 
-				if (e instanceof MidiNote mn && mn.getOff() != null) {
+				if (e instanceof PianoNote mn && mn.getOff() != null) {
 					noteEnd = mn.getOff().getTick();
 				} else {
 					MidiEvent off = NotePairer.getOff(e, t);
@@ -459,7 +459,7 @@ public class Piano extends MusicBox {
 		for (MidiEvent sel : selected) {
 			if (Midi.isNoteOn(sel.getMessage())) {
 				MidiEvent off = NotePairer.getOff(sel, t);
-				dragging.add(new MidiNote(sel, off));
+				dragging.add(new PianoNote(sel, off));
 			}
 		}
 	}
@@ -507,7 +507,7 @@ public class Piano extends MusicBox {
         return pair;
     }
 
-	private boolean isNoteInDraggingList(MidiNote note) {
+	private boolean isNoteInDraggingList(PianoNote note) {
 		if (dragging == null || note == null) return false;
 		for (MidiEvent draggedEvent : dragging) {
 			if (draggedEvent.getTick() == note.getTick() &&

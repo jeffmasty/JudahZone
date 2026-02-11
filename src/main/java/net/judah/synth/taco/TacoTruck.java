@@ -20,6 +20,8 @@ public class TacoTruck extends Engine {
 
 	@Getter private final Vector<TacoSynth> tracks = new Vector<TacoSynth>();
 
+	private static final float[] work = new float[Constants.bufSize()];
+
     public TacoTruck(String name, ImageIcon picture) {
     	super(name, Constants.MONO);
     	icon = picture;
@@ -59,14 +61,18 @@ public class TacoTruck extends Engine {
 	@Override public void processImpl() {
 		if (onMute)
 			return;
-		AudioTools.silence(left);
+
+		AudioTools.silence(work);
 		for (TacoSynth t : tracks) { // gather tracks
 			t.process();
-			AudioTools.mix(t.mono, left);
+			AudioTools.mix(t.mono, work);
 		}
-		((Convolution.Mono)IR).monoToStereo(left, right);
-		// AudioTools.copy(left, right); // make stereo
-		fx();
+		if (effects.contains(IR))
+			((Convolution.Mono)IR).process(work);
+		gain.monoToStereo(work, left, right);
+		hotSwap(); // activate FX
+		for( int i = 0, n = active.size(); i < n; i++)
+			active.get(i).process(left, right);
 	}
 
 

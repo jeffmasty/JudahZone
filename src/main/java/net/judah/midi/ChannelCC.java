@@ -8,7 +8,7 @@ import judahzone.api.Midi;
 import judahzone.api.MidiConstants;
 import judahzone.fx.Chorus;
 import judahzone.fx.Delay;
-import judahzone.fx.Filter;
+import judahzone.fx.CutFilter;
 import judahzone.fx.Gain;
 import judahzone.fx.MonoFilter;
 import judahzone.fx.Reverb;
@@ -34,7 +34,7 @@ public class ChannelCC {
 				return false;
 			int val = (int) (msg.getData2() * Constants.TO_100);
 			LFO lfo = ch.getLfo2();
-			Filter filter = ch.getLoCut();
+			CutFilter filter = ch.getLoCut();
 
 			switch(type) {
 			case BALANCE:
@@ -74,7 +74,7 @@ public class ChannelCC {
 				lfo.set(LFO.Settings.MSec.ordinal(), val);
 				break;
 			case LOCUT:
-				filter.set(Filter.Settings.Type.ordinal(), val);
+				filter.set(CutFilter.Settings.Type.ordinal(), val);
 				break;
 			case PHASER:
 				phaser(); // chorus preset

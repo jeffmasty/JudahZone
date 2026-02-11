@@ -122,7 +122,7 @@ public final class FluidSynth extends MidiInstrument {
 			else if (listener.instruments.get(i).group == 128)
 				drums.add(new Drum(listener.instruments.get(i).name, listener.instruments.get(i).index));
 		}
-		RTLogger.log(this, "Loaded " + size + " instruments");
+		RTLogger.debug(this, "Loaded " + size + " instruments");
 	}
 
 	public Midi bankUp() {

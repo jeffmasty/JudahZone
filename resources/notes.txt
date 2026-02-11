@@ -1,8 +1,9 @@
 
-TODO: 
-
-loop widgets 
-KnobMode.Mix2, Shift-faders Shift-pads, shift-clipping/shift-algo
+TODO:
+Vocoder  (+contrib/documentation)
+FM + Pluck, Drums2
+Envelopes.txt
+BoomBox++ (zoom)
 Mixer right-click
 Channels serialization: preamp, filter, visibility
 		update filter/preamp effect in realtime but save to disk on autosave form close? edit vs. create
@@ -11,7 +12,9 @@ Engine: upgrade to internal/external
 - mixer right-click menu
 - drumkv1_jack  AppImage in /tracks,  Natural, Synth or Bitcrush ProgChanges
 Controllers MidiMapper mapRange, Jamstik Midi/Cmd?
+KnobMode.Mix2, Shift-faders Shift-pads, shift-clipping/shift-algo
 
+loop widgets brough back to GUI
 MidiThumbnail vis-a-vis Spectrogram
 nudge notes, scrollTo on Automation selection (linked mode), global orientation?
 register Overview SongTracks/ChannelTracks?: CC
@@ -45,7 +48,6 @@ Oscillator ViewWidget, Phase ViewWidget (rainbow color)
 Sample Editor: reverse sample, chop sample left, right, stretch, scratch
 Sampler FX (granularity, pitched frequency, lofi, wet)
 https://github.com/JorenSix/TarsosDSP/blob/master/examples/src/main/java/be/tarsos/dsp/example/unverified/GranulatorExample.java
-DrumSynth (jsyn?), Shepherd, Vocoder
 FFM instead of JNA? https://jdk.java.net/jextract/
 zone omni -> omni   Recording?  Stems, 
 Directives.BREAKS ChordPro.@ ChordPro.%   Cycle breaks: A3_ ABC_ TOF_?
@@ -62,7 +64,8 @@ SongEditor undo/redo, Reload setlist on new Song
 toggle Korg looper/fx pads to Scene pads
 Electronics Github Repository, credits 
 record record record youtubes - MAC - Elevation - SUG
-user manual, linkify ReadMe, qwerty, client-server architecture, message bus
+user manual, linkify ReadMe, qwerty, 
+client-server architecture, message bus  (See other engines, i.e., DRow's Tracktion, Elk+Sushi)
 support JavaSound/non-Jack, make accessible setup and settings
 Subwoofer library, Fluid drums
 IIR filter https://www.youtube.com/watch?v=JCIxD6ep1rM
@@ -70,6 +73,8 @@ reverb builder https://www.youtube.com/watch?v=6ZK2Goiyotk&t=1748s
 https://github.com/jatinchowdhury18/WaveDigitalFilters
 
 --etc-----------------------
+Hoshijo trainer.
+
 MiniMeter PhaseMeter   stereo width and balance.
 Display Mode:
 Scaled: View lower volume samples with ease.
@@ -82,6 +87,7 @@ Multi-Band: 3 overlaid view for the Low, Mid, & High bands.
 New! Correlation Meter:
 Single-Band: Shows the overall correlation.
 Multi-Band: Shows the correlation of the Low, Mid, & High bands separately. As well as the overall correlation. 
+
 
 https://www.recordingblogs.com/wiki/midi-meta-messages
 
@@ -125,6 +131,8 @@ java sequencer https://github.com/sebastianruizva/JMidiSequencer
 java launchpad sequencer https://github.com/perkowitz/sequence/wiki/User%20Manual
 LV2 plugins
 go 24-bit
+ERRNOBUF - recover Jack MIDI when ALSA bridge fails
+
 
 ARty effects  https://github.com/openAVproductions/openAV-ArtyFX/blob/master/manual.md
 Rudolf556 drum machine http://ll-plugins.nongnu.org/lv2/rudolf556.html
@@ -199,7 +207,6 @@ export beatbox as midi file, quantization
 midi-fluent Song editor, midi track resolution
 BeatBox absolute resolution, Swing and Waltz gracefully 
 MidiEditor undo/redo/copy/paste/transpose/translate/drag-n-drop/velocity/record live/zoom+center
-ERRNOBUF - recover Jack MIDI when ALSA bridge fails
 Arpeggiator, ChordPro parser, Synth tracks follow ChordPro/MPK/ABS/Racman
 Setlists, save/load loops to/from disk, record session audio
 Delay/Chorus/LFO sync to Tempo
@@ -214,6 +221,9 @@ TacoSynth anti-aliasing
 JudahScope-Spectrometer 
 Convolution
 rotate PianoView
+Add/Remove Channels
+DrumSynth
+
 
 
 REFERENCE------------------------------------------------------------

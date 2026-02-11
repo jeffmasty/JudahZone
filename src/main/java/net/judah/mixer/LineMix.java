@@ -6,7 +6,7 @@ import java.awt.Color;
 
 import net.judah.JudahZone;
 import net.judah.channel.LineIn;
-import net.judah.drumkit.DrumMachine;
+import net.judah.drums.DrumMachine;
 import net.judah.looper.SoloTrack;
 import net.judah.seq.track.DrumTrack;
 

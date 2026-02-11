@@ -2,6 +2,8 @@ package net.judah.controllers;
 
 import java.util.List;
 
+import javax.swing.SwingUtilities;
+
 import judahzone.api.Controller;
 import judahzone.api.Midi;
 import judahzone.fx.Gain;
@@ -11,8 +13,8 @@ import lombok.RequiredArgsConstructor;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
 import net.judah.channel.LineIn;
-import net.judah.gui.HQ;
 import net.judah.gui.MainFrame;
+import net.judah.gui.ShiftBtn;
 import net.judah.gui.TabZone;
 import net.judah.seq.Seq;
 import net.judah.song.Scene;
@@ -89,8 +91,8 @@ public class KorgMixer implements Controller {
 			launchScene(data1 - SCENE);
 		}
 
-		else if (data1 == SET.getVal() /* && data2 != 0 */) { // Run SettableCombo or hide modal dialog
-			Threads.execute(()->HQ.setShift(data2 == 100));
+		else if (data1 == SET.getVal() /* && data2 != 0 */) { // SHIFT btn
+			SwingUtilities.invokeLater(()->ShiftBtn.setMidiShift(data2 == 100));
 		}
 		else if (data1 == CYCLE.getVal()) {
 			zone.getLooper().verseChorus();

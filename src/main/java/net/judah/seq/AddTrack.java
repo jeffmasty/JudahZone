@@ -25,16 +25,14 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
 
-import judahzone.api.MidiConstants;
 import judahzone.gui.Gui;
 import judahzone.gui.Icons;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
 import judahzone.widgets.Btn;
-import judahzone.widgets.Integers;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
-import net.judah.drumkit.DrumKit;
+import net.judah.drums.DrumKit;
 import net.judah.gui.Size;
 import net.judah.gui.widgets.ModalDialog;
 import net.judah.midi.MidiInstrument;
@@ -56,18 +54,13 @@ public class AddTrack extends JPanel {
 	private final Channels channels;
 	private final Seq seq;
 	private final JTabbedPane tabs = new JTabbedPane();
-	private final Box drum = new Box(BoxLayout.Y_AXIS);
 	private final Box synth = new Box(BoxLayout.Y_AXIS);
 	private final Box chord = new Box(BoxLayout.Y_AXIS);
 	private final Box fx = new Box(BoxLayout.Y_AXIS);
 
-	final JTextField drumName = new JTextField(8);
 	final JTextField synthName = new JTextField(8);
-	final JComboBox<Channels.RegisteredDrums> drumType = new JComboBox<Channels.RegisteredDrums>(Channels.RegisteredDrums.values());
 	final JComboBox<Channels.RegisteredSynths> synthType = new JComboBox<Channels.RegisteredSynths>(Channels.RegisteredSynths.values());
-	final JList<ZoneMidi> drumOut = new JList<ZoneMidi>();
 	final JList<ZoneMidi> synthOut = new JList<ZoneMidi>();
-	final JComboBox<Integer> drumCh = new JComboBox<Integer>(Integers.generate(0, 16));
 	final JToggleButton joinSynth = new JToggleButton("Connect");
 	final JList<Channel> fxChannel;
 	final JTextArea chordPreview = new JTextArea(25, 7);
@@ -112,13 +105,6 @@ public class AddTrack extends JPanel {
 				if (e.getKeyChar() == KeyEvent.VK_ENTER) ok();
 				else if (e.getKeyChar() == KeyEvent.VK_ESCAPE)
 						ModalDialog.getInstance().dispose();}});
-		drumType.setSelectedIndex(0);
- 		refillDrums();
-		drumCh.setSelectedIndex(MidiConstants.DRUM_CH);
-		drumType.addActionListener(l->refillDrums());
- 		drum.add(Gui.wrap(new JLabel("Name: "), drumName, drumType));
-		drum.add(Gui.resize(new JScrollPane(drumOut), MIDIOUT));
- 		drum.add(Gui.wrap(new JLabel("Midi CH:"), drumCh));
 
 		fxChannel.setSelectedIndex(0);
  		fx.add(Gui.resize(fxChannel, AUTOMATION));
@@ -186,11 +172,6 @@ public class AddTrack extends JPanel {
 			synthOut.setSelectedIndex(0);
 	}
 
-	private void refillDrums() {
-		DefaultListModel<ZoneMidi> model = new DefaultListModel<>();
-		drumOut.setModel(model);
-	}
-
 	// TODO  4 and 5: post processing
 	// TACO or Fluid or Automation (or Crave/Etc) (separate channel?)
 	// 1. gather info from user
@@ -222,7 +203,7 @@ public class AddTrack extends JPanel {
 			}
 			RTLogger.debug(this, "creating " + type.name() + " engine with track " + name);
 			if (type == Channels.RegisteredSynths.Fluid) {
-				new FluidAssistant(name, zone);
+				new FluidAssistant(zone.getChannels(), seq.getFluids().length + 1);
 			} else if (type == Channels.RegisteredSynths.Taco) {
 				int idx = seq.getTacos().length + 1;
 				zone.getChannels().accept(new TacoTruck("T + " + idx));
@@ -243,10 +224,24 @@ public class AddTrack extends JPanel {
 		zone.getOverview().refill();
 	}
 
+//	private final Box drum = new Box(BoxLayout.Y_AXIS);
+//	final JTextField drumName = new JTextField(8);
+//	final JComboBox<Channels.RegisteredDrums> drumType = new JComboBox<Channels.RegisteredDrums>(Channels.RegisteredDrums.values());
+//	final JList<ZoneMidi> drumOut = new JList<ZoneMidi>();
+//	final JComboBox<Integer> drumCh = new JComboBox<Integer>(Integers.generate(0, 16));
+//	drumType.setSelectedIndex(0);
+//	refillDrums();
+//	drumCh.setSelectedIndex(MidiConstants.DRUM_CH);
+//	drumType.addActionListener(l->refillDrums());
+//		drum.add(Gui.wrap(new JLabel("Name: "), drumName, drumType));
+//	drum.add(Gui.resize(new JScrollPane(drumOut), MIDIOUT));
+//		drum.add(Gui.wrap(new JLabel("Midi CH:"), drumCh));
+//	private void refillDrums() {
+//		DefaultListModel<ZoneMidi> model = new DefaultListModel<>();
+//		drumOut.setModel(model); }
 //	private void createDrum() {
 		// RegisteredDrums type = RegisteredDrums.values()[drumOut.getSelectedIndex()];
-		//	jackclient.registerPort("left", AUDIO, JackPortIsOutput);
-//	}
+		//	jackclient.registerPort("left", AUDIO, JackPortIsOutput);	}
 
 
 }

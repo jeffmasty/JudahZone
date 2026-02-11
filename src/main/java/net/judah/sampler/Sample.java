@@ -3,7 +3,7 @@ package net.judah.sampler;
 import static judahzone.util.Constants.LEFT;
 import static judahzone.util.Constants.RIGHT;
 
-import judahzone.api.Asset;
+import judahzone.data.Asset;
 import judahzone.fx.Gain;
 import judahzone.jnajack.BasicPlayer;
 import judahzone.util.AudioTools;

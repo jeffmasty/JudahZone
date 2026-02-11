@@ -11,7 +11,7 @@ import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 
 import net.judah.JudahZone;
-import net.judah.drumkit.DrumMachine;
+import net.judah.drums.DrumMachine;
 import net.judah.gui.Bindings.Act;
 
 public class TrackBindings {

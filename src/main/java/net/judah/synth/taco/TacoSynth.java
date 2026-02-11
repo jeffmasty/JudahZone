@@ -31,7 +31,7 @@ public class TacoSynth extends PianoTrack {
 	public static final int DCO_COUNT = 3;
 	public static final int ZERO_BEND = 8192;
 
-	protected final float[] mono = new float[Constants.bufSize()];
+	@Getter protected final float[] mono = new float[Constants.bufSize()];
 	protected final float[] upsample = new float[Constants.bufSize() * OVERSAMPLE];
     // TODO Pan DCOs: protected final FloatBuffer stereo = FloatBuffer.wrap(new float[Constants.bufSize()]);
 
@@ -225,7 +225,7 @@ public class TacoSynth extends PianoTrack {
 
 	}
 
-	private void decimate() {
+	private void decimate() { // TODO AudioTools
 		for (int i= 0; i < mono.length; i++)
 			mono[i] = upsample[i * OVERSAMPLE];
 	}

@@ -14,7 +14,7 @@ import judahzone.gui.Gui;
 import judahzone.widgets.Btn;
 import judahzone.widgets.Integers;
 import lombok.Setter;
-import net.judah.drumkit.DrumType;
+import net.judah.drums.DrumType;
 import net.judah.gui.widgets.ModalDialog;
 import net.judah.seq.piano.Piano;
 import net.judah.seq.track.Edit.Type;

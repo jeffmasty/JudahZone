@@ -23,7 +23,8 @@ import javax.swing.JPanel;
 import judahzone.api.Chord;
 import judahzone.api.FX;
 import judahzone.api.MidiConstants;
-import judahzone.api.Tuning;
+import judahzone.data.Circular;
+import judahzone.data.Tuning;
 import judahzone.fx.Compressor;
 import judahzone.fx.Convolution;
 import judahzone.fx.Gain;
@@ -32,7 +33,6 @@ import judahzone.gui.Icons;
 import judahzone.gui.Updateable;
 import judahzone.scope.JudahScope;
 import judahzone.util.AudioMetrics.RMS;
-import judahzone.util.Circular;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
@@ -40,13 +40,14 @@ import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
-import net.judah.drumkit.DrumKit;
-import net.judah.drumkit.DrumMachine;
-import net.judah.drumkit.KitSetup;
+import net.judah.drums.DrumKit;
+import net.judah.drums.DrumMachine;
+import net.judah.drums.gui.KitParent;
+import net.judah.drums.oldschool.SampleParams;
+import net.judah.drums.synth.DrumParams;
 import net.judah.gui.fx.FxPanel;
 import net.judah.gui.fx.MultiSelect;
 import net.judah.gui.fx.PresetsView;
-import net.judah.gui.knobs.KitKnobs;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.knobs.MidiGui;
@@ -357,10 +358,11 @@ public class MainFrame extends JFrame implements Runnable {
                 else if (ch instanceof Sampler)
                     midiGui.update(); // stepSampler
             }
-            else if (o instanceof Actives a) { // TODO
-                if (a.getChannel() >= MidiConstants.DRUM_CH && knobMode == KnobMode.Kitz) {
-                    ((KitKnobs)knobs).update(a);
-                }
+            else if (o instanceof Actives actives) {
+            	actives.update(); // new
+            	if (actives.getChannel() >= MidiConstants.DRUM_CH && knobMode == KnobMode.Kitz)
+					((KitParent)knobs).update(actives);
+            	// MidiTrack Step view updates removed for sanity
             }
             else if (o instanceof MidiTrack t) { // clipboard/editor/select
                 tabs.update(t);
@@ -432,8 +434,15 @@ public class MainFrame extends JFrame implements Runnable {
             	tuner.update(tuning);
             else if (o instanceof RMS rms && knobs instanceof TunerKnobs tuner)
             	tuner.update(rms);
-            else if (o instanceof KitSetup)
-                drums.getKnobs().update();
+            // TODO SampleParams
+            // TODO DrumParams
+            else if (o instanceof SampleParams || o instanceof DrumParams) {
+        		// both use same update
+            	if (knobMode == KnobMode.Kitz)
+            		((KitParent)knobs).update(o);
+            }
+//            else if (o instanceof LegacySetup)
+//                drums.getKnobs().update();
             else if (o instanceof Seq)
                 overview.refill(); // # of Tracks has changed
             else if (o instanceof FocusUpdate focus)
@@ -452,7 +461,7 @@ public class MainFrame extends JFrame implements Runnable {
 		mode.setSelectedItem(knobMode);
 		knobPanel(switch(knobs) {
     		case MIDI -> midiGui;
-			case Kitz -> drums.getKnobs();
+			case Kitz -> new KitParent(drums);
 			case Track -> seq.getKnobs();
 			case LFO -> effects.getChannel().getLfoKnobs();
 			case Taco -> zone.getTaco().getTrack().getKnobs();

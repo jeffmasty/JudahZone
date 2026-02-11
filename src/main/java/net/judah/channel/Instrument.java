@@ -76,16 +76,23 @@ public class Instrument extends LineIn {
 
 		// get raw data
 		AudioTools.copy(leftPort.getFloatBuffer(), left);
-		if (isStereo)
+		if (isStereo) {
 			AudioTools.copy(rightPort.getFloatBuffer(), right);
+			fx();
+		}
 		else { // Mono: apply custom filter then Convolution (on or off) splits to stereo
 			if (hp != null)
 				hp.process(left);
 			if (lp != null)
 				lp.process(left);
-			((Convolution.Mono)IR).monoToStereo(left, right);
+
+			if (effects.contains(IR))
+				((Convolution.Mono)IR).process(left);
+			gain.monoToStereo(left, left, right);
+			hotSwap(); // activate FX
+			for (int i = 0, n = active.size(); i < n; i++)
+				active.get(i).process(left, right);
 		}
-		fx();
 	}
 
 }

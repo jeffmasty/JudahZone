@@ -71,6 +71,13 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 		chords = null;
 	}
 
+	@Override
+	public void load(TrackInfo info) {
+		super.load(info);
+		if (info.getArp() != null) // overkill?  Sched has arpinfo.
+			setInfo(info.getArp());
+	}
+
 	@Override public Channel getChannel() {
 		return (MidiInstrument)midiOut;
 	}
@@ -113,8 +120,8 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 
 	@Override public void setState(Sched sched) {
 		super.setState(sched);
-		if (sched.getArp() != info)
-			setInfo(state.getArp());
+		if (sched.getArp() != info && sched.getArp() != null)
+			setInfo(sched.getArp());
 		if (sched.active && clock.isActive() && clock.getBeat() == 0)
 			playTo(0); // kludge
 	}
@@ -199,7 +206,7 @@ public class PianoTrack extends NoteTrack implements ChordListener {
 	}
 
 	public void setRange(int range) {
-		info.setRange(range);
+		info.range = range;
 		if (algo != null) algo.setRange(range);
 		MainFrame.updateTrack(Update.RANGE, this);
 	}
