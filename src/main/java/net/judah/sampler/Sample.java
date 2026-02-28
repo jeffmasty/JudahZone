@@ -68,8 +68,8 @@ public class Sample extends BasicPlayer {
 
 	    float[][] buf = recording.get(frame);
 
-	    AudioTools.mix(buf[LEFT], env * gain.getLeft() * gain.getGain(), outLeft);
-	    AudioTools.mix(buf[RIGHT], env * gain.getRight() * gain.getGain(), outRight);
+	    AudioTools.mix(buf[LEFT], amp * gain.getLeft() * gain.getGain(), outLeft);
+	    AudioTools.mix(buf[RIGHT], amp * gain.getRight() * gain.getGain(), outRight);
 	}
 
 	public String getName() {

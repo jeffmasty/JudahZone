@@ -7,7 +7,7 @@ import java.awt.Window;
 import java.awt.event.FocusEvent.Cause;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -26,6 +26,8 @@ import judahzone.util.RTLogger;
 import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.drums.Drum;
+import net.judah.gui.drums.views.DrumFrame;
 import net.judah.gui.widgets.CloseableTabbedPane;
 import net.judah.midi.JudahMidi;
 import net.judah.seq.beatbox.BeatBox;
@@ -49,7 +51,7 @@ public class TabZone extends CloseableTabbedPane {
 
 	@Getter private static TabZone instance;
 
-	@Getter private final HashSet<Component> frames = new HashSet<Component>();
+	@Getter private static final CopyOnWriteArraySet<Component> frames = new CopyOnWriteArraySet<>();
 
 	private final JudahZone zone;
 	private final SheetMusicPnl sheetMusic;
@@ -379,6 +381,15 @@ public class TabZone extends CloseableTabbedPane {
 			scope = new JudahScope(Size.WIDTH_TAB, playa, zone.getAnalysis());
 		}
 		install(scope);
+	}
+
+	public static void update(Drum drum) {
+		for (Component c : frames) {
+			if (c instanceof DrumFrame view)
+				if (view.getCurrent().getDrum() == drum)
+					view.getCurrent().update();
+		}
+
 	}
 
 }

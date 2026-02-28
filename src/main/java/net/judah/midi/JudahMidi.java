@@ -21,10 +21,10 @@ import org.jaudiolibs.jnajack.JackMidi;
 import org.jaudiolibs.jnajack.JackMidi.Event;
 import org.jaudiolibs.jnajack.JackPort;
 
+import judahzone.api.AudioEngine.Type;
 import judahzone.api.Controller;
 import judahzone.api.Midi;
 import judahzone.api.MidiClock;
-import judahzone.api.AudioEngine.Type;
 import judahzone.jnajack.ZoneJackClient;
 import judahzone.util.Constants;
 import judahzone.util.RTLogger;
@@ -221,6 +221,7 @@ public class JudahMidi extends ZoneJackClient implements Closeable, MixBus {
         	Threads.sleep(30);
         	fluid = jack.getPorts(jackclient, FluidSynth.MIDI_PORT, MIDI, INS);
         }
+        Threads.sleep(10);
     	for (String port : fluid)
     		connect(port, fluidOut.getName());
 

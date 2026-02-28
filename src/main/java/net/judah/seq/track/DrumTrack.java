@@ -10,9 +10,6 @@ import lombok.Getter;
 import net.judah.drums.DrumInit;
 import net.judah.drums.DrumKit;
 import net.judah.drums.KitDB;
-import net.judah.drums.KitDB.KitSetup;
-import net.judah.drums.oldschool.OldSchool;
-import net.judah.drums.synth.DrumSynth;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahMidi;
 import net.judah.seq.track.Edit.Type;
@@ -31,15 +28,7 @@ public class DrumTrack extends NoteTrack {
 	public void load(TrackInfo info) {
 		// TODO change kit if necessary
 		if (info.getKit() != null) {
-			if (info.getKit().equals(DrumSynth.TOKEN)) {
-				if (kit instanceof DrumSynth synth)
-					return;
-			}
-			else if (kit instanceof OldSchool samples) {
-				KitSetup setup = KitDB.get(info.getKit(), false);
-				if (setup != null)
-					samples.accept(setup);
-			}
+			kit.accept(KitDB.get(info.getProgram(), info.getKit()));
 		}
 		else {
 			// error case?

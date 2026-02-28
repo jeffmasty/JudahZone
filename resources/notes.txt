@@ -1,8 +1,22 @@
+Pluck Drums (Karplus-Strong)
+FM Drums (DX9-style phase mod)
+
+
+Util: Envelope, Noise, Phase, Ramp, Shape, MidiCmdPack
+Gui: DX9Grid, TwoStepEnv, OscFilter, DrumView, DrumKnobs
+Tests: Envelope, Phase, Ramp, Shape/Colour, Drum, Pluck, FM, Hz
+
 
 TODO:
+
+Split TacoSynth off of MidiTrack
+TacoKnobs sus midiknob broken
+TacoKnobs progChange combo midiknob broken
+Drum Project+Documentation
+put DrumUpdates on Circular
+TrackKnobs progChange broken (drum)
+
 Vocoder  (+contrib/documentation)
-FM + Pluck, Drums2
-Envelopes.txt
 BoomBox++ (zoom)
 Mixer right-click
 Channels serialization: preamp, filter, visibility
@@ -13,6 +27,9 @@ Engine: upgrade to internal/external
 - drumkv1_jack  AppImage in /tracks,  Natural, Synth or Bitcrush ProgChanges
 Controllers MidiMapper mapRange, Jamstik Midi/Cmd?
 KnobMode.Mix2, Shift-faders Shift-pads, shift-clipping/shift-algo
+Stereo Delay https://www.roberthenke.com/technology/filterdelays.html
+Sample Capture https://roberthenke.com/technology/samplecapture.html
+RingMod -> phase 
 
 loop widgets brough back to GUI
 MidiThumbnail vis-a-vis Spectrogram
@@ -23,7 +40,6 @@ Automation: PitchBend.release, Meta, TimeSig, KeySig, Tempo
 standalone backup IRDB inside Convolution
 SampleTrack,  Lyrics Track, mpkMini to127, EQ++/Visualizer
 compression meter, normalization
-TacoSynth ADSR ramping
 TacoSynth GLIDE (Crave <3) Portamento
 Channel Pressure or Breath = Crave 303 Accent (w/ Crave Assign)
 TacoSynth detune on sus/pdl, onTape channel Title
@@ -37,7 +53,6 @@ ChordTrack |1:[] |2:[] endings,  |bars| parse bug
 ChordView rightClick menu (remove track, File)
 PianoEditor: drag-n-drop/transpose across frame, falling water, REL/Modal
 Synth filter tracking, LFO: detune, filter/resonance
-AOT cache
 
 lv2 jna https://github.com/nativelibs4java/JNAerator/tree/refresh-2022
 DSP Course: https://www.youtube.com/watch?v=hVOA8VtKLgk&list=PLuh62Q4Sv7BUSzx5Jr8Wrxxn-U10qG1et
@@ -73,8 +88,10 @@ reverb builder https://www.youtube.com/watch?v=6ZK2Goiyotk&t=1748s
 https://github.com/jatinchowdhury18/WaveDigitalFilters
 
 --etc-----------------------
+AOT cache
+granulator: https://www.youtube.com/watch?v=XKIQHQImGwc
+Flat L&F https://www.formdev.com/flatlaf/
 Hoshijo trainer.
-
 MiniMeter PhaseMeter   stereo width and balance.
 Display Mode:
 Scaled: View lower volume samples with ease.
@@ -88,9 +105,7 @@ New! Correlation Meter:
 Single-Band: Shows the overall correlation.
 Multi-Band: Shows the correlation of the Low, Mid, & High bands separately. As well as the overall correlation. 
 
-
 https://www.recordingblogs.com/wiki/midi-meta-messages
-
 https://melanchall.github.io/drywetmidi/articles/tools/Quantizer.html
 samples: https://freesound.org/people/laffik/packs/38658/
 Latency + bleeding edge
@@ -306,7 +321,6 @@ SYNTH
 	   DCO 1 ...
 	   DCO 2 ...
 		<--Filter-->
-
 
 
 ---Recording normalization checklist---

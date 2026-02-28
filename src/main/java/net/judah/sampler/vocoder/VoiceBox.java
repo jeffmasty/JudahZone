@@ -10,7 +10,8 @@ import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
-import judahzone.data.Frequency;
+import judahzone.api.Frequency;
+import judahzone.api.Hz;
 import judahzone.gui.Gui;
 import judahzone.widgets.Knob;
 import net.judah.gui.widgets.Slider;
@@ -29,6 +30,7 @@ public class VoiceBox extends JPanel {
 	private final Knob decay = new Knob();
 	private final Slider pitch = new Slider(null);
 
+	// TODO RMS on both input and output
 	public VoiceBox(Sampler sampler) {
 		this.sampler = sampler;
 
@@ -44,7 +46,7 @@ public class VoiceBox extends JPanel {
 		pitch.setMinimum(0);
 		pitch.setMaximum(127);
 		pitch.setValue(69); // A4
-		pitch.addChangeListener(e -> stenzel.setHz(new Frequency(Frequency.midiToHz(pitch.getValue()))));
+		pitch.addChangeListener(e -> stenzel.setHz(new Hz(Frequency.midiToHz(pitch.getValue()))));
 
 		wetDry.setToolTipText("Wet/Dry Mix");
 		preamp.setToolTipText("Input Gain");

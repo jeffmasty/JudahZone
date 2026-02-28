@@ -40,7 +40,7 @@ import net.judah.channel.Mains;
 import net.judah.channel.PresetsDB;
 import net.judah.controllers.MPKmini;
 import net.judah.drums.DrumMachine;
-import net.judah.drums.oldschool.DrumDB;
+import net.judah.drums.wav.WavDrumDB;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.FxPanel;
 import net.judah.gui.fx.MultiSelect;
@@ -115,7 +115,7 @@ public class JudahZone extends ZoneJackClient {
 		super(JUDAHZONE);
 		Nimbus.start();
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
-		Threads.execute(() -> DrumDB.init());
+		Threads.execute(() -> WavDrumDB.init());
 		Threads.execute(() -> SampleDB.init());
 		Threads.execute(() -> Convolution.setIRDB(IRDB.instance) );
 		Threads.execute(() -> SynthDB.init(Folders.getSynthPresets()));

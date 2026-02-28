@@ -20,6 +20,8 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
 
+import judahzone.data.Shape;
+import judahzone.data.Stamp;
 import judahzone.fx.MonoFilter;
 import judahzone.gui.Gui;
 import judahzone.gui.Icons;
@@ -37,8 +39,6 @@ import net.judah.gui.Size;
 import net.judah.gui.settable.Program;
 import net.judah.gui.widgets.Slider;
 import net.judah.seq.track.Computer.Update;
-import net.judah.synth.taco.Adsr;
-import net.judah.synth.taco.Shape;
 import net.judah.synth.taco.SynthDB;
 import net.judah.synth.taco.TacoSynth;
 import net.judah.synth.taco.TacoTruck;
@@ -62,7 +62,7 @@ public class SynthKnobs extends KnobPanel {
 	private final DoubleSlider filter;
 	private final Knob hcReso = new Knob();
 	private final Knob lcReso = new Knob();
-	private final Adsr adsr;
+	private final Stamp adsr;
 	private final Knob a = new Knob();//0, 200
 	private final Knob d = new Knob();
 	private final Knob s = new Knob();
@@ -204,10 +204,10 @@ public class SynthKnobs extends KnobPanel {
 		detune1.addActionListener(e->synth.getDetune()[1] = DETUNE_AMOUNT[detune1.getSelectedIndex()]);
 		detune2.addActionListener(e->synth.getDetune()[2] = DETUNE_AMOUNT[detune2.getSelectedIndex()]);
 
-		a.addListener(e->adsr.setAttackTime(a.getValue()));
-		d.addListener(e->adsr.setDecayTime(d.getValue()));
-		s.addListener(e-> adsr.setSustainGain(s.getValue() * 0.01f));
-		r.addListener(e->adsr.setReleaseTime(rFactor * r.getValue()));
+		a.addListener(e->adsr.attack = a.getValue());
+		d.addListener(e->adsr.decay = d.getValue());
+		s.addListener(e-> adsr.sustain = s.getValue());
+		r.addListener(e->adsr.release = rFactor * r.getValue());
 
 		hcReso.addListener(data2 ->  synth.getLowPass().set(Resonance.ordinal(), data2));
 		lcReso.addListener(data2 ->  synth.getHighPass().set(Resonance.ordinal(), data2));
@@ -228,14 +228,14 @@ public class SynthKnobs extends KnobPanel {
 			checkShape(shapes.get(i), i);
 
 		// adsr update
-		if (a.getValue() != adsr.getAttackTime())
-			a.setValue(adsr.getAttackTime());
-		if (d.getValue() != adsr.getDecayTime())
-			d.setValue(adsr.getDecayTime());
-		if (s.getValue() * 0.01f != adsr.getSustainGain())
-			s.setValue((int)(adsr.getSustainGain() * 100));
-		if (r.getValue() != adsr.getReleaseTime() / rFactor)
-			r.setValue(adsr.getReleaseTime() / rFactor);
+		if (a.getValue() != adsr.attack)
+			a.setValue(adsr.attack);
+		if (d.getValue() != adsr.decay)
+			d.setValue(adsr.decay);
+		if (s.getValue() * 0.01f != adsr.sustain)
+			s.setValue(adsr.sustain * 100);
+		if (r.getValue() != adsr.release / rFactor)
+			r.setValue(adsr.release / rFactor);
 		program.update();
 		conformDetune();
 	}
@@ -293,16 +293,16 @@ public class SynthKnobs extends KnobPanel {
 		// preset, volume, hi-cut hz, lo-cut res, adsr
 		switch (idx) {
 			case 0:
-				adsr.setAttackTime(data2);
+				adsr.attack = data2;
 				break;
 			case 1:
-				adsr.setDecayTime(data2);
+				adsr.decay = data2;
 				break;
 			case 2:
-				adsr.setSustainGain(data2 * 0.01f);
+				adsr.sustain = data2;
 				break;
 			case 3:
-				adsr.setReleaseTime(rFactor * data2);
+				adsr.release = rFactor * data2;
 				break;
 			case 4:
 				int focus = Constants.ratio(data2, program.getItemCount() - 1);

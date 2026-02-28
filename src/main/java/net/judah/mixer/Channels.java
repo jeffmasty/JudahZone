@@ -37,8 +37,10 @@ import net.judah.channel.Channel;
 import net.judah.channel.Instrument;
 import net.judah.channel.LineIn;
 import net.judah.drums.DrumKit;
-import net.judah.drums.oldschool.OldSchool;
-import net.judah.drums.synth.DrumSynth;
+import net.judah.drums.fm.FMKit;
+import net.judah.drums.noise.NoiseKit;
+import net.judah.drums.pluck.PluckKit;
+import net.judah.drums.wav.WavKit;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.FxPanel;
 import net.judah.looper.Loop;
@@ -498,7 +500,7 @@ public class Channels implements Consumer<LineIn>, TimeListener, Closeable {
 
 	@RequiredArgsConstructor @Getter
 	public static enum RegisteredDrums {
-		OldSkool(OldSchool.class), Synth(DrumSynth.class);
+		Wav(WavKit.class), Noise(NoiseKit.class), FM(FMKit.class), Pluck(PluckKit.class);
 		private final Class<? extends DrumKit> clazz;
 	}
 

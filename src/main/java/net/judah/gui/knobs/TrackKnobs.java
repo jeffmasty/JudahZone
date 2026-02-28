@@ -103,8 +103,9 @@ public class TrackKnobs extends KnobPanel {
 		if (track.isDrums()) {
 			focus.setSelectedItem(DrumType.Snare);
 			focus.addActionListener(e->update());
-			focusVol.setValue(((DrumTrack)track).getKit().getGain(((DrumType)focus.getSelectedItem())).get(Gain.VOLUME));
-					// ((DrumType)focus.getSelectedItem())).getGain().get(Gain.VOLUME));
+			Gain g = ((DrumTrack)track).getKit().get((DrumType)focus.getSelectedItem()).getGain();
+
+			focusVol.setValue((int) (g.getGain() * 100));
 			focusVol.addChangeListener(e->drumVol(focusVol.getValue()));
 		}
 		else if (track.isSynth()) {
@@ -175,7 +176,7 @@ public class TrackKnobs extends KnobPanel {
 	}
 
 	private void drumVol(int gain) {
-		Gain g = ((DrumTrack)track).getKit().getGain((DrumType)focus.getSelectedItem());
+		Gain g = ((DrumTrack)track).getKit().get((DrumType)focus.getSelectedItem()).getGain();
 		g.set(Gain.VOLUME, gain);
 		MainFrame.update(this);
 	}
@@ -204,7 +205,7 @@ public class TrackKnobs extends KnobPanel {
 	@Override public void update() {
 
 		if (track.isDrums()) {
-			Gain g = ((DrumTrack)track).getKit().getGain((DrumType)focus.getSelectedItem());
+			Gain g = ((DrumTrack)track).getKit().get((DrumType)focus.getSelectedItem()).getGain();
 			if (g.get(Gain.VOLUME) != focusVol.getValue())
 				focusVol.setValue(g.get(Gain.VOLUME));
 		}

@@ -47,8 +47,8 @@ class PitchEdit extends AutoBox {
     private final Box algo = new Box(BoxLayout.PAGE_AXIS);
 
     private final JPanel checkbox = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-    private final Pitch pitch  = new Pitch(false); // start
-    private final Pitch pitch2 = new Pitch(true);  // end
+    private final PitchBendGui pitch  = new PitchBendGui(false); // start
+    private final PitchBendGui pitch2 = new PitchBendGui(true);  // end
     private final Tick  steps;
     private final Tick  steps2;
     private final JCheckBox automation = new JCheckBox("Enabled");
@@ -365,12 +365,12 @@ class PitchEdit extends AutoBox {
 
     // ---- inner UI component ----
 
-    protected class Pitch extends JPanel {
+    protected class PitchBendGui extends JPanel {
 
         private JLabel display = new JLabel("  0");
         private final JSlider slider = new JSlider(0, 127);
 
-        Pitch(boolean automation) {
+        PitchBendGui(boolean automation) {
             super(new FlowLayout(FlowLayout.CENTER, 3, 3));
             Gui.resize(slider, WIDE);
             add(new JLabel(automation ? "End Pitch: " : "Pitch: "));

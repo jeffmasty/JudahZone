@@ -3,6 +3,8 @@ package net.judah.synth.taco;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 
+import judahzone.data.Shape;
+import judahzone.data.Stamp;
 import judahzone.util.Constants;
 import judahzone.util.RTLogger;
 import lombok.AllArgsConstructor;
@@ -28,7 +30,7 @@ public class TacoSauce {
 
 	String name = "??";
 	int index = 127;
-	Adsr env = new Adsr();
+	Stamp env = new Stamp();
 	float[] filter = new float[4];
 	Osc[] osc = new Osc[TacoSynth.DCO_COUNT];
 
@@ -67,7 +69,7 @@ public class TacoSauce {
 		public TacoSauce(String name2, TacoSynth synth, int idx) {
 			name = name2;
 			index = idx;
-			env = new Adsr(synth.getAdsr());
+			env = new Stamp(synth.getAdsr());
 
 			filter[0] = synth.getLowPass().getFrequency();
 			filter[1] = synth.getLowPass().getResonance();
@@ -78,11 +80,11 @@ public class TacoSauce {
 				osc[i] = new Osc(synth.getShapes()[i], synth.getDcoGain()[i], synth.getDetune()[i]);
 		}
 
-		public void adsr(String[] dat) {
-			env.setAttackTime(Integer.parseInt(dat[0]));
-			env.setDecayTime(Integer.parseInt(dat[1]));
-			env.setSustainGain(Float.parseFloat(dat[2]));
-			env.setReleaseTime(Integer.parseInt(dat[3]));
+		public void adsr(String[] dat) { // TODO percentage-based violates MS in serialization rule
+			env.attack = Integer.parseInt(dat[0]);
+			env.decay = Integer.parseInt(dat[1]);
+			env.sustain = Integer.parseInt(dat[2]);
+			env.release = Integer.parseInt(dat[3]);
 		}
 		public void filter(String[] dat) {
 			filter[0] = Float.parseFloat(dat[0]);
@@ -101,8 +103,8 @@ public class TacoSauce {
 			StringBuffer buf = new StringBuffer();
 			buf.append(DASH).append(name).append(DASH).append(index).append(Constants.NL);
 			buf.append(OPEN).append(ENVELOPE).append(CLOSE);
-			buf.append(env.getAttackTime()).append(SPLIT).append(env.getDecayTime()).append(SPLIT);
-			buf.append(env.getSustainGain()).append(SPLIT).append(env.getReleaseTime()).append(Constants.NL);
+			buf.append(env.attack).append(SPLIT).append(env.decay).append(SPLIT);
+			buf.append(env.sustain).append(SPLIT).append(env.release).append(Constants.NL);
 
 			buf.append(OPEN).append(FILTER).append(CLOSE);
 			for (int i = 0; i < filter.length; i++)

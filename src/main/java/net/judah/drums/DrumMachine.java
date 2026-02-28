@@ -10,12 +10,12 @@ import judahzone.api.Midi;
 import judahzone.gui.Icons;
 import judahzone.util.AudioTools;
 import lombok.Getter;
-import net.judah.drums.gui.SampleDrums;
-import net.judah.drums.oldschool.DrumDB;
-import net.judah.drums.oldschool.OldSchool;
-import net.judah.drums.synth.DrumSynth;
+import net.judah.drums.fm.FMKit;
+import net.judah.drums.noise.NoiseKit;
+import net.judah.drums.pluck.PluckKit;
+import net.judah.drums.wav.WavDrumDB;
+import net.judah.drums.wav.WavKit;
 import net.judah.midi.JudahMidi;
-import net.judah.mixer.Channels.RegisteredDrums;
 import net.judah.seq.TrackList;
 import net.judah.seq.Trax;
 import net.judah.seq.track.Cue;
@@ -29,19 +29,21 @@ public final class DrumMachine extends Engine {
 
 	private final TrackList<DrumTrack> tracks = new TrackList<DrumTrack>();
 	private final ArrayList<DrumKit> kits = new ArrayList<DrumKit>();
-	private SampleDrums knobs;
+//	private SampleDrums knobs;
 
 	public DrumMachine() throws Exception {
 		super("Drums", true);
 		icon = Icons.get("Drums.png");
-		for (DrumInit type : DrumInit.values()) {
-			DrumKit kit;
-			if (type.engine == RegisteredDrums.Synth)
-				kit = new DrumSynth(this, type);
-			else
-				kit = new OldSchool(this, type);
+		for (DrumInit init : DrumInit.values()) {
+
+			DrumKit kit = switch (init.engine) {
+				case Wav -> new WavKit(this, init);
+				case FM -> new FMKit(init.name, this, init);
+				case Noise -> new NoiseKit(this, init);
+				case Pluck -> new PluckKit(init.name, this, init);
+			};
 			kits.add(kit);
-			DrumTrack trak = new DrumTrack(type, kit);
+			DrumTrack trak = new DrumTrack(init, kit);
 			tracks.add(trak);
 		}
 		setOnMixer(true);
@@ -71,19 +73,19 @@ public final class DrumMachine extends Engine {
 	}
 
 	public String[] getSamplePresets() {
-		return DrumDB.getPatches();
+		return WavDrumDB.getPatches();
 	}
 
-	public String[] getSynthPresets() {
-		return KitDB.getSynthKits();
-	}
+//	public String[] getSynthPresets() {
+//		return KitDB.getSynthKits();
+//	}
 
 	@Override public String[] getPatches() {
 		return getSamplePresets(); // legacy sampler kits
 	}
 
 	@Override public String progChange(int data2, int ch) {
-		if (data2 < 0 || data2 >= DrumDB.getKits().size())
+		if (data2 < 0 || data2 >= WavDrumDB.getKits().size())
 			return null;
 		return getChannel(ch).progChange(data2);
 	}
@@ -125,26 +127,25 @@ public final class DrumMachine extends Engine {
 
 
 	///////////////////////////////////////////////
-	// process + mix each drumkit, process this channel's fx, place on mains
+	// process + mix each drumkit, process this channel's fx, place on DrumMachine outs
 	@Override
 	protected void processImpl() {
-		if (onMute)
-			return;
+		if (onMute) return;
+
 		AudioTools.silence(left);
 		AudioTools.silence(right);
-		for (int i = 0; i < tracks.size(); i++)
-			tracks.get(i).getKit().processKit();
 
-
-		for (int i = 0; i < tracks.size(); i++) {
+		int size = tracks.size();
+		for (int i = 0; i < size; i++) {
 			DrumKit kit = tracks.get(i).getKit();
+			kit.processImpl();
+			// Mix immediately (while buffers in L1 cache)
 			AudioTools.mix(kit.getLeft(), left);
 			AudioTools.mix(kit.getRight(), right);
 		}
 
 		fx();
 	}
-
 	@Override
 	public NoteTrack getTrack() {
 		if (tracks.isEmpty())

@@ -29,7 +29,7 @@ public class WellenCoder extends ZoneCoder {
 	// State: analysis/synthesis filterbanks + envelope followers
 	private final Band[] analysisBands;
 	private final Band[] synthesisBands;
-	private final Envelope[] envelopes;
+	private final LeakyEnvelope[] envelopes;
 
 	@Getter private LineIn carrier;
 	private float[] carrierMono;
@@ -38,12 +38,12 @@ public class WellenCoder extends ZoneCoder {
 		setCarrier(carrier);
 		analysisBands = new Band[MAX_BANDS];
 		synthesisBands = new Band[MAX_BANDS];
-		envelopes = new Envelope[MAX_BANDS];
+		envelopes = new LeakyEnvelope[MAX_BANDS];
 
 		for (int i = 0; i < MAX_BANDS; i++) {
 			analysisBands[i] = new Band(filtersPerBand);
 			synthesisBands[i] = new Band(filtersPerBand);
-			envelopes[i] = new Envelope();
+			envelopes[i] = new LeakyEnvelope();
 		}
 
 		initializeFilterbank();
@@ -183,7 +183,7 @@ public class WellenCoder extends ZoneCoder {
 	}
 
 	// Lightweight envelope follower (4-tap leaky integrator)
-	private static class Envelope {
+	private static class LeakyEnvelope {
 		private float coef;
 		private final float[] history = new float[4];
 

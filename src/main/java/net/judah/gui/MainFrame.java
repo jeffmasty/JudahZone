@@ -42,9 +42,8 @@ import net.judah.JudahZone;
 import net.judah.channel.Channel;
 import net.judah.drums.DrumKit;
 import net.judah.drums.DrumMachine;
-import net.judah.drums.gui.KitParent;
-import net.judah.drums.oldschool.SampleParams;
-import net.judah.drums.synth.DrumParams;
+import net.judah.drums.DrumUpdate;
+import net.judah.gui.drums.knobs.Kitz;
 import net.judah.gui.fx.FxPanel;
 import net.judah.gui.fx.MultiSelect;
 import net.judah.gui.fx.PresetsView;
@@ -360,8 +359,8 @@ public class MainFrame extends JFrame implements Runnable {
             }
             else if (o instanceof Actives actives) {
             	actives.update(); // new
-            	if (actives.getChannel() >= MidiConstants.DRUM_CH && knobMode == KnobMode.Kitz)
-					((KitParent)knobs).update(actives);
+            	if (actives.getChannel() >= MidiConstants.DRUM_CH && knobs instanceof Kitz kitz)
+					kitz.update(actives);
             	// MidiTrack Step view updates removed for sanity
             }
             else if (o instanceof MidiTrack t) { // clipboard/editor/select
@@ -434,15 +433,13 @@ public class MainFrame extends JFrame implements Runnable {
             	tuner.update(tuning);
             else if (o instanceof RMS rms && knobs instanceof TunerKnobs tuner)
             	tuner.update(rms);
-            // TODO SampleParams
-            // TODO DrumParams
-            else if (o instanceof SampleParams || o instanceof DrumParams) {
-        		// both use same update
-            	if (knobMode == KnobMode.Kitz)
-            		((KitParent)knobs).update(o);
-            }
-//            else if (o instanceof LegacySetup)
-//                drums.getKnobs().update();
+            else if (o instanceof DrumUpdate drum) {
+            	drum.drum().getDrama().set(drum);
+            	// TODO floating drum frames update
+
+//              else if (o instanceof LegacySetup)
+//              drums.getKnobs().update(); / TODO SampleParams TODO DrumParams
+			}
             else if (o instanceof Seq)
                 overview.refill(); // # of Tracks has changed
             else if (o instanceof FocusUpdate focus)
@@ -461,7 +458,7 @@ public class MainFrame extends JFrame implements Runnable {
 		mode.setSelectedItem(knobMode);
 		knobPanel(switch(knobs) {
     		case MIDI -> midiGui;
-			case Kitz -> new KitParent(drums);
+			case Kitz -> new Kitz(drums.getKits());
 			case Track -> seq.getKnobs();
 			case LFO -> effects.getChannel().getLfoKnobs();
 			case Taco -> zone.getTaco().getTrack().getKnobs();

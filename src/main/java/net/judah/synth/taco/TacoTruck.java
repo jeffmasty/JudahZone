@@ -12,6 +12,7 @@ import judahzone.fx.Convolution;
 import judahzone.gui.Icons;
 import judahzone.util.AudioTools;
 import judahzone.util.Constants;
+import judahzone.util.RTLogger;
 import judahzone.util.WavConstants;
 import lombok.Getter;
 import net.judah.synth.Engine;
@@ -50,8 +51,15 @@ public class TacoTruck extends Engine {
 	}
 
 	@Override public void send(MidiMessage message, long timeStamp) {
-		if (message instanceof ShortMessage s && s.getChannel() < tracks.size())
-			tracks.get(s.getChannel()).send(message, timeStamp);
+		if (message instanceof ShortMessage s) {
+			int ch = s.getChannel();
+			if (ch >= tracks.size()) {
+				RTLogger.warn(this, "Wrong channel: " + ch);
+				ch = 0;
+			}
+			tracks.get(ch).send(message, timeStamp);
+		}
+
 	}
 
 	@Override public void close() {

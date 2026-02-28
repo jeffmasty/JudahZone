@@ -5,11 +5,12 @@ import lombok.Getter;
 
 public enum DrumType {
 
-	// data1 36, 38, 37, 39, 42, 46, 51, 61
+	// data1 36, 37, 38, 39, 42, 46, 51, 61
 	Kick(GMDrum.BassDrum, GMDrum.AcousticBassDrum),
 	Stick(GMDrum.SideStick, GMDrum.OpenHiConga, GMDrum.LowMidTom, GMDrum.MuteHiConga, GMDrum.Maracas, GMDrum.HighTimbale),
 	Snare(GMDrum.AcousticSnare, GMDrum.Cabasa, GMDrum.ShortWhistle, GMDrum.HiWoodBlock, GMDrum.LowTimbale, GMDrum.HiMidTom),
 	Clap(GMDrum.HandClap, GMDrum.Claves, GMDrum.HiBongo, GMDrum.HighFloorTom, GMDrum.Cowbell, GMDrum.HighTom),
+
 	CHat(GMDrum.ClosedHiHat, GMDrum.PedalHiHat, GMDrum.MuteTriangle, GMDrum.MuteCuica),
 	OHat(GMDrum.OpenHiHat, GMDrum.OpenTriangle, GMDrum.RideCymbal2),
 	Ride(GMDrum.RideCymbal, GMDrum.CrashCymbal1, GMDrum.Vibraslap, GMDrum.CrashCymbal2, GMDrum.LongWhistle, GMDrum.ChineseCymbal),

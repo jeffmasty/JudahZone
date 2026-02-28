@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import judahzone.data.Stamp;
 import judahzone.fx.MonoFilter;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
@@ -135,9 +136,9 @@ public class SynthDB {
 
 	public static String create(TacoSynth synth) {
 		StringBuffer buf = new StringBuffer(OPEN).append(ENVELOPE).append(CLOSE);
-		Adsr env = synth.getAdsr();
-		buf.append(env.getAttackTime()).append(SPLIT).append(env.getDecayTime()).append(SPLIT);
-		buf.append(env.getSustainGain()).append(SPLIT).append(env.getReleaseTime()).append(Constants.NL);
+		Stamp env = synth.getAdsr();
+		buf.append(env.attack).append(SPLIT).append(env.decay).append(SPLIT);
+		buf.append(env.sustain).append(SPLIT).append(env.release).append(Constants.NL);
 		buf.append(OPEN).append(FILTER).append(CLOSE);
 		MonoFilter hc = synth.getLowPass();
 		MonoFilter lc = synth.getHighPass();

@@ -22,11 +22,8 @@ import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import net.judah.drums.DrumKit;
 import net.judah.drums.DrumType;
-import net.judah.drums.gui.OneDrumFrame;
-import net.judah.drums.gui.OneSampleFrame;
-import net.judah.drums.oldschool.OldSchool;
-import net.judah.drums.synth.DrumSynth;
 import net.judah.gui.TabZone;
+import net.judah.gui.drums.views.DrumFrame;
 import net.judah.seq.automation.CCPopup;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.Edit;
@@ -226,20 +223,11 @@ public class BeatBox extends MusicBox implements Pastels {
 
 		if (SwingUtilities.isRightMouseButton(mouse)) {
 			int step = (int) (click.tick % track.getWindow() / track.getStepTicks());
-
 			DrumKit kit = ((DrumTrack) track).getKit();
-			if (kit instanceof DrumSynth synth) {
-				DrumType t = DrumType.values()[DrumType.index(click.data1)];
-				Actionable openDrum = new Actionable("Open " + t,
-						e -> OneDrumFrame.load(synth.getDrum(t), synth));
-				cc.popup(mouse, step, openDrum);
-			}
-			else if (kit instanceof OldSchool samples) {
-				DrumType t = DrumType.values()[DrumType.index(click.data1)];
-				Actionable openDrum = new Actionable("Open " + t,
-						e -> OneSampleFrame.load(samples, samples.getSample(t)));
-				cc.popup(mouse, step, openDrum);
-			}
+			DrumType t = DrumType.values()[DrumType.index(click.data1)];
+			Actionable openDrum = new Actionable("Open " + t,
+					e -> new DrumFrame(kit, kit.get(t)));
+			cc.popup(mouse, step, openDrum);
 			return;
 		}
 

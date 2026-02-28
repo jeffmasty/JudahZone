@@ -242,7 +242,7 @@ public class Sampler extends LineIn {
     		sample.process(left, right);
     	for (StepSample s : stepSamples)
     		if (s.isOn()) {
-    			s.setEnv(stepMix); // not elegant
+    			s.setAmp(stepMix); // not elegant
     			s.process(left, right);
     		}
 

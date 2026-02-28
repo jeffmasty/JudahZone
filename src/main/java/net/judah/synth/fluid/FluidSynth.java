@@ -31,14 +31,14 @@ public final class FluidSynth extends MidiInstrument {
 	public static final String MIDI_PORT = "fluidsynth-midi:midi_00"; // "fluidsynth:midi";
 	public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // "~/tracks/JJazzLab-SoundFont.sf2"
 
-	public record Drum(String name, int prog) {};
+	public record DrumProg(String name, int prog) {};
 	private final String shellCommand;
 	private Process process;
 	/** talks to FluidSynth on stdin */
 	private final OutputStream outStream;
 	/** General-Midi presets */
 	@Getter private final FluidChannels channels = new FluidChannels();
-	@Getter private final ArrayList<Drum> drums = new ArrayList<>();
+	@Getter private final ArrayList<DrumProg> drums = new ArrayList<>();
 	private FluidListener listener;
 
 	public FluidSynth(JackPort midi, JackPort left, JackPort right) throws IOException {
@@ -112,15 +112,14 @@ public final class FluidSynth extends MidiInstrument {
 		if (listener.instruments.isEmpty())
 			throw new Exception("Fluid Error reading instruments");
 
-		int size = listener.instruments.size();
-		patches = new String[127];
-
+		int size = listener.instruments.size();  //  189  bankB + drumsets
+		patches = new String[128]; // BANK_A
 
 		for (int i = 0; i < size; i++) {
-			if (i < 127) // knob has 100 instruments
+			if (i < patches.length) // knob has 100 instruments
 				patches[i] = listener.instruments.get(i).name;
 			else if (listener.instruments.get(i).group == 128)
-				drums.add(new Drum(listener.instruments.get(i).name, listener.instruments.get(i).index));
+				drums.add(new DrumProg(listener.instruments.get(i).name, listener.instruments.get(i).index));
 		}
 		RTLogger.debug(this, "Loaded " + size + " instruments");
 	}

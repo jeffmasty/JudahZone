@@ -24,11 +24,8 @@ public class Mains extends Channel {
         icon = Icons.get("Speakers.png");
     }
 
-    @Override
-    public void processImpl() {
-    }
+    @Override public void processImpl() { /* no-op */ }
 
-	@Override
 	public void process(float[] l, float[] r) {
         hotSwap();
         gain.process(l, r);

@@ -8,8 +8,11 @@ import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
 import judahzone.api.Midi;
+import judahzone.data.Shape;
+import judahzone.data.Stamp;
 import judahzone.fx.MonoFilter;
 import judahzone.fx.MonoFilter.Type;
+import judahzone.prism.MidiCmdPack;
 import judahzone.util.AudioTools;
 import judahzone.util.Constants;
 import judahzone.util.RTLogger;
@@ -36,7 +39,7 @@ public class TacoSynth extends PianoTrack {
     // TODO Pan DCOs: protected final FloatBuffer stereo = FloatBuffer.wrap(new float[Constants.bufSize()]);
 
 	@Getter private final Channel channel;
-	@Getter private final Adsr adsr = new Adsr();
+	@Getter private final Stamp adsr = new Stamp();
     private final Polyphony notes;
     @Getter private final float[] dcoGain = new float[DCO_COUNT];
     @Getter private final float[] detune = new float[DCO_COUNT];
@@ -117,32 +120,35 @@ public class TacoSynth extends PianoTrack {
 		return result.toArray(new String[result.size()]);
 	}
 
-	@Override public void send(MidiMessage midi, long timeStamp) {
-		if (midi instanceof MetaMessage)
-			return; // TODO
-		ShortMessage m = (ShortMessage)midi;
-		if (Midi.isProgChange(m)) { // should have been filtered by MidiTrack
-			progChange(m.getData1());
-			return;
-		}
-		if (filterPiano(m))
-			return; // Pedal/Panic filter
-		if (cc.process(m))
-			return; // channel cc filter
-		if (ccEnv(m))
-			return; // envelope cc filter
+	@Override
+	public void send(MidiMessage midi, long timeStamp) {
+	    if (midi instanceof MetaMessage) return;
+	    ShortMessage m = (ShortMessage)midi;
+	    if (Midi.isProgChange(m)) { progChange(m.getData1()); return; }
+	    if (filterPiano(m)) return;
+	    if (cc.process(m)) return;
+	    if (ccEnv(m)) return;
 
-		if (Midi.isNote(midi))
-			notes.receive(m);
-		else if (ControlChange.MODWHEEL.matches(m))
-			modWheel.dragged(m.getData2());
-		else if (Midi.isPitchBend(m)) {
-			float factor = bendFactor(m, modSemitones);
-			for (Voice v : notes.voices)
-				v.bend(factor);
-		}
-		else RTLogger.debug(this, "skip " + Midi.toString(m));
-
+	    // RT-safe: queue into ring, then flush UI-side update immediately
+	    if (Midi.isNoteOn(m)) {
+	        int d1 = m.getData1();
+	        int d2 = m.getData2();
+	        int cmd = (notes.isPedal() && notes.indexOf(d1) >= 0)
+	            ? MidiCmdPack.CMD_RETRIGGER
+	            : MidiCmdPack.CMD_ADD;
+	        // Correct packing order: (cmdType, channel, data1, data2)
+	        notes.receivePacked(MidiCmdPack.pack(cmd, m.getChannel(), d1, d2));
+	    } else if (Midi.isNoteOff(m)) {
+	        // Correct packing order for NOTE_OFF: channel then data1
+	        notes.receivePacked(MidiCmdPack.pack(MidiCmdPack.CMD_NOTE_OFF, m.getChannel(), m.getData1(), 0));
+	    } else if (ControlChange.MODWHEEL.matches(m))
+	        modWheel.dragged(m.getData2());
+	    else if (Midi.isPitchBend(m)) {
+	        float factor = bendFactor(m, modSemitones);
+	        for (Voice v : notes.voices)
+	            v.bend(factor);
+	    } else
+	        RTLogger.debug(this, "skip " + Midi.toString(m));
 	}
 
 	private boolean ccEnv(ShortMessage msg) {
@@ -157,15 +163,15 @@ public class TacoSynth extends PianoTrack {
 		switch(type) {
 		// TODO fine-tune
 			case ATTACK:
-				adsr.setAttackTime(val);
+				adsr.attack = val;
 				break;
 			case DECAY:
-				adsr.setDecayTime(val);
+				adsr.decay = val;
 				break;
 			case SUSTAIN:
-				adsr.setSustainGain(val * Constants.TO_1);
+				adsr.sustain = val;
 			case RELEASE:
-				adsr.setReleaseTime(val);
+				adsr.release = val;
 				break;
 			case DETUNE:
 				setDetune(val);

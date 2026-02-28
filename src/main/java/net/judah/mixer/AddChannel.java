@@ -34,8 +34,8 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 
-import judahzone.api.Custom;
 import judahzone.api.AudioEngine;
+import judahzone.api.Custom;
 import judahzone.gui.DialogManager;
 import judahzone.gui.Gui;
 import judahzone.gui.Icons;
@@ -200,10 +200,7 @@ public class AddChannel extends JPanel implements AudioEngine.PortData {
 		addRow(form, c, row++, new JLabel("Left / Mono:"), leftPort);
 
 		// RangeSlider now works in percent (1..100); logarithmic mapping to Hz
-		filterRange = new RangeSlider(1, 100);
-		// initialize percent values from desired Hz defaults
-		filterRange.setValue(Constants.reverseLog(85, MIN_HZ, MAX_HZ));
-		filterRange.setUpperValue(Constants.reverseLog(12000, MIN_HZ, MAX_HZ));
+		filterRange = new RangeSlider(1, 100, Constants.reverseLog(85, MIN_HZ, MAX_HZ), Constants.reverseLog(12000, MIN_HZ, MAX_HZ));
 		lowLabel = new JLabel(
 				Integer.toString(Math.round(Constants.logarithmic(filterRange.getValue(), MIN_HZ, MAX_HZ))) + "Hz",
 				JLabel.CENTER);

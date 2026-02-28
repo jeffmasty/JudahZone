@@ -17,7 +17,6 @@ public class Computer {
 		PLAY, CAPTURE, CURRENT, CYCLE, AMP, ARP, PROGRAM,
 		CUE, GATE, FILE, REFILL, RANGE, LAUNCH, REZ
 	}
-//	public static record Tracker(Update type, Computer track) {}
 
 	protected JudahClock clock = JudahMidi.getClock();
 

@@ -63,7 +63,7 @@ public class BoomBox extends Knobs implements PlayAudio, Played {
 		volSlider.setToolTipText("Output gain: 0% .. 100%");
 		volSlider.addChangeListener(e -> {
 			float gain = volSlider.getValue() / 100f;
-			player.setEnv(gain);
+			player.setAmp(gain);
 		});
 
 		// Loop button
@@ -155,8 +155,8 @@ public class BoomBox extends Knobs implements PlayAudio, Played {
 	}
 
 	@Override
-	public void setEnv(float env) {
-		player.setEnv(env);
+	public void setAmp(float env) {
+		player.setAmp(env);
 	}
 
 	@Override

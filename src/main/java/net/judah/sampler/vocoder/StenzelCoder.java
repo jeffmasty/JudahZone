@@ -3,7 +3,8 @@ package net.judah.sampler.vocoder;
 import javax.sound.midi.ShortMessage;
 
 import be.tarsos.dsp.util.fft.HannWindow;
-import judahzone.data.Frequency;
+import judahzone.api.Frequency;
+import judahzone.api.Hz;
 import lombok.Getter;
 
 /** Pitch-synchronous vocoder using leaky autocorrelation.
@@ -33,8 +34,8 @@ public class StenzelCoder extends ZoneCoder {
 		delta = TWO_PI * hz * ISR;
 	}
 
-	public void setHz(Frequency freq) {
-		setHz(freq.hz);
+	public void setHz(Hz freq) {
+		setHz(freq.freq());
 	}
 
 	public void setNote(ShortMessage noteOn) {

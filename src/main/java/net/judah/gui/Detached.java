@@ -39,7 +39,7 @@ public class Detached extends JFrame {
 		validate();
 		setVisible(true);
 
-		tabs.getFrames().add(content);
+		TabZone.getFrames().add(content);
         addComponentListener(new ComponentAdapter() {
             @Override public void componentResized(ComponentEvent e) {
             	if (content instanceof Floating resize) {

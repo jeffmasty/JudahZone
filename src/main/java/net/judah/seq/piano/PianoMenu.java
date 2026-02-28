@@ -23,13 +23,6 @@ import net.judah.seq.track.Transpose;
 
 public class PianoMenu extends TrackMenu implements Floating {
 
-//	private static final String[] VERT = { "Top", "Bottom"};
-//	private static final String[] HORZ = { "Left", "Right" };
-//	private final String a;
-//	private final String b;
-//	a = track.isDrums() ? HORZ[0] : VERT[0];
-//	b = track.isDrums() ? HORZ[1] : VERT[1];
-
 	private final PianoView view;
 	private final Seq seq;
 	private final PianoTrack t;
@@ -51,9 +44,7 @@ public class PianoMenu extends TrackMenu implements Floating {
 		range.setSelectedItem(t.getRange());
         menu.add(edit);
         menu.add(tools);
-        viewport = new RangeSlider(0, 16);
-        viewport.setValue(6);
-        viewport.setExtent(4);
+        viewport = new RangeSlider(0, 16, 6, 10);
         viewport.addChangeListener(e -> {
             int centerNote = (viewport.getValue() + viewport.getExtent() / 2) * 6; // half-octave to semitones
             int rangeHalfOctaves = viewport.getExtent();

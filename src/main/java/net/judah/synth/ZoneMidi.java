@@ -25,7 +25,7 @@ public interface ZoneMidi extends Receiver, Closeable {
 	 * @return name of prog change on success or null */
 	String progChange(int data2, int ch);
 
-	void process(); // tied to FxChain/Channel.process()
-	void mix(float[] left, float[] right); // tied to FxChain/Channel.process()
+//	void process(); // tied to FxChain/Channel.process()
+//	void mix(float[] left, float[] right); // tied to FxChain/Channel.process()
 
 }
