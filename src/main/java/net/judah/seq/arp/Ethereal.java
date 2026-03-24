@@ -7,7 +7,7 @@ import javax.sound.midi.ShortMessage;
 
 import judahzone.api.Algo;
 import judahzone.api.Chord;
-import judahzone.api.Key;
+import judahzone.data.Key;
 
 /** 1 5 9 chord */
 public class Ethereal extends Algo {

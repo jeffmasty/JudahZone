@@ -8,14 +8,11 @@ import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
 import judahzone.api.Midi;
-import judahzone.api.MidiConstants;
 
-public class Measure extends ArrayList<PianoNote> implements MidiConstants {
+public class Measure extends ArrayList<PianoNote> {
 
-//	public Measure
-//		public Measure(Measure copy) {
-//			addAll(copy);
-
+	private static final int NOTE_OFF = ShortMessage.NOTE_OFF;
+	private static final int NOTE_ON = ShortMessage.NOTE_ON;
 
 	private final Accumulator stash = new Accumulator();
 	private final MidiTrack track;

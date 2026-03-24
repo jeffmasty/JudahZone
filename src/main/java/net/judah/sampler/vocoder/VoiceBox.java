@@ -10,9 +10,8 @@ import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
-import judahzone.api.Frequency;
-import judahzone.api.Hz;
 import judahzone.gui.Gui;
+import judahzone.util.Frequency;
 import judahzone.widgets.Knob;
 import net.judah.gui.widgets.Slider;
 import net.judah.sampler.Sampler;

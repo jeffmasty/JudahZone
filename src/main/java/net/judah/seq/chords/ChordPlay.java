@@ -8,7 +8,7 @@ import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 
 import judahzone.api.Chord;
-import judahzone.api.Key;
+import judahzone.data.Key;
 import judahzone.gui.Pastels;
 import judahzone.util.Threads;
 
@@ -49,8 +49,7 @@ public class ChordPlay extends JButton implements ChordListener, Pastels {
 	}
 
 	public ChordPlay makeFancy() {
-		if (!chords.getListeners().contains(this))
-			chords.addListener(this);
+		chords.addListener(this);
 		return this;
 	}
 

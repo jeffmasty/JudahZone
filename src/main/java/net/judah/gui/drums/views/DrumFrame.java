@@ -5,52 +5,53 @@ import java.awt.event.KeyEvent;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.KeyStroke;
 
+import judahzone.api.DrumType;
+import judahzone.drums.DefaultKits;
+import judahzone.drums.Drum;
+import judahzone.drums.DrumJson;
+import judahzone.drums.DrumsetJson;
+import judahzone.drums.ZoneDrums;
+import judahzone.drums.fm.FMOsc;
+import judahzone.drums.noise.NoiseOsc;
+import judahzone.drums.pluck.PluckOsc;
+import judahzone.drums.wav.WavDrum;
+import judahzone.drums.wav.WavDrumDB;
 import judahzone.gui.Gui;
 import judahzone.util.Constants;
 import lombok.Getter;
-import net.judah.drums.Drum;
-import net.judah.drums.DrumKit;
-import net.judah.drums.DrumType;
-import net.judah.drums.fm.FMOsc;
-import net.judah.drums.noise.NoiseOsc;
-import net.judah.drums.pluck.PluckOsc;
-import net.judah.drums.wav.WavDrum;
+import net.judah.drums.Drumset;
 import net.judah.gui.Size;
 import net.judah.gui.TabZone;
 import net.judah.gui.drums.NotePad;
-import net.judah.gui.drums.OscTuning;
 import net.judah.gui.widgets.Arrow;
 
-public class DrumFrame extends JFrame {
+public final class DrumFrame extends JFrame {
 
-	protected static final boolean LEFT = false;
-	protected static final boolean RIGHT = true;
+	private static final boolean LEFT = false;
+	private static final boolean RIGHT = true;
 
-	protected final DrumKit kit;
-	@Getter protected DrumView<?> current;
-	protected NotePad tap;
+	private final Drumset kit;
+	@Getter private DrumView<?> current;
 
+	private NotePad tap;
+	private JComboBox<ZoneDrums> registration = new JComboBox<>(ZoneDrums.values());
 	protected JPanel header;
 
-	public DrumFrame(DrumKit kit, Drum drum) {
-		this(kit, factory(drum));
-	}
-
-	public DrumFrame(DrumKit kit, DrumView<?> initial) {
+	public DrumFrame(Drumset kit, Drum drum) {
 		this.kit = kit;
-		this.current = initial;
-		this.tap = new NotePad(kit, initial.getDrum().getType());
-
+		this.current = factory(drum);
+		this.tap = new NotePad(kit, current.getDrum().getType());
 
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		initKeys();
-		initLayout(initial);
+		initLayout(current);
 		setTitle(kit.getClass().getSimpleName());
 		pack();
 		setLocationRelativeTo(null);
@@ -74,11 +75,26 @@ public class DrumFrame extends JFrame {
 		toolbar.add(Box.createHorizontalStrut(3));
 		toolbar.add(new Arrow(Arrow.EAST, x -> rotary(RIGHT)));
 		toolbar.add(Box.createHorizontalStrut(4));
-		OscTuning tuning = current.getTuning();
-		if (tuning != null) {
-			toolbar.add(tuning);
-			toolbar.add(Box.createHorizontalStrut(1));
-		}
+
+		toolbar.add(registration);
+		registration.setSelectedItem(ZoneDrums.ofDrum(current.getDrum()));
+		registration.addActionListener(e -> {
+			DrumType type = current.drum.getType();
+			ZoneDrums selected = (ZoneDrums) registration.getSelectedItem();
+			dispose(); // close old drum/layout frame
+
+			DrumJson next;
+			if (selected == ZoneDrums.Wav) {
+				DrumsetJson waves = DefaultKits.specifyWavKit(WavDrumDB.getPatches()[0], 0);
+				next = waves.drums()[type.ordinal()];
+			} else {
+				next = DefaultKits.get(selected, type);
+			}
+			kit.replace(next);
+			// re-open frame with new drum.
+			new DrumFrame(kit, kit.get(type));
+		});
+
 		return toolbar;
 	}
 
@@ -110,6 +126,7 @@ public class DrumFrame extends JFrame {
 		current = view;
 		current.update();
 		tap.rebase(current.getDrum().getType());
+		registration.setSelectedItem(ZoneDrums.ofDrum(current.getDrum()));
 		getContentPane().removeAll();
 		getContentPane().add(toolbar(), BorderLayout.NORTH);
 		getContentPane().add(createMainContent(view), BorderLayout.CENTER);

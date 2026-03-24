@@ -7,9 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import judahzone.api.Chord;
-import judahzone.api.Signature;
-import judahzone.api.TimeListener;
 import judahzone.api.Notification.Property;
+import judahzone.api.TimeListener;
+import judahzone.data.Signature;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
 import lombok.Getter;
@@ -19,27 +19,26 @@ import net.judah.midi.JudahClock;
 import net.judah.song.Scene;
 import net.judah.song.Song;
 
-@Getter
 public class Chords implements TimeListener {
 
-	private boolean active = false;
-	private boolean onDeck = false;
+	private final JudahClock clock;
+	@Getter private boolean active = false;
+	@Getter private boolean onDeck = false;
 	/** current sequenced chord */
-	private Chord chord = new Chord("C", "JudahZone", 16);
+	@Getter private Chord chord = new Chord("C", "JudahZone", 16);
 	/** current section */
-	private Section section;
-	private int step;
+	@Getter private Section section;
 	/** absolute bars since start */
-	private int bar;
+	@Getter private int bar;
+	private int step;
 
-	private final List<Section> sections = new ArrayList<>();
-	private final List<Directive> directives = new ArrayList<>();
-	private ChordProData data;
-	private Signature sig = Signature.FOURFOUR;
-	private final ChordSheet chordSheet = new ChordSheet(this);
+	@Getter private final List<Section> sections = new ArrayList<>();
+	@Getter private final List<Directive> directives = new ArrayList<>();
+	@Getter private Signature sig = Signature.FOURFOUR;
+	@Getter private final ChordSheet chordSheet = new ChordSheet(this);
+
 	private boolean loading;
 	private ArrayList<ChordListener> listeners = new ArrayList<>();
-	private final JudahClock clock;
 	public void addListener(ChordListener l) { if (!listeners.contains(l)) listeners.add(l); }
 	public void removeListener(ChordListener l) {listeners.remove(l);}
 	public int bars() { return beats() / sig.beats; }
@@ -187,7 +186,6 @@ public class Chords implements TimeListener {
 
 			try {
 				chordPro = new ChordPro(file, sig.steps);
-				data = chordPro.getData();
 				sections.addAll(chordPro.getSections());
 				directives.addAll(chordPro.getDirectives());
 				parseTempo(chordPro.getData().getTempo());
@@ -230,7 +228,6 @@ public class Chords implements TimeListener {
 		section = null;
 		sections.clear();
 		directives.clear();
-		data = null;
 		active = false;
 		ChordProCombo.refresh(null);
 		chordSheet.refresh();

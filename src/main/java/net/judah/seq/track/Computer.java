@@ -34,10 +34,14 @@ public class Computer {
 	protected long right; 	// right bar's computed start tick
 
 
-	public Computer() throws InvalidMidiDataException {
-		t = new MidiFile().createTrack();
-		setBarTicks(clock.getTimeSig().beats * resolution);
-		compute();
+	public Computer() {
+		try {
+			t = new MidiFile().createTrack();
+			setBarTicks(clock.getTimeSig().beats * resolution);
+			compute();
+		} catch (InvalidMidiDataException e) {
+			throw new RuntimeException(e);
+		}
 		//setResolution(MidiFile.DEFAULT_RESOLUTION);
 	}
 
@@ -46,7 +50,7 @@ public class Computer {
 	public final boolean isActive() { return state.active; }
     public Cycle getCycle() { return state.cycle; }
     public int getLaunch() { return state.launch; }
-    public float getAmp() { return state.amp; }
+    public float getAmp() { return state.amp; } // NoteTrack+   ChannelTrack re-purposed to LineIn gain?
 	public int getFrame() {return current / 2;}
     public long getWindow() { return 2 * barTicks; }
 	public long getStepTicks() { return resolution / clock.getSubdivision(); }

@@ -6,7 +6,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
-import judahzone.api.TimeFX;
+import judahzone.api.FX.TimeFX;
 import judahzone.gui.Pastels;
 import judahzone.gui.Updateable;
 import lombok.Getter;

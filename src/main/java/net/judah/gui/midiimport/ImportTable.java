@@ -34,7 +34,7 @@ public class ImportTable extends JTable {
 
 	public ImportTable(Sequence seq) {
 
-		super(new ImportModel(seq, JudahZone.getInstance().getSeq().getSynthTracks().getFirst()));
+		super(new ImportModel(seq, JudahZone.getInstance().getSeq().getCurrent()));
 		model = (ImportModel) getModel();
 		sequence = seq;
 		for (MidiTrack t : JudahZone.getInstance().getSeq().getTracks())
@@ -62,13 +62,9 @@ public class ImportTable extends JTable {
 				int midiTrack = Integer.valueOf( e.getActionCommand() );
 				String name = "" + model.getValueAt(midiTrack, MIDI_COL);
 				NoteTrack target = (NoteTrack)model.getValueAt(midiTrack, ZONE_COL);
-				try {
-					NoteTrack stub = new PianoTrack(name, target);
-					stub.importTrack(sequence.getTracks()[midiTrack], sequence.getResolution());
-					TabZone.edit(stub);
-				} catch (Throwable t) {
-					RTLogger.warn(this, t);
-				}
+				NoteTrack stub = new PianoTrack(name, target);
+				stub.importTrack(sequence.getTracks()[midiTrack], sequence.getResolution());
+				TabZone.edit(stub);
 			}};
 		new ButtonColumn(this, preview, INFO_COL);
 	}

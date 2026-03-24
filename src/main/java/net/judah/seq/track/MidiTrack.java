@@ -6,7 +6,6 @@ import static org.jaudiolibs.jnajack.JackTransportState.JackTransportNetStarting
 
 import java.io.File;
 
-import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiMessage;
@@ -16,11 +15,11 @@ import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 import javax.swing.JOptionPane;
 
+import judahzone.api.ControlChange;
 import judahzone.api.Midi;
-import judahzone.api.MidiConstants;
 import judahzone.api.Notification.Property;
-import judahzone.api.Signature;
 import judahzone.api.TimeListener;
+import judahzone.data.Signature;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
@@ -33,11 +32,10 @@ import net.judah.midi.JudahMidi;
 import net.judah.seq.Meta;
 import net.judah.seq.MetaMap;
 import net.judah.seq.automation.Automation;
-import net.judah.seq.automation.ControlChange;
 import net.judah.song.Sched;
 
 @Getter
-public abstract class MidiTrack extends Computer implements TimeListener, MidiConstants {
+public abstract class MidiTrack extends Computer implements TimeListener {
 
     protected final int ch;
     @Setter protected String name;
@@ -49,9 +47,13 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 	@Getter protected final Editor editor;
 	protected Automation automation;
 
-	public MidiTrack(String name, int ch) throws InvalidMidiDataException {
+	protected final Channel channel;
+
+
+	public MidiTrack(String name, int ch, Channel channel) {
 		this.ch = ch;
 		this.name = name;
+		this.channel = channel;
 		clock.addListener(this);
 		editor = new Editor(this);
 	}
@@ -85,7 +87,7 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 	public abstract String[] getPatches();
 	public abstract String progChange(int data1);
 	public abstract boolean progChange(String name);
-	public abstract Channel getChannel();
+	public final Channel getChannel() { return channel; }
 
 	public String getProgram() {
 		return state.getProgram();
@@ -239,7 +241,7 @@ public abstract class MidiTrack extends Computer implements TimeListener, MidiCo
 	}
 
 	public File getFolder() {
-		return Folders.midi(isDrums() ? Folders.getBeats() : Folders.getSynths(), clock.getTimeSig());
+		return Folders.midi(isDrums() ? Folders.getBeats() : Folders.getNotes(), clock.getTimeSig());
 		// getType() == Trax.B ? Folders.getBass() :
 	}
 

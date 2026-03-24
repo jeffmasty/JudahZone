@@ -6,6 +6,7 @@ import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
+import judahzone.api.ControlChange;
 import judahzone.api.Midi;
 import lombok.Getter;
 import net.judah.seq.automation.Automation.CCData;
@@ -13,7 +14,7 @@ import net.judah.seq.track.Computer;
 import net.judah.seq.track.MidiTools;
 
 @Getter
-public class CCModel /* extends DefaultTableModel*/ {
+public class CCModel {
 
 	static final String[] COL_NAMES = {"Type", "Tick", "Value"};
 	static final int COLS = COL_NAMES.length;

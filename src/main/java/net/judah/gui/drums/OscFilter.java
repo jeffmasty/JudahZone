@@ -6,13 +6,13 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 
-import judahzone.api.Frequency;
+import judahzone.drums.Drum;
+import judahzone.drums.DrumUpdate;
 import judahzone.fx.EQ.EqBand;
 import judahzone.gui.Gui;
+import judahzone.util.Frequency;
 import judahzone.widgets.Knob;
 import judahzone.widgets.RangeSlider;
-import net.judah.drums.Drum;
-import net.judah.drums.DrumUpdate;
 import net.judah.gui.Size;
 import net.judah.gui.drums.views.DrumView;
 import net.judah.gui.drums.views.DrumView.DataLbl;
@@ -69,11 +69,11 @@ public class OscFilter extends JPanel implements DrumView.SZ {
 		hilo = new RangeSlider(0, 100, drum.getHzKnob(EqBand.Bass), drum.getHzKnob(EqBand.High));
 		hilo.addChangeListener(l -> hilo(l));
 
-		loResK.addListener(val -> drum.getDrama().set(new DrumUpdate(drum, DrumUpdate.Mode.FILTER, 2, val)));
-		hiResK.addListener(val -> drum.getDrama().set(new DrumUpdate(drum, DrumUpdate.Mode.FILTER, 3, val)));
-		mid.addChangeListener(l -> drum.getDrama().set(new DrumUpdate(drum, DrumUpdate.Mode.FILTER, 4, mid.getValue())));
-		gainK.addListener(val -> drum.getDrama().set(new DrumUpdate(drum, DrumUpdate.Mode.FILTER, 5, val)));
-		bwK.addListener(val -> drum.getDrama().set(new DrumUpdate(drum, DrumUpdate.Mode.FILTER, 6, val)));
+		loResK.addListener(val -> drum.getEdit().set(new DrumUpdate(drum, DrumUpdate.Mode.FILTER, 2, val)));
+		hiResK.addListener(val -> drum.getEdit().set(new DrumUpdate(drum, DrumUpdate.Mode.FILTER, 3, val)));
+		mid.addChangeListener(l -> drum.getEdit().set(new DrumUpdate(drum, DrumUpdate.Mode.FILTER, 4, mid.getValue())));
+		gainK.addListener(val -> drum.getEdit().set(new DrumUpdate(drum, DrumUpdate.Mode.FILTER, 5, val)));
+		bwK.addListener(val -> drum.getEdit().set(new DrumUpdate(drum, DrumUpdate.Mode.FILTER, 6, val)));
 
 		Gui.resize(loCutVal, Size.MEDIUM);
 		Gui.resize(hiCutVal, Size.MEDIUM);
@@ -131,12 +131,12 @@ public class OscFilter extends JPanel implements DrumView.SZ {
 		int loKnob = hilo.getValue();
 		int lo = drum.getHzKnob(EqBand.Bass);
 		if (lo != loKnob)
-			drum.getDrama().set(new DrumUpdate(drum, DrumUpdate.Mode.FILTER, 0, loKnob));
+			drum.getEdit().set(new DrumUpdate(drum, DrumUpdate.Mode.FILTER, 0, loKnob));
 
 		int hiKnob = hilo.getUpperValue();
 		int hi = drum.getHzKnob(EqBand.High);
 		if (hi != hiKnob)
-			drum.getDrama().set(new DrumUpdate(drum, DrumUpdate.Mode.FILTER, 1, hiKnob));
+			drum.getEdit().set(new DrumUpdate(drum, DrumUpdate.Mode.FILTER, 1, hiKnob));
 	}
 
 	public void update() {

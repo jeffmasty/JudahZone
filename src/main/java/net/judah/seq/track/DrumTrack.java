@@ -1,43 +1,33 @@
 package net.judah.seq.track;
 
-import javax.sound.midi.InvalidMidiDataException;
+import static net.judah.controllers.MPKTools.drumBank;
+import static net.judah.controllers.MPKTools.drumIndex;
+
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 
+import judahzone.api.DrumType;
 import judahzone.api.Midi;
 import lombok.Getter;
-import net.judah.drums.DrumInit;
-import net.judah.drums.DrumKit;
-import net.judah.drums.KitDB;
-import net.judah.gui.MainFrame;
+import net.judah.drums.Drumset;
 import net.judah.midi.JudahMidi;
 import net.judah.seq.track.Edit.Type;
 
 public class DrumTrack extends NoteTrack {
 
-	@Getter private final DrumKit kit;
+	@Getter private final Drumset kit;
 
-	public DrumTrack(DrumInit type, DrumKit kit) throws InvalidMidiDataException {
-		super(type.name, kit.getActives());
-		this.kit = kit;
+	public DrumTrack(String name, int ch, Drumset drums) {
+		super(name, ch, drums, drums);
+		this.kit = drums;
 		cue = Cue.Hot;
+		permanent = true; // for now
 	}
 
 	@Override
-	public void load(TrackInfo info) {
-		// TODO change kit if necessary
-		if (info.getKit() != null) {
-			kit.accept(KitDB.get(info.getProgram(), info.getKit()));
-		}
-		else {
-			// error case?
-		}
-		super.load(info);
-	}
-
-	@Override public DrumKit getChannel() {
-		return kit;
+	public int[] getActiveSnapshot() {
+		return kit.getActiveSnapshot();
 	}
 
 	@Override protected void processNote(ShortMessage formatted) {
@@ -58,9 +48,14 @@ public class DrumTrack extends NoteTrack {
 	}
 
 	@Override public boolean capture(Midi m) {
+
 		if (!capture)
 			return false;
-		if (Midi.isNoteOn(m) && m.getChannel() >= DRUM_CH) {
+		if (m.getChannel() < Midi.DRUM_CH) // translate drums??
+			m = Midi.create(m.getCommand(), Midi.DRUM_CH + drumBank(m.getData1()),
+				DrumType.values()[drumIndex(m.getData1())].getData1(), m.getData2());
+		if (Midi.isNoteOn(m) && m.getChannel() >= Midi.DRUM_CH) {
+
 			long tick = quantize(recent);
 			editor.push(new Edit(Type.NEW,
 					Midi.createEvent(tick, NOTE_ON, ch, m.getData1(), m.getData2())));
@@ -71,27 +66,4 @@ public class DrumTrack extends NoteTrack {
 		return false;
 	}
 
-	@Override public String progChange(int data1) {
-		String name = kit.progChange(data1);
-		if (name == null)
-			return null;
-		progSuccess(name);
-		return name;
-	}
-
-	@Override public boolean progChange(String name) {
-		boolean result = kit.progChange(name);
-		if (!result)
-			return false;
-		progSuccess(name);
-		return result;
-	}
-
-	private void progSuccess(String name) {
-		state.setProgram(name);
-		MainFrame.updateTrack(Update.PROGRAM, this);
-	}
-	@Override public String[] getPatches() {
-		return kit.getPatches(); // oldSchool vs synth
-	}
 }

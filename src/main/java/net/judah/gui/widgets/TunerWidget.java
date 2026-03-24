@@ -9,7 +9,7 @@ import javax.swing.JButton;
 import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
 
-import judahzone.api.Note;
+import judahzone.data.Note;
 import judahzone.data.Tuning;
 import judahzone.fx.analysis.Tuner;
 import judahzone.gui.Gui;

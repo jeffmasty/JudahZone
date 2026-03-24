@@ -7,9 +7,9 @@ import javax.swing.JPanel;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
+import judahzone.api.DrumType;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
-import net.judah.drums.DrumType;
 
 
 public class Mutes extends JPanel {

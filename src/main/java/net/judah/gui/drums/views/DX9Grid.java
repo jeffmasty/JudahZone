@@ -1,4 +1,3 @@
-// Java
 package net.judah.gui.drums.views;
 
 import java.awt.BasicStroke;
@@ -20,12 +19,13 @@ import java.util.function.IntUnaryOperator;
 
 import javax.swing.JPanel;
 
+import judahzone.drums.DrumUpdate;
+import judahzone.drums.DrumUpdate.Mode;
+import judahzone.drums.fm.Algorithm;
+import judahzone.drums.fm.FMOsc;
 import judahzone.gui.Gui;
+import judahzone.util.RTLogger;
 import judahzone.widgets.Knob;
-import net.judah.drums.DrumUpdate;
-import net.judah.drums.DrumUpdate.Mode;
-import net.judah.drums.fm.Algorithm;
-import net.judah.drums.fm.FMOsc;
 
 /**
  * Compact operator-grid renderer for DX9-style algorithms.
@@ -38,6 +38,8 @@ import net.judah.drums.fm.FMOsc;
  * the same layout computation; arrows are still painted in the panel
  * background so they appear behind the knobs.
  */
+
+// TODO BUG: updateAll moving to param values @ 0 (attack=0, shape=SIN): knobs do not update.
 public class DX9Grid extends JPanel {
 
     private static final Color CARRIER_COLOR = new Color(0x4DA6FF); // blue
@@ -46,8 +48,8 @@ public class DX9Grid extends JPanel {
     private static final Color LABEL = Color.BLACK;
     private static final int PREF_W = 340;
     private static final int PREF_H = 210;
-
-    private static final int PADDING = 32; // ensure knobs stay at least this many px from edges
+    // knobs stay at least this many px from edges
+    private static final int PADDING = 32;
 
     private final FMView view;
     private final FMOsc fm;
@@ -60,7 +62,7 @@ public class DX9Grid extends JPanel {
     private Algorithm cachedAlgo;
 
     // UI knobs (one per operator).
-    private Knob[] knobs;
+    private final Knob[] knobs;
 
     // Dynamic node radius derived from knob preferred size. Fallback to default.
     private static final int DEFAULT_NODE_RADIUS = 16;
@@ -72,8 +74,25 @@ public class DX9Grid extends JPanel {
         Dimension pref = new Dimension(PREF_W, PREF_H);
         Gui.resize(this, pref);
         setLayout(null);
-        ensureKnobs(fm.getOpCount());
+        knobs = new Knob[fm.getOpCount()];
+        createKnobs(knobs);
         setAlgo(fm.getAlgo());
+    }
+
+    // create/ensure knobs array is large enough and added to the panel
+    private void createKnobs(Knob[] knobs) {
+        for (int i = 0; i < knobs.length; i++) {
+            final int idx = i;
+            Knob k = new Knob(val -> {
+            	fm.getEdit().set(new DrumUpdate(fm, Mode.FM, view.encode(idx), val));
+            	repaint();
+			});
+            k.setOpaque(false);
+            knobs[i] = k;
+            add(k);
+        }
+        // derive node radius from knob preferred size, if possible
+        refreshNodeRadiusFromKnobs();
     }
 
     /** Update algorithm to display (call from UI thread) */
@@ -103,7 +122,7 @@ public class DX9Grid extends JPanel {
                 return;
             }
 
-            int opCount = Math.min(fm.getOpCount(), a.modulatorsFor().length);
+            int opCount = fm.getOpCount();
 
             // recompute layout only when necessary
             int w = getWidth();
@@ -114,7 +133,6 @@ public class DX9Grid extends JPanel {
                 cachedH = h;
                 cachedAlgo = a;
                 // reposition knobs whenever cachedPos changes
-                ensureKnobs(opCount);
                 positionKnobs(cachedPos, opCount);
             }
 
@@ -174,7 +192,6 @@ public class DX9Grid extends JPanel {
             else
                 chosen = west;
 
-
             // draw text with baseline computed from font metrics
             int tx = chosen.x;
             int ty = chosen.y + g.getFontMetrics().getAscent();
@@ -220,8 +237,6 @@ public class DX9Grid extends JPanel {
 
     // Position or move knobs to match node coordinates (call on layout change)
     private void positionKnobs(Point2D.Float[] pos, int count) {
-        if (knobs == null) return;
-
         // try to refresh nodeRadius based on visible knob size if available
         refreshNodeRadiusFromKnobs();
 
@@ -237,7 +252,7 @@ public class DX9Grid extends JPanel {
                 k.setVisible(true);
                 k.setToolTipText("Op " + (i + 1));
                 // update knob visual hint for carrier / mod state
-                boolean carrier = net.judah.drums.fm.Topology.isCarrier(this.algo, i);
+                boolean carrier = judahzone.drums.fm.Topology.isCarrier(this.algo, i);
                 k.setKnobColor(carrier ? CARRIER_COLOR : MOD_COLOR);
             } else {
                 if (k != null) k.setVisible(false);
@@ -246,39 +261,14 @@ public class DX9Grid extends JPanel {
         repaint(); // ensure arrows redraw under knobs if needed
     }
 
-    // create/ensure knobs array is large enough and added to the panel
-    private void ensureKnobs(int required) {
-        if (knobs != null && knobs.length >= required) return;
-        // remove old knobs if any
-        if (knobs != null) {
-            for (Knob k : knobs) remove(k);
-        }
-        knobs = new Knob[Math.max(required, 1)];
-        for (int i = 0; i < knobs.length; i++) {
-            final int idx = i;
-            Knob k = new Knob(val -> {
-            	fm.getDrama().set(new DrumUpdate(fm, Mode.FM, view.encode(idx), val));
-            	repaint();
-			});
-            k.setOpaque(false);
-            knobs[i] = k;
-            add(k);
-        }
-        // derive node radius from knob preferred size, if possible
-        refreshNodeRadiusFromKnobs();
-        revalidate();
-        repaint();
-    }
 
     // update nodeRadius from knobs[0] preferred size, fallback to default
     private void refreshNodeRadiusFromKnobs() {
-        if (knobs != null && knobs.length > 0 && knobs[0] != null) {
-            Dimension p = knobs[0].getPreferredSize();
-            if (p != null && p.width > 0) {
-                // approximate node radius as half the knob width (rounded)
-                nodeRadius = Math.max(4, Math.round(p.width * 0.5f));
-                return;
-            }
+        Dimension p = knobs[0].getPreferredSize();
+        if (p != null && p.width > 0) {
+            // approximate node radius as half the knob width (rounded)
+            nodeRadius = Math.max(4, Math.round(p.width * 0.5f));
+            return;
         }
         nodeRadius = DEFAULT_NODE_RADIUS;
     }
@@ -460,22 +450,24 @@ public class DX9Grid extends JPanel {
 		return out;
 
 	}
-    private static final class NodeX {
+
+	private final class NodeX {
         final int idx;
         final float x;
         NodeX(int idx, float x) { this.idx = idx; this.x = x; }
     }
 
 	public void updateAll() {
-		if (knobs == null) {
-			repaint();
-			return;
-		}
 		for (int i = 0; i < knobs.length; i++) {
 			int paramIndex = view.encode(i);
 			int val = fm.get(paramIndex);
-			if (val != -1 && val != knobs[i].getValue())
-				knobs[i].setValue(val);
+
+			int normalized = paramIndex % 10;
+
+			if (normalized == 3 && paramIndex > 10 && val == 0)
+				RTLogger.log(this, "0 attack" );
+
+			knobs[i].setValue(val);
 		}
 		repaint();
 	}

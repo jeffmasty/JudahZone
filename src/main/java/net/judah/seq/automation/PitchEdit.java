@@ -17,18 +17,17 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import judahzone.api.Midi;
-import judahzone.api.MidiConstants;
 import judahzone.gui.Gui;
 import judahzone.util.Constants;
 import judahzone.util.RTLogger;
 import judahzone.widgets.Btn;
 import net.judah.gui.Size;
 import net.judah.seq.automation.Automation.AutoBox;
-import net.judah.seq.track.Editor.Selection;
 import net.judah.seq.track.Edit;
+import net.judah.seq.track.Edit.Type;
+import net.judah.seq.track.Editor.Selection;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.Prototype;
-import net.judah.seq.track.Edit.Type;
 
 class PitchEdit extends AutoBox {
 
@@ -126,7 +125,7 @@ class PitchEdit extends AutoBox {
             change.setEnabled(true);
             select.setEnabled(true);
         } else {
-            pitch.set(MidiConstants.CUTOFF + 1);
+            pitch.set(Midi.CUTOFF + 1);
             steps.quantizable(0L);
             delete.setEnabled(false);
             change.setEnabled(false);
@@ -144,7 +143,7 @@ class PitchEdit extends AutoBox {
         undoCurve = null;
 
         // Default to center bend
-        pitch.set(MidiConstants.CUTOFF + 1);
+        pitch.set(Midi.CUTOFF + 1);
         steps.quantizable(tick);
 
         // For "new" we default to automation enabled so user can draw a ramp.
@@ -338,7 +337,7 @@ class PitchEdit extends AutoBox {
 
     private static int extractUiFromMessage(ShortMessage msg) {
         if (!Midi.isPitchBend(msg))
-            return MidiConstants.CUTOFF + 1;
+            return Midi.CUTOFF + 1;
         int bend = msg.getData1() | (msg.getData2() << 7);
         return bendToUi(bend);
     }
@@ -381,7 +380,7 @@ class PitchEdit extends AutoBox {
             slider.setMinorTickSpacing(16);
             slider.setPaintTicks(true);
             slider.addChangeListener(l -> text(slider.getValue()));
-            slider.setValue(MidiConstants.CUTOFF + 1);
+            slider.setValue(Midi.CUTOFF + 1);
         }
 
         public void knob(int value) {

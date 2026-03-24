@@ -6,11 +6,11 @@ import java.util.function.Consumer;
 
 import org.jaudiolibs.jnajack.JackPort;
 
-import judahzone.api.Custom;
 import judahzone.api.AudioEngine;
 import judahzone.api.AudioEngine.Connect;
 import judahzone.api.AudioEngine.Request;
 import judahzone.api.AudioEngine.Wrapper;
+import judahzone.api.Custom;
 import judahzone.util.Constants;
 import judahzone.util.RTLogger;
 import lombok.ToString;
@@ -79,7 +79,7 @@ public class FluidAssistant implements AudioEngine.PortCallback {
 			return;
 
 		try {
-			runtime = new FluidSynth(engineName, tri.midi, tri.left, tri.right);
+			runtime = new FluidSynth(engineName, tri.midi, tri.left, tri.right, "Gear.png");
 			channels.accept(runtime);
 
 			AudioEngine.Provider ports = AudioEngine.getPorts();

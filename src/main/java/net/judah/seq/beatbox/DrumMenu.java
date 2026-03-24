@@ -7,9 +7,9 @@ import javax.swing.ButtonGroup;
 import javax.swing.JMenu;
 import javax.swing.JRadioButtonMenuItem;
 
+import judahzone.api.DrumType;
 import judahzone.gui.Actionable;
 import judahzone.gui.Gui;
-import net.judah.drums.DrumType;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.seq.track.DrumTrack;

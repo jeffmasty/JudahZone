@@ -14,5 +14,4 @@ public enum KnobMode {
 	Remap,
 	Log,
 	Tuner;
-
 }

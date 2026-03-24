@@ -113,7 +113,7 @@ public abstract class TrackMenu extends Box { // to update Programmer (length) i
             super("SendTo...");
             for (MidiTrack t : source.isDrums() ?
                     JudahZone.getInstance().getDrumMachine().getTracks() :
-                    JudahZone.getInstance().getSeq().getSynthTracks()) {
+                    JudahZone.getInstance().getSeq().getPianoTracks()) {
                 if (t != source)
                     add(new Actionable(t.getName(), evt -> t.load(source)));
             }

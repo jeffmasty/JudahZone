@@ -21,11 +21,10 @@ import net.judah.channel.Channel;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.fx.FxTrigger;
-import net.judah.mixer.IRDB;
 
 public class CabSim extends JPanel implements Updateable {
 
-	private final JComboBox<String> cabinets = new JComboBox<String>(IRDB.instance.getNames());
+	private final JComboBox<String> cabinets = new JComboBox<String>(Convolution.getIRDB().getNames());
 	private final Channel channel;
 	private final Convolution ir;
 	private final FxTrigger lbl;

@@ -18,7 +18,7 @@ import javax.swing.BoxLayout;
 import javax.swing.SwingUtilities;
 
 import judahzone.api.Midi;
-import judahzone.api.Signature;
+import judahzone.data.Signature;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import judahzone.util.RTLogger;
@@ -27,10 +27,10 @@ import net.judah.seq.piano.PianoView.Orientation;
 import net.judah.seq.track.Edit;
 import net.judah.seq.track.Edit.Type;
 import net.judah.seq.track.Editor.Selection;
-import net.judah.seq.track.PianoNote;
 import net.judah.seq.track.MidiTools;
 import net.judah.seq.track.MusicBox;
 import net.judah.seq.track.NotePairer;
+import net.judah.seq.track.PianoNote;
 import net.judah.seq.track.Prototype;
 
 /** Display midi music in piano grid with orientation support (NOTES_X, NOTES_Y). */

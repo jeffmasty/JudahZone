@@ -6,7 +6,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import judahzone.api.FX;
-import judahzone.api.MidiConstants;
 import judahzone.fx.Gain;
 import judahzone.fx.Reverb;
 import judahzone.gui.Gui;
@@ -19,6 +18,7 @@ import net.judah.gui.Bindings;
 import net.judah.gui.MainFrame;
 import net.judah.gui.ShiftBtn;
 import net.judah.gui.fx.FXAware;
+import net.judah.midi.ChannelCC;
 
 /** a knob and label, paints itself on update when effect is active */
 public class FxKnob extends JPanel implements Updateable, FXAware {
@@ -136,7 +136,7 @@ public class FxKnob extends JPanel implements Updateable, FXAware {
 			if (fx instanceof Gain)
 				return;// volume/pan always on
 			// threshold activation
-			ch.setActive(fx, tholdHi ? criteria < MidiConstants.THOLD_HI : criteria > MidiConstants.THOLD_LO);
+			ch.setActive(fx, tholdHi ? criteria < ChannelCC.THOLD_HI : criteria > ChannelCC.THOLD_LO);
 		}
 	}
 

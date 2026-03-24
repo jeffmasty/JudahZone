@@ -3,8 +3,8 @@ package net.judah.controllers;
 import javax.swing.JToggleButton;
 
 import judahzone.api.Controller;
-import judahzone.api.Key;
 import judahzone.api.Midi;
+import judahzone.data.Key;
 import judahzone.fx.Gain;
 import judahzone.gui.Updateable;
 import lombok.Getter;
@@ -14,7 +14,6 @@ import net.judah.channel.Channel;
 import net.judah.channel.LineIn;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahMidi;
-import net.judah.midi.Panic;
 
 /** reroute guitar midi to synths, w/ optional octaver */
 public class Jamstik implements Controller, Updateable {
@@ -50,7 +49,7 @@ public class Jamstik implements Controller, Updateable {
 			guitar.getGain().setGain(0);
 		} else {
 			guitar.getGain().set(Gain.VOLUME, volStash);
-			new Panic(mini.getMidiOut());
+			mini.getMidiOut().panic();
 		}
 	}
 

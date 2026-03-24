@@ -7,39 +7,36 @@ import javax.sound.midi.Receiver;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
+import judahzone.api.DrumType;
 import judahzone.api.Midi;
 import judahzone.gui.Gui;
-import net.judah.drums.DrumKit;
-import net.judah.drums.DrumType;
+import net.judah.drums.Drumset;
 import net.judah.midi.JudahMidi;
 
 public class NotePad extends JLabel implements Gui.Mouse {
 
-	private final int ch;
 	private int velocity;
 	private int data1;
 	private final Receiver out;
 	private final Runnable rightClick;
 
-	public NotePad(Receiver out, int data1, int ch) {
-	    this(out, data1, ch, 100, null);
+	public NotePad(Receiver out, int data1) {
+	    this(out, data1, 100, null);
 	}
 
-	public NotePad(DrumKit kit, DrumType type) {
+	public NotePad(Drumset kit, DrumType type) {
 	    super(type.name(), JLabel.CENTER);
 	    out = kit;
 	    data1 = type.getData1();
-	    ch = kit.getChannel();
 	    velocity = 100;
 	    rightClick = null;
 	    init();
 	    setFont(Gui.BOLD11);
 	}
 
-	public NotePad(Receiver out, int data1, int ch, int velocity, Runnable onRightClick) {
+	public NotePad(Receiver out, int data1, int velocity, Runnable onRightClick) {
 	    this.data1 = data1;
 	    this.out = out;
-	    this.ch = ch;
 	    this.velocity = velocity;
 	    this.rightClick = onRightClick;
 	    init();
@@ -65,7 +62,7 @@ public class NotePad extends JLabel implements Gui.Mouse {
 	}
 
 	public void sound() {
-	    Midi click = Midi.create(Midi.NOTE_ON, ch, data1, velocity);
+	    Midi click = Midi.create(Midi.NOTE_ON, data1, velocity);
 	    out.send(click, JudahMidi.ticker());
 	}
 

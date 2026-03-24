@@ -12,13 +12,12 @@ import javax.sound.midi.ShortMessage;
 import javax.swing.SwingUtilities;
 
 import judahzone.api.Midi;
-import judahzone.api.MidiConstants;
-import judahzone.api.Signature;
+import judahzone.api.UINotes;
+import judahzone.data.Signature;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import lombok.Getter;
 import net.judah.gui.Size;
-import net.judah.midi.Actives;
 import net.judah.midi.JudahClock;
 import net.judah.seq.Steps;
 import net.judah.seq.automation.Automation;
@@ -34,6 +33,9 @@ import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
 
 public class PianoSteps extends Steps implements TrackListener, Gui.Mouse, Size {
+
+	private static final int NOTE_OFF = ShortMessage.NOTE_OFF;
+	private static final int NOTE_ON = ShortMessage.NOTE_ON;
 
 	static final int OFFSET = UNIT / 2 - 5;
 	private final NoteTrack notes;
@@ -51,11 +53,13 @@ public class PianoSteps extends Steps implements TrackListener, Gui.Mouse, Size 
 	private boolean[] selectedCCs = new boolean[0];
 	private boolean[] selectedProg = new boolean[0];
 
+	private final UINotes actives;
 	private Orientation orientation = Orientation.NOTES_X;
 
-	public PianoSteps(PianoTrack piano, Automation auto) {
+	public PianoSteps(PianoTrack piano, Automation auto, UINotes actives) {
 		super(piano);
 		this.notes = piano;
+		this.actives = actives;
 		this.clock = notes.getClock();
 		this.cc = new CCPopup(notes, this, false);
 		setLayout(null);
@@ -257,7 +261,6 @@ public class PianoSteps extends Steps implements TrackListener, Gui.Mouse, Size 
 		int coord = (orientation == Orientation.NOTES_X) ? e.getPoint().y : e.getPoint().x;
 		off = toStep(coord) + 1;
 
-		Actives actives = notes.getActives();
 		if (actives.isEmpty())
 			return;
 
@@ -268,9 +271,9 @@ public class PianoSteps extends Steps implements TrackListener, Gui.Mouse, Size 
 		long end = notes.getLeft() + off * step - 1;
 		on = off = null;
 		ArrayList<MidiEvent> list = new ArrayList<>();
-		for (int data1 : actives.getActiveSnapshot()) {
-			list.add(new MidiEvent(Midi.create(MidiConstants.NOTE_ON, ch, data1, data2), begin));
-			list.add(new MidiEvent(Midi.create(MidiConstants.NOTE_OFF, ch, data1, 127), end));
+		for (int data1 : actives.actives()) {
+			list.add(new MidiEvent(Midi.create(NOTE_ON, ch, data1, data2), begin));
+			list.add(new MidiEvent(Midi.create(NOTE_OFF, ch, data1, 127), end));
 		}
 		notes.getEditor().push(new Edit(Type.NEW, list));
 	}

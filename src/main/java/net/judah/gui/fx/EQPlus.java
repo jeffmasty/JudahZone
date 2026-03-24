@@ -5,7 +5,6 @@ import java.awt.Color;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import judahzone.api.MidiConstants;
 import judahzone.fx.EQ;
 import judahzone.fx.EQ.EqBand;
 import judahzone.gui.Gui;
@@ -17,6 +16,7 @@ import judahzone.widgets.Knob.KnobListener;
 import lombok.Getter;
 import net.judah.channel.Channel;
 import net.judah.gui.Bindings;
+import net.judah.midi.ChannelCC;
 
 public class EQPlus implements Updateable {
 	private static final Color SHIFTED = Pastels.MY_GRAY;
@@ -46,7 +46,7 @@ public class EQPlus implements Updateable {
 		int val = EffectsRack.offset(eq.get(idx), up);
 		eq.set(idx, val);
 		if (idx < 3)
-			channel.setActive(eq, val > MidiConstants.THOLD_LO);
+			channel.setActive(eq, val > ChannelCC.THOLD_LO);
 	}
 
 	@Override public void update() {

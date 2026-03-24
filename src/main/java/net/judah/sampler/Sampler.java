@@ -51,7 +51,7 @@ public class Sampler extends LineIn {
     	onMixer = false;
 
         if (!SampleDB.isInitialized()) {
-            SampleDB.init();
+            SampleDB.init(Folders.getSamples());
             while (!SampleDB.isInitialized()) {
 				try {
 					Thread.sleep(10);

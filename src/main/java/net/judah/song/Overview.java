@@ -20,7 +20,7 @@ import javax.swing.ScrollPaneConstants;
 
 import judahzone.api.FX;
 import judahzone.api.Notification.Property;
-import judahzone.api.Signature;
+import judahzone.data.Signature;
 import judahzone.api.TimeListener;
 import judahzone.gui.Gui;
 import judahzone.gui.Nimbus;

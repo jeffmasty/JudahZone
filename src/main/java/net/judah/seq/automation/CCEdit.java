@@ -18,8 +18,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
+import judahzone.api.ControlChange;
 import judahzone.api.Midi;
-import judahzone.api.MidiConstants;
 import judahzone.gui.Gui;
 import judahzone.util.Constants;
 import judahzone.util.RTLogger;
@@ -28,12 +28,12 @@ import net.judah.gui.Size;
 import net.judah.seq.automation.Automation.AutoBox;
 import net.judah.seq.automation.Automation.CCData;
 import net.judah.seq.track.Edit;
+import net.judah.seq.track.Edit.Type;
 import net.judah.seq.track.Editor;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.Prototype;
-import net.judah.seq.track.Edit.Type;
 
-class CCEdit extends AutoBox implements MidiConstants {
+class CCEdit extends AutoBox {
 
 	private CCData existing;
 	private Edit undoCurve;
@@ -135,7 +135,7 @@ class CCEdit extends AutoBox implements MidiConstants {
 		change.setEnabled(false);
 		select.setEnabled(false);
 		cc.setSelectedItem(ControlChange.VOLUME);
-		val.set(CUTOFF +1);
+		val.set(Midi.CUTOFF +1);
 		steps.quantizable(tick);
 		enableAutomation(true);
 		return this;
@@ -329,7 +329,7 @@ class CCEdit extends AutoBox implements MidiConstants {
 			add(display);
 			setEnabled(!automation);
 			data2.addChangeListener(l->text(data2.getValue()));
-			data2.setValue(MidiConstants.CUTOFF + 1);
+			data2.setValue(Midi.CUTOFF + 1);
 		}
 
 		public void knob(int value) {
@@ -350,7 +350,7 @@ class CCEdit extends AutoBox implements MidiConstants {
 		}
 		public void text(int val) {
 			if (sourceCC != null && ((ControlChange)sourceCC.getSelectedItem()).toggle)
-				display.setText(val > MidiConstants.CUTOFF ? "  On " : " Off ");
+				display.setText(val > Midi.CUTOFF ? "  On " : " Off ");
 			else {
 				String out = " ";
 				if (val < 100) out += " ";

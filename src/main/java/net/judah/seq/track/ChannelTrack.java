@@ -16,13 +16,11 @@ import net.judah.midi.ChannelCC;
 public class ChannelTrack extends MidiTrack {
 
 
-	private final Channel channel;
 	private final ChannelCC cc;
 
 	public ChannelTrack(Channel line, int midiCh, String trackName) throws InvalidMidiDataException {
-		super(trackName, midiCh);
-		this.channel = line;
-		cc = new ChannelCC(channel);
+		super(trackName, midiCh, line);
+		cc = new ChannelCC(line);
 	}
 
 	@Override public boolean capture(Midi midi) {

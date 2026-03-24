@@ -12,11 +12,11 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.sound.midi.MidiEvent;
+import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 import javax.swing.JPanel;
 
 import judahzone.api.Midi;
-import judahzone.api.MidiConstants;
 import judahzone.gui.Floating;
 import lombok.Getter;
 import net.judah.gui.TabZone;
@@ -25,7 +25,10 @@ import net.judah.seq.piano.Piano;
 import net.judah.seq.track.Editor.Delta;
 import net.judah.seq.track.Editor.Selection;
 
-public abstract class MusicBox extends JPanel implements Musician, Floating, MidiConstants {
+public abstract class MusicBox extends JPanel implements Musician, Floating {
+
+	protected static final int NOTE_OFF = ShortMessage.NOTE_OFF;
+	protected static final int NOTE_ON = ShortMessage.NOTE_ON;
 
     public static enum DragMode { CREATE, TRANSLATE, SELECT }
     protected static final Composite transparent = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);

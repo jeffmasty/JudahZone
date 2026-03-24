@@ -9,24 +9,23 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
+import judahzone.api.DrumType;
 import judahzone.api.RTNotes;
+import judahzone.drums.Drum;
+import judahzone.drums.DrumUpdate;
 import judahzone.gui.Gui;
 import judahzone.util.RTLogger;
 import lombok.Getter;
-import net.judah.drums.Drum;
-import net.judah.drums.DrumKit;
-import net.judah.drums.DrumType;
-import net.judah.drums.DrumUpdate;
+import net.judah.drums.Drumset;
 import net.judah.gui.Size;
 import net.judah.gui.knobs.Knobs;
-import net.judah.mixer.Channels.RegisteredDrums;
 
 /** drum parameter UI for all kit types (Noise, Wav, FM, Pluck).
  *  Tabs: 0=Base (Vol/Pan/Atk/Decay), 1=Filters, 2=Extra params.
  *  ParamCombo on tabBar reflects current selection. */
 public class KitKnobs extends Knobs {
 
-	@Getter private final DrumKit kit;
+	@Getter private final Drumset kit;
 
 	private final JPanel tabBar = new JPanel();
 	private final JComboBox<String> paramCombo = new JComboBox<>();
@@ -38,7 +37,7 @@ public class KitKnobs extends Knobs {
 	private final ActionListener paramListener;
 	private final DrumPad[] pads;
 
-	public KitKnobs(DrumKit kit) {
+	public KitKnobs(Drumset kit) {
 	    this.kit = kit;
 	    this.pads = new DrumPad[DrumType.values().length];
 
@@ -50,15 +49,15 @@ public class KitKnobs extends Knobs {
 	            DrumUpdate.Mode mode = switch (currentTab) {
 	                case 0 -> DrumUpdate.Mode.BASE;
 	                case 1 -> DrumUpdate.Mode.FILTER;
-	                case 2 -> {
-	                    RegisteredDrums type = kit.getType().engine;
-	                    yield switch (type) {
-	                        case Noise -> DrumUpdate.Mode.NOISE;
-	                        case FM -> DrumUpdate.Mode.FM;
-	                        case Pluck -> DrumUpdate.Mode.PLUCK;
-	                        default -> DrumUpdate.Mode.BASE;
-	                    };
-	                }
+//	                case 2 -> {
+//	                    RegisteredDrums type = kit.getType().engine;
+//	                    yield switch (type) {
+//	                        case Noise -> DrumUpdate.Mode.NOISE;
+//	                        case FM -> DrumUpdate.Mode.FM;
+//	                        case Pluck -> DrumUpdate.Mode.PLUCK;
+//	                        default -> DrumUpdate.Mode.BASE;
+//	                    };
+//	                }
 	                default -> DrumUpdate.Mode.BASE;
 	            };
 
@@ -99,9 +98,9 @@ public class KitKnobs extends Knobs {
 
 	    addTabButton("Base", 0);
 	    addTabButton("Filters", 1);
-	    RegisteredDrums type = kit.getType().engine;
-	    if (type != RegisteredDrums.Wav)
-	        addTabButton(type.name(), 2);
+//	    RegisteredDrums type = kit.getType().engine;
+//	    if (type != RegisteredDrums.Wav)
+//	        addTabButton(type.name(), 2);
 
 	    tabBar.add(Box.createHorizontalStrut(8));
 	    tabBar.add(Gui.resize(paramCombo, Size.COMBO_SIZE));
@@ -147,18 +146,18 @@ public class KitKnobs extends Knobs {
 	    DrumUpdate.Mode mode = switch (tabIdx) {
 	        case 0 -> DrumUpdate.Mode.BASE;
 	        case 1 -> DrumUpdate.Mode.FILTER;
-	        case 2 -> {
-	            RegisteredDrums type = kit.getType().engine;
-	            yield switch (type) {
-	                case Noise -> DrumUpdate.Mode.NOISE;
-	                case FM -> DrumUpdate.Mode.FM;
-	                case Pluck -> DrumUpdate.Mode.PLUCK;
-	                default -> DrumUpdate.Mode.BASE;
-	            };
-	        }
+//	        case 2 -> {
+//	            RegisteredDrums type = kit.getType().engine;
+//	            yield switch (type) {
+//	                case Noise -> DrumUpdate.Mode.NOISE;
+//	                case FM -> DrumUpdate.Mode.FM;
+//	                case Pluck -> DrumUpdate.Mode.PLUCK;
+//	                default -> DrumUpdate.Mode.BASE;
+//	            };
+//	        }
 	        default -> DrumUpdate.Mode.BASE;
 	    };
-	    String[] paramNames = drum.getDrama().getParamNames(drum, mode);
+	    String[] paramNames = drum.getEdit().getParamNames(drum, mode);
 
 	    // Update all pads with the correct mode
 	    for (DrumPad pad : pads)
@@ -180,8 +179,34 @@ public class KitKnobs extends Knobs {
 	public void update(Object o) {
 	    if (o == null)
 	        return;
-	    // ton of actives updates coming in
-	    RTLogger.log(this, o.getClass().getSimpleName() + " update: " + o);
+	    if (o instanceof int[] actives) { // TODO better targeting?
+	    	// what format is actives in?:
+			/* an array of midi note numbers of currently active drums (max: 8)
+				@Override public int[] actives() {
+					BOOL8 snapshot = new BOOL8(actives.toByte());
+					int[] result = new int[snapshot.count()];
+					int idx = 0;
+					for (int i = 0; i < LENGTH; i++)
+						if (snapshot.test(i))
+							result[idx++] = DrumType.values()[i].getData1();
+					return result;}*/
+	    	for (int i = 0; i < pads.length; i++) {
+	    		DrumType type = DrumType.values()[i];
+	    		int midi = type.getData1();
+	    		boolean isActive = false;
+	    		// if actives contains midi, isActive = true;
+	    		for (int note : actives) {
+	    			if (note == midi) {
+	    				isActive = true;
+	    				break;
+	    			}
+	    		}
+	            pads[i].background(isActive);
+	    	}
+	    }
+
+	    else
+	    	RTLogger.log(this, o.getClass().getSimpleName() + " update: " + o);
 
 	}
 

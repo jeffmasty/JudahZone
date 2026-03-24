@@ -4,7 +4,6 @@ import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
@@ -162,15 +161,6 @@ public class TwoStepGraph extends JComponent {
             g.setColor(new Color(200, 240, 255));
             g.drawLine(left, finalY, attackX, peakY);
             drawDecayCurve(g, attackX, peakY, decayX, finalY);
-
-            g.setColor(new Color(220, 220, 220, 180));
-            g.fillOval(attackX - 3, peakY - 3, 7, 7);
-            g.fillOval(decayX - 3, finalY - 3, 7, 7);
-
-            g.setFont(g.getFont().deriveFont(Font.PLAIN, 10f));
-            g.setColor(new Color(200, 200, 200, 200));
-            g.drawString("A", Math.max(left, attackX - 10), Math.max(peakY - 4, top));
-            g.drawString("D", Math.max(left, decayX - 8), Math.min(finalY + 12, h - 2));
 
         } finally {
             g.dispose();

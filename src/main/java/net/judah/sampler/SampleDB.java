@@ -2,6 +2,7 @@ package net.judah.sampler;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -11,8 +12,8 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import judahzone.data.Asset;
-import judahzone.data.Recording;
 import judahzone.data.Asset.Category;
+import judahzone.data.Recording;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
 import judahzone.util.MP3;
@@ -40,15 +41,15 @@ public final class SampleDB {
     public static boolean isInitialized() { return initialized; }
 
     // Initialize standard samples (sampler + step samples)
-    public static void init() {
+    public static void init(File samples) {
         if (initialized) return;
 
-        String[] standard = Stream.concat(java.util.Arrays.stream(LOOPS), java.util.Arrays.stream(ONESHOTS))
+        String[] standard = Stream.concat(Arrays.stream(LOOPS), Arrays.stream(ONESHOTS))
                 .toArray(String[]::new);
 
         // register sampler assets (may attempt to warm load)
         for (String name : standard) {
-            File file = new File(Folders.getSamples(), name + ".wav");
+            File file = new File(samples, name + ".wav");
             loadAndRegister(name, file, Asset.Category.SAMPLER);
         }
 

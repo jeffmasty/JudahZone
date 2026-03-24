@@ -6,7 +6,7 @@
 <parent>
     <groupId>net.judahzone</groupId>
     <artifactId>meta-zone</artifactId>
-    <version>0.3-SNAPSHOT</version>
+    <version>0.4-SNAPSHOT</version>
     <relativePath>../meta-zone/pom.xml</relativePath> 
   </parent>
 
@@ -42,18 +42,21 @@
   		<groupId>net.judahzone</groupId>
   		<artifactId>zone-fx</artifactId>
    	</dependency>
-  
+   	
+   	<dependency>
+   		<groupId>net.judahzone</groupId>
+   		<artifactId>zone-drums</artifactId>
+   	</dependency>
+   	
+   	<dependency>
+   		<groupId>net.judahzone</groupId>
+   		<artifactId>taco-synth</artifactId>
+   	</dependency>
+
     <!-- Lombok annotation processor -->
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
-    </dependency>
-
-    <!-- JUnit 5 -->
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <scope>test</scope>
     </dependency>
 
     <!-- JSON -->
@@ -151,22 +154,64 @@
 		    </archive>
 		  </configuration>
 		</plugin>
+		
+<!-- create shaded jar on deploy -->
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-shade-plugin</artifactId>
+  <version>3.6.0</version>
+  <executions>
+    <execution>
+      <id>shade-on-deploy</id>
+      <phase>deploy</phase>
+      <goals><goal>shade</goal></goals>
+      <configuration>
+        <shadedArtifactAttached>true</shadedArtifactAttached> <!-- attach shaded jar -->
+        <shadedClassifierName>shaded</shadedClassifierName>   <!-- produces ${project.build.finalName}-shaded.jar -->
+        <transformers>
+          <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+            <mainClass>net.judah.JudahZone</mainClass>
+          </transformer>
+        </transformers>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
+
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-antrun-plugin</artifactId>
+  <version>3.1.0</version>
+  <executions>
+    <execution>
+      <id>copy-and-clean-shaded-at-deploy</id>
+      <phase>deploy</phase>
+      <goals><goal>run</goal></goals>
+      <configuration>
+        <target>
+          <!-- copy any *-shaded.jar from `target` and map it to `/home/judah/bin/JudahZone.jar` -->
+          <copy todir="/home/judah/bin" failonerror="false" overwrite="true">
+            <fileset dir="${project.build.directory}" includes="*-shaded.jar"/>
+            <mapper type="glob" from="*-shaded.jar" to="JudahZone.jar"/>
+          </copy>
+
+          <!-- then remove the shaded jar(s) from `target` -->
+          <delete failonerror="false">
+            <fileset dir="${project.build.directory}" includes="*-shaded.jar"/>
+          </delete>
+        </target>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
+		
     </plugins>
   </build>
 </project>
 
 
-      <!-- JUnit 5 -->
-<!--      <plugin>-->
-<!--        <groupId>org.apache.maven.plugins</groupId>-->
-<!--        <artifactId>maven-surefire-plugin</artifactId>-->
-<!--        <version>3.2.5</version>-->
-<!--        <configuration>-->
-<!--          <useModulePath>false</useModulePath>-->
-<!--        </configuration>-->
-<!--      </plugin>-->
 
-<!--      <plugin>--> <!-- shiny, fat JudahZone.jar in project root -->
+<!--      <plugin>--> <!-- fat JudahZone.jar in project root -->
 <!--		  <groupId>org.apache.maven.plugins</groupId>-->
 <!--		  <artifactId>maven-antrun-plugin</artifactId>-->
 <!--		  <version>3.1.0</version>-->

@@ -11,6 +11,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import judahzone.api.DrumType;
 import judahzone.fx.Gain;
 import judahzone.gui.Gui;
 import judahzone.gui.Icons;
@@ -20,7 +21,6 @@ import judahzone.util.Threads;
 import judahzone.widgets.Btn;
 import judahzone.widgets.Integers;
 import lombok.Getter;
-import net.judah.drums.DrumType;
 import net.judah.gui.MainFrame;
 import net.judah.gui.Size;
 import net.judah.gui.TabZone;
@@ -42,7 +42,6 @@ import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.Programmer;
-import net.judah.synth.taco.TacoSynth;
 
 // TODO MouseWheel listener -> change pattern
 public class TrackKnobs extends KnobPanel {
@@ -93,7 +92,8 @@ public class TrackKnobs extends KnobPanel {
 		///////////////////////////
 		play = new PlayBtn(track, "  Play    ");
 		file = new Folder(track); // TODO
-		program = new Program(track);
+
+		program = t instanceof NoteTrack n ? new Program(n) : null;
 		programmer = new Programmer(track);
         patterns = new PatternLauncher(track);
 		cue = new CueCombo(track);
@@ -136,8 +136,8 @@ public class TrackKnobs extends KnobPanel {
 
 		if (track instanceof NoteTrack notes) {
 			fx.add(new FxButton(notes.getChannel()));
-	        if (notes.getMidiOut() instanceof TacoSynth)
-	        	btns.add(new Btn("DCO", e->MainFrame.setFocus(((TacoSynth)notes.getMidiOut()).getKnobs())));
+//	        if (notes.getMidiOut() instanceof TacoSynth)
+//	        	btns.add(new Btn("DCO", e->MainFrame.setFocus(((TacoSynth)notes.getMidiOut()).getKnobs())));
 		}
 		column.add(fx);
 		settings.add(column);
@@ -145,7 +145,10 @@ public class TrackKnobs extends KnobPanel {
 		column = new JPanel();
 		column.setLayout(new BoxLayout(column, BoxLayout.PAGE_AXIS));
 		column.add(Gui.resize(file, COMBO_SIZE));
-		column.add(Gui.resize(program, COMBO_SIZE));
+		if (program != null)
+			column.add(Gui.resize(program, COMBO_SIZE));
+		else
+			column.add(new JLabel("--"));
 		column.add(Gui.resize(cue, COMBO_SIZE));
 
 		column.add(btns);
@@ -214,7 +217,8 @@ public class TrackKnobs extends KnobPanel {
 		if (velocity.getValue() != (int)(track.getAmp() * 100))
 			velocity.setValue((int) (track.getAmp() * 100));
 		patterns.update();
-		program.update();
+		if (program != null)
+			program.update();
 	}
 
 	@Override
@@ -231,7 +235,8 @@ public class TrackKnobs extends KnobPanel {
 				file.midiShow(x);
 				return true;
 			case 3: // preset (settable)
-				program.midiShow(track.getPatches()[data2]);
+				if (program != null)
+					program.midiShow(track.getPatches()[data2]);
 				return true;
 			case 4: // amp
 				track.setAmp(data2 * 0.01f);
@@ -270,7 +275,7 @@ public class TrackKnobs extends KnobPanel {
 	}
 
 	public void update(Update type) {
-		if (type == Update.PROGRAM)
+		if (type == Update.PROGRAM && program != null)
 			program.update();
 		else if (type == Update.ARP)
 			mode.update();

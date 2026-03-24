@@ -45,7 +45,6 @@ public class PhoneSynth extends JPanel implements Updateable, Consumer<Asset> {
 	private final Sampler sampler;
 	private final int SAMPLES; // computed from SR
 
-	private float amplitude = 0.1f;
 	private int sampleCount = 0;
 	private volatile float lowFreq;
 	private volatile float highFreq;
@@ -65,6 +64,11 @@ public class PhoneSynth extends JPanel implements Updateable, Consumer<Asset> {
 
 	private BasicPlayer ringtone; // ONE_SHOT: Phone.wav (ringtone)
 	private Asset asset;
+
+	private final float amplitude = 0.05f; // preamp
+//	public void setAmplitude(float amp) {
+//	this.amplitude = Math.max(0f, Math.min(1f, amp));
+//}
 
 
 	public PhoneSynth(int sampleRate, Sampler sampler) {
@@ -120,9 +124,6 @@ public class PhoneSynth extends JPanel implements Updateable, Consumer<Asset> {
 		trigger(key);
 	}
 
-	public void setAmplitude(float amp) {
-		this.amplitude = Math.max(0f, Math.min(1f, amp));
-	}
 
 	public void ringtone() {
 		if (ringtone == null) {

@@ -6,6 +6,7 @@ import javax.swing.JLabel;
 
 import lombok.Getter;
 import net.judah.JudahZone;
+import net.judah.gui.TabZone;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
 import net.judah.seq.track.DrumTrack;
@@ -18,11 +19,11 @@ public class RemapView extends KnobPanel {
 	private final RemapTable table;
 
 	public RemapView() {
-		this((DrumTrack) JudahZone.getInstance().getFrame().getBeatBox().getCurrent());
+		this(JudahZone.getInstance().getDrumMachine().getCurrent());
 	}
 
 	public RemapView(DrumTrack t) {
-		this(JudahZone.getInstance().getFrame().getBeatBox().getView(t).grid);
+		this(TabZone.getDrummer(t));
 	}
 
 	public RemapView(Musician view) {

@@ -8,14 +8,14 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import judahzone.util.RTLogger;
 import lombok.Data;
-import net.judah.synth.Engine;
+import net.judah.synth.SynthEngine;
 
 /** Wraps a Jack midi port or an internal midi consumer */
 @Data
 public class MidiPort {
 	
 	private final JackPort port;
-	private final Engine engine;
+	private final SynthEngine engine;
 	
 	public MidiPort(JackPort port) {
 		if (port == null)
@@ -24,7 +24,7 @@ public class MidiPort {
 		engine = null;	
 	}
 	
-	public MidiPort(Engine engine) {
+	public MidiPort(SynthEngine engine) {
 		if (engine == null)
 			throw new NullPointerException();
 		this.engine = engine;

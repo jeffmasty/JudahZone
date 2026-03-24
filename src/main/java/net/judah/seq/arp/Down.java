@@ -6,7 +6,7 @@ import javax.sound.midi.ShortMessage;
 
 import judahzone.api.Algo;
 import judahzone.api.Chord;
-import judahzone.api.Key;
+import judahzone.data.Key;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor

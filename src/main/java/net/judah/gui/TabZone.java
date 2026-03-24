@@ -16,6 +16,8 @@ import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
+import judahzone.api.MidiOut.MidiPiano;
+import judahzone.drums.Drum;
 import judahzone.gui.Floating;
 import judahzone.gui.Gui;
 import judahzone.jnajack.BasicPlayer;
@@ -26,10 +28,10 @@ import judahzone.util.RTLogger;
 import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.drums.Drum;
 import net.judah.gui.drums.views.DrumFrame;
 import net.judah.gui.widgets.CloseableTabbedPane;
 import net.judah.midi.JudahMidi;
+import net.judah.seq.TrackList;
 import net.judah.seq.beatbox.BeatBox;
 import net.judah.seq.beatbox.DrumCage;
 import net.judah.seq.beatbox.DrumZone;
@@ -56,17 +58,16 @@ public class TabZone extends CloseableTabbedPane {
 	private final JudahZone zone;
 	private final SheetMusicPnl sheetMusic;
 	private final Overview overview;
-	private final DrumZone drumz;
 	private final ChordSheet chords;
 	private JudahScope scope;
+	private DrumZone drums;
 
-	public TabZone(JudahZone judahZone, DrumZone drumz) {
+	public TabZone(JudahZone judahZone) {
 
 		// Overview songs, DrumZone drumz, ChordSheet chordz, JudahScope scope
 		this.zone = judahZone;
-		this.overview = zone.getOverview();
-		this.drumz = drumz;
-		this.chords = zone.getChords().getChordSheet();
+		overview = zone.getOverview();
+		chords = zone.getChords().getChordSheet();
 
 		instance = this;
 		SheetMusicPnl exceptional = null;
@@ -78,7 +79,6 @@ public class TabZone extends CloseableTabbedPane {
         setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 
         addTab(JudahZone.JUDAHZONE, overview);
-        addTab(drumz.getName(), drumz, true);
 		addTab(sheetMusic.getName(), sheetMusic, true);
 	}
 
@@ -91,23 +91,25 @@ public class TabZone extends CloseableTabbedPane {
 		if (track instanceof PianoTrack piano)
 			pianoTrack(piano);
 		else if (track instanceof DrumTrack drumTrack) {
-			if (drumz.getTracks().contains(drumTrack)) {
-				drumz.getTracks().setCurrent(drumTrack);
-				// drumz.setCurrent(drumTrack); // fra-gee-leh
-				int idx = indexOfComponent(drumz);
+			if (drums == null)
+				drums = new DrumZone(zone.getDrumMachine().getTracks());
+			if (drums.getTracks().contains(drumTrack)) {
+				drums.getTracks().setCurrent(drumTrack);
+				// drums.setCurrent(drumTrack); // fra-gee-lay
+				int idx = indexOfComponent(drums);
 				if (idx >= 0)
 					setSelectedIndex(idx);
-				else if (drumz.isShowing())
-					drumz.requestFocus();
+				else if (drums.isShowing())
+					drums.requestFocus();
 				else {
-					addTab(drumz.getName(), drumz, true);
-					setSelectedComponent(drumz);
+					addTab(drums.getName(), drums, true);
+					setSelectedComponent(drums);
 				}
 				MainFrame.setFocus(track);
 			}
 			else { // ??
 				Box box = new Box(BoxLayout.Y_AXIS);
-				box.add(new BeatBox(drumTrack, drumz));
+				box.add(new BeatBox(drumTrack, drums));
 				addTab("import",  box, true);
 			}
 		}
@@ -156,7 +158,7 @@ public class TabZone extends CloseableTabbedPane {
 	}
 
 	public static BeatBox getDrummer(DrumTrack t) {
-		return instance.drumz.getView(t).getGrid();
+		return instance.drums == null ? null : instance.drums.getView(t).getGrid();
 	}
 
 	public static Piano getPianist(PianoTrack t) {
@@ -273,10 +275,6 @@ public class TabZone extends CloseableTabbedPane {
 		show(chords);
 	}
 
-	public void drumZone() {
-		show(drumz);
-	}
-
 	/** show PianoTrack, creating if necessary */
 	public void pianoTrack(PianoTrack p) {
 		PianoView view = getPiano(p);
@@ -314,8 +312,8 @@ public class TabZone extends CloseableTabbedPane {
 			return;
 		NoteTrack notes = (NoteTrack)c;
 		if (type == Update.REZ) {
-			if (notes.isDrums()) {
-				DrumCage view = drumz.getView(notes);
+			if (notes.isDrums() && drums != null) {
+				DrumCage view = drums.getView(notes);
 				if (view != null)
 					view.getGrid().repaint();
 			}
@@ -324,8 +322,8 @@ public class TabZone extends CloseableTabbedPane {
 				if (view != null)
 					view.refresh();
 			}
-		} else if (notes.isDrums()) {
-			DrumCage view = drumz.getView(notes);
+		} else if (notes.isDrums() && drums != null) {
+			DrumCage view = drums.getView(notes);
 			if (view != null)
 				view.getMenu().update(type);
 		} else if (notes.isSynth()) {
@@ -356,9 +354,29 @@ public class TabZone extends CloseableTabbedPane {
 		}
 	}
 
+
+	public void update(MidiPiano p) {
+		for (int i = 0; i < getTabCount(); i++)
+			if (getComponentAt(i) instanceof PianoView v)
+				if (v.getTrack().getMidiOut() == p) {
+					v.getKeyboard().repaint();
+					return;
+				}
+		for (Component c : frames)
+			if (c instanceof PianoView v)
+				if (v.getTrack().getMidiOut() == p) {
+					v.getKeyboard().repaint();
+					return;
+				}
+	}
+
 	public void update(MidiTrack t) {
-		if (t.isDrums())
-			getDrummer((DrumTrack)t).repaint();
+		if (t.isDrums() && drums != null) {
+			var it = getDrummer((DrumTrack)t);
+			if (it == null)
+				return;
+			it.repaint();
+		}
 		else if (t.isSynth()) {
 			PianoView view = getPiano((PianoTrack)t);
 			if (view != null) {
@@ -389,6 +407,14 @@ public class TabZone extends CloseableTabbedPane {
 				if (view.getCurrent().getDrum() == drum)
 					view.getCurrent().update();
 		}
+
+	}
+
+
+	public void beatBox(TrackList<DrumTrack> tracks) {
+		if (drums == null)
+			drums = new DrumZone(tracks);
+		install(drums);
 
 	}
 

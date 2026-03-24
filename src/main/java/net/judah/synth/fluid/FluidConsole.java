@@ -47,8 +47,8 @@ class FluidConsole implements Participant {
 		}
 
 		if (text.equals("channels")) {
-			MainFrame.feedback("channels: " + fluid.getChannels().size() + NL);
-			for (FluidChannel channel : fluid.getChannels()) {
+			MainFrame.feedback("channels: " + fluid.channels.size() + NL);
+			for (FluidChannel channel : fluid.channels) {
 				MainFrame.feedback(channel.toString() + NL);
 			}
 		}

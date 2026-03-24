@@ -29,7 +29,7 @@ private final int baseController;
  * @param baseController first CC controller used for mapping (e.g. 20)
  */
 public TODOSampleTrack(String name, int ch, Sampler sampler, int baseController) throws InvalidMidiDataException {
-    super(name, ch);
+    super(name, ch, sampler);
     this.sampler = sampler;
     this.baseController = baseController;
 }
@@ -62,6 +62,5 @@ public void send(MidiMessage midi, long ticker) {
 @Override public String[] getPatches() { return new String[0]; }
 @Override public String progChange(int data1) { return null; }
 @Override public boolean progChange(String name) { return false; }
-@Override public net.judah.channel.Channel getChannel() { return sampler; }
 
 }

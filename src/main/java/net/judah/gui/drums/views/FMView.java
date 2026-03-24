@@ -8,16 +8,14 @@ import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 
+import judahzone.drums.DrumUpdate;
+import judahzone.drums.DrumUpdate.Mode;
+import judahzone.drums.fm.Algorithm;
+import judahzone.drums.fm.DX9;
+import judahzone.drums.fm.FMOsc;
+import judahzone.drums.fm.Operator.Params;
 import judahzone.gui.Gui;
-import lombok.Getter;
-import net.judah.drums.DrumUpdate;
-import net.judah.drums.DrumUpdate.Mode;
-import net.judah.drums.fm.Algorithm;
-import net.judah.drums.fm.DX9;
-import net.judah.drums.fm.FMOsc;
-import net.judah.drums.fm.Operator.Params;
 import net.judah.gui.Size;
-import net.judah.gui.drums.OscTuning;
 
 /** a complete FMOsc, operaters(6) and all */
 public class FMView extends DrumView<FMOsc> implements ActionListener {
@@ -28,11 +26,9 @@ public class FMView extends DrumView<FMOsc> implements ActionListener {
 	private final JComboBox<String> algo = new JComboBox<>(DX9.names);
 	private final JComboBox<Params> param = new JComboBox<>(Params.values());
 	private final JLabel algoLabel = new JLabel("Algorithm");
-	@Getter private final OscTuning tuning;
 
 	public FMView(FMOsc fm) {
 		super(fm);
-		tuning = new OscTuning(fm);
 		opPanel = new DX9Grid(this);
 		param.setFont(Gui.BOLD11);
 
@@ -58,7 +54,7 @@ public class FMView extends DrumView<FMOsc> implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if (updating) return;
+//		if (updating) return;
 		Object src = e.getSource();
 		if (src == algo)
 			algoSet();
@@ -89,7 +85,7 @@ public class FMView extends DrumView<FMOsc> implements ActionListener {
 
 		// Encode op index and param ordinal into a single int for DrumUpdate
 		int fmIndex = p.ordinal() + (opIdx + 1) * 10;
-		drum.getDrama().set(new DrumUpdate(drum, Mode.FM, fmIndex, val));
+		drum.getEdit().set(new DrumUpdate(drum, Mode.FM, fmIndex, val));
 	}
 
 	private void algoSet() {
@@ -97,7 +93,7 @@ public class FMView extends DrumView<FMOsc> implements ActionListener {
 		int algoCount = DX9.ALGO_COUNT;
 		int idx = (algoCount <= 1) ? 0 : Math.round((selected / (float)(algoCount - 1)) * 100f);
 		idx = Math.max(0, Math.min(idx, 100));
-		drum.getDrama().set(new DrumUpdate(drum, Mode.FM, 0, idx));
+		drum.getEdit().set(new DrumUpdate(drum, Mode.FM, 0, idx));
 	}
 
 //	private void updateOpKnobs() {

@@ -8,7 +8,6 @@ import javax.sound.midi.Track;
 import javax.swing.table.DefaultTableModel;
 
 import judahzone.api.Midi;
-import judahzone.api.MidiConstants;
 import net.judah.seq.Meta;
 import net.judah.seq.track.MidiTrack;
 
@@ -17,7 +16,7 @@ import net.judah.seq.track.MidiTrack;
  *Trck#	 Notes
  *Name   [ # ]  Assign[]  [Import]
  */
-public class ImportModel extends DefaultTableModel implements MidiConstants {
+public class ImportModel extends DefaultTableModel {
 
 	static final String[] cols = new String[] {"Source", "Notes", "AssignTo", "Action"};
 	static final String IMPORT = "Import";

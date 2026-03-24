@@ -1,6 +1,5 @@
 package net.judah.seq.track;
 
-import static judahzone.api.MidiConstants.NOTE_ON;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,19 +13,19 @@ import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Track;
 import javax.swing.SwingUtilities;
 
-import judahzone.api.Key;
+import judahzone.api.DrumType;
 import judahzone.api.Midi;
+import judahzone.data.Key;
 import judahzone.util.RTLogger;
 import lombok.Getter;
-import net.judah.drums.DrumType;
 import net.judah.gui.MainFrame;
 import net.judah.gui.TabZone;
 import net.judah.gui.knobs.KnobMode;
-import net.judah.midi.Panic;
 import net.judah.seq.beatbox.RemapView;
 import net.judah.seq.track.Edit.Type;
 
 public class Editor {
+	private static final int NOTE_ON = ShortMessage.NOTE_ON;
 
 	/** unified clipboard */
 	public static final Clipboard clipboard = new Clipboard();
@@ -201,7 +200,7 @@ public class Editor {
 	        case TRANS -> {
 	            if (track instanceof PianoTrack piano) {
 	                if (track.isActive())
-	                    new Panic(piano);
+	                	piano.panic();
 	                decomposePiano(e);
 	            } else if (track instanceof DrumTrack) {
 	                decomposeDrums(e);
@@ -284,7 +283,7 @@ public class Editor {
 	 * @param destination Target pitch offset and tick offset */
 	public void transposePiano(ArrayList<MidiEvent> raw, Prototype destination) {
 	    if (track.isActive())
-	        new Panic((PianoTrack)track);
+	    	((PianoTrack)track).panic();
 	    editDel(raw);
 	    ArrayList<MidiEvent> replace = new ArrayList<>();
 	    MidiEvent on = null;

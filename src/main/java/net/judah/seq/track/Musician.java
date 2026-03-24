@@ -6,7 +6,7 @@ import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 
 import judahzone.api.Midi;
-import judahzone.api.Signature;
+import judahzone.data.Signature;
 import judahzone.gui.Gui;
 import net.judah.seq.track.Editor.TrackListener;
 

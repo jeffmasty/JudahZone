@@ -5,21 +5,20 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.event.ChangeEvent;
 
+import judahzone.drums.DrumEdit;
+import judahzone.drums.DrumUpdate;
+import judahzone.drums.DrumUpdate.Mode;
+import judahzone.drums.pluck.PluckOsc;
+import judahzone.drums.pluck.PluckOsc.Params;
 import judahzone.util.Constants;
-import lombok.Getter;
-import net.judah.drums.Drama;
-import net.judah.drums.DrumUpdate;
-import net.judah.drums.DrumUpdate.Mode;
-import net.judah.drums.pluck.PluckOsc;
-import net.judah.drums.pluck.PluckSetup.Params;
-import net.judah.gui.drums.OscTuning;
+import judahzone.widgets.SingleRow;
 import net.judah.gui.widgets.Slider;
 
 /** Full params of a Pluck Osc in a single view */
 public class PluckView extends DrumView<PluckOsc> {
 
 	private final PluckOsc pluck; // voices
-	private final Drama drama;
+	private final DrumEdit edit;
 
 	private final Box burstPnl = new Box(BoxLayout.Y_AXIS); // burst [samples, preamp, colour, pitch]
 	private final Box bodyPnl = new Box(BoxLayout.Y_AXIS); // ad fb damp  [a/d, f/b, damp, harmony, combs]
@@ -41,25 +40,23 @@ public class PluckView extends DrumView<PluckOsc> {
 	private final DataLbl dampData = new DataLbl();
 	private final DataLbl roomData = new DataLbl();
 	private final DataLbl combsData = new DataLbl();
-	@Getter private final OscTuning tuning;
 
 	public PluckView(PluckOsc pluck) {
 		super(pluck);
 		this.pluck = pluck;
-		this.drama = pluck.getDrama();
-		this.tuning = new OscTuning(pluck);
+		this.edit = pluck.getEdit();
 
 		burstPnl.setBorder(BorderFactory.createTitledBorder("Burst"));
-		burstPnl.add(singleRow(new LBL("Burst"), burst, burstData));
-		burstPnl.add(singleRow(new LBL("Colour"), colour, colourData));
-		burstPnl.add(singleRow(new LBL("Gain"), amp, ampData));
-		burstPnl.add(singleRow(new LBL("Pickup"), tap, tapData));
+		burstPnl.add(new SingleRow("Burst", burst, burstData));
+		burstPnl.add(new SingleRow("Colour", colour, colourData));
+		burstPnl.add(new SingleRow("Gain", amp, ampData));
+		burstPnl.add(new SingleRow("Pickup", tap, tapData));
 
 		bodyPnl.setBorder(BorderFactory.createTitledBorder("Loop"));
-		bodyPnl.add(singleRow(new LBL("Feedback"), feedback, feedbackData));
-		bodyPnl.add(singleRow(new LBL("Bright"), bright, dampData));
-		bodyPnl.add(singleRow(new LBL("Metal"), combs, combsData));
-		bodyPnl.add(singleRow(new LBL("Room"), room, roomData));
+		bodyPnl.add(new SingleRow("Feedback", feedback, feedbackData));
+		bodyPnl.add(new SingleRow("Bright", bright, dampData));
+		bodyPnl.add(new SingleRow("Metal", combs, combsData));
+		bodyPnl.add(new SingleRow("Room", room, roomData));
 
 		child.setLayout(new BoxLayout(child, BoxLayout.Y_AXIS));
 		child.add(burstPnl);
@@ -72,21 +69,21 @@ public class PluckView extends DrumView<PluckOsc> {
 		Object src = e.getSource();
 
 		if (src == burst)
-			drama.set(new DrumUpdate(pluck, Mode.PLUCK, 0, burst.getValue()));
+			edit.set(new DrumUpdate(pluck, Mode.PLUCK, 0, burst.getValue()));
 		else if (src == amp)
-			drama.set(new DrumUpdate(pluck, Mode.PLUCK, 1, amp.getValue()));
+			edit.set(new DrumUpdate(pluck, Mode.PLUCK, 1, amp.getValue()));
 		else if (src == tap)
-			drama.set(new DrumUpdate(pluck, Mode.PLUCK, 2, tap.getValue()));
+			edit.set(new DrumUpdate(pluck, Mode.PLUCK, 2, tap.getValue()));
 		else if (src == feedback)
-			drama.set(new DrumUpdate(pluck, Mode.PLUCK, 3, feedback.getValue()));
+			edit.set(new DrumUpdate(pluck, Mode.PLUCK, 3, feedback.getValue()));
 		else if (src == bright)
-			drama.set(new DrumUpdate(pluck, Mode.PLUCK, 4, bright.getValue()));
+			edit.set(new DrumUpdate(pluck, Mode.PLUCK, 4, bright.getValue()));
 		else if (src == room)
-			drama.set(new DrumUpdate(pluck, Mode.PLUCK, 5, room.getValue()));
+			edit.set(new DrumUpdate(pluck, Mode.PLUCK, 5, room.getValue()));
 		else if (src == combs)
-			drama.set(new DrumUpdate(pluck, Mode.PLUCK, 6, combs.getValue()));
+			edit.set(new DrumUpdate(pluck, Mode.PLUCK, 6, combs.getValue()));
 		else if (src == colour)
-			drama.set(new DrumUpdate(pluck, Mode.PLUCK, 7, colour.getValue()));
+			edit.set(new DrumUpdate(pluck, Mode.PLUCK, 7, colour.getValue()));
 	}
 
 	@Override protected void updateChild() {

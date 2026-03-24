@@ -5,7 +5,7 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 
-import judahzone.api.Signature;
+import judahzone.data.Signature;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import net.judah.gui.Size;

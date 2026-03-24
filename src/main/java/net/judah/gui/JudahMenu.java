@@ -138,15 +138,14 @@ public class JudahMenu extends JMenuBar {
 
 	public void refillTracks() {
 		synth.removeAll();
-		for (PianoTrack t : zone.getSeq().getSynthTracks())
+		for (PianoTrack t : zone.getSeq().getPianoTracks())
 			synth.add(new Actionable(t.getName(), e->TabZone.edit(t)));
 	}
 
 	private JMenu viewMenu(TabZone tabs) {
 		JMenu views = new JMenu("View");
-        views.add(new Actionable("BeatBox", e->tabs.drumZone()));
+        views.add(new Actionable("BeatBox", e->tabs.beatBox(zone.getDrumMachine().getTracks())));
         views.add(synth);
-        refillTracks();
         views.add(new Actionable("ChordPro..", e-> {
         	if (zone.getChords().isEmpty()) {
 	        	if (zone.getChords().load() != null)

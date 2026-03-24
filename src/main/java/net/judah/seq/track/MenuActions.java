@@ -5,8 +5,8 @@ import java.util.ArrayList;
 import javax.sound.midi.MidiEvent;
 import javax.swing.JMenu;
 
+import judahzone.api.DrumType;
 import judahzone.gui.Actionable;
-import net.judah.drums.DrumType;
 import net.judah.gui.MainFrame;
 import net.judah.seq.track.Edit.Type;
 

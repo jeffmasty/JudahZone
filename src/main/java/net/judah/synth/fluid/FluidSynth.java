@@ -6,79 +6,98 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Vector;
 
 import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MetaMessage;
+import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
+import org.jaudiolibs.jnajack.JackMidi;
 import org.jaudiolibs.jnajack.JackPort;
 
 import judahzone.api.Midi;
+import judahzone.api.MidiUpdate;
+import judahzone.gui.Icons;
+import judahzone.util.AudioTools;
 import judahzone.util.Constants;
 import judahzone.util.RTLogger;
 import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
-import net.judah.gui.MainFrame;
 import net.judah.midi.JudahMidi;
-import net.judah.midi.MidiInstrument;
-import net.judah.seq.track.Computer;
+import net.judah.seq.Luthier;
+import net.judah.seq.chords.Chords;
+import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
+import net.judah.synth.SynthEngine;
+import net.judah.synth.TrackOut;
 
 /** runs fluid command line and connects to FluidSynth stdin and stdout ports */
-public final class FluidSynth extends MidiInstrument {
-	public static final String LEFT_PORT = "fluidsynth-midi:left"; // "fluidsynth:l_00";
-	public static final String RIGHT_PORT = "fluidsynth-midi:right"; // "fluidsynth:r_00";
-	public static final String MIDI_PORT = "fluidsynth-midi:midi_00"; // "fluidsynth:midi";
-	public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // "~/tracks/JJazzLab-SoundFont.sf2"
+public final class FluidSynth extends SynthEngine {
+    public static final String LEFT_PORT = "fluidsynth-midi:left"; // "fluidsynth:l_00";
+    public static final String RIGHT_PORT = "fluidsynth-midi:right"; // "fluidsynth:r_00";
+    public static final String MIDI_PORT = "fluidsynth-midi:midi_00"; // "fluidsynth:midi";
+    public static final File SOUND_FONT = new File("/usr/share/sounds/sf2/FluidR3_GM.sf2"); // "~/tracks/JJazzLab-SoundFont.sf2"
 
-	public record DrumProg(String name, int prog) {};
-	private final String shellCommand;
-	private Process process;
-	/** talks to FluidSynth on stdin */
-	private final OutputStream outStream;
-	/** General-Midi presets */
-	@Getter private final FluidChannels channels = new FluidChannels();
-	@Getter private final ArrayList<DrumProg> drums = new ArrayList<>();
-	private FluidListener listener;
+    public record DrumProg(String name, int prog) {};
+    private final String shellCommand;
+    private Process process;
+    /** talks to FluidSynth on stdin */
+    private final OutputStream outStream;
+    /** General-Midi presets */
+    final FluidChannels channels = new FluidChannels();
+    @Getter private final ArrayList<DrumProg> drums = new ArrayList<>();
+    private FluidListener listener;
+    @Getter private Vector<PianoTrack> tracks = new Vector<>();
 
-	public FluidSynth(JackPort midi, JackPort left, JackPort right) throws IOException {
-		this(Constants.FLUID, midi, left, right, "Fluid.png");
+    public FluidSynth(JackPort midi, JackPort left, JackPort right) throws IOException {
+        this(Constants.FLUID, midi, left, right, "Fluid.png");
+    }
+
+    // watch timing
+    @Getter private String[] patches = new String[0];
+
+    @SuppressWarnings("deprecation")
+    public FluidSynth(String name, JackPort midi, JackPort left, JackPort right, String image) throws IOException {
+        super(name, LEFT_PORT, RIGHT_PORT, left, right, image, midi, true);
+        shellCommand = "fluidsynth -m jack -a jack -g 1.5 -C 0 -r " + S_RATE + " " + SOUND_FONT.getAbsolutePath();
+
+        process = Runtime.getRuntime().exec(shellCommand); // IOException
+        new FluidListener(process.getErrorStream(), true).start();
+        listener = new FluidListener(process.getInputStream(), false);
+        listener.start();
+
+        int delay = 222;
+        Threads.sleep(delay);
+        outStream = process.getOutputStream();
+
+        FluidSynth[] predecessors = getFluids();
+        if (predecessors.length == 0 || predecessors[0].getPatches().length == 0)
+            try {
+                Threads.sleep(2 * delay);
+                syncInstruments();
+                syncChannels();
+            } catch (Throwable e) {
+                RTLogger.warn(this, e);
+            }
+        else
+            patches = predecessors[0].getPatches();
+
+        replace(new FluidReverb(this)); // use external reverb
+        RTLogger.registerParticipant(new FluidConsole(this));
+        icon = Icons.get("Fluid.png");
+
+    }
+
+    @Override
+	public PianoTrack addTrack(String name, MidiUpdate gui, Chords c) throws InvalidMidiDataException {
+    	int midiCh = tracks.size();
+    	TrackOut wrapper = new TrackOut(this, midiCh, gui);
+		PianoTrack t = new PianoTrack(name, midiCh, this, wrapper, c);
+		tracks.add(t);
+		return t;
 	}
-
-	public FluidSynth(String engineName, JackPort midi, JackPort left, JackPort right) throws IOException {
-		this(engineName, midi, left, right, "Violin.png");
-	}
-
-	@SuppressWarnings("deprecation")
-	private FluidSynth(String name, JackPort midi, JackPort left, JackPort right, String image) throws IOException {
-		super(name, LEFT_PORT, RIGHT_PORT, left, right, image, midi);
-		shellCommand = "fluidsynth -m jack -a jack -g 1.5 -C 0 -r " + S_RATE + " " + SOUND_FONT.getAbsolutePath();
-
-		process = Runtime.getRuntime().exec(shellCommand); // IOException
-		new FluidListener(process.getErrorStream(), true).start();
-		listener = new FluidListener(process.getInputStream(), false);
-		listener.start();
-
-		int delay = 222;
-		Threads.sleep(delay);
-		outStream = process.getOutputStream();
-
-		FluidSynth[] predecessors = JudahZone.getInstance().getSeq().getFluids();
-		if (predecessors.length == 0 || predecessors[0].getPatches().length == 0)
-			try {
-				Threads.sleep(2 * delay);
-				syncInstruments();
-				syncChannels();
-			} catch (Throwable e) {
-				RTLogger.warn(this, e);
-			}
-		else
-			patches = predecessors[0].getPatches();
-
-		replace(new FluidReverb(this)); // use external reverb
-		RTLogger.registerParticipant(new FluidConsole(this));
-	}
-
 
 	public void syncChannels() {
 		try {
@@ -176,17 +195,34 @@ public final class FluidSynth extends MidiInstrument {
 
 	private void sendProg(int idx, int ch, String name) {
 		JudahMidi.queue(Midi.create(ShortMessage.PROGRAM_CHANGE, ch, idx, 0), midiPort);
-		for (PianoTrack p : tracks)
-			if (p.getCh() == ch)
-				MainFrame.updateTrack(Computer.Update.PROGRAM, p);
+
+
+		// get midiOut for ch, set dataModel of that wrapper for next calls, for gui updates
+
+
+
+
+
+
+// feels like infinite loop:  MidiOut is source of truth, our MidiOut is a TrackOut wrapper, not wired (YET) for program
+//		for (int i = 0; i < tracks.size(); i++) {
+//			PianoTrack t = tracks.get(i);
+//			if (t.getCh() == ch)
+//				t.progChange(idx);
+//		}
 	}
 
-	public String getProg(int ch) {
+	@Override public String getProgram(int ch) {
+
 		return tracks.get(ch).getState().getProgram();
 	}
 
-	public boolean progChange(String preset) {
-		return progChange(preset, 0);
+	@Override public int getProgChange(int ch) {
+		String program = getProgram(ch);
+		for (int i = 0; i < patches.length; i++)
+			if (patches[i].equals(program))
+				return i;
+		return -1;
 	}
 
 	@Override public String progChange(int data2, int ch) {
@@ -197,47 +233,73 @@ public final class FluidSynth extends MidiInstrument {
 		return name;
 	}
 
-	public boolean progChange(String preset, int ch) {
+	@Override
+	public int progChange(String preset, int ch) {
 		try {
 			int idx = Integer.parseInt(preset);
 			if (idx > 0 && idx < 128)
 				progChange(idx, ch);
-			return true;
+			return idx;
 		} catch (NumberFormatException e) { /* ignore */ }
 
 		for (int i = 0; i < patches.length; i++)
 			if (patches[i].equals(preset)) {
 				// flooding: Constants.execute(() -> {
 				sendProg(i, ch, preset);
-				return true;
+				return i;
 			}
-		return false;
+		return -1;
 	}
 
+	@Override public final void processImpl() {
+		if (isOnMute())
+			return;
+
+		// get raw data
+		AudioTools.copy(leftPort.getFloatBuffer(), left);
+		AudioTools.copy(rightPort.getFloatBuffer(), right);
+		fx();
+	}
+
+	@Override public final void send(MidiMessage midi, long timeStamp) {
+		if (midi instanceof MetaMessage)
+			return; // TODO
+		ShortMessage msg = (ShortMessage)midi;
+		if (cc.process(msg))
+			return; // channel filtered
+
+		if (Midi.isProgChange(midi))  // Should have been filtered by MidiTrack
+			return;
+
+
+
+// hmm, this section..., perhaps the midi should be ch formatted already, just write?
+		// worry about the live keyboard being routed here (force live keyboard to format?)
+		NoteTrack out = null;
+		for (NoteTrack t : getTracks())
+			if (t.getCh() == msg.getChannel()) {
+				out = t;
+				break;
+			}
+		if (out == null)
+			out = tracks.getFirst();
+
+//		if (pedalPass(shrt)) // TODO Notes should veto if pedal (and update velocity)
+			write(Midi.format(msg, out.getCh(), out.getAmp()));
+	}
+
+	void write(ShortMessage msg) {
+		try {
+			JackMidi.eventWrite(midiPort, JudahMidi.ticker(),
+					msg.getMessage(), msg.getLength());
+		} catch (Exception e) {RTLogger.warn(this, e);}
+	}
+
+	public FluidSynth[] getFluids() {
+		Luthier factory = JudahZone.getInstance().getLuthier();
+		if (factory == null)
+			return new FluidSynth[0];
+		return factory.getFluids();
+	}
 
 }
-
-//public void mute() {
-//sendCommand(FluidCommand.GAIN, FluidCommand.GAIN.min);
-//}
-//// TODO chorus routines to MIDI "SF2 default modulators" (too many jack hangs on stdin)
-//public void chorusDelayLines(int val) {
-//	FluidCommand delay = FluidCommand.CHORUS_DELAY_LINES;
-//	if (val > delay.max.intValue()) val = delay.max.intValue();
-//	if (val < delay.min.intValue()) val = delay.min.intValue();
-//	sendCommand(delay.code + val); }
-//public void chorusLevel(float val) {
-//	FluidCommand level = FluidCommand.CHORUS_OUTPUT;
-//	if (val > level.max.floatValue()) val = level.max.floatValue();
-//	if (val < level.min.intValue()) val = level.min.intValue();
-//	sendCommand(level.code + val); }
-//public void chorusSpeed(float val) {
-//	FluidCommand speed = FluidCommand.CHORUS_SPEED;
-//	if (val > speed.max.floatValue()) val = speed.max.floatValue();
-//	if (val < speed.min.floatValue()) val = speed.min.floatValue();
-//	sendCommand(speed.code + val);}
-//public void chorusDepth(int val) {
-//	FluidCommand depth = FluidCommand.CHORUS_DEPTH;
-//	if (val > depth.max.intValue()) val = depth.max.intValue();
-//	if (val < depth.min.intValue()) val = depth.min.intValue();
-//	sendCommand(depth.code + val); }

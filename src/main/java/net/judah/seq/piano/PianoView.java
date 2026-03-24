@@ -3,7 +3,7 @@ package net.judah.seq.piano;
 
 import java.awt.Dimension;
 
-import judahzone.api.Key;
+import judahzone.data.Key;
 import judahzone.gui.Floating;
 import judahzone.gui.Gui;
 import judahzone.util.RTLogger;
@@ -30,7 +30,7 @@ public class PianoView extends HiringAgency implements Floating, Size {
 	@Getter final Piano grid;
 	@Getter private final PianoMenu menu;
 	@Getter private final PianoSteps steps;
-	private final PianoKeys keyboard;
+	@Getter private final PianoKeys keyboard;
 
 	int range = DEFAULT_RANGE;
 	int tonic = DEFAULT_TONIC;
@@ -45,8 +45,8 @@ public class PianoView extends HiringAgency implements Floating, Size {
 		this.track = t;
 		setName(t.getName());
 
-		keyboard = new PianoKeys(track, this);
-		steps = new PianoSteps(track, seq.getAutomation());
+		keyboard = new PianoKeys(track, this, t.getNotes());
+		steps = new PianoSteps(track, seq.getAutomation(), t.getNotes());
 		grid = new Piano(this, steps, keyboard);
 		menu = new PianoMenu(this, grid, seq);
 		pedal = t.getPedal();

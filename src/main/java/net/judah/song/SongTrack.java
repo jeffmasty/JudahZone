@@ -19,6 +19,7 @@ import net.judah.gui.Size;
 import net.judah.gui.TabZone;
 import net.judah.gui.settable.ModeCombo;
 import net.judah.gui.settable.Program;
+import net.judah.gui.widgets.FxButton;
 import net.judah.gui.widgets.PlayBtn;
 import net.judah.gui.widgets.TogglePreset;
 import net.judah.gui.widgets.TrackGain;
@@ -26,6 +27,7 @@ import net.judah.gui.widgets.TrackVol;
 import net.judah.seq.track.ChannelTrack;
 import net.judah.seq.track.Computer.Update;
 import net.judah.seq.track.MidiTrack;
+import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
 import net.judah.seq.track.Programmer;
 
@@ -51,7 +53,7 @@ import net.judah.seq.track.Programmer;
 		mode = t instanceof PianoTrack p ? new ModeCombo(p) : null;
 		gain = t instanceof PianoTrack ? null : new TrackGain(t);
 		amp = new TrackVol(track);
-		program = new Program(track);
+		program = t instanceof NoteTrack n ? new Program(n) : null;
 		programmer = new Programmer(track);
 		ccTrack = new CCTrack(track);
 
@@ -68,14 +70,14 @@ import net.judah.seq.track.Programmer;
 		else
 			top.add(amp);
 
-		top.add(Gui.resize(program, COMBO_SIZE));
+		top.add(new FxButton(track.getChannel()));
+
+		if (program != null)
+			top.add(Gui.resize(program, COMBO_SIZE));
 		top.add(Gui.resize(programmer, COMPUTER));
 
-		if (t instanceof ChannelTrack)
-			top.add(new Btn(Icons.DETAILS_VIEW, e->MainFrame.setFocus(t.getChannel())));
-		else
+		if (t instanceof ChannelTrack == false)
 			top.add(new Btn(Icons.DETAILS_VIEW, e->TabZone.edit(track)));
-
 		if (MainFrame.isBundle())
 			top.add(new Btn(" ⏲ ", l->expand()));
 
@@ -86,7 +88,7 @@ import net.judah.seq.track.Programmer;
 			folder.setBorder(Gui.SUBTLE);
 			if (track.getFile() != null)
 				folder.setText(track.getFile().getName());
-			top.add(Gui.resize(folder, MEDIUM));
+			top.add(Gui.resize(folder, SMALLER));
 		}
 		Gui.resize(this, Overview.TRACK);
 		setBorder(Gui.SUBTLE);
@@ -133,7 +135,7 @@ import net.judah.seq.track.Programmer;
 	}
 
 	public void update(Update type) {
-		if (Update.PROGRAM == type)
+		if (Update.PROGRAM == type && program != null)
 			program.update();
 		else if (Update.ARP == type && mode != null)
 			mode.update();

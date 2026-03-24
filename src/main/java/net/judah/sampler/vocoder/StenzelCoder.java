@@ -3,8 +3,7 @@ package net.judah.sampler.vocoder;
 import javax.sound.midi.ShortMessage;
 
 import be.tarsos.dsp.util.fft.HannWindow;
-import judahzone.api.Frequency;
-import judahzone.api.Hz;
+import judahzone.util.Frequency;
 import lombok.Getter;
 
 /** Pitch-synchronous vocoder using leaky autocorrelation.

@@ -1,13 +1,20 @@
 package net.judah.channel;
 
+import java.util.concurrent.Callable;
+
 import judahzone.util.Constants;
 import lombok.Getter;
-import net.judah.JudahZone;
-import net.judah.drums.DrumKit;
 import net.judah.gui.MainFrame;
 
 /** an live audio channel that can be recorded */
-public abstract class LineIn extends Channel {
+public abstract class LineIn extends Channel  {
+
+
+    // preallocated task to avoid per-frame lambda allocation
+    @Getter private final Callable<Void> processTask = () -> {
+	    process();
+	    return null;
+	};
 
 	@Getter protected boolean muteRecord = true;
 
@@ -20,9 +27,7 @@ public abstract class LineIn extends Channel {
 
     public final void setMuteRecord(boolean muteRecord) {
 		this.muteRecord = muteRecord;
-		MainFrame.update(this);
-		if (this instanceof DrumKit)
-			MainFrame.update(JudahZone.getInstance().getDrumMachine());
+		MainFrame.updateChannel(Update.MUTE_RECORD, this);
 	}
 
     /** run active stereo effects on this input channel*/

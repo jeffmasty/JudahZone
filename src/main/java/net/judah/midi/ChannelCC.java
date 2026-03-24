@@ -4,11 +4,11 @@ import static judahzone.fx.Chorus.Settings.*;
 
 import javax.sound.midi.ShortMessage;
 
+import judahzone.api.ControlChange;
 import judahzone.api.Midi;
-import judahzone.api.MidiConstants;
 import judahzone.fx.Chorus;
-import judahzone.fx.Delay;
 import judahzone.fx.CutFilter;
+import judahzone.fx.Delay;
 import judahzone.fx.Gain;
 import judahzone.fx.MonoFilter;
 import judahzone.fx.Reverb;
@@ -18,10 +18,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.judah.channel.Channel;
 import net.judah.gui.MainFrame;
-import net.judah.seq.automation.ControlChange;
 
 @RequiredArgsConstructor  // TacoSynthTruck, DrumKit, MidiInstrument
 public class ChannelCC {
+	public static final int THOLD_LO = 1; // toggle Fx
+	public static final int THOLD_HI = 99; // toggle Fx
+
 
 	private final Channel ch;
 	@Getter @Setter private boolean active = true;
@@ -43,32 +45,32 @@ public class ChannelCC {
 				break;
 			case BRIGHT:
 	        	filter.set(MonoFilter.Settings.Resonance.ordinal(), val);
-	        	ch.setActive(filter, val < MidiConstants.THOLD_HI);
+	        	ch.setActive(filter, val < THOLD_HI);
 				break;
 			case CHORUS:
 				ch.getChorus().set(Chorus.Settings.Feedback.ordinal(), val);
 
-				ch.setActive(ch.getChorus(), val > MidiConstants.THOLD_LO);
+				ch.setActive(ch.getChorus(), val > THOLD_LO);
 				break;
 			case ECHO:
 				ch.getDelay().set(Delay.Settings.DelayTime.ordinal(), val);
-				ch.setActive(ch.getDelay(), val > MidiConstants.THOLD_LO);
+				ch.setActive(ch.getDelay(), val > THOLD_LO);
 				break;
 			case ECHO_FB:
 				ch.getDelay().set(Delay.Settings.Feedback.ordinal(), val);
-				ch.setActive(ch.getDelay(), val > MidiConstants.THOLD_LO);
+				ch.setActive(ch.getDelay(), val > THOLD_LO);
 				break;
 			case DEPTH:
 	        	ch.getChorus().set(Chorus.Settings.Depth.ordinal(), val);
-	        	ch.setActive(ch.getChorus(), val > MidiConstants.THOLD_LO);
+	        	ch.setActive(ch.getChorus(), val > THOLD_LO);
 				break;
 			case DRIVE:
 				ch.getOverdrive().set(0, val);
-				ch.setActive(ch.getOverdrive(), val > MidiConstants.THOLD_LO);
+				ch.setActive(ch.getOverdrive(), val > THOLD_LO);
 				break;
 			case HZ:
 	        	filter.set(MonoFilter.Settings.Frequency.ordinal(), val);
-	        	ch.setActive(filter, val < MidiConstants.THOLD_HI);
+	        	ch.setActive(filter, val < THOLD_HI);
 				break;
 			case LFO:
 				lfo.set(LFO.Settings.MSec.ordinal(), val);
@@ -92,7 +94,7 @@ public class ChannelCC {
 				break;
 			case RATE:
 	        	ch.getChorus().set(Chorus.Settings.Rate.ordinal(), val);
-	        	ch.setActive(ch.getChorus(), val < MidiConstants.THOLD_HI);
+	        	ch.setActive(ch.getChorus(), val < THOLD_HI);
 				break;
 			case TREMELO:
 				lfo.tremelo(val);

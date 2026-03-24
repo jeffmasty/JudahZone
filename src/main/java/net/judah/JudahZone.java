@@ -8,11 +8,9 @@ import static org.jaudiolibs.jnajack.JackPortType.AUDIO;
 
 import java.awt.EventQueue;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.apache.log4j.xml.DOMConfigurator;
 import org.apache.logging.log4j.Level;
@@ -21,11 +19,12 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import judahzone.api.AudioEngine;
 import judahzone.api.AudioEngine.Type;
+import judahzone.drums.wav.WavDrumDB;
 import judahzone.fx.Convolution;
-import judahzone.gui.Icons;
 import judahzone.gui.Nimbus;
 import judahzone.jnajack.JackHelper;
 import judahzone.jnajack.ZoneJackClient;
+import judahzone.synth.SynthDB;
 import judahzone.util.AudioTools;
 import judahzone.util.Constants;
 import judahzone.util.Folders;
@@ -35,12 +34,12 @@ import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.bridge.Analyzers;
 import net.judah.channel.Channel;
+import net.judah.channel.Generator;
 import net.judah.channel.LineIn;
 import net.judah.channel.Mains;
 import net.judah.channel.PresetsDB;
 import net.judah.controllers.MPKmini;
 import net.judah.drums.DrumMachine;
-import net.judah.drums.wav.WavDrumDB;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.FxPanel;
 import net.judah.gui.fx.MultiSelect;
@@ -54,43 +53,50 @@ import net.judah.mixer.Fader;
 import net.judah.mixer.IRDB;
 import net.judah.sampler.SampleDB;
 import net.judah.sampler.Sampler;
+import net.judah.seq.Luthier;
 import net.judah.seq.Seq;
-import net.judah.seq.Trax;
 import net.judah.seq.chords.Chords;
 import net.judah.song.Overview;
 import net.judah.song.setlist.Setlists;
 import net.judah.synth.fluid.FluidSynth;
-import net.judah.synth.taco.SynthDB;
-import net.judah.synth.taco.TacoTruck;
 
-/* my jack sound system settings:
+/* my jack sound system settings: (samples are 48khz)
  * jackd -P99 -dalsa -dhw:UMC1820 -r48000 -p512 -n2
- * (samples are 48khz) */
+ *
+ * life cycle:
+ *  load presets/samples/IRs (off thread)
+ * 	init some internal units (e.g. clock, channels, looper, seq)
+ * 	set Midi/Audio ports (initialize/makeConnections)
+ * 	start MainFrame
+ * 	start Channels graph (synths + MidiUpdates loop)
+ * 	initialized.
+ *
+ */
 public class JudahZone extends ZoneJackClient {
 	public static final String JUDAHZONE = JudahZone.class.getSimpleName();
-	public static JudahZone getInstance() { return instance; }
 	private static JudahZone instance;
+	public static JudahZone getInstance() { return instance; }
 	private static boolean initialized; // abort
 	public static boolean isInitialized() { return initialized; }
-	public static void setInitialized(boolean initialized) {JudahZone.initialized = initialized; }
 
 	private JackPort outL, outR;
 	@Getter private Mains mains;
-	/** hot buffer, The Product */
+	/** The Product, left channel */
 	private final float[] left = new float[Constants.bufSize()];
-	/** hot buffer, The Product */
+	/** The Product, right channel */
 	private final float[] right = new float[Constants.bufSize()];
 
-	@Getter private final Chords chords;
-	@Getter private final JudahMidi midi;
 	private final JudahClock clock;
+	@Getter private final JudahMidi midi;
 	@Getter private final Channels channels;
-	@Getter private final TacoTruck taco; // midiTrack-Controlled-digital-Oscillator
+	@Getter private final Chords chords;
 	@Getter private final Sampler sampler;
 	@Getter private final Looper looper;
 	@Getter private final DrumMachine drumMachine;
 	@Getter private final Seq seq;
 
+	@Getter private Luthier luthier;
+	@Getter private Generator taco; // midiTrack-Controlled-digital-Oscillator
 	@Getter private FluidSynth fluid; // promote to system for current commit
 	@Getter private MainFrame frame;
 	@Getter private DJJefe mixer;
@@ -101,31 +107,27 @@ public class JudahZone extends ZoneJackClient {
 	@Getter private final Setlists setlists = new Setlists();
 	private final MultiSelect selected = new MultiSelect();
 
+	// process each LineIn multi-threaded (join for mix)
+	private final ExecutorService processExec = Threads.getProcessPool();
+	private final List<Callable<Void>> threads = new ArrayList<>();
 	/** Thread-safe list of analyzers; each consumes left/right float[] frames. */
 	@Getter private final Analyzers analysis = new Analyzers(selected);
-
-	private final ExecutorService processExec = Executors.newFixedThreadPool(
-	            Runtime.getRuntime().availableProcessors(),
-	            r -> {	Thread t = new Thread(r, "DSP-Worker");
-	                	t.setDaemon(true);
-	                	return t; });
-	private final List<Callable<Void>> threads = new ArrayList<>();
 
 	private JudahZone() throws Exception {
 		super(JUDAHZONE);
 		Nimbus.start();
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
-		Threads.execute(() -> WavDrumDB.init());
-		Threads.execute(() -> SampleDB.init());
-		Threads.execute(() -> Convolution.setIRDB(IRDB.instance) );
+
+		Threads.execute(() -> SampleDB.init(Folders.getSamples()));
+		Threads.execute(() -> WavDrumDB.init(Folders.getKits()));
 		Threads.execute(() -> SynthDB.init(Folders.getSynthPresets()));
+		Threads.execute(() -> Convolution.setIRDB(new IRDB(Folders.getIR())) );
 		Threads.execute(() -> PresetsDB.init(Folders.getPresetsFile()));
 
-		instance = this;
 		channels = new Channels(this, Folders.getUserChannels());
-		channels.load(); // custom channel prototypes ready to register ports
 		mpkMini = new MPKmini(this);
 		midi = new JudahMidi(this);
+		channels.load(); // custom channel prototypes ready to register ports
 		AudioEngine.register(new JackHelper(midi, this));
 
 		clock = JudahMidi.getClock();
@@ -133,13 +135,11 @@ public class JudahZone extends ZoneJackClient {
 		looper = new Looper(clock, channels);
 		mixer = new DJJefe(this);
 		chords = new Chords(this, clock);
-		taco = new TacoTruck(Trax.TK1.getName(), Icons.get("taco.png"));
-		taco.setOnMixer(true);
 		sampler = new Sampler();
-		drumMachine = new DrumMachine();
+		drumMachine = new DrumMachine(Folders.getDrumsets());
 		seq = new Seq(this);
 		start(); // super calls initialize(), makeConnections()
-
+		instance = this;
 	}
 
 	public static void main(String[] args) {
@@ -193,19 +193,19 @@ public class JudahZone extends ZoneJackClient {
 		looper.gui();
 		seq.gui();
 		mixer.gui();
-		channels.gui(sampler, drumMachine, taco, fluid);
-
-		midiGui = new MidiGui(this, taco, fluid, channels.getBass(), clock, midi.getJamstik());
+		channels.gui(sampler, drumMachine);
 		overview = new Overview(JUDAHZONE, this);
 		fxRack = new FxPanel(selected, clock, mains, analysis);
+		midiGui = new MidiGui(this, clock, midi.getJamstik());
 		frame = new MainFrame(JUDAHZONE, this);
+		luthier = new Luthier(frame, seq, chords, drumMachine);
+		channels.accept(fluid);
+		taco = luthier.makeTaco();
+		channels.accept(taco);
+		midiGui.ping(taco, fluid, channels.getBass());
+		clock.setTempo(93);
 
 		EventQueue.invokeLater(()->{
-			clock.setTempo(93);
-			overview.newSong();
-			drumMachine.init("Drumz");
-			System.gc();
-			Fader.execute(Fader.fadeIn());
 
 			Channel guitar = channels.getGuitar();
 			if (guitar != null) {
@@ -214,6 +214,9 @@ public class JudahZone extends ZoneJackClient {
 				MainFrame.setFocus(guitar);
 			}
 
+			overview.newSong();
+			System.gc();
+			Fader.execute(Fader.fadeIn());
 			initialized = true;
 			////////////////////////////
 			// now the system is live //
@@ -244,8 +247,8 @@ public class JudahZone extends ZoneJackClient {
 			return true;
 
 		// the sound will be additive
-		Arrays.fill(left, 0f);
-		Arrays.fill(right, 0f);
+		AudioTools.silence(left);
+		AudioTools.silence(right);
 
 		if (mains.isOnMute()) {
 		//	if (mains.isHotMic()) { // TODO Revive HOT MIC function, or not: Vocoder
@@ -261,24 +264,24 @@ public class JudahZone extends ZoneJackClient {
 			return true;
 		}
 
-		threads.clear();
 		// Run each channel+FX multi-threaded (synth engines are channels)
+		threads.clear();
 		List<LineIn> lines = channels.getAudio();
 		int channels = lines.size();
 		for (int i = 0; i < channels; i++) {
-			final LineIn channel = lines.get(i);
-		    threads.add(() -> { channel.process(); return null;});
-		}
+		    threads.add(lines.get(i).getProcessTask());
+		} // DrumMachine would like up to 4, a SynthEngine might want more than 1.. each active voice..
 
 		try {
-		    processExec.invokeAll(threads);
+		    processExec.invokeAll(threads); // prism ok
 		} catch (InterruptedException e) {
 		    Thread.currentThread().interrupt();
 		}
 
-		// join/mix channels/threads
+		// join/mix channels/threads // TODO pre-run loops (inputs built)
 		for (int i = 0; i < channels; i++)
 			lines.get(i).mix(left, right);
+
 		looper.process(left, right);  // looper records previous channels and/or plays loops
 		mains.process(left, right);	  // final mix bus effects
 

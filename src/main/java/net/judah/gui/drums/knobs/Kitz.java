@@ -1,47 +1,40 @@
 package net.judah.gui.drums.knobs;
 
-import java.util.List;
-
 import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
+import javax.swing.JComboBox;
 import javax.swing.JPanel;
-import javax.swing.JToggleButton;
 
+import judahzone.data.ProgChange;
+import judahzone.drums.Drum;
+import judahzone.drums.DrumUpdate;
 import judahzone.gui.Gui;
 import judahzone.gui.Icons;
 import judahzone.util.RTLogger;
 import judahzone.widgets.Btn;
 import lombok.Getter;
-import net.judah.drums.Drum;
-import net.judah.drums.DrumKit;
-import net.judah.drums.DrumUpdate;
-import net.judah.drums.noise.NoiseKit;
-import net.judah.drums.wav.WavKit;
+import net.judah.drums.DrumMachine;
+import net.judah.drums.Drumset;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
-import net.judah.midi.Actives;
 
 public class Kitz extends KnobPanel {
+
+	private static Kitz instance;
 
 	@Getter private final KnobMode knobMode = KnobMode.Kitz;
 	@Getter private final JPanel title = new JPanel();
 	private KitKnobs knobs;
+	private final JComboBox<Drumset> combo;
 
-	public Kitz(List<DrumKit> kits) {
+	private Kitz(DrumMachine drumz) {
+		instance = this;
 		title.setLayout(new BoxLayout(title, BoxLayout.X_AXIS));
-		ButtonGroup g = new ButtonGroup();
-		for (DrumKit k : kits) {
-			JToggleButton b = new JToggleButton(k.getName());
-			if (g.getButtonCount() == 0)
-				b.setSelected(true);
-			g.add(b);
-
-			b.addActionListener(e -> install(k.getKnobs()));
-			title.add(b);
-		}
+		combo = new JComboBox<>(drumz.getKits().toArray(new Drumset[0]));
+		combo.addActionListener(e -> show(drumz));
+		int idx = drumz.getTracks().indexOf(drumz.getTracks().getCurrent());
+		combo.setSelectedIndex(idx);
+		title.add(combo);
 		title.add(new Btn(Icons.SAVE, e->save()));
-
-		install(kits.get(0).getKnobs());
 
 	}
 
@@ -49,71 +42,39 @@ public class Kitz extends KnobPanel {
 		this.knobs = knobs;
 		super.install(knobs);
 		// TODO make sure correct kit toggle button is selected
-
 	}
 
 	public void update(Object o) {
-		if (o instanceof Actives a && knobs != null) {
-			if (a.getMidiOut() == knobs.getKit())
-				knobs.update(a);
-		}
-		else if (o instanceof DrumUpdate up)
-			up.drum().getDrama().set(up);
+		if (o instanceof DrumUpdate up)
+			up.drum().getEdit().set(up);
 		else if (o instanceof Drum drum && knobs != null) {
-			DrumKit ours = knobs.getKit();
-			for (int i = 0; i < DrumKit.LENGTH; i++) {
+			Drumset ours = knobs.getKit();
+			for (int i = 0; i < Drumset.LENGTH; i++) {
 				if (drum == ours.get(i)) {
 					knobs.update(); // TODO targeted
 					return;
 				}
 			}
+		} else if (o instanceof Drumset kit) {
+			// in this case one of the drumset's drums has fired or gone silent, update the background of respective drumset's pad, if that drumset is the currently viewed kit.
+			if (knobs != null && knobs.getKit() == kit)
+				knobs.update(kit.actives());
 		}
+		else
+			RTLogger.log(this, "Unknown update: " + o);
 	}
-
-//	/** Broadcast actives to every kit's knobs (keeps GUI in sync). */
-//	public void update(Actives a) {
-//		drumz.getKits().forEach(kit -> kit.getKnobs().update(a));
-//	}
-
-//	/** Route DrumParams to the DrumSynth that owns the DrumOsc, else broadcast. */
-//	private void routeDrumParams(NoiseParams dp) {
-//
-//		for (DrumKit kit : drumz.getKits()) {
-////			if (kit instanceof NoiseKit ds) {
-////				if (match == src) {
-////					kit.getKnobs().update(dp);
-////					return;
-////				}
-////			}
-//		}
-//		// fallback: broadcast to all kits
-//		drumz.getKits().forEach(kit -> kit.getKnobs().update(dp));
-//	}
-
-//	/**Route SampleParams to the OldSchool kit that owns the DrumSample, else* broadcast. */
-//	private void routeSampleParams(SampleParams sp) {
-//		for (DrumKit kit : drumz.getKits()) {
-//			if (kit instanceof SampleKit)
-//				kit.getKnobs().update(sp);
-//		}
-//		// fallback: broadcast to all kits
-//		drumz.getKits().forEach(kit -> kit.getKnobs().update(sp));
-//	}
 
 	void save() {
 		if (installed instanceof KitKnobs knobs) {
-			DrumKit kit = knobs.getKit();
-
-			String old =
-				kit instanceof NoiseKit synth ? synth.getProgram() :
-				kit instanceof WavKit samples ? samples.getKitName() : "??";
-
+			Drumset kit = knobs.getKit();
+			String old = kit.getProgram();
 			String name = Gui.inputBox("Name (" + old + ")"); // current
 			if (name == null)
 				return;
 			if (name.isBlank())
 				name = old; // default to current if blank
-			kit.save(name);
+			ProgChange doit = new ProgChange(kit.getProgChange(), name);
+			kit.save(doit);
 		}
 		else {
 			RTLogger.log(this, "No kit selected.");
@@ -138,6 +99,14 @@ public class Kitz extends KnobPanel {
 			return true;
 		}
 		return false;
+	}
+
+	public static Kitz show(DrumMachine drums) {
+		if (instance == null)
+			instance = new Kitz(drums);
+		else
+			instance.install(new KitKnobs((Drumset)instance.combo.getSelectedItem()));
+		return instance;
 	}
 
 }

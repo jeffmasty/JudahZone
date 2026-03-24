@@ -20,9 +20,9 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 
+import judahzone.api.DrumType;
 import judahzone.api.GMDrum;
 import net.judah.JudahZone;
-import net.judah.drums.DrumType;
 import net.judah.gui.MainFrame;
 import net.judah.seq.track.DrumTrack;
 import net.judah.seq.track.Edit;

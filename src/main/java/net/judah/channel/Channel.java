@@ -44,7 +44,7 @@ public abstract class Channel extends FXBus implements Presets {
     protected Custom user;
     @Setter protected boolean onMixer;
 
-    protected final Gain gain = new Gain(); // RT but handles separately
+    protected final Gain gain = new Gain(); // RT but handled separately
     protected final EQ eq = new EQ();
     protected final CutFilter hiCut = new CutFilter(true);
     protected final CutFilter loCut = new CutFilter(false);
@@ -64,9 +64,9 @@ public abstract class Channel extends FXBus implements Presets {
     protected boolean presetActive;
     protected EffectsRack gui;
     protected LFOKnobs lfoKnobs;
-    /** Last RMS values computed on the RT thread (0..1 approximate). */
-	private /* volatile */ float lastRmsLeft = 0f; // TODO atomic?
-	private /* volatile */ float lastRmsRight = 0f;
+    /** Last RMS values computed on the RT thread (0..1). */
+	private float lastRmsLeft = 0f; // volatile?
+	private float lastRmsRight = 0f;
 
     public Channel(String name, boolean isStereo) {
         this.name = name;
@@ -99,8 +99,6 @@ public abstract class Channel extends FXBus implements Presets {
     }
 
     public final void mix(float[] outLeft, float[] outRight) {
-        if (isOnMute())
-            return;
         AudioTools.mix(left, outLeft);
         AudioTools.mix(right, outRight);
     }
@@ -257,6 +255,10 @@ public abstract class Channel extends FXBus implements Presets {
     public void setUser(Custom json) {
     	this.user = json;
     	this.onMixer = json.onMixer();
+
+    	if (json.preamp() != null)
+    		gain.setPreamp(json.preamp());
+
     }
 	public boolean isSys() {
 		return user == null;

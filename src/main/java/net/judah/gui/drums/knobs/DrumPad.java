@@ -10,27 +10,27 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 
 import judahzone.api.Midi;
+import judahzone.drums.Drum;
+import judahzone.drums.DrumEdit;
+import judahzone.drums.DrumUpdate;
 import judahzone.gui.Gui;
+import judahzone.gui.Pastels;
 import judahzone.widgets.Knob;
 import judahzone.widgets.Knob.KnobListener;
-import net.judah.drums.Drama;
-import net.judah.drums.Drum;
-import net.judah.drums.DrumKit;
-import net.judah.drums.DrumUpdate;
+import net.judah.drums.Drumset;
 import net.judah.gui.MainFrame;
 import net.judah.gui.drums.views.DrumFrame;
-import net.judah.midi.Actives;
 import net.judah.midi.JudahMidi;
 
 /** Single drum pad: shows status and syncs with kit knob. */
 class DrumPad extends Gui.Opaque implements KnobListener, Gui.Mouse {
 
+	private static final Color ACTIVE_COLOR = Pastels.PURPLE;
 	private static final Color BORDER = Color.DARK_GRAY;
-	private static final Color ACTIVE_COLOR = new Color(100, 180, 100);
 
 	private final Drum drum;
-	private final Drama drama;
-	private final DrumKit kit;
+	private final DrumEdit edit;
+	private final Drumset kit;
 
 	private String unit = "%";
 
@@ -44,9 +44,9 @@ class DrumPad extends Gui.Opaque implements KnobListener, Gui.Mouse {
 	private final JLabel dataLabel = new JLabel("--", JLabel.CENTER);
 	private final JLabel unitLabel = new JLabel(unit, JLabel.CENTER);
 
-	public DrumPad(Drum drum, DrumKit kit) {
+	public DrumPad(Drum drum, Drumset kit) {
 		this.drum = drum;
-		this.drama = drum.getDrama();
+		this.edit = drum.getEdit();
 		this.kit = kit;
 		header = new JLabel(drum.getType().name(), JLabel.CENTER);
 
@@ -69,30 +69,36 @@ class DrumPad extends Gui.Opaque implements KnobListener, Gui.Mouse {
 			new DrumFrame(kit, drum);
 			return;
 		}
-		Midi click = Midi.create(Midi.NOTE_ON, kit.getChannel(), drum.getType().getData1(), 100);
+		Midi click = Midi.create(Midi.NOTE_ON, drum.getType().getData1(), 100);
 		kit.send(click, JudahMidi.ticker());
+	}
+
+
+
+	public void background(boolean active) {
+		setBackground(active ? ACTIVE_COLOR : null);
 	}
 
 	public void update() {
 		// Reflect active play state
-		Actives actives = kit.getActives();
-		boolean isActive = actives.find(drum.getType().getData1()) != null;
-		setBackground(isActive ? ACTIVE_COLOR : null);
+//		UINotes actives = kit.getActives();
+//		boolean isActive = actives.find(drum.getType().getData1()) != null;
+//		setBackground(isActive ? ACTIVE_COLOR : null);
 
 		// Update param display
-		int val = drama.get(paramIdx, mode);
+		int val = edit.get(paramIdx, mode);
 		if (knob.getValue() != val)
 			knob.setValue(val);
-		dataLabel.setText(drama.val(paramIdx, mode));
+		dataLabel.setText(edit.val(paramIdx, mode));
 	}
 
 	public void paramIdx(DrumUpdate.Mode m, int i) {
 		mode = m;
 		paramIdx = i;
-		int target = drum.getDrama().get(i, mode);
+		int target = drum.getEdit().get(i, mode);
 		if (knob.getValue() != target)
 			knob.setValue(target);
-		unit = drum.getDrama().getUnit(mode, i);
+		unit = drum.getEdit().getUnit(mode, i);
 		unitLabel.setText(unit);
 		dataLabel.setText("" + target);
 	}

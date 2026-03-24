@@ -7,9 +7,8 @@ import javax.sound.midi.ShortMessage;
 import judahzone.api.Algo;
 import judahzone.api.Chord;
 import judahzone.api.Midi;
-import judahzone.api.MidiConstants;
-import judahzone.api.TimeListener;
 import judahzone.api.Notification.Property;
+import judahzone.api.TimeListener;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.seq.track.Cue;
@@ -39,11 +38,13 @@ public class MPKTranspose extends Algo implements TimeListener, Feed, Ignorant {
 		}
 	}
 
+	int MIDDLE_C = 60;
+
 	@Override public void feed(ShortMessage midi) {
 		if (track.getCue() == Cue.Hot)
-			amount = midi.getData1() - MidiConstants.MIDDLE_C;
+			amount = midi.getData1() - MIDDLE_C;
 		else
-			onDeck = midi.getData1() - MidiConstants.MIDDLE_C;
+			onDeck = midi.getData1() - MIDDLE_C;
 	}
 
 	@Override public void process(ShortMessage m, Chord chord, List<Integer> result) {

@@ -1,6 +1,6 @@
 package net.judah.seq;
 
-import static judahzone.api.MidiConstants.DRUM_CH;
+import static judahzone.api.Midi.DRUM_CH;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

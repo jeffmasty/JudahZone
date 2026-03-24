@@ -29,25 +29,23 @@ import net.judah.gui.TabZone;
 import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.LFOKnobs;
 import net.judah.midi.JudahMidi;
-import net.judah.midi.Panic;
 import net.judah.sampler.Sample;
 import net.judah.seq.track.MidiTrack;
 import net.judah.seq.track.NoteTrack;
 import net.judah.seq.track.PianoTrack;
-import net.judah.synth.ZoneMidi;
-import net.judah.synth.taco.TacoTruck;
+import net.judah.synth.SynthEngine;
 
 
 /** Akai MPKmini, not the new one */
 @RequiredArgsConstructor
-public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controller {
+public class MPKmini extends JComboBox<PianoTrack> implements Updateable, Controller {
 
 	public static final String NAME = "MPKmini2"; // midi port
 
 	private final JudahZone zone;
 
 	// Where to route live MPK keys (and Jamstik)
-	@Getter private ZoneMidi midiOut;
+	@Getter private PianoTrack midiOut;
 
 	@Override
 	public boolean midiProcessed(Midi midi) {
@@ -68,22 +66,18 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 		return false;
 	}
 
-	public MPKmini fill(ZoneMidi[] items, ZoneMidi selected) {
+	public MPKmini fill(PianoTrack[] items, PianoTrack selected) {
 		setRenderer(new BasicComboBoxRenderer() {
 			@SuppressWarnings("rawtypes")
 			@Override public Component getListCellRendererComponent(JList list,
 					Object value, int index, boolean isSelected, boolean cellHasFocus) {
 				setHorizontalAlignment(SwingConstants.CENTER);
-
-				if (value instanceof TacoTruck)
-					setText("Taco");
-				else
-					setText(value.toString());
+				setText(value.toString());
 				return this;
 			}
 		});
 
-		for (ZoneMidi out : items) {
+		for (PianoTrack out : items) {
 			addItem(out);
 			if (out == selected) {
 				setSelectedItem(out);
@@ -93,10 +87,10 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 		addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) {
 				if (SwingUtilities.isRightMouseButton(e))
-					TabZone.edit(((ZoneMidi)getSelectedItem()).getTrack());
+					TabZone.edit(((SynthEngine)getSelectedItem()).getTrack());
 			}
 		});
-		addActionListener(e->setMidiOut((ZoneMidi)getSelectedItem()));
+		addActionListener(e->setMidiOut((PianoTrack)getSelectedItem()));
 		return this;
 	}
 
@@ -125,10 +119,10 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 
 		///////// ROW 1 /////////////////
 		if (data1 == PRIMARY_CC.getFirst())  {
-			zone.getMidiGui().getToggler().capture(midiOut, data2 > 0);
+			zone.getMidiGui().getToggler().capture(midiOut.getMidiOut(), data2 > 0);
 		}
 		else if (data1 == PRIMARY_CC.get(1)) {
-			zone.getMidiGui().getToggler().mpk(midiOut, data2 > 0);
+			zone.getMidiGui().getToggler().mpk(midiOut.getMidiOut(), data2 > 0);
 		}
 
 		else if (data1 == PRIMARY_CC.get(2) && data2 > 0 && !flooding())
@@ -145,7 +139,7 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 
 		///////// ROW 2 /////////////////
 		else if (data1 == PRIMARY_CC.get(4)) {
-			((PianoTrack)midiOut.getTrack()).getPedal().setPressed(data2 > 0);
+// 			((PianoTrack)midiOut.getTrack()).getPedal().setPressed(data2 > 0);
 		}
 		else if (data1 == PRIMARY_CC.get(5)) {
 			zone.getChords().toggle();
@@ -196,14 +190,16 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 	}
 
 	private boolean joystickL(int data2) { // delay
-		Delay d = ((Channel)midiOut).getDelay();
-		((Channel)midiOut).setActive(d, data2 > 4);
+		Channel c = midiOut.getChannel();
+
+		Delay d = c.getDelay();
+		c.setActive(d, data2 > 4);
 		if (data2 > 4) {
 			if (d.getDelay() < Delay.DEFAULT_TIME)
 				d.setDelayTime(Delay.DEFAULT_TIME);
 			d.setFeedback(Constants.midiToFloat(data2));
 		}
-		MainFrame.update(midiOut);
+		MainFrame.update(c);
 		return true;
 	}
 
@@ -231,11 +227,11 @@ public class MPKmini extends JComboBox<ZoneMidi> implements Updateable, Controll
 		return false;
 	}
 
-	public void setMidiOut(ZoneMidi out) {
+	public void setMidiOut(PianoTrack out) {
 		if (out == null)
 			return;
 		if (midiOut != null)
-			new Panic(midiOut);
+			midiOut.panic();
 		midiOut = out;
 		MainFrame.update(this);
 	}

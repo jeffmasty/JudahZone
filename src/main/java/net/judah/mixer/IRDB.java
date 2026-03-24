@@ -27,7 +27,7 @@ import judahzone.util.WavFile;
  */
 public final class IRDB implements IRProvider {
 
-	public static final IRDB instance = new IRDB(Folders.getIR());
+	// public static final IRDB instance = new IRDB(Folders.getIR());
 
     private static final int IR_SIZE  = FFT_SIZE / 2;
     public static final float MASTERING = 0.3f; // cut IR volume
@@ -110,7 +110,8 @@ public final class IRDB implements IRProvider {
     @Override
 	public int size() { return entries.size(); }
     public List<IR> getEntries() { return entries; }
-    public String[] getNames() {
+    @Override
+	public String[] getNames() {
         String[] n = new String[entries.size()];
         for (int i = 0; i < n.length; i++) n[i] = entries.get(i).name();
         return n;

@@ -16,7 +16,6 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 
 import judahzone.api.Midi;
-import judahzone.api.MidiConstants;
 import judahzone.gui.Gui;
 import judahzone.util.Constants;
 import judahzone.util.RTLogger;
@@ -24,11 +23,11 @@ import judahzone.widgets.Btn;
 import net.judah.gui.Size;
 import net.judah.seq.automation.Automation.AutoBox;
 import net.judah.seq.track.Edit;
+import net.judah.seq.track.Edit.Type;
 import net.judah.seq.track.Editor;
 import net.judah.seq.track.MidiTrack;
-import net.judah.seq.track.Edit.Type;
 
-class ProgramEdit extends AutoBox implements MidiConstants {
+class ProgramEdit extends AutoBox {
 
 	private MidiEvent existing;
 
@@ -71,6 +70,8 @@ class ProgramEdit extends AutoBox implements MidiConstants {
 		init(0L);
 
 		String[] source = track.getPatches();
+		if (source == null)
+			source = new String[0];
 		int length = source.length;
 		DefaultListModel<String> model = new DefaultListModel<>();
 		for (int i = 0; i < 128; i++)

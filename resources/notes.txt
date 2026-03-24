@@ -1,48 +1,30 @@
-Pluck Drums (Karplus-Strong)
-FM Drums (DX9-style phase mod)
-
-
-Util: Envelope, Noise, Phase, Ramp, Shape, MidiCmdPack
-Gui: DX9Grid, TwoStepEnv, OscFilter, DrumView, DrumKnobs
-Tests: Envelope, Phase, Ramp, Shape/Colour, Drum, Pluck, FM, Hz
-
 
 TODO:
-
-Split TacoSynth off of MidiTrack
-TacoKnobs sus midiknob broken
-TacoKnobs progChange combo midiknob broken
-Drum Project+Documentation
-put DrumUpdates on Circular
-TrackKnobs progChange broken (drum)
 
 Vocoder  (+contrib/documentation)
 BoomBox++ (zoom)
 Mixer right-click
+Program on songtrack doesn't update program on SynthKnobs.
+TrackKnobs progChange broken (drum) 
 Channels serialization: preamp, filter, visibility
 		update filter/preamp effect in realtime but save to disk on autosave form close? edit vs. create
-Engine: upgrade to internal/external
-- Controllers +Jamstik +Fluid
-- mixer right-click menu
-- drumkv1_jack  AppImage in /tracks,  Natural, Synth or Bitcrush ProgChanges
-Controllers MidiMapper mapRange, Jamstik Midi/Cmd?
+Engine: upgrade to internal/external, Fluid package, Jamstik package
+Controllers MidiMapper mapRange
+mixer right-click menu
+LFO upgrade  interface Target   register observer FX int param. 
 KnobMode.Mix2, Shift-faders Shift-pads, shift-clipping/shift-algo
 Stereo Delay https://www.roberthenke.com/technology/filterdelays.html
 Sample Capture https://roberthenke.com/technology/samplecapture.html
 RingMod -> phase 
+WaveDigitalFilters https://www.youtube.com/watch?v=7Npx0eaSxow https://www.youtube.com/watch?v=ZMbnvEWT6nY&t=21s
 
 loop widgets brough back to GUI
 MidiThumbnail vis-a-vis Spectrogram
-nudge notes, scrollTo on Automation selection (linked mode), global orientation?
-register Overview SongTracks/ChannelTracks?: CC
-TrackKnobs: what are we doing with this view? (program overflow)
+nudge notes, scrollTo on Automation selection (linked mode)
 Automation: PitchBend.release, Meta, TimeSig, KeySig, Tempo
 standalone backup IRDB inside Convolution
 SampleTrack,  Lyrics Track, mpkMini to127, EQ++/Visualizer
 compression meter, normalization
-TacoSynth GLIDE (Crave <3) Portamento
-Channel Pressure or Breath = Crave 303 Accent (w/ Crave Assign)
-TacoSynth detune on sus/pdl, onTape channel Title
 Import anonymous seq broken?./SendTo ignore Meta Device, Program?
 Fine Tune Midi Envelope(CC)
 Hi/Lo filter CC   Mid/Side/Chain
@@ -53,6 +35,7 @@ ChordTrack |1:[] |2:[] endings,  |bars| parse bug
 ChordView rightClick menu (remove track, File)
 PianoEditor: drag-n-drop/transpose across frame, falling water, REL/Modal
 Synth filter tracking, LFO: detune, filter/resonance
+drumkv1_jack  AppImage in /tracks,  Natural, Synth or Bitcrush ProgChanges
 
 lv2 jna https://github.com/nativelibs4java/JNAerator/tree/refresh-2022
 DSP Course: https://www.youtube.com/watch?v=hVOA8VtKLgk&list=PLuh62Q4Sv7BUSzx5Jr8Wrxxn-U10qG1et
@@ -259,8 +242,8 @@ FXChain
        TacoTruck
        		TacoSynth(s)
        DrumMachine
-       		DrumKits
-       			DrumSamples
+       		Drumsets
+       			(Drums)
        Sampler
     AudioTrack
        Loop - A/B/C
@@ -276,7 +259,11 @@ javax.sound.midi.Receiver:
       Engine
       	TacoTruck
       	DrumMachine
-	  DrumKit (x4)
+	 
+	 MidiOut
+	   DrumKit (x4)
+	   TacoSynth
+
 
 Computer: t resolution current ticks
 MidiTrack: ch  name 

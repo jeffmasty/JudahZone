@@ -6,7 +6,7 @@ import java.awt.event.MouseListener;
 import javax.sound.midi.Track;
 import javax.swing.JPanel;
 
-import judahzone.api.Signature;
+import judahzone.data.Signature;
 import lombok.Getter;
 import net.judah.seq.track.MidiTrack;
 

@@ -11,16 +11,18 @@ import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import judahzone.drums.Drum;
+import judahzone.drums.Drum.NonPitched;
+import judahzone.drums.DrumUpdate;
+import judahzone.drums.DrumUpdate.Mode;
 import judahzone.fx.Gain;
 import judahzone.gui.Gui;
 import judahzone.util.RTLogger;
+import judahzone.widgets.SingleRow;
 import lombok.Getter;
-import net.judah.drums.Drum;
-import net.judah.drums.DrumUpdate;
-import net.judah.drums.DrumUpdate.Mode;
 import net.judah.gui.Size;
+import net.judah.gui.drums.DrumTuning;
 import net.judah.gui.drums.OscFilter;
-import net.judah.gui.drums.OscTuning;
 import net.judah.gui.drums.TwoStepEnv;
 import net.judah.gui.widgets.Slider;
 
@@ -60,13 +62,14 @@ public abstract class DrumView<T extends Drum> extends JPanel implements ChangeL
 	}
 
 	@Getter protected final T drum;
-	protected boolean updating = false;
+	private boolean updating = false;
 	private final TwoStepEnv env;
 	private final OscFilter filter;
 	private final Slider vol;  // vert West of Envelope
 	private final Slider pan; // horiz (below/with envelope)
 	private final DataLbl volFb = new DataLbl();
 	protected final JPanel child = new JPanel(); // custom child class controls
+	private final DrumTuning tuning;
 
 	public DrumView(T drum) {
 	    this.drum = drum;
@@ -84,7 +87,7 @@ public abstract class DrumView<T extends Drum> extends JPanel implements ChangeL
 	        }});
 	    JPanel volRow = vertRow(new LBL("Vol"), vol, volFb);
 
-	    JPanel panRow = singleRow(new LBL("L"), pan, new LBL("R"));
+	    Box panRow = new SingleRow("L", pan, new LBL("R"));
 
 	    Box panenv = new Box(BoxLayout.Y_AXIS);
 	    panenv.add(env);
@@ -99,33 +102,15 @@ public abstract class DrumView<T extends Drum> extends JPanel implements ChangeL
 
 	    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 	    add(Gui.wrap(top));
+	    tuning = drum instanceof NonPitched ? null : new DrumTuning(drum);
+	    if (tuning != null)
+	         add(Gui.wrap(tuning));
 	    add(filter);
 	    add(Gui.wrap(child));
 	    add(Box.createVerticalStrut(4));
-
 	}
 
-	public static JPanel singleRow(String lbl, JSlider slider, JLabel value) {
-	    return singleRow(new LBL(lbl), slider, value);
-	}
-
-	/* Reusable single-row layout. */
-	public static JPanel singleRow(JLabel lbl, JSlider slider, JLabel value) {
-	    JPanel p = new JPanel();
-	    p.setLayout(new BoxLayout(p, BoxLayout.LINE_AXIS));
-	    p.add(Box.createHorizontalGlue());
-	    p.add(lbl);
-	    p.add(Box.createHorizontalStrut(SZ.SPACING));
-	    Gui.resize(slider, SZ.SLIDER_DIM);
-	    p.add(slider);
-	    p.add(Box.createHorizontalStrut(SZ.SPACING));
-	    Gui.resize(value, SZ.VAL_DIM);
-	    p.add(value);
-	    p.add(Box.createHorizontalGlue());
-	    return p;
-	}
-
-	public static JPanel vertRow(JLabel lbl, JSlider slider, JLabel value) {
+	private JPanel vertRow(JLabel lbl, JSlider slider, JLabel value) {
 	    //    lbl
 	    //  Vslider
 	    //   value
@@ -149,9 +134,9 @@ public abstract class DrumView<T extends Drum> extends JPanel implements ChangeL
 
 	    Object src = e.getSource();
 	    if (src == vol)
-	        drum.getDrama().set(new DrumUpdate(drum, Mode.BASE, 0, vol.getValue()));
+	        drum.getEdit().set(new DrumUpdate(drum, Mode.BASE, 0, vol.getValue()));
 	    else if (src == pan)
-	        drum.getDrama().set(new DrumUpdate(drum, Mode.BASE, 1, pan.getValue()));
+	        drum.getEdit().set(new DrumUpdate(drum, Mode.BASE, 1, pan.getValue()));
 
 	}
 
@@ -161,7 +146,7 @@ public abstract class DrumView<T extends Drum> extends JPanel implements ChangeL
 	}
 
 	protected abstract void updateChild();
-	protected abstract OscTuning getTuning();
+// 	protected abstract DrumTuning getTuning();
 
 	public void update() {
 	    // Prevent listeners from reacting to programmatic changes.
@@ -177,8 +162,8 @@ public abstract class DrumView<T extends Drum> extends JPanel implements ChangeL
 
 	        filter.update();
 	        env.update();
-	        if (getTuning() != null)
-	            getTuning().update();
+	        if (tuning != null)
+	        	tuning.update();
 	        updateChild();
 	    } finally {
 	        updating = false;

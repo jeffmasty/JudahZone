@@ -1,7 +1,6 @@
 package net.judah.midi;
 
-import java.util.Vector;
-
+import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
@@ -11,43 +10,53 @@ import org.jaudiolibs.jnajack.JackPort;
 
 import judahzone.api.Custom;
 import judahzone.api.Midi;
+import judahzone.api.MidiOut.MidiPiano;
+import judahzone.api.MidiUpdate;
+import judahzone.util.Notes;
 import judahzone.util.RTLogger;
-import judahzone.util.Services;
 import lombok.Getter;
 import lombok.Setter;
 import net.judah.channel.Instrument;
-import net.judah.seq.track.MidiTrack;
+import net.judah.seq.chords.Chords;
 import net.judah.seq.track.PianoTrack;
-import net.judah.synth.ZoneMidi;
 
-/** base function for an external synth, subclasses handle midi-channel awareness*/
+/** base function for a synth with effects
+ *
+ *  Contains a MidiOut and a PianoTrack */
 @Getter
-public class MidiInstrument extends Instrument implements ZoneMidi {
+public final class MidiInstrument extends Instrument implements MidiPiano {
 
 	public static enum Type { SYNTH, DRUM, BOTH }
 
 	@Setter protected JackPort midiPort;
-	protected final Vector<PianoTrack> tracks = new Vector<>();
-	protected String[] patches = new String[] {};
-	protected ChannelCC cc = new ChannelCC(this);
+	private final Notes notes;
+	private final PianoTrack track;
+	private final ChannelCC cc = new ChannelCC(this);
+	private String[] patches = new String[0];
 
-	public MidiInstrument(Custom user) {
+	public MidiInstrument(Custom user, MidiUpdate gui, Chords chords) {
 		super(user);
+
+		String type = user.engine(); // wav/pluck/fm/?fluid?bass?
+		RTLogger.log(this, "Creating MidiInstrument with type: " + type);
+
+		notes = new Notes(this, gui, 8); // TODO monophonic (crave)
+		track = new PianoTrack(user.name(), 0, this, this, chords);
+		track.setPermanent(true);
 	}
 
-	// FluidSynth
-	@Deprecated
-	public MidiInstrument(String channelName, String sourceLeft, String sourceRight,
-			JackPort left, JackPort right, String icon, JackPort midi) {
-		super(channelName, sourceLeft, sourceRight, icon);
-		leftPort = left;
-		rightPort = right;
-		init(midi);
+	@Override public void off(int data1) {
+		try {
+			ShortMessage msg = new ShortMessage(ShortMessage.NOTE_OFF, track.getCh(), data1, 0);
+			write(msg);
+			notes.off(data1);
+		} catch (Exception e) {
+			RTLogger.warn(this, e);
+		}
 	}
 
-	private void init(JackPort midi) {
-		midiPort = midi;
-		Services.add(this); // TODO as user channel this will be closed by Channels
+	@Override public void on(ShortMessage velocity) {
+		send(velocity, JudahMidi.ticker());
 	}
 
 	@Override public final void send(MidiMessage midi, long timeStamp) {
@@ -57,21 +66,20 @@ public class MidiInstrument extends Instrument implements ZoneMidi {
 		if (cc.process(msg))
 			return; // channel filtered
 
-		if (Midi.isProgChange(midi))  // Should have been filtered by MidiTrack
+		if (Midi.isProgChange(midi))  // Should have been filtered by MidiTrack?
 			return;
 
-		ShortMessage shrt = (ShortMessage)midi;
-		PianoTrack out = null;
-		for (PianoTrack t : getTracks())
-			if (t.getCh() == msg.getChannel()) {
-				out = t;
-				break;
-			}
-		if (out == null)
-			out = tracks.getFirst();
-
-		if (out.getActives().receive(shrt)) // Pedal handling
-			write(Midi.format(msg, out.getCh(), out.getAmp()));
+		if (Midi.isNoteOn(msg))
+			notes.on(msg);
+		else if (Midi.isNoteOff(msg)) {
+			notes.off(msg.getData1());
+			if (notes.isPedal())
+				return;
+		} else {
+			RTLogger.warn(this, "Unhandled MIDI message: " + Midi.toString(msg));
+			return;
+		}
+		write(Midi.format(msg, track.getCh(), track.getAmp()));
 	}
 
 	void write(ShortMessage msg) {
@@ -80,23 +88,40 @@ public class MidiInstrument extends Instrument implements ZoneMidi {
 					msg.getMessage(), msg.getLength());
 		} catch (Exception e) {RTLogger.warn(this, e);}
 	}
+
+
+
 	@Override public void close() {
-		Panic.panicNow(midiPort, 0);
+		panic();
 	}
 
-//	/** no-op, subclass override */
-	@Override public String progChange(int data2, int ch) { return null; }
+    @Override
+	public void panic() {
+        try {
+        	int channel = track.getCh();
+            // Preferred: minimal CC panic messages
+            ShortMessage reset = new ShortMessage(ShortMessage.CONTROL_CHANGE, channel, 121, 0);
+            ShortMessage allSoundOff = new ShortMessage(ShortMessage.CONTROL_CHANGE, channel, 120, 0);
+            ShortMessage allNotesOff = new ShortMessage(ShortMessage.CONTROL_CHANGE, channel, 123, 0);
 
-	public final MidiTrack trackByName(String name) {
-		for (MidiTrack t : tracks)
-			if (t.getName().equals(name))
-				return t;
-		return null;
-	}
+            if (midiPort != null) {
+                JudahMidi.queue(reset, midiPort);
+                JudahMidi.queue(allSoundOff, midiPort);
+                JudahMidi.queue(allNotesOff, midiPort);
+            }
 
-	@Override public PianoTrack getTrack() {
-		if (tracks.isEmpty()) return null;
-		return tracks.getFirst();
-	}
+        } catch (InvalidMidiDataException e) {
+			RTLogger.warn(this, e);
+		}
+    }
+
+
+	@Override public int getProgChange() { return 0; }
+	@Override public String getProgram() { return ""; }
+	@Override public String progChange(int data2) { return ""; }
+	@Override public int progChange(String preset) { return 0; }
+	@Override public int[] actives() { return notes.actives(); }
+	@Override public boolean isPedal() { return notes.isPedal(); }
+	@Override public void setPedal(boolean hold) { notes.setPedal(hold); }
 
 }

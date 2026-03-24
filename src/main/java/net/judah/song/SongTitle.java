@@ -7,9 +7,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
-import judahzone.api.Key;
 import judahzone.api.Notification.Property;
-import judahzone.api.Signature;
+import judahzone.data.Key;
+import judahzone.data.Signature;
 import judahzone.api.TimeListener;
 import judahzone.api.TimeProvider;
 import judahzone.gui.Gui;

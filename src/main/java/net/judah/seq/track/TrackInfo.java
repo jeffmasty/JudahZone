@@ -7,11 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import net.judah.drums.fm.FMKit;
-import net.judah.drums.noise.NoiseKit;
-import net.judah.drums.pluck.PluckKit;
-import net.judah.drums.wav.WavKit;
-import net.judah.mixer.Channels.RegisteredDrums;
 import net.judah.seq.arp.ArpInfo;
 
 @Data @AllArgsConstructor @NoArgsConstructor @ToString
@@ -27,13 +22,7 @@ public class TrackInfo {
 	@JsonInclude(Include.NON_NULL)
 	private ArpInfo arp; // mode, octaves
 	@JsonInclude(Include.NON_NULL)
-	private String channel;
-	// DrumSample kit name/net.jz.DrumSynth
-	@JsonInclude(Include.NON_NULL)
-	private RegisteredDrums kit;
-
-//	@JsonInclude(Include.NON_NULL)
-//	private String kit; // for OldSchool: kit db name, for DrumSynth: class name
+	private String channel; // Line/Engine
 
 	public TrackInfo(MidiTrack t) {
 		track = t.getName();
@@ -42,13 +31,7 @@ public class TrackInfo {
 		if (t instanceof NoteTrack notes)
 			gate = notes.getGate();
 		program = t.getProgram();
-		if (t instanceof DrumTrack drum) {
-			kit = drum.getKit() instanceof NoiseKit ? RegisteredDrums.Noise :
-				  drum.getKit() instanceof WavKit ? RegisteredDrums.Wav :
-				  drum.getKit() instanceof FMKit ? RegisteredDrums.FM :
-				  drum.getKit() instanceof PluckKit ? RegisteredDrums.Pluck : null;
-		}
-		else if (t instanceof PianoTrack piano)
+		if (t instanceof PianoTrack piano)
 			arp = piano.getInfo() == null ? null : piano.getInfo();
 		else if (t instanceof ChannelTrack ch)
 			channel = ch.getChannel().getName();

@@ -40,6 +40,10 @@ public class Slider extends JSlider {
 		});
     }
 
+    public Slider() {
+    	this(0, 100, null, null);
+    }
+
     public Slider(ChangeListener l) {
         this(0, 100, l, null);
     }
@@ -49,6 +53,10 @@ public class Slider extends JSlider {
         if (tooltip != null)
             setToolTipText(tooltip);
     }
+
+    public Slider(int min, int max) {
+		this(min, max, null);
+	}
 
     public Slider(int min, int max, ChangeListener l) {
         super(min, max);

@@ -8,7 +8,7 @@ import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 
 import judahzone.api.FX.Calc;
-import judahzone.api.TimeFX;
+import judahzone.api.FX.TimeFX;
 import judahzone.fx.Chorus;
 import judahzone.fx.Delay;
 import judahzone.gui.Pastels;

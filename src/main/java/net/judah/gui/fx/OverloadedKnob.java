@@ -1,7 +1,6 @@
 package net.judah.gui.fx;
 
 import judahzone.api.FX;
-import judahzone.api.MidiConstants;
 import judahzone.gui.Updateable;
 import judahzone.widgets.Knob;
 import judahzone.widgets.Knob.KnobListener;
@@ -9,6 +8,7 @@ import lombok.Getter;
 import net.judah.channel.Channel;
 import net.judah.gui.ShiftBtn;
 import net.judah.gui.widgets.FxKnob;
+import net.judah.midi.ChannelCC;
 
 
 @Getter
@@ -41,7 +41,7 @@ public class OverloadedKnob extends Knob implements KnobListener, Updateable {
 		else {
 			fx.set(main, val);
 
-			ch.setActive(fx, val > MidiConstants.THOLD_LO);
+			ch.setActive(fx, val > ChannelCC.THOLD_LO);
 		}
 	}
 

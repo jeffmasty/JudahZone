@@ -1,38 +1,87 @@
 package net.judah.seq.track;
 
-import javax.sound.midi.InvalidMidiDataException;
+
 import javax.sound.midi.MetaMessage;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.ShortMessage;
 
+import judahzone.api.ControlChange;
 import judahzone.api.Midi;
+import judahzone.api.MidiOut;
 import judahzone.util.Constants;
+import judahzone.util.RTLogger;
 import lombok.Getter;
 import lombok.Setter;
+import net.judah.channel.Channel;
 import net.judah.gui.MainFrame;
 import net.judah.gui.knobs.TrackKnobs;
-import net.judah.midi.Actives;
-import net.judah.seq.automation.ControlChange;
 import net.judah.song.Sched;
-import net.judah.synth.ZoneMidi;
 
 @Getter
 public abstract class NoteTrack extends MidiTrack {
-    protected final Actives actives;
+	protected static final int NOTE_OFF = ShortMessage.NOTE_OFF;
+	protected static final int NOTE_ON = ShortMessage.NOTE_ON;
+
     /** parent midi port */
-    protected final ZoneMidi midiOut;
+    @Setter protected MidiOut midiOut;
 	private Gate gate = Gate.SIXTEENTH;
 	@Setter protected TrackKnobs trackKnobs; // Seq manages
 
-	public NoteTrack(String name, Actives actives) throws InvalidMidiDataException {
-		super(name, actives.getChannel());
-		this.actives = actives;
-		this.midiOut = actives.getMidiOut();
+	/**
+	 * @param name    track name (nice if it was unique)
+	 * @param ch      midi channel (0-15)
+	 * @param line    sometimes line and midiOut are the same.
+	 * @param midiOut  sometimes line is a midiOut container
+	 */
+	public NoteTrack(String name, int ch, Channel line, MidiOut midiOut) {
+		super(name, ch, line);
+
+		if (midiOut != null)
+			this.midiOut = midiOut;
+		else if (line instanceof MidiOut midi)
+			this.midiOut = midi;
+		else {
+			RTLogger.warn(this, new NullPointerException("No midiOut for " + name));
+			this.midiOut = null;
+		}
 	}
 
-	/** publish the note/cc */
+	// final here to MidiOut?:
+//	public abstract String[] getPatches();
+//	public abstract String progChange(int data1);
+//	public abstract boolean progChange(String name);
 	@Override
-	public void send(MidiMessage midi, long ticker) {
+	public final String[] getPatches() {
+		return midiOut.getPatches();
+	}
+
+	@Override public String progChange(int data1) {
+		String name = midiOut.progChange(data1);
+		if (name == null)
+			return null;
+		progSuccess(name);
+		return name;
+	}
+
+	@Override public boolean progChange(String name) {
+		int result = midiOut.progChange(name);
+		if (result < 0)
+			return false;
+		progSuccess(name);
+		return true;
+	}
+
+	private void progSuccess(String name) {
+		state.setProgram(name);
+		MainFrame.updateTrack(Update.PROGRAM, this);
+	}
+
+
+	// forward to midiOut's version of Notes/BOOL8
+	public abstract int[] getActiveSnapshot();
+
+	/** publish the note/cc */
+	@Override public void send(MidiMessage midi, long ticker) {
 		if (midi instanceof MetaMessage) {
 			// TODO
 			return;
@@ -59,27 +108,6 @@ public abstract class NoteTrack extends MidiTrack {
 		if (sched.getProgram() != null && !sched.getProgram().equals(state.getProgram()))
 			progChange(sched.getProgram());
 		super.setState(sched);
-	}
-
-	@Override public String[] getPatches() {
-		return midiOut.getPatches();
-	}
-
-	@Override public String progChange(int data1) {
-		String name = midiOut.progChange(data1, ch);
-		if (name == null)
-			return null;
-		state.setProgram(name);
-		MainFrame.updateTrack(Update.PROGRAM, this);
-		return name;
-	}
-
-	@Override public boolean progChange(String name) {
-		String[] names = midiOut.getPatches();
-		for (int i = 0; i < names.length; i++)
-			if (names[i].equals(name))
-				return progChange(i) != null;
-		return false;
 	}
 
 	public long quantize(long tick) {

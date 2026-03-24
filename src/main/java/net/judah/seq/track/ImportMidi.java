@@ -13,7 +13,6 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import judahzone.api.MidiConstants;
 import judahzone.gui.Gui;
 import judahzone.util.Folders;
 import judahzone.util.RTLogger;
@@ -23,7 +22,7 @@ import net.judah.seq.Meta;
 
 /** Dialog to import a single track from a standard MIDI file*/
 
-public class ImportMidi extends JPanel implements MidiConstants {
+public class ImportMidi extends JPanel {
 
 	public static final Dimension SIZE = new Dimension(300, 200);
 

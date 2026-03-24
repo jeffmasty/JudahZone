@@ -22,9 +22,13 @@ import javax.swing.JPanel;
 
 import judahzone.api.Chord;
 import judahzone.api.FX;
-import judahzone.api.MidiConstants;
+import judahzone.api.MidiOut;
+import judahzone.api.MidiOut.MidiPiano;
+import judahzone.api.MidiUpdate;
 import judahzone.data.Circular;
 import judahzone.data.Tuning;
+import judahzone.drums.Drum;
+import judahzone.drums.DrumUpdate;
 import judahzone.fx.Compressor;
 import judahzone.fx.Convolution;
 import judahzone.fx.Gain;
@@ -40,9 +44,9 @@ import judahzone.util.Threads;
 import lombok.Getter;
 import net.judah.JudahZone;
 import net.judah.channel.Channel;
-import net.judah.drums.DrumKit;
+import net.judah.channel.LineIn;
 import net.judah.drums.DrumMachine;
-import net.judah.drums.DrumUpdate;
+import net.judah.drums.Drumset;
 import net.judah.gui.drums.knobs.Kitz;
 import net.judah.gui.fx.FxPanel;
 import net.judah.gui.fx.MultiSelect;
@@ -51,11 +55,11 @@ import net.judah.gui.knobs.KnobMode;
 import net.judah.gui.knobs.KnobPanel;
 import net.judah.gui.knobs.MidiGui;
 import net.judah.gui.knobs.TunerKnobs;
+import net.judah.gui.knobs.synth.SynthKnobs;
 import net.judah.gui.midiimport.ImportView;
 import net.judah.gui.settable.SetCombo;
 import net.judah.gui.widgets.ModalDialog;
 import net.judah.looper.Looper;
-import net.judah.midi.Actives;
 import net.judah.midi.JudahClock;
 import net.judah.midi.JudahMidi;
 import net.judah.midi.LFO;
@@ -67,7 +71,6 @@ import net.judah.sampler.Sampler;
 import net.judah.seq.Seq;
 import net.judah.seq.TrackList;
 import net.judah.seq.automation.Automation;
-import net.judah.seq.beatbox.DrumZone;
 import net.judah.seq.beatbox.RemapView;
 import net.judah.seq.chords.ChordPlay;
 import net.judah.seq.chords.ChordScroll;
@@ -83,11 +86,9 @@ import net.judah.song.Scene;
 import net.judah.song.SceneLauncher;
 import net.judah.song.SongView;
 import net.judah.song.setlist.SetlistView;
-import net.judah.synth.taco.TacoSynth;
-import net.judah.synth.taco.TacoTruck;
 
 /** over-all layout and background updates thread */
-public class MainFrame extends JFrame implements Runnable {
+public class MainFrame extends JFrame implements Runnable, MidiUpdate {
 
 	private static MainFrame instance;
 	private static KnobMode knobMode = KnobMode.MIDI;
@@ -98,9 +99,9 @@ public class MainFrame extends JFrame implements Runnable {
 	private static final Circular<FxUpdate> fxUpdates = new Circular<>(192, () -> new FxUpdate());
 	private static final Circular<ChUpdate> chUpdates = new Circular<>(128, () -> new ChUpdate());
 	private static final Circular<KnobUpdate> knobUpdates = new Circular<>(96, () -> new KnobUpdate());
+	private static final Circular<MidiUpdate> midiUpdates = new Circular<>(512, () -> new MidiUpdate());
 
 	private final TabZone tabs;
-    @Getter private final DrumZone beatBox;
 	@Getter private final JudahMenu menu;
     private final DJJefe mixer;
 	private final FxPanel effects;
@@ -119,7 +120,16 @@ public class MainFrame extends JFrame implements Runnable {
     private final SetlistView setlists;
     private TunerKnobs tuner;
     private final JudahZone zone;
-    private final Feedback feedback;
+    private final Feedback feedback = new Feedback(Size.KNOB_PANEL);
+
+
+
+	@Override
+	public void updateMidi(MidiOut midiOut) {
+		MidiUpdate mi = midiUpdates.get();
+		mi.source = midiOut;
+		update(mi);
+	}
 
     public static void updateFx(Channel ch, FX fx) {
     	FxUpdate send = fxUpdates.get();
@@ -159,11 +169,9 @@ public class MainFrame extends JFrame implements Runnable {
         this.midiGui = zone.getMidiGui();
         this.looper = zone.getLooper();
         this.drums = zone.getDrumMachine();
-        this.seq = zone.getSeq();
         this.chords = zone.getChords();
         this.sampler = zone.getSampler();
-
-        this.feedback = new Feedback(Size.KNOB_PANEL);
+        this.seq = zone.getSeq();
         JudahClock clock = JudahMidi.getClock();
 
         hq = new HQ(clock, zone);
@@ -178,8 +186,7 @@ public class MainFrame extends JFrame implements Runnable {
         knobHolder = Box.createVerticalBox();
         mixer.updateAll();
 
-        beatBox = new DrumZone(drums.getTracks());
-        tabs = new TabZone(zone, beatBox);
+        tabs = new TabZone(zone);
         menu = new JudahMenu(WIDTH_KNOBS, zone, tabs, zone.getMidi());
 
         Gui.resize(knobHolder, KNOB_PANEL);
@@ -233,7 +240,7 @@ public class MainFrame extends JFrame implements Runnable {
             Thread.ofVirtual().start(this);
 	        tabs.setSelectedIndex(0);
 	        tabs.requestFocusInWindow();
-	        seq.getTracks().setCurrent(seq.getTracks().getFirst());
+// 	        seq.getTracks().setCurrent(seq.getTracks().getFirst());
 	        knobMode(KnobMode.MIDI);
 	        setVisible(true);
 	        new Bindings(this, seq, mixer, zone.getMains());
@@ -264,8 +271,6 @@ public class MainFrame extends JFrame implements Runnable {
     		mixer.highlight(ch);
     		if (knobMode == KnobMode.LFO)
     			knobPanel(ch.getLfoKnobs());
-			if (ch instanceof TacoTruck synth)
-				focus(synth.getTrack().getKnobs());
     		update(o); // loopback update();
 		}
 
@@ -286,7 +291,7 @@ public class MainFrame extends JFrame implements Runnable {
 			else if (trax == drums.getTracks()) {
 				DrumTrack d = (DrumTrack)current;
 				focus(d.getKit());
-				beatBox.update(d);
+				tabs.update(d);
 			}
 		}
 		else if (o instanceof Automation a) {
@@ -339,12 +344,37 @@ public class MainFrame extends JFrame implements Runnable {
                 }
             }
 
+            else if (o instanceof MidiUpdate mi) {
+            	if (mi.source instanceof Drumset d && knobs instanceof Kitz kitz) {
+            		kitz.update(d);
+				}
+            	else if (mi.source instanceof MidiPiano p) {
+            		tabs.update(p);
+            	}
+			}
+            else if (o instanceof ChUpdate ch) {
+				if (ch.ch instanceof Drumset d && knobs instanceof Kitz kitz)
+					kitz.update(d);
+				else if (ch.ch instanceof Channel c) {
+					c.getGui().getTitle().update();
+					if (c instanceof LineIn line)
+						mixer.update(line); // muteRecord status
+				}
+            }
+            else if (o instanceof MidiOut)	{
+            	if (o instanceof MidiPiano p) {
+            		tabs.update(p);
+            		if (knobs instanceof SynthKnobs synthKnobs && synthKnobs.getSynth() == p)
+						synthKnobs.update();
+            	}
+			}
+
             else if (o instanceof Channel ch) {
             	if (effects.getChannel() == ch)
 					effects.getChannel().getGui().update(); // heavy?
 				mixer.update(ch);
 				overview.update(ch);
-				if (ch instanceof DrumKit && knobMode == KnobMode.Kitz)
+				if (ch instanceof Drumset && knobMode == KnobMode.Kitz)
 					knobs.update();
 				else if (ch instanceof Sampler)
 					midiGui.update(); // stepSampler
@@ -352,17 +382,18 @@ public class MainFrame extends JFrame implements Runnable {
             		effects.getChannel().getGui().update(); // heavy?
                 mixer.update(ch);
                 overview.update(ch);
-                if (ch instanceof DrumKit && knobMode == KnobMode.Kitz)
+                if (ch instanceof Drumset && knobMode == KnobMode.Kitz)
                     knobs.update();
                 else if (ch instanceof Sampler)
                     midiGui.update(); // stepSampler
+
             }
-            else if (o instanceof Actives actives) {
-            	actives.update(); // new
-            	if (actives.getChannel() >= MidiConstants.DRUM_CH && knobs instanceof Kitz kitz)
-					kitz.update(actives);
-            	// MidiTrack Step view updates removed for sanity
-            }
+//            else if (o instanceof OldActives actives) {
+//            	actives.update(); // new
+//            	if (actives.getChannel() >= MidiConstants.DRUM_CH && knobs instanceof Kitz kitz)
+//					kitz.update(actives);
+//            	// MidiTrack Step view updates removed for sanity
+//            }
             else if (o instanceof MidiTrack t) { // clipboard/editor/select
                 tabs.update(t);
                 overview.update(t);
@@ -372,8 +403,8 @@ public class MainFrame extends JFrame implements Runnable {
                 overview.update(t.type, t.update);
                 tabs.update(t.type, t.update);
                 midiGui.update(t.type, t.update);
-                if (t.update instanceof TacoSynth taco && taco.getKnobs() != null)
-                    taco.getKnobs().update(t.type);
+//                if (t.update instanceof TacoSynth taco && taco.getKnobs() != null)
+//                    taco.getKnobs().update(t.type);
             }
 
             else if (o instanceof Sample samp) {
@@ -434,7 +465,7 @@ public class MainFrame extends JFrame implements Runnable {
             else if (o instanceof RMS rms && knobs instanceof TunerKnobs tuner)
             	tuner.update(rms);
             else if (o instanceof DrumUpdate drum) {
-            	drum.drum().getDrama().set(drum);
+            	drum.drum().getEdit().set(drum);
             	// TODO floating drum frames update
 
 //              else if (o instanceof LegacySetup)
@@ -458,10 +489,10 @@ public class MainFrame extends JFrame implements Runnable {
 		mode.setSelectedItem(knobMode);
 		knobPanel(switch(knobs) {
     		case MIDI -> midiGui;
-			case Kitz -> new Kitz(drums.getKits());
+			case Kitz -> Kitz.show(drums);
 			case Track -> seq.getKnobs();
 			case LFO -> effects.getChannel().getLfoKnobs();
-			case Taco -> zone.getTaco().getTrack().getKnobs();
+			case Taco -> zone.getTaco().getKnobs();
 			case Sample -> {focus(sampler); yield sampler.getView();}
 			case Presets -> presets;
 			case Setlist -> setlists;
@@ -519,7 +550,7 @@ public class MainFrame extends JFrame implements Runnable {
 	}
 
 	public static void kit() {
-		if (instance.effects.getChannel() instanceof DrumKit)
+		if (instance.effects.getChannel() instanceof Drumset)
 			instance.drums.getTracks().next(true);
 		else
 			setFocus(instance.drums.getTracks());
@@ -545,6 +576,10 @@ public class MainFrame extends JFrame implements Runnable {
     	FX fx;
     }
 
+    private static class MidiUpdate {
+		MidiOut source;
+	}
+
     @SuppressWarnings("unused")
 	private static class ChUpdate {
     	Channel.Update type;
@@ -560,4 +595,16 @@ public class MainFrame extends JFrame implements Runnable {
     	instance.feedback.addText(s);
     }
 
+	@Override
+	public void updateDrum(Object drum) {
+		// drum instanceof Drum
+		if (knobs instanceof Kitz kitz)
+			kitz.update(drum); // TODO targeted data
+		TabZone.update((Drum)drum); // TODO targeted data
+	}
+
+	@Override
+	public void updateSynth(Object synth) {
+		update(synth);
+	}
 }

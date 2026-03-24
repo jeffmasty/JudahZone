@@ -4,13 +4,13 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
-import java.util.HashSet;
 import java.util.List;
 
 import javax.sound.midi.ShortMessage;
 import javax.swing.JPanel;
 
 import judahzone.api.Midi;
+import judahzone.api.UINotes;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import lombok.Getter;
@@ -30,15 +30,18 @@ public class PianoKeys extends JPanel implements Gui.Mouse, Size {
 	private int highlight = -1;
 	private int pressed = -1;
 	@Getter private int octave = 4;
-	private HashSet<Integer> actives = new HashSet<>();
+	private int[] actives = new int[0];
 
 	private Orientation orientation = Orientation.NOTES_X;
 	private float keyHeight; // pixels per note
 	private int visible;     // range + 1
 
-	public PianoKeys(NoteTrack t, PianoView v) {
+	private UINotes sounding;
+
+	public PianoKeys(NoteTrack t, PianoView v, UINotes sounding) {
 		view = v;
 		track = t;
+		this.sounding = sounding;
 		addMouseListener(this);
 		addMouseMotionListener(this);
 	}
@@ -71,7 +74,7 @@ public class PianoKeys extends JPanel implements Gui.Mouse, Size {
 		super.paint(g);
 		g.setColor(Color.GRAY);
 		g.drawRect(0, 0, width, height);
-
+// TODO		actives = sounding.actives();
 		if (orientation == Orientation.NOTES_X) {
 			paintNotesX(g);
 		} else {
@@ -81,11 +84,10 @@ public class PianoKeys extends JPanel implements Gui.Mouse, Size {
 
 	/** NOTES_X: notes laid out horizontally (left to right). */
 	private void paintNotesX(Graphics g) {
-		track.getActives().data1(actives);
 		for (int i = 0; i < visible; i++) {
 			int x = (int) (i * keyHeight);
 			int midi = i + view.tonic;
-			drawKeyRect(g, i, midi, x, 0, (int) keyHeight, UNIT);
+			drawKeyRect(g, midi, x, 0, (int) keyHeight, UNIT);
 			if (isLabelC(midi))
 				g.drawString("" + (midi / 12), x + 2, 18);
 		}
@@ -93,24 +95,27 @@ public class PianoKeys extends JPanel implements Gui.Mouse, Size {
 
 	/** NOTES_Y: notes laid out vertically (top to bottom, high to low). */
 	private void paintNotesY(Graphics g) {
-		track.getActives().data1(actives);
 		for (int i = 0; i < visible; i++) {
 			int y = (int) (i * keyHeight);
 			/* High notes on top, low notes on bottom */
 			int midi = (view.tonic + view.range) - i;
-			drawKeyRect(g, i, midi, 0, y, UNIT, (int) keyHeight);
+			drawKeyRect(g, midi, 0, y, UNIT, (int) keyHeight);
 			if (isLabelC(midi))
 				g.drawString("" + (midi / 12), 4, y + 14);
 		}
 	}
 
-	private void drawKeyRect(Graphics g, int i, int data1, int x, int y, int w, int h) {
+	private void drawKeyRect(Graphics g, int data1, int x, int y, int w, int h) {
 		g.drawRect(x, y, w, h);
 		/* Determine black-key-ness using MIDI pitch modulo 12 */
 		boolean isBlack = BLACK_KEYS.contains((data1 % 12 + 12) % 12);
-		if (actives.contains(data1))
-			rect(g, Pastels.GREEN, x, y, w, h);
-		else if (highlight == data1)
+		for (int j = 0; j < actives.length; j++) {
+			if (actives[j] == data1) {
+				rect(g, Pastels.GREEN, x, y, w, h);
+				return;
+			}
+		}
+		if (highlight == data1)
 			rect(g, isBlack ? Pastels.YELLOW.darker() : Pastels.YELLOW, x, y, w, h);
 		else if (isBlack)
 			g.fillRect(x + 1, y + 1, w - 1, h - 1);

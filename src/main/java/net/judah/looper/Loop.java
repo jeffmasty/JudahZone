@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import judahzone.api.RecordAudio;
 import judahzone.data.Circular;
+import judahzone.data.Letter;
 import judahzone.data.Recording;
 import judahzone.gui.Icons;
 import judahzone.util.AudioTools;
@@ -22,17 +23,16 @@ import judahzone.util.Folders;
 import judahzone.util.MP3;
 import judahzone.util.Memory;
 import judahzone.util.RTLogger;
+import judahzone.util.Ramp;
 import judahzone.util.WavFile;
 import lombok.Getter;
 import net.judah.channel.Channel;
-import net.judah.channel.Instrument;
 import net.judah.channel.LineIn;
 import net.judah.drums.DrumMachine;
 import net.judah.gui.MainFrame;
 import net.judah.midi.JudahClock;
 import net.judah.mixer.LoopMix;
 import net.judah.seq.track.DrumTrack;
-import net.judah.synth.taco.TacoTruck;
 
 /** Audio loop recorder with real-time overdub, thread-safe tape mutation,
     and lock-free buffer pooling to minimize RT allocations. */
@@ -58,14 +58,19 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 	@Getter private boolean timer;
 	@Getter private int stopwatch;
 	private int boundary;
-	private boolean leadIn;
 	@Getter protected boolean drumTrack;
+
 
 	private final Circular<float[][]> overdubPool = new Circular<>( // blank tape for recording
 			OVERDUB_QUEUE_CAPACITY, () -> new float[STEREO][N_FRAMES]);
 	private final BlockingQueue<RecordTask> recordQueue = new LinkedBlockingQueue<>();
 	private final AtomicInteger overdubDropped = new AtomicInteger(0);
 	private volatile boolean deleted = false;
+
+	// lead-in smoothing time in ms
+	private static final float SMOOTH_MS = 1.5f;
+	private static final int RAMP_SAMP = Letter.msToSamples(SMOOTH_MS);
+	private final Ramp ampRamp = new Ramp(RAMP_SAMP);
 
 	public Loop(String name, String icon, Looper loops, JudahClock clock) {
 		super(name, true);
@@ -78,6 +83,8 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 			initial.add(new float[STEREO][N_FRAMES]);
 		tape.set(initial);
 		display = new LoopMix(this, looper);
+
+		// ampRamp.setImmediate(UNITY); // default to unity when idle
 		new Thread(this).start();
 	}
 
@@ -177,6 +184,9 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 		computeRMS(left, right);
 		display.clear();
 		deleted = false;
+
+		// Ensure ramp is at unity after delete
+		ampRamp.setImmediate(UNITY);
 	}
 
 	public void save() {
@@ -302,7 +312,10 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 			boundary = 0;
 			stopwatch = 0;
 		}
-		isRecording = leadIn = true;
+		// Start recording and kick off a smooth lead-in to avoid clicks
+		isRecording = true;
+		ampRamp.reset(0f);    // immediate start level (non-RT)
+		ampRamp.setTarget(UNITY);  // begin smoothing to unity (non-RT)
 	}
 
 	private void endCapture() {
@@ -358,8 +371,7 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 		fx(left, right);
 		computeRMS(left, right);
 
-		AudioTools.mix(left, outLeft);
-		AudioTools.mix(right, outRight);
+		mix(outLeft, outRight);
 	}
 
 	private void fx(float[] outLeft, float[] outRight) {
@@ -392,7 +404,7 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 			}
 			else {
 				// Safe: no collision, enqueue direct write (no lock on RT path)
-				float[][] newBuffer = new float[STEREO][N_FRAMES];
+				float[][] newBuffer = Memory.STEREO.getFrame();
 				AudioTools.silence(newBuffer);
 				captureInto(newBuffer);
 
@@ -418,11 +430,8 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 	}
 
 	private void captureInto(float[][] target) {
-		float amp = UNITY;
-		if (leadIn) {
-			amp *= 0.33f;
-			leadIn = false;
-		}
+		// Use Ramp.next() per-sample for RT-safe smoothing
+		float amp = ampRamp.next();
 
 		SoloTrack d = looper.getSoloTrack();
 		LineIn solo = d.isSolo() ? d.getSoloTrack() : null;
@@ -434,17 +443,17 @@ public class Loop extends Channel implements RecordAudio, Runnable {
 			if (in == solo && this != d) continue;
 			if (solo != null && in != solo && this == d) continue;
 
-			if (in instanceof Instrument)
-				recordCh(in.getLeft(), in.getRight(), target, amp);
-			else if (in instanceof TacoTruck synth) {
-				if (!synth.isMuteRecord() && !synth.isOnMute())
-					recordCh(synth.getLeft(), synth.getRight(), target, amp);
-			} else if (in instanceof DrumMachine drumz) {
+			if (in instanceof DrumMachine drumz) {
 				for (DrumTrack track : drumz.getTracks())
-					if (!track.getKit().isMuteRecord())
+					if (!track.getKit().isOnMute() && !track.getKit().isMuteRecord())
 						recordCh(track.getKit().getLeft(), track.getKit().getRight(),
 							target, UNITY);
 			}
+			//	else if (in instanceof TacoTruck synth) {
+			//	if (!synth.isMuteRecord() && !synth.isOnMute())
+			//		recordCh(synth.getLeft(), synth.getRight(), target, amp);
+			else
+				recordCh(in.getLeft(), in.getRight(), target, amp);
 		}
 	}
 

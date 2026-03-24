@@ -15,13 +15,13 @@ import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.swing.SwingUtilities;
 
+import judahzone.api.DrumType;
 import judahzone.api.Midi;
-import judahzone.api.Signature;
+import judahzone.data.Signature;
 import judahzone.gui.Actionable;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
-import net.judah.drums.DrumKit;
-import net.judah.drums.DrumType;
+import net.judah.drums.Drumset;
 import net.judah.gui.TabZone;
 import net.judah.gui.drums.views.DrumFrame;
 import net.judah.seq.automation.CCPopup;
@@ -36,6 +36,7 @@ import net.judah.seq.track.PianoNote;
 import net.judah.seq.track.Prototype;
 
 public class BeatBox extends MusicBox implements Pastels {
+
 
 	public static final int X_OFF = 5;
 	private static final int PADS = DrumType.values().length;
@@ -223,7 +224,7 @@ public class BeatBox extends MusicBox implements Pastels {
 
 		if (SwingUtilities.isRightMouseButton(mouse)) {
 			int step = (int) (click.tick % track.getWindow() / track.getStepTicks());
-			DrumKit kit = ((DrumTrack) track).getKit();
+			Drumset kit = ((DrumTrack) track).getKit();
 			DrumType t = DrumType.values()[DrumType.index(click.data1)];
 			Actionable openDrum = new Actionable("Open " + t,
 					e -> new DrumFrame(kit, kit.get(t)));

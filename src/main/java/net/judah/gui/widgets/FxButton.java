@@ -1,17 +1,15 @@
 package net.judah.gui.widgets;
 
 
-import java.awt.Insets;
-
 import javax.swing.Icon;
 import javax.swing.JButton;
 
+import judahzone.gui.Gui;
 import judahzone.gui.Icons;
 import net.judah.channel.Channel;
 import net.judah.gui.MainFrame;
 
 public class FxButton extends JButton {
-	private static final Insets ZERO = new Insets(0, 0, 0, 0);
 
 	public static Icon icon() {
 		return Icons.get("fx.png");
@@ -19,7 +17,7 @@ public class FxButton extends JButton {
 
 	public FxButton(Channel ch) {
 		setIcon(icon());
-		setMargin(ZERO);
+		setMargin(Gui.BTN_ZERO);
 		addActionListener(e -> MainFrame.setFocus(ch));
 	}
 

@@ -22,9 +22,11 @@ import judahzone.api.AudioEngine.Request;
 import judahzone.api.AudioEngine.Type;
 import judahzone.api.AudioEngine.Wrapper;
 import judahzone.api.Custom;
+import judahzone.api.MidiOut;
 import judahzone.api.Notification.Property;
 import judahzone.api.TimeListener;
 import judahzone.gui.Gui;
+import judahzone.synth.WavSynth;
 import judahzone.util.Folders;
 import judahzone.util.JsonUtil;
 import judahzone.util.RTLogger;
@@ -36,20 +38,14 @@ import net.judah.JudahZone;
 import net.judah.channel.Channel;
 import net.judah.channel.Instrument;
 import net.judah.channel.LineIn;
-import net.judah.drums.DrumKit;
-import net.judah.drums.fm.FMKit;
-import net.judah.drums.noise.NoiseKit;
-import net.judah.drums.pluck.PluckKit;
-import net.judah.drums.wav.WavKit;
+import net.judah.drums.Drumset;
 import net.judah.gui.MainFrame;
 import net.judah.gui.fx.FxPanel;
 import net.judah.looper.Loop;
 import net.judah.midi.JudahClock;
 import net.judah.midi.MidiInstrument;
 import net.judah.song.FxData;
-import net.judah.synth.ZoneMidi;
 import net.judah.synth.fluid.FluidSynth;
-import net.judah.synth.taco.TacoTruck;
 
 /**
  * Channel Registry: consolidates system and user-registered channels into
@@ -161,7 +157,14 @@ public class Channels implements Consumer<LineIn>, TimeListener, Closeable {
 				if (line instanceof MidiInstrument == false)
 					continue; // shouldn't happen
 				MidiInstrument midi = (MidiInstrument) line;
-				ports.connectNow(midi.getMidiPort(), Type.MIDI, user.midiPort());
+				// JudahMidi might not have created ports yet.
+				try {
+					ports.connectNow(midi.getMidiPort(), Type.MIDI, user.midiPort());
+				} catch (Exception e) {
+					RTLogger.warn(this, "Failed to connect MIDI port for " + user.name() + ": " + e.getMessage());
+					continue;
+				}
+
 				if (user.clocked())
 					ports.connectNow(zone.getMidi().getClockOut(), type, user.midiPort());
 			}
@@ -174,7 +177,7 @@ public class Channels implements Consumer<LineIn>, TimeListener, Closeable {
 		for (Loop l : zone.getLooper())
 			all.add(l);
 		all.addAll(zone.getLooper());
-		for (DrumKit k : zone.getDrumMachine().getKits())
+		for (Drumset k : zone.getDrumMachine().getKits())
 			all.add(k);
 
 		subscribe(all);
@@ -355,7 +358,6 @@ public class Channels implements Consumer<LineIn>, TimeListener, Closeable {
 		Instrument gtr = getGuitar();
 		if (gtr != null)
 			gtr.setMuteRecord(false);
-		zone.getTaco().setMuteRecord(false);
 		zone.getDrumMachine().setMuteRecord(false); // individual kits can capture
 	}
 
@@ -492,20 +494,19 @@ public class Channels implements Consumer<LineIn>, TimeListener, Closeable {
 		}
 	}
 
+
+
 	@RequiredArgsConstructor @Getter
 	public static enum RegisteredSynths {
-		Taco(TacoTruck.class), Fluid(FluidSynth.class), External(MidiInstrument.class);
-		public final Class<? extends ZoneMidi> clazz;
+		JackMidi(MidiInstrument.class),
+		WavSynth(WavSynth.class),
+// 		Taco(TacoTruck.class), // deprecated
+		Fluid(FluidSynth.class); // (SynthEngine subclass);
+		public final Class<? extends MidiOut> clazz;
 	}
 
-	@RequiredArgsConstructor @Getter
-	public static enum RegisteredDrums {
-		Wav(WavKit.class), Noise(NoiseKit.class), FM(FMKit.class), Pluck(PluckKit.class);
-		private final Class<? extends DrumKit> clazz;
-	}
 
-	@Override
-	public void close() throws IOException {
+	@Override public void close() throws IOException {
 		for (Channel ch : audio)
 			if (ch instanceof Closeable close)
 				close.close();
@@ -518,7 +519,7 @@ public class Channels implements Consumer<LineIn>, TimeListener, Closeable {
 	/** First non-fluid user midi-insturment - janky*/
 	public void scanBass() {
 		for (LineIn ch : getUserChannels())
-			if (ch instanceof MidiInstrument midi && midi instanceof FluidSynth == false
+			if (ch instanceof MidiInstrument midi
 				&& ch.getName().equalsIgnoreCase("Bass")) {
 				bass = midi;
 				return;
@@ -549,17 +550,15 @@ public class Channels implements Consumer<LineIn>, TimeListener, Closeable {
 			}
 	}
 
-	public static LineIn factory(Custom user) {
+	public LineIn factory(Custom user) {
 		boolean midi = user.midiPort() != null && user.midiPort().isBlank() == false;
-		if (user.engine() != null && Channels.RegisteredSynths.valueOf(user.engine()) != null) {
+		if (user.engine() != null && Channels.RegisteredSynths.valueOf(user.engine()) == null) {
 			// TODO lookup AddTrack logic
-			RTLogger.warn("ChannelFactory", "Engine-backed synths not yet supported in factory(): " + user.engine());
-			return null;
+			RTLogger.warn(this, "Unknown: " + user.engine());
 		}
 
 		if (midi)
-			return new MidiInstrument(user);
-
+			return new MidiInstrument(user, zone.getFrame(), zone.getChords());
 		else
 			return new Instrument(user);
 

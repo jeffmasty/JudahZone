@@ -25,6 +25,11 @@ public class Instrument extends LineIn {
     public Instrument(Custom user) {
     	super(user.name(), user.stereo());
     	setUser(user);
+    }
+
+    @Override
+    public void setUser(Custom json) {
+    	super.setUser(json);
     	if (user.iconName() == null	)
 			icon = Icons.get("Gear.png");
 		else
@@ -41,33 +46,11 @@ public class Instrument extends LineIn {
 		}
     }
 
-    /** Mono channel with additional/default HiCut/LoCut */
-	@Deprecated public Instrument(String name, String sourcePort, JackPort left, String icon, int lowCut, int hiCut) {
-		super(name, Constants.MONO);
-		if (icon == null)
-			icon = "Gear.png";
-		this.icon = Icons.get(icon);
-		this.leftPort = left;
-
-		hp = new MonoFilter(Type.LoCut, lowCut, 1);
-		lp = new MonoFilter(Type.HiCut, hiCut, 1);
-		effects.add(hp);
-		effects.add(lp);
-		setActive(hp, true);
-		setActive(lp, true);
-	}
-
 	/** Stereo channel */
-	@Deprecated public Instrument(String name, String leftSource, String rightSource, String icon) {
+	protected Instrument(String name, String leftSource, String rightSource, String icon) {
 		super(name, Constants.STEREO);
 		if (icon != null)
 			this.icon = Icons.get(icon);
-	}
-
-	@Deprecated public Instrument(String name, String leftSource, String rightSource, String icon, JackPort left, JackPort right) {
-		this(name, leftSource, rightSource, icon);
-		leftPort = left;
-		rightPort = right;
 	}
 
 	@Override public final void processImpl() {

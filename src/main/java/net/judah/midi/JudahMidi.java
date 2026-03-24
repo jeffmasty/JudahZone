@@ -42,7 +42,6 @@ import net.judah.controllers.Line6FBV;
 import net.judah.controllers.MPKmini;
 import net.judah.gui.MainFrame;
 import net.judah.mixer.Channels.MixBus;
-import net.judah.synth.ZoneMidi;
 import net.judah.synth.fluid.FluidSynth;
 
 
@@ -89,7 +88,7 @@ public class JudahMidi extends ZoneJackClient implements Closeable, MixBus {
     private JackPort beatstep;
     private JackPort gtrMidi;
     @Getter private JackPort clockOut;
-    private final ArrayList<ZoneMidi> sync = new ArrayList<>();
+    private final ArrayList<MidiInstrument> sync = new ArrayList<>();
     private final MidiScheduler scheduler;
     private long counter;
     private final HashMap<JackPort, Controller> switchboard = new HashMap<>();
@@ -184,14 +183,14 @@ public class JudahMidi extends ZoneJackClient implements Closeable, MixBus {
         	switchboard.put(gtrMidi, jamstik);
         }
 
-        RTLogger.log(this, switchboard.size() + " controllers connected");
-
-        zone.getChannels().initialize(Type.MIDI);
-
+        RTLogger.debug(this, switchboard.size() + " controllers connected");
         Thread timePolling = new Thread(scheduler);
         timePolling.setPriority(7);
         timePolling.setName(scheduler.getClass().getSimpleName());
         timePolling.start();
+
+        zone.getChannels().initialize(Type.MIDI);
+        Threads.sleep(5);
     }
 
     @Override
@@ -308,7 +307,7 @@ public class JudahMidi extends ZoneJackClient implements Closeable, MixBus {
     	queue.add(new PortMessage(msg, out));
     }
 
-    public void synchronize(ZoneMidi ch) {
+    public void synchronize(MidiInstrument ch) {
     	if (sync.contains(ch)) {
     		// TODO send MIDI_RT_STOP to ch
 			sync.remove(ch);
@@ -320,7 +319,7 @@ public class JudahMidi extends ZoneJackClient implements Closeable, MixBus {
 
     /** send start/stop to midi listeners */
 	public void synchronize(byte[] midi) {
-		for (ZoneMidi p : sync)
+		for (MidiInstrument p : sync)
 			p.send(new Midi(midi), JudahMidi.ticker());
 	}
 

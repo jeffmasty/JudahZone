@@ -12,8 +12,8 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
+import judahzone.api.ControlChange;
 import judahzone.api.Midi;
-import judahzone.api.MidiConstants;
 import judahzone.gui.Gui;
 import judahzone.gui.Pastels;
 import judahzone.util.RTLogger;
@@ -30,7 +30,7 @@ import net.judah.seq.track.Editor.TrackListener;
 import net.judah.seq.track.MidiTrack;
 import net.judah.song.TraxCombo;
 
-public class Automation extends KnobPanel implements MidiConstants, TrackListener {
+public class Automation extends KnobPanel implements TrackListener {
 
 	public static record CCData(MidiEvent e, ControlChange type) {}
 
@@ -53,6 +53,7 @@ public class Automation extends KnobPanel implements MidiConstants, TrackListene
 		this.track = owner;
 
 		cc = new CCEdit(owner);
+
 		program = new ProgramEdit(owner);
 		pitch = new PitchEdit(owner);
 		all = new MidiView(this);

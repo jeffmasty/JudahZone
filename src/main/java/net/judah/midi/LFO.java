@@ -3,10 +3,10 @@ package net.judah.midi;
 import java.security.InvalidParameterException;
 
 import judahzone.api.FX;
-import judahzone.api.TimeFX;
+import judahzone.api.FX.TimeFX;
 import judahzone.fx.Chorus;
-import judahzone.fx.Delay;
 import judahzone.fx.CutFilter;
+import judahzone.fx.Delay;
 import judahzone.fx.Gain;
 import judahzone.fx.Reverb;
 import judahzone.util.Constants;
